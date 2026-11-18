@@ -5,8 +5,9 @@ import {
   defaultDeviceFor,
   enumerateInferenceDevices,
   runtimeDevices,
+  describeNvidia,
 } from '../runtime-capabilities.js'
-import type { HardwareInfo } from '../../interfaces/platform.js'
+import type { HardwareInfo, NvidiaInfo } from '../../interfaces/platform.js'
 
 const base = {
   cpuModel: 'x',
@@ -22,13 +23,21 @@ const intelIgpu: HardwareInfo = {
   npu: null,
 }
 const intelNpu: HardwareInfo = { ...intelIgpu, npu: { type: 'intel-npu' } }
+const rtxIdle: NvidiaInfo = describeNvidia({ name: 'RTX 2060' }, ['CPUExecutionProvider'])
+const rtxCuda: NvidiaInfo = describeNvidia({ name: 'RTX 2060' }, [
+  'CUDAExecutionProvider',
+  'CPUExecutionProvider',
+])
 const nvidia: HardwareInfo = {
   ...base,
   platform: 'linux',
   arch: 'x64',
-  gpu: { type: 'nvidia', name: 'RTX' },
+  gpu: null,
   npu: null,
+  nvidia: rtxIdle,
 }
+// i7-8700K (UHD 630) + RTX 2060: the iGPU in `gpu`, the NVIDIA card in its own slot.
+const i7WithRtx: HardwareInfo = { ...intelIgpu, nvidia: rtxIdle }
 const apple: HardwareInfo = {
   ...base,
   platform: 'darwin',
@@ -80,17 +89,14 @@ describe('scoreRuntimes', () => {
     expect(scores.some((s) => s.backend === 'cuda')).toBe(false)
     expect(best.backend).toBe('cpu')
   })
-  it('nvidia whose ONNX Runtime reported only CPU → no cuda', () => {
-    const cpuOnlyOrt: HardwareInfo = { ...nvidia, onnxExecutionProviders: ['CPUExecutionProvider'] }
-    expect(scoreRuntimes(cpuOnlyOrt).scores.some((s) => s.backend === 'cuda')).toBe(false)
-  })
-  it('nvidia whose ONNX Runtime reported the CUDA EP → best cuda 85', () => {
-    const cudaOrt: HardwareInfo = {
-      ...nvidia,
-      onnxExecutionProviders: ['CUDAExecutionProvider', 'CPUExecutionProvider'],
-    }
-    expect(scoreRuntimes(cudaOrt).best.backend).toBe('cuda')
-  })
+  it('nvidia with the CUDA execution provider → best cuda 85', () =>
+    expect(scoreRuntimes({ ...nvidia, nvidia: rtxCuda }).best.backend).toBe('cuda'))
+  it('a gpu.type nvidia from an older node is not a cuda device', () =>
+    expect(
+      scoreRuntimes({ ...nvidia, nvidia: null, gpu: { type: 'nvidia', name: 'RTX' } }).scores.some(
+        (s) => s.backend === 'cuda',
+      ),
+    ).toBe(false))
   it('apple → best coreml 95', () => expect(scoreRuntimes(apple).best.backend).toBe('coreml'))
   it('plain x86 → best cpu 50', () => expect(scoreRuntimes(plainX86).best.backend).toBe('cpu'))
 })
@@ -99,6 +105,29 @@ describe('cuda is offered only when the CUDA EP exists', () => {
     expect(enumerateInferenceDevices(nvidia).map((d) => d.key)).toEqual(['cpu']))
   it('an NVIDIA host without it offers no cuda device on the onnx runtime', () =>
     expect(runtimeDevices('onnx', nvidia).map((d) => d.value)).toEqual(['cpu']))
+  it('i7-8700K + RTX 2060, no CUDA EP → openvino:gpu offered, no cuda', () => {
+    const keys = enumerateInferenceDevices(i7WithRtx).map((d) => d.key)
+    expect(keys).toContain('openvino:gpu')
+    expect(keys.some((k) => k.startsWith('cuda'))).toBe(false)
+    expect(supportedRuntimes(i7WithRtx)).toContain('openvino')
+  })
+  it('i7-8700K + RTX 2060 with the CUDA EP → openvino:gpu and cuda coexist', () => {
+    const keys = enumerateInferenceDevices({ ...i7WithRtx, nvidia: rtxCuda }).map((d) => d.key)
+    expect(keys).toContain('openvino:gpu')
+    expect(keys).toContain('cuda:gpu')
+  })
+})
+describe('describeNvidia', () => {
+  it('no CUDA EP → present, not usable, with the reason', () =>
+    expect(rtxIdle).toEqual({
+      type: 'nvidia',
+      name: 'RTX 2060',
+      usable: false,
+      reason: 'no-cuda-execution-provider',
+    }))
+  it('an unreported EP list is not usable either', () =>
+    expect(describeNvidia({ name: 'x' }, null).usable).toBe(false))
+  it('CUDA EP listed → usable', () => expect(rtxCuda.usable).toBe(true))
 })
 describe('defaultDeviceFor', () => {
   it('openvino → auto', () => expect(defaultDeviceFor('openvino')).toBe('auto'))

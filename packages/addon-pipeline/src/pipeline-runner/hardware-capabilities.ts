@@ -32,7 +32,9 @@ export function summarizeRunnerHardware(
   cpuCores: number = os.cpus().length,
 ): RunnerHardwareCapabilities {
   return {
-    hasGpu: hardware?.gpu != null,
+    // NVIDIA has its own slot and counts only when it can run inference (the
+    // CUDA execution provider exists); present-but-unusable is not a GPU here.
+    hasGpu: hardware?.gpu != null || hardware?.nvidia?.usable === true,
     cpuCores,
     // Deliberately absent. A node runs a pool per accelerator, so there is no
     // single "the inference backend" to report here; `RunnerLocalLoad.devices`

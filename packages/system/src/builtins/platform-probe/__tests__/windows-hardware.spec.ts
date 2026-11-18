@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   classifyWindowsAmdNpu,
   classifyWindowsGpu,
+  classifyWindowsNvidia,
   parsePowershellOutput,
   parseWmicCsv,
   pciVendorOf,
@@ -74,12 +75,19 @@ describe('classifyWindowsGpu', () => {
       type: 'amd',
       name: RADEON_780M.Name,
     })
-    expect(classifyWindowsGpu([ctl(RTX_3060)])?.type).toBe('nvidia')
+    expect(classifyWindowsNvidia([ctl(RTX_3060)])).toEqual({ name: RTX_3060.Name })
     expect(pciVendorOf(INTEL_UHD.PNPDeviceID)).toBe('8086')
   })
 
-  it('prefers NVIDIA, then Intel, then AMD — the Linux probe order', () => {
-    expect(classifyWindowsGpu([ctl(INTEL_UHD), ctl(RTX_3060)])?.type).toBe('nvidia')
+  it('never puts an NVIDIA card in gpu: the iGPU keeps it, NVIDIA has its own slot', () => {
+    expect(classifyWindowsGpu([ctl(RTX_3060)])).toBeNull()
+    expect(classifyWindowsGpu([ctl(INTEL_UHD), ctl(RTX_3060)])?.type).toBe('intel')
+    expect(classifyWindowsGpu([ctl(RTX_3060), ctl(RADEON_780M)])?.type).toBe('amd')
+    expect(classifyWindowsNvidia([ctl(INTEL_UHD), ctl(RTX_3060)])).toEqual({ name: RTX_3060.Name })
+    expect(classifyWindowsNvidia([ctl(INTEL_UHD)])).toBeNull()
+  })
+
+  it('prefers Intel, then AMD, for gpu', () => {
     expect(classifyWindowsGpu([ctl(RADEON_780M), ctl(INTEL_UHD)])?.type).toBe('intel')
   })
 
@@ -142,7 +150,8 @@ describe('probeWindowsHardware', () => {
     }
     const hw = await probeWindowsHardware(run, { onFallback: (r) => reasons.push(r) })
     expect(hw.source).toBe('wmic')
-    expect(hw.gpu?.type).toBe('nvidia')
+    expect(hw.gpu).toBeNull()
+    expect(hw.nvidia).toEqual({ name: 'NVIDIA GeForce RTX 3060' })
     expect(reasons[0]).toMatch(/PowerShell probe failed.*policy/)
   })
 
@@ -152,6 +161,7 @@ describe('probeWindowsHardware', () => {
     }
     await expect(probeWindowsHardware(run)).resolves.toEqual({
       gpu: null,
+      nvidia: null,
       npu: null,
       source: 'none',
     })

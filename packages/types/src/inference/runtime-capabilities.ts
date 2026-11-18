@@ -9,7 +9,7 @@
  */
 
 import type { ModelFormat } from '../types/models.js'
-import type { HardwareInfo, PlatformScore } from '../interfaces/platform.js'
+import type { HardwareInfo, NvidiaInfo, PlatformScore } from '../interfaces/platform.js'
 import { formatForRuntime } from '../utils/runtime-mapping.js'
 import { coralUsableUnits, type CoralUnitAddress } from './coral-units.js'
 
@@ -51,13 +51,39 @@ function coralUnitOption(unit: CoralUnitAddress): DeviceOption {
 
 const ONNX_CUDA_EP = 'CUDAExecutionProvider'
 
+/** The probe's facts about an NVIDIA card, before its usability is judged. */
+export interface NvidiaProbe {
+  readonly name: string
+  readonly memoryMB?: number
+}
+
 /**
- * CUDA is offered only when the node's ONNX Runtime build carries the CUDA EP.
- * An NVIDIA GPU alone is not enough: without the EP the pool binds the CPU
- * provider and a `cuda` device would be the CPU under another name.
+ * The `HardwareInfo.nvidia` slot for a found card. Usable only when the node's
+ * ONNX Runtime lists the CUDA execution provider (`ort.get_available_providers()`,
+ * the signal the inference pool binds on); `null` = not reported = not usable.
+ */
+export function describeNvidia(
+  probe: NvidiaProbe,
+  onnxExecutionProviders: readonly string[] | null,
+): NvidiaInfo {
+  const base = {
+    type: 'nvidia' as const,
+    name: probe.name,
+    ...(probe.memoryMB === undefined ? {} : { memoryMB: probe.memoryMB }),
+  }
+  return onnxExecutionProviders?.includes(ONNX_CUDA_EP) === true
+    ? { ...base, usable: true }
+    : { ...base, usable: false, reason: 'no-cuda-execution-provider' }
+}
+
+/**
+ * CUDA is offered only for a USABLE NVIDIA slot. An NVIDIA GPU alone is not
+ * enough: without the EP the pool binds the CPU provider and a `cuda` device
+ * would be the CPU under another name. `gpu.type === 'nvidia'` (older nodes)
+ * never counts.
  */
 function onnxCudaAvailable(hw: HardwareInfo | null): boolean {
-  return hw?.onnxExecutionProviders?.includes(ONNX_CUDA_EP) === true
+  return hw?.nvidia?.usable === true
 }
 
 interface RuntimeDef {
@@ -192,7 +218,7 @@ interface ScoreRuntimesResult {
  *
  * Rules (hardware-driven only — no Python import probes):
  * - coreml:   score 95, darwin+arm64
- * - cuda:     score 85, only when the ONNX Runtime build reported the CUDA EP
+ * - cuda:     score 85, only for a usable `nvidia` slot (the CUDA EP exists)
  * - openvino: score 90 if intel-npu present, else 80 if intel gpu
  * - edgetpu:  score 70, a usable Coral unit (USB or PCIe)
  * - cpu:      score 50 (universal floor, always included)

@@ -53,6 +53,11 @@ const HardwareSchema = z.looseObject({
   cpuModel: z.string(),
   gpu: z.looseObject({ type: z.string(), name: z.string() }).nullable(),
   npu: z.looseObject({ type: z.string() }).nullable(),
+  /** NVIDIA's own slot (never `gpu`, which is the iGPU); absent on older nodes. */
+  nvidia: z
+    .looseObject({ name: z.string(), usable: z.boolean(), reason: z.string().optional() })
+    .nullable()
+    .optional(),
 })
 
 const InferenceDevicesSchema = z.looseObject({
@@ -177,7 +182,8 @@ const EXPECTATIONS: { readonly [kind in ExpectedAccelerator]: Expectation } = {
   },
   nvidia: {
     deviceKeys: (k) => /cuda|tensorrt|nvidia/i.test(k),
-    probe: (hw) => hw.gpu?.type === 'nvidia',
+    // Its own slot; `gpu.type === 'nvidia'` only from a node that predates it.
+    probe: (hw) => hw.nvidia != null || hw.gpu?.type === 'nvidia',
     image: null,
     steps: [],
     unsupported: {
@@ -202,6 +208,8 @@ export interface ProbeFact {
   readonly cpuModel: string
   readonly gpu: string | null
   readonly npu: string | null
+  /** `<name>: present, usable` or `<name>: present, not usable (<reason>)`; null when absent. */
+  readonly nvidia: string | null
 }
 
 export interface AcceleratorDiagnosis {
@@ -234,7 +242,14 @@ function probeFact(hw: z.infer<typeof HardwareSchema>): ProbeFact {
     cpuModel: hw.cpuModel,
     gpu: hw.gpu ? `${hw.gpu.type}: ${hw.gpu.name}` : null,
     npu: hw.npu ? hw.npu.type : null,
+    nvidia: hw.nvidia ? nvidiaFact(hw.nvidia) : null,
   }
+}
+
+function nvidiaFact(nvidia: NonNullable<z.infer<typeof HardwareSchema>['nvidia']>): string {
+  return nvidia.usable
+    ? `${nvidia.name}: present, usable`
+    : `${nvidia.name}: present, not usable (${nvidia.reason ?? 'unknown reason'})`
 }
 
 function installSteps(expectation: Expectation): readonly string[] {

@@ -162,6 +162,7 @@ function probeLines(probe: ProbeFact): { readonly [key: string]: string } {
     'node cpu': probe.cpuModel,
     'node gpu': probe.gpu ?? 'none reported',
     'node npu': probe.npu ?? 'none reported',
+    ...(probe.nvidia === null ? {} : { 'node nvidia': probe.nvidia }),
   }
 }
 

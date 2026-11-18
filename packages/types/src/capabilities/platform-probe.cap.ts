@@ -125,6 +125,21 @@ const CoralInfoSchema = z.object({
     .optional(),
 })
 
+const NvidiaInfoBaseSchema = z.object({
+  type: z.literal('nvidia'),
+  name: z.string(),
+  memoryMB: z.number().optional(),
+})
+
+/** An NVIDIA GPU: usable ⇔ the CUDA execution provider exists; otherwise the reason. */
+const NvidiaInfoSchema = z.discriminatedUnion('usable', [
+  NvidiaInfoBaseSchema.extend({ usable: z.literal(true) }),
+  NvidiaInfoBaseSchema.extend({
+    usable: z.literal(false),
+    reason: z.enum(['no-cuda-execution-provider']),
+  }),
+])
+
 const HardwareInfoSchema = z.object({
   platform: HardwarePlatformSchema,
   arch: HardwareArchSchema,
@@ -139,6 +154,9 @@ const HardwareInfoSchema = z.object({
   // found (USB and/or PCIe); the `edgetpu` runtime is offered only for USABLE
   // units (`units`), never for the `unavailable` ones.
   coral: CoralInfoSchema.nullable().optional(),
+  // An NVIDIA GPU in its own slot (never `gpu`), present + usable + reason like
+  // `coral`. Optional/nullable for older nodes; `cuda` is offered only when usable.
+  nvidia: NvidiaInfoSchema.nullable().optional(),
   /**
    * Per-accelerator compute (D930). Omitted by a node that has not probed it.
    * `null` fields inside an entry are a failed query, never a zero.

@@ -744,13 +744,24 @@ and look merely quiet.
   `onnxruntime-gpu`, so `_resolve_onnx_providers` drops the CUDA provider and a
   session binds `CPUExecutionProvider`. Until 2026-11-18 `scoreRuntimes` still
   scored `cuda` on `gpu.type: 'nvidia'`, which made a `cuda:gpu` device that ran
-  on the CPU and logged `device=gpu`. Now `cuda` is offered only when
-  `HardwareInfo.onnxExecutionProviders` lists `CUDAExecutionProvider` (nothing
-  reports it yet: planning#605), and the pool's `ONNX: execution provider` line
-  says `device=` from the provider the session BOUND (`device=cpu, asked=…`).
-  The install docs and `camstack host-check` say NVIDIA is not supported yet
-  and point at the Intel iGPU.
-- **`hasGpu` on `RunnerLocalLoad` is literal** — an NPU or a Coral is not a GPU.
+  on the CPU and logged `device=gpu`. Now NVIDIA has its own slot, like Coral:
+  `HardwareInfo.nvidia` / `KernelInferenceHardware.nvidia` is `{ name,
+  memoryMB?, usable, reason? }`, built by `describeNvidia` (usable only when
+  the ONNX Runtime lists `CUDAExecutionProvider`; nothing passes that list yet:
+  planning#605). `cuda` is offered only for a usable slot. The pool's `ONNX:
+  execution provider` line says `device=` from the provider the session BOUND
+  (`device=cpu, asked=…`). The install docs and `camstack host-check` say
+  NVIDIA is not supported yet and point at the Intel iGPU.
+- **`gpu` is the iGPU (Intel / AMD / render node), never NVIDIA.** When `gpu`
+  read `nvidia` on a host that also had an Intel iGPU (an i7-8700K + RTX 2060),
+  the iGPU vanished and `openvino:gpu` went with it. The platform scorer and
+  `mapSignalsToInferenceHardware` now leave `gpu` to the iGPU and put the card
+  in the `nvidia` slot, so both devices coexist once the CUDA provider ships.
+  The scorer logs `NVIDIA GPU present but not usable` with the reason on every
+  probe, and `platform-probe.getHardware` carries it; the node inference
+  device list does not show it yet (planning#605).
+- **`hasGpu` on `RunnerLocalLoad` is literal** — an NPU or a Coral is not a GPU,
+  and an NVIDIA card counts only when its slot is `usable`.
   The per-accelerator truth is `RunnerLocalLoad.devices`. It was a hardcoded
   `false` until 2026-07-31 and the admin UI drew a badge from it.
 - **A pin to a root-guard-excluded device is silently ignored** — `balance()`

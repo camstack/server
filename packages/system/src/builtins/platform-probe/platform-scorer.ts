@@ -2,12 +2,14 @@ import * as os from 'node:os'
 import * as fs from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { errMsg, scoreRuntimes, enumerateInferenceDevices } from '@camstack/types'
+import { describeNvidia, errMsg, scoreRuntimes, enumerateInferenceDevices } from '@camstack/types'
 import type {
   HardwareInfo,
   GpuInfo,
   NpuInfo,
   CoralInfo,
+  NvidiaInfo,
+  NvidiaProbe,
   PlatformCapabilities,
   IScopedLogger,
   AcceleratorCompute,
@@ -223,6 +225,8 @@ export class PlatformScorer {
 
     let gpu: GpuInfo | null = null
     let npu: NpuInfo | null = null
+    // NVIDIA has its own slot, like Coral — never `gpu`, which stays the iGPU.
+    let nvidiaProbe: NvidiaProbe | null = null
 
     // Coral Edge TPU — USB and/or PCIe/M.2, independent of the host GPU/NPU.
     // Scanned on every platform (the hub is Linux; `/sys` USB + PCI + the apex
@@ -236,11 +240,12 @@ export class PlatformScorer {
     }
 
     // Windows: GPU vendor/model and the AMD NPU come from WMI, never from /sys.
-    // NVIDIA's own tool still gives the exact VRAM, so it runs first and wins.
+    // NVIDIA's own tool still gives the exact model and VRAM for its slot.
     if (platform === 'win32') {
-      const nvidia = await this.probeNvidiaSmi()
+      const smi = await this.probeNvidiaSmi()
       const win = await this.probeWindowsHardwareSafely()
-      gpu = nvidia ?? win.gpu
+      gpu = win.gpu
+      nvidiaProbe = smi ?? win.nvidia
       npu = win.npu
       if (gpu)
         this.logger.info('Windows GPU detected', {
@@ -257,10 +262,8 @@ export class PlatformScorer {
         })
     }
 
-    // Linux NVIDIA
     if (platform === 'linux') {
-      const nvidia = await this.probeNvidiaSmi()
-      if (nvidia) gpu = nvidia
+      nvidiaProbe = await this.probeNvidiaSmi()
 
       const listRenderNodes = (): readonly string[] => {
         try {
@@ -362,6 +365,7 @@ export class PlatformScorer {
       }
     }
 
+    const nvidia = nvidiaProbe === null ? null : this.describeNvidiaSlot(nvidiaProbe)
     const hardware: HardwareInfo = {
       platform,
       arch,
@@ -372,6 +376,7 @@ export class PlatformScorer {
       gpu,
       npu,
       coral,
+      ...(nvidia === null ? {} : { nvidia }),
     }
     const accelerators = await this.readAcceleratorCompute()
     return accelerators === null ? hardware : { ...hardware, accelerators }
@@ -464,8 +469,26 @@ export class PlatformScorer {
     }
   }
 
+  /**
+   * The NVIDIA slot. This process has no ONNX Runtime to ask, so the card is
+   * reported present and — until a node's runtime lists the CUDA execution
+   * provider (#605) — not usable, with the reason logged on every probe the
+   * way an unusable Coral is: silence would read as "no NVIDIA".
+   */
+  private describeNvidiaSlot(probe: NvidiaProbe): NvidiaInfo {
+    const nvidia = describeNvidia(probe, null)
+    if (nvidia.usable) {
+      this.logger.info('NVIDIA GPU detected', { meta: { name: nvidia.name } })
+    } else {
+      this.logger.warn('NVIDIA GPU present but not usable', {
+        meta: { name: nvidia.name, memoryMB: nvidia.memoryMB, reason: nvidia.reason },
+      })
+    }
+    return nvidia
+  }
+
   /** NVIDIA's own tool: exact model and VRAM. Null when absent or failing. */
-  private async probeNvidiaSmi(): Promise<GpuInfo | null> {
+  private async probeNvidiaSmi(): Promise<NvidiaProbe | null> {
     try {
       const { stdout } = await execFileAsync(
         'nvidia-smi',
@@ -480,7 +503,6 @@ export class PlatformScorer {
       if (!output) return null
       const [name, mem] = output.split(',').map((s) => s.trim())
       return {
-        type: 'nvidia',
         name: name ?? 'NVIDIA GPU',
         memoryMB: parseInt(mem ?? '0'),
       }
@@ -516,7 +538,7 @@ export class PlatformScorer {
       this.logger.warn('Windows hardware probe failed — scoring as a CPU node', {
         meta: { error: errMsg(err) },
       })
-      return { gpu: null, npu: null, source: 'none' }
+      return { gpu: null, nvidia: null, npu: null, source: 'none' }
     }
   }
 

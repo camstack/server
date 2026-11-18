@@ -77,13 +77,20 @@ describe('probeHardware on win32', () => {
     expect(hw.coral).toBeNull()
   })
 
-  it('lets nvidia-smi give the exact NVIDIA model and VRAM over WMI', async () => {
+  it("reports nvidia-smi's model and VRAM in the nvidia slot, never in gpu", async () => {
     fakes.exec = async (file) => {
       if (/nvidia-smi/.test(file)) return { stdout: 'NVIDIA GeForce RTX 3060, 12288 MiB\n' }
       return { stdout: POWERSHELL_JSON }
     }
     const hw = await new PlatformScorer(logger(), null, NO_CORAL).probeHardware()
-    expect(hw.gpu).toEqual({ type: 'nvidia', name: 'NVIDIA GeForce RTX 3060', memoryMB: 12288 })
+    expect(hw.gpu).toEqual({ type: 'amd', name: 'AMD Radeon(TM) 780M Graphics' })
+    expect(hw.nvidia).toEqual({
+      type: 'nvidia',
+      name: 'NVIDIA GeForce RTX 3060',
+      memoryMB: 12288,
+      usable: false,
+      reason: 'no-cuda-execution-provider',
+    })
     expect(hw.npu?.type).toBe('amd-xdna')
   })
 
@@ -94,5 +101,6 @@ describe('probeHardware on win32', () => {
     const hw = await new PlatformScorer(logger(), null, NO_CORAL).probeHardware()
     expect(hw.gpu).toBeNull()
     expect(hw.npu).toBeNull()
+    expect(hw.nvidia ?? null).toBeNull()
   })
 })

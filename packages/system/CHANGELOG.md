@@ -129,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device-link contribution is retried when its customization changed under the write, re-derived after every operator Customize save, and cannot be deleted — switch it off instead
 - A device that only retains a wired client's MAC (its client left) no longer keeps the auto link when another port freshly reads that MAC: the fresh port takes it.
 - An operator-confirmed identity link whose evidence is gone no longer acts: its power-source contribution is withdrawn so the port the camera moved to can contribute, and a restart through it is refused as link-lost; an orphan customization's link stamp is withdrawn even though its camera was removed.
+- A host with an Intel iGPU and an NVIDIA card keeps OpenVINO on the iGPU; the NVIDIA card is reported present but not usable (no CUDA execution provider).
 
 ### Removed
 

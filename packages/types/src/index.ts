@@ -2864,6 +2864,7 @@ export type {
   InferenceDeviceDescriptor,
   RuntimeId,
 } from './inference/runtime-capabilities.js'
+export type { NvidiaProbe } from './inference/runtime-capabilities.js'
 export type { CoralUnitAddress } from './inference/coral-units.js'
 export { coralUsableUnits, edgetpuDelegateDevice } from './inference/coral-units.js'
 // Inference — hardware-driven runtime capability rules (SSOT)
@@ -2873,6 +2874,7 @@ export {
   modelFormatForRuntime,
   runtimeDevices,
   scoreRuntimes,
+  describeNvidia,
   supportedRuntimes,
 } from './inference/runtime-capabilities.js'
 

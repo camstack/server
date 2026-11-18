@@ -6,13 +6,14 @@
  *
  *  openvino — `gpu` only on Intel GPU, `npu` only on Intel NPU; `auto`/`cpu`
  *             always present (probe null → AUTO only).
- *  onnx    — `cuda` only on NVIDIA, `coreml` EP only on Apple ANE; `cpu` always
+ *  onnx    — `cuda` only for a usable `nvidia` slot, `coreml` EP only on Apple ANE; `cpu` always
  *             present (probe null → CPU only).
  *  coreml  — `ane` only when Apple ANE present.
  *
  * (Replaces the old `filterDeviceOptionsByHardware` tests; that helper was
  * removed when the offer became registry-driven.)
  */
+import { describeNvidia, type NvidiaInfo } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { runtimeDevices } from '../runtimes.js'
 
@@ -35,12 +36,18 @@ describe('runtimeDevices — openvino', () => {
 })
 
 describe('runtimeDevices — onnx', () => {
-  it('adds CUDA only on NVIDIA', () => {
+  it('adds CUDA only for a usable NVIDIA slot (the CUDA execution provider exists)', () => {
+    const rtx = { name: 'RTX 2060' }
+    const usable = describeNvidia(rtx, ['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    const idle = describeNvidia(rtx, ['CPUExecutionProvider'])
+    const values = (nvidia: NvidiaInfo | null): readonly string[] =>
+      runtimeDevices('onnx', { npu: null, gpu: { type: 'intel' }, nvidia }).map((o) => o.value)
+    expect(values(usable)).toContain('cuda')
+    expect(values(idle)).not.toContain('cuda')
+    expect(values(null)).not.toContain('cuda')
+    // A node that predates the slot reports NVIDIA in gpu: never cuda from that.
     expect(
       runtimeDevices('onnx', { npu: null, gpu: { type: 'nvidia' } }).map((o) => o.value),
-    ).toContain('cuda')
-    expect(
-      runtimeDevices('onnx', { npu: null, gpu: { type: 'intel' } }).map((o) => o.value),
     ).not.toContain('cuda')
   })
   it('probe null → CPU only', () => {

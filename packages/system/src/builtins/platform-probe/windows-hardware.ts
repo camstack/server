@@ -1,4 +1,4 @@
-import type { GpuInfo, NpuInfo } from '@camstack/types'
+import type { GpuInfo, NpuInfo, NvidiaProbe } from '@camstack/types'
 import { xdnaInfoForDevice } from './amd-npu.js'
 
 /**
@@ -33,7 +33,10 @@ export interface WindowsPnpDevice {
 }
 
 export interface WindowsHardware {
+  /** The iGPU / non-NVIDIA adapter (Intel, then AMD) — never an NVIDIA card. */
   readonly gpu: GpuInfo | null
+  /** An NVIDIA card, its own slot like Coral; usability is decided elsewhere. */
+  readonly nvidia: NvidiaProbe | null
   readonly npu: NpuInfo | null
   /** Which source answered — for the boot log; `none` when neither could. */
   readonly source: 'powershell' | 'wmic' | 'none'
@@ -163,7 +166,7 @@ function pciDeviceOf(pnpDeviceId: string): string | null {
   return m?.[1] ? m[1].toLowerCase() : null
 }
 
-type GpuVendor = GpuInfo['type']
+type GpuVendor = 'nvidia' | 'intel' | 'amd'
 
 function gpuVendor(c: WindowsVideoController): GpuVendor | null {
   const vendor = pciVendorOf(c.pnpDeviceId)
@@ -176,19 +179,33 @@ function gpuVendor(c: WindowsVideoController): GpuVendor | null {
   return null
 }
 
+function realAdapters(
+  controllers: readonly WindowsVideoController[],
+): readonly WindowsVideoController[] {
+  return controllers.filter((c) => c.name.length > 0 && !VIRTUAL_ADAPTER.test(c.name))
+}
+
 /**
- * The accelerator the node should treat as its GPU. Same preference as the
- * Linux probe — NVIDIA, then Intel, then AMD — so a laptop with an Intel iGPU
- * and a discrete card is described the way the rest of the system already
- * expects. Virtual adapters never count.
+ * The node's `gpu` slot: Intel, then AMD — the same iGPU model the Linux probe
+ * fills. An NVIDIA card never takes it (it has its own slot,
+ * `classifyWindowsNvidia`), so a host with both keeps OpenVINO on the iGPU.
+ * Virtual adapters never count.
  */
 export function classifyWindowsGpu(controllers: readonly WindowsVideoController[]): GpuInfo | null {
-  const real = controllers.filter((c) => c.name.length > 0 && !VIRTUAL_ADAPTER.test(c.name))
-  for (const wanted of ['nvidia', 'intel', 'amd'] as const) {
+  const real = realAdapters(controllers)
+  for (const wanted of ['intel', 'amd'] as const) {
     const hit = real.find((c) => gpuVendor(c) === wanted)
     if (hit) return { type: wanted, name: hit.name }
   }
   return null
+}
+
+/** An NVIDIA card from the video controllers, or null. Virtual adapters never count. */
+export function classifyWindowsNvidia(
+  controllers: readonly WindowsVideoController[],
+): NvidiaProbe | null {
+  const hit = realAdapters(controllers).find((c) => gpuVendor(c) === 'nvidia')
+  return hit ? { name: hit.name } : null
 }
 
 /**
@@ -212,6 +229,7 @@ async function viaPowershell(
   const parsed = parsePowershellOutput(await run(file, args))
   return {
     gpu: classifyWindowsGpu(parsed.controllers),
+    nvidia: classifyWindowsNvidia(parsed.controllers),
     npu: classifyWindowsAmdNpu(parsed.pnp),
     source: 'powershell',
   }
@@ -222,8 +240,10 @@ async function viaWmic(run: WindowsProbeRunner): Promise<WindowsHardware> {
     run('wmic', WMIC_VIDEO_ARGS),
     run('wmic', WMIC_AMD_PNP_ARGS).catch(() => ''),
   ])
+  const controllers = parseWmicCsv(video)
   return {
-    gpu: classifyWindowsGpu(parseWmicCsv(video)),
+    gpu: classifyWindowsGpu(controllers),
+    nvidia: classifyWindowsNvidia(controllers),
     npu: classifyWindowsAmdNpu(parseWmicCsv(amd)),
     source: 'wmic',
   }
@@ -231,7 +251,7 @@ async function viaWmic(run: WindowsProbeRunner): Promise<WindowsHardware> {
 
 /**
  * GPU + AMD NPU on a Windows host. NEVER throws: a probe that cannot run is
- * `{ gpu: null, npu: null, source: 'none' }` and boot goes on — the node then
+ * `{ gpu: null, nvidia: null, npu: null, source: 'none' }` and boot goes on — the node then
  * scores as a CPU node, which is correct for hardware we could not see.
  */
 export async function probeWindowsHardware(
@@ -254,6 +274,6 @@ export async function probeWindowsHardware(
     options.onFallback?.(
       `wmic probe failed (${wmicError instanceof Error ? wmicError.message : String(wmicError)}); hardware unknown`,
     )
-    return { gpu: null, npu: null, source: 'none' }
+    return { gpu: null, nvidia: null, npu: null, source: 'none' }
   }
 }

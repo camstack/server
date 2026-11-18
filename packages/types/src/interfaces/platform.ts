@@ -25,21 +25,48 @@ export interface HardwareInfo {
    */
   readonly coral?: CoralInfo | null
   /**
-   * The execution providers the node's ONNX Runtime build reported
-   * (`ort.get_available_providers()`, the signal the inference pool binds on).
-   * Absent / null = not reported, and then no EP beyond the CPU floor is
-   * assumed: an NVIDIA GPU is offered as `cuda` only when this lists
-   * `CUDAExecutionProvider`. Nothing reports it yet — CamStack provisions the
-   * plain `onnxruntime` wheel, which has no CUDA EP (planning#605).
+   * An NVIDIA GPU, when found — usable or not. Its own slot, like `coral`: an
+   * NVIDIA card never takes `gpu`, which stays the integrated GPU (Intel / AMD),
+   * so an idle NVIDIA card cannot hide the iGPU OpenVINO runs on. Optional so
+   * reports from older nodes still validate; absent / null ⇒ no NVIDIA GPU.
    */
-  readonly onnxExecutionProviders?: readonly string[] | null
+  readonly nvidia?: NvidiaInfo | null
 }
 
 export interface GpuInfo {
+  /** `nvidia` only from older nodes: an NVIDIA card is reported in `HardwareInfo.nvidia`. */
   readonly type: 'nvidia' | 'amd' | 'intel' | 'apple'
   readonly name: string
   readonly memoryMB?: number
 }
+
+/**
+ * Why an NVIDIA GPU that IS present cannot run inference (D393/D315: present
+ * but unusable is never reported as absent).
+ *  - `no-cuda-execution-provider`: the node's ONNX Runtime build does not list
+ *    `CUDAExecutionProvider` (CamStack ships the plain `onnxruntime` wheel;
+ *    planning#605).
+ */
+export type NvidiaUnusableReason = 'no-cuda-execution-provider'
+
+/**
+ * An NVIDIA GPU. `usable` ⇔ the CUDA execution provider is available; only a
+ * usable one is offered as the `cuda` runtime / device.
+ */
+export type NvidiaInfo =
+  | {
+      readonly type: 'nvidia'
+      readonly name: string
+      readonly memoryMB?: number
+      readonly usable: true
+    }
+  | {
+      readonly type: 'nvidia'
+      readonly name: string
+      readonly memoryMB?: number
+      readonly usable: false
+      readonly reason: NvidiaUnusableReason
+    }
 
 export interface NpuInfo {
   readonly type: 'apple-ane' | 'intel-npu' | 'amd-xdna'

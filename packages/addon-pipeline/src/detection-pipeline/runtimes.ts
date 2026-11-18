@@ -17,7 +17,7 @@ import {
   type RuntimeId,
   type DeviceOption,
 } from '@camstack/types'
-import type { HardwareInfo, GpuInfo, NpuInfo, CoralInfo } from '@camstack/types'
+import type { HardwareInfo, GpuInfo, NpuInfo, CoralInfo, NvidiaInfo } from '@camstack/types'
 import type { PoolBatchMode, PoolTuning } from './engine/shared-inference-pool.js'
 
 // ---------------------------------------------------------------------------
@@ -61,6 +61,11 @@ export interface ProbedHardware {
    * what the enumerator turns into `edgetpu:<bus>[:N]` devices.
    */
   readonly coral?: CoralInfo | null
+  /**
+   * An NVIDIA card, its own slot (never `gpu`, which stays the iGPU): `cuda`
+   * is offered only when it is `usable` (the CUDA execution provider exists).
+   */
+  readonly nvidia?: NvidiaInfo | null
 }
 
 export interface RuntimeEnv {
@@ -118,6 +123,10 @@ function coralInfoFrom(hw: ProbedHardware): CoralInfo | null {
   return hw.coral?.type === 'coral-edgetpu' ? hw.coral : null
 }
 
+function nvidiaInfoFrom(hw: ProbedHardware): NvidiaInfo | null {
+  return hw.nvidia?.type === 'nvidia' ? hw.nvidia : null
+}
+
 export function envToHardwareInfo(env: RuntimeEnv): HardwareInfo {
   // platform + arch are AUTHORITATIVE — they come from the running process
   // (`process.platform`/`arch`), which is deterministic and never wrong. They
@@ -136,6 +145,7 @@ export function envToHardwareInfo(env: RuntimeEnv): HardwareInfo {
     gpu: env.hardware ? gpuInfoFrom(env.hardware) : null,
     npu: env.hardware ? npuInfoFrom(env.hardware) : null,
     coral: env.hardware ? coralInfoFrom(env.hardware) : null,
+    nvidia: env.hardware ? nvidiaInfoFrom(env.hardware) : null,
   }
 }
 
@@ -151,6 +161,7 @@ function probedToHardwareInfo(hw: ProbedHardware | null): HardwareInfo | null {
     gpu: gpuInfoFrom(hw),
     npu: npuInfoFrom(hw),
     coral: coralInfoFrom(hw),
+    nvidia: nvidiaInfoFrom(hw),
   }
 }
 

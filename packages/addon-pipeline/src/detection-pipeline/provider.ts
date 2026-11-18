@@ -24,6 +24,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   CoralInfo,
+  NvidiaInfo,
   DeviceProxy,
   EffectiveTuning,
   EffectiveTuningInput,
@@ -501,6 +502,7 @@ function toProbedHardware(
     npu?: { type: string } | null
     gpu?: { type: string } | null
     coral?: CoralInfo | null
+    nvidia?: NvidiaInfo | null
   } | null,
 ): ProbedHardware | null {
   if (!hw) return null
@@ -508,6 +510,7 @@ function toProbedHardware(
     npu: hw.npu ? { type: hw.npu.type } : null,
     gpu: hw.gpu ? { type: hw.gpu.type } : null,
     coral: hw.coral ?? null,
+    nvidia: hw.nvidia ?? null,
   }
 }
 

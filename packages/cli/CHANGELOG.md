@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New `camstack host-check` (and the `setup_host_check` MCP tool): run it on the machine where CamStack will run to see its GPUs, NPU, Coral and NVIDIA (not supported yet), the image tag and the exact device flags for docker run, Compose, Unraid and Proxmox.
+- support_diagnose_accelerator reports an NVIDIA card and why it is not usable.
 
 ## [1.2.234] - 2026-11-17
 

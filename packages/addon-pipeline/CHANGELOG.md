@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The inference pool log now names the device the ONNX session actually runs on (device=cpu when only the CPU provider bound), not the device it was asked for.
+- An NVIDIA card no longer hides the Intel iGPU from the inference devices, and counts as a GPU only once it can run inference.
 
 ## [1.2.662] - 2026-11-18
 

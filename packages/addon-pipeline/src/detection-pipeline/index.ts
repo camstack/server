@@ -667,6 +667,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
         npu: hw.npu ? { type: hw.npu.type } : null,
         gpu: hw.gpu ? { type: hw.gpu.type } : null,
         coral: hw.coral ?? null,
+        nvidia: hw.nvidia ?? null,
         // The probed node's OWN platform/arch — NOT this process's. Used by
         // `probeHardwareEnv` when the target is a remote node (F3/CB3).
         platform: hw.platform,

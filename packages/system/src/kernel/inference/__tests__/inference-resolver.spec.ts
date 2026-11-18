@@ -18,10 +18,46 @@ function signals(over: Partial<PlatformSignals> = {}): PlatformSignals {
 }
 
 describe('mapSignalsToInferenceHardware', () => {
-  it('nvidia gpu → gpu.type nvidia', () => {
+  const idleNvidia = {
+    type: 'nvidia',
+    name: 'NVIDIA GPU',
+    usable: false,
+    reason: 'no-cuda-execution-provider',
+  }
+
+  it('an NVIDIA GPU alone → its own slot, present but not usable; gpu stays null', () => {
+    expect(mapSignalsToInferenceHardware(signals({ hasNvidiaGpu: true }))).toEqual({
+      gpu: null,
+      npu: null,
+      coral: null,
+      nvidia: idleNvidia,
+    })
+  })
+
+  // i7-8700K (UHD 630) + RTX 2060: both GPUs visible.
+  const i7WithRtx = signals({ hasNvidiaGpu: true, hasIntelGpu: true, hasRenderNode: true })
+
+  it('NVIDIA + Intel iGPU, no CUDA EP → gpu intel (OpenVINO), NVIDIA present not usable', () => {
+    expect(mapSignalsToInferenceHardware(i7WithRtx)).toEqual({
+      gpu: { type: 'intel' },
+      npu: null,
+      coral: null,
+      nvidia: idleNvidia,
+    })
+  })
+
+  it('NVIDIA + Intel iGPU with the CUDA EP → both: gpu intel AND a usable NVIDIA', () => {
+    const hw = mapSignalsToInferenceHardware(i7WithRtx, ['CUDAExecutionProvider'])
+    expect(hw.gpu).toEqual({ type: 'intel' })
+    expect(hw.nvidia).toEqual({ type: 'nvidia', name: 'NVIDIA GPU', usable: true })
+  })
+
+  it('AMD + NVIDIA → gpu stays amd', () => {
     expect(
-      mapSignalsToInferenceHardware(signals({ hasNvidiaGpu: true, hasRenderNode: true })),
-    ).toEqual({ gpu: { type: 'nvidia' }, npu: null, coral: null })
+      mapSignalsToInferenceHardware(
+        signals({ hasNvidiaGpu: true, hasAmdGpu: true, hasRenderNode: true }),
+      ).gpu,
+    ).toEqual({ type: 'amd' })
   })
 
   it('intel gpu (or render node) → gpu.type intel', () => {

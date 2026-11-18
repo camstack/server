@@ -121,6 +121,28 @@ describe('support_diagnose_accelerator', () => {
     expect(out.unsupported?.extend).toContain('@camstack/addon-pipeline')
   })
 
+  it('reads NVIDIA from its own slot and says why it is not usable; gpu stays the iGPU', async () => {
+    const { ctx } = hubWith([device('cpu'), device('openvino:gpu')], {
+      ...ultra,
+      nvidia: {
+        type: 'nvidia',
+        name: 'NVIDIA GeForce RTX 2060',
+        usable: false,
+        reason: 'no-cuda-execution-provider',
+      },
+    })
+    const out = await supportDiagnoseAccelerator(ctx, {
+      nodeId: 'hub',
+      expected: 'nvidia',
+    })
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.verdict).toBe('unsupported')
+    expect(out.probe?.gpu).toBe('intel: Arc')
+    expect(out.probe?.nvidia).toBe(
+      'NVIDIA GeForce RTX 2060: present, not usable (no-cuda-execution-provider)',
+    )
+  })
+
   it('unsupported: the Neural Engine on a Linux node cannot exist there', async () => {
     const { ctx } = hubWith([device('cpu')])
     const out = await supportDiagnoseAccelerator(ctx, {

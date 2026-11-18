@@ -14,7 +14,7 @@ import { probePlatform } from '../hwaccel/hwaccel-resolver.js'
 import { mapSignalsToInferenceHardware } from './inference-resolver.js'
 
 function asGpuType(type: string): GpuInfo['type'] | null {
-  if (type === 'nvidia' || type === 'amd' || type === 'intel' || type === 'apple') return type
+  if (type === 'amd' || type === 'intel' || type === 'apple') return type
   return null
 }
 
@@ -43,6 +43,7 @@ function localHardwareInfo(): HardwareInfo | null {
     gpu: gpuType !== null ? { type: gpuType, name: gpuType } : null,
     npu: npuType !== null ? { type: npuType } : null,
     coral: inference.coral ?? null,
+    nvidia: inference.nvidia ?? null,
   }
 }
 

@@ -14,7 +14,7 @@ import type { ConfigUISchema, ConfigUISchemaWithValues, FieldProbeResult } from 
 import type { IEventBus, ReadinessScope } from './event-bus.js'
 import type { ICapabilityRegistry } from './kernel-abstractions.js'
 import type { IScopedLogger } from './logging.js'
-import type { CoralInfo } from './platform.js'
+import type { CoralInfo, NvidiaInfo } from './platform.js'
 import type { ICapabilityHandle } from './readiness.js'
 import type {
   StorageLocationDeclaration,
@@ -457,6 +457,8 @@ export interface KernelInferenceHardware {
   readonly npu: { readonly type: string } | null
   /** Coral Edge TPU hardware (USB and/or PCIe), when found — whole, units included. */
   readonly coral?: CoralInfo | null
+  /** An NVIDIA GPU, when found — usable or not. Never in `gpu` (the iGPU slot). */
+  readonly nvidia?: NvidiaInfo | null
 }
 
 export interface IKernelInferenceEngine {
