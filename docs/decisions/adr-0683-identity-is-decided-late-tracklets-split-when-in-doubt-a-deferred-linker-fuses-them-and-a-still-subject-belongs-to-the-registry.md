@@ -109,8 +109,13 @@ moved** (the object was already sitting there on first sight) was never a
 moving subject and is disposed exactly as D547 always disposed it — deleted,
 row and media, because the registry does not want a parked object persisted
 as a track too. "Moved" is answered once, scale-relative to the subject's own
-box (`DEFAULT_STILL_SPAN_FRACTION`, 0.35× the first box's short side), the
-same test the state analyzer already used for stillness — no new constant.
+box (`DEFAULT_STILL_SPAN_FRACTION`: the displacement within 0.35× the early
+boxes' median short side, or, for a flat box only, sideways within 0.35× their
+median width and vertically within 0.35× the short side), the same rule the
+state analyzer uses for stillness (`withinStillSpan`) — no new constant.
+(Amended 2026-11-18: a wide, flat parked car whose width the detector flips
+never parked under the short-side circle alone; the flat exception was added,
+and for any box that is not flat the rule is exactly the old circle.)
 
 **The model-free descriptor (§8).** Appearance is a 96-integer histogram per
 box (`appearanceCrop`, 16×32 RGB view): a Bhattacharyya distance per

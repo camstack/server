@@ -190,8 +190,8 @@ second after the first is refused.
 state at all — the parked-object registry (D547) is the only stillness
 authority there is. The instant it promotes a subject, that subject's track
 closes: if the track ever MOVED (`planPromotion`, scale-relative to the
-subject's own box — `DEFAULT_STILL_SPAN_FRACTION`, 0.35× the first box's
-short side), it closes `stationary` at its last sighting and keeps its row,
+subject's own box — `withinStillSpan`, 0.35× the early boxes' median short
+side, plus the median width sideways for a flat box), it closes `stationary` at its last sighting and keeps its row,
 so a later return within the link window may still be linked to it; face
 recognition, plate reading, the detail plane and best-shot evaluation stop
 with it. If it NEVER moved, D547's disposal is unchanged — deleted, row and
@@ -642,11 +642,17 @@ The paragraph above is the whole rule only for a subject that was **already
 sitting there** on its first sighting. Since tracker v2 (operator decision
 2026-09-30), a subject is a track while it MOVES, and `planPromotion`
 (`pipeline/stationary/promotion-plan.ts`) decides what a promotion does to
-the track it promotes, from the tracklet's own confident path: did any box's
-centre move farther from the first box's centre than
-`DEFAULT_STILL_SPAN_FRACTION` (0.35) × the first box's short side (the same
-scale-relative test the state analyzer already used for stillness — no new
-constant).
+the track it promotes, from the tracklet's own confident path: did the
+centre stay, for three boxes in a row, farther from the median centre of the
+first five boxes than `DEFAULT_STILL_SPAN_FRACTION` (0.35) × their median
+SHORT side, as a circle — or, for a FLAT box only (median width > median
+height), farther than 0.35 × the median WIDTH sideways or 0.35 × the short
+side vertically (the same scale-relative rule the state analyzer uses for
+stillness, `withinStillSpan` — no new constant). The flat exception exists
+because a wide, flat parked car whose width the detector flips (Retro 1441,
+~150x53, width 102–183 px) swings its centre ~20 px sideways, past a
+short-side bar of 18.5 px. A box that is not flat — a person — is judged
+exactly as before, diagonals included.
 
 - **Never moved** — the object was already standing there when first seen
   (a parked car, a seated person at session start). D547's disposal is

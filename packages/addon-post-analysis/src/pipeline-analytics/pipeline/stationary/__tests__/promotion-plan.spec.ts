@@ -4,16 +4,19 @@
  * still be linked; one that never moved is D547's disposal, as today.
  *
  * "Moved" (fix round 1, review M1) is judged against a ROBUST reference — the
- * median centre of the first {@link PROMOTION_EARLY_BOXES} boxes, scaled by
- * their median short side — and only a SUSTAINED displacement counts:
+ * median centre of the first {@link PROMOTION_EARLY_BOXES} boxes, judged by
+ * `withinStillSpan` (the circle on their median short side, plus the median
+ * width sideways for a flat box) — and
+ * only a SUSTAINED displacement counts:
  * {@link PROMOTION_SUSTAINED_BOXES} consecutive boxes beyond the span. One
  * truncated first box or one stray box is not a move.
  *
  * Disarms (each alone, restored):
  *  - make `planPromotion` always answer "moved": "a subject that was standing there from its first box is disposed" fails;
  *  - make it always answer "never moved": "a subject that walked to its seat keeps its track" fails;
- *  - measure the span against a constant 50 px instead of the short side: "the stillness span scales with the subject" fails;
- *  - `Math.min` → `Math.max` for the short side: "the span is the SHORT side" fails;
+ *  - measure the span against a constant 50 px instead of the box: "the stillness span scales with the subject" fails;
+ *  - no flat exception (the circle alone), or its sideways bar on the median
+ *    HEIGHT: "a flat car whose box stays wide for a while never moved" fails;
  *  - reference = the first box alone (no median): "a parked car whose first box was cut by the frame edge never moved" fails;
  *  - sustain = 1 box: "one stray box is not a move" fails;
  *  - judge the NET displacement (only the final boxes against the reference):
@@ -25,6 +28,7 @@
  */
 import type { BoundingBox } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { RETRO_1441_PARKED_CAR } from '../../tracker/__tests__/scenes/retro-1441-parked-car.js'
 import { EMPTY_MOVED_PROBE, planPromotion, probeMoved, stepMovedProbe } from '../promotion-plan.js'
 
 const box = (x: number, y: number, w: number, h: number): BoundingBox => ({ x, y, w, h })
@@ -62,10 +66,17 @@ describe('planPromotion', () => {
     expect(planPromotion(seat)).toEqual(NEVER_MOVED)
   })
 
-  it('the span is the SHORT side', () => {
+  it('a tall subject stepping sideways is judged against its short side, not its height', () => {
     // A 40×200 standing person who steps 30 px sideways moved: 30 > 0.35 × 40
-    // = 14, though 30 < 0.35 × 200 = 70 would call it jitter.
+    // = 14, though 30 < 0.35 × 200 = 70 (the height) would call it jitter.
     const person = [...repeat(box(500, 300, 40, 200), 5), ...repeat(box(530, 300, 40, 200), 5)]
+    expect(planPromotion(person)).toEqual(MOVED)
+  })
+
+  it('a tall subject stepping down is judged against its short side, not its height', () => {
+    // The same 40×200 person steps 30 px DOWN: 30 > 0.35 × 40 = 14 moved,
+    // though 30 < 0.35 × 200 = 70 (the height) would call it jitter.
+    const person = [...repeat(box(500, 300, 40, 200), 5), ...repeat(box(500, 330, 40, 200), 5)]
     expect(planPromotion(person)).toEqual(MOVED)
   })
 
@@ -150,5 +161,39 @@ describe('the incremental probe', () => {
     stepMovedProbe(first, box(500, 500, 10, 10))
     expect(JSON.stringify(first)).toBe(snapshot)
     expect(EMPTY_MOVED_PROBE.early).toHaveLength(0)
+  })
+})
+
+describe('a wide, flat parked car (Retro 1441)', () => {
+  // The recorded parked car: ~150x53, its width flipping ~102-183 px, so the
+  // centre swings ~20 px sideways — over 0.35 x 53 = 18.5 px of short side.
+  // Judged sideways against the median width, it never moved.
+  for (const track of RETRO_1441_PARKED_CAR) {
+    it(`${track.trackId}: never reported as moved`, () => {
+      const path = track.boxes.map(([, x, y, w, h]) => box(x, y, w, h))
+      expect(planPromotion(path)).toEqual(NEVER_MOVED)
+    })
+  }
+
+  it('a flat car whose box stays wide for a while never moved', () => {
+    // The detector holds the wide box (left edge fixed, 150 → 190 px) for
+    // several boxes in a row: the centre sits 20 px right of the reference —
+    // past 0.35 x 53 = 18.5 px of short side, inside 0.35 x 150 = 52.5 px of width.
+    const narrow = repeat(box(1350, 1083, 150, 53), 10)
+    const wide = repeat(box(1350, 1083, 190, 53), 10)
+    expect(planPromotion([...narrow, ...wide, ...narrow])).toEqual(NEVER_MOVED)
+  })
+
+  it('a flat car that leaves by one width moved', () => {
+    const parked = repeat(box(1350, 1083, 150, 53), 10)
+    const left = repeat(box(1500, 1083, 150, 53), 10)
+    expect(planPromotion([...parked, ...left])).toEqual(MOVED)
+  })
+
+  it('a flat car that pulls out by one height moved', () => {
+    // 53 px down the frame: 0.35 x 53 = 18.5 px of height, far below 0.35 x 150.
+    const parked = repeat(box(1350, 1083, 150, 53), 10)
+    const out = repeat(box(1350, 1136, 150, 53), 10)
+    expect(planPromotion([...parked, ...out])).toEqual(MOVED)
   })
 })
