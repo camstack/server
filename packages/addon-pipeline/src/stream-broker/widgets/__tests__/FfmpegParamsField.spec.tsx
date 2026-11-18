@@ -56,6 +56,110 @@ describe('FfmpegParamsField', () => {
     expect(savedProfile?.outputArgs).toEqual(expect.arrayContaining(['-copyts']))
   })
 
+  describe('numeric video fields commit a draft', () => {
+    const base = {
+      video: {
+        codec: 'h264' as const,
+        width: 1280,
+        fps: 15,
+        bitrateKbps: 2000,
+      },
+      audio: 'passthrough' as const,
+    }
+    const renderField = (onSave: ReturnType<typeof vi.fn>, withSource = false) =>
+      render(
+        <FfmpegParamsField
+          config={{
+            fieldKey: 'derived:native:main',
+            ...(withSource
+              ? {
+                  sourceParams: {
+                    video: { codec: 'h264' as const, fps: 25 },
+                    audio: 'passthrough' as const,
+                  },
+                }
+              : {}),
+          }}
+          value={base}
+          onSave={onSave}
+        />,
+      )
+
+    it('typing 20 after selecting all saves once, on blur, with fps 20', () => {
+      const onSave = vi.fn()
+      renderField(onSave)
+      const fps = screen.getByLabelText(/^fps$/i)
+      fireEvent.focus(fps)
+      fireEvent.change(fps, { target: { value: '2' } })
+      fireEvent.change(fps, { target: { value: '20' } })
+      expect(onSave).not.toHaveBeenCalled()
+      fireEvent.blur(fps)
+      expect(onSave).toHaveBeenCalledTimes(1)
+      expect(onSave.mock.calls[0]?.[0].video.fps).toBe(20)
+    })
+
+    it('Enter commits the draft', () => {
+      const onSave = vi.fn()
+      renderField(onSave)
+      const fps = screen.getByLabelText(/^fps$/i)
+      fireEvent.change(fps, { target: { value: '30' } })
+      fireEvent.keyDown(fps, { key: 'Enter' })
+      expect(onSave).toHaveBeenCalledTimes(1)
+      expect(onSave.mock.calls[0]?.[0].video.fps).toBe(30)
+    })
+
+    it('clearing FPS and blurring saves a profile with no fps key', () => {
+      const onSave = vi.fn()
+      renderField(onSave)
+      const fps = screen.getByLabelText(/^fps$/i)
+      fireEvent.change(fps, { target: { value: '' } })
+      fireEvent.blur(fps)
+      expect(onSave).toHaveBeenCalledTimes(1)
+      const saved = onSave.mock.calls[0]?.[0]
+      expect('fps' in saved.video).toBe(false)
+      expect(saved.video.width).toBe(1280)
+      expect(base.video.fps).toBe(15)
+    })
+
+    it('an invalid value does not save and shows the error state', () => {
+      const onSave = vi.fn()
+      renderField(onSave)
+      const fps = screen.getByLabelText(/^fps$/i)
+      fireEvent.change(fps, { target: { value: '-5' } })
+      fireEvent.blur(fps)
+      expect(onSave).not.toHaveBeenCalled()
+      expect(fps).toHaveAttribute('aria-invalid', 'true')
+    })
+
+    it('Escape reverts the draft to the persisted value', () => {
+      const onSave = vi.fn()
+      renderField(onSave)
+      const fps = screen.getByLabelText(/^fps$/i)
+      fireEvent.change(fps, { target: { value: '99' } })
+      fireEvent.keyDown(fps, { key: 'Escape' })
+      expect(fps).toHaveValue(15)
+      fireEvent.blur(fps)
+      expect(onSave).not.toHaveBeenCalled()
+    })
+
+    it('an empty fps field says it follows the source fps', () => {
+      render(
+        <FfmpegParamsField
+          config={{
+            fieldKey: 'derived:native:main',
+            sourceParams: {
+              video: { codec: 'h264', fps: 25 },
+              audio: 'passthrough',
+            },
+          }}
+          value={{ video: { codec: 'h264' }, audio: 'passthrough' }}
+          onSave={vi.fn()}
+        />,
+      )
+      expect(screen.getByLabelText(/^fps$/i)).toHaveAttribute('placeholder', 'source (25 fps)')
+    })
+  })
+
   describe('argsOnly mode (source-stream normalization)', () => {
     it('hides the codec/geometry/audio controls and renders only the two args editors', () => {
       render(
@@ -105,8 +209,19 @@ describe('FfmpegParamsField', () => {
         config={{
           fieldKey: 'derived:native:main',
           sourceParams: {
-            video: { codec: 'h265', width: 2560, height: 1920, fps: 20, bitrateKbps: 4500 },
-            audio: { codec: 'aac', bitrateKbps: 64, sampleRateHz: 16000, channels: 1 },
+            video: {
+              codec: 'h265',
+              width: 2560,
+              height: 1920,
+              fps: 20,
+              bitrateKbps: 4500,
+            },
+            audio: {
+              codec: 'aac',
+              bitrateKbps: 64,
+              sampleRateHz: 16000,
+              channels: 1,
+            },
           },
         }}
         value={undefined}

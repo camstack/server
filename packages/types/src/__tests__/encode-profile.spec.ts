@@ -2,6 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { EncodeProfileSchema, encodeProfileFromStreamShape } from '../encode-profile.js'
 
 describe('EncodeProfile schemas', () => {
+  it('accepts a cleared profile: video without width, height, fps or bitrateKbps', () => {
+    const profile = { video: { codec: 'h264' }, audio: 'passthrough' }
+    expect(EncodeProfileSchema.parse(profile)).toEqual(profile)
+  })
+
   it('parses a video-only h264 profile with audio passthrough', () => {
     const profile = {
       video: {

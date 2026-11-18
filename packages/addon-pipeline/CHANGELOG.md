@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An inference device OpenVINO cannot enumerate (for example an Intel iGPU the compute runtime no longer supports) is now reported down with the reason no-gpu-device instead of failing every load behind a retry backoff
 
+### Fixed
+
+- A derived stream's FPS, bitrate, width and height fields now save on blur or Enter instead of every keystroke, and can be cleared to follow the source
+
 ## [1.2.665] - 2026-11-18
 
 ### Changed

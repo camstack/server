@@ -239,7 +239,10 @@ export interface FfmpegParamsCoreProps {
  * the edited `profile` keeps a stable identity across renders while
  * `value` is undefined (otherwise the textarea-resync guard would loop).
  */
-const PASSTHROUGH_DEFAULT: EncodeProfile = { video: { codec: 'copy' }, audio: 'passthrough' }
+const PASSTHROUGH_DEFAULT: EncodeProfile = {
+  video: { codec: 'copy' },
+  audio: 'passthrough',
+}
 
 // ── Tailwind primitives matching StreamBrokerPanel conventions ──────────
 const inputCls =
@@ -258,6 +261,83 @@ const sectionCardCls = 'rounded-lg border border-border bg-surface overflow-hidd
 const sectionHeaderCls =
   'border-b border-border px-3 py-1.5 flex items-center justify-between bg-surface-hover/30'
 const sectionTitleCls = 'text-[11px] font-semibold text-foreground uppercase tracking-wider'
+
+type VideoNumericKey = 'width' | 'height' | 'fps' | 'bitrateKbps'
+
+interface DraftNumberInputProps {
+  readonly id: string
+  readonly ariaLabel: string
+  /** The persisted value; `undefined` = the field is absent. */
+  readonly value: number | undefined
+  /** Whole numbers only (width, height, bitrate). */
+  readonly integer: boolean
+  readonly placeholder: string
+  readonly invalidText: string
+  /** `undefined` = the operator cleared the field. */
+  readonly onCommit: (next: number | undefined) => void
+}
+
+/**
+ * A numeric field that keeps a local draft and commits on blur / Enter, so a
+ * keystroke is not a save (every save respawns the derived feeder). An empty
+ * draft clears the value, an invalid one is not saved and shows the error
+ * state, Escape reverts to the persisted value.
+ */
+function DraftNumberInput({
+  id,
+  ariaLabel,
+  value,
+  integer,
+  placeholder,
+  invalidText,
+  onCommit,
+}: DraftNumberInputProps): React.ReactElement {
+  const [draft, setDraft] = useState<string | null>(null)
+  const [invalid, setInvalid] = useState(false)
+
+  const commit = (): void => {
+    if (draft === null) return
+    const trimmed = draft.trim()
+    if (trimmed === '') {
+      if (value !== undefined) onCommit(undefined)
+    } else {
+      const n = Number(trimmed)
+      if (!Number.isFinite(n) || n <= 0 || (integer && !Number.isInteger(n))) {
+        setInvalid(true)
+        return
+      }
+      if (n !== value) onCommit(n)
+    }
+    setInvalid(false)
+    setDraft(null)
+  }
+
+  return (
+    <Input
+      id={id}
+      type="number"
+      aria-label={ariaLabel}
+      aria-invalid={invalid || undefined}
+      title={invalid ? invalidText : undefined}
+      state={invalid ? 'error' : 'default'}
+      placeholder={placeholder}
+      value={draft ?? (value === undefined ? '' : String(value))}
+      onChange={(e) => {
+        setInvalid(false)
+        setDraft(e.target.value)
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit()
+        else if (e.key === 'Escape') {
+          setInvalid(false)
+          setDraft(null)
+        }
+      }}
+      className={inputCls + ' w-24 text-right'}
+    />
+  )
+}
 
 /**
  * Pure presentational component. Receives `value` + `onSave` directly
@@ -304,26 +384,15 @@ export function FfmpegParamsCore({
 
   const setVideoCodec = (codec: EncodeProfile['video']['codec']): void =>
     updateProfile((p) => ({ ...p, video: { ...p.video, codec } }))
-  // Numeric setters skip an empty / non-positive field: `Number('')` is 0,
-  // which fails the backend's `positive()` schema and would reject the WHOLE
-  // save (leaving the widget looking "stuck"). A blank keystroke is a no-op;
-  // only a valid positive value is persisted.
-  const setVideoWidth = (width: number): void => {
-    if (!Number.isFinite(width) || width <= 0) return
-    updateProfile((p) => ({ ...p, video: { ...p.video, width } }))
-  }
-  const setVideoHeight = (height: number): void => {
-    if (!Number.isFinite(height) || height <= 0) return
-    updateProfile((p) => ({ ...p, video: { ...p.video, height } }))
-  }
-  const setVideoFps = (fps: number): void => {
-    if (!Number.isFinite(fps) || fps <= 0) return
-    updateProfile((p) => ({ ...p, video: { ...p.video, fps } }))
-  }
-  const setVideoBitrate = (bitrateKbps: number): void => {
-    if (!Number.isFinite(bitrateKbps) || bitrateKbps <= 0) return
-    updateProfile((p) => ({ ...p, video: { ...p.video, bitrateKbps } }))
-  }
+  // A numeric video field commits a draft (blur / Enter). `undefined` REMOVES
+  // the key: absent fps follows the source cadence, absent bitrate is the
+  // automatic ceiling, absent width/height is the source size.
+  const setVideoNumber = (key: VideoNumericKey, next: number | undefined): void =>
+    updateProfile((p) => {
+      if (next !== undefined) return { ...p, video: { ...p.video, [key]: next } }
+      const { [key]: _removed, ...rest } = p.video
+      return { ...p, video: rest }
+    })
   const setAudioPassthrough = (): void =>
     updateProfile((p) => ({ ...p, audio: 'passthrough' as const }))
   const setAudioCodec = (codec: 'opus' | 'aac' | 'pcmu' | 'pcma' | 'copy'): void =>
@@ -495,49 +564,62 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-video-width`} className={labelTextCls}>
                         {t('ffmpeg.width')}
                       </label>
-                      <Input
+                      <DraftNumberInput
                         id={`${config.fieldKey}-video-width`}
-                        type="number"
-                        aria-label={t('ffmpeg.width')}
-                        value={profile.video.width ?? ''}
-                        onChange={(e) => setVideoWidth(Number(e.target.value))}
-                        className={inputCls + ' w-24 text-right'}
+                        ariaLabel={t('ffmpeg.width')}
+                        value={profile.video.width}
+                        integer={true}
+                        placeholder={t('ffmpeg.placeholderSource')}
+                        invalidText={t('ffmpeg.invalidNumber')}
+                        onCommit={(next) => setVideoNumber('width', next)}
                       />
                     </div>
                     <div className={labelRowCls}>
                       <label htmlFor={`${config.fieldKey}-video-height`} className={labelTextCls}>
                         {t('ffmpeg.height')}
                       </label>
-                      <Input
+                      <DraftNumberInput
                         id={`${config.fieldKey}-video-height`}
-                        type="number"
-                        value={profile.video.height ?? ''}
-                        onChange={(e) => setVideoHeight(Number(e.target.value))}
-                        className={inputCls + ' w-24 text-right'}
+                        ariaLabel={t('ffmpeg.height')}
+                        value={profile.video.height}
+                        integer={true}
+                        placeholder={t('ffmpeg.placeholderSource')}
+                        invalidText={t('ffmpeg.invalidNumber')}
+                        onCommit={(next) => setVideoNumber('height', next)}
                       />
                     </div>
                     <div className={labelRowCls}>
                       <label htmlFor={`${config.fieldKey}-video-fps`} className={labelTextCls}>
                         {t('ffmpeg.fps')}
                       </label>
-                      <Input
+                      <DraftNumberInput
                         id={`${config.fieldKey}-video-fps`}
-                        type="number"
-                        value={profile.video.fps ?? ''}
-                        onChange={(e) => setVideoFps(Number(e.target.value))}
-                        className={inputCls + ' w-24 text-right'}
+                        ariaLabel={t('ffmpeg.fps')}
+                        value={profile.video.fps}
+                        integer={false}
+                        placeholder={
+                          config.sourceParams?.video.fps !== undefined
+                            ? t('ffmpeg.placeholderFps', {
+                                fps: config.sourceParams.video.fps,
+                              })
+                            : t('ffmpeg.placeholderSource')
+                        }
+                        invalidText={t('ffmpeg.invalidNumber')}
+                        onCommit={(next) => setVideoNumber('fps', next)}
                       />
                     </div>
                     <div className={labelRowCls}>
                       <label htmlFor={`${config.fieldKey}-video-bitrate`} className={labelTextCls}>
                         {t('ffmpeg.bitrateKbps')}
                       </label>
-                      <Input
+                      <DraftNumberInput
                         id={`${config.fieldKey}-video-bitrate`}
-                        type="number"
-                        value={profile.video.bitrateKbps ?? ''}
-                        onChange={(e) => setVideoBitrate(Number(e.target.value))}
-                        className={inputCls + ' w-24 text-right'}
+                        ariaLabel={t('ffmpeg.bitrateKbps')}
+                        value={profile.video.bitrateKbps}
+                        integer={true}
+                        placeholder={t('ffmpeg.placeholderAuto')}
+                        invalidText={t('ffmpeg.invalidNumber')}
+                        onCommit={(next) => setVideoNumber('bitrateKbps', next)}
                       />
                     </div>
                   </>

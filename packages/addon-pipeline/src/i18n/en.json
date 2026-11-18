@@ -113,7 +113,11 @@
     "chipChannels": "a-ch",
     "noDeviceId": "ffmpeg-params: no deviceId in widget context — this widget only renders inside a device tab.",
     "fieldKeyRequired": "ffmpeg-params: widgetConfig.fieldKey is required — fix the contribution builder.",
-    "addFlag": "Add flag…"
+    "addFlag": "Add flag…",
+    "placeholderFps": "source ({{fps}} fps)",
+    "placeholderSource": "source",
+    "placeholderAuto": "auto",
+    "invalidNumber": "Enter a number above 0, or clear the field"
   },
   "geometry": {
     "title": "Geometry / zoom",
