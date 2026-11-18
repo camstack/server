@@ -78,6 +78,7 @@ const STATE_SOURCE_ORDER: readonly StateSource[] = [
   'script-runner',
   'event-emitter',
   'running-state',
+  'workload',
   'switch',
   'contact',
   'group-active',

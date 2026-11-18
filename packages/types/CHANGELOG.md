@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Each integration instance now states what Add device offers inside it (scan, children or none), decided by its provider
 - Pipeline steps can be switched per cluster (off, on, opt-in), per node and per accelerator; new pipelineOrchestrator methods setClusterStepMode, setNodeStepEnabled, setDeviceStepEnabled and getStepSwitches.
 
+### Changed
+
+- A host or container card shows its running state instead of a dash.
+
 ## [1.2.596] - 2026-11-18
 
 ### Changed

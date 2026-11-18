@@ -21,6 +21,7 @@ import {
   VacuumControlStatusSchema,
   type VacuumState,
 } from '../../capabilities/vacuum-control.cap.js'
+import { WorkloadStatusSchema, type WorkloadState } from '../../capabilities/workload.cap.js'
 import { DeviceFeature } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
 import {
@@ -639,6 +640,25 @@ const pumpCycleContribution = contribution('pump-cycle', PumpCycleStatusSchema, 
   }
 })
 
+// ── workload ───────────────────────────────────────────────────────────────
+
+const WORKLOAD_WORDS: Readonly<Record<WorkloadState, StateWords>> = {
+  running: { state: 'on', title: heroText('Running', 'In esecuzione') },
+  paused: { state: 'standby', title: heroText('Paused', 'In pausa') },
+  stopped: { state: 'off', title: heroText('Stopped', 'Fermo') },
+  starting: { state: 'running', title: heroText('Starting', 'In avvio') },
+  stopping: { state: 'running', title: heroText('Stopping', 'In arresto') },
+  crashed: { state: 'alert', title: heroText('Crashed', 'Andato in errore') },
+}
+
+/** The state of a VM, container or host; its controls stay on the workload card. */
+const workloadContribution = contribution('workload', WorkloadStatusSchema, (slice) => {
+  const state = slice?.state ?? null
+  if (state === null) return { reading: reading('workload', 'unknown') }
+  const words = WORKLOAD_WORDS[state]
+  return { reading: reading('workload', words.state, false, words.title) }
+})
+
 export const DEVICES_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
   'fan-control': fanContribution,
   'vacuum-control': vacuumContribution,
@@ -646,4 +666,5 @@ export const DEVICES_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribut
   'pet-feeder': feederContribution,
   'pet-fountain': fountainContribution,
   'pump-cycle': pumpCycleContribution,
+  workload: workloadContribution,
 }
