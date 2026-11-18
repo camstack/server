@@ -216,7 +216,7 @@ export const IntegrationInstanceSchema = z.object({
   status: IntegrationInstanceStatusSchema.optional(),
   /** Epoch ms of the last probe of the remote that produced `status`; absent when never checked. */
   lastCheckedAt: z.number().optional(),
-  /** What "Add device" inside this instance offers; see {@link IntegrationInstanceAddDeviceSchema}. Absent means the caller falls back to its legacy rule. */
+  /** What "Add device" inside this instance offers; see {@link IntegrationInstanceAddDeviceSchema}. Absent means the caller derives it from `describe().discovery` with `defaultAddDeviceMode` (lan → scan, account → children, else none). */
   addDevice: IntegrationInstanceAddDeviceSchema.optional(),
 })
 export type IntegrationInstance = z.infer<typeof IntegrationInstanceSchema>

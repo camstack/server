@@ -193,6 +193,16 @@ describe('IntegrationDetailPage - Add device scan scope (decided per instance by
     expect(openAddDevice()).toEqual({ canScan: false, scanFailure: null })
   })
 
+  it('applies the server default when the instance serves no addDevice: lan keeps the scan', () => {
+    setup({ description: { kinds: [], discovery: { mode: 'lan', scopedToInstance: false } } })
+    expect(openAddDevice()).toEqual({ canScan: true, scanFailure: null })
+  })
+
+  it('applies the server default when the instance serves no addDevice: account offers no scan', () => {
+    setup({ description: { kinds: [], discovery: { mode: 'account', scopedToInstance: true } } })
+    expect(openAddDevice().canScan).toBe(false)
+  })
+
   it('offers no scan when the instance says none', () => {
     setup({ description: { kinds: [] }, addDevice: 'none' })
     expect(openAddDevice().canScan).toBe(false)

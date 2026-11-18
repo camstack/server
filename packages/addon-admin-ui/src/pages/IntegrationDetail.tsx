@@ -1,3 +1,4 @@
+import { defaultAddDeviceMode } from '@camstack/types'
 import {
   Breadcrumb,
   ConfirmActionButton,
@@ -193,7 +194,11 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       const reason = failed instanceof Error ? failed.message : ''
       return { canScan: false, scanFailure: reason.length > 0 ? reason : 'unknown error' }
     }
-    return { canScan: instance.data?.addDevice === 'scan', scanFailure: null }
+    // An instance that serves no `addDevice` gets the server's own default from the description.
+    const mode =
+      instance.data?.addDevice ??
+      (description.data !== undefined ? defaultAddDeviceMode(description.data) : 'none')
+    return { canScan: mode === 'scan', scanFailure: null }
   }, [
     discoveryPending,
     holdersPending,
@@ -201,6 +206,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     description.isPending,
     description.isError,
     description.error,
+    description.data,
     instance.isPending,
     instance.isError,
     instance.error,

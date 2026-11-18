@@ -7,6 +7,7 @@
 import {
   defineEntryKind,
   entryBody,
+  type IntegrationInstance,
   type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
@@ -178,9 +179,6 @@ export function buildReolinkInstances(
       },
       formSchema: () => buildHubInstanceSchema(),
       initialBody: (name): ReolinkConnectionBody => ({ name }),
-      // The default integration (no host) holds standalone cameras: a scan adds more of them. An NVR / Home
-      // Hub integration adopts only its own children; a scan there would offer other hosts.
-      addDevice: (body) => ((body.host ?? '').trim().length === 0 ? 'scan' : 'children'),
       configured: (body) => (body.host ?? '').length === 0 || (body.password ?? '').length > 0,
       onChanged: () => deps.onChanged(),
       test: (input) => testReolinkInstance(records, deps, input),
@@ -197,8 +195,23 @@ export function reolinkInstancesProvider(
   instances: Pick<RecordIntegrationInstances<ReolinkConnectionBody>, 'toProvider' | 'getResolved'>,
   deps: Pick<ReolinkInstancesDeps, 'registryEvidenceOf'>,
 ): ReturnType<RecordIntegrationInstances<ReolinkConnectionBody>['toProvider']> {
+  const base = instances.toProvider()
+  // What Add device offers is decided per instance, by the same rule as `integrationIsHub`: the
+  // default integration holds standalone cameras (a scan adds more of them); an NVR / Home Hub
+  // integration adopts only its own children (a scan there would offer other hosts, which are new
+  // integrations).
+  const withAddDevice = async (instance: IntegrationInstance): Promise<IntegrationInstance> => ({
+    ...instance,
+    addDevice: (await integrationIsHub(instances, deps, instance.id)) ? 'children' : 'scan',
+  })
   return {
-    ...instances.toProvider(),
+    ...base,
+    listInstances: async (input) =>
+      Promise.all((await base.listInstances(input)).map(withAddDevice)),
+    getInstance: async (input) => {
+      const found = await base.getInstance(input)
+      return found === null ? null : withAddDevice(found)
+    },
     instanceFormSchema: async ({ id }) => {
       if (id === null) return buildHubInstanceSchema()
       const [evidence, body] = await Promise.all([
