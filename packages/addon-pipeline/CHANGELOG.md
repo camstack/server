@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Stateless runs and benchmarks without an explicit device no longer use the node's default engine when it is excluded: they run on an eligible device or are refused with 'no-eligible-device'.
+
 ### Fixed
 
 - Derived streams no longer blur at every keyframe: the encoder now targets 80% of the bitrate cap, never upsamples fps above the source, raises a too-low bitrate to a floor for its resolution, and a suspended derived stream no longer logs a false 'push source stalled'.
@@ -21,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A derived stream's FPS, bitrate, width and height fields now save on blur or Enter instead of every keystroke, and can be cleared to follow the source
-- Stateless runs and benchmarks without an explicit device no longer use the node's default engine when it is excluded: they run on an eligible device or are refused with 'no-eligible-device'.
 
 ## [1.2.666] - 2026-11-18
 
