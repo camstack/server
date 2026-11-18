@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device commands wait for the hub's state re-read before they answer, so the state shown after a command is the device's real one (D1062).
 
+## [1.2.898] - 2026-11-18
+
+### Changed
+
+- Rebuilt against updated dependencies.
+
 ## [1.2.897] - 2026-11-17
 
 ### Changed
