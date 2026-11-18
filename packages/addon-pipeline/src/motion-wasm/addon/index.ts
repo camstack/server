@@ -496,11 +496,11 @@ export default class MotionWasmAddon extends BaseAddon implements IMotionDetecti
               key: 'minArea',
               label: 'Min Area',
               description:
-                'Absolute pixel bar, applied to each motion region on its own. This is ' +
-                'how motion has always worked, and it stays the default. Set it to 0 to ' +
-                'move THIS camera to Min Subject Size, which merges the fragments of one ' +
-                'subject before measuring it and keeps its meaning at any resolution — ' +
-                'expect more motion, so move one camera at a time.',
+                'Absolute pixel bar, applied to each motion region on its own (the ' +
+                'older per-region rule). The default is 0, which uses Min Subject Size: it merges ' +
+                'the fragments of one subject before measuring it and keeps its meaning ' +
+                'at any resolution. Set a positive value only to pin THIS camera to the ' +
+                'per-region bar.',
               min: 0,
               max: 50000,
               step: 100,

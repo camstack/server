@@ -293,9 +293,8 @@ class ObjectDetectionStep implements IPipelineStep {
         label: 'Detect on motion-derived crops',
         description:
           'Run the second detector pass on EVERY moving region instead of only on regions no full-frame box accounts for. Additive: the full-frame pass still runs, and it stays the only arm that can see a stationary subject. Costs about one extra detector invocation every four frames while something is moving.',
-        // OFF by default, per camera — the same opt-in shape as the motion area
-        // bar's `minArea: 0` (D394), so a deploy changes nothing until an
-        // operator moves a camera.
+        // OFF by default, per camera — a per-camera opt-in, so a deploy changes
+        // nothing until an operator moves a camera.
         //
         // Measured on camera 101 against `yolov9m-320-int8` over 38 visually
         // confirmed positive frames from six animal pass-bys: recall at the

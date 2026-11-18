@@ -30,7 +30,8 @@ export interface WasmMotionConfig {
   /**
    * Absolute area bar in pixels, and the per-camera rollout switch. `> 0` runs
    * the pre-D394 rule in full (this bar, per component, no merging, no storm
-   * cutoff) and is the default; `0` moves this camera to the measured rule.
+   * cutoff) and only applies when stored; `0` is the default and runs the
+   * measured merged-relative rule.
    * Same key and same meaning as the `minArea` that shipped, so a stored value
    * keeps doing exactly what the operator who stored it asked for.
    */

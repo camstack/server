@@ -69,9 +69,8 @@ import {
 /**
  * Which region rule this camera's second pass runs.
  *
- * The selector is per camera and defaults to the shipped rule, exactly like
- * the motion area bar's own `minArea: 0` opt-in (D394): a deploy changes
- * nothing until an operator moves a camera.
+ * The selector is per camera and defaults to the shipped rule: a deploy
+ * changes nothing until an operator moves a camera.
  */
 export type RecoveryRecipe = 'uncovered-region' | 'motion-crop'
 

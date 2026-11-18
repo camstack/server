@@ -82,7 +82,7 @@ describe('MotionWasmAddon — the rule a camera is on is visible in the log', ()
   // invisible. This line is how an operator confirms the camera moved.
   const CAM_ID = 7
 
-  it('logs the LEGACY rule for a camera nobody has moved', async () => {
+  it('logs the MERGED rule for a camera with no stored minArea (the default)', async () => {
     const { addon } = makeAddon()
     await addon['getDeviceConfig'](String(CAM_ID))
     const logger = addon['ctx'].logger as unknown as { info: ReturnType<typeof vi.fn> }
@@ -90,16 +90,26 @@ describe('MotionWasmAddon — the rule a camera is on is visible in the log', ()
     expect(line).toBeDefined()
     expect(line?.[1]).toMatchObject({
       tags: { deviceId: CAM_ID },
-      meta: { rule: 'legacy-per-region', minArea: 1500 },
+      meta: { rule: 'merged-relative', minArea: 0 },
     })
   })
 
-  it('logs the MERGED rule once minArea is set to 0, and only on change', async () => {
+  it('keeps the LEGACY rule for a camera with an explicitly stored minArea', async () => {
+    const { addon, store } = makeAddon()
+    store[CAM_ID] = { minArea: 1500 }
+    const cfg = await addon['getDeviceConfig'](String(CAM_ID))
+    expect(cfg.minArea).toBe(1500)
+    const logger = addon['ctx'].logger as unknown as { info: ReturnType<typeof vi.fn> }
+    const line = logger.info.mock.calls.find((c) => c[0] === 'motion area rule resolved')
+    expect(line?.[1]).toMatchObject({ meta: { rule: 'legacy-per-region', minArea: 1500 } })
+  })
+
+  it('logs the LEGACY rule once a positive minArea is stored, and only on change', async () => {
     const { addon } = makeAddon()
     const logger = addon['ctx'].logger as unknown as { info: ReturnType<typeof vi.fn> }
 
     await addon['getDeviceConfig'](String(CAM_ID))
-    await addon.applyDeviceSettingsPatch({ deviceId: CAM_ID, patch: { minArea: 0 } })
+    await addon.applyDeviceSettingsPatch({ deviceId: CAM_ID, patch: { minArea: 1500 } })
     await addon['getDeviceConfig'](String(CAM_ID))
     // A second resolve with nothing changed must not add a line.
     addon['deviceConfigCache'].delete(String(CAM_ID))
@@ -109,7 +119,7 @@ describe('MotionWasmAddon — the rule a camera is on is visible in the log', ()
     expect(lines).toHaveLength(2)
     expect(lines[1]?.[1]).toMatchObject({
       tags: { deviceId: CAM_ID },
-      meta: { rule: 'merged-relative', minArea: 0 },
+      meta: { rule: 'legacy-per-region', minArea: 1500 },
     })
   })
 })

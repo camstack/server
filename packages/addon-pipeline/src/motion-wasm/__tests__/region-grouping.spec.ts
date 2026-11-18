@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
+import { DEFAULT_CONFIG } from '../wasm-motion-detector.js'
 import {
   groupMotionRegions,
   resolveMinGroupArea,
   DEFAULT_MERGE_RADIUS_DIVISOR,
   DEFAULT_MIN_AREA,
   DEFAULT_MIN_AREA_FRACTION,
-  DEFAULT_MAX_COVERAGE_FRACTION,
   type MotionRegionInput,
   type RegionGroupingConfig,
 } from '../region-grouping.js'
@@ -37,49 +37,37 @@ function region(x: number, y: number, w: number, h: number, pixels?: number): Mo
   return { x, y, w, h, pixels: pixels ?? w * h }
 }
 
-describe('the shipped default changes nothing', () => {
-  // Installing this addon must not move a single camera. The default config is
-  // the legacy rule at the bar that shipped, and an operator moves ONE camera
-  // by setting `minArea` to 0.
-  const shipped: RegionGroupingConfig = {
+describe('the default rule is the merged-relative one (D394, default flipped 2026-11-18)', () => {
+  // A walking person splits into edge fragments, each far below 1500 px on the
+  // 320x180 view. The default must judge them as ONE subject; a camera whose
+  // operator stored a positive `minArea` keeps the per-component rule.
+  const fromDefault: RegionGroupingConfig = {
     viewWidth: VIEW_W,
     viewHeight: VIEW_H,
-    mergeRadiusDivisor: DEFAULT_MERGE_RADIUS_DIVISOR,
-    minAreaFraction: DEFAULT_MIN_AREA_FRACTION,
-    minArea: DEFAULT_MIN_AREA,
-    maxCoverageFraction: DEFAULT_MAX_COVERAGE_FRACTION,
+    mergeRadiusDivisor: DEFAULT_CONFIG.mergeRadiusDivisor,
+    minAreaFraction: DEFAULT_CONFIG.minAreaFraction,
+    minArea: DEFAULT_CONFIG.minArea,
+    maxCoverageFraction: DEFAULT_CONFIG.maxCoverageFraction,
   }
+  const fragments = [
+    region(100, 80, 30, 20, 600),
+    region(126, 84, 30, 20, 600),
+    region(150, 82, 30, 20, 600),
+  ]
 
-  it('reproduces the pre-D394 filter exactly, region for region', () => {
-    const regions = [
-      region(100, 80, 30, 20, 600),
-      region(126, 84, 30, 20, 600),
-      region(10, 10, 60, 50, 1600),
-      region(200, 120, 80, 70, 4000),
-      region(300, 170, 6, 6, 20),
-    ]
-    const before = regions.filter((r) => r.pixels >= DEFAULT_MIN_AREA)
-    const after = groupMotionRegions(regions, shipped)
-
-    expect(after.passed).toHaveLength(before.length)
-    expect(after.passed.map((g) => ({ x: g.x, y: g.y, w: g.w, h: g.h, pixels: g.pixels }))).toEqual(
-      before.map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h, pixels: r.pixels })),
-    )
-    expect(after.suppressedByCoverage).toBe(0)
+  it('the shipped default minArea is 0', () => {
+    expect(DEFAULT_MIN_AREA).toBe(0)
+    expect(DEFAULT_CONFIG.minArea).toBe(0)
   })
 
-  it('is the legacy bar that shipped, not a new number', () => {
-    expect(DEFAULT_MIN_AREA).toBe(1500)
+  it('a fragmented subject yields one region under the default', () => {
+    const out = groupMotionRegions(fragments, fromDefault)
+    expect(out.passed).toHaveLength(1)
+    expect(out.passed[0]?.pixels).toBe(1800)
   })
 
-  it('setting minArea to 0 is the whole gesture that moves a camera', () => {
-    const fragments = [
-      region(100, 80, 30, 20, 600),
-      region(126, 84, 30, 20, 600),
-      region(150, 82, 30, 20, 600),
-    ]
-    expect(groupMotionRegions(fragments, shipped).passed).toEqual([])
-    expect(groupMotionRegions(fragments, { ...shipped, minArea: 0 }).passed).toHaveLength(1)
+  it('the same fragments yield none under an explicitly stored minArea 1500', () => {
+    expect(groupMotionRegions(fragments, { ...fromDefault, minArea: 1500 }).passed).toEqual([])
   })
 })
 

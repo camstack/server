@@ -150,7 +150,7 @@
           "threshold": 45,
           "blurRadius": 1,
           "dilateRadius": 4,
-          "minArea": 3000
+          "minArea": 0
         },
         "protected": true,
         "icon": "assets/icon.svg",

@@ -63,12 +63,19 @@ is relative to the motion view.
 2. A group passes when its **summed member pixels** reach
    `minAreaFraction × viewW × viewH`. The relative form is the default and the
    only one that keeps its meaning across a resolution or aspect change.
-3. **`minArea` (px) is the rollout switch, and it defaults to what shipped.**
+3. **`minArea` (px) is the rule switch, and since 2026-11-18 it defaults to `0`.**
    A positive `minArea` runs the pre-D394 rule in FULL on that camera — this
-   absolute bar, per component, no merging, no storm cutoff — and the default is
-   `1500`, so installing this addon moves nothing on any camera. An operator
-   moves one camera by setting its `minArea` to **0**, which hands it to
-   `minAreaFraction` with the storm cutoff live.
+   absolute bar, per component, no merging, no storm cutoff. `0`, the default,
+   hands the camera to `minAreaFraction` with the storm cutoff live. Only a
+   value an operator STORED selects the legacy rule; a camera with nothing
+   stored is on the merged rule.
+
+   **Amendment 2026-11-18 — default flipped (operator-approved).** The original
+   default was `1500` (opt-in per camera). Live evidence on a 320x180 view: a
+   person walking in view fragments into edge pieces each under 1500 px, the
+   per-component bar drops them all, `MotionAnalysis.detected` is false and the
+   viewer overlay draws nothing. Stored values are untouched: a camera with a
+   stored `minArea` (including a stored 1500) keeps the legacy rule.
 
    It is one knob because it is one question: which rule does this camera run.
    A separate `useMergedRule` boolean beside a bar that already answers it would
@@ -181,10 +188,12 @@ discarded.
 pins the geometry: fragments that must merge, fragments that must not, the
 boundary, a single large region, a frame of noise, resolution invariance, and
 four storm cases including the subject-inside-a-storm fallback. It also pins the
-rollout: **the shipped default reproduces the pre-D394 filter region for
-region**, a positive `minArea` restores the legacy rule whole (no merging, no
-storm cutoff), and setting `minArea` to 0 is the entire gesture that moves a
-camera.
+rule switch: **a fragmented subject (several components each under 1500 px)
+yields one region under the default and none under an explicitly stored
+`minArea: 1500`**, and a positive `minArea` restores the legacy rule whole (no
+merging, no storm cutoff). `device-contribution.spec.ts` pins that an unset
+camera resolves `merged-relative` while a stored `minArea` resolves
+`legacy-per-region`.
 
 `__tests__/shared-detector-sizing.spec.ts` runs the real `motion.wasm` and pins
 both directions of the shared-detector mis-size, and that `ensureSize` removes

@@ -63,10 +63,10 @@ export interface RegionGroupingConfig {
    * Absolute bar in pixels, and the ROLLOUT SWITCH.
    *
    * `> 0` runs the **pre-D394 rule in full** on this camera: this bar, applied
-   * to each component independently, no merging, no storm cutoff. That is the
-   * default, so installing this addon moves nothing anywhere.
+   * to each component independently, no merging, no storm cutoff. Only a value
+   * an operator stored gets here; the default is `0`.
    *
-   * `0` moves the camera to the measured rule — merge first, then judge
+   * `0` (the default) puts the camera on the measured rule — merge first, then judge
    * against {@link RegionGroupingConfig.minAreaFraction}, with
    * {@link RegionGroupingConfig.maxCoverageFraction} live. It is ONE knob
    * because it is one question: which rule does this camera run. A separate
@@ -111,14 +111,13 @@ export const DEFAULT_MERGE_RADIUS_DIVISOR = 6
 export const DEFAULT_MIN_AREA_FRACTION = 0.0085
 
 /**
- * The DEFAULT is the rule that shipped before D394: a 1500 px absolute bar per
- * component. The measured rule is per-camera opt-in (`minArea: 0`), because
- * the measurement says duty cycle rises between ×1.45 and ×2.82 and ten fleet
- * cameras turn that into recorded hours that cannot be measured from their own
- * footage. The end state is still one relative constant for the fleet; the
- * path there is one camera at a time.
+ * The DEFAULT is the merged-relative rule (`minArea: 0`), as of 2026-11-18:
+ * whole-body motion fragmented at 320x180 into pieces each under the old
+ * 1500 px per-component bar, so a person walking in view produced no motion.
+ * A camera with an explicitly STORED positive `minArea` keeps the legacy
+ * per-component rule; an unset one is on this default.
  */
-export const DEFAULT_MIN_AREA = 1500
+export const DEFAULT_MIN_AREA = 0
 
 /**
  * Default storm bar. A group of changed pixels covering more than this

@@ -77,10 +77,10 @@ where the grown boxes overlap, and the group — its rectangle the union of the
 a storm rather than a subject and does not fire, but its components are
 re-judged individually so a mover inside the storm is not silenced with it.
 
-**Which rule a camera runs is `minArea`, and the default is the old one.** A
-positive `minArea` runs the pre-D394 rule whole — that absolute bar, per
-component, no merging, no storm cutoff — and it ships at 1500, so the change is
-inert until an operator sets a camera's `minArea` to `0`.
+**Which rule a camera runs is `minArea`, and the default is `0` (merged-relative,
+flipped 2026-11-18).** A positive `minArea` that an operator stored runs the
+pre-D394 rule whole — that absolute bar, per component, no merging, no storm
+cutoff. A camera with nothing stored runs the merged rule.
 
 **One `WasmMotionDetector` serves every camera on the node** — motion-wasm is in
 the `detection` group, so `resolveRunnerId` gives it one runner per node. The
