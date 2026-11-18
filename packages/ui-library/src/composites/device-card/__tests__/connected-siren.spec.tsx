@@ -1,16 +1,47 @@
 // @vitest-environment jsdom
 /**
- * A siren whose `switch` slice has not answered is pending, never blank and
- * never silent. An answered off is silent.
+ * The connected siren: pending until a slice answers, the served state only,
+ * one command per tap (the one-shot claim) and a held button while it flies.
  */
-import type { SwitchStatus } from '@camstack/types'
-import { cleanup, render, screen } from '@testing-library/react'
+import type {
+  MotionTriggerStatus,
+  SirenOptions,
+  SirenRuntimeState,
+  SwitchStatus,
+} from '@camstack/types'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
 import { ConnectedSirenCard } from '../connected/ConnectedSirenCard'
 
+const never = (): Promise<never> => new Promise(() => undefined)
+
+const OPTIONS: SirenOptions = {
+  allowedSeconds: [10, 30, 60],
+  rangeSeconds: null,
+  defaultSeconds: 30,
+  allowedPlays: null,
+  rangePlays: null,
+  defaultPlays: null,
+  unit: 'seconds',
+  secondsPerPlay: null,
+  source: 'camera',
+  fetchedAt: 1,
+}
+
 const hub = vi.hoisted(() => ({
-  slice: undefined as SwitchStatus | undefined,
+  withSiren: true,
+  withMotion: true,
+  switchSlice: undefined as SwitchStatus | undefined,
+  sirenSlice: undefined as SirenRuntimeState | undefined,
+  motionSlice: undefined as MotionTriggerStatus | undefined,
+  trigger: vi.fn(),
+  stop: vi.fn(),
+  getOptions: vi.fn(),
+  setState: vi.fn(),
+  setMotionTrigger: vi.fn(),
 }))
 
 vi.mock('../../../contexts/system-context', () => ({
@@ -18,8 +49,22 @@ vi.mock('../../../contexts/system-context', () => ({
 }))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
-    switch: { setState: async () => undefined },
-    state: { switch: hub.slice },
+    switch: { setState: hub.setState },
+    ...(hub.withSiren
+      ? {
+          siren: {
+            trigger: hub.trigger,
+            stop: hub.stop,
+            getOptions: hub.getOptions,
+          },
+        }
+      : {}),
+    ...(hub.withMotion ? { motionTrigger: { setMotionTrigger: hub.setMotionTrigger } } : {}),
+    state: {
+      switch: hub.switchSlice,
+      siren: hub.sirenSlice,
+      motionTrigger: hub.motionSlice,
+    },
   }),
   useDeviceStateSlice: (slice: unknown) => slice,
 }))
@@ -40,22 +85,134 @@ vi.mock('../connected/use-card-common', () => ({
   },
 }))
 
+function mount(): void {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const tree: ReactElement = (
+    <QueryClientProvider client={client}>
+      <ConnectedSirenCard deviceId={591} />
+    </QueryClientProvider>
+  )
+  render(tree)
+}
+
+const silent: SirenRuntimeState = {
+  active: false,
+  activeUntil: null,
+  durationSeconds: null,
+  plays: null,
+  activeUntilEstimated: false,
+  lastTriggeredAt: 0,
+  lastFetchedAt: 1,
+}
+
 beforeEach(() => {
-  hub.slice = undefined
+  hub.withSiren = true
+  hub.withMotion = true
+  hub.switchSlice = { on: false, lastChangedAt: 0 }
+  hub.sirenSlice = silent
+  hub.motionSlice = { enabled: true, lastChangedAt: 0 }
+  for (const spy of [hub.trigger, hub.stop, hub.setState, hub.setMotionTrigger]) {
+    spy.mockReset()
+    spy.mockImplementation(never)
+  }
+  hub.getOptions.mockReset()
+  hub.getOptions.mockResolvedValue(OPTIONS)
 })
 afterEach(cleanup)
 
 describe('ConnectedSirenCard', () => {
-  it('shows the pending state while the switch slice has not answered', () => {
-    render(<ConnectedSirenCard deviceId={591} />)
+  it('is pending while the siren slice has not answered, never silent', () => {
+    hub.sirenSlice = undefined
+    mount()
     expect(screen.getByTestId('dc-card-pending')).toBeTruthy()
     expect(screen.queryByText('Silent')).toBeNull()
   })
 
-  it('shows silent once the switch has answered off', () => {
-    hub.slice = { on: false, lastChangedAt: 0 }
-    render(<ConnectedSirenCard deviceId={591} />)
+  it('is pending while a switch-only siren has not answered', () => {
+    hub.withSiren = false
+    hub.switchSlice = undefined
+    mount()
+    expect(screen.getByTestId('dc-card-pending')).toBeTruthy()
+  })
+
+  it('reads sounding from the siren slice, not the switch', () => {
+    hub.sirenSlice = {
+      ...silent,
+      active: true,
+      activeUntil: Date.now() + 20_000,
+      durationSeconds: 30,
+    }
+    mount()
+    expect(screen.getByText('Sounding')).toBeTruthy()
+    expect(screen.getByTestId('dc-siren-stop')).toBeTruthy()
+  })
+
+  it('triggers once for a double tap, and holds the button while it flies', () => {
+    mount()
+    const sound = screen.getByTestId('dc-siren-sound')
+    fireEvent.click(sound)
+    act(() => {
+      // Confirm twice in one tick: the second lands before the re-render.
+      sound.click()
+      sound.click()
+    })
+    expect(hub.trigger).toHaveBeenCalledTimes(1)
+    expect(hub.trigger).toHaveBeenCalledWith({})
+    expect(screen.getByTestId('dc-siren-sound').hasAttribute('disabled')).toBe(true)
     expect(screen.getByText('Silent')).toBeTruthy()
-    expect(screen.queryByTestId('dc-card-pending')).toBeNull()
+  })
+
+  it('stops once for a double tap, and holds Stop while it flies', () => {
+    hub.sirenSlice = {
+      ...silent,
+      active: true,
+      activeUntil: Date.now() + 20_000,
+      durationSeconds: 30,
+    }
+    mount()
+    const stop = screen.getByTestId('dc-siren-stop')
+    act(() => {
+      stop.click()
+      stop.click()
+    })
+    expect(hub.stop).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('dc-siren-stop').hasAttribute('disabled')).toBe(true)
+    // Still sounding until the served slice says otherwise.
+    expect(screen.getByText('Sounding')).toBeTruthy()
+  })
+
+  it('sends the picked duration from the options the siren declared', async () => {
+    mount()
+    const chip = await screen.findByTestId('dc-siren-seconds')
+    expect(chip.textContent).toContain('30 s')
+    expect(screen.queryByTestId('dc-siren-plays')).toBeNull()
+  })
+
+  it('sounds a switch-only siren through its switch, with no chips and no motion toggle', () => {
+    hub.withSiren = false
+    hub.withMotion = false
+    mount()
+    const sound = screen.getByTestId('dc-siren-sound')
+    fireEvent.click(sound)
+    fireEvent.click(sound)
+    expect(hub.setState).toHaveBeenCalledWith({ on: true })
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
+    expect(screen.queryByTestId('dc-siren-motion')).toBeNull()
+    expect(hub.getOptions).not.toHaveBeenCalled()
+  })
+
+  it('flips "sound on motion" through motion-trigger and keeps the served value', () => {
+    mount()
+    const toggle = screen.getByTestId('dc-siren-motion')
+    act(() => {
+      toggle.click()
+      toggle.click()
+    })
+    expect(hub.setMotionTrigger).toHaveBeenCalledTimes(1)
+    expect(hub.setMotionTrigger).toHaveBeenCalledWith({ enabled: false })
+    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByTestId('dc-siren-motion').hasAttribute('disabled')).toBe(true)
   })
 })

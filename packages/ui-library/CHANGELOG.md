@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The siren card is one big Sound button that becomes Stop while it sounds, inside a ring counting down the reported time left; duration, plays and sound-on-motion appear only when the siren offers them.
+
 ## [1.2.468] - 2026-11-18
 
 ### Changed
