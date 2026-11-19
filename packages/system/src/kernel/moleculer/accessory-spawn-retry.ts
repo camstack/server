@@ -25,7 +25,8 @@
  * the child without its meta pre-seed (`final: true`), so a permanently failing
  * pre-seed never leaves a healthy child unregistered.
  */
-import { DEVICE_RESTORE_RETRY_DELAYS_MS, type IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@camstack/types'
+import { DEVICE_RESTORE_RETRY_DELAYS_MS } from '@camstack/types/addon'
 
 /** The spawn step that failed — named in every log line. */
 export type AccessorySpawnStep =

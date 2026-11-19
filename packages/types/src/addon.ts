@@ -94,6 +94,7 @@ export { viewerUiCapability } from './capabilities/viewer-ui.cap.js'
 // module, never from `device-manager.cap.js` — that path would re-drag the cap
 // schema graph onto this entry and undo D28.
 export { DEVICE_CHILDREN_BATCH_MAX } from './device/children-batch-max.js'
+export { DEVICE_RESTORE_RETRY_DELAYS_MS } from './device/device-restore-retry.js'
 export { COMPOSED_DEVICE_STABLE_ID_PREFIX } from './composition/composed-stable-id.js'
 export { DeviceType } from './device/device-type.js'
 // D783 — the runner reports a device's declared secret config paths at
