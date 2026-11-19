@@ -23,7 +23,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 /** The providers whose device-state timing the core owns (D1062). */
-export const MIGRATED: readonly string[] = ['packages/addon-provider-vesync']
+export const MIGRATED: readonly string[] = [
+  'packages/addon-provider-vesync',
+  'packages/addon-provider-enpal',
+]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/
 

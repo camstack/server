@@ -1,7 +1,7 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { EnpalConnection } from './config.js'
 import { EnpalError, readEnpalSnapshot, type FetchLike } from './enpal-client.js'
-import { BlazorBackoff, effectivePollIntervalMs, type BlazorReader } from './enpal-blazor.js'
+import { BlazorBackoff, type BlazorReader } from './enpal-blazor.js'
 import type { EnpalSourceKind } from './enpal-snapshot.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
@@ -32,7 +32,7 @@ export interface EnpalLastError {
 }
 
 /**
- * Polls one Enpal box. A failed poll drops the snapshot, so a consumer reads "no data" and
+ * Reads one Enpal box when asked: the core's state refresh decides when (D1062), so this owns no timer. A failed poll drops the snapshot, so a consumer reads "no data" and
  * marks itself offline; the last good readings are never replayed as current (D393).
  */
 export class EnpalIntegrationManager {
@@ -41,7 +41,6 @@ export class EnpalIntegrationManager {
   #status: EnpalManagerStatus = 'disconnected'
   #snapshot: EnpalSnapshot | null = null
   #lastError: EnpalLastError | null = null
-  #timer: ReturnType<typeof setInterval> | null = null
   readonly #blazorBackoff = new BlazorBackoff()
   #lastSource: EnpalSourceKind | null = null
   #lastFallbackKey: string | null = null
@@ -80,17 +79,10 @@ export class EnpalIntegrationManager {
     this.#stopped = false
     this.#status = 'connecting'
     await this.poll()
-    if (this.#stopped || this.#timer !== null) return
-    this.#timer = setInterval(() => {
-      void this.poll()
-    }, effectivePollIntervalMs(this.#options.connection))
-    this.#timer.unref()
   }
 
   async stop(): Promise<void> {
     this.#stopped = true
-    if (this.#timer !== null) clearInterval(this.#timer)
-    this.#timer = null
     if (this.#inFlight !== null) await this.#inFlight
     this.#snapshot = null
     this.#status = 'disconnected'

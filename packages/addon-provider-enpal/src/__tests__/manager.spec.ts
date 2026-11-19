@@ -90,13 +90,12 @@ describe('EnpalIntegrationManager', () => {
     await h.manager.stop()
   })
 
-  it('polls on the interval and recovers when the box comes back', async () => {
-    vi.useFakeTimers()
+  it('recovers on the next read the core asks for when the box comes back', async () => {
     const h = harness('down')
     await h.manager.start()
     expect(h.manager.status).toBe('error')
     h.setState('up')
-    await vi.advanceTimersByTimeAsync(20_000)
+    await h.manager.poll()
     expect(h.manager.status).toBe('connected')
     expect(h.manager.getSnapshot()).not.toBeNull()
     expect(h.events).toContain('connected')
@@ -104,11 +103,10 @@ describe('EnpalIntegrationManager', () => {
   })
 
   it('a failing poll drops the snapshot: readings are never replayed as current', async () => {
-    vi.useFakeTimers()
     const h = harness('up')
     await h.manager.start()
     h.setState('down')
-    await vi.advanceTimersByTimeAsync(20_000)
+    await h.manager.poll()
     expect(h.manager.status).toBe('error')
     expect(h.manager.getSnapshot()).toBeNull()
     expect(h.events).toContain('disconnected')
@@ -136,7 +134,18 @@ describe('EnpalIntegrationManager', () => {
     expect(JSON.stringify(h.lines)).not.toContain(TOKEN)
   })
 
-  it('stop() clears the timer and the snapshot', async () => {
+  it('arms no timer: only the core asks for a read (D1062)', async () => {
+    vi.useFakeTimers()
+    const h = harness('up')
+    await h.manager.start()
+    const before = h.events.length
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(h.events.length).toBe(before)
+    expect(vi.getTimerCount()).toBe(0)
+    await h.manager.stop()
+  })
+
+  it('stop() clears the snapshot', async () => {
     vi.useFakeTimers()
     const h = harness('up')
     await h.manager.start()

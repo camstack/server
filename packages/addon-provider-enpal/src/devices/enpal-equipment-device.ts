@@ -16,6 +16,7 @@ import {
 import { ENPAL_LEGACY_CONSUMPTION_NAME } from '../enpal-catalog.js'
 import { renameLegacyCatalogDevices } from './enpal-catalog-rename.js'
 import { enpalConnections } from '../enpal-resolver.js'
+import { registerEnpalStateRefresh } from './enpal-state-refresh.js'
 import { EnpalMetadataSync, enpalIdentifiers } from './enpal-metadata-sync.js'
 import { backfillPrimaryChildPreference } from './enpal-preference-backfill.js'
 
@@ -35,6 +36,7 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
   private readonly specIds: readonly string[]
   private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = enpalEquipmentSchema.parse(ctx.persistedConfig ?? {})
@@ -51,6 +53,12 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the box is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerEnpalStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     await backfillPrimaryChildPreference({
       deviceId: this.id,
       stored: this.ctx.deviceMeta.primaryChildPreference,
@@ -126,6 +134,8 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()

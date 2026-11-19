@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { ENPAL_BOX_ID, accessoryChildSpecs } from '../enpal-equipment.js'
 import { enpalConnections } from '../enpal-resolver.js'
+import { registerEnpalStateRefresh } from './enpal-state-refresh.js'
 import { EnpalMetadataSync, enpalIdentifiers } from './enpal-metadata-sync.js'
 
 export const enpalGatewaySchema = z.object({
@@ -37,6 +38,7 @@ export class EnpalGatewayDevice extends BaseDevice<typeof enpalGatewaySchema> {
   private readonly integrationId: string
   private readonly specIds: readonly string[]
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = enpalGatewaySchema.parse(ctx.persistedConfig ?? {})
@@ -53,6 +55,12 @@ export class EnpalGatewayDevice extends BaseDevice<typeof enpalGatewaySchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the box is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerEnpalStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     const metadata = new EnpalMetadataSync({
       equipment: ENPAL_BOX_ID,
       deviceId: this.id,
@@ -71,6 +79,8 @@ export class EnpalGatewayDevice extends BaseDevice<typeof enpalGatewaySchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()

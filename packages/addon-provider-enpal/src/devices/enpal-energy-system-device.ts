@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { computeEnergySystemStatus, EnergySystemCounterGuards } from '../enpal-energy-system.js'
 import { enpalConnections } from '../enpal-resolver.js'
+import { registerEnpalStateRefresh } from './enpal-state-refresh.js'
 
 const CAP = energySystemCapability.name
 
@@ -46,6 +47,7 @@ export class EnpalEnergySystemDevice extends BaseDevice<typeof enpalEnergySystem
   private readonly integrationId: string
   private readonly counters = new EnergySystemCounterGuards()
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = enpalEnergySystemSchema.parse(ctx.persistedConfig ?? {})
@@ -57,6 +59,12 @@ export class EnpalEnergySystemDevice extends BaseDevice<typeof enpalEnergySystem
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the box is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerEnpalStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     const provider: InferNativeProvider<typeof energySystemCapability> = {
       getStatus: async () => this.runtimeState.getCapState<EnergySystemStatus>(CAP) ?? COLD,
     }
@@ -76,6 +84,8 @@ export class EnpalEnergySystemDevice extends BaseDevice<typeof enpalEnergySystem
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()

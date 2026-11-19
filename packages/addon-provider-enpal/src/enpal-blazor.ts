@@ -139,6 +139,7 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
         action()
       }
       const timer = setTimeout(() => {
+        // not-a-state-poll: one-shot deadline on a bridge read
         child.kill('SIGKILL')
         finish(() =>
           reject(

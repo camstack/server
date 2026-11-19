@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Enpal box is now read on the core's state-refresh schedule instead of the addon's own timer; the poll interval setting still slows the cadence.
+
 ## [0.1.26] - 2026-11-18
 
 ### Changed
