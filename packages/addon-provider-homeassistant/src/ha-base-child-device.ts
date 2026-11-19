@@ -14,6 +14,7 @@ import { attachAccessoriesCap, type AccessoriesCapHandle } from './ha-accessorie
 import { HaEntityStateSchema, type HaEntityState } from './ha-types.js'
 import type { HaStatePushContext } from './ha-change-stamp.js'
 import { HaMeterCarrier } from './ha-meter-carrier.js'
+import { registerHaStateRefresh } from './ha-state-refresh.js'
 
 /**
  * Persisted config shared by every per-domain HA child device class.
@@ -179,6 +180,13 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
    */
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core never schedules a read of a push entity (D1062); it asks for one
+    // only when a command was not confirmed by a push.
+    registerHaStateRefresh({
+      ctx: this.ctx,
+      brokerId: this.brokerId,
+      reapplyCachedState: () => this.reapplyCachedState(),
+    })
     // device-admin-link — a child / standalone device IS one HA entity, so its
     // page is the entity's, not a device-registry page. Registered here, once,
     // for every per-domain subclass: they all reach HA through the same entity.
@@ -348,6 +356,22 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
     }
   }
 
+  /**
+   * The core's refresh read (D1062): re-apply the broker's cached state of this
+   * entity. An unknown entity is a refusal the core logs, never a silent success.
+   */
+  private async reapplyCachedState(): Promise<void> {
+    const cached = await this.ctx.api.broker.getState.query({
+      brokerId: this.brokerId,
+      key: this.entityId,
+    })
+    const parsed = HaEntityStateSchema.safeParse(cached)
+    if (!parsed.success) {
+      throw new Error(`ha: no cached state for ${this.entityId} on broker ${this.brokerId}`)
+    }
+    this.applyEntityState(parsed.data)
+  }
+
   private attachEventBusListener(): void {
     const eb = this.ctx.eventBus
     const handler = (event: { data: unknown }): void => {
@@ -371,44 +395,52 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
       // The payload is the HaEntityState snapshot (the integration
       // manager pre-folds it via processEvent before emitting).
       if (!state) return
-      // Inbound update (HA → camstack): a value change is operational churn,
-      // so it logs at DEBUG (lifecycle events below stay INFO). Reports the
-      // `old → new` transition and skips churn-free repeats of the same value.
-      if (state.state !== this.lastLoggedState) {
-        this.deviceLogger.debug('HA→device value change', {
-          meta: {
-            entityId: this.entityId,
-            from: this.lastLoggedState ?? undefined,
-            to: state.state,
-          },
-        })
-        this.lastLoggedState = state.state
-      }
-      // Entity availability → device.online (base chokepoint, A1). HA reports
-      // an unreachable entity as `unavailable` / `unknown`. The base owns the
-      // `device-status` slice for ALL domains here; subclasses keep their own
-      // `unavailable`/`unknown` early-returns so the last-known VALUE slice is
-      // preserved. `markOnline` no-ops when unchanged, so this is churn-free.
-      const reachable = state.state !== 'unavailable' && state.state !== 'unknown'
-      // Read BEFORE the liveness flips: this push ENDS an outage this process saw.
-      const push: HaStatePushContext = { afterOutage: reachable && !this.online }
-      if (this.online !== reachable) {
-        // One line per liveness transition (not per push) — operationally
-        // useful and churn-free since markOnline already no-ops when unchanged.
-        this.deviceLogger.info('HA→device online transition', {
-          meta: { entityId: this.entityId, online: reachable, state: state.state },
-        })
-        this.markOnline(reachable)
-      }
-      try {
-        this.handleStatePush(state, push)
-      } catch (err) {
-        this.deviceLogger.warn('ha-child state-push handler error', {
-          meta: { entityId: this.entityId, error: errMsg(err) },
-        })
-      }
+      this.applyEntityState(state)
     }
     const unsub = eb.subscribe({ category: HaBaseChildDevice.BROKER_MSG_CATEGORY }, handler)
     this.eventBusUnsub = typeof unsub === 'function' ? unsub : null
+  }
+
+  /**
+   * Fold one entity state into the device: the push handler and the core's
+   * refresh read (the broker's cached state, D1062) both land here.
+   */
+  private applyEntityState(state: HaEntityState): void {
+    // Inbound update (HA → camstack): a value change is operational churn,
+    // so it logs at DEBUG (lifecycle events below stay INFO). Reports the
+    // `old → new` transition and skips churn-free repeats of the same value.
+    if (state.state !== this.lastLoggedState) {
+      this.deviceLogger.debug('HA→device value change', {
+        meta: {
+          entityId: this.entityId,
+          from: this.lastLoggedState ?? undefined,
+          to: state.state,
+        },
+      })
+      this.lastLoggedState = state.state
+    }
+    // Entity availability → device.online (base chokepoint, A1). HA reports
+    // an unreachable entity as `unavailable` / `unknown`. The base owns the
+    // `device-status` slice for ALL domains here; subclasses keep their own
+    // `unavailable`/`unknown` early-returns so the last-known VALUE slice is
+    // preserved. `markOnline` no-ops when unchanged, so this is churn-free.
+    const reachable = state.state !== 'unavailable' && state.state !== 'unknown'
+    // Read BEFORE the liveness flips: this push ENDS an outage this process saw.
+    const push: HaStatePushContext = { afterOutage: reachable && !this.online }
+    if (this.online !== reachable) {
+      // One line per liveness transition (not per push) — operationally
+      // useful and churn-free since markOnline already no-ops when unchanged.
+      this.deviceLogger.info('HA→device online transition', {
+        meta: { entityId: this.entityId, online: reachable, state: state.state },
+      })
+      this.markOnline(reachable)
+    }
+    try {
+      this.handleStatePush(state, push)
+    } catch (err) {
+      this.deviceLogger.warn('ha-child state-push handler error', {
+        meta: { entityId: this.entityId, error: errMsg(err) },
+      })
+    }
   }
 }

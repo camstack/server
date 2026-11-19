@@ -83,6 +83,7 @@ export class ReachabilityReconciler {
     const delayMs = Math.max(0, this.minIntervalMs - sinceLast)
     this.options.onScheduled?.({ brokerId, delayMs })
     this.timer = setTimeout(() => {
+      // not-a-state-poll: throttle of the reachability reconcile, not a state read
       this.timer = null
       this.fire()
     }, delayMs)

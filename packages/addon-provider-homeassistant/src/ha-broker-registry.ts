@@ -318,6 +318,7 @@ export class HaBrokerRegistry {
 
     const timeout = new Promise<HaTestSettingsResult>((resolve) => {
       timer = setTimeout(() => {
+        // not-a-state-poll: request deadline of a connection test
         if (resolved) return
         resolved = true
         // Stop the throwaway client so the timeout branch doesn't leak the

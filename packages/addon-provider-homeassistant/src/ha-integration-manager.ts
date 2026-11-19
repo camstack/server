@@ -278,6 +278,7 @@ export class HaIntegrationManager {
   private startConnectDeadline(): void {
     this.clearConnectDeadline()
     const timer = setTimeout(() => {
+      // not-a-state-poll: connect deadline of the websocket
       this.connectDeadlineTimer = null
       // Only fire if the connect is still in flight — a resolved (connected)
       // or already-classified (unreachable/auth-failed/error) broker owns its

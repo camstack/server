@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**254 units · 9035 source files · 247 units claimed by at least one document (9004 files).**
+**254 units · 9036 source files · 247 units claimed by at least one document (9005 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -55,8 +55,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/mappers` | 43 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +7 more, 9 ADRs | 2026-09-29 |
 | `packages/ui-library/src/hooks` | 42 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +7 more | 2026-11-11 |
 | `packages/develop` | 41 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
+| `packages/addon-provider-homeassistant` | 40 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +7 more | 2026-11-08 |
 | `packages/addon-provider-bosch/src/home-connect` | 39 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +2 more | 2026-11-08 |
-| `packages/addon-provider-homeassistant` | 39 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +7 more | 2026-11-08 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 39 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +10 more, 9 ADRs | 2026-11-08 |
 | `packages/addon-provider-amcrest` | 38 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, +9 more | 2026-11-08 |
 | `packages/addon-provider-unifi` | 38 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md`, +2 more | 2026-11-08 |

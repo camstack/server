@@ -160,6 +160,7 @@ export class HaWsClient {
     const delay = this.backoff[idx]!
     this.reconnectAttempt += 1
     this.reconnectTimer = setTimeout(() => {
+      // not-a-state-poll: reconnect backoff of the websocket
       this.reconnectTimer = null
       void this.attemptReconnect()
     }, delay)

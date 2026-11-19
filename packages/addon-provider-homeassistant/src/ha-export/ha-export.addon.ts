@@ -789,6 +789,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
         this.doorbellReleaseTimers.set(
           deviceId,
           setTimeout(() => {
+            // not-a-state-poll: doorbell press auto-release, not a read
             this.doorbellReleaseTimers.delete(deviceId)
             this.push(
               deviceId,
@@ -1162,6 +1163,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     if (this.reconcileQueued) return
     this.reconcileQueued = true
     setTimeout(() => {
+      // not-a-state-poll: debounce of the export reconcile (CamStack to HA direction)
       this.reconcileQueued = false
       void this.reconcile('structure-changed')
     }, 2_000)
@@ -2190,6 +2192,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
   private scheduleReadRetry(): void {
     if (this.readTimer !== null) return
     this.readTimer = setTimeout(() => {
+      // not-a-state-poll: retry of an export read held back until the provider registers
       this.readTimer = null
       void this.reconcile('read-retry')
     }, READ_RETRY_MS)
@@ -3470,6 +3473,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     this.stopTimer()
     const ms = this.book().reconcileIntervalSec() * 1000
     this.reconcileTimer = setInterval(() => void this.reconcile('periodic'), ms)
+    // not-a-state-poll: periodic export reconcile; writes CamStack devices to HA, reads no HA state
   }
 
   private stopTimer(): void {

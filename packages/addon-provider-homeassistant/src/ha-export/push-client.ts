@@ -162,6 +162,7 @@ export class PushClient {
   start(): void {
     if (this.heartbeatTimer !== null) return
     this.heartbeatTimer = setInterval(() => {
+      // not-a-state-poll: heartbeat of the export push channel
       void this.send({ type: 'heartbeat', ts: Date.now() })
     }, HEARTBEAT_INTERVAL_MS)
   }
@@ -189,6 +190,7 @@ export class PushClient {
     this.buffer.push({ type: 'state_update', topic, value: payload })
     if (this.flushTimer === null) {
       this.flushTimer = setTimeout(() => void this.flush(), BATCH_FLUSH_MS)
+      // not-a-state-poll: batch flush of outgoing pushes
     }
   }
 

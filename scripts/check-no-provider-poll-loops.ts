@@ -30,6 +30,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-unifi',
   'packages/addon-provider-gree',
   'packages/addon-provider-unraid',
+  'packages/addon-provider-homeassistant',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

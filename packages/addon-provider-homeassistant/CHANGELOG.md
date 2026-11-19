@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant entities declare that their state arrives by push, so the core never schedules a read of them; a command not confirmed by a push re-reads the cached state.
+
 ## [1.2.694] - 2026-11-18
 
 ### Changed

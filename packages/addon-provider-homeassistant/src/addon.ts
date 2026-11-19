@@ -304,6 +304,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     // Periodic sweep — catches mapping changes that happen while connected
     // (and the first-boot case where devices restore after the initial connect).
     this.resyncTimer = setInterval(() => {
+      // not-a-state-poll: entity-device mapping resync; entity state is full push over the HA websocket
       void this.reconcileAllConnectedBrokers()
     }, HaProviderAddon.RESYNC_INTERVAL_MS)
     this.ctx.logger.info('ha provider initialised', {
