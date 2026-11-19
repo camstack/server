@@ -63,6 +63,7 @@ import { classifyPinRefusal, PinAttention } from './dreame-pin-attention.js'
 import { seedDeviceDecisionRecording } from './dreame-recording-seed.js'
 import { RECORDING_SIGNAL_COLD_START, recordingSignalSlice } from './dreame-recording-signal.js'
 import { type FeedLoss, type RfcServerInfo, startRfc4571Server } from './dreame-rfc4571-server.js'
+import { dreameFacades } from '../dreame-gateway.js'
 import { registerDreameStateRefresh } from './dreame-state-refresh.js'
 
 const CAP_NAME = 'navigation'
@@ -226,6 +227,8 @@ export class DreameCameraDevice extends DreameChildDevice {
     super(ctx)
   }
 
+  private stopStateRefresh: () => void = () => undefined
+
   protected override registerControlCap(): void {
     const provider = this.buildNavigationProvider()
     this.ctx.registerNativeCap(navigationCapability, provider)
@@ -236,11 +239,21 @@ export class DreameCameraDevice extends DreameChildDevice {
     this.ctx.registerNativeCap(networkLinkCapability, this.networkLink.provider())
     this.networkLink.seed()
     this.networkLink.start()
-    registerDreameStateRefresh({
+    // The robot's main state (status, battery, errors) rides MQTT transitions
+    // only; a core read also re-reads it from the cloud shadow (no wake).
+    this.stopStateRefresh()
+    this.stopStateRefresh = registerDreameStateRefresh({
       ctx: this.ctx,
       brokerId: this.brokerId,
       minIntervalMs: NETWORK_LINK_REFRESH_MS,
-      read: () => this.networkLink.refreshIfDue(),
+      intervals: dreameFacades,
+      read: async () => {
+        const handle = this.resolveHandle()
+        await Promise.all([
+          handle instanceof DreameVacuum ? handle.refreshFromCache() : undefined,
+          this.networkLink.refreshIfDue(),
+        ])
+      },
     })
     this.registerStreamCatalogCap()
     this.registerRecordingSignalCap()
@@ -940,6 +953,7 @@ export class DreameCameraDevice extends DreameChildDevice {
 
   override async removeDevice(): Promise<void> {
     await super.removeDevice()
+    this.stopStateRefresh()
     this.unsubscribeRefresh?.()
     this.unsubscribeRefresh = null
     await this.closeStream('removed')

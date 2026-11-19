@@ -24,6 +24,43 @@ export class DreameFacadeResolver {
    */
   readonly #stateSubs: Map<string, Map<string, Set<() => void>>> = new Map()
 
+  /** The operator's `pollIntervalMs` per account (0 or absent = no slowing). */
+  readonly #pollIntervals: Map<string, number> = new Map()
+  readonly #pollIntervalSubs: Map<string, Set<() => void>> = new Map()
+
+  /** Record an account's operator interval; subscribers hear only a real change. */
+  setPollInterval(brokerId: string, ms: number | undefined): void {
+    const next = ms !== undefined && ms > 0 ? ms : undefined
+    if (this.#pollIntervals.get(brokerId) === next) return
+    if (next === undefined) this.#pollIntervals.delete(brokerId)
+    else this.#pollIntervals.set(brokerId, next)
+    for (const cb of this.#pollIntervalSubs.get(brokerId) ?? []) {
+      try {
+        cb()
+      } catch {
+        // best-effort — one bad subscriber must not starve the others
+      }
+    }
+  }
+
+  /** The account's operator interval, or undefined when unset / 0. */
+  pollIntervalOf(brokerId: string): number | undefined {
+    return this.#pollIntervals.get(brokerId)
+  }
+
+  /** Subscribe to a change of the account's operator interval. */
+  onPollInterval(brokerId: string, cb: () => void): () => void {
+    let set = this.#pollIntervalSubs.get(brokerId)
+    if (!set) {
+      set = new Set()
+      this.#pollIntervalSubs.set(brokerId, set)
+    }
+    set.add(cb)
+    return () => {
+      this.#pollIntervalSubs.get(brokerId)?.delete(cb)
+    }
+  }
+
   /** Publish or remove the facade for a broker id. `null` removes the entry. */
   set(brokerId: string, facade: Nodreame | null): void {
     if (facade === null) {
@@ -90,6 +127,8 @@ export class DreameFacadeResolver {
   clear(): void {
     this.#facades.clear()
     this.#stateSubs.clear()
+    this.#pollIntervals.clear()
+    this.#pollIntervalSubs.clear()
   }
 }
 

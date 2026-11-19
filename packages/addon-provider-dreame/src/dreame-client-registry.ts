@@ -116,6 +116,9 @@ export class DreameClientRegistry {
    * leaves the entry registered so a later reconcile / lifecycle event retries.
    */
   async upsert(integrationId: string, name: string, connection: DreameConfig): Promise<void> {
+    // The operator's interval drives each device's refresh policy (D1062); it is
+    // not a connection property, so a change never restarts the session.
+    dreameFacades.setPollInterval(integrationId, connection.pollIntervalMs)
     const existing = this.#entries.get(integrationId)
     if (existing) {
       if (sameConnection(existing.connection, connection)) return

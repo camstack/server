@@ -189,10 +189,10 @@ describe('DreameIntegrationManager stateChanged fan-out pump', () => {
 })
 
 describe('sameConnection', () => {
-  it('treats a differing poll interval as a different connection', () => {
+  it('a differing poll interval is not a new connection: it re-registers the refresh policy', () => {
     const a = settingsToDreameConfig({ username: 'u', password: 'p', pollIntervalMs: 30_000 })
     const b = settingsToDreameConfig({ username: 'u', password: 'p', pollIntervalMs: 10_000 })
-    expect(sameConnection(a, b)).toBe(false)
+    expect(sameConnection(a, b)).toBe(true)
   })
 
   it('treats identical configs as the same connection', () => {

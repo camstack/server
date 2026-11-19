@@ -5,7 +5,7 @@
   "connection.s_region.title": "Regione",
   "connection.s_region.region.label": "Regione",
   "connection.s_advanced.title": "Avanzate",
-  "connection.s_advanced.pollIntervalMs.label": "Intervallo di polling di ripiego (ms, 0 = disattivato)",
+  "connection.s_advanced.pollIntervalMs.label": "Intervallo di aggiornamento stato (ms, 0 = predefinito del dispositivo)",
   "camera_settings.s_camera-backend.title": "Servizio video",
   "camera_settings.s_camera-backend.description": "È implementato solo il percorso Aliyun; un robot su Tencent non può essere visto da CamStack. Il cambio chiede al robot di passare.",
   "camera_settings.s_camera-backend.videoVendor.label": "Servizio",

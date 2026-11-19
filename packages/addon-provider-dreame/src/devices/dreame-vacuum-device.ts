@@ -35,6 +35,7 @@ import {
   seedConsumablesColdStart,
 } from './dreame-consumables.js'
 import { DreameNetworkLinkMonitor } from './dreame-network-link.js'
+import { dreameFacades } from '../dreame-gateway.js'
 import { registerDreameStateRefresh } from './dreame-state-refresh.js'
 import { DreameVacuumConsumables, TANK_REREAD_MS } from './dreame-vacuum-consumables.js'
 
@@ -128,15 +129,26 @@ export class DreameVacuumDevice extends DreameChildDevice {
     this.consumables.start()
     // Push is partial (MQTT carries the state, not the tanks, consumables or
     // signal): the core calls this at TANK_REREAD_MS and each source keeps its age.
-    registerDreameStateRefresh({
+    // MQTT pushes only transitions, so while it is down the status, battery and
+    // errors would freeze: every core read also re-reads them from the cloud
+    // shadow (no wake), as the library's own poll did.
+    this.stopStateRefresh()
+    this.stopStateRefresh = registerDreameStateRefresh({
       ctx: this.ctx,
       brokerId: this.brokerId,
       minIntervalMs: TANK_REREAD_MS,
+      intervals: dreameFacades,
       read: async () => {
-        await Promise.all([this.consumables.refreshIfDue(), this.networkLink.refreshIfDue()])
+        await Promise.all([
+          this.resolveVacuum()?.refreshFromCache(),
+          this.consumables.refreshIfDue(),
+          this.networkLink.refreshIfDue(),
+        ])
       },
     })
   }
+
+  private stopStateRefresh: () => void = () => undefined
 
   /** Consumables refresh + reset — see `DreameVacuumConsumables`. */
   private readonly consumables = new DreameVacuumConsumables({
@@ -166,6 +178,7 @@ export class DreameVacuumDevice extends DreameChildDevice {
 
   override async removeDevice(): Promise<void> {
     this.consumables.stop()
+    this.stopStateRefresh()
     await super.removeDevice()
   }
 

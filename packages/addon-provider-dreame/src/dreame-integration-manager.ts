@@ -267,10 +267,5 @@ export class DreameIntegrationManager {
 /** True when two configs are the "same connection" (no facade rebuild needed). */
 export function sameConnection(a: DreameConfig | null, b: DreameConfig | null): boolean {
   if (a === null || b === null) return false
-  return (
-    a.username === b.username &&
-    a.password === b.password &&
-    a.region === b.region &&
-    a.pollIntervalMs === b.pollIntervalMs
-  )
+  return a.username === b.username && a.password === b.password && a.region === b.region
 }

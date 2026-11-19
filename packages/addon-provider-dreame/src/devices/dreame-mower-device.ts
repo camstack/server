@@ -24,6 +24,7 @@ import {
   type ConsumablesSlice,
 } from './dreame-consumables.js'
 import { DreameMowerConsumables, MowerChargingEdge } from './dreame-mower-consumables.js'
+import { dreameFacades } from '../dreame-gateway.js'
 import { registerDreameStateRefresh } from './dreame-state-refresh.js'
 
 const CAP_NAME = 'lawn-mower-control'
@@ -162,16 +163,21 @@ export class DreameMowerDevice extends DreameChildDevice {
     // interval, else `batteryLevel` stays null. Distinct from the CMS action:
     // the shadow read works even while the mower sleeps.
     void this.#refreshShadow()
-    registerDreameStateRefresh({
+    this.stopStateRefresh()
+    this.stopStateRefresh = registerDreameStateRefresh({
       ctx: this.ctx,
       brokerId: this.brokerId,
       minIntervalMs: SHADOW_POLL_MS,
+      intervals: dreameFacades,
       read: () => this.#refreshShadow(),
     })
   }
 
+  private stopStateRefresh: () => void = () => undefined
+
   override async removeDevice(): Promise<void> {
     this.#consumables.stop()
+    this.stopStateRefresh()
     await super.removeDevice()
   }
 

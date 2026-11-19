@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Dreame robots are read by the core's scheduled state refresh instead of per-device timers: tank status, consumables, Wi-Fi signal and the mower's cloud shadow keep their own cadence, and the library's fallback poll is off.
+- A robot's status, battery and errors are re-read by the core refresh while MQTT is down, and the state refresh interval setting drives that cadence again
 
 ## [0.2.180] - 2026-11-17
 

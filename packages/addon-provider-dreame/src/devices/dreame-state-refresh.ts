@@ -16,22 +16,45 @@ import {
 } from '@camstack/types'
 
 /** The part of a device context the refresh registration uses. */
-export type DreameRefreshContext = Pick<DeviceContext, 'registerNativeCap'>
+export type DreameRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>
+
+/** The account's operator interval: its value and its changes. */
+export interface DreamePollIntervals {
+  pollIntervalOf(brokerId: string): number | undefined
+  onPollInterval(brokerId: string, cb: () => void): () => void
+}
 
 export interface DreameStateRefreshTarget {
   readonly ctx: DreameRefreshContext
   readonly brokerId: string
   /** The fastest cadence any source of this device needs. */
   readonly minIntervalMs: number
+  /** Where the account's `pollIntervalMs` comes from. */
+  readonly intervals: DreamePollIntervals
   /** Read every source that is due; throws when a read was refused. */
   readonly read: () => Promise<void>
 }
 
-export function dreameRefreshPolicy(brokerId: string, minIntervalMs: number): StateRefreshPolicy {
-  return { integrationId: brokerId, minIntervalMs, batch: false, push: 'partial' }
+export function dreameRefreshPolicy(
+  brokerId: string,
+  minIntervalMs: number,
+  intervalMs?: number,
+): StateRefreshPolicy {
+  return {
+    integrationId: brokerId,
+    minIntervalMs,
+    ...(intervalMs !== undefined ? { intervalMs } : {}),
+    batch: false,
+    push: 'partial',
+  }
 }
 
-export function registerDreameStateRefresh(target: DreameStateRefreshTarget): void {
+/**
+ * Register the refresh with the account's operator interval, and register again
+ * when that interval changes (the policy is static per registration). Returns
+ * the cleanup.
+ */
+export function registerDreameStateRefresh(target: DreameStateRefreshTarget): () => void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
       await target.read()
@@ -39,8 +62,19 @@ export function registerDreameStateRefresh(target: DreameStateRefreshTarget): vo
     },
     resubscribe: async () => ({ ok: true }),
   }
-  target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: dreameRefreshPolicy(target.brokerId, target.minIntervalMs),
+  let registered = target.intervals.pollIntervalOf(target.brokerId)
+  const register = (): void => {
+    target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
+      stateRefresh: dreameRefreshPolicy(target.brokerId, target.minIntervalMs, registered),
+    })
+  }
+  register()
+  return target.intervals.onPollInterval(target.brokerId, () => {
+    const now = target.intervals.pollIntervalOf(target.brokerId)
+    if (now === registered || target.ctx.unregisterNativeCap === undefined) return
+    registered = now
+    target.ctx.unregisterNativeCap(deviceStateRefreshCapability.name)
+    register()
   })
 }
 
