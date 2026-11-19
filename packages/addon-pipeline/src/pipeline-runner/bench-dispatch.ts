@@ -6,6 +6,7 @@
  */
 import type { FrameInput } from '@camstack/types'
 import type { BenchStepShape } from './bench-step-schema.js'
+import type { NodeDeviceChoice } from './node-device-election.js'
 
 /** Raw frame the bench pins once and replays. */
 export type BenchFrame = FrameInput
@@ -109,4 +110,25 @@ export function buildBenchTuningQuery(target: BenchPoolTarget): BenchTuningQuery
     nodeId: target.nodeId,
     input: target.deviceKey ? { deviceKey: target.deviceKey } : {},
   }
+}
+
+/**
+ * A bench that names a device is the operator's explicit statement and runs
+ * there, even on a device load balancing has off. One that names NONE would fall
+ * onto the node's default engine — which can be an excluded device — so it runs
+ * on the elected eligible device, or is refused when there is none (#610).
+ * `onRefused` is the caller's log line; the throw is the refusal the caller sees.
+ */
+export async function benchInputOnEligibleDevice<T extends BenchPathInput>(
+  requested: T,
+  choose: () => Promise<NodeDeviceChoice>,
+  onRefused: (detail: string) => void,
+): Promise<T> {
+  if (requested.deviceKey) return requested
+  const choice = await choose()
+  if (choice.kind === 'none-eligible') {
+    onRefused(choice.detail)
+    throw new Error(`runSyntheticBench: no-eligible-device — ${choice.detail}`)
+  }
+  return choice.kind === 'device' ? { ...requested, deviceKey: choice.deviceKey } : requested
 }

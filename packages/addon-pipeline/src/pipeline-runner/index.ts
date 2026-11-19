@@ -184,6 +184,7 @@ import {
 } from './bench-actions.js'
 import {
   type BenchPoolTarget,
+  benchInputOnEligibleDevice,
   buildBenchRunPipelineInput,
   buildBenchTuningQuery,
   canUseCachedFastPath,
@@ -1865,19 +1866,18 @@ export default class PipelineRunnerAddon
     }
   }
 
-  private async benchInputOnEligibleDevice(
+  private benchInputOnEligibleDevice(
     requested: SyntheticBenchInput,
     benchNode: string,
   ): Promise<SyntheticBenchInput> {
-    if (requested.deviceKey) return requested
-    const choice = await this.chooseNodeDevice(benchNode)
-    if (choice.kind === 'none-eligible') {
-      this.ctx.logger.warn('synthetic bench refused — no eligible inference device', {
-        meta: { node: benchNode, reason: 'no-eligible-device', detail: choice.detail },
-      })
-      throw new Error(`runSyntheticBench: no-eligible-device — ${choice.detail}`)
-    }
-    return choice.kind === 'device' ? { ...requested, deviceKey: choice.deviceKey } : requested
+    return benchInputOnEligibleDevice(
+      requested,
+      () => this.chooseNodeDevice(benchNode),
+      (detail) =>
+        this.ctx.logger.warn('synthetic bench refused — no eligible inference device', {
+          meta: { node: benchNode, reason: 'no-eligible-device', detail },
+        }),
+    )
   }
 
   private async runSyntheticBench(
