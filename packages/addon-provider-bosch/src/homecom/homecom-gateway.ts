@@ -27,10 +27,13 @@ export interface HomeComConnectionSurface {
   readonly client: HomeComApiClient
   readonly snapshot: HomeComSystemSnapshot
   readonly discoverables: readonly HomeComDiscoverableDevice[]
+  /** Read the gateway now; the core's state refresh calls it (D1062). */
+  readonly refresh?: () => Promise<void>
 }
 
 export class HomeComConnectionResolver {
   readonly #surfaces: Map<string, HomeComConnectionSurface> = new Map()
+  readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
 
   set(integrationId: string, surface: HomeComConnectionSurface | null): void {
     if (surface === null) {
@@ -56,6 +59,23 @@ export class HomeComConnectionResolver {
     return this.#surfaces.get(integrationId)?.client ?? null
   }
 
+  /** The read-the-gateway function of an integration's surface, or null when it is not connected (D1062). */
+  getRefresh(integrationId: string): (() => Promise<void>) | null {
+    return this.#surfaces.get(integrationId)?.refresh ?? null
+  }
+
+  /** Subscribe a device to the integration's new snapshots. Returns the unsubscribe. */
+  onSnapshot(integrationId: string, cb: () => void): () => void {
+    const set = this.#snapshotSubs.get(integrationId) ?? new Set<() => void>()
+    set.add(cb)
+    this.#snapshotSubs.set(integrationId, set)
+    return () => {
+      const current = this.#snapshotSubs.get(integrationId)
+      current?.delete(cb)
+      if (current?.size === 0) this.#snapshotSubs.delete(integrationId)
+    }
+  }
+
   getSnapshot(integrationId: string): HomeComSystemSnapshot | null {
     return this.#surfaces.get(integrationId)?.snapshot ?? null
   }
@@ -68,9 +88,11 @@ export class HomeComConnectionResolver {
       snapshot,
       discoverables: buildDiscoverables(snapshot),
     })
+    for (const cb of this.#snapshotSubs.get(integrationId) ?? []) cb()
   }
 
   clear(): void {
+    this.#snapshotSubs.clear()
     this.#surfaces.clear()
   }
 }

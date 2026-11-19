@@ -9,9 +9,7 @@ export interface ShcConnectionTestDeps {
   readonly probe?: (host: string, port: number) => Promise<boolean>
 }
 
-export function buildShcConnectionTestProvider(
-  deps: ShcConnectionTestDeps,
-): IConnectionProbe {
+export function buildShcConnectionTestProvider(deps: ShcConnectionTestDeps): IConnectionProbe {
   const { logger, probe = probeTcp } = deps
 
   return {
@@ -52,6 +50,7 @@ function probeTcp(host: string, port: number): Promise<boolean> {
       resolve(ok)
     }
     socket.setTimeout(4_000, () => finish(false))
+    // not-a-state-poll: socket deadline of a connection test
     socket.once('connect', () => finish(true))
     socket.once('error', () => finish(false))
   })

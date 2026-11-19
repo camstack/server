@@ -10,6 +10,7 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import { homeComConnections } from '../homecom-gateway.js'
+import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import { climateSliceFromCircuit } from '../homecom-domain-mapping.js'
 
 export const homeComClimateSchema = z.object({
@@ -44,6 +45,7 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
   readonly features: readonly never[] = []
 
   readonly #brokerId: string
+  private stopStateRefresh: (() => void) | null = null
   readonly #circuitId: string
 
   constructor(ctx: DeviceContext) {
@@ -61,9 +63,21 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the gateway is re-read (D1062); this device follows the snapshot.
+    this.stopStateRefresh ??= registerHomeComStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.#brokerId,
+      onSnapshot: () => this.refreshFromSnapshot(),
+    })
     this.registerClimateCap()
     this.runtimeState.setCapState(CLIMATE_CAP, COLD_START)
     this.refreshFromSnapshot()
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
+    await super.removeDevice()
   }
 
   private refreshFromSnapshot(): void {

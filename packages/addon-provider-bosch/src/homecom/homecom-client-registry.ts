@@ -81,7 +81,6 @@ export class HomeComClientRegistry {
           fetchFn,
           makeClient,
           ...(bridge !== undefined ? { bridge } : {}),
-          pollIntervalMs: 60_000,
         }))
   }
 

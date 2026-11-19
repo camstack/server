@@ -40,7 +40,6 @@ function mgr(connection: HomeComConfig, fetchFn: FetchFn, chosen: string[] = [])
     surfaceSink: new HomeComConnectionResolver(),
     fetchFn,
     onGatewayChosen: (id) => void chosen.push(id),
-    pollIntervalMs: 3_600_000,
   })
 }
 

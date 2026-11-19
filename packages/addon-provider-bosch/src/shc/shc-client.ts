@@ -287,6 +287,7 @@ function createDefaultAgent(config: ShcConfig): Agent {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
+    // not-a-state-poll: backoff sleep of the SHC long-poll subscription, which is push
   })
 }
 

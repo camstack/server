@@ -423,6 +423,7 @@ export class HomeConnectSession {
     this.#missedProbes = 0
     if (this.#keepaliveMs <= 0) return
     this.#keepalive = setInterval(() => {
+      // not-a-state-poll: keepalive probe of the push wire
       void this.#probe()
     }, this.#keepaliveMs)
   }
@@ -477,6 +478,7 @@ export class HomeConnectSession {
         finish(() => reject(new Error('Home Connect wire closed before init')))
       })
       const timer = setTimeout(() => {
+        // not-a-state-poll: deadline of an init resource
         finish(() => reject(new Error(`Home Connect init timeout waiting for ${resource}`)))
       }, HOME_CONNECT_INIT_RESOURCE_TIMEOUT_MS)
     })
@@ -520,6 +522,7 @@ export class HomeConnectSession {
   async #sendAndWaitResponse(outgoing: HomeConnectMessage): Promise<HomeConnectMessage> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
+        // not-a-state-poll: response deadline of one request
         if (this.#pending.delete(outgoing.msgID)) {
           reject(new Error(`Home Connect response timeout for ${outgoing.resource}`))
         }

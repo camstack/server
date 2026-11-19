@@ -203,6 +203,7 @@ function runWorker(
       action()
     }
     const timer = setTimeout(() => {
+      // not-a-state-poll: kill deadline of the bridge child process
       child.kill('SIGKILL')
       finish(() =>
         reject(

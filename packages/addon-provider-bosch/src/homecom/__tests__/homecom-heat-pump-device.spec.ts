@@ -19,6 +19,7 @@ type Provider = Record<string, (input: Record<string, unknown>) => Promise<unkno
 
 function rig() {
   const providers: Record<string, Provider> = {}
+  const refreshPolicies: unknown[] = []
   let runtime: IDeviceRuntimeState | null = null
   const logger = {
     debug: vi.fn(),
@@ -51,8 +52,13 @@ function rig() {
       runtime = rs
     },
     registerNativeCap: vi.fn(
-      (cap: { name: string; runtimeState?: unknown }, provider: Provider) => {
+      (
+        cap: { name: string; runtimeState?: unknown },
+        provider: Provider,
+        options?: { stateRefresh?: unknown },
+      ) => {
         providers[cap.name] = provider
+        if (options?.stateRefresh !== undefined) refreshPolicies.push(options.stateRefresh)
         if (cap.runtimeState && runtime) {
           runtime.installCapSchema(
             cap.name,
@@ -64,7 +70,7 @@ function rig() {
     api: {},
     logger,
   } as unknown as DeviceContext
-  return { ctx, providers, logger }
+  return { ctx, providers, logger, refreshPolicies }
 }
 
 const holiday = {
@@ -128,6 +134,9 @@ function connect(heatPump: HomeComHeatPumpReading | undefined, api: HomeComApiCl
     client: api,
     snapshot: snapshot(heatPump),
     discoverables: [],
+    refresh: async () => {
+      homeComConnections.updateSnapshot('int-1', await api.fetchSystem())
+    },
   })
 }
 
@@ -174,5 +183,40 @@ describe('HomeComHeatPumpDevice', () => {
     const slice = device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')
     expect(slice?.power.compressorPct).toBe(55)
     homeComConnections.clear()
+  })
+
+  it('declares the batched polled policy, and a refresh re-reads the gateway and moves the slice (D1062)', async () => {
+    const { ctx, providers, refreshPolicies } = rig()
+    const fetchSystem = vi.fn(async () => snapshot({ ...READING, compressorPct: 77 }))
+    connect(READING, client(fetchSystem))
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    expect(refreshPolicies).toEqual([
+      { integrationId: 'int-1', minIntervalMs: 60_000, batch: true, push: 'none' },
+    ])
+    expect(
+      device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.power.compressorPct,
+    ).toBe(55)
+    await providers['device-state-refresh']?.['refresh']?.({})
+    expect(fetchSystem).toHaveBeenCalledTimes(1)
+    expect(
+      device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.power.compressorPct,
+    ).toBe(77)
+    await device.removeDevice()
+    homeComConnections.clear()
+  })
+
+  it('a refresh of an integration that is not connected fails, never a silent success', async () => {
+    const { ctx, providers } = rig()
+    connect(
+      READING,
+      client(async () => snapshot(READING)),
+    )
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    homeComConnections.clear()
+    await expect(providers['device-state-refresh']?.['refresh']?.({})).rejects.toThrow(
+      /not connected/,
+    )
   })
 })

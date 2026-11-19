@@ -179,6 +179,7 @@ export class HomeConnectChildReconciler {
     if (!entry) return
     if (entry.timer !== null) clearTimeout(entry.timer)
     entry.timer = setTimeout(() => {
+      // not-a-state-poll: debounce of a child reconcile
       entry.timer = null
       void this.reconcile(deviceId)
     }, this.#deps.debounceMs ?? HOME_CONNECT_RECONCILE_DEBOUNCE_MS)

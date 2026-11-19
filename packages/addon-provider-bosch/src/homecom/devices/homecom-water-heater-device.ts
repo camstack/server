@@ -8,6 +8,7 @@ import {
   type WaterHeaterStatus,
 } from '@camstack/types'
 import { homeComConnections } from '../homecom-gateway.js'
+import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import { waterHeaterSliceFromDhw } from '../homecom-domain-mapping.js'
 
 export const homeComWaterHeaterSchema = z.object({
@@ -34,6 +35,7 @@ export class HomeComWaterHeaterDevice extends BaseDevice<typeof homeComWaterHeat
   readonly features: readonly never[] = []
 
   readonly #brokerId: string
+  private stopStateRefresh: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComWaterHeaterSchema.parse(ctx.persistedConfig ?? {})
@@ -45,9 +47,21 @@ export class HomeComWaterHeaterDevice extends BaseDevice<typeof homeComWaterHeat
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the gateway is re-read (D1062); this device follows the snapshot.
+    this.stopStateRefresh ??= registerHomeComStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.#brokerId,
+      onSnapshot: () => this.refreshFromSnapshot(),
+    })
     this.registerWaterHeaterCap()
     this.runtimeState.setCapState(WH_CAP, COLD_START)
     this.refreshFromSnapshot()
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
+    await super.removeDevice()
   }
 
   private refreshFromSnapshot(): void {

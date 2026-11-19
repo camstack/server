@@ -456,6 +456,7 @@ function createProtocolHomeConnectClient(input: {
     const delay = Math.round(base * (1 + (jitter() - 0.5) * 0.4))
     attempt += 1
     retryTimer = setTimeout(() => {
+      // not-a-state-poll: reconnect backoff of the push wire
       retryTimer = null
       // A connect() may have won the race while this timer was pending: one session only.
       if (!wanted || opening !== null || link === 'connected') return

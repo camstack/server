@@ -87,7 +87,6 @@ function manager(
     onAuthFailed: extra.onAuthFailed,
     surfaceSink: new HomeComConnectionResolver(),
     fetchFn,
-    pollIntervalMs: 3_600_000,
   })
 }
 

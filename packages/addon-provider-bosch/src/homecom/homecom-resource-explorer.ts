@@ -242,6 +242,7 @@ function clampNodes(requested: number | undefined): number {
 const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
+    // not-a-state-poll: sleep between explorer requests, an operator tool
   })
 
 export async function exploreHomeComResources(input: ExplorerInput): Promise<ExplorerResult> {

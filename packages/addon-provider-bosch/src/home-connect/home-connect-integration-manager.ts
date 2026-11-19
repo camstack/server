@@ -290,6 +290,7 @@ export class HomeConnectIntegrationManager {
       this.#iddfRetryMs[Math.min(this.#iddfAttempt, this.#iddfRetryMs.length - 1)] ?? 600_000
     this.#iddfAttempt += 1
     this.#iddfTimer = setTimeout(() => {
+      // not-a-state-poll: retry of the appliance-description download; the wire is push
       this.#iddfTimer = null
       void this.#retryIddf()
     }, delay)

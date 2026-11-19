@@ -8,6 +8,7 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import { homeComConnections } from '../homecom-gateway.js'
+import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import {
   circuitOptionWrite,
   circuitRangeWrite,
@@ -49,6 +50,7 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   readonly features: readonly never[] = []
 
   readonly #brokerId: string
+  private stopStateRefresh: (() => void) | null = null
   /** True while the gateway has no heat-pump reading, so the log marks the transitions only. */
   #noReading = false
 
@@ -62,10 +64,22 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the gateway is re-read (D1062); this device follows the snapshot.
+    this.stopStateRefresh ??= registerHomeComStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.#brokerId,
+      onSnapshot: () => this.refreshFromSnapshot(),
+    })
     this.registerStatusCap()
     this.registerControlCap()
     this.runtimeState.setCapState(STATUS_CAP, COLD_START)
     this.refreshFromSnapshot()
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
+    await super.removeDevice()
   }
 
   private reading(): HomeComHeatPumpReading | null {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bosch HomeCom is read on the core's state-refresh schedule (60 s minimum) instead of its own timer, and the heat pump, circuits and hot water follow every read.
+
 ## [0.1.59] - 2026-11-17
 
 ### Changed

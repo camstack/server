@@ -42,7 +42,6 @@ export interface HomeComIntegrationManagerOptions {
   readonly onGatewayChosen?: (gatewayId: string) => void
   /** Called when the cloud refused the stored sign-in (a refused refresh token). */
   readonly onAuthFailed?: (integrationId: string) => void
-  readonly pollIntervalMs?: number
 }
 
 export class HomeComIntegrationManager {
@@ -54,14 +53,12 @@ export class HomeComIntegrationManager {
   readonly #onDisconnected: (integrationId: string) => void
   readonly #surfaceSink: Pick<HomeComConnectionResolver, 'set' | 'updateSnapshot'>
   readonly #makeClient: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
-  readonly #pollIntervalMs: number
   readonly #onGatewayChosen: (gatewayId: string) => void
   readonly #onAuthFailed: (integrationId: string) => void
 
   #gateways: readonly HomeComGatewayListing[] = []
   #client: HomeComApiClient | null = null
   #gatewayId: string | null = null
-  #pollTimer: ReturnType<typeof setInterval> | null = null
   #status: HomeComBrokerStatus = 'disconnected'
   #error: string | null = null
   #lastCheckedAt: number | null = null
@@ -104,7 +101,6 @@ export class HomeComIntegrationManager {
           ...(bridge !== undefined ? { bridge } : {}),
           deviceType: this.#gateways.find((gateway) => gateway.gatewayId === gatewayId)?.deviceType,
         }))
-    this.#pollIntervalMs = options.pollIntervalMs ?? 60_000
   }
 
   getConnection(): HomeComConfig {
@@ -143,14 +139,12 @@ export class HomeComIntegrationManager {
         client,
         snapshot,
         discoverables: buildDiscoverables(snapshot),
+        refresh: () => this.poll(),
       }
       this.#surfaceSink.set(this.#id, surface)
       this.#status = 'connected'
       this.#lastCheckedAt = Date.now()
       this.#onConnected(this.#id)
-      this.#pollTimer = setInterval(() => {
-        void this.pollOnce()
-      }, this.#pollIntervalMs)
     } catch (err: unknown) {
       this.#status = 'error'
       const authFailed = err instanceof HomeComAuthError
@@ -164,10 +158,6 @@ export class HomeComIntegrationManager {
   }
 
   async stop(): Promise<void> {
-    if (this.#pollTimer) {
-      clearInterval(this.#pollTimer)
-      this.#pollTimer = null
-    }
     this.#client = null
     this.#gatewayId = null
     this.#gateways = []
@@ -182,9 +172,14 @@ export class HomeComIntegrationManager {
     await this.start()
   }
 
-  private async pollOnce(): Promise<void> {
+  /**
+   * Read the gateway once; the core's state refresh calls it (D1062) — this
+   * manager arms no timer. A failed read is logged and thrown, so the caller
+   * (the core) sees it.
+   */
+  async poll(): Promise<void> {
     const client = this.#client
-    if (!client) return
+    if (!client) throw new Error(`HomeCom integration ${this.#id} is not connected — no refresh`)
     try {
       const snapshot = await client.fetchSystem()
       this.#surfaceSink.updateSnapshot(this.#id, snapshot)
@@ -194,6 +189,7 @@ export class HomeComIntegrationManager {
       this.#logger.warn('HomeCom poll failed', {
         meta: { integrationId: this.#id, error: errMsg(err) },
       })
+      throw err
     }
   }
 

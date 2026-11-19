@@ -90,7 +90,6 @@ function startManager(
     surfaceSink: new HomeComConnectionResolver(),
     fetchFn,
     onTokensRotated: (t) => persist(t),
-    pollIntervalMs: 3_600_000,
   })
 }
 
