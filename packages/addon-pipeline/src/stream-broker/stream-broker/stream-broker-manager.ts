@@ -8629,6 +8629,12 @@ export class StreamBrokerManager {
       brokerIdFor(deviceId, camStreamId),
       describeEffectiveEncode(built),
     )
+    if (cadence.encodeFps === null) {
+      this.logger.warn('derived encode rate unknown — no profile fps and no measured source fps', {
+        tags: { deviceId },
+        meta: { camStreamId },
+      })
+    }
     if (cadence.fpsClamped) {
       this.logger.info('derived fps clamped to the source — never upsampled', {
         tags: { deviceId },
@@ -8656,6 +8662,7 @@ export class StreamBrokerManager {
         sourceFps: sourceProbe.fps,
         sourceIdrIntervalMs: sourceProbe.idrIntervalMs,
         fpsMode: cadence.fpsMode,
+        encodeFps: cadence.encodeFps,
         outputFps: cadence.outputFps,
         gopFrames: cadence.gopFrames,
         vbvSeconds: cadence.vbvSeconds,

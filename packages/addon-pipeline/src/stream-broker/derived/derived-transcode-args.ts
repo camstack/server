@@ -192,6 +192,11 @@ export interface DerivedSourceCadence {
 /** The cadence a derived encode runs at, and the numbers behind it. */
 export interface DerivedCadence {
   readonly fpsMode: 'cfr' | 'passthrough'
+  /**
+   * The `-r` the encode carries: the profile's fps, or the measured source
+   * rate rounded; `null` only when nothing names a rate (passthrough).
+   */
+  readonly encodeFps: number | null
   /** The fps the profile asked for; `null` when it named none. */
   readonly requestedFps: number | null
   /** `true` when the request exceeded the source and the source cadence won. */
@@ -213,12 +218,28 @@ function positive(value: number | null | undefined): number | null {
 }
 
 /**
+ * A measured source rate as an integer `-r`: 20.5 from a 20 fps camera becomes
+ * 20, 24.9 becomes 25. A half rounds DOWN so the encode never upsamples.
+ */
+export function roundSourceFps(fps: number): number {
+  return Math.max(1, Math.round(fps - 0.25))
+}
+
+/**
  * Resolve the cadence of a derived encode.
  *
- * - **Frame rate.** A profile `fps` is explicit intent (`cfr`). Without one the
- *   source's cadence is passed through: ffmpeg is never asked to duplicate a
- *   20 fps source up to a guessed 30, which put an IDR every second on a
- *   400 kbps cap and starved the VBV on each one (the visible flicker).
+ * - **Frame rate.** The encoder must always be TOLD a rate. A profile `fps` is
+ *   explicit intent (`cfr`). Without one (or when it exceeds the source and is
+ *   clamped) the encode runs CFR at the measured source rate, rounded
+ *   ({@link roundSourceFps}): ffmpeg is never asked to duplicate a 20 fps
+ *   source up to a guessed 30 (an IDR every second on a 400 kbps cap starved
+ *   the VBV: the visible flicker). Bare `-fps_mode passthrough` is NOT used
+ *   when a rate is known: with a probe too small to estimate the source rate
+ *   (tbr 90k) the encoder took 90000 fps from the time base, rate control gave
+ *   each frame ~bitrate/90000 bits and the picture came out grey and blocky
+ *   (60 kbps, level 62 instead of 712 kbps, level 30). `-r` is encoder
+ *   agnostic (libx264 and every hw encoder), unlike `-x264-params fps=`. Only
+ *   with NO measured rate does it stay `passthrough` (the caller warns).
  * - **GOP.** An explicit `gopFrames` wins. Otherwise, with a measured source,
  *   the source's own IDR interval (else 2 s) in OUTPUT frames. With nothing
  *   measured the legacy second-of-frames stays.
@@ -237,6 +258,8 @@ export function resolveDerivedCadence(
     requestedFps !== null &&
     sourceFps !== null &&
     requestedFps > sourceFps * DERIVED_FPS_CLAMP_TOLERANCE
+  const sourceEncodeFps = sourceFps !== null ? roundSourceFps(sourceFps) : null
+  const encodeFps = requestedFps !== null && !fpsClamped ? requestedFps : sourceEncodeFps
   const outputFps = fpsClamped ? sourceFps : (requestedFps ?? sourceFps)
   const observed = sourceFps !== null
   const idrSeconds = Math.min(
@@ -253,8 +276,9 @@ export function resolveDerivedCadence(
       : (requestedFps ?? DERIVED_DEFAULT_GOP_FRAMES))
   const gopSeconds = gopFrames / (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
   return {
-    // A clamped request follows the source cadence (no `-r`), like no request.
-    fpsMode: video.fps !== undefined && !fpsClamped ? 'cfr' : 'passthrough',
+    // A clamped request follows the source cadence, like no request.
+    fpsMode: encodeFps !== null ? 'cfr' : 'passthrough',
+    encodeFps,
     requestedFps,
     fpsClamped,
     outputFps,
@@ -460,12 +484,12 @@ function withCarrierDefaults(
   cadence: DerivedCadence,
   bitrate: DerivedBitrate,
 ): VideoEncode {
-  const { fps, ...rest } = video
+  const { fps: _profileFps, ...rest } = video
   const bitrateKbps = bitrate.capKbps ?? undefined
   return {
     ...rest,
-    // A clamped request drops the fps: the source cadence passes through.
-    ...(fps !== undefined && !cadence.fpsClamped ? { fps } : {}),
+    // The resolved rate (profile, or the rounded measured source rate).
+    ...(cadence.encodeFps !== null ? { fps: cadence.encodeFps } : {}),
     gopFrames: cadence.gopFrames,
     bf: video.bf ?? DERIVED_DEFAULT_BF,
     preset: video.preset ?? DERIVED_DEFAULT_PRESET,

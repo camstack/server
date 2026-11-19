@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A derived stream whose camera reports no frame rate no longer comes out grey and blocky: the encoder now runs at the camera's measured frame rate.
+
 ## [1.2.670] - 2026-11-19
 
 ### Changed

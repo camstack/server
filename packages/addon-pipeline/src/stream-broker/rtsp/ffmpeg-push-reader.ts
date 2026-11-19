@@ -84,6 +84,10 @@ const AAC_LC_OBJECT_TYPE = 2
 /** Cap on retained stderr text used to annotate the terminal error message. */
 const MAX_STDERR_TAIL = 4 * 1024
 
+/** At most one live stderr log line per this interval, and its size cap. */
+const STDERR_LOG_INTERVAL_MS = 10_000
+const STDERR_LOG_MAX_CHARS = 1024
+
 /** Grace before escalating SIGTERM → SIGKILL on a lingering child. */
 const KILL_GRACE_MS = 500
 
@@ -146,6 +150,7 @@ export class FfmpegPushReader {
   private audioInfoEmitted = false
   private firstMediaSeen = false
   private stderrTail = ''
+  private lastStderrLogAt = 0
 
   /** Set once the reader has terminated (exit / error / destroy). */
   private done = false
@@ -265,7 +270,17 @@ export class FfmpegPushReader {
   }
 
   private appendStderr(chunk: Buffer): void {
-    this.stderrTail = (this.stderrTail + chunk.toString()).slice(-MAX_STDERR_TAIL)
+    const text = chunk.toString()
+    this.stderrTail = (this.stderrTail + text).slice(-MAX_STDERR_TAIL)
+    // A running child's errors (`-loglevel error`) were only ever surfaced at
+    // exit; say them live, rate-limited. The logger carries the device tags.
+    const now = Date.now()
+    if (this.logger !== undefined && now - this.lastStderrLogAt >= STDERR_LOG_INTERVAL_MS) {
+      this.lastStderrLogAt = now
+      this.logger.warn(`${this.logLabel}: ffmpeg stderr`, {
+        meta: { stderr: text.trim().slice(-STDERR_LOG_MAX_CHARS) },
+      })
+    }
   }
 
   private handleExit(code: number | null, signal: NodeJS.Signals | null): void {

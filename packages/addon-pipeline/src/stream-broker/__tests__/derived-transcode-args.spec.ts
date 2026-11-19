@@ -327,14 +327,32 @@ describe('buildDerivedTranscodeArgs — the derived encode follows the source ca
     return i === -1 ? undefined : args[i + 1]
   }
 
-  it('no fps: passes the source cadence through and emits no -r', () => {
+  it('no fps: the encoder runs CFR at the measured source rate', () => {
     const { args } = buildDerivedTranscodeArgs({
       profile: noFps,
       loopbackUrl: URL,
       sourceCadence: source,
     })
+    expect(value(args, '-fps_mode')).toBe('cfr')
+    expect(value(args, '-r')).toBe('20')
+  })
+
+  it('no fps, source measured at 20.5: the rate becomes 20, never upsampled', () => {
+    const { args, cadence } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20.5, idrIntervalMs: 4000 },
+    })
+    expect(value(args, '-r')).toBe('20')
+    expect(value(args, '-fps_mode')).toBe('cfr')
+    expect(cadence.encodeFps).toBe(20)
+  })
+
+  it('no fps and no measured source fps: passthrough, rate unknown', () => {
+    const { args, cadence } = buildDerivedTranscodeArgs({ profile: noFps, loopbackUrl: URL })
     expect(value(args, '-fps_mode')).toBe('passthrough')
     expect(args).not.toContain('-r')
+    expect(cadence.encodeFps).toBeNull()
   })
 
   it('fps 30: explicit -r 30 with cfr', () => {
@@ -406,7 +424,7 @@ describe('buildDerivedTranscodeArgs — issue 609: rate, fps and floor', () => {
     expect(value(args, '-b:v')).toBe('1600k')
   })
 
-  it('never upsamples: 60 fps from a 20 fps source follows the source, no -r', () => {
+  it('never upsamples: 60 fps from a 20 fps source runs at the source rate', () => {
     const { args, cadence } = buildDerivedTranscodeArgs({
       profile: p720({ fps: 60, bitrateKbps: 2000 }),
       loopbackUrl: URL,
@@ -415,8 +433,8 @@ describe('buildDerivedTranscodeArgs — issue 609: rate, fps and floor', () => {
     expect(cadence.fpsClamped).toBe(true)
     expect(cadence.requestedFps).toBe(60)
     expect(cadence.outputFps).toBe(20)
-    expect(args).not.toContain('-r')
-    expect(value(args, '-fps_mode')).toBe('passthrough')
+    expect(value(args, '-r')).toBe('20')
+    expect(value(args, '-fps_mode')).toBe('cfr')
     expect(value(args, '-g')).toBe('80')
   })
 
