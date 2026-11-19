@@ -113,6 +113,7 @@ describe('DreameVacuumConsumables', () => {
 
     vacuum.readings = vacuum.readings.map((r) => (r.key === 'sensor' ? { ...r, leftPct: 3 } : r))
     await vi.advanceTimersByTimeAsync(CONSUMABLES_REFRESH_MS)
+    await consumables.refreshIfDue()
     expect(vacuum.refreshConsumables).toHaveBeenCalledTimes(2)
     expect(levels().sensor).toBe(3)
     consumables.stop()
@@ -218,6 +219,18 @@ describe('DreameVacuumConsumables', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
+  it('a refresh the core asks for BEFORE a source is due reads nothing (no timer of its own)', async () => {
+    const { vacuum, consumables } = setup()
+    consumables.start()
+    await vi.advanceTimersByTimeAsync(0)
+    await consumables.refreshIfDue()
+    await vi.advanceTimersByTimeAsync(TANK_REREAD_MS - 1_000)
+    await consumables.refreshIfDue()
+    expect(vacuum.refreshConsumables).toHaveBeenCalledTimes(1)
+    expect(vi.getTimerCount()).toBe(0)
+    consumables.stop()
+  })
+
   it('a failed refresh keeps the last good values and says so with the device tag', async () => {
     const { vacuum, consumables, levels, logger } = setup()
     consumables.start()
@@ -225,6 +238,7 @@ describe('DreameVacuumConsumables', () => {
     vacuum.refreshFails = true
     vacuum.readings = [] // what a half-seeded cache could look like
     await vi.advanceTimersByTimeAsync(CONSUMABLES_REFRESH_MS)
+    await consumables.refreshIfDue()
     expect(levels()).toEqual({ 'main-brush': 90, sensor: 4, 'dust-bag': 50 })
     expect(logger.warn).toHaveBeenCalled()
     consumables.stop()
@@ -236,6 +250,7 @@ describe('DreameVacuumConsumables', () => {
     await vi.advanceTimersByTimeAsync(0)
     vacuum.readings = []
     await vi.advanceTimersByTimeAsync(CONSUMABLES_REFRESH_MS)
+    await consumables.refreshIfDue()
     expect(levels()).toEqual({ 'main-brush': 90, sensor: 4, 'dust-bag': 50 })
     expect(logger.warn).toHaveBeenCalledTimes(1)
     consumables.stop()
@@ -373,6 +388,7 @@ describe('DreameVacuumConsumables', () => {
       expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1) // the activation read
 
       await vi.advanceTimersByTimeAsync(TANK_REREAD_MS)
+      await consumables.refreshIfDue()
       expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
       const props = vacuum.refreshProperties.mock.calls[1]?.[0] ?? []
       expect(props).toHaveLength(Object.keys(VACUUM_TANK_PROPS).length)
@@ -387,6 +403,7 @@ describe('DreameVacuumConsumables', () => {
       vacuum.tankLiveFails = true
       consumables.start()
       await vi.advanceTimersByTimeAsync(TANK_REREAD_MS)
+      await consumables.refreshIfDue()
       expect(vacuum.refreshCachedProperties).toHaveBeenCalledTimes(2) // activate + tank fallback
       expect(JSON.stringify(allLogCalls(logger))).toContain('tank-status live read failed')
       consumables.stop()
@@ -465,6 +482,7 @@ describe('DreameVacuumConsumables', () => {
       consumables.start()
       consumables.stop()
       await vi.advanceTimersByTimeAsync(TANK_REREAD_MS * 3)
+      await consumables.refreshIfDue()
       expect(vacuum.refreshProperties).not.toHaveBeenCalled()
     })
   })

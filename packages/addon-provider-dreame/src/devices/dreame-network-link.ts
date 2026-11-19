@@ -13,6 +13,7 @@ import {
   type NetworkLinkStatus,
   signalPercentFromBars,
 } from '@camstack/types'
+import { isDue } from './dreame-state-refresh.js'
 
 /** Dreame draws the signal map in four bars. */
 export const DREAME_WIFI_SIGNAL_BARS = 4
@@ -60,7 +61,7 @@ export interface NetworkLinkMonitorDeps {
  * the first failure at WARN.
  */
 export class DreameNetworkLinkMonitor {
-  private timer: ReturnType<typeof setInterval> | null = null
+  private readAt = 0
   private reported = false
   private failureWarned = false
 
@@ -82,26 +83,23 @@ export class DreameNetworkLinkMonitor {
     }
   }
 
-  /** A first read now, then one every `refreshMs`. */
+  /** A first read now; the core's state refresh drives the rest (D1062). */
   start(): void {
-    this.stop()
     void this.refresh('activate')
-    this.timer = setInterval(
-      () => void this.refresh('periodic'),
-      this.deps.refreshMs ?? NETWORK_LINK_REFRESH_MS,
-    )
-    this.timer.unref?.()
   }
 
-  stop(): void {
-    if (this.timer !== null) clearInterval(this.timer)
-    this.timer = null
+  /** Read again when the last read is older than `refreshMs`; the core calls it on its schedule. */
+  async refreshIfDue(): Promise<void> {
+    const now = (this.deps.now ?? Date.now)()
+    if (!isDue(this.readAt, this.deps.refreshMs ?? NETWORK_LINK_REFRESH_MS, now)) return
+    await this.refresh('periodic')
   }
 
   async refresh(reason: 'activate' | 'periodic'): Promise<void> {
     const pending = this.deps.readBars()
     if (pending === null) return
     const now = this.deps.now ?? Date.now
+    this.readAt = now()
     try {
       const bars = await pending
       const next = networkLinkFromBars(bars, now())

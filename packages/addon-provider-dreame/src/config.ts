@@ -17,8 +17,8 @@ export type DreameRegionValue = z.infer<typeof DreameRegionSchema>
  * account). The Dreame integration is cloud-only (outbound HTTPS + per-device
  * MQTT push), so the connection is just account credentials plus a region.
  *
- * `pollIntervalMs` is the fallback poll cadence the library uses while a
- * device's MQTT push is down; `0` disables poll fallback.
+ * `pollIntervalMs` is no longer used: the library's fallback poll is off and
+ * the core's state refresh (D1062) reads each robot.
  *
  * The diagnostic catalog (enum/numeric sensors, switches, selects) is seeded
  * from the cloud SHADOW once at broker start and then tracked by the library's
@@ -35,7 +35,7 @@ export const dreameConfigSchema = z.object({
       (v) => (v === '' || v === null ? undefined : v),
       z.number().int().min(0).max(3_600_000).default(30_000),
     )
-    .describe('Poll fallback interval (ms) while MQTT push is down — 0 disables'),
+    .describe('Ignored: the core schedules every read (kept so stored settings still parse)'),
 })
 
 export type DreameConfig = z.infer<typeof dreameConfigSchema>
@@ -52,7 +52,8 @@ export function toNodreameOptions(config: DreameConfig): NodreameOptions {
     // Seed each device's property cache on start() so the typed getters resolve
     // (they return null until the first values land).
     fetchInitialValues: true,
-    pollIntervalMs: config.pollIntervalMs,
+    // The core reads the robots (D1062); the library's own fallback poll stays off.
+    pollIntervalMs: 0,
   }
 }
 

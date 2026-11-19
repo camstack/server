@@ -10,6 +10,7 @@
  * - A refresh never overlaps itself, and a failed one changes nothing (D49): the
  *   last good values stay, and the failure is logged with the device tag.
  */
+
 import {
   type ConsumableItem,
   consumablesCapability,
@@ -17,6 +18,7 @@ import {
   type InferRuntimeState,
   type IScopedLogger,
 } from '@camstack/types'
+import { isDue } from './dreame-state-refresh.js'
 
 export const CONSUMABLES_CAP_NAME = 'consumables'
 
@@ -155,7 +157,7 @@ const DEFAULT_FOLLOW_UP_MS = 60_000
 
 export class DreameConsumablesRefresher {
   readonly #deps: ConsumablesRefresherDeps
-  #interval: ReturnType<typeof setInterval> | null = null
+  #lastReadAt = 0
   #followUp: ReturnType<typeof setTimeout> | null = null
   #running: Promise<boolean> | null = null
   /** At most ONE run waits behind the one in flight. */
@@ -169,23 +171,29 @@ export class DreameConsumablesRefresher {
   /** False once stopped — the device is gone, nothing may be written for it. */
   readonly live = (): boolean => !this.#stopped
 
-  /** Arm the periodic re-read (the caller triggers the first read itself). */
+  /** Mark the refresher live (the caller triggers the first read itself). */
   start(): void {
     this.#stopped = false
-    const { intervalMs } = this.#deps
-    if (intervalMs === undefined || this.#interval !== null) return
-    this.#interval = setInterval(() => {
-      void this.trigger('interval')
-    }, intervalMs)
   }
 
   stop(): void {
     this.#stopped = true
-    if (this.#interval !== null) clearInterval(this.#interval)
     if (this.#followUp !== null) clearTimeout(this.#followUp)
-    this.#interval = null
     this.#followUp = null
     this.#queued = null
+  }
+
+  /**
+   * The core's state refresh calls this on ITS schedule (D1062): re-read only
+   * when the last read is older than `intervalMs`, so a slow source is not read
+   * at the pace of a fast one.
+   */
+  triggerIfDue(now: number): Promise<boolean> {
+    const { intervalMs } = this.#deps
+    if (intervalMs === undefined || !isDue(this.#lastReadAt, intervalMs, now)) {
+      return Promise.resolve(false)
+    }
+    return this.trigger('interval')
   }
 
   /**
@@ -211,6 +219,7 @@ export class DreameConsumablesRefresher {
     if (this.#stopped) return
     if (this.#followUp !== null) clearTimeout(this.#followUp)
     this.#followUp = setTimeout(() => {
+      // not-a-state-poll: one delayed re-read after a reset, armed by that command
       this.#followUp = null
       if (!this.#stopped) void this.trigger(reason)
     }, this.#deps.followUpMs ?? DEFAULT_FOLLOW_UP_MS)
@@ -230,6 +239,7 @@ export class DreameConsumablesRefresher {
     const { deviceId, logger, subject, read } = this.#deps
     try {
       await read(reason, this.live)
+      this.#lastReadAt = Date.now()
       // A read that outlived its device learned nothing worth a line.
       if (this.#stopped) return false
       logger.debug(`${subject}: consumables refreshed`, {

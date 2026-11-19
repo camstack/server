@@ -96,6 +96,7 @@ export class DreameReconciler {
       const result = await this.#sweep.sweep({ ownerIds, listedIds, removeDevices })
       if (result.newSuspects > 0 && this.#rerun === null) {
         this.#rerun = setTimeout(() => {
+          // not-a-state-poll: re-run of the device-list reconcile, not a state read
           this.#rerun = null
           void this.reconcile()
         }, this.#sweep.minIntervalMs + 1_000)

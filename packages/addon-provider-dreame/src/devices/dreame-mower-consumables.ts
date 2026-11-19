@@ -91,7 +91,7 @@ export class DreameMowerConsumables {
     const delayMs = this.#deps.retryDelayMs ?? CONSUMABLES_RETRY_DELAY_MS
     let lastError: unknown = null
     for (let attempt = 0; attempt <= retries; attempt++) {
-      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, delayMs))
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, delayMs)) // not-a-state-poll: retry spacing of one wake-and-read action
       // Stopped while asleep between tries: no more CMS calls for a gone device.
       if (!live()) return
       const mower = resolveMower()

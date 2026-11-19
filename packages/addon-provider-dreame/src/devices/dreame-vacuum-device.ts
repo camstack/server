@@ -17,7 +17,6 @@ import {
   clampBatteryLevel,
   clampPercent,
   decodeVacuumTanks,
-  vacuumTankItems,
   mapMiotStateToVacuumState,
   nextVacuumControlSlice,
   suctionLevelToken,
@@ -26,6 +25,7 @@ import {
   VACUUM_TANK_PROPS,
   vacuumErrorLabel,
   vacuumErrorReading,
+  vacuumTankItems,
 } from '../dreame-vacuum-decode.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 import {
@@ -34,8 +34,9 @@ import {
   type ConsumablesSlice,
   seedConsumablesColdStart,
 } from './dreame-consumables.js'
-import { DreameVacuumConsumables } from './dreame-vacuum-consumables.js'
 import { DreameNetworkLinkMonitor } from './dreame-network-link.js'
+import { registerDreameStateRefresh } from './dreame-state-refresh.js'
+import { DreameVacuumConsumables, TANK_REREAD_MS } from './dreame-vacuum-consumables.js'
 
 const CAP_NAME = 'vacuum-control'
 const RUNNING_CAP = 'running-state'
@@ -125,6 +126,16 @@ export class DreameVacuumDevice extends DreameChildDevice {
     // Consumable life %s + time-left twins + tank statuses: rarely re-pushed over
     // MQTT, so re-read from the cloud shadow now, hourly, and on the dock edge.
     this.consumables.start()
+    // Push is partial (MQTT carries the state, not the tanks, consumables or
+    // signal): the core calls this at TANK_REREAD_MS and each source keeps its age.
+    registerDreameStateRefresh({
+      ctx: this.ctx,
+      brokerId: this.brokerId,
+      minIntervalMs: TANK_REREAD_MS,
+      read: async () => {
+        await Promise.all([this.consumables.refreshIfDue(), this.networkLink.refreshIfDue()])
+      },
+    })
   }
 
   /** Consumables refresh + reset — see `DreameVacuumConsumables`. */
@@ -154,7 +165,6 @@ export class DreameVacuumDevice extends DreameChildDevice {
   }
 
   override async removeDevice(): Promise<void> {
-    this.networkLink.stop()
     this.consumables.stop()
     await super.removeDevice()
   }

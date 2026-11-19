@@ -52,6 +52,7 @@ import {
   resolveResettableKey,
   writeConsumables,
 } from './dreame-consumables.js'
+import { isDue } from './dreame-state-refresh.js'
 
 /** Hourly: a consumable moves by hours of cleaning, and the dock edge covers a run. */
 export const CONSUMABLES_REFRESH_MS = 60 * 60_000
@@ -109,7 +110,6 @@ export class DreameVacuumConsumables {
   #prevState: VacuumState | null = null
   /** Last pushed tank items; `null` until the first push after boot. */
   #tanks: readonly ConsumableItem[] | null = null
-  #tankTimer: ReturnType<typeof setInterval> | null = null
   #tankRead: Promise<void> | null = null
   #lastTankReadAt = 0
   /** Label of the tank read in flight, so the pushes it provokes are attributed to it. */
@@ -131,15 +131,24 @@ export class DreameVacuumConsumables {
   start(): void {
     this.#refresher.start()
     void this.#refresher.trigger('activate')
-    if (this.#tankTimer === null) {
-      this.#tankTimer = setInterval(() => void this.#rereadTanks('interval'), TANK_REREAD_MS)
-    }
+  }
+
+  /**
+   * The core's state refresh (D1062): the tank props every {@link TANK_REREAD_MS},
+   * the consumables every {@link CONSUMABLES_REFRESH_MS}, each by its own age.
+   */
+  async refreshIfDue(): Promise<void> {
+    const now = Date.now()
+    await Promise.all([
+      this.#refresher.triggerIfDue(now),
+      isDue(this.#lastTankReadAt, TANK_REREAD_MS, now)
+        ? this.#rereadTanks('interval')
+        : Promise.resolve(),
+    ])
   }
 
   stop(): void {
     this.#refresher.stop()
-    if (this.#tankTimer !== null) clearInterval(this.#tankTimer)
-    this.#tankTimer = null
   }
 
   /**

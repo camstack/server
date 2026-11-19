@@ -6,8 +6,6 @@ import { DreameCameraStream, VacuumDevice as DreameVacuum } from '@apocaliss92/n
 import {
   type BatteryStatus,
   batteryCapability,
-  lowPowerSleepCapability,
-  sleepSliceOfBattery,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   createEvent,
@@ -17,6 +15,7 @@ import {
   errMsg,
   hydrateSchema,
   type InferNativeProvider,
+  lowPowerSleepCapability,
   type NavigationFeatures,
   type NavigationRuntimeState,
   type NavigationStatus,
@@ -24,6 +23,7 @@ import {
   networkLinkCapability,
   type RecordingSignalRuntimeState,
   recordingSignalCapability,
+  sleepSliceOfBattery,
   streamCatalogCapability,
   type VacuumState,
 } from '@camstack/types'
@@ -40,7 +40,6 @@ import {
   WAKE_TIMEOUT_MS,
 } from './dreame-camera-stream.js'
 import { DreameChildDevice } from './dreame-child-device.js'
-import { classifyPinRefusal, PinAttention } from './dreame-pin-attention.js'
 import {
   actionCall,
   type ControllerCall,
@@ -59,10 +58,12 @@ import {
   resolveNavigationFeatures,
 } from './dreame-navigation-config.js'
 import { decodeFollowing, decodeNavigationReadback } from './dreame-navigation-status.js'
-import { DreameNetworkLinkMonitor } from './dreame-network-link.js'
+import { DreameNetworkLinkMonitor, NETWORK_LINK_REFRESH_MS } from './dreame-network-link.js'
+import { classifyPinRefusal, PinAttention } from './dreame-pin-attention.js'
 import { seedDeviceDecisionRecording } from './dreame-recording-seed.js'
 import { RECORDING_SIGNAL_COLD_START, recordingSignalSlice } from './dreame-recording-signal.js'
 import { type FeedLoss, type RfcServerInfo, startRfc4571Server } from './dreame-rfc4571-server.js'
+import { registerDreameStateRefresh } from './dreame-state-refresh.js'
 
 const CAP_NAME = 'navigation'
 
@@ -235,6 +236,12 @@ export class DreameCameraDevice extends DreameChildDevice {
     this.ctx.registerNativeCap(networkLinkCapability, this.networkLink.provider())
     this.networkLink.seed()
     this.networkLink.start()
+    registerDreameStateRefresh({
+      ctx: this.ctx,
+      brokerId: this.brokerId,
+      minIntervalMs: NETWORK_LINK_REFRESH_MS,
+      read: () => this.networkLink.refreshIfDue(),
+    })
     this.registerStreamCatalogCap()
     this.registerRecordingSignalCap()
     // Once, ever: a camera that can ask to be recorded and is configured by
@@ -512,7 +519,7 @@ export class DreameCameraDevice extends DreameChildDevice {
       () => 'failed' as const,
     )
     const bound = new Promise<'timeout'>((resolve) => {
-      const timer = setTimeout(() => resolve('timeout'), timeoutMs)
+      const timer = setTimeout(() => resolve('timeout'), timeoutMs) // not-a-state-poll: wake wait bound for a stream open
       timer.unref?.()
     })
     const outcome = await Promise.race([opened, bound])
@@ -662,6 +669,7 @@ export class DreameCameraDevice extends DreameChildDevice {
   private armMaxDuration(): void {
     if (this.maxTimer !== null) clearTimeout(this.maxTimer)
     this.maxTimer = setTimeout(() => {
+      // not-a-state-poll: recording max-duration cut
       this.onMaxDuration()
     }, MAX_STREAM_MS)
     this.maxTimer.unref?.()
@@ -932,7 +940,6 @@ export class DreameCameraDevice extends DreameChildDevice {
 
   override async removeDevice(): Promise<void> {
     await super.removeDevice()
-    this.networkLink.stop()
     this.unsubscribeRefresh?.()
     this.unsubscribeRefresh = null
     await this.closeStream('removed')

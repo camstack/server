@@ -132,7 +132,7 @@ describe('DreameConsumablesRefresher', () => {
     vi.useRealTimers()
   })
 
-  it('re-reads on the interval and stops when told', async () => {
+  it('re-reads only when the core asks AND the last read is older than the interval', async () => {
     const read = vi.fn(async () => {})
     const r = new DreameConsumablesRefresher({
       deviceId: 7,
@@ -142,12 +142,19 @@ describe('DreameConsumablesRefresher', () => {
       intervalMs: 60_000,
     })
     r.start()
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(180_000)
+    expect(read).not.toHaveBeenCalled() // no timer of its own
+    await r.triggerIfDue(Date.now())
     expect(read).toHaveBeenCalledTimes(1)
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await r.triggerIfDue(Date.now())
+    expect(read).toHaveBeenCalledTimes(1) // not due yet
+    await vi.advanceTimersByTimeAsync(30_000)
+    await r.triggerIfDue(Date.now())
     expect(read).toHaveBeenCalledTimes(2)
     r.stop()
     await vi.advanceTimersByTimeAsync(180_000)
+    await r.triggerIfDue(Date.now())
     expect(read).toHaveBeenCalledTimes(2)
   })
 

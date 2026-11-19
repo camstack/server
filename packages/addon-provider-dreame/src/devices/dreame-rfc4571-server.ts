@@ -126,7 +126,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> 
   return Promise.race([
     p,
     new Promise<T>((_, reject) => {
-      const t = setTimeout(() => reject(new Error(message)), ms)
+      const t = setTimeout(() => reject(new Error(message)), ms) // not-a-state-poll: request timeout
       t.unref?.()
     }),
   ])
@@ -248,7 +248,7 @@ export async function startRfc4571Server(params: StartRfcServerParams): Promise<
   await Promise.race([
     firstAudio.promise,
     new Promise<void>((resolve) => {
-      const t = setTimeout(resolve, audioGraceMs)
+      const t = setTimeout(resolve, audioGraceMs) // not-a-state-poll: audio grace wait
       t.unref?.()
     }),
   ])
@@ -327,6 +327,7 @@ export async function startRfc4571Server(params: StartRfcServerParams): Promise<
       logger.debug('rfc4571: consumer disconnected', { meta: { active: liveClients } })
       if (liveClients === 0 && !toreDown) {
         idleTimer = setTimeout(() => {
+          // not-a-state-poll: stream idle cut
           if (liveClients === 0 && !toreDown) {
             toreDown = true
             onConsumerDisconnect()
@@ -346,6 +347,7 @@ export async function startRfc4571Server(params: StartRfcServerParams): Promise<
   // Allocation-free stall watch: the frame path stamps a clock, one sweep
   // reads it (the broker's own pattern for its RTP activity watchdog).
   const stallSweep = setInterval(
+    // not-a-state-poll: media stall watch, not device state
     () => {
       if (toreDown) return
       // Audio that dies while the video keeps going is NOT a lost relay — the
