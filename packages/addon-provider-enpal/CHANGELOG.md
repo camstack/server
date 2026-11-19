@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Enpal sensors that only repeated values already shown on the Energy system device (production, battery, grid, house, heat pump) are no longer created, and existing ones are removed.
+- The Enpal PV, battery, grid, house and heat-pump power and energy sensor devices are removed, together with their history, because the same values live on the Energy system device; new integrations no longer create them.
 
 ## [0.1.27] - 2026-11-19
 

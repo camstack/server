@@ -16,6 +16,7 @@ import {
 import { ENPAL_LEGACY_CONSUMPTION_NAME } from '../enpal-catalog.js'
 import { renameLegacyCatalogDevices } from './enpal-catalog-rename.js'
 import { enpalConnections } from '../enpal-resolver.js'
+import { armRetireReprobe } from './enpal-retire-reprobe.js'
 import { registerEnpalStateRefresh } from './enpal-state-refresh.js'
 import { EnpalMetadataSync, enpalIdentifiers } from './enpal-metadata-sync.js'
 import { backfillPrimaryChildPreference } from './enpal-preference-backfill.js'
@@ -37,6 +38,7 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
   private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
   private stopStateRefresh: (() => void) | null = null
+  private stopRetireReprobe: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = enpalEquipmentSchema.parse(ctx.persistedConfig ?? {})
@@ -87,6 +89,13 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
       void metadata.apply()
     })
     await metadata.apply()
+    this.stopRetireReprobe ??= armRetireReprobe({
+      deviceId: this.id,
+      hasSnapshot: () => enpalConnections.getSnapshot(this.integrationId) !== null,
+      onSnapshot: (listener) => enpalConnections.onSnapshot(this.integrationId, listener),
+      reprobe: () => this.reprobe(),
+      logger: this.ctx.logger,
+    })
   }
 
   /**
@@ -138,6 +147,8 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
     this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
+    this.stopRetireReprobe?.()
+    this.stopRetireReprobe = null
     await super.removeDevice()
   }
 
