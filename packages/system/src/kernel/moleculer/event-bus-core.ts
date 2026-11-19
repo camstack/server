@@ -10,7 +10,8 @@
  * of logic (deny-list, subscriber map, filter semantics) without pulling in
  * Moleculer types.
  */
-import { noiseEventCategories, type EventFilter, type SystemEvent } from '@camstack/types'
+import type { EventFilter, SystemEvent } from '@camstack/types'
+import { noiseEventCategories } from '@camstack/types/enums'
 import type { DeviceEventRings } from './device-event-ring.js'
 import { createDeviceEventRings, recordDeviceEvent } from './device-event-ring.js'
 
