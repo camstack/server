@@ -23,13 +23,13 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
+  DeviceFeature,
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
 import {
   BaseDevice,
   createRuntimeStateBridge,
-  DeviceFeature,
   DeviceType,
   hydrateSchema,
   type MotionTriggerRuntimeState,
@@ -39,24 +39,24 @@ import {
   type SirenOptions,
   type SirenPlaysActivation,
   type SirenStatus,
+  type SwitchStatus,
   sirenCapability,
   sirenIdleStatus,
   sirenPlayChoices,
   sirenTriggeredStatus,
-  type SwitchStatus,
   sleep,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
 import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
-import { sirenPlayDuration } from './siren-play-duration.js'
 import {
   buildReolinkSirenOptions,
   DEFAULT_SECONDS_PER_PLAY,
   playsForSeconds,
   secondsForPlays,
 } from './siren-options.js'
+import { sirenPlayDuration } from './siren-play-duration.js'
 
 /** Detection-class combinations the Reolink firmware accepts for the
  *  siren-on-motion `typeScheduleList`. Mirrors `motion-floodlight`
@@ -115,7 +115,8 @@ const STALE_MS = 30_000
 const COOLDOWN_MS = 15_000
 
 export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
-  readonly features = [DeviceFeature.MotionTrigger]
+  /** Nothing reported: the kernel derives this device's features from its bound caps (#459). */
+  readonly features: readonly DeviceFeature[] = []
 
   private lastSetAtMs = 0
   /** Clears the `siren` slice when a timed activation runs out. */

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Siren and floodlight no longer hand-set the motion-trigger feature; it follows the bound cap
+
 ## [1.2.247] - 2026-11-19
 
 ### Fixed

@@ -22,6 +22,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
+  DeviceFeature,
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
@@ -73,7 +74,8 @@ export type PirAccessoryConfig = z.infer<typeof pirAccessorySchema>
 const COOLDOWN_MS = 15_000
 
 export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
-  readonly features = []
+  /** Nothing reported: the kernel derives this device's features from its bound caps (#459). */
+  readonly features: readonly DeviceFeature[] = []
 
   private lastSetAtMs = 0
   /** Becomes `true` after the first successful `refreshFromFirmware`

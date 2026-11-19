@@ -32,12 +32,12 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
+  DeviceFeature,
   InferNativeProvider,
 } from '@camstack/types'
 import {
   BaseDevice,
   createRuntimeStateBridge,
-  DeviceFeature,
   DeviceType,
   hydrateSchema,
   type MotionTriggerRuntimeState,
@@ -46,11 +46,11 @@ import {
   planSirenTrigger,
   type SirenOptions,
   type SirenStatus,
+  type SwitchStatus,
   sirenCapability,
   sirenIdleStatus,
   sirenPlayChoices,
   sirenTriggeredStatus,
-  type SwitchStatus,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -92,7 +92,8 @@ export interface HikvisionSirenHost extends HikvisionAccessoryHost {
 const MOTION_TRIGGER_STALE_MS = 30_000
 
 export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
-  readonly features = [DeviceFeature.MotionTrigger]
+  /** Nothing reported: the kernel derives this device's features from its bound caps (#459). */
+  readonly features: readonly DeviceFeature[] = []
 
   /** Pending auto-release timer fired after `pulseDurationMs`. */
   private pulseTimer: ReturnType<typeof setTimeout> | null = null

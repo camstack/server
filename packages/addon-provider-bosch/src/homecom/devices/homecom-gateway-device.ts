@@ -1,5 +1,5 @@
+import { BaseDevice, type DeviceContext, type DeviceFeature, DeviceType } from '@camstack/types'
 import { z } from 'zod'
-import { BaseDevice, type DeviceContext, DeviceType } from '@camstack/types'
 import { homeComConnections } from '../homecom-gateway.js'
 
 export const homeComGatewaySchema = z.object({
@@ -19,7 +19,8 @@ export const homeComGatewaySchema = z.object({
  * children of it; each is adopted as its own top-level device of the same integration.
  */
 export class HomeComGatewayDevice extends BaseDevice<typeof homeComGatewaySchema> {
-  readonly features = [] as const
+  /** Nothing reported: the kernel derives this device's features from its bound caps (#459). */
+  readonly features: readonly DeviceFeature[] = []
 
   constructor(ctx: DeviceContext) {
     const cfg = homeComGatewaySchema.parse(ctx.persistedConfig ?? {})

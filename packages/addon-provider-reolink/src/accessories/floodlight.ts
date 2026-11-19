@@ -22,6 +22,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
+  DeviceFeature,
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
@@ -30,7 +31,6 @@ import {
   type BrightnessStatus,
   brightnessCapability,
   createRuntimeStateBridge,
-  DeviceFeature,
   DeviceType,
   hydrateSchema,
   type MotionTriggerRuntimeState,
@@ -99,7 +99,8 @@ const STALE_MS = 30_000
 const COOLDOWN_MS = 15_000
 
 export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySchema> {
-  readonly features = [DeviceFeature.MotionTrigger]
+  /** Nothing reported: the kernel derives this device's features from its bound caps (#459). */
+  readonly features: readonly DeviceFeature[] = []
 
   /** Wall-clock ms of the last operator-driven setState/setBrightness
    *  /setMotionTrigger. Read by the parent's align loop via the
