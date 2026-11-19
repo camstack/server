@@ -33,8 +33,7 @@ interface Registration {
   readonly policy: StateRefreshPolicy | undefined
 }
 
-function rig(registrations: Registration[]): DeviceContext {
-  let runtime: IDeviceRuntimeState | null = null
+function silentLogger(): IScopedLogger {
   const logger: IScopedLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -43,6 +42,15 @@ function rig(registrations: Registration[]): DeviceContext {
     child: () => logger,
     withTags: () => logger,
   }
+  return logger
+}
+
+function rig(
+  registrations: Registration[],
+  unregistered: string[] = [],
+  logger: IScopedLogger = silentLogger(),
+): DeviceContext {
+  let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object and there is no typed fake of it; the spec supplies
   // only what the Gateway device reads (the same boundary as the identity spec).
   return {
@@ -78,6 +86,9 @@ function rig(registrations: Registration[]): DeviceContext {
         runtime.installCapSchema(cap.name, cap.runtimeState)
       }
     },
+    unregisterNativeCap: (capName: string) => {
+      unregistered.push(capName)
+    },
     api: { deviceManager: { setIdentifiers: { mutate: vi.fn(async () => {}) } } },
     logger,
   } as unknown as DeviceContext
@@ -106,6 +117,35 @@ describe('Ecowitt device-state-refresh (D1062)', () => {
       batch: true,
       push: 'none',
     })
+  })
+
+  it('a settings change re-registers the policy with the new poll interval', async () => {
+    const local = (pollIntervalMs: number) =>
+      settingsToEcowittConfig({ transport: 'local', host: '192.0.2.7', pollIntervalMs })
+    ecowittConnections.set('e1', local(90_000))
+    const registrations: Registration[] = []
+    const unregistered: string[] = []
+    await new EcowittGatewayDevice(rig(registrations, unregistered)).onActivate()
+
+    ecowittConnections.set('e1', local(300_000))
+
+    const policies = registrations
+      .filter((r) => r.cap === deviceStateRefreshCapability)
+      .map((r) => r.policy?.intervalMs)
+    expect(policies).toEqual([90_000, 300_000])
+    expect(unregistered).toEqual([deviceStateRefreshCapability.name])
+  })
+
+  it('with no connection known it refreshes at the library default, not the 1 s floor, and says so', async () => {
+    const registrations: Registration[] = []
+    const logger = silentLogger()
+    await new EcowittGatewayDevice(rig(registrations, [], logger)).onActivate()
+    const refresh = registrations.find((r) => r.cap === deviceStateRefreshCapability)
+    expect(refresh?.policy?.intervalMs).toBe(60_000)
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('library default'),
+      expect.objectContaining({ tags: { deviceId: 21 } }),
+    )
   })
 
   it('a refresh reaches the live facade one-shot read, and fails loudly with no facade', async () => {

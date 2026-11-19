@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Ecowitt gateways are read by the core's scheduled state refresh (your poll interval still slows it) instead of a library timer; needs @apocaliss92/nodewitt 1.5.0.
+- A changed poll interval now re-schedules the gateway refresh, and an unknown connection refreshes every 60 s instead of every second
 
 ## [0.2.172] - 2026-11-18
 

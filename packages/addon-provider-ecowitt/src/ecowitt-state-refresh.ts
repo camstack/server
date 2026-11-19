@@ -13,6 +13,7 @@ import {
   type DeviceContext,
   deviceStateRefreshCapability,
   type InferNativeProvider,
+  type IScopedLogger,
   type StateRefreshPolicy,
 } from '@camstack/types'
 import type { EcowittConfig } from './config.js'
@@ -21,11 +22,20 @@ import type { EcowittFacadeResolver } from './ecowitt-gateway.js'
 /** The core's own floor for this provider; the operator's poll interval rides on top. */
 export const ECOWITT_MIN_REFRESH_INTERVAL_MS = 1_000
 
+/** The library's own live-data interval: the cadence when no connection is known (yet). */
+export const ECOWITT_DEFAULT_POLL_INTERVAL_MS = 60_000
+
+/** The policy for a gateway; an unknown connection reads at the library default, never at the floor. */
 export function ecowittRefreshPolicy(
   integrationId: string,
   connection: EcowittConfig | null,
 ): StateRefreshPolicy {
-  const operatorMs = connection?.transport === 'local' ? connection.pollIntervalMs : undefined
+  const operatorMs =
+    connection === null
+      ? ECOWITT_DEFAULT_POLL_INTERVAL_MS
+      : connection.transport === 'local'
+        ? connection.pollIntervalMs
+        : undefined
   return {
     integrationId,
     minIntervalMs: ECOWITT_MIN_REFRESH_INTERVAL_MS,
@@ -35,15 +45,28 @@ export function ecowittRefreshPolicy(
   }
 }
 
+/** Where the integration's running connection is read, and when it changes. */
+export interface EcowittConnectionSource {
+  get(integrationId: string): EcowittConfig | null
+  onChange(integrationId: string, cb: () => void): () => void
+}
+
 export interface EcowittStateRefreshTarget {
-  readonly ctx: Pick<DeviceContext, 'registerNativeCap'>
+  readonly ctx: Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>
+  readonly logger: Pick<IScopedLogger, 'info'>
+  readonly deviceId: number
   readonly integrationId: string
   readonly gatewayId: string
   readonly facades: Pick<EcowittFacadeResolver, 'get'>
-  readonly connection: EcowittConfig | null
+  readonly connections: EcowittConnectionSource
 }
 
-export function registerEcowittStateRefresh(target: EcowittStateRefreshTarget): void {
+/**
+ * Register the gateway refresh. The policy is static per registration, so it is registered
+ * again when the integration's connection changes (a new poll interval, a rebuilt client).
+ * Returns the cleanup.
+ */
+export function registerEcowittStateRefresh(target: EcowittStateRefreshTarget): () => void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
       const facade = target.facades.get(target.gatewayId)
@@ -53,7 +76,24 @@ export function registerEcowittStateRefresh(target: EcowittStateRefreshTarget): 
     },
     resubscribe: async () => ({ ok: true }),
   }
-  target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: ecowittRefreshPolicy(target.integrationId, target.connection),
-  })
+  let registered: StateRefreshPolicy | null = null
+  const register = (): void => {
+    const connection = target.connections.get(target.integrationId)
+    const policy = ecowittRefreshPolicy(target.integrationId, connection)
+    if (connection === null) {
+      target.logger.info(
+        'ecowitt: no connection known, refreshing at the library default interval',
+        {
+          tags: { deviceId: target.deviceId },
+          meta: { intervalMs: ECOWITT_DEFAULT_POLL_INTERVAL_MS },
+        },
+      )
+    }
+    if (registered !== null && registered.intervalMs === policy.intervalMs) return
+    if (registered !== null) target.ctx.unregisterNativeCap?.(deviceStateRefreshCapability.name)
+    registered = policy
+    target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, { stateRefresh: policy })
+  }
+  register()
+  return target.connections.onChange(target.integrationId, register)
 }

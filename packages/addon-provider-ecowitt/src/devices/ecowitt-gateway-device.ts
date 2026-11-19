@@ -43,6 +43,7 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   private lastIdentityKey: string | null = null
   /** The "MAC unknown" reason is logged once, until a read succeeds. */
   private macUnknownLogged = false
+  private stopStateRefresh: () => void = () => undefined
   /** `onActivate` ran: before it, an online flip from the constructor does no I/O. */
   private activated = false
   /** One MAC read per client start: a second flip while one runs does not start another. */
@@ -58,16 +59,24 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
     void this.updateSourceInfo({ id: cfg.gatewayId, system: ECOWITT_SYSTEM })
   }
 
+  override async removeDevice(): Promise<void> {
+    this.stopStateRefresh()
+    await super.removeDevice()
+  }
+
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.activated = true
     // The gateway is polled, never pushed to: the core schedules the reads (D1062).
-    registerEcowittStateRefresh({
+    this.stopStateRefresh()
+    this.stopStateRefresh = registerEcowittStateRefresh({
       ctx: this.ctx,
+      logger: this.ctx.logger,
+      deviceId: this.id,
       integrationId: this.integrationId,
       gatewayId: this.gatewayId,
       facades: ecowittFacades,
-      connection: ecowittConnections.get(this.integrationId),
+      connections: ecowittConnections,
     })
     // Fire-and-forget: the probe may wait 1.5 s, activation does not.
     if (this.online) this.startGatewayConnected()

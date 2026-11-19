@@ -24,15 +24,36 @@ interface EcowittClientEntry {
 /** The connection each running integration dials, for the Gateway device's admin link. */
 class EcowittConnections {
   readonly #byIntegration = new Map<string, EcowittConfig>()
+  readonly #subscribers = new Map<string, Set<() => void>>()
   set(integrationId: string, connection: EcowittConfig | null): void {
     if (connection === null) this.#byIntegration.delete(integrationId)
     else this.#byIntegration.set(integrationId, connection)
+    for (const cb of this.#subscribers.get(integrationId) ?? []) {
+      try {
+        cb()
+      } catch {
+        // best-effort — one bad subscriber must not starve the others
+      }
+    }
+  }
+  /** Hear every change of an integration's connection; returns the unsubscribe. */
+  onChange(integrationId: string, cb: () => void): () => void {
+    let set = this.#subscribers.get(integrationId)
+    if (set === undefined) {
+      set = new Set()
+      this.#subscribers.set(integrationId, set)
+    }
+    set.add(cb)
+    return () => {
+      this.#subscribers.get(integrationId)?.delete(cb)
+    }
   }
   get(integrationId: string): EcowittConfig | null {
     return this.#byIntegration.get(integrationId) ?? null
   }
   clear(): void {
     this.#byIntegration.clear()
+    this.#subscribers.clear()
   }
 }
 
