@@ -43,6 +43,13 @@ const SKIPPED: readonly string[] = [
   'packages/system/src/builtins/device-manager/device-row-store.ts',
   'packages/system/src/kernel/config-manager.ts',
   'packages/system/src/kernel/moleculer/device-cap-proxy.ts',
+  // Readers and projections, not drivers.
+  'packages/addon-export-hap/src/reconcile/accessory-shape.ts', // normalises a shape key's inputs; copies the device's features, sets none
+  'packages/ui-library/src/composites/device-card/connected/fan-model.ts', // a destructured prop default in a card model
+  // `features` here are COMPOSITION features (customize catalog entries), not DeviceFeature.
+  'packages/system/src/builtins/core-blocks/composition-api.ts',
+  'packages/system/src/builtins/core-blocks/core-blocks.addon.ts',
+  'packages/system/src/builtins/core-blocks/link-contributions.ts',
 ]
 
 /** Lines still hand-setting features, per file. Lower a number in the commit that removes the hit. */
@@ -59,7 +66,6 @@ export const PINS: Readonly<Record<string, number>> = {
   'packages/addon-provider-esphome/src/devices/esp-child-device.ts': 1,
   'packages/addon-provider-gree/src/devices/gree-ac-device.ts': 2,
   'packages/addon-provider-hikvision/src/accessories/light.ts': 1,
-  'packages/addon-provider-hikvision/src/accessories/siren.ts': 1,
   'packages/addon-provider-hikvision/src/hikvision-camera.ts': 2,
   'packages/addon-provider-homeassistant/src/devices/ha-container-device.ts': 1,
   'packages/addon-provider-homeassistant/src/ha-base-child-device.ts': 3,
@@ -70,12 +76,9 @@ export const PINS: Readonly<Record<string, number>> = {
   'packages/addon-provider-onvif/src/onvif-camera.ts': 1,
   'packages/addon-provider-petkit/src/devices/petkit-feeder-device.ts': 1,
   'packages/addon-provider-rademacher/src/devices/rademacher-cover-device.ts': 3,
-  'packages/addon-provider-reolink/src/accessories/floodlight.ts': 1,
-  'packages/addon-provider-reolink/src/accessories/pir.ts': 1,
-  'packages/addon-provider-reolink/src/accessories/siren.ts': 1,
   'packages/addon-provider-reolink/src/reolink-camera.ts': 1,
   'packages/addon-provider-rtsp/src/rtsp-camera.ts': 1,
-  'packages/addon-provider-unifi/src/unifi-mapping.ts': 9,
+  'packages/addon-provider-unifi/src/unifi-mapping.ts': 6,
   'packages/addon-provider-velux/src/devices/velux-window-device.ts': 1,
   'packages/addon-provider-wyze/src/wyze-camera.ts': 1,
   'packages/system/src/builtins/composer/composed-device.ts': 4,

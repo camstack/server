@@ -266,7 +266,8 @@ stage_begin
 if npx tsx scripts/check-vitest-max-workers.ts \
   && npx tsx scripts/check-no-tsc6-typecheck.ts \
   && npx tsx scripts/check-action-block-importers.ts \
-  && npx tsx scripts/check-secret-fields-declared.ts; then
+  && npx tsx scripts/check-secret-fields-declared.ts \
+  && npx tsx scripts/check-no-hand-set-features.ts; then
   LOAD_GUARDS_RESULT="ok"
 else
   LOAD_GUARDS_RESULT="RED"
