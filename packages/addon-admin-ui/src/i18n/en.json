@@ -10738,7 +10738,6 @@
         "playsLabel": "Plays",
         "durationLabel": "Duration",
         "soundFor": "Sound for",
-        "onMotion": "Sound on motion",
         "defaultDuration": "Default duration",
         "defaultPlays": "Default plays",
         "optionsUnavailable": "Options unavailable"
