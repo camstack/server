@@ -39,6 +39,8 @@ describe('check-no-provider-poll-loops (D1062)', () => {
   it('exempts a timer that names why it is not a state poll, and only that', () => {
     const marked = `this.#hb = setInterval(ping, 5000) // not-a-state-poll: connection keepalive\n`
     expect(findProviderPollLoops(file(REL, marked))).toEqual([])
+    const below = `const t = setTimeout(() => {\n  // not-a-state-poll: request deadline\n  abort()\n}, 5000)\n`
+    expect(findProviderPollLoops(file(REL, below))).toEqual([])
     const bare = `this.#hb = setInterval(ping, 5000) // not-a-state-poll:\n`
     expect(findProviderPollLoops(file(REL, bare))).toHaveLength(1)
   })

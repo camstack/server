@@ -32,7 +32,7 @@ const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollL
 
 /**
  * A timer that is not a state poll (a connection heartbeat, a request deadline, a
- * debounce) says so on its own line: `// not-a-state-poll: <why>`. The reason is
+ * debounce) says so on its own line or the line below: `// not-a-state-poll: <why>`. The reason is
  * required; the marker without one does not exempt.
  */
 const EXEMPT = /\/\/\s*not-a-state-poll:\s*\S/
@@ -80,8 +80,11 @@ export function findProviderPollLoops(
 ): PollLoopFinding[] {
   const findings: PollLoopFinding[] = []
   for (const { rel, content } of files) {
-    for (const [i, text] of content.split('\n').entries()) {
-      if (isCommentLine(text) || EXEMPT.test(text)) continue
+    const lines = content.split('\n')
+    for (const [i, text] of lines.entries()) {
+      if (isCommentLine(text)) continue
+      // The formatter may move a trailing comment onto the next line, so the marker counts there too.
+      if (EXEMPT.test(text) || EXEMPT.test(lines[i + 1] ?? '')) continue
       if (LOOP.test(text)) findings.push({ file: rel, line: i + 1, text: text.trim() })
     }
   }
