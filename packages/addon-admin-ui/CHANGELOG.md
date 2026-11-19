@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.708] - 2026-11-19
+
 ### Changed
 
 - Automation and action run detail lists every condition with what it read against what it expected, shows a failed step's real error in an alert box, and shows one row per run when a hold pending row and its run were both recorded.
