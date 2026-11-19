@@ -10,7 +10,7 @@
  * of logic (deny-list, subscriber map, filter semantics) without pulling in
  * Moleculer types.
  */
-import type { EventFilter, SystemEvent } from '@camstack/types'
+import { noiseEventCategories, type EventFilter, type SystemEvent } from '@camstack/types'
 import type { DeviceEventRings } from './device-event-ring.js'
 import { createDeviceEventRings, recordDeviceEvent } from './device-event-ring.js'
 
@@ -261,43 +261,13 @@ export function matchesEventFilter(
  * meaningful events (motion / phase transitions / device lifecycle / addon
  * lifecycle / recording / detection.event) survive in the last-N window without
  * being displaced by per-frame noise.
+ *
+ * Derived from the `noise` flag of `EVENT_CATEGORY_CATALOG` (`@camstack/types`):
+ * the catalogue is the one place a category is classified as telemetry. To deny
+ * a category, mark it `noise` there. (The admin events tab keeps its own, smaller
+ * default-hidden list on purpose: it still shows `motion.on-motion-changed`.)
  */
-export const RING_BUFFER_DENY_PATTERNS: readonly string[] = [
-  'pipeline.camera-metrics-snapshot',
-  'pipeline.runner-load-snapshot',
-  'pipeline.engine-metrics-snapshot',
-  'pipeline.inference-result',
-  'pipeline.trace',
-  'pipeline.progress',
-  'stream-broker.metrics-snapshot',
-  'metrics.node-resources-snapshot',
-  'metrics.node-processes-snapshot',
-  'cluster.topology-snapshot',
-  'detection.motion-analysis',
-  'detection.motion-zones-raw',
-  'detection.result',
-  'pipeline.audio-inference-result',
-  'platform-probe.phase',
-  'benchmark.progress',
-  'model.download.progress',
-  // High-frequency per-frame / per-track analytics + raw motion toggles —
-  // these were the dominant contributors to the unbounded recent[] leak.
-  'pipeline-analytics.frame-tracked',
-  'pipeline-analytics.detection-event',
-  'pipeline-analytics.track-started',
-  'pipeline-analytics.track-ended',
-  'motion.on-motion-changed',
-  // A camera's RAW onboard motion push (D673), re-emitted at ~1 Hz by some
-  // providers: the same noise `motion.on-motion-changed` was before the split.
-  'provider.motion',
-  // The broker state mirror (Home Assistant entity states, ~64 000/day): the
-  // only readers are live subscribers (the HA child devices), which the deny
-  // list never gates — nothing reads it back out of the ring.
-  'broker.message',
-  // `device.state-changed` is intentionally NOT denied (audit-grade) — the
-  // MAX_RECENT_EVENTS length cap in `deliverShared` bounds it instead.
-  'capability.binding-changed',
-]
+export const RING_BUFFER_DENY_PATTERNS: readonly string[] = noiseEventCategories()
 
 /**
  * Hard cap on the `recent[]` buffer size. Even audit-grade categories that

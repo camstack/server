@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Unit preparation no longer throws on a command step with no action chosen yet
+- Every event category now has a catalogue entry (group, English and Italian label, noise and deprecated flags); the event-ring deny list is derived from it
 
 ## [1.2.602] - 2026-11-19
 

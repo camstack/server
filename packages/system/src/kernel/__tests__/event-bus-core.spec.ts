@@ -1,9 +1,15 @@
-import type { SystemEvent } from '@camstack/types'
+import {
+  EVENT_CATEGORY_CATALOG,
+  EventCategory,
+  noiseEventCategories,
+  type SystemEvent,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   createSharedBusState,
   deliverShared,
   isHighFrequencyCategory,
+  RING_BUFFER_DENY_PATTERNS,
 } from '../moleculer/event-bus-core.js'
 
 function makeEvent(category: string, seq: number): SystemEvent {
@@ -108,5 +114,16 @@ describe('event-bus-core deliverShared — one-shot vs retaining bus', () => {
     expect(received.length).toBe(1)
     // …but it was not retained in the ring.
     expect(state.recent.length).toBe(0)
+  })
+})
+
+describe('ring-buffer deny list is derived from the event-category catalogue', () => {
+  it('denies exactly the categories the catalogue marks noise', () => {
+    expect([...RING_BUFFER_DENY_PATTERNS].toSorted()).toEqual([...noiseEventCategories()])
+  })
+
+  it('a category the catalogue does not mark noise is retained', () => {
+    expect(EVENT_CATEGORY_CATALOG[EventCategory.DeviceStateChanged].noise).toBe(false)
+    expect(isHighFrequencyCategory(EventCategory.DeviceStateChanged)).toBe(false)
   })
 })

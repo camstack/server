@@ -1742,6 +1742,18 @@ export {
   OWNER_ONLY_EVENT_CATEGORIES,
   publicEventCategories,
 } from './enums/event-category.js'
+export {
+  catalogedEventCategories,
+  EVENT_CATEGORY_CATALOG,
+  EVENT_CATEGORY_GROUPS,
+  noiseEventCategories,
+  offerableEventCategories,
+} from './enums/event-category-catalog.js'
+export type {
+  EventCategoryEntry,
+  EventCategoryGroup,
+  EventCategoryLabel,
+} from './enums/event-category-catalog.js'
 // Enums
 export * from './enums/index.js'
 export type {
