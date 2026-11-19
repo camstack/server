@@ -90,34 +90,7 @@ export interface GreeColumnReader {
   requestColumns(cols: string[]): Promise<Record<string, number>>
 }
 
-/**
- * Read the extra columns now and then every `intervalMs`. One read in flight at a
- * time; a failed read is reported and the next tick tries again. Returns the stop.
- */
-export function startGreeExtrasPoll(options: {
-  readonly ac: GreeColumnReader
-  readonly intervalMs: number
-  readonly onExtras: (extras: GreeExtras) => void
-  readonly onError: (err: unknown) => void
-}): () => void {
-  let inFlight = false
-  let stopped = false
-  const tick = async (): Promise<void> => {
-    if (inFlight || stopped) return
-    inFlight = true
-    try {
-      const raw = await options.ac.requestColumns([...GREE_EXTRA_COLUMNS])
-      if (!stopped) options.onExtras(parseGreeExtras(raw))
-    } catch (err: unknown) {
-      options.onError(err)
-    } finally {
-      inFlight = false
-    }
-  }
-  void tick()
-  const timer = setInterval(() => void tick(), options.intervalMs)
-  return () => {
-    stopped = true
-    clearInterval(timer)
-  }
+/** Read the extra columns once; a failed read throws. */
+export async function readGreeExtras(ac: GreeColumnReader): Promise<GreeExtras> {
+  return parseGreeExtras(await ac.requestColumns([...GREE_EXTRA_COLUMNS]))
 }

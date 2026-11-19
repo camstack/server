@@ -6,7 +6,7 @@ import {
 } from '@apocaliss92/nodegree'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { type GreeConfig, settingsToGreeConfig, toNodegreeOptions } from './config.js'
-import { type GreeExtras, startGreeExtrasPoll } from './gree-extras.js'
+import { type GreeExtras, readGreeExtras } from './gree-extras.js'
 import { type GreeConnectionSurface, macKey } from './gree-gateway.js'
 
 /** Status of a single Gree AC connection. */
@@ -62,8 +62,6 @@ export interface GreeIntegrationManagerOptions {
   readonly onConnected: (connectionKey: string) => void
   readonly onDisconnected: (connectionKey: string) => void
   readonly surfaceSink: GreeSurfaceSink
-  /** Per-AC poll cadence (ms). 0 disables polling. */
-  readonly pollIntervalMs?: number
   /** Factory seam for testing. When omitted, builds a real {@link Nodegree}. */
   readonly makeFacade?: GreeFacadeFactory
   /** Numeric device id carried on every log line (`tags.deviceId`) when known. */
@@ -98,7 +96,7 @@ export interface GreeRetryScheduler {
 
 const defaultScheduler: GreeRetryScheduler = {
   after: (fn, delayMs) => {
-    const timer = setTimeout(fn, delayMs)
+    const timer = setTimeout(fn, delayMs) // not-a-state-poll: bind retry backoff
     timer.unref()
     return () => clearTimeout(timer)
   },
@@ -119,7 +117,7 @@ function defaultFacade(config: GreeConfig): GreeFacadeLike {
   return new Nodegree(toNodegreeOptions(config))
 }
 
-const DEFAULT_POLL_INTERVAL_MS = 10_000
+const OFFLINE_ERRORS: ReadonlySet<string> = new Set(['GreeTimeoutError', 'GreeDeviceOfflineError'])
 
 /**
  * Wraps exactly one `@apocaliss92/nodegree` facade bound to a SINGLE Gree AC
@@ -143,7 +141,6 @@ export class GreeIntegrationManager {
   readonly #onConnected: (connectionKey: string) => void
   readonly #onDisconnected: (connectionKey: string) => void
   readonly #surfaceSink: GreeSurfaceSink
-  readonly #pollIntervalMs: number
   readonly #makeFacade: GreeFacadeFactory
   /** When set, only the responder for this MAC is bound (standalone: one AC). */
   readonly #expectMac: string | null
@@ -174,7 +171,6 @@ export class GreeIntegrationManager {
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
     this.#surfaceSink = options.surfaceSink
-    this.#pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS
     this.#makeFacade = options.makeFacade ?? defaultFacade
     this.#deviceId = options.deviceId
     this.#scheduler = options.scheduler ?? defaultScheduler
@@ -359,7 +355,6 @@ export class GreeIntegrationManager {
             mac: dev.mac,
           })
           if (generation !== this.#generation) return
-          if (this.#pollIntervalMs > 0) ac.startPolling(this.#pollIntervalMs)
           handles.set(macKey(dev.mac), ac)
         } catch (err: unknown) {
           this.#logger.warn('GreeIntegrationManager: bind (createAc) failed', {
@@ -370,7 +365,11 @@ export class GreeIntegrationManager {
       }
 
       this.#handles = handles
-      const surface: GreeConnectionSurface = { discovered: matched, handles }
+      const surface: GreeConnectionSurface = {
+        discovered: matched,
+        handles,
+        refresh: (mac) => this.refresh(mac),
+      }
       this.#surfaceSink.set(this.#id, surface)
 
       this.#deviceCount = handles.size
@@ -468,51 +467,66 @@ export class GreeIntegrationManager {
     })
   }
 
-  /** Subscribe to each bound AC's health events; an `error` listener must exist
-   *  or the library's poll `.catch` would throw an unhandled emit. */
+  /** Subscribe to each bound AC's health events and read each once (the core schedules the rest, D1062). */
   #watchHandles(handles: ReadonlyMap<string, AcDevice>): void {
     for (const [mac, ac] of handles) {
-      const onError = (err: Error): void => {
-        this.#logger.warn('GreeIntegrationManager: AC poll error', {
-          tags: this.#tags(),
-          meta: { mac, error: errMsg(err) },
-        })
-      }
-      const onOffline = (): void => {
-        this.#consecutiveFailures += 1
-        this.#logger.warn('GreeIntegrationManager: AC offline', {
-          tags: this.#tags(),
-          meta: { mac, consecutiveFailures: this.#consecutiveFailures },
-        })
-        if (this.#consecutiveFailures >= OFFLINE_FAILURE_LIMIT) this.#handleLost()
-      }
+      const onError = (err: Error): void => this.#noteReadError(mac, err)
+      const onOffline = (): void => this.#noteOffline(mac)
       const onState = (): void => {
         this.#consecutiveFailures = 0
       }
       ac.on('error', onError)
       ac.on('offline', onOffline)
       ac.on('stateChanged', onState)
-      if (this.#pollIntervalMs > 0) {
-        this.#disposers.push(
-          startGreeExtrasPoll({
-            ac,
-            intervalMs: this.#pollIntervalMs,
-            onExtras: (extras) => this.#surfaceSink.setExtras?.(this.#id, mac, extras),
-            onError: (err) =>
-              this.#logger.debug('GreeIntegrationManager: extra columns not read', {
-                tags: this.#tags(),
-                meta: { mac, error: errMsg(err) },
-              }),
-          }),
-        )
-      }
       this.#disposers.push(() => {
         ac.off('error', onError)
         ac.off('offline', onOffline)
         ac.off('stateChanged', onState)
       })
+      void this.refresh(mac).catch(() => undefined)
     }
     this.#consecutiveFailures = 0
+  }
+
+  #noteReadError(mac: string, err: unknown): void {
+    this.#logger.warn('GreeIntegrationManager: AC poll error', {
+      tags: this.#tags(),
+      meta: { mac, error: errMsg(err) },
+    })
+  }
+
+  #noteOffline(mac: string): void {
+    this.#consecutiveFailures += 1
+    this.#logger.warn('GreeIntegrationManager: AC offline', {
+      tags: this.#tags(),
+      meta: { mac, consecutiveFailures: this.#consecutiveFailures },
+    })
+    if (this.#consecutiveFailures >= OFFLINE_FAILURE_LIMIT) this.#handleLost()
+  }
+
+  /**
+   * Read one bound AC (D1062): its state, then the extra columns. A failure is reported the way the
+   * library's own poll reported it (an error line; a timeout or an offline answer counts toward
+   * losing the AC and re-binding) and is thrown to the caller.
+   */
+  async refresh(mac: string): Promise<void> {
+    const ac = this.#handles.get(macKey(mac))
+    if (ac === undefined) throw new Error(`gree: AC ${mac} is not bound — no refresh`)
+    try {
+      await ac.updateState()
+    } catch (err: unknown) {
+      this.#noteReadError(mac, err)
+      if (err instanceof Error && OFFLINE_ERRORS.has(err.name)) this.#noteOffline(mac)
+      throw err
+    }
+    try {
+      this.#surfaceSink.setExtras?.(this.#id, mac, await readGreeExtras(ac))
+    } catch (err: unknown) {
+      this.#logger.debug('GreeIntegrationManager: extra columns not read', {
+        tags: this.#tags(),
+        meta: { mac, error: errMsg(err) },
+      })
+    }
   }
 
   /** The bound AC stopped answering: drop the handle, report offline, re-bind. */

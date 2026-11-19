@@ -8,7 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GreeContainerDevice } from '../devices/gree-container-device.js'
 import { GreeSensorDevice } from '../devices/gree-sensor-device.js'
-import { startGreeExtrasPoll } from '../gree-extras.js'
+import { readGreeExtras } from '../gree-extras.js'
 import { greeConnections } from '../gree-gateway.js'
 
 function stubContext(persistedConfig: Record<string, unknown>, type: DeviceType): DeviceContext {
@@ -111,31 +111,17 @@ describe('GreeSensorDevice', () => {
   })
 })
 
-describe('startGreeExtrasPoll', () => {
-  it('asks for the three columns and publishes the parsed answer', async () => {
+describe('readGreeExtras', () => {
+  it('asks for the three columns and returns the parsed answer', async () => {
     const requestColumns = vi.fn(async () => ({ OutEnvTem: 46, Defrost: 1, AllErr: 0 }))
-    const onExtras = vi.fn()
-    const stop = startGreeExtrasPoll({
-      ac: { requestColumns },
-      intervalMs: 60_000,
-      onExtras,
-      onError: vi.fn(),
-    })
-    await vi.waitFor(() => expect(onExtras).toHaveBeenCalled())
-    stop()
+    const extras = await readGreeExtras({ requestColumns })
     expect(requestColumns).toHaveBeenCalledWith(['OutEnvTem', 'Defrost', 'AllErr'])
-    expect(onExtras).toHaveBeenCalledWith({ outdoorTemp: 6, defrost: true, errorCode: 0 })
+    expect(extras).toEqual({ outdoorTemp: 6, defrost: true, errorCode: 0 })
   })
 
-  it('reports a failed read instead of throwing', async () => {
-    const onError = vi.fn()
-    const stop = startGreeExtrasPoll({
-      ac: { requestColumns: async () => Promise.reject(new Error('timeout')) },
-      intervalMs: 60_000,
-      onExtras: vi.fn(),
-      onError,
-    })
-    await vi.waitFor(() => expect(onError).toHaveBeenCalled())
-    stop()
+  it('a failed read throws to the caller', async () => {
+    await expect(
+      readGreeExtras({ requestColumns: async () => Promise.reject(new Error('timeout')) }),
+    ).rejects.toThrow('timeout')
   })
 })

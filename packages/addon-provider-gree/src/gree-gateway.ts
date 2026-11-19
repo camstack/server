@@ -13,6 +13,8 @@ export interface GreeConnectionSurface {
   readonly discovered: readonly DiscoveredDevice[]
   /** Bound AC handles, keyed by MAC (lowercased). */
   readonly handles: ReadonlyMap<string, AcDevice>
+  /** Read one AC now (state + extras); the core's state refresh calls it (D1062). */
+  readonly refresh?: (mac: string) => Promise<void>
 }
 
 /** Lowercase a MAC for stable map keying (Gree echoes mixed-case MACs). */
@@ -120,6 +122,11 @@ export class GreeConnectionResolver {
   /** The bind-scan rows for a connection key, or empty when unknown. */
   discovered(connectionKey: string): readonly DiscoveredDevice[] {
     return this.#surfaces.get(connectionKey)?.discovered ?? []
+  }
+
+  /** The read-one-AC function of a connection's surface, or null when it is not bound (D1062). */
+  getRefresh(connectionKey: string): ((mac: string) => Promise<void>) | null {
+    return this.#surfaces.get(connectionKey)?.refresh ?? null
   }
 
   /** True when the connection has a published surface (i.e. it is bound). */

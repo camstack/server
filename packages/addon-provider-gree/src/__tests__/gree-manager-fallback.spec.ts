@@ -52,7 +52,6 @@ function build(sweep: () => Promise<readonly DiscoveredDevice[]>) {
     onConnected: vi.fn(),
     onDisconnected: vi.fn(),
     surfaceSink: { set: vi.fn() },
-    pollIntervalMs: 0,
     expectMac: MAC,
     makeFacade: () => ({
       discover: async () => [],

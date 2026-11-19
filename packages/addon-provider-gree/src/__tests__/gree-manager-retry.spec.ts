@@ -89,7 +89,6 @@ function build(opts: {
     onConnected,
     onDisconnected,
     surfaceSink: { set: vi.fn() },
-    pollIntervalMs: 0,
     expectMac: MAC,
     makeFacade,
     scheduler,

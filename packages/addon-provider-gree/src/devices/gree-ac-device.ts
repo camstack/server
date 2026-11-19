@@ -40,6 +40,7 @@ import {
   verticalSwingToBool,
 } from '../gree-domain-mapping.js'
 import { greeConnections } from '../gree-gateway.js'
+import { registerGreeStateRefresh } from './gree-state-refresh.js'
 import { greeClimateAction } from '../gree-extras.js'
 
 const CLIMATE_CAP = 'climate-control'
@@ -178,6 +179,12 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when this AC is re-read (D1062); this device only reads.
+    registerGreeStateRefresh({
+      ctx: this.ctx,
+      connectionKey: this.connectionKey,
+      mac: this.greeMac,
+    })
     this.registerCaps()
     this.attachStateListener()
     this.recomputeSlices()
