@@ -710,6 +710,11 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
   // whole e2e suite fails at `declare`. It is a real in-memory backend, not a
   // no-op: a test that reads a row it never wrote still gets nothing.
   fakeApi.settingsStore = makeFakeSettingsStore().client
+  // The hub integration registry (D1066): every addon reads its instance switches
+  // from it at boot. The orchestrator owns no instances, so the registry answers empty.
+  fakeApi.integrations = {
+    listByAddon: { query: async () => [] },
+  }
   // The hub's migration engine for an owner with nothing to run (D987): a `block-owner`
   // migration counts as blocked when the engine is unreachable, so the harness answers.
   fakeApi.migrations = {
