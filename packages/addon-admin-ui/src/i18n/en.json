@@ -13228,7 +13228,9 @@
       "omitted": "Not sent",
       "structured": "JSON for {{field}}",
       "invalidStructured": "Not a valid value."
-    }
+    },
+    "viaRemote": "Served by this device's remote",
+    "editRemote": "Edit remote"
   },
   "preset": {
     "petFountain": {

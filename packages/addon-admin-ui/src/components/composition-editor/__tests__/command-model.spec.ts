@@ -3,6 +3,7 @@ import {
   type CompositionFieldsFeature,
   type CompositionForwardCommand,
   type CompositionSourceRef,
+  mediaPlayerExtensionCommands,
   petFountainFromEntitiesComposition,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -253,5 +254,30 @@ describe('the args template', () => {
       cap: 'switch',
       method: 'setState',
     })
+  })
+})
+
+describe('extension-served media-player commands', () => {
+  const def = ALL_CAPABILITY_DEFINITIONS.find((d) => d.name === 'media-player')
+  const feature: CompositionFieldsFeature = {
+    kind: 'fields',
+    cap: 'media-player',
+    fields: {},
+    commands: mediaPlayerExtensionCommands(),
+  }
+
+  it('marks every row as served by the remote and none as unserved', () => {
+    if (def === undefined) throw new Error('media-player cap missing')
+    const rows = commandRows(def, feature)
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every((row) => row.extension && row.command === null)).toBe(true)
+    expect(unservedMethods(def, feature)).toEqual([])
+  })
+
+  it('a feature with no commands still lists every method as unserved', () => {
+    if (def === undefined) throw new Error('media-player cap missing')
+    const bare: CompositionFieldsFeature = { kind: 'fields', cap: 'media-player', fields: {} }
+    expect(unservedMethods(def, bare).length).toBeGreaterThan(0)
+    expect(commandRows(def, bare).some((row) => row.extension)).toBe(false)
   })
 })

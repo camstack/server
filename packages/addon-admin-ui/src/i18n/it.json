@@ -13250,7 +13250,9 @@
       "omitted": "Non inviato",
       "structured": "JSON per {{field}}",
       "invalidStructured": "Valore non valido."
-    }
+    },
+    "viaRemote": "Servito dal telecomando del dispositivo",
+    "editRemote": "Modifica telecomando"
   },
   "preset": {
     "petFountain": {

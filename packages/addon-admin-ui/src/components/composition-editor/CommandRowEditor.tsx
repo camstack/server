@@ -96,18 +96,20 @@ export function CommandRowEditor(props: CommandRowEditorProps): ReactNode {
         <div className="min-w-0">
           <div className="font-mono text-xs text-foreground break-words">{label}</div>
           <div className="text-[11px] text-foreground-muted break-words">
-            {row.command === null
-              ? t('commands.none')
-              : t('commands.calls', {
-                  device: sourceName(row.command),
-                  call: `${row.command.cap}.${row.command.method}`,
-                })}
+            {row.extension
+              ? t('commands.viaRemote')
+              : row.command === null
+                ? t('commands.none')
+                : t('commands.calls', {
+                    device: sourceName(row.command),
+                    call: `${row.command.cap}.${row.command.method}`,
+                  })}
           </div>
         </div>
         {!editing && (
           <div className="flex gap-1">
             <Button variant="outline" size="sm" disabled={saving} onClick={open}>
-              {row.command === null ? t('commands.set') : t('commands.change')}
+              {row.command === null && !row.extension ? t('commands.set') : t('commands.change')}
             </Button>
             {row.command !== null && (
               <Button variant="ghost" size="sm" disabled={saving} onClick={remove}>

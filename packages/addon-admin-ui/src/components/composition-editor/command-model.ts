@@ -46,6 +46,8 @@ export interface CommandRow {
   readonly itemKey: string | null
   /** The stored forward; null while the row has none. */
   readonly command: CompositionForwardCommand | null
+  /** Served by the device's own `remote` extension (no source device to name). */
+  readonly extension: boolean
   /** A stored command naming a method the cap does not serve: shown so it can be refused and removed. */
   readonly orphan: boolean
 }
@@ -61,12 +63,14 @@ export function commandRows(
     const target = stored[method]
     return target !== undefined && target.kind === 'forward' ? target : null
   }
+  const isExtension = (method: string): boolean => stored[method]?.kind === 'extension'
   const methods: readonly CommandRow[] = served.map((method) => ({
     id: method,
     kind: 'method',
     method,
     itemKey: null,
     command: forwardOf(method),
+    extension: isExtension(method),
     orphan: false,
   }))
   const resets: readonly CommandRow[] = Object.entries(feature.items ?? {}).map(([key, item]) => ({
@@ -75,6 +79,7 @@ export function commandRows(
     method: 'reset',
     itemKey: key,
     command: item.reset ?? null,
+    extension: false,
     orphan: false,
   }))
   const orphans: readonly CommandRow[] = Object.keys(stored)
@@ -85,6 +90,7 @@ export function commandRows(
       method,
       itemKey: null,
       command: forwardOf(method),
+      extension: isExtension(method),
       orphan: true,
     }))
   return [...methods, ...resets, ...orphans]
@@ -170,7 +176,7 @@ export function unservedMethods(
   feature: CompositionFieldsFeature,
 ): readonly string[] {
   return commandRows(def, feature)
-    .filter((row) => row.kind === 'method' && !row.orphan && row.command === null)
+    .filter((row) => row.kind === 'method' && !row.orphan && row.command === null && !row.extension)
     .map((row) => row.method)
 }
 

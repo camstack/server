@@ -171,7 +171,16 @@ export function CompositionBlockEditor({
       </Badge>
       <CompositionFieldsCardList device={deviceStub} handle={handle} skipCaps={skipCaps} />
       {composition.target.kind === 'new' && (
-        <CommandsSection composition={composition} saving={update.isPending} save={handle.save} />
+        <CommandsSection
+          composition={composition}
+          saving={update.isPending}
+          save={handle.save}
+          remoteDevice={
+            view.state.kind === 'answered' && view.state.state?.deviceId != null
+              ? { ...deviceStub, id: view.state.state.deviceId }
+              : null
+          }
+        />
       )}
     </div>
   )

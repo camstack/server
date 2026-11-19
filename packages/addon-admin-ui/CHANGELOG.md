@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Back in Build-your-self returns to the list after opening an automation, script, action, scheduler or composed device editor
 - The new composed device / helper picker has a search field, focused on open, that filters the templates across sections
+- A composed media player whose commands are served by its remote shows them as such, with an Edit remote button, instead of as commands without a source
 
 ## [1.2.706] - 2026-11-19
 
