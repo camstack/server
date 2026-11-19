@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.908",
+  "version": "1.2.909",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,13 +66,9 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.706",
-        "@camstack/addon-provider-bosch": ">=0.1.60",
-        "@camstack/addon-provider-dreame": ">=0.2.181",
-        "@camstack/addon-provider-homeassistant": ">=1.2.695",
-        "@camstack/addon-provider-homematic": ">=1.2.208",
-        "@camstack/addon-provider-reolink": ">=1.2.246",
-        "@camstack/addon-provider-vesync": ">=0.2.170"
+        "@camstack/addon-admin-ui": ">=1.2.707",
+        "@camstack/addon-agent-ui": ">=1.2.414",
+        "@camstack/addon-provider-reolink": ">=1.2.247"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

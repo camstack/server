@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.247] - 2026-11-19
+
 ### Fixed
 
 - The Reolink addon no longer floods the hub with integration lookups that slowed the whole system and restarted the addon every few minutes

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.475] - 2026-11-19
+
 ### Changed
 
 - Opening an editor in Build-your-self adds a history entry, so Back returns to the list
