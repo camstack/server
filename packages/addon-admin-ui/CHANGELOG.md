@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The integration page switches every row through the registry; the fixed-row exception is gone
+
 ## [1.2.708] - 2026-11-19
 
 ### Changed
@@ -24,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device quick-detail modal is taller with a single scroll area, and the device's web interface is a base card in the device info.
 - Automation editor: a quantity condition's unit select no longer overlaps the For select, and a row's move / NOT / remove controls wrap together.
 - Creating a Camera grid now ends on the engine's own cells editor, so the cameras are placed at creation; Done opens the device.
-- The integration page switches every row through the registry; the fixed-row exception is gone
 
 ## [1.2.706] - 2026-11-19
 
