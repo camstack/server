@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The core now decides when an Unraid server is re-read (one shared read per server); the provider no longer runs its own poll timer.
+
 ## [0.2.174] - 2026-11-18
 
 ### Changed

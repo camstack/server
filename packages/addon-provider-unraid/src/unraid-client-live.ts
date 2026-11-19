@@ -224,7 +224,7 @@ async function sampleFirst<T>(source: AsyncIterable<T>): Promise<T | null> {
   const iterator = source[Symbol.asyncIterator]()
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), SAMPLE_WINDOW_MS)
+    timer = setTimeout(() => resolve(null), SAMPLE_WINDOW_MS) // not-a-state-poll: one-shot sampling window of a single read
   })
   try {
     const next = await Promise.race([iterator.next(), timeout])
@@ -245,7 +245,7 @@ async function sampleContainerStats(
   const iterator = source[Symbol.asyncIterator]()
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), SAMPLE_WINDOW_MS)
+    timer = setTimeout(() => resolve(null), SAMPLE_WINDOW_MS) // not-a-state-poll: one-shot sampling window of a single read
   })
   try {
     while (stats.size < expected) {

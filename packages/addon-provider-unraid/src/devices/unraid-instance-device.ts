@@ -17,6 +17,7 @@ import {
 import { UNRAID_SYSTEM } from '../config.js'
 import { UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
+import { registerUnraidStateRefresh } from './unraid-state-refresh.js'
 import { UnraidIdentityDeclarer, unraidServerIdentifiers } from '../unraid-identifiers.js'
 import { UnraidEntityIdentitySchema } from '../unraid-mapping.js'
 import {
@@ -62,6 +63,7 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   private readonly instanceId: string
   private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
   private identityUnsub: (() => void) | null = null
   private readonly identity: UnraidIdentityDeclarer
   /** The identity read failures last logged, so a server that keeps failing logs once. */
@@ -94,6 +96,12 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the server is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerUnraidStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     // The server device is the host its containers and VMs report, whatever its type.
     unraidInstances.setHostDevice(this.instanceId, this.id)
     // The server's identity (D1059), from every poll, whatever the device type.
@@ -132,6 +140,8 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     this.identityUnsub?.()

@@ -5,6 +5,7 @@
  */
 import {
   batteryCapability,
+  deviceStateRefreshCapability,
   type DeviceConstructor,
   type DeviceContext,
   DeviceRole,
@@ -17,6 +18,10 @@ import {
 } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToConnection, UNRAID_SYSTEM } from '../config.js'
+import {
+  UNRAID_MIN_REFRESH_INTERVAL_MS,
+  unraidRefreshPolicy,
+} from '../devices/unraid-state-refresh.js'
 import { UnraidUpsDevice } from '../devices/unraid-ups-device.js'
 import { UnraidProviderAddon } from '../addon.js'
 import { mapUps } from '../unraid-client-live.js'
@@ -351,6 +356,37 @@ describe('UnraidUpsDevice', () => {
     upsLocalId: 'apc1',
     entities: [],
   }
+
+  it('arms no timer; the core read (device-state-refresh) re-fetches the snapshot (D1062)', async () => {
+    vi.useFakeTimers()
+    try {
+      const list = vi.fn(async () => [ups()])
+      await liveManager(list)
+      const { ctx, providers } = rig(CONFIG)
+      const device = new UnraidUpsDevice(ctx)
+      await device.onActivate()
+      const calls = list.mock.calls.length
+      await vi.advanceTimersByTimeAsync(10 * 60_000)
+      expect(list.mock.calls.length).toBe(calls)
+      const refresh = providers.get(deviceStateRefreshCapability.name) as {
+        refresh: (i: object) => Promise<{ ok: boolean }>
+      }
+      await refresh.refresh({ deviceId: 60, deviceIds: [60], reason: 'schedule' })
+      expect(list.mock.calls.length).toBe(calls + 1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('declares a batched polled policy', () => {
+    expect(unraidRefreshPolicy(INT, 5000)).toEqual({
+      integrationId: INT,
+      minIntervalMs: UNRAID_MIN_REFRESH_INTERVAL_MS,
+      intervalMs: 5000,
+      batch: true,
+      push: 'none',
+    })
+  })
 
   it('serves battery and power-meter from the polled UPS; a null power stays absent', async () => {
     let current = ups()

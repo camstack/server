@@ -33,9 +33,9 @@ export interface UnraidIntegrationManagerOptions {
 }
 
 /**
- * Wraps exactly one {@link UnraidClientLike} (= one Unraid server). Owns a poll
- * loop: on `start()` it connects, fetches the first snapshot, and then
- * periodically re-fetches, firing `onPolled` after every cycle. Mirrors the
+ * Wraps exactly one {@link UnraidClientLike} (= one Unraid server). Owns no
+ * timer: on `start()` it connects and fetches the first snapshot; the core's
+ * state refresh (D1062) calls `poll()` after that, firing `onPolled` each time. Mirrors the
  * Velux / Ecowitt integration managers, with the same fresh-client-on-reconnect
  * discipline.
  */
@@ -52,7 +52,6 @@ export class UnraidIntegrationManager {
   #client: UnraidClientLike | null = null
   #snapshot: UnraidSnapshot | null = null
   #status: UnraidInstanceStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setInterval> | null = null
   #error: string | null = null
 
   constructor(options: UnraidIntegrationManagerOptions) {
@@ -102,7 +101,8 @@ export class UnraidIntegrationManager {
   }
 
   /**
-   * Connect the client, fetch the first snapshot, and start the poll loop. A
+   * Connect the client, fetch the first snapshot. The core's state refresh decides
+   * when it is fetched again (D1062). A
    * failed connect throws (the caller logs and keeps the device — a later
    * `applyConnection` / restart retries).
    */
@@ -131,7 +131,6 @@ export class UnraidIntegrationManager {
     this.#status = 'connected'
     this.#onConnected(this.#id)
     this.#onPolled(this.#id)
-    this.#startPollLoop()
     this.#logger.info('UnraidIntegrationManager: started', {
       tags: { instanceId: this.#id },
       meta: {
@@ -142,12 +141,8 @@ export class UnraidIntegrationManager {
     })
   }
 
-  /** Stop the poll loop and drop the client + snapshot. */
+  /** Drop the client + snapshot. */
   async stop(): Promise<void> {
-    if (this.#pollTimer !== null) {
-      clearInterval(this.#pollTimer)
-      this.#pollTimer = null
-    }
     const client = this.#client
     this.#client = null
     this.#snapshot = null
@@ -198,20 +193,6 @@ export class UnraidIntegrationManager {
         meta: { section, error },
       })
     }
-
-  #startPollLoop(): void {
-    if (this.#pollTimer !== null) return
-    this.#pollTimer = setInterval(() => {
-      void this.poll().catch((err) => {
-        this.#logger.warn('UnraidIntegrationManager: poll cycle failed', {
-          tags: { instanceId: this.#id },
-          meta: { error: errMsg(err) },
-        })
-      })
-    }, this.#connection.pollIntervalMs)
-    // Do not keep the event loop alive solely for polling.
-    this.#pollTimer.unref?.()
-  }
 }
 
 /** A list section of the snapshot that may read as unknown on its own. */

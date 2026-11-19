@@ -15,6 +15,7 @@ import { registerUnraidAdminLink } from '../unraid-admin-link.js'
 import { UNRAID_SYSTEM } from '../config.js'
 import { findUps } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
+import { registerUnraidStateRefresh } from './unraid-state-refresh.js'
 import { UnraidEntityIdentitySchema } from '../unraid-mapping.js'
 import { upsBatteryStatus, upsPowerMeterStatus } from '../unraid-ups.js'
 import { UnraidEntityDevice } from './unraid-entity-device.js'
@@ -56,6 +57,7 @@ export class UnraidUpsDevice extends BaseDevice<typeof unraidUpsSchema> {
   private readonly integrationId: string
   private readonly upsLocalId: string
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
   private listed = true
 
   constructor(ctx: DeviceContext) {
@@ -72,6 +74,12 @@ export class UnraidUpsDevice extends BaseDevice<typeof unraidUpsSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the server is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerUnraidStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     const battery: InferNativeProvider<typeof batteryCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<BatteryStatus>(batteryCapability.name) ?? COLD_BATTERY,
@@ -93,6 +101,8 @@ export class UnraidUpsDevice extends BaseDevice<typeof unraidUpsSchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()
