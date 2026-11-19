@@ -175,9 +175,9 @@ export function CompositionBlockEditor({
           composition={composition}
           saving={update.isPending}
           save={handle.save}
-          remoteDevice={
+          deviceId={
             view.state.kind === 'answered' && view.state.state?.deviceId != null
-              ? { ...deviceStub, id: view.state.state.deviceId }
+              ? view.state.state.deviceId
               : null
           }
         />

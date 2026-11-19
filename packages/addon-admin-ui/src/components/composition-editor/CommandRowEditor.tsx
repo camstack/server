@@ -15,6 +15,7 @@ import {
 import { Button, Select } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useDeviceBoundCaps } from '../device-do-action/use-device-bound-caps'
 import type {
   AssignmentCandidate,
@@ -54,6 +55,8 @@ export interface CommandRowEditorProps {
   readonly candidates: Known<readonly AssignmentCandidate[]>
   readonly room: RoomSuggestions | null
   readonly saving: boolean
+  /** The built device's page, where its remote is edited; null before it exists. */
+  readonly remoteHref?: string | null
   readonly onApply: (
     row: CommandRow,
     command: CompositionForwardCommand | null,
@@ -66,7 +69,17 @@ function problemLines(problems: readonly CompositionProblem[]): readonly Refusal
 
 export function CommandRowEditor(props: CommandRowEditorProps): ReactNode {
   const { t } = useTranslation()
-  const { def, feature, featureIndex, row, itemLabel, names, saving, onApply } = props
+  const {
+    def,
+    feature,
+    featureIndex,
+    row,
+    itemLabel,
+    names,
+    saving,
+    onApply,
+    remoteHref = null,
+  } = props
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<RowDraft>(EMPTY_ROW_DRAFT)
   const [serverLines, setServerLines] = useState<readonly RefusalLine[]>([])
@@ -96,14 +109,30 @@ export function CommandRowEditor(props: CommandRowEditorProps): ReactNode {
         <div className="min-w-0">
           <div className="font-mono text-xs text-foreground break-words">{label}</div>
           <div className="text-[11px] text-foreground-muted break-words">
-            {row.extension
-              ? t('commands.viaRemote')
-              : row.command === null
-                ? t('commands.none')
-                : t('commands.calls', {
-                    device: sourceName(row.command),
-                    call: `${row.command.cap}.${row.command.method}`,
-                  })}
+            {row.extension ? (
+              <>
+                {t('commands.viaRemote')}
+                {remoteHref !== null && (
+                  <>
+                    {' · '}
+                    <Link
+                      to={remoteHref}
+                      className="text-primary hover:underline"
+                      data-testid={`command-remote-link-${row.id}`}
+                    >
+                      {t('commands.openDevicePage')}
+                    </Link>
+                  </>
+                )}
+              </>
+            ) : row.command === null ? (
+              t('commands.none')
+            ) : (
+              t('commands.calls', {
+                device: sourceName(row.command),
+                call: `${row.command.cap}.${row.command.method}`,
+              })
+            )}
           </div>
         </div>
         {!editing && (

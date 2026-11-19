@@ -13263,7 +13263,7 @@
       "invalidStructured": "Valore non valido."
     },
     "viaRemote": "Servito dal telecomando del dispositivo",
-    "editRemote": "Modifica telecomando"
+    "openDevicePage": "Modificalo nella pagina del dispositivo"
   },
   "preset": {
     "petFountain": {

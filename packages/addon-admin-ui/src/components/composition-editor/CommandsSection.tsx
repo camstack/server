@@ -11,15 +11,13 @@ import {
   type CompositionFieldsFeature,
   type CompositionForwardCommand,
   type CompositionSourceRef,
-  type DeviceInfo,
   featureFieldEntries,
   fieldReads,
 } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
 import { Terminal } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RemoteConfigDialog } from '../remote/RemoteConfigDialog'
+import { devicePath } from '../../lib/customization-routes'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
 import { useCandidateDevices } from '../device/customize/assignments/use-source-candidates'
 import type { CustomizationSaveOutcome } from '../device/customize/use-customization'
@@ -39,10 +37,10 @@ export interface CommandsSectionProps {
   readonly saving: boolean
   readonly save: (next: Composition) => Promise<CustomizationSaveOutcome>
   /**
-   * The built device itself, once it exists: the card that routes methods to
-   * the device's `remote` extension offers that remote's editor.
+   * The built device itself, once it exists: a method served by its `remote`
+   * extension links to the device page, the one place the remote is edited.
    */
-  readonly remoteDevice?: DeviceInfo | null
+  readonly deviceId?: number | null
 }
 
 /** The device the card already reads or calls first: where the picker's suggestions start. */
@@ -59,10 +57,9 @@ export function CommandsSection({
   composition,
   saving,
   save,
-  remoteDevice = null,
+  deviceId = null,
 }: CommandsSectionProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const [remoteOpen, setRemoteOpen] = useState(false)
   const fleet = useCandidateDevices(true)
   const names = useMemo(
     () =>
@@ -118,18 +115,6 @@ export function CommandsSection({
             icon={Terminal}
             title={t('commands.title', { cap: capTitle })}
             testId={`commands-card-${feature.cap}`}
-            actions={
-              remoteDevice !== null && rows.some((row) => row.extension) ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRemoteOpen(true)}
-                  data-testid="commands-open-remote"
-                >
-                  {t('commands.editRemote')}
-                </Button>
-              ) : undefined
-            }
           >
             <div className="flex flex-col gap-3 px-3 py-2 sm:px-4">
               <p className="text-xs text-foreground-muted">{t('commands.hint')}</p>
@@ -156,6 +141,7 @@ export function CommandsSection({
                     names={names}
                     candidates={candidates}
                     room={room}
+                    remoteHref={deviceId === null ? null : devicePath(deviceId)}
                     saving={saving}
                     onApply={(r, command) => apply(featureIndex, r, command)}
                   />
@@ -165,9 +151,6 @@ export function CommandsSection({
           </CustomizeCard>
         )
       })}
-      {remoteDevice !== null && remoteOpen && (
-        <RemoteConfigDialog device={remoteDevice} open onClose={() => setRemoteOpen(false)} />
-      )}
     </>
   )
 }

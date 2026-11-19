@@ -13241,7 +13241,7 @@
       "invalidStructured": "Not a valid value."
     },
     "viaRemote": "Served by this device's remote",
-    "editRemote": "Edit remote"
+    "openDevicePage": "Edit it on the device page"
   },
   "preset": {
     "petFountain": {
