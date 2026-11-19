@@ -43,8 +43,9 @@ delivery parameters of D938 were never handed to an adapter.
    only narrows, never adds media.
 4. **Declared so far.** Alexa: `normal` (follows Do Not Disturb) and `high`
    (overrides it). Telegram: `threadId` (forum topic). Home Assistant push:
-   `group`, `channel`. No notifier declares volume or voice: none of them
-   can set one.
+   `group`, `channel`, `sound`. Pushover and Zentik: `sound` (the rule's value
+   wins over the notification's, then the target default). No notifier
+   declares volume or voice: none of them can set one.
 
 ## Consequences
 
