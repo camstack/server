@@ -309,6 +309,12 @@ export interface DeviceOverride {
   }
 }
 
+/** The profile a derived stream holds when every editor section is off. */
+const DERIVED_PASSTHROUGH_PROFILE: EncodeProfile = {
+  video: { codec: 'copy' },
+  audio: 'passthrough',
+}
+
 interface DerivedStreamEntry {
   /**
    * Dual-mode source: a profile slot (follows assignment) or a physical
@@ -7360,14 +7366,13 @@ export class StreamBrokerManager {
         overrideDirty = true
         derivedDirty = true
         const next = { ...nextOverride.derivedStreams }
-        // `null` is the editor's "every transform off": passthrough is no
-        // profile, so the stored one is dropped (the cap field is optional).
+        // `null` is the editor's "every transform off": the stored profile
+        // becomes the passthrough one (copy video, passthrough audio), which
+        // the editor reads back as no section on. The rest of the entry stays.
         if (value === null) {
           const current = next[name]
           if (current !== undefined) {
-            const { encodeProfile: cleared, ...withoutProfile } = current
-            void cleared
-            next[name] = withoutProfile
+            next[name] = { ...current, encodeProfile: DERIVED_PASSTHROUGH_PROFILE }
             nextOverride.derivedStreams = next
           }
           continue

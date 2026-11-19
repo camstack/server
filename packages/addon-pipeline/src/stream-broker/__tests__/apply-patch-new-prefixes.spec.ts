@@ -100,7 +100,7 @@ describe('applyDeviceSettingsPatch — new prefixes', () => {
     expect(internal?.derivedStreams?.['web-720p']?.encodeProfile).toEqual(profile)
   })
 
-  it('derivedProfile:<name> = null clears the stored profile and keeps the rest of the entry', async () => {
+  it('derivedProfile:<name> = null stores the passthrough profile and keeps the rest of the entry', async () => {
     await manager.applyDeviceSettingsPatch({
       deviceId: 1,
       patch: { derivedStreamNames: ['web-720p'] },
@@ -128,7 +128,7 @@ describe('applyDeviceSettingsPatch — new prefixes', () => {
       }
     ).deviceOverrides.get(1)?.derivedStreams?.['web-720p']
     expect(entry).toBeDefined()
-    expect(entry?.encodeProfile).toBeUndefined()
+    expect(entry?.encodeProfile).toEqual({ video: { codec: 'copy' }, audio: 'passthrough' })
     expect(entry?.source).toEqual({ kind: 'camStream', camStreamId: 'native:main' })
   })
 
