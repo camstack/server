@@ -12322,7 +12322,8 @@
       },
       "camera": {
         "grid": "Name the grid. You lay out its cells on the device once it is saved.",
-        "terminal": "Name the camera and pick the Terminal it shows."
+        "terminal": "Name the camera and pick the Terminal it shows.",
+        "gridCells": "Place the cameras on the grid, then open the device."
       }
     },
     "reducer": "Combine by",
@@ -12605,7 +12606,8 @@
       "cameraPending": "The grid's camera is being created. Its cells can be laid out once it is running."
     },
     "searchTemplates": "Search templates",
-    "noMatchingTemplates": "No template matches your search"
+    "noMatchingTemplates": "No template matches your search",
+    "gridDone": "Done, open device"
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

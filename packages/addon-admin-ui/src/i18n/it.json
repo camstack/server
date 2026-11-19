@@ -12344,7 +12344,8 @@
       },
       "camera": {
         "grid": "Dai un nome alla griglia. Le celle si dispongono sul dispositivo dopo il salvataggio.",
-        "terminal": "Dai un nome alla telecamera e scegli il Terminale da mostrare."
+        "terminal": "Dai un nome alla telecamera e scegli il Terminale da mostrare.",
+        "gridCells": "Disponi le camere sulla griglia, poi apri il dispositivo."
       }
     },
     "reducer": "Combina con",
@@ -12627,7 +12628,8 @@
       "cameraPending": "La telecamera della griglia è in creazione. Le celle si possono disporre quando è attiva."
     },
     "searchTemplates": "Cerca modelli",
-    "noMatchingTemplates": "Nessun modello corrisponde alla ricerca"
+    "noMatchingTemplates": "Nessun modello corrisponde alla ricerca",
+    "gridDone": "Fatto, apri il dispositivo"
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",

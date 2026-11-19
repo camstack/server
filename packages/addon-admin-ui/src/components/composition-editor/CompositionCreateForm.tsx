@@ -128,7 +128,8 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
       deviceId = id
       createdBlock.current = null
       if (name !== '') await setName.mutateAsync({ deviceId: id, name })
-      if (intent === 'open') navigate(devicePath(id), { replace: true })
+      // A grid first lays out its cells in the wizard, which then opens the device.
+      if (intent === 'open' && next.kind !== 'grid') navigate(devicePath(id), { replace: true })
     })
     const savedId = deviceId
     if (lines.length > 0 || savedId === null) return { kind: 'refused', lines: refused(lines, t) }
@@ -155,6 +156,7 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
         fillHeight
         onDevice={() => setFree(true)}
         onPreset={choosePreset}
+        onOpenDevice={(id) => navigate(devicePath(id), { replace: true })}
         purpose="create"
         initial={linked}
         start={linked === null ? 'template' : 'parameters'}

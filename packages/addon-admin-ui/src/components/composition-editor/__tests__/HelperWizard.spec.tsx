@@ -50,8 +50,17 @@ vi.mock('../TerminalCameraPicker', () => ({
   ),
 }))
 
+// The engine's own cells editor reads the camera over tRPC; its behaviour is its own spec's.
+vi.mock('@camstack/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+  CameraGridLayoutEditor: ({ deviceId }: { readonly deviceId: number }) => (
+    <div data-testid="grid-layout-editor" data-device={deviceId} />
+  ),
+}))
+
 function renderWizard(
   onSave: (draft: HelperDraft, intent: 'open' | 'again') => Promise<HelperSaveResult>,
+  onOpenDevice?: (deviceId: number) => void,
 ): void {
   const ui: ReactNode = (
     <MemoryRouter>
@@ -61,6 +70,7 @@ function renderWizard(
         start="template"
         saving={false}
         onSave={onSave}
+        onOpenDevice={onOpenDevice}
       />
     </MemoryRouter>
   )
@@ -226,6 +236,19 @@ describe('HelperWizard', () => {
       name: 'Driveway wall',
       room: '',
     })
+  })
+
+  it('a saved grid shows the cells editor on its new camera, and Done opens the device', async () => {
+    const onOpenDevice = vi.fn()
+    renderWizard(async () => ({ kind: 'saved', deviceId: 77 }), onOpenDevice)
+    pick('grid')
+    fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Wall' } })
+    fireEvent.click(screen.getByTestId('helper-save-open'))
+    const editor = await screen.findByTestId('grid-layout-editor')
+    expect(editor.getAttribute('data-device')).toBe('77')
+    expect(onOpenDevice).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('helper-grid-done'))
+    expect(onOpenDevice).toHaveBeenCalledWith(77)
   })
 
   it('a Terminal camera saves once a Terminal is picked', async () => {

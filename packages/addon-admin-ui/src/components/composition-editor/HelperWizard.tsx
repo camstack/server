@@ -16,7 +16,13 @@ import {
   type RollingSpan,
   STATISTIC_STATS,
 } from '@camstack/types'
-import { Button, ExpressionInput, Input, Select } from '@camstack/ui-library'
+import {
+  Button,
+  CameraGridLayoutEditor,
+  ExpressionInput,
+  Input,
+  Select,
+} from '@camstack/ui-library'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -63,6 +69,12 @@ export interface HelperWizardProps {
   /** Create only: a preset tile of the picker. */
   readonly onPreset?: (presetId: string) => void
   /**
+   * Create only: leave for the new device. A grid does not leave on save, it
+   * first shows its cells editor (the engine's own `camera-grid-layout`),
+   * and this runs from that step's Done button.
+   */
+  readonly onOpenDevice?: (deviceId: number) => void
+  /**
    * The host is a full-height dialog: the member list takes the remaining
    * height and scrolls, and the action row stays at the bottom.
    */
@@ -83,6 +95,7 @@ export function HelperWizard({
   onDraftChange,
   onDevice,
   onPreset,
+  onOpenDevice,
   fillHeight = false,
 }: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
@@ -90,6 +103,8 @@ export function HelperWizard({
   const [draft, setDraft] = useState<HelperDraft | null>(initial)
   const [refusals, setRefusals] = useState<readonly RefusalLine[]>([])
   const [created, setCreated] = useState<CreatedDevice | null>(null)
+  // The grid camera just made, whose cells are being laid out before leaving.
+  const [layingOut, setLayingOut] = useState<number | null>(null)
   // A second click while a save runs is a no-op: the ref closes the window
   // before the state re-render disables the buttons.
   const inFlight = useRef(false)
@@ -129,6 +144,10 @@ export function HelperWizard({
         setRefusals(result.lines)
         return
       }
+      if (intent === 'open' && savingDraft.kind === 'grid' && onOpenDevice !== undefined) {
+        setLayingOut(result.deviceId)
+        return
+      }
       if (intent === 'again') {
         setCreated({
           deviceId: result.deviceId,
@@ -146,6 +165,20 @@ export function HelperWizard({
   const members = draft === null ? [] : draftMembers(draft)
   // A camera block has no members: it saves from its parameters step.
   const saveStep: WizardStep = draft !== null && isCameraDraft(draft) ? 'parameters' : 'members'
+
+  if (layingOut !== null) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="helper-grid-cells">
+        <p className="text-[11px] text-foreground-muted">{t('helper.step.camera.gridCells')}</p>
+        <CameraGridLayoutEditor deviceId={layingOut} />
+        <div className="mt-auto flex shrink-0 flex-wrap gap-2">
+          <Button data-testid="helper-grid-done" onClick={() => onOpenDevice?.(layingOut)}>
+            {t('helper.gridDone')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
