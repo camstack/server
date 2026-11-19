@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An automation run trace records a run-level error, and a hold's pending row is folded into the run it became.
+
 ## [1.2.600] - 2026-11-19
 
 ### Changed

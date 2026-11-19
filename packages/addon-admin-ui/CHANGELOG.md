@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automation and action run detail lists every condition with what it read against what it expected, shows a failed step's real error in an alert box, and shows one row per run when a hold pending row and its run were both recorded.
+- The composition editor no longer has an Edit remote button; a command served by the device remote links to the device page, where the remote is edited.
+
 ## [1.2.707] - 2026-11-19
 
 ### Changed
@@ -17,8 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device quick-detail modal is taller with a single scroll area, and the device's web interface is a base card in the device info.
 - Automation editor: a quantity condition's unit select no longer overlaps the For select, and a row's move / NOT / remove controls wrap together.
 - Creating a Camera grid now ends on the engine's own cells editor, so the cameras are placed at creation; Done opens the device.
-- Automation and action run detail lists every condition with what it read against what it expected, shows a failed step's real error in an alert box, and shows one row per run when a hold pending row and its run were both recorded.
-- The composition editor no longer has an Edit remote button; a command served by the device remote links to the device page, where the remote is edited.
 
 ## [1.2.706] - 2026-11-19
 
