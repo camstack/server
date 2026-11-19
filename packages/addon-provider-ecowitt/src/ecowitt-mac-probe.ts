@@ -44,7 +44,7 @@ export const nodeUdpUnicastExchange: UdpUnicastExchange = (input) =>
       if (error === null) resolve(replies)
       else reject(error)
     }
-    const timer = setTimeout(() => finish(null), input.timeoutMs)
+    const timer = setTimeout(() => finish(null), input.timeoutMs) // not-a-state-poll: deadline of one MAC probe
     socket.on('error', (err) => finish(err))
     socket.on('message', (data) => {
       const hex = data.toString('hex')

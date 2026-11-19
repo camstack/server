@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Ecowitt gateways are read by the core's scheduled state refresh (your poll interval still slows it) instead of a library timer; needs @apocaliss92/nodewitt 1.5.0.
+
 ## [0.2.172] - 2026-11-18
 
 ### Changed

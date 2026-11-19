@@ -37,6 +37,7 @@ export const MIGRATED: readonly string[] = [
   // media timers stay, so the entries are FILES, not the package.
   'packages/addon-provider-reolink/src/reolink-hub-session.ts',
   'packages/addon-provider-reolink/src/reolink-state-refresh.ts',
+  'packages/addon-provider-ecowitt',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

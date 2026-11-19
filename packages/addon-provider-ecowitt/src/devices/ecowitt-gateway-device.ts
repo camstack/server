@@ -14,6 +14,7 @@ import { ecowittConnections } from '../ecowitt-client-registry.js'
 import { ecowittFacades } from '../ecowitt-gateway.js'
 import { ecowittMacReader } from '../ecowitt-gateway-mac.js'
 import { ecowittGatewayIdentifiers, needsGatewayMacRead } from '../ecowitt-identifiers.js'
+import { registerEcowittStateRefresh } from '../ecowitt-state-refresh.js'
 
 /** Marks the Gateway device's blob apart from a group Container's. */
 export const ECOWITT_GATEWAY_DEVICE_KIND = 'gateway-device'
@@ -37,6 +38,7 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   readonly features: readonly DeviceFeature[] = []
 
   private readonly integrationId: string
+  private readonly gatewayId: string
   /** The last declaration sent; an unchanged one is not re-sent. */
   private lastIdentityKey: string | null = null
   /** The "MAC unknown" reason is logged once, until a read succeeds. */
@@ -50,6 +52,7 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
     const cfg = ecowittGatewayDeviceSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, ecowittGatewayDeviceSchema, { type: DeviceType.Gateway })
     this.integrationId = cfg.integrationId
+    this.gatewayId = cfg.gatewayId
     this.online = ecowittFacades.get(cfg.gatewayId) !== null
     this.registerAdminLinkCap()
     void this.updateSourceInfo({ id: cfg.gatewayId, system: ECOWITT_SYSTEM })
@@ -58,6 +61,14 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.activated = true
+    // The gateway is polled, never pushed to: the core schedules the reads (D1062).
+    registerEcowittStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.integrationId,
+      gatewayId: this.gatewayId,
+      facades: ecowittFacades,
+      connection: ecowittConnections.get(this.integrationId),
+    })
     // Fire-and-forget: the probe may wait 1.5 s, activation does not.
     if (this.online) this.startGatewayConnected()
   }

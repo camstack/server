@@ -36,7 +36,8 @@ function buildLocalFacade(config: EcowittLocalConfig): Ecowitt {
     host: config.host,
     port: config.port,
     ...(config.password.length > 0 ? { password: config.password } : {}),
-    pollIntervalMs: config.pollIntervalMs,
+    // The core's state refresh drives every read (D1062): the library arms no timer.
+    pollIntervalMs: 0,
     mappingIntervalMs: config.mappingIntervalMs,
   })
 }

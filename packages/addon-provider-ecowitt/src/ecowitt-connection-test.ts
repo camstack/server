@@ -104,7 +104,7 @@ export async function testEcowittConnection(
   const first = new Promise<FirstOutcome>((resolve) => {
     probe.onSnapshot((sensors) => resolve({ kind: 'reading', sensors }))
     probe.onError((err) => resolve({ kind: 'error', err }))
-    timer = setTimeout(() => resolve({ kind: 'deadline' }), deadlineMs)
+    timer = setTimeout(() => resolve({ kind: 'deadline' }), deadlineMs) // not-a-state-poll: deadline of one connection test
     probe
       .start()
       .catch((err: unknown) =>
