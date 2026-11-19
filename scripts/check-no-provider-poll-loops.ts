@@ -13,7 +13,7 @@
  * Scope: the runtime source (`src/`, excluding specs, `__tests__` and
  * generated code) of every provider in {@link MIGRATED}. A provider joins the
  * list when it moves to `device-state-refresh`. Comment-only lines are skipped
- * (prose may name the old loop). Textual: a timer reached through an alias
+ * (prose may name the old loop), and so are lines marked `not-a-state-poll`. Textual: a timer reached through an alias
  * passes — the list is the contract, review is the rest.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -26,6 +26,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const MIGRATED: readonly string[] = ['packages/addon-provider-vesync']
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/
+
+/**
+ * A timer that is not a state poll (a connection heartbeat, a request deadline, a
+ * debounce) says so on its own line: `// not-a-state-poll: <why>`. The reason is
+ * required; the marker without one does not exempt.
+ */
+const EXEMPT = /\/\/\s*not-a-state-poll:\s*\S/
 
 const SKIP_DIRS = new Set([
   'dist',
@@ -71,7 +78,7 @@ export function findProviderPollLoops(
   const findings: PollLoopFinding[] = []
   for (const { rel, content } of files) {
     for (const [i, text] of content.split('\n').entries()) {
-      if (isCommentLine(text)) continue
+      if (isCommentLine(text) || EXEMPT.test(text)) continue
       if (LOOP.test(text)) findings.push({ file: rel, line: i + 1, text: text.trim() })
     }
   }
