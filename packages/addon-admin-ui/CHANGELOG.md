@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Device quick detail scrolls when the card is taller than the window.
 - The integration page switches every row through the registry; the fixed-row exception is gone
 
 ## [1.2.708] - 2026-11-19

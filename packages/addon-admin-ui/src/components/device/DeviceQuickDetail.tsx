@@ -42,7 +42,8 @@ type QuickTabId = 'detail' | 'info' | 'export'
  * device, open camera, deep link) leaves through the modal's guarded `leaveTo`,
  * so unsaved edits are confirmed exactly as for "Open device page". The card
  * fills the modal's body, so its History / detail views scroll in their own
- * region and the modal body does not scroll a second time.
+ * region; a card taller than the body overflows it and the body is the one
+ * region that scrolls (the body keeps its own `overflow-y-auto`).
  */
 function DetailCard({
   deviceId,
@@ -154,7 +155,7 @@ function DeviceQuickDetailModal({
               </button>
             ))}
           </div>
-          <DialogBody className={tab === 'detail' ? 'mt-3 overflow-hidden' : 'mt-3'}>
+          <DialogBody className="mt-3">
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
               {tab === 'detail' ? (
