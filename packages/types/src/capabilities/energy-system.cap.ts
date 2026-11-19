@@ -198,6 +198,12 @@ export const energySystemCapability = {
         deadband: 0.05,
         displayName: 'Stored energy',
       },
+      'storage.capacityKwh': {
+        kind: 'gauge',
+        unit: 'kWh',
+        deadband: 0.1,
+        displayName: 'Storage capacity',
+      },
       'storage.powerW': {
         group: 'power-flow',
         kind: 'gauge',

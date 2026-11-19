@@ -58,7 +58,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `dishwasher` | 15 | ✓ | ✓ | 6 series | — | `bosch-home-connect` |
 | `do-not-disturb` | 2 | ✓ | ✓ | 1 series | — | — |
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |
-| `energy-system` | 1 | ✓ | ✓ | 15 series | — | — |
+| `energy-system` | 1 | ✓ | ✓ | 16 series | — | — |
 | `enum-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `error` | 1 | ✓ | ✓ | none | — | `provider-dreame` |
 | `event-emitter` | 1 | ✓ | ✓ | none | — | — |

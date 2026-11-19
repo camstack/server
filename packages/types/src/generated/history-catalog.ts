@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 47 caps with series (130 series), 40 caps answered `'none'`.
+ * 47 caps with series (131 series), 40 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -83,6 +83,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'heatPump.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Heat pump energy' },
     'storage.stateOfChargePct': { kind: 'gauge', unit: '%', deadband: 1, displayName: 'Storage charge' },
     'storage.storedKwh': { kind: 'gauge', unit: 'kWh', deadband: 0.05, displayName: 'Stored energy' },
+    'storage.capacityKwh': { kind: 'gauge', unit: 'kWh', deadband: 0.1, displayName: 'Storage capacity' },
     'storage.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Storage power' },
     'storage.chargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage charged' },
     'storage.dischargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage discharged' },
