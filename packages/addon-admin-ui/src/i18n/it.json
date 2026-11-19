@@ -2172,29 +2172,32 @@
     },
     "diagnostics": {
       "title": "Diagnostica",
-      "subtitle": "Le diagnostiche si armano per una finestra, non si accendono. Ognuna porta una scadenza e scade da sola — una lasciata accesa è essa stessa un incidente.",
+      "subtitle": "Finestre e canali si armano per un tempo limitato, non si accendono e basta. Ognuno ha una scadenza e termina da solo: uno lasciato attivo è un incidente a sé.",
       "expiresIn": "scade tra {{left}}",
       "disarmed": "disarmata",
       "notPersisted": "non persistita — non sopravvive a un riavvio",
       "disarm": "Disarma",
       "camerasPlaceholder": "tutte le telecamere",
-      "channels": "Canali dei componenti",
-      "channelsSubtitle": "Dichiarati dagli addon che li possiedono — questo elenco non è mantenuto a mano. Armare un canale apre una finestra con una scadenza; si chiude da sola.",
-      "noChannels": "Nessun addon di questo cluster dichiara un canale di log, oppure nessuno è raggiungibile ora.",
-      "notPerCamera": "non filtrabile per telecamera"
-    },
-    "watch": {
-      "title": "Osserva",
-      "subtitle": "Attiva un canale di debug per i dispositivi scelti e leggilo dal vivo. Una osservazione dura 10 minuti, si rinnova finché questa pagina resta aperta e termina da sola dopo al massimo 60 minuti.",
-      "setup": "Canali e dispositivi",
-      "noChannels": "Nessun addon del cluster offre un canale di debug, oppure nessuno è raggiungibile ora.",
-      "devices": "Dispositivi",
-      "start": "Avvia osservazione",
-      "stop": "Ferma",
-      "lapsed": "Già terminata, non rinnovata: {{names}}. Riavvia per continuare.",
-      "live": "In diretta",
+      "channels": "Canali di log",
+      "channelsSubtitle": "Dichiarati dagli addon che li possiedono, raggruppati per addon — l'elenco non è tenuto a mano. Un canale diagnostico apre una finestra con una scadenza; un canale di debug avvia un monitoraggio dal vivo che questa pagina rinnova finché resta aperta.",
+      "noChannels": "Nessun addon del cluster dichiara un canale di log, oppure al momento nessuno è raggiungibile.",
+      "notPerCamera": "non filtrabile per telecamera",
+      "kind": {
+        "diagnostic": "diagnostico",
+        "debug": "debug"
+      },
+      "caption": {
+        "request-census": "Conta ogni chiamata tRPC per PIANO DI TRASPORTO — http, ws, mesh — e per procedura, chiamante, indirizzo e user-agent. Le sottoscrizioni sono contate a parte, così uno stream di lunga durata non passa per una tempesta di chiamate. Armalo, poi riavvia: la scadenza è persistita, quindi la finestra è ancora attiva quando i client si riconnettono."
+      },
+      "cameras": "Telecamere",
+      "pickCamerasToWatch": "Scegli almeno una telecamera per avviare il monitoraggio.",
+      "watchStart": "Avvia monitoraggio",
+      "watchStop": "Ferma",
+      "watching": "in monitoraggio",
       "endsIn": "termina tra {{left}}",
-      "capIn": "stop definitivo tra {{left}}"
+      "capIn": "stop definitivo tra {{left}}",
+      "lapsed": "Già terminato, non rinnovato: {{names}}. Riavvia per continuare.",
+      "live": "Dal vivo"
     }
   },
   "clusterLoad": {
@@ -7124,8 +7127,7 @@
         "viewer": "Visualizzatore",
         "destinations": "Destinazioni",
         "levels": "Livelli",
-        "diagnostics": "Diagnostica",
-        "watch": "Osserva"
+        "diagnostics": "Diagnostica"
       },
       "secrets": {
         "revealRefused": "Rivelazione rifiutata",

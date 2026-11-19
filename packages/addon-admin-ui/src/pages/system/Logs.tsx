@@ -1,5 +1,5 @@
 /**
- * `/system/logs` — Viewer / Destinations / Levels / Watch / Diagnostics.
+ * `/system/logs` — Viewer / Destinations / Levels / Diagnostics.
  *
  * Shell is library `SectionedPage` (OSD template).
  */
@@ -15,7 +15,6 @@ import { navChromeForPath } from '../../lib/nav-items'
 import { LogDiagnosticsPage } from './LogDiagnostics'
 import { LoggingPage } from './Logging'
 import { LogLevelsPage } from './LogLevels'
-import { LogWatchPage } from './LogWatch'
 
 function LogViewerTab() {
   // `/system/logs?deviceId=<id>` — the Archive camera page's Health link.
@@ -66,11 +65,6 @@ export function LogsPage() {
           id: 'levels',
           label: t('admin.system.logs.levels', 'Levels'),
           content: <LogLevelsPage />,
-        },
-        {
-          id: 'watch',
-          label: t('admin.system.logs.watch', 'Watch'),
-          content: <LogWatchPage />,
         },
         {
           id: 'diagnostics',

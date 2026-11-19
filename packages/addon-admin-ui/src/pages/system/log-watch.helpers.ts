@@ -1,5 +1,5 @@
-/** Pure helpers for the Logs → Watch page. */
-import type { DebugWatchState } from '@camstack/types'
+/** Pure helpers for the Logs → Diagnostics page. */
+import type { DebugWatchState, LogChannelDescriptor } from '@camstack/types'
 
 /** `4m 12s`. Never a bare millisecond count — a deadline has to be readable. */
 export function formatRemaining(ms: number): string {
@@ -7,7 +7,8 @@ export function formatRemaining(ms: number): string {
   const minutes = Math.floor(total / 60)
   const seconds = total % 60
   if (minutes === 0) return `${seconds}s`
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`
+  if (seconds === 0) return `${minutes}m`
+  return `${minutes}m ${seconds}s`
 }
 
 /** What a watch has left, and what the hard cap leaves of it. */
@@ -28,4 +29,32 @@ export function channelsToRearm(
 ): readonly string[] {
   const live = new Set(watches.map((w) => w.channel))
   return selected.filter((channel) => live.has(channel))
+}
+
+/** The addon a channel belongs to: its name up to the first dot. */
+export function addonOfChannel(channelName: string): string {
+  const dot = channelName.indexOf('.')
+  return dot === -1 ? channelName : channelName.slice(0, dot)
+}
+
+export interface ChannelGroup {
+  readonly addon: string
+  readonly channels: readonly LogChannelDescriptor[]
+}
+
+/** One group per addon, groups and the channels inside them sorted by name. */
+export function groupChannelsByAddon(
+  channels: readonly LogChannelDescriptor[],
+): readonly ChannelGroup[] {
+  const byAddon = new Map<string, LogChannelDescriptor[]>()
+  for (const channel of channels) {
+    const addon = addonOfChannel(channel.name)
+    byAddon.set(addon, [...(byAddon.get(addon) ?? []), channel])
+  }
+  return [...byAddon.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([addon, list]) => ({
+      addon,
+      channels: [...list].sort((a, b) => a.name.localeCompare(b.name)),
+    }))
 }

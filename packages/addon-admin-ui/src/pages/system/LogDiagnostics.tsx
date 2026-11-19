@@ -1,9 +1,10 @@
 /**
- * Diagnostics — the armed windows, each with the deadline it expires at.
+ * Diagnostics — armed windows and log channels, each with the deadline it
+ * expires at.
  *
  * A diagnostic left on is itself an incident, and the only way to notice one
- * is a page that lists it with the time it has left. So every row here states
- * the deadline in plain words ("expires in 4m 12s"), not a boolean.
+ * is a page that lists it with the time it has left. So every row states the
+ * deadline in plain words ("expires in 4m 12s"), not a boolean.
  *
  * Arming goes through `system.setLoggingSettings` — the ONE write authority
  * over the window. `system.setRequestCensus` was retired on 2026-08-27 (D245)
@@ -11,47 +12,51 @@
  * window. `system.getRequestCensus` still exists and is a different thing: it
  * returns what the census MEASURED, which is a result, not a setting.
  *
- * ## The channel rows
+ * ## The channel list
  *
- * The second section lists the per-component CHANNELS the cluster's addons
- * DECLARE. The roster is not written here — it arrives from the addons through
- * `log-channels`, so a channel added by a redeployed addon appears without
- * anybody editing this file, and one whose addon is gone stops being offered.
- * A hand-maintained list would rot at the first addition, silently.
- *
- * A channel declared `perDevice: false` says so on its row and offers no
- * camera box. Its lines carry the device in `meta` rather than in
- * `tags: { deviceId }`, so `| json | deviceId="102"` would select none of
- * them — and an operator who narrowed and saw nothing would conclude the code
- * path was never taken. The server refuses such a patch too; the UI simply
- * does not offer the lie in the first place.
+ * ONE list of the log channels the cluster's addons DECLARE, grouped by addon.
+ * The roster is not written here — it arrives through `log-channels`, so a
+ * channel added by a redeployed addon appears without anybody editing this
+ * file. A `diagnostic` channel arms a window; a `debug` channel is WATCHED
+ * (`system.debugWatch`): a 10 minute window that this page re-arms every 4
+ * minutes while it stays open. Closing the page stops the re-arms and the
+ * watch lapses by itself; past a hard cap of 60 minutes it lapses regardless,
+ * and a lapsed watch is never revived by the page — Start is always an
+ * operator's decision.
  */
-import { useState, type ReactElement } from 'react'
-import { Activity, Camera, Loader2, TimerReset } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
+import { Activity, Loader2, TimerReset } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
+  Button,
+  LogStream,
+  SectionCard,
+  useSystemDebugWatch,
   useSystemGetLoggingSettings,
   useSystemSetLoggingSettings,
-  Button,
-  Input,
 } from '@camstack/ui-library'
-import type { DiagnosticWindow, LogChannelDescriptor, LogChannelWindowState } from '@camstack/types'
+import {
+  DEBUG_WATCH_REARM_EVERY_MS,
+  type DebugWatchState,
+  type DiagnosticWindow,
+} from '@camstack/types'
 import { AdminPage } from '../../components/AdminPage'
+import { ARM_BUTTON, ARM_CHOICES_MS, LogChannelRow } from './LogChannelRow'
+import { channelsToRearm, formatRemaining, groupChannelsByAddon } from './log-watch.helpers'
 
-/** Offered windows. The server clamps; these are the useful shapes. */
-const ARM_CHOICES_MS: readonly number[] = [120_000, 300_000, 600_000, 1_800_000]
-
-/** One line per diagnostic saying what arming it buys. */
-const DIAGNOSTIC_CAPTIONS: Readonly<Record<string, string>> = {
-  'request-census':
-    'Counts every tRPC call by TRANSPORT PLANE — http, ws, mesh — and by procedure, caller, address and user-agent. Subscriptions are counted apart from calls, so a long-lived stream cannot pass for a storm. Arm it, then restart: the deadline is persisted, so the window is still running when clients reconnect.',
-}
+const CLOCK_MS = 1_000
+const LIST_EVERY_MS = 15_000
 
 export function LogDiagnosticsPage(): ReactElement {
   const { t } = useTranslation()
   const settings = useSystemGetLoggingSettings({}, { refetchInterval: 5_000 })
   const write = useSystemSetLoggingSettings()
+  const watch = useSystemDebugWatch()
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [watches, setWatches] = useState<readonly DebugWatchState[]>([])
+  const [selected, setSelected] = useState<readonly string[]>([])
+  const [lapsedNotice, setLapsedNotice] = useState<readonly string[]>([])
+  const [nowMs, setNowMs] = useState<number>(() => Date.now())
 
   const arm = (id: DiagnosticWindow['id'], armMs: number): void => {
     setPendingId(id)
@@ -66,14 +71,10 @@ export function LogDiagnosticsPage(): ReactElement {
     )
   }
 
-  const windows = settings.data?.activeWindows ?? []
-  const channels = (settings.data?.channels ?? []).filter((c) => c.kind !== 'debug')
-  const activeChannels = settings.data?.activeChannels ?? []
-
   /**
    * `deviceIds: null` = every camera. An EMPTY list would be a window that
-   * matches nothing, which reads exactly like a disarmed one — so the parsed
-   * box collapses to `null` rather than to `[]`.
+   * matches nothing, which reads exactly like a disarmed one — so the picker
+   * collapses to `null` rather than to `[]`.
    */
   const armChannel = (
     channel: string,
@@ -92,6 +93,61 @@ export function LogDiagnosticsPage(): ReactElement {
     )
   }
 
+  const call = useCallback(
+    (
+      action: 'list' | 'start' | 'rearm' | 'stop',
+      names: readonly string[],
+      ids: readonly number[],
+    ) => {
+      watch.mutate(
+        { action, channels: names, deviceIds: ids },
+        {
+          onSuccess: (result) => {
+            setWatches(result.watches)
+            setLapsedNotice(result.lapsed)
+          },
+        },
+      )
+    },
+    // `mutate` is stable; the mutation object is not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+
+  // One clock for the countdown, one poll for what the hub holds, one re-arm.
+  useEffect(() => {
+    const clock = setInterval(() => setNowMs(Date.now()), CLOCK_MS)
+    return () => clearInterval(clock)
+  }, [])
+  useEffect(() => {
+    call('list', [], [])
+    const poll = setInterval(() => call('list', [], []), LIST_EVERY_MS)
+    return () => clearInterval(poll)
+  }, [call])
+  const rearming = channelsToRearm(watches, selected).join('|')
+  useEffect(() => {
+    if (rearming === '') return undefined
+    const rearm = setInterval(
+      () => call('rearm', rearming.split('|'), []),
+      DEBUG_WATCH_REARM_EVERY_MS,
+    )
+    return () => clearInterval(rearm)
+  }, [rearming, call])
+
+  const startWatch = (channel: string, deviceIds: readonly number[]): void => {
+    setSelected((prev) => (prev.includes(channel) ? prev : [...prev, channel]))
+    call('start', [channel], deviceIds)
+  }
+  const stopWatch = (channel: string): void => {
+    setSelected((prev) => prev.filter((name) => name !== channel))
+    call('stop', [channel], [])
+  }
+
+  const windows = settings.data?.activeWindows ?? []
+  const activeChannels = settings.data?.activeChannels ?? []
+  const groups = useMemo(() => groupChannelsByAddon(settings.data?.channels ?? []), [settings.data])
+  const watchedDevices = [...new Set(watches.flatMap((w) => w.deviceIds))]
+
   return (
     <AdminPage
       embedded
@@ -99,7 +155,7 @@ export function LogDiagnosticsPage(): ReactElement {
       title={t('logging.diagnostics.title', 'Diagnostics')}
       subtitle={t(
         'logging.diagnostics.subtitle',
-        'Diagnostics are armed for a window, never switched on. Each carries a deadline and expires by itself — one left running is an incident of its own.',
+        'Windows and channels are armed for a limited time, never switched on. Each carries a deadline and expires by itself — one left running is an incident of its own.',
       )}
     >
       {settings.isLoading ? (
@@ -121,15 +177,15 @@ export function LogDiagnosticsPage(): ReactElement {
       )}
 
       <h3 className="mt-6 text-sm font-medium text-foreground">
-        {t('logging.diagnostics.channels', 'Component channels')}
+        {t('logging.diagnostics.channels', 'Log channels')}
       </h3>
       <p className="mb-2 max-w-3xl text-[11px] text-foreground-subtle">
         {t(
           'logging.diagnostics.channelsSubtitle',
-          'Declared by the addons that own them — this list is not maintained by hand. Arming a channel opens a window with a deadline; it closes by itself.',
+          'Declared by the addons that own them, grouped by addon. A diagnostic channel opens a window with a deadline; a debug channel starts a live watch that this page keeps renewed while it stays open.',
         )}
       </p>
-      {channels.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="text-[11px] text-foreground-subtle">
           {t(
             'logging.diagnostics.noChannels',
@@ -137,118 +193,56 @@ export function LogDiagnosticsPage(): ReactElement {
           )}
         </p>
       ) : (
-        <div className="rounded-lg border border-border bg-surface divide-y divide-border">
-          {channels.map((channel) => (
-            <ChannelRow
-              key={channel.name}
-              channel={channel}
-              state={activeChannels.find((w) => w.channel === channel.name)}
-              busy={pendingId === channel.name}
-              onArm={(ms, deviceIds) => armChannel(channel.name, ms, deviceIds)}
-            />
+        <div className="space-y-4">
+          {groups.map((group) => (
+            <section key={group.addon} aria-label={group.addon}>
+              <h4 className="mb-1 text-xs font-medium text-foreground-muted">{group.addon}</h4>
+              <div className="rounded-lg border border-border bg-surface divide-y divide-border">
+                {group.channels.map((channel) => (
+                  <LogChannelRow
+                    key={channel.name}
+                    channel={channel}
+                    armed={activeChannels.find((w) => w.channel === channel.name)}
+                    watch={watches.find((w) => w.channel === channel.name)}
+                    nowMs={nowMs}
+                    busy={pendingId === channel.name || watch.isPending}
+                    onArm={(ms, deviceIds) => armChannel(channel.name, ms, deviceIds)}
+                    onStartWatch={(deviceIds) => startWatch(channel.name, deviceIds)}
+                    onStopWatch={() => stopWatch(channel.name)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
+      {watch.isError && <p className="mt-2 text-[11px] text-danger">{watch.error.message}</p>}
+      {lapsedNotice.length > 0 && (
+        <p className="mt-2 text-[11px] text-warning">
+          {t(
+            'logging.diagnostics.lapsed',
+            'Already ended, not renewed: {{names}}. Start again to continue.',
+            { names: lapsedNotice.join(', ') },
+          )}
+        </p>
+      )}
+
+      {watchedDevices.length > 0 && (
+        <SectionCard headingId="log-diagnostics-live" title={t('logging.diagnostics.live', 'Live')}>
+          {watchedDevices.map((id) => (
+            <div key={id} className="border-t border-border first:border-t-0">
+              <LogStream
+                deviceId={id}
+                limit={200}
+                maxHeight="max-h-80"
+                showScope
+                showFilters={false}
+              />
+            </div>
+          ))}
+        </SectionCard>
+      )}
     </AdminPage>
-  )
-}
-
-/**
- * One declared channel, with its deadline and — only when the channel can
- * honestly honour it — a camera box.
- */
-function ChannelRow({
-  channel,
-  state,
-  busy,
-  onArm,
-}: {
-  readonly channel: LogChannelDescriptor
-  readonly state: LogChannelWindowState | undefined
-  readonly busy: boolean
-  readonly onArm: (armMs: number, deviceIds: readonly number[] | null) => void
-}): ReactElement {
-  const { t } = useTranslation()
-  const [cameras, setCameras] = useState<string>('')
-  const armed = state?.armed === true
-
-  /** `102, 101` → `[102, 101]`; anything unparseable is dropped, empty → null. */
-  const parseCameras = (): readonly number[] | null => {
-    const ids = cameras
-      .split(/[\s,+]+/)
-      .filter((part) => /^\d+$/.test(part))
-      .map((part) => Number(part))
-    return ids.length > 0 ? ids : null
-  }
-
-  return (
-    <div className="flex flex-col gap-2 p-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{channel.name}</span>
-          {armed ? (
-            <span className="inline-flex items-center gap-1 rounded bg-warning/10 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
-              <TimerReset className="h-3 w-3" />
-              {t('logging.diagnostics.expiresIn', 'expires in {{left}}', {
-                left: formatRemaining(state?.remainingMs ?? 0),
-              })}
-            </span>
-          ) : (
-            <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-foreground-subtle">
-              {t('logging.diagnostics.disarmed', 'disarmed')}
-            </span>
-          )}
-          {armed && state?.deviceIds !== null && state?.deviceIds !== undefined && (
-            <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-              <Camera className="h-3 w-3" />
-              {state.deviceIds.join(', ')}
-            </span>
-          )}
-          {!channel.perDevice && (
-            // The corollary, stated where the operator would otherwise assume
-            // the opposite: no camera box, and a reason for its absence.
-            <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-foreground-subtle">
-              {t('logging.diagnostics.notPerCamera', 'not filterable per camera')}
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 max-w-2xl text-[11px] text-foreground-subtle">{channel.description}</p>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-1">
-        {channel.perDevice && (
-          <Input
-            type="text"
-            inputMode="numeric"
-            value={cameras}
-            disabled={busy}
-            onChange={(e) => setCameras(e.target.value)}
-            placeholder={t('logging.diagnostics.camerasPlaceholder', 'all cameras')}
-            className="w-28 rounded border border-border bg-surface px-2 py-1 text-[11px] text-foreground"
-          />
-        )}
-        {ARM_CHOICES_MS.map((ms) => (
-          <Button
-            variant="unstyled"
-            key={ms}
-            type="button"
-            disabled={busy}
-            onClick={() => onArm(ms, parseCameras())}
-            className="rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground disabled:opacity-50"
-          >
-            {formatRemaining(ms)}
-          </Button>
-        ))}
-        <Button
-          variant="unstyled"
-          type="button"
-          disabled={busy || !armed}
-          onClick={() => onArm(0, null)}
-          className="rounded bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-40"
-        >
-          {t('logging.diagnostics.disarm', 'Disarm')}
-        </Button>
-      </div>
-    </div>
   )
 }
 
@@ -286,7 +280,7 @@ function WindowRow({
           )}
         </div>
         <p className="mt-0.5 max-w-2xl text-[11px] text-foreground-subtle">
-          {DIAGNOSTIC_CAPTIONS[window.id] ?? ''}
+          {t(`logging.diagnostics.caption.${window.id}`, { defaultValue: '' })}
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-1">
@@ -297,7 +291,7 @@ function WindowRow({
             type="button"
             disabled={busy}
             onClick={() => onArm(ms)}
-            className="rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground disabled:opacity-50"
+            className={ARM_BUTTON}
           >
             {formatRemaining(ms)}
           </Button>
@@ -314,14 +308,4 @@ function WindowRow({
       </div>
     </div>
   )
-}
-
-/** `4m 12s`. Never a bare millisecond count — a deadline has to be readable. */
-function formatRemaining(ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000))
-  const minutes = Math.floor(total / 60)
-  const seconds = total % 60
-  if (minutes === 0) return `${seconds}s`
-  if (seconds === 0) return `${minutes}m`
-  return `${minutes}m ${seconds}s`
 }
