@@ -29,6 +29,7 @@ import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordKindHandle, RecordRow, RecordsAccess } from '../records/records-access.js'
 import { secretViewsOf } from '../records/secret-views.js'
 import {
+  claimInstance,
   forgetInstanceSwitch,
   hasRegistryRow,
   isInstanceOn,
@@ -187,6 +188,23 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   private readonly secretKeys: ReadonlySet<string>
   private readonly secretMaps: ReadonlySet<string>
   private readonly nameField: string
+  /** The state each instance had when the addon last read it or was told it: {@link reapply} announces only a change. */
+  private readonly knownSwitches = new Map<string, boolean>()
+
+  /** What the addon reads for `id`: the switch as this process holds it, remembered as known. */
+  private knownSwitchOf(id: string): boolean {
+    claimInstance(this.records.owner, id)
+    const enabled = isInstanceOn(id)
+    this.knownSwitches.set(id, enabled)
+    return enabled
+  }
+
+  /** What a view of `id` shows; the addon did not read it, so nothing is remembered as known. */
+  private viewSwitchOf(id: string): boolean {
+    claimInstance(this.records.owner, id)
+    return isInstanceOn(id)
+  }
+
   private readonly switchListeners = new Set<
     (id: string, enabled: boolean) => void | Promise<void>
   >()
@@ -226,7 +244,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         : {
             id,
             body: record.data,
-            enabled: isInstanceOn(id),
+            enabled: this.knownSwitchOf(id),
             secrets: 'resolved',
           }
     } catch (err: unknown) {
@@ -241,7 +259,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       return {
         id,
         body: open as TBody,
-        enabled: isInstanceOn(id),
+        enabled: this.knownSwitchOf(id),
         secrets: 'unavailable',
       }
     }
@@ -294,7 +312,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
-      enabled: isInstanceOn(record.id),
+      enabled: this.viewSwitchOf(record.id),
       formValues: shown,
       kind,
       addDevice:
@@ -369,6 +387,10 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       )
     }
     await this.handle.put({ id: minted, data: initial }, { ifRev: 0 })
+    // A new instance is on: the hub gives it a registry row right after, and it must not read off
+    // while this process still waits for a registry read.
+    claimInstance(this.records.owner, minted)
+    recordRegistrySwitch(minted, true)
     // Form values sent with the create (a link picked in the dialog, settings a migration carries)
     // are written under the same secret rules as an update, before the addon is told.
     if (Object.keys(patch).length > 0) await this.handle.patch(minted, patch)
@@ -443,7 +465,9 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     id,
     enabled,
   }) => {
+    claimInstance(this.records.owner, id)
     recordRegistrySwitch(id, enabled)
+    this.knownSwitches.set(id, enabled)
     await this.hooks.onChanged?.(id, 'enabled')
     for (const listener of this.switchListeners) await listener(id, enabled)
     return { ok: true as const }
@@ -457,7 +481,12 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   async reapply(): Promise<void> {
     const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
     for (const record of page.records) {
+      claimInstance(this.records.owner, record.id)
       const enabled = isInstanceOn(record.id)
+      // Only a state the addon does not hold yet is news. The rest already ran on it; announcing
+      // it again would restart a service that is up.
+      if (this.knownSwitches.get(record.id) === enabled) continue
+      this.knownSwitches.set(record.id, enabled)
       await this.hooks.onChanged?.(record.id, 'enabled')
       for (const listener of this.switchListeners) await listener(record.id, enabled)
     }

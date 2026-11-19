@@ -3,6 +3,7 @@ import { EventCategory } from '../enums/event-category.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
   beginHydration,
+  isHydrationPending,
   hydrateInstanceSwitches,
   recordRegistrySwitch,
   servedInstanceKindsOf,
@@ -51,6 +52,7 @@ import {
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
+import { InstanceSwitchesUnreadError } from './instance-switches-unread-error.js'
 import {
   nodeScopedKey,
   normalizeNodeId,
@@ -372,7 +374,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const result = await this.onInitialize()
     await this.moveLateInstanceKinds()
     await this.adoptUnrowed()
-    this.bootSettled = true
     if (this.switchesHydrated) {
       settleHydration(this.ctx.id)
       for (const served of servedInstanceKindsOf(this.ctx.id)) await served.reapply()
@@ -600,27 +601,21 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * Learn the on/off state of this addon's instances from the registry rows (D1066), once at boot
-   * and again after a migration run. This is the ONLY read of the hub for the switch, and it runs
-   * on the addon's own boot path, never inside a method the hub calls into. A hub that cannot
-   * answer leaves every instance reading as on until the hub's `setInstanceEnabled` notification
-   * states it; no retry loop (D3).
+   * Learn the on/off state of this addon's instances from the registry rows (D1066), at boot, after
+   * a migration run, and again through {@link rehydrateSwitches}. It runs on the addon's own boot
+   * path, never inside a method the hub calls into. A registry that cannot answer leaves the
+   * instances of THIS addon reading off (fail closed, per owner) until a read answers.
    */
   private switchesHydrated = false
-  /** Set once `initialize` built every instance kind: until then an instance with no state reads off. */
-  private bootSettled = false
 
   private async hydrateSwitches(): Promise<boolean> {
     beginHydration(this.ctx.id)
     try {
       const rows = await this.ctx.api.integrations.listByAddon.query({ addonId: this.ctx.id })
-      hydrateInstanceSwitches(rows)
+      hydrateInstanceSwitches(this.ctx.id, rows)
       this.switchesHydrated = true
-      if (this.bootSettled) settleHydration(this.ctx.id)
       return true
     } catch (err: unknown) {
-      // Fail closed: until a read answers, an instance nobody stated reads as OFF. The hub-reachable
-      // event reads again (event-driven, no timer, D3).
       this.ctx.logger.warn('instance switches not read from the registry: instances stay off', {
         meta: { error: errMsg(err) },
       })
@@ -653,14 +648,37 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * The runner calls this once the hub node is connected (instead of `onHubReachable` directly):
-   * the instance switches are read again, so an addon that booted before the registry answered
-   * leaves the fail-closed default, and every served kind announces the states it now knows.
+   * Read the switches from the registry again and announce the states now known, so an addon that
+   * started on the fail-closed default (off) starts what is on. Throws
+   * {@link InstanceSwitchesUnreadError} when the registry still does not answer while this addon
+   * serves instance kinds: a forked runner turns that into a failed boot (the supervisor respawns
+   * it, bounded, D6), an agent or the hub reads again on the next hub connect (event-driven, D3).
+   * An addon with no instance kind has nothing waiting and never throws.
    */
-  async hubReachable(): Promise<void> {
+  async rehydrateSwitches(): Promise<void> {
+    // Not initialized yet: its own boot reads the registry.
+    if (this._ctx === null) return
     if (await this.hydrateSwitches()) {
       await this.adoptUnrowed()
+      settleHydration(this.ctx.id)
       for (const served of servedInstanceKindsOf(this.ctx.id)) await served.reapply()
+      return
+    }
+    if (isHydrationPending(this.ctx.id)) throw new InstanceSwitchesUnreadError(this.ctx.id)
+  }
+
+  /**
+   * Called on the hub-reachable event (instead of `onHubReachable` directly): the switches are
+   * read again, then `onHubReachable` runs. A registry that still does not answer is logged and
+   * left for the next connect.
+   */
+  async hubReachable(): Promise<void> {
+    try {
+      await this.rehydrateSwitches()
+    } catch (err: unknown) {
+      this.ctx.logger.warn('instance switches still unread at the hub connect', {
+        meta: { error: errMsg(err) },
+      })
     }
     await this.onHubReachable()
   }

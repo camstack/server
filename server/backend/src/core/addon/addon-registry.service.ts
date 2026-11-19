@@ -1819,6 +1819,22 @@ export class AddonRegistryService {
     this.credentialTokenService = service
   }
 
+  /** Every in-process addon with instance kinds reads its switches from the now-wired registry. */
+  private async rehydrateInProcessSwitches(): Promise<void> {
+    for (const [addonId, entry] of this.addonEntries) {
+      const addon = entry.addon
+      if (addon?.rehydrateSwitches === undefined) continue
+      try {
+        await addon.rehydrateSwitches()
+      } catch (err: unknown) {
+        this.logger.error('in-process addon instance switches not read: its instances stay off', {
+          tags: { addonId },
+          meta: { error: errMsg(err) },
+        })
+      }
+    }
+  }
+
   private async wireHubMainOrphanRecords(): Promise<void> {
     const recordsCap = this.capabilityRegistry.getSingleton<IRecordsProvider>('records')
     if (recordsCap === null || recordsCap === undefined) {
@@ -1839,6 +1855,9 @@ export class AddonRegistryService {
     )
     await this.integrationRegistry.initialize()
     this.logger.info('IntegrationRegistry initialized (records)', { meta: { phase: 'v2' } })
+    // The registry wires asynchronously, so an in-process addon that booted first read nothing and
+    // holds its instances off (D1066): every one reads its switches now, in this process, directly.
+    await this.rehydrateInProcessSwitches()
 
     const clusterRecords = this.recordsForOwner(
       'cluster-agent',

@@ -1026,6 +1026,12 @@ export interface ICamstackAddon {
    * not extend `BaseAddon` has none and its `onHubReachable` is called directly.
    */
   hubReachable?(): Promise<void>
+  /**
+   * Read the instance switches from the registry and announce them (`BaseAddon`). Throws when the
+   * registry does not answer while the addon serves instance kinds. Called on EVERY hub connect
+   * and when the hub-main registry becomes available.
+   */
+  rehydrateSwitches?(): Promise<void>
   shutdown(): Promise<void>
 
   // Cleanup: the legacy `getConfigSchema / getConfig / onConfigChange`

@@ -100,7 +100,17 @@ async function boot(options: Options) {
         },
       },
       integrations: {
-        listByAddon: { query: vi.fn(async () => []) },
+        // The hub's own reads: every row of the addon, and the devices-role row only (a services
+        // instance row carries `info.serviceInstance` and is never the addon's).
+        listByAddon: {
+          query: vi.fn(async (input: { addonId: string }) =>
+            options.integrations === undefined
+              ? []
+              : (await options.integrations.listIntegrations()).filter(
+                  (i) => i.addonId === input.addonId.replace(/^addon:/, ''),
+                ),
+          ),
+        },
         adoptInstanceRows: {
           mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
         },
@@ -108,13 +118,30 @@ async function boot(options: Options) {
           query: vi.fn(async (input: { addonId: string }) =>
             options.integrations === undefined
               ? { id: 'int_0001' }
-              : options.integrations.getIntegrationByAddonId(input.addonId),
+              : ((await options.integrations.listIntegrations()).find(
+                  (i) =>
+                    i.addonId === input.addonId.replace(/^addon:/, '') &&
+                    i.info?.['serviceInstance'] !== true,
+                ) ?? null),
           ),
         },
         create: {
           mutate: vi.fn(async (input: { addonId: string; name: string }) => {
             if (options.integrations === undefined) throw new Error('not wired')
             return options.integrations.createIntegration(input)
+          }),
+        },
+      },
+      integrationInstances: {
+        // A services instance: the hub gives it a registry row marked `serviceInstance`.
+        createInstance: {
+          mutate: vi.fn(async (input: { addonId: string; name: string }) => {
+            if (options.integrations === undefined) throw new Error('not wired')
+            return options.integrations.createIntegration({
+              addonId: input.addonId.replace(/^addon:/, ''),
+              name: input.name,
+              info: { serviceInstance: true },
+            })
           }),
         },
       },
@@ -243,5 +270,28 @@ describe('LokiLoggingAddon — a hub-resident ctx.id finds its integration row',
     )
     const rows = (await integrations.listIntegrations()).filter((i) => i.addonId === BARE_ID)
     expect(rows.map((r) => r.id)).toEqual([existing.id])
+  })
+
+  it("a services instance row is the addon's own: a second run reuses it, never a duplicate", async () => {
+    const registryRecords = makeInMemoryRecords('integration-registry').records
+    await registryRecords.declare(integrationRegistryRecordKinds)
+    const integrations = new IntegrationRegistry(
+      IntegrationRegistry.recordStoresOf(registryRecords),
+    )
+    await integrations.initialize()
+    for (let run = 0; run < 2; run++) {
+      const w = await boot({
+        registry: 'active',
+        stored: { url: 'http://loki:3100' },
+        integrations,
+      })
+      addons.push(w.addon)
+      await vi.waitFor(() =>
+        expect(w.finished.filter((f) => f.id === CONNECTION_TO_RECORDS_ID)).toHaveLength(1),
+      )
+    }
+    const rows = (await integrations.listIntegrations()).filter((i) => i.addonId === BARE_ID)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.info?.['serviceInstance']).toBe(true)
   })
 })

@@ -52,12 +52,22 @@ disagreeing row; an absent field never overwrites one; a rerun changes nothing.
 
 - The hub no longer depends on an addon to answer an integration read, and a switch can be read and
   written while its addon is down.
-- **Fail closed.** An instance whose switch this process does not know reads OFF: while the
-  registry has not answered (`listByAddon` failed or is pending) and, until the addon's boot has
-  built every instance kind and settled, for any instance nobody stated. No instance starts before
-  its switch is known. The hub-connection event the addon already receives (`hubReachable`) reads
-  the registry again and every served kind announces the states it now knows (event-driven, no
-  timer or retry, D3).
+- **Fail closed, per owner.** An instance whose switch this process does not know reads OFF while
+  ITS addon waits for the registry (`listByAddon` failed or is pending). The window belongs to the
+  owner addon, never to the process: one addon's unread registry does not turn off another's
+  instances, and an addon that serves no instance kind is never held back. An instance nobody
+  stated, once its owner was answered, is a fresh instance and reads ON; one the helper just
+  created is ON.
+- **Who reads again, and when.** Every owner still waiting reads the registry on EVERY hub
+  connect (`rehydrateSwitches`, event-driven, no timer or retry, D3): an agent on each (re)connect
+  of the hub (a hub restart after a good read keeps the known values), a forked runner on its
+  first connect, which is its boot. A forked runner whose registry still does not answer exits, so
+  CrashSupervisor respawns it, bounded and marked terminally failed (D6); it never leaves its
+  instances off silently. In hub-main the integration registry is wired asynchronously, so the
+  in-process addons read again the moment it is wired; a wiring failure is logged as an error and
+  the instances stay off by name.
+- A re-apply announces only an instance whose state the addon did not already know, so a service
+  that is up is not restarted by the hub connect.
 - A served-kind addon is blocked on EVERY boot while the migration engine is down: the body-switch
   move is `block-owner`, an engine that cannot be reached counts as not applied, and
   `AddonMigrationsBlockedError` fails the boot for a kind built early and for one built late (a

@@ -290,6 +290,7 @@ export {
   SOCKET_QUEUE_TOP_N,
 } from './kernel/socket-plane-report.js'
 export type { SocketPeerQueue, SocketQueueReading } from './kernel/socket-plane-report.js'
+export { rehydrateSwitchesOnHubConnect } from './kernel/moleculer/hub-connect-switches.js'
 export type { MeshPeerQueue, MeshQueueReader } from './kernel/moleculer/mesh-queue-report.js'
 export {
   createMeshQueueReader,

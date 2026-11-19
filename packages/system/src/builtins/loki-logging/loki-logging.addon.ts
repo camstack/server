@@ -245,6 +245,16 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     }
   }
 
+  /**
+   * The id of the registry row of this addon's own instance, or null. Read through `listByAddon`:
+   * the row of a services instance carries `info.serviceInstance`, which `getByAddonId` (the
+   * devices-role row) skips on purpose.
+   */
+  private async ownRegistryRowId(): Promise<string | null> {
+    const rows = await this.ctx.api.integrations.listByAddon.query({ addonId: this.ctx.id })
+    return rows[0]?.id ?? null
+  }
+
   /** The ports of the connection migrations: the old settings in, the record out. */
   private migrationPorts(): LokiCataloguePorts {
     const records = this.ctx.records
@@ -266,12 +276,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       warn: (message: string) => {
         this.ctx.logger.warn(message)
       },
-      findIntegration: async () => {
-        const existing = await this.ctx.api.integrations.getByAddonId.query({
-          addonId: this.ctx.id,
-        })
-        return existing?.id ?? null
-      },
+      findIntegration: async () => this.ownRegistryRowId(),
       readRecord: async (id: string): Promise<LokiRecordState | null> => {
         const row = await handle.getResolved(id)
         if (row === null) return null
@@ -281,10 +286,8 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         }
       },
       ensureIntegration: async (name: string) => {
-        const existing = await this.ctx.api.integrations.getByAddonId.query({
-          addonId: this.ctx.id,
-        })
-        if (existing !== null && existing !== undefined) return existing.id
+        const existing = await this.ownRegistryRowId()
+        if (existing !== null) return existing
         const created = await this.ctx.api.integrationInstances.createInstance.mutate({
           addonId: this.ctx.id,
           name,

@@ -160,6 +160,7 @@ interface LoadedAddonEntry {
     shutdown?(): Promise<void>
     onHubReachable?(): Promise<void> | void
     hubReachable?(): Promise<void>
+    rehydrateSwitches?(): Promise<void>
   }
 }
 

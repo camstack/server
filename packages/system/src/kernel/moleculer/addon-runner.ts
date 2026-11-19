@@ -59,6 +59,7 @@ import type {
   ICamstackAddon,
   SecretsAccess,
 } from '@camstack/types'
+import { rehydrateSwitchesOnHubConnect } from './hub-connect-switches.js'
 import {
   errMsg,
   isCollectionArrayMethodName,
@@ -783,36 +784,49 @@ async function main(): Promise<void> {
   // handshake) and fire each addon's `onHubReachable` exactly once. Kept
   // symmetrical with the prior broker `$node.connected` semantics.
   let hubReachableFired = false
-  const fireHubReachableOnce = (): void => {
+  const rehydrateSwitches = (first: boolean): Promise<void> =>
+    rehydrateSwitchesOnHubConnect(loaded, {
+      fatalOnUnread: first,
+      onUnread: (addonId, err) => {
+        runnerLog.error(`"${addonId}" instance switches not read from the registry`, {
+          meta: { error: errMsg(err) },
+        })
+      },
+      exit: (addonId, err) => {
+        // Raw console + sync exit: an async UDS log would never flush. The supervisor respawns the
+        // runner, bounded, and marks it terminally failed (D6).
+        console.error(
+          `[addon-runner] "${addonId}" cannot read its instance switches: ${errMsg(err)}`,
+        )
+        process.exit(1)
+      },
+    })
+  const fireHubReachableOnce = async (): Promise<void> => {
     if (hubReachableFired) return
     hubReachableFired = true
+    await rehydrateSwitches(true)
     for (const entry of loaded) {
-      if (
-        entry.addon.hubReachable !== undefined ||
-        typeof entry.addon.onHubReachable === 'function'
-      ) {
-        Promise.resolve(
-          entry.addon.hubReachable !== undefined
-            ? entry.addon.hubReachable()
-            : entry.addon.onHubReachable?.(),
-        ).catch((err: unknown) => {
-          runnerLog.error(`"${entry.addonId}" hubReachable() threw`, {
-            meta: { error: errMsg(err) },
-          })
+      if (typeof entry.addon.onHubReachable !== 'function') continue
+      Promise.resolve(entry.addon.onHubReachable()).catch((err: unknown) => {
+        runnerLog.error(`"${entry.addonId}" onHubReachable() threw`, {
+          meta: { error: errMsg(err) },
         })
-      }
+      })
     }
   }
   udsChildClient.onConnected(() => {
     // Reconnect (after a parent restart) — re-register the full cap set so the
     // parent re-applies the manifest; the initial connect already registered
-    // `initialCapDescriptors` during `start()`.
-    if (hubReachableFired) refreshChildCaps('on reconnect')
-    fireHubReachableOnce()
+    // `initialCapDescriptors` during `start()`. The switches are read again on EVERY connect.
+    if (hubReachableFired) {
+      refreshChildCaps('on reconnect')
+      void rehydrateSwitches(false)
+    }
+    void fireHubReachableOnce()
   })
-  // The initial connect fired before `onConnected` was registered, so trigger
-  // the one-shot `onHubReachable` directly for the addons loaded this boot.
-  fireHubReachableOnce()
+  // The initial connect fired before `onConnected` was registered: the boot reads the switches
+  // here, and a registry that does not answer fails the boot before READY.
+  await fireHubReachableOnce()
 
   runnerLog.info(`"${nodeId}" started — ${loaded.length} addon(s) ready (UDS connected)`)
   process.stdout.write(`READY:${nodeId}\n`)

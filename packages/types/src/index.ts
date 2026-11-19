@@ -113,6 +113,9 @@ export {
 } from './addon/record-integration-instances.js'
 export {
   beginHydration,
+  claimInstance,
+  isHydrationPending,
+  pendingHydrationOwners,
   clearInstanceSwitches,
   forgetInstanceSwitch,
   hydrateInstanceSwitches,
@@ -127,6 +130,10 @@ export {
   UnknownInstanceKindError,
 } from './addon/compose-instance-kinds.js'
 export type { InstanceKindPart } from './addon/compose-instance-kinds.js'
+export {
+  InstanceSwitchesUnreadError,
+  isInstanceSwitchesUnreadError,
+} from './addon/instance-switches-unread-error.js'
 export * from './addon/notification-targets.js'
 export * from './addon/instances-of-cap.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'

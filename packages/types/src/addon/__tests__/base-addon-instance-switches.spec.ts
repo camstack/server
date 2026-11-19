@@ -159,6 +159,7 @@ describe('instance switches in BaseAddon', () => {
   })
 
   it('fails closed: a hub that cannot answer leaves every instance off, and the boot goes on', async () => {
+    registerServedInstanceKind(ADDON, served(widgets).entry)
     const hub = hubWith('down')
     await new Probe().initialize(
       fakeAddonContext({ id: ADDON, api: createTRPCClient<AppRouter>({ links: [hub.link] }) }),
@@ -168,6 +169,7 @@ describe('instance switches in BaseAddon', () => {
   })
 
   it('the hub-reachable event reads again: instances come on once the registry answers', async () => {
+    registerServedInstanceKind(ADDON, served(widgets).entry)
     const hub = hubWith('down')
     const addon = new Probe()
     await addon.initialize(
@@ -184,13 +186,13 @@ describe('instance switches in BaseAddon', () => {
     expect(isInstanceOn('never-heard-of')).toBe(true)
   })
 
-  it('an instance nobody stated reads off while the addon initialises, on once its boot is settled', async () => {
+  it('an instance nobody stated reads on once the registry answered (a fresh instance)', async () => {
     const hub = hubWith([])
     const addon = new Probe()
     await addon.initialize(
       fakeAddonContext({ id: ADDON, api: createTRPCClient<AppRouter>({ links: [hub.link] }) }),
     )
-    expect(addon.seenInInit).toBe(false)
+    expect(addon.seenInInit).toBe(true)
     expect(isInstanceOn('probe-instance')).toBe(true)
   })
 

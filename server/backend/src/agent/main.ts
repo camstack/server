@@ -53,6 +53,7 @@ import {
   createCiaoPublisher,
   TlsTcpTransporter,
   NativeMetricsProvider,
+  rehydrateSwitchesOnHubConnect,
 } from '@camstack/server/system'
 import { EventCategory } from '@camstack/types'
 import type {
@@ -1446,22 +1447,32 @@ async function startAgent(configPath?: string): Promise<void> {
     // Hub connected — its view of this agent was reset, so the full manifest goes again.
     // (A stale `certificate-rejected` clears on the registration's ack.)
     registration.onHubConnected()
-    if (hubReachableFired) return
+    // Every (re)connect reads the switches again for each addon that serves instance kinds: an
+    // owner whose registry read failed earlier is retried by the next connect (event-driven, D3),
+    // and a hub restart after a good read changes nothing the addon already knows.
+    const first = !hubReachableFired
     hubReachableFired = true
-    for (const [, entry] of loadedAddons) {
-      if (
-        !entry.addon ||
-        (entry.addon.hubReachable === undefined && typeof entry.addon.onHubReachable !== 'function')
+    void (async () => {
+      await rehydrateSwitchesOnHubConnect(
+        [...loadedAddons.values()].flatMap((entry) =>
+          entry.addon ? [{ addonId: entry.id, addon: entry.addon }] : [],
+        ),
+        {
+          fatalOnUnread: false,
+          onUnread: (addonId, err) => {
+            console.error(`[Agent] ${addonId} instance switches not read:`, err)
+          },
+          exit: () => undefined,
+        },
       )
-        continue
-      Promise.resolve(
-        entry.addon.hubReachable !== undefined
-          ? entry.addon.hubReachable()
-          : entry.addon.onHubReachable?.(),
-      ).catch((err: unknown) => {
-        console.error(`[Agent] ${entry.id} hubReachable() threw:`, err)
-      })
-    }
+      if (!first) return
+      for (const [, entry] of loadedAddons) {
+        if (!entry.addon || typeof entry.addon.onHubReachable !== 'function') continue
+        Promise.resolve(entry.addon.onHubReachable()).catch((err: unknown) => {
+          console.error(`[Agent] ${entry.id} onHubReachable() threw:`, err)
+        })
+      }
+    })()
   })
 
   console.log(
