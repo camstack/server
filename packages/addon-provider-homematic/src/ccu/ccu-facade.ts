@@ -13,6 +13,7 @@ export type CcuFacade = Pick<
   | 'serviceMessages'
   | 'acknowledgeServiceMessage'
   | 'devices'
+  | 'refreshNames'
   | 'customEntities'
   | 'groups'
   | 'createGroup'

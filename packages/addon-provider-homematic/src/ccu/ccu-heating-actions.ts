@@ -1,6 +1,7 @@
 import type { HmDevice, HmGroup } from 'nodehomematic'
 import type { CcuActionDeps } from './ccu-facade.js'
 import { errorText, requireConfirmed, requireFacade } from './ccu-facade.js'
+import { revalidateCcuNames } from './ccu-names-revalidate.js'
 import {
   HEATING_GROUP_TYPES,
   type GroupCandidate,
@@ -69,6 +70,7 @@ export function buildCcuHeatingHandlers(deps: CcuActionDeps) {
   return {
     listHeatingGroups: async (input: { integrationId: string }): Promise<HeatingOverview> => {
       const facade = requireFacade(deps, input.integrationId)
+      revalidateCcuNames(deps, input.integrationId, facade)
       const devices = facade.devices()
       const names = new Map(devices.map((device) => [device.address, device.name ?? null]))
       let groups: HeatingGroup[] = []

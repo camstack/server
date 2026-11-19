@@ -16,9 +16,10 @@ export function fakeDeps(
   options: { readonly integrations?: readonly CcuListItem[] } = {},
 ): { readonly deps: CcuActionDeps; readonly logger: RecordingLogger } {
   const logger = new RecordingLogger()
+  const live = facade === null ? null : asFacade({ refreshNames: async () => undefined, ...facade })
   return {
     deps: {
-      facade: (id) => (id === 'hm_1' && facade !== null ? asFacade(facade) : null),
+      facade: (id) => (id === 'hm_1' ? live : null),
       integrations: () => options.integrations ?? [],
       logger,
       adoptedAddresses: async () => new Map<string, number>(),

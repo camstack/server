@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Heating tab: a heating group offers only the channels the CCU accepts as members (the thermostat's control channel), not every climate channel of the device
+- CCU device and heating pages show a device's CCU name after it is renamed on the CCU or named after pairing (re-read at most once a minute, on a page read; needs nodehomematic 0.9.2)
 
 ## [1.2.207] - 2026-11-18
 
