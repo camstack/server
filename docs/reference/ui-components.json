@@ -8957,6 +8957,51 @@
       ]
     },
     {
+      "name": "FormSaveBar",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/form-save-bar.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "pendingCount",
+          "type": "number",
+          "optional": false,
+          "doc": "How many changes are pending. At 0 the bar hides itself."
+        },
+        {
+          "name": "onSave",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onDiscard",
+          "type": "() => void",
+          "optional": false,
+          "doc": "Resets the local edits without touching the server."
+        },
+        {
+          "name": "saving",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Disables both buttons while a save is in flight and shows \"Saving…\"."
+        },
+        {
+          "name": "saveLabel",
+          "type": "string",
+          "optional": true,
+          "doc": "Override for the save label (e.g. \"Apply\")."
+        },
+        {
+          "name": "discardLabel",
+          "type": "string",
+          "optional": true,
+          "doc": "Override for the discard label."
+        }
+      ]
+    },
+    {
       "name": "FOUNTAIN_LOW_PERCENT",
       "kind": "constant",
       "area": "composites",

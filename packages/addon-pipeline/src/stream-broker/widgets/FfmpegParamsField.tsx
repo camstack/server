@@ -5,6 +5,7 @@ import {
   useStreamBrokerGetBrokerStats,
   useStreamBrokerPreviewDerivedEncode,
   Button,
+  FormSaveBar,
   Input,
   Switch,
   Textarea,
@@ -16,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useT } from '../../i18n/index.js'
 import {
   audioCodecOf,
+  changedFieldCount,
   PASSTHROUGH_PROFILE,
   parseAudioCodec,
   parseVideoCodecChoice,
@@ -26,13 +28,13 @@ import {
   videoCodecChoiceOf,
   withAudioCodec,
   withFps,
-  withHeight,
-  withCodecSection,
   withVideoCodec,
   withVideoField,
+  withWidth,
 } from './encode-sections.js'
 import { EncodeResultPanel, type ResultView, type RunningView } from './EncodeResultPanel.js'
 import { GeometryBuilder } from './GeometryBuilder.js'
+import { migrateHeightToWidth, resolutionLadder, type SourceSize } from './resolution-ladder.js'
 
 /**
  * Curated catalogue of commonly-used ffmpeg flag groups, surfaced as
@@ -250,10 +252,10 @@ export interface FfmpegParamsWidgetConfig {
 }
 
 /**
- * Autosave lifecycle surfaced to the operator. The widget persists every
- * edit immediately (there is no explicit Save button) — this drives the
- * inline "Saving… / Saved / Save failed" indicator so a change is never
- * silently in-flight or silently dropped.
+ * Lifecycle of the last Save, surfaced to the operator. Edits stay a local
+ * draft until the Save button writes them (every save respawns the derived
+ * feeder) — this drives the inline "Saving… / Saved / Save failed" indicator
+ * so a save is never silently in-flight or silently dropped.
  */
 export type FfmpegSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -261,8 +263,10 @@ export interface FfmpegParamsCoreProps {
   readonly config: FfmpegParamsWidgetConfig
   readonly value: EncodeProfile | undefined
   readonly onSave: (next: EncodeProfile | undefined) => void
-  /** Live autosave status for the header indicator. Omit in tests. */
+  /** Status of the last save for the header indicator. Omit in tests. */
   readonly saveStatus?: FfmpegSaveStatus
+  /** Fires with the profile being edited (the draft, or the stored one after a save or discard). */
+  readonly onEditedChange?: (edited: EncodeProfile | undefined) => void
   /** The server's plan for the profile being edited; absent = nothing asked yet. */
   readonly result?: ResultView
   /** The running encode of this stream; absent = no badge. */
@@ -330,8 +334,10 @@ interface DraftNumberInputProps {
   readonly ariaLabel: string
   /** The persisted value; `undefined` = the field is absent. */
   readonly value: number | undefined
-  /** Whole numbers only (width, height, bitrate). */
+  /** Whole numbers only (width, bitrate). */
   readonly integer: boolean
+  /** Even numbers only (a picture width the encoder accepts). */
+  readonly even?: boolean
   readonly placeholder: string
   readonly invalidText: string
   /** `undefined` = the operator cleared the field. */
@@ -340,8 +346,8 @@ interface DraftNumberInputProps {
 
 /**
  * A numeric field that keeps a local draft and commits on blur / Enter, so a
- * keystroke is not a save (every save respawns the derived feeder). An empty
- * draft clears the value, an invalid one is not saved and shows the error
+ * keystroke is not an edit. An empty
+ * draft clears the value, an invalid one is not applied and shows the error
  * state, Escape reverts to the persisted value.
  */
 function DraftNumberInput({
@@ -349,6 +355,7 @@ function DraftNumberInput({
   ariaLabel,
   value,
   integer,
+  even = false,
   placeholder,
   invalidText,
   onCommit,
@@ -363,7 +370,12 @@ function DraftNumberInput({
       if (value !== undefined) onCommit(undefined)
     } else {
       const n = Number(trimmed)
-      if (!Number.isFinite(n) || n <= 0 || (integer && !Number.isInteger(n))) {
+      if (
+        !Number.isFinite(n) ||
+        n <= 0 ||
+        (integer && !Number.isInteger(n)) ||
+        (even && n % 2 !== 0)
+      ) {
         setInvalid(true)
         return
       }
@@ -400,6 +412,83 @@ function DraftNumberInput({
   )
 }
 
+const CUSTOM_WIDTH = 'custom'
+
+interface ResizeControlProps {
+  readonly id: string
+  /** The edited output width; `undefined` = none chosen yet. */
+  readonly width: number | undefined
+  readonly source: SourceSize | undefined
+  readonly onChange: (width: number | undefined) => void
+}
+
+/**
+ * The Resize control: the sizes at the source aspect ratio, from the source's
+ * own down to the lowest, plus a custom (even) width. Only the width is stored;
+ * the height follows the source.
+ */
+function ResizeControl({ id, width, source, onChange }: ResizeControlProps): React.ReactElement {
+  const { t } = useT()
+  const ladder = useMemo(() => resolutionLadder(source), [source])
+  const inLadder = width !== undefined && ladder.some((option) => option.width === width)
+  const [customOpen, setCustomOpen] = useState(false)
+  const custom = customOpen || (width !== undefined && !inLadder)
+  const selected = custom ? CUSTOM_WIDTH : width === undefined ? '' : String(width)
+  return (
+    <div className="space-y-1.5">
+      <div className={labelRowCls}>
+        <label htmlFor={id} className={labelTextCls}>
+          {t('ffmpeg.outputSize')}
+        </label>
+        <Select
+          wrapperClassName="inline-block w-auto"
+          id={id}
+          value={selected}
+          onChange={(e) => {
+            if (e.target.value === CUSTOM_WIDTH) {
+              setCustomOpen(true)
+              return
+            }
+            setCustomOpen(false)
+            const next = Number(e.target.value)
+            if (Number.isInteger(next) && next > 0) onChange(next)
+          }}
+          className="min-w-[120px]"
+        >
+          {width === undefined && !custom ? (
+            <option value="" disabled>
+              {t('ffmpeg.resizeChoose')}
+            </option>
+          ) : null}
+          {ladder.map((option) => (
+            <option key={option.width} value={String(option.width)}>
+              {`${String(option.width)}×${String(option.height)}`}
+            </option>
+          ))}
+          <option value={CUSTOM_WIDTH}>{t('ffmpeg.resizeCustom')}</option>
+        </Select>
+      </div>
+      {custom ? (
+        <div className={labelRowCls}>
+          <label htmlFor={`${id}-custom`} className={labelTextCls}>
+            {t('ffmpeg.outputWidth')}
+          </label>
+          <DraftNumberInput
+            id={`${id}-custom`}
+            ariaLabel={t('ffmpeg.outputWidth')}
+            value={width}
+            integer={true}
+            even={true}
+            placeholder={t('ffmpeg.placeholderSource')}
+            invalidText={t('ffmpeg.invalidEvenNumber')}
+            onCommit={onChange}
+          />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /**
  * Pure presentational component. Receives `value` + `onSave` directly
  * from its parent — used by the WidgetProps wrapper below AND by the
@@ -414,6 +503,7 @@ export function FfmpegParamsCore({
   value,
   onSave,
   saveStatus,
+  onEditedChange,
   result,
   running,
 }: FfmpegParamsCoreProps): React.ReactElement {
@@ -421,7 +511,33 @@ export function FfmpegParamsCore({
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const argsOnly = config.argsOnly === true
 
-  const profile: EncodeProfile = value ?? PASSTHROUGH_DEFAULT
+  // The source picture the Resize sizes are cut from, and the stored profile
+  // read against it: a height stored by the old editor shows as the matching
+  // width. Nothing is written back until the operator saves.
+  const sourceWidth = config.sourceParams?.video.width
+  const sourceHeight = config.sourceParams?.video.height
+  const sourceSize: SourceSize | undefined = useMemo(
+    () =>
+      sourceWidth !== undefined && sourceHeight !== undefined
+        ? { width: sourceWidth, height: sourceHeight }
+        : undefined,
+    [sourceWidth, sourceHeight],
+  )
+  const storedView = useMemo(
+    () => (value === undefined ? undefined : migrateHeightToWidth(value, sourceSize)),
+    [value, sourceSize],
+  )
+  // Edits are a draft until Save: `null` = nothing edited yet.
+  const [draft, setDraft] = useState<{ readonly profile: EncodeProfile | undefined } | null>(null)
+  const current: EncodeProfile | undefined = draft !== null ? draft.profile : storedView
+  const pendingCount = draft !== null ? changedFieldCount(value, draft.profile) : 0
+
+  const profile: EncodeProfile = current ?? PASSTHROUGH_DEFAULT
+  const probedCodec = config.sourceParams?.video.codec
+  const codecOffHint =
+    probedCodec === 'h264' || probedCodec === 'h265'
+      ? t('ffmpeg.codecOffHintKnown', { codec: probedCodec === 'h265' ? 'H.265' : 'H.264' })
+      : t('ffmpeg.codecOffHint')
 
   // Local textarea state synced from the persisted profile — lets us
   // append flags from the picker without going through onBlur cycles.
@@ -446,23 +562,34 @@ export function FfmpegParamsCore({
   // operator just switched on that has no value yet (a Resize with no height)
   // stays on here without touching the profile.
   const [on, setOn] = useState<SectionState>(() => sectionsOf(value))
-  // Passthrough is no profile: back at passthrough, the stored one is cleared.
-  const commit = (next: EncodeProfile, codecOn: boolean = on.codec): void => {
-    onSave(profileToSave(withCodecSection(next, codecOn)))
+  // An edit changes the draft only. Passthrough is no profile: back at
+  // passthrough, saving clears the stored one.
+  const edit = (next: EncodeProfile): void => {
+    const edited = profileToSave(next)
+    if (changedFieldCount(current, edited) === 0) return
+    setDraft({ profile: edited })
+    onEditedChange?.(edited)
+  }
+  const save = (): void => {
+    if (draft === null) return
+    onSave(draft.profile)
+    setDraft(null)
+  }
+  const discard = (): void => {
+    setDraft(null)
+    setOn(sectionsOf(value))
+    onEditedChange?.(storedView)
   }
   const toggleSection = (id: SectionId, next: boolean): void => {
     setOn((prev) => ({ ...prev, [id]: next }))
-    const stored = sectionsOf(value)
-    if (id === 'resize' && !next && stored.resize) commit(withHeight(value, undefined))
-    else if (id === 'fps' && !next && stored.fps) commit(withFps(value, undefined))
-    else if (id === 'codec' && next) commit(withVideoCodec(value, 'h264'), true)
-    else if (id === 'codec' && !next && stored.codec) commit(withVideoCodec(value, null), false)
-    else if (id === 'audio' && next) commit(withAudioCodec(value, 'aac'))
-    else if (id === 'audio' && !next && stored.audio) commit(withAudioCodec(value, null))
+    if (id === 'resize' && !next) edit(withWidth(current, undefined))
+    else if (id === 'fps' && !next) edit(withFps(current, undefined))
+    else if (id === 'codec') edit(withVideoCodec(current, next ? 'h264' : null))
+    else if (id === 'audio') edit(withAudioCodec(current, next ? 'aac' : null))
   }
   const setAudioBitrate = (bitrateKbps: number): void => {
     if (!Number.isFinite(bitrateKbps) || bitrateKbps <= 0) return
-    commit({
+    edit({
       ...profile,
       audio:
         typeof profile.audio === 'object'
@@ -478,7 +605,7 @@ export function FfmpegParamsCore({
       .filter((l) => l.length > 0)
     const current = profile[key] ?? []
     if (next.length === current.length && next.every((line, i) => line === current[i])) return
-    commit({ ...profile, [key]: next })
+    edit({ ...profile, [key]: next })
   }
   const setInputArgs = (lines: string): void => setArgs('inputArgs', lines)
   const setOutputArgs = (lines: string): void => setArgs('outputArgs', lines)
@@ -555,12 +682,10 @@ export function FfmpegParamsCore({
 
   return (
     <div className="space-y-3">
-      {/* ── Autosave indicator ──────────────────────────────────────────── */}
-      {/*    These params have NO explicit Save button — every edit is       */}
-      {/*    persisted immediately. This row tells the operator the change   */}
-      {/*    landed (or is in flight / failed) so a silent autosave never    */}
-      {/*    looks like "nothing happened".                                  */}
-      {saveStatus !== undefined && (
+      {/* ── Save status ─────────────────────────────────────────────────── */}
+      {/*    Edits are a draft until the Save bar below writes them. This    */}
+      {/*    row tells the operator how the last save went.                  */}
+      {saveStatus !== undefined && saveStatus !== 'idle' && (
         <div className="flex items-center justify-end">
           <SaveStatusBadge status={saveStatus} />
         </div>
@@ -597,20 +722,12 @@ export function FfmpegParamsCore({
               onToggle={(next) => toggleSection('resize', next)}
               offHint={t('ffmpeg.resizeOffHint')}
             >
-              <div className={labelRowCls}>
-                <label htmlFor={`${config.fieldKey}-resize-height`} className={labelTextCls}>
-                  {t('ffmpeg.outputHeight')}
-                </label>
-                <DraftNumberInput
-                  id={`${config.fieldKey}-resize-height`}
-                  ariaLabel={t('ffmpeg.outputHeight')}
-                  value={profile.video.height}
-                  integer={true}
-                  placeholder={t('ffmpeg.placeholderSource')}
-                  invalidText={t('ffmpeg.invalidNumber')}
-                  onCommit={(next) => commit(withHeight(value, next))}
-                />
-              </div>
+              <ResizeControl
+                id={`${config.fieldKey}-resize-width`}
+                width={profile.video.width}
+                source={sourceSize}
+                onChange={(next) => edit(withWidth(current, next))}
+              />
               <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.resizeOnHint')}</p>
             </SectionCard>
 
@@ -618,7 +735,7 @@ export function FfmpegParamsCore({
               title={t('ffmpeg.sectionCodec')}
               on={on.codec}
               onToggle={(next) => toggleSection('codec', next)}
-              offHint={t('ffmpeg.codecOffHint')}
+              offHint={codecOffHint}
             >
               <div className={labelRowCls}>
                 <label htmlFor={`${config.fieldKey}-video-codec`} className={labelTextCls}>
@@ -627,14 +744,13 @@ export function FfmpegParamsCore({
                 <Select
                   wrapperClassName="inline-block w-auto"
                   id={`${config.fieldKey}-video-codec`}
-                  value={videoCodecChoiceOf(value)}
+                  value={videoCodecChoiceOf(current)}
                   onChange={(e) => {
                     const choice = parseVideoCodecChoice(e.target.value)
-                    if (choice !== undefined) commit(withVideoCodec(value, choice), true)
+                    if (choice !== undefined) edit(withVideoCodec(current, choice))
                   }}
                   className="min-w-[120px]"
                 >
-                  <option value="source">{t('ffmpeg.codecKeepSource')}</option>
                   <option value="h264">{t('ffmpeg.codecH264')}</option>
                   <option value="h265">{t('ffmpeg.codecH265')}</option>
                 </Select>
@@ -654,10 +770,10 @@ export function FfmpegParamsCore({
                 <Select
                   wrapperClassName="inline-block w-auto"
                   id={`${config.fieldKey}-audio-codec`}
-                  value={audioCodecOf(value)}
+                  value={audioCodecOf(current)}
                   onChange={(e) => {
                     const codec = parseAudioCodec(e.target.value)
-                    if (codec !== undefined) commit(withAudioCodec(value, codec))
+                    if (codec !== undefined) edit(withAudioCodec(current, codec))
                   }}
                   className="min-w-[120px]"
                 >
@@ -691,7 +807,7 @@ export function FfmpegParamsCore({
                       : t('ffmpeg.placeholderSource')
                   }
                   invalidText={t('ffmpeg.invalidNumber')}
-                  onCommit={(next) => commit(withFps(value, next))}
+                  onCommit={(next) => edit(withFps(current, next))}
                 />
               </div>
               <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.fpsOnHint')}</p>
@@ -699,7 +815,7 @@ export function FfmpegParamsCore({
           </div>
 
           <EncodeResultPanel
-            profile={value}
+            profile={current}
             result={result ?? { kind: 'pending' }}
             {...(running !== undefined ? { running } : {})}
           />
@@ -752,20 +868,6 @@ export function FfmpegParamsCore({
               <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.expertHint')}</p>
               <div className="divide-y divide-border/30">
                 <div className={labelRowCls}>
-                  <label htmlFor={`${config.fieldKey}-video-width`} className={labelTextCls}>
-                    {t('ffmpeg.width')}
-                  </label>
-                  <DraftNumberInput
-                    id={`${config.fieldKey}-video-width`}
-                    ariaLabel={t('ffmpeg.width')}
-                    value={profile.video.width}
-                    integer={true}
-                    placeholder={t('ffmpeg.placeholderSource')}
-                    invalidText={t('ffmpeg.invalidNumber')}
-                    onCommit={(next) => commit(withVideoField(value, 'width', next))}
-                  />
-                </div>
-                <div className={labelRowCls}>
                   <label htmlFor={`${config.fieldKey}-video-bitrate`} className={labelTextCls}>
                     {t('ffmpeg.bitrateKbps')}
                   </label>
@@ -776,7 +878,7 @@ export function FfmpegParamsCore({
                     integer={true}
                     placeholder={t('ffmpeg.placeholderAuto')}
                     invalidText={t('ffmpeg.invalidNumber')}
-                    onCommit={(next) => commit(withVideoField(value, 'bitrateKbps', next))}
+                    onCommit={(next) => edit(withVideoField(current, 'bitrateKbps', next))}
                   />
                 </div>
                 <div className={labelRowCls}>
@@ -790,7 +892,7 @@ export function FfmpegParamsCore({
                     integer={true}
                     placeholder={t('ffmpeg.placeholderAuto')}
                     invalidText={t('ffmpeg.invalidNumber')}
-                    onCommit={(next) => commit(withVideoField(value, 'gopFrames', next))}
+                    onCommit={(next) => edit(withVideoField(current, 'gopFrames', next))}
                   />
                 </div>
                 {typeof profile.audio === 'object' && (
@@ -821,17 +923,27 @@ export function FfmpegParamsCore({
           )}
         </div>
       )}
+
+      {/* The same Save / Discard bar the other settings forms use. */}
+      <FormSaveBar
+        pendingCount={pendingCount}
+        onSave={save}
+        onDiscard={discard}
+        saving={saveStatus === 'saving'}
+      />
     </div>
   )
 }
 
-// ── Autosave status badge ───────────────────────────────────────────────
-// Small inline affordance for the button-less autosave form. Idle renders a
-// muted "Autosaves" hint so the operator knows edits persist without a Save
-// click; the other states flash the in-flight / success / failure of the
-// last write.
+// ── Save status badge ───────────────────────────────────────────────
+// Small inline affordance for the in-flight / success / failure of the last
+// save. Idle renders nothing: the Save bar speaks for pending edits.
 
-function SaveStatusBadge({ status }: { readonly status: FfmpegSaveStatus }): React.ReactElement {
+function SaveStatusBadge({
+  status,
+}: {
+  readonly status: FfmpegSaveStatus
+}): React.ReactElement | null {
   const { t } = useT()
   const base =
     'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border'
@@ -859,11 +971,7 @@ function SaveStatusBadge({ status }: { readonly status: FfmpegSaveStatus }): Rea
       </span>
     )
   }
-  return (
-    <span className={`${base} bg-foreground-subtle/10 text-foreground-subtle border-border`}>
-      {t('ffmpeg.autosaves')}
-    </span>
-  )
+  return null
 }
 
 // ── Source (probed) chips ───────────────────────────────────────────────
@@ -975,11 +1083,14 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
   // form-builder may produce new identities each render even when the
   // value hasn't changed; re-syncing would clobber user edits in flight.
   const [value, setValue] = useState<EncodeProfile | undefined>(() => cfg.initialValue)
+  // The profile being edited (the unsaved draft, or the saved value): the plan
+  // below is computed for what the operator sees, not only for what is stored.
+  const [edited, setEdited] = useState<EncodeProfile | undefined>(() => cfg.initialValue)
 
   // The plan for the profile being edited, computed by the server and asked
   // for once the operator pauses. The profile is the query key, so a new edit
   // is a new query; the last answer stays on screen meanwhile.
-  const debouncedProfile = useDebouncedValue(value ?? PASSTHROUGH_PROFILE, PREVIEW_DEBOUNCE_MS)
+  const debouncedProfile = useDebouncedValue(edited ?? PASSTHROUGH_PROFILE, PREVIEW_DEBOUNCE_MS)
   const previewSource = DerivedSourceRefSchema.safeParse(cfg.previewSource)
   const previewQuery = useStreamBrokerPreviewDerivedEncode(
     {
@@ -1021,6 +1132,7 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
   const handleSave = useCallback(
     (next: EncodeProfile | undefined): void => {
       setValue(next)
+      setEdited(next)
       if (props.deviceId === undefined) return
       const writerCapName = cfg.writerCapName
       const writerAddonId = cfg.writerAddonId
@@ -1060,10 +1172,9 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
     )
   }
 
-  // Autosave status derived from the mutation. `isPending` → in flight;
+  // Save status derived from the mutation. `isPending` → in flight;
   // `isError` → the last write was rejected (e.g. an invalid encode value);
-  // `isSuccess` → persisted. `idle` before the first edit shows the muted
-  // "Autosaves" hint so the operator knows there is no Save button to click.
+  // `isSuccess` → persisted. `idle` before the first save shows nothing.
   const saveStatus: FfmpegSaveStatus = updateField.isPending
     ? 'saving'
     : updateField.isError
@@ -1079,6 +1190,7 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
       value={value}
       onSave={handleSave}
       saveStatus={saveStatus}
+      onEditedChange={setEdited}
       result={result}
       {...(running !== undefined ? { running } : {})}
     />

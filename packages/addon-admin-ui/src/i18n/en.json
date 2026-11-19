@@ -11186,6 +11186,13 @@
     },
     "openPageQuickAction": {
       "open": "Open device page"
+    },
+    "formSaveBar": {
+      "unsavedChanges_one": "{{count}} unsaved change",
+      "unsavedChanges_other": "{{count}} unsaved changes",
+      "discard": "Discard",
+      "save": "Save",
+      "saving": "Saving…"
     }
   },
   "helpers": {

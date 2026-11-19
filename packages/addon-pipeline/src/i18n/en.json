@@ -120,7 +120,7 @@
     "invalidNumber": "Enter a number above 0, or clear the field",
     "sectionResize": "Resize",
     "resizeOffHint": "Keeps the source size.",
-    "resizeOnHint": "Width follows the source aspect ratio.",
+    "resizeOnHint": "The height follows the source aspect ratio.",
     "outputHeight": "Output height",
     "sectionCodec": "Video codec",
     "codecOffHint": "Keeps the source codec.",
@@ -171,7 +171,13 @@
     "resultAudioAac": "re-encoded to AAC",
     "resultAudioProfile": "encoded as {{codec}}",
     "resultAudioNone": "no audio",
-    "resultArgs": "ffmpeg arguments"
+    "resultArgs": "ffmpeg arguments",
+    "outputSize": "Size",
+    "outputWidth": "Width (even)",
+    "resizeChoose": "Choose a size",
+    "resizeCustom": "Custom width…",
+    "invalidEvenNumber": "Enter an even number above 0, or clear the field",
+    "codecOffHintKnown": "Keeps the source codec ({{codec}})."
   },
   "geometry": {
     "title": "Geometry / zoom",

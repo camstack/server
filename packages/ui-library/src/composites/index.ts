@@ -445,6 +445,7 @@ export {
 } from './extensions/ExtensionsPanel.js'
 export * from './filter-bar'
 export * from './form-field'
+export * from './form-save-bar'
 export type { GroupedModelSelectorProps } from './grouped-model-selector'
 export * from './grouped-tile-picker'
 export { GroupedModelSelector } from './grouped-model-selector'

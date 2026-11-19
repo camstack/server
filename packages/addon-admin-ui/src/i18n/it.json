@@ -11208,6 +11208,13 @@
     },
     "openPageQuickAction": {
       "open": "Apri la pagina del dispositivo"
+    },
+    "formSaveBar": {
+      "unsavedChanges_one": "{{count}} modifica non salvata",
+      "unsavedChanges_other": "{{count}} modifiche non salvate",
+      "discard": "Annulla modifiche",
+      "save": "Salva",
+      "saving": "Salvataggio…"
     }
   },
   "helpers": {

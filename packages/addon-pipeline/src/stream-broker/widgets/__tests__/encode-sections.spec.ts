@@ -4,13 +4,13 @@ import {
   NO_SECTIONS,
   PASSTHROUGH_PROFILE,
   type SectionState,
+  changedFieldCount,
   isPassthrough,
   profileToSave,
   sectionsOf,
   withAudioCodec,
-  withCodecSection,
   withFps,
-  withHeight,
+  withWidth,
   withVideoCodec,
 } from '../encode-sections.js'
 
@@ -22,11 +22,16 @@ describe('sectionsOf: a stored profile switches on exactly the sections its fiel
     ['passthrough', PASSTHROUGH_PROFILE, NO_SECTIONS],
     [
       'resize + h264 + aac',
-      { video: { codec: 'h264', height: 480 }, audio: { codec: 'aac' } },
+      { video: { codec: 'h264', width: 854 }, audio: { codec: 'aac' } },
       on({ resize: true, codec: true, audio: true }),
     ],
     [
       'resize only',
+      { video: { codec: 'source', width: 854 }, audio: 'passthrough' },
+      on({ resize: true }),
+    ],
+    [
+      'a height stored by the old editor still switches Resize on',
       { video: { codec: 'source', height: 480 }, audio: 'passthrough' },
       on({ resize: true }),
     ],
@@ -43,8 +48,8 @@ describe('sectionsOf: a stored profile switches on exactly the sections its fiel
       NO_SECTIONS,
     ],
     [
-      'width alone is Expert, not Resize',
-      { video: { codec: 'source', width: 1280 }, audio: 'passthrough' },
+      'a source codec is the codec section OFF',
+      { video: { codec: 'source' }, audio: 'passthrough' },
       NO_SECTIONS,
     ],
     [
@@ -60,14 +65,14 @@ describe('sectionsOf: a stored profile switches on exactly the sections its fiel
 
 describe('section edits combine, and each owns only its fields', () => {
   it('resize + h264 + aac from nothing', () => {
-    const p = withAudioCodec(withVideoCodec(withHeight(undefined, 480), 'h264'), 'aac')
-    expect(p).toEqual({ video: { codec: 'h264', height: 480 }, audio: { codec: 'aac' } })
+    const p = withAudioCodec(withVideoCodec(withWidth(undefined, 854), 'h264'), 'aac')
+    expect(p).toEqual({ video: { codec: 'h264', width: 854 }, audio: { codec: 'aac' } })
     expect(sectionsOf(p)).toEqual(on({ resize: true, codec: true, audio: true }))
   })
 
   it('resize only re-encodes in the source codec', () => {
-    expect(withHeight(undefined, 480)).toEqual({
-      video: { codec: 'source', height: 480 },
+    expect(withWidth(undefined, 854)).toEqual({
+      video: { codec: 'source', width: 854 },
       audio: 'passthrough',
     })
   })
@@ -95,26 +100,26 @@ describe('section edits combine, and each owns only its fields', () => {
 
   it('switching a section off removes only its field', () => {
     const full: EncodeProfile = {
-      video: { codec: 'h264', height: 480, fps: 10, bitrateKbps: 800 },
+      video: { codec: 'h264', width: 854, fps: 10, bitrateKbps: 800 },
       audio: { codec: 'aac', bitrateKbps: 64 },
       outputArgs: ['-copyts'],
     }
-    expect(withHeight(full, undefined).video).toEqual({ codec: 'h264', fps: 10, bitrateKbps: 800 })
-    expect(withFps(full, undefined).video.height).toBe(480)
+    expect(withWidth(full, undefined).video).toEqual({ codec: 'h264', fps: 10, bitrateKbps: 800 })
+    expect(withFps(full, undefined).video.width).toBe(854)
     expect(withAudioCodec(full, null).audio).toBe('passthrough')
     expect(withAudioCodec(full, null).outputArgs).toEqual(['-copyts'])
     // codec off keeps the rest: still a re-encode in the source codec
     expect(withVideoCodec(full, null).video).toEqual({
       codec: 'source',
-      height: 480,
+      width: 854,
       fps: 10,
       bitrateKbps: 800,
     })
   })
 
   it('every section off is the passthrough profile', () => {
-    const p = withHeight(withVideoCodec(withAudioCodec(undefined, 'aac'), 'h264'), 480)
-    const off = withAudioCodec(withVideoCodec(withHeight(p, undefined), null), null)
+    const p = withWidth(withVideoCodec(withAudioCodec(undefined, 'aac'), 'h264'), 854)
+    const off = withAudioCodec(withVideoCodec(withWidth(p, undefined), null), null)
     expect(off).toEqual(PASSTHROUGH_PROFILE)
     expect(isPassthrough(off)).toBe(true)
   })
@@ -128,29 +133,34 @@ describe('section edits combine, and each owns only its fields', () => {
   })
 })
 
-describe('a stored source codec', () => {
-  it('opens with the Video codec section ON, because it is a real re-encode', () => {
-    expect(sectionsOf({ video: { codec: 'source' }, audio: 'passthrough' })).toEqual(
-      on({ codec: true }),
-    )
-  })
-  it('stays a re-encode when Keep source is the only thing on', () => {
-    const p = withCodecSection(withVideoCodec(undefined, 'source'), true)
-    expect(p.video.codec).toBe('source')
-  })
-  it('is copy again once the codec section is off and nothing else asks for a re-encode', () => {
-    expect(
-      withCodecSection(
-        withVideoCodec({ video: { codec: 'source' }, audio: 'passthrough' }, null),
-        false,
-      ).video.codec,
-    ).toBe('copy')
-  })
-  it('keeps source when a resize is removed while the codec section is on', () => {
-    const resized: EncodeProfile = { video: { codec: 'source', height: 480 }, audio: 'passthrough' }
-    expect(withCodecSection(withHeight(resized, undefined), true).video).toEqual({
-      codec: 'source',
+describe('resize is keyed on the width', () => {
+  it('replaces a height stored by the old editor instead of keeping both', () => {
+    const stored: EncodeProfile = {
+      video: { codec: 'h264', height: 720, bitrateKbps: 777 },
+      audio: 'passthrough',
+    }
+    expect(withWidth(stored, 1280).video).toEqual({
+      codec: 'h264',
+      width: 1280,
+      bitrateKbps: 777,
     })
+  })
+  it('clearing the width clears a leftover height too', () => {
+    const stored: EncodeProfile = { video: { codec: 'source', height: 720 }, audio: 'passthrough' }
+    expect(withWidth(stored, undefined).video).toEqual({ codec: 'copy' })
+  })
+})
+
+describe('changedFieldCount', () => {
+  it('is 0 for the same profile and for none against passthrough', () => {
+    expect(changedFieldCount(PASSTHROUGH_PROFILE, PASSTHROUGH_PROFILE)).toBe(0)
+    expect(changedFieldCount(undefined, PASSTHROUGH_PROFILE)).toBe(0)
+  })
+  it('counts each changed video field, the audio and the args once', () => {
+    const edited = withWidth(withAudioCodec(undefined, 'aac'), 854)
+    // codec copy -> source, width added, audio changed
+    expect(changedFieldCount(undefined, edited)).toBe(3)
+    expect(changedFieldCount(undefined, { ...PASSTHROUGH_PROFILE, outputArgs: ['-a'] })).toBe(1)
   })
 })
 
@@ -159,7 +169,7 @@ describe('profileToSave: passthrough is no profile', () => {
     expect(profileToSave(PASSTHROUGH_PROFILE)).toBeUndefined()
   })
   it('a profile with anything on is saved as is', () => {
-    const p = withHeight(undefined, 360)
+    const p = withWidth(undefined, 640)
     expect(profileToSave(p)).toEqual(p)
   })
   it('raw args keep a profile from being passthrough', () => {
@@ -186,8 +196,8 @@ describe('fields with no section and no Expert input survive every edit', () => 
     const { codec: _codec, ...tuning } = video
     const keep = (p: EncodeProfile) => expect(p.video).toMatchObject(tuning)
     // resize on, then off again, then fps, then an audio change, then width/bitrate
-    keep(withHeight(stored, 480))
-    keep(withHeight(withHeight(stored, 480), undefined))
+    keep(withWidth(stored, 854))
+    keep(withWidth(withWidth(stored, 854), undefined))
     keep(withFps(stored, 15))
     keep(withAudioCodec(stored, 'aac'))
     keep(withVideoCodec(stored, 'h264'))

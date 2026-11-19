@@ -120,7 +120,7 @@
     "invalidNumber": "Inserisci un numero maggiore di 0, oppure svuota il campo",
     "sectionResize": "Ridimensiona",
     "resizeOffHint": "Mantiene la dimensione della sorgente.",
-    "resizeOnHint": "La larghezza segue le proporzioni della sorgente.",
+    "resizeOnHint": "L'altezza segue le proporzioni della sorgente.",
     "outputHeight": "Altezza in uscita",
     "sectionCodec": "Codec video",
     "codecOffHint": "Mantiene il codec della sorgente.",
@@ -171,7 +171,13 @@
     "resultAudioAac": "ricodificato in AAC",
     "resultAudioProfile": "codificato come {{codec}}",
     "resultAudioNone": "nessun audio",
-    "resultArgs": "Argomenti ffmpeg"
+    "resultArgs": "Argomenti ffmpeg",
+    "outputSize": "Dimensione",
+    "outputWidth": "Larghezza (pari)",
+    "resizeChoose": "Scegli una dimensione",
+    "resizeCustom": "Larghezza personalizzata…",
+    "invalidEvenNumber": "Inserisci un numero pari maggiore di 0, o svuota il campo",
+    "codecOffHintKnown": "Mantiene il codec della sorgente ({{codec}})."
   },
   "geometry": {
     "title": "Geometria / zoom",

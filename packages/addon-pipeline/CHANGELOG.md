@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A derived stream whose camera reports no frame rate no longer comes out grey and blocky: the encoder now runs at the camera's measured frame rate.
+### Changed
+
+- Derived streams: resize by width from the source's own aspect ratio ladder, the codec select no longer offers Same as source, and edits are saved with a Save button
 
 ## [1.2.670] - 2026-11-19
 

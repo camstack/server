@@ -108,6 +108,23 @@ describe('computeDerivedEncode', () => {
     expect(preview.args).toContain('aac')
   })
 
+  it('a width alone scales by that width, the height following the source aspect', () => {
+    const profile: EncodeProfile = { video: { codec: 'h264', width: 854 }, audio: 'passthrough' }
+    const { preview } = computeDerivedEncode(profile, SOURCE_1080P_H264)
+    expect(preview).toMatchObject({ width: 854, height: 480 })
+    expect(preview.args.join(' ')).toContain('scale=')
+    expect(preview.args.join(' ')).toContain('854')
+    expect(preview.args.join(' ')).toContain('480')
+  })
+
+  it('a stored height still gives the same picture as the matching width', () => {
+    const byHeight: EncodeProfile = { video: { codec: 'h264', height: 480 }, audio: 'passthrough' }
+    const byWidth: EncodeProfile = { video: { codec: 'h264', width: 854 }, audio: 'passthrough' }
+    const a = computeDerivedEncode(byHeight, SOURCE_1080P_H264).preview
+    const b = computeDerivedEncode(byWidth, SOURCE_1080P_H264).preview
+    expect(a.args).toEqual(b.args)
+  })
+
   it('audio none emits -an', () => {
     const { preview } = computeDerivedEncode(ROWS[4]!.profile, SOURCE_1080P_H264)
     expect(preview.args).toContain('-an')

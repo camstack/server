@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device quick detail scrolls when the card is taller than the window.
 - The integration page switches every row through the registry; the fixed-row exception is gone
 - Device cards: new On motion label (English and Italian).
+### Changed
+
+- Settings save bar sits on an opaque surface (shared library bar), no longer see-through over the form
 
 ## [1.2.708] - 2026-11-19
 

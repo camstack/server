@@ -37,8 +37,18 @@ function Stateful({
   )
 }
 
-const lastSaved = (onSave: ReturnType<typeof vi.fn>): EncodeProfile | undefined =>
-  onSave.mock.calls[onSave.mock.calls.length - 1]?.[0]
+/** Edits are a draft: nothing reaches `onSave` until the Save bar's button is pressed. */
+const saveNow = (): void => {
+  fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+}
+
+const saveBar = (): HTMLElement | null => screen.queryByRole('button', { name: /^save$/i })
+
+/** Presses Save (when the bar is up), then the last profile `onSave` received. */
+const lastSaved = (onSave: ReturnType<typeof vi.fn>): EncodeProfile | undefined => {
+  if (saveBar() !== null) saveNow()
+  return onSave.mock.calls[onSave.mock.calls.length - 1]?.[0]
+}
 
 const switchFor = (name: RegExp): HTMLElement => screen.getByRole('switch', { name })
 
@@ -85,7 +95,7 @@ describe('opening never saves, and switches on exactly the sections the profile 
         ['Resize'],
       ],
       ['codec only', { video: { codec: 'h265' }, audio: 'passthrough' }, ['Video codec']],
-      ['source codec only', { video: { codec: 'source' }, audio: 'passthrough' }, ['Video codec']],
+      ['source codec only', { video: { codec: 'source' }, audio: 'passthrough' }, []],
       [
         'tuning fields only',
         { video: { codec: 'h264', level: '3.1', tune: 'film', bf: 2 }, audio: 'passthrough' },
@@ -106,7 +116,7 @@ describe('opening never saves, and switches on exactly the sections the profile 
       [
         'a legacy audio codec',
         { video: { codec: 'h264', width: 1280 }, audio: { codec: 'pcmu', bitrateKbps: 64 } },
-        ['Video codec', 'Audio'],
+        ['Resize', 'Video codec', 'Audio'],
       ],
     ]
 
@@ -143,23 +153,21 @@ describe('sections combine', () => {
     const onSave = vi.fn()
     render(<Stateful initial={undefined} onSave={onSave} />)
 
-    // Resize on: nothing to save until there is a height.
+    // Resize on: nothing to save until there is a width.
     fireEvent.click(switchFor(/^resize$/i))
-    expect(onSave).not.toHaveBeenCalled()
-    const height = screen.getByLabelText(/^output height$/i)
-    fireEvent.change(height, { target: { value: '480' } })
-    fireEvent.blur(height)
+    expect(saveBar()).toBeNull()
+    selectOption(selectTrigger('resize-width'), '854')
     expect(lastSaved(onSave)).toEqual({
-      video: { codec: 'source', height: 480 },
+      video: { codec: 'source', width: 854 },
       audio: 'passthrough',
     })
 
     fireEvent.click(switchFor(/^video codec$/i))
-    expect(lastSaved(onSave)?.video).toEqual({ codec: 'h264', height: 480 })
+    expect(lastSaved(onSave)?.video).toEqual({ codec: 'h264', width: 854 })
 
     fireEvent.click(switchFor(/^audio$/i))
     expect(lastSaved(onSave)).toEqual({
-      video: { codec: 'h264', height: 480 },
+      video: { codec: 'h264', width: 854 },
       audio: { codec: 'aac' },
     })
   })
@@ -168,12 +176,29 @@ describe('sections combine', () => {
     const onSave = vi.fn()
     render(<Stateful initial={undefined} onSave={onSave} />)
     fireEvent.click(switchFor(/^resize$/i))
-    const height = screen.getByLabelText(/^output height$/i)
-    fireEvent.change(height, { target: { value: '360' } })
-    fireEvent.keyDown(height, { key: 'Enter' })
-    expect(onSave).toHaveBeenCalledTimes(1)
+    selectOption(selectTrigger('resize-width'), '640')
+    expect(onSave).not.toHaveBeenCalled()
     expect(lastSaved(onSave)).toEqual({
-      video: { codec: 'source', height: 360 },
+      video: { codec: 'source', width: 640 },
+      audio: 'passthrough',
+    })
+    expect(onSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('a custom width is possible, and only an even one is accepted', () => {
+    const onSave = vi.fn()
+    render(<Stateful initial={undefined} onSave={onSave} />)
+    fireEvent.click(switchFor(/^resize$/i))
+    selectOption(selectTrigger('resize-width'), 'custom')
+    const width = screen.getByLabelText(/^width \(even\)$/i)
+    fireEvent.change(width, { target: { value: '801' } })
+    fireEvent.blur(width)
+    expect(width).toHaveAttribute('aria-invalid', 'true')
+    expect(saveBar()).toBeNull()
+    fireEvent.change(width, { target: { value: '800' } })
+    fireEvent.blur(width)
+    expect(lastSaved(onSave)).toEqual({
+      video: { codec: 'source', width: 800 },
       audio: 'passthrough',
     })
   })
@@ -207,7 +232,7 @@ describe('sections combine', () => {
     render(
       <Stateful
         initial={{
-          video: { codec: 'h264', height: 480, fps: 10, bitrateKbps: 800 },
+          video: { codec: 'h264', width: 854, fps: 10, bitrateKbps: 800 },
           audio: { codec: 'aac', bitrateKbps: 64 },
           outputArgs: ['-copyts'],
         }}
@@ -231,8 +256,8 @@ describe('sections combine', () => {
     fireEvent.click(switchFor(/^video codec$/i))
     expect(lastSaved(onSave)).toEqual({ video: { codec: 'h264' }, audio: 'passthrough' })
     fireEvent.click(switchFor(/^video codec$/i))
-    expect(onSave).toHaveBeenCalledTimes(2)
     expect(lastSaved(onSave)).toBeUndefined()
+    expect(onSave).toHaveBeenCalledTimes(2)
   })
 
   it('every section off on a stored stream saves undefined too: passthrough is no profile', () => {
@@ -241,26 +266,38 @@ describe('sections combine', () => {
       <Stateful initial={{ video: { codec: 'h264' }, audio: 'passthrough' }} onSave={onSave} />,
     )
     fireEvent.click(switchFor(/^video codec$/i))
-    expect(onSave).toHaveBeenCalledTimes(1)
     expect(lastSaved(onSave)).toBeUndefined()
+    expect(onSave).toHaveBeenCalledTimes(1)
   })
 
-  it('a stored source codec opens with Keep source on and survives the next edit', () => {
+  it('a stored source codec opens with the codec section OFF and survives the next edit', () => {
     const onSave = vi.fn()
     render(
       <Stateful initial={{ video: { codec: 'source' }, audio: 'passthrough' }} onSave={onSave} />,
     )
-    expect(switchFor(/^video codec$/i)).toHaveAttribute('aria-checked', 'true')
+    expect(switchFor(/^video codec$/i)).toHaveAttribute('aria-checked', 'false')
     fireEvent.click(switchFor(/^audio$/i))
     expect(lastSaved(onSave)).toEqual({ video: { codec: 'source' }, audio: { codec: 'aac' } })
   })
 
-  it('picking Keep source with nothing else on saves a source re-encode, not a copy', () => {
-    const onSave = vi.fn()
-    render(<Stateful initial={undefined} onSave={onSave} />)
+  it('has no "same as source" choice: the OFF state says it keeps the source codec', () => {
+    render(
+      <FfmpegParamsField
+        config={{
+          ...CONFIG,
+          sourceParams: {
+            video: { codec: 'h265', width: 2560, height: 1440 },
+            audio: 'passthrough',
+          },
+        }}
+        value={undefined}
+        onSave={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/keeps the source codec \(H\.265\)/i)).toBeInTheDocument()
     fireEvent.click(switchFor(/^video codec$/i))
-    selectOption(selectTrigger('video-codec'), 'source')
-    expect(lastSaved(onSave)).toEqual({ video: { codec: 'source' }, audio: 'passthrough' })
+    expect(screen.queryByText(/keeps the source codec/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/keep source codec|same as source/i)).not.toBeInTheDocument()
   })
 
   const tuned: ReadonlyArray<readonly [string, EncodeProfile['video']]> = [
@@ -270,15 +307,106 @@ describe('sections combine', () => {
     ['tune', { codec: 'h264', tune: 'zerolatency' }],
     ['bf', { codec: 'h264', bf: 0 }],
   ]
-  it.each(tuned)('a stored %s survives opening and a height edit', (_name, video) => {
+  it.each(tuned)('a stored %s survives opening and a width edit', (_name, video) => {
     const onSave = vi.fn()
     render(<Stateful initial={{ video, audio: 'passthrough' }} onSave={onSave} />)
     expect(onSave).not.toHaveBeenCalled()
     fireEvent.click(switchFor(/^resize$/i))
-    const height = screen.getByLabelText(/^output height$/i)
-    fireEvent.change(height, { target: { value: '480' } })
-    fireEvent.blur(height)
-    expect(lastSaved(onSave)).toEqual({ video: { ...video, height: 480 }, audio: 'passthrough' })
+    selectOption(selectTrigger('resize-width'), '854')
+    expect(lastSaved(onSave)).toEqual({ video: { ...video, width: 854 }, audio: 'passthrough' })
+  })
+})
+
+describe('edits are a draft until Save', () => {
+  const stored: EncodeProfile = {
+    video: { codec: 'h264', width: 1280, fps: 15 },
+    audio: 'passthrough',
+  }
+
+  it('an edit raises the save bar and writes nothing', () => {
+    const onSave = vi.fn()
+    render(<FfmpegParamsField config={CONFIG} value={stored} onSave={onSave} />)
+    expect(saveBar()).toBeNull()
+    fireEvent.click(switchFor(/^audio$/i))
+    expect(saveBar()).not.toBeNull()
+    expect(screen.getByText(/1 unsaved change/i)).toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('Discard drops the draft and the sections go back to the stored ones', () => {
+    const onSave = vi.fn()
+    render(<FfmpegParamsField config={CONFIG} value={stored} onSave={onSave} />)
+    fireEvent.click(switchFor(/^audio$/i))
+    fireEvent.click(screen.getByRole('button', { name: /^discard$/i }))
+    expect(saveBar()).toBeNull()
+    expect(switchFor(/^audio$/i)).toHaveAttribute('aria-checked', 'false')
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('an edit changed back to the stored value is no pending change', () => {
+    render(<FfmpegParamsField config={CONFIG} value={stored} onSave={vi.fn()} />)
+    fireEvent.click(switchFor(/^audio$/i))
+    fireEvent.click(switchFor(/^audio$/i))
+    expect(saveBar()).toBeNull()
+  })
+
+  it('reports the edited profile through onEditedChange, so the plan follows the draft', () => {
+    const onEditedChange = vi.fn()
+    render(
+      <FfmpegParamsField
+        config={CONFIG}
+        value={stored}
+        onSave={vi.fn()}
+        onEditedChange={onEditedChange}
+      />,
+    )
+    fireEvent.click(switchFor(/^audio$/i))
+    expect(onEditedChange).toHaveBeenLastCalledWith({
+      video: { codec: 'h264', width: 1280, fps: 15 },
+      audio: { codec: 'aac' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^discard$/i }))
+    expect(onEditedChange).toHaveBeenLastCalledWith(stored)
+  })
+})
+
+describe('a height stored by the old editor', () => {
+  const SOURCE: EncodeProfile = {
+    video: { codec: 'h265', width: 2560, height: 1440 },
+    audio: 'passthrough',
+  }
+  const legacy: EncodeProfile = {
+    video: { codec: 'h264', height: 720, bitrateKbps: 777 },
+    audio: 'passthrough',
+  }
+
+  it('opens as the matching width, without a pending change', () => {
+    render(
+      <FfmpegParamsField
+        config={{ ...CONFIG, sourceParams: SOURCE }}
+        value={legacy}
+        onSave={vi.fn()}
+      />,
+    )
+    expect(switchFor(/^resize$/i)).toHaveAttribute('aria-checked', 'true')
+    expect(selectTrigger('resize-width')).toHaveTextContent('1280×720')
+    expect(saveBar()).toBeNull()
+  })
+
+  it('saves a width on the next edit and keeps every other field', () => {
+    const onSave = vi.fn()
+    render(
+      <FfmpegParamsField
+        config={{ ...CONFIG, sourceParams: SOURCE }}
+        value={legacy}
+        onSave={onSave}
+      />,
+    )
+    selectOption(selectTrigger('resize-width'), '1920')
+    expect(lastSaved(onSave)).toEqual({
+      video: { codec: 'h264', width: 1920, bitrateKbps: 777 },
+      audio: 'passthrough',
+    })
   })
 })
 
@@ -288,7 +416,8 @@ describe('Expert', () => {
     expect(screen.queryByLabelText(/^bitrate/i)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /expert/i }))
     expect(screen.getByLabelText(/^bitrate/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/^width$/i)).toBeInTheDocument()
+    // Width is owned by Resize, not repeated here.
+    expect(screen.queryByLabelText(/^width/i)).not.toBeInTheDocument()
     expect(screen.getByLabelText(/keyframe interval/i)).toBeInTheDocument()
   })
 
@@ -334,7 +463,7 @@ describe('frame rate section: draft number input', () => {
   const renderField = (onSave: ReturnType<typeof vi.fn>) =>
     render(<FfmpegParamsField config={CONFIG} value={base} onSave={onSave} />)
 
-  it('typing 20 after selecting all saves once, on blur, with fps 20', () => {
+  it('typing 20 after selecting all is one edit on blur, saved with fps 20 by Save', () => {
     const onSave = vi.fn()
     renderField(onSave)
     const fps = screen.getByLabelText(/^fps$/i)
@@ -343,6 +472,8 @@ describe('frame rate section: draft number input', () => {
     fireEvent.change(fps, { target: { value: '20' } })
     expect(onSave).not.toHaveBeenCalled()
     fireEvent.blur(fps)
+    expect(onSave).not.toHaveBeenCalled()
+    saveNow()
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave.mock.calls[0]?.[0].video.fps).toBe(20)
   })
@@ -353,6 +484,7 @@ describe('frame rate section: draft number input', () => {
     const fps = screen.getByLabelText(/^fps$/i)
     fireEvent.change(fps, { target: { value: '30' } })
     fireEvent.keyDown(fps, { key: 'Enter' })
+    saveNow()
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave.mock.calls[0]?.[0].video.fps).toBe(30)
   })
@@ -363,6 +495,7 @@ describe('frame rate section: draft number input', () => {
     const fps = screen.getByLabelText(/^fps$/i)
     fireEvent.change(fps, { target: { value: '' } })
     fireEvent.blur(fps)
+    saveNow()
     expect(onSave).toHaveBeenCalledTimes(1)
     const saved = onSave.mock.calls[0]?.[0]
     expect('fps' in saved.video).toBe(false)
@@ -377,6 +510,7 @@ describe('frame rate section: draft number input', () => {
     fireEvent.change(fps, { target: { value: '-5' } })
     fireEvent.blur(fps)
     expect(onSave).not.toHaveBeenCalled()
+    expect(saveBar()).toBeNull()
     expect(fps).toHaveAttribute('aria-invalid', 'true')
   })
 
@@ -388,6 +522,7 @@ describe('frame rate section: draft number input', () => {
     fireEvent.keyDown(fps, { key: 'Escape' })
     expect(fps).toHaveValue(15)
     fireEvent.blur(fps)
+    expect(saveBar()).toBeNull()
     expect(onSave).not.toHaveBeenCalled()
   })
 
