@@ -1,3 +1,4 @@
+import { type JSX } from 'react'
 import { useUiText } from '../contexts/ui-text'
 import { Button } from '../primitives/button'
 
