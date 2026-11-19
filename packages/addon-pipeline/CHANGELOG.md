@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.669] - 2026-11-19
+
 ### Changed
 
 - An NVIDIA image now installs onnxruntime-gpu from its wheelhouse for the ONNX engine instead of the CPU wheel, so CUDA can be offered.

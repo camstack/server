@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.164] - 2026-11-19
+
 ### Changed
 
 - Gree air conditioners are now read on the core's state-refresh schedule instead of the library's own poll timer; a dead unit is still detected and re-bound.

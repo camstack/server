@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.236] - 2026-11-19
+
 ### Changed
 
 - The install guide, host-check and accelerator diagnosis know the intel-legacy, nvidia and nvidia-legacy image variants and say when to use each.
