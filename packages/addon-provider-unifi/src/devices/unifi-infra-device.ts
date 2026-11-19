@@ -32,6 +32,7 @@ import {
 import { hasPoePort, infraPoeTotalStatus } from '../unifi-port-state.js'
 import { unifiInfraIdentifiers } from '../unifi-identifiers.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
+import { registerUnifiStateRefresh } from './unifi-state-refresh.js'
 import { UnifiFeatureDevice } from './unifi-feature-device.js'
 
 /**
@@ -58,6 +59,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   readonly features: readonly DeviceFeature[] = [DeviceFeature.Resyncable]
 
   private readonly integrationId: string
+  private stopStateRefresh: (() => void) | null = null
   private readonly infraNativeId: string
   private snapshotUnsub: (() => void) | null = null
   /** The last identity declaration sent, so an unchanged poll sends nothing. */
@@ -85,6 +87,12 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the controller is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerUnifiStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, () => {
       this.recomputeWorkload()
       void this.declareIdentity()
@@ -140,6 +148,8 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()

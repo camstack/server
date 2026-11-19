@@ -27,6 +27,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-vesync',
   'packages/addon-provider-enpal',
   'packages/addon-provider-rademacher',
+  'packages/addon-provider-unifi',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

@@ -32,6 +32,7 @@ import { capForMetric, portLabel, portNameWrite, quantityForMetric } from '../un
 import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../unifi-port-state.js'
 import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
+import { registerUnifiStateRefresh } from './unifi-state-refresh.js'
 import { unifiPortAttachedIdentifiers } from '../unifi-identifiers.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
@@ -69,6 +70,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   private readonly kind: UnifiFeatureKind
   private readonly integrationId: string
+  private stopStateRefresh: (() => void) | null = null
   private readonly infraNativeId: string | undefined
   private readonly switchFeature: UnifiSwitchFeature | undefined
   private readonly buttonAction: UnifiButtonAction | undefined
@@ -110,6 +112,12 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the controller is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerUnifiStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     // Register the cap + seed cold-start, THEN attach the live listener and
     // replay the current value (mirrors the Ecowitt / Velux ordering:
     // registerNativeCap first so the slice schema is installed before setCapState).
@@ -119,6 +127,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     if (this.snapshotUnsub) {
       try {
         this.snapshotUnsub()

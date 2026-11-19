@@ -36,11 +36,12 @@ export interface UnifiIntegrationManagerOptions {
 
 /**
  * Wraps exactly one {@link UnifiControllerClient} (= one UniFi Network
- * controller). On `start()` it connects, lists infra + clients once, and then
- * periodically re-lists them, firing `onPolled` after every cycle. A client with
+ * controller). On `start()` it connects and lists infra + clients once; the
+ * core's state refresh decides when they are re-listed (D1062), so it owns no
+ * timer. `poll` re-lists them, firing `onPolled` after every cycle. A client with
  * an event stream (a local account: the aiounifi websocket) pushes its tables
  * between polls — `onPolled` fires for those too — and while that stream is up
- * the poll slows to a reconcile ({@link UNIFI_RECONCILE_POLL_MS}). Mirrors the Velux / Rademacher
+ * the refresh slows to a reconcile ({@link UNIFI_RECONCILE_POLL_MS}). Mirrors the Velux / Rademacher
  * integration manager, with the same fresh-client-on-reconnect discipline.
  */
 export class UnifiIntegrationManager {
@@ -57,7 +58,6 @@ export class UnifiIntegrationManager {
   #infra: Map<string, UnifiInfraSnapshot> = new Map()
   #clients: Map<string, UnifiClientSnapshot> = new Map()
   #status: UnifiControllerStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setTimeout> | null = null
   #streamUp = false
   #unsubscribeLive: (() => void) | null = null
   /** The last failure of the client's secondary half (the local account), logged on change. */
@@ -161,7 +161,7 @@ export class UnifiIntegrationManager {
   }
 
   /**
-   * Connect the client, list infra + clients once, and start the poll loop. A
+   * Connect the client, list infra + clients once. A
    * failed connect throws (the caller logs and keeps the device — a later
    * `applyConnection` / restart retries).
    */
@@ -192,7 +192,6 @@ export class UnifiIntegrationManager {
     this.#status = 'connected'
     this.#onConnected(this.#id)
     this.#onPolled(this.#id)
-    this.#startPollLoop()
     this.#logger.info('UnifiIntegrationManager: started', {
       tags: { integrationId: this.#id },
       meta: {
@@ -202,12 +201,8 @@ export class UnifiIntegrationManager {
     })
   }
 
-  /** Stop the poll loop and drop the client + snapshots. */
+  /** Drop the client + snapshots. */
   async stop(): Promise<void> {
-    if (this.#pollTimer !== null) {
-      clearTimeout(this.#pollTimer)
-      this.#pollTimer = null
-    }
     this.#unsubscribeLive?.()
     this.#unsubscribeLive = null
     this.#streamUp = false
@@ -279,7 +274,12 @@ export class UnifiIntegrationManager {
     )
   }
 
-  /** The interval to the next poll: a reconcile while the event stream is up. */
+  /** Whether the live event stream is up (changes arrive by push; the poll is a reconcile). */
+  get streamUp(): boolean {
+    return this.#streamUp
+  }
+
+  /** The interval between reads: a reconcile while the event stream is up. */
   pollDelayMs(): number {
     const configured = this.#connection.pollIntervalMs
     return this.#streamUp ? Math.max(configured, UNIFI_RECONCILE_POLL_MS) : configured
@@ -296,37 +296,14 @@ export class UnifiIntegrationManager {
           : 'UniFi: the event stream is down — polling at the configured interval',
         { tags: { integrationId: this.#id }, meta: { reason: change.reason } },
       )
-      // Re-arm so a stream that went down is not left on the slow reconcile delay.
-      if (this.#pollTimer !== null) this.#armPoll()
+      // Tell the devices: the refresh policy (push level, cadence) follows the stream (D1062).
+      this.#onPolled(this.#id)
       return
     }
     this.#infra = indexBy(change.infra, (d) => d.id)
     this.#clients = indexBy(change.clients, (c) => c.mac)
     this.#error = null
     this.#onPolled(this.#id)
-  }
-
-  #startPollLoop(): void {
-    if (this.#pollTimer !== null) return
-    this.#armPoll()
-  }
-
-  #armPoll(): void {
-    if (this.#pollTimer !== null) clearTimeout(this.#pollTimer)
-    this.#pollTimer = setTimeout(() => {
-      void this.poll()
-        .catch((err) => {
-          this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
-            tags: { integrationId: this.#id },
-            meta: { error: errMsg(err) },
-          })
-        })
-        .finally(() => {
-          if (this.#client !== null) this.#armPoll()
-        })
-    }, this.pollDelayMs())
-    // Do not keep the event loop alive solely for polling.
-    this.#pollTimer.unref?.()
   }
 }
 

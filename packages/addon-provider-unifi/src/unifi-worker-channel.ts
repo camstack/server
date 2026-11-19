@@ -243,6 +243,7 @@ export function startUnifiWorkerChannel(deps: UnifiWorkerChannelDeps): UnifiWork
       const id = String(nextId++)
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
+          // not-a-state-poll: worker request deadline
           pending.delete(id)
           reject(new Error(`unifi worker did not answer ${body.op} within ${timeoutMs} ms`))
         }, timeoutMs)

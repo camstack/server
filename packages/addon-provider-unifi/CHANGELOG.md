@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The UniFi controller is now read on the core's state-refresh schedule (slower reconcile while the live event stream is up) instead of the addon's own timer.
+
 ## [0.2.172] - 2026-11-18
 
 ### Changed
