@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { errMsg, type IEventBus, type IScopedLogger, isInstanceEnabled } from '@camstack/types'
+import { errMsg, type IEventBus, type IScopedLogger, isInstanceOn } from '@camstack/types'
 import {
   HaIntegrationManager,
   type HaBrokerInfo,
@@ -152,7 +152,7 @@ export class HaBrokerRegistry {
     this.seedCounterFromEntries(entries)
     await Promise.all(
       entries
-        .filter((entry) => isInstanceEnabled(entry) && haAuthOf(entry) !== null)
+        .filter((entry) => isInstanceOn(entry.id) && haAuthOf(entry) !== null)
         .map(async (entry) => {
           try {
             await this.startManagerForEntry(entry)

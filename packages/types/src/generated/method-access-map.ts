@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1535 method paths across 214 capabilities.
+ * Coverage: 1536 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -578,6 +578,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'integrationInstances.setInstanceEnabled': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrationInstances.testInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrationInstances.updateInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'integrations.adoptInstanceRows': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.delete': { capName: "integrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'integrations.get': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.getAvailableTypes': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

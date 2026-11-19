@@ -185,7 +185,9 @@ describe('BaseAddon readers of the scoped schemas', () => {
       await addon.initialize(h.ctx)
       await addon.updateScopedSettings('cluster', CAP, { mode: 'b' })
       await vi.runAllTimersAsync()
-      expect(h.calls).toEqual(['addons.restartAddon'])
+      expect(h.calls.filter((c) => c !== 'integrations.listByAddon')).toEqual([
+        'addons.restartAddon',
+      ])
     } finally {
       vi.useRealTimers()
     }

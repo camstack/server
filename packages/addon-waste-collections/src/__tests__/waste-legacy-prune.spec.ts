@@ -67,15 +67,25 @@ async function boot(
     },
     dataDir: '/nonexistent',
     kernel: { localNodeId: 'hub' },
-    // The migration engine is unreachable: the step reports "not declared" and stays pending.
+    // The engine answers, the switch move is already ledgered, and the sources step never starts:
+    // it stays pending, which is the state of a boot whose legacy move has not landed. (A hub that
+    // does not answer at all blocks the addon through the switch move, D1066.)
     api: {
       migrations: {
         declareOwner: {
-          mutate: async () => {
-            throw new Error('engine down')
-          },
+          mutate: async (input: { metas: readonly { id: string }[] }) => ({
+            bootId: 'boot',
+            snapshot: 'none',
+            steps: input.metas.map((m) => ({
+              id: m.id,
+              action: m.id.includes('body-switch-to-registry') ? 'skip' : 'run',
+              state: 'pending',
+            })),
+          }),
         },
-        startMigration: { mutate: async () => undefined },
+        startMigration: {
+          mutate: async () => ({ proceed: false, state: 'failed', reason: 'engine busy' }),
+        },
         finishMigration: { mutate: async () => undefined },
       },
     },
@@ -124,10 +134,10 @@ async function boot(
 }
 
 describe('an unmigrated boot says so', () => {
-  it('logs an error when the migration engine was unreachable and when legacy sources have no record', async () => {
+  it('logs an error when the sources migration has not landed and when legacy sources have no record', async () => {
     errors.length = 0
     await boot()
-    expect(errors.some((m) => m.includes('migration engine was unreachable'))).toBe(true)
+    expect(errors.some((m) => m.includes('sources migration has not landed'))).toBe(true)
     expect(errors.some((m) => m.includes('legacy setting still holds sources'))).toBe(true)
   })
 

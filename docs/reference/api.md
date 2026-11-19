@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1535 methods.**
+**214 capabilities · 1536 methods.**
 
 ## Method index
 
@@ -573,6 +573,7 @@
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
 | `integrations.listByAddon` | query | protected | integrations |
+| `integrations.adoptInstanceRows` | mutation | admin | integrations |
 | `integrations.update` | mutation | admin | integrations |
 | `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
@@ -3123,6 +3124,7 @@
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
 | listByAddon | `integrations.listByAddon` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema[]` |
+| adoptInstanceRows | `integrations.adoptInstanceRows` | mutation | admin | `{ addonId: string; rows: ({ id: string; name: string; enabled: boolean; stated: boolean })[] }` | `{ created: number; updated: number; skipped: number }` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |

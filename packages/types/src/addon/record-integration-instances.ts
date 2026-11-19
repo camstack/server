@@ -28,24 +28,26 @@ import { linksOfKind } from './instance-link-meta.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordKindHandle, RecordRow, RecordsAccess } from '../records/records-access.js'
 import { secretViewsOf } from '../records/secret-views.js'
+import {
+  forgetInstanceSwitch,
+  isInstanceOn,
+  recordInstanceSwitch,
+  registerServedInstanceKind,
+} from './instance-switches.js'
 
 /** The most instances one addon lists (an integrations page, not a table). */
 const INSTANCES_LIST_MAX = 1000
 
-/** What every instance body carries: an absent `enabled` means on (no data migration). */
-export type InstanceBody = Record<string, unknown> & {
-  readonly enabled?: boolean | undefined
-}
+/**
+ * What every instance body is. The on/off state is NOT part of it: the hub registry row is the only
+ * stored switch (D1066), read through {@link isInstanceOn}.
+ */
+export type InstanceBody = Record<string, unknown>
 
 /**
- * The ONE reader of an instance's switch (D996): an absent field means on, so a row written
- * before the field existed needs no migration. Every consumer of an instance body asks this.
+ * The body key the switch USED to live under (D1007, D1015). Nothing writes or reads it any more;
+ * the migrations that move it between the body and the registry name it.
  */
-export function isInstanceEnabled(body: { readonly enabled?: boolean | undefined }): boolean {
-  return body.enabled !== false
-}
-
-/** The body key of the switch; only {@link RecordIntegrationInstances.setInstanceEnabled} writes it. */
 export const SWITCH_KEY = 'enabled'
 
 /**
@@ -195,6 +197,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     this.secretKeys = topLevelSecretKeys(kind.declaration.secretPaths)
     this.secretMaps = secretMapKeys(kind.declaration.secretPaths)
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
+    registerServedInstanceKind(records.owner, { kind, reapplyOff: () => this.reapplyOff() })
     // D1013: every instance names its kind.
     if (hooks.kindOf === undefined && hooks.description.kinds.length !== 1) {
       throw new Error(
@@ -216,7 +219,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         : {
             id,
             body: record.data,
-            enabled: isInstanceEnabled(record.data),
+            enabled: isInstanceOn(id),
             secrets: 'resolved',
           }
     } catch (err: unknown) {
@@ -231,7 +234,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       return {
         id,
         body: open as TBody,
-        enabled: isInstanceEnabled(stored.data),
+        enabled: isInstanceOn(id),
         secrets: 'unavailable',
       }
     }
@@ -284,7 +287,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
-      enabled: isInstanceEnabled(record.data),
+      enabled: isInstanceOn(record.id),
       formValues: shown,
       kind,
       addDevice:
@@ -425,26 +428,38 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   /**
-   * The ONE writer of the switch (D996, D1014): the record body's `enabled`, for every role. A
-   * configured thing is an instance, so an id with no record yet (a default integration that was
-   * never configured) gets its record from `initialBody` before the switch is written.
+   * The hub's notification that the registry row of `id` moved (D1066). The registry holds the
+   * switch; this keeps NO copy of it in the record. It remembers the state for this process's
+   * readers ({@link isInstanceOn}), lets the addon re-apply, and fires the listeners.
    */
   setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async ({
     id,
     enabled,
   }) => {
-    if ((await this.handle.get(id)) === null) {
-      await this.handle.put({ id, data: this.hooks.initialBody(id) }, { ifRev: 0 })
-    }
-    await this.handle.patch(id, { [SWITCH_KEY]: enabled })
+    recordInstanceSwitch(id, enabled)
     await this.hooks.onChanged?.(id, 'enabled')
     for (const listener of this.switchListeners) await listener(id, enabled)
     return { ok: true as const }
   }
 
+  /**
+   * After a late move of the switch into the registry: every instance of this kind that is off
+   * is announced as switched, so an addon that already started on the "no state means on" default
+   * stops it. Instances that are on need no announcement.
+   */
+  async reapplyOff(): Promise<void> {
+    const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
+    for (const record of page.records) {
+      if (isInstanceOn(record.id)) continue
+      await this.hooks.onChanged?.(record.id, 'enabled')
+      for (const listener of this.switchListeners) await listener(record.id, false)
+    }
+  }
+
   /** The row and its keychain refs go together (the records door). */
   deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async ({ id }) => {
     await this.handle.delete(id)
+    forgetInstanceSwitch(id)
     await this.hooks.onChanged?.(id, 'deleted')
     return { ok: true as const }
   }

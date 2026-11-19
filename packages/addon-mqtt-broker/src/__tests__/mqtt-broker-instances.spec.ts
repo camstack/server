@@ -1,4 +1,9 @@
-import { InstanceInUseError, type InstanceChange, makeInMemoryRecords } from '@camstack/types'
+import {
+  InstanceInUseError,
+  type InstanceChange,
+  makeInMemoryRecords,
+  recordInstanceSwitch,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { mqttBrokersEntryKind } from '../broker-record-kinds.js'
 import {
@@ -266,7 +271,8 @@ describe('the health of an MQTT broker instance', () => {
     })
     await put(records, 'N')
     await put(records, 'O', { onboard: { port: 1884, allowAnonymous: false } })
-    await put(records, 'X', { enabled: false })
+    await put(records, 'X')
+    recordInstanceSwitch('X', false)
     expect((await statusOf(provider, 'N'))?.status).toEqual({
       state: 'unknown',
       label: 'Not checked yet',

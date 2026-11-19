@@ -86,7 +86,8 @@ describe('waste sources migration over the migration API', () => {
       password: marks.rawPassword,
       city: 'Torino',
     })
-    expect(rows.find((r) => r.id === 'cabin')?.enabled).toBe(false)
+    // The move writes the legacy switch into the body; the switch-to-registry step carries it on.
+    expect((await raw.get('cabin'))?.data.enabled).toBe(false)
     const stored = await raw.get('home')
     expect(stored?.data.args.password).toBe(REDACTED_SECRET)
 

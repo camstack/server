@@ -60,7 +60,7 @@ import {
   nodePin,
   oauthIntegrationCapability,
   type ProviderRegistration,
-  isInstanceEnabled,
+  isInstanceOn,
   type CommandOriginRequestOptions,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -2699,7 +2699,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
 
   /** The Status column of the instances table: why a target is, or is not, pushing. */
   private targetHealth(id: string, body: HaExportTargetBody): IntegrationInstanceStatus {
-    if (!isInstanceEnabled(body)) return { state: 'off', label: 'Off' }
+    if (!isInstanceOn(id)) return { state: 'off', label: 'Off' }
     if (!this.connectionExists(body.connectionId)) {
       return {
         state: 'error',

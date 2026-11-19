@@ -23,7 +23,7 @@ async function start(stored: Record<string, unknown>) {
     putSource: async (source) => {
       await store.putIfAbsent(source)
     },
-    readSource: (id) => store.readResolved(id),
+    readSource: (id) => store.readResolvedBody(id),
     warn: (message) => {
       warnings.push(message)
     },
@@ -75,9 +75,10 @@ describe('waste-collections: legacy sources move into records', () => {
     })
     expect(home?.argsJson).toBeUndefined()
     expect(rows.find((r) => r.id === 'cabin')).toMatchObject({
-      enabled: false,
       args: { url: 'https://example.com/cabin.ics' },
     })
+    // The legacy switch rides in the body until the switch-to-registry step moves it.
+    expect((await raw.get('cabin'))?.data.enabled).toBe(false)
 
     // A plain read shows the redaction token: the text lives in the keychain, bound to the row.
     const stored = await raw.get('home')

@@ -17,6 +17,7 @@
  *  - {@link moveTargetRows}: the D987 procedure that flattens the old `config` blobs into the bodies.
  */
 import { z } from 'zod'
+import { isInstanceOn, recordInstanceSwitch } from './instance-switches.js'
 import { forbiddenError } from '../i18n/camstack-error.js'
 import type { CapCaller } from '../capabilities/capability-definition.js'
 import type {
@@ -40,11 +41,7 @@ import type { RecordKindHandle, RecordsAccess } from '../records/records-access.
 import { composeInstanceKinds, type InstanceKindPart } from './compose-instance-kinds.js'
 import { type InstanceApi, instanceSourceOverApi, instancesOfCap } from './instances-of-cap.js'
 import { optionalLinkField } from './instance-link-meta.js'
-import {
-  type InstanceBody,
-  isInstanceEnabled,
-  RecordIntegrationInstances,
-} from './record-integration-instances.js'
+import { type InstanceBody, RecordIntegrationInstances } from './record-integration-instances.js'
 
 /** The function cap every notification target is an instance of. */
 export const NOTIFICATION_OUTPUT_CAP = 'notification-output'
@@ -185,7 +182,7 @@ export function targetOfRecord(
     name,
     kind,
     addonId,
-    enabled: isInstanceEnabled(data),
+    enabled: isInstanceOn(id),
     config,
   })
   return parsed.success ? parsed.data : null
@@ -306,7 +303,10 @@ export class NotificationTargetStore {
     const own = this.handles.find((entry) => entry.kind === target.kind)
     if (own === undefined)
       throw new Error(`invalid target '${target.id}': unknown kind '${target.kind}'`)
-    await own.handle.put({ id: target.id, data: targetBody(target) })
+    // The switch is the registry row's (D1066): the record keeps none, this process mirrors it.
+    const { enabled: _switch, ...data } = targetBody(target)
+    await own.handle.put({ id: target.id, data })
+    recordInstanceSwitch(target.id, target.enabled)
     for (const other of this.handles) {
       if (other !== own) await other.handle.delete(target.id)
     }
@@ -323,7 +323,7 @@ export class NotificationTargetStore {
   async setEnabled(id: string, enabled: boolean): Promise<Target | null> {
     for (const { kind, handle } of this.handles) {
       if ((await handle.get(id)) === null) continue
-      await handle.patch(id, { enabled })
+      recordInstanceSwitch(id, enabled)
       const row = await handle.get(id)
       return row === null ? null : targetOfRecord(this.addonId, kind, row.id, row.data)
     }

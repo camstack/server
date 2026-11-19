@@ -21,7 +21,7 @@ import {
   type IntegrationInstance,
   type IntegrationInstanceDescription,
   type IntegrationTestConnectionResult,
-  isInstanceEnabled,
+  isInstanceOn,
   isSecretClear,
   isSecretFieldView,
   type LlmGenerateResult,
@@ -287,7 +287,7 @@ function viewOf(owner: string, row: RecordRow<LlmProfileBody>): IntegrationInsta
     id: row.id,
     name: body.name,
     configured: checked.ok && body.model.trim().length > 0,
-    enabled: isInstanceEnabled(body),
+    enabled: isInstanceOn(row.id),
     kind: body.kind,
     formValues: valuesOfRow(owner, row),
   }
@@ -412,7 +412,10 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
   const { store, profiles } = deps
   /** `supportsVision` of an Apple row is the node's last report, never the value stored at save. */
   const seenNow = (row: RecordRow<LlmProfileBody>): RecordRow<LlmProfileBody> => {
-    const [live] = withAppleVision([{ ...row.data, id: row.id }], deps.appleNodes)
+    const [live] = withAppleVision(
+      [{ ...row.data, id: row.id, enabled: isInstanceOn(row.id) }],
+      deps.appleNodes,
+    )
     return live === undefined
       ? row
       : { ...row, data: { ...row.data, supportsVision: live.supportsVision } }
@@ -465,8 +468,8 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
       if ((await store.getById(minted)) !== null) throw new Error(`profile "${minted}" exists`)
       const supplied = values !== undefined && Object.keys(values).length > 0
       if (!supplied) {
-        // A blank draft: off until the operator fills the connection in.
-        await store.upsert(blankProfile(minted, name, wanted, false))
+        // A blank draft: unusable until the operator fills the connection in (no model).
+        await store.upsert(blankProfile(minted, name, wanted, true))
         return { id: minted }
       }
       const profile = profileFromValues(
@@ -486,9 +489,9 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
       return { ok: true as const }
     },
 
-    // The one switch (D996): the record body's `enabled`, written by the shared helper. It
-    // patches that field alone, so a blank draft is switched without validation and a key the
-    // keychain cannot serve right now is untouched.
+    // The one switch (D1066): the registry row's, which the hub writes before it notifies this
+    // provider. The helper only mirrors it into this process; the record is never touched, so a
+    // key the keychain cannot serve right now stays as it is.
     setInstanceEnabled: rowSwitch.setInstanceEnabled,
 
     deleteInstance: async ({ id }) => {

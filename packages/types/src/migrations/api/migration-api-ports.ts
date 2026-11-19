@@ -11,6 +11,7 @@ import type { KeychainResolveResult } from '../../capabilities/keychain.cap.js'
 import type { DefaultIntegrationApi } from '../default-integration-migrations.js'
 import type { IntegrationRowsApi, RowsRecordsDoor } from '../integration-rows-api-ports.js'
 import type { MigrationApiV1 } from './migration-api.v1.js'
+import type { BodySwitchRecordsDoor } from '../body-switch-to-registry.js'
 import type { SwitchRecordsDoor } from '../registry-switch-to-body.js'
 
 /** The keychain handle of the migration API: resolve and delete, owner-scoped by the transport. */
@@ -49,6 +50,33 @@ export function switchRecordsOverMigrationApi(api: MigrationApiV1): SwitchRecord
         put: (input, opts) =>
           handle.put({ ...input, ...(opts?.ifRev === undefined ? {} : { ifRev: opts.ifRev }) }),
         patch: (id, partial) => handle.patch({ id, partial }),
+      }
+    },
+  }
+}
+
+/** The record calls the body-to-registry switch migration makes, over the migration API. */
+export function bodySwitchRecordsOverMigrationApi(api: MigrationApiV1): BodySwitchRecordsDoor {
+  return {
+    kind: (definition) => {
+      const handle = api.records.kind(definition)
+      return {
+        query: async () => {
+          const rows: Awaited<ReturnType<typeof handle.query>>['records'][number][] = []
+          let cursor: string | undefined
+          do {
+            const page = await handle.query({
+              limit: 500,
+              ...(cursor === undefined ? {} : { cursor }),
+            })
+            rows.push(...page.records)
+            cursor = page.nextCursor ?? undefined
+          } while (cursor !== undefined)
+          return { records: rows }
+        },
+        get: (id) => handle.get({ id }),
+        put: (input, opts) =>
+          handle.put({ ...input, ...(opts?.ifRev === undefined ? {} : { ifRev: opts.ifRev }) }),
       }
     },
   }

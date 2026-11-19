@@ -18,7 +18,7 @@ import {
   type IntegrationTestConnectionResult,
   RecordIntegrationInstances,
   type RecordsAccess,
-  isInstanceEnabled,
+  isInstanceOn,
 } from '@camstack/types'
 import { z } from 'zod'
 
@@ -237,7 +237,7 @@ export class <%= className %>Addon extends BaseAddon<Readonly<Record<string, nev
         [...this.book.entries()].map(([instanceId, body]) => ({
           instanceId,
           name: body.name,
-          enabled: isInstanceEnabled(body),
+          enabled: isInstanceOn(instanceId),
           kind: <%= className %>_TARGET_KIND,
         })),
       listSupportedDeviceKinds: async ({ instanceId }) => {

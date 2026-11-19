@@ -29,6 +29,8 @@ export const USAGE_RETENTION_MS = 90 * DAY_MS
  * the slot keeps its record ref across the D893 reshape.
  */
 export const LlmProfileBodySchema = LlmProfileSchema.omit({ id: true }).extend({
+  // The switch is the registry row's (D1066); a body written before that may still carry it.
+  enabled: z.boolean().optional(),
   apiKey: z.string().optional().meta({ secret: true }),
 })
 export type LlmProfileBody = z.infer<typeof LlmProfileBodySchema>

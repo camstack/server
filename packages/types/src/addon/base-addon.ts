@@ -1,5 +1,7 @@
 import type { ZodType } from 'zod'
 import { EventCategory } from '../enums/event-category.js'
+import { errMsg } from '../utils/err-msg.js'
+import { hydrateInstanceSwitches, servedInstanceKindsOf } from './instance-switches.js'
 import type {
   AddonContext,
   AddonInitResult,
@@ -28,12 +30,18 @@ import {
 import type { MigrationApiV1 } from '../migrations/api/migration-api.v1.js'
 import {
   integrationRowsApiOver,
+  bodySwitchRecordsOverMigrationApi,
   switchRecordsOverMigrationApi,
 } from '../migrations/api/migration-api-ports.js'
 import {
   registrySwitchPortsOver,
   registrySwitchToBodyMigration,
 } from '../migrations/registry-switch-to-body.js'
+import {
+  bodySwitchPortsOver,
+  bodySwitchToRegistryId,
+  bodySwitchToRegistryMigration,
+} from '../migrations/body-switch-to-registry.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
@@ -354,7 +362,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         if (this._configSecretRefs.has(ref)) this.scheduleSecretReresolve(SECRET_CHANGE_DEBOUNCE_MS)
       })
     }
+    await this.hydrateSwitches()
     const result = await this.onInitialize()
+    await this.moveLateInstanceKinds()
     this.emitLifecycle(EventCategory.AddonStarted)
     const normalized = normalizeAddonInitResult(result)
     const providers: readonly ProviderRegistration[] =
@@ -449,10 +459,19 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     readonly initialBody: (name: string) => Readonly<Record<string, unknown>>
   } | null = null
 
+  /** The instance kinds whose switch move this process already ran (or tried), by record kind name. */
+  private readonly switchMoved = new Set<string>()
+  private lastDeclared: readonly BoundAddonMigration[] = []
+
   private registrySwitchBound(): readonly BoundAddonMigration[] {
-    const spec = this.registrySwitchSpec
-    if (spec === null) return []
     const api = this.ctx.migrationApi
+    const spec = this.registrySwitchSpec
+    // Every record kind a RecordIntegrationInstances helper wraps in this process moves its switch
+    // back to the registry (D1066); the legacy registry-to-body move runs first where declared.
+    const kinds = servedInstanceKindsOf(this.ctx.id).filter(
+      (k) => !this.switchMoved.has(k.kind.name),
+    )
+    if (spec === null && kinds.length === 0) return []
     if (api === undefined) {
       // A context without the migration API cannot move the flag; the run goes on without it.
       this.ctx.logger.warn(
@@ -460,35 +479,85 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       )
       return []
     }
-    return migrationSet(
-      [
-        registrySwitchToBodyMigration({
-          addonId: this.ctx.id,
-          date: '2026-11-06',
-          seq: 1000,
-          initialBody: spec.initialBody,
-        }),
-      ],
-      (a) =>
-        registrySwitchPortsOver({
-          api: integrationRowsApiOver(a),
-          records: switchRecordsOverMigrationApi(a),
-          kind: spec.kind,
-        }),
-    ).bind(api)
+    const date = '2026-11-06'
+    const moveIn =
+      spec === null
+        ? []
+        : migrationSet(
+            [
+              registrySwitchToBodyMigration({
+                addonId: this.ctx.id,
+                date,
+                seq: 1000,
+                initialBody: spec.initialBody,
+              }),
+            ],
+            (a) =>
+              registrySwitchPortsOver({
+                api: integrationRowsApiOver(a),
+                records: switchRecordsOverMigrationApi(a),
+                kind: spec.kind,
+              }),
+          ).bind(api)
+    const moveBack = kinds.flatMap(({ kind }, index) => {
+      this.switchMoved.add(kind.name)
+      return migrationSet(
+        [
+          bodySwitchToRegistryMigration({
+            addonId: this.ctx.id,
+            date: '2026-11-19',
+            seq: 1001 + index,
+            kindName: kind.name,
+            ...(spec === null ? {} : { followsDate: date }),
+          }),
+        ],
+        (a) =>
+          bodySwitchPortsOver({
+            records: bodySwitchRecordsOverMigrationApi(a),
+            kind,
+            nameField: kind.declaration.entry?.nameField ?? 'name',
+            adopt: (addonId, rows) =>
+              this.ctx.api.integrations.adoptInstanceRows.mutate({ addonId, rows: [...rows] }),
+          }),
+      ).bind(api)
+    })
+    return [...moveIn, ...moveBack]
+  }
+
+  /**
+   * A helper built AFTER the addon's migrations ran has a kind that moved nothing yet. Run its
+   * switch move now (the engine replaces an owner's catalogue on every declare, so the whole
+   * declared set goes with it, phased to the late ids), read the registry again, and tell the
+   * addon about every instance that is off so it stops what it started on the default.
+   */
+  private async moveLateInstanceKinds(): Promise<void> {
+    const late = servedInstanceKindsOf(this.ctx.id).filter(
+      (k) => !this.switchMoved.has(k.kind.name),
+    )
+    if (late.length === 0) return
+    try {
+      const only = late.map((k) => bodySwitchToRegistryId(this.ctx.id, '2026-11-19', k.kind.name))
+      await this.runBound(this.lastDeclared, { only })
+      for (const { reapplyOff } of late) await reapplyOff()
+    } catch (err: unknown) {
+      this.ctx.logger.error('the late instance switch move failed', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   private async runBound(
     declared: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
+    this.lastDeclared = declared
     const added = this.registrySwitchBound()
     const migrations = [...declared, ...added]
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
       options?.only === undefined || added.length === 0
         ? options
-        : { ...options, only: [...options.only, ...added.map((m) => m.meta.id)] }
+        : { ...options, only: [...new Set([...options.only, ...added.map((m) => m.meta.id)])] }
     const phased: AddonMigrationRunOptions =
       this.retiredMigrationIds.length === 0
         ? (widened ?? {})
@@ -507,7 +576,27 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)
     }
+    // The move above may have created or corrected rows: read the registry again.
+    await this.hydrateSwitches()
     return report
+  }
+
+  /**
+   * Learn the on/off state of this addon's instances from the registry rows (D1066), once at boot
+   * and again after a migration run. This is the ONLY read of the hub for the switch, and it runs
+   * on the addon's own boot path, never inside a method the hub calls into. A hub that cannot
+   * answer leaves every instance reading as on until the hub's `setInstanceEnabled` notification
+   * states it; no retry loop (D3).
+   */
+  private async hydrateSwitches(): Promise<void> {
+    try {
+      const rows = await this.ctx.api.integrations.listByAddon.query({ addonId: this.ctx.id })
+      hydrateInstanceSwitches(rows)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('instance switches not read from the registry at boot', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   /**

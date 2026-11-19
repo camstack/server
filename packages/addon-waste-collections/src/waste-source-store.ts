@@ -1,4 +1,5 @@
 import {
+  isInstanceOn,
   type RecordKindHandle,
   RecordSecretUnavailableError,
   type RecordsAccess,
@@ -26,9 +27,13 @@ export function rowToSource(id: string, data: WasteSourceBody): WasteSourceConfi
   return parsed.success ? parsed.data : null
 }
 
-export function bodyOf(source: WasteSourceConfig): WasteSourceBody {
+/**
+ * The stored body of a source. The switch belongs to the registry row (D1066): only the
+ * switch-to-registry migration step writes `enabled` (`withSwitch`), so the move can carry it.
+ */
+export function bodyOf(source: WasteSourceConfig, withSwitch = false): WasteSourceBody {
   const { id, label, module, args, enabled } = source
-  const body = { name: label, module, args, enabled }
+  const body = withSwitch ? { name: label, module, args, enabled } : { name: label, module, args }
   const parsed = wasteSourceEntryKind.schema.safeParse(body)
   if (!parsed.success) throw new Error(`invalid waste source '${id}': ${parsed.error.message}`)
   return parsed.data
@@ -56,6 +61,15 @@ export class WasteSourceStore {
 
   /** One source with its credentials resolved; markers stay where the keychain cannot serve. */
   async readResolved(id: string): Promise<WasteSourceConfig | null> {
+    const source = await this.readResolvedBody(id)
+    return source === null ? null : { ...source, enabled: isInstanceOn(id) }
+  }
+
+  /**
+   * The same source with `enabled` as the stored BODY says it: only the legacy move reads that
+   * back, to prove what it wrote. A reader of the running calendar takes `readResolved`.
+   */
+  async readResolvedBody(id: string): Promise<WasteSourceConfig | null> {
     const stored = await this.kind.get(id)
     if (stored === null) return null
     let data = stored.data
@@ -77,10 +91,13 @@ export class WasteSourceStore {
     return out
   }
 
-  /** Create the record when the id is free; an existing record is never touched. */
+  /**
+   * Create the record when the id is free; an existing record is never touched. The legacy move's
+   * writer: the body carries the legacy switch so the switch-to-registry step can move it.
+   */
   async putIfAbsent(source: WasteSourceConfig): Promise<boolean> {
     if ((await this.kind.get(source.id)) !== null) return false
-    await this.kind.put({ id: source.id, data: bodyOf(source) }, { ifRev: 0 })
+    await this.kind.put({ id: source.id, data: bodyOf(source, true) }, { ifRev: 0 })
     return true
   }
 

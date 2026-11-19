@@ -48,7 +48,7 @@ import {
   type RecordKindHandle,
   RecordIntegrationInstances,
   RevConflictError,
-  isInstanceEnabled,
+  isInstanceOn,
   pruneExposedNames,
 } from '@camstack/types'
 
@@ -286,8 +286,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         name,
       }),
       mintId: () => `alexa-skill-${randomUUID().slice(0, 8)}`,
-      health: (body, id) => {
-        if (!isInstanceEnabled(body)) return { status: { state: 'off', label: 'Off' } }
+      health: (_body, id) => {
+        if (!isInstanceOn(id)) return { status: { state: 'off', label: 'Off' } }
         const runtime = this.runtimes.get(id)
         if (runtime === undefined) return { status: { state: 'unknown' } }
         const linked = runtime.ledgers().linkedAccounts.length

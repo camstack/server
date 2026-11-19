@@ -116,7 +116,7 @@ describe('BaseAddon.runMigrations', () => {
     const calls: string[] = []
     const addon = await probeWith('applied', calls)
     const report = await addon.migrate([entry('one', 'block-owner')])
-    expect(calls).toEqual([
+    expect(calls.filter((c) => c !== 'integrations.listByAddon')).toEqual([
       'migrations.declareOwner',
       'migrations.startMigration',
       'migrations.finishMigration',
@@ -150,7 +150,7 @@ describe('BaseAddon.runMigrations', () => {
     const calls: string[] = []
     const addon = await probeWith('applied', calls)
     expect((await addon.migrate([])).declared).toBe(false)
-    expect(calls).toEqual([])
+    expect(calls.filter((c) => c !== 'integrations.listByAddon')).toEqual([])
   })
 })
 

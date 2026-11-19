@@ -23,7 +23,7 @@ import {
   type IDeviceAdoptionProvider,
   type ProviderRegistration,
   type RecordIntegrationInstances,
-  isInstanceEnabled,
+  isInstanceOn,
 } from '@camstack/types'
 import type { MatterAddonConfig } from './config.js'
 import { MatterBrokerRegistry } from './matter-broker-registry.js'
@@ -220,7 +220,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       await this.cascadeRemoveDevicesForBroker(id)
       return
     }
-    if (!isInstanceEnabled(entry)) {
+    if (!isInstanceOn(id)) {
       await reg.removeEntry(id)
       return
     }
@@ -260,7 +260,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     }
 
     for (const entry of persisted) {
-      if (!isInstanceEnabled(entry)) continue
+      if (!isInstanceOn(entry.id)) continue
       if (entry.id && liveIds.has(entry.id)) {
         if (sameConnection(entry.connection, reg.getConnection(entry.id))) continue
         try {

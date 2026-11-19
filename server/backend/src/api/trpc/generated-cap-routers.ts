@@ -9054,6 +9054,19 @@ export function createCapRouter_integrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listByAddon(methodInput as any)
       }),
+    adoptInstanceRows: adminProcedure
+      .input(integrationsCapability.methods.adoptInstanceRows.input.loose())
+      .output(integrationsCapability.methods.adoptInstanceRows.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.adoptInstanceRows(methodInput as any)
+      }),
     update: adminProcedure
       .input(integrationsCapability.methods.update.input.loose())
       .output(integrationsCapability.methods.update.output)

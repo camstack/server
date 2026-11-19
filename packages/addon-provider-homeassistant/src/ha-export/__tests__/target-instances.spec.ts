@@ -5,8 +5,8 @@
  * make `configured` answer true for an empty connection and "unconfigured" fails; have
  * `deleteInstance` skip `onChanged` and "reloads" fails.
  */
-import { makeInMemoryRecords } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { clearInstanceSwitches, isInstanceOn, makeInMemoryRecords } from '@camstack/types'
+import { afterEach, describe, expect, it } from 'vitest'
 import { buildTargetForm } from '../target-form.js'
 import { openTargetInstances, type TargetChange } from '../target-instances.js'
 import { ExportTargets, haExportTargetsKind } from '../target-records.js'
@@ -28,6 +28,8 @@ async function harness(connections: readonly string[] = ['ha_001']) {
   })
   return { handle, book, changes, instances, provider: instances.toProvider() }
 }
+
+afterEach(() => clearInstanceSwitches())
 
 describe('export target instances', () => {
   it('describes a multiple, id-minting services provider of the ha-target kind', async () => {
@@ -87,10 +89,10 @@ describe('export target instances', () => {
   })
 
   it('switches a target off through the record and reloads after every change', async () => {
-    const { provider, handle, book, changes } = await harness()
+    const { provider, book, changes } = await harness()
     const { id } = await provider.createInstance({ name: 'Home' })
     await provider.setInstanceEnabled({ id, enabled: false })
-    expect((await handle.get(id))?.data.enabled).toBe(false)
+    expect(isInstanceOn(id)).toBe(false)
     expect(book.isEnabled(id)).toBe(false)
     await provider.deleteInstance({ id })
     expect(book.ids()).toEqual([])

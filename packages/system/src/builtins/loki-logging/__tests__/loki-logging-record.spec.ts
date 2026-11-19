@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
 import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { integrationInstancesCapability, makeInMemoryRecords } from '@camstack/types'
+import {
+  clearInstanceSwitches,
+  integrationInstancesCapability,
+  makeInMemoryRecords,
+  recordInstanceSwitch,
+} from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
@@ -40,12 +45,13 @@ async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean
           batchIntervalMs: 5000,
           batchSize: 200,
           timeoutMs: 10000,
-          ...(seed.enabled === undefined ? {} : { enabled: seed.enabled }),
         },
       },
       { ifRev: 0 },
     )
   }
+  // The switch is the registry row's (D1066): the hub told this process it is off.
+  if (seed?.enabled === false) recordInstanceSwitch('int_0001', false)
   const store: Record<string, unknown> = {}
   const declareOwner = {
     mutate: vi.fn(async () => ({
@@ -91,6 +97,7 @@ async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean
 describe('LokiLoggingAddon — connection record (D985)', () => {
   const addons: LokiLoggingAddon[] = []
   afterEach(async () => {
+    clearInstanceSwitches()
     // Let the background D777 carry-over finish before the context goes away.
     await new Promise((resolve) => setTimeout(resolve, 25))
     for (const a of addons.splice(0)) await a.shutdown()

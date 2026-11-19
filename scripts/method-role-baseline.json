@@ -555,6 +555,7 @@
   "integrationInstances.setInstanceEnabled": "admin",
   "integrationInstances.testInstance": "admin",
   "integrationInstances.updateInstance": "admin",
+  "integrations.adoptInstanceRows": "admin",
   "integrations.delete": "admin",
   "integrations.get": "admin",
   "integrations.getAvailableTypes": "admin",

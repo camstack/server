@@ -28,7 +28,7 @@ function bodySchema(secret: boolean) {
   return entryBody({
     module: z.string().min(1),
     args: argsSchema(secret).default({}),
-    enabled: z.boolean().default(true),
+    enabled: z.boolean().optional(),
   })
 }
 

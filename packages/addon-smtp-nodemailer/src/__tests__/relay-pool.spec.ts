@@ -1,6 +1,10 @@
 import { Readable } from 'node:stream'
-import type { PeerBytesOpenResult } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import {
+  clearInstanceSwitches,
+  recordInstanceSwitch,
+  type PeerBytesOpenResult,
+} from '@camstack/types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RelayPool } from '../relay-pool.js'
 import { RELAY_DEFAULT_BODY, type SmtpRelayBody } from '../relay-record-kinds.js'
 import { fakeFactory } from './support.js'
@@ -14,6 +18,8 @@ const relay = (name: string, host: string, extra: Partial<SmtpRelayBody> = {}): 
   ...extra,
 })
 const mail = { to: 'ops@example.com', subject: 's', text: 't' }
+
+afterEach(() => clearInstanceSwitches())
 
 describe('RelayPool', () => {
   it('attaches an image on a text mail with the shared MIME body', async () => {
@@ -116,7 +122,8 @@ describe('RelayPool', () => {
     it('the default pick skips a relay that is off', async () => {
       const { factory, built } = fakeFactory()
       const pool = new RelayPool(factory, log)
-      pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
+      recordInstanceSwitch('int_0001', false)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
       pool.apply('int_0002', relay('b', 'smtp.b.test'))
       await pool.sendEmail(undefined, mail)
       expect(built.map((t) => t.sent.length)).toEqual([0, 1])
@@ -126,7 +133,8 @@ describe('RelayPool', () => {
     it('with every relay off a default send is refused, not answered by an off relay', async () => {
       const { factory, built } = fakeFactory()
       const pool = new RelayPool(factory, log)
-      pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
+      recordInstanceSwitch('int_0001', false)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
       await expect(pool.sendEmail(undefined, mail)).rejects.toThrow()
       expect(built[0]?.sent).toHaveLength(0)
     })
@@ -135,7 +143,8 @@ describe('RelayPool', () => {
       const warn = vi.fn()
       const { factory, built } = fakeFactory()
       const pool = new RelayPool(factory, { info: vi.fn(), warn })
-      pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
+      recordInstanceSwitch('int_0001', false)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
       pool.apply('int_0002', relay('b', 'smtp.b.test'))
       const err: unknown = await pool.sendEmail('int_0001', mail).catch((e: unknown) => e)
       expect(err).toMatchObject({
@@ -181,7 +190,8 @@ describe('RelayPool', () => {
     it('a switched-off relay reports not ready without an error', () => {
       const { factory } = fakeFactory()
       const pool = new RelayPool(factory, log)
-      pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
+      recordInstanceSwitch('int_0001', false)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
       expect(pool.status('int_0001')).toEqual({ ready: false, host: 'smtp.a.test' })
     })
 
@@ -189,11 +199,12 @@ describe('RelayPool', () => {
       const { factory } = fakeFactory()
       const pool = new RelayPool(factory, log)
       pool.apply('int_0001', relay('a', 'smtp.a.test'))
-      pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
+      recordInstanceSwitch('int_0001', false)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
       await expect(pool.sendEmail('int_0001', mail)).rejects.toMatchObject({
         i18nCode: 'smtp.relay-disabled',
       })
-      pool.apply('int_0001', relay('a', 'smtp.a.test'))
+      recordInstanceSwitch('int_0001', true)
       await expect(pool.sendEmail('int_0001', mail)).resolves.toMatchObject({ accepted: [] })
     })
   })

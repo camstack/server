@@ -19,7 +19,11 @@ export interface ResolveInput {
 }
 
 function usable(profile: LlmProfile, purpose: LlmPurpose): boolean {
-  return profile.enabled && (purpose !== 'vision' || profile.supportsVision)
+  return (
+    profile.enabled &&
+    profile.model.trim().length > 0 &&
+    (purpose !== 'vision' || profile.supportsVision)
+  )
 }
 
 function defaultProfileId(

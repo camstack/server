@@ -33,7 +33,7 @@ import {
   RecordIntegrationInstances,
   RevConflictError,
   bareAddonId,
-  isInstanceEnabled,
+  isInstanceOn,
   isSameAddonId,
 } from '@camstack/types'
 import type { LokiConfig } from './loki-destination.js'
@@ -222,7 +222,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         continue
       }
       this.secretsWarned.delete(instance.id)
-      configs.set(instance.id, this.destinationConfig(instance.body))
+      configs.set(instance.id, this.destinationConfig(instance.id, instance.body))
     }
     await this.destination?.apply(configs, keep)
   }
@@ -442,12 +442,12 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
    * different signature is a type error — usefully, since silently overriding it
    * would have broken this addon's settings reload.
    */
-  private destinationConfig(body: LokiDestinationBody): LokiConfig {
+  private destinationConfig(id: string, body: LokiDestinationBody): LokiConfig {
     // The destination's own gate is "enabled AND a URL is set". `enabled` is the instance's switch
-    // on the record (D996, `setInstanceEnabled`); the registry toggle (D777) is no longer the
+    // on its registry row (D1066, `setInstanceEnabled`); the registry toggle (D777) is no longer the
     // operator's switch and is left on.
     return {
-      enabled: isInstanceEnabled(body),
+      enabled: isInstanceOn(id),
       url: body.url,
       job: body.job,
       node: this.ctx.kernel.localNodeId ?? 'hub',

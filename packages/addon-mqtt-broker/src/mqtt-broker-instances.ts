@@ -20,7 +20,7 @@ import {
   REDACTED_SECRET,
   RecordIntegrationInstances,
   type RecordsAccess,
-  isInstanceEnabled,
+  isInstanceOn,
 } from '@camstack/types'
 import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
 import { mqttBrokerUsers } from './mqtt-broker-users.js'
@@ -68,11 +68,12 @@ const PROBE_LABELS: Readonly<Record<MqttBrokerLiveStatus, string>> = {
 
 /** The instance's health word: connected / auth-failed / unreachable / tls-error, latency, clients. */
 export function mqttHealthOf(
+  id: string,
   body: MqttBrokerBody,
   live: MqttLiveState,
   now: number,
 ): { readonly status: IntegrationInstanceStatus; readonly lastCheckedAt?: number } {
-  if (!isInstanceEnabled(body)) return { status: { state: 'off', label: 'Switched off' } }
+  if (!isInstanceOn(id)) return { status: { state: 'off', label: 'Switched off' } }
   if (body.onboard !== undefined) {
     return live.onboard === null
       ? { status: { state: 'error', label: 'Not listening' }, lastCheckedAt: now }
@@ -167,7 +168,7 @@ export function buildMqttBrokerInstances(
       kindOf: () => MQTT_INSTANCE_KIND,
       initialBody: (name): MqttBrokerBody => ({ name, url: 'mqtt://' }),
       configured: (body) => body.url.trim().length > 0 && body.url.trim() !== 'mqtt://',
-      health: (body, id) => mqttHealthOf(body, deps.liveState(id), Date.now()),
+      health: (body, id) => mqttHealthOf(id, body, deps.liveState(id), Date.now()),
       onChanged: deps.onChanged,
       test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
         if (id === null && isOnboardRequested(values)) {

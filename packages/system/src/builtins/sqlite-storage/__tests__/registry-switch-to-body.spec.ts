@@ -7,7 +7,6 @@ import {
   defineAddonMigrations,
   defineEntryKind,
   entryBody,
-  isInstanceEnabled,
   registrySwitchPortsOver,
   registrySwitchToBodyMigration,
 } from '@camstack/types'
@@ -79,7 +78,6 @@ describe('registrySwitchToBodyMigration on SQLite', () => {
 
     const off = await w.handle.get('int_1')
     expect(off?.data).toMatchObject({ host: MARK, enabled: false })
-    expect(isInstanceEnabled(off?.data ?? {})).toBe(false)
     const on = await w.handle.get('int_2')
     expect(on?.data).toMatchObject({ host: MARK })
     expect(on?.data).not.toHaveProperty('enabled')

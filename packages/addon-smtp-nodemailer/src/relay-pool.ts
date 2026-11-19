@@ -10,7 +10,7 @@ import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js'
 import {
   userError,
-  isInstanceEnabled,
+  isInstanceOn,
   assembleEmailMime,
   type EmailImagePart,
   type PeerBytesOpenResult,
@@ -94,9 +94,9 @@ export function buildTransportOptions(body: Readonly<SmtpRelayBody>): SMTPTransp
   return options
 }
 
-/** An absent `enabled` means on (D996). */
-function isOn(body: Readonly<SmtpRelayBody>): boolean {
-  return isInstanceEnabled(body)
+/** The relay's switch is its registry row's, read from this process's copy (D1066); absent means on. */
+function isOn(id: string): boolean {
+  return isInstanceOn(id)
 }
 
 function coerceAddress(entry: string | { readonly address: string }): string {
@@ -111,8 +111,7 @@ function sameBody(a: SmtpRelayBody, b: SmtpRelayBody): boolean {
     a.username === b.username &&
     (a.password ?? '') === (b.password ?? '') &&
     a.fromAddress === b.fromAddress &&
-    a.fromName === b.fromName &&
-    isOn(a) === isOn(b)
+    a.fromName === b.fromName
   )
 }
 
@@ -178,7 +177,7 @@ export class RelayPool {
    */
   private pick(instanceId: string | undefined): RelayState | undefined {
     if (instanceId !== undefined) return this.relays.get(instanceId)
-    const on = [...this.relays.values()].filter((r) => isOn(r.body))
+    const on = [...this.relays.values()].filter((r) => isOn(r.id))
     return on.find((r) => r.body.host !== '') ?? on[0]
   }
 
@@ -224,7 +223,7 @@ export class RelayPool {
   ): Promise<{ messageId: string; accepted: string[]; rejected: string[] }> {
     const relay = this.pick(instanceId)
     if (relay === undefined) throw new Error(this.unknown(instanceId))
-    if (!isOn(relay.body)) {
+    if (!isOn(relay.id)) {
       this.log.warn('smtp send refused: the relay is switched off', {
         meta: { integrationId: relay.id, relay: relay.body.name },
         tags: { topic: 'smtp', phase: 'relay-disabled' },
@@ -296,10 +295,10 @@ export class RelayPool {
   private statusOf(relay: RelayState): RelayStatus {
     // A relay that is off is not ready, and that is not an error (D62: off must not look broken).
     const status: RelayStatus = {
-      ready: isOn(relay.body) && relay.lastSendOk === true,
+      ready: isOn(relay.id) && relay.lastSendOk === true,
       host: relay.body.host,
     }
-    if (isOn(relay.body) && relay.lastSendOk !== undefined) status.verified = relay.lastSendOk
+    if (isOn(relay.id) && relay.lastSendOk !== undefined) status.verified = relay.lastSendOk
     if (relay.lastError) status.error = relay.lastError
     if (relay.lastVerifiedAt !== undefined) status.lastVerifiedAt = relay.lastVerifiedAt
     return status

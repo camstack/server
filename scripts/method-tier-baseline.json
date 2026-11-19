@@ -500,6 +500,7 @@
   "integrationInstances.setInstanceEnabled": "protected",
   "integrationInstances.testInstance": "protected",
   "integrationInstances.updateInstance": "protected",
+  "integrations.adoptInstanceRows": "admin",
   "integrations.delete": "admin",
   "integrations.get": "protected",
   "integrations.getAvailableTypes": "admin",

@@ -26,6 +26,8 @@ import {
   type RecordsAccess,
   RecordSecretUnavailableError,
   REDACTED_SECRET,
+  isInstanceOn,
+  recordInstanceSwitch,
 } from '@camstack/types'
 import { secretFieldOf } from './kinds/provider-config.js'
 import { migrateProfileBody } from './profile-migration.js'
@@ -93,6 +95,8 @@ function toProfile(read: ProfileRead): LlmProfile | null {
   const parsed = LlmProfileSchema.safeParse({
     ...withoutKey(body),
     id: read.id,
+    // The switch is the registry row's (D1066), never a field of the record.
+    enabled: isInstanceOn(read.id),
     providerConfig:
       field !== null && read.key !== undefined ? { ...config, [field]: read.key } : config,
   })
@@ -200,7 +204,8 @@ export class ProfileStore {
     profile: LlmProfile,
     opts: { readonly keepStoredKey?: boolean } = {},
   ): Promise<void> {
-    const { id, providerConfig, ...rest } = profile
+    const { id, providerConfig, enabled, ...rest } = profile
+    recordInstanceSwitch(id, enabled)
     const [config, secret] = splitSecret(profile.kind, providerConfig)
     const common: LlmProfileBody = { ...rest, providerConfig: config }
     let data: LlmProfileBody = common

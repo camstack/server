@@ -34,6 +34,9 @@ function harness(rows: readonly Integration[], instancesOf: (addonId: string) =>
       async (addonId: string) => rows.find((r) => r.addonId === addonId) ?? null,
     ),
     updateIntegration: vi.fn(async (id: string) => rows.find((r) => r.id === id) ?? null),
+    createIntegration: vi.fn(async (input: { id?: string; addonId: string; name: string }) =>
+      row(input.id ?? 'int_new', input.addonId, true),
+    ),
   }
   const emit = vi.fn()
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -154,5 +157,59 @@ describe('integrations.update({ enabled }) is the one door', () => {
       expect.stringContaining('addon was not told'),
       expect.anything(),
     )
+  })
+})
+
+describe('adoptInstanceRows: the hub keeps the one copy of every instance switch (D1066)', () => {
+  it('creates the missing row of a services instance with the body state, false included', async () => {
+    const { provider, registry } = harness([], () => null)
+    const result = await provider.adoptInstanceRows({
+      addonId: 'waste-collections',
+      rows: [{ id: 'home', name: 'Home', enabled: false, stated: true }],
+    })
+    expect(result).toEqual({ created: 1, updated: 0, skipped: 0 })
+    expect(registry.createIntegration).toHaveBeenCalledWith({
+      id: 'home',
+      addonId: 'waste-collections',
+      name: 'Home',
+      enabled: false,
+      info: { [SERVICE_INSTANCE_INFO_KEY]: true },
+    })
+  })
+
+  it('a stated body wins over a disagreeing registry row; an unstated one never overwrites it', async () => {
+    const { provider, registry } = harness([row('int_0001', 'matter', true)], () => null)
+    expect(
+      await provider.adoptInstanceRows({
+        addonId: 'matter',
+        rows: [{ id: 'int_0001', name: 'A', enabled: false, stated: false }],
+      }),
+    ).toEqual({ created: 0, updated: 0, skipped: 0 })
+    expect(registry.updateIntegration).not.toHaveBeenCalled()
+    expect(
+      await provider.adoptInstanceRows({
+        addonId: 'matter',
+        rows: [{ id: 'int_0001', name: 'A', enabled: false, stated: true }],
+      }),
+    ).toEqual({ created: 0, updated: 1, skipped: 0 })
+    expect(registry.updateIntegration).toHaveBeenCalledWith('int_0001', { enabled: false })
+  })
+
+  it("a rerun with the same rows changes nothing, and another addon's row is skipped, not taken", async () => {
+    const { provider, registry } = harness(
+      [row('int_0001', 'matter', false), row('int_0002', 'other', true)],
+      () => null,
+    )
+    expect(
+      await provider.adoptInstanceRows({
+        addonId: 'matter',
+        rows: [
+          { id: 'int_0001', name: 'A', enabled: false, stated: true },
+          { id: 'int_0002', name: 'B', enabled: false, stated: true },
+        ],
+      }),
+    ).toEqual({ created: 0, updated: 0, skipped: 1 })
+    expect(registry.updateIntegration).not.toHaveBeenCalled()
+    expect(registry.createIntegration).not.toHaveBeenCalled()
   })
 })

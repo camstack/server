@@ -93,7 +93,7 @@ describe('onChanged says what happened', () => {
 })
 
 describe('one switch for a role "devices" addon too', () => {
-  it('serves enabled, creates a missing record on the switch and tells onSwitched', async () => {
+  it('serves enabled from the switch store, writes no body and tells onSwitched even for an id with no record', async () => {
     const { instances } = await setupAccounts('devices')
     const switched: Array<readonly [string, boolean]> = []
     instances.onSwitched((id, enabled) => {
@@ -103,9 +103,9 @@ describe('one switch for a role "devices" addon too', () => {
     expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
     await instances.setInstanceEnabled({ id: 'int_1', enabled: false })
     expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(false)
-    // no record yet: the switch creates it from initialBody
+    // the switch is the registry's: a notification for an id with no record creates nothing
     await instances.setInstanceEnabled({ id: 'int_2', enabled: false })
-    expect((await instances.getInstance({ id: 'int_2' }))?.enabled).toBe(false)
+    expect(await instances.getInstance({ id: 'int_2' })).toBeNull()
     expect(switched).toEqual([
       ['int_1', false],
       ['int_2', false],

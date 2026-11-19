@@ -1,5 +1,10 @@
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import {
+  clearInstanceSwitches,
+  isInstanceOn,
+  makeInMemoryRecords,
+  REDACTED_SECRET,
+} from '@camstack/types'
+import { afterEach, describe, expect, it } from 'vitest'
 import catalogJson from '../catalog.json'
 import { WasteFetchTimeoutError, WasteProviderRejectedError } from '../fetch-source.js'
 import { listCatalogCountries } from '../waste-catalog.js'
@@ -47,6 +52,8 @@ const CREATE_VALUES = {
   password: 'hunter2',
 }
 
+afterEach(() => clearInstanceSwitches())
+
 describe('waste-source instances', () => {
   it('describes one testable kind of the calendar-source function cap', async () => {
     const { instances } = await start()
@@ -89,8 +96,8 @@ describe('waste-source instances', () => {
     expect(stored?.data).toMatchObject({
       name: 'Home bins',
       module: 'recyclesmart_com',
-      enabled: true,
     })
+    expect(stored?.data.enabled).toBeUndefined()
     expect(stored?.data.args.password).toBe(REDACTED_SECRET)
     expect((await raw.getResolved(id))?.data.args.password).toBe('hunter2')
 
@@ -150,7 +157,9 @@ describe('waste-source instances', () => {
     })
     await instances.toProvider().setInstanceEnabled({ id, enabled: false })
     expect((await instances.getInstance({ id }))?.enabled).toBe(false)
-    expect((await raw.get(id))?.data.enabled).toBe(false)
+    // The switch is the registry's: the record keeps no copy of it.
+    expect(isInstanceOn(id)).toBe(false)
+    expect((await raw.get(id))?.data.enabled).toBeUndefined()
     await expect(
       instances.createInstance({ id, name: 'Other', values: CREATE_VALUES }),
     ).rejects.toThrow()
@@ -160,7 +169,7 @@ describe('waste-source instances', () => {
     expect(changes).toEqual([`created:${id}`, `enabled:${id}`, `deleted:${id}`])
   })
 
-  it('the switch flips the one field the calendar readers use, and never invents a source', async () => {
+  it('the switch is read from the registry state, writes nothing into the record and invents no source', async () => {
     const world = makeInMemoryRecords('waste-collections')
     await world.records.declare({ 'waste-source': wasteSourceEntryKind })
     const instances = new WasteSourceInstances(world.records, {
@@ -176,7 +185,6 @@ describe('waste-source instances', () => {
     expect((await reader.listResolved()).map((s) => s.enabled)).toEqual([false])
     await setEnabled({ id, enabled: true })
     expect((await reader.readResolved(id))?.enabled).toBe(true)
-    await expect(setEnabled({ id: 'ghost', enabled: false })).rejects.toThrow(/not found/)
     expect(await reader.listIds()).toEqual([id])
   })
 

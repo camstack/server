@@ -78,7 +78,7 @@ export function wasteSourcePortsOver(
     listSourceIds: async () => (await handle.query({ limit: PAGE })).records.map((row) => row.id),
     putSource: async (source) => {
       if ((await handle.get({ id: source.id })) !== null) return
-      await handle.put({ id: source.id, data: bodyOf(source), ifRev: 0 })
+      await handle.put({ id: source.id, data: bodyOf(source, true), ifRev: 0 })
     },
     readSource: async (id) => {
       const stored = await handle.get({ id })

@@ -166,6 +166,34 @@ export const integrationsCapability = {
      * a services instance, this does not.
      */
     listByAddon: method(z.object({ addonId: z.string() }), z.array(IntegrationLiteSchema)),
+    /**
+     * The one-time move of an addon's switches into the registry (D1066): for each instance record
+     * the addon holds, an absent row is created as a services row under the addon-minted id, and a
+     * row that disagrees with a STATED body switch is corrected (a body that states nothing never
+     * moves an existing row). A row
+     * that belongs to another addon is left alone and counted as skipped. Idempotent: a rerun changes
+     * nothing. It never notifies the addon.
+     */
+    adoptInstanceRows: method(
+      z.object({
+        addonId: z.string(),
+        rows: z.array(
+          z.object({
+            id: z.string().min(1),
+            name: z.string(),
+            enabled: z.boolean(),
+            /** True when the record body STATED the switch: only then does it override an existing row. */
+            stated: z.boolean(),
+          }),
+        ),
+      }),
+      z.object({
+        created: z.number().int(),
+        updated: z.number().int(),
+        skipped: z.number().int(),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
       kind: 'mutation',
       auth: 'admin',

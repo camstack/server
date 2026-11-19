@@ -4,6 +4,8 @@
  * fabricated.
  */
 import {
+  clearInstanceSwitches,
+  isInstanceOn,
   isSecretFieldView,
   isSecretMarker,
   type LlmGenerateResult,
@@ -43,6 +45,7 @@ async function world(
   answer: () => Promise<LlmGenerateResult> = async () => OK,
   testBudgetMs?: number,
 ) {
+  clearInstanceSwitches()
   const w = await makeAiRecords()
   const store = ProfileStore.of(w.records)
   const client: LlmClient = {
@@ -206,7 +209,8 @@ describe('llm profiles as integration-instances', () => {
     const { w, instances } = await world()
     await createKeyed(instances)
     await instances.setInstanceEnabled({ id: 'a', enabled: false })
-    expect(rawRow(w, 'a')?.['enabled']).toBe(false)
+    expect(rawRow(w, 'a')).not.toHaveProperty('enabled')
+    expect(isInstanceOn('a')).toBe(false)
     expect(rawRow(w, 'a')?.['model']).toBe('claude-x')
     expect([...w.keychain.values.values()]).toEqual([KEY])
     await instances.deleteInstance({ id: 'a' })
@@ -225,20 +229,19 @@ describe('llm profiles as integration-instances', () => {
     expect((await resolve()).ok).toBe(false)
     await instances.setInstanceEnabled({ id: 'a', enabled: true })
     expect((await resolve()).ok).toBe(true)
-    await expect(instances.setInstanceEnabled({ id: 'ghost', enabled: true })).rejects.toThrow(
-      /not found/,
-    )
+    // The hub refuses a switch for an id it holds no row for; the helper never invents a record.
+    await instances.setInstanceEnabled({ id: 'ghost', enabled: true })
     expect(await store.getById('ghost')).toBeNull()
   })
 
-  it('a create with no values is a disabled draft, and the form follows the stored kind', async () => {
+  it('a create with no values is a blank draft (no model), and the form follows the stored kind', async () => {
     const { w, instances } = await world()
     const { id } = await instances.createInstance({
       name: 'Draft',
       kind: 'apple-foundation',
     })
     expect(id).toMatch(/^llm-/)
-    expect(rawRow(w, id)?.['enabled']).toBe(false)
+    expect(rawRow(w, id)?.['model']).toBe('')
     const form = await instances.instanceFormSchema({ id, kind: undefined })
     const keys = form.sections.flatMap((s) => s.fields.map((f) => f.key))
     expect(keys).toContain('name')

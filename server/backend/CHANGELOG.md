@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Integration list, get and getByAddonId are pure registry reads that never call an addon, ending the hub and addon call cycle behind hub stalls
+
 ## [1.2.910] - 2026-11-19
 
 ### Changed

@@ -1121,6 +1121,37 @@ export function buildIntegrationsProvider(
       const bare = bareAddonId(input.addonId)
       return rows.filter((i) => i.addonId === bare)
     },
+    adoptInstanceRows: async (input) => {
+      const reg = requireIntegrationRegistry(ar)
+      const addonId = bareAddonId(input.addonId)
+      let created = 0
+      let updated = 0
+      let skipped = 0
+      for (const row of input.rows) {
+        const existing = await reg.getIntegration(row.id)
+        if (existing === null) {
+          // An absent row with a record is a services instance under its addon-minted id.
+          await reg.createIntegration({
+            id: row.id,
+            addonId,
+            name: row.name,
+            enabled: row.enabled,
+            info: { [SERVICE_INSTANCE_INFO_KEY]: true },
+          })
+          created += 1
+        } else if (existing.addonId !== addonId) {
+          logger.warn('adopt skipped: the row belongs to another addon', {
+            tags: { integrationId: row.id, addonId },
+            meta: { owner: existing.addonId },
+          })
+          skipped += 1
+        } else if (row.stated && existing.enabled !== row.enabled) {
+          await reg.updateIntegration(row.id, { enabled: row.enabled })
+          updated += 1
+        }
+      }
+      return { created, updated, skipped }
+    },
     update: async (input) => {
       const reg = requireIntegrationRegistry(ar)
       const previous = await reg.getIntegration(input.id)

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isInstanceEnabled } from '@camstack/types'
+import { isInstanceOn } from '@camstack/types'
 import type { TerminalBody } from './terminal-record-kinds.js'
 
 const TerminalInstanceSchema = z.object({
@@ -72,7 +72,7 @@ export function rawInstanceOfRecord(id: string, body: TerminalBody): Record<stri
     profileId: body.profileId,
     profileLabel: body.profileLabel,
     name: body.name,
-    enabled: isInstanceEnabled(body),
+    enabled: isInstanceOn(id),
     executable: body.executable,
     args: body.args,
     cwd: body.cwd,

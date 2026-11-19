@@ -14,7 +14,7 @@ import {
   type IntegrationInstanceDescription,
   type IntegrationInstanceKind,
   type IntegrationTestConnectionResult,
-  isInstanceEnabled,
+  isInstanceOn,
   isSecretClear,
   isSecretFieldView,
   REDACTED_SECRET,
@@ -221,7 +221,7 @@ function scrubbed(message: string, args: Readonly<Record<string, unknown>>): str
 export class WasteSourceInstances {
   private readonly handle: RecordKindHandle<WasteSourceBody>
   private readonly store: WasteSourceStore
-  /** The one switch (D996): the record body's `enabled`, written by the shared helper only. */
+  /** The one switch (D1066): the registry row's, mirrored by the shared helper. */
   private readonly rowSwitch: RecordIntegrationInstances<WasteSourceBody>
 
   constructor(
@@ -267,7 +267,7 @@ export class WasteSourceInstances {
       id: record.id,
       name: body.name,
       configured,
-      enabled: isInstanceEnabled(body),
+      enabled: isInstanceOn(record.id),
       kind: WASTE_INSTANCE_KIND,
       formValues,
     }
@@ -311,7 +311,6 @@ export class WasteSourceInstances {
       name,
       module: service.module,
       args: mergeServiceArgs(service, freshArgs(form)),
-      enabled: true,
     })
     if (!parsed.success) throw new Error(`invalid waste source: ${parsed.error.message}`)
     // `ifRev: 0`: an id that already exists is refused, never overwritten.

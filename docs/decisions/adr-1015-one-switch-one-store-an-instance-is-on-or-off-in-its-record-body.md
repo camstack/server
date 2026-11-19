@@ -1,7 +1,8 @@
 ---
 id: D1015
 title: One switch, one store - an instance is on or off in its record body, for every role
-status: accepted
+status: superseded
+superseded-by: D1066
 date: 2026-11-06
 supersedes: D1007 (the clause "the registry owns `enabled` for `role: devices`", and `setInstanceEnabled` refusing a devices addon)
 applies-to:

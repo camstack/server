@@ -108,7 +108,7 @@ export interface SystemProxy {
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
   readonly heroLayout: Pick<InferProvider<typeof heroLayoutCapability>, 'getHeroModel' | 'getRowModels' | 'getLayout'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
-  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'listByAddon' | 'update' | 'delete' | 'getAvailableTypes'>
+  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'listByAddon' | 'adoptInstanceRows' | 'update' | 'delete' | 'getAvailableTypes'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
@@ -537,6 +537,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     get: (input?: unknown) => dispatch('integrations', 'get', 'query', input),
     getByAddonId: (input?: unknown) => dispatch('integrations', 'getByAddonId', 'query', input),
     listByAddon: (input?: unknown) => dispatch('integrations', 'listByAddon', 'query', input),
+    adoptInstanceRows: (input?: unknown) => dispatch('integrations', 'adoptInstanceRows', 'mutation', input),
     update: (input?: unknown) => dispatch('integrations', 'update', 'mutation', input),
     delete: (input?: unknown) => dispatch('integrations', 'delete', 'mutation', input),
     getAvailableTypes: (input?: unknown) => dispatch('integrations', 'getAvailableTypes', 'query', input),

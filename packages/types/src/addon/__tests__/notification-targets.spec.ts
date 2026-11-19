@@ -2,12 +2,13 @@
  * Notification targets as instances: the per-kind record kinds, the facade the providers keep using, the
  * `integration-instances` provider, and the D987 procedure that flattens the old `config` blob.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '../../interfaces/logging.js'
 import { recordSecretRef } from '../../records/secret-paths.js'
 import type { TargetKind } from '../../capabilities/notification-output.cap.js'
 import { defineRecordKinds } from '../../records/record-kind.js'
 import { makeInMemoryRecords } from '../../records/in-memory-records.js'
+import { clearInstanceSwitches, recordInstanceSwitch } from '../instance-switches.js'
 import {
   buildNotificationTargetInstances,
   legacyTargetsOver,
@@ -115,8 +116,11 @@ type World = Awaited<ReturnType<typeof world>>
 
 describe('notification targets over per-kind records', () => {
   let w: World
+  afterEach(() => clearInstanceSwitches())
   beforeEach(async () => {
     w = await world()
+    // The registry states tg-1 off; the body carries no switch any more.
+    recordInstanceSwitch('tg-1', false)
     await w.oldKind.put({
       id: 'tg-1',
       data: {

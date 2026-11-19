@@ -110,8 +110,14 @@ export type { ConnectionTestOutcome, IConnectionProbe } from './addon/connection
 export {
   RecordIntegrationInstances,
   defaultAddDeviceMode,
-  isInstanceEnabled,
 } from './addon/record-integration-instances.js'
+export {
+  clearInstanceSwitches,
+  forgetInstanceSwitch,
+  hydrateInstanceSwitches,
+  isInstanceOn,
+  recordInstanceSwitch,
+} from './addon/instance-switches.js'
 export {
   composeInstanceKinds,
   UnknownInstanceError,
@@ -237,6 +243,7 @@ export * from './migrations/integration-rows-api-ports.js'
 export * from './migrations/claim-devices-to-default-integration.js'
 export * from './migrations/default-integration-migrations.js'
 export * from './migrations/registry-switch-to-body.js'
+export * from './migrations/body-switch-to-registry.js'
 export * from './training/index.js'
 export * from './retrain-review.js'
 export {

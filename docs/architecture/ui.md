@@ -489,18 +489,17 @@ The role is, in order: the manifest's `integrationRole` (`devices`, `services` o
 `role` the addon's `integration-instances` provider answers in `describe()` (with its `discovery`:
 `none | lan | account`, which the wizard reads as `auto` for `lan` and `manual` otherwise), and, for an addon
 still on legacy rows, the capabilities it declares (`integration-instances` means `services`, anything else
-`devices`). The instance record body owns `enabled` for every role, switched only through `integration-instances.setInstanceEnabled`; the registry list projects it, marking a row whose addon did not answer `switchUnknown` ([D1015](../decisions/adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md)); an `info.fixed` row is switched the same way and the hub half writes its registry flag (`integrations.update` refuses `enabled`). A dual entry declares `both`, is listed
+`devices`). The hub registry row owns `enabled` for every role, switched only through `integration-instances.setInstanceEnabled` (the hub writes the row, then tells the addon); `integrations.get / list / getByAddonId` are pure registry reads that never call an addon ([D1066](../decisions/adr-1066-the-hub-registry-row-is-the-only-stored-switch-of-an-instance-reads-never-call-an-addon.md)). There is no `info.fixed` exception. A dual entry declares `both`, is listed
 on Integrations for its devices, and keeps its service instances on the function page. Loki, the SMTP relays
 and the TURN servers (static and Cloudflare) therefore have no Integrations row; the TURN Servers page holds
 their records.
 
 **One switch per instance (planning#440 step 3).** `integrationInstances.setInstanceEnabled` is the only
-way to switch an instance. The switch is ONE stored field, the record body's `enabled`, read through
-`isInstanceEnabled` (`@camstack/types`); an absent field is on. `createInstance` and `updateInstance`
+way to switch an instance. The switch is ONE stored field, the hub registry row's `enabled`, keyed by addon and integration like a device ([D1066](../decisions/adr-1066-the-hub-registry-row-is-the-only-stored-switch-of-an-instance-reads-never-call-an-addon.md)); an instance with no row reads as on. `createInstance` and `updateInstance`
 never write it (the form hands back the whole body it was shown, and a stale `enabled` in it would
-undo a switch moved meanwhile). The `integrations` registry list does not keep a switch of its own:
-it projects the record's `enabled` ([D1015](../decisions/adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md)),
-and the hub half of an `info.fixed` row writes the registry flag. A notification rule (`setRuleEnabled`), a core block, a scheduler job and a terminal
+undo a switch moved meanwhile). The addon keeps no copy in its record body: it learns its rows from
+`integrations.listByAddon` at boot and from the hub's notification (`onSwitched`), and the `integrations`
+reads never call it. A notification rule (`setRuleEnabled`), a core block, a scheduler job and a terminal
 session are not integration-instance records yet and keep their own switch, listed with the reason in
 `scripts/one-row-switch-baseline.json`; `scripts/check-one-row-switch.ts` refuses a new one.
 

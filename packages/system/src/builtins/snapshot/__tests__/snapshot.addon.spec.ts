@@ -133,6 +133,8 @@ function makeCtx(opts: CtxStubOptions = {}): {
       setSection: vi.fn(async () => undefined),
     },
     api: {
+      // The base addon reads its instance switches from the registry at boot (D1066).
+      integrations: { listByAddon: { query: vi.fn(async () => []) } },
       deviceManager: {
         getDevice: {
           query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({

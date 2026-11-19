@@ -5,8 +5,8 @@
  * whole body instead of patching `devices` and "keeps a rename made through the instances door"
  * fails; mint ids from a count instead of the highest and "never reuses a live id" fails.
  */
-import { makeInMemoryRecords } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { clearInstanceSwitches, makeInMemoryRecords, recordInstanceSwitch } from '@camstack/types'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   type HaExportTargetBody,
   ExportTargets,
@@ -30,6 +30,8 @@ const HOME: HaExportTargetBody = {
   devices: ['7'],
 }
 
+afterEach(() => clearInstanceSwitches())
+
 describe('ExportTargets', () => {
   it('holds nothing for an empty store, and the default cadence', async () => {
     const targets = await (await open()).load()
@@ -47,9 +49,9 @@ describe('ExportTargets', () => {
       data: {
         ...newTargetBody('Cabin'),
         connectionId: 'ha_001',
-        enabled: false,
       },
     })
+    recordInstanceSwitch('hae_002', false)
     const targets = await load()
     expect(targets.isEnabled('hae_001')).toBe(true)
     expect(targets.isEnabled('hae_002')).toBe(false)
@@ -70,8 +72,9 @@ describe('ExportTargets', () => {
     })
     await handle.put({
       id: 'hae_003',
-      data: { ...HOME, reconcileIntervalSec: 5, enabled: false },
+      data: { ...HOME, reconcileIntervalSec: 5 },
     })
+    recordInstanceSwitch('hae_003', false)
     expect((await load()).reconcileIntervalSec()).toBe(120)
     await handle.put({
       id: 'hae_002',

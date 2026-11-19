@@ -9,6 +9,7 @@ import {
   type IDeviceExportProvider,
   type IIntegrationInstancesProvider,
   addonRoutesCapability,
+  clearInstanceSwitches,
   deviceExportCapability,
   integrationInstancesCapability,
   makeInMemoryRecords,
@@ -152,6 +153,7 @@ describe('export-google multi-instance', () => {
   const addons: ExportGoogleAddon[] = []
   afterEach(async () => {
     for (const a of addons.splice(0)) await a.shutdown()
+    clearInstanceSwitches()
   })
 
   it('declares itself multiple, mints ids, and lists the migrated instance under export-google', async () => {

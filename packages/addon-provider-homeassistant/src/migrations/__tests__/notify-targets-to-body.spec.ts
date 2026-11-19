@@ -111,7 +111,6 @@ describe('homeassistant notify-targets-to-body', () => {
     expect(await w.store.getById('ha-1')).toMatchObject({
       id: 'ha-1',
       kind: 'homeassistant',
-      enabled: false,
       name: 'Pixel',
       config: { brokerId: 'ha_001', service: 'mobile_app_pixel_7' },
     })
@@ -161,13 +160,12 @@ describe('homeassistant notify-targets-to-body', () => {
     expect(first.outcomes.has(HA_NOTIFY_TARGETS_TO_BODY_ID)).toBe(false)
     expect(await w.oldKind.get('ha-good')).toBeNull()
     expect(await w.oldKind.get('ha-bad')).not.toBeNull()
-    expect(await w.store.getById('ha-bad')).toMatchObject({ enabled: false })
+    expect(await w.store.getById('ha-bad')).toMatchObject({ id: 'ha-bad' })
 
     const second = ledgerHost()
     expect((await w.run(second.host)).failed).toEqual([])
     expect(await w.oldKind.get('ha-bad')).toBeNull()
     expect(await w.store.getById('ha-bad')).toMatchObject({
-      enabled: false,
       config: { service: 'notify_ha-bad' },
     })
     expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['ha-bad', 'ha-good'])

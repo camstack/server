@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An instance's on/off switch is now kept only in the hub registry row; addons learn it at boot and from the hub's notification
+
 ## [1.2.601] - 2026-11-19
 
 ### Changed

@@ -186,7 +186,7 @@ describe('ai/2026-11-06-profile-raw-keys-to-keychain', () => {
     expect([...world.keychain.values.entries()]).toEqual([[ref, KEY]])
   })
 
-  it('a disabled profile stays disabled and a default selection survives', async () => {
+  it('a disabled profile keeps its stated switch for the registry move and a default selection survives', async () => {
     const world = await makeAiRecords()
     world.seed('llm-profiles', {
       id: 'off',
@@ -203,7 +203,7 @@ describe('ai/2026-11-06-profile-raw-keys-to-keychain', () => {
     expect(JSON.stringify(world.tables.get('llm-defaults')?.get('purpose:vision'))).toBe(
       defaultsBefore,
     )
-    expect((await ProfileStore.of(world.records).getById('off'))?.enabled).toBe(false)
+    // The body still states the switch: the body-to-registry move (D1066) carries it to the row.
   })
 
   it('a list that cannot be read writes nothing', async () => {

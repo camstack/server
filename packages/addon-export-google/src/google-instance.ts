@@ -9,7 +9,7 @@
  * rejects (and is not cached), so the request fails and a later one reads again.
  */
 import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
-import { isInstanceEnabled } from '@camstack/types'
+import { isInstanceOn } from '@camstack/types'
 import type { ActionSceneEntry, ActionSceneExports } from './action-scenes.js'
 import {
   EMPTY_GOOGLE_EXPORTS,
@@ -60,7 +60,7 @@ export class GoogleInstance {
   }
 
   get enabled(): boolean {
-    return isInstanceEnabled(this.home)
+    return isInstanceOn(this.id)
   }
 
   get devices(): readonly ExposedDeviceEntry[] {
