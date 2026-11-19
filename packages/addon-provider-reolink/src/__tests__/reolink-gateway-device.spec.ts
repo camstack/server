@@ -75,6 +75,7 @@ async function call(
 function publish(reboot: () => Promise<void>): void {
   const handle: HubSessionHandle = {
     name: 'Hub',
+    refresh: async () => undefined,
     channelSnapshot: () => ({
       channels: [],
       lastRefreshAt: null,

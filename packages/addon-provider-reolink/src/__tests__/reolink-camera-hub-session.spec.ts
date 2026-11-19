@@ -9,6 +9,7 @@ import { DeviceType, deviceStateRefreshCapability } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
 import { reolinkHubSessions } from '../reolink-hub-session.js'
+import { registerHubChildStateRefresh } from '../reolink-state-refresh.js'
 
 /** The class prototype is a ReolinkBaichuanApi-typed identity sentinel; nothing calls it. */
 const SENTINEL_API: ReolinkBaichuanApi = ReolinkBaichuanApi.prototype
@@ -106,27 +107,37 @@ describe('ReolinkCamera under an NVR integration', () => {
   })
 })
 
-describe('ReolinkCamera and the core state refresh (D1062)', () => {
-  function register(config: Record<string, unknown>): ReturnType<typeof vi.fn> {
+describe('the hub child core state refresh (D1062)', () => {
+  function register(target: { integrationId: string | null; hubChild: boolean }): {
+    readonly registerNativeCap: ReturnType<typeof vi.fn>
+    readonly refresh: ReturnType<typeof vi.fn>
+  } {
     const registerNativeCap = vi.fn()
-    ReolinkCamera.prototype['registerNvrStateRefresh'].call({
+    const refresh = vi.fn(async () => undefined)
+    registerHubChildStateRefresh({
       ctx: { registerNativeCap },
-      hubIntegrationId: ReolinkCamera.prototype['hubIntegrationId'],
-      isHubChild: ReolinkCamera.prototype['isHubChild'],
-      config: { get: (key: string) => config[key] },
+      ...target,
+      session: () => ({ refresh }),
     })
-    return registerNativeCap
+    return { registerNativeCap, refresh }
   }
 
-  it('a hub child registers one NVR refresh for its integration', () => {
-    const registerNativeCap = register(CHILD_CONFIG)
+  it('a hub child registers one NVR refresh for its integration, answered by the session', async () => {
+    const { registerNativeCap, refresh } = register({ integrationId: 'int-1', hubChild: true })
     expect(registerNativeCap).toHaveBeenCalledTimes(1)
-    const [cap, , options] = registerNativeCap.mock.calls[0] ?? []
+    const [cap, provider, options] = registerNativeCap.mock.calls[0] ?? []
     expect(cap).toBe(deviceStateRefreshCapability)
     expect(options.stateRefresh).toMatchObject({ integrationId: 'int-1', batch: true })
+    await provider.refresh({ reason: 'schedule' })
+    expect(refresh).toHaveBeenCalledTimes(1)
   })
 
   it('a standalone camera registers no refresh: it keeps its own reads', () => {
-    expect(register({ host: '1.2.3.4' })).not.toHaveBeenCalled()
+    expect(
+      register({ integrationId: null, hubChild: false }).registerNativeCap,
+    ).not.toHaveBeenCalled()
+    expect(
+      register({ integrationId: 'int-1', hubChild: false }).registerNativeCap,
+    ).not.toHaveBeenCalled()
   })
 })

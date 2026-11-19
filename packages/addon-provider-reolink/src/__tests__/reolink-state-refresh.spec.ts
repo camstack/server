@@ -24,6 +24,7 @@ describe('hub child state refresh', () => {
     registerHubChildStateRefresh({
       ctx: { registerNativeCap },
       integrationId: 'int-1',
+      hubChild: true,
       session: () => live,
     })
     const [cap, provider] = registerNativeCap.mock.calls[0] ?? []

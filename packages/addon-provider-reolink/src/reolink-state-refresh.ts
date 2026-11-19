@@ -26,17 +26,23 @@ export function hubChildRefreshPolicy(integrationId: string): StateRefreshPolicy
 
 export interface HubChildStateRefreshTarget {
   readonly ctx: Pick<DeviceContext, 'registerNativeCap'>
-  readonly integrationId: string
+  /** The camera's integration, or null for a standalone camera. */
+  readonly integrationId: string | null
+  /** True for a camera adopted under an NVR / Home Hub (an integration AND a channel). */
+  readonly hubChild: boolean
   /** The live NVR session, or null before it exists. */
   readonly session: () => Pick<HubSessionHandle, 'refresh'> | null
 }
 
+/** A standalone camera keeps its own reads and registers nothing. */
 export function registerHubChildStateRefresh(target: HubChildStateRefreshTarget): void {
+  const integrationId = target.integrationId
+  if (integrationId === null || !target.hubChild) return
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
       const session = target.session()
       if (session === null) {
-        throw new Error(`reolink: no NVR session for integration ${target.integrationId}`)
+        throw new Error(`reolink: no NVR session for integration ${integrationId}`)
       }
       await session.refresh()
       return { ok: true }
@@ -44,6 +50,6 @@ export function registerHubChildStateRefresh(target: HubChildStateRefreshTarget)
     resubscribe: async () => ({ ok: true }),
   }
   target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: hubChildRefreshPolicy(target.integrationId),
+    stateRefresh: hubChildRefreshPolicy(integrationId),
   })
 }

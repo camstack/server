@@ -2578,11 +2578,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    */
   private registerNvrStateRefresh(): void {
     const integrationId = this.hubIntegrationId()
-    if (integrationId === null || !this.isHubChild()) return
     registerHubChildStateRefresh({
       ctx: this.ctx,
       integrationId,
-      session: () => reolinkHubSessions.get(integrationId),
+      hubChild: this.isHubChild(),
+      session: () => (integrationId === null ? null : reolinkHubSessions.get(integrationId)),
     })
   }
 
