@@ -22649,6 +22649,27 @@
       ]
     },
     {
+      "name": "IconButtonGroup",
+      "kind": "component",
+      "area": "viewer",
+      "file": "camstack/src/components/ui/IconButtonGroup.tsx",
+      "summary": "IconButtonGroup — several icon-only actions of ONE device, drawn as one capsule: adjacent segments, a hairline between them, the active one filled.",
+      "props": [
+        {
+          "name": "children",
+          "type": "React.ReactNode",
+          "optional": false,
+          "doc": "The segments, in order."
+        },
+        {
+          "name": "testID",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "KeyboardAwareScrollView",
       "kind": "component",
       "area": "viewer",
@@ -24029,6 +24050,13 @@
       "area": "viewer",
       "file": "camstack/src/components/ui/HeaderOverflowMenu.tsx",
       "summary": "HeaderOverflowMenu — a page's `⋯` header button and the menu it opens."
+    },
+    {
+      "name": "useInIconGroup",
+      "kind": "hook",
+      "area": "viewer",
+      "file": "camstack/src/components/ui/IconButtonGroup.tsx",
+      "summary": "True under an : an `IconButton` then draws as a flat segment."
     },
     {
       "name": "useKeyboardOverlap",
