@@ -683,14 +683,17 @@ means never run** and must never render as 1 Jan 1970.
 ## A link to the device's OWN page is ONE hook, drawn in two places
 
 The `device-admin-link` cap answers "where is this device's own management
-page", and the answer appears twice: as a 12px glyph at the end of the device
-row (`AdminLinkQuickAction`, ui-library) and as a bordered pill in the device
-detail header (`components/device/DeviceAdminLinkButton.tsx`), between the
-camera function switches and the kebab — ahead of the kebab because it OPENS
-something rather than hiding choices. Both read the same
-`useDeviceAdminLink`; two surfaces deriving the gate separately would sooner or
-later disagree about one device, and the operator would be right to believe
-whichever one said there was a page.
+page", and the answer appears twice: as the `DeviceWebInterfaceCard` base card
+in the device detail's info tab (`components/device/DeviceWebInterfaceCard.tsx`)
+and as a bordered pill in the device detail header
+(`components/device/DeviceAdminLinkButton.tsx`), between the camera function
+switches and the kebab — ahead of the kebab because it OPENS something rather
+than hiding choices. Both read the same `useDeviceAdminLink`
+(`composites/device-item/use-device-admin-link.ts`); two surfaces deriving the
+gate separately would sooner or later disagree about one device, and the
+operator would be right to believe whichever one said there was a page. The
+device ROW no longer carries the link: its quick-action button opens the
+device page (arrow-up-right icon) and a row click opens the quick-detail modal.
 
 Four states draw NOTHING, and not one of them renders a disabled button (D62):
 the provider never registered the cap, the provider answered `null`, the query

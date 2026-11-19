@@ -9,6 +9,7 @@
 import { act, renderHook } from '@testing-library/react'
 import type { DeviceAdminLink } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { UseDeviceProxyTrpc } from '../../../hooks/use-device-proxy'
 import { useDeviceAdminLink } from '../use-device-admin-link'
 
 type CapabilityResult = { dev: unknown; cap: unknown; online: boolean }
@@ -46,7 +47,12 @@ const INTEGRATION_LINK: DeviceAdminLink = {
   host: '192.168.10.89',
 }
 
-const trpc = {} as never
+/** The hook only forwards this to the mocked `useDeviceCapability`; it is never called. */
+const trpc: UseDeviceProxyTrpc = {
+  deviceManager: {
+    getBindings: { query: async () => ({ deviceId: 0, entries: [] }) },
+  },
+}
 
 beforeEach(() => {
   getAdminLink.mockClear()

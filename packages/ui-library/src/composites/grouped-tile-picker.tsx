@@ -12,6 +12,7 @@ import { Info, Search } from 'lucide-react'
 import { type JSX, type ReactNode, useState } from 'react'
 import { BottomSheet } from '../primitives/bottom-sheet'
 import { IconButton } from '../primitives/icon-button'
+import { Input } from '../primitives/input'
 import { fuzzyMatch } from './device-list/fuzzy-match'
 
 export interface TilePickerTile {
@@ -87,19 +88,16 @@ export function GroupedTilePicker({
   return (
     <div className="space-y-4">
       {search !== undefined && (
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-subtle" />
-          <input // ui-check-ok: same search field as DataTableFilterBar
-            data-dialog-autofocus=""
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={search.placeholder}
-            aria-label={search.label}
-            data-testid="tile-picker-search"
-            className="w-full rounded border border-border bg-background py-1.5 pl-7 pr-2 text-xs text-foreground"
-          />
-        </label>
+        <Input
+          data-dialog-autofocus=""
+          type="search"
+          leftSlot={<Search className="h-3.5 w-3.5 text-foreground-subtle" />}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={search.placeholder}
+          aria-label={search.label}
+          data-testid="tile-picker-search"
+        />
       )}
       {groups.length === 0 && (
         <p className="text-xs text-foreground-subtle">

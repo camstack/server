@@ -104,6 +104,6 @@ admin-gated query, `getAdminLink({ deviceId }) → DeviceAdminLink | null`.
 - `server/backend/src/__tests__/cap-routers/device-admin-link.router.spec.ts`
   pins the device-native mount (the `motion` 412-on-every-camera failure mode)
   and the admin gate; both verified RED with `deviceNative` / `auth` removed.
-- `packages/ui-library/src/composites/device-item/__tests__/admin-link-quick-action.test.tsx`
-  pins the four draw-nothing states and that nothing is even ASKED for an
+- `packages/ui-library/src/composites/device-item/__tests__/use-device-admin-link.test.tsx`
+  pins the four resolve-nothing states and that nothing is even ASKED for an
   unbound cap.

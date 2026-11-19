@@ -2,14 +2,13 @@
  * <DeviceAdminLinkButton> — the device-detail header's "open this device's own
  * config page" action.
  *
- * Same answer as the row's `AdminLinkQuickAction`, from the SAME hook
+ * Same answer as the info tab's `DeviceWebInterfaceCard`, from the SAME hook
  * (`useDeviceAdminLink`), deliberately: two surfaces that derived the gate
  * separately would sooner or later disagree about one device, and the operator
  * would be right to believe whichever one told him there was a page.
  *
- * What differs is only the presentation. The row's version is a bare 12px
- * glyph at the end of a run of controls the operator uses daily. Here there is
- * room and the action is one of a handful the header offers, so it takes the
+ * What differs is only the presentation. The card is a base block of the
+ * detail body. Here there is room and the action is one of a handful the header offers, so it takes the
  * same shape as the Enable/Disable button beside it — bordered pill, icon plus
  * a label that collapses to the icon on phones — and sits between the camera
  * function switches and the kebab, ahead of the kebab because it opens
