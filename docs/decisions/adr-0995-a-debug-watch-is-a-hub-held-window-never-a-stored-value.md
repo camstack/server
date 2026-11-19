@@ -8,7 +8,8 @@ covers:
   - packages/types/src/logging/debug-watch.ts
   - packages/system/src/logging/log-ring-buffer.ts
   - server/backend/src/api/core/logging-settings.ts
-  - packages/addon-admin-ui/src/pages/system/LogWatch.tsx
+  - packages/addon-admin-ui/src/pages/system/LogDiagnostics.tsx
+  - packages/addon-admin-ui/src/pages/system/LogChannelRow.tsx
 ---
 
 ## Context
