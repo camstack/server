@@ -8,10 +8,21 @@
  *  - AMD XDNA NPU: detected by the server, no inference runtime yet.
  *  - Coral USB: the whole `/dev/bus/usb` plus `c 189:* rmw` (the stick
  *    re-enumerates); Coral PCIe/M.2: each `/dev/apex_N`.
- *  - NVIDIA and Hailo: not supported yet (no CUDA runtime in the image).
+ *  - Intel GPU older than Gen12 (Gen8-11): the `intel-legacy` image, `/dev/dri`, no NPU.
+ *  - NVIDIA: the `nvidia` image (Turing+) or `nvidia-legacy` (Pascal/Maxwell), through
+ *    `--gpus all` and the host's nvidia-container-toolkit, not a device line. Used only
+ *    when no Intel/AMD GPU is: one image carries one vendor's runtime.
+ *  - Hailo: not supported yet.
+ * The variant table and the generation rules live in `../mcp/image-variants.ts`.
  * No `group_add` is needed: the image entrypoint hands every passed node to
  * the `camstack` user and drops supplementary groups.
  */
+import {
+  intelVariantForDeviceId,
+  nvidiaVariantForName,
+  variantTag,
+  type ImageVariant,
+} from '../mcp/image-variants.js'
 import type { HostInventory, PciGpu } from './probe.js'
 
 export type AcceleratorKind =
@@ -35,6 +46,8 @@ export interface DetectedAccelerator {
   /** Whether the device node is visible to THIS process (null = not applicable). */
   readonly visibleHere: boolean | null
   readonly note: string
+  /** The image variant this accelerator needs (absent for Coral and unsupported kinds). */
+  readonly variant?: ImageVariant
 }
 
 export interface UnraidAdvice {
@@ -56,8 +69,21 @@ export interface Passthrough {
 
 export const CORAL_USB_CGROUP_RULE = 'c 189:* rmw'
 const DEFAULT_CT_RENDER_GID = 993
-const NOT_SUPPORTED =
-  'not supported yet: the CamStack image has no CUDA runtime. Do not pass it; it would stay idle.'
+export const NVIDIA_RUN_FLAGS: readonly string[] = [
+  '--gpus all',
+  '-e NVIDIA_DRIVER_CAPABILITIES=compute,video,utility',
+]
+const NVIDIA_COMPOSE = [
+  '    environment:',
+  '      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility',
+  '    deploy:',
+  '      resources:',
+  '        reservations:',
+  '          devices:',
+  '            - driver: nvidia',
+  '              count: all',
+  '              capabilities: [gpu]',
+]
 
 const UNRAID_FIELD: Readonly<Record<string, string>> = {
   '/dev/dri': 'Intel/AMD iGPU',
@@ -71,18 +97,24 @@ function nvidiaName(inv: HostInventory): string | null {
   return /^GPU \d+:\s*(.+?)\s*(\(UUID|$)/m.exec(inv.nvidiaSmi ?? '')?.[1] ?? null
 }
 
+function nvidiaEntry(name: string, where: string, inv: HostInventory): DetectedAccelerator {
+  const variant = nvidiaVariantForName(name)
+  return {
+    kind: 'nvidia',
+    label: `${name}${where}`,
+    status: 'used',
+    hostPaths: [],
+    // nvidia-smi answering on the host is the proof the driver is there.
+    visibleHere: inv.nvidiaSmi !== null ? true : null,
+    variant,
+    note: `CUDA inference through the ${variantTag(variant)} image: needs --gpus all and nvidia-container-toolkit on the host.`,
+  }
+}
+
 function gpuEntry(gpu: PciGpu, inv: HostInventory): DetectedAccelerator | null {
   const where = `${gpu.vendorId}:${gpu.deviceId} at ${gpu.slot}`
   if (gpu.vendor === 'nvidia') {
-    const name = nvidiaName(inv) ?? 'NVIDIA GPU'
-    return {
-      kind: 'nvidia',
-      label: `${name} (${where})`,
-      status: 'unsupported',
-      hostPaths: [],
-      visibleHere: null,
-      note: `NVIDIA: ${NOT_SUPPORTED}`,
-    }
+    return nvidiaEntry(nvidiaName(inv) ?? 'NVIDIA GPU', ` (${where})`, inv)
   }
   if (gpu.vendor !== 'intel' && gpu.vendor !== 'amd') return null
   const kind = gpu.vendor === 'intel' ? 'intel-gpu' : 'amd-gpu'
@@ -103,9 +135,10 @@ function gpuEntry(gpu: PciGpu, inv: HostInventory): DetectedAccelerator | null {
     status: 'used',
     hostPaths: ['/dev/dri'],
     visibleHere: gpu.renderNodeVisible,
+    variant: gpu.vendor === 'intel' ? (intelVariantForDeviceId(gpu.deviceId) ?? 'intel') : 'amd',
     note:
       gpu.vendor === 'intel'
-        ? 'Hardware video decode (VAAPI/QSV) and OpenVINO GPU inference.'
+        ? `Hardware video decode (VAAPI/QSV) and OpenVINO GPU inference${intelVariantForDeviceId(gpu.deviceId) === 'intel-legacy' ? '; a Gen8-Gen11 iGPU, so the intel-legacy image (no NPU driver)' : ''}.`
         : 'Hardware video decode (VAAPI) and ONNX WebGPU inference over Vulkan. No ROCm: /dev/kfd is not needed.',
   }
 }
@@ -118,14 +151,22 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
   }
   const nvidiaSeen = out.some((a) => a.kind === 'nvidia')
   if (!nvidiaSeen && (inv.nvidiaNodes.length > 0 || inv.nvidiaSmi !== null)) {
-    out.push({
-      kind: 'nvidia',
-      label: nvidiaName(inv) ?? 'NVIDIA GPU',
-      status: 'unsupported',
-      hostPaths: [],
-      visibleHere: null,
-      note: `NVIDIA: ${NOT_SUPPORTED}`,
-    })
+    out.push(nvidiaEntry(nvidiaName(inv) ?? 'NVIDIA GPU', '', inv))
+  }
+  // One image carries one vendor's runtime: next to a usable Intel/AMD GPU the
+  // card is offered, not taken (the operator picks the nvidia tag to trade).
+  const otherGpuUsed = out.some(
+    (a) => (a.kind === 'intel-gpu' || a.kind === 'amd-gpu') && a.status === 'used',
+  )
+  if (otherGpuUsed) {
+    for (const [i, a] of out.entries()) {
+      if (a.kind !== 'nvidia' || a.variant === undefined) continue
+      out[i] = {
+        ...a,
+        status: 'detected-not-used',
+        note: `CUDA is available on this card with the ${variantTag(a.variant)} image, but that image carries no Intel/AMD runtime, so the iGPU above would stop being used. Pick it only if the card is the faster accelerator.`,
+      }
+    }
   }
   for (const accel of inv.accel) {
     if (accel.vendor === 'intel') {
@@ -135,6 +176,7 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
         status: 'used',
         hostPaths: ['/dev/accel'],
         visibleHere: accel.visible,
+        variant: 'intel',
         note: 'OpenVINO NPU inference (the intel image carries the NPU driver).',
       })
     } else if (accel.vendor === 'amd') {
@@ -193,10 +235,11 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
 
 export function pickImageTag(accelerators: readonly DetectedAccelerator[]): string {
   const used = accelerators.filter((a) => a.status === 'used')
-  if (used.some((a) => a.kind === 'intel-gpu')) return 'intel-latest'
-  if (used.some((a) => a.kind === 'amd-gpu')) return 'amd-latest'
+  // An Intel NPU lives only in the intel image: it wins over a legacy-classified iGPU.
+  if (used.some((a) => a.kind === 'intel-npu')) return variantTag('intel')
+  const picked = used.find((a) => a.variant !== undefined)
   // No Coral- or CPU-specific image: those hosts take the intel image.
-  return 'intel-latest'
+  return variantTag(picked?.variant ?? 'intel')
 }
 
 /** The nodes an LXC needs, one `devN:` per node, then the Coral USB bind. */
@@ -214,6 +257,11 @@ function proxmoxLines(
   for (const accel of inv.accel) if (accel.vendor === 'intel') nodes.push(accel.node)
   for (const apex of inv.coralPcieNodes) nodes.push(apex.node)
   const lines = nodes.map((node, i) => `dev${i}: ${node},gid=${gid},mode=0660`)
+  if (accelerators.some((a) => a.kind === 'nvidia' && a.status === 'used')) {
+    // The driver nodes the NVIDIA runtime inside the CT needs; nvidia-container-toolkit goes in the CT too.
+    const driver = [...inv.nvidiaNodes, '/dev/nvidiactl', '/dev/nvidia-uvm']
+    lines.push(...driver.map((node, i) => `dev${nodes.length + i}: ${node},mode=0666`))
+  }
   if (accelerators.some((a) => a.kind === 'coral-usb')) {
     lines.push('lxc.cgroup2.devices.allow: c 189:* rwm')
     lines.push('lxc.mount.entry: /dev/bus/usb dev/bus/usb none bind,optional,create=dir')
@@ -221,9 +269,15 @@ function proxmoxLines(
   return lines
 }
 
-function composeSnippet(devices: readonly string[], rules: readonly string[]): string {
-  if (devices.length === 0) return ''
-  const lines = ['    devices:', ...devices.map((d) => `      - ${d}:${d}`)]
+function composeSnippet(
+  devices: readonly string[],
+  rules: readonly string[],
+  nvidia: boolean,
+): string {
+  if (devices.length === 0 && !nvidia) return ''
+  const lines =
+    devices.length > 0 ? ['    devices:', ...devices.map((d) => `      - ${d}:${d}`)] : []
+  if (nvidia) lines.push(...NVIDIA_COMPOSE)
   if (rules.length > 0) {
     lines.push('    device_cgroup_rules:', ...rules.map((r) => `      - '${r}'`))
   }
@@ -241,14 +295,31 @@ export function buildPassthrough(
     ? [CORAL_USB_CGROUP_RULE]
     : []
   const ruleFlags = rules.map((r) => `--device-cgroup-rule='${r}'`)
+  const nvidia = accelerators.some((a) => a.kind === 'nvidia' && a.status === 'used')
   return {
     devices,
     deviceCgroupRules: rules,
-    dockerRunFlags: [...devices.map((d) => `--device ${d}`), ...ruleFlags],
-    compose: composeSnippet(devices, rules),
+    dockerRunFlags: [
+      ...devices.map((d) => `--device ${d}`),
+      ...ruleFlags,
+      ...(nvidia ? NVIDIA_RUN_FLAGS : []),
+    ],
+    compose: composeSnippet(devices, rules, nvidia),
     unraid: {
-      deviceFields: devices.map((d) => `${UNRAID_FIELD[d] ?? 'Device'}: ${d}`),
-      extraParameters: [...devices.map((d) => `--device=${d}`), ...ruleFlags].join(' '),
+      deviceFields: [
+        ...devices.map((d) => `${UNRAID_FIELD[d] ?? 'Device'}: ${d}`),
+        ...(nvidia
+          ? [
+              'Variable: NVIDIA_VISIBLE_DEVICES=all',
+              'Variable: NVIDIA_DRIVER_CAPABILITIES=compute,video,utility',
+            ]
+          : []),
+      ],
+      extraParameters: [
+        ...devices.map((d) => `--device=${d}`),
+        ...ruleFlags,
+        ...(nvidia ? ['--runtime=nvidia'] : []),
+      ].join(' '),
     },
     proxmoxLxc: proxmoxLines(accelerators, inv),
   }

@@ -5,13 +5,20 @@
  */
 import { z } from 'zod'
 import type { FetchFn } from './context.js'
+import {
+  IMAGE_VARIANT_TABLE,
+  IMAGE_VARIANTS,
+  renderVariantTable,
+  type ImageVariant,
+} from './image-variants.js'
 import { composeToDockerRun, customizeCompose } from './setup-compose.js'
 import {
   COMPOSE_MARKERS_BY_ACCELERATOR,
   firstRunHub,
   IMAGE_REPOSITORY,
   IMAGE_TAG_BY_ACCELERATOR,
-  MUST_NOT_OMIT,
+  isNvidiaAccelerator,
+  mustNotOmitFor,
   NO_BARE_LATEST,
   TEMPLATE_URLS,
   type Accelerator,
@@ -62,6 +69,25 @@ export interface GuideReady {
 
 export type InstallGuideResult = NeedAnswers | FetchFailed | GuideReady
 
+function variantEdits(accelerator: Accelerator): readonly string[] {
+  const variant = variantOf(accelerator)
+  return variant === null ? [] : variantNotes(variant, false)
+}
+
+function variantOf(accelerator: Accelerator): ImageVariant | null {
+  return IMAGE_VARIANTS.find((v) => v === accelerator) ?? null
+}
+
+/** `withHost` false on routes that name their own device handling (Unraid, Proxmox). */
+function variantNotes(variant: ImageVariant, withHost: boolean): readonly string[] {
+  const info = IMAGE_VARIANT_TABLE[variant]
+  return [
+    `${info.tag}: ${info.hardware}. ${info.when}`,
+    ...(withHost ? info.hostNeeds.map((n) => `Host needs: ${n}`) : []),
+    ...(info.caveat === undefined ? [] : [info.caveat]),
+  ]
+}
+
 const CONTAINER_ROUTES: readonly HostKind[] = ['docker-compose', 'docker']
 
 const Q_HOST: Question = {
@@ -76,9 +102,8 @@ const Q_ROLE: Question = {
 }
 const Q_ACCEL: Question = {
   id: 'accelerator',
-  question:
-    'Which accelerator does this host have? Run `camstack host-check` (or setup_host_check) on that host to find out. An NVIDIA GPU is not supported yet: with an Intel CPU that has an iGPU answer intel, otherwise cpu.',
-  options: ['intel', 'amd', 'coral', 'cpu'],
+  question: `Which accelerator does this host have? Run \`camstack host-check\` (or setup_host_check) on that host to find out. The image variants:\n${renderVariantTable().join('\n')}\nAnswer with the variant name (intel, intel-legacy, amd, nvidia, nvidia-legacy), or coral / cpu when the host has none of those.`,
+  options: ['intel', 'intel-legacy', 'amd', 'nvidia', 'nvidia-legacy', 'coral', 'cpu'],
 }
 const Q_PATHS: Question = {
   id: 'paths',
@@ -139,7 +164,9 @@ const DMG = /^CamStack-[0-9][0-9A-Za-z.-]*-(arm64|x64)\.dmg$/
 
 function acceleratorEdits(accelerator: Accelerator, role: Role): readonly string[] {
   const note = `Image tag ${IMAGE_TAG_BY_ACCELERATOR[accelerator]} for ${accelerator}. ${NO_BARE_LATEST}`
-  return role === 'agent' ? [note, 'Do not run a hub and an agent on the same host.'] : [note]
+  const variant = variantOf(accelerator)
+  const notes = variant === null ? [note] : [note, ...variantNotes(variant, true)]
+  return role === 'agent' ? [...notes, 'Do not run a hub and an agent on the same host.'] : notes
 }
 
 async function composeGuide(
@@ -200,6 +227,7 @@ async function unraidGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Inst
     'Recordings: point it at a roomy array share, not the cache; leave Media root as /recordings.',
     'Keep ExtraParams as shipped: --device-cgroup-rule and --pids-limit=8192.',
     ...unraidDeviceEdits(input.accelerator),
+    ...variantEdits(input.accelerator),
   ]
   const first = firstRun(input)
   return ready(input, imageTag, {
@@ -214,8 +242,16 @@ async function unraidGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Inst
 }
 
 function unraidDeviceEdits(accelerator: Accelerator): readonly string[] {
-  if (accelerator === 'intel' || accelerator === 'amd') {
+  if (accelerator === 'intel') {
     return ['Intel/AMD iGPU: enter /dev/dri in that field. Intel NPU: enter /dev/accel.']
+  }
+  if (accelerator === 'amd' || accelerator === 'intel-legacy') {
+    return ['iGPU: enter /dev/dri in that field (the image has no NPU driver).']
+  }
+  if (isNvidiaAccelerator(accelerator)) {
+    return [
+      'NVIDIA: install the Nvidia-Driver plugin (it provides the container toolkit), add --runtime=nvidia to Extra Parameters, and add the variables NVIDIA_VISIBLE_DEVICES=all and NVIDIA_DRIVER_CAPABILITIES=compute,video,utility. No /dev/dri entry is needed.',
+    ]
   }
   if (accelerator === 'coral') {
     return ['Coral USB: enter /dev/bus/usb (the whole bus). Coral PCIe/M.2: /dev/apex_0 (and _1).']
@@ -260,6 +296,12 @@ async function proxmoxGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Ins
     edits: [
       `The script defaults to the amd image; IMAGE_TAG above sets ${imageTag}. ${NO_BARE_LATEST}`,
       'A hub and an agent on one machine need two CTs (host networking collides otherwise).',
+      ...variantEdits(input.accelerator),
+      ...(isNvidiaAccelerator(input.accelerator)
+        ? [
+            'NVIDIA in an LXC: the installer passes only /dev/dri. Add the /dev/nvidia* nodes to the CT (`camstack host-check` inside it lists them) and install nvidia-container-toolkit inside the CT, then run the container with --gpus all.',
+          ]
+        : []),
     ],
   })
 }
@@ -332,7 +374,7 @@ function ready(input: ResolvedInput, imageTag: string | null, body: Body): Guide
     steps: body.steps,
     files: body.files,
     edits: body.edits,
-    mustNotOmit: input.hostKind === 'macos-desktop' ? [] : MUST_NOT_OMIT,
+    mustNotOmit: input.hostKind === 'macos-desktop' ? [] : mustNotOmitFor(input.accelerator),
   }
 }
 

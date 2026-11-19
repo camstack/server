@@ -195,6 +195,76 @@ describe('setup_install_guide — routes', () => {
     expect(cmd).toContain(TEMPLATE_URLS.proxmoxInstaller)
   })
 
+  it('the accelerator question lists every image variant and when to use it', async () => {
+    const r = await installGuide({ hostKind: 'unraid', role: 'hub' }, fakeFetch)
+    if (r.status !== 'need-answers') throw new Error('expected need-answers')
+    const q = r.questions.find((x) => x.id === 'accelerator')
+    expect(q?.options).toEqual([
+      'intel',
+      'intel-legacy',
+      'amd',
+      'nvidia',
+      'nvidia-legacy',
+      'coral',
+      'cpu',
+    ])
+    for (const tag of [
+      'intel-latest',
+      'intel-legacy-latest',
+      'amd-latest',
+      'nvidia-latest',
+      'nvidia-legacy-latest',
+    ]) {
+      expect(q?.question).toContain(tag)
+    }
+    expect(q?.question).toContain('Gen8-Gen11')
+    expect(q?.question).toContain('--gpus all')
+  })
+
+  it.each([
+    ['intel-legacy', 'intel-legacy-latest'],
+    ['nvidia', 'nvidia-latest'],
+    ['nvidia-legacy', 'nvidia-legacy-latest'],
+  ] as const)('docker-compose %s: tag %s', async (accelerator, tag) => {
+    const g = ready(
+      await installGuide(
+        { hostKind: 'docker-compose', role: 'hub', accelerator, paths: PATHS },
+        fakeFetch,
+      ),
+    )
+    expect(g.files[0]?.body).toContain(`ghcr.io/camstack/camstack:${tag}`)
+    expect(g.imageTag).toBe(tag)
+  })
+
+  it('an NVIDIA guide carries the toolkit rules; a non-NVIDIA one does not', async () => {
+    const nv = ready(
+      await installGuide({ hostKind: 'unraid', role: 'hub', accelerator: 'nvidia' }, fakeFetch),
+    )
+    expect(nv.mustNotOmit.join('\n')).toContain('NVIDIA_DRIVER_CAPABILITIES=compute,video,utility')
+    expect(nv.edits.join('\n')).toContain('--runtime=nvidia')
+    const compose = ready(
+      await installGuide(
+        { hostKind: 'docker-compose', role: 'hub', accelerator: 'nvidia', paths: PATHS },
+        fakeFetch,
+      ),
+    )
+    expect(compose.edits.join('\n')).toContain('--gpus all')
+    const intel = ready(
+      await installGuide({ hostKind: 'unraid', role: 'hub', accelerator: 'intel' }, fakeFetch),
+    )
+    expect(intel.mustNotOmit.join('\n')).not.toContain('NVIDIA')
+  })
+
+  it('nvidia-legacy says it is unverified on hardware', async () => {
+    const g = ready(
+      await installGuide(
+        { hostKind: 'docker-compose', role: 'hub', accelerator: 'nvidia-legacy', paths: PATHS },
+        fakeFetch,
+      ),
+    )
+    expect(g.edits.join('\n')).toMatch(/Not yet run/)
+  })
+
   it('macos-desktop: both dmg assets of the latest release, no viewer', async () => {
     const g = ready(await installGuide({ hostKind: 'macos-desktop', role: 'hub' }, fakeFetch))
     const text = g.steps.join('\n')

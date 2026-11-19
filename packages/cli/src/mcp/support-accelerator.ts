@@ -26,10 +26,20 @@ import {
 } from './ops-hub.js'
 import {
   IMAGE_TAG_BY_ACCELERATOR,
+  isNvidiaAccelerator,
   MUST_NOT_OMIT,
   NO_BARE_LATEST,
+  NVIDIA_MUST_NOT_OMIT,
   type Accelerator,
 } from './setup-install-rules.js'
+import {
+  IMAGE_VARIANT_TABLE,
+  intelVariantForName,
+  NVIDIA_CONTAINER_NEEDS,
+  nvidiaVariantForName,
+  variantTag,
+  type ImageVariant,
+} from './image-variants.js'
 
 export const EXPECTED_ACCELERATORS = [
   'intel-igpu',
@@ -102,7 +112,7 @@ const EXPECTATIONS: { readonly [kind in ExpectedAccelerator]: Expectation } = {
     steps: [
       'Pass the render node into the container: --device /dev/dri (Compose: devices: ["/dev/dri:/dev/dri"]).',
       'On the host, `ls -l /dev/dri` must list renderD128; if it does not, the i915/xe driver is not loaded on the host.',
-      'Use the intel-latest (or intel-<version>) image: the AMD image carries no OpenVINO GPU runtime.',
+      'Use the intel-latest (or intel-<version>) image: the AMD image carries no OpenVINO GPU runtime. An iGPU older than Gen12 (Skylake to Ice Lake, Jasper/Elkhart Lake) needs intel-legacy-latest instead.',
     ],
   },
   'intel-npu': {
@@ -184,13 +194,11 @@ const EXPECTATIONS: { readonly [kind in ExpectedAccelerator]: Expectation } = {
     deviceKeys: (k) => /cuda|tensorrt|nvidia/i.test(k),
     // Its own slot; `gpu.type === 'nvidia'` only from a node that predates it.
     probe: (hw) => hw.nvidia != null || hw.gpu?.type === 'nvidia',
-    image: null,
-    steps: [],
-    unsupported: {
-      extend:
-        '@camstack/addon-pipeline (the detection-pipeline addon): a CUDA or TensorRT execution-provider backend',
-      why: 'No CUDA or TensorRT backend ships; an NVIDIA GPU is not an inference device here.',
-    },
+    image: 'nvidia',
+    steps: [
+      ...NVIDIA_CONTAINER_NEEDS,
+      'On the host, `nvidia-smi` must list the card; the nvidia images install onnxruntime-gpu from their wheelhouse, so the node reports cuda only after the pipeline addon has provisioned it (a restart of the pipeline addon retries it).',
+    ],
   },
 }
 
@@ -252,15 +260,44 @@ function nvidiaFact(nvidia: NonNullable<z.infer<typeof HardwareSchema>['nvidia']
     : `${nvidia.name}: present, not usable (${nvidia.reason ?? 'unknown reason'})`
 }
 
-function installSteps(expectation: Expectation): readonly string[] {
-  if (expectation.image === null) return []
-  const tag = IMAGE_TAG_BY_ACCELERATOR[expectation.image]
-  return [`Image tag for this accelerator: ${tag}. ${NO_BARE_LATEST}`]
+/** The image variant this node's own hardware names, when the probe says enough to pick one. */
+function variantFor(
+  expectation: Expectation,
+  hw: z.infer<typeof HardwareSchema> | null,
+): ImageVariant | null {
+  if (hw === null) return null
+  if (expectation.image === 'intel' && hw.gpu?.type === 'intel') {
+    return expectation.deviceKeys('openvino:gpu') ? intelVariantForName(hw.gpu.name) : null
+  }
+  if (expectation.image === 'nvidia') {
+    const name = hw.nvidia?.name ?? (hw.gpu?.type === 'nvidia' ? hw.gpu.name : null)
+    return name === null ? null : nvidiaVariantForName(name)
+  }
+  return null
 }
 
-function mustNotOmitFor(expectation: Expectation): readonly string[] {
+function installSteps(
+  expectation: Expectation,
+  hw: z.infer<typeof HardwareSchema> | null,
+): readonly string[] {
+  if (expectation.image === null) return []
+  const variant = variantFor(expectation, hw)
+  const tag = variant === null ? IMAGE_TAG_BY_ACCELERATOR[expectation.image] : variantTag(variant)
+  const steps = [`Image tag for this accelerator: ${tag}. ${NO_BARE_LATEST}`]
+  if (variant !== null && variant !== expectation.image) {
+    steps.push(
+      `This node's ${variant === 'intel-legacy' ? 'iGPU is Gen8-Gen11' : 'card is Pascal/Maxwell'}: use ${tag}, not ${IMAGE_TAG_BY_ACCELERATOR[expectation.image]}. ${IMAGE_VARIANT_TABLE[variant].when}`,
+    )
+  }
+  return steps
+}
+
+function mustNotOmitForExpectation(expectation: Expectation): readonly string[] {
   const coral = expectation.image === 'coral'
-  return MUST_NOT_OMIT.filter((rule) => coral || !rule.startsWith('Coral'))
+  const base = MUST_NOT_OMIT.filter((rule) => coral || !rule.startsWith('Coral'))
+  return expectation.image !== null && isNvidiaAccelerator(expectation.image)
+    ? [...base, ...NVIDIA_MUST_NOT_OMIT]
+    : base
 }
 
 export interface DiagnoseInputs {
@@ -303,7 +340,7 @@ export function diagnoseAccelerator(input: DiagnoseInputs): AcceleratorDiagnosis
     expected: input.expected,
     probe: hw ? probeFact(hw) : null,
     inferenceDevices: devices,
-    mustNotOmit: mustNotOmitFor(expectation),
+    mustNotOmit: mustNotOmitForExpectation(expectation),
     optIn: expectation.optIn ?? [],
     unavailable,
   }
@@ -370,6 +407,7 @@ export function diagnoseAccelerator(input: DiagnoseInputs): AcceleratorDiagnosis
       steps.push(
         `${notAvailable.map((d) => d.key).join(', ')} is listed but not available (presence: ${notAvailable.map((d) => d.presence ?? 'unknown').join(', ')}): the runtime could not open the device.`,
         ...expectation.steps,
+        ...installSteps(expectation, hw),
       )
     }
     if (disabled.length > 0) {
@@ -409,7 +447,7 @@ export function diagnoseAccelerator(input: DiagnoseInputs): AcceleratorDiagnosis
         ? 'The device never reached the container: fix the host first (driver, cable, BIOS), then the passthrough below.'
         : 'The hardware is on the host but not in the container, or the image lacks its runtime.',
       ...expectation.steps,
-      ...installSteps(expectation),
+      ...installSteps(expectation, hw),
       ...(expectation.optIn ?? []),
     ],
     null,

@@ -896,8 +896,11 @@ that closure — image label `io.camstack.server.version`, and a line in the
 release notes. `scripts/ci/verify-release-npm.mjs` fails closed when `latest`
 cannot be resolved. It does not ask `latest` to equal the product version.
 
-Image tags stay accel-prefixed: `intel-X.Y.Z`, `amd-X.Y.Z`, `intel-latest`,
-`amd-latest`. A bare `:X.Y.Z` would name two accelerator images.
+Image tags stay accel-prefixed: `<variant>-X.Y.Z` and `<variant>-latest` for
+the five variants `intel`, `intel-legacy`, `amd`, `nvidia`, `nvidia-legacy`. A
+bare `:X.Y.Z` would name several accelerator images. The variant → hardware
+table is one object, `IMAGE_VARIANT_TABLE` in `packages/cli/src/mcp/image-variants.ts`;
+the install guide, `camstack host-check` and `support_diagnose_accelerator` read it.
 
 An install of the desktop app or the Electron viewer shell that is still on
 1.2.x will not auto-update to 0.1.0 (electron-updater treats it as a downgrade).

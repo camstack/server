@@ -65,16 +65,16 @@ function kinds(report: HostCheckReport, status: string): readonly string[] {
 describe('host-check — the reported i7-8700K + RTX 2060 host', () => {
   const report = check(I7_8700K_RTX2060, 'GPU 0: NVIDIA GeForce RTX 2060 (UUID: GPU-1)')
 
-  it('uses the Intel iGPU and lists NVIDIA as not supported yet', () => {
+  it('uses the Intel iGPU and offers the NVIDIA card with its own tag, without taking it', () => {
     expect(kinds(report, 'used')).toEqual(['intel-gpu'])
-    expect(kinds(report, 'unsupported')).toEqual(['nvidia'])
+    expect(kinds(report, 'detected-not-used')).toEqual(['nvidia'])
     const nvidia = report.accelerators.find((a) => a.kind === 'nvidia')
     expect(nvidia?.label).toContain('RTX 2060')
-    expect(nvidia?.note).toMatch(/not supported yet/i)
+    expect(nvidia?.note).toContain('nvidia-latest')
   })
 
-  it('picks the intel image and passes /dev/dri only — never a GPU runtime flag', () => {
-    expect(report.imageTag).toBe('intel-latest')
+  it('picks intel-legacy for the Coffee Lake UHD 630 and passes /dev/dri only — never a GPU runtime flag', () => {
+    expect(report.imageTag).toBe('intel-legacy-latest')
     expect(report.passthrough.devices).toEqual(['/dev/dri'])
     expect(report.passthrough.dockerRunFlags).toEqual(['--device /dev/dri'])
     expect(report.passthrough.compose).toContain('- /dev/dri:/dev/dri')
@@ -91,9 +91,10 @@ describe('host-check — the reported i7-8700K + RTX 2060 host', () => {
 
   it('renders a human report naming the hardware and the flags', () => {
     const out = renderHostCheck(report)
-    expect(out).toContain('intel-latest')
+    expect(out).toContain('intel-legacy-latest')
+    expect(out).toContain('Gen8-Gen11')
     expect(out).toContain('--device /dev/dri')
-    expect(out).toMatch(/NVIDIA.*not supported yet/i)
+    expect(out).toContain('nvidia-latest')
   })
 })
 
@@ -105,9 +106,51 @@ describe('host-check — hardware matrix', () => {
       ...renderNode('renderD128', '0000:01:00.0'),
       '/dev/nvidia0': '',
     })
-    expect(kinds(report, 'used')).toEqual([])
+    expect(kinds(report, 'used')).toEqual(['nvidia'])
     expect(report.passthrough.devices).toEqual([])
     expect(report.hints.join('\n')).toMatch(/BIOS/)
+    expect(report.imageTag).toBe('nvidia-latest')
+  })
+
+  it('an NVIDIA-only host takes the nvidia image through --gpus all, in every route', () => {
+    const report = check(
+      {
+        ...INTEL_CPU,
+        ...pciGpu('0000:01:00.0', '0x10de', '0x1f08'),
+        '/dev/nvidia0': '',
+        '/dev/nvidiactl': '',
+      },
+      'GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-1)',
+    )
+    expect(report.imageTag).toBe('nvidia-latest')
+    const p = report.passthrough
+    expect(p.dockerRunFlags).toEqual([
+      '--gpus all',
+      '-e NVIDIA_DRIVER_CAPABILITIES=compute,video,utility',
+    ])
+    expect(p.compose).toContain('driver: nvidia')
+    expect(p.compose).toContain('NVIDIA_DRIVER_CAPABILITIES: compute,video,utility')
+    expect(p.unraid.extraParameters).toContain('--runtime=nvidia')
+    expect(p.proxmoxLxc).toContain('dev0: /dev/nvidia0,mode=0666')
+    expect(p.devices).toEqual([])
+  })
+
+  it('a Pascal card takes nvidia-legacy and says it is unverified', () => {
+    const report = check(
+      { ...INTEL_CPU, ...pciGpu('0000:01:00.0', '0x10de', '0x1c03'), '/dev/nvidia0': '' },
+      'GPU 0: NVIDIA GeForce GTX 1060 6GB (UUID: GPU-1)',
+    )
+    expect(report.imageTag).toBe('nvidia-legacy-latest')
+    expect(renderHostCheck(report)).toMatch(/Pascal or Maxwell/)
+    expect(renderHostCheck(report)).toMatch(/Not yet run/)
+  })
+
+  it('an Alder Lake iGPU (Gen12) stays on the intel image', () => {
+    const report = check({
+      ...INTEL_CPU,
+      ...pciGpu('0000:00:02.0', '0x8086', '0x4680'),
+      ...renderNode('renderD128', '0000:00:02.0'),
+    })
     expect(report.imageTag).toBe('intel-latest')
   })
 

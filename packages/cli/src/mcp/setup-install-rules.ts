@@ -4,6 +4,7 @@
  * they are fetched live from the official repositories on every call.
  */
 import { z } from 'zod'
+import { variantTag } from './image-variants.js'
 
 export const HOST_KINDS = [
   'docker-compose',
@@ -19,7 +20,16 @@ export const ROLES = ['hub', 'agent'] as const
 export const RoleSchema = z.enum(ROLES)
 export type Role = z.infer<typeof RoleSchema>
 
-export const ACCELERATORS = ['intel', 'amd', 'coral', 'apple', 'cpu'] as const
+export const ACCELERATORS = [
+  'intel',
+  'intel-legacy',
+  'amd',
+  'nvidia',
+  'nvidia-legacy',
+  'coral',
+  'apple',
+  'cpu',
+] as const
 export const AcceleratorSchema = z.enum(ACCELERATORS)
 export type Accelerator = z.infer<typeof AcceleratorSchema>
 
@@ -65,8 +75,11 @@ export const IMAGE_REPOSITORY = 'ghcr.io/camstack/camstack'
  * re-read the page when it changes.
  */
 export const IMAGE_TAG_BY_ACCELERATOR: Readonly<Record<Accelerator, string>> = {
-  intel: 'intel-latest',
-  amd: 'amd-latest',
+  intel: variantTag('intel'),
+  'intel-legacy': variantTag('intel-legacy'),
+  amd: variantTag('amd'),
+  nvidia: variantTag('nvidia'),
+  'nvidia-legacy': variantTag('nvidia-legacy'),
   // No Coral- or CPU-specific image: Intel hosts and the Unraid templates track intel-latest.
   coral: 'intel-latest',
   cpu: 'intel-latest',
@@ -74,7 +87,7 @@ export const IMAGE_TAG_BY_ACCELERATOR: Readonly<Record<Accelerator, string>> = {
 }
 
 export const NO_BARE_LATEST =
-  'There is no bare :latest tag: use intel-<version>/intel-latest or amd-<version>/amd-latest, and never mix them across vendors.'
+  'There is no bare :latest tag: use <variant>-<version> or <variant>-latest (intel, intel-legacy, amd, nvidia, nvidia-legacy), and never mix variants across vendors.'
 
 /** Settings whose absence breaks CamStack in ways that do not look like the setting. */
 export const MUST_NOT_OMIT: readonly string[] = [
@@ -85,10 +98,31 @@ export const MUST_NOT_OMIT: readonly string[] = [
   'Coral USB: /dev/bus/usb AND the device-cgroup rule c 189:* rmw.',
 ]
 
+/** Added to the must-not-omit list only for an NVIDIA image. */
+export const NVIDIA_MUST_NOT_OMIT: readonly string[] = [
+  'NVIDIA (nvidia, nvidia-legacy): --gpus all with nvidia-container-toolkit on the host, and NVIDIA_DRIVER_CAPABILITIES=compute,video,utility.',
+]
+
+export function isNvidiaAccelerator(accelerator: Accelerator): boolean {
+  return accelerator === 'nvidia' || accelerator === 'nvidia-legacy'
+}
+
+/** What an accelerator's image needs from the host beyond the common rules. */
+export function mustNotOmitFor(accelerator: Accelerator): readonly string[] {
+  return isNvidiaAccelerator(accelerator)
+    ? [...MUST_NOT_OMIT, ...NVIDIA_MUST_NOT_OMIT]
+    : MUST_NOT_OMIT
+}
+
 /** Marker tags the official compose files carry on the lines an accelerator enables. */
 export const COMPOSE_MARKERS_BY_ACCELERATOR: Readonly<Record<Accelerator, readonly string[]>> = {
   intel: ['devices', 'dri', 'accel'],
+  // No NPU driver in the legacy image: /dev/dri only.
+  'intel-legacy': ['devices', 'dri'],
   amd: ['devices', 'dri'],
+  // The GPU reaches the container through the NVIDIA runtime (--gpus all), not a device line.
+  nvidia: [],
+  'nvidia-legacy': [],
   coral: ['devices', 'usb'],
   cpu: [],
   apple: [],

@@ -59,11 +59,15 @@ wheel whose CUDA provider does not link the CUDA major the image ships.
 
 !!! warning "State of the NVIDIA images"
 
-    The images provide the stack; the pipeline does not yet install the wheel
-    or bind the CUDA execution provider (issue #605), and neither NVIDIA image
-    has been run on a card. `nvidia-legacy` rests on third-party reports that
+    On a node with an NVIDIA card and the wheelhouse (`CAMSTACK_ORT_WHEELHOUSE`
+    set), the pipeline installs `onnxruntime-gpu` from it instead of the CPU
+    `onnxruntime` wheel (`requirements-onnxruntime-gpu.txt`), and `cuda` is
+    offered only once the CUDA execution provider answers. Neither NVIDIA image
+    has been run on a card yet. `nvidia-legacy` rests on third-party reports that
     CUDA 12 / cuDNN 9 `onnxruntime-gpu` builds need compute capability 7.0;
     CUDA 13 (`onnxruntime-gpu` 1.27+ default) dropped Maxwell/Pascal/Volta.
+    Run the container with `--gpus all` and
+    `NVIDIA_DRIVER_CAPABILITIES=compute,video,utility`.
 
 ## Docker Compose
 

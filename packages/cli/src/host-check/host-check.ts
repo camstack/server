@@ -5,6 +5,7 @@
  * Read-only, no root, no hub, nothing sent anywhere. The same report backs the
  * `setup_host_check` MCP tool.
  */
+import { IMAGE_VARIANT_TABLE, IMAGE_VARIANTS, variantTag } from '../mcp/image-variants.js'
 import {
   buildPassthrough,
   listAccelerators,
@@ -85,11 +86,9 @@ function hintsFor(inv: HostInventory, accelerators: readonly DetectedAccelerator
       'The CPU is Intel but no Intel GPU is on the PCI bus. If the CPU has an integrated GPU, enable it in the BIOS (often "iGPU Multi-Monitor" or "Primary display: auto"): a discrete card usually switches it off. Then run this check again.',
     )
   }
-  if (has('nvidia')) {
+  if (used.some((a) => a.kind === 'nvidia')) {
     hints.push(
-      used.some((a) => a.kind === 'intel-gpu')
-        ? 'The NVIDIA card is not used: CamStack runs on the Intel GPU (the flags above).'
-        : 'The NVIDIA card is not used: without another accelerator CamStack runs detection on the CPU.',
+      'NVIDIA: the host needs the NVIDIA driver and nvidia-container-toolkit (`docker info` lists the nvidia runtime); without them --gpus all fails at container start.',
     )
   }
   if (inv.coralPcieUnbound > 0) {
@@ -182,7 +181,14 @@ export function renderHostCheck(report: HostCheckReport): string {
     lines.push(`  [${STATUS_LABEL[a.status]}] ${a.label}`)
     lines.push(`      ${a.note}`)
   }
-  lines.push('', `Image: ${IMAGE_REPOSITORY}:${report.imageTag ?? 'intel-latest'}`)
+  const tag = report.imageTag ?? variantTag('intel')
+  lines.push('', `Image: ${IMAGE_REPOSITORY}:${tag}`)
+  const variant = IMAGE_VARIANTS.find((v) => variantTag(v) === tag)
+  if (variant !== undefined) {
+    const info = IMAGE_VARIANT_TABLE[variant]
+    lines.push(`  For: ${info.hardware}.`, `  ${info.when}`)
+    if (info.caveat !== undefined) lines.push(`  Caveat: ${info.caveat}`)
+  }
   lines.push(
     ...section(
       'docker run flags:',

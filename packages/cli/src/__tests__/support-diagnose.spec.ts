@@ -107,18 +107,41 @@ describe('support_diagnose_accelerator', () => {
     expect(out.mustNotOmit.join('\n')).toContain('Coral USB')
   })
 
-  it('unsupported: NVIDIA has no inference backend and the answer names the addon to extend', async () => {
+  it('NVIDIA present, no cuda device: misconfigured, with the toolkit steps and the nvidia tag', async () => {
     const { ctx } = hubWith([device('cpu')], {
       ...ultra,
-      gpu: { type: 'nvidia', name: 'RTX' },
+      gpu: { type: 'nvidia', name: 'NVIDIA GeForce RTX 3060' },
     })
-    const out = await supportDiagnoseAccelerator(ctx, {
-      nodeId: 'hub',
-      expected: 'nvidia',
-    })
+    const out = await supportDiagnoseAccelerator(ctx, { nodeId: 'hub', expected: 'nvidia' })
     if (out.status !== 'ok') throw new Error('expected ok')
-    expect(out.verdict).toBe('unsupported')
-    expect(out.unsupported?.extend).toContain('@camstack/addon-pipeline')
+    expect(out.verdict).toBe('misconfigured')
+    const steps = out.fixSteps.join('\n')
+    expect(steps).toContain('--gpus all')
+    expect(steps).toContain('NVIDIA_DRIVER_CAPABILITIES=compute,video,utility')
+    expect(steps).toContain('nvidia-latest')
+    expect(out.mustNotOmit.join('\n')).toContain('nvidia-container-toolkit')
+  })
+
+  it('a Pascal card is pointed at nvidia-legacy, not nvidia', async () => {
+    const { ctx } = hubWith([device('cpu')], {
+      ...ultra,
+      nvidia: { type: 'nvidia', name: 'NVIDIA GeForce GTX 1070', usable: false },
+    })
+    const out = await supportDiagnoseAccelerator(ctx, { nodeId: 'hub', expected: 'nvidia' })
+    if (out.status !== 'ok') throw new Error('expected ok')
+    const steps = out.fixSteps.join('\n')
+    expect(steps).toContain('nvidia-legacy-latest')
+    expect(steps).toMatch(/Pascal\/Maxwell/)
+  })
+
+  it('an older Intel iGPU is pointed at intel-legacy', async () => {
+    const { ctx } = hubWith([device('cpu')], {
+      ...ultra,
+      gpu: { type: 'intel', name: 'Intel UHD Graphics 630' },
+    })
+    const out = await supportDiagnoseAccelerator(ctx, { nodeId: 'hub', expected: 'intel-igpu' })
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.fixSteps.join('\n')).toContain('intel-legacy-latest')
   })
 
   it('reads NVIDIA from its own slot and says why it is not usable; gpu stays the iGPU', async () => {
@@ -136,7 +159,7 @@ describe('support_diagnose_accelerator', () => {
       expected: 'nvidia',
     })
     if (out.status !== 'ok') throw new Error('expected ok')
-    expect(out.verdict).toBe('unsupported')
+    expect(out.verdict).toBe('misconfigured')
     expect(out.probe?.gpu).toBe('intel: Arc')
     expect(out.probe?.nvidia).toBe(
       'NVIDIA GeForce RTX 2060: present, not usable (no-cuda-execution-provider)',
