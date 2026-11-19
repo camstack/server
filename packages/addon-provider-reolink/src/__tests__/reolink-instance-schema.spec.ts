@@ -14,6 +14,7 @@ import { ReolinkProviderAddon } from '../addon.js'
 import { isHubIntegration } from '../hub-connection.js'
 import {
   integrationIsHub,
+  ReolinkEvidenceCache,
   type ReolinkConnectionBody,
   reolinkInstancesProvider,
 } from '../reolink-instances.js'
@@ -64,6 +65,7 @@ function schemaFor(
       integration === 'unreachable' ? null : { name: 'x', ...integration.settings },
   }
   const provider = reolinkInstancesProvider(instances, {
+    evidenceCache: new ReolinkEvidenceCache(),
     registryEvidenceOf: async () =>
       integration === 'unreachable'
         ? null

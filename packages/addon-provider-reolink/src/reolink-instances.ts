@@ -60,6 +60,31 @@ export interface ReolinkRegistryEvidence {
   readonly info: Readonly<Record<string, unknown>>
 }
 
+/**
+ * What the addon last learned of each integration's registry row. The request path
+ * (`listInstances` / `getInstance`) reads ONLY this — the hub's own `integrations.get` projects
+ * the switches by calling this provider's `listInstances` again, so asking the hub from there is
+ * an unbounded call cycle. It is filled off the request path (the integration reconcile, the
+ * form schema read); a failed read leaves it as it was.
+ */
+export class ReolinkEvidenceCache {
+  private readonly rows = new Map<string, ReolinkRegistryEvidence>()
+
+  get(id: string): ReolinkRegistryEvidence | null {
+    return this.rows.get(id) ?? null
+  }
+
+  set(id: string, evidence: ReolinkRegistryEvidence): void {
+    this.rows.set(id, evidence)
+  }
+
+  /** The registry's full answer for this addon: integrations it no longer lists are dropped. */
+  replaceAll(entries: ReadonlyArray<readonly [string, ReolinkRegistryEvidence]>): void {
+    this.rows.clear()
+    for (const [id, evidence] of entries) this.rows.set(id, evidence)
+  }
+}
+
 export interface ReolinkInstancesDeps {
   /** Bring the hub sessions in line with the records after a change. */
   readonly onChanged: () => Promise<void>
@@ -193,7 +218,9 @@ export function buildReolinkInstances(
  */
 export function reolinkInstancesProvider(
   instances: Pick<RecordIntegrationInstances<ReolinkConnectionBody>, 'toProvider' | 'getResolved'>,
-  deps: Pick<ReolinkInstancesDeps, 'registryEvidenceOf'>,
+  deps: Pick<ReolinkInstancesDeps, 'registryEvidenceOf'> & {
+    readonly evidenceCache: Pick<ReolinkEvidenceCache, 'get' | 'set'>
+  },
 ): ReturnType<RecordIntegrationInstances<ReolinkConnectionBody>['toProvider']> {
   const base = instances.toProvider()
   // What Add device offers is decided per instance, by the same rule as `integrationIsHub`: the
@@ -202,7 +229,9 @@ export function reolinkInstancesProvider(
   // integrations).
   const withAddDevice = async (instance: IntegrationInstance): Promise<IntegrationInstance> => ({
     ...instance,
-    addDevice: (await integrationIsHub(instances, deps, instance.id)) ? 'children' : 'scan',
+    addDevice: (await integrationIsHubCached(instances, deps.evidenceCache, instance.id))
+      ? 'children'
+      : 'scan',
   })
   return {
     ...base,
@@ -218,6 +247,7 @@ export function reolinkInstancesProvider(
         deps.registryEvidenceOf(id),
         instances.getResolved(id),
       ])
+      if (evidence !== null) deps.evidenceCache.set(id, evidence)
       const isHub =
         evidence !== null &&
         isHubIntegration({
@@ -244,6 +274,25 @@ export async function integrationIsHub(
     instances.getResolved(id),
   ])
   if (evidence === null) return false
+  return isHubIntegration({
+    originStableId: evidence.originStableId,
+    info: evidence.info,
+    settings: body === null ? {} : hubSettingsOf(body),
+  })
+}
+
+/**
+ * `integrationIsHub` from the cache alone, for the request path: no evidence yet reads as "not a
+ * hub" (the same answer as a registry that cannot name the integration) and never asks the hub.
+ */
+export async function integrationIsHubCached(
+  instances: Pick<RecordIntegrationInstances<ReolinkConnectionBody>, 'getResolved'>,
+  cache: Pick<ReolinkEvidenceCache, 'get'>,
+  id: string,
+): Promise<boolean> {
+  const evidence = cache.get(id)
+  if (evidence === null) return false
+  const body = await instances.getResolved(id)
   return isHubIntegration({
     originStableId: evidence.originStableId,
     info: evidence.info,

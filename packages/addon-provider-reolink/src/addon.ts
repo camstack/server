@@ -86,6 +86,7 @@ import {
 import {
   buildReolinkInstances,
   integrationIsHub,
+  ReolinkEvidenceCache,
   type ReolinkConnectionBody,
   reolinkConnectionsEntryKind,
   reolinkInstancesProvider,
@@ -359,6 +360,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
 
   private hubManager: ReolinkHubManager | null = null
   private instances: RecordIntegrationInstances<ReolinkConnectionBody> | null = null
+  private readonly evidenceCache = new ReolinkEvidenceCache()
   private hubIntegrationProbe: ((id: string) => Promise<boolean>) | null = null
   /**
    * The camera mailbox bridge (`email-push-bridge.ts`, D999): battery cameras mail motion to a
@@ -688,6 +690,11 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     if (manager === null || instances === null) return
     try {
       const all = await this.ctx.api.integrations.list.query()
+      this.evidenceCache.replaceAll(
+        all
+          .filter((i) => i.addonId === this.ctx.id)
+          .map((i) => [i.id, { originStableId: i.originStableId, info: { ...i.info } }] as const),
+      )
       const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
       const withConnection = await readHubConnections(instances, mine)
       await manager.reconcile(withConnection)
@@ -986,10 +993,12 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     } | null> => {
       try {
         const integration = await this.ctx.api.integrations.get.query({ id })
-        return {
+        const evidence = {
           originStableId: integration.originStableId,
           info: { ...integration.info },
         }
+        this.evidenceCache.set(id, evidence)
+        return evidence
       } catch (err) {
         this.ctx.logger.warn('Reolink integration form: instance lookup failed — hub form shown', {
           meta: { integrationId: id, error: errMsg(err) },
@@ -1090,7 +1099,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     })
     regs.push({
       capability: integrationInstancesCapability,
-      provider: reolinkInstancesProvider(instances, { registryEvidenceOf }),
+      provider: reolinkInstancesProvider(instances, {
+        registryEvidenceOf,
+        evidenceCache: this.evidenceCache,
+      }),
     })
 
     return { providers: regs }

@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { MIGRATED_FROM_HUB_KEY } from '../hub-connection.js'
 import {
   buildReolinkInstances,
+  ReolinkEvidenceCache,
   type ReolinkRegistryEvidence,
   reolinkInstancesProvider,
   reolinkRecordKinds,
@@ -19,6 +20,8 @@ async function served(
   const world = makeInMemoryRecords('provider-reolink')
   await world.records.declare(reolinkRecordKinds)
   const evidence = new Map(rows.map((r) => [r.id, r.evidence]))
+  const evidenceCache = new ReolinkEvidenceCache()
+  for (const [id, ev] of evidence) if (ev !== null) evidenceCache.set(id, ev)
   const deps = {
     onChanged: async () => {},
     registryEvidenceOf: async (id: string) => evidence.get(id) ?? null,
@@ -26,7 +29,10 @@ async function served(
       throw new Error('unused')
     },
   }
-  const provider = reolinkInstancesProvider(buildReolinkInstances(world.records, deps), deps)
+  const provider = reolinkInstancesProvider(buildReolinkInstances(world.records, deps), {
+    ...deps,
+    evidenceCache,
+  })
   for (const r of rows) {
     await provider.createInstance({
       id: r.id,
