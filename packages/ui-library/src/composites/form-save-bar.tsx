@@ -36,7 +36,7 @@ export function FormSaveBar({
   saving = false,
   saveLabel,
   discardLabel,
-}: FormSaveBarProps) {
+}: FormSaveBarProps): JSX.Element | null {
   const t = useUiText()
   if (pendingCount <= 0) return null
 
