@@ -145,7 +145,10 @@ import type {
 } from './source-tracker.js'
 
 export type { ComposerDerivedSpec } from './composer-plan.js'
-export type { ComposerDeclareResult, ComposerDevicePorts } from './composed-device-set.js'
+export type {
+  ComposerDeclareResult,
+  ComposerDevicePorts,
+} from './composed-device-set.js'
 
 /** What the composer reads of a `device.bindings-changed` payload; the typed `EventCatalog` payload is assignable to it. */
 export interface DeviceBindingsChangedData {
@@ -275,6 +278,8 @@ export class Composer {
   private readonly claimSeed: ConfirmedSeed<FieldClaim>
   /** Applies never interleave: each one reads and replaces the whole live set. */
   private applyChain: Promise<unknown> = Promise.resolve()
+  /** The newest set the supervisor sent: what a binding event re-applies for a waiting block. */
+  private lastInput: ComposerApplyInput | null = null
   /**
    * Block names an editor rename still owes the device row. In memory only:
    * a restart has no entry, and the row's name wins (see `composedNameAuthority`).
@@ -325,7 +330,31 @@ export class Composer {
   }
 
   apply(input: ComposerApplyInput): Promise<ComposerApplyResult> {
-    return this.chained(() => this.applyNow(input))
+    return this.chained(() => {
+      this.lastInput = input
+      return this.applyNow(input)
+    })
+  }
+
+  /**
+   * The bindings of a device a block WAITS on changed: apply the set the
+   * supervisor last sent once more, so the block plans on the event itself
+   * rather than on the supervisor's next pass. Never operator actions: a
+   * restart or a retirement is the supervisor's, and runs once. A dropped
+   * event is covered by the waiting block re-reading the registry on every
+   * apply (D8, D49) — there is no timer here.
+   */
+  private async replanWaitingOn(deviceId: number): Promise<void> {
+    const last = this.lastInput
+    if (last === null) return
+    const waiting = [...this.live.values()].some(
+      (entry) =>
+        entry.planned.target.kind === 'existing' &&
+        entry.planned.target.deviceId === deviceId &&
+        entry.planned.target.waiting !== null,
+    )
+    if (!waiting) return
+    await this.applyNow({ ...last, restartBlockIds: [], retiredBlockIds: [] })
   }
 
   getStates(blockIds: readonly string[]): readonly CompositionBlockState[] {
@@ -369,6 +398,7 @@ export class Composer {
       await this.deps.tracker.onBindingsChanged(data.deviceId, data.capName, data.reason),
     )
     await this.chained(() => this.actuators?.onMemberBindings(data.deviceId))
+    await this.chained(() => this.replanWaitingOn(data.deviceId))
     await this.syncBoundFeatures(
       [...this.live.keys()].filter(
         (blockId) => this.composed.idOf(composedDeviceStableId(blockId)) === data.deviceId,
@@ -568,7 +598,10 @@ export class Composer {
       }),
     )
     await adoptMathQuantities(
-      input.blocks.map((block) => ({ id: block.id, helper: block.composition.helper })),
+      input.blocks.map((block) => ({
+        id: block.id,
+        helper: block.composition.helper,
+      })),
       {
         logger: this.deps.logger.child('math'),
         sourceDeviceId: (ref) => {
@@ -767,7 +800,10 @@ export class Composer {
         } catch (err: unknown) {
           this.deps.logger.warn(
             'composed device slice could not be read — the runtime starts without a restored seed',
-            { tags: { deviceId: device.id }, meta: { blockId: p.block.id, error: errMsg(err) } },
+            {
+              tags: { deviceId: device.id },
+              meta: { blockId: p.block.id, error: errMsg(err) },
+            },
           )
         }
       }
@@ -889,7 +925,9 @@ export class Composer {
       const owed = remembered?.nameOwed === name
       if (!owed && remembered?.appliedName === name) return name
       try {
-        await this.deps.devices.setName(device.id, name, { stampUserNamed: true })
+        await this.deps.devices.setName(device.id, name, {
+          stampUserNamed: true,
+        })
         this.nameOwed.delete(blockId)
         this.deps.logger.info('composed device renamed after its block', {
           tags: { deviceId: device.id },
@@ -900,7 +938,10 @@ export class Composer {
         this.nameOwed.set(blockId, name)
         this.deps.logger.warn(
           'composed block was renamed but the device name was not written — retried on the next apply',
-          { tags: { deviceId: device.id }, meta: { blockId, name, error: errMsg(err) } },
+          {
+            tags: { deviceId: device.id },
+            meta: { blockId, name, error: errMsg(err) },
+          },
         )
         return remembered?.appliedName ?? device.name
       }
@@ -1037,7 +1078,10 @@ export class Composer {
         runtime: null,
         planned: {
           ...entry.planned,
-          target: { ...target, gone: `${resolution.reason} — two index reads agreed` },
+          target: {
+            ...target,
+            gone: `${resolution.reason} — two index reads agreed`,
+          },
         },
       })
     }

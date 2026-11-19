@@ -10,8 +10,10 @@
  *   per plan change, and planned against that description. A settled plan is
  *   kept until the OPERATOR acts (edit, restart): a bindings change alone never
  *   re-plans (Task 10 rule 2, D659). While the claims index is unseeded or the
- *   target is unresolved or undescribed, the block WAITS by name and claims
- *   nothing (D49). A target gone on two agreeing index reads is `gone`.
+ *   target is unresolved or undescribed, or does not bind yet a cap the
+ *   composition needs the provider to serve, the block WAITS by name and claims
+ *   nothing (D49) — and re-reads the registry on every apply while it waits.
+ *   A target gone on two agreeing index reads is `gone`.
  * - An unreadable row names no target: whatever it holds is held (D49).
  */
 import {
@@ -19,7 +21,11 @@ import {
   type CapabilityLookup,
   type ComposerBlock,
   type ComposerUnreadableBlock,
+  type Composition,
   type CompositionExistingTarget,
+  type CompositionPlanResult,
+  type CompositionTargetFound,
+  commandedMethods,
   type CompositionEventPlan,
   type CompositionFeaturePlan,
   type CompositionFieldPlan,
@@ -155,7 +161,13 @@ export function planNew(
     return def === null ? [] : [def]
   })
   const hosted = composition.helper !== undefined && isEngineHostedHelper(composition.helper)
-  const declarationInput = { blockId: block.id, name: block.name, target, caps, hosted }
+  const declarationInput = {
+    blockId: block.id,
+    name: block.name,
+    target,
+    caps,
+    hosted,
+  }
   return {
     block,
     fields: plan.fields,
@@ -163,7 +175,10 @@ export function planNew(
     problems: [],
     declaration: declarationFor(declarationInput),
     shape: shapeOf(declarationInput),
-    spec: { type: target.type, ...(target.role === undefined ? {} : { role: target.role }) },
+    spec: {
+      type: target.type,
+      ...(target.role === undefined ? {} : { role: target.role }),
+    },
     target: planned,
   }
 }
@@ -223,14 +238,19 @@ export async function planExisting(input: ExistingPlanInput): Promise<PlannedBlo
     return {
       ...NO_PLAN,
       block,
-      target: { ...existing, gone: `${resolution.reason} — two index reads agreed` },
+      target: {
+        ...existing,
+        gone: `${resolution.reason} — two index reads agreed`,
+      },
     }
   }
+  // A block already waiting re-reads the registry on every apply: the
+  // `device.bindings-changed` that should have moved it may have been dropped (D8).
   const description = await input.targets.describe(
     ref,
     resolution.deviceId,
     resolution.type,
-    operatorAction,
+    operatorAction || (prior?.kind === 'existing' && prior.waiting !== null),
   )
   if (description === null) {
     return waitingPlan(
@@ -241,14 +261,69 @@ export async function planExisting(input: ExistingPlanInput): Promise<PlannedBlo
     )
   }
   const plan = planComposition(block.composition, input.lookupCap, description)
+  const pending = unboundNativeCaps(block.composition, input.lookupCap, description, plan)
+  if (pending.length > 0) {
+    return waitingPlan(
+      block,
+      ref,
+      resolution.deviceId,
+      `the target device \`${key}\` has not bound ${pending.map((cap) => `\`${cap}\``).join(', ')} yet — its provider has not registered it; re-evaluated when its bindings change`,
+    )
+  }
   return {
     ...NO_PLAN,
     block,
     fields: plan.problems.length > 0 ? [] : plan.fields,
     events: plan.problems.length > 0 ? [] : plan.events,
     problems: plan.problems.map((p) => `${p.path}: ${p.message}`),
-    target: { ...existing, features: plan.features, nativeCaps: description.nativeCaps },
+    target: {
+      ...existing,
+      features: plan.features,
+      nativeCaps: description.nativeCaps,
+    },
   }
+}
+
+/** Stands in for a provider that has not registered yet, when asking "would this plan if it had". */
+const PRESUMED_NATIVE_OWNER = 'pending-provider'
+
+/**
+ * The commanded caps a plan is refused for only because the target does not
+ * bind them yet. A composer never builds a cap with methods on an existing
+ * device, so the native is the one thing that can make it plan: when the plan
+ * is clean once those caps are presumed native, the block WAITS for them (a
+ * hub restart registers the bindings after the blocks first validate), and
+ * any other problem keeps it failed.
+ */
+function unboundNativeCaps(
+  composition: Composition,
+  lookupCap: CapabilityLookup,
+  description: CompositionTargetFound,
+  plan: CompositionPlanResult,
+): readonly string[] {
+  if (plan.problems.length === 0) return []
+  const unbound = [
+    ...new Set(
+      composition.features.flatMap((feature) => {
+        const def = lookupCap(feature.cap)
+        return compositionFeatureEnabled(feature) &&
+          def !== null &&
+          commandedMethods(def).length > 0 &&
+          !description.nativeCaps.has(feature.cap)
+          ? [feature.cap]
+          : []
+      }),
+    ),
+  ]
+  if (unbound.length === 0) return []
+  const presumed: CompositionTargetFound = {
+    ...description,
+    nativeCaps: new Map([
+      ...description.nativeCaps,
+      ...unbound.map((cap) => [cap, PRESUMED_NATIVE_OWNER] as const),
+    ]),
+  }
+  return planComposition(composition, lookupCap, presumed).problems.length === 0 ? unbound : []
 }
 
 function waitingPlan(
@@ -332,12 +407,19 @@ export function logPlanTransition(
       target.kind === 'existing' && target.deviceId !== null
         ? { deviceId: target.deviceId }
         : liveTags,
-    meta: { blockId: p.block.id, problems: p.problems, placeholder: p.declaration !== null },
+    meta: {
+      blockId: p.block.id,
+      problems: p.problems,
+      placeholder: p.declaration !== null,
+    },
   }
   if (target.kind === 'existing' && target.gone !== null) {
     logger.error(
       'customization target device is gone — the block failed; only the operator ends this (edit or restart the block)',
-      { ...extras, meta: { ...extras.meta, target: compositionSourceKey(target.ref) } },
+      {
+        ...extras,
+        meta: { ...extras.meta, target: compositionSourceKey(target.ref) },
+      },
     )
   } else if (target.kind === 'existing' && target.waiting !== null) {
     logger.warn('customization waits — nothing is claimed or released until it plans', {
