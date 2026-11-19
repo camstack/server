@@ -15,8 +15,26 @@ const responder: DiscoveredDevice = { ip: '192.0.2.10', port: 7000, mac: MAC, na
 /** A real AcDevice prototype with a live emitter and no network (type boundary: no transport). */
 function fakeAc(): AcDevice {
   const ac: AcDevice = Object.create(AcDevice.prototype)
-  Object.assign(ac, { emitter: new EventEmitter(), startPolling: vi.fn(), stopPolling: vi.fn() })
+  Object.assign(ac, {
+    emitter: new EventEmitter(),
+    updateState: vi.fn(async () => ({})),
+    requestColumns: vi.fn(async () => ({})),
+    startPolling: vi.fn(),
+    stopPolling: vi.fn(),
+  })
   return ac
+}
+
+const timeout = Object.assign(new Error('no answer'), { name: 'GreeTimeoutError' })
+
+/** One core read of the AC that fails the way a dead AC does. */
+async function failedRead(ac: AcDevice, manager: { refresh: (mac: string) => Promise<void> }) {
+  Reflect.set(
+    ac,
+    'updateState',
+    vi.fn(async () => Promise.reject(timeout)),
+  )
+  await expect(manager.refresh(responder.mac)).rejects.toThrow('no answer')
 }
 
 interface Timer {
@@ -148,28 +166,27 @@ describe('GreeIntegrationManager retry', () => {
     expect(h.manager.getInfo().status).toBe('connected')
   })
 
-  it('logs offline, never throws on error, and a state change resets the failure count', async () => {
+  it('a failed read is logged, never thrown past the core; a state change resets the failure count', async () => {
     const ac = fakeAc()
     const h = build({ discover: async () => [responder], ac })
     await h.manager.start()
-    expect(() => ac.emit('error', new Error('boom'))).not.toThrow()
-    ac.emit('offline', undefined)
-    ac.emit('offline', undefined)
+    await failedRead(ac, h.manager)
+    await failedRead(ac, h.manager)
     ac.emit('stateChanged', { changed: {} })
-    ac.emit('offline', undefined)
-    ac.emit('offline', undefined)
+    await failedRead(ac, h.manager)
+    await failedRead(ac, h.manager)
     expect(h.onDisconnected).not.toHaveBeenCalled()
     expect(h.timers).toHaveLength(0)
   })
 
-  it('after 3 consecutive offline events marks the AC offline, drops the handle and re-binds', async () => {
+  it('after 3 consecutive failed reads marks the AC offline, drops the handle and re-binds', async () => {
     const ac = fakeAc()
     const h = build({ discover: async () => [responder], ac })
     await h.manager.start()
-    ac.emit('offline', undefined)
-    ac.emit('offline', undefined)
+    await failedRead(ac, h.manager)
+    await failedRead(ac, h.manager)
     expect(h.timers).toHaveLength(0)
-    ac.emit('offline', undefined)
+    await failedRead(ac, h.manager)
     expect(h.onDisconnected).toHaveBeenCalledTimes(1)
     expect(h.timers.map((t) => t.delayMs)).toEqual([5_000])
     expect(h.manager.getInfo().status).toBe('error')

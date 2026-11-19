@@ -134,6 +134,23 @@ describe('Gree device-state-refresh (D1062)', () => {
     await manager.stop()
   })
 
+  it('one failed read is exactly one count, even if the library also emits its poll events', async () => {
+    const fake = fakeAc()
+    const { manager, resolver, disconnected } = await started(fake)
+    const timeout = Object.assign(new Error('no answer'), { name: 'GreeTimeoutError' })
+    fake.updateState.mockImplementation(async () => {
+      fake.ac.emit('error', timeout)
+      fake.ac.emit('offline', undefined)
+      throw timeout
+    })
+    const refresh = resolver.getRefresh('k1')
+    for (let i = 0; i < 2; i += 1) await expect(refresh?.(MAC)).rejects.toThrow('no answer')
+    expect(disconnected).not.toHaveBeenCalled()
+    await expect(refresh?.(MAC)).rejects.toThrow('no answer')
+    expect(disconnected).toHaveBeenCalledTimes(1)
+    await manager.stop()
+  })
+
   it('an unbound connection has nothing to read', () => {
     expect(greeConnections.getRefresh('nope')).toBeNull()
   })

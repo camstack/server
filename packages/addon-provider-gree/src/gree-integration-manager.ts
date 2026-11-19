@@ -467,20 +467,18 @@ export class GreeIntegrationManager {
     })
   }
 
-  /** Subscribe to each bound AC's health events and read each once (the core schedules the rest, D1062). */
+  /**
+   * Read each bound AC once (the core schedules the rest, D1062). A failed read is counted and
+   * logged in `refresh()` only; the library's own `error`/`offline` events come from its poll
+   * timer, which is never started, so they are not listened to (that would count twice).
+   */
   #watchHandles(handles: ReadonlyMap<string, AcDevice>): void {
     for (const [mac, ac] of handles) {
-      const onError = (err: Error): void => this.#noteReadError(mac, err)
-      const onOffline = (): void => this.#noteOffline(mac)
       const onState = (): void => {
         this.#consecutiveFailures = 0
       }
-      ac.on('error', onError)
-      ac.on('offline', onOffline)
       ac.on('stateChanged', onState)
       this.#disposers.push(() => {
-        ac.off('error', onError)
-        ac.off('offline', onOffline)
         ac.off('stateChanged', onState)
       })
       void this.refresh(mac).catch(() => undefined)
