@@ -38,7 +38,18 @@ afterEach(() => {
   harness = null
 })
 
-describe('file host worker', () => {
+/**
+ * Every spec here boots a REAL worker thread that loads the TypeScript worker
+ * graph through tsx (the point of the file), and `stop()` then waits for that
+ * thread's isolate to end by itself — bounded by the client's 5 s exit grace,
+ * which equals vitest's default test budget. On a saturated machine (parallel
+ * verify lanes) boot + teardown alone can pass 5 s, so the default budget was
+ * a race against the very grace being tested. The budget is therefore explicit
+ * and sized above grace + a cold boot; a passing run does not wait for it.
+ */
+const REAL_WORKER_TEST_TIMEOUT_MS = 60_000
+
+describe('file host worker', { timeout: REAL_WORKER_TEST_TIMEOUT_MS }, () => {
   it('round-trips data requests through the thread', async () => {
     harness = makeHarness()
     const events = await openOwnedSqliteFile(harness.specOf('events'), harness.deps)
