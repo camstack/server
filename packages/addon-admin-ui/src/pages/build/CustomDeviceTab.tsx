@@ -99,7 +99,7 @@ export function CustomDeviceTab({
   const [params, setParams] = useSearchParams()
   const compositions = useCoreBlocksListCompositions({}, { refetchInterval: POLL_MS })
   const fleet = useFleetLookup()
-  const formUrl = useItemFormUrl({ editKey: 'block', newKey: 'new' })
+  const formUrl = useItemFormUrl({ editKey: 'block', newKey: 'new', push: true })
   const editingId = formUrl.state.mode === 'edit' ? formUrl.state.id : null
   const createMode = editingId === null ? createModeOf(params.get('new'), createRequested) : null
   const isNew = createMode !== null

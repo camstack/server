@@ -55,6 +55,7 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
   const { state, openNew, openEdit, close } = useItemFormUrl({
     editKey: 'scheduler',
     newKey: 'new',
+    push: true,
   })
   const list = useSchedulersList({}, { refetchInterval: POLL_MS })
   const status = useSchedulersGetStatus({}, { refetchInterval: POLL_MS })

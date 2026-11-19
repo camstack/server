@@ -1,9 +1,9 @@
 /**
- * URL ownership for create/edit modals: `?new=1` or `?edit=<id>` (replace).
+ * URL ownership for create/edit modals: `?new=1` or `?edit=<id>` (replace, or push with `push`).
  * Mutually exclusive — opening one clears the other.
  */
 import { useCallback, useMemo } from 'react'
-import { useUrlQueryParam } from '../hooks/use-url-query'
+import { isFormOpenEntry, useUrlQueryParam, writeUrlParams } from '../hooks/use-url-query'
 
 export type ItemFormUrlState =
   | { readonly mode: 'closed' }
@@ -15,6 +15,12 @@ export interface UseItemFormUrlOptions {
   readonly newKey?: string
   /** Query key for edit id (default `edit`). */
   readonly editKey?: string
+  /**
+   * Opening adds a history entry, so Back returns to the previous view (the
+   * list) instead of skipping past it; closing from that entry goes back.
+   * Default false: the URL is replaced.
+   */
+  readonly push?: boolean
 }
 
 export interface UseItemFormUrlResult {
@@ -27,6 +33,7 @@ export interface UseItemFormUrlResult {
 export function useItemFormUrl(options: UseItemFormUrlOptions = {}): UseItemFormUrlResult {
   const newKey = options.newKey ?? 'new'
   const editKey = options.editKey ?? 'edit'
+  const push = options.push === true
   const [newParam, setNewParam] = useUrlQueryParam(newKey)
   const [editParam, setEditParam] = useUrlQueryParam(editKey)
 
@@ -39,22 +46,32 @@ export function useItemFormUrl(options: UseItemFormUrlOptions = {}): UseItemForm
   }, [editParam, newParam])
 
   const openNew = useCallback((): void => {
-    setEditParam(null)
-    setNewParam('1')
-  }, [setEditParam, setNewParam])
+    if (push) writeUrlParams({ [editKey]: null, [newKey]: '1' }, 'push')
+    else {
+      setEditParam(null)
+      setNewParam('1')
+    }
+  }, [push, editKey, newKey, setEditParam, setNewParam])
 
   const openEdit = useCallback(
     (id: string): void => {
-      setNewParam(null)
-      setEditParam(id)
+      if (push) writeUrlParams({ [newKey]: null, [editKey]: id }, 'push')
+      else {
+        setNewParam(null)
+        setEditParam(id)
+      }
     },
-    [setEditParam, setNewParam],
+    [push, editKey, newKey, setEditParam, setNewParam],
   )
 
   const close = useCallback((): void => {
+    if (push && isFormOpenEntry()) {
+      window.history.back()
+      return
+    }
     setNewParam(null)
     setEditParam(null)
-  }, [setEditParam, setNewParam])
+  }, [push, setEditParam, setNewParam])
 
   return { state, openNew, openEdit, close }
 }

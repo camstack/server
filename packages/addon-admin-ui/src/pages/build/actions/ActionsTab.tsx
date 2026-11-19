@@ -79,6 +79,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
   const { state, openNew, openEdit, close } = useItemFormUrl({
     editKey: 'action',
     newKey: 'new',
+    push: true,
   })
   const list = useActionsList({}, { refetchInterval: POLL_MS })
   const run = useActionsRun({

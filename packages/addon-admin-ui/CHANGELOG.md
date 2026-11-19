@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Back in Build-your-self returns to the list after opening an automation, script, action, scheduler or composed device editor
+
 ## [1.2.706] - 2026-11-19
 
 ### Changed

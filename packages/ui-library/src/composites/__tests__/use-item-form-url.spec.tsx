@@ -26,3 +26,34 @@ describe('useItemFormUrl', () => {
     expect(window.location.search).toBe('')
   })
 })
+
+describe('useItemFormUrl with push', () => {
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/page?tab=x')
+  })
+
+  it('opening adds ONE history entry and closing goes back to the list', async () => {
+    const start = window.history.length
+    const { result } = renderHook(() => useItemFormUrl({ push: true, editKey: 'block' }))
+    act(() => result.current.openEdit('abc'))
+    expect(window.history.length).toBe(start + 1)
+    expect(window.location.search).toContain('block=abc')
+    expect(window.location.search).toContain('tab=x')
+    act(() => result.current.openNew())
+    expect(window.history.length).toBe(start + 2)
+    expect(window.location.search).not.toContain('block=')
+    const popped = new Promise<void>((resolve) =>
+      window.addEventListener('popstate', () => resolve(), { once: true }),
+    )
+    act(() => result.current.close())
+    await popped
+    expect(window.location.search).toContain('block=abc')
+  })
+
+  it('a replace-mode hook never adds entries', () => {
+    const start = window.history.length
+    const { result } = renderHook(() => useItemFormUrl())
+    act(() => result.current.openEdit('abc'))
+    expect(window.history.length).toBe(start)
+  })
+})

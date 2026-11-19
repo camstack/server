@@ -4,7 +4,7 @@
  * Shell is library `SectionedPage` via `AdminSectionedPage` (OSD template).
  */
 import { coreBlockSourceKind, type CoreBlock } from '@camstack/types'
-import { Button, useSystem, useTemplateList } from '@camstack/ui-library'
+import { Button, FORM_OPEN_ROUTER_STATE, useSystem, useTemplateList } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Hammer, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -117,7 +117,7 @@ export function BuildPage() {
         else copy.set('block', blockId)
         return copy
       },
-      { replace: true },
+      { state: FORM_OPEN_ROUTER_STATE },
     )
   }
 
@@ -158,7 +158,7 @@ export function BuildPage() {
         copy.set('new', mode)
         return copy
       },
-      { replace: true },
+      { state: FORM_OPEN_ROUTER_STATE },
     )
   }
 

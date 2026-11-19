@@ -8820,6 +8820,13 @@
       "summary": "A tag filter's selection after a rename (`to`) or a remove (`to: null`): the renamed tag stays selected under its new name, a removed one leaves."
     },
     {
+      "name": "FORM_OPEN_ROUTER_STATE",
+      "kind": "constant",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-url-query.ts",
+      "summary": "Router-made entries keep their `state` option under `usr`."
+    },
+    {
       "name": "formatChartBytes",
       "kind": "function",
       "area": "composites",
@@ -20493,7 +20500,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/use-item-form-url.ts",
-      "summary": "URL ownership for create/edit modals: `?new=1` or `?edit=<id>` (replace). Mutually exclusive — opening one clears the other."
+      "summary": "URL ownership for create/edit modals: `?new=1` or `?edit=<id>` (replace, or push with `push`). Mutually exclusive — opening one clears the other."
     },
     {
       "name": "useLiveBuffer",

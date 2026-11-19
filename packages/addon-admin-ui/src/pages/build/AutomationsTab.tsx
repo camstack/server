@@ -85,7 +85,7 @@ export function AutomationsTab({
     openNew,
     openEdit,
     close: closeForm,
-  } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
+  } = useItemFormUrl({ editKey: 'block', newKey: 'new', push: true })
   const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
   /** The automation whose Quick edit modal is open (row action, or right after a create). */

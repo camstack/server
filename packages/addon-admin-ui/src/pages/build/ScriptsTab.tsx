@@ -112,7 +112,7 @@ export function ScriptsTab({
     openNew,
     openEdit,
     close: closeForm,
-  } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
+  } = useItemFormUrl({ editKey: 'block', newKey: 'new', push: true })
   /** Local draft after create before the list poll catches up (null = new). */
   const [savedBlock, setSavedBlock] = useState<CoreBlock | null>(null)
   const confirm = useConfirm()

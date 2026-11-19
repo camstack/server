@@ -34,6 +34,50 @@ function writeParam(key: string, value: string | null): void {
   window.history.replaceState(null, '', url)
 }
 
+/** Marks a history entry an editor was opened on, so closing it can go back instead of stacking. */
+export const FORM_OPEN_STATE_KEY = 'camstackFormOpen'
+
+/** Router-made entries keep their `state` option under `usr`. */
+export const FORM_OPEN_ROUTER_STATE: { readonly camstackFormOpen: true } = {
+  camstackFormOpen: true,
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/** True when the current history entry was pushed by an editor opening. */
+export function isFormOpenEntry(): boolean {
+  const state: unknown = window.history.state
+  if (!isRecord(state)) return false
+  if (state[FORM_OPEN_STATE_KEY] === true) return true
+  const usr = state['usr']
+  return isRecord(usr) && usr[FORM_OPEN_STATE_KEY] === true
+}
+
+export type UrlWriteMode = 'replace' | 'push'
+
+/**
+ * Several params in ONE history write. `push` adds an entry (marked as an
+ * editor-open entry) so Back returns to the previous view; `replace` rewrites
+ * the current one.
+ */
+export function writeUrlParams(
+  changes: Readonly<Record<string, string | null>>,
+  mode: UrlWriteMode,
+): void {
+  const params = new URLSearchParams(window.location.search)
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === null || value === '') params.delete(key)
+    else params.set(key, value)
+  }
+  const qs = params.toString()
+  const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+  ensureHistoryPatched()
+  if (mode === 'push') window.history.pushState(FORM_OPEN_ROUTER_STATE, '', url)
+  else window.history.replaceState(null, '', url)
+}
+
 let historyPatched = false
 
 /** So react-router (and anyone else) replaceState/pushState refresh every hook. */
