@@ -140,6 +140,7 @@ import {
   type HubSessionHandle,
   reolinkHubSessions,
 } from './reolink-hub-session.js'
+import { registerHubChildStateRefresh } from './reolink-state-refresh.js'
 import {
   applyHubChildSections,
   EMPTY_HUB_CHANNEL_SNAPSHOT,
@@ -968,6 +969,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // BaseDevice constructor seeds `device-status` slice with online=false;
     // no need to re-set here.
     this.registerNativeCapabilities()
+    this.registerNvrStateRefresh()
   }
 
   /**
@@ -2567,6 +2569,21 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    */
   async getRawState(): Promise<RawStateResult | null> {
     return buildRawState(this.runtimeState)
+  }
+
+  /**
+   * A hub child is kept fresh by its NVR session, never by a dial to the camera (D1062): the
+   * core calls the session's `refresh()` — the hub's own channel summary — once per integration.
+   * A standalone camera keeps its own reads and registers nothing.
+   */
+  private registerNvrStateRefresh(): void {
+    const integrationId = this.hubIntegrationId()
+    if (integrationId === null || !this.isHubChild()) return
+    registerHubChildStateRefresh({
+      ctx: this.ctx,
+      integrationId,
+      session: () => reolinkHubSessions.get(integrationId),
+    })
   }
 
   private registerNativeCapabilities(): void {
@@ -9150,6 +9167,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.consecutiveStaleHealthChecks = 0
     this.nextEventHealthCheckAt = 0
     this.eventHealthCheckTimer = setInterval(() => {
+      // not-a-state-poll: event-subscription health, re-subscribes a silent camera
       void (async () => {
         const api = this.api
         if (!api) return
@@ -12458,6 +12476,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
     if (this.removed) return
     this.reconnectTimer = setTimeout(() => {
+      // not-a-state-poll: the camera socket's own reconnect backoff window
       this.reconnectTimer = null
       // Trigger ensureApi indirectly — the next demand event will. We
       // don't pre-emptively reconnect because the broker may already

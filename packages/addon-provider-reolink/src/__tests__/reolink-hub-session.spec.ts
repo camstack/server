@@ -453,8 +453,49 @@ describe('ReolinkHubSession reconcile', () => {
     )
   })
 
-  it('re-reads on a timer every minute', () => {
-    expect(HUB_CHILD_SLEEP_RECONCILE_MS).toBe(60_000)
+  it('the session owns no reconcile clock: the core calls refresh() at the floor cadence (D1062)', async () => {
+    vi.useFakeTimers()
+    try {
+      const fake = fakeApi([{ channel: 0, uid: 'UID1', online: true }])
+      const { session } = makeSession(fake.api, () => [fakeChild(1, 0)])
+      session.start()
+      await vi.advanceTimersByTimeAsync(0)
+      const afterConnect = fake.api.getNvrChannelsSummary.mock.calls.length
+      await vi.advanceTimersByTimeAsync(HUB_CHILD_SLEEP_RECONCILE_MS * 10)
+      expect(fake.api.getNvrChannelsSummary).toHaveBeenCalledTimes(afterConnect)
+      expect(HUB_CHILD_SLEEP_RECONCILE_MS).toBe(60_000)
+      await session.close()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a refresh reads the NVR only: one hub socket, the hub-wide reads, no camera dial or wake', async () => {
+    const fake = fakeApi([
+      { channel: 0, uid: 'UID1', online: true, sleeping: true, isBattery: true },
+      { channel: 1, uid: 'UID2', online: true, sleeping: true, isBattery: true },
+    ])
+    const a = fakeChild(1, 0)
+    const b = fakeChild(2, 1)
+    a.sleepingValue = true
+    b.sleepingValue = true
+    const { session, connect } = makeSession(fake.api, () => [a, b])
+    await session.refresh()
+    await session.refresh()
+    // One socket, to the HUB's address: a child camera is never dialled.
+    expect(connect).toHaveBeenCalledTimes(1)
+    expect(connect).toHaveBeenCalledWith(expect.objectContaining({ host: CONNECTION.host }))
+    // Every read is the hub's own CGI summary of ALL channels (no per-channel, no baichuan wake).
+    for (const [options] of fake.api.getNvrChannelsSummary.mock.calls) {
+      expect(options).toMatchObject({ source: 'cgi' })
+      expect(options).not.toHaveProperty('channels')
+    }
+    expect(fake.api.getAllChannelsBatteryInfo).toHaveBeenCalled()
+    // A sleeping child is told what the hub said and is neither flagged offline nor woken.
+    expect(a.sleepStates).toEqual([true, true])
+    expect(a.onlineValue).toBe(true)
+    expect(a.repaired).toEqual([])
+    expect(fake.api.reboot).not.toHaveBeenCalled()
   })
 })
 

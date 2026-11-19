@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The NVR / Home Hub sleep-state reconcile of its cameras is now scheduled by the core instead of a timer in the session; it still reads only the NVR and never wakes a camera.
+
 ## [1.2.245] - 2026-11-18
 
 ### Changed

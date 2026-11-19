@@ -28,8 +28,8 @@ import { shouldTraceSimpleEventDispatch } from './simple-event-dispatch-trace.js
 
 const HUB_DISCOVERY_REFRESH_TIMEOUT_MS = 8000
 /**
- * How often the session re-reads its own channels summary to reconcile the adopted children's
- * sleep slices. 60 s: a naturally-waking camera (PIR, schedule) is caught within a minute, and
+ * How often the core re-reads the session's own channels summary to reconcile the adopted
+ * children's sleep slices (the floor of the `device-state-refresh` policy). 60 s: a naturally-waking camera (PIR, schedule) is caught within a minute, and
  * the play path has its own faster confirm + post-dial watch, so this only ever carries
  * background drift. Never wakes a child — the summary is answered by the hub itself.
  */
@@ -182,7 +182,6 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
   #connectInFlight: Promise<TApi> | null = null
   #reconnectAttempts = 0
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  #reconcileTimer: ReturnType<typeof setInterval> | null = null
   #shutdown = false
   #online = false
 
@@ -258,16 +257,11 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
     }
   }
 
-  /** Arm the periodic reconcile and make the first dial. Idempotent. */
+  /**
+   * Make the first dial. The reconcile after it is the core's: `device-state-refresh` calls
+   * {@link refresh} at {@link HUB_CHILD_SLEEP_RECONCILE_MS} (D1062), the session owns no clock.
+   */
   start(): void {
-    if (this.#reconcileTimer === null) {
-      this.#reconcileTimer = setInterval(() => {
-        void this.refresh().catch(() => {
-          /* best-effort — the next tick retries */
-        })
-      }, HUB_CHILD_SLEEP_RECONCILE_MS)
-      if (typeof this.#reconcileTimer.unref === 'function') this.#reconcileTimer.unref()
-    }
     void this.getApi().catch((err: unknown) => {
       this.#logger.warn('Reolink hub initial connect failed — will retry', {
         tags: { integrationId: this.integrationId },
@@ -301,10 +295,6 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
     if (this.#reconnectTimer !== null) {
       clearTimeout(this.#reconnectTimer)
       this.#reconnectTimer = null
-    }
-    if (this.#reconcileTimer !== null) {
-      clearInterval(this.#reconcileTimer)
-      this.#reconcileTimer = null
     }
     await this.dropApi('hub-shutdown')
   }
@@ -411,6 +401,7 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
       meta: { reason, attempt: this.#reconnectAttempts, backoffMs: backoff },
     })
     this.#reconnectTimer = setTimeout(() => {
+      // not-a-state-poll: the hub socket's own reconnect backoff
       this.#reconnectTimer = null
       void this.getApi().catch(() => {
         /* logged in #connect() */
@@ -865,6 +856,11 @@ export interface HubSessionHandle {
   readonly isOnline: boolean
   /** Restart the hub itself over its live session. */
   reboot(): Promise<void>
+  /**
+   * Re-read the hub's channel summary and reconcile the children from it. Answered by the hub
+   * itself: it never dials or wakes a child camera.
+   */
+  refresh(): Promise<void>
   relayEndpoint(): HubRelayEndpoint
 }
 

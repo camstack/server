@@ -12,7 +12,7 @@
  *
  * Scope: the runtime source (`src/`, excluding specs, `__tests__` and
  * generated code) of every provider in {@link MIGRATED}. A provider joins the
- * list when it moves to `device-state-refresh`. Comment-only lines are skipped
+ * list when it moves to `device-state-refresh`; one that migrates only in part lists the files. Comment-only lines are skipped
  * (prose may name the old loop), and so are lines marked `not-a-state-poll`. Textual: a timer reached through an alias
  * passes — the list is the contract, review is the rest.
  */
@@ -33,6 +33,10 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-homeassistant',
   'packages/addon-provider-bosch',
   'packages/addon-provider-dreame',
+  // Reolink migrates only the NVR session's sleep reconcile: the cameras' own socket and
+  // media timers stay, so the entries are FILES, not the package.
+  'packages/addon-provider-reolink/src/reolink-hub-session.ts',
+  'packages/addon-provider-reolink/src/reolink-state-refresh.ts',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/
@@ -100,7 +104,11 @@ export function findProviderPollLoops(
 
 function main(): void {
   const paths: string[] = []
-  for (const pkg of MIGRATED) walk(path.join(ROOT, pkg, 'src'), paths)
+  for (const entry of MIGRATED) {
+    // An entry is a provider package, or one source file of a provider that migrates in part.
+    if (SOURCE_RE.test(entry)) paths.push(path.join(ROOT, entry))
+    else walk(path.join(ROOT, entry, 'src'), paths)
+  }
   const files = paths.map((p) => ({
     rel: path.relative(ROOT, p).split(path.sep).join('/'),
     content: readFileSync(p, 'utf-8'),

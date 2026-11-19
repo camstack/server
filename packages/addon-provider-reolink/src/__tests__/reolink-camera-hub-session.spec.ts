@@ -5,8 +5,8 @@
  * the registry.
  */
 import { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import { DeviceType } from '@camstack/types'
-import { afterEach, describe, expect, it } from 'vitest'
+import { DeviceType, deviceStateRefreshCapability } from '@camstack/types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
 import { reolinkHubSessions } from '../reolink-hub-session.js'
 
@@ -73,6 +73,7 @@ describe('ReolinkCamera under an NVR integration', () => {
       }),
       isOnline: true,
       reboot: async () => undefined,
+      refresh: async () => undefined,
       getApi: async () => SENTINEL_API,
       relayEndpoint: () => ({
         host: 'h',
@@ -102,5 +103,30 @@ describe('ReolinkCamera under an NVR integration', () => {
   it('a standalone camera attaches to nothing', () => {
     makeSubject({ host: '1.2.3.4' }).attachToHubSession()
     expect(reolinkHubSessions.childrenOf('int-1')).toHaveLength(0)
+  })
+})
+
+describe('ReolinkCamera and the core state refresh (D1062)', () => {
+  function register(config: Record<string, unknown>): ReturnType<typeof vi.fn> {
+    const registerNativeCap = vi.fn()
+    ReolinkCamera.prototype['registerNvrStateRefresh'].call({
+      ctx: { registerNativeCap },
+      hubIntegrationId: ReolinkCamera.prototype['hubIntegrationId'],
+      isHubChild: ReolinkCamera.prototype['isHubChild'],
+      config: { get: (key: string) => config[key] },
+    })
+    return registerNativeCap
+  }
+
+  it('a hub child registers one NVR refresh for its integration', () => {
+    const registerNativeCap = register(CHILD_CONFIG)
+    expect(registerNativeCap).toHaveBeenCalledTimes(1)
+    const [cap, , options] = registerNativeCap.mock.calls[0] ?? []
+    expect(cap).toBe(deviceStateRefreshCapability)
+    expect(options.stateRefresh).toMatchObject({ integrationId: 'int-1', batch: true })
+  })
+
+  it('a standalone camera registers no refresh: it keeps its own reads', () => {
+    expect(register({ host: '1.2.3.4' })).not.toHaveBeenCalled()
   })
 })
