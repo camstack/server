@@ -85,7 +85,10 @@ const LINK_RECONCILER_CALLERS = new WeakSet<CompositionWriter>()
 
 /** A caller that IS the identity-link reconciler — mint it in-process only. */
 export function linkReconcilerCaller(): LinkReconcilerCaller {
-  const caller: LinkReconcilerCaller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
+  const caller: LinkReconcilerCaller = {
+    userId: IDENTITY_LINKS_USER_ID,
+    isAdmin: true,
+  }
   LINK_RECONCILER_CALLERS.add(caller)
   return caller
 }
@@ -155,6 +158,12 @@ export interface CompositionApiDeps {
    * still lands, and the composer retries the device write on its next apply.
    */
   readonly writeComposedDeviceName?: (blockId: string, name: string) => Promise<void>
+  /**
+   * The device manager owns a composed device's name (D1057); the block's stored
+   * name is a mirror. Reads show the row's name, by block id. A read that fails
+   * shows the mirror. Absent in tests that predate it.
+   */
+  readonly readComposedDeviceNames?: () => Promise<ReadonlyMap<string, string>>
   /** Every capability definition — the listing is derived from them, never from the registry's live state. */
   readonly capabilityDefinitions: readonly CapabilityDefinition[]
   /**
@@ -382,7 +391,10 @@ async function validateAgainstStore(
     peers: stored.peers,
     unreadTargets: stored.unread,
   })
-  return { validation, memberDeviceIds: helperMemberDeviceIds(composition, read.sources) }
+  return {
+    validation,
+    memberDeviceIds: helperMemberDeviceIds(composition, read.sources),
+  }
 }
 
 function describeProblems(validation: CompositionValidation): readonly string[] {
@@ -401,7 +413,10 @@ function refuse(
     deps.logger.warn('composition save refused', { meta })
   } else {
     for (const deviceId of memberDeviceIds) {
-      deps.logger.warn('composition save refused', { tags: { deviceId }, meta })
+      deps.logger.warn('composition save refused', {
+        tags: { deviceId },
+        meta,
+      })
     }
   }
   throw new Error(
@@ -424,7 +439,9 @@ async function readStates(
     )
   } catch (err: unknown) {
     const error = errMsg(err)
-    deps.logger.warn('composer state unreachable', { meta: { blocks: blockIds.length, error } })
+    deps.logger.warn('composer state unreachable', {
+      meta: { blocks: blockIds.length, error },
+    })
     return new Map(
       blockIds.map((id): [string, CompositionStateRead] => [id, { kind: 'unreachable', error }]),
     )
@@ -562,9 +579,9 @@ async function followComposedRename(
   name: string | undefined,
 ): Promise<void> {
   const write = deps.writeComposedDeviceName
-  if (write === undefined || previous === null || name === undefined || name === previous.name) {
-    return
-  }
+  if (write === undefined || previous === null || name === undefined) return
+  const [shown] = await withDeviceNames(deps, [previous])
+  if (name === (shown?.name ?? previous.name)) return
   const composition = coreBlockComposition(previous)
   if (composition === null || existingTarget(composition) !== null) return
   try {
@@ -575,6 +592,32 @@ async function followComposedRename(
       { meta: { blockId: previous.id, error: errMsg(err) } },
     )
   }
+}
+
+/**
+ * The blocks as the operator sees them: a composed device's name is the device
+ * row's, whatever the mirror stored (one name, never two). A customization has
+ * no name of its own and is returned as stored.
+ */
+async function withDeviceNames(
+  deps: CompositionApiDeps,
+  blocks: readonly CoreBlock[],
+): Promise<readonly CoreBlock[]> {
+  const read = deps.readComposedDeviceNames
+  if (read === undefined || blocks.length === 0) return blocks
+  let names: ReadonlyMap<string, string>
+  try {
+    names = await read()
+  } catch (err: unknown) {
+    deps.logger.warn('composed device names could not be read — the stored block names are shown', {
+      meta: { error: errMsg(err) },
+    })
+    return blocks
+  }
+  return blocks.map((block) => {
+    const name = names.get(block.id)
+    return name === undefined || name === block.name ? block : { ...block, name }
+  })
 }
 
 /** The block customizing `device`, found by TARGET — never by its derived name (rule 4). */
@@ -643,8 +686,9 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
             )
           }
         }
-        const updated = await deps.store.updateComposition(blockId, block)
+        const stored = await deps.store.updateComposition(blockId, block)
         await followComposedRename(deps, previous, block.name)
+        const [updated = stored] = await withDeviceNames(deps, [stored])
         deps.logger.info('composition updated', {
           meta: { blockId, by: caller?.userId ?? 'system' },
         })
@@ -679,13 +723,18 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
       if (block === null || coreBlockComposition(block) === null) {
         return { state: 'loaded', view: null }
       }
-      return { state: 'loaded', view: { block, state: await readState(deps, blockId) } }
+      const [shown = block] = await withDeviceNames(deps, [block])
+      return {
+        state: 'loaded',
+        view: { block: shown, state: await readState(deps, blockId) },
+      }
     },
 
     listCompositions: async () => {
       if (!deps.store.isLoaded()) return { state: 'not-loaded', reason: NOT_LOADED_REASON }
-      const blocks = deps.store.list().filter((b) => coreBlockComposition(b) !== null)
-      if (blocks.length === 0) return { state: 'loaded', views: [] }
+      const stored = deps.store.list().filter((b) => coreBlockComposition(b) !== null)
+      if (stored.length === 0) return { state: 'loaded', views: [] }
+      const blocks = await withDeviceNames(deps, stored)
       const states = await readStates(
         deps,
         blocks.map((b) => b.id),
@@ -697,7 +746,10 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
       if (!deps.store.isLoaded()) return { state: 'not-loaded', reason: NOT_LOADED_REASON }
       const block = customizationOf(deps.store.list(), { addonId, stableId })
       if (block === null) return { state: 'loaded', view: null }
-      return { state: 'loaded', view: { block, state: await readState(deps, block.id) } }
+      return {
+        state: 'loaded',
+        view: { block, state: await readState(deps, block.id) },
+      }
     },
 
     validateComposition: async ({ composition, blockId }) =>

@@ -83,7 +83,14 @@ function addBattery(expr = 'on ? 100 : 0', device = FEEDER): Composition {
           level: {
             kind: 'expression',
             expr,
-            bindings: { on: { kind: 'from', source: device, cap: 'binary', fieldPath: 'on' } },
+            bindings: {
+              on: {
+                kind: 'from',
+                source: device,
+                cap: 'binary',
+                fieldPath: 'on',
+              },
+            },
           },
           charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
           sleeping: { kind: 'expression', expr: 'false', bindings: {} },
@@ -110,7 +117,14 @@ function invertFeeder(device = FEEDER): Composition {
           on: {
             kind: 'expression',
             expr: '!on',
-            bindings: { on: { kind: 'from', source: device, cap: 'binary', fieldPath: 'on' } },
+            bindings: {
+              on: {
+                kind: 'from',
+                source: device,
+                cap: 'binary',
+                fieldPath: 'on',
+              },
+            },
           },
         },
       },
@@ -197,7 +211,9 @@ function deps(over: Partial<CompositionApiDeps> = {}): CompositionApiDeps {
           ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
           ...(patch.composition === undefined
             ? {}
-            : { source: { kind: 'composition', composition: patch.composition } }),
+            : {
+                source: { kind: 'composition', composition: patch.composition },
+              }),
           updatedAt: found.updatedAt + 1,
         }
         stored = stored.map((b) => (b.id === id ? updated : b))
@@ -215,7 +231,12 @@ function deps(over: Partial<CompositionApiDeps> = {}): CompositionApiDeps {
       ),
     lookupCap: buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS),
     composerStates: async (ids): Promise<readonly CompositionBlockState[]> =>
-      ids.map((blockId) => ({ blockId, deviceId: 1901, status: 'running', fields: [] })),
+      ids.map((blockId) => ({
+        blockId,
+        deviceId: 1901,
+        status: 'running',
+        fields: [],
+      })),
     convergeSoon: () => {
       converged += 1
     },
@@ -383,8 +404,16 @@ describe('updateComposition', () => {
   it('two concurrent updates that would close a cycle: the second is judged AFTER the first lands, and refused naming the cycle', async () => {
     stored = [compositionBlock('b1', ROOM), compositionBlock('b2', ROOM)]
     rows.set('composer', [
-      { id: 1901, stableId: composedDeviceStableId('b1'), type: DeviceType.Sensor },
-      { id: 1902, stableId: composedDeviceStableId('b2'), type: DeviceType.Sensor },
+      {
+        id: 1901,
+        stableId: composedDeviceStableId('b1'),
+        type: DeviceType.Sensor,
+      },
+      {
+        id: 1902,
+        stableId: composedDeviceStableId('b2'),
+        type: DeviceType.Sensor,
+      },
     ])
     let release: () => void = () => undefined
     const gate = new Promise<void>((resolve) => {
@@ -430,7 +459,11 @@ describe('updateComposition', () => {
       compositionBlock('b2', celsiusFrom(composedDeviceRef('b1'))),
     ]
     rows.set('composer', [
-      { id: 1902, stableId: composedDeviceStableId('b2'), type: DeviceType.Sensor },
+      {
+        id: 1902,
+        stableId: composedDeviceStableId('b2'),
+        type: DeviceType.Sensor,
+      },
     ])
     const { block } = await buildCompositionApi(deps()).updateComposition({
       blockId: 'b1',
@@ -450,7 +483,10 @@ describe('validateComposition', () => {
       caller: CALLER,
     })
     const loop = celsiusFrom(composedDeviceRef(block.id))
-    const result = await api.validateComposition({ composition: loop, blockId: block.id })
+    const result = await api.validateComposition({
+      composition: loop,
+      blockId: block.id,
+    })
     expect(result.ok).toBe(false)
     expect(result.problems.map((p) => p.code)).toContain('cycle')
     // No unreadable device in the loop: the plain message, unchanged.
@@ -462,7 +498,9 @@ describe('validateComposition', () => {
 
   it('returns every refusal with its code and path, and writes nothing', async () => {
     rows.set('provider-homeassistant', [])
-    const result = await buildCompositionApi(deps()).validateComposition({ composition: ROOM })
+    const result = await buildCompositionApi(deps()).validateComposition({
+      composition: ROOM,
+    })
     expect(result.ok).toBe(false)
     expect(result.problems.every((p) => p.code === 'source-missing')).toBe(true)
     expect(result.problems.map((p) => p.path)).toContain('features[0].fields.temperature')
@@ -492,7 +530,10 @@ describe('get / list', () => {
       caller: CALLER,
     })
     const views = loadedViews(await api.listCompositions({}))
-    expect(views[0]?.state).toEqual({ kind: 'unreachable', error: 'ECONNREFUSED' })
+    expect(views[0]?.state).toEqual({
+      kind: 'unreachable',
+      error: 'ECONNREFUSED',
+    })
   })
 
   it('answer the composer state per block', async () => {
@@ -531,14 +572,20 @@ describe('get / list', () => {
     const views = loadedViews(await api.listCompositions({}))
     expect(views.map((v) => v.block.name)).toEqual(['Room'])
     expect(views[0]?.state).toEqual({ kind: 'answered', state: null })
-    expect(await api.getComposition({ blockId: 'c1' })).toEqual({ state: 'loaded', view: null })
+    expect(await api.getComposition({ blockId: 'c1' })).toEqual({
+      state: 'loaded',
+      view: null,
+    })
   })
 
   it('answer NOT-LOADED — never "none" — before the table has been read (D315)', async () => {
     stored = [compositionBlock('b1', ROOM)]
     loaded = false
     const api = buildCompositionApi(deps())
-    expect(await api.listCompositions({})).toEqual({ state: 'not-loaded', reason: NOT_LOADED })
+    expect(await api.listCompositions({})).toEqual({
+      state: 'not-loaded',
+      reason: NOT_LOADED,
+    })
     expect(await api.getComposition({ blockId: 'b1' })).toEqual({
       state: 'not-loaded',
       reason: NOT_LOADED,
@@ -583,7 +630,9 @@ describe('customizing an existing device (D663, D944)', () => {
     ).rejects.toThrow('a customization has no name of its own')
     const refusals = log.lines.filter((l) => l.message === 'composition save refused')
     expect(refusals).toHaveLength(1)
-    expect(refusals[0]?.extras).toMatchObject({ tags: { deviceId: FEEDER_ID } })
+    expect(refusals[0]?.extras).toMatchObject({
+      tags: { deviceId: FEEDER_ID },
+    })
   })
 
   it('without a name, the server stores the DERIVED name (S2)', async () => {
@@ -695,7 +744,11 @@ describe('customizing an existing device (D663, D944)', () => {
       compositionBlock('p1', feederReadsRoom),
     ]
     rows.set('composer', [
-      { id: 1901, stableId: composedDeviceStableId('q1'), type: DeviceType.Sensor },
+      {
+        id: 1901,
+        stableId: composedDeviceStableId('q1'),
+        type: DeviceType.Sensor,
+      },
     ])
     await expect(
       buildCompositionApi(feederUnreadable()).updateComposition({
@@ -731,7 +784,12 @@ describe('customizing an existing device (D663, D944)', () => {
               kind: 'expression',
               expr: 'charging ? c : 0',
               bindings: {
-                charging: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'charging' },
+                charging: {
+                  kind: 'from',
+                  source: FEEDER,
+                  cap: 'battery',
+                  fieldPath: 'charging',
+                },
                 c: {
                   kind: 'from',
                   source: room,
@@ -783,7 +841,11 @@ describe('customizing an existing device (D663, D944)', () => {
       compositionBlock('b1', ROOM),
     ]
     rows.set('composer', [
-      { id: 1901, stableId: composedDeviceStableId('q1'), type: DeviceType.Sensor },
+      {
+        id: 1901,
+        stableId: composedDeviceStableId('q1'),
+        type: DeviceType.Sensor,
+      },
     ])
     await expect(
       buildCompositionApi(feederUnreadable()).updateComposition({
@@ -819,6 +881,41 @@ describe('customizing an existing device (D663, D944)', () => {
     expect(block.name).toBe('Garden')
     expect(stored[0]?.name).toBe('Garden')
     expect(writes).toEqual([{ blockId: 'b1', name: 'Garden' }])
+  })
+
+  it('the device row is the name: get and list show it when the stored block name drifted', async () => {
+    stored = [compositionBlock('b1', ROOM)]
+    const api = buildCompositionApi(
+      deps({
+        readComposedDeviceNames: async () => new Map([['b1', 'TV Daniel (Hisense)']]),
+      }),
+    )
+    const listed = loadedViews(await api.listCompositions({}))
+    expect(listed[0]?.block.name).toBe('TV Daniel (Hisense)')
+    const got = await api.getComposition({ blockId: 'b1' })
+    expect(got.state === 'loaded' ? got.view?.block.name : null).toBe('TV Daniel (Hisense)')
+  })
+
+  it('a rename that repeats the stored block name still reaches a device that drifted from it', async () => {
+    const writes: string[] = []
+    stored = [compositionBlock('b1', ROOM)]
+    const before = stored[0]
+    if (before === undefined) throw new Error('the block was not stored')
+    const api = buildCompositionApi(
+      deps({
+        readComposedDeviceNames: async () => new Map([['b1', 'Drifted']]),
+        writeComposedDeviceName: async (_blockId, name) => {
+          writes.push(name)
+        },
+      }),
+    )
+    await api.updateComposition({
+      blockId: 'b1',
+      expectedUpdatedAt: before.updatedAt,
+      block: { name: before.name },
+      caller: CALLER,
+    })
+    expect(writes).toEqual([before.name])
   })
 
   it('a failed device-name write does not undo the block save', async () => {
@@ -909,12 +1006,21 @@ describe('customizing an existing device (D663, D944)', () => {
     const found = await api.getCustomization(FEEDER)
     if (found.state !== 'loaded') throw new Error(found.reason)
     expect(found.view?.block.id).toBe(a.id)
-    expect(found.view?.state).toMatchObject({ kind: 'answered', state: { blockId: a.id } })
-    expect(await api.getCustomization(OTHER)).toEqual({ state: 'loaded', view: null })
+    expect(found.view?.state).toMatchObject({
+      kind: 'answered',
+      state: { blockId: a.id },
+    })
+    expect(await api.getCustomization(OTHER)).toEqual({
+      state: 'loaded',
+      view: null,
+    })
   })
 
   it('plans a camera doorbell as ADD when its binding names no native owner', async () => {
-    const camera = { addonId: 'provider-hikvision', stableId: 'mac-40acbf-test' }
+    const camera = {
+      addonId: 'provider-hikvision',
+      stableId: 'mac-40acbf-test',
+    }
     rows.set('provider-hikvision', [
       { id: 101, stableId: camera.stableId, type: DeviceType.Camera },
     ])
@@ -927,13 +1033,19 @@ describe('customizing an existing device (D663, D944)', () => {
           cap: 'doorbell',
           fields: {
             lastPressedAt: { kind: 'expression', expr: 'null', bindings: {} },
-            pressCountSinceStart: { kind: 'expression', expr: '0', bindings: {} },
+            pressCountSinceStart: {
+              kind: 'expression',
+              expr: '0',
+              bindings: {},
+            },
           },
         },
       ],
     })
 
-    const verdict = await buildCompositionApi(deps()).validateComposition({ composition })
+    const verdict = await buildCompositionApi(deps()).validateComposition({
+      composition,
+    })
 
     expect(verdict.ok).toBe(true)
     expect(verdict.features).toEqual([{ featureIndex: 0, cap: 'doorbell', mode: 'add' }])
@@ -943,7 +1055,9 @@ describe('customizing an existing device (D663, D944)', () => {
 describe('listComposableCaps (G2, D676)', () => {
   it('lists what a pet feeder can be given, from the same blockers the validator uses', async () => {
     const api = buildCompositionApi(deps())
-    const { caps } = await api.listComposableCaps({ deviceType: DeviceType.PetFeeder })
+    const { caps } = await api.listComposableCaps({
+      deviceType: DeviceType.PetFeeder,
+    })
     expect(caps.map((c) => c.cap)).toEqual(expect.arrayContaining(['battery', 'consumables']))
     expect(caps.map((c) => c.cap)).not.toContain('device-status')
   })
@@ -967,7 +1081,10 @@ describe('listComposableCaps (G2, D676)', () => {
       fieldPath: 'power',
     })
     expect(asked).toEqual([42])
-    expect(answer).toMatchObject({ state: 'insufficient', reason: 'no-history' })
+    expect(answer).toMatchObject({
+      state: 'insufficient',
+      reason: 'no-history',
+    })
   })
 })
 
@@ -1168,7 +1285,9 @@ describe('a feature an identity link contributed (D1063)', () => {
       buildCompositionApi(deps()).updateComposition({
         blockId: 'b1',
         expectedUpdatedAt: 1,
-        block: { composition: remainder((all) => pick(all, 'charging', 'sleeping')) },
+        block: {
+          composition: remainder((all) => pick(all, 'charging', 'sleeping')),
+        },
         caller,
       }),
     ).rejects.toThrow(/target-missing/)
@@ -1189,7 +1308,9 @@ describe('a feature an identity link contributed (D1063)', () => {
   it('an operator write of a customization asks for a link reconcile; the reconciler’s own write does not', async () => {
     const written: string[] = []
     const api = buildCompositionApi(
-      deps({ compositionWritten: (_target, caller) => written.push(caller.userId) }),
+      deps({
+        compositionWritten: (_target, caller) => written.push(caller.userId),
+      }),
     )
     const { block } = await api.createComposition({
       block: { enabled: true, composition: addBattery() },

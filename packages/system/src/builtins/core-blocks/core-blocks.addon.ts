@@ -108,7 +108,7 @@ import {
   linkContributionDeleteRefusal,
 } from './composition-api.js'
 import { LinkContributionReconciler } from './link-contributions.js'
-import { writeComposedDeviceName } from './sync-composed-device-name.js'
+import { readComposedDeviceNames, writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
@@ -266,7 +266,9 @@ export class CoreBlocksAddon extends BaseAddon {
     // After the compile gate exists: a release may have changed a shipped template.
     void this.remoteRuntime?.templates.reexpandBuiltinInstances().catch((error: unknown) =>
       this.ctx.logger.warn('automation templates: built-in instances were not re-expanded', {
-        meta: { error: error instanceof Error ? error.message : String(error) },
+        meta: {
+          error: error instanceof Error ? error.message : String(error),
+        },
       }),
     )
 
@@ -303,13 +305,19 @@ export class CoreBlocksAddon extends BaseAddon {
         capability: integrationInstancesCapability,
         provider: this.requireBlocksInstances().toProvider(),
       },
-      { capability: actionsCapability, provider: this.requireActions().service },
+      {
+        capability: actionsCapability,
+        provider: this.requireActions().service,
+      },
       { capability: schedulersCapability, provider: schedulers.service },
       ...this.tagsRegistrations(),
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
       { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
-      { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
+      {
+        capability: remoteLayoutComponentsCapability,
+        provider: new RemoteComponentsService(),
+      },
       { capability: heroLayoutCapability, provider: this.buildHeroLayout() },
       ...this.remoteRegistrations(),
       ...this.fanPresetRegistrations(),
@@ -348,7 +356,9 @@ export class CoreBlocksAddon extends BaseAddon {
       now: () => Date.now(),
       reader: {
         device: async (deviceId) => {
-          const found = await requireApi().deviceManager.getDevice.query({ deviceId })
+          const found = await requireApi().deviceManager.getDevice.query({
+            deviceId,
+          })
           return found === null
             ? null
             : {
@@ -366,7 +376,11 @@ export class CoreBlocksAddon extends BaseAddon {
             (e) => e.capName,
           ),
         slice: (deviceId, capName) =>
-          requireApi().deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
+          requireApi().deviceState.getCapSlice.query({
+            deviceId,
+            capName,
+            confirmed: true,
+          }),
         remoteCommands: async (deviceId) =>
           (await requireApi().remote.listCommands.query({ deviceId })).commands.length,
         switchOptions: (deviceId) => switchOptionsOf(requireApi(), deviceId),
@@ -443,7 +457,10 @@ export class CoreBlocksAddon extends BaseAddon {
         ? { code }
         : {
             code,
-            files: { ...existing.files, [resolveCoreBlockEntry(existing.entry)]: code },
+            files: {
+              ...existing.files,
+              [resolveCoreBlockEntry(existing.entry)]: code,
+            },
             entry: resolveCoreBlockEntry(existing.entry),
           }
     await this.gate(write)
@@ -564,13 +581,19 @@ export class CoreBlocksAddon extends BaseAddon {
       blocks: this.requireStore().list(),
       names: this.deviceNames(api),
       readState: async (deviceId) => {
-        const raw: unknown = await api.lockControl.getStatus.query({ deviceId })
+        const raw: unknown = await api.lockControl.getStatus.query({
+          deviceId,
+        })
         const state =
           raw !== null && typeof raw === 'object' ? Reflect.get(raw, 'state') : undefined
         return typeof state === 'string' ? state : null
       },
       apply: (deviceId, state) =>
-        gate.onStateChanged({ deviceId, capName: 'lock-control', slice: { state } }),
+        gate.onStateChanged({
+          deviceId,
+          capName: 'lock-control',
+          slice: { state },
+        }),
       logger: this.ctx.logger.child('lock-door'),
       failedLogged: this.seedFailed,
     }).catch((err: unknown) => {
@@ -688,7 +711,10 @@ export class CoreBlocksAddon extends BaseAddon {
       host: createBrokerProcessHost(broker),
       compile: async (source) => {
         if (this.transpiler === null) {
-          return { ok: false, error: 'the compiler is unavailable on this node' }
+          return {
+            ok: false,
+            error: 'the compiler is unavailable on this node',
+          }
         }
         const input =
           source.files !== undefined
@@ -956,7 +982,12 @@ export class CoreBlocksAddon extends BaseAddon {
             for (const claim of unreleased) {
               this.ctx.logger.error('composition deleted but its claim was not released', {
                 tags: { deviceId: claim.deviceId },
-                meta: { blockId, cap: claim.capName, owner: claim.owner, error: claim.error },
+                meta: {
+                  blockId,
+                  cap: claim.capName,
+                  owner: claim.owner,
+                  error: claim.error,
+                },
               })
             }
             const detail = unreleased
@@ -1011,7 +1042,10 @@ export class CoreBlocksAddon extends BaseAddon {
 
       compile: async (input: CoreBlockCompileInput) => {
         if (this.transpiler === null) {
-          return { ok: false, error: 'the compiler is unavailable on this node' }
+          return {
+            ok: false,
+            error: 'the compiler is unavailable on this node',
+          }
         }
         const source =
           input.files !== undefined
@@ -1050,7 +1084,12 @@ export class CoreBlocksAddon extends BaseAddon {
         // Read once and held: 344 files off disk per keystroke would be absurd,
         // and they cannot change without the process restarting.
         this.typeDefs ??= await loadBlockTypeDefs(this.ctx.logger)
-        return { libs: this.typeDefs.map((l) => ({ filePath: l.filePath, content: l.content })) }
+        return {
+          libs: this.typeDefs.map((l) => ({
+            filePath: l.filePath,
+            content: l.content,
+          })),
+        }
       },
 
       ...this.requireActions().runsApi,
@@ -1104,7 +1143,10 @@ export class CoreBlocksAddon extends BaseAddon {
         await compositions.createComposition({
           block: {
             enabled: true,
-            composition: { target: { kind: 'existing', device: host }, features: [...features] },
+            composition: {
+              target: { kind: 'existing', device: host },
+              features: [...features],
+            },
           },
           caller,
         })
@@ -1179,7 +1221,11 @@ export class CoreBlocksAddon extends BaseAddon {
         ),
       lookupCap: buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS),
       composerStates: async (blockIds) =>
-        (await requireApi().composer.getStates.query({ blockIds: [...blockIds] })).states,
+        (
+          await requireApi().composer.getStates.query({
+            blockIds: [...blockIds],
+          })
+        ).states,
       convergeSoon: () => {
         this.convergeSoon()
         this.seedLockDoorGate()
@@ -1209,19 +1255,31 @@ export class CoreBlocksAddon extends BaseAddon {
           }),
         retention: async () =>
           historyRetentionFromSettings(
-            await requireApi().addonSettingsRaw.getGlobal.query({ addonId: 'device-history' }),
+            await requireApi().addonSettingsRaw.getGlobal.query({
+              addonId: 'device-history',
+            }),
           ),
         now: () => Date.now(),
         logger: this.ctx.logger.child('running-proposal'),
       },
       logger: this.ctx.logger.child('compositions'),
+      readComposedDeviceNames: async () =>
+        readComposedDeviceNames({
+          listPersistedByAddon: async (addonId) =>
+            requireApi().deviceManager.listPersistedByAddon.query({ addonId }),
+        }),
       writeComposedDeviceName: (blockId, name) =>
         writeComposedDeviceName(
           {
             listPersistedByAddon: async (addonId) =>
-              requireApi().deviceManager.listPersistedByAddon.query({ addonId }),
+              requireApi().deviceManager.listPersistedByAddon.query({
+                addonId,
+              }),
             setOperatorName: async (deviceId, deviceName) => {
-              await requireApi().deviceManager.setName.mutate({ deviceId, name: deviceName })
+              await requireApi().deviceManager.setName.mutate({
+                deviceId,
+                name: deviceName,
+              })
             },
           },
           this.ctx.logger.child('compositions'),

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A block on a device whose provider has not registered yet after a hub restart now waits and starts on its own instead of staying failed
+- A composed device has one name, the device's: the block list and editor show it, a rename from either side writes it, and a drifted block is realigned at boot
 
 ## [1.2.907] - 2026-11-19
 

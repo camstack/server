@@ -912,7 +912,10 @@ export class Composer {
     // See `composedNameAuthority`: the device wins when nothing is remembered
     // (restart) or the live handle moved and the block did not. An editor
     // rename keeps the block and retries the stamped device write.
-    if (device.userNamed === true && device.name !== name) {
+    // At boot (nothing remembered) a row that differs from its block is drift
+    // whether or not it was ever stamped: the device manager owns the name (D1057),
+    // so the block is realigned once.
+    if ((device.userNamed === true || remembered === null) && device.name !== name) {
       if (composedNameAuthority(device.name, name, remembered) === 'device') {
         this.nameOwed.delete(blockId)
         this.deps.logger.info('composed device keeps the name the operator gave it', {

@@ -37,7 +37,10 @@ const ROOM = roomCompositionExample({
 function seedHub(hub: FakeHub): void {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES.forEach((ref, i) =>
     hub.add(ref, 11 + i, {
-      'temperature-sensor': { temperature: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
+      'temperature-sensor': {
+        temperature: [21.0, 21.5, 21.4][i],
+        lastFetchedAt: 990_000 + i,
+      },
       'device-status': { online: true, lastChangedAt: 1 },
     }),
   )
@@ -76,7 +79,15 @@ function input(over: Partial<ComposerApplyInput> = {}): ComposerApplyInput {
   return {
     integrationId: 'int_blocks',
     storeLoaded: true,
-    blocks: [{ id: 'b1', name: 'Living room', enabled: true, updatedAt: 1, composition: ROOM }],
+    blocks: [
+      {
+        id: 'b1',
+        name: 'Living room',
+        enabled: true,
+        updatedAt: 1,
+        composition: ROOM,
+      },
+    ],
     restartBlockIds: [],
     unreadableBlocks: [],
     ...over,
@@ -170,7 +181,11 @@ describe('apply', () => {
   it('waits, by name, for the shared integration', async () => {
     const result = await composer.apply(input({ integrationId: null }))
     expect(result.blocks).toEqual([
-      { blockId: 'b1', status: 'starting', reason: expect.stringContaining('Blocks integration') },
+      {
+        blockId: 'b1',
+        status: 'starting',
+        reason: expect.stringContaining('Blocks integration'),
+      },
     ])
     expect(declared).toEqual([])
   })
@@ -187,10 +202,21 @@ describe('apply', () => {
   })
 
   it('a naked composition (no feature) declares its device and reports running (D1004)', async () => {
-    const naked: Composition = { target: { kind: 'new', type: DeviceType.Fan }, features: [] }
+    const naked: Composition = {
+      target: { kind: 'new', type: DeviceType.Fan },
+      features: [],
+    }
     const result = await composer.apply(
       input({
-        blocks: [{ id: 'b1', name: 'Stove', enabled: true, updatedAt: 1, composition: naked }],
+        blocks: [
+          {
+            id: 'b1',
+            name: 'Stove',
+            enabled: true,
+            updatedAt: 1,
+            composition: naked,
+          },
+        ],
       }),
     )
     expect(declared).toEqual([['composed-b1']])
@@ -208,7 +234,13 @@ describe('apply', () => {
     const result = await composer.apply(
       input({
         blocks: [
-          { id: 'b1', name: 'Living room', enabled: false, updatedAt: 1, composition: ROOM },
+          {
+            id: 'b1',
+            name: 'Living room',
+            enabled: false,
+            updatedAt: 1,
+            composition: ROOM,
+          },
         ],
       }),
     )
@@ -244,6 +276,21 @@ describe('apply', () => {
     )
   })
 
+  it('at boot a drifted block follows the device name even when the row was never stamped, and the device is not overwritten', async () => {
+    await composer.apply(input())
+    const device = targets.get('composed-b1')
+    if (device === undefined) throw new Error('the room was not declared')
+    device.name = 'Living room (Hisense)'
+    named = []
+    blockRenames = []
+    composer = makeComposer()
+    await composer.apply(input())
+    await composer.apply(input())
+    expect(named).toEqual([])
+    expect(device.name).toBe('Living room (Hisense)')
+    expect(blockRenames).toEqual([['b1', 'Living room (Hisense)']])
+  })
+
   it('an editor rename of a user-named device is written onto the device, and a re-apply keeps the block name', async () => {
     await composer.apply(input())
     const device = targets.get('composed-b1')
@@ -255,7 +302,15 @@ describe('apply', () => {
     nameStamps = []
     blockRenames = []
     const garden = input({
-      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+      blocks: [
+        {
+          id: 'b1',
+          name: 'Garden',
+          enabled: true,
+          updatedAt: 2,
+          composition: ROOM,
+        },
+      ],
     })
     await composer.apply(garden)
     expect(blockRenames).toEqual([])
@@ -280,7 +335,15 @@ describe('apply', () => {
     nameStamps = []
     blockRenames = []
     const garden = input({
-      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+      blocks: [
+        {
+          id: 'b1',
+          name: 'Garden',
+          enabled: true,
+          updatedAt: 2,
+          composition: ROOM,
+        },
+      ],
     })
     await composer.apply(garden)
     expect(blockRenames).toEqual([])
@@ -302,7 +365,15 @@ describe('apply', () => {
     blockRenames = []
     composer = makeComposer()
     const garden = input({
-      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+      blocks: [
+        {
+          id: 'b1',
+          name: 'Garden',
+          enabled: true,
+          updatedAt: 2,
+          composition: ROOM,
+        },
+      ],
     })
     await composer.apply(garden)
     await composer.apply(garden)
@@ -315,7 +386,15 @@ describe('apply', () => {
     await composer.apply(input())
     await composer.apply(
       input({
-        blocks: [{ id: 'b1', name: 'Salotto', enabled: true, updatedAt: 2, composition: ROOM }],
+        blocks: [
+          {
+            id: 'b1',
+            name: 'Salotto',
+            enabled: true,
+            updatedAt: 2,
+            composition: ROOM,
+          },
+        ],
       }),
     )
     expect(named).toEqual([[1900, 'Salotto']])
@@ -337,7 +416,11 @@ describe('apply', () => {
     // The same read failure with a block in memory: named, not applied.
     const withBlock = await composer.apply(input({ storeLoaded: false }))
     expect(withBlock.blocks).toEqual([
-      { blockId: 'b1', status: 'starting', reason: expect.stringContaining('has not loaded') },
+      {
+        blockId: 'b1',
+        status: 'starting',
+        reason: expect.stringContaining('has not loaded'),
+      },
     ])
     expect(declared).toEqual([])
     expect(named).toEqual([])
@@ -384,7 +467,11 @@ describe('apply', () => {
     const unreadable = input({
       blocks: [],
       unreadableBlocks: [
-        { id: 'b1', name: 'Living room', error: 'source.composition.features: Invalid input' },
+        {
+          id: 'b1',
+          name: 'Living room',
+          error: 'source.composition.features: Invalid input',
+        },
       ],
     })
     await composer.apply(unreadable)
@@ -422,7 +509,11 @@ describe('apply', () => {
   it('getStates answers per field', async () => {
     await composer.apply(input())
     const [state] = composer.getStates(['b1'])
-    expect(state).toMatchObject({ blockId: 'b1', deviceId: 1900, status: 'running' })
+    expect(state).toMatchObject({
+      blockId: 'b1',
+      deviceId: 1900,
+      status: 'running',
+    })
     expect(state?.fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'fresh',
       value: 21.3,
@@ -457,7 +548,11 @@ describe('persisted rows and placeholders', () => {
     composer = makeComposer()
     const first = await composer.apply(input())
     expect(first.blocks).toEqual([
-      { blockId: 'b1', status: 'starting', reason: expect.stringContaining('could not be read') },
+      {
+        blockId: 'b1',
+        status: 'starting',
+        reason: expect.stringContaining('could not be read'),
+      },
     ])
     // Store loaded, integration known — and still refused: the caller must not count it.
     expect(first.acted).toBe(false)
@@ -493,7 +588,10 @@ describe('persisted rows and placeholders', () => {
     // No runtime ever runs on a placeholder: nothing is written to it.
     expect(targets.get('composed-b1')?.writes).toEqual([])
     expect(targets.get('composed-b1')?.availability).toEqual([])
-    expect(composer.getStates(['b1'])[0]).toMatchObject({ status: 'failed', fields: [] })
+    expect(composer.getStates(['b1'])[0]).toMatchObject({
+      status: 'failed',
+      fields: [],
+    })
   })
 
   it('a live block that stops planning is rebuilt as a placeholder, not withdrawn', async () => {
@@ -545,7 +643,11 @@ describe('events', () => {
     const before = target?.writes.length ?? 0
     const slice = { temperature: 24.0, lastFetchedAt: 995_000 }
     hub.setSlice(11, 'temperature-sensor', slice)
-    await composer.onStateChanged({ deviceId: 11, capName: 'temperature-sensor', slice })
+    await composer.onStateChanged({
+      deviceId: 11,
+      capName: 'temperature-sensor',
+      slice,
+    })
     expect(target?.writes.slice(before)).toContainEqual(
       expect.objectContaining({
         cap: 'temperature-sensor',
@@ -572,7 +674,11 @@ describe('an empty seed needs a second read to agree (D49)', () => {
     })
     const cold = await composer.apply(broken)
     expect(cold.blocks).toEqual([
-      { blockId: 'b1', status: 'starting', reason: expect.stringContaining('read empty') },
+      {
+        blockId: 'b1',
+        status: 'starting',
+        reason: expect.stringContaining('read empty'),
+      },
     ])
     expect(declared).toEqual([])
     await composer.apply(broken)
@@ -643,18 +749,37 @@ describe('hardening', () => {
 
   it('a block whose device never built does not re-open a source it shares with a healthy block (D3, no auto-repair)', async () => {
     const [T1] = ROOM_EXAMPLE_TEMPERATURE_SOURCES
-    const temperature = { source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' }
+    const temperature = {
+      source: T1!,
+      cap: 'temperature-sensor',
+      fieldPath: 'temperature',
+    }
     hub.remove(T1!)
     unbuilt = new Set(['composed-b1'])
     const both = input({
       blocks: [
-        { id: 'b1', name: 'Kitchen', enabled: true, updatedAt: 1, composition: ROOM },
-        { id: 'b2', name: 'Living room', enabled: true, updatedAt: 1, composition: ROOM },
+        {
+          id: 'b1',
+          name: 'Kitchen',
+          enabled: true,
+          updatedAt: 1,
+          composition: ROOM,
+        },
+        {
+          id: 'b2',
+          name: 'Living room',
+          enabled: true,
+          updatedAt: 1,
+          composition: ROOM,
+        },
       ],
     })
     await composer.apply(both)
     expect(targets.has('composed-b1')).toBe(false)
-    expect(tracker.read(temperature)).toMatchObject({ state: 'unavailable', fatal: true })
+    expect(tracker.read(temperature)).toMatchObject({
+      state: 'unavailable',
+      fatal: true,
+    })
     // The source comes back, but nothing the OPERATOR did happened: it stays gone.
     hub.add(T1!, 11, {
       'temperature-sensor': { temperature: 21.0, lastFetchedAt: 990_000 },
@@ -665,7 +790,10 @@ describe('hardening', () => {
     await composer.apply(both)
     await composer.apply(both)
     expect(hub.calls.filter((c) => c.startsWith('list:')).length).toBe(lists)
-    expect(tracker.read(temperature)).toMatchObject({ state: 'unavailable', fatal: true })
+    expect(tracker.read(temperature)).toMatchObject({
+      state: 'unavailable',
+      fatal: true,
+    })
     expect(
       composer.getStates(['b2'])[0]?.fields.find((f) => f.path === 'temperature'),
     ).toMatchObject({
@@ -674,7 +802,10 @@ describe('hardening', () => {
     // An operator restart of the unbuilt block is what re-opens it.
     await composer.apply({ ...both, restartBlockIds: ['b1'] })
     expect(hub.calls.filter((c) => c.startsWith('list:')).length).toBeGreaterThan(lists)
-    expect(tracker.read(temperature)).toMatchObject({ state: 'fresh', value: 21.0 })
+    expect(tracker.read(temperature)).toMatchObject({
+      state: 'fresh',
+      value: 21.0,
+    })
   })
 
   it('overlapping applies are serialized: one declaration, not two', async () => {
@@ -685,7 +816,10 @@ describe('hardening', () => {
 })
 
 describe('a restart mid-run (D933, D49)', () => {
-  const PLUG: CompositionSourceRef = { addonId: 'zigbee', stableId: 'dryer-plug' }
+  const PLUG: CompositionSourceRef = {
+    addonId: 'zigbee',
+    stableId: 'dryer-plug',
+  }
   const PLUG_ID = 31
 
   function dryer(): Composition {
@@ -724,7 +858,15 @@ describe('a restart mid-run (D933, D49)', () => {
     })
     await composer.apply(
       input({
-        blocks: [{ id: 'b1', name: 'Dryer', enabled: true, updatedAt: 1, composition: dryer() }],
+        blocks: [
+          {
+            id: 'b1',
+            name: 'Dryer',
+            enabled: true,
+            updatedAt: 1,
+            composition: dryer(),
+          },
+        ],
       }),
     )
     const running = (targets.get('composed-b1')?.writes ?? [])

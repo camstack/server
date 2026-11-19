@@ -5,6 +5,7 @@
  * A failure is logged and swallowed: the block save has already landed, and
  * the composer's next apply retries the device write.
  */
+import { composedBlockIdOf } from './rename-composition-block.js'
 import {
   COMPOSER_ADDON_ID,
   composedDeviceStableId,
@@ -54,4 +55,17 @@ export async function writeComposedDeviceName(
       },
     )
   }
+}
+
+/** The device row's name for every composed block, by block id: the one name an operator sees. */
+export async function readComposedDeviceNames(
+  port: Pick<ComposedDeviceNamePort, 'listPersistedByAddon'>,
+): Promise<ReadonlyMap<string, string>> {
+  const rows = await port.listPersistedByAddon(COMPOSER_ADDON_ID)
+  return new Map(
+    rows.flatMap((row) => {
+      const blockId = composedBlockIdOf(COMPOSER_ADDON_ID, row.stableId)
+      return blockId === null ? [] : [[blockId, row.name] as const]
+    }),
+  )
 }
