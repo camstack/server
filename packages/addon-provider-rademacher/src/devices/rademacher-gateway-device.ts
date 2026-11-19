@@ -11,6 +11,7 @@ import {
 import { rademacherGatewayDeviceSchema } from '../config.js'
 import { gatewayMetadataPatch } from '../rademacher-gateway-metadata.js'
 import { rademacherSessions } from '../rademacher-session-resolver.js'
+import { registerRademacherStateRefresh } from './rademacher-state-refresh.js'
 
 /**
  * The physical HomePilot / Start2Smart box, as a {@link DeviceType.Gateway}. Its
@@ -32,6 +33,7 @@ export class RademacherGatewayDevice extends BaseDevice<typeof rademacherGateway
 
   private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
   /** The last metadata written, so a poll that changed nothing writes nothing. */
   private lastMetadataKey = ''
 
@@ -46,6 +48,12 @@ export class RademacherGatewayDevice extends BaseDevice<typeof rademacherGateway
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when the hub is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerRademacherStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+    })
     this.snapshotUnsub = rademacherSessions.onSnapshot(this.integrationId, () => {
       void this.sync()
     })
@@ -53,6 +61,8 @@ export class RademacherGatewayDevice extends BaseDevice<typeof rademacherGateway
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()

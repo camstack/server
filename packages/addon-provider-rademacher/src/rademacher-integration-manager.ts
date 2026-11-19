@@ -4,7 +4,7 @@ import {
   type HubIdentity,
   Rademacher,
 } from '@apocaliss92/noderademacher'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger, type StateRefreshReason } from '@camstack/types'
 import type { RademacherConnectionConfig } from './config.js'
 
 /** Status of a single Rademacher hub connection. */
@@ -53,10 +53,10 @@ export interface RademacherIntegrationManagerOptions {
 
 /**
  * Wraps exactly one `@apocaliss92/noderademacher` client (= one HomePilot hub,
- * = one integration). HomePilot has NO push channel, so the manager owns a poll
- * loop: on `start()` it connects, materialises the device handles once, and then
- * periodically calls `device.refresh()` on each, firing `onPolled` after every
- * cycle.
+ * = one integration). HomePilot has NO push channel; the core's state refresh decides
+ * when it is polled (D1062), so the manager owns no poll timer: on `start()` it
+ * connects and materialises the device handles once, and `refresh` / `poll`
+ * call `device.refresh()` on them, firing `onPolled` after every cycle.
  *
  * `start()` never throws. A hub that is down is retried with a bounded backoff,
  * and a poll cycle in which EVERY device refresh failed marks the session down
@@ -78,7 +78,6 @@ export class RademacherIntegrationManager {
   #devices: Map<string, RademacherBaseDevice> = new Map()
   #identity: Readonly<HubIdentity> | null = null
   #status: RademacherHubStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setInterval> | null = null
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null
   #attempts = 0
   #generation = 0
@@ -142,8 +141,7 @@ export class RademacherIntegrationManager {
   }
 
   /**
-   * Connect the client, materialise the device handles once and start the poll
-   * loop. Never throws: a failed connect is logged and retried with backoff.
+   * Connect the client and materialise the device handles once. Never throws: a failed connect is logged and retried with backoff.
    */
   async start(): Promise<void> {
     if (this.#client !== null || this.#reconnectTimer !== null) {
@@ -155,7 +153,7 @@ export class RademacherIntegrationManager {
     await this.#connectOnce(this.#generation)
   }
 
-  /** Stop the poll loop and any pending reconnect, drop the client and handles. */
+  /** Stop any pending reconnect, drop the client and handles. */
   async stop(): Promise<void> {
     this.#generation += 1
     this.#clearTimers()
@@ -175,9 +173,25 @@ export class RademacherIntegrationManager {
     await this.start()
   }
 
+  /**
+   * Read what the core asked for (D1062): a scheduled tick polls every device; a command or
+   * burst read polls only the covers named (by did).
+   */
+  async refresh(reason: StateRefreshReason, dids: readonly string[]): Promise<void> {
+    if (reason === 'schedule') {
+      await this.poll()
+      return
+    }
+    const wanted = new Set(dids)
+    await this.#pollDevices([...this.#devices].filter(([did]) => wanted.has(did)).map(([, d]) => d))
+  }
+
   /** Poll every device once, then fan the snapshot out. Best-effort per device. */
   async poll(): Promise<void> {
-    const devices = [...this.#devices.values()]
+    await this.#pollDevices([...this.#devices.values()])
+  }
+
+  async #pollDevices(devices: readonly RademacherBaseDevice[]): Promise<void> {
     const results = await Promise.allSettled(devices.map((d) => d.refresh()))
     const failed = results.filter((r) => r.status === 'rejected')
     for (const result of failed) {
@@ -225,7 +239,6 @@ export class RademacherIntegrationManager {
       this.#attempts = 0
       this.#onConnected(this.#id)
       this.#onPolled(this.#id)
-      this.#startPollLoop()
       this.#logger.info('RademacherIntegrationManager: started', {
         tags: { integrationId: this.#id },
         meta: { deviceCount: this.#devices.size },
@@ -244,6 +257,7 @@ export class RademacherIntegrationManager {
         meta: { error: this.#error, attempt: this.#attempts, retryInMs: delay },
       })
       this.#reconnectTimer = setTimeout(() => {
+        // not-a-state-poll: connect retry backoff
         this.#reconnectTimer = null
         void this.#connectOnce(generation)
       }, delay)
@@ -252,27 +266,9 @@ export class RademacherIntegrationManager {
   }
 
   #clearTimers(): void {
-    if (this.#pollTimer !== null) {
-      clearInterval(this.#pollTimer)
-      this.#pollTimer = null
-    }
     if (this.#reconnectTimer !== null) {
       clearTimeout(this.#reconnectTimer)
       this.#reconnectTimer = null
     }
-  }
-
-  #startPollLoop(): void {
-    if (this.#pollTimer !== null) return
-    this.#pollTimer = setInterval(() => {
-      void this.poll().catch((err) => {
-        this.#logger.warn('RademacherIntegrationManager: poll cycle failed', {
-          tags: { integrationId: this.#id },
-          meta: { error: errMsg(err) },
-        })
-      })
-    }, this.#connection.pollIntervalMs)
-    // Do not keep the event loop alive solely for polling.
-    this.#pollTimer.unref?.()
   }
 }

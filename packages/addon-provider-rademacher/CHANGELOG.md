@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The HomePilot hub is now read on the core's state-refresh schedule (and per cover after a command) instead of the addon's own timer; the poll interval setting still slows the cadence.
+
 ## [0.2.167] - 2026-11-17
 
 ### Changed

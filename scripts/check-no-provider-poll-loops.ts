@@ -26,6 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const MIGRATED: readonly string[] = [
   'packages/addon-provider-vesync',
   'packages/addon-provider-enpal',
+  'packages/addon-provider-rademacher',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

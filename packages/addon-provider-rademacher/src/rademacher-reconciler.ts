@@ -99,6 +99,7 @@ export class RademacherReconciler {
       const result = await this.#sweep.sweep({ ownerIds, listedIds, removeDevices })
       if (result.newSuspects > 0 && this.#rerun === null) {
         this.#rerun = setTimeout(() => {
+          // not-a-state-poll: one-shot orphan-sweep re-run
           this.#rerun = null
           void this.reconcile()
         }, this.#sweep.minIntervalMs + 1_000)

@@ -10,6 +10,7 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import { rademacherCoverSchema } from '../config.js'
+import { registerRademacherStateRefresh } from './rademacher-state-refresh.js'
 import { type RademacherCoverSnapshot, toCoverStatus, toLibraryPosition } from '../cover-mapping.js'
 import { rademacherSessions } from '../rademacher-session-resolver.js'
 
@@ -41,6 +42,7 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
 
   private readonly did: string
   private readonly integrationId: string
+  private stopStateRefresh: (() => void) | null = null
   private readonly invertPosition: boolean
   private readonly supportsTilt: boolean
 
@@ -68,11 +70,20 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when this cover is re-read (D1062); this device only reads.
+    this.stopStateRefresh ??= registerRademacherStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+      did: this.did,
+    })
     this.attachSnapshotListener()
     this.recomputeSlice()
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     if (this.snapshotUnsub) {
       try {
         this.snapshotUnsub()
