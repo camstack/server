@@ -436,6 +436,8 @@ const zentikDescriptor: TargetKind = {
   addonId: 'notifiers',
   configSchema: zentikConfigSchema(),
   supportsDiscovery: true,
+  // The alert sound: a rule may set it per target (#487).
+  deliveryParams: [{ key: 'sound', label: 'Sound', type: 'string' }],
   caps: {
     attachments: {
       mediaTypes: ['image', 'video', 'gif', 'audio', 'icon'],
@@ -530,7 +532,9 @@ export const zentikAdapter: HttpNotifierAdapter = {
     if (attachments.length > 0) body.attachments = attachments
 
     if (prepared.clickUrl !== null) body.tapUrl = prepared.clickUrl
-    if (prepared.sound !== null) body.sound = prepared.sound
+    const ruleSound = prepared.delivery?.['sound']
+    const sound = typeof ruleSound === 'string' ? ruleSound : prepared.sound
+    if (sound !== null) body.sound = sound
     // TTL → ephemeral (fixed ~1h auto-cleanup).
     if (prepared.ttl !== null) body.ephemeral = true
 

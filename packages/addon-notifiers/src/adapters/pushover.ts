@@ -85,6 +85,8 @@ function descriptor(): TargetKind {
     // descriptor a complete `TargetKind` at rest.
     addonId: 'notifiers',
     supportsDiscovery: true,
+    // The alert sound: a rule may set it per target (#487).
+    deliveryParams: [{ key: 'sound', label: 'Sound', type: 'string' }],
     caps: {
       attachments: {
         mediaTypes: ['image'],
@@ -255,8 +257,12 @@ export const pushoverAdapter: HttpNotifierAdapter = {
     // Format — Pushover renders an HTML-lite subset when `html=1`.
     if (prepared.format === 'html') field('html', '1')
 
-    // Sound — per-notification value wins, else the target default.
-    const sound = prepared.sound ?? readString(config, 'defaultSound')
+    // Sound — the rule's per-target value wins, then the notification's, then the target default.
+    const ruleSound = prepared.delivery?.['sound']
+    const sound =
+      (typeof ruleSound === 'string' ? ruleSound : undefined) ??
+      prepared.sound ??
+      readString(config, 'defaultSound')
     if (sound !== undefined) field('sound', sound)
 
     // Supplemental URL (Pushover's single tap-through) + its title.

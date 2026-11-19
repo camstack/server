@@ -116,6 +116,7 @@ export function homeassistantTargetKind(addonId: string): TargetKind {
     deliveryParams: [
       { key: 'group', label: 'Notification group', type: 'string' },
       { key: 'channel', label: 'Android channel', type: 'string' },
+      { key: 'sound', label: 'Sound', type: 'string' },
     ],
     caps: {
       // HA Companion push accepts one media URL per notification.
@@ -272,7 +273,8 @@ export function buildNotifyServiceData(prepared: PreparedNotification): NotifySe
   applyLevel(data, prepared.level)
 
   // Per-target delivery parameters the kind declared (group, channel).
-  for (const key of ['group', 'channel']) {
+  // The rule's sound replaces the notification's.
+  for (const key of ['group', 'channel', 'sound']) {
     const value = prepared.delivery?.[key]
     if (typeof value === 'string' && value !== '') data[key] = value
   }

@@ -136,6 +136,7 @@ describe('group and channel delivery parameters (#487)', () => {
     expect(declared.map((p) => [p.key, p.type])).toEqual([
       ['group', 'string'],
       ['channel', 'string'],
+      ['sound', 'string'],
     ])
   })
 
@@ -418,5 +419,12 @@ describe('relative attachment urls (test-panel samples)', () => {
   it('no public endpoint: the image is dropped, the text still goes out', async () => {
     const data = await relativeImageDispatch(async () => ({ kind: 'none' }))
     expect(data['image']).toBeUndefined()
+  })
+})
+
+describe('sound delivery parameter (#487)', () => {
+  it('the rule-set sound beats the notification sound', () => {
+    const out = build(baseNotification({ sound: 'default', delivery: { sound: 'alarm' } }))
+    expect(out.data['sound']).toBe('alarm')
   })
 })

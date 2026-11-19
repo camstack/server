@@ -325,3 +325,18 @@ describe('zentik buildRequest — magic-code auth', () => {
     expect('authorization' in (plan.headers ?? {})).toBe(false)
   })
 })
+
+describe('zentik sound delivery parameter (#487)', () => {
+  it('declares sound as a string the rule may set', () => {
+    const declared = zentikAdapter.descriptor.deliveryParams ?? []
+    expect(declared.map((p) => [p.key, p.type])).toEqual([['sound', 'string']])
+  })
+
+  it('the rule-set sound beats the notification sound', () => {
+    const plan = planFor(
+      TOKEN_CONFIG,
+      notification({ sound: 'ping', delivery: { sound: 'chime' } }),
+    )
+    expect(jsonBody(plan)['sound']).toBe('chime')
+  })
+})

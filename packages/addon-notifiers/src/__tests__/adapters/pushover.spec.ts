@@ -220,3 +220,18 @@ describe('pushoverAdapter.discover', () => {
     await expect(pushoverAdapter.discover?.({ appToken: 'only-token' })).resolves.toEqual([])
   })
 })
+
+describe('pushover sound delivery parameter (#487)', () => {
+  it('declares sound as a string the rule may set', () => {
+    const declared = pushoverAdapter.descriptor.deliveryParams ?? []
+    expect(declared.map((p) => [p.key, p.type])).toEqual([['sound', 'string']])
+  })
+
+  it('the rule-set sound beats the target default and the notification sound', () => {
+    const plan = pushoverAdapter.buildRequest(
+      { ...BASE_CONFIG, defaultSound: 'siren' },
+      prepare({ body: 'ping', sound: 'cosmic', delivery: { sound: 'bugle' } }),
+    )
+    expect(fields(plan)['sound']).toBe('bugle')
+  })
+})
