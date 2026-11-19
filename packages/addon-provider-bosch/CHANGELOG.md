@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Bosch Smart Home Controller: a controller that stops answering (removed or unplugged) now shows its gateway, rooms and radiators offline within about two minutes and logs it, and they return online by themselves when it answers again
+
 ## [0.1.60] - 2026-11-19
 
 ### Changed

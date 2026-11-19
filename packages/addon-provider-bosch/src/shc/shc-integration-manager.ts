@@ -1,7 +1,7 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { type ShcConfig, sameShcConnection } from './config.js'
 import { nameShcDevices } from './shc-parse-devices.js'
-import { ShcClient, type ShcClientDeps } from './shc-client.js'
+import { ShcClient, type ShcClientDeps, type ShcLinkDetail } from './shc-client.js'
 import type { ShcConnectionSurface } from './shc-gateway.js'
 import type { ShcDeviceSummary } from './shc-types.js'
 
@@ -91,8 +91,20 @@ export class ShcIntegrationManager {
     this.#status = 'connecting'
     this.#error = null
 
-    const client = this.#makeClient(this.#connection)
+    const client = this.#makeClient(this.#connection, {
+      onPollError: (err, consecutiveFailures) => {
+        this.#logger.debug('ShcIntegrationManager: long-poll failed', {
+          tags: { integrationId: this.#id },
+          meta: { error: errMsg(err), consecutiveFailures },
+        })
+      },
+    })
     this.#client = client
+    client.onLinkState((up, detail) => {
+      if (this.#client !== client) return
+      if (up) this.#linkRestored()
+      else this.#linkLost(detail)
+    })
 
     try {
       const listed = await client.listDevices()
@@ -123,6 +135,35 @@ export class ShcIntegrationManager {
       })
       throw err
     }
+  }
+
+  #linkLost(detail: ShcLinkDetail | null): void {
+    if (this.#status !== 'connected') return
+    this.#status = 'error'
+    this.#error = errMsg(detail?.error ?? 'SHC link lost')
+    this.#lastCheckedAt = Date.now()
+    this.#onDisconnected(this.#id)
+    this.#logger.warn('ShcIntegrationManager: controller unreachable', {
+      tags: { integrationId: this.#id },
+      meta: {
+        host: this.#connection.host,
+        error: this.#error,
+        consecutiveFailures: detail?.consecutiveFailures,
+        sinceLastSuccessMs: detail?.sinceLastSuccessMs,
+      },
+    })
+  }
+
+  #linkRestored(): void {
+    this.#lastCheckedAt = Date.now()
+    if (this.#status !== 'error') return
+    this.#status = 'connected'
+    this.#error = null
+    this.#onConnected(this.#id)
+    this.#logger.info('ShcIntegrationManager: controller reachable again', {
+      tags: { integrationId: this.#id },
+      meta: { host: this.#connection.host },
+    })
   }
 
   async stop(): Promise<void> {

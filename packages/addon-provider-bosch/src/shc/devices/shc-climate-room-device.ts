@@ -9,6 +9,7 @@ import {
 import { shcClimateEntityName } from '../shc-discovery.js'
 import { SHC_ROOM_CLIMATE_SUFFIX, shcClimateRole } from '../shc-domain-mapping.js'
 import { shcStableIdSuffixFromDeviceId } from '../shc-stable-id-suffix.js'
+import { shcConnections } from '../shc-gateway.js'
 import { shcDeviceSchema } from './shc-device-base.js'
 import { ShcRoomClimateDevice } from './shc-room-climate-device.js'
 import { ShcTrvDevice } from './shc-trv-device.js'
@@ -39,7 +40,7 @@ export class ShcClimateRoomDevice extends BaseDevice<typeof shcClimateRoomSchema
     this.brokerId = cfg.brokerId
     this.integrationId = cfg.integrationId
     this.deviceModel = cfg.deviceModel
-    this.online = true
+    this.online = shcConnections.has(cfg.brokerId)
     void this.updateSourceInfo({ id: cfg.shcDeviceId, system: 'bosch-shc' })
   }
 

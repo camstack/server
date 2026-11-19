@@ -8,6 +8,14 @@ const REST_PORT = 8444
 const REST_PREFIX = '/smarthome'
 const RPC_PATH = '/remote/json-rpc'
 const LONG_POLL_SECONDS = 30
+/** Slack on top of one long-poll window before undici gives up on a silent peer. */
+const POLL_MARGIN_SECONDS = 15
+const POLL_TIMEOUT_MS = (LONG_POLL_SECONDS + POLL_MARGIN_SECONDS) * 1000
+/** Consecutive failed RPCs that confirm the link is down (one blip never does, D49). */
+export const SHC_LINK_DOWN_FAILURES = 2
+/** No successful reply for this long confirms the link down on the next failure. */
+export const SHC_LINK_DOWN_AFTER_MS = 2 * POLL_TIMEOUT_MS
+const RETRY_DELAY_MS = 2_000
 
 export type ShcFetch = (
   url: string,
@@ -17,7 +25,23 @@ export type ShcFetch = (
 export interface ShcClientDeps {
   readonly fetchImpl?: ShcFetch
   readonly createAgent?: (config: ShcConfig) => Agent
+  /** Wait between failed RPCs of the keepalive loop (default 2 s). */
+  readonly retryDelayMs?: number
+  /** Clock seam for the "no successful reply for a while" rule. */
+  readonly now?: () => number
+  /** Called for every failed subscribe / longPoll, with the running failure count. */
+  readonly onPollError?: (err: unknown, consecutiveFailures: number) => void
 }
+
+export interface ShcLinkDetail {
+  readonly consecutiveFailures: number
+  /** Milliseconds since the last successful reply; null when none ever came. */
+  readonly sinceLastSuccessMs: number | null
+  readonly error: unknown
+}
+
+/** `up` is true on every successful reply, false once per confirmed outage. */
+export type ShcLinkStateHandler = (up: boolean, detail: ShcLinkDetail | null) => void
 
 export type ShcStateChangeHandler = (event: ShcEventNotification) => void
 
@@ -35,9 +59,19 @@ export class ShcClient {
   #longPollRunning = false
   #subscriptionId: string | null = null
   #stateHandlers: Set<ShcStateChangeHandler> = new Set()
+  #linkHandlers: Set<ShcLinkStateHandler> = new Set()
+  readonly #retryDelayMs: number
+  readonly #now: () => number
+  readonly #onPollError: ((err: unknown, consecutiveFailures: number) => void) | undefined
+  #consecutiveFailures = 0
+  #lastSuccessAt: number | null = null
+  #linkReportedDown = false
 
   constructor(config: ShcConfig, deps: ShcClientDeps = {}) {
     this.#config = config
+    this.#retryDelayMs = deps.retryDelayMs ?? RETRY_DELAY_MS
+    this.#now = deps.now ?? Date.now
+    this.#onPollError = deps.onPollError
     this.#agent = deps.createAgent?.(config) ?? createDefaultAgent(config)
     this.#fetch = deps.fetchImpl ?? ((url, init) => fetchWithShcAgent(url, this.#agent, init))
   }
@@ -46,6 +80,13 @@ export class ShcClient {
     this.#stateHandlers.add(handler)
     return () => {
       this.#stateHandlers.delete(handler)
+    }
+  }
+
+  onLinkState(handler: ShcLinkStateHandler): () => void {
+    this.#linkHandlers.add(handler)
+    return () => {
+      this.#linkHandlers.delete(handler)
     }
   }
 
@@ -156,6 +197,32 @@ export class ShcClient {
   close(): void {
     this.stopLongPoll()
     this.#stateHandlers.clear()
+    this.#linkHandlers.clear()
+  }
+
+  private markLinkUp(): void {
+    this.#consecutiveFailures = 0
+    this.#lastSuccessAt = this.#now()
+    this.#linkReportedDown = false
+    for (const handler of this.#linkHandlers) handler(true, null)
+  }
+
+  private markPollFailure(err: unknown): void {
+    this.#consecutiveFailures += 1
+    this.#onPollError?.(err, this.#consecutiveFailures)
+    const sinceLastSuccessMs =
+      this.#lastSuccessAt === null ? null : this.#now() - this.#lastSuccessAt
+    const confirmed =
+      this.#consecutiveFailures >= SHC_LINK_DOWN_FAILURES ||
+      (sinceLastSuccessMs !== null && sinceLastSuccessMs >= SHC_LINK_DOWN_AFTER_MS)
+    if (!confirmed || this.#linkReportedDown) return
+    this.#linkReportedDown = true
+    const detail: ShcLinkDetail = {
+      consecutiveFailures: this.#consecutiveFailures,
+      sinceLastSuccessMs,
+      error: err,
+    }
+    for (const handler of this.#linkHandlers) handler(false, detail)
   }
 
   private emitState(event: ShcEventNotification): void {
@@ -169,19 +236,23 @@ export class ShcClient {
       try {
         const subscriptionId = await this.subscribeEvents()
         this.#subscriptionId = subscriptionId
+        this.markLinkUp()
         while (this.#longPollRunning) {
           const payload = await this.pollSubscribed(subscriptionId)
+          this.markLinkUp()
           this.dispatchEvents(payload)
         }
       } catch (err: unknown) {
         if (this.#longPollRunning && !isAbortError(err)) {
-          await sleep(2_000)
+          this.markPollFailure(err)
+          await sleep(this.#retryDelayMs)
         }
       } finally {
         const subscriptionId = this.#subscriptionId
         this.#subscriptionId = null
         if (subscriptionId !== null) {
-          await this.unsubscribeEvents(subscriptionId).catch(() => undefined)
+          // Not awaited: against a dead peer this would stall the retry for a full timeout.
+          void this.unsubscribeEvents(subscriptionId).catch(() => undefined)
         }
       }
     }
@@ -281,6 +352,9 @@ export function shcTlsConnectOptions(config: ShcConfig): {
 function createDefaultAgent(config: ShcConfig): Agent {
   return new Agent({
     connect: shcTlsConnectOptions(config),
+    // A dead peer must surface within one poll window plus margin, not undici's 300 s.
+    headersTimeout: POLL_TIMEOUT_MS,
+    bodyTimeout: POLL_TIMEOUT_MS,
   })
 }
 
