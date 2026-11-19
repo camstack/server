@@ -45,7 +45,12 @@ export function buildUnifiDeviceAdopter(input: {
   const { devices } = input
   return {
     adoptInfra: async ({ integrationId, name, infraId }) => {
-      const infra = unifiControllers.getInfra(integrationId, infraId)
+      let infra = unifiControllers.getInfra(integrationId, infraId)
+      if (infra === null) {
+        // A device the controller gained since the last read: one re-list before refusing.
+        await unifiControllers.getManager(integrationId)?.poll()
+        infra = unifiControllers.getInfra(integrationId, infraId)
+      }
       if (infra === null) {
         throw new Error(`unifi adopt: no infra device ${infraId} on integration ${integrationId}`)
       }

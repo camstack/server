@@ -80,6 +80,7 @@ export function buildUnifiAdoptionProvider(
   }
 
   async function candidates(integrationId: string): Promise<readonly DiscoveredChildDevice[]> {
+    unifiControllers.getManager(integrationId)?.revalidateIfStale()
     return buildDiscoveryCandidates({
       controllerName: controllerName(integrationId),
       controllerOnline: unifiControllers.getManager(integrationId)?.status === 'connected',

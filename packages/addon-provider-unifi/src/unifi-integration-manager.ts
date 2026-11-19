@@ -63,6 +63,8 @@ export class UnifiIntegrationManager {
   /** The last failure of the client's secondary half (the local account), logged on change. */
   #degraded: string | null = null
   #error: string | null = null
+  #readAt = 0
+  #reading = false
 
   constructor(options: UnifiIntegrationManagerOptions) {
     this.#id = options.id
@@ -181,6 +183,7 @@ export class UnifiIntegrationManager {
       await client.connect()
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+      this.#readAt = Date.now()
       this.#noteDegraded(client)
     } catch (err) {
       // The reason stays on the manager (the integration's status word) after the caller stops it.
@@ -232,6 +235,21 @@ export class UnifiIntegrationManager {
     await this.start()
   }
 
+  /**
+   * A reader (the adoption picker) asks for a fresh controller list when the slice is older than
+   * the read cadence (D224): it is answered from the slice at once and never joins a read in
+   * flight; the re-list runs in the background. Covers a controller with no activated device,
+   * which has nothing registered for the core to read (D1062).
+   */
+  revalidateIfStale(): void {
+    if (this.#client === null || this.#reading) return
+    if (Date.now() - this.#readAt < this.pollDelayMs()) return
+    this.#reading = true
+    void this.poll().finally(() => {
+      this.#reading = false
+    })
+  }
+
   /** Re-list infra + clients once, then fan the snapshot out. Best-effort. */
   async poll(): Promise<void> {
     const client = this.#client
@@ -239,6 +257,7 @@ export class UnifiIntegrationManager {
     try {
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+      this.#readAt = Date.now()
       this.#error = null
       this.#noteDegraded(client)
     } catch (err) {

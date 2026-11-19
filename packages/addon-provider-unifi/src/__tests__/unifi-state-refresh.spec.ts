@@ -18,8 +18,14 @@ import {
   UNIFI_MIN_REFRESH_INTERVAL_MS,
   type UnifiRefreshContext,
 } from '../devices/unifi-state-refresh.js'
-import type { UnifiControllerClient, UnifiLiveChange } from '../unifi-client-contract.js'
+import type {
+  UnifiControllerClient,
+  UnifiInfraSnapshot,
+  UnifiLiveChange,
+} from '../unifi-client-contract.js'
 import { UnifiIntegrationManager, UNIFI_RECONCILE_POLL_MS } from '../unifi-integration-manager.js'
+import { buildUnifiAdoptionProvider } from '../unifi-adoption-provider.js'
+import { infraSnapshot } from './unifi-fixtures.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 
 const quiet: IScopedLogger = {
@@ -70,16 +76,18 @@ function fakeCtx(): {
 function rig(pollIntervalMs: number): {
   manager: UnifiIntegrationManager
   lists: { count: number }
+  infra: UnifiInfraSnapshot[]
   live: (change: UnifiLiveChange) => void
 } {
   const lists = { count: 0 }
+  const infra: UnifiInfraSnapshot[] = []
   let listener: ((change: UnifiLiveChange) => void) | null = null
   const client: UnifiControllerClient = {
     connect: async () => undefined,
     disconnect: async () => undefined,
     listInfraDevices: async () => {
       lists.count += 1
-      return []
+      return [...infra]
     },
     listClients: async () => [],
     getInfraDevice: () => null,
@@ -105,7 +113,7 @@ function rig(pollIntervalMs: number): {
     makeClient: () => client,
   })
   unifiControllers.set('u1', manager)
-  return { manager, lists, live: (change) => listener?.(change) }
+  return { manager, lists, infra, live: (change) => listener?.(change) }
 }
 
 afterEach(() => {
@@ -157,6 +165,33 @@ describe('UniFi device-state-refresh (D1062)', () => {
     registerUnifiStateRefresh({ ctx, deviceId: 1, integrationId: 'u1' })
     await registrations[0]?.refresh()
     expect(lists.count).toBe(afterStart + 1)
+    await manager.stop()
+  })
+
+  it('a controller with no activated device still shows a new AP in the picker (serve, then revalidate)', async () => {
+    vi.useFakeTimers()
+    const { manager, infra } = rig(2_000)
+    await manager.start()
+    const provider = buildUnifiAdoptionProvider({
+      hasIntegration: () => true,
+      listIntegrations: () => ['u1'],
+      integrationName: () => 'UniFi',
+      listAdopted: async () => [],
+      adoptInfra: async () => ({ deviceId: 1, accessoryDeviceIds: [] }),
+      adoptClient: async () => ({ deviceId: 1 }),
+      childDeviceIds: async () => [],
+      removeDevice: async () => undefined,
+      findDeviceConfig: async () => null,
+      logger: quiet,
+    })
+    const ask = async (): Promise<number> =>
+      (await provider.listCandidates({ integrationId: 'u1', page: 1, pageSize: 50 })).totalCount
+    const before = await ask()
+    infra.push(infraSnapshot({ id: 'ap-new' }))
+    await vi.advanceTimersByTimeAsync(5_000)
+    await ask()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(await ask()).toBeGreaterThan(before)
     await manager.stop()
   })
 })
