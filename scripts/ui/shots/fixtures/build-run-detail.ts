@@ -130,6 +130,17 @@ export default defineFixtures({
     'Build → Automations: run detail with conditions, a nested failure and a folded hold',
   handlers: {
     ...automations.handlers,
+    'deviceManager.search': {
+      items: [],
+      nextCursor: null,
+      total: 0,
+      compatibleTotal: 0,
+      fleetTotal: 0,
+      hiddenIncompatible: 0,
+      facets: { locations: [], integrations: [], types: [] },
+      suggested: [],
+    },
+    'notificationRules.getConditionCatalog': { catalog: [] },
     'coreBlocks.getTraces': () => ({ traces: TRACES, lastError: ROUTE_ERROR }),
   },
 })
