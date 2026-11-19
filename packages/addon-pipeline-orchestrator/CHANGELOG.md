@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.707] - 2026-11-19
+
 ### Changed
 
 - A camera on a node whose every inference device is turned off in load balancing or not functional is no longer run on the node's default engine: detection is skipped with the named reason no-eligible-device until a device is enabled or recovers

@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Node inference devices report whether the default engine is excluded; stateless step refusals gain 'no-eligible-device'.
+## [1.2.599] - 2026-11-19
 
 ### Added
 
@@ -17,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Node inference devices report whether the default engine is excluded; stateless step refusals gain 'no-eligible-device'.
 - FFmpeg rate control accepts an optional ABR target fraction on a capped encode.
 - Derived-stream encode profiles accept video codec source and audio none; new DerivedEncodePreview schemas for the stream-broker previewDerivedEncode method.
 
