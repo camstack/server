@@ -8,8 +8,16 @@ import {
   type HeatingOverview,
 } from './ccu-schemas.js'
 
-/** Channel types that can sit in a heating group (HmIP and HomeMatic thermostats, wall thermostats, radiator valves). */
-const HEATING_CHANNEL = /THERMOSTAT|CLIMATECONTROL|THERMALCONTROL/i
+/**
+ * Channel types the CCU accepts as heating-group members: the climate channel
+ * that both reports and is commanded (`*_TRANSCEIVER`: HmIP thermostats and
+ * radiator valves `:1`, floor-heating actuators, the HomeMatic RT thermostat),
+ * and the classic wall thermostat's `THERMALCONTROL_TRANSMIT`. The device's other
+ * climate channels (`*_RECEIVER`, `*_TRANSMITTER`: link endpoints for the
+ * shutter contact, key, floor sensor, boiler demand) are not members.
+ */
+const HEATING_GROUP_MEMBER =
+  /^(?:HEATING_)?CLIMATECONTROL_(?:RT_|FLOOR_)?TRANSCEIVER$|^THERMALCONTROL_TRANSMIT$/
 
 function deviceAddressOf(channelAddress: string): string {
   const colon = channelAddress.indexOf(':')
@@ -36,7 +44,7 @@ function candidatesOf(devices: readonly HmDevice[]): GroupCandidate[] {
   const out: GroupCandidate[] = []
   for (const device of devices) {
     for (const channel of device.channels) {
-      if (channel.type !== undefined && HEATING_CHANNEL.test(channel.type)) {
+      if (channel.type !== undefined && HEATING_GROUP_MEMBER.test(channel.type)) {
         out.push({
           address: channel.address,
           type: channel.type,

@@ -86,6 +86,51 @@ describe('listHeatingGroups', () => {
     expect(out.candidates.map((c) => c.address)).toEqual(['TRV1:1'])
   })
 
+  it('offers only the control channels the CCU accepts as group members, not every climate channel', async () => {
+    const ch = (address: string, index: number, type: string) => ({
+      address,
+      index,
+      name: null,
+      type,
+      dataPoints: [],
+    })
+    const wall: HmDevice = {
+      address: 'WTH',
+      type: 'HmIP-WTH-2',
+      name: 'Wall',
+      channels: [
+        ch('WTH:0', 0, 'MAINTENANCE'),
+        ch('WTH:1', 1, 'HEATING_CLIMATECONTROL_TRANSCEIVER'),
+        ch('WTH:2', 2, 'HEATING_CLIMATECONTROL_RECEIVER'),
+        ch('WTH:3', 3, 'HEATING_CLIMATECONTROL_CL_TRANSMITTER'),
+        ch('WTH:5', 5, 'HEATING_CLIMATECONTROL_SWITCH_TRANSMITTER'),
+        ch('WTH:7', 7, 'CLIMATECONTROL_FLOOR_TRANSMITTER'),
+      ],
+    }
+    const floor: HmDevice = {
+      address: 'FLR',
+      type: 'HmIPW-FALMOT-C12',
+      name: 'Floor',
+      channels: [ch('FLR:3', 3, 'CLIMATECONTROL_FLOOR_TRANSCEIVER')],
+    }
+    const { handlers } = setup({
+      devices: () => [wall, floor],
+      groups: vi.fn().mockResolvedValue([]),
+    })
+    const out = await handlers.listHeatingGroups({ integrationId: 'hm_1' })
+    expect(out.candidates.map((c) => c.address)).toEqual(['WTH:1', 'FLR:3'])
+  })
+
+  it('still renders a group whose members are channels that are no longer candidates', async () => {
+    const legacy: HmGroup = {
+      ...GROUP,
+      members: [{ address: 'TRV1:2', type: 'HEATING_CLIMATECONTROL_RECEIVER' }],
+    }
+    const { handlers } = setup({ groups: vi.fn().mockResolvedValue([legacy]) })
+    const out = await handlers.listHeatingGroups({ integrationId: 'hm_1' })
+    expect(out.groups[0]?.members.map((m) => m.address)).toEqual(['TRV1:2'])
+  })
+
   it('names why the groups are missing and still returns the thermostats', async () => {
     const { handlers } = setup({
       groups: vi.fn().mockRejectedValue(new Error('needs WebUI credentials')),

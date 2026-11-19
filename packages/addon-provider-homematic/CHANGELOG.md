@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Heating tab: a heating group offers only the channels the CCU accepts as members (the thermostat's control channel), not every climate channel of the device
+
 ## [1.2.207] - 2026-11-18
 
 ### Changed
