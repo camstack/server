@@ -10,7 +10,10 @@ import { logPersonWithoutViewer } from './person-without-viewer.js'
 import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { formatTrpcError } from './cap-route-error-formatter.js'
-import { NON_ADMIN_CONFIG_REDACTED_METHODS } from './device-config-secret-redaction.js'
+import {
+  ALL_PRINCIPALS_REDACTED_METHODS,
+  NON_ADMIN_CONFIG_REDACTED_METHODS,
+} from './device-config-secret-redaction.js'
 import { projectListAllForPrincipal } from './principal-visibility.js'
 import { LOCALIZED_SCHEMA_PATHS } from './localized-schema-paths.js'
 import { authorizeProcedure, viewerPassesAdminTier } from './principal-authorization.js'
@@ -91,7 +94,10 @@ const localizeSchemaOutput = t.middleware(async ({ ctx, path, next }) => {
   const out = await next()
   const lang = ctx.lang ?? DEFAULT_CATALOG_LANG
   if (!out.ok || lang === DEFAULT_CATALOG_LANG || !LOCALIZED_SCHEMA_PATHS.has(path)) return out
-  return { ...out, data: localizeConfigTree(out.data, getCatalogRegistry().lookupFor(lang)) }
+  return {
+    ...out,
+    data: localizeConfigTree(out.data, getCatalogRegistry().lookupFor(lang)),
+  }
 })
 
 /** Every authenticated procedure starts from here, so the localizing middleware is the outermost. */
@@ -160,7 +166,11 @@ export const protectedProcedure = localized.use(async ({ ctx, next, path, getRaw
   // Spread+reassign of `user` narrows downstream ctx from `User | null` to
   // `User` so `adminProcedure` can read fields without re-checking.
   if (verdict.mode === 'all') {
-    return next({ ctx: { ...ctx, user } })
+    // A camera's own login in a stream URL is withheld from an admin too.
+    const redactForAll = ALL_PRINCIPALS_REDACTED_METHODS.get(path)
+    const out = await next({ ctx: { ...ctx, user } })
+    if (!out.ok || !redactForAll) return out
+    return { ...out, data: redactForAll(out.data, await getRawInput()) }
   }
   if (verdict.mode === 'share') {
     const grant = verdict.grant

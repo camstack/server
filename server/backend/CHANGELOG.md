@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An automation run that crashes outside its steps now records the reason on its trace, and a hold's pending row is folded into the run it became.
+- Camera logins inside stream URLs (stream catalog, camera stream views, runtime-state slice) are now masked for admin sessions too
 
 ## [1.2.909] - 2026-11-19
 

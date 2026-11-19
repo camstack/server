@@ -123,7 +123,7 @@ import {
   toAudioSidecarCodec,
 } from './ffmpeg-invocation.js'
 import { FfmpegPushReader, type FfmpegPushReaderCallbacks } from '../rtsp/ffmpeg-push-reader.js'
-import { buildFfmpegArgs } from '@camstack/types'
+import { buildFfmpegArgs, maskUrlCredentials } from '@camstack/types'
 import {
   decideEgressCopy,
   type EgressCopyDecision,
@@ -863,7 +863,7 @@ export class EgressTranscodeManager {
       meta: {
         pipelineKey: key,
         brokerId,
-        sourceUrl: source.url,
+        sourceUrl: maskUrlCredentials(source.url),
         transport: delivery.transport,
         encoder: entry.handle.encoder,
         decodeHwAccel: actualHwAccel ?? 'software',

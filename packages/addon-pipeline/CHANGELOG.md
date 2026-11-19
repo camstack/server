@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Stream broker egress logs mask camera credentials in the source URL
+
 ## [1.2.669] - 2026-11-19
 
 ### Changed

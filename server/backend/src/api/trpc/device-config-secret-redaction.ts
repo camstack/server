@@ -384,7 +384,10 @@ const DEVICE_EXPORT_CAP = 'device-export'
  */
 export function redactStatusAggregateSetup(data: unknown): unknown {
   if (!isRecord(data) || !(DEVICE_EXPORT_CAP in data)) return data
-  return { ...data, [DEVICE_EXPORT_CAP]: redactExportSetup(data[DEVICE_EXPORT_CAP]) }
+  return {
+    ...data,
+    [DEVICE_EXPORT_CAP]: redactExportSetup(data[DEVICE_EXPORT_CAP]),
+  }
 }
 
 /** Project a batch status aggregate (`Record<deviceId, Record<capName, status>>`). */
@@ -538,4 +541,53 @@ export const NON_ADMIN_CONFIG_REDACTED_METHODS: ReadonlyMap<string, ConfigRedact
   ['deviceState.getSnapshot', maskUrlCredentialsDeep],
   ['deviceState.getCapSlice', maskUrlCredentialsDeep],
   ['deviceState.getAllSnapshots', maskUrlCredentialsDeep],
+])
+
+/** A projection that also sees the call's validated-shape input (e.g. the `capName` asked for). */
+export type InputAwareRedactor = (data: unknown, input: unknown) => unknown
+
+const STREAM_CATALOG_CAP = 'stream-catalog'
+
+/** Mask URL credentials in the `stream-catalog` slice of a `capName -> slice` record. */
+function maskCatalogSliceOfSnapshot(snapshot: unknown): unknown {
+  if (!isRecord(snapshot) || !(STREAM_CATALOG_CAP in snapshot)) return snapshot
+  return {
+    ...snapshot,
+    [STREAM_CATALOG_CAP]: maskUrlCredentialsDeep(snapshot[STREAM_CATALOG_CAP]),
+  }
+}
+
+/**
+ * Reads that carry a CAMERA's own login inside a stream URL (`rtsp://user:pass@…`,
+ * Reolink FLV `…&user=…&password=…`) and are masked for EVERY principal, an admin
+ * included — an admin session is a browser, a script, a leaked token; it has no use for
+ * the camera's password, and the settings form already shows it only as `{ $secret }`.
+ *
+ * Applied at the transport boundary only. The stream broker reads `stream-catalog` through
+ * its in-process link (`NEVER_BRIDGED_CAPS`) and the credential reaches the process that
+ * opens the connection without crossing this middleware. Distinct from
+ * {@link NON_ADMIN_CONFIG_REDACTED_METHODS}, which an admin skips.
+ */
+export const ALL_PRINCIPALS_REDACTED_METHODS: ReadonlyMap<string, InputAwareRedactor> = new Map<
+  string,
+  InputAwareRedactor
+>([
+  ['streamCatalog.getCatalog', (d) => maskUrlCredentialsDeep(d)],
+  ['cameraStreams.getCameraStreams', (d) => redactStreamUrlSecrets(d)],
+  ['streamBroker.listAllCameraStreams', (d) => redactStreamUrlSecrets(d)],
+  ['deviceState.getSnapshot', (d) => maskCatalogSliceOfSnapshot(d)],
+  [
+    'deviceState.getCapSlice',
+    (d, input) =>
+      isRecord(input) && input['capName'] === STREAM_CATALOG_CAP ? maskUrlCredentialsDeep(d) : d,
+  ],
+  [
+    'deviceState.getAllSnapshots',
+    (d) =>
+      isRecord(d)
+        ? Object.fromEntries(
+            Object.entries(d).map(([id, snap]) => [id, maskCatalogSliceOfSnapshot(snap)]),
+          )
+        : d,
+  ],
 ])
