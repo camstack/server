@@ -348,6 +348,21 @@ describe('buildDerivedTranscodeArgs — the derived encode follows the source ca
     expect(cadence.encodeFps).toBe(20)
   })
 
+  it.each([
+    [24.9, 25],
+    [29.97, 30],
+  ])('source %s rounds to -r %s, and GOP and VBV follow the encoded rate', (measured, rate) => {
+    const { args, cadence } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: { fps: measured, idrIntervalMs: 2000 },
+    })
+    expect(value(args, '-r')).toBe(String(rate))
+    expect(cadence.gopFrames).toBe(rate * 2)
+    expect(value(args, '-g')).toBe(String(rate * 2))
+    expect(cadence.vbvSeconds).toBe(2)
+  })
+
   it('no fps and no measured source fps: passthrough, rate unknown', () => {
     const { args, cadence } = buildDerivedTranscodeArgs({ profile: noFps, loopbackUrl: URL })
     expect(value(args, '-fps_mode')).toBe('passthrough')

@@ -219,7 +219,12 @@ function positive(value: number | null | undefined): number | null {
 
 /**
  * A measured source rate as an integer `-r`: 20.5 from a 20 fps camera becomes
- * 20, 24.9 becomes 25. A half rounds DOWN so the encode never upsamples.
+ * 20, 24.9 becomes 25, 29.97 becomes 30. Rounding to the nearest integer can
+ * add at most half a frame per second (a half rounds DOWN, so 20.5 does not).
+ *
+ * Known limit: the rate is fixed at the value measured at spawn, so a source
+ * that changes its rate later (night mode) gets duplicated or dropped frames
+ * until the next respawn.
  */
 export function roundSourceFps(fps: number): number {
   return Math.max(1, Math.round(fps - 0.25))
@@ -262,6 +267,8 @@ export function resolveDerivedCadence(
   const encodeFps = requestedFps !== null && !fpsClamped ? requestedFps : sourceEncodeFps
   const outputFps = fpsClamped ? sourceFps : (requestedFps ?? sourceFps)
   const observed = sourceFps !== null
+  // GOP and VBV are counted in the rate the encoder is TOLD, not the raw measurement.
+  const gopRate = encodeFps ?? outputFps
   const idrSeconds = Math.min(
     DERIVED_MAX_IDR_SECONDS,
     Math.max(
@@ -271,10 +278,10 @@ export function resolveDerivedCadence(
   )
   const gopFrames =
     video.gopFrames ??
-    (observed && outputFps !== null
-      ? Math.max(1, Math.round(outputFps * idrSeconds))
+    (observed && gopRate !== null
+      ? Math.max(1, Math.round(gopRate * idrSeconds))
       : (requestedFps ?? DERIVED_DEFAULT_GOP_FRAMES))
-  const gopSeconds = gopFrames / (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
+  const gopSeconds = gopFrames / (gopRate ?? DERIVED_DEFAULT_GOP_FRAMES)
   return {
     // A clamped request follows the source cadence, like no request.
     fpsMode: encodeFps !== null ? 'cfr' : 'passthrough',
@@ -484,10 +491,9 @@ function withCarrierDefaults(
   cadence: DerivedCadence,
   bitrate: DerivedBitrate,
 ): VideoEncode {
-  const { fps: _profileFps, ...rest } = video
   const bitrateKbps = bitrate.capKbps ?? undefined
   return {
-    ...rest,
+    ...video,
     // The resolved rate (profile, or the rounded measured source rate).
     ...(cadence.encodeFps !== null ? { fps: cadence.encodeFps } : {}),
     gopFrames: cadence.gopFrames,

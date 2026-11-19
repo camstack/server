@@ -88,6 +88,15 @@ const MAX_STDERR_TAIL = 4 * 1024
 const STDERR_LOG_INTERVAL_MS = 10_000
 const STDERR_LOG_MAX_CHARS = 1024
 
+/**
+ * ffmpeg error lines echo the input URL, userinfo and token included. Every
+ * `scheme://…` up to the next whitespace is dropped before stderr is logged or
+ * put in an error message.
+ */
+export function redactFfmpegStderr(text: string): string {
+  return text.replace(/\b([a-z][a-z0-9+.-]*):\/\/\S+/gi, '$1://<redacted>')
+}
+
 /** Grace before escalating SIGTERM → SIGKILL on a lingering child. */
 const KILL_GRACE_MS = 500
 
@@ -278,7 +287,7 @@ export class FfmpegPushReader {
     if (this.logger !== undefined && now - this.lastStderrLogAt >= STDERR_LOG_INTERVAL_MS) {
       this.lastStderrLogAt = now
       this.logger.warn(`${this.logLabel}: ffmpeg stderr`, {
-        meta: { stderr: text.trim().slice(-STDERR_LOG_MAX_CHARS) },
+        meta: { stderr: redactFfmpegStderr(text.trim()).slice(-STDERR_LOG_MAX_CHARS) },
       })
     }
   }
@@ -287,7 +296,7 @@ export class FfmpegPushReader {
     if (this.done) return
     this.done = true
     this.demux?.flush()
-    const tail = this.stderrTail.trim()
+    const tail = redactFfmpegStderr(this.stderrTail.trim())
     const message = `${this.logLabel} exited (code=${code ?? 'null'}, signal=${
       signal ?? 'null'
     })${tail ? `: ${tail}` : ''}`
@@ -300,7 +309,7 @@ export class FfmpegPushReader {
     this.done = true
     this.demux?.flush()
     this.killChild()
-    const tail = this.stderrTail.trim()
+    const tail = redactFfmpegStderr(this.stderrTail.trim())
     const message = tail ? `${error.message}: ${tail}` : error.message
     this.callbacks.onError?.(new Error(message))
     this.fireTeardown()
