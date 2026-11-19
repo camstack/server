@@ -1349,7 +1349,7 @@
       "callableYes": "Sì",
       "callableNo": "No",
       "subscriptionNote": "Le subscription trasmettono su websocket e non si possono eseguire da questa pagina.",
-      "input": "Input (JSON)",
+      "input": "Input",
       "noInput": "Questo metodo non accetta input.",
       "run": "Esegui",
       "running": "In esecuzione…",
@@ -1382,7 +1382,28 @@
       "callFailed": "Chiamata fallita",
       "confirmTitle": "Eseguire una mutation?",
       "confirmMessage": "{{method}} modifica lo stato di questo hub. Eseguirla con la tua sessione?",
-      "callablePerDevice": "Dipende dal dispositivo"
+      "callablePerDevice": "Dipende dal dispositivo",
+      "macro": {
+        "devices": "Dispositivi",
+        "camerasMedia": "Telecamere e media",
+        "pipeline": "Pipeline e rilevamento",
+        "recordings": "Registrazioni e archiviazione",
+        "notifications": "Notifiche e automazioni",
+        "integrations": "Integrazioni e addon",
+        "system": "Sistema e accessi",
+        "other": "Altro"
+      },
+      "macroCount": "{{shown}} di {{total}}",
+      "form": {
+        "formView": "Modulo",
+        "jsonView": "JSON",
+        "viewLabel": "Editor dell'input",
+        "none": "Nessuno",
+        "required": "obbligatorio",
+        "devicePlaceholder": "Scegli un dispositivo",
+        "jsonField": "Valore JSON",
+        "invalidJsonField": "JSON non valido"
+      }
     }
   },
   "common": {

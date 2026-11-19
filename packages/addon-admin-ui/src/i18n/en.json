@@ -1349,7 +1349,7 @@
       "callableYes": "Yes",
       "callableNo": "No",
       "subscriptionNote": "Subscriptions stream over a websocket and cannot be run from this page.",
-      "input": "Input (JSON)",
+      "input": "Input",
       "noInput": "This method takes no input.",
       "run": "Run",
       "running": "Running…",
@@ -1382,7 +1382,28 @@
       "callFailed": "Call failed",
       "confirmTitle": "Run a mutation?",
       "confirmMessage": "{{method}} changes state on this hub. Run it with your session?",
-      "callablePerDevice": "Depends on the device"
+      "callablePerDevice": "Depends on the device",
+      "macro": {
+        "devices": "Devices",
+        "camerasMedia": "Cameras & media",
+        "pipeline": "Pipeline & detection",
+        "recordings": "Recordings & storage",
+        "notifications": "Notifications & automations",
+        "integrations": "Integrations & addons",
+        "system": "System & access",
+        "other": "Other"
+      },
+      "macroCount": "{{shown}} of {{total}}",
+      "form": {
+        "formView": "Form",
+        "jsonView": "JSON",
+        "viewLabel": "Input editor",
+        "none": "None",
+        "required": "required",
+        "devicePlaceholder": "Pick a device",
+        "jsonField": "JSON value",
+        "invalidJsonField": "Not valid JSON"
+      }
     }
   },
   "common": {

@@ -14,16 +14,16 @@ export const API_EXPLORER_METHOD_PARAM = 'method'
 
 const MAX_DEPTH = 8
 
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+export function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function schemaList(value: unknown): readonly JsonSchema[] {
+export function schemaList(value: unknown): readonly JsonSchema[] {
   return Array.isArray(value) ? value.filter(isRecord) : []
 }
 
 /** `#/$defs/X` (or `#/definitions/X`) against the root document; anything else stays as is. */
-function resolveRef(schema: JsonSchema, root: JsonSchema): JsonSchema {
+export function resolveRef(schema: JsonSchema, root: JsonSchema): JsonSchema {
   const ref = schema['$ref']
   if (typeof ref !== 'string' || !ref.startsWith('#/')) return schema
   let node: unknown = root
@@ -33,14 +33,14 @@ function resolveRef(schema: JsonSchema, root: JsonSchema): JsonSchema {
   return isRecord(node) ? node : schema
 }
 
-function typesOf(schema: JsonSchema): readonly string[] {
+export function typesOf(schema: JsonSchema): readonly string[] {
   const type = schema['type']
   if (typeof type === 'string') return [type]
   if (Array.isArray(type)) return type.filter((t): t is string => typeof t === 'string')
   return []
 }
 
-function requiredOf(schema: JsonSchema): readonly string[] {
+export function requiredOf(schema: JsonSchema): readonly string[] {
   const required = schema['required']
   return Array.isArray(required) ? required.filter((r): r is string => typeof r === 'string') : []
 }

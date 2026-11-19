@@ -34,10 +34,12 @@ import {
   formatResult,
   type InputIssue,
   type JsonSchema,
+  isRecord,
   parseInputText,
-  skeletonFromSchema,
 } from '../../lib/api-explorer'
+import { formSeed, inputFieldsOf } from '../../lib/api-input-fields'
 import { hubOrigin } from '../../lib/mount'
+import { ApiInputForm } from './ApiInputForm'
 import { KindBadge, TierBadge } from './ApiMethodTable'
 
 export interface ApiMethodDetailProps {
@@ -61,7 +63,7 @@ const CALLABLE_LABEL: Readonly<Record<ApiCallable, string>> = {
 }
 
 function skeletonText(schema: JsonSchema | null): string {
-  const skeleton = skeletonFromSchema(schema)
+  const skeleton = formSeed(schema)
   return skeleton === undefined ? '' : JSON.stringify(skeleton, null, 2)
 }
 
@@ -77,6 +79,8 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
   const [text, setText] = useState('')
   const [outcome, setOutcome] = useState<RunOutcome | null>(null)
   const [running, setRunning] = useState(false)
+  const [view, setView] = useState<'form' | 'json'>('form')
+  const fields = useMemo(() => inputFieldsOf(schema), [schema])
 
   // The editor starts from the skeleton once the schema has answered.
   useEffect(() => {
@@ -84,6 +88,15 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
   }, [schema])
 
   const parsed = useMemo(() => parseInputText(text), [text])
+  // The form edits the same value as the JSON box; it needs an object (or none yet).
+  const formValue: Readonly<Record<string, unknown>> | null =
+    fields === null || !parsed.ok
+      ? null
+      : isRecord(parsed.value)
+        ? parsed.value
+        : parsed.value === undefined
+          ? {}
+          : null
   const issues: readonly InputIssue[] = parsed.ok
     ? checkInputAgainstSchema(parsed.value, schema)
     : []
@@ -177,22 +190,56 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
 
         {runnable && (
           <div className="space-y-2">
-            <label
-              htmlFor="api-explorer-input"
-              className="text-xs font-medium text-foreground-muted"
-            >
-              {t('system.apiExplorer.input')}
-            </label>
-            <Textarea
-              id="api-explorer-input"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={method.hasInput ? 8 : 2}
-              spellCheck={false}
-              placeholder={method.hasInput ? undefined : t('system.apiExplorer.noInput')}
-              state={parsed.ok && issues.length === 0 ? 'default' : 'error'}
-              className="font-mono text-xs"
-            />
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="api-explorer-input"
+                className="text-xs font-medium text-foreground-muted"
+              >
+                {t('system.apiExplorer.input')}
+              </label>
+              {formValue !== null && (
+                <div
+                  role="group"
+                  aria-label={t('system.apiExplorer.form.viewLabel')}
+                  className="flex items-center gap-1"
+                >
+                  <Button
+                    size="sm"
+                    variant={view === 'form' ? 'secondary' : 'ghost'}
+                    aria-pressed={view === 'form'}
+                    onClick={() => setView('form')}
+                  >
+                    {t('system.apiExplorer.form.formView')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={view === 'json' ? 'secondary' : 'ghost'}
+                    aria-pressed={view === 'json'}
+                    onClick={() => setView('json')}
+                  >
+                    {t('system.apiExplorer.form.jsonView')}
+                  </Button>
+                </div>
+              )}
+            </div>
+            {formValue !== null && fields !== null && view === 'form' ? (
+              <ApiInputForm
+                fields={fields}
+                value={formValue}
+                onChange={(next) => setText(JSON.stringify(next, null, 2))}
+              />
+            ) : (
+              <Textarea
+                id="api-explorer-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={method.hasInput ? 8 : 2}
+                spellCheck={false}
+                placeholder={method.hasInput ? undefined : t('system.apiExplorer.noInput')}
+                state={parsed.ok && issues.length === 0 ? 'default' : 'error'}
+                className="font-mono text-xs"
+              />
+            )}
             <InputIssues parseError={parsed.ok ? null : parsed.message} issues={issues} />
             <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => void run()} disabled={!canRun}>

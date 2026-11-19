@@ -50,6 +50,20 @@ const RAW: readonly ShotMethod[] = [
     hasInput: true,
   },
   { path: 'system.info', kind: 'query', tier: 'protected', cap: null, hasInput: false },
+  { path: 'ptz.moveTo', kind: 'mutation', tier: 'protected', cap: null, hasInput: true },
+  { path: 'snapshot.capture', kind: 'mutation', tier: 'protected', cap: null, hasInput: true },
+  {
+    path: 'pipelineOrchestrator.getConfig',
+    kind: 'query',
+    tier: 'admin',
+    cap: null,
+    hasInput: false,
+  },
+  { path: 'storage.getUsage', kind: 'query', tier: 'protected', cap: null, hasInput: false },
+  { path: 'notificationRules.list', kind: 'query', tier: 'admin', cap: null, hasInput: false },
+  { path: 'integrations.list', kind: 'query', tier: 'admin', cap: null, hasInput: false },
+  { path: 'userManagement.listUsers', kind: 'query', tier: 'admin', cap: null, hasInput: false },
+  { path: 'newFeature.status', kind: 'query', tier: 'protected', cap: null, hasInput: false },
 ]
 
 const METHODS = RAW.map((m) => {
@@ -78,6 +92,8 @@ const SET_DISABLED_SCHEMA = {
     deviceId: { type: 'integer', minimum: 1 },
     disabled: { type: 'boolean' },
     reason: { type: 'string', enum: ['operator', 'maintenance'], default: 'operator' },
+    durationMinutes: { type: 'integer', minimum: 1, maximum: 1440, default: 30 },
+    keepRecording: { type: 'boolean', default: true },
   },
   required: ['deviceId', 'disabled'],
   additionalProperties: false,
