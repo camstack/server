@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- FormSaveBar: the sticky Save / Discard bar is now a library composite on an opaque surface, so text no longer shows through it
+
 ## [1.2.476] - 2026-11-19
 
 ### Changed
@@ -14,9 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration switch hooks follow the hub registry (listByAddon, adoptInstanceRows)
 - Light and floodlight device cards now show an On motion toggle when the device supports it, shared with the siren card.
 - Every device card whose device supports it now shows an On motion icon toggle in the bottom-left corner (the siren's own text toggle is gone); the siren's Sound and Stop buttons are icons with a spinner while a command is in flight.
-### Changed
-
-- FormSaveBar: the sticky Save / Discard bar is now a library composite on an opaque surface, so text no longer shows through it
 
 ## [1.2.475] - 2026-11-19
 
