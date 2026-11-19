@@ -5,11 +5,11 @@ import { coreBlockComposition, DeviceType, isEngineHostedHelper } from '@camstac
 import {
   Badge,
   ErrorBox,
-  trpc,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
   useDeviceManagerSetLocation,
 } from '@camstack/ui-library'
+import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CompositionFieldsCardList } from '../device/customize/cards/CompositionFieldsCardList'
@@ -35,7 +35,7 @@ export function CompositionBlockEditor({
   const { t } = useTranslation()
   const read = useCoreBlocksGetComposition({ blockId })
   const update = useCoreBlocksUpdateComposition()
-  const utils = trpc.useUtils()
+  const queryClient = useQueryClient()
   const setLocation = useDeviceManagerSetLocation()
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
@@ -109,7 +109,10 @@ export function CompositionBlockEditor({
             }
             await read.refetch()
             // A rename writes the device's name: every list that shows it refreshes now, not on reload.
-            await Promise.all([utils.coreBlocks.invalidate(), utils.deviceManager.invalidate()])
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: [['coreBlocks']] }),
+              queryClient.invalidateQueries({ queryKey: [['deviceManager']] }),
+            ])
           })
           if (lines.length > 0) return { kind: 'refused', lines }
           return { kind: 'saved', deviceId: deviceId ?? 0 }

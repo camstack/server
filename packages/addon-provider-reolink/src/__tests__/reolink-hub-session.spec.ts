@@ -19,6 +19,8 @@ import {
   ReolinkHubSessions,
 } from '../reolink-hub-session.js'
 
+type NvrSummaryOptions = Parameters<HubApiPort['getNvrChannelsSummary']>[0]
+
 const CONNECTION: ReolinkHubConnection = {
   host: '192.168.1.10',
   port: 9000,
@@ -60,7 +62,7 @@ function fakeApi(channels: readonly ChannelRow[] = []) {
   const api = {
     login: vi.fn(async () => undefined),
     close: vi.fn(async () => undefined),
-    getNvrChannelsSummary: vi.fn(async () => ({
+    getNvrChannelsSummary: vi.fn(async (_options?: NvrSummaryOptions) => ({
       devices: channels,
       channels: [],
     })),

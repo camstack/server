@@ -16,6 +16,7 @@ const HUB: HubSessionHandle = {
   name: 'Home Hub',
   isOnline: true,
   reboot: async () => undefined,
+  refresh: async () => undefined,
   getApi: async () => SENTINEL_API,
   channelSnapshot: () => ({
     channels: [

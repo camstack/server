@@ -3,6 +3,7 @@
  * cells on the camera its block made, and a Terminal camera changes Terminal.
  * Neither opens the helper wizard.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -97,9 +98,11 @@ const GRID = {
 
 function renderEditor(): void {
   render(
-    <MemoryRouter>
-      <CompositionBlockEditor blockId="b1" />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <CompositionBlockEditor blockId="b1" />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
