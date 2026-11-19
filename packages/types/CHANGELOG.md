@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- installPythonRequirements accepts exclusiveOf: pip distributions to uninstall before the file is installed
+
 ## [1.2.599] - 2026-11-19
 
 ### Added

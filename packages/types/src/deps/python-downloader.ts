@@ -239,6 +239,29 @@ export async function installPythonPackages(
   }
 }
 
+/** Options of {@link installPythonRequirements}. */
+export interface InstallRequirementsOptions {
+  /**
+   * pip distributions that provide the same module as this file and must not
+   * coexist with it. Any of them found installed is uninstalled and the file
+   * is installed again, whatever its marker says.
+   */
+  readonly exclusiveOf?: readonly string[]
+}
+
+/** True when `pip show <dist>` finds the distribution in the embedded Python. */
+function isPipDistributionInstalled(pythonPath: string, dist: string): boolean {
+  try {
+    execFileSync(pythonPath, ['-m', 'pip', 'show', '--disable-pip-version-check', dist], {
+      stdio: 'pipe',
+      timeout: 60_000,
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Install a pip requirements file into the embedded Python.
  *
@@ -255,6 +278,7 @@ export async function installPythonRequirements(
   pythonPath: string,
   requirementsFile: string,
   logger: IScopedLogger,
+  options: InstallRequirementsOptions = {},
 ): Promise<void> {
   if (!existsSync(requirementsFile)) {
     throw new Error(`Requirements file not found: ${requirementsFile}`)
@@ -270,16 +294,51 @@ export async function installPythonRequirements(
   const markerDir = join(pythonRoot, '.requirements-installed')
   const markerPath = join(markerDir, `${fileBase}-${hash}.marker`)
 
-  if (existsSync(markerPath)) {
+  // A distribution that ships the same module as this file's (onnxruntime vs
+  // onnxruntime-gpu) is removed first, and the install is forced: two
+  // distributions in one module directory shadow each other, and removing one
+  // deletes files the other owns, so the survivor must be written again.
+  const conflicting = (options.exclusiveOf ?? []).filter((dist) =>
+    isPipDistributionInstalled(pythonPath, dist),
+  )
+
+  if (conflicting.length === 0 && existsSync(markerPath)) {
     logger.debug('Python requirements already installed', { meta: { requirementsFile, hash } })
     return
+  }
+
+  if (conflicting.length > 0) {
+    logger.info('Replacing conflicting Python distributions', {
+      meta: { requirementsFile, conflicting },
+    })
+    try {
+      execFileSync(
+        pythonPath,
+        ['-m', 'pip', 'uninstall', '--yes', '--disable-pip-version-check', ...conflicting],
+        { stdio: 'pipe', timeout: 120_000 },
+      )
+    } catch (err) {
+      logger.error('Failed to uninstall conflicting Python distributions', {
+        meta: { requirementsFile, conflicting, error: errMsg(err) },
+      })
+      throw err
+    }
   }
 
   logger.info('Installing Python requirements', { meta: { requirementsFile, hash } })
   try {
     execFileSync(
       pythonPath,
-      ['-m', 'pip', 'install', '--quiet', '--disable-pip-version-check', '-r', requirementsFile],
+      [
+        '-m',
+        'pip',
+        'install',
+        '--quiet',
+        '--disable-pip-version-check',
+        ...(conflicting.length > 0 ? ['--force-reinstall'] : []),
+        '-r',
+        requirementsFile,
+      ],
       {
         stdio: 'pipe',
         timeout: 600_000, // 10 minutes — coremltools + tensorflow can be slow

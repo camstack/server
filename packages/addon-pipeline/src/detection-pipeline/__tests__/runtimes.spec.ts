@@ -4,6 +4,7 @@ import {
   runtimeDevices,
   defaultDeviceFor,
   pythonRequirementsFor,
+  exclusiveDistributionsFor,
   modelFormatFor,
 } from '../runtimes.js'
 import {
@@ -171,5 +172,16 @@ describe('delegation invariants — shared rules agreement', () => {
 
   it('local defaultDeviceFor("openvino") agrees with shared', () => {
     expect(defaultDeviceFor('openvino')).toBe(sharedDefaultDeviceFor('openvino'))
+  })
+})
+
+describe('exclusiveDistributionsFor — one onnxruntime distribution per node', () => {
+  it('the CPU file excludes the CUDA wheel and the CUDA file excludes the CPU wheel', () => {
+    expect(exclusiveDistributionsFor('requirements-onnxruntime.txt')).toEqual(['onnxruntime-gpu'])
+    expect(exclusiveDistributionsFor('requirements-onnxruntime-gpu.txt')).toEqual(['onnxruntime'])
+  })
+
+  it('an unrelated file has no exclusive distribution', () => {
+    expect(exclusiveDistributionsFor('requirements.txt')).toEqual([])
   })
 })

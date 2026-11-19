@@ -42,6 +42,7 @@ export {
   installPythonPackages,
   installPythonRequirements,
   PYTHON_VERSION,
+  type InstallRequirementsOptions,
 } from './deps/python-downloader.js'
 // The Coral delegate (libedgetpu): which file a node loads, and the pinned
 // per-OS set the deps downloader stages (zstd .deb payloads read in-process).

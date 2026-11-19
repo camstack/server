@@ -9,6 +9,7 @@ import {
   ensurePython,
   installPythonPackages,
   installPythonRequirements,
+  type InstallRequirementsOptions,
 } from '@camstack/types/node'
 
 /**
@@ -143,13 +144,16 @@ export class AddonDepsManager implements IAddonDepsManager {
     )
   }
 
-  async installPythonRequirements(requirementsFile: string): Promise<void> {
+  async installPythonRequirements(
+    requirementsFile: string,
+    options?: InstallRequirementsOptions,
+  ): Promise<void> {
     const pythonPath = await this.ensurePython()
     if (!pythonPath) {
       throw new Error('Cannot install Python requirements: Python is not available')
     }
     await singleFlight(this.depsDir, 'python-pip', () =>
-      installPythonRequirements(pythonPath, requirementsFile, this.logger),
+      installPythonRequirements(pythonPath, requirementsFile, this.logger, options),
     )
     await this.stageNativeDepsDeclaredBy(requirementsFile)
   }

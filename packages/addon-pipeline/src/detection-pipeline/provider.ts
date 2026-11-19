@@ -151,6 +151,7 @@ import {
   envToHardwareInfo,
   modelFormatFor,
   type ProbedHardware,
+  exclusiveDistributionsFor,
   pythonRequirementsFor,
   type RuntimeEnv,
   type RuntimeId,
@@ -670,6 +671,12 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
   private executor: PipelineExecutor | null = null
   private currentSteps: PipelineDefaultStep[] | null = null
   private currentEngine: PipelineEngineChoice
+  /**
+   * The NVIDIA slot of the node's hardware (present even while the CUDA EP is
+   * not), null until probed. It decides which ONNX Runtime wheel the provisioner
+   * installs, so it is read BEFORE the first provisioning (`setApi`).
+   */
+  private probedNvidia: NvidiaInfo | null = null
   private readonly log: IScopedLogger
 
   /** Addon context — ctx.api resolves lazily (direct caller created after boot) */
@@ -1096,6 +1103,8 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // FIRST `select()` — the inference gate (`assertEngineReady`) stays
     // closed until the machine reaches `ready`.
     if (!this.needsAutoPick) {
+      // The ORT wheel depends on the NVIDIA slot: know it before the first install.
+      await this.refreshProbedNvidia()
       this.startProvisioningForCurrentEngine()
       return
     }
@@ -1321,7 +1330,9 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         for (const basename of files) {
           const file = path.join(pythonAddonDir, basename)
           if (!fs.existsSync(file)) continue
-          await this.addonCtx.deps.installPythonRequirements(file)
+          await this.addonCtx.deps.installPythonRequirements(file, {
+            exclusiveOf: exclusiveDistributionsFor(basename),
+          })
         }
       },
       ensureModelForFormat: async (format) => {
@@ -1349,6 +1360,15 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * engine is ignored. No-op for non-python engines (nothing to install /
    * verify — the gate treats them as ready immediately below).
    */
+  private async refreshProbedNvidia(): Promise<void> {
+    try {
+      const hardware = (await this.addonCtx?.kernel?.inferenceEngine?.resolveHardware()) ?? null
+      this.probedNvidia = hardware ? (toProbedHardware(hardware)?.nvidia ?? null) : null
+    } catch {
+      // Resolver unavailable: the CPU wheel stays the default, as before.
+    }
+  }
+
   private startProvisioningForCurrentEngine(): void {
     if (!this.provisioner) {
       this.provisioner = this.buildProvisioner()

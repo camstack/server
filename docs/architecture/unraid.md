@@ -87,6 +87,7 @@ the setting. The guard exists because every one of them was wrong at some point.
 | `/dev/bus/usb` + `--device-cgroup-rule` | A Coral USB accelerator re-enumerates on init, so the passed-through node is not the one the delegate opens. It appears to load and sheds every frame. |
 | `/config` and `/backups` mapped | The image declares both a `VOLUME` (with `/data`). Unmapped, Docker mints a fresh anonymous volume on every re-create. |
 | `<Restart>unless-stopped` | The NVR does not come back after a host reboot. |
+| `CAMSTACK_ORT_WHEELHOUSE` (nvidia images: set by the image to `/opt/camstack/wheelhouse`; never set or override it in a template) | Read by the pipeline's `requirements-onnxruntime-gpu.txt`. Unset or pointing elsewhere, an NVIDIA node installs the CPU `onnxruntime` wheel and reports `cuda` unusable. A Compose or template that clears the environment loses it. |
 | `CAMSTACK_MOLECULER_USE_HOSTNAME=false` | Nodes advertise a container hostname no other machine can resolve, and a multi-machine cluster never forms. |
 
 `--shm-size=2g` used to be on that list and was **removed on 2026-09-19**. It

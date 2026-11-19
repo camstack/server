@@ -142,8 +142,15 @@ export interface IAddonDepsManager {
    * Idempotent: keyed on (file basename + sha256 of contents). Marker
    * lives under the python install dir so re-downloading python wipes
    * everything together.
+   *
+   * `options.exclusiveOf` names pip distributions that ship the same module
+   * (onnxruntime vs onnxruntime-gpu): any found installed is uninstalled and
+   * the file is installed again, so a node never holds both.
    */
-  installPythonRequirements(requirementsFile: string): Promise<void>
+  installPythonRequirements(
+    requirementsFile: string,
+    options?: { readonly exclusiveOf?: readonly string[] },
+  ): Promise<void>
 
   /** Get the deps directory path */
   getDepsDir(): string

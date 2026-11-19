@@ -337,6 +337,22 @@ export function pythonRequirementsFor(id: RuntimeId, ctx?: RequirementsContext):
 }
 
 /**
+ * pip distributions a requirements file must not share a node with: the CPU and
+ * the CUDA onnxruntime wheels both ship the `onnxruntime/` module, so
+ * installing one over the other leaves a mixed directory. Passed to the deps
+ * manager, which uninstalls a found conflict and reinstalls the file — in both
+ * directions (a node entering and a node leaving an nvidia image).
+ */
+const EXCLUSIVE_DISTRIBUTIONS: Readonly<Record<string, readonly string[]>> = {
+  'requirements-onnxruntime.txt': ['onnxruntime-gpu'],
+  'requirements-onnxruntime-gpu.txt': ['onnxruntime'],
+}
+
+export function exclusiveDistributionsFor(requirementsFile: string): readonly string[] {
+  return EXCLUSIVE_DISTRIBUTIONS[requirementsFile] ?? []
+}
+
+/**
  * The pool provisioning for ONE runtime. Callers must pass the runtime of the
  * pool they are provisioning — never the node's default runtime. See
  * `engine/pool-provisioning.ts` for the resolver that layers an operator

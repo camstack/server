@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An NVIDIA image now installs onnxruntime-gpu from its wheelhouse for the ONNX engine instead of the CPU wheel, so CUDA can be offered.
+- An NVIDIA node that already holds the CPU onnxruntime wheel now swaps it for onnxruntime-gpu (and back), instead of leaving two copies in one module
+
 ## [1.2.668] - 2026-11-19
 
 ### Changed
@@ -15,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A derived stream's effective encode can be previewed before it runs, computed by the same function the broker uses to start it; a height-only profile now actually resizes (the other side follows the source aspect).
 - A derived profile or egress asking for the source codec keeps the camera's own codec (H.265 stays H.265).
 - Derived-stream editor: resize, video codec, audio and frame rate are separate switches that combine, bitrate and raw ffmpeg args sit under Expert, and a Final result panel shows the encode the server will run.
-- An NVIDIA image now installs onnxruntime-gpu from its wheelhouse for the ONNX engine instead of the CPU wheel, so CUDA can be offered.
 
 ### Fixed
 
