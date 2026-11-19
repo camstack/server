@@ -101,3 +101,41 @@ describe('the ring', () => {
     expect(ring.map((t) => t.runId)).toEqual(['run1', 'run2', 'run3'])
   })
 })
+
+describe('one hold episode is one run', () => {
+  const held = (
+    id: string,
+    phase: 'pending' | 'fired',
+    outcome: AutomationRunTrace['outcome'],
+    since = 100,
+  ) =>
+    trace({
+      id,
+      outcome,
+      trigger: {
+        ...buildTriggerTrace({ kind: 'device-becomes', leaf: 'when.0', at: 1 }, 'pass', phase),
+        hold: { phase, ms: 600000, mode: 'held', since },
+      },
+    })
+
+  it('drops the "hold pending" row once the same hold fires its run', () => {
+    let ring: AutomationRunTrace[] = []
+    ring = appendTrace(ring, held('pending', 'pending', 'skipped-trigger'), 20)
+    expect(ring.map((t) => t.runId)).toEqual(['pending'])
+    ring = appendTrace(ring, held('run', 'fired', 'ran'), 20)
+    expect(ring.map((t) => t.runId)).toEqual(['run'])
+  })
+
+  it('keeps a pending row of ANOTHER episode', () => {
+    let ring = appendTrace([], held('other', 'pending', 'skipped-trigger'), 20)
+    ring = appendTrace(ring, held('run', 'fired', 'ran', 999), 20)
+    expect(ring.map((t) => t.runId)).toEqual(['other', 'run'])
+  })
+
+  it('the run trace accepts a run-level error', () => {
+    expect(
+      AutomationRunTraceSchema.safeParse(trace({ id: 'e', outcome: 'failed', error: 'boom' }))
+        .success,
+    ).toBe(true)
+  })
+})

@@ -4,13 +4,19 @@
  * colours the blocks of the editor beside it (see `trace-view.ts`).
  */
 
-import type { AutomationRunOutcome, AutomationRunTrace, SchedulerOutcome } from '@camstack/types'
+import {
+  type AutomationRunOutcome,
+  type AutomationRunTrace,
+  foldHoldEpisodes,
+  type SchedulerOutcome,
+} from '@camstack/types'
 import {
   Badge,
   type BadgeVariant,
   Button,
   DisclosureChevron,
   EmptyState,
+  ErrorBox,
   SectionCard,
   Skeleton,
   useIsMidWidth,
@@ -20,7 +26,8 @@ import { History } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
-import { type BlockView, runSummary } from './trace-view'
+import { RunConditions } from './RunConditions'
+import { type BlockView, runFailures, runSummary } from './trace-view'
 
 const OUTCOME_VARIANT: Readonly<Record<AutomationRunOutcome, BadgeVariant>> = {
   ran: 'success',
@@ -155,24 +162,42 @@ function SelectedSummary({ run }: { readonly run: AutomationRunTrace }) {
   const { t } = useTranslation()
   const outcomeLabel = useOutcomeLabel()
   const summary = runSummary(run)
+  const failures = runFailures(run)
   return (
-    <p
-      className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle bg-primary/5 px-3 py-2 text-xs"
-      data-testid="run-summary"
-    >
-      <Badge variant={OUTCOME_VARIANT[run.outcome]}>{outcomeLabel(run.outcome)}</Badge>
-      {summary.reason !== null && (
-        <span className="min-w-0 break-words text-foreground">{summary.reason}</span>
+    <>
+      <p
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle bg-primary/5 px-3 py-2 text-xs"
+        data-testid="run-summary"
+      >
+        <Badge variant={OUTCOME_VARIANT[run.outcome]}>{outcomeLabel(run.outcome)}</Badge>
+        {summary.reason !== null && failures.length === 0 && (
+          <span className="min-w-0 break-words text-foreground">{summary.reason}</span>
+        )}
+        {summary.stepsTotal > 0 && (
+          <span className="text-foreground-subtle">
+            {t('flow.runs.stepsRan', '{{run}} of {{total}} steps ran', {
+              run: summary.stepsRun,
+              total: summary.stepsTotal,
+            })}
+          </span>
+        )}
+      </p>
+      {failures.length > 0 && (
+        <div className="space-y-2 px-3 pb-2" data-testid="run-failure">
+          {failures.map((failure) => (
+            <ErrorBox
+              key={`${String(failure.step)}:${failure.message}`}
+              title={
+                failure.step === null
+                  ? t('flow.runs.runFailed', 'The run failed')
+                  : t('flow.runs.stepFailedAt', 'Step {{n}} failed', { n: failure.step + 1 })
+              }
+              message={failure.message}
+            />
+          ))}
+        </div>
       )}
-      {summary.stepsTotal > 0 && (
-        <span className="text-foreground-subtle">
-          {t('flow.runs.stepsRan', '{{run}} of {{total}} steps ran', {
-            run: summary.stepsRun,
-            total: summary.stepsTotal,
-          })}
-        </span>
-      )}
-    </p>
+    </>
   )
 }
 
@@ -184,7 +209,8 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   // null: the person has not chosen, so the viewport decides.
   const [chosen, setChosen] = useState<boolean | null>(null)
   const expanded = chosen ?? !startsCollapsed
-  const newestFirst = traces === undefined ? [] : traces.toReversed()
+  // A hold's "pending" row is the beginning of its run: one row per run, also for traces stored before the ledger folded them.
+  const newestFirst = traces === undefined ? [] : foldHoldEpisodes(traces).toReversed()
   const selectedRun = newestFirst.find((run) => run.runId === selectedId) ?? null
   return (
     <SectionCard headingId="runs-heading" title={t('flow.runs.title', 'Runs')} icon={History} fill>
@@ -246,6 +272,7 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
             })}
           </ul>
           {selectedRun !== null && <SelectedSummary run={selectedRun} />}
+          {selectedRun !== null && <RunConditions run={selectedRun} />}
           <p className="border-t border-border-subtle px-3 py-2 text-xs text-foreground-subtle">
             {t(
               'flow.runs.hint',

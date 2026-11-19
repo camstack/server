@@ -12749,7 +12749,12 @@
       "hide": "Hide runs",
       "choseElse": "Ran the \"otherwise\" list",
       "choseBranch": "Ran branch {{n}}",
-      "lastRound": "The last of {{n}} rounds:"
+      "lastRound": "The last of {{n}} rounds:",
+      "stepFailed": "This step failed",
+      "stepGuard": "Condition",
+      "runFailed": "The run failed",
+      "stepFailedAt": "Step {{n}} failed",
+      "conditionsTitle": "Conditions"
     },
     "scope": {
       "className": "what it saw",

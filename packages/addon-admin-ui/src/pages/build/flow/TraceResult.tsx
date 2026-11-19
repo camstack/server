@@ -7,7 +7,7 @@
  */
 
 import { AutomationConditionOperatorSchema, type TraceNodeOutcome } from '@camstack/types'
-import { Badge, type BadgeVariant } from '@camstack/ui-library'
+import { Badge, type BadgeVariant, ErrorBox } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { operatorLabel } from '../automation/recipe-parts'
 import {
@@ -154,10 +154,18 @@ export function StepResult({ step, deviceName }: StepResultProps) {
     >
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={TONE_VARIANT[step.tone]}>{label}</Badge>
-        {step.message !== null && (
+        {step.message !== null && step.tone !== 'fail' && (
           <span className="min-w-0 break-words text-foreground">{step.message}</span>
         )}
       </div>
+      {step.message !== null && step.tone === 'fail' && (
+        <ErrorBox message={step.message} title={t('flow.runs.stepFailed', 'This step failed')} />
+      )}
+      {step.conditionReason !== undefined && (
+        <div className="text-[11px] text-foreground-subtle" data-testid="step-guard">
+          {t('flow.runs.stepGuard', 'Condition')}: {step.conditionReason}
+        </div>
+      )}
       {step.chose !== null && (
         <div className="text-foreground-subtle" data-testid="step-chose">
           {step.chose.kind === 'else'

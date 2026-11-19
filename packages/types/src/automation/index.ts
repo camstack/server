@@ -107,6 +107,7 @@ export {
   AutomationStepTraceSchema,
   AutomationTriggerTraceSchema,
   appendTrace,
+  foldHoldEpisodes,
   buildStepArgsTrace,
   buildTriggerTrace,
   isSkippedTrace,

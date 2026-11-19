@@ -1262,6 +1262,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     let outcome: AutomationRunTrace['outcome'] = 'ran'
     let nodes: AutomationConditionTraceNode[] = []
     let steps: AutomationStepTrace[] = []
+    let runError: string | undefined
     try {
       const firedLeaf = trigger['leaf']
       const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), {
@@ -1311,7 +1312,8 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
       outcome = token.aborted ? 'aborted' : result.failed ? 'failed' : 'ran'
     } catch (err: unknown) {
       outcome = 'failed'
-      ctx.logger.warn('automation run failed', { error: err instanceof Error ? err.message : String(err), ...deviceTags(trigger) })
+      runError = err instanceof Error ? err.message : String(err)
+      ctx.logger.warn('automation run failed', { error: runError, ...deviceTags(trigger) })
     } finally {
       runningTokens.delete(token)
       const endedAt = Date.now()
@@ -1324,6 +1326,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         verdict,
         steps,
         outcome,
+        ...(runError === undefined ? {} : { error: runError }),
         repeat: 1,
         lastAt: endedAt,
       })

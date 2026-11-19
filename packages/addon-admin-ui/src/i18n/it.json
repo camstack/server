@@ -12771,7 +12771,12 @@
       "hide": "Nascondi le esecuzioni",
       "choseElse": "Eseguita la lista \"altrimenti\"",
       "choseBranch": "Eseguito il ramo {{n}}",
-      "lastRound": "L'ultimo di {{n}} giri:"
+      "lastRound": "L'ultimo di {{n}} giri:",
+      "stepFailed": "Questo passo e fallito",
+      "stepGuard": "Condizione",
+      "runFailed": "L'esecuzione e fallita",
+      "stepFailedAt": "Il passo {{n}} e fallito",
+      "conditionsTitle": "Condizioni"
     },
     "scope": {
       "className": "cosa ha visto",

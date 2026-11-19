@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An automation run that crashes outside its steps now records the reason on its trace, and a hold's pending row is folded into the run it became.
+
 ## [1.2.909] - 2026-11-19
 
 ### Changed

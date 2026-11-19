@@ -118,6 +118,8 @@ interface Options {
   readonly ledger?: Ledger
   /** The hub cannot answer the stamp read. */
   readonly failStampRead?: boolean
+  /** The logger throws on this message: a crash OUTSIDE every step. */
+  readonly throwOnLog?: string
   /** What `actions.run` answers. */
   readonly actionOutcome?: { outcome: string; message?: string }
   /** What the hub's template renderer answers per template (D1021). */
@@ -142,6 +144,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
   const sliceReads = { count: 0, unconfirmed: 0 }
   const mutate = vi.fn(async () => undefined)
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
+    if (options.throwOnLog === msg) throw new Error('logger crashed')
     logs.push({ level, msg, meta })
   }
   const ctx = {
@@ -828,6 +831,15 @@ describe('action step', () => {
     ])
     expect(h.mutate).toHaveBeenCalledTimes(1)
     expect(h.traces()[0]).toMatchObject({ outcome: 'ran' })
+  })
+
+  it('a run that crashes outside its steps records WHY on the trace, not only in the log', async () => {
+    const block = await load({ triggers: [MOTION], actions: [SIREN] })
+    const h = start(block, { throwOnLog: 'automation running' })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.traces()[0]).toMatchObject({ outcome: 'failed', error: 'logger crashed' })
   })
 
   it('an Action that did not run fails THIS step and leaves the next one not-run', async () => {

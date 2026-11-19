@@ -515,6 +515,9 @@ export class ActionsService implements IActionsProvider {
       conditions: [],
       steps: [...steps],
       outcome,
+      ...(message !== undefined && !steps.some((s) => s.message === message)
+        ? { error: message }
+        : {}),
       repeat: 1,
       lastAt: endedAt,
     }

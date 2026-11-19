@@ -70,7 +70,7 @@ export interface RunsLedgerOptions {
 function failureOf(trace: AutomationRunTrace): string | null {
   if (trace.outcome !== 'failed') return null
   const step = trace.steps.find((s) => s.outcome === 'error')
-  return step?.message ?? 'the run failed'
+  return step?.message ?? trace.error ?? 'the run failed'
 }
 
 export class RunsLedger {

@@ -204,6 +204,11 @@ const runTraceObject = z.object({
    * the trace; this field says exactly what happened.
    */
   scheduler: SchedulerOutcomeSchema.optional(),
+  /**
+   * Why the run failed when no step carries it: the run crashed outside the
+   * steps (conditions, gate). Absent when the failure is on a step.
+   */
+  error: z.string().optional(),
 })
 /**
  * Declared as an interface so it is printed by NAME: a capability that embeds
@@ -277,6 +282,38 @@ export function mergeSkipTraces(
 }
 
 /**
+ * One hold episode is ONE run. A `for` trigger first writes a skipped
+ * "hold pending" row when the value changes, and a run row when the hold is
+ * met; both carry the same leaf path and the same hold start (`since`), so the
+ * pending row is the run's own beginning and is dropped once the run exists.
+ * Pure, so the ledger (on append) and the list (for traces written before this
+ * rule) apply the same fold.
+ */
+export function foldHoldEpisodes(traces: readonly AutomationRunTrace[]): AutomationRunTrace[] {
+  const fired = new Set<string>()
+  for (const t of traces) {
+    const key = holdEpisodeKey(t)
+    if (key !== null && t.trigger.hold?.phase === 'fired' && !isSkippedTrace(t)) fired.add(key)
+  }
+  if (fired.size === 0) return [...traces]
+  return traces.filter((t) => {
+    const key = holdEpisodeKey(t)
+    return !(
+      key !== null &&
+      isSkippedTrace(t) &&
+      t.trigger.hold?.phase === 'pending' &&
+      fired.has(key)
+    )
+  })
+}
+
+function holdEpisodeKey(trace: AutomationRunTrace): string | null {
+  const since = trace.trigger.hold?.since
+  if (since === undefined || trace.trigger.path === undefined) return null
+  return `${trace.trigger.path}@${String(since)}`
+}
+
+/**
  * Append a trace to a ring of at most `keep` entries, without mutating it.
  *
  *  - A skip identical to the previous trace is counted on that trace
@@ -293,7 +330,7 @@ export function appendTrace(
   const last = ring[ring.length - 1]
   const merged = last === undefined ? null : mergeSkipTraces(last, trace)
   if (merged !== null) return [...ring.slice(0, -1), merged]
-  const next = [...ring, trace]
+  const next = foldHoldEpisodes([...ring, trace])
   while (next.length > keep) {
     const skipAt = next.findIndex((t, i) => i < next.length - 1 && isSkippedTrace(t))
     next.splice(skipAt === -1 ? 0 : skipAt, 1)

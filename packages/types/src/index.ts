@@ -937,6 +937,7 @@ export {
   AutomationStepTraceSchema,
   AutomationTriggerTraceSchema,
   appendTrace,
+  foldHoldEpisodes,
   buildTriggerTrace,
   collectMirrorSources,
   ConditionMirror,

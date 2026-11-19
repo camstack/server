@@ -170,6 +170,10 @@ export interface StepDetailView {
   readonly nested: readonly NestedStepView[]
   /** A repeat step: how many rounds ran; `nested` is then the LAST round only. Null for any other step. */
   readonly rounds: number | null
+  /** What the step's own `if` read (`true` ran, `false` did not, `unknown` could not be read); absent on an unguarded step. */
+  readonly condition?: 'true' | 'false' | 'unknown'
+  /** Why the guard read what it read, with the values compared. */
+  readonly conditionReason?: string
 }
 
 export type ChoseView =
@@ -263,6 +267,8 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
         inner: (inner.steps ?? []).map(leafView),
       })),
       rounds: step.iterations ?? null,
+      ...(step.condition === undefined ? {} : { condition: step.condition }),
+      ...(step.conditionReason === undefined ? {} : { conditionReason: step.conditionReason }),
     })),
   }
 }
@@ -314,12 +320,61 @@ export interface RunSummary {
   readonly reason: string | null
 }
 
+/** One thing that went wrong in a run: the step it happened in (null: the run itself) and why. */
+export interface FailureView {
+  readonly step: number | null
+  readonly message: string
+}
+
+/** A trace row at any depth: what the failure walk needs of it. */
+interface FailureRow {
+  readonly outcome: AutomationRunTrace['steps'][number]['outcome']
+  readonly message?: string | undefined
+  readonly devices?: readonly {
+    readonly deviceId: number
+    readonly outcome: 'ok' | 'error'
+    readonly message?: string | undefined
+  }[]
+  readonly steps?: readonly FailureRow[]
+  readonly else?: readonly FailureRow[]
+}
+
+function isFailedRow(row: FailureRow): boolean {
+  return (
+    row.outcome === 'error' || row.outcome === 'failed-continued' || row.outcome === 'timed-out'
+  )
+}
+
+/** The words of whatever really failed under a row: its failed children first (a block step only says "a step failed"), then its failed devices, then its own message. */
+function causesOf(row: FailureRow): readonly string[] {
+  const kids = [...(row.steps ?? []), ...(row.else ?? [])].filter(isFailedRow)
+  const fromKids = kids.flatMap(causesOf)
+  if (fromKids.length > 0) return fromKids
+  const fromDevices = (row.devices ?? [])
+    .filter((d) => d.outcome === 'error')
+    .map((d) => `device ${String(d.deviceId)}: ${d.message ?? 'failed'}`)
+  if (fromDevices.length > 0) return fromDevices
+  const own = nonEmpty(row.message)
+  return own === null ? [] : [own]
+}
+
+/** Every failure of a run, the root cause of each failed step, then a run-level error nothing else carries. */
+export function runFailures(trace: AutomationRunTrace): readonly FailureView[] {
+  const out: FailureView[] = []
+  for (const step of trace.steps.filter(isFailedRow)) {
+    for (const message of causesOf(step)) out.push({ step: stepIndex(step.path), message })
+  }
+  const error = nonEmpty(trace.error)
+  if (out.length === 0 && error !== null) out.push({ step: null, message: error })
+  return out
+}
+
 /** The one line the Runs panel keeps for the selected run. */
 export function runSummary(trace: AutomationRunTrace): RunSummary {
-  const failed = trace.steps.find((s) => s.outcome === 'error')
+  const failure = runFailures(trace)[0]
   const reason =
-    failed !== undefined
-      ? nonEmpty(failed.message)
+    failure !== undefined
+      ? failure.message
       : (nonEmpty(trace.verdict?.reason) ?? nonEmpty(trace.trigger.reason))
   return {
     stepsRun: trace.steps.filter((s) => s.outcome === 'ok').length,

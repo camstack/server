@@ -1,6 +1,7 @@
 import type { AutomationRunTrace } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
+  runFailures,
   runSummary,
   stepToneAt,
   traceDetails,
@@ -441,5 +442,79 @@ describe('traceDetails steps', () => {
       { deviceId: 1, tone: 'pass', message: null },
       { deviceId: 2, tone: 'fail', message: 'offline' },
     ])
+  })
+})
+
+const ROUTE_ERROR =
+  'action internal:cc38 failed: forward to ha:pump refused (source-call-failed): no provider registered for device-native cap "switch" on device 5329'
+
+describe('runFailures: the cause, not the wrapper', () => {
+  it('names the error of the step that really threw, under a block step that only says "a step failed"', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      outcome: 'failed',
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'choose',
+          outcome: 'error',
+          message: 'a step of the branch failed',
+          steps: [{ path: 'actions.0.0', kind: 'action', outcome: 'error', message: ROUTE_ERROR }],
+        },
+      ],
+    }
+    expect(runFailures(trace)).toEqual([{ step: 0, message: ROUTE_ERROR }])
+    expect(runSummary(trace).reason).toBe(ROUTE_ERROR)
+  })
+
+  it('reports a failed device of a multi-device step', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      outcome: 'failed',
+      steps: [
+        {
+          path: 'actions.1',
+          kind: 'cap',
+          outcome: 'error',
+          message: '1 of 2 devices failed',
+          devices: [
+            { deviceId: 1, outcome: 'ok' },
+            { deviceId: 2, outcome: 'error', message: 'offline' },
+          ],
+        },
+      ],
+    }
+    expect(runFailures(trace)).toEqual([{ step: 1, message: 'device 2: offline' }])
+  })
+
+  it('shows a run-level error that no step carries (the run crashed outside a step)', () => {
+    const trace: AutomationRunTrace = { ...BASE, outcome: 'failed', error: 'mirror exploded' }
+    expect(runFailures(trace)).toEqual([{ step: null, message: 'mirror exploded' }])
+    expect(runSummary(trace).reason).toBe('mirror exploded')
+  })
+
+  it('is empty for a run that ran', () => {
+    expect(runFailures(BASE)).toEqual([])
+  })
+})
+
+describe('a step guard keeps what it read', () => {
+  it('exposes the guard verdict and reason on the step detail', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'cap',
+          outcome: 'skipped',
+          condition: 'false',
+          conditionReason: 'food level 80, expected < 20 → fail',
+        },
+      ],
+    }
+    expect(traceDetails(trace).steps[0]).toMatchObject({
+      condition: 'false',
+      conditionReason: 'food level 80, expected < 20 → fail',
+    })
   })
 })

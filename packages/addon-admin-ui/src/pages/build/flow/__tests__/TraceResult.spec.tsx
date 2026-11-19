@@ -171,3 +171,39 @@ describe('StepResult', () => {
     expect(devices.getByText('timeout')).toBeTruthy()
   })
 })
+
+describe('StepResult failure', () => {
+  const FAILED: StepDetailView = {
+    index: 0,
+    kind: 'action',
+    tone: 'fail',
+    message: 'pump refused: no provider',
+    args: [],
+    devices: [],
+    chose: null,
+    nested: [],
+    rounds: null,
+  }
+
+  it('shows the error of a failed step in an alert box', () => {
+    render(<StepResult step={FAILED} deviceName={(id) => `#${String(id)}`} />)
+    const alert = screen.getByRole('alert')
+    expect(within(alert).getByText('pump refused: no provider')).toBeTruthy()
+  })
+
+  it('shows what the step guard read', () => {
+    render(
+      <StepResult
+        step={{
+          ...FAILED,
+          tone: 'idle',
+          message: null,
+          condition: 'false',
+          conditionReason: 'level 80 → fail',
+        }}
+        deviceName={(id) => `#${String(id)}`}
+      />,
+    )
+    expect(screen.getByTestId('step-guard').textContent).toContain('level 80 → fail')
+  })
+})
