@@ -203,6 +203,24 @@ export function isPassthrough(profile: EncodeProfile): boolean {
 }
 
 /**
+ * A stored profile that only says `video.codec: 'source'` (a re-encode in the
+ * source codec with nothing else): no section can show it, so the editor shows
+ * it as the passthrough it looks like. It is NOT passthrough to the broker, so
+ * the editor counts it as a pending change and Save writes passthrough.
+ */
+export function isBareSourceProfile(profile: EncodeProfile | undefined): boolean {
+  if (profile === undefined) return false
+  const { video, audio } = profile
+  return (
+    video.codec === 'source' &&
+    Object.keys(video).length === 1 &&
+    audio === 'passthrough' &&
+    (profile.inputArgs?.length ?? 0) === 0 &&
+    (profile.outputArgs?.length ?? 0) === 0
+  )
+}
+
+/**
  * What an edit saves. Passthrough is no profile: a stream back at passthrough
  * saves `undefined` (the writer clears the stored one), never an explicit copy profile.
  */

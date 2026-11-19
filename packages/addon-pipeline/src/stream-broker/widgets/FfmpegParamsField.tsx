@@ -18,6 +18,7 @@ import { useT } from '../../i18n/index.js'
 import {
   audioCodecOf,
   changedFieldCount,
+  isBareSourceProfile,
   PASSTHROUGH_PROFILE,
   parseAudioCodec,
   parseVideoCodecChoice,
@@ -529,8 +530,12 @@ export function FfmpegParamsCore({
   )
   // Edits are a draft until Save: `null` = nothing edited yet.
   const [draft, setDraft] = useState<{ readonly profile: EncodeProfile | undefined } | null>(null)
-  const current: EncodeProfile | undefined = draft !== null ? draft.profile : storedView
-  const pendingCount = draft !== null ? changedFieldCount(value, draft.profile) : 0
+  // A stored bare `source` profile shows as passthrough, so it is pending:
+  // stored differs from what the editor shows, and Save writes passthrough.
+  const bareSource = isBareSourceProfile(value)
+  const current: EncodeProfile | undefined =
+    draft !== null ? draft.profile : bareSource ? undefined : storedView
+  const pendingCount = draft !== null || bareSource ? changedFieldCount(value, current) : 0
 
   const profile: EncodeProfile = current ?? PASSTHROUGH_DEFAULT
   const probedCodec = config.sourceParams?.video.codec
@@ -571,8 +576,8 @@ export function FfmpegParamsCore({
     onEditedChange?.(edited)
   }
   const save = (): void => {
-    if (draft === null) return
-    onSave(draft.profile)
+    if (draft === null && !bareSource) return
+    onSave(current)
     setDraft(null)
   }
   const discard = (): void => {

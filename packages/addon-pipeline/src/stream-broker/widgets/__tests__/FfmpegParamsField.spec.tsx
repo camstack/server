@@ -270,14 +270,14 @@ describe('sections combine', () => {
     expect(onSave).toHaveBeenCalledTimes(1)
   })
 
-  it('a stored source codec opens with the codec section OFF and survives the next edit', () => {
+  it('a stored bare source codec opens as passthrough (codec section OFF); the next edit builds on that', () => {
     const onSave = vi.fn()
     render(
       <Stateful initial={{ video: { codec: 'source' }, audio: 'passthrough' }} onSave={onSave} />,
     )
     expect(switchFor(/^video codec$/i)).toHaveAttribute('aria-checked', 'false')
     fireEvent.click(switchFor(/^audio$/i))
-    expect(lastSaved(onSave)).toEqual({ video: { codec: 'source' }, audio: { codec: 'aac' } })
+    expect(lastSaved(onSave)).toEqual({ video: { codec: 'copy' }, audio: { codec: 'aac' } })
   })
 
   it('has no "same as source" choice: the OFF state says it keeps the source codec', () => {
@@ -698,4 +698,22 @@ it('renders "Source (probed)" read-only card when sourceParams is supplied', () 
   )
   expect(screen.getByText(/2560×1920/)).toBeInTheDocument()
   expect(screen.getByText(/aac/i)).toBeInTheDocument()
+})
+
+describe('a stored bare source-codec profile (the broker still re-encodes it)', () => {
+  const stored: EncodeProfile = { video: { codec: 'source' }, audio: 'passthrough' }
+
+  it('shows every section off, counts one pending change, and Save writes passthrough', () => {
+    const onSave = vi.fn()
+    render(<FfmpegParamsField config={CONFIG} value={stored} onSave={onSave} />)
+    const on = screen
+      .getAllByRole('switch')
+      .filter((el) => el.getAttribute('aria-checked') === 'true')
+    expect(on).toEqual([])
+    expect(screen.getByText(/1 unsaved change/i)).toBeTruthy()
+    expect(onSave).not.toHaveBeenCalled()
+    saveNow()
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave).toHaveBeenCalledWith(undefined)
+  })
 })

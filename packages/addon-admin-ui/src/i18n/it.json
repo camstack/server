@@ -5089,9 +5089,6 @@
       "searchOrAdd": "Cerca o aggiungi…",
       "searchToAdd": "Cerca per aggiungere…"
     },
-    "formSaveBar": {
-      "saving": "Salvataggio…"
-    },
     "modelSelector": {
       "models": "Modelli ({{length}})",
       "customPath": "Percorso personalizzato",
@@ -5102,10 +5099,6 @@
     },
     "searchableMultiSelectField": {
       "searchToAdd": "Cerca per aggiungere…"
-    },
-    "saveBar": {
-      "unsavedChanges_one": "{{count}} modifica non salvata",
-      "unsavedChanges_other": "{{count}} modifiche non salvate"
     }
   },
   "backup": {

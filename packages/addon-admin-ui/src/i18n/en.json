@@ -5014,9 +5014,6 @@
       "searchOrAdd": "Search or add…",
       "searchToAdd": "Search to add…"
     },
-    "formSaveBar": {
-      "saving": "Saving…"
-    },
     "modelSelector": {
       "models": "Models ({{length}})",
       "customPath": "Custom Path",
@@ -5027,10 +5024,6 @@
     },
     "searchableMultiSelectField": {
       "searchToAdd": "Search to add…"
-    },
-    "saveBar": {
-      "unsavedChanges_one": "{{count}} unsaved change",
-      "unsavedChanges_other": "{{count}} unsaved changes"
     }
   },
   "backup": {
