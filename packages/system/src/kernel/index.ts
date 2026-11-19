@@ -392,7 +392,6 @@ export {
   NATIVE_PROVIDER_SERVICE_INFIX,
 } from './moleculer/device-cap-proxy.js'
 export type { WorkerDeviceManagerOptions } from './moleculer/device-cap-proxy.js'
-export { processAccessorySpawnBoard } from './moleculer/accessory-spawn-retry.js'
 export { getWorkerDeviceRegistry } from './moleculer/addon-context-factory.js'
 export {
   localProviderLink,

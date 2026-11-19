@@ -97,12 +97,6 @@ export interface ParentUnownedCallDeps {
    */
   readonly isDeviceNativeCap?: (capName: string) => boolean
   /**
-   * Optional — why a device's child is not spawned ("accessory child failed to
-   * spawn: <step>: <reason>, retry n/N"), from the accessory spawn board. Null
-   * when the device has no recorded spawn failure.
-   */
-  readonly describeSpawnFailure?: (deviceId: number) => string | null
-  /**
    * Optional predicate — returns `true` when `(capName, method)` is declared
    * with `systemMethod()` (`systemOnly`): served ONLY by the cap's
    * system/wrapper provider. Such a call carries a `deviceId` as an ARGUMENT
@@ -591,13 +585,8 @@ export function createParentUnownedCallHandler(
                 // Still unregistered after the bounded window: the call is
                 // genuinely unroutable RIGHT NOW. Surface a precise error rather
                 // than the misleading `${cap}.${cap}.${method}` broker failure.
-                // A child whose spawn failed says so, with the step and the
-                // retry count — not the generic "binding not yet".
-                const spawnFailure = deps.describeSpawnFailure?.(deviceId) ?? null
                 throw new Error(
-                  spawnFailure !== null
-                    ? `no provider registered for device-native cap "${input.capName}" on device ${deviceId} (${spawnFailure})`
-                    : `no provider registered for device-native cap "${input.capName}" on device ${deviceId} (binding not yet in LocalChildRegistry)`,
+                  `no provider registered for device-native cap "${input.capName}" on device ${deviceId} (binding not yet in LocalChildRegistry)`,
                 )
               }
             }

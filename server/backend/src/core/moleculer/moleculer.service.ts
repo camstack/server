@@ -50,7 +50,6 @@ import {
   answerClaimedGetStatus,
   answerDeviceCallRedirect,
   type DeviceCallRedirectHook,
-  processAccessorySpawnBoard,
 } from '@camstack/server/system'
 import type { CapabilityDefinition, StatusOverlayAnswer } from '@camstack/types'
 import { EventCategory, emitReadiness, errMsg, ReadinessRegistry } from '@camstack/types'
@@ -434,8 +433,6 @@ export class MoleculerService {
         // than the unroutable broker fallback (`switch.switch.getStatus`).
         isDeviceNativeCap: (capName) =>
           this.capabilityService.getRegistry()?.getDefinition(capName)?.deviceNative === true,
-        // Why a child is not spawned (accessory spawn failed, retry n/N).
-        describeSpawnFailure: (deviceId) => processAccessorySpawnBoard.describe(deviceId),
         // A `systemMethod()` routes to the cap's system/wrapper provider, never
         // the device-native owner its `deviceId` argument would select.
         isSystemOnlyMethod: (capName, method) => this.isSystemOnlyMethod(capName, method),

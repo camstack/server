@@ -75,8 +75,13 @@ function spec(suffix: string): AccessoryChildSpec {
 import { AccessorySpawnBoard } from '../../moleculer/accessory-spawn-retry.js'
 
 /** Parent with ONE accessory whose first `applyInitialMeta` dial fails. */
-function failingWorld(failures: number) {
+function failingWorld(
+  failures: number,
+  failing: string = 'applyInitialMeta',
+  delaysMs: readonly number[] = [5, 5],
+) {
   let fail = failures
+  const calls: Record<string, number> = {}
   const board = new AccessorySpawnBoard()
   const log = logger()
   const parent = {
@@ -101,14 +106,16 @@ function failingWorld(failures: number) {
     getSettingsUISchema: () => ({ sections: [] }),
     applySettingsPatch: async () => {},
     getAccessoryChildren: () => [spec('vacuum')],
+    _kernelReprobe: undefined as undefined | (() => Promise<void>),
   }
   const api = {
     deviceManager: new Proxy({} as Record<string, unknown>, {
       get(_t, method) {
         if (typeof method !== 'string') return undefined
         const handler = vi.fn(async () => {
+          calls[method] = (calls[method] ?? 0) + 1
           if (method === 'allocateDeviceId') return { id: KEEP_ID }
-          if (method === 'applyInitialMeta' && fail > 0) {
+          if (method === failing && fail > 0) {
             fail -= 1
             throw new Error('dial timed out')
           }
@@ -131,13 +138,20 @@ function failingWorld(failures: number) {
     registry,
     capabilityRegistry: new CapabilityRegistry(logger()),
     accessorySpawnBoard: board,
-    accessorySpawnRetryDelaysMs: [5, 5],
+    accessorySpawnRetryDelaysMs: delaysMs,
   })
   return {
     board,
     log,
     registry,
+    calls,
+    deviceApi,
     register: () => deviceApi.register(parentAsDevice(parent)),
+    reprobe: async () => {
+      const run = parent._kernelReprobe
+      if (run === undefined) throw new Error('kernel did not wire _kernelReprobe')
+      await run()
+    },
   }
 }
 
@@ -171,16 +185,48 @@ describe('accessory spawn retry (D347 shape)', () => {
   })
 
   it('gives up after the bound, at ERROR, and the board says so', async () => {
-    const w = failingWorld(99)
+    const w = failingWorld(99, 'loadRuntimeState')
     await w.register()
     await until(() => w.board.get(KEEP_ID)?.terminal === true)
-    expect(w.board.describe(KEEP_ID)).toMatch(/retry 2\/2, gave up/)
+    expect(w.board.describe(KEEP_ID)).toMatch(/loadRuntimeState.*retry 2\/2, gave up/)
     expect(w.log.error).toHaveBeenCalledWith(
       'Accessory child spawn gave up after the bounded retries',
-      expect.objectContaining({
-        tags: expect.objectContaining({ deviceId: KEEP_ID }),
-      }),
+      expect.objectContaining({ tags: expect.objectContaining({ deviceId: KEEP_ID }) }),
     )
     expect(w.registry.getById(KEEP_ID)).toBeNull()
+  })
+
+  it('a give-up sticks: a later reconcile does not restart the rounds', async () => {
+    const w = failingWorld(99, 'loadRuntimeState')
+    await w.register()
+    await until(() => w.board.get(KEEP_ID)?.terminal === true)
+    const before = w.calls.loadRuntimeState
+    await w.reprobe()
+    await new Promise((r) => setTimeout(r, 60))
+    // The reprobe spawned once itself (+1); no new rounds followed it.
+    expect(w.calls.loadRuntimeState).toBe((before ?? 0) + 1)
+  })
+
+  it('a parent removed during a pending retry never spawns the child', async () => {
+    const w = failingWorld(1, 'applyInitialMeta', [40, 40])
+    await w.register()
+    await w.deviceApi.decommission(PARENT_ID)
+    await new Promise((r) => setTimeout(r, 150))
+    expect(w.calls.applyInitialMeta).toBe(1)
+    expect(w.registry.getById(KEEP_ID)).toBeNull()
+  })
+
+  it('a permanently failing meta pre-seed still registers the child on the last attempt, with an ERROR naming the step', async () => {
+    const w = failingWorld(99, 'applyInitialMeta')
+    await w.register()
+    await until(() => w.registry.getById(KEEP_ID) !== null)
+    expect(w.registry.getById(KEEP_ID)?.stableId).toBe(KEEP_STABLE)
+    expect(w.log.error).toHaveBeenCalledWith(
+      'Accessory child spawned WITHOUT its meta pre-seed after the last retry',
+      expect.objectContaining({
+        tags: expect.objectContaining({ deviceId: KEEP_ID }),
+        meta: expect.objectContaining({ step: 'applyInitialMeta' }),
+      }),
+    )
   })
 })

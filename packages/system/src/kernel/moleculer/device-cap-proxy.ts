@@ -75,9 +75,9 @@ import {
 import { AccessoryShrinkGate, classifyAccessoryRead } from './accessory-prune-gate.js'
 import {
   AccessorySpawnBoard,
+  type AccessorySpawnAttemptOptions,
   AccessorySpawnRetry,
   AccessorySpawnStepError,
-  processAccessorySpawnBoard,
 } from './accessory-spawn-retry.js'
 import { loadRuntimeStateOrRefuse, type RuntimeStateLoadPhase } from './runtime-state-load.js'
 
@@ -996,6 +996,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     return parentMeta?.integrationId ?? undefined
   }
 
+  const accessorySpawnBoard = opts.accessorySpawnBoard ?? new AccessorySpawnBoard()
+  const accessorySpawnRetry = new AccessorySpawnRetry({
+    logger: opts.logger,
+    board: accessorySpawnBoard,
+    ...(opts.accessorySpawnRetryDelaysMs !== undefined
+      ? { delaysMs: opts.accessorySpawnRetryDelaysMs }
+      : {}),
+  })
   /**
    * Spawn one accessory child device declared by a parent's
    * `getAccessoryChildren()`. Mirrors the standard `create()` flow
@@ -1005,24 +1013,23 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
    * row already exists, `persistInitialConfig` is skipped (config
    * arg empty) and the child self-hydrates from `loadConfig`.
    */
-  const accessorySpawnBoard = opts.accessorySpawnBoard ?? processAccessorySpawnBoard
-  const accessorySpawnRetry = new AccessorySpawnRetry({
-    logger: opts.logger,
-    board: accessorySpawnBoard,
-    ...(opts.accessorySpawnRetryDelaysMs !== undefined
-      ? { delaysMs: opts.accessorySpawnRetryDelaysMs }
-      : {}),
-  })
   const spawnAccessoryChild = async (
     parent: IDevice,
     spec: import('@camstack/types').AccessoryChildSpec,
+    spawnOptions: AccessorySpawnAttemptOptions = { final: false },
   ): Promise<IDevice> => {
     const childStableId = `${parent.stableId}-${spec.stableIdSuffix}`
     let allocatedId: number | null = null
     try {
-      const child = await spawnAccessoryChildSteps(parent, spec, childStableId, (id) => {
-        allocatedId = id
-      })
+      const child = await spawnAccessoryChildSteps(
+        parent,
+        spec,
+        childStableId,
+        (id) => {
+          allocatedId = id
+        },
+        spawnOptions,
+      )
       if (allocatedId !== null) accessorySpawnBoard.clear(allocatedId)
       return child
     } catch (err) {
@@ -1036,6 +1043,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     spec: import('@camstack/types').AccessoryChildSpec,
     childStableId: string,
     onAllocated: (id: number) => void,
+    spawnOptions: AccessorySpawnAttemptOptions,
   ): Promise<IDevice> => {
     const id = await deviceApi
       .allocateDeviceId(childStableId)
@@ -1108,11 +1116,23 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       ...(spec.meta.type !== undefined ? { type: spec.meta.type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
     }
-    // A failed pre-seed fails the spawn (it used to be swallowed, leaving a
-    // half-seeded child): the bounded retry re-runs the whole idempotent spawn.
-    await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) =>
-      Promise.reject(new AccessorySpawnStepError('applyInitialMeta', id, err)),
-    )
+    // A failed pre-seed fails the spawn, and the bounded retry re-runs the whole
+    // idempotent spawn. On the LAST attempt the old behaviour applies: register
+    // the child without its meta (ERROR naming the step) rather than leave a
+    // healthy child unregistered forever.
+    await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) => {
+      if (!spawnOptions.final)
+        return Promise.reject(new AccessorySpawnStepError('applyInitialMeta', id, err))
+      opts.logger.error('Accessory child spawned WITHOUT its meta pre-seed after the last retry', {
+        tags: { deviceId: id, parentDeviceId: parent.id },
+        meta: {
+          step: 'applyInitialMeta',
+          stableId: childStableId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      return undefined
+    })
     // persistConfig writes the per-device config blob (keyed by numeric id),
     // SEPARATE from the meta row — first-spawn-only here; the self-heal below
     // covers a restored child whose config row was lost.
@@ -1214,6 +1234,8 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
    */
   const teardownLocal = async (deviceId: number, runLifecycle: boolean): Promise<void> => {
     const device = registry.getById(deviceId)
+    // The parent is going away: its pending accessory-spawn rounds die with it.
+    accessorySpawnRetry.cancelParent(deviceId)
     // Always cancel any pending probe-retry — even on the
     // "already decommissioned" idempotent path, a leftover timer
     // from a prior register cycle would fire against a removed
@@ -1557,6 +1579,8 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       // `onActivate` is logged + swallowed because the device IS
       // already registered. Drivers that need stricter guarantees
       // handle their own retry / shutdown logic.
+      // A parent registering again gives the children that gave up a fresh chance.
+      accessorySpawnRetry.resetParent(device.id)
       const lifecycleHost = device as IDevice & {
         onProbe?: () => Promise<void>
         onActivate?: () => Promise<void>
@@ -1633,8 +1657,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
               stableId: `${device.stableId}-${spec.stableIdSuffix}`,
               parentDeviceId: device.id,
               error: err,
-              attempt: async () => {
-                await spawnAccessoryChild(device, spec)
+              isParentRegistered: () => registry.getById(device.id) !== null,
+              attempt: async (attemptOptions) => {
+                await spawnAccessoryChild(device, spec, attemptOptions)
               },
             })
           }
