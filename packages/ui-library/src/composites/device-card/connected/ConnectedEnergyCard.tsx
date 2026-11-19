@@ -1,5 +1,5 @@
 import type { EnergySystemStatus } from '@camstack/types'
-import type { ReactElement } from 'react'
+import { type ReactElement, useState } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
@@ -7,7 +7,8 @@ import { EnergyCard, energySince } from '../scenes/energy/EnergyCard'
 import { energyActivityOf } from '../scenes/energy/model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { energyFlowsOf, energyTodayOf } from './energy-model'
-import { PrimaryTrend } from './PrimaryTrend'
+import { EnergyDayPanel } from '../parts/EnergyDayPanel'
+import { useEnergyDay } from './use-energy-day'
 import { useCardCommon } from './use-card-common'
 
 /**
@@ -30,19 +31,37 @@ export function ConnectedEnergyCard({
   const slice: EnergySystemStatus | undefined = useDeviceStateSlice(
     dev?.energySystem === undefined ? undefined : dev.state.energySystem,
   )
+  const [dayOffset, setDayOffset] = useState(0)
+  const day = useEnergyDay(deviceId, dayOffset, t)
   if (dev?.energySystem === undefined || slice === undefined) return null
   const flows = energyFlowsOf(slice)
+  const isToday = dayOffset === 0
   return (
     <EnergyCard
       orientation={orientation}
       showName={showName}
-      trend={<PrimaryTrend deviceId={deviceId} label={card.common.name} />}
+      trend={
+        <EnergyDayPanel
+          dayStart={day.window.from}
+          isToday={isToday}
+          canNext={!isToday}
+          onPrev={() => setDayOffset((o) => o + 1)}
+          onNext={() => setDayOffset((o) => Math.max(0, o - 1))}
+          onToday={() => setDayOffset(0)}
+          status={day.status}
+          powerSeries={day.powerSeries}
+          socSeries={day.socSeries}
+          flowSpans={day.flowSpans}
+          range={day.window}
+        />
+      }
       model={{
         common: { ...card.common, battery: null, power: null },
         activity: energyActivityOf(flows),
         since: energySince(flows, t),
         flows,
-        today: energyTodayOf(slice),
+        // Today reads the system's own day totals; another day reads its recorded counters.
+        today: isToday ? energyTodayOf(slice) : day.today,
       }}
       actions={card.actions}
     />

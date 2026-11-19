@@ -38,6 +38,7 @@ import {
   WaterHeaterCard,
   type WaterHeaterCardActions,
   EnergyCard,
+  EnergyDayPanel,
   type EnergyCardActions,
   IrTransmitterCard,
   SensorCard,
@@ -49,7 +50,10 @@ import {
   CLIMATE_FIXTURES,
 } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/climate'
 import { coverFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/cover'
-import { energyFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/energy'
+import {
+  energyDayFixture,
+  energyFixtures,
+} from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/energy'
 import { fanFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/fan'
 import { heaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heater'
 import { heatPumpFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heat-pump'
@@ -65,6 +69,25 @@ import { irFixtures } from '../../../../packages/ui-library/src/composites/devic
 import { sensorFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/sensor'
 import { WAVE_D_TYPES, WaveDScene } from './device-card-preview-wave-d'
 import { WAVE_E_TYPES, WaveEScene } from './device-card-preview-wave-e'
+
+/** The energy card's day panel on a fixture day; the arrows step the label, the data is one sunny day. */
+function EnergyDayFixturePanel(): ReactElement {
+  const [offset, setOffset] = useState(0)
+  const dayStart = useMemo(() => new Date(2026, 10, 20 - offset).getTime(), [offset])
+  const day = useMemo(() => energyDayFixture(dayStart), [dayStart])
+  return (
+    <EnergyDayPanel
+      dayStart={dayStart}
+      isToday={offset === 0}
+      canNext={offset > 0}
+      onPrev={() => setOffset((o) => o + 1)}
+      onNext={() => setOffset((o) => Math.max(0, o - 1))}
+      onToday={() => setOffset(0)}
+      status="ready"
+      {...day}
+    />
+  )
+}
 
 function ValueHistoryMark(): ReactElement {
   return (
@@ -273,7 +296,12 @@ function WaveCScene({ type }: { readonly type: string }): ReactElement | null {
         <>
           {energyFixtures().map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
-              <EnergyCard model={f.model} actions={ENERGY_ACTIONS} orientation={f.orientation} />
+              <EnergyCard
+                model={f.model}
+                actions={ENERGY_ACTIONS}
+                orientation={f.orientation}
+                trend={<EnergyDayFixturePanel />}
+              />
             </Cell>
           ))}
         </>

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import {
+  type EnergyCentreFigure,
   EnergyFlowIllustration,
   type EnergyNodeId,
   type EnergyNodeView,
@@ -78,6 +79,43 @@ export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
   return null
 }
 
+const NO_VALUE = '—'
+
+/** "+2.1 kWh" drew from the grid, "−2.9 kWh" fed it; the sign is always spelled. */
+export function signedKwh(v: number | null): string {
+  if (v === null) return NO_VALUE
+  const sign = v > 0 ? '+' : v < 0 ? '−' : ''
+  return `${sign}${Math.abs(v)} kWh`
+}
+
+/** The three figures of the centre circle for the selected day; a missing input reads "—", never 0. */
+export function energyCentreFigures(
+  today: EnergyToday | null,
+  t: UiTextFn,
+): readonly EnergyCentreFigure[] {
+  const e = (key: string, fallback: string): string =>
+    t(`uiLibrary.deviceCard.energy.${key}`, fallback)
+  const pctOrDash = (v: number | null | undefined): string =>
+    v === null || v === undefined ? NO_VALUE : `${Math.round(v)}%`
+  return [
+    {
+      id: 'sufficiency',
+      label: e('centreSufficiency', 'Self-sufficiency'),
+      value: pctOrDash(today?.selfSufficiencyPct),
+    },
+    {
+      id: 'selfUse',
+      label: e('centreSelfUse', 'Self-consumption'),
+      value: pctOrDash(today?.selfConsumptionPct),
+    },
+    {
+      id: 'netGrid',
+      label: e('centreNetGrid', 'Net grid'),
+      value: signedKwh(today?.netGridKwh ?? null),
+    },
+  ]
+}
+
 const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
 const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
 const hours = (v: number | null): string | null => (v === null ? null : `≈ ${v.toFixed(1)} h`)
@@ -109,14 +147,6 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
         ['house', e('houseToday', 'House'), kwh(today.houseKwh)],
         ['imported', e('imported', 'Imported'), kwh(today.importedKwh)],
         ['exported', e('exported', 'Exported'), kwh(today.exportedKwh)],
-      ],
-    },
-    {
-      id: 'share',
-      label: e('rowShare', 'Share'),
-      cells: [
-        ['self', e('selfConsumption', 'Self-use'), pct(today.selfConsumptionPct)],
-        ['sufficiency', e('selfSufficiency', 'Self-sufficiency'), pct(today.selfSufficiencyPct)],
       ],
     },
     {
@@ -202,6 +232,7 @@ export function EnergyCard({
         image: (
           <EnergyFlowIllustration
             nodes={energyNodes(model.flows, t)}
+            centre={energyCentreFigures(model.today, t)}
             ariaLabel={t('uiLibrary.deviceCard.energy.flows', 'Energy flows')}
             className="h-auto w-full max-w-96"
           />

@@ -31,6 +31,8 @@ export interface EnergyToday {
   readonly selfConsumptionPct: number | null
   readonly importedKwh: number | null
   readonly exportedKwh: number | null
+  /** Imported − exported, kWh: + drew from the grid, − fed it. Null unless both are known. */
+  readonly netGridKwh: number | null
   readonly heatPumpKwh: number | null
   readonly houseKwh: number | null
   /** 1 − import today / house consumption today, clamped to 0..100. */

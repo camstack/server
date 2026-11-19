@@ -10645,7 +10645,29 @@
         "rowBattery": "Batteria",
         "rowHeatPump": "Pompa di calore",
         "hpToday": "Oggi",
-        "hpNow": "Ora"
+        "hpNow": "Ora",
+        "centreSufficiency": "Autosufficienza",
+        "centreSelfUse": "Autoconsumo",
+        "centreNetGrid": "Rete netta",
+        "day": {
+          "previous": "Giorno precedente",
+          "next": "Giorno successivo",
+          "today": "Oggi",
+          "empty": "Nessun dato registrato per questo giorno.",
+          "error": "Impossibile leggere lo storico.",
+          "power": "Potenza",
+          "charge": "Carica batteria",
+          "flow": "Flusso",
+          "fromGrid": "Dalla rete",
+          "toGrid": "Verso la rete",
+          "fromBattery": "Dalla batteria",
+          "toBattery": "Verso la batteria",
+          "solar": "Solare",
+          "house": "Casa",
+          "grid": "Rete",
+          "battery": "Batteria",
+          "heatPump": "Pompa di calore"
+        }
       },
       "ir": {
         "canLearn": "Può apprendere",

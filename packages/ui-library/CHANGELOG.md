@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Energy system card has a day selector with a time-axis power chart, and an enlarged centre circle showing self-sufficiency, self-consumption and the net grid of the selected day
+
 ## [1.2.477] - 2026-11-19
 
 ### Changed

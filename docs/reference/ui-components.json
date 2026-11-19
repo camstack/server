@@ -7891,11 +7891,93 @@
       ]
     },
     {
+      "name": "energyCentreFigures",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "The three figures of the centre circle for the selected day; a missing input reads \"—\", never 0."
+    },
+    {
       "name": "energyDailyFacts",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
       "summary": "The daily facts of one energy-system slice. Pure; a missing input is null."
+    },
+    {
+      "name": "EnergyDayPanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/EnergyDayPanel.tsx",
+      "summary": "The selected day of an energy system: a previous / next / today bar over a power chart on the day's clock (x axis in local time), the battery's charge under it, and the spans where the house drew from or fed the grid …",
+      "props": [
+        {
+          "name": "dayStart",
+          "type": "number",
+          "optional": false,
+          "doc": "Local midnight that opens the selected day."
+        },
+        {
+          "name": "isToday",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "canNext",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The next day exists only up to today."
+        },
+        {
+          "name": "onPrev",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onNext",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onToday",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "status",
+          "type": "EnergyDayStatus",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "powerSeries",
+          "type": "readonly TimeSeriesDef[]",
+          "optional": false,
+          "doc": "Powers in W over the day: solar, house, grid, battery, heat pump (those the system has)."
+        },
+        {
+          "name": "socSeries",
+          "type": "readonly TimeSeriesDef[]",
+          "optional": false,
+          "doc": "State of charge in %, when the system has a storage."
+        },
+        {
+          "name": "flowSpans",
+          "type": "readonly EnergyFlowSpan[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "range",
+          "type": "{ readonly from: number; readonly to: number }",
+          "optional": false,
+          "doc": "The x axis: the whole local day."
+        }
+      ]
     },
     {
       "name": "EnergyFlowIllustration",
@@ -7909,6 +7991,12 @@
           "type": "readonly EnergyNodeView[]",
           "optional": false,
           "doc": ""
+        },
+        {
+          "name": "centre",
+          "type": "readonly EnergyCentreFigure[]",
+          "optional": true,
+          "doc": "The day's figures drawn inside the enlarged bus circle; omit for the small bus dot."
         },
         {
           "name": "ariaLabel",
@@ -12614,6 +12702,13 @@
       "summary": "The handle a value is nearer to; a tie goes to the side the value lies on."
     },
     {
+      "name": "netGridKwh",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "Net grid, kWh: imported − exported (+ drew, − fed). Null unless both are known."
+    },
+    {
       "name": "NetworkLinkBadge",
       "kind": "component",
       "area": "composites",
@@ -16725,6 +16820,20 @@
       "summary": "Add every device of the group (only the ones the current search shows)."
     },
     {
+      "name": "selfConsumptionPct",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "Self-consumption: the share of the production that was not exported, 0..100. Null when the production or the export is unknown, or nothing was produced (D393)."
+    },
+    {
+      "name": "selfSufficiencyPct",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "`energy-system` → the energy card. Pure: the connected card reads the slice, these turn it into the scene's node powers and today's totals. The storage is read from the model's `storage` part, never from the `battery`…"
+    },
+    {
       "name": "SemanticBadge",
       "kind": "component",
       "area": "composites",
@@ -17197,6 +17306,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/fan/model.ts",
       "summary": "\"+45°\", \"-30°\", \"0°\"."
+    },
+    {
+      "name": "signedKwh",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "\"+2.1 kWh\" drew from the grid, \"−2.9 kWh\" fed it; the sign is always spelled."
     },
     {
       "name": "sirenActivityOf",

@@ -10623,7 +10623,29 @@
         "rowBattery": "Battery",
         "rowHeatPump": "Heat pump",
         "hpToday": "Today",
-        "hpNow": "Now"
+        "hpNow": "Now",
+        "centreSufficiency": "Self-sufficiency",
+        "centreSelfUse": "Self-consumption",
+        "centreNetGrid": "Net grid",
+        "day": {
+          "previous": "Previous day",
+          "next": "Next day",
+          "today": "Today",
+          "empty": "No data was recorded for this day.",
+          "error": "The history could not be read.",
+          "power": "Power",
+          "charge": "Battery charge",
+          "flow": "Flow",
+          "fromGrid": "From the grid",
+          "toGrid": "To the grid",
+          "fromBattery": "From the battery",
+          "toBattery": "To the battery",
+          "solar": "Solar",
+          "house": "House",
+          "grid": "Grid",
+          "battery": "Battery",
+          "heatPump": "Heat pump"
+        }
       },
       "ir": {
         "canLearn": "Can learn",

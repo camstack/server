@@ -3,7 +3,7 @@
  * these turn it into the scene's node powers and today's totals. The storage
  * is read from the model's `storage` part, never from the `battery` cap (#522).
  */
-import { type EnergySystemStatus, energySystemSelfConsumptionPct } from '@camstack/types'
+import type { EnergySystemStatus } from '@camstack/types'
 import type { EnergyFlows, EnergyToday } from '../scenes/energy/model'
 
 /** Derived daily facts. Null is a missing input, not a stand-in for zero. */
@@ -13,6 +13,7 @@ export interface EnergyDailyFacts {
   readonly houseKwh: number | null
   readonly importedKwh: number | null
   readonly exportedKwh: number | null
+  readonly netGridKwh: number | null
   readonly autonomyHours: number | null
   readonly chargedTodayKwh: number | null
   readonly dischargedTodayKwh: number | null
@@ -63,9 +64,30 @@ function houseConsumptionTodayKwh(status: EnergySystemStatus): number | null {
   return produced + imported - exported
 }
 
-function selfSufficiencyPct(houseKwh: number | null, importKwh: number | null): number | null {
+export function selfSufficiencyPct(
+  houseKwh: number | null,
+  importKwh: number | null,
+): number | null {
   if (houseKwh === null || importKwh === null || houseKwh <= 0) return null
   return Math.max(0, Math.min(100, (1 - importKwh / houseKwh) * 100))
+}
+
+/**
+ * Self-consumption: the share of the production that was not exported, 0..100.
+ * Null when the production or the export is unknown, or nothing was produced (D393).
+ */
+export function selfConsumptionPct(
+  producedKwh: number | null,
+  exportedKwh: number | null,
+): number | null {
+  if (producedKwh === null || exportedKwh === null || producedKwh <= 0) return null
+  return Math.max(0, Math.min(100, ((producedKwh - exportedKwh) / producedKwh) * 100))
+}
+
+/** Net grid, kWh: imported − exported (+ drew, − fed). Null unless both are known. */
+export function netGridKwh(importedKwh: number | null, exportedKwh: number | null): number | null {
+  if (importedKwh === null || exportedKwh === null) return null
+  return tenth(importedKwh - exportedKwh)
 }
 
 /**
@@ -106,6 +128,10 @@ export function energyDailyFacts(status: EnergySystemStatus): EnergyDailyFacts {
     houseKwh: tenth(house),
     importedKwh: tenth(status.grid?.importTodayKwh ?? null),
     exportedKwh: tenth(status.grid?.exportTodayKwh ?? null),
+    netGridKwh: netGridKwh(
+      status.grid?.importTodayKwh ?? null,
+      status.grid?.exportTodayKwh ?? null,
+    ),
     autonomyHours: autonomyHours(status),
     chargedTodayKwh: tenth(status.storage?.chargedTodayKwh ?? null),
     dischargedTodayKwh: tenth(status.storage?.dischargedTodayKwh ?? null),
@@ -120,9 +146,13 @@ export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
   const facts = energyDailyFacts(status)
   const today: EnergyToday = {
     producedKwh: facts.producedKwh,
-    selfConsumptionPct: energySystemSelfConsumptionPct(status),
+    selfConsumptionPct: selfConsumptionPct(
+      status.solar?.todayKwh ?? null,
+      status.grid?.exportTodayKwh ?? null,
+    ),
     importedKwh: facts.importedKwh,
     exportedKwh: facts.exportedKwh,
+    netGridKwh: facts.netGridKwh,
     heatPumpKwh: tenth(status.heatPump?.todayKwh ?? null),
     houseKwh: facts.houseKwh,
     selfSufficiencyPct: facts.selfSufficiencyPct,

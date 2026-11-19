@@ -6,7 +6,7 @@
  * because the system is not a device that runs on a battery (#522).
  */
 import { DeviceType, type EnergySystemStatus } from '@camstack/types'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
 import { ConnectedEnergyCard } from '../connected/ConnectedEnergyCard'
@@ -50,11 +50,36 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
   }),
   useDeviceStateSlice: (slice: unknown) => slice,
 }))
-// The trend reads history through tRPC; the card's wiring is what these specs judge.
-vi.mock('../connected/PrimaryTrend', () => ({
-  PrimaryTrend: ({ deviceId }: { deviceId: number }) => (
-    <span data-testid="dc-primary-trend" data-device-id={deviceId} />
-  ),
+// The day reads history through tRPC; the card's wiring is what these specs judge.
+const PAST_DAY = {
+  producedKwh: 10,
+  selfConsumptionPct: 75,
+  importedKwh: 4,
+  exportedKwh: 2.5,
+  netGridKwh: 1.5,
+  heatPumpKwh: null,
+  houseKwh: 12,
+  selfSufficiencyPct: 66.7,
+  autonomyHours: null,
+  chargedTodayKwh: null,
+  dischargedTodayKwh: null,
+  socPct: null,
+  healthPct: null,
+  heatPumpShareNowPct: null,
+}
+const dayCalls = vi.hoisted(() => ({ offsets: [] as number[], past: true }))
+vi.mock('../connected/use-energy-day', () => ({
+  useEnergyDay: (_deviceId: number, offset: number) => {
+    dayCalls.offsets.push(offset)
+    return {
+      window: { from: 1_700_000_000_000, to: 1_700_086_400_000 },
+      status: 'ready',
+      powerSeries: [],
+      socSeries: [],
+      flowSpans: [],
+      today: dayCalls.past ? PAST_DAY : null,
+    }
+  },
 }))
 vi.mock('../connected/use-card-common', () => ({
   useCardCommon: () => {
@@ -234,8 +259,6 @@ describe('the energy system card', () => {
       'House13.2 kWh',
       'Imported2.1 kWh',
       'Exported7.3 kWh',
-      'Self-use60%',
-      'Self-sufficiency84%',
       'Now67%',
       'Health96%',
       'Autonomy≈ 8.2 h',
@@ -244,10 +267,54 @@ describe('the energy system card', () => {
     ])
   })
 
-  it('mounts the primary trend of THIS device under the readings', () => {
+  it('the enlarged centre circle shows self-sufficiency, self-consumption and the signed net grid', () => {
     hub.slice = FULL
-    render(<ConnectedEnergyCard deviceId={42} />)
-    expect(screen.getByTestId('dc-primary-trend').getAttribute('data-device-id')).toBe('42')
+    render(<ConnectedEnergyCard deviceId={1} />)
+    const centre = (id: string): string | null | undefined =>
+      screen.getByTestId(`dc-energy-centre-${id}`).textContent
+    expect(centre('sufficiency')).toContain('84%')
+    expect(centre('selfUse')).toContain('60%')
+    // 2.1 imported − 7.3 exported: fed the grid.
+    expect(centre('netGrid')).toContain('−5.2 kWh')
+  })
+
+  it('a net grid that drew from the grid carries a plus sign', () => {
+    hub.slice = { ...FULL, grid: { ...FULL.grid!, importTodayKwh: 9, exportTodayKwh: 1 } }
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('+8 kWh')
+  })
+
+  it('a missing input reads as a dash in the centre, never 0', () => {
+    hub.slice = { ...FULL, grid: { ...FULL.grid!, importTodayKwh: null, exportTodayKwh: null } }
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('—')
+    expect(screen.getByTestId('dc-energy-centre-sufficiency').textContent).toContain('—')
+  })
+
+  it('the day selector steps back a day and shows that day’s figures, then returns to today', () => {
+    hub.slice = FULL
+    dayCalls.offsets = []
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(screen.getByTestId('dc-energy-day-label').textContent).toBe('Today')
+    expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByLabelText('Previous day'))
+    expect(dayCalls.offsets.at(-1)).toBe(1)
+    expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('+1.5 kWh')
+    expect(screen.getByTestId('dc-energy-centre-selfUse').textContent).toContain('75%')
+    expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(screen.getByText('Today'))
+    expect(dayCalls.offsets.at(-1)).toBe(0)
+    expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('−5.2 kWh')
+  })
+
+  it('a past day with no recording shows dashes, not zeros', () => {
+    hub.slice = FULL
+    dayCalls.past = false
+    render(<ConnectedEnergyCard deviceId={1} />)
+    fireEvent.click(screen.getByLabelText('Previous day'))
+    dayCalls.past = true
+    expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('—')
+    expect(screen.getByTestId('dc-energy-centre-selfUse').textContent).toContain('—')
   })
 
   it('keeps the Charge pill when the scene does not draw the battery', () => {
