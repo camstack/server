@@ -26,7 +26,6 @@ import { History } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
-import { RunConditions } from './RunConditions'
 import { type BlockView, runFailures, runSummary } from './trace-view'
 
 const OUTCOME_VARIANT: Readonly<Record<AutomationRunOutcome, BadgeVariant>> = {
@@ -162,7 +161,9 @@ function SelectedSummary({ run }: { readonly run: AutomationRunTrace }) {
   const { t } = useTranslation()
   const outcomeLabel = useOutcomeLabel()
   const summary = runSummary(run)
+  // A failed step shows its own error on its row in the editor; only a failure no step carries is an alert here.
   const failures = runFailures(run)
+  const runLevel = failures.filter((failure) => failure.step === null)
   return (
     <>
       <p
@@ -182,16 +183,12 @@ function SelectedSummary({ run }: { readonly run: AutomationRunTrace }) {
           </span>
         )}
       </p>
-      {failures.length > 0 && (
+      {runLevel.length > 0 && (
         <div className="space-y-2 px-3 pb-2" data-testid="run-failure">
-          {failures.map((failure) => (
+          {runLevel.map((failure) => (
             <ErrorBox
-              key={`${String(failure.step)}:${failure.message}`}
-              title={
-                failure.step === null
-                  ? t('flow.runs.runFailed', 'The run failed')
-                  : t('flow.runs.stepFailedAt', 'Step {{n}} failed', { n: failure.step + 1 })
-              }
+              key={failure.message}
+              title={t('flow.runs.runFailed', 'The run failed')}
               message={failure.message}
             />
           ))}
@@ -272,7 +269,6 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
             })}
           </ul>
           {selectedRun !== null && <SelectedSummary run={selectedRun} />}
-          {selectedRun !== null && <RunConditions run={selectedRun} />}
           <p className="border-t border-border-subtle px-3 py-2 text-xs text-foreground-subtle">
             {t(
               'flow.runs.hint',

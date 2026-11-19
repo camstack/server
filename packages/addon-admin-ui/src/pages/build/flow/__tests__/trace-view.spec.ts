@@ -305,6 +305,7 @@ describe('traceDetails', () => {
         kind: 'action',
         tone: 'fail',
         message: 'Feeder offline',
+        failure: 'Feeder offline',
         args: [
           { name: 'grams', value: { kind: 'value', text: '30' } },
           { name: 'label', value: { kind: 'value', text: 'dog' } },
@@ -516,5 +517,41 @@ describe('a step guard keeps what it read', () => {
       condition: 'false',
       conditionReason: 'food level 80, expected < 20 → fail',
     })
+  })
+})
+
+describe('traceDetails step failure', () => {
+  const base = (steps: AutomationRunTrace['steps']): AutomationRunTrace => ({
+    ...BASE,
+    outcome: 'failed',
+    steps,
+  })
+
+  it('a block step names the failed inner step, not its own generic line', () => {
+    const detail = traceDetails(
+      base([
+        {
+          path: 'actions.0',
+          kind: 'choose',
+          outcome: 'error',
+          message: 'a step of the branch failed',
+          steps: [
+            { path: 'actions.0.0', kind: 'action', outcome: 'error', message: 'pump refused' },
+          ],
+        },
+      ]),
+    ).steps[0]
+    expect(detail?.failure).toBe('pump refused')
+  })
+
+  it('a plain failed step keeps its message, and a step that did not fail has none', () => {
+    const steps = traceDetails(
+      base([
+        { path: 'actions.0', kind: 'command', outcome: 'error', message: 'offline' },
+        { path: 'actions.1', kind: 'wait', outcome: 'ok' },
+      ]),
+    ).steps
+    expect(steps[0]?.failure).toBe('offline')
+    expect(steps[1]?.failure).toBeNull()
   })
 })

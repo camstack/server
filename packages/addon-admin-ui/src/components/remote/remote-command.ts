@@ -33,7 +33,8 @@ export function commandOfBinding(action: RemoteBindingAction): CommandStep {
 export function bindingOfCommand(step: CommandStep): RemoteBindingAction | null {
   if (step.target.kind !== 'devices' || step.target.ids.length !== 1) return null
   const deviceId = step.target.ids[0]
-  if (deviceId === undefined) return null
+  // A step whose action is not chosen yet is no binding: nothing to translate, nothing to throw.
+  if (deviceId === undefined || findVocabAction(step.actionId) === undefined) return null
   const call = vocabCall(step.actionId, step.args)
   return {
     kind: 'cap',

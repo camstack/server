@@ -71,4 +71,16 @@ describe('prepareRecipeUnits (shared save boundary)', () => {
     expect(prepared.ok).toBe(false)
     if (!prepared.ok) expect(prepared.error).toMatch(/cross-dimension/)
   })
+
+  it('lets a step with a blank action id through untouched instead of throwing (a fresh Then step)', () => {
+    const blank = {
+      kind: 'command' as const,
+      target: { kind: 'devices' as const, ids: [] },
+      actionId: '',
+      args: { grams: 30 },
+    }
+    const prepared = prepareRecipeUnits(recipe(leaf({}), [blank]), resolver)
+    if (!prepared.ok) throw new Error(prepared.error)
+    expect(prepared.recipe.actions[0]).toEqual(blank)
+  })
 })

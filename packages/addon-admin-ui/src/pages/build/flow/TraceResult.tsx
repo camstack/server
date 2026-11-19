@@ -158,8 +158,8 @@ export function StepResult({ step, deviceName }: StepResultProps) {
           <span className="min-w-0 break-words text-foreground">{step.message}</span>
         )}
       </div>
-      {step.message !== null && step.tone === 'fail' && (
-        <ErrorBox message={step.message} title={t('flow.runs.stepFailed', 'This step failed')} />
+      {step.failure !== null && (
+        <ErrorBox message={step.failure} title={t('flow.runs.stepFailed', 'This step failed')} />
       )}
       {step.conditionReason !== undefined && (
         <div className="text-[11px] text-foreground-subtle" data-testid="step-guard">

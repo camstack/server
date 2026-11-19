@@ -12794,9 +12794,7 @@
       "lastRound": "L'ultimo di {{n}} giri:",
       "stepFailed": "Questo passo e fallito",
       "stepGuard": "Condizione",
-      "runFailed": "L'esecuzione e fallita",
-      "stepFailedAt": "Il passo {{n}} e fallito",
-      "conditionsTitle": "Condizioni"
+      "runFailed": "L'esecuzione e fallita"
     },
     "scope": {
       "className": "cosa ha visto",

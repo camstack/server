@@ -26,7 +26,7 @@ import {
   enumerateSchemaFields,
   unwrapSchema,
 } from '../device/schema-fields.js'
-import { vocabCall } from '../device/cap-vocabulary/action-index.js'
+import { findVocabAction, vocabCall } from '../device/cap-vocabulary/action-index.js'
 import { normalizeUnit } from '../device/source-info.js'
 import {
   type ParamMeta,
@@ -211,6 +211,9 @@ function normalizeCommandStepUnits(
   resolver: UnitResolver,
   path: string,
 ): UnitsNormalized<AutomationCommandStep> {
+  // A blank or unknown action id (a Then step not yet configured) has no method whose units to
+  // check; the recipe schema reports it, and a render must never throw over it.
+  if (findVocabAction(step.actionId) === undefined) return { value: step, warnings: [] }
   const deviceId =
     step.target.kind === 'devices' && step.target.ids.length === 1 ? step.target.ids[0] : undefined
   const { cap, method } = vocabCall(step.actionId, undefined)

@@ -373,9 +373,9 @@ function firstSchemaError(recipe: AutomationRecipe): string | null {
 }
 
 function generate(name: string, recipe: AutomationRecipe): GeneratedSource {
-  const prepared = prepareRecipeUnits(recipe)
-  if (!prepared.ok) return { code: null, error: prepared.error }
   try {
+    const prepared = prepareRecipeUnits(recipe)
+    if (!prepared.ok) return { code: null, error: prepared.error }
     return {
       code: generateAutomationBlock({ name, recipe: prepared.recipe }),
       error: null,

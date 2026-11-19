@@ -160,6 +160,8 @@ export interface StepDetailView {
   readonly kind: string
   readonly tone: BlockTone
   readonly message: string | null
+  /** A failed step's root cause: its failed inner steps' own words (a block step only says "a step failed"), else its message. Null when the step did not fail. */
+  readonly failure: string | null
   /** What the step SENT (after `{{vars.x}}` substitution); empty on an old trace or a step with none. */
   readonly args: readonly StepArgView[]
   /** What happened per device, when the step drove several. */
@@ -250,6 +252,7 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
       kind: step.kind,
       tone: stepTone(step.outcome),
       message: nonEmpty(step.message),
+      failure: failureOf(step),
       args: Object.entries(step.args ?? {}).map(([name, value]) => ({
         name,
         value: valueView(value),
@@ -356,6 +359,13 @@ function causesOf(row: FailureRow): readonly string[] {
   if (fromDevices.length > 0) return fromDevices
   const own = nonEmpty(row.message)
   return own === null ? [] : [own]
+}
+
+/** What a failed step shows on its own row: the cause under it when it is a block step, else its message. */
+function failureOf(row: FailureRow): string | null {
+  if (!isFailedRow(row)) return null
+  const inner = [...(row.steps ?? []), ...(row.else ?? [])].filter(isFailedRow).flatMap(causesOf)
+  return inner.length > 0 ? inner.join('; ') : nonEmpty(row.message)
 }
 
 /** Every failure of a run, the root cause of each failed step, then a run-level error nothing else carries. */

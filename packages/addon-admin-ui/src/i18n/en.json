@@ -12772,9 +12772,7 @@
       "lastRound": "The last of {{n}} rounds:",
       "stepFailed": "This step failed",
       "stepGuard": "Condition",
-      "runFailed": "The run failed",
-      "stepFailedAt": "Step {{n}} failed",
-      "conditionsTitle": "Conditions"
+      "runFailed": "The run failed"
     },
     "scope": {
       "className": "what it saw",

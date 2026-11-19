@@ -40,7 +40,9 @@ describe('RunsPanel', () => {
     expect(screen.queryByTestId('run-details')).toBeNull()
     const summary = within(screen.getByTestId('run-summary'))
     expect(summary.getByText('Failed')).toBeTruthy()
-    expect(within(screen.getByTestId('run-failure')).getByText('Feeder offline')).toBeTruthy()
+    // The step's own row carries its error; the panel repeats none.
+    expect(screen.queryByTestId('run-failure')).toBeNull()
+    expect(screen.queryByText('Feeder offline')).toBeNull()
     expect(summary.getByText('1 of 2 steps ran')).toBeTruthy()
     // The trigger vars are not repeated in the panel.
     expect(screen.queryByText('score')).toBeNull()
@@ -77,7 +79,7 @@ describe('RunsPanel', () => {
     expect(screen.getByTestId('run-summary')).toBeTruthy()
   })
 
-  it('shows the failure in an alert box, with the cause a block step hides', () => {
+  it('keeps a step failure off the panel: the step row carries it, the panel shows no step alert', () => {
     const nested: AutomationRunTrace = {
       ...TRACE,
       steps: [
@@ -98,8 +100,20 @@ describe('RunsPanel', () => {
       ],
     }
     render(<RunsPanel traces={[nested]} selectedId="r1" onSelect={() => {}} />)
+    expect(screen.queryByTestId('run-failure')).toBeNull()
+    expect(screen.queryByText('pump refused: no provider')).toBeNull()
+  })
+
+  it('shows a run-level error no step carries in an alert box', () => {
+    render(
+      <RunsPanel
+        traces={[{ ...TRACE, outcome: 'failed', steps: [], error: 'the block threw' }]}
+        selectedId="r1"
+        onSelect={() => {}}
+      />,
+    )
     const alert = within(screen.getByTestId('run-failure'))
-    expect(alert.getByText('pump refused: no provider')).toBeTruthy()
+    expect(alert.getByText('the block threw')).toBeTruthy()
     expect(alert.getByRole('alert')).toBeTruthy()
   })
 
@@ -131,12 +145,11 @@ describe('RunsPanel', () => {
     expect(screen.queryByText('hold pending')).toBeNull()
   })
 
-  it('lists every condition with what it read, what it wanted and the result', () => {
+  it('draws no separate values box: conditions and values live in the editor rows', () => {
     const withConditions: AutomationRunTrace = {
       ...TRACE,
       outcome: 'ran',
       conditions: [
-        { path: 'when', kind: 'all', outcome: 'pass', reason: '' },
         {
           path: 'when.0',
           kind: 'device-is',
@@ -149,27 +162,12 @@ describe('RunsPanel', () => {
           expected: 90,
           observed: 80,
         },
-        {
-          path: 'when.1',
-          kind: 'device-is',
-          outcome: 'fail',
-          reason: 'bowl value unknown → fail',
-          cap: 'sensor',
-          fieldPath: 'bowl',
-          operator: 'eq',
-          expected: 'empty',
-          observed: null,
-        },
       ],
       steps: [],
     }
     render(<RunsPanel traces={[withConditions]} selectedId="r1" onSelect={() => {}} />)
-    const rows = screen.getAllByTestId('run-condition')
-    expect(rows).toHaveLength(2)
-    expect(within(rows[0]!).getByTestId('trace-observed').textContent).toContain('80')
-    expect(within(rows[0]!).getByTestId('trace-expected').textContent).toContain('90')
-    expect(within(rows[0]!).getByText('Passed')).toBeTruthy()
-    expect(within(rows[1]!).getByTestId('trace-value-unknown')).toBeTruthy()
-    expect(within(rows[1]!).getByText('Failed')).toBeTruthy()
+    expect(screen.queryByTestId('run-conditions')).toBeNull()
+    expect(screen.queryByTestId('run-condition')).toBeNull()
+    expect(screen.queryByTestId('trace-observed')).toBeNull()
   })
 })

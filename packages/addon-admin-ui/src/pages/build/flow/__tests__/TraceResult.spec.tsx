@@ -70,6 +70,7 @@ describe('StepResult', () => {
     kind: 'cap',
     tone: 'fail',
     message: 'Feeder offline',
+    failure: 'Feeder offline',
     args: [{ name: 'grams', value: { kind: 'value', text: '30' } }],
     devices: [
       { deviceId: 1, tone: 'pass', message: null },
@@ -178,6 +179,7 @@ describe('StepResult failure', () => {
     kind: 'action',
     tone: 'fail',
     message: 'pump refused: no provider',
+    failure: 'pump refused: no provider',
     args: [],
     devices: [],
     chose: null,
@@ -189,6 +191,23 @@ describe('StepResult failure', () => {
     render(<StepResult step={FAILED} deviceName={(id) => `#${String(id)}`} />)
     const alert = screen.getByRole('alert')
     expect(within(alert).getByText('pump refused: no provider')).toBeTruthy()
+  })
+
+  it('alerts with the inner root cause of a block step, not its generic line', () => {
+    render(
+      <StepResult
+        step={{
+          ...FAILED,
+          kind: 'choose',
+          message: 'a step of the branch failed',
+          failure: 'pump refused',
+        }}
+        deviceName={(id) => `#${String(id)}`}
+      />,
+    )
+    const alert = screen.getByRole('alert')
+    expect(within(alert).getByText('pump refused')).toBeTruthy()
+    expect(screen.queryByText('a step of the branch failed')).toBeNull()
   })
 
   it('shows what the step guard read', () => {

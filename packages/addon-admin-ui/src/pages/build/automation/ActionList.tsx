@@ -49,7 +49,7 @@ import { StepGuard, StepIf } from './StepGuard'
 import { WaitUntilFields } from './WaitUntilFields'
 import { Trans, useTranslation } from 'react-i18next'
 
-const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
+export const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
   { value: 'command', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },

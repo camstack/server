@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - API explorer groups methods into collapsible macro groups with counts, de-emphasises the call type, and fills the input through typed controls (device picker, selects, bounded numbers, switches)
+- Automation editor: a run's values and errors now show inside the When rows and Then steps, not in a separate box; adding a Then step no longer crashes the page
 
 ## [1.2.710] - 2026-11-19
 
