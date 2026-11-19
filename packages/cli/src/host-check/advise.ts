@@ -235,11 +235,19 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
 
 export function pickImageTag(accelerators: readonly DetectedAccelerator[]): string {
   const used = accelerators.filter((a) => a.status === 'used')
-  // An Intel NPU lives only in the intel image: it wins over a legacy-classified iGPU.
+  // A fixed order, independent of how the accelerators were enumerated: an Intel
+  // iGPU, then an AMD GPU (the pre-variant outcomes), then an Intel NPU, then NVIDIA.
+  const intelGpu = used.find((a) => a.kind === 'intel-gpu')
+  if (intelGpu !== undefined) {
+    // An Intel NPU lives only in the intel image: it wins over a legacy-classified iGPU.
+    if (used.some((a) => a.kind === 'intel-npu')) return variantTag('intel')
+    return variantTag(intelGpu.variant ?? 'intel')
+  }
+  if (used.some((a) => a.kind === 'amd-gpu')) return variantTag('amd')
   if (used.some((a) => a.kind === 'intel-npu')) return variantTag('intel')
-  const picked = used.find((a) => a.variant !== undefined)
+  const nvidia = used.find((a) => a.kind === 'nvidia')
   // No Coral- or CPU-specific image: those hosts take the intel image.
-  return variantTag(picked?.variant ?? 'intel')
+  return variantTag(nvidia?.variant ?? 'intel')
 }
 
 /** The nodes an LXC needs, one `devN:` per node, then the Coral USB bind. */
