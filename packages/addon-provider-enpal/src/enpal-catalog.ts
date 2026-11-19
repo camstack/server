@@ -520,6 +520,36 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   numeric('data-lte-up', 'LTE upload this month', 'count', 'IoT.Data.Consumption.Lte.Up.Month'),
 ]
 
+/**
+ * The catalog entries the Energy system device shows (production, battery, grid, house, heat
+ * pump). It reads them through {@link findSpec}, so they stay in the catalog, but they are NOT
+ * offered as Sensor devices: a Sensor would only repeat a value the Energy system already has.
+ */
+export const ENERGY_SYSTEM_INPUT_SPEC_IDS: ReadonlySet<string> = new Set([
+  'pv',
+  'pv-energy-day',
+  'battery',
+  'battery-stored-energy',
+  'battery-charge-day',
+  'battery-discharge-day',
+  'battery-charged',
+  'battery-discharged',
+  'battery-health',
+  'battery-capacity',
+  'grid-import',
+  'grid-export',
+  'grid-import-day',
+  'grid-export-day',
+  'house',
+  'house-energy-day',
+  'heatpump',
+])
+
+/** True for a catalog entry that becomes a Sensor child device. */
+export function isSensorSpecId(id: string): boolean {
+  return !ENERGY_SYSTEM_INPUT_SPEC_IDS.has(id)
+}
+
 export function findSpec(id: string): EnpalSpec | undefined {
   return ENPAL_SPECS.find((s) => s.id === id)
 }

@@ -48,7 +48,7 @@ const SPEC_IDS = ['battery', 'pv', 'house']
 const DECLARED = primaryChildPreferenceOf(SYSTEM, SPEC_IDS)
 
 describe('backfillPrimaryChildPreference', () => {
-  it('declares the Energy system first, then PV, on a System adopted without a preference', async () => {
+  it('declares the Energy system on a System adopted without a preference', async () => {
     const { row, write } = rig({ primaryChildEntityId: null, primaryChildPreference: undefined })
     const wrote = await backfillPrimaryChildPreference({
       deviceId: 9,
@@ -58,7 +58,7 @@ describe('backfillPrimaryChildPreference', () => {
       logger: quiet,
     })
     expect(wrote).toBe(true)
-    expect(row.primaryChildPreference).toEqual(['energy-system', 'pv', 'battery', 'house'])
+    expect(row.primaryChildPreference).toEqual(['energy-system'])
   })
 
   it("never touches the operator's pick", async () => {

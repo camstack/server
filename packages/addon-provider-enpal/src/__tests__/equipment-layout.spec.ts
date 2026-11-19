@@ -10,6 +10,7 @@ import {
   findSpec,
   keysOfSpec,
   type EnpalSpec,
+  ENERGY_SYSTEM_INPUT_SPEC_IDS,
 } from '../enpal-catalog.js'
 import {
   accessoryChildSpecs,
@@ -255,13 +256,12 @@ describe('System container', () => {
       expect(placed?.child.section).toBe('Battery')
     }
   })
-  it('has exactly the sections Photovoltaic, Battery, Grid, Home and Inverter', () => {
+  it('has the sections Photovoltaic, Battery, Grid and Inverter; Home only held Energy system inputs', () => {
     const layout = childLayoutOf(equipmentOf('impianto'), equipmentOf('impianto').specIds)
     expect([...new Set(layout.map((e) => e.section))]).toEqual([
       'Photovoltaic',
       'Battery',
       'Grid',
-      'Home',
       'Inverter',
     ])
   })
@@ -405,11 +405,11 @@ describe('diagnostics are hidden, history untouched', () => {
   it('a diagnostic child is hidden by default and a live one is not', () => {
     const specs = accessoryChildSpecs({
       equipment: 'impianto',
-      specIds: ['pv', 'pv-string-1-voltage'],
+      specIds: ['pv-string-1-power', 'pv-string-1-voltage'],
       integrationId: 'int-1',
     })
     const hidden = Object.fromEntries(specs.map((s) => [s.stableIdSuffix, s.meta.display?.hidden]))
-    expect(hidden).toEqual({ pv: undefined, 'pv-string-1-voltage': true })
+    expect(hidden).toEqual({ 'pv-string-1-power': undefined, 'pv-string-1-voltage': true })
   })
 
   it('every child of the Enpal Box is a diagnostic', () => {
@@ -419,11 +419,15 @@ describe('diagnostics are hidden, history untouched', () => {
 
 describe('child layout', () => {
   it('names each adopted child by its stable suffix, in catalog order, and skips the rest', () => {
-    const layout = childLayoutOf(equipmentOf('impianto'), ['battery-health', 'pv', 'house'])
+    const layout = childLayoutOf(equipmentOf('impianto'), [
+      'battery-temperature',
+      'pv',
+      'pv-string-1-power',
+      'house',
+    ])
     expect(layout.map((e) => [e.childKey, e.section])).toEqual([
-      ['pv', 'Photovoltaic'],
-      ['battery-health', 'Battery'],
-      ['house', 'Home'],
+      ['pv-string-1-power', 'Photovoltaic'],
+      ['battery-temperature', 'Battery'],
     ])
     const orders = layout.map((e) => e.order ?? -1)
     expect(orders).toEqual([...orders].sort((a, b) => a - b))
@@ -431,23 +435,21 @@ describe('child layout', () => {
 })
 
 describe('the primary child: a declared preference, the first adopted one wins', () => {
-  it('System prefers its Energy system, then PV power, the battery level, the home consumption', () => {
+  it('System prefers its Energy system alone: its inputs are not devices', () => {
     expect(
       primaryChildPreferenceOf(equipmentOf('impianto'), equipmentOf('impianto').specIds),
-    ).toEqual(['energy-system', 'pv', 'battery', 'house'])
+    ).toEqual(['energy-system'])
   })
 
   it('Heat pump prefers its power, then the hot water, then the outside temperature', () => {
     expect(
       primaryChildPreferenceOf(equipmentOf('heatpump'), equipmentOf('heatpump').specIds),
-    ).toEqual(['heatpump', 'heatpump-hot-water', 'heatpump-outside'])
+    ).toEqual(['heatpump-hot-water', 'heatpump-outside'])
   })
 
   it('declares only the children that were adopted', () => {
     expect(primaryChildPreferenceOf(equipmentOf('impianto'), ['house', 'battery'])).toEqual([
       'energy-system',
-      'battery',
-      'house',
     ])
   })
 
@@ -458,11 +460,11 @@ describe('the primary child: a declared preference, the first adopted one wins',
     expect(primaryChildPreferenceOf(findEquipment('pv'), ['pv'])).toEqual([])
   })
 
-  it('names no sensor in the rule: a candidate is a catalog entry of any kind', () => {
-    const kinds = new Set(
-      ENPAL_EQUIPMENT.flatMap((e) => e.primaryChildPreference).map((id) => findSpec(id)?.kind),
-    )
-    expect(kinds).toEqual(new Set(['power-meter', 'battery', 'numeric']))
+  it('never names a catalog entry that is not a device', () => {
+    for (const id of ENPAL_EQUIPMENT.flatMap((e) => e.primaryChildPreference)) {
+      expect(findSpec(id)).toBeDefined()
+      expect(ENERGY_SYSTEM_INPUT_SPEC_IDS.has(id)).toBe(false)
+    }
   })
 
   it('the framework resolves the Energy system whatever order the children come back in', () => {

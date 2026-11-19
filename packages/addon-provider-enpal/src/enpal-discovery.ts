@@ -4,7 +4,7 @@ import {
   deviceAdminLinkCapability,
   gatewayDeviceName,
 } from '@camstack/types'
-import { availableSpecs, capsOfSpec } from './enpal-catalog.js'
+import { availableSpecs, capsOfSpec, isSensorSpecId } from './enpal-catalog.js'
 import {
   ENPAL_BOX_ID,
   ENPAL_EQUIPMENT,
@@ -36,7 +36,7 @@ function reportedChildren(
   const reported = new Map(availableSpecs(snapshot).map((spec) => [spec.id, spec]))
   return equipment.specIds.flatMap((id): DiscoveredChildDevice[] => {
     const spec = reported.get(id)
-    if (spec === undefined) return []
+    if (spec === undefined || !isSensorSpecId(spec.id)) return []
     return [
       {
         childNativeId: childNativeId(equipment.id, spec.id),
@@ -50,6 +50,13 @@ function reportedChildren(
       },
     ]
   })
+}
+
+/** An Energy system container is offered when the box reported any value it shows, sensors or not. */
+function showsEnergySystem(equipment: EnpalEquipment, snapshot: EnpalSnapshot | null): boolean {
+  if (equipment.energySystem !== true || snapshot === null) return false
+  const reported = new Set(availableSpecs(snapshot).map((spec) => spec.id))
+  return equipment.specIds.some((id) => reported.has(id))
 }
 
 /**
@@ -82,7 +89,7 @@ export function buildEnpalCandidates(
   for (const equipment of ENPAL_EQUIPMENT) {
     if (equipment.kind !== 'container') continue
     const children = reportedChildren(equipment, snapshot)
-    if (children.length === 0) continue
+    if (children.length === 0 && !showsEnergySystem(equipment, snapshot)) continue
     const adoptedId = input.adopted.get(equipment.id) ?? null
     out.push({
       childNativeId: equipment.id,

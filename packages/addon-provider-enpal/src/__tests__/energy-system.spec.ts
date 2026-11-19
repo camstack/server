@@ -245,7 +245,7 @@ describe('the Energy system child of the System container', () => {
   })
 
   it('is the System’s first preferred primary child', () => {
-    expect(primaryChildPreferenceOf(SYSTEM, ['house'])).toEqual([ENERGY_SYSTEM_CHILD_KEY, 'house'])
+    expect(primaryChildPreferenceOf(SYSTEM, ['house'])).toEqual([ENERGY_SYSTEM_CHILD_KEY])
   })
 
   it('options are the plain ones by default', () => {

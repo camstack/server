@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Enpal sensors that only repeated values already shown on the Energy system device (production, battery, grid, house, heat pump) are no longer created, and existing ones are removed.
+
 ## [0.1.27] - 2026-11-19
 
 ### Changed

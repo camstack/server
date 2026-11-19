@@ -11,11 +11,11 @@ describe('Enpal equipment', () => {
 
   it('adopting a container spawns exactly the children it was adopted with', () => {
     const specs = accessoryChildSpecs({
-      equipment: 'battery',
-      specIds: ['battery', 'battery-health'],
+      equipment: 'heatpump',
+      specIds: ['heatpump-hot-water', 'heatpump-outside'],
       integrationId: 'int-1',
     })
-    expect(specs.map((s) => s.stableIdSuffix)).toEqual(['battery', 'battery-health'])
+    expect(specs.map((s) => s.stableIdSuffix)).toEqual(['heatpump-hot-water', 'heatpump-outside'])
     for (const s of specs) {
       expect(s.meta.type).toBe(DeviceType.Sensor)
       expect(s.meta.integrationId).toBe('int-1')
@@ -24,15 +24,15 @@ describe('Enpal equipment', () => {
         system: 'enpal',
       })
     }
-    expect(specs[1]?.config['specId']).toBe('battery-health')
+    expect(specs[1]?.config['specId']).toBe('heatpump-outside')
   })
 
   it('a persisted spec id the catalog no longer knows is skipped, not thrown', () => {
     const specs = accessoryChildSpecs({
-      equipment: 'pv',
-      specIds: ['pv', 'gone'],
+      equipment: 'heatpump',
+      specIds: ['heatpump-outside', 'gone'],
       integrationId: 'int-1',
     })
-    expect(specs.map((s) => s.stableIdSuffix)).toEqual(['pv'])
+    expect(specs.map((s) => s.stableIdSuffix)).toEqual(['heatpump-outside'])
   })
 })

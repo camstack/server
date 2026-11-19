@@ -80,7 +80,7 @@ function harness(keys: string[]) {
 
 describe('Enpal adoption', () => {
   it('lists the containers the box reported', async () => {
-    const h = harness(['Power.Consumption.Total', 'Heatpump.Power.Consumption.Total'])
+    const h = harness(['Power.Consumption.Total', 'Heatpump.Outside.Temperature'])
     const page = await h.provider.listCandidates({
       integrationId: 'int-1',
       page: 1,
@@ -102,21 +102,17 @@ describe('Enpal adoption', () => {
     expect(h.adoptCalls).toEqual([
       {
         equipment: 'impianto',
-        specIds: ['battery', 'battery-health', 'inverter-temperature'],
+        specIds: ['inverter-temperature'],
         name: 'System',
-        layout: [
-          ['battery', 'Battery'],
-          ['battery-health', 'Battery'],
-          ['inverter-temperature', 'Inverter'],
-        ],
-        primary: ['energy-system', 'battery'],
+        layout: [['inverter-temperature', 'Inverter']],
+        primary: ['energy-system'],
       },
     ])
     expect(out.adopted).toEqual([
       {
         childNativeId: 'impianto',
         parentDeviceId: 11,
-        accessoryDeviceIds: [100, 101, 102],
+        accessoryDeviceIds: [100],
       },
     ])
   })
@@ -181,6 +177,6 @@ describe('Enpal adoption', () => {
   it('declares the primary child of a container in preference order, adopted ones only', async () => {
     const h = harness(['Power.Consumption.Total', 'Energy.Battery.Charge.Level'])
     await h.provider.adopt({ integrationId: 'int-1', childNativeIds: ['impianto'] })
-    expect(h.adoptCalls[0]?.primary).toEqual(['energy-system', 'battery', 'house'])
+    expect(h.adoptCalls[0]?.primary).toEqual(['energy-system'])
   })
 })

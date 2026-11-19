@@ -6,7 +6,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from './config.js'
-import { findSpec } from './enpal-catalog.js'
+import { findSpec, isSensorSpecId } from './enpal-catalog.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 import { enpalSensorFactory } from './devices/enpal-sensor-factory.js'
 import { enpalEnergySystemFactory } from './devices/enpal-energy-system-device.js'
@@ -204,7 +204,7 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
         key: 'SoftwareVersion.Service.Battery.Unit.1',
       },
     ],
-    primaryChildPreference: ['pv', 'battery', 'house'],
+    primaryChildPreference: [],
     energySystem: true,
   }),
   equipment({
@@ -251,7 +251,7 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
       },
       { attribute: 'gatewayFirmware', key: 'Heatpump.Gateway.SoftwareVersion' },
     ],
-    primaryChildPreference: ['heatpump', 'heatpump-hot-water', 'heatpump-outside'],
+    primaryChildPreference: ['heatpump-hot-water', 'heatpump-outside'],
   }),
 ]
 
@@ -305,6 +305,7 @@ export function childLayoutOf(
   const entries: ChildLayoutEntry[] = []
   found.children.forEach((child, order) => {
     if (child.section === undefined || !specIds.includes(child.specId)) return
+    if (!isSensorSpecId(child.specId)) return
     entries.push({ childKey: child.specId, section: child.section, order })
   })
   return entries
@@ -345,7 +346,7 @@ export function accessoryChildSpecs(config: {
   }
   for (const specId of config.specIds) {
     const spec = findSpec(specId)
-    if (spec === undefined) continue
+    if (spec === undefined || !isSensorSpecId(spec.id)) continue
     const diagnostic = found?.children.find((c) => c.specId === specId)?.diagnostic === true
     out.push({
       stableIdSuffix: spec.id,

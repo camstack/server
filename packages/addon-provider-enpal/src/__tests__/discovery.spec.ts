@@ -76,17 +76,9 @@ describe('Enpal discovery: containers per equipment', () => {
     ])
     const byId = Object.fromEntries(out.map((c) => [c.childNativeId, childIds(c)]))
     expect(byId['impianto']).toEqual(
-      expect.arrayContaining([
-        'impianto#pv',
-        'impianto#battery',
-        'impianto#grid-import',
-        'impianto#house',
-        'impianto#inverter-temperature',
-        'impianto#inverter-state',
-      ]),
+      expect.arrayContaining(['impianto#inverter-temperature', 'impianto#inverter-state']),
     )
     expect(byId['heatpump']).toEqual([
-      'heatpump#heatpump',
       'heatpump#heatpump-hot-water',
       'heatpump#heatpump-outside',
       'heatpump#heatpump-connection',
@@ -99,7 +91,8 @@ describe('Enpal discovery: containers per equipment', () => {
       adopted: new Map(),
     })
     expect(out.map((c) => c.childNativeId)).toEqual(['impianto'])
-    expect(childIds(out[0]!)).toEqual(['impianto#battery', 'impianto#house'])
+    // Both readings feed the Energy system only: the container is offered, with no Sensor.
+    expect(childIds(out[0]!)).toEqual([])
   })
 
   it('a text-only reading (a state label) is enough to offer its equipment', () => {
@@ -129,8 +122,7 @@ describe('Enpal discovery: containers per equipment', () => {
     const out = buildEnpalCandidates({ snapshot: FULL, adopted: new Map() })
     const impianto = out.find((c) => c.childNativeId === 'impianto')
     const child = (id: string) => impianto?.children?.find((c) => c.childNativeId === id)
-    expect(child('impianto#battery')?.type).toBe(DeviceType.Sensor)
-    expect(child('impianto#battery')?.capabilities).toEqual(['numeric-sensor', 'power-meter'])
+    expect(child('impianto#inverter-temperature')?.type).toBe(DeviceType.Sensor)
     expect(child('impianto#inverter-state')?.capabilities).toEqual(['enum-sensor'])
   })
 })
