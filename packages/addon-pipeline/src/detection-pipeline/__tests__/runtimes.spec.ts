@@ -96,6 +96,24 @@ describe('defaults / format / requirements', () => {
     expect(modelFormatFor('openvino')).toBe('openvino')
     expect(modelFormatFor('coreml')).toBe('coreml')
   })
+  it('onnx on an NVIDIA node with the wheelhouse installs onnxruntime-gpu, not the CPU wheel (#605)', () => {
+    const nvidia = {
+      type: 'nvidia' as const,
+      name: 'RTX',
+      usable: false as const,
+      reason: 'no-cuda-execution-provider' as const,
+    }
+    expect(
+      pythonRequirementsFor('onnx', { nvidia, ortWheelhouse: '/opt/camstack/wheelhouse' }),
+    ).toEqual(['requirements.txt', 'requirements-onnxruntime-gpu.txt'])
+    // no wheelhouse (not an nvidia image) or no card: the CPU wheel
+    expect(pythonRequirementsFor('onnx', { nvidia, ortWheelhouse: null })).toContain(
+      'requirements-onnxruntime.txt',
+    )
+    expect(pythonRequirementsFor('onnx', { nvidia: null, ortWheelhouse: '/w' })).toContain(
+      'requirements-onnxruntime.txt',
+    )
+  })
   it('requirements are base + the runtime-specific file', () => {
     expect(pythonRequirementsFor('openvino')).toEqual([
       'requirements.txt',

@@ -310,8 +310,30 @@ export function modelFormatFor(id: RuntimeId): 'onnx' | 'openvino' | 'coreml' | 
 // Detection-specific accessors
 // ---------------------------------------------------------------------------
 
-export function pythonRequirementsFor(id: RuntimeId): readonly string[] {
-  return RUNTIME_DETAIL[id].pythonRequirements
+/** What decides which ONNX Runtime wheel a node installs. */
+export interface RequirementsContext {
+  /** The node's NVIDIA slot — PRESENT whether or not the CUDA EP exists yet. */
+  readonly nvidia: NvidiaInfo | null
+  /**
+   * `CAMSTACK_ORT_WHEELHOUSE`: the directory an nvidia image bakes its
+   * `onnxruntime-gpu` wheel into; null on every other image.
+   */
+  readonly ortWheelhouse: string | null
+}
+
+/**
+ * The requirement files for one runtime. `onnx` on a node that has an NVIDIA
+ * card AND the baked wheelhouse installs `onnxruntime-gpu` from it instead of
+ * the CPU wheel: the two ship the same module, so the CPU wheel would shadow the
+ * CUDA execution provider and `nvidia.usable` could never turn true. The card
+ * alone is not enough (no wheelhouse = no wheel to install).
+ */
+export function pythonRequirementsFor(id: RuntimeId, ctx?: RequirementsContext): readonly string[] {
+  const files = RUNTIME_DETAIL[id].pythonRequirements
+  if (id !== 'onnx' || !ctx || ctx.nvidia === null || !ctx.ortWheelhouse) return files
+  return files.map((f) =>
+    f === 'requirements-onnxruntime.txt' ? 'requirements-onnxruntime-gpu.txt' : f,
+  )
 }
 
 /**

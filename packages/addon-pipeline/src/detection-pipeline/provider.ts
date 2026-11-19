@@ -1257,6 +1257,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       // onnx/cpu floor below still keeps the node alive.
     }
     const env = runtimeEnvFromProcess(hardware ? toProbedHardware(hardware) : null)
+    this.probedNvidia = env.hardware?.nvidia ?? null
     // `enumerateInferenceDevices` returns descriptors sorted best-score-first
     // (NPU > iGPU > … > CPU floor), one per PHYSICAL accelerator — the exact set
     // the orchestrator balances over. The top available descriptor is the node
@@ -1308,7 +1309,11 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    */
   private buildProvisioner(): EngineProvisioner {
     return new EngineProvisioner({
-      requirementsFor: pythonRequirementsFor,
+      requirementsFor: (id) =>
+        pythonRequirementsFor(id, {
+          nvidia: this.probedNvidia,
+          ortWheelhouse: process.env['CAMSTACK_ORT_WHEELHOUSE'] || null,
+        }),
       modelFormatFor,
       installRequirements: async (files) => {
         const pythonAddonDir = this.executorOptions.pythonAddonDir
@@ -1609,6 +1614,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const customByStep = await this.getCustomModels()
     const { hardware } = await this.fetchProbeGatingData()
     const env = runtimeEnvFromProcess(toProbedHardware(hardware))
+    this.probedNvidia = env.hardware?.nvidia ?? null
     const enginesWithDevices = this.getAvailableEnginesWithDevices(env)
     // A node can host MULTIPLE inference-device formats concurrently
     // (multi-device): the node's SELECTED engine format PLUS every other format

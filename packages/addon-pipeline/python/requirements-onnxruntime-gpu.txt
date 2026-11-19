@@ -1,0 +1,8 @@
+# ONNX Runtime with the CUDA execution provider. Installed INSTEAD of
+# requirements-onnxruntime.txt (same `onnxruntime` module — both together shadow
+# each other) on a node that has an NVIDIA card and an nvidia image: the wheel is
+# baked into $CAMSTACK_ORT_WHEELHOUSE (/opt/camstack/wheelhouse), matched to the
+# image's CUDA major (12.x: 1.21-1.26; nvidia-legacy, CUDA 11.8: 1.18.1).
+# pip expands ${CAMSTACK_ORT_WHEELHOUSE}; --no-index is NOT set so numpy etc. resolve.
+--find-links ${CAMSTACK_ORT_WHEELHOUSE}
+onnxruntime-gpu>=1.18,<1.27
