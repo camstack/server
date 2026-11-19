@@ -1,3 +1,10 @@
+/**
+ * `info` key of a registry row that stands for a SERVICES instance (D1066): every instance of every
+ * role has a row, the one stored switch, but only a row of an instance that brings devices is an
+ * entry of the Integrations list.
+ */
+export const SERVICE_INSTANCE_INFO_KEY = 'serviceInstance'
+
 /** Persisted integration (provider instance) */
 export interface Integration {
   readonly id: string // "int_001" progressive
@@ -17,6 +24,12 @@ export interface Integration {
 
 /** Input for creating an integration */
 export interface CreateIntegrationInput {
+  /**
+   * The row id. Absent: the registry mints `int_NNNN`. A SERVICES instance (a broker account, a
+   * relay, a destination) is a row too, under the id its addon minted (D1066); an id already taken
+   * is refused, never overwritten.
+   */
+  readonly id?: string
   readonly addonId: string
   readonly name: string
   readonly enabled?: boolean

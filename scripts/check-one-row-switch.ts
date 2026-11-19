@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 /**
- * One switch per instance (planning#440 step 3, D996, D1007).
+ * One switch per instance (planning#440 step 3, D996, D1007, D1066).
  *
  * `integration-instances.setInstanceEnabled` is the only way to switch an instance on or off. The
- * switch is ONE stored field (the record body's `enabled`, read through `isInstanceEnabled`); a
- * registry flag is a projection, never a second store. Two rules:
+ * switch is ONE stored field: the hub registry row's `enabled`, keyed by (addon, integration) like a
+ * device (D1066). The addon's record body keeps no copy. Two rules:
  *
  * 1. A capability method named `set…Enabled` whose input is not device-scoped (no `deviceId`: a
  *    device switch is D62's, not an instance's) is a second switch. The only one allowed is

@@ -6,7 +6,7 @@ import type {
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
-import { type SeedCreateInput, seedCreate } from './support/seed-create'
+import { registerLikeTheHub, type SeedCreateInput, seedCreate } from './support/seed-create'
 
 /** The slice of a listed addon the integrations provider reads. */
 interface ListedAddon {
@@ -96,6 +96,7 @@ function harness(
   }
   const restartAddon = vi.fn(async () => ({ success: true }))
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+  const registered = registerLikeTheHub({ registry, log }, ADDON_ID, instances)
   const addonReg = {
     getIntegrationRegistry: vi.fn(() => registry),
     restartAddon,
@@ -113,7 +114,9 @@ function harness(
     getCapabilityRegistry: vi.fn(() => ({
       getSingleton: vi.fn(() => null),
       getProviderByAddon: vi.fn((cap: string, addonId: string) =>
-        withProvider && cap === 'integration-instances' && addonId === ADDON_ID ? instances : null,
+        withProvider && cap === 'integration-instances' && addonId === ADDON_ID
+          ? registered.wrapped
+          : null,
       ),
     })),
   }
@@ -122,7 +125,16 @@ function harness(
     { createLogger: vi.fn(() => log) } as never,
   )
   const create = (input: SeedCreateInput) => seedCreate({ registry, log }, instances, input)
-  return { provider, registry, instances, restartAddon, log, addonReg, create }
+  return {
+    provider,
+    registry,
+    instances,
+    restartAddon,
+    log,
+    addonReg,
+    create,
+    primed: registered.primed,
+  }
 }
 
 describe('integrations over an integration-instances provider', () => {
@@ -287,6 +299,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
   it('describe().role devices lists the addon and offers it, though the manifest declares no role', async () => {
     const h = harness({ role: 'devices', instanceMode: 'multiple' })
     deviceAddon(h)
+    await h.primed
     await h.create({ addonId: ADDON_ID, name: 'Gizmo' })
     expect(await h.provider.list()).toHaveLength(1)
     const [type] = await h.provider.getAvailableTypes()
@@ -296,8 +309,10 @@ describe('the provider describes what its instances are (planning#416)', () => {
   it('describe().role services hides it, and the manifest integrationRole still overrides describe()', async () => {
     const hidden = harness({ role: 'services' })
     deviceAddon(hidden)
+    await hidden.primed
     expect(await hidden.provider.getAvailableTypes()).toEqual([])
     const overridden = harness({ role: 'services' })
+    await overridden.primed
     overridden.addonReg.listAddons.mockReturnValue([
       {
         manifest: {
@@ -327,6 +342,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
       discovery: { mode: 'lan', scopedToInstance: false },
     })
     deviceAddon(lan)
+    await lan.primed
     expect((await lan.provider.getAvailableTypes())[0]).toMatchObject({
       discoveryMode: 'auto',
       canTest: true,
@@ -338,6 +354,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
       discovery: { mode: 'account', scopedToInstance: true },
     })
     deviceAddon(account)
+    await account.primed
     expect((await account.provider.getAvailableTypes())[0]).toMatchObject({
       discoveryMode: 'manual',
       mode: 'account',

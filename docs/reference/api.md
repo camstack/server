@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1534 methods.**
+**214 capabilities · 1535 methods.**
 
 ## Method index
 
@@ -572,6 +572,7 @@
 | `integrations.list` | query | protected | integrations |
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
+| `integrations.listByAddon` | query | protected | integrations |
 | `integrations.update` | mutation | admin | integrations |
 | `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
@@ -3111,7 +3112,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:167`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:155`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -3121,6 +3122,7 @@
 | list | `integrations.list` | query | protected | `void` | `IntegrationWithStateSchema[]` |
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
+| listByAddon | `integrations.listByAddon` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema[]` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |

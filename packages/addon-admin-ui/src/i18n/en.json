@@ -6954,8 +6954,7 @@
     "restart": "Restart",
     "restart2": "Restart \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.",
-    "instances": "Integration",
-    "switchUnknown": "Unknown"
+    "instances": "Integration"
   },
   "library": {
     "people": "People",

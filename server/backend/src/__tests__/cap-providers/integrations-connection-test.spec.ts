@@ -1,7 +1,7 @@
 import type { Integration, IntegrationTestConnectionResult } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
-import { type SeedCreateInput, seedCreate } from './support/seed-create'
+import { registerLikeTheHub, type SeedCreateInput, seedCreate } from './support/seed-create'
 
 /**
  * Pre-creation credential validation for EVERY integration (D1016).
@@ -93,6 +93,10 @@ interface HarnessOptions {
 function makeHarness(opts: HarnessOptions = {}) {
   const integrationReg = makeIntegrationRegistry()
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+  const registered =
+    opts.instances === undefined
+      ? null
+      : registerLikeTheHub({ registry: integrationReg, log }, ADDON_ID, opts.instances)
   const addonReg = {
     getIntegrationRegistry: vi.fn(() => integrationReg),
     listAddons: vi.fn(() => [
@@ -106,7 +110,7 @@ function makeHarness(opts: HarnessOptions = {}) {
     getCapabilityRegistry: vi.fn(() => ({
       getProviderByAddon: vi.fn((cap: string, addonId: string) =>
         cap === 'integration-instances' && addonId === ADDON_ID
-          ? (opts.instances ?? null)
+          ? (registered?.wrapped ?? null)
           : cap === 'integration-instances' && addonId === 'mqtt-broker'
             ? (opts.brokerInstances ?? null)
             : null,
@@ -129,7 +133,7 @@ function makeHarness(opts: HarnessOptions = {}) {
       opts.instances,
       input,
     )
-  return { provider, integrationReg, log, create }
+  return { provider, integrationReg, log, create, primed: registered?.primed ?? Promise.resolve() }
 }
 
 describe('integrations.create is GATED on the instance test', () => {
@@ -189,6 +193,7 @@ describe('integrations.create is GATED on the instance test', () => {
 describe('integrations.getAvailableTypes().canTest follows describe().canTest per kind', () => {
   it('is true for an instance kind that declares a test', async () => {
     const h = makeHarness({ instances: makeInstances({ canTest: true }) })
+    await h.primed
     expect((await h.provider.getAvailableTypes())[0]).toMatchObject({
       addonId: ADDON_ID,
       canTest: true,
@@ -197,6 +202,7 @@ describe('integrations.getAvailableTypes().canTest follows describe().canTest pe
 
   it('is false for an instance kind that declares none', async () => {
     const h = makeHarness({ instances: makeInstances({ canTest: false }) })
+    await h.primed
     expect((await h.provider.getAvailableTypes())[0]).toMatchObject({
       addonId: ADDON_ID,
       canTest: false,

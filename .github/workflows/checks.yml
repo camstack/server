@@ -296,6 +296,7 @@ jobs:
             scripts/check-integration-instances-declared.ts \
             scripts/check-instances-kinds-declared.ts \
             scripts/check-one-row-switch.ts \
+            scripts/check-no-provider-call-in-registry-read.ts \
             scripts/check-one-test-method.ts \
             scripts/check-instance-refs-use-link-primitive.ts \
             scripts/check-broker-cap-is-bus-only.ts \

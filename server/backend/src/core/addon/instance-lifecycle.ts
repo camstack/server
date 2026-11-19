@@ -21,11 +21,12 @@ import type {
   IIntegrationRegistry,
   Integration,
   IntegrationInstance,
+  IntegrationInstanceDescription,
   IntegrationRole,
   IntegrationTestConnectionStatus,
   IScopedLogger,
 } from '@camstack/types'
-import { bareAddonId, EventCategory, errMsg } from '@camstack/types'
+import { bareAddonId, EventCategory, errMsg, SERVICE_INSTANCE_INFO_KEY } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { planDeleteTimeStamps } from '../../boot/integration-id-backfill'
 import { bringsDevices, describedRoleOf } from '../../api/core/integration-role'
@@ -452,11 +453,6 @@ async function bringsDevicesOf(
   return bringsDevices(describedRoleOf(described) ?? described.role)
 }
 
-/** A builtin the hub itself declared (`DeclaredDevices` marks it `fixed`); its switch is the registry flag. */
-export function isFixedBuiltin(integration: Integration): boolean {
-  return integration.info['fixed'] === true
-}
-
 /** Who the transport stamped as the caller of an `integration-instances` call; null when nobody. */
 function callerAddonIdOf(input: object): string | null {
   const stamp: unknown = Reflect.get(input, 'callerAddonId')
@@ -474,19 +470,45 @@ export function rawInstancesProvider(
 }
 
 /**
- * The switch of a FIXED builtin: the registry flag, the one store, written here and nowhere else.
- * It needs no addon provider, so a builtin whose addon is down or failed can still be turned back
- * on: `integrations.update({ enabled })` (the hub's own cap, no provider in the path) reaches it
- * directly, and `setInstanceEnabled` reaches it when the provider is up. The enabled / disabled
- * event follows a real change only.
+ * The ONE door of an instance's switch (D1066): the hub registry row's `enabled`, for every role
+ * and every row, fixed builtins included. The row is written first, so the switch holds whether or
+ * not the addon is up; the addon is then told (`setInstanceEnabled` of its RAW provider, which only
+ * re-applies its runtime and fires `onSwitched`). An addon that is down or refuses learns the state
+ * from the registry at its next boot, so a failed notice is logged and never undoes the switch.
  */
-export async function setFixedBuiltinEnabled(
+export async function switchRegisteredInstance(
   deps: Pick<InstanceLifecycleDeps, 'integrations' | 'eventBus' | 'logger'>,
   integration: Integration,
   enabled: boolean,
+  addon: IIntegrationInstancesProvider | null,
 ): Promise<void> {
   await deps.integrations().updateIntegration(integration.id, { enabled })
   await emitSwitchEvent(deps, integration, enabled)
+  if (addon === null) return
+  try {
+    await addon.setInstanceEnabled({ id: integration.id, enabled })
+  } catch (err) {
+    deps.logger.warn(
+      'switched in the registry; the addon was not told (it reads it at its next boot)',
+      {
+        tags: { integrationId: integration.id, addonId: integration.addonId },
+        meta: { phase: 'set-enabled', enabled, error: errMsg(err) },
+      },
+    )
+  }
+}
+
+/** What each wrapped provider described last (at registration, or on a call that asked): a registry read answers from it. */
+const DESCRIPTIONS = new WeakMap<IIntegrationInstancesProvider, IntegrationInstanceDescription>()
+
+/**
+ * The description the hub holds for a registered provider, or null before it answered once. A
+ * registry read (`integrations.list`, `getAvailableTypes`) uses it instead of calling the addon (D1066).
+ */
+export function cachedDescription(
+  provider: IIntegrationInstancesProvider,
+): IntegrationInstanceDescription | null {
+  return DESCRIPTIONS.get(provider) ?? null
 }
 
 /** `integration.enabled` / `integration.disabled`, only when the switch actually moved. */
@@ -547,7 +569,7 @@ export function withInstanceLifecycle(
       return { id: created.id }
     }
     if (!(await bringsDevicesOf(deps, bare, provider, input.kind))) {
-      return provider.createInstance(input)
+      return createServiceInstance(deps, bare, provider, input)
     }
     const reg = deps.integrations()
     if (input.id !== undefined) {
@@ -577,15 +599,10 @@ export function withInstanceLifecycle(
     await deleteRegisteredInstance(deps, provider, integration)
     return { ok: true as const }
   }
-  // A FIXED builtin keeps a name-only record with no flag, which a body reads as "on": its switch
-  // is the registry flag, the one store, so the listing reads it and the switch writes it.
-  const fixedRow = async (id: string): Promise<Integration | null> => {
-    const row = await deps.integrations().getIntegration(id)
-    return row !== null && row.addonId === bare && isFixedBuiltin(row) ? row : null
-  }
+  // The switch is the registry row's, for every row: what the addon lists is overlaid with it.
   const withRegistryFlag = async (instance: IntegrationInstance): Promise<IntegrationInstance> => {
-    const row = await fixedRow(instance.id)
-    return row === null ? instance : { ...instance, enabled: row.enabled }
+    const row = await deps.integrations().getIntegration(instance.id)
+    return row === null || row.addonId !== bare ? instance : { ...instance, enabled: row.enabled }
   }
   const listInstances: IIntegrationInstancesProvider['listInstances'] = async () =>
     Promise.all((await provider.listInstances()).map(withRegistryFlag))
@@ -594,21 +611,20 @@ export function withInstanceLifecycle(
     return instance === null ? null : withRegistryFlag(instance)
   }
   const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) => {
-    const fixed = await fixedRow(input.id)
-    if (fixed !== null) {
-      await setFixedBuiltinEnabled(deps, fixed, input.enabled)
-      return { ok: true as const }
-    }
-    // The switch of an instance lives in its record body: the baseline is what the body said
-    // BEFORE the write, never the registry flag (this path does not write it).
     const row = await deps.integrations().getIntegration(input.id)
-    const previous =
-      row !== null && row.addonId === bare ? await provider.getInstance({ id: input.id }) : null
-    const result = await provider.setInstanceEnabled(input)
-    if (row !== null && previous !== null) {
-      await emitSwitchEvent(deps, { ...row, enabled: previous.enabled !== false }, input.enabled)
+    if (row === null || row.addonId !== bare) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `Addon "${bare}" has no integration "${input.id}" to switch`,
+      })
     }
-    return result
+    await switchRegisteredInstance(deps, row, input.enabled, provider)
+    return { ok: true as const }
+  }
+  const describe: IIntegrationInstancesProvider['describe'] = async () => {
+    const described = await provider.describe()
+    DESCRIPTIONS.set(wrapped, described)
+    return described
   }
   const wrapped: IIntegrationInstancesProvider = new Proxy(provider, {
     get(target, prop) {
@@ -617,12 +633,73 @@ export function withInstanceLifecycle(
       if (prop === 'listInstances') return listInstances
       if (prop === 'getInstance') return getInstance
       if (prop === 'setInstanceEnabled') return setInstanceEnabled
+      if (prop === 'describe') return describe
       const value: unknown = Reflect.get(target, prop)
       return typeof value === 'function' ? value.bind(target) : value
     },
   })
   RAW_PROVIDERS.set(wrapped, provider)
   return wrapped
+}
+
+/**
+ * Ask a just-registered provider to describe itself ONCE and keep the answer ({@link cachedDescription}),
+ * off every request path: a registry read never asks the addon (D1066). One call at registration, no
+ * retry: a failure is logged and the reads fall back to the manifest until a later `describe()` lands.
+ */
+export function rememberDescription(
+  provider: IIntegrationInstancesProvider,
+  addonId: string,
+  logger: IScopedLogger,
+): void {
+  Promise.resolve()
+    .then(() => provider.describe())
+    .catch((err: unknown) => {
+      logger.warn('provider description not cached at registration', {
+        tags: { addonId },
+        meta: { phase: 'register', error: errMsg(err) },
+      })
+    })
+}
+
+/**
+ * Create an instance that brings no devices (a broker account, a relay, a destination): the addon
+ * makes its record under the id it mints, and the hub gives it its registry row, the one stored
+ * switch (D1066). Hidden from the Integrations list by its `info`. A refused row removes the record.
+ */
+async function createServiceInstance(
+  deps: InstanceLifecycleDeps,
+  addonId: string,
+  provider: IIntegrationInstancesProvider,
+  input: Parameters<IIntegrationInstancesProvider['createInstance']>[0],
+): Promise<{ readonly id: string }> {
+  const created = await provider.createInstance(input)
+  const reg = deps.integrations()
+  try {
+    const existing = await reg.getIntegration(created.id)
+    if (existing !== null) {
+      if (existing.addonId === addonId) return created
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: `Integration "${created.id}" already belongs to "${existing.addonId}"`,
+      })
+    }
+    await reg.createIntegration({
+      id: created.id,
+      addonId,
+      name: input.name,
+      info: { [SERVICE_INSTANCE_INFO_KEY]: true },
+    })
+  } catch (err) {
+    await provider.deleteInstance({ id: created.id }).catch((cleanupErr: unknown) => {
+      deps.logger.warn('instance record not removed after its registry row was refused', {
+        tags: { addonId },
+        meta: { phase: 'create-rollback', id: created.id, error: errMsg(cleanupErr) },
+      })
+    })
+    throw err
+  }
+  return created
 }
 
 /** The stable code (D863) of {@link addonNotRunningError}: a client reads it from `data.i18n`. */
@@ -684,6 +761,11 @@ export function deferInstanceLifecycle(
       readNow().getInstance(input)
     const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) =>
       wrapNow('switch').setInstanceEnabled(input)
+    const describe: IIntegrationInstancesProvider['describe'] = async () => {
+      const described = await provider.describe()
+      DESCRIPTIONS.set(deferred, described)
+      return described
+    }
     const deferred: IIntegrationInstancesProvider = new Proxy(provider, {
       get(target, prop) {
         if (prop === 'createInstance') return createInstance
@@ -691,10 +773,12 @@ export function deferInstanceLifecycle(
         if (prop === 'listInstances') return listInstances
         if (prop === 'getInstance') return getInstance
         if (prop === 'setInstanceEnabled') return setInstanceEnabled
+        if (prop === 'describe') return describe
         const value: unknown = Reflect.get(target, prop)
         return typeof value === 'function' ? value.bind(target) : value
       },
     })
+    rememberDescription(deferred, bare, logger)
     RAW_PROVIDERS.set(deferred, rawInstancesProvider(provider))
     return deferred
   }

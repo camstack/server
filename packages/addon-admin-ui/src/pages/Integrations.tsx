@@ -82,13 +82,11 @@ interface IntegrationListItem {
   readonly addonId: string
   readonly name: string
   readonly enabled: boolean
-  /** The addon that holds the switch did not answer: `enabled` is stale, not the state (D315). */
-  readonly switchUnknown?: true
   readonly processState: string
 }
 
 function deriveStatus(integration: IntegrationListItem): IntegrationRowStatus {
-  if (!integration.enabled && integration.switchUnknown !== true) return 'disabled'
+  if (!integration.enabled) return 'disabled'
   switch (integration.processState) {
     case 'running':
       return 'running'

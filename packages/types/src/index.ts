@@ -289,6 +289,7 @@ export type {
   IIntegrationRegistry,
   Integration,
 } from './interfaces/integration-registry.js'
+export { SERVICE_INSTANCE_INFO_KEY } from './interfaces/integration-registry.js'
 export type * from './interfaces/kernel-abstractions.js'
 export type * from './interfaces/lifecycle.js'
 export type * from './interfaces/logging.js'

@@ -13,6 +13,7 @@ import {
   type IntegrationInstanceDescription,
   type IntegrationTestConnectionResult,
   type IScopedLogger,
+  SERVICE_INSTANCE_INFO_KEY,
 } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
@@ -229,11 +230,36 @@ describe('createInstance of a kind that brings devices', () => {
     expect(kit.stored.has(row.id)).toBe(true)
   })
 
-  it('is the addon record alone for a kind that brings no devices', async () => {
+  it('gives a kind that brings no devices its registry row, under the id its addon minted, and runs no test', async () => {
     const created = await kit.wrapped.createInstance({ name: 'Out', kind: 'dest' })
     expect(created.id).toBe('minted-by-provider')
-    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+    const rows = await kit.registry.listIntegrations()
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      id: 'minted-by-provider',
+      addonId: ADDON,
+      name: 'Out',
+      enabled: true,
+      info: { [SERVICE_INSTANCE_INFO_KEY]: true },
+    })
     expect(kit.testInstance).not.toHaveBeenCalled()
+  })
+
+  it('removes the record when the registry refuses the row of a services instance', async () => {
+    await kit.registry.createIntegration({
+      id: 'minted-by-provider',
+      addonId: 'other',
+      name: 'Taken',
+    })
+    await expect(kit.wrapped.createInstance({ name: 'Out', kind: 'dest' })).rejects.toThrow()
+    expect(kit.stored.has('minted-by-provider')).toBe(false)
+  })
+
+  it('deletes the row of a services instance with its record', async () => {
+    const created = await kit.wrapped.createInstance({ name: 'Out', kind: 'dest' })
+    await kit.wrapped.deleteInstance({ id: created.id })
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+    expect(kit.stored.has(created.id)).toBe(false)
   })
 })
 
@@ -242,7 +268,7 @@ describe('a kind that declares its own role', () => {
     const kit = await makeKit('multiple', {}, () => 'devices')
     const created = await kit.wrapped.createInstance({ id: 'inst-cafe', name: 'Out', kind: 'dest' })
     expect(created.id).toBe('inst-cafe')
-    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+    expect((await kit.registry.listIntegrations()).map((r) => r.id)).toEqual(['inst-cafe'])
   })
 
   it('a kind without a role still follows the manifest', async () => {
@@ -253,16 +279,18 @@ describe('a kind that declares its own role', () => {
       kind: 'connection',
     })
     expect(created.id).toBe('inst-cafe')
-    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+    expect((await kit.registry.listIntegrations()).map((r) => r.id)).toEqual(['inst-cafe'])
   })
 })
 
 describe('createInstance without a kind on a provider with several', () => {
-  it('takes the default kind: a services default writes no row and runs no test', async () => {
+  it('takes the default kind: a services default writes its services row and runs no test', async () => {
     const mixed = await makeKit('multiple', { kind: 'dest' })
     const created = await mixed.wrapped.createInstance({ name: 'Out' })
     expect(created.id).toBe('minted-by-provider')
-    expect(await mixed.registry.listIntegrations()).toHaveLength(0)
+    expect((await mixed.registry.listIntegrations())[0]?.info).toEqual({
+      [SERVICE_INSTANCE_INFO_KEY]: true,
+    })
     expect(mixed.testInstance).not.toHaveBeenCalled()
   })
 
@@ -464,12 +492,11 @@ describe('registration', () => {
   })
 })
 
-describe('the switch of a fixed builtin is the registry flag', () => {
-  async function fixedKit(): Promise<{ kit: Kit; id: string }> {
+describe('the switch of every instance is the registry row (D1066)', () => {
+  async function rowKit(info: Record<string, unknown> = {}): Promise<{ kit: Kit; id: string }> {
     const kit = await makeKit()
-    const row = await kit.registry.createIntegration({ addonId: ADDON, name: 'Blocks' })
-    await kit.registry.updateIntegration(row.id, { info: { fixed: true }, enabled: false })
-    // The name-only record it is seeded with carries no flag, which a body reads as "on".
+    const row = await kit.registry.createIntegration({ addonId: ADDON, name: 'Blocks', info })
+    // The addon's record says "on" and says nothing else: only the registry row can answer.
     kit.stored.set(row.id, {
       id: row.id,
       name: 'Blocks',
@@ -480,39 +507,63 @@ describe('the switch of a fixed builtin is the registry flag', () => {
     return { kit, id: row.id }
   }
 
-  it('lists and gets the registry flag, not the flagless body', async () => {
-    const { kit, id } = await fixedKit()
+  it.each([
+    {},
+    { fixed: true },
+    { [SERVICE_INSTANCE_INFO_KEY]: true },
+  ])('lists and gets the registry flag, not what the addon record says (%j)', async (info) => {
+    const { kit, id } = await rowKit(info)
+    await kit.registry.updateIntegration(id, { enabled: false })
     expect((await kit.wrapped.listInstances()).find((i) => i.id === id)?.enabled).toBe(false)
     expect((await kit.wrapped.getInstance({ id }))?.enabled).toBe(false)
   })
 
-  it('writes the registry flag, the one store, and not a body flag nobody reads', async () => {
-    const { kit, id } = await fixedKit()
-    const setOnRecord = vi.spyOn(kit.provider, 'setInstanceEnabled')
+  it.each([
+    {},
+    { fixed: true },
+  ])('writes the registry row, then tells the addon, for every row (%j)', async (info) => {
+    const { kit, id } = await rowKit(info)
+    const told = vi.spyOn(kit.provider, 'setInstanceEnabled')
+    await kit.registry.updateIntegration(id, { enabled: false })
     await kit.wrapped.setInstanceEnabled({ id, enabled: true })
     expect((await kit.registry.getIntegration(id))?.enabled).toBe(true)
-    expect(setOnRecord).not.toHaveBeenCalled()
-    expect((await kit.wrapped.getInstance({ id }))?.enabled).toBe(true)
+    expect(told).toHaveBeenCalledWith({ id, enabled: true })
   })
 
-  it('leaves a non-fixed instance to its own record', async () => {
+  it('keeps the switch when the addon refuses the notice', async () => {
+    const { kit, id } = await rowKit()
+    vi.spyOn(kit.provider, 'setInstanceEnabled').mockRejectedValueOnce(new Error('addon down'))
+    await kit.wrapped.setInstanceEnabled({ id, enabled: false })
+    expect((await kit.registry.getIntegration(id))?.enabled).toBe(false)
+  })
+
+  it('refuses an id the addon has no row for, and tells nobody', async () => {
     const kit = await makeKit()
-    const created = await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })
-    kit.stored.set(created.id, {
-      ...(kit.stored.get(created.id) ?? {
-        id: created.id,
-        name: 'Home',
-        kind: 'connection',
-        configured: true,
-        formValues: {},
-      }),
-      enabled: false,
+    const told = vi.spyOn(kit.provider, 'setInstanceEnabled')
+    await expect(
+      kit.wrapped.setInstanceEnabled({ id: 'ghost', enabled: false }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
     })
-    expect((await kit.wrapped.getInstance({ id: created.id }))?.enabled).toBe(false)
+    expect(told).not.toHaveBeenCalled()
+  })
+
+  it("refuses another addon's row", async () => {
+    const kit = await makeKit()
+    const other = await kit.registry.createIntegration({
+      addonId: 'provider-other',
+      name: 'Theirs',
+    })
+    await expect(
+      kit.wrapped.setInstanceEnabled({ id: other.id, enabled: false }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
+    expect((await kit.registry.getIntegration(other.id))?.enabled).toBe(true)
   })
 })
 
-describe('the switch events of an instance follow its record body', () => {
+describe('the switch events of an instance follow the registry row', () => {
   const switchCategories = (kit: Kit): string[] =>
     kit.emit.mock.calls
       .map(([event]) => event.category)

@@ -190,114 +190,33 @@ describe('IntegrationDetailPage - no addon-level settings read', () => {
   })
 })
 
-describe('IntegrationDetailPage - the switch', () => {
-  it('toggles an integration through setInstanceEnabled with its addon', () => {
+describe('IntegrationDetailPage - the switch is the hub registry row (D1066)', () => {
+  it('switches every row through integrations.update, the one door', () => {
     shown.integration = null
-    switches.instance.mockReset()
-    render(renderPage())
-
-    fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
-
-    expect(switches.instance).toHaveBeenCalledWith({
-      id: 'int_reolink',
-      addonId: 'provider-reolink',
-      enabled: false,
-    })
-  })
-
-  it('switches a RUNNING fixed builtin through the instance door like every row', () => {
-    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'running' }
-    switches.instance.mockReset()
     switches.fixed.mockReset()
+    switches.instance.mockReset()
     render(renderPage())
 
     fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
 
-    expect(switches.instance).toHaveBeenCalledWith({
-      id: 'int_reolink',
-      addonId: 'provider-reolink',
-      enabled: false,
-    })
-    expect(switches.fixed).not.toHaveBeenCalled()
-    shown.integration = null
+    expect(switches.fixed).toHaveBeenCalledWith({ id: 'int_reolink', enabled: false })
+    expect(switches.instance).not.toHaveBeenCalled()
   })
 
-  it('switches a fixed builtin whose addon is down through the hub (integrations.update), which needs no provider', () => {
-    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'failed' }
-    switches.instance.mockReset()
+  it.each([
+    'running',
+    'stopped',
+    'failed',
+    'unknown',
+  ])('the switch stays usable when the addon is %s: the hub holds it, no addon is needed', (processState) => {
+    shown.integration = { ...BASE_INTEGRATION, processState }
     switches.fixed.mockReset()
     render(renderPage())
 
     const toggle = screen.getByRole('switch', { name: 'Disable integration' })
     expect(toggle).not.toBeDisabled()
     fireEvent.click(toggle)
-
     expect(switches.fixed).toHaveBeenCalledWith({ id: 'int_reolink', enabled: false })
-    expect(switches.instance).not.toHaveBeenCalled()
-    shown.integration = null
-  })
-
-  it('does not draw a switch the addon could not answer for as on or off (D315)', () => {
-    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true }
-    switches.instance.mockReset()
-    render(renderPage())
-
-    const unknown = screen.getByRole('switch', { name: 'Unknown' })
-    expect(unknown).toBeDisabled()
-    expect(screen.queryByText('Enabled')).toBeNull()
-    expect(screen.queryByText('Disabled')).toBeNull()
-    // The label is not drawn green either (the stored flag is stale, not the state).
-    expect(
-      screen.getAllByText('Unknown').every((el) => !el.className.includes('text-success')),
-    ).toBe(true)
-    shown.integration = null
-  })
-})
-
-describe('IntegrationDetailPage - the switch of an addon that is not running', () => {
-  const REASON = /is not running: start it first/
-
-  it('says why the switch is refused when the addon is known to be down', () => {
-    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true, processState: 'failed' }
-    render(renderPage())
-
-    expect(screen.getByRole('switch', { name: 'Unknown' })).toBeDisabled()
-    expect(screen.getByText(REASON)).toBeInTheDocument()
-    shown.integration = null
-  })
-
-  it('refuses the switch of a stopped addon even when the row did not arrive marked unknown', () => {
-    shown.integration = { ...BASE_INTEGRATION, processState: 'stopped' }
-    switches.instance.mockReset()
-    render(renderPage())
-
-    const toggle = screen.getByRole('switch')
-    expect(toggle).toBeDisabled()
-    fireEvent.click(toggle)
-    expect(switches.instance).not.toHaveBeenCalled()
-    expect(screen.getByText(REASON)).toBeInTheDocument()
-    shown.integration = null
-  })
-
-  it('claims no stop while the process state is unknown or running (D315)', () => {
-    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true, processState: 'unknown' }
-    const first = render(renderPage())
-    expect(screen.queryByText(REASON)).toBeNull()
-    first.unmount()
-
-    shown.integration = { ...BASE_INTEGRATION, processState: 'running' }
-    render(renderPage())
-    expect(screen.queryByText(REASON)).toBeNull()
-    expect(screen.getByRole('switch', { name: 'Disable integration' })).not.toBeDisabled()
-    shown.integration = null
-  })
-
-  it('gives no reason for a fixed builtin whose addon is down: the hub still switches it', () => {
-    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'failed' }
-    render(renderPage())
-
-    expect(screen.getByRole('switch', { name: 'Disable integration' })).not.toBeDisabled()
-    expect(screen.queryByText(REASON)).toBeNull()
     shown.integration = null
   })
 })

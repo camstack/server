@@ -4,12 +4,12 @@
 
 # Guards
 
-253 repository guards: 248 in `scripts/`,
+254 repository guards: 249 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (243)
+## Enforced by CI checks (244)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -163,6 +163,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-native-form-controls.ts` | Admin and addon pages use the library's form controls, never the browser's. |
 | `scripts/check-no-native-select.ts` | A native `<select>` is written NOWHERE in the admin UI or the library: the `Select` primitive (`packages/ui-library/src/primitives/select.tsx`) renders our own list, so a raw `<select>` would bring back the browser's popup. |
 | `scripts/check-no-private-lan-scan.ts` | An addon does not scan the LAN itself (D977). |
+| `scripts/check-no-provider-call-in-registry-read.ts` | An integrations read never calls an addon (D1066). |
 | `scripts/check-no-provider-poll-loops.ts` | A provider migrated to the core state refresh (D1062) owns no poll timer. |
 | `scripts/check-no-raw-secret-read.ts` | Addon code never reads its settings through a MARKER-bearing view (D798). |
 | `scripts/check-no-raw-secrets-in-collections.ts` | A credential never sits in plain text in a persisted row (D879). |
@@ -182,7 +183,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-onboard-motion-emitters.ts` | GUARD: only the camera-sensors bridge, the device-activity source and the runner's analyzer emit `MotionOnMotionChanged` (D673), and only the orchestrator writes a camera's `motion` runtime slice (D696). The rules live in `onboard-motion… |
 | `scripts/check-one-instance-create-door.ts` | One create door for an instance (planning#440, D1013 rule 1). |
 | `scripts/check-one-instances-list.ts` | One list of configured things (planning#440 step 6, D1013). |
-| `scripts/check-one-row-switch.ts` | One switch per instance (planning#440 step 3, D996, D1007). |
+| `scripts/check-one-row-switch.ts` | One switch per instance (planning#440 step 3, D996, D1007, D1066). |
 | `scripts/check-one-test-method.ts` | One connection test (planning#440 step 4, D1016). |
 | `scripts/check-orphan-reclaimers.ts` | Orphan-reclaimer guard — **every collection the audit WALKS declares how its rows are deleted.** ## The failure this catches The audit's reclaim was one `if` for media and a raw `settingsStore.delete` for everything else. The raw delete … |
 | `scripts/check-owner-only-events.ts` | GUARD: an owner-only event category never reaches a consumer surface (D224, D663). |

@@ -62,13 +62,13 @@ import type {
   Toast,
   TopologyNode,
 } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import { bareAddonId, SERVICE_INSTANCE_INFO_KEY } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
   deleteRegisteredInstance,
-  isFixedBuiltin,
   rawInstancesProvider,
-  setFixedBuiltinEnabled,
+  cachedDescription,
+  switchRegisteredInstance,
 } from '../../core/addon/instance-lifecycle'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
@@ -1044,12 +1044,11 @@ export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adopt
  * `integration-instances` declares its role (`devices`) and is listed for its devices. Decided from the manifest, so a not-yet-registered provider does
  * not flash a row in. A row it already has stays in the registry and reachable by id.
  */
-async function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): Promise<boolean> {
+function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): boolean {
   const addon = ar.listAddons().find((a) => a.manifest.id === addonId)
   if (addon === undefined) return false
   const declared = addon.declaration?.integrationRole ?? addon.manifest.integrationRole
-  const described =
-    declared === undefined ? await describedInstancesOf(getInstancesProvider(ar, addonId)) : null
+  const described = declared === undefined ? describedInstancesOf(ar, addonId) : null
   return !bringsDevices(
     resolveIntegrationRole({
       integrationRole: declared,
@@ -1060,18 +1059,16 @@ async function hidesFromIntegrations(ar: AddonRegistryService, addonId: string):
 }
 
 /**
- * The provider's own description, or null when it has none or cannot answer: an addon that
- * is mid-restart must not make the Integrations page throw, it falls back to the manifest.
+ * What the addon's provider described when it registered (the hub keeps it, `cachedDescription`), or
+ * null when it is not registered yet. NEVER a call to the addon: a registry read that awaits an addon
+ * makes every integration read depend on every addon (D1066), so it falls back to the manifest.
  */
-async function describedInstancesOf(
-  provider: IIntegrationInstancesProvider | null,
-): Promise<IntegrationInstanceDescription | null> {
-  if (provider === null) return null
-  try {
-    return await provider.describe()
-  } catch {
-    return null
-  }
+function describedInstancesOf(
+  ar: AddonRegistryService,
+  addonId: string,
+): IntegrationInstanceDescription | null {
+  const provider = getInstancesProvider(ar, addonId)
+  return provider === null ? null : cachedDescription(provider)
 }
 
 /** The wizard's discovery word for what a provider describes (`none` and `account` find nothing before an instance exists). */
@@ -1084,49 +1081,6 @@ function getInstancesProvider(
   addonId: string,
 ): IIntegrationInstancesProvider | null {
   return findInstancesProvider(ar.getCapabilityRegistry(), addonId)
-}
-
-/**
- * An integration's `enabled` is a projection of its instance body (epic #440, step 3): the one
- * switch is `setInstanceEnabled`, stored in the addon's record. One `listInstances` call per
- * addon answers every row of it. A row the addon cannot speak for (its provider is not up, it
- * keeps no instance for the row, it fails to answer) keeps the registry's stored flag but is
- * marked `switchUnknown`: that flag is stale, not the state, and a reader must not draw it as on or
- * off (D315). A failure is logged: a listing never fails because one addon did not answer.
- *
- * A FIXED builtin is the exception: its switch is the registry flag, the hub's own, written by
- * `setFixedBuiltinEnabled` (`instance-lifecycle.ts`) from `setInstanceEnabled` or from
- * `integrations.update({ enabled })`, and the name-only record it is seeded with carries no flag,
- * which a body reads as "on". Its row is never projected and the flag is the answer, whether or
- * not its addon is up.
- */
-async function projectSwitches(
-  ar: AddonRegistryService,
-  logger: IScopedLogger,
-  integrations: readonly Integration[],
-): Promise<readonly Integration[]> {
-  const byAddon = new Map<string, ReadonlyMap<string, boolean>>()
-  for (const addonId of new Set(
-    integrations.filter((i) => !isFixedBuiltin(i)).map((i) => i.addonId),
-  )) {
-    const provider = getInstancesProvider(ar, addonId)
-    if (provider === null) continue
-    try {
-      const instances = await provider.listInstances()
-      byAddon.set(addonId, new Map(instances.map((i) => [i.id, i.enabled !== false])))
-    } catch (err) {
-      logger.warn('integration switch not projected: the addon did not answer', {
-        tags: { addonId },
-        meta: { error: errMsg(err) },
-      })
-    }
-  }
-  return integrations.map((i) => {
-    // A fixed builtin's switch is the registry flag: the hub owns it, the addon does not answer for it.
-    if (isFixedBuiltin(i)) return i
-    const enabled = byAddon.get(i.addonId)?.get(i.id)
-    return enabled === undefined ? { ...i, switchUnknown: true as const } : { ...i, enabled }
-  })
 }
 
 export function buildIntegrationsProvider(
@@ -1145,24 +1099,27 @@ export function buildIntegrationsProvider(
       const integrations = await requireIntegrationRegistry(ar).listIntegrations()
       const hidden = new Map<string, boolean>()
       for (const addonId of new Set(integrations.map((i) => i.addonId))) {
-        hidden.set(addonId, await hidesFromIntegrations(ar, addonId))
+        hidden.set(addonId, hidesFromIntegrations(ar, addonId))
       }
-      const visible = integrations.filter((i) => hidden.get(i.addonId) !== true)
-      return (await projectSwitches(ar, logger, visible)).map(withProcessState)
+      return integrations
+        .filter((i) => hidden.get(i.addonId) !== true && i.info[SERVICE_INSTANCE_INFO_KEY] !== true)
+        .map(withProcessState)
     },
     get: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegration(input.id)
       if (!integration) throw new Error(`Integration "${input.id}" not found`)
-      const [projected] = await projectSwitches(ar, logger, [integration])
-      return withProcessState(projected ?? integration)
+      return withProcessState(integration)
     },
     getByAddonId: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegrationByAddonId(
         input.addonId,
       )
-      if (!integration) return integration
-      const [projected] = await projectSwitches(ar, logger, [integration])
-      return projected ?? integration
+      return integration
+    },
+    listByAddon: async (input) => {
+      const rows = await requireIntegrationRegistry(ar).listIntegrations()
+      const bare = bareAddonId(input.addonId)
+      return rows.filter((i) => i.addonId === bare)
     },
     update: async (input) => {
       const reg = requireIntegrationRegistry(ar)
@@ -1174,18 +1131,15 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      if (input.enabled !== undefined && isFixedBuiltin(previous)) {
-        // The hub owns a fixed builtin's switch (the registry flag): it works while the addon is down.
-        await setFixedBuiltinEnabled(ar.instanceLifecycleDeps(), previous, input.enabled)
-      } else if (input.enabled !== undefined) {
-        logger.warn('refused: integrations.update does not switch', {
-          tags: { integrationId: input.id, addonId: previous.addonId },
-          meta: { phase: 'update', reason: 'switch-through-set-instance-enabled' },
-        })
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
-        })
+      if (input.enabled !== undefined) {
+        // The one door of the switch (D1066): the registry row, then the addon is told. Works while the addon is down.
+        const raw = getInstancesProvider(ar, previous.addonId)
+        await switchRegisteredInstance(
+          ar.instanceLifecycleDeps(),
+          previous,
+          input.enabled,
+          raw === null ? null : rawInstancesProvider(raw),
+        )
       }
       const { id, enabled: _switched, ...updates } = input
       const changedFields = Object.keys(updates).filter(
@@ -1277,7 +1231,7 @@ export function buildIntegrationsProvider(
       )
       const providerAddons: typeof markerAddons = []
       for (const addon of markerAddons) {
-        if (!(await hidesFromIntegrations(ar, addon.manifest.id))) providerAddons.push(addon)
+        if (!hidesFromIntegrations(ar, addon.manifest.id)) providerAddons.push(addon)
       }
       const integrations = await reg.listIntegrations()
       return Promise.all(
@@ -1286,8 +1240,7 @@ export function buildIntegrationsProvider(
           const d = addon.declaration
           const icon = d?.icon ?? m.icon
           const color = d?.color ?? m.color ?? '#78716c'
-          const instances = getInstancesProvider(ar, m.id)
-          const described = await describedInstancesOf(instances)
+          const described = describedInstancesOf(ar, m.id)
           const instanceMode =
             described !== null
               ? described.instanceMode === 'single'

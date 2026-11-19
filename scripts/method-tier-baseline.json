@@ -505,6 +505,7 @@
   "integrations.getAvailableTypes": "admin",
   "integrations.getByAddonId": "protected",
   "integrations.list": "protected",
+  "integrations.listByAddon": "protected",
   "integrations.update": "admin",
   "intercom.endTalkSession": "protected",
   "intercom.handleAnswer": "protected",

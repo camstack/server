@@ -147,6 +147,7 @@ import {
 import {
   type DeviceCascadePort,
   type InstanceLifecycleDeps,
+  rememberDescription,
   withInstanceLifecycle,
 } from './instance-lifecycle.js'
 import { retireUndeclaredFixedIntegrations } from './retire-undeclared-fixed-integrations.js'
@@ -3637,7 +3638,11 @@ export class AddonRegistryService {
         addonId,
         registeredProviderFor(capabilityName, provider, this.capabilityRegistry, {
           addonId,
-          wrap: this.instanceLifecycleWrap,
+          wrap: (wrapAddonId, held) => {
+            const wrapped = this.instanceLifecycleWrap(wrapAddonId, held)
+            rememberDescription(wrapped, addonId, logger)
+            return wrapped
+          },
         }),
       )
       logger.info('Registered provider via context.registerProvider()', {

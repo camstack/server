@@ -9,7 +9,6 @@ const HM = {
   addonId: 'provider-homematic',
   name: 'Homematic CCU',
   enabled: true,
-  switchUnknown: true,
   processState: 'failed',
   info: {},
 }

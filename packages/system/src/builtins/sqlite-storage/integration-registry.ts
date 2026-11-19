@@ -83,7 +83,10 @@ export class IntegrationRegistry implements IIntegrationRegistry {
   }
 
   private async resumeCounter(): Promise<void> {
-    const rows = await readAllRows(this.recordStores.integrations, { order: 'id' })
+    // Only the minted ids count: a services row keeps the id its addon chose (D1066).
+    const rows = (await readAllRows(this.recordStores.integrations, { order: 'id' })).filter((r) =>
+      /^int_\d+$/.test(r.id),
+    )
     rows.sort((a, b) => b.id.localeCompare(a.id))
     const top = rows[0]
     if (top !== undefined) {
@@ -97,7 +100,7 @@ export class IntegrationRegistry implements IIntegrationRegistry {
   async createIntegration(rawInput: CreateIntegrationInput): Promise<Integration> {
     // ONE canonical spelling on disk: the bare manifest id (a hub-main `ctx.id` is `addon:<id>`).
     const input: CreateIntegrationInput = { ...rawInput, addonId: bareAddonId(rawInput.addonId) }
-    const id = nextIntegrationId()
+    const id = input.id ?? nextIntegrationId()
     const now = Math.floor(Date.now() / 1000)
     const enabled = input.enabled !== false
     const info = input.info ?? {}
@@ -110,7 +113,10 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       createdAt: now,
       updatedAt: now,
     }
-    await this.recordStores.integrations.put({ id, data: body })
+    await this.recordStores.integrations.put(
+      { id, data: body },
+      input.id === undefined ? undefined : { ifRev: 0 },
+    )
     return mapIntegrationBody(id, body)
   }
 

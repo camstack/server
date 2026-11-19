@@ -560,6 +560,7 @@
   "integrations.getAvailableTypes": "admin",
   "integrations.getByAddonId": "admin",
   "integrations.list": "admin",
+  "integrations.listByAddon": "admin",
   "integrations.update": "admin",
   "intercom.endTalkSession": "viewer",
   "intercom.getStatus": "viewer",

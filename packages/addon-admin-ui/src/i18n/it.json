@@ -7029,8 +7029,7 @@
     "restart": "Riavvia",
     "restart2": "Riavviare \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente.",
-    "instances": "Integrazione",
-    "switchUnknown": "Sconosciuto"
+    "instances": "Integrazione"
   },
   "library": {
     "people": "Persone",

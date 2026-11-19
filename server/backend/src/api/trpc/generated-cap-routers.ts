@@ -9041,6 +9041,19 @@ export function createCapRouter_integrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getByAddonId(methodInput as any)
       }),
+    listByAddon: protectedProcedure
+      .input(integrationsCapability.methods.listByAddon.input.loose())
+      .output(integrationsCapability.methods.listByAddon.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listByAddon(methodInput as any)
+      }),
     update: adminProcedure
       .input(integrationsCapability.methods.update.input.loose())
       .output(integrationsCapability.methods.update.output)

@@ -59,3 +59,30 @@ export async function seedCreate(
   }
   return wrapped.createInstance(Object.assign({}, call, { callerAddonId: stampedAs }))
 }
+
+/**
+ * Register a provider the way the hub does: wrapped by the instance lifecycle, with its `describe()`
+ * answer cached once, off the read path (D1066). Registry reads then see the description without
+ * ever calling the addon. Returns the wrapped provider (what `getProviderByAddon` hands out) and a
+ * `primed` promise that settles when the cache holds the answer.
+ */
+export function registerLikeTheHub(
+  world: SeedCreateWorld,
+  addonId: string,
+  provider: unknown,
+): { readonly wrapped: unknown; readonly primed: Promise<void> } {
+  if (!isIntegrationInstancesProvider(provider)) throw new Error('not an instances provider')
+  const deps: InstanceLifecycleDeps = {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- spec doubles for the registry and the logger
+    logger: world.log as IScopedLogger,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- spec double
+    integrations: () => world.registry as ReturnType<InstanceLifecycleDeps['integrations']>,
+    deviceManager: () => null,
+    eventBus: { emit: vi.fn() },
+    providerFor: () => provider,
+    holders: () => [],
+    manifestRole: () => undefined,
+  }
+  const wrapped = withInstanceLifecycle(addonId, provider, deps)
+  return { wrapped, primed: wrapped.describe().then(() => undefined) }
+}

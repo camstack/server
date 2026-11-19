@@ -25,14 +25,8 @@ const IntegrationWithStateSchema = z.object({
   id: z.string(),
   addonId: z.string(),
   name: z.string(),
-  /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
+  /** THE switch of the instance: the hub registry row is its only stored copy (D1066). */
   enabled: z.boolean(),
-  /**
-   * True when the addon that holds the switch did not answer (down, failed, or keeps no record for
-   * this row): `enabled` is then the stored registry flag, a stale value, not the state. A reader
-   * must not draw it as on or off (D315).
-   */
-  switchUnknown: z.literal(true).optional(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
   originStableId: z.string().optional(),
@@ -45,14 +39,8 @@ const IntegrationLiteSchema = z.object({
   id: z.string(),
   addonId: z.string(),
   name: z.string(),
-  /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
+  /** THE switch of the instance: the hub registry row is its only stored copy (D1066). */
   enabled: z.boolean(),
-  /**
-   * True when the addon that holds the switch did not answer (down, failed, or keeps no record for
-   * this row): `enabled` is then the stored registry flag, a stale value, not the state. A reader
-   * must not draw it as on or off (D315).
-   */
-  switchUnknown: z.literal(true).optional(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
   originStableId: z.string().optional(),
@@ -172,6 +160,12 @@ export const integrationsCapability = {
     list: method(z.void(), z.array(IntegrationWithStateSchema)),
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
+    /**
+     * Every registry row of one addon, services instances included: the addon reads its own switches
+     * with it at boot (D1066). A pure registry read; the Integrations list (`list`) hides the rows of
+     * a services instance, this does not.
+     */
+    listByAddon: method(z.object({ addonId: z.string() }), z.array(IntegrationLiteSchema)),
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
       kind: 'mutation',
       auth: 'admin',

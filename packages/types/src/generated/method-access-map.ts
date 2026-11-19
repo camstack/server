@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1534 method paths across 214 capabilities.
+ * Coverage: 1535 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -583,6 +583,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'integrations.getAvailableTypes': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.getByAddonId': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.list': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'integrations.listByAddon': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.update': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'intercom.endTalkSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'intercom.getStatus': { capName: "intercom", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
