@@ -1111,10 +1111,13 @@ export function buildIntegrationsProvider(
       return withProcessState(integration)
     },
     getByAddonId: async (input) => {
-      const integration = await requireIntegrationRegistry(ar).getIntegrationByAddonId(
-        input.addonId,
+      // The row of a devices-role addon only: a services instance row (`info.serviceInstance`)
+      // belongs to an instance, never to the addon, and would answer for it.
+      const bare = bareAddonId(input.addonId)
+      const rows = await requireIntegrationRegistry(ar).listIntegrations()
+      return (
+        rows.find((i) => i.addonId === bare && i.info?.[SERVICE_INSTANCE_INFO_KEY] !== true) ?? null
       )
-      return integration
     },
     listByAddon: async (input) => {
       const rows = await requireIntegrationRegistry(ar).listIntegrations()
@@ -1124,33 +1127,50 @@ export function buildIntegrationsProvider(
     adoptInstanceRows: async (input) => {
       const reg = requireIntegrationRegistry(ar)
       const addonId = bareAddonId(input.addonId)
+      // An addon states rows of its OWN instances only: the transport stamps who is calling.
+      const stamp: unknown = Reflect.get(input, 'callerAddonId')
+      if (typeof stamp === 'string' && stamp.length > 0 && bareAddonId(stamp) !== addonId) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: `addon "${bareAddonId(stamp)}" cannot adopt instance rows of addon "${addonId}"`,
+        })
+      }
       let created = 0
       let updated = 0
-      let skipped = 0
+      const conflicts: { id: string; ownerAddonId: string }[] = []
       for (const row of input.rows) {
         const existing = await reg.getIntegration(row.id)
         if (existing === null) {
-          // An absent row with a record is a services instance under its addon-minted id.
-          await reg.createIntegration({
-            id: row.id,
-            addonId,
-            name: row.name,
-            enabled: row.enabled,
-            info: { [SERVICE_INSTANCE_INFO_KEY]: true },
-          })
-          created += 1
+          // An absent row with a record is a services instance under its addon-minted id. The
+          // registry writes an explicit id with `ifRev: 0`, so it can never overwrite a row a
+          // concurrent writer (or the `int_NNNN` counter) placed first.
+          try {
+            await reg.createIntegration({
+              id: row.id,
+              addonId,
+              name: row.name,
+              enabled: row.enabled,
+              info: { [SERVICE_INSTANCE_INFO_KEY]: true },
+            })
+            created += 1
+          } catch (err: unknown) {
+            const raced = await reg.getIntegration(row.id)
+            if (raced === null) throw err
+            if (raced.addonId !== addonId)
+              conflicts.push({ id: row.id, ownerAddonId: raced.addonId })
+          }
         } else if (existing.addonId !== addonId) {
           logger.warn('adopt skipped: the row belongs to another addon', {
             tags: { integrationId: row.id, addonId },
             meta: { owner: existing.addonId },
           })
-          skipped += 1
+          conflicts.push({ id: row.id, ownerAddonId: existing.addonId })
         } else if (row.stated && existing.enabled !== row.enabled) {
           await reg.updateIntegration(row.id, { enabled: row.enabled })
           updated += 1
         }
       }
-      return { created, updated, skipped }
+      return { created, updated, conflicts }
     },
     update: async (input) => {
       const reg = requireIntegrationRegistry(ar)

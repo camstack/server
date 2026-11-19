@@ -159,6 +159,7 @@ export const integrationsCapability = {
   methods: {
     list: method(z.void(), z.array(IntegrationWithStateSchema)),
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
+    /** The devices-role row of an addon; a services instance row never answers for its addon. */
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
     /**
      * Every registry row of one addon, services instances included: the addon reads its own switches
@@ -171,8 +172,9 @@ export const integrationsCapability = {
      * the addon holds, an absent row is created as a services row under the addon-minted id, and a
      * row that disagrees with a STATED body switch is corrected (a body that states nothing never
      * moves an existing row). A row
-     * that belongs to another addon is left alone and counted as skipped. Idempotent: a rerun changes
-     * nothing. It never notifies the addon.
+     * that belongs to another addon is left alone and returned in `conflicts` (the caller keeps its
+     * own copy of that state), and an addon naming another addon's id is refused FORBIDDEN.
+     * Idempotent: a rerun changes nothing. It never notifies the addon.
      */
     adoptInstanceRows: method(
       z.object({
@@ -190,7 +192,8 @@ export const integrationsCapability = {
       z.object({
         created: z.number().int(),
         updated: z.number().int(),
-        skipped: z.number().int(),
+        /** Rows whose id belongs to ANOTHER addon: left untouched, so the caller keeps its own copy. */
+        conflicts: z.array(z.object({ id: z.string(), ownerAddonId: z.string() })),
       }),
       { kind: 'mutation', auth: 'admin' },
     ),

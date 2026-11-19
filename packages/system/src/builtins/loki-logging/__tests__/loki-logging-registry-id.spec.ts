@@ -100,6 +100,10 @@ async function boot(options: Options) {
         },
       },
       integrations: {
+        listByAddon: { query: vi.fn(async () => []) },
+        adoptInstanceRows: {
+          mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+        },
         getByAddonId: {
           query: vi.fn(async (input: { addonId: string }) =>
             options.integrations === undefined

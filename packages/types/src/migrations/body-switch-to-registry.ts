@@ -35,7 +35,8 @@ export interface BodySwitchRow {
 export interface BodySwitchAdoption {
   readonly created: number
   readonly updated: number
-  readonly skipped: number
+  /** Rows whose id belongs to another addon: the record keeps its body switch. */
+  readonly conflicts: readonly { readonly id: string; readonly ownerAddonId: string }[]
 }
 
 export interface BodySwitchPorts {
@@ -53,6 +54,8 @@ export interface BodySwitchPorts {
   ): Promise<BodySwitchAdoption>
   /** Remove the switch key from the record body. */
   stripSwitch(id: string): Promise<void>
+  /** A WARN on the run's log. */
+  warn(message: string): Promise<void>
 }
 
 export function bodySwitchToRegistryId(addonId: string, date: string, kindName: string): string {
@@ -64,21 +67,29 @@ export async function moveBodySwitchToRegistry(
   spec: { readonly addonId: string },
 ): Promise<MigrationProcedureResult> {
   const records = await ports.listRecords()
-  const stated = records.filter((r) => r.stated)
   const adopted: BodySwitchAdoption =
     records.length === 0
-      ? { created: 0, updated: 0, skipped: 0 }
+      ? { created: 0, updated: 0, conflicts: [] }
       : await ports.adoptRows(
           spec.addonId,
           records.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, stated: r.stated })),
         )
+  // A record whose id the registry gives to ANOTHER addon has no row of its own: its body flag is
+  // the only copy left of the switch, so it stays and the run says so.
+  const foreign = new Map(adopted.conflicts.map((c) => [c.id, c.ownerAddonId]))
+  for (const [id, owner] of foreign) {
+    await ports.warn(
+      `body switch kept: the registry row "${id}" belongs to addon "${owner}", not "${spec.addonId}"`,
+    )
+  }
+  const stated = records.filter((r) => r.stated && !foreign.has(r.id))
   for (const row of stated) await ports.stripSwitch(row.id)
   const summary = {
     records: records.length,
     stripped: stated.length,
     rowsCreated: adopted.created,
     rowsCorrected: adopted.updated,
-    skipped: adopted.skipped,
+    conflicts: adopted.conflicts.length,
   }
   return stated.length === 0 && adopted.created === 0 && adopted.updated === 0
     ? { outcome: 'already-done', summary }
@@ -147,6 +158,7 @@ export function bodySwitchPortsOver(deps: {
   readonly kind: DefinedRecordKind
   readonly nameField: string
   readonly adopt: BodySwitchPorts['adoptRows']
+  readonly warn: BodySwitchPorts['warn']
 }): BodySwitchPorts {
   const handle = deps.records.kind({
     name: deps.kind.name,
@@ -167,6 +179,7 @@ export function bodySwitchPortsOver(deps: {
       })
     },
     adoptRows: deps.adopt,
+    warn: deps.warn,
     stripSwitch: async (id) => {
       const row = await handle.get(id)
       if (row === null || !(SWITCH_KEY in row.data)) return

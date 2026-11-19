@@ -26,16 +26,43 @@ function row(
   }
 }
 
-function harness(rows: readonly Integration[], instancesOf: (addonId: string) => unknown) {
+function harness(initial: readonly Integration[], instancesOf: (addonId: string) => unknown) {
+  // The registry holds what was written to it: an adopted row is there for the next read.
+  const rows: Integration[] = [...initial]
   const registry = {
     listIntegrations: vi.fn(async () => rows),
     getIntegration: vi.fn(async (id: string) => rows.find((r) => r.id === id) ?? null),
     getIntegrationByAddonId: vi.fn(
       async (addonId: string) => rows.find((r) => r.addonId === addonId) ?? null,
     ),
-    updateIntegration: vi.fn(async (id: string) => rows.find((r) => r.id === id) ?? null),
-    createIntegration: vi.fn(async (input: { id?: string; addonId: string; name: string }) =>
-      row(input.id ?? 'int_new', input.addonId, true),
+    updateIntegration: vi.fn(async (id: string, patch: { enabled?: boolean }) => {
+      const at = rows.findIndex((r) => r.id === id)
+      const current = rows[at]
+      if (current === undefined) return null
+      const next = {
+        ...current,
+        ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
+      }
+      rows[at] = next
+      return next
+    }),
+    createIntegration: vi.fn(
+      async (input: {
+        id?: string
+        addonId: string
+        name: string
+        enabled?: boolean
+        info?: Record<string, unknown>
+      }) => {
+        const created = row(
+          input.id ?? 'int_new',
+          input.addonId,
+          input.enabled !== false,
+          input.info,
+        )
+        rows.push(created)
+        return created
+      },
     ),
   }
   const emit = vi.fn()
@@ -167,7 +194,7 @@ describe('adoptInstanceRows: the hub keeps the one copy of every instance switch
       addonId: 'waste-collections',
       rows: [{ id: 'home', name: 'Home', enabled: false, stated: true }],
     })
-    expect(result).toEqual({ created: 1, updated: 0, skipped: 0 })
+    expect(result).toEqual({ created: 1, updated: 0, conflicts: [] })
     expect(registry.createIntegration).toHaveBeenCalledWith({
       id: 'home',
       addonId: 'waste-collections',
@@ -184,14 +211,14 @@ describe('adoptInstanceRows: the hub keeps the one copy of every instance switch
         addonId: 'matter',
         rows: [{ id: 'int_0001', name: 'A', enabled: false, stated: false }],
       }),
-    ).toEqual({ created: 0, updated: 0, skipped: 0 })
+    ).toEqual({ created: 0, updated: 0, conflicts: [] })
     expect(registry.updateIntegration).not.toHaveBeenCalled()
     expect(
       await provider.adoptInstanceRows({
         addonId: 'matter',
         rows: [{ id: 'int_0001', name: 'A', enabled: false, stated: true }],
       }),
-    ).toEqual({ created: 0, updated: 1, skipped: 0 })
+    ).toEqual({ created: 0, updated: 1, conflicts: [] })
     expect(registry.updateIntegration).toHaveBeenCalledWith('int_0001', { enabled: false })
   })
 
@@ -208,8 +235,90 @@ describe('adoptInstanceRows: the hub keeps the one copy of every instance switch
           { id: 'int_0002', name: 'B', enabled: false, stated: true },
         ],
       }),
-    ).toEqual({ created: 0, updated: 0, skipped: 1 })
+    ).toEqual({
+      created: 0,
+      updated: 0,
+      conflicts: [{ id: 'int_0002', ownerAddonId: 'other' }],
+    })
     expect(registry.updateIntegration).not.toHaveBeenCalled()
     expect(registry.createIntegration).not.toHaveBeenCalled()
+  })
+})
+
+describe('adoptInstanceRows: who may adopt, and what the adopted row can do (D1066)', () => {
+  it('refuses an addon naming another addon in the call: nothing is written', async () => {
+    const { provider, registry } = harness([], () => null)
+    await expect(
+      provider.adoptInstanceRows({
+        addonId: 'victim',
+        callerAddonId: 'intruder',
+        rows: [{ id: 'x', name: 'X', enabled: false, stated: true }],
+      } as never),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    expect(registry.createIntegration).not.toHaveBeenCalled()
+  })
+
+  it('accepts the addon adopting its own rows, and the hub-side caller with no stamp', async () => {
+    const { provider } = harness([], () => null)
+    await expect(
+      provider.adoptInstanceRows({
+        addonId: 'waste-collections',
+        callerAddonId: 'addon:waste-collections',
+        rows: [{ id: 'a', name: 'A', enabled: true, stated: false }],
+      } as never),
+    ).resolves.toMatchObject({ created: 1 })
+  })
+
+  it('a record adopted after the fact is switchable through the one door', async () => {
+    const addon = strictAddon()
+    const h = harness([], () => addon)
+    await h.provider.adoptInstanceRows({
+      addonId: 'ai',
+      rows: [{ id: 'seed-ollama-lan', name: 'Seed', enabled: false, stated: false }],
+    })
+    await h.provider.update({ id: 'seed-ollama-lan', enabled: true })
+    expect(h.registry.updateIntegration).toHaveBeenCalledWith('seed-ollama-lan', { enabled: true })
+    expect(addon.setInstanceEnabled).toHaveBeenCalledWith({ id: 'seed-ollama-lan', enabled: true })
+  })
+
+  it('writes an explicit id through the registry only (the registry refuses to overwrite)', async () => {
+    const { provider, registry } = harness([], () => null)
+    registry.createIntegration.mockRejectedValueOnce(new Error('rev conflict'))
+    registry.getIntegration
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(row('int_0007', 'other', true))
+    expect(
+      await provider.adoptInstanceRows({
+        addonId: 'matter',
+        rows: [{ id: 'int_0007', name: 'A', enabled: false, stated: true }],
+      }),
+    ).toEqual({
+      created: 0,
+      updated: 0,
+      conflicts: [{ id: 'int_0007', ownerAddonId: 'other' }],
+    })
+  })
+})
+
+describe('getByAddonId answers for the addon, never for one of its service instances', () => {
+  it('skips a services instance row and returns the devices-role row', async () => {
+    const { provider } = harness(
+      [
+        row('home', 'waste-collections', true, { [SERVICE_INSTANCE_INFO_KEY]: true }),
+        row('int_0005', 'waste-collections', true),
+      ],
+      () => null,
+    )
+    expect(await provider.getByAddonId({ addonId: 'waste-collections' })).toMatchObject({
+      id: 'int_0005',
+    })
+  })
+
+  it('is null when only services instance rows exist', async () => {
+    const { provider } = harness(
+      [row('home', 'waste-collections', true, { [SERVICE_INSTANCE_INFO_KEY]: true })],
+      () => null,
+    )
+    expect(await provider.getByAddonId({ addonId: 'waste-collections' })).toBeNull()
   })
 })

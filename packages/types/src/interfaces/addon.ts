@@ -1020,6 +1020,12 @@ export interface ICamstackAddon {
    * is no separate hub to wait for).
    */
   onHubReachable?(): Promise<void> | void
+  /**
+   * What the runner calls on the hub-reachable event (`BaseAddon`): the instance switches are read
+   * from the registry again and announced, then {@link onHubReachable} runs. An addon that does
+   * not extend `BaseAddon` has none and its `onHubReachable` is called directly.
+   */
+  hubReachable?(): Promise<void>
   shutdown(): Promise<void>
 
   // Cleanup: the legacy `getConfigSchema / getConfig / onConfigChange`

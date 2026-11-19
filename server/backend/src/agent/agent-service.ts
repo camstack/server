@@ -159,6 +159,7 @@ interface LoadedAddonEntry {
   readonly addon?: {
     shutdown?(): Promise<void>
     onHubReachable?(): Promise<void> | void
+    hubReachable?(): Promise<void>
   }
 }
 

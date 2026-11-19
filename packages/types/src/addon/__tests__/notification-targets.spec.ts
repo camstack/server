@@ -269,11 +269,11 @@ describe('notification targets over per-kind records', () => {
       id: 'tg-1',
       enabled: false,
     })
-    // Flipping the switch moves the row to its record and drops the retired one.
-    expect(await w.store.setEnabled('tg-1', true)).toMatchObject({
-      id: 'tg-1',
-      enabled: true,
-    })
+    // A write of the target moves the row to its record and drops the retired one.
+    const old = await w.store.getById('tg-1')
+    if (old === null) throw new Error('the retired target must be readable')
+    await w.store.upsert({ ...old, enabled: true })
+    expect(await w.store.getById('tg-1')).toMatchObject({ id: 'tg-1', enabled: true })
     expect(await w.oldKind.get('tg-1')).toBeNull()
     expect(await w.memory.records.kind(w.kinds['notify-telegram']!).get('tg-1')).not.toBeNull()
   })
@@ -377,9 +377,8 @@ describe('notification targets over per-kind records', () => {
     ])
     await w.store.delete('tg-1')
     expect(await w.store.getById('tg-1')).toBeNull()
-    expect(await w.store.setEnabled('wh-1', false)).toMatchObject({
-      enabled: false,
-    })
+    recordInstanceSwitch('wh-1', false)
+    expect(await w.store.getById('wh-1')).toMatchObject({ enabled: false })
   })
 
   it('maps a probe to the tri-state', () => {

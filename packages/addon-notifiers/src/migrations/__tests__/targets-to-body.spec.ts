@@ -115,11 +115,11 @@ describe('notifiers targets-to-body', () => {
     const { host, outcomes } = ledgerHost()
     expect((await w.run(host)).failed).toEqual([])
     const moved = await w.store.getById('tg-1')
-    expect(moved).toMatchObject({
-      id: 'tg-1',
-      kind: 'telegram',
+    expect(moved).toMatchObject({ id: 'tg-1', kind: 'telegram', name: 'Phone' })
+    // The record carries the switch in its body until the body-to-registry move takes it to the
+    // registry row (D1066); the store itself reads the switch from the registry state only.
+    expect((await w.store.handlesByKind().get('telegram')?.get('tg-1'))?.data).toMatchObject({
       enabled: false,
-      name: 'Phone',
     })
     expect(moved?.config['botToken']).toBe(TOKEN)
     expect(moved?.config['chatId']).toBe('42')
@@ -190,7 +190,10 @@ describe('notifiers targets-to-body', () => {
     })
     expect(await w.oldKind.get('tg-bad')).toBeNull()
     const moved = await w.store.getById('tg-bad')
-    expect(moved).toMatchObject({ name: 'Broken', enabled: false })
+    expect(moved).toMatchObject({ name: 'Broken' })
+    expect((await w.store.handlesByKind().get('telegram')?.get('tg-bad'))?.data).toMatchObject({
+      enabled: false,
+    })
     expect(moved?.config['botToken']).toBe(TOKEN)
     expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-bad', 'tg-good'])
   })

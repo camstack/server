@@ -1449,9 +1449,17 @@ async function startAgent(configPath?: string): Promise<void> {
     if (hubReachableFired) return
     hubReachableFired = true
     for (const [, entry] of loadedAddons) {
-      if (!entry.addon || typeof entry.addon.onHubReachable !== 'function') continue
-      Promise.resolve(entry.addon.onHubReachable()).catch((err: unknown) => {
-        console.error(`[Agent] ${entry.id} onHubReachable() threw:`, err)
+      if (
+        !entry.addon ||
+        (entry.addon.hubReachable === undefined && typeof entry.addon.onHubReachable !== 'function')
+      )
+        continue
+      Promise.resolve(
+        entry.addon.hubReachable !== undefined
+          ? entry.addon.hubReachable()
+          : entry.addon.onHubReachable?.(),
+      ).catch((err: unknown) => {
+        console.error(`[Agent] ${entry.id} hubReachable() threw:`, err)
       })
     }
   })

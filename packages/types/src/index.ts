@@ -112,11 +112,14 @@ export {
   defaultAddDeviceMode,
 } from './addon/record-integration-instances.js'
 export {
+  beginHydration,
   clearInstanceSwitches,
   forgetInstanceSwitch,
   hydrateInstanceSwitches,
   isInstanceOn,
   recordInstanceSwitch,
+  recordRegistrySwitch,
+  settleHydration,
 } from './addon/instance-switches.js'
 export {
   composeInstanceKinds,

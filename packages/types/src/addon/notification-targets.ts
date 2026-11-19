@@ -303,7 +303,9 @@ export class NotificationTargetStore {
     const own = this.handles.find((entry) => entry.kind === target.kind)
     if (own === undefined)
       throw new Error(`invalid target '${target.id}': unknown kind '${target.kind}'`)
-    // The switch is the registry row's (D1066): the record keeps none, this process mirrors it.
+    // The switch is the registry row's (D1066): the record keeps none. This process mirrors the
+    // state a write names, and the addon's next hydration adopts the record into the registry
+    // with it (`integrations.adoptInstanceRows`), so the hub door owns it from then on.
     const { enabled: _switch, ...data } = targetBody(target)
     await own.handle.put({ id: target.id, data })
     recordInstanceSwitch(target.id, target.enabled)
@@ -317,22 +319,6 @@ export class NotificationTargetStore {
   async delete(id: string): Promise<void> {
     for (const { handle } of this.handles) await handle.delete(id)
     await this.options.legacy?.delete(id)
-  }
-
-  /** Flip the switch on an existing target; null when it does not exist. */
-  async setEnabled(id: string, enabled: boolean): Promise<Target | null> {
-    for (const { kind, handle } of this.handles) {
-      if ((await handle.get(id)) === null) continue
-      recordInstanceSwitch(id, enabled)
-      const row = await handle.get(id)
-      return row === null ? null : targetOfRecord(this.addonId, kind, row.id, row.data)
-    }
-    // Only the legacy source has it: flipping the switch moves the row to its record.
-    const old = (await this.legacyRows()).find((row) => row.id === id)
-    if (old === undefined) return null
-    const moved = { ...targetOfOld(this.addonId, old), enabled }
-    await this.upsert(moved)
-    return moved
   }
 }
 

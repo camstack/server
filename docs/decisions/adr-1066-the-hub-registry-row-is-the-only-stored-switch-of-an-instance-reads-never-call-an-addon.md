@@ -52,11 +52,26 @@ disagreeing row; an absent field never overwrites one; a rerun changes nothing.
 
 - The hub no longer depends on an addon to answer an integration read, and a switch can be read and
   written while its addon is down.
-- A hub that cannot answer at addon boot leaves that addon's instances reading as on until the hub's
-  notification states them (no retry loop, D3). A migration that did not apply blocks the owner
-  (`block-owner`, fail closed).
-- A record created outside the hub door (for example a seeded example profile) has no registry row
-  and reads as on.
+- **Fail closed.** An instance whose switch this process does not know reads OFF: while the
+  registry has not answered (`listByAddon` failed or is pending) and, until the addon's boot has
+  built every instance kind and settled, for any instance nobody stated. No instance starts before
+  its switch is known. The hub-connection event the addon already receives (`hubReachable`) reads
+  the registry again and every served kind announces the states it now knows (event-driven, no
+  timer or retry, D3).
+- A served-kind addon is blocked on EVERY boot while the migration engine is down: the body-switch
+  move is `block-owner`, an engine that cannot be reached counts as not applied, and
+  `AddonMigrationsBlockedError` fails the boot for a kind built early and for one built late (a
+  helper constructed during `onInitialize`) alike. The operator recovers it with `migrations.retry`
+  once the engine is up.
+- A record created outside the hub door (a store write, the seeded example profile) gets its row at
+  hydration: every record of a served kind with no row is adopted through `adoptInstanceRows`
+  with the state this process held (on unless stated off), so `setInstanceEnabled` works on it.
+- `adoptInstanceRows` refuses an `addonId` other than its caller's (FORBIDDEN), writes an explicit
+  id with `ifRev: 0` (never an overwrite) and returns `conflicts` (ids another addon's row owns);
+  the migration strips the body key only of a record whose row was created, corrected or already
+  agrees, so a conflicting record keeps its body flag and the run logs a WARN naming both addons.
+- `getByAddonId` answers with the devices-role row only (never a `serviceInstance` row); the
+  declared-device `getIntegration` caller reads a service instance through `listByAddon`.
 - `integrations.listByAddon` is new; it is the addon's own read of its rows and does not hide any.
 - A helper built after the addon's migrations ran gets its move on construction (the engine replaces
   an owner's catalogue on every declare, so the late run carries the whole declared set phased to

@@ -77,6 +77,13 @@ async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean
     kernel: { localNodeId },
     api: {
       addons: { setCapabilityProviderEnabled: { mutate: vi.fn(async () => ({ success: true })) } },
+      // The registry answers with no rows: an instance nobody switched off reads on.
+      integrations: {
+        listByAddon: { query: vi.fn(async () => []) },
+        adoptInstanceRows: {
+          mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+        },
+      },
       migrations: {
         declareOwner,
         startMigration: {

@@ -1,7 +1,13 @@
 import type { ZodType } from 'zod'
 import { EventCategory } from '../enums/event-category.js'
 import { errMsg } from '../utils/err-msg.js'
-import { hydrateInstanceSwitches, servedInstanceKindsOf } from './instance-switches.js'
+import {
+  beginHydration,
+  hydrateInstanceSwitches,
+  recordRegistrySwitch,
+  servedInstanceKindsOf,
+  settleHydration,
+} from './instance-switches.js'
 import type {
   AddonContext,
   AddonInitResult,
@@ -365,6 +371,12 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     await this.hydrateSwitches()
     const result = await this.onInitialize()
     await this.moveLateInstanceKinds()
+    await this.adoptUnrowed()
+    this.bootSettled = true
+    if (this.switchesHydrated) {
+      settleHydration(this.ctx.id)
+      for (const served of servedInstanceKindsOf(this.ctx.id)) await served.reapply()
+    }
     this.emitLifecycle(EventCategory.AddonStarted)
     const normalized = normalizeAddonInitResult(result)
     const providers: readonly ProviderRegistration[] =
@@ -518,6 +530,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
             nameField: kind.declaration.entry?.nameField ?? 'name',
             adopt: (addonId, rows) =>
               this.ctx.api.integrations.adoptInstanceRows.mutate({ addonId, rows: [...rows] }),
+            warn: async (message) => {
+              await a.log.warn({ message })
+            },
           }),
       ).bind(api)
     })
@@ -538,8 +553,10 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     try {
       const only = late.map((k) => bodySwitchToRegistryId(this.ctx.id, '2026-11-19', k.kind.name))
       await this.runBound(this.lastDeclared, { only })
-      for (const { reapplyOff } of late) await reapplyOff()
     } catch (err: unknown) {
+      // A blocked block-owner move fails the boot, exactly as for a kind built early: serving a
+      // body whose switch never reached the registry would read a disabled instance as on.
+      if (err instanceof AddonMigrationsBlockedError) throw err
       this.ctx.logger.error('the late instance switch move failed', {
         meta: { error: errMsg(err) },
       })
@@ -578,6 +595,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
     // The move above may have created or corrected rows: read the registry again.
     await this.hydrateSwitches()
+    await this.adoptUnrowed()
     return report
   }
 
@@ -588,15 +606,63 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * answer leaves every instance reading as on until the hub's `setInstanceEnabled` notification
    * states it; no retry loop (D3).
    */
-  private async hydrateSwitches(): Promise<void> {
+  private switchesHydrated = false
+  /** Set once `initialize` built every instance kind: until then an instance with no state reads off. */
+  private bootSettled = false
+
+  private async hydrateSwitches(): Promise<boolean> {
+    beginHydration(this.ctx.id)
     try {
       const rows = await this.ctx.api.integrations.listByAddon.query({ addonId: this.ctx.id })
       hydrateInstanceSwitches(rows)
+      this.switchesHydrated = true
+      if (this.bootSettled) settleHydration(this.ctx.id)
+      return true
     } catch (err: unknown) {
-      this.ctx.logger.warn('instance switches not read from the registry at boot', {
+      // Fail closed: until a read answers, an instance nobody stated reads as OFF. The hub-reachable
+      // event reads again (event-driven, no timer, D3).
+      this.ctx.logger.warn('instance switches not read from the registry: instances stay off', {
+        meta: { error: errMsg(err) },
+      })
+      return false
+    }
+  }
+
+  /**
+   * Every record of a served kind the registry holds no row for (created outside the hub door:
+   * a seed, a store write) is adopted with the state it effectively had, on unless this process
+   * stated it off, so the hub can switch it. A failure is logged; the next hydration retries.
+   */
+  private async adoptUnrowed(): Promise<void> {
+    if (!this.switchesHydrated) return
+    try {
+      for (const served of servedInstanceKindsOf(this.ctx.id)) {
+        const rows = await served.unrowed()
+        if (rows.length === 0) continue
+        await this.ctx.api.integrations.adoptInstanceRows.mutate({
+          addonId: this.ctx.id,
+          rows: rows.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, stated: false })),
+        })
+        for (const r of rows) recordRegistrySwitch(r.id, r.enabled)
+      }
+    } catch (err: unknown) {
+      this.ctx.logger.warn('records without a registry row were not adopted', {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /**
+   * The runner calls this once the hub node is connected (instead of `onHubReachable` directly):
+   * the instance switches are read again, so an addon that booted before the registry answered
+   * leaves the fail-closed default, and every served kind announces the states it now knows.
+   */
+  async hubReachable(): Promise<void> {
+    if (await this.hydrateSwitches()) {
+      await this.adoptUnrowed()
+      for (const served of servedInstanceKindsOf(this.ctx.id)) await served.reapply()
+    }
+    await this.onHubReachable()
   }
 
   /**

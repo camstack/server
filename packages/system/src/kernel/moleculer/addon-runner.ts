@@ -787,9 +787,16 @@ async function main(): Promise<void> {
     if (hubReachableFired) return
     hubReachableFired = true
     for (const entry of loaded) {
-      if (typeof entry.addon.onHubReachable === 'function') {
-        Promise.resolve(entry.addon.onHubReachable()).catch((err: unknown) => {
-          runnerLog.error(`"${entry.addonId}" onHubReachable() threw`, {
+      if (
+        entry.addon.hubReachable !== undefined ||
+        typeof entry.addon.onHubReachable === 'function'
+      ) {
+        Promise.resolve(
+          entry.addon.hubReachable !== undefined
+            ? entry.addon.hubReachable()
+            : entry.addon.onHubReachable?.(),
+        ).catch((err: unknown) => {
+          runnerLog.error(`"${entry.addonId}" hubReachable() threw`, {
             meta: { error: errMsg(err) },
           })
         })

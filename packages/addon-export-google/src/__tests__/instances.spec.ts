@@ -99,6 +99,13 @@ async function boot(options: { readonly seedHome?: boolean } = {}) {
         },
         listUsers: { query: vi.fn(async () => []) },
       },
+      // The registry answers with no rows: an instance nobody switched off reads on.
+      integrations: {
+        listByAddon: { query: vi.fn(async () => []) },
+        adoptInstanceRows: {
+          mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+        },
+      },
       deviceManager: {
         getDevice: {
           query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({

@@ -211,20 +211,14 @@ describe('HaTargetStore CRUD round-trip', () => {
     expect((await store.getById('t1'))?.name).toBe('My Phone')
     expect((await store.list()).length).toBe(1)
 
-    // Toggle enabled.
-    const toggled = await store.setEnabled('t1', false)
-    expect(toggled?.enabled).toBe(false)
+    // A write that states the target off is read off (the registry switch is mirrored, D1066).
+    await store.upsert(makeTarget({ enabled: false }))
     expect((await store.getById('t1'))?.enabled).toBe(false)
 
     // Delete.
     await store.delete('t1')
     expect(await store.getById('t1')).toBeNull()
     expect((await store.list()).length).toBe(0)
-  })
-
-  it('setEnabled on a missing id returns null', async () => {
-    const store = HaTargetStore.of((await makeHaRecords()).records)
-    expect(await store.setEnabled('nope', true)).toBeNull()
   })
 })
 

@@ -1,5 +1,10 @@
 import * as fs from 'node:fs/promises'
-import { type IScopedLogger, makeInMemoryRecords, type Target } from '@camstack/types'
+import {
+  type IScopedLogger,
+  makeInMemoryRecords,
+  recordInstanceSwitch,
+  type Target,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   AlexaSpeakController,
@@ -292,7 +297,7 @@ describe('the records are the one source of the Echo targets', () => {
     await store.upsert(echoTarget('t-off', true))
     const h = harness({ brokers: ONE, targets: ports })
     await h.controller.start()
-    await store.setEnabled('t-off', false)
+    recordInstanceSwitch('t-off', false)
     const sent = await h.controller.provider.send({
       targetId: 't-off',
       notification: NOTIFICATION,

@@ -3124,7 +3124,7 @@
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
 | listByAddon | `integrations.listByAddon` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema[]` |
-| adoptInstanceRows | `integrations.adoptInstanceRows` | mutation | admin | `{ addonId: string; rows: ({ id: string; name: string; enabled: boolean; stated: boolean })[] }` | `{ created: number; updated: number; skipped: number }` |
+| adoptInstanceRows | `integrations.adoptInstanceRows` | mutation | admin | `{ addonId: string; rows: ({ id: string; name: string; enabled: boolean; stated: boolean })[] }` | `{ created: number; updated: number; conflicts: ({ id: string; ownerAddonId: string })[] }` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |

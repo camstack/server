@@ -30,9 +30,12 @@ import type { RecordKindHandle, RecordRow, RecordsAccess } from '../records/reco
 import { secretViewsOf } from '../records/secret-views.js'
 import {
   forgetInstanceSwitch,
+  hasRegistryRow,
   isInstanceOn,
-  recordInstanceSwitch,
+  recordRegistrySwitch,
   registerServedInstanceKind,
+  statedInstanceSwitch,
+  type UnrowedInstance,
 } from './instance-switches.js'
 
 /** The most instances one addon lists (an integrations page, not a table). */
@@ -197,7 +200,11 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     this.secretKeys = topLevelSecretKeys(kind.declaration.secretPaths)
     this.secretMaps = secretMapKeys(kind.declaration.secretPaths)
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
-    registerServedInstanceKind(records.owner, { kind, reapplyOff: () => this.reapplyOff() })
+    registerServedInstanceKind(records.owner, {
+      kind,
+      reapply: () => this.reapply(),
+      unrowed: () => this.unrowed(),
+    })
     // D1013: every instance names its kind.
     if (hooks.kindOf === undefined && hooks.description.kinds.length !== 1) {
       throw new Error(
@@ -436,24 +443,43 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     id,
     enabled,
   }) => {
-    recordInstanceSwitch(id, enabled)
+    recordRegistrySwitch(id, enabled)
     await this.hooks.onChanged?.(id, 'enabled')
     for (const listener of this.switchListeners) await listener(id, enabled)
     return { ok: true as const }
   }
 
   /**
-   * After a late move of the switch into the registry: every instance of this kind that is off
-   * is announced as switched, so an addon that already started on the "no state means on" default
-   * stops it. Instances that are on need no announcement.
+   * After the registry answered for a kind built before it could: announce the state of every
+   * instance of this kind, on and off, so an addon that started on the fail-closed default (off)
+   * starts what is on and stops what is off.
    */
-  async reapplyOff(): Promise<void> {
+  async reapply(): Promise<void> {
     const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
     for (const record of page.records) {
-      if (isInstanceOn(record.id)) continue
+      const enabled = isInstanceOn(record.id)
       await this.hooks.onChanged?.(record.id, 'enabled')
-      for (const listener of this.switchListeners) await listener(record.id, false)
+      for (const listener of this.switchListeners) await listener(record.id, enabled)
     }
+  }
+
+  /**
+   * The records of this kind the registry holds no row for: created outside the hub door (a
+   * seed, a migration, a store write). Each carries the state this process holds for it, on when
+   * it holds none, because on was its effective state before the registry owned the switch.
+   */
+  async unrowed(): Promise<readonly UnrowedInstance[]> {
+    const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
+    return page.records
+      .filter((record) => !hasRegistryRow(record.id))
+      .map((record) => {
+        const name = record.data[this.nameField]
+        return {
+          id: record.id,
+          name: typeof name === 'string' ? name : record.id,
+          enabled: statedInstanceSwitch(record.id) ?? true,
+        }
+      })
   }
 
   /** The row and its keychain refs go together (the records door). */
