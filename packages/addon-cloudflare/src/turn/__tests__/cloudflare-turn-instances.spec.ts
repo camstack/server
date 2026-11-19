@@ -65,6 +65,13 @@ async function boot(seed: Omit<CloudflareTurnBody, 'name'> | null) {
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
     api: {
+      // The registry answers with no rows: an instance nobody switched off reads on.
+      integrations: {
+        listByAddon: { query: vi.fn(async () => []) },
+        adoptInstanceRows: {
+          mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+        },
+      },
       migrations: {
         declareOwner: {
           mutate: vi.fn(async () => ({

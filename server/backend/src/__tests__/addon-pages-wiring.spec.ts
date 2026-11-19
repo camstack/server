@@ -86,7 +86,15 @@ describe('Addon Pages Integration', () => {
       registerProvider: (capName: string, provider: unknown) => {
         providers.set(capName, provider)
       },
+      // The registry answers with no rows; the boot path reads it and logs through ctx.logger.
+      logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
       api: {
+        integrations: {
+          listByAddon: { query: vi.fn(async () => []) },
+          adoptInstanceRows: {
+            mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+          },
+        },
         settingsStore: {
           declareCollection: { mutate: declareCollection },
           // Since D646 the addon also prunes its replay runs at start
@@ -146,6 +154,15 @@ describe('Addon Pages Integration', () => {
 
     const providers = new Map<string, unknown>()
     const mockContext = {
+      logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
+      api: {
+        integrations: {
+          listByAddon: { query: vi.fn(async () => []) },
+          adoptInstanceRows: {
+            mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+          },
+        },
+      },
       registerProvider: (capName: string, provider: unknown) => {
         providers.set(capName, provider)
       },

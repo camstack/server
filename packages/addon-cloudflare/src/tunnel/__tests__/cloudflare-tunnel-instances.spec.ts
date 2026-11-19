@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import {
+  clearInstanceSwitches,
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   makeInMemoryRecords,
@@ -34,7 +35,8 @@ function logger(): IScopedLogger {
   } as unknown as IScopedLogger
 }
 
-async function boot(seed: Partial<CloudflareTunnelBody> | null) {
+/** `switchedOff`: the hub registry row of the tunnel says off (the switch is the registry's, D1066). */
+async function boot(seed: Partial<CloudflareTunnelBody> | null, switchedOff = false) {
   const world = makeInMemoryRecords('cloudflare-tunnel')
   await world.records.declare({ tunnels: cloudflareTunnelsKind })
   const handle = world.records.kind(cloudflareTunnelsKind)
@@ -60,6 +62,17 @@ async function boot(seed: Partial<CloudflareTunnelBody> | null) {
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
     api: {
+      // The registry answers with the switch rows: no row, an instance nobody switched off reads on.
+      integrations: {
+        listByAddon: {
+          query: vi.fn(async () =>
+            switchedOff ? [{ id: CLOUDFLARE_TUNNEL_RECORD_ID, enabled: false }] : [],
+          ),
+        },
+        adoptInstanceRows: {
+          mutate: vi.fn(async () => ({ created: 0, updated: 0, conflicts: [] })),
+        },
+      },
       localNetwork: { getPreferred: { query: vi.fn(async () => null) } },
       migrations: {
         declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },
@@ -93,6 +106,7 @@ describe('CloudflareTunnelAddon: the tunnel is an integration instance (D996)', 
   afterEach(async () => {
     for (const a of addons.splice(0)) await a.shutdown()
     ensureCloudflared.mockClear()
+    clearInstanceSwitches()
   })
 
   it('registers network-access and integration-instances, one single-instance record', async () => {
@@ -118,14 +132,15 @@ describe('CloudflareTunnelAddon: the tunnel is an integration instance (D996)', 
     await vi.waitFor(() => expect(ensureCloudflared).toHaveBeenCalled())
 
     ensureCloudflared.mockClear()
-    const off = await boot({ ...NAMED, enabled: false })
+    clearInstanceSwitches()
+    const off = await boot(NAMED, true)
     addons.push(off.addon)
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(ensureCloudflared).not.toHaveBeenCalled()
   })
 
   it('switching the record on starts the tunnel; the switch is the record, not a setting', async () => {
-    const w = await boot({ ...NAMED, enabled: false })
+    const w = await boot(NAMED, true)
     addons.push(w.addon)
     expect(ensureCloudflared).not.toHaveBeenCalled()
     await w.instances.setInstanceEnabled({ id: CLOUDFLARE_TUNNEL_RECORD_ID, enabled: true })
