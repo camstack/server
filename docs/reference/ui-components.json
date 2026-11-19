@@ -12452,6 +12452,39 @@
       "summary": "Shared model picker — the ONE model-selection control across the app."
     },
     {
+      "name": "MotionCorner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "Bottom-left: the \"on motion\" toggle, an icon with no text.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "pending",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "blocked",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Gating: a blocked card may not be commanded."
+        },
+        {
+          "name": "onToggle",
+          "type": "(enabled: boolean) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "MotionZonesSettings",
       "kind": "component",
       "area": "root",

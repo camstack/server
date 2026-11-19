@@ -5,6 +5,7 @@
  * `scripts/check-device-card-parts.ts` refuses it.
  */
 import {
+  Activity,
   AlarmClock,
   AppWindow,
   ArrowLeftRight,
@@ -49,6 +50,7 @@ import {
   Image,
   Info,
   Joystick,
+  LoaderCircle,
   Lightbulb,
   ListChecks,
   Lock,
@@ -239,6 +241,8 @@ export const CARD_GLYPHS = [
   'app',
   'host',
   'forceStop',
+  'motion',
+  'pending',
 ] as const
 
 export type CardGlyph = (typeof CARD_GLYPHS)[number]
@@ -364,4 +368,6 @@ export const CARD_ICONS: Readonly<Record<CardGlyph, LucideIcon>> = {
   app: AppWindow,
   host: Server,
   forceStop: OctagonX,
+  motion: Activity,
+  pending: LoaderCircle,
 }

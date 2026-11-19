@@ -31,9 +31,6 @@ export interface LightCardModel {
   readonly palette: boolean
   /** It takes a white temperature: the White popover, at this kelvin (null = not reported). */
   readonly white: { readonly kelvin: number | null } | null
-  /** "On motion" as its authority reports it; null when the device offers none. */
-  readonly onMotion: boolean | null
-  readonly onMotionPending: boolean
 }
 
 export interface LightCardActions extends CardCommonActions {
@@ -41,7 +38,6 @@ export interface LightCardActions extends CardCommonActions {
   readonly onBrightness: (level: number) => void
   readonly onColor: (color: LightRgb) => void
   readonly onWhite: (kelvin: number) => void
-  readonly onMotion: (enabled: boolean) => void
 }
 
 const clampByte = (n: number): number => Math.max(0, Math.min(255, Math.round(n)))

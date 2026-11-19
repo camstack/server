@@ -7,7 +7,6 @@ import { hsvRgb, kelvinRgb, kelvinToMired, miredToKelvin } from '../scenes/light
 import { LightCard } from '../scenes/light/LightCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
-import { useMotionTrigger } from './use-motion-trigger'
 import { reportedCall } from './use-command-notice'
 import { useSwitchPower } from './use-switch-power'
 
@@ -37,7 +36,6 @@ export function ConnectedLightCard({
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
   const power = useSwitchPower({ deviceId, card })
-  const motion = useMotionTrigger({ deviceId, card })
   const brightness = useDeviceStateSlice(
     dev?.brightness === undefined ? undefined : dev.state.brightness,
   )
@@ -68,15 +66,12 @@ export function ConnectedLightCard({
                   : null,
             }
           : null,
-        onMotion: motion.on,
-        onMotionPending: motion.pending,
       }}
       actions={{
         ...card.actions,
         onPower: power.onPower,
         onBrightness: (level) => send(() => dev?.brightness?.setBrightness({ level })),
         onColor: (rgb) => send(() => colorCap?.setColor({ color: { mode: 'rgb', rgb } })),
-        onMotion: motion.onToggle,
         onWhite: (kelvin) =>
           send(() =>
             colorCap?.setColor({

@@ -22,7 +22,7 @@ const ADJUSTABLE: SirenAdjustable = {
 const NONE: SirenAdjustable = { durations: null, plays: null }
 
 const base = (): SirenCardModel => ({
-  common: outdoor(),
+  common: { ...outdoor(), motionTrigger: { on: false, pending: false } },
   activity: 'silent',
   since: '2 g',
   canTrigger: true,
@@ -31,8 +31,6 @@ const base = (): SirenCardModel => ({
   run: null,
   adjustable: ADJUSTABLE,
   optionsUnavailable: false,
-  onMotion: true,
-  onMotionPending: false,
 })
 
 export function sirenFixtures(): readonly SirenFixture[] {
@@ -64,7 +62,7 @@ export function sirenFixtures(): readonly SirenFixture[] {
         activity: 'sounding',
         since: '30 s',
         adjustable: NONE,
-        onMotion: null,
+        common: { ...outdoor(), motionTrigger: null },
         run: { endsAt: null, totalMs: null, estimated: false },
       },
     },
@@ -72,7 +70,7 @@ export function sirenFixtures(): readonly SirenFixture[] {
       id: 'siren-switch-only',
       caption: 'Solo interruttore',
       orientation: 'vertical',
-      model: { ...base(), adjustable: NONE, onMotion: null },
+      model: { ...base(), adjustable: NONE, common: { ...outdoor(), motionTrigger: null } },
     },
     {
       id: 'siren-unknown',

@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from 'react'
+import { cn } from '../../../../lib/cn'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { SirenIllustration } from '../../illustrations/SirenIllustration'
 import { ArmedButton } from '../../parts/ArmedButton'
@@ -6,7 +7,6 @@ import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { CountdownRing } from '../../parts/CountdownRing'
 import { MenuButton } from '../../parts/MenuButton'
-import { motionTriggerRow } from '../../parts/motion-trigger-row'
 import { useCountdown } from '../../parts/use-countdown'
 import { type BottomRow, rowButtons, rowText } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
@@ -32,6 +32,8 @@ export interface SirenCardProps {
 
 /** The big round face at the centre of the ring. */
 const FACE_CLASS = 'aspect-square w-2/5 flex-col gap-1 rounded-full text-base font-semibold'
+/** The face's glyph: large, it IS the button. */
+const FACE_ICON_CLASS = 'h-1/2 w-1/2 min-h-6 min-w-6'
 const CANCEL_CLASS = 'min-h-8 px-2 py-1 text-xs'
 
 function remainingText(countdown: SirenCountdown, t: UiTextFn): string | null {
@@ -98,7 +100,6 @@ function amountChip({ unit, choices, pick, onPick, disabled, t }: AmountChipProp
 
 function bottomRows(
   model: SirenCardModel,
-  actions: SirenCardActions,
   pick: SirenAmount | null,
   setPick: (amount: SirenAmount) => void,
   t: UiTextFn,
@@ -149,14 +150,6 @@ function bottomRows(
       }),
     )
   }
-  const motion = motionTriggerRow({
-    on: model.onMotion,
-    pending: model.onMotionPending,
-    label: t('uiLibrary.deviceCard.siren.onMotion', 'Sound on motion'),
-    testId: 'dc-siren-motion',
-    onToggle: actions.onMotion,
-  })
-  if (motion !== null) rows.push(motion)
   return rows
 }
 
@@ -179,10 +172,14 @@ function centre({ model, actions, pick, countdown, t }: CentreProps): ReactEleme
         disabled={model.commandPending}
         aria-busy={model.commandPending}
         data-testid="dc-siren-stop"
+        aria-label={t('uiLibrary.deviceCard.siren.stop', 'Stop')}
+        title={t('uiLibrary.deviceCard.siren.stop', 'Stop')}
         onClick={actions.onStop}
       >
-        <CardIcon glyph="stop" />
-        <span>{t('uiLibrary.deviceCard.siren.stop', 'Stop')}</span>
+        <CardIcon
+          glyph={model.commandPending ? 'pending' : 'stop'}
+          className={cn(FACE_ICON_CLASS, model.commandPending && 'animate-spin')}
+        />
         {left === null ? null : (
           <span data-testid="dc-siren-remaining" className="text-xs font-normal tabular-nums">
             {left}
@@ -196,7 +193,6 @@ function centre({ model, actions, pick, countdown, t }: CentreProps): ReactEleme
       <ArmedButton
         stacked
         tone="primary"
-        glyph="siren"
         label={t('uiLibrary.deviceCard.siren.sound', 'Sound')}
         disabled={model.commandPending}
         testId="dc-siren-sound"
@@ -204,7 +200,10 @@ function centre({ model, actions, pick, countdown, t }: CentreProps): ReactEleme
         cancelClassName={CANCEL_CLASS}
         onConfirm={() => actions.onTrigger(pick)}
       >
-        {t('uiLibrary.deviceCard.siren.sound', 'Sound')}
+        <CardIcon
+          glyph={model.commandPending ? 'pending' : 'siren'}
+          className={cn(FACE_ICON_CLASS, model.commandPending && 'animate-spin')}
+        />
       </ArmedButton>
     )
   }
@@ -239,7 +238,9 @@ function sideCommands(
  * which becomes Stop while it sounds, inside a ring that counts the run down
  * from what the server reports and pulses when the end is unknown. The
  * duration and plays chips appear only when the siren declares more than one
- * value; "Sound on motion" only when the device offers it.
+ * value. Its Sound and Stop are icon faces: the glyph says the state (siren
+ * armed, stop while sounding, a spinner while a command flies); "on motion" is
+ * the shell's own corner.
  */
 export function SirenCard({
   model,
@@ -282,7 +283,7 @@ export function SirenCard({
           </CountdownRing>
         ),
         columns: { right: sideCommands(model, actions, t) },
-        bottom: bottomRows(model, actions, pick, setPick, t),
+        bottom: bottomRows(model, pick, setPick, t),
       }}
     />
   )

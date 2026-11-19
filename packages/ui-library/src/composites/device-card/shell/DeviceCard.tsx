@@ -12,7 +12,7 @@ import { useUiText } from '../../../contexts/ui-text'
 import { DEVICE_CARD_CSS } from '../card-css'
 import { ValueChip } from '../parts/ValueChip'
 import { ConsumablesButton, ReasonLine, SupplyChip } from './BottomLine'
-import { BatteryCorner, PowerCorner, RemoteCorner, StateCorner } from './Corner'
+import { BatteryCorner, MotionCorner, PowerCorner, RemoteCorner, StateCorner } from './Corner'
 import { type CardGating, CardGatingProvider } from './gating'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from './model'
 import { HistoryView, RemoteView } from './Overlays'
@@ -169,6 +169,7 @@ export function DeviceCard({
     setView(next)
   }
   const history = common.history
+  const motion = common.motionTrigger ?? null
   const hasHistory =
     history !== null &&
     (history.charts !== null || history.events !== null || common.deviceId !== undefined)
@@ -229,7 +230,7 @@ export function DeviceCard({
               <SceneGrid
                 {...scene}
                 activity={activity}
-                bottomCorners={common.battery !== null || hasRemote}
+                bottomCorners={common.battery !== null || hasRemote || motion !== null}
                 corners={
                   <>
                     <StateCorner
@@ -237,8 +238,17 @@ export function DeviceCard({
                       {...(hasHistory ? { onOpenHistory: () => openView('history') } : {})}
                     />
                     {common.power === null ? null : <PowerCorner power={common.power} />}
+                    {motion === null ? null : (
+                      <MotionCorner
+                        on={motion.on}
+                        pending={motion.pending}
+                        blocked={gating.blocked}
+                        onToggle={(enabled) => actions?.onMotionTrigger?.(enabled)}
+                      />
+                    )}
                     {common.battery === null ? null : (
                       <BatteryCorner
+                        shifted={motion !== null}
                         level={common.battery.level}
                         {...(common.battery.label === undefined
                           ? {}

@@ -47,13 +47,7 @@ function coverActions(): CoverCardActions {
   }
 }
 function lightActions(): LightCardActions {
-  return {
-    onPower: vi.fn(),
-    onBrightness: vi.fn(),
-    onColor: vi.fn(),
-    onWhite: vi.fn(),
-    onMotion: vi.fn(),
-  }
+  return { onPower: vi.fn(), onBrightness: vi.fn(), onColor: vi.fn(), onWhite: vi.fn() }
 }
 function fanActions(): FanCardActions {
   return {

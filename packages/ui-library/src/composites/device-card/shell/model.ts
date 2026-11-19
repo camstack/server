@@ -147,9 +147,21 @@ export interface CardCommon {
   /** A saved template is still loading: the remote view draws no raw keys. */
   readonly remoteLayoutPending?: boolean
   readonly history: CardHistory | null
+  /**
+   * "On motion" for a device that binds `motion-trigger`: the served value and
+   * whether a change is in flight. Null or absent: the device offers none, no corner.
+   */
+  readonly motionTrigger?: CardMotionTrigger | null
+}
+
+export interface CardMotionTrigger {
+  readonly on: boolean
+  readonly pending: boolean
 }
 
 export interface CardCommonActions {
+  /** Flip "on motion" (the value to set). */
+  readonly onMotionTrigger?: (enabled: boolean) => void
   readonly onSupply?: (action: CardSupplyAction) => void
   /** A promise lets the card disable that item's Reset while the call is in flight. */
   readonly onConsumableReset?: (key: string) => void | PromiseLike<unknown>

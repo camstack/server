@@ -14,7 +14,6 @@ import {
 import { SirenCard } from '../scenes/siren/SirenCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
-import { useMotionTrigger } from './use-motion-trigger'
 import { reportedCommand } from './use-command-notice'
 import { useSwitchPower } from './use-switch-power'
 
@@ -26,7 +25,6 @@ const OPTIONS_STALE_MS = 5 * 60_000
  * cap: Sound is `siren.trigger` (seconds or plays, as the siren declares),
  * Stop is `siren.stop`, and the ring counts the served `activeUntil` down.
  * Without it: Sound and Stop are the `switch`, and sounding is open-ended.
- * "Sound on motion" is the device's `motion-trigger`, when it binds one.
  * Every command is one-shot and the card shows only the served slices (D1061).
  */
 export function ConnectedSirenCard({
@@ -41,7 +39,6 @@ export function ConnectedSirenCard({
   const power = useSwitchPower({ deviceId, card })
   const siren = dev?.siren
   const sirenSlice = useDeviceStateSlice(siren === undefined ? undefined : dev?.state.siren)
-  const motion = useMotionTrigger({ deviceId, card })
   const runCommand = useDeviceCommand()
   // Sound and Stop share one claim: a double tap must not send twice (D1061).
   const shot = useOneShotCommand()
@@ -87,8 +84,6 @@ export function ConnectedSirenCard({
         run: sirenRunOf(sirenSlice, activity === 'sounding'),
         adjustable: sirenTriggers ? sirenAdjustableOf(options.data) : sirenAdjustableOf(undefined),
         optionsUnavailable: sirenTriggers && readsOptions && options.isError,
-        onMotion: motion.on,
-        onMotionPending: motion.pending,
       }}
       actions={{
         ...card.actions,
@@ -100,7 +95,6 @@ export function ConnectedSirenCard({
           ),
         onStop: () =>
           sendOnce(() => (sirenStops ? siren?.stop({}) : dev?.switch?.setState({ on: false }))),
-        onMotion: motion.onToggle,
       }}
     />
   )

@@ -40,6 +40,7 @@ import { remoteLayoutPending, remotePanelOf } from './remote-panel'
 import { remoteKeyOf } from '../shell/remote-keys'
 import { sinceText } from './since-text'
 import { useCommandNotice } from './use-command-notice'
+import { useMotionTrigger } from './use-motion-trigger'
 
 export interface CardCommonInput {
   readonly deviceId: number
@@ -147,6 +148,12 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const series = useDeviceSeriesList(deviceId)
 
   const { notice, fail, succeed } = useCommandNotice()
+  const motion = useMotionTrigger({
+    deviceId,
+    settable: bindingImplements(bindings.data?.entries, 'motion-trigger', 'setMotionTrigger'),
+    fail,
+    succeed,
+  })
 
   const online = reachabilityOf(status)
   const offlineSince = online === false ? (status?.lastChangedAt ?? null) : null
@@ -243,6 +250,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     ),
     remoteLayoutPending: remoteLayoutPending(remote.data, templates.data, templates.status),
     deviceId,
+    motionTrigger: motion.on === null ? null : { on: motion.on, pending: motion.pending },
     history:
       seriesReady || actuationsOffered
         ? {
@@ -253,6 +261,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   }
 
   const actions: CardCommonActions = {
+    onMotionTrigger: motion.onToggle,
     onSupply: (action: CardSupplyAction) => {
       const call = action === 'on' ? powerOn : action === 'off' ? powerOff : restart
       call.mutate(

@@ -3,7 +3,6 @@ import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { LightIllustration, rgbCss } from '../../illustrations/LightIllustration'
 import { CardButton } from '../../parts/CardButton'
-import { motionTriggerRow } from '../../parts/motion-trigger-row'
 import { HorizontalSlider } from '../../parts/sliders'
 import { columnButton, columnPopover, columnSlider } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
@@ -64,13 +63,6 @@ export function LightCard({
   const brightnessLabel = t('uiLibrary.deviceCard.light.brightness', 'Brightness')
   const colourLabel = t('uiLibrary.deviceCard.light.colour', 'Colour')
   const whiteLabel = t('uiLibrary.deviceCard.light.white', 'White')
-  const motion = motionTriggerRow({
-    on: model.onMotion,
-    pending: model.onMotionPending,
-    label: t('uiLibrary.deviceCard.onMotion', 'On motion'),
-    testId: 'dc-light-motion',
-    onToggle: actions.onMotion,
-  })
   return (
     <DeviceCard
       kind="light"
@@ -161,7 +153,6 @@ export function LightCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
-        bottom: motion === null ? [] : [motion],
       }}
     />
   )

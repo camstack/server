@@ -56,7 +56,6 @@ const VALVE_ACTIONS: ValveCardActions = {
 const SIREN_ACTIONS: SirenCardActions = {
   onTrigger: noop,
   onStop: noop,
-  onMotion: noop,
 }
 const FEEDER_ACTIONS: PetFeederCardActions = {
   onFeed: noop,

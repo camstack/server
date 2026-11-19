@@ -62,15 +62,11 @@ export interface SirenCardModel {
   readonly adjustable: SirenAdjustable
   /** The siren's options were asked and failed: the chips are unknown, not absent. */
   readonly optionsUnavailable: boolean
-  /** "Sound on motion" as its authority reports it; null when the device offers none. */
-  readonly onMotion: boolean | null
-  readonly onMotionPending: boolean
 }
 
 export interface SirenCardActions extends CardCommonActions {
   readonly onTrigger: (amount: SirenAmount | null) => void
   readonly onStop: () => void
-  readonly onMotion: (enabled: boolean) => void
 }
 
 const NO_ADJUSTABLE: SirenAdjustable = { durations: null, plays: null }

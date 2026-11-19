@@ -21,14 +21,14 @@ interface LightRow {
   readonly color: LightCardModel['color']
   readonly palette: boolean
   readonly kelvin: number | null
-  /** The device binds `motion-trigger`: its "on motion" value. Absent = no toggle. */
+  /** The device binds `motion-trigger`: its "on motion" value. Absent = no corner. */
   readonly motion?: boolean
 }
 
 const ROWS: readonly LightRow[] = [
   {
     id: 'light-floodlight',
-    caption: 'Faro con movimento',
+    caption: 'Faro con movimento e batteria',
     name: 'Faro giardino',
     integration: 'Reolink',
     watts: 18,
@@ -121,8 +121,9 @@ export function lightFixtures(): readonly LightFixture[] {
             { id: 'colour', label: 'Colore', glyph: 'colour' },
           ],
         }),
-        battery: null,
+        battery: row.motion === undefined ? null : { level: 64 },
         consumables: null,
+        ...(row.motion === undefined ? {} : { motionTrigger: { on: row.motion, pending: false } }),
       },
       on: row.on,
       since: '2 h',
@@ -130,8 +131,6 @@ export function lightFixtures(): readonly LightFixture[] {
       color: row.color,
       palette: row.palette,
       white: row.kelvin === null ? null : { kelvin: row.kelvin },
-      onMotion: row.motion ?? null,
-      onMotionPending: false,
     },
   }))
 }

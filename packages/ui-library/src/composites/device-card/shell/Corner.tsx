@@ -148,16 +148,23 @@ export function PowerCorner({ power }: { readonly power: CardPower }): ReactElem
 export function BatteryCorner({
   level,
   label,
+  shifted = false,
 }: {
   readonly level: number
   readonly label?: string
+  /** The motion corner holds the corner's start: the battery sits beside it. */
+  readonly shifted?: boolean
 }): ReactElement {
   const low = level < BATTERY_LOW_PERCENT
   return (
     <Corner
       place="bl"
       testId="dc-battery"
-      className={cn('tabular-nums', low ? 'text-danger' : 'text-foreground-muted')}
+      className={cn(
+        'tabular-nums',
+        low ? 'text-danger' : 'text-foreground-muted',
+        shifted && 'left-11',
+      )}
     >
       <CardIcon glyph={low ? 'batteryLow' : 'battery'} className="h-3.5 w-3.5 text-success" />
       {label ?? `${Math.round(level)}%`}
@@ -183,6 +190,45 @@ export function RemoteCorner({ onOpen }: { readonly onOpen: () => void }): React
       )}
     >
       <CardIcon glyph="remote" className="h-3.5 w-3.5" />
+    </Button>
+  )
+}
+
+export interface MotionCornerProps {
+  readonly on: boolean
+  readonly pending: boolean
+  /** Gating: a blocked card may not be commanded. */
+  readonly blocked: boolean
+  readonly onToggle: (enabled: boolean) => void
+}
+
+/** Bottom-left: the "on motion" toggle, an icon with no text. */
+export function MotionCorner({ on, pending, blocked, onToggle }: MotionCornerProps): ReactElement {
+  const t = useUiText()
+  return (
+    <Button
+      type="button"
+      variant="unstyled"
+      data-corner="bl"
+      data-testid="dc-motion"
+      aria-pressed={on}
+      aria-busy={pending}
+      aria-label={t('uiLibrary.deviceCard.onMotion', 'On motion')}
+      title={t('uiLibrary.deviceCard.onMotion', 'On motion')}
+      disabled={pending || blocked}
+      onClick={() => onToggle(!on)}
+      className={cn(
+        CORNER_CLASS,
+        PLACE.bl,
+        'border px-1.5 py-1 transition-colors disabled:pointer-events-none',
+        on ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground-muted',
+        blocked && !pending && 'opacity-45',
+      )}
+    >
+      <CardIcon
+        glyph={pending ? 'pending' : 'motion'}
+        className={cn('h-3.5 w-3.5', pending && 'animate-spin')}
+      />
     </Button>
   )
 }

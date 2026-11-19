@@ -3,12 +3,7 @@
  * The connected siren: pending until a slice answers, the served state only,
  * one command per tap (the one-shot claim) and a held button while it flies.
  */
-import type {
-  MotionTriggerStatus,
-  SirenOptions,
-  SirenRuntimeState,
-  SwitchStatus,
-} from '@camstack/types'
+import type { SirenOptions, SirenRuntimeState, SwitchStatus } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -33,15 +28,12 @@ const OPTIONS: SirenOptions = {
 
 const hub = vi.hoisted(() => ({
   withSiren: true,
-  withMotion: true,
   switchSlice: undefined as SwitchStatus | undefined,
   sirenSlice: undefined as SirenRuntimeState | undefined,
-  motionSlice: undefined as MotionTriggerStatus | undefined,
   trigger: vi.fn(),
   stop: vi.fn(),
   getOptions: vi.fn(),
   setState: vi.fn(),
-  setMotionTrigger: vi.fn(),
 }))
 
 vi.mock('../../../contexts/system-context', () => ({
@@ -59,11 +51,9 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
           },
         }
       : {}),
-    ...(hub.withMotion ? { motionTrigger: { setMotionTrigger: hub.setMotionTrigger } } : {}),
     state: {
       switch: hub.switchSlice,
       siren: hub.sirenSlice,
-      motionTrigger: hub.motionSlice,
     },
   }),
   useDeviceStateSlice: (slice: unknown) => slice,
@@ -109,11 +99,9 @@ const silent: SirenRuntimeState = {
 
 beforeEach(() => {
   hub.withSiren = true
-  hub.withMotion = true
   hub.switchSlice = { on: false, lastChangedAt: 0 }
   hub.sirenSlice = silent
-  hub.motionSlice = { enabled: true, lastChangedAt: 0 }
-  for (const spy of [hub.trigger, hub.stop, hub.setState, hub.setMotionTrigger]) {
+  for (const spy of [hub.trigger, hub.stop, hub.setState]) {
     spy.mockReset()
     spy.mockImplementation(never)
   }
@@ -204,29 +192,14 @@ describe('ConnectedSirenCard', () => {
     expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
   })
 
-  it('sounds a switch-only siren through its switch, with no chips and no motion toggle', () => {
+  it('sounds a switch-only siren through its switch, with no chips', () => {
     hub.withSiren = false
-    hub.withMotion = false
     mount()
     const sound = screen.getByTestId('dc-siren-sound')
     fireEvent.click(sound)
     fireEvent.click(sound)
     expect(hub.setState).toHaveBeenCalledWith({ on: true })
     expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
-    expect(screen.queryByTestId('dc-siren-motion')).toBeNull()
     expect(hub.getOptions).not.toHaveBeenCalled()
-  })
-
-  it('flips "sound on motion" through motion-trigger and keeps the served value', () => {
-    mount()
-    const toggle = screen.getByTestId('dc-siren-motion')
-    act(() => {
-      toggle.click()
-      toggle.click()
-    })
-    expect(hub.setMotionTrigger).toHaveBeenCalledTimes(1)
-    expect(hub.setMotionTrigger).toHaveBeenCalledWith({ enabled: false })
-    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
-    expect(screen.getByTestId('dc-siren-motion').hasAttribute('disabled')).toBe(true)
   })
 })

@@ -43,7 +43,7 @@ import { compassOf, kmhOf, weatherSkyOf } from '../scenes/weather/model'
 afterEach(cleanup)
 
 const noop = (): void => undefined
-const SIREN_NOOP = { onTrigger: noop, onStop: noop, onMotion: noop }
+const SIREN_NOOP = { onTrigger: noop, onStop: noop }
 
 function fixture<T extends { readonly id: string }>(list: readonly T[], id: string): T {
   const found = list.find((f) => f.id === id)
@@ -303,14 +303,14 @@ describe('the humidifier, valve and siren', () => {
     expect(screen.queryByTestId('dc-siren-remaining')).toBeNull()
   })
 
-  it('draws the duration and plays chips and the motion toggle only when declared', () => {
+  it('draws the duration and plays chips and the motion corner only when declared', () => {
     render(
       <SirenCard model={fixture(sirenFixtures(), 'siren-silent').model} actions={SIREN_NOOP} />,
     )
     // Nothing picked: the trigger sends neither unit, so each chip names the camera default.
     expect(screen.getByTestId('dc-siren-seconds').textContent).toBe('Default duration')
     expect(screen.getByTestId('dc-siren-plays').textContent).toBe('Default plays')
-    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByTestId('dc-motion').getAttribute('aria-pressed')).toBe('false')
     cleanup()
     render(
       <SirenCard
@@ -320,7 +320,7 @@ describe('the humidifier, valve and siren', () => {
     )
     expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
     expect(screen.queryByTestId('dc-siren-plays')).toBeNull()
-    expect(screen.queryByTestId('dc-siren-motion')).toBeNull()
+    expect(screen.queryByTestId('dc-motion')).toBeNull()
   })
 
   it('sends the picked value, and the other unit no longer claims a default', async () => {
@@ -352,19 +352,6 @@ describe('the humidifier, valve and siren', () => {
       'Options unavailable',
     )
     expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
-  })
-
-  it('sends the served motion state flipped, never its own copy', () => {
-    const onMotion = vi.fn()
-    render(
-      <SirenCard
-        model={fixture(sirenFixtures(), 'siren-silent').model}
-        actions={{ ...SIREN_NOOP, onMotion }}
-      />,
-    )
-    fireEvent.click(screen.getByTestId('dc-siren-motion'))
-    expect(onMotion).toHaveBeenCalledWith(false)
-    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
   })
 
   it('holds Sound while a command is in flight', () => {
