@@ -62,11 +62,11 @@ describe('EnpalClientRegistry', () => {
   })
 
   it('a poll that fails after a good one reports the integration disconnected and drops the snapshot', async () => {
-    vi.useFakeTimers()
     const h = registryHarness('up')
     await h.registry.upsert('int-1', 'Home', CONNECTION, false)
     h.set('down')
-    await vi.advanceTimersByTimeAsync(20_000)
+    // The read is caller-driven now (the core's device-state-refresh, D1062): no timer in the provider.
+    await enpalConnections.getManager('int-1')?.poll()
     expect(h.events).toEqual(['connected:int-1', 'disconnected:int-1'])
     expect(enpalConnections.getSnapshot('int-1')).toBeNull()
     await h.registry.shutdown()
