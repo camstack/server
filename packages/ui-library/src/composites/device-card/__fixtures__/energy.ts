@@ -1,6 +1,7 @@
 /** The energy-system page of the approved mockup: the five systems, the mockup's data (kW → W). */
 import type { TimeSeriesDef } from '../../charts/TimeSeriesChart'
 import { type EnergyFlowSpan, energyFlowSpans } from '../connected/energy-day'
+import { ENERGY_NODE_SLOT } from '../illustrations/EnergyFlowIllustration'
 import { energyActivityOf, type EnergyCardModel, type EnergyFlows } from '../scenes/energy/model'
 import type { CardOrientation } from '../shell/model'
 import { mockupCommon } from './common'
@@ -271,12 +272,12 @@ export function energyDayFixture(dayStart: number): {
   const range = { from: dayStart, to: dayStart + 24 * HOUR_MS }
   return {
     powerSeries: [
-      def('solar', 'Solare', solar, 0, 'kW'),
-      def('house', 'Casa', load, 1, 'kW'),
-      def('grid', 'Rete', grid, 2, 'kW'),
-      def('battery', 'Batteria', battery, 3, 'kW'),
+      def('solar', 'Solare', solar, ENERGY_NODE_SLOT.solar, 'kW'),
+      def('house', 'Casa', load, ENERGY_NODE_SLOT.house, 'kW'),
+      def('grid', 'Rete', grid, ENERGY_NODE_SLOT.grid, 'kW'),
+      def('battery', 'Batteria', battery, ENERGY_NODE_SLOT.battery, 'kW'),
     ],
-    socSeries: [def('soc', 'Carica batteria', charge, 3, '%')],
+    socSeries: [def('soc', 'Carica batteria', charge, ENERGY_NODE_SLOT.battery, '%')],
     flowSpans: energyFlowSpans(grid, battery, range),
     range,
   }

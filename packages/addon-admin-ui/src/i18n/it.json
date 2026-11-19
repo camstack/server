@@ -10666,7 +10666,8 @@
           "house": "Casa",
           "grid": "Rete",
           "battery": "Batteria",
-          "heatPump": "Pompa di calore"
+          "heatPump": "Pompa di calore",
+          "live": "Ora"
         }
       },
       "ir": {

@@ -25,6 +25,8 @@ export interface EnergyCardProps {
   readonly showName?: boolean
   /** The primary trend line, drawn under the readings. */
   readonly trend?: ReactElement
+  /** False when the scene's nodes show now but the card shows another day: they are dimmed and marked. */
+  readonly nodesLive?: boolean
 }
 
 function gridLabel(watts: number, t: UiTextFn): string {
@@ -208,6 +210,7 @@ export function EnergyCard({
   orientation = 'vertical',
   showName = true,
   trend,
+  nodesLive = true,
 }: EnergyCardProps): ReactElement {
   const t = useUiText()
   const producing = model.activity === 'sun'
@@ -233,6 +236,8 @@ export function EnergyCard({
           <EnergyFlowIllustration
             nodes={energyNodes(model.flows, t)}
             centre={energyCentreFigures(model.today, t)}
+            stale={!nodesLive}
+            staleLabel={t('uiLibrary.deviceCard.energy.day.live', 'Live now')}
             ariaLabel={t('uiLibrary.deviceCard.energy.flows', 'Energy flows')}
             className="h-auto w-full max-w-96"
           />

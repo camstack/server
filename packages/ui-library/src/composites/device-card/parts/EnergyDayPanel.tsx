@@ -1,10 +1,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { type ReactElement, useMemo } from 'react'
+import { cn } from '../../../lib/cn'
 import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
 import { Button } from '../../../primitives/button'
 import { IconButton } from '../../../primitives/icon-button'
 import { Skeleton } from '../../../primitives/skeleton'
 import type { ChartBand, ChartBandTone } from '../../charts/chart-bands'
+import { chartLocale } from '../../charts/chart-data'
 import { TimeSeriesChart, type TimeSeriesDef } from '../../charts/TimeSeriesChart'
 import type { EnergyFlowSource, EnergyFlowSpan } from '../connected/energy-day'
 
@@ -50,11 +52,48 @@ function sourceLabel(source: EnergyFlowSource, t: UiTextFn): string {
   }
 }
 
-const DAY_FORMAT = new Intl.DateTimeFormat(undefined, {
+const DAY_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   weekday: 'short',
   day: 'numeric',
   month: 'short',
-})
+}
+
+/** Spelled out so Tailwind finds every class; mirrors the band tones the chart paints. */
+const SOURCE_SWATCH: Readonly<Record<EnergyFlowSource, string>> = {
+  'from-grid': 'bg-info',
+  'to-grid': 'bg-success',
+  'from-battery': 'bg-warning',
+  'to-battery': 'bg-foreground-subtle',
+}
+
+const SOURCE_ORDER: readonly EnergyFlowSource[] = [
+  'from-grid',
+  'to-grid',
+  'from-battery',
+  'to-battery',
+]
+
+/** What each band colour means: the sources that occur in the day, one swatch each. */
+function FlowLegend({ spans }: { readonly spans: readonly EnergyFlowSpan[] }): ReactElement | null {
+  const t = useUiText()
+  const present = SOURCE_ORDER.filter((source) => spans.some((s) => s.source === source))
+  if (present.length === 0) return null
+  return (
+    <ul
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-foreground-muted"
+      data-testid="dc-energy-day-legend"
+    >
+      {present.map((source) => (
+        <li key={source} className="flex items-center gap-1">
+          <span
+            className={cn('inline-block size-2 rounded-sm opacity-60', SOURCE_SWATCH[source])}
+          />
+          {sourceLabel(source, t)}
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 function DayBar({
   dayStart,
@@ -83,7 +122,7 @@ function DayBar({
       >
         {isToday
           ? t('uiLibrary.deviceCard.energy.day.today', 'Today')
-          : DAY_FORMAT.format(dayStart)}
+          : new Intl.DateTimeFormat(chartLocale(), DAY_FORMAT_OPTIONS).format(dayStart)}
       </span>
       <IconButton
         icon={ChevronRight}
@@ -152,6 +191,7 @@ export function EnergyDayPanel(props: EnergyDayPanelProps): ReactElement {
               'No data was recorded for this day.',
             )}
           />
+          <FlowLegend spans={props.flowSpans} />
           {props.socSeries.length === 0 ? null : (
             <TimeSeriesChart
               title={t('uiLibrary.deviceCard.energy.day.charge', 'Battery charge')}

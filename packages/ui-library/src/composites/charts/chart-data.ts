@@ -270,18 +270,27 @@ const DATE_MY: Readonly<Intl.DateTimeFormatOptions> = { month: 'short', year: '2
  * seconds under ten minutes, `HH:MM` within two days, the date past that,
  * month + year past ~4 months.
  */
+/** The UI language (`<html lang>`), so axis times follow it rather than the browser's own locale; undefined falls back to the browser's. */
+export function chartLocale(): string | undefined {
+  if (typeof document === 'undefined') return undefined
+  const lang = document.documentElement.lang
+  return lang.length > 0 ? lang : undefined
+}
+
 export function formatTimeLabel(t: number, spanMs: number): string {
   const d = new Date(t)
-  if (spanMs < 10 * MINUTE) return d.toLocaleTimeString(undefined, TIME_HMS)
-  if (spanMs <= 2 * DAY) return d.toLocaleTimeString(undefined, TIME_HM)
-  if (spanMs <= 120 * DAY) return d.toLocaleDateString(undefined, DATE_DM)
-  return d.toLocaleDateString(undefined, DATE_MY)
+  const locale = chartLocale()
+  if (spanMs < 10 * MINUTE) return d.toLocaleTimeString(locale, TIME_HMS)
+  if (spanMs <= 2 * DAY) return d.toLocaleTimeString(locale, TIME_HM)
+  if (spanMs <= 120 * DAY) return d.toLocaleDateString(locale, DATE_DM)
+  return d.toLocaleDateString(locale, DATE_MY)
 }
 
 /** A cursor readout time: always the full instant at the window's precision. */
 export function formatCursorTime(t: number, spanMs: number): string {
   const d = new Date(t)
+  const locale = chartLocale()
   if (spanMs <= 2 * DAY)
-    return d.toLocaleTimeString(undefined, spanMs < 10 * MINUTE ? TIME_HMS : TIME_HM)
-  return `${d.toLocaleDateString(undefined, DATE_DM)} ${d.toLocaleTimeString(undefined, TIME_HM)}`
+    return d.toLocaleTimeString(locale, spanMs < 10 * MINUTE ? TIME_HMS : TIME_HM)
+  return `${d.toLocaleDateString(locale, DATE_DM)} ${d.toLocaleTimeString(locale, TIME_HM)}`
 }

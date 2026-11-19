@@ -392,7 +392,7 @@ export function DeviceCardPreview(): ReactElement {
   const type = params.get('type') ?? 'plug'
   const remote = params.get('view') === 'remote'
   const history = params.get('view') === 'history'
-  if (history) document.documentElement.lang = 'it'
+  document.documentElement.lang = 'it'
   const theme = sessionStorage.getItem('ui-shots:theme') === 'dark' ? 'dark' : 'light'
   const t = useMemo(() => {
     const it = i18n.cloneInstance({ lng: 'it' })

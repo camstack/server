@@ -38,6 +38,7 @@ export function ConnectedEnergyCard({
   const isToday = dayOffset === 0
   return (
     <EnergyCard
+      nodesLive={isToday}
       orientation={orientation}
       showName={showName}
       trend={

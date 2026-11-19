@@ -296,14 +296,18 @@ describe('the energy system card', () => {
     dayCalls.offsets = []
     render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.getByTestId('dc-energy-day-label').textContent).toBe('Today')
+    expect(screen.queryByTestId('dc-energy-stale')).toBeNull()
     expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByLabelText('Previous day'))
     expect(dayCalls.offsets.at(-1)).toBe(1)
+    // The scene's nodes still read now: dimmed and marked, never passed off as that day.
+    expect(screen.getByTestId('dc-energy-stale').textContent).toBe('Live now')
     expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('+1.5 kWh')
     expect(screen.getByTestId('dc-energy-centre-selfUse').textContent).toContain('75%')
     expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(screen.getByText('Today'))
     expect(dayCalls.offsets.at(-1)).toBe(0)
+    expect(screen.queryByTestId('dc-energy-stale')).toBeNull()
     expect(screen.getByTestId('dc-energy-centre-netGrid').textContent).toContain('−5.2 kWh')
   })
 

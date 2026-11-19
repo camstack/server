@@ -7831,6 +7831,13 @@
       ]
     },
     {
+      "name": "ENERGY_NODE_SLOT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/EnergyFlowIllustration.tsx",
+      "summary": "The chart slot each node owns: the scene tints a node with it and the day chart draws that node's line with the same slot, so one colour means one node in both."
+    },
+    {
       "name": "ENERGY_STILL_BELOW_W",
       "kind": "constant",
       "area": "composites",
@@ -7887,6 +7894,12 @@
           "type": "ReactElement",
           "optional": true,
           "doc": "The primary trend line, drawn under the readings."
+        },
+        {
+          "name": "nodesLive",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False when the scene's nodes show now but the card shows another day: they are dimmed and marked."
         }
       ]
     },
@@ -7997,6 +8010,18 @@
           "type": "readonly EnergyCentreFigure[]",
           "optional": true,
           "doc": "The day's figures drawn inside the enlarged bus circle; omit for the small bus dot."
+        },
+        {
+          "name": "stale",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The nodes show a moment other than the selected day: dimmed, with `staleLabel` (\"Live now\")."
+        },
+        {
+          "name": "staleLabel",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         },
         {
           "name": "ariaLabel",
@@ -8977,7 +9002,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-data.ts",
-      "summary": "A wall-clock label at the precision the window's length justifies: seconds under ten minutes, `HH:MM` within two days, the date past that, month + year past ~4 months."
+      "summary": "Data shaping for the chart family — pure, no DOM, no uPlot."
     },
     {
       "name": "formatTrackTime",

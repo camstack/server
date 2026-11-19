@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   alignSeries,
   formatSpan,
+  formatTimeLabel,
   segmentsFromChanges,
   sharedGapSpans,
   stackSeries,
@@ -215,5 +216,18 @@ describe('bars', () => {
     ])
     expect(bucketTotals(buckets, 2)).toEqual({ perLayer: [1, 5], total: 6, known: true })
     expect(bucketTotals([{ t: 0, values: [null] }], 1).known).toBe(false)
+  })
+})
+
+describe('formatTimeLabel follows the UI language', () => {
+  afterEach(() => {
+    document.documentElement.lang = ''
+  })
+  const afternoon = new Date(2026, 10, 20, 16, 0).getTime()
+  it('an Italian UI reads 24 h, an English one 12 h', () => {
+    document.documentElement.lang = 'it'
+    expect(formatTimeLabel(afternoon, 3_600_000 * 24)).toBe('16:00')
+    document.documentElement.lang = 'en-US'
+    expect(formatTimeLabel(afternoon, 3_600_000 * 24)).toMatch(/4:00\s?PM/)
   })
 })

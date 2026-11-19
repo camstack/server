@@ -13,6 +13,7 @@ import { useMemo } from 'react'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
 import type { TimePoint } from '../../charts/chart-data'
 import type { TimeSeriesDef } from '../../charts/TimeSeriesChart'
+import { ENERGY_NODE_SLOT, type EnergyNodeId } from '../illustrations/EnergyFlowIllustration'
 import { linePoints } from '../../device-history/history-model'
 import {
   anchorNow,
@@ -37,7 +38,7 @@ const PREFIX = 'cap:energy-system.'
 
 interface PowerLine {
   readonly field: string
-  readonly id: string
+  readonly id: EnergyNodeId
   readonly textKey: string
   readonly fallback: string
 }
@@ -156,7 +157,7 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
     const entryOf = (field: string): DeviceHistoryQueryManyEntry | undefined =>
       reads.data.current.get(readItemId({ deviceId, key: keyOf(field) }))
     const until = Math.min(Date.now(), window.to)
-    const powerSeries = POWER_LINES.flatMap((line, i): TimeSeriesDef[] => {
+    const powerSeries = POWER_LINES.flatMap((line): TimeSeriesDef[] => {
       const points = pointsOf(infoOf(series, line.field), entryOf(line.field), window, until)
       return points.some((p) => p.v !== null)
         ? [
@@ -165,7 +166,7 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
               label: t(`uiLibrary.deviceCard.energy.day.${line.textKey}`, line.fallback),
               unit: 'kW',
               points: kilowatts(points),
-              colorIndex: i,
+              colorIndex: ENERGY_NODE_SLOT[line.id],
               interpolation: 'step',
             },
           ]
@@ -179,7 +180,7 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
             label: t('uiLibrary.deviceCard.energy.day.charge', 'Battery charge'),
             unit: '%',
             points: soc,
-            colorIndex: 3,
+            colorIndex: ENERGY_NODE_SLOT.battery,
             interpolation: 'step',
           },
         ]

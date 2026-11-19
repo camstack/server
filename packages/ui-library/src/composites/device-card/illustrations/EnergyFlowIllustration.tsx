@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import { cn } from '../../../lib/cn'
+import { CHART_SERIES_TOKENS, type ChartSeriesToken } from '../../charts/chart-palette'
 import { CARD_ICONS, type CardGlyph } from '../icons'
 import { speedBand } from './AmbientFx'
 
@@ -28,15 +29,48 @@ export interface EnergyFlowIllustrationProps {
   readonly nodes: readonly EnergyNodeView[]
   /** The day's figures drawn inside the enlarged bus circle; omit for the small bus dot. */
   readonly centre?: readonly EnergyCentreFigure[]
+  /** The nodes show a moment other than the selected day: dimmed, with `staleLabel` ("Live now"). */
+  readonly stale?: boolean
+  readonly staleLabel?: string
   readonly ariaLabel: string
   readonly className?: string
+}
+
+/**
+ * The chart slot each node owns: the scene tints a node with it and the day
+ * chart draws that node's line with the same slot, so one colour means one
+ * node in both.
+ */
+export const ENERGY_NODE_SLOT: Readonly<Record<EnergyNodeId, number>> = {
+  solar: 4,
+  grid: 0,
+  battery: 6,
+  house: 5,
+  heatPump: 2,
+}
+
+/** Spelled out so Tailwind finds every class. */
+const SLOT_TEXT: Readonly<Record<ChartSeriesToken, string>> = {
+  'chart-series-a': 'text-chart-series-a',
+  'chart-series-b': 'text-chart-series-b',
+  'chart-series-c': 'text-chart-series-c',
+  'chart-series-d': 'text-chart-series-d',
+  'chart-series-e': 'text-chart-series-e',
+  'chart-series-f': 'text-chart-series-f',
+  'chart-series-g': 'text-chart-series-g',
+  'chart-series-h': 'text-chart-series-h',
+}
+
+function toneOf(id: EnergyNodeId): string {
+  const token = CHART_SERIES_TOKENS[ENERGY_NODE_SLOT[id]] ?? 'chart-series-a'
+  return SLOT_TEXT[token]
 }
 
 const BUS = { x: 130, y: 92 } as const
 const R = 19
 /** The bus dot, and the circle that holds the day's figures. */
 const BUS_R = 6
-const CENTRE_R = 46
+const CENTRE_R = 58
 const ICON = 18
 
 interface NodePlace {
@@ -46,12 +80,11 @@ interface NodePlace {
   readonly ly: number
   readonly anchor: 'start' | 'middle'
   readonly glyph: CardGlyph
-  readonly tone: string
 }
 
 const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
-  solar: { x: 130, y: 6, lx: 154, ly: 0, anchor: 'start', glyph: 'solar', tone: 'text-primary' },
-  grid: { x: 28, y: 92, lx: 28, ly: 124, anchor: 'middle', glyph: 'grid', tone: 'text-info' },
+  solar: { x: 130, y: 6, lx: 154, ly: 0, anchor: 'start', glyph: 'solar' },
+  grid: { x: 28, y: 92, lx: 28, ly: 124, anchor: 'middle', glyph: 'grid' },
   battery: {
     x: 232,
     y: 92,
@@ -59,7 +92,6 @@ const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
     ly: 124,
     anchor: 'middle',
     glyph: 'battery',
-    tone: 'text-success',
   },
   house: {
     x: 66,
@@ -68,7 +100,6 @@ const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
     ly: 208,
     anchor: 'middle',
     glyph: 'home',
-    tone: 'text-foreground',
   },
   heatPump: {
     x: 194,
@@ -77,7 +108,6 @@ const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
     ly: 208,
     anchor: 'middle',
     glyph: 'heatPump',
-    tone: 'text-warning',
   },
 }
 
@@ -117,7 +147,7 @@ function Branch({
   const pct = Math.min(100, (Math.abs(node.watts) / FULL_SCALE_W) * 100)
   return (
     <g
-      className={place.tone}
+      className={toneOf(node.id)}
       data-testid={`dc-energy-branch-${node.id}`}
       data-speed={node.still ? undefined : speedBand(pct)}
       data-direction={node.still ? 'still' : node.watts > 0 ? 'in' : 'out'}
@@ -155,7 +185,7 @@ function Node({ node }: { readonly node: EnergyNodeView }): ReactElement {
   const place = PLACE[node.id]
   const Icon = CARD_ICONS[place.glyph]
   return (
-    <g className={place.tone} data-testid={`dc-energy-node-${node.id}`}>
+    <g className={toneOf(node.id)} data-testid={`dc-energy-node-${node.id}`}>
       <circle
         cx={place.x}
         cy={place.y}
@@ -185,7 +215,7 @@ function Node({ node }: { readonly node: EnergyNodeView }): ReactElement {
   )
 }
 
-const FIGURE_STEP = 22
+const FIGURE_STEP = 26
 
 /** The figures stacked in the bus circle, centred: a small name over a bold value. */
 function CentreFigures({
@@ -200,7 +230,7 @@ function CentreFigures({
         const y = top + i * FIGURE_STEP
         return (
           <g key={f.id} data-testid={`dc-energy-centre-${f.id}`}>
-            <text x={BUS.x} y={y - 4} className="fill-foreground-muted text-[7.5px]">
+            <text x={BUS.x} y={y - 4} className="fill-foreground-muted text-[10px]">
               {f.label}
             </text>
             <text
@@ -226,6 +256,8 @@ function CentreFigures({
 export function EnergyFlowIllustration({
   nodes,
   centre,
+  stale = false,
+  staleLabel,
   ariaLabel,
   className,
 }: EnergyFlowIllustrationProps): ReactElement {
@@ -239,9 +271,11 @@ export function EnergyFlowIllustration({
       data-still={still}
       className={cn('dc-energy overflow-visible', className)}
     >
-      {nodes.map((n) => (
-        <Branch key={`b-${n.id}`} node={n} busR={busR} />
-      ))}
+      <g className={stale ? 'opacity-40' : undefined} data-testid="dc-energy-branches">
+        {nodes.map((n) => (
+          <Branch key={`b-${n.id}`} node={n} busR={busR} />
+        ))}
+      </g>
       <circle
         cx={BUS.x}
         cy={BUS.y}
@@ -250,9 +284,21 @@ export function EnergyFlowIllustration({
         className="fill-surface stroke-foreground-muted"
       />
       {centre === undefined ? null : <CentreFigures figures={centre} />}
-      {nodes.map((n) => (
-        <Node key={`n-${n.id}`} node={n} />
-      ))}
+      <g className={stale ? 'opacity-40' : undefined} data-testid="dc-energy-nodes">
+        {nodes.map((n) => (
+          <Node key={`n-${n.id}`} node={n} />
+        ))}
+      </g>
+      {stale && staleLabel !== undefined ? (
+        <text
+          x={0}
+          y={-4}
+          className="fill-foreground-muted text-[11px]"
+          data-testid="dc-energy-stale"
+        >
+          {staleLabel}
+        </text>
+      ) : null}
     </svg>
   )
 }

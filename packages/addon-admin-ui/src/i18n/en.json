@@ -10644,7 +10644,8 @@
           "house": "House",
           "grid": "Grid",
           "battery": "Battery",
-          "heatPump": "Heat pump"
+          "heatPump": "Heat pump",
+          "live": "Live now"
         }
       },
       "ir": {
