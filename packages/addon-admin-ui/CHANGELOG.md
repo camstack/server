@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Back in Build-your-self returns to the list after opening an automation, script, action, scheduler or composed device editor
+- The new composed device / helper picker has a search field, focused on open, that filters the templates across sections
 
 ## [1.2.706] - 2026-11-19
 

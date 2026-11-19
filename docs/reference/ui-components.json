@@ -8625,6 +8625,13 @@
       "summary": "Devices matching EVERY token. A blank query keeps the list as it is."
     },
     {
+      "name": "filterTileGroups",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/grouped-tile-picker.tsx",
+      "summary": "The groups with only the tiles whose label matches `query` (case and separator-insensitive); a group left empty is dropped. An empty query returns the groups untouched."
+    },
+    {
       "name": "finalizeSessionRun",
       "kind": "function",
       "area": "composites",
@@ -9242,6 +9249,12 @@
       "file": "packages/ui-library/src/composites/grouped-tile-picker.tsx",
       "summary": "`GroupedTilePicker` — choose ONE \"type of thing\" from tiles grouped by who provides it (an AI profile kind, a notification-target kind…): an uppercase group label, then a grid of icon + label tiles. The pre-modal of a…",
       "props": [
+        {
+          "name": "search",
+          "type": "TilePickerSearch",
+          "optional": true,
+          "doc": "Adds a search field that filters the tiles of every group; focused when the picker's dialog opens."
+        },
         {
           "name": "groups",
           "type": "readonly TilePickerGroup[]",

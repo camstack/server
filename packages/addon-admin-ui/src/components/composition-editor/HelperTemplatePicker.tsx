@@ -56,6 +56,11 @@ export function HelperTemplatePicker({
     <div data-testid="helper-template-picker">
       <GroupedTilePicker
         emptyMessage={t('helper.noTemplates')}
+        search={{
+          placeholder: t('helper.searchTemplates'),
+          label: t('helper.searchTemplates'),
+          noMatchMessage: t('helper.noMatchingTemplates'),
+        }}
         onPick={(key) => {
           if (key === DEVICE_KEY) {
             onDevice?.()

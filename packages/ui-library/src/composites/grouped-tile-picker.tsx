@@ -8,10 +8,11 @@
  * a grid, which toolbar-button chrome fights. One place owns that look so the
  * pickers stay identical.
  */
-import { Info } from 'lucide-react'
+import { Info, Search } from 'lucide-react'
 import { type JSX, type ReactNode, useState } from 'react'
 import { BottomSheet } from '../primitives/bottom-sheet'
 import { IconButton } from '../primitives/icon-button'
+import { fuzzyMatch } from './device-list/fuzzy-match'
 
 export interface TilePickerTile {
   /** Unique within the picker; handed back to `onPick`. */
@@ -35,7 +36,35 @@ export interface TilePickerGroup {
   readonly tiles: readonly TilePickerTile[]
 }
 
+/** Labels of the optional search field (the caller's i18n owns the words). */
+export interface TilePickerSearch {
+  readonly placeholder: string
+  readonly label: string
+  /** Shown when the query matches no tile. */
+  readonly noMatchMessage: string
+}
+
+/**
+ * The groups with only the tiles whose label matches `query` (case and
+ * separator-insensitive); a group left empty is dropped. An empty query
+ * returns the groups untouched.
+ */
+export function filterTileGroups(
+  groups: readonly TilePickerGroup[],
+  query: string,
+): readonly TilePickerGroup[] {
+  if (query.trim() === '') return groups
+  const kept: TilePickerGroup[] = []
+  for (const group of groups) {
+    const tiles = group.tiles.filter((tile) => fuzzyMatch(query, tile.label))
+    if (tiles.length > 0) kept.push({ ...group, tiles })
+  }
+  return kept
+}
+
 export interface GroupedTilePickerProps {
+  /** Adds a search field that filters the tiles of every group; focused when the picker's dialog opens. */
+  readonly search?: TilePickerSearch
   readonly groups: readonly TilePickerGroup[]
   readonly onPick: (key: string) => void
   /** Shown when there is no group at all. */
@@ -43,18 +72,40 @@ export interface GroupedTilePickerProps {
 }
 
 export function GroupedTilePicker({
-  groups,
+  search,
+  groups: allGroups,
   onPick,
   emptyMessage,
 }: GroupedTilePickerProps): JSX.Element {
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const groups = search === undefined ? allGroups : filterTileGroups(allGroups, query)
   const openTile =
     openKey === null
       ? null
-      : (groups.flatMap((group) => group.tiles).find((tile) => tile.key === openKey) ?? null)
+      : (allGroups.flatMap((group) => group.tiles).find((tile) => tile.key === openKey) ?? null)
   return (
     <div className="space-y-4">
-      {groups.length === 0 && <p className="text-xs text-foreground-subtle">{emptyMessage}</p>}
+      {search !== undefined && (
+        <label className="relative block">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-subtle" />
+          <input // ui-check-ok: same search field as DataTableFilterBar
+            data-dialog-autofocus=""
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={search.placeholder}
+            aria-label={search.label}
+            data-testid="tile-picker-search"
+            className="w-full rounded border border-border bg-background py-1.5 pl-7 pr-2 text-xs text-foreground"
+          />
+        </label>
+      )}
+      {groups.length === 0 && (
+        <p className="text-xs text-foreground-subtle">
+          {allGroups.length > 0 && search !== undefined ? search.noMatchMessage : emptyMessage}
+        </p>
+      )}
       {groups.map((group) => (
         <div key={group.id}>
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle">

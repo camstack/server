@@ -12599,7 +12599,9 @@
     },
     "grid": {
       "cameraPending": "The grid's camera is being created. Its cells can be laid out once it is running."
-    }
+    },
+    "searchTemplates": "Search templates",
+    "noMatchingTemplates": "No template matches your search"
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

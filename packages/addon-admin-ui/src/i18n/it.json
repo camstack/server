@@ -12621,7 +12621,9 @@
     },
     "grid": {
       "cameraPending": "La telecamera della griglia è in creazione. Le celle si possono disporre quando è attiva."
-    }
+    },
+    "searchTemplates": "Cerca modelli",
+    "noMatchingTemplates": "Nessun modello corrisponde alla ricerca"
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",
