@@ -73,6 +73,12 @@ import {
   STATE_REFRESH_CAP,
 } from '../state-refresh-policies.js'
 import { AccessoryShrinkGate, classifyAccessoryRead } from './accessory-prune-gate.js'
+import {
+  AccessorySpawnBoard,
+  AccessorySpawnRetry,
+  AccessorySpawnStepError,
+  processAccessorySpawnBoard,
+} from './accessory-spawn-retry.js'
 import { loadRuntimeStateOrRefuse, type RuntimeStateLoadPhase } from './runtime-state-load.js'
 
 // Re-export NATIVE_PROVIDER_SERVICE_INFIX so existing importers of this module
@@ -141,6 +147,10 @@ export interface WorkerDeviceManagerOptions {
    */
   readonly udsMode?: boolean
   readonly streamProbe?: IKernelStreamProbe
+  /** Which accessory children failed to spawn and why (routing errors read it). */
+  readonly accessorySpawnBoard?: AccessorySpawnBoard
+  /** Retry delays for a failed accessory spawn; defaults to the D347 schedule. */
+  readonly accessorySpawnRetryDelaysMs?: readonly number[]
 }
 
 function toPlainRecord(value: unknown): Record<string, unknown> | null {
@@ -995,12 +1005,44 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
    * row already exists, `persistInitialConfig` is skipped (config
    * arg empty) and the child self-hydrates from `loadConfig`.
    */
+  const accessorySpawnBoard = opts.accessorySpawnBoard ?? processAccessorySpawnBoard
+  const accessorySpawnRetry = new AccessorySpawnRetry({
+    logger: opts.logger,
+    board: accessorySpawnBoard,
+    ...(opts.accessorySpawnRetryDelaysMs !== undefined
+      ? { delaysMs: opts.accessorySpawnRetryDelaysMs }
+      : {}),
+  })
   const spawnAccessoryChild = async (
     parent: IDevice,
     spec: import('@camstack/types').AccessoryChildSpec,
   ): Promise<IDevice> => {
     const childStableId = `${parent.stableId}-${spec.stableIdSuffix}`
-    const id = await deviceApi.allocateDeviceId(childStableId)
+    let allocatedId: number | null = null
+    try {
+      const child = await spawnAccessoryChildSteps(parent, spec, childStableId, (id) => {
+        allocatedId = id
+      })
+      if (allocatedId !== null) accessorySpawnBoard.clear(allocatedId)
+      return child
+    } catch (err) {
+      throw err instanceof AccessorySpawnStepError
+        ? err
+        : new AccessorySpawnStepError('register', allocatedId, err)
+    }
+  }
+  const spawnAccessoryChildSteps = async (
+    parent: IDevice,
+    spec: import('@camstack/types').AccessoryChildSpec,
+    childStableId: string,
+    onAllocated: (id: number) => void,
+  ): Promise<IDevice> => {
+    const id = await deviceApi
+      .allocateDeviceId(childStableId)
+      .catch((err: unknown) =>
+        Promise.reject(new AccessorySpawnStepError('allocateDeviceId', null, err)),
+      )
+    onAllocated(id)
     // Idempotency guard: reconcile may fire multiple times within a
     // single addon-worker lifetime (e.g. `feature-probe` slice writes
     // re-trigger Phase 4b — see runReconcile). The first run registers
@@ -1066,12 +1108,11 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       ...(spec.meta.type !== undefined ? { type: spec.meta.type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
     }
-    await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) => {
-      opts.logger.warn('spawnAccessoryChild: applyInitialMeta pre-seed failed', {
-        tags: { stableId: childStableId, deviceId: id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
-    })
+    // A failed pre-seed fails the spawn (it used to be swallowed, leaving a
+    // half-seeded child): the bounded retry re-runs the whole idempotent spawn.
+    await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) =>
+      Promise.reject(new AccessorySpawnStepError('applyInitialMeta', id, err)),
+    )
     // persistConfig writes the per-device config blob (keyed by numeric id),
     // SEPARATE from the meta row — first-spawn-only here; the self-heal below
     // covers a restored child whose config row was lost.
@@ -1086,7 +1127,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     // config may already carry operator-edited values that the spec
     // shouldn't overwrite.
     const [initialRuntimeState, loadedConfig, deviceMeta] = await Promise.all([
-      loadRuntimeStateFor(id, childStableId, 'accessory-child'),
+      loadRuntimeStateFor(id, childStableId, 'accessory-child').catch((err: unknown) =>
+        Promise.reject(new AccessorySpawnStepError('loadRuntimeState', id, err)),
+      ),
       callDeviceManager(api, 'loadConfig', { deviceId: id }).catch(() => empty) as Promise<
         Record<string, unknown>
       >,
@@ -1582,11 +1625,16 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           try {
             await spawnAccessoryChild(device, spec)
           } catch (err) {
-            opts.logger.warn('Failed to spawn accessory child', {
-              tags: { parentDeviceId: device.id, parentStableId: device.stableId },
-              meta: {
-                stableIdSuffix: spec.stableIdSuffix,
-                error: err instanceof Error ? err.message : String(err),
+            // D347 shape: a bounded retry, then a visible terminal state. The
+            // retry re-runs this same idempotent spawn; the ERROR log with
+            // `tags.deviceId` is written by the scheduler for every failure.
+            accessorySpawnRetry.schedule({
+              deviceId: err instanceof AccessorySpawnStepError ? err.deviceId : null,
+              stableId: `${device.stableId}-${spec.stableIdSuffix}`,
+              parentDeviceId: device.id,
+              error: err,
+              attempt: async () => {
+                await spawnAccessoryChild(device, spec)
               },
             })
           }

@@ -630,6 +630,41 @@ describe('createParentUnownedCallHandler', () => {
     }
   })
 
+  it('device-native with a recorded spawn failure → the error names the failed spawn and retry count', async () => {
+    vi.useFakeTimers()
+    try {
+      const broker = fakeBrokerWithService('$core-caps', 'system.info', () => ({ ok: 1 }))
+      const { dispatcher } = localDispatcherFake()
+      const handler = createParentUnownedCallHandler({
+        getResolver: () =>
+          fakeResolver({
+            resolveCapRoute: (capName) => {
+              throw new CapRouteError(capName, undefined, { reason: 'no-provider', rejected: [] })
+            },
+            dispatch: async () => {
+              throw new Error('should not dispatch')
+            },
+          }),
+        broker,
+        nodeRegistry: nodeRegistryFake(),
+        getLocalDispatcher: () => dispatcher,
+        isDeviceNativeCap: (capName) => capName === 'switch',
+        describeSpawnFailure: (id) =>
+          id === 5329
+            ? 'accessory child failed to spawn: applyInitialMeta: dial timed out, retry 1/3'
+            : null,
+      })
+      const promise = handler({ capName: 'switch', method: 'setState', args: { deviceId: 5329 } })
+      const assertion = expect(promise).rejects.toThrow(
+        /accessory child failed to spawn: applyInitialMeta: dial timed out, retry 1\/3/,
+      )
+      await vi.advanceTimersByTimeAsync(1_000)
+      await assertion
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('device-native still unregistered after all retries → precise error (NOT a `${cap}.${cap}.${method}` broker attempt)', async () => {
     vi.useFakeTimers()
     try {

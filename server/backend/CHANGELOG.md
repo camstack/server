@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A device-provider accessory child that failed to spawn at boot is now retried a bounded number of times, and calls to it name the failed step instead of 'binding not yet'.
 - Integration list, get and getByAddonId are pure registry reads that never call an addon, ending the hub and addon call cycle behind hub stalls
 
 ## [1.2.910] - 2026-11-19
