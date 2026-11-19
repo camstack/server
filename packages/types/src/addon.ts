@@ -180,3 +180,5 @@ export * from './records/index.js'
 export { createDebugEmitter } from './logging/debug-watch.js'
 // The runner's inference resolver names the NVIDIA slot; plain functions, no schema graph (D28).
 export { describeNvidia } from './inference/runtime-capabilities.js'
+// D1066 - the hub-connect hook tells an unread registry apart by name; plain function, no schema graph (D28).
+export { isInstanceSwitchesUnreadError } from './addon/instance-switches-unread-error.js'

@@ -1,4 +1,4 @@
-import { isInstanceSwitchesUnreadError } from '@camstack/types'
+import { isInstanceSwitchesUnreadError } from '@camstack/types/addon'
 
 /** The part of a loaded addon the hub-connect hook needs. */
 export interface SwitchHydratingAddon {
