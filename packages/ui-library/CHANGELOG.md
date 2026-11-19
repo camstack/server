@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integration switch hooks follow the hub registry (listByAddon, adoptInstanceRows)
+- Light and floodlight device cards now show an On motion toggle when the device supports it, shared with the siren card.
 
 ## [1.2.475] - 2026-11-19
 

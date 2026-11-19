@@ -14,6 +14,7 @@ import {
 import { SirenCard } from '../scenes/siren/SirenCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
+import { useMotionTrigger } from './use-motion-trigger'
 import { reportedCommand } from './use-command-notice'
 import { useSwitchPower } from './use-switch-power'
 
@@ -39,15 +40,11 @@ export function ConnectedSirenCard({
   const card = useCardCommon({ deviceId, canActuate })
   const power = useSwitchPower({ deviceId, card })
   const siren = dev?.siren
-  const motion = dev?.motionTrigger
   const sirenSlice = useDeviceStateSlice(siren === undefined ? undefined : dev?.state.siren)
-  const motionSlice = useDeviceStateSlice(
-    motion === undefined ? undefined : dev?.state.motionTrigger,
-  )
+  const motion = useMotionTrigger({ deviceId, card })
   const runCommand = useDeviceCommand()
   // Sound and Stop share one claim: a double tap must not send twice (D1061).
   const shot = useOneShotCommand()
-  const motionShot = useOneShotCommand()
   const has = (method: string): boolean => card.implements('siren', method)
   const readsOptions = siren !== undefined && has('getOptions')
   const options = useQuery({
@@ -76,7 +73,6 @@ export function ConnectedSirenCard({
   const sirenTriggers = siren !== undefined && has('trigger')
   const sirenStops = siren !== undefined && has('stop')
   const switchSets = power.bound && card.implements('switch', 'setState')
-  const motionSets = motion !== undefined && card.implements('motion-trigger', 'setMotionTrigger')
   return (
     <SirenCard
       orientation={orientation}
@@ -91,8 +87,8 @@ export function ConnectedSirenCard({
         run: sirenRunOf(sirenSlice, activity === 'sounding'),
         adjustable: sirenTriggers ? sirenAdjustableOf(options.data) : sirenAdjustableOf(undefined),
         optionsUnavailable: sirenTriggers && readsOptions && options.isError,
-        onMotion: motionSets && motionSlice !== undefined ? motionSlice.enabled : null,
-        onMotionPending: motionShot.inFlight,
+        onMotion: motion.on,
+        onMotionPending: motion.pending,
       }}
       actions={{
         ...card.actions,
@@ -104,10 +100,7 @@ export function ConnectedSirenCard({
           ),
         onStop: () =>
           sendOnce(() => (sirenStops ? siren?.stop({}) : dev?.switch?.setState({ on: false }))),
-        onMotion: (enabled) => {
-          const claimed = motionShot.claim(() => motion?.setMotionTrigger({ enabled }))
-          if (claimed !== null) send(claimed)
-        },
+        onMotion: motion.onToggle,
       }}
     />
   )

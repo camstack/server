@@ -10947,7 +10947,8 @@
           "m": "{{m}}m",
           "underMinute": "<1m"
         }
-      }
+      },
+      "onMotion": "Al movimento"
     },
     "language": "it",
     "measurement": {

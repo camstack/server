@@ -6,6 +6,7 @@ import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { CountdownRing } from '../../parts/CountdownRing'
 import { MenuButton } from '../../parts/MenuButton'
+import { motionTriggerRow } from '../../parts/motion-trigger-row'
 import { useCountdown } from '../../parts/use-countdown'
 import { type BottomRow, rowButtons, rowText } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
@@ -148,25 +149,14 @@ function bottomRows(
       }),
     )
   }
-  const onMotion = model.onMotion
-  if (onMotion !== null) {
-    rows.push(
-      rowButtons('motion', {
-        buttons: [
-          <CardButton
-            key="motion"
-            tone={onMotion ? 'on' : 'default'}
-            aria-pressed={onMotion}
-            disabled={model.onMotionPending}
-            data-testid="dc-siren-motion"
-            onClick={() => actions.onMotion(!onMotion)}
-          >
-            {t('uiLibrary.deviceCard.siren.onMotion', 'Sound on motion')}
-          </CardButton>,
-        ],
-      }),
-    )
-  }
+  const motion = motionTriggerRow({
+    on: model.onMotion,
+    pending: model.onMotionPending,
+    label: t('uiLibrary.deviceCard.siren.onMotion', 'Sound on motion'),
+    testId: 'dc-siren-motion',
+    onToggle: actions.onMotion,
+  })
+  if (motion !== null) rows.push(motion)
   return rows
 }
 
