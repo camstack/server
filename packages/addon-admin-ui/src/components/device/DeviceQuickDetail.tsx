@@ -28,6 +28,7 @@ import {
 } from '@camstack/ui-library'
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { DeviceWebInterfaceCard } from './DeviceWebInterfaceCard'
 import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { DeviceHeroCard, type DeviceHeroCardDevice } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
@@ -39,7 +40,9 @@ type QuickTabId = 'detail' | 'info' | 'export'
 /**
  * The device card of the Detail tab. Every navigation the card starts (open
  * device, open camera, deep link) leaves through the modal's guarded `leaveTo`,
- * so unsaved edits are confirmed exactly as for "Open device page".
+ * so unsaved edits are confirmed exactly as for "Open device page". The card
+ * fills the modal's body, so its History / detail views scroll in their own
+ * region and the modal body does not scroll a second time.
  */
 function DetailCard({
   deviceId,
@@ -54,7 +57,7 @@ function DetailCard({
 }): ReactNode {
   const save = useQuickDetailSave()
   return (
-    <DeviceCardFrameProvider frame="bare">
+    <DeviceCardFrameProvider frame="bare" fill>
       <DeviceHeroCard
         deviceId={deviceId}
         device={device}
@@ -111,7 +114,8 @@ function DeviceQuickDetailModal({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent width="lg" scroll="body">
+      {/* A tall dialog: the History view gets the room. Exactly one region scrolls. */}
+      <DialogContent width="lg" scroll="body" className="md:h-[85dvh]">
         <QuickDetailSaveProvider
           deviceId={deviceId}
           seed={
@@ -150,14 +154,17 @@ function DeviceQuickDetailModal({
               </button>
             ))}
           </div>
-          <DialogBody className="mt-3">
+          <DialogBody className={tab === 'detail' ? 'mt-3 overflow-hidden' : 'mt-3'}>
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
               {tab === 'detail' ? (
                 // Mounted only while shown, and never a stream: a camera has no card here.
-                <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
+                <div className="h-full">
+                  <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
+                </div>
               ) : null}
-              <div className={tab === 'info' ? undefined : 'hidden'}>
+              <div className={tab === 'info' ? 'flex flex-col gap-3' : 'hidden'}>
+                <DeviceWebInterfaceCard deviceId={deviceId} />
                 <DeviceInfoAdapter />
               </div>
               <div className={tab === 'export' ? undefined : 'hidden'}>

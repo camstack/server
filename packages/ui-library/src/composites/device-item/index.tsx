@@ -26,6 +26,7 @@ import { useContainerChildren } from './container-children-context'
 import { DeviceDeleteAction } from './device-delete-action'
 import { DeviceItemFeatures } from './features'
 import { DeviceItemHeader } from './header'
+import { OpenPageQuickAction } from './open-page-quick-action'
 import { useDeviceQuickDetailOpen } from '../../contexts/device-quick-detail'
 import { useDeviceLabel } from '../device-name'
 import {
@@ -184,6 +185,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         rowActivates={rowActivates}
         rowSelected={selection?.selected ?? false}
         onNavigate={navigate}
+        canOpenPage={onNavigate !== undefined}
         displayStatus={displayStatus}
         isCamera={isCamera}
         showSnapshot={flags.showSnapshot && isCamera}
@@ -289,6 +291,9 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           />
 
           <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="right" />
+          {onNavigate !== undefined && (
+            <OpenPageQuickAction deviceId={device.id} onOpenPage={navigate} />
+          )}
 
           {renderRowAction && (
             <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
@@ -409,6 +414,9 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             showStatusPills
           />
           <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="right" />
+          {onNavigate !== undefined && (
+            <OpenPageQuickAction deviceId={device.id} onOpenPage={navigate} />
+          )}
           {renderRowAction && (
             <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
           )}
@@ -451,6 +459,8 @@ interface DeviceItemTableRowProps {
   readonly expanded: boolean
   readonly onToggleExpand: () => void
   readonly onNavigate: (id: number) => void
+  /** The caller wired navigation, so the row offers its Open device page button. */
+  readonly canOpenPage: boolean
   /**
    * Primary row-click handler. In batch mode (`rowSelects`) it toggles
    * the row's selection; otherwise it navigates. Pre-resolved by the
@@ -511,6 +521,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     expanded,
     onToggleExpand,
     onNavigate,
+    canOpenPage,
     onRowClick,
     rowSelects,
     rowActivates,
@@ -766,6 +777,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
               </span>
             )}
             <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="table" />
+            {canOpenPage && <OpenPageQuickAction deviceId={device.id} onOpenPage={onNavigate} />}
             <DeviceItemPreview
               trpc={trpc}
               device={device}

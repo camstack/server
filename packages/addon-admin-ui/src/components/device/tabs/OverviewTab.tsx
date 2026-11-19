@@ -9,6 +9,7 @@ import {
 import { Wifi } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DeviceNotificationMute } from '../DeviceNotificationMute'
+import { DeviceWebInterfaceCard } from '../DeviceWebInterfaceCard'
 import { HelperGroupStatus } from '../HelperGroupStatus'
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
 import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
@@ -118,6 +119,8 @@ export function OverviewTab({ device }: OverviewTabProps) {
           the alarm reports a muted sensor or button the same way it reports a
           muted camera. Reads and writes `notificationRules` directly; the
           deprecated switch group is never involved. ── */}
+      {numericId !== null && <DeviceWebInterfaceCard deviceId={numericId} />}
+
       {numericId !== null && <DeviceNotificationMute deviceId={numericId} isCamera={isCamera} />}
 
       {/* ── Quick Stats — camera-only (Phase / Detection FPS / Inference

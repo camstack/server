@@ -67,11 +67,7 @@ export {
   type CapabilityProviderNodes,
   type CapabilityRegistryAnswer,
 } from './hooks/use-capability-presence'
-export {
-  AdminLinkQuickAction,
-  type AdminLinkQuickActionProps,
-  useDeviceAdminLink,
-} from './composites/device-item/admin-link-quick-action'
+export { useDeviceAdminLink } from './composites/device-item/use-device-admin-link'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Canvas composites — konva-dependent, exported LAZILY so they do NOT appear

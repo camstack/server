@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useDeviceManagerGetDevice, useRebootReboot } from '../../../generated/system-hooks'
-import { useDeviceAdminLink } from '../../device-item/admin-link-quick-action'
+import { useDeviceAdminLink } from '../../device-item/use-device-admin-link'
 import { GatewayCard, type GatewayFacts } from '../scenes/gateway/GatewayCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'

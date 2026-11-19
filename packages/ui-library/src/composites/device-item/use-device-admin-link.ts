@@ -1,26 +1,9 @@
 /**
- * <AdminLinkQuickAction> — the row-level "open this device's own config page"
- * affordance.
+ * `useDeviceAdminLink` — the one decision on whether a device has its own
+ * config page, shared by the device-page header button, the Web interface card
+ * and the gateway card.
  *
- * ## Discreet, in this row's vocabulary
- *
- * The trailing run of a device row already carries a type-specific inline
- * control (a switch, a cover triad, a climate stepper, a sensor value), an
- * on-motion toggle, a PTZ button, a reboot button, whatever the caller injects
- * through `renderRowAction`, a delete button in table view and a status dot.
- * Anything added there competes with a control the operator uses daily, and
- * this one he uses roughly never.
- *
- * So it is the quietest thing the row can hold: a bare 12px glyph in
- * `text-foreground-subtle`, no chrome, no label, no colour until hover — a
- * step below `RebootQuickAction`, which at least has a hover surface, and it
- * sits LAST among the actions so it never displaces one. It renders as an `<a>`
- * rather than a button so the browser's own middle-click / copy-link /
- * open-in-new-tab all work, which is most of what an operator wants from it.
- *
- * ## It draws nothing rather than something dead
- *
- * Four gates, all of which draw nothing:
+ * It resolves nothing rather than something dead, in four cases:
  *
  *  - the device proxy has not resolved, or the cap is not bound (the provider
  *    cannot answer for this device at all — a cloud-only vacuum, a Wyze cam);
@@ -28,32 +11,16 @@
  *    which is the intended outcome — no button beats a button that 403s);
  *  - the provider answered `null` (this device HAS no page);
  *  - the link is the DEVICE's own page and the device is offline — a web server
- *    on a camera that is not answering will not answer a browser either.
- *
- * That last gate is why `target` exists on the payload: an `integration` link
- * (the Home Assistant device page, the UniFi controller) stays put when the
- * device is offline, because the page is served by something else entirely and
- * is very often exactly where the operator wants to go when a device drops.
+ *    on a camera that is not answering will not answer a browser either. An
+ *    `integration` link (the Home Assistant device page, the UniFi controller)
+ *    stays put when the device is offline.
  *
  * D62's rule holds from the other side: nothing here renders a DISABLED button.
- * A greyed-out link would say "broken", and none of these four states is.
  */
-import { useEffect, useState, type ReactNode } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { DeviceAdminLink, DeviceProxy } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
-import { cn } from '../../lib/cn'
-import { useUiText } from '../../contexts/ui-text'
-
-export interface AdminLinkQuickActionProps {
-  readonly trpc: UseDeviceProxyTrpc
-  readonly deviceId: number
-  /** Extra classes for the anchor — the detail header uses a larger glyph. */
-  readonly className?: string
-  /** Glyph size. The row wants 12px; the header wants 14px. */
-  readonly iconClassName?: string
-}
 
 /**
  * The four answers this hook can give. `pending` and `failed` are DISTINCT
@@ -141,41 +108,4 @@ export function useDeviceAdminLink(
   if (state.kind !== 'link') return null
   if (state.link.target === 'device' && !online) return null
   return state.link
-}
-
-export function AdminLinkQuickAction({
-  trpc,
-  deviceId,
-  className,
-  iconClassName,
-}: AdminLinkQuickActionProps): ReactNode {
-  const t = useUiText()
-  const link = useDeviceAdminLink(trpc, deviceId)
-  if (link === null) return null
-
-  return (
-    <a
-      href={link.url}
-      target="_blank"
-      // `noopener` is not optional on a target=_blank link to an address the
-      // operator's own LAN serves: without it the opened page holds a live
-      // `window.opener` handle back into the admin UI.
-      rel="noopener noreferrer"
-      onClick={(e) => {
-        // The row navigates to the device detail on click. Without this the
-        // operator gets the page AND a navigation he did not ask for.
-        e.stopPropagation()
-      }}
-      className={cn(
-        'inline-flex items-center justify-center rounded text-foreground-subtle hover:text-foreground transition-colors flex-shrink-0',
-        className,
-      )}
-      title={`${link.label} — ${link.host}`}
-      aria-label={t('uiLibrary.adminLinkQuickAction.open', 'Open {{label}} for this device', {
-        label: link.label,
-      })}
-    >
-      <ExternalLink className={cn('h-3 w-3', iconClassName)} />
-    </a>
-  )
 }

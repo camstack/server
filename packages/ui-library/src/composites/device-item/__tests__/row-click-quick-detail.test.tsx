@@ -119,4 +119,30 @@ describe('DeviceItem row click and quick detail', () => {
     expect(open).not.toHaveBeenCalled()
     expect(onNavigate).not.toHaveBeenCalled()
   })
+
+  it('the row button opens the device page and does not open the modal', () => {
+    const open = vi.fn()
+    const onNavigate = vi.fn()
+    const row = renderRow({ open, onNavigate })
+    const button = row.querySelector('[data-testid="device-row-open-page"]')
+    if (button === null) throw new Error('open-page button missing')
+    fireEvent.click(button)
+    expect(onNavigate).toHaveBeenCalledTimes(1)
+    expect(onNavigate).toHaveBeenCalledWith(42)
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  it('draws no open-page button when the caller wired no navigation', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { container } = render(
+      <QueryClientProvider client={client}>
+        <table>
+          <tbody>
+            <DeviceItem trpc={mockTrpc} device={device} view="table" />
+          </tbody>
+        </table>
+      </QueryClientProvider>,
+    )
+    expect(container.querySelector('[data-testid="device-row-open-page"]')).toBeNull()
+  })
 })

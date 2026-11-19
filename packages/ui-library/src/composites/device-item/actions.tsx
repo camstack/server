@@ -42,7 +42,6 @@ import { resolveContainerPrimary } from '../device-controls/container-primary'
 import { cn } from '../../lib/cn'
 import type { DeviceItemDevice, VariantDefaults } from './helpers'
 import { hasMotionTriggerFeature } from './helpers'
-import { AdminLinkQuickAction } from './admin-link-quick-action'
 import { RebootQuickAction } from './reboot-quick-action'
 import { useContainerChildren } from './container-children-context'
 import { ModelRowControl, ModelRowReading } from './model-row-value'
@@ -124,8 +123,7 @@ export function DeviceItemActions({
   //    registry's InlineControl directly (cover → ↑■↓; rest → DummyInline).
   const isSensorRow = SENSOR_VALUE_TYPES.has(device.type)
   const isModelRow = MODEL_ROW_TYPES.has(device.type)
-  const control =
-    isSensorRow || isModelRow ? null : resolveDeviceControl(device.type, device.role)
+  const control = isSensorRow || isModelRow ? null : resolveDeviceControl(device.type, device.role)
   const InlineControl = control?.InlineControl ?? null
   // Alignment for the uniform control column. FILL types stretch; natural-width
   // types are placed per `placement` (right for card view, center for table).
@@ -187,15 +185,6 @@ export function DeviceItemActions({
       {showReboot && (
         <RebootQuickAction trpc={trpc} deviceId={device.id} deviceName={deviceLabel} />
       )}
-      {/*
-        Last in the run, and the quietest thing in it. Unlike PTZ and reboot
-        there is no feature flag to pre-gate on — "has a config page" is not a
-        DeviceFeature and inventing one would be a second authority on a
-        question the cap already answers. `AdminLinkQuickAction` self-gates on
-        the cap binding, so nothing is queried for the devices that cannot
-        answer, and it renders nothing until it has a real URL.
-      */}
-      <AdminLinkQuickAction trpc={trpc} deviceId={device.id} />
     </>
   )
 }

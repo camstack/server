@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Opening an editor in Build-your-self adds a history entry, so Back returns to the list
 - The grouped tile picker can show a search field that filters tiles across sections
+- Device rows: the quick-action button now opens the device page (arrow-up-right icon); the web interface link moved into the device detail.
 
 ## [1.2.474] - 2026-11-19
 

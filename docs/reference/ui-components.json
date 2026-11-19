@@ -904,39 +904,6 @@
       "summary": "`current` plus `raw`, trimmed; unchanged when `raw` is empty or already there."
     },
     {
-      "name": "AdminLinkQuickAction",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-item/admin-link-quick-action.tsx",
-      "summary": "<AdminLinkQuickAction> — the row-level \"open this device's own config page\" affordance.",
-      "props": [
-        {
-          "name": "trpc",
-          "type": "UseDeviceProxyTrpc",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "deviceId",
-          "type": "number",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "optional": true,
-          "doc": "Extra classes for the anchor — the detail header uses a larger glyph."
-        },
-        {
-          "name": "iconClassName",
-          "type": "string",
-          "optional": true,
-          "doc": "Glyph size. The row wants 12px; the header wants 14px."
-        }
-      ]
-    },
-    {
       "name": "agentColumnKey",
       "kind": "function",
       "area": "composites",
@@ -20183,7 +20150,7 @@
       "name": "useDeviceAdminLink",
       "kind": "hook",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-item/admin-link-quick-action.tsx",
+      "file": "packages/ui-library/src/composites/device-item/use-device-admin-link.ts",
       "summary": "Resolve the link, or null, applying every gate. Split out so the row button and the detail-header button share ONE decision — two copies of a four-state gate is how the two surfaces end up disagreeing about the same d…"
     },
     {

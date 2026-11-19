@@ -4880,7 +4880,11 @@
     "children": "Children",
     "disabledSection": "Disabled",
     "parts": "Parts",
-    "primary": "Primary"
+    "primary": "Primary",
+    "webInterface": {
+      "title": "Web interface",
+      "open": "Open"
+    }
   },
   "hero": {
     "buttonHero": {
@@ -9061,9 +9065,6 @@
       "exceptional": "Exceptional",
       "unknown": "Unknown"
     },
-    "adminLinkQuickAction": {
-      "open": "Open {{label}} for this device"
-    },
     "childrenAccordion": {
       "adoptedDevices": "Adopted devices",
       "accessories": "Accessories",
@@ -11183,6 +11184,9 @@
     },
     "deviceCommand": {
       "refusedTitle": "The device refused the change"
+    },
+    "openPageQuickAction": {
+      "open": "Open device page"
     }
   },
   "helpers": {

@@ -61,7 +61,22 @@ const WASHER = row(982, 'Lavatrice', 'washer', 'provider-appliances', null, 'lav
 })
 const WASHER_SERIES = DEVICE_SERIES[971] ?? []
 
-const DEVICES = [CONTAINER, ENERGY, GRID, OWN, HUB, PORCH, WASHER]
+// A managed network switch with its own web page: the quick-detail modal's
+// Detail tab (one scroll container) and the Web interface base card.
+const SWITCH = row(
+  9001,
+  'Switch Lite 8 PoE Studio',
+  'gateway',
+  'provider-unifi',
+  null,
+  'switch-lite-8',
+  {
+    metadata: { model: 'Switch Lite 8 PoE', firmware: '7.0.1', ip: '192.0.2.31' },
+  },
+)
+const SWITCH_IDS = new Set([9001])
+
+const DEVICES = [CONTAINER, ENERGY, GRID, OWN, HUB, PORCH, WASHER, SWITCH]
 
 const SLICE = {
   solar: { powerW: 4200, energyKwh: 12000, todayKwh: 18.4 },
@@ -127,7 +142,15 @@ export default defineFixtures({
             providerNodeId: 'hub',
             nativeAddonId: ENPAL,
           }))
-        : [],
+        : SWITCH_IDS.has(i.deviceId ?? 0)
+          ? ['device-status', 'device-admin-link'].map((capName) => ({
+              capName,
+              kind: 'native' as const,
+              providerAddonId: 'provider-unifi',
+              providerNodeId: 'hub',
+              nativeAddonId: 'provider-unifi',
+            }))
+          : [],
     }),
     'deviceState.getSnapshot': (i: { deviceId?: number }) =>
       ENERGY_IDS.has(i.deviceId ?? 0) ? { 'energy-system': SLICE } : {},
@@ -151,6 +174,12 @@ export default defineFixtures({
     'deviceHistory.query': (i: { key: string; scope?: string; from: number; to: number }) =>
       queryResult(WASHER_SERIES, i.key, i.scope, i.from, i.to),
     'deviceHistory.getDeviceEnabled': { enabled: true },
+    'deviceAdminLink.getAdminLink': {
+      url: 'http://192.0.2.31/',
+      label: 'Web UI',
+      target: 'device',
+      host: '192.0.2.31',
+    },
     'deviceRuns.listRuns': { runs: [], nextCursor: null },
   },
 })
