@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.191] - 2026-11-19
+
 ### Changed
 
 - Siren no longer hand-sets the motion-trigger feature; it follows the bound cap

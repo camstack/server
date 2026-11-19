@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.603] - 2026-11-19
+
 ### Changed
 
 - Unit preparation no longer throws on a command step with no action chosen yet

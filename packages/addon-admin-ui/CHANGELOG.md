@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.711] - 2026-11-19
+
 ### Changed
 
 - API explorer groups methods into collapsible macro groups with counts, de-emphasises the call type, and fills the input through typed controls (device picker, selects, bounded numbers, switches)

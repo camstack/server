@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.913] - 2026-11-19
+
 ### Changed
 
 - The event ring's high-frequency deny list is derived from the event-category catalogue instead of a hand-kept list
