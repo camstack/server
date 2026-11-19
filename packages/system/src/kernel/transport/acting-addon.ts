@@ -7,8 +7,12 @@
  * runner map before it stamps the call with it.
  */
 
-/** The caps whose rows and secret refs are keyed by the calling ADDON, not by its runner. */
-export const ADDON_KEYED_CAPS: readonly string[] = ['records', 'migrations']
+/**
+ * The caps whose rows and secret refs are keyed by the calling ADDON, not by its runner.
+ * `integrations`: `adoptInstanceRows` lets an addon state rows of its OWN instances only, so a
+ * grouped addon stamped with its group was refused its own rows and its migration blocked it.
+ */
+export const ADDON_KEYED_CAPS: readonly string[] = ['records', 'migrations', 'integrations']
 
 /** A child claimed an addon its runner does not host. Typed so a caller can tell it from a crash. */
 export class ActingAddonRefusedError extends Error {

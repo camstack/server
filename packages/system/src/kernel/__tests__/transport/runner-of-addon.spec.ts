@@ -59,6 +59,21 @@ describe('agent registry, grouped runner', () => {
     expect(calls[0]?.callerAddonId).toBe('member-addon')
   })
 
+  it('stamps an integrations call with the verified addon id (instance rows are keyed by the addon)', async () => {
+    const map = new RunnerOfAddon()
+    map.record('member-addon', GROUP)
+    const calls: CapCallInput[] = []
+    const { client, registry } = await connect(map.resolve, calls)
+    open.push(client, registry)
+    await client.callOut({
+      capName: 'integrations',
+      method: 'adoptInstanceRows',
+      args: {},
+      actingAddonId: 'member-addon',
+    })
+    expect(calls[0]?.callerAddonId).toBe('member-addon')
+  })
+
   it('refuses a claim for an addon the runner does not host', async () => {
     const map = new RunnerOfAddon()
     map.record('member-addon', GROUP)
