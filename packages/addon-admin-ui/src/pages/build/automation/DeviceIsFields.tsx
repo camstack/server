@@ -69,7 +69,11 @@ export function DeviceIsFields({ leaf, devices, onChange }: DeviceIsFieldsProps)
         />
       </label>
 
-      <label className="min-w-[9rem] flex-1">
+      {/* A quantity value is a number AND a unit select side by side; the label
+          must be wide enough for both or the unit runs under the next field. */}
+      <label
+        className={`flex-1 ${quantity !== undefined && base !== undefined ? 'min-w-[12rem]' : 'min-w-[9rem]'}`}
+      >
         <PickerLabel>{t('automation.conditionRow.value', 'Value')}</PickerLabel>
         {isList ? (
           <ListValueInput

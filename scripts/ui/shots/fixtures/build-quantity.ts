@@ -55,6 +55,9 @@ export default defineFixtures({
   description: 'Automation editor: a quantity condition and a quantity action arg',
   handlers: {
     ...build.handlers,
+    'schedulers.list': [],
+    'template.list': [],
+    'auth.listLoginMethods': [],
     'deviceManager.getWireableFields': (input: { deviceId?: number }) =>
       input.deviceId === 201
         ? {

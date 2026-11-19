@@ -102,24 +102,26 @@ export function WhenLeafRow({
             ? t('automation.whenTree.natureEvent', 'Event')
             : t('automation.whenTree.natureState', 'State')}
         </Badge>
-        <span className="flex-1" />
-        {move !== undefined && <MoveButtons move={move} />}
-        {onNegate !== null && (
+        {/* One group: the controls wrap together instead of scattering one by one. */}
+        <span className="ml-auto flex items-center gap-1">
+          {move !== undefined && <MoveButtons move={move} />}
+          {onNegate !== null && (
+            <Button
+              variant="ghost"
+              onClick={onNegate}
+              title={t('automation.whenTree.negateRow', 'Invert this row (NOT)')}
+            >
+              {'NOT'}
+            </Button>
+          )}
           <Button
             variant="ghost"
-            onClick={onNegate}
-            title={t('automation.whenTree.negateRow', 'Invert this row (NOT)')}
+            onClick={onRemove}
+            title={t('automation.whenTree.removeRow', 'Remove this row')}
           >
-            {'NOT'}
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
-        )}
-        <Button
-          variant="ghost"
-          onClick={onRemove}
-          title={t('automation.whenTree.removeRow', 'Remove this row')}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        </span>
       </div>
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <LeafFields leaf={leaf} devices={devices} onChange={onChange} />
