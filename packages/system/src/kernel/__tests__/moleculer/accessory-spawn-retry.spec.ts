@@ -1,7 +1,7 @@
 /**
  * A failed accessory-child spawn is retried, bounded (the D347 shape), through
- * the real kernel reconcile; the failure is an ERROR naming the step and the
- * board turns "binding not yet" into a typed reason.
+ * the real kernel reconcile; every failure and the give-up are ERROR logs
+ * naming the step, tagged with the child's deviceId.
  */
 import type {
   AccessoryChildSpec,
@@ -72,8 +72,6 @@ function spec(suffix: string): AccessoryChildSpec {
   }
 }
 
-import { AccessorySpawnBoard } from '../../moleculer/accessory-spawn-retry.js'
-
 /** Parent with ONE accessory whose first `applyInitialMeta` dial fails. */
 function failingWorld(
   failures: number,
@@ -82,7 +80,6 @@ function failingWorld(
 ) {
   let fail = failures
   const calls: Record<string, number> = {}
-  const board = new AccessorySpawnBoard()
   const log = logger()
   const parent = {
     id: PARENT_ID,
@@ -137,11 +134,9 @@ function failingWorld(
     eventBus: bus,
     registry,
     capabilityRegistry: new CapabilityRegistry(logger()),
-    accessorySpawnBoard: board,
     accessorySpawnRetryDelaysMs: delaysMs,
   })
   return {
-    board,
     log,
     registry,
     calls,
@@ -160,6 +155,14 @@ function parentAsDevice(parent: object): IDevice {
   return parent as unknown as IDevice
 }
 
+function gaveUp(log: IScopedLogger): boolean {
+  return vi
+    .mocked(log.error)
+    .mock.calls.some(
+      ([message]) => message === 'Accessory child spawn gave up after the bounded retries',
+    )
+}
+
 async function until(cond: () => boolean): Promise<void> {
   for (let i = 0; i < 200 && !cond(); i += 1) await new Promise((r) => setTimeout(r, 5))
 }
@@ -169,9 +172,6 @@ describe('accessory spawn retry (D347 shape)', () => {
     const w = failingWorld(1)
     await w.register()
     expect(w.registry.getById(KEEP_ID)).toBeNull()
-    expect(w.board.describe(KEEP_ID)).toMatch(
-      /accessory child failed to spawn: applyInitialMeta: dial timed out, retry 0\/2/,
-    )
     expect(w.log.error).toHaveBeenCalledWith(
       'Accessory child spawn failed',
       expect.objectContaining({
@@ -181,14 +181,12 @@ describe('accessory spawn retry (D347 shape)', () => {
     )
     await until(() => w.registry.getById(KEEP_ID) !== null)
     expect(w.registry.getById(KEEP_ID)?.stableId).toBe(KEEP_STABLE)
-    expect(w.board.describe(KEEP_ID)).toBeNull()
   })
 
-  it('gives up after the bound, at ERROR, and the board says so', async () => {
+  it('gives up after the bound, at ERROR', async () => {
     const w = failingWorld(99, 'loadRuntimeState')
     await w.register()
-    await until(() => w.board.get(KEEP_ID)?.terminal === true)
-    expect(w.board.describe(KEEP_ID)).toMatch(/loadRuntimeState.*retry 2\/2, gave up/)
+    await until(() => gaveUp(w.log))
     expect(w.log.error).toHaveBeenCalledWith(
       'Accessory child spawn gave up after the bounded retries',
       expect.objectContaining({ tags: expect.objectContaining({ deviceId: KEEP_ID }) }),
@@ -199,7 +197,7 @@ describe('accessory spawn retry (D347 shape)', () => {
   it('a give-up sticks: a later reconcile does not restart the rounds', async () => {
     const w = failingWorld(99, 'loadRuntimeState')
     await w.register()
-    await until(() => w.board.get(KEEP_ID)?.terminal === true)
+    await until(() => gaveUp(w.log))
     const before = w.calls.loadRuntimeState
     await w.reprobe()
     await new Promise((r) => setTimeout(r, 60))

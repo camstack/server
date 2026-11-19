@@ -13,7 +13,7 @@
  * packages/types/src/device/device-restore-retry.ts) and follows its sanctioned
  * shape exactly: a bounded number of rounds on the SHARED
  * `DEVICE_RESTORE_RETRY_DELAYS_MS` schedule, then a terminal, VISIBLE state
- * (D6): an ERROR log tagged `deviceId` and a `failed` entry on the status board.
+ * (D6): an ERROR log tagged `deviceId`, then a sticky give-up (see below).
  * It is not a wait-for-a-node timer (D3): a retry re-runs the child's own
  * failed dial, it does not poll a registry.
  *
@@ -24,13 +24,10 @@
  * (`resetParent`). On the LAST attempt the spawn may fall back to registering
  * the child without its meta pre-seed (`final: true`), so a permanently failing
  * pre-seed never leaves a healthy child unregistered.
- *
- * The board records, per child id, why it is not spawned (`describe`). It is
- * process-local: it is read by whatever runs in the same process as the spawn.
  */
 import { DEVICE_RESTORE_RETRY_DELAYS_MS, type IScopedLogger } from '@camstack/types'
 
-/** The spawn step that failed — named in every log line and routing error. */
+/** The spawn step that failed — named in every log line. */
 export type AccessorySpawnStep =
   | 'allocateDeviceId'
   | 'applyInitialMeta'
@@ -51,44 +48,8 @@ export class AccessorySpawnStepError extends Error {
   }
 }
 
-export interface AccessorySpawnFailureState {
-  readonly stableId: string
-  readonly step: AccessorySpawnStep | 'unknown'
-  readonly reason: string
-  /** Retries already run (0 = only the initial attempt failed). */
-  readonly retry: number
-  readonly maxRetries: number
-  readonly terminal: boolean
-}
-
-/** Which children are not spawned, and why. Process-local. */
-export class AccessorySpawnBoard {
-  readonly #byDeviceId = new Map<number, AccessorySpawnFailureState>()
-
-  set(deviceId: number, state: AccessorySpawnFailureState): void {
-    this.#byDeviceId.set(deviceId, state)
-  }
-
-  clear(deviceId: number): void {
-    this.#byDeviceId.delete(deviceId)
-  }
-
-  get(deviceId: number): AccessorySpawnFailureState | null {
-    return this.#byDeviceId.get(deviceId) ?? null
-  }
-
-  /** The routing-error wording, or null when this child has no spawn failure. */
-  describe(deviceId: number): string | null {
-    const state = this.get(deviceId)
-    if (state === null) return null
-    const tail = state.terminal ? ', gave up' : ''
-    return `accessory child failed to spawn: ${state.step}: ${state.reason}, retry ${state.retry}/${state.maxRetries}${tail}`
-  }
-}
-
 export interface AccessorySpawnRetryOptions {
   readonly logger: IScopedLogger
-  readonly board: AccessorySpawnBoard
   readonly delaysMs?: readonly number[]
 }
 
@@ -134,7 +95,6 @@ interface PendingSpawn {
 
 export class AccessorySpawnRetry {
   readonly #logger: IScopedLogger
-  readonly #board: AccessorySpawnBoard
   readonly #delaysMs: readonly number[]
   /** Pending spawns, by `<parent>:<child stableId>`. */
   readonly #pending = new Map<string, PendingSpawn>()
@@ -143,7 +103,6 @@ export class AccessorySpawnRetry {
 
   constructor(options: AccessorySpawnRetryOptions) {
     this.#logger = options.logger
-    this.#board = options.board
     this.#delaysMs = options.delaysMs ?? DEVICE_RESTORE_RETRY_DELAYS_MS
   }
 
@@ -204,16 +163,6 @@ export class AccessorySpawnRetry {
     terminal: boolean,
   ): void {
     const { step, reason } = describeError(error)
-    if (deviceId !== null) {
-      this.#board.set(deviceId, {
-        stableId: request.stableId,
-        step,
-        reason,
-        retry,
-        maxRetries: this.#delaysMs.length,
-        terminal,
-      })
-    }
     this.#logger.error(
       terminal
         ? 'Accessory child spawn gave up after the bounded retries'
@@ -254,7 +203,6 @@ export class AccessorySpawnRetry {
       try {
         await request.attempt({ final: round === this.#delaysMs.length })
         if (entry.cancelled) return
-        if (deviceId !== null) this.#board.clear(deviceId)
         this.#pending.delete(key)
         this.#logger.info('Accessory child spawned on retry', {
           tags: {

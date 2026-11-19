@@ -74,7 +74,6 @@ import {
 } from '../state-refresh-policies.js'
 import { AccessoryShrinkGate, classifyAccessoryRead } from './accessory-prune-gate.js'
 import {
-  AccessorySpawnBoard,
   type AccessorySpawnAttemptOptions,
   AccessorySpawnRetry,
   AccessorySpawnStepError,
@@ -147,8 +146,6 @@ export interface WorkerDeviceManagerOptions {
    */
   readonly udsMode?: boolean
   readonly streamProbe?: IKernelStreamProbe
-  /** Which accessory children failed to spawn and why (routing errors read it). */
-  readonly accessorySpawnBoard?: AccessorySpawnBoard
   /** Retry delays for a failed accessory spawn; defaults to the D347 schedule. */
   readonly accessorySpawnRetryDelaysMs?: readonly number[]
 }
@@ -996,10 +993,8 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     return parentMeta?.integrationId ?? undefined
   }
 
-  const accessorySpawnBoard = opts.accessorySpawnBoard ?? new AccessorySpawnBoard()
   const accessorySpawnRetry = new AccessorySpawnRetry({
     logger: opts.logger,
-    board: accessorySpawnBoard,
     ...(opts.accessorySpawnRetryDelaysMs !== undefined
       ? { delaysMs: opts.accessorySpawnRetryDelaysMs }
       : {}),
@@ -1030,7 +1025,6 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         },
         spawnOptions,
       )
-      if (allocatedId !== null) accessorySpawnBoard.clear(allocatedId)
       return child
     } catch (err) {
       throw err instanceof AccessorySpawnStepError
