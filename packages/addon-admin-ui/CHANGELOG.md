@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.706] - 2026-11-19
+
 ### Changed
 
 - Renaming a composed device in the block editor refreshes the lists without a page reload
