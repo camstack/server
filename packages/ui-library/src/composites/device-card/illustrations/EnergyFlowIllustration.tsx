@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { type KeyboardEvent, type ReactElement, useState } from 'react'
 import { cn } from '../../../lib/cn'
 import { CHART_SERIES_TOKENS, type ChartSeriesToken } from '../../charts/chart-palette'
 import { CARD_ICONS, type CardGlyph } from '../icons'
@@ -70,7 +70,7 @@ const BUS = { x: 130, y: 92 } as const
 const R = 19
 /** The bus dot, and the circle that holds the day's figures. */
 const BUS_R = 6
-const CENTRE_R = 58
+const CENTRE_R = 44
 const ICON = 18
 
 interface NodePlace {
@@ -83,7 +83,7 @@ interface NodePlace {
 }
 
 const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
-  solar: { x: 130, y: 6, lx: 154, ly: 0, anchor: 'start', glyph: 'solar' },
+  solar: { x: 130, y: 22, lx: 154, ly: 16, anchor: 'start', glyph: 'solar' },
   grid: { x: 28, y: 92, lx: 28, ly: 124, anchor: 'middle', glyph: 'grid' },
   battery: {
     x: 232,
@@ -94,18 +94,18 @@ const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
     glyph: 'battery',
   },
   house: {
-    x: 66,
-    y: 176,
-    lx: 66,
-    ly: 208,
+    x: 76,
+    y: 160,
+    lx: 76,
+    ly: 192,
     anchor: 'middle',
     glyph: 'home',
   },
   heatPump: {
-    x: 194,
-    y: 176,
-    lx: 194,
-    ly: 208,
+    x: 184,
+    y: 160,
+    lx: 184,
+    ly: 192,
     anchor: 'middle',
     glyph: 'heatPump',
   },
@@ -215,34 +215,62 @@ function Node({ node }: { readonly node: EnergyNodeView }): ReactElement {
   )
 }
 
-const FIGURE_STEP = 26
-
-/** The figures stacked in the bus circle, centred: a small name over a bold value. */
+/**
+ * The bus circle shows ONE figure of the day at a time (a small name over a
+ * bold value) with a dot per figure under it; a tap, Enter or Space moves to
+ * the next. It starts on the first figure.
+ */
 function CentreFigures({
   figures,
 }: {
   readonly figures: readonly EnergyCentreFigure[]
-}): ReactElement {
-  const top = BUS.y - ((figures.length - 1) * FIGURE_STEP) / 2
+}): ReactElement | null {
+  const [index, setIndex] = useState(0)
+  const shown = figures[index % Math.max(1, figures.length)]
+  if (shown === undefined) return null
+  const next = (): void => setIndex((i) => (i + 1) % figures.length)
+  const onKeyDown = (e: KeyboardEvent<SVGGElement>): void => {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    e.preventDefault()
+    next()
+  }
   return (
-    <g data-testid="dc-energy-centre" textAnchor="middle">
-      {figures.map((f, i) => {
-        const y = top + i * FIGURE_STEP
-        return (
-          <g key={f.id} data-testid={`dc-energy-centre-${f.id}`}>
-            <text x={BUS.x} y={y - 4} className="fill-foreground-muted text-[10px]">
-              {f.label}
-            </text>
-            <text
-              x={BUS.x}
-              y={y + 9}
-              className="fill-foreground text-[13px] font-semibold tabular-nums"
-            >
-              {f.value}
-            </text>
-          </g>
-        )
-      })}
+    // biome-ignore lint/a11y/useSemanticElements: an SVG group cannot be a <button>
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={`${shown.label}: ${shown.value}`}
+      data-testid="dc-energy-centre"
+      data-shown={shown.id}
+      textAnchor="middle"
+      className="cursor-pointer outline-none focus-visible:[&>circle]:stroke-primary"
+      onClick={next}
+      onKeyDown={onKeyDown}
+    >
+      <circle cx={BUS.x} cy={BUS.y} r={CENTRE_R} className="fill-transparent stroke-transparent" />
+      <g data-testid={`dc-energy-centre-${shown.id}`}>
+        <text x={BUS.x} y={BUS.y - 8} className="fill-foreground-muted text-[10px]">
+          {shown.label}
+        </text>
+        <text
+          x={BUS.x}
+          y={BUS.y + 10}
+          className="fill-foreground text-[16px] font-semibold tabular-nums"
+        >
+          {shown.value}
+        </text>
+      </g>
+      {figures.map((f, i) => (
+        <circle
+          key={f.id}
+          cx={BUS.x + (i - (figures.length - 1) / 2) * 9}
+          cy={BUS.y + 29}
+          r={2}
+          data-testid={`dc-energy-centre-dot-${f.id}`}
+          data-active={f.id === shown.id}
+          className={f.id === shown.id ? 'fill-foreground' : 'fill-foreground-subtle'}
+        />
+      ))}
     </g>
   )
 }
@@ -265,7 +293,7 @@ export function EnergyFlowIllustration({
   const still = nodes.every((n) => n.still)
   return (
     <svg
-      viewBox="0 -16 260 242"
+      viewBox="0 0 260 206"
       role="img"
       aria-label={ariaLabel}
       data-still={still}
@@ -292,7 +320,7 @@ export function EnergyFlowIllustration({
       {stale && staleLabel !== undefined ? (
         <text
           x={0}
-          y={-4}
+          y={12}
           className="fill-foreground-muted text-[11px]"
           data-testid="dc-energy-stale"
         >
