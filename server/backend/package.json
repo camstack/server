@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.910",
+  "version": "1.2.911",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,26 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.708",
-        "@camstack/addon-pipeline": ">=1.2.670",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.708"
+        "@camstack/addon-admin-ui": ">=1.2.709",
+        "@camstack/addon-agent-ui": ">=1.2.415",
+        "@camstack/addon-ai": ">=0.4.183",
+        "@camstack/addon-cloudflare": ">=1.2.162",
+        "@camstack/addon-export-alexa": ">=1.2.203",
+        "@camstack/addon-export-google": ">=0.1.138",
+        "@camstack/addon-import-alexa": ">=0.2.208",
+        "@camstack/addon-matter-broker": ">=0.2.172",
+        "@camstack/addon-mqtt-broker": ">=1.2.160",
+        "@camstack/addon-notifiers": ">=1.2.640",
+        "@camstack/addon-pipeline": ">=1.2.671",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.709",
+        "@camstack/addon-provider-enpal": ">=0.1.28",
+        "@camstack/addon-provider-homeassistant": ">=1.2.696",
+        "@camstack/addon-smtp-nodemailer": ">=1.2.157",
+        "@camstack/addon-static-turn": ">=1.2.148",
+        "@camstack/addon-tailscale": ">=1.2.155",
+        "@camstack/addon-terminal": ">=0.1.168",
+        "@camstack/addon-training": ">=0.1.139",
+        "@camstack/addon-waste-collections": ">=0.1.44"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

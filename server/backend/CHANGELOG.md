@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.911] - 2026-11-19
+
 ### Changed
 
 - A device-provider accessory child that failed to spawn at boot is now retried a bounded number of times, then reported as failed in the log, instead of staying unroutable until the addon restarts.

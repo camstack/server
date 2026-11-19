@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.157] - 2026-11-19
+
 ### Changed
 
 - An instance's on/off switch is read from the hub registry row, and moved there from the record on first boot

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.709] - 2026-11-19
+
 ### Changed
 
 - Device quick detail scrolls when the card is taller than the window.
