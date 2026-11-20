@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Reverted the 'sleep push ignored while streaming' change: a camera that really slept kept a dead stream open and live view could not start.
+
 ## [1.2.250] - 2026-11-20
 
 ### Changed

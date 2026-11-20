@@ -185,14 +185,3 @@ export function decideSleepCommit(input: SleepCommitInput): SleepCommitDecision 
 
   return { kind: 'commit', stampFirstHand: source !== 'hub-reconcile' }
 }
-
-/**
- * A firmware `sleeping` push is ignored while a consumer (the recorder,
- * a live view) holds an RFC 4571 server on the camera. Teardown on that
- * push is what cut a recorded battery camera into 40–110 s gaps: the
- * broker only re-dialled ~20 s after we closed the stream. With no
- * consumer the push is acted on exactly as before.
- */
-export function shouldIgnoreSleepPush(input: { readonly activeStreams: number }): boolean {
-  return input.activeStreams > 0
-}
