@@ -5604,6 +5604,18 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         ],
         icon: 'battery-charging',
       },
+      {
+        kind: 'enum',
+        field: 'chargeState',
+        label: { en: 'Charge state', it: 'Stato di carica' },
+        values: [
+          { value: 'charging', label: { en: 'Charging', it: 'In carica' } },
+          { value: 'full', label: { en: 'Full', it: 'Carica completa' } },
+          { value: 'idle', label: { en: 'Not charging', it: 'Non in carica' } },
+          { value: 'unknown', label: { en: 'Unknown', it: 'Sconosciuto' } },
+        ],
+        icon: 'battery-charging',
+      },
     ],
     events: {
       onStatusChanged: {

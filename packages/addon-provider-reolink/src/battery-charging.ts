@@ -92,3 +92,59 @@ export function isMeasuredCameraBatteryLevel(
   if (context.sleeping) return false
   return context.charging !== 'dc' && context.charging !== 'solar'
 }
+
+/** The extra readings a `BatteryInfo` can carry beyond level and power source. */
+export interface BatteryReadingFields {
+  readonly chargeStatus?: string | undefined
+  /** Battery voltage in millivolts. */
+  readonly voltage?: number | undefined
+  /** Battery current in milliamperes (negative while charging on some firmwares). */
+  readonly current?: number | undefined
+  /** Battery temperature in degrees Celsius. */
+  readonly temperature?: number | undefined
+}
+
+/** What the cell is doing, from `chargeStatus`. Absent is `'unknown'`, never `'idle'` (D315). */
+export function deriveChargeState(chargeStatus: string | undefined): BatteryStatus['chargeState'] {
+  if (chargeStatus === undefined) return 'unknown'
+  switch (chargeStatus.toLowerCase()) {
+    case 'charging':
+      return 'charging'
+    case 'chargecomplete':
+      return 'full'
+    case 'none':
+      return 'idle'
+    default:
+      return 'unknown'
+  }
+}
+
+export type BatteryReadings = Pick<
+  BatteryStatus,
+  'chargeState' | 'voltage' | 'currentMa' | 'temperatureC'
+>
+
+const finite = (n: number | undefined): n is number => typeof n === 'number' && Number.isFinite(n)
+
+/**
+ * The cell state and the extra readings of one reading, over the previous
+ * belief. A push that does not carry a field keeps what was known, the same
+ * rule `level` and the power source apply, so a level-only push never turns a
+ * known `'charging'` into `'unknown'` or a known temperature into nothing.
+ */
+export function mapBatteryReadings(
+  info: BatteryReadingFields,
+  previous: BatteryReadings,
+): BatteryReadings {
+  const chargeState =
+    info.chargeStatus !== undefined
+      ? deriveChargeState(info.chargeStatus)
+      : (previous.chargeState ?? 'unknown')
+  return {
+    chargeState,
+    // Millivolts on the wire, volts on the cap.
+    voltage: finite(info.voltage) ? info.voltage / 1000 : (previous.voltage ?? null),
+    currentMa: finite(info.current) ? info.current : (previous.currentMa ?? null),
+    temperatureC: finite(info.temperature) ? info.temperature : (previous.temperatureC ?? null),
+  }
+}

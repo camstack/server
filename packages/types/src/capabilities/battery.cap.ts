@@ -69,6 +69,37 @@ export const BatteryStatusSchema = z.object({
     .optional()
     .meta(readingMeta('voltage', { label: 'Voltage' })),
   /**
+   * What the CELL is doing, as opposed to {@link charging} (what it is powered
+   * from). `'charging'` takes current, `'full'` is connected and topped up,
+   * `'idle'` is a stopped cell the firmware reported as such (running on the
+   * battery, or an adapter that is not feeding it).
+   *
+   * Absent or `'unknown'` is NOT an answer: the provider has not read the
+   * charge fields. It must never be coerced to `'idle'` (D315) — a camera
+   * nobody reached would be drawn "not charging". Consumers SKIP it.
+   */
+  chargeState: z
+    .enum(['charging', 'full', 'idle', 'unknown'])
+    .optional()
+    .meta({ label: 'Charge state' }),
+  /**
+   * Battery current in milliamperes, as the firmware reports it (sign is the
+   * firmware's). `null`/absent = not reported. Stored in mA, not the quantity
+   * base (A), so it carries no reading quantity: a quantity would make the UI
+   * convert and print it as amperes.
+   */
+  currentMa: z
+    .number()
+    .nullable()
+    .optional()
+    .meta(readingMeta('none', { label: 'Current (mA)' })),
+  /** Battery temperature in °C. `null`/absent = not reported. */
+  temperatureC: z
+    .number()
+    .nullable()
+    .optional()
+    .meta(readingMeta('temperature', { label: 'Temperature' })),
+  /**
    * Ms epoch of the last time the device PROVED it was reachable — a
    * completed firmware round-trip, an observed wake, or an inbound push
    * (firmware event, email). `0`/absent = never since this slice was born.
@@ -226,6 +257,8 @@ export const batteryCapability = {
     fields: {
       level: { kind: 'gauge', unit: '%' },
       voltage: { kind: 'gauge', unit: 'V' },
+      // `currentMa` is not recorded: the history unit catalog has A, not mA.
+      temperatureC: { kind: 'gauge', unit: '°C' },
     },
   },
   customize: batteryCustomize,
@@ -275,6 +308,18 @@ export const batteryCapability = {
             label: t('Not charging', 'Non in carica'),
             phrase: t('When {device} stops charging', 'Quando {device} smette di caricarsi'),
           },
+          { value: 'unknown', label: t('Unknown', 'Sconosciuto') },
+        ],
+        icon: 'battery-charging',
+      },
+      {
+        kind: 'enum',
+        field: 'chargeState',
+        label: t('Charge state', 'Stato di carica'),
+        values: [
+          { value: 'charging', label: t('Charging', 'In carica') },
+          { value: 'full', label: t('Full', 'Carica completa') },
+          { value: 'idle', label: t('Not charging', 'Non in carica') },
           { value: 'unknown', label: t('Unknown', 'Sconosciuto') },
         ],
         icon: 'battery-charging',

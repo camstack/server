@@ -1913,7 +1913,7 @@
 
 ### `battery` → `battery.*`
 
-- **Source:** `packages/types/src/capabilities/battery.cap.ts:163`
+- **Source:** `packages/types/src/capabilities/battery.cap.ts:194`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, pet-feeder, container, climate, event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IBatteryProvider`

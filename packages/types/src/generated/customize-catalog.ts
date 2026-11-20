@@ -1926,6 +1926,7 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   'battery': {
     level: '%',
     voltage: 'V',
+    temperatureC: '°C',
   },
   'humidity-sensor': {
     humidity: '%',

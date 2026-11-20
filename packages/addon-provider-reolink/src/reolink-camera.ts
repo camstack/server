@@ -92,6 +92,7 @@ import {
 import {
   deriveChargingSource,
   isMeasuredCameraBatteryLevel,
+  mapBatteryReadings,
   reportsPowerSource,
 } from './battery-charging.js'
 import {
@@ -2966,6 +2967,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       charging,
       sleeping,
       lastUpdated: Date.now(),
+      ...mapBatteryReadings(info, this.state.battery),
     }
   }
 
@@ -3524,6 +3526,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       ...this.state.battery,
       level: mapped.level,
       charging: mapped.charging,
+      chargeState: mapped.chargeState,
       lastUpdated: Date.now(),
     })
   }

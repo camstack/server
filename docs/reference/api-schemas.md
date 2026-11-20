@@ -536,6 +536,9 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 - `sleeping`: `boolean`
 - `lastUpdated`: `number`
 - `voltage?`: `number \| null`
+- `chargeState?`: `"charging" \| "full" \| "idle" \| "unknown"`
+- `currentMa?`: `number \| null`
+- `temperatureC?`: `number \| null`
 - `lastContactAt?`: `number`
 - `lastFullRefreshAt?`: `number`
 - `binary?`: `boolean`

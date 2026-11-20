@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 47 caps with series (131 series), 40 caps answered `'none'`.
+ * 47 caps with series (132 series), 40 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -31,6 +31,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'battery': {
     'level': { kind: 'gauge', unit: '%' },
     'voltage': { kind: 'gauge', unit: 'V' },
+    'temperatureC': { kind: 'gauge', unit: '°C' },
   },
   'binary': {
     'on': { kind: 'boolean' },

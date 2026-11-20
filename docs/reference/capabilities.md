@@ -30,7 +30,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `audio-analysis` | 4 | — | — | — | — | `audio-analyzer` |
 | `audio-metrics` | 2 | — | ✓ | none | — | `pipeline-analytics` |
 | `automation-control` | 4 | ✓ | ✓ | none | — | — |
-| `battery` | 1 | ✓ | ✓ | 2 series | — | — |
+| `battery` | 1 | ✓ | ✓ | 3 series | — | — |
 | `binary` | 1 | ✓ | ✓ | 1 series | — | — |
 | `brightness` | 2 | ✓ | ✓ | 1 series | — | — |
 | `button` | 1 | — | — | — | — | — |
