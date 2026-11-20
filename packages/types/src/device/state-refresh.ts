@@ -45,9 +45,10 @@ export const StateRefreshPolicySchema = z.object({
   /** Longest silence a push integration may keep before the core re-reads it and asks it to resubscribe. */
   heartbeatMs: z.number().int().positive().optional(),
   /**
-   * Bumped by the provider each time its push subscription reconnected on its
-   * own. A change makes the core re-read every device of the integration
-   * (pushes lost while it was down; events may be dropped, D8).
+   * Changes on every reconnect of the provider's push subscription; any change
+   * makes the core read every device of the integration once (pushes lost while
+   * it was down; events may be dropped, D8). It need not grow: a provider whose
+   * counter restarts with its process is still understood.
    */
   connectionEpoch: z.number().int().nonnegative().optional(),
 })

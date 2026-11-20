@@ -575,6 +575,22 @@ describe('StateRefreshScheduler (D1062)', () => {
       expect(refreshes(r, 'schedule')).toEqual([expect.objectContaining({ deviceIds: [7] })])
     })
 
+    it('an epoch that goes backwards (a provider respawn) still re-reads once', async () => {
+      r = rig()
+      declare(r, 7, { push: 'full', connectionEpoch: 7 })
+      await vi.advanceTimersByTimeAsync(1)
+      r.calls.length = 0
+      r.policies.delete('in-process', 7)
+      declare(r, 7, { push: 'full', connectionEpoch: 1 })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(refreshes(r, 'schedule')).toEqual([expect.objectContaining({ deviceIds: [7] })])
+      r.calls.length = 0
+      r.policies.delete('in-process', 7)
+      declare(r, 7, { push: 'full', connectionEpoch: 1 })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(refreshes(r, 'schedule')).toEqual([]) // the same epoch again reads nothing
+    })
+
     it('a reconnect re-reads every device of the integration', async () => {
       r = rig()
       declare(r, 7, { push: 'full', connectionEpoch: 1 })

@@ -120,7 +120,7 @@ function errorMessage(err: unknown): string {
 export class StateRefreshScheduler {
   private readonly devices = new Map<number, DeviceSchedule>()
   private readonly groups = new Map<string, GroupState>()
-  /** The highest connection epoch seen per integration, kept while its group is gone. */
+  /** The latest connection epoch seen per integration, kept while its group is gone. */
   private readonly epochs = new Map<string, number>()
   private readonly unsubscribe: () => void
   private disposed = false
@@ -173,6 +173,7 @@ export class StateRefreshScheduler {
     for (const group of this.groups.values()) this.clearGroupTimers(group)
     this.devices.clear()
     this.groups.clear()
+    this.epochs.clear()
   }
 
   // ── reconcile ────────────────────────────────────────────────────
@@ -219,17 +220,23 @@ export class StateRefreshScheduler {
   }
 
   /**
-   * Track an integration's connection epoch; `true` when it moved past the
-   * highest one seen. Kept across a gap (a provider re-registers its cap to
-   * publish a new policy, which drops the device and its group for a moment).
+   * Track an integration's connection epoch; `true` when it CHANGED. Any change
+   * is a reconnect, a restart that comes back with a lower value included (a
+   * provider's counter restarts with its process while this scheduler keeps
+   * running). The first registration and an unchanged epoch read nothing.
+   *
+   * The value is kept across a gap on purpose, and NOT dropped when the last
+   * device of an integration leaves: a provider re-registers its cap to publish
+   * the new epoch, which removes the device for a moment, and the comparison
+   * must still see the epoch from before. It is forgotten in `dispose()`.
    */
   private noteEpoch(entry: StateRefreshPolicyEntry): boolean {
     const epoch = entry.policy.connectionEpoch
     if (epoch === undefined) return false
     const key = groupKeyOf(entry)
     const previous = this.epochs.get(key)
-    if (previous === undefined || epoch > previous) this.epochs.set(key, epoch)
-    return previous !== undefined && epoch > previous
+    this.epochs.set(key, epoch)
+    return previous !== undefined && epoch !== previous
   }
 
   private rebuildGroups(now: number): void {
