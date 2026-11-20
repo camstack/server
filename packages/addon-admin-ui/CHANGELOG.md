@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.723] - 2026-11-20
+
 ### Added
 
 - Notification targets: a core notifier group can be added from Add target, with a member search and a per-member policy editor (when, fields, templates, priority, throttle) and a preview, and its row carries a core badge.

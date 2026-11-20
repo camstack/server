@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.615] - 2026-11-20
+
 ### Added
 
 - A notification-target instances spec can name the edit-dialog widgets of a kind.

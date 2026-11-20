@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.925] - 2026-11-20
+
 ### Added
 
 - Notifications: a notifier group delivers one notification to several notifiers, each member with its own schedule, alarm-state, fields, priority and throttle policy
