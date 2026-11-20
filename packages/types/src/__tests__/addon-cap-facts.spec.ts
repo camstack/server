@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { ALL_CAPABILITY_DEFINITIONS } from '../generated/capability-router-map.js'
-import { CAP_ADVANCE_FIELDS } from '../addon.js'
+import { CAP_ADVANCE_FIELDS, CAP_STATE_FIELD_PRESENCE } from '../addon.js'
 
 describe('CAP_ADVANCE_FIELDS (generated)', () => {
   it('equals the field each cap declares in events[*].fromState { on: advance }', () => {
@@ -24,5 +24,30 @@ describe('CAP_ADVANCE_FIELDS (generated)', () => {
     )
     expect(CAP_ADVANCE_FIELDS).toEqual(truth)
     expect(CAP_ADVANCE_FIELDS['doorbell']).toBe('lastPressedAt')
+  })
+})
+
+describe('CAP_STATE_FIELD_PRESENCE (generated)', () => {
+  it('equals what each runtimeState schema says about its top-level fields', () => {
+    const truth = Object.fromEntries(
+      ALL_CAPABILITY_DEFINITIONS.flatMap((def) => {
+        const shape = def.runtimeState?.shape
+        if (shape === undefined) return []
+        return [
+          [
+            def.name,
+            Object.fromEntries(
+              Object.entries(shape).map(([name, schema]) => [
+                name,
+                schema.safeParse(undefined).success ? 'optional' : 'required',
+              ]),
+            ),
+          ],
+        ]
+      }),
+    )
+    expect(CAP_STATE_FIELD_PRESENCE).toEqual(truth)
+    expect(CAP_STATE_FIELD_PRESENCE['day-night']?.['switchDelaySec']).toBe('optional')
+    expect(CAP_STATE_FIELD_PRESENCE['day-night']?.['mode']).toBe('required')
   })
 })

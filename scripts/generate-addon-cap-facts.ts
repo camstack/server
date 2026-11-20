@@ -46,6 +46,7 @@ function main(): void {
   const advance: Array<readonly [string, string]> = []
   const leaves: Array<readonly [string, string]> = []
   const timeouts: Array<readonly [string, string]> = []
+  const presence: Array<readonly [string, string]> = []
   let leafCount = 0
   const names = [...ALL_CAPABILITY_DEFINITIONS]
     .map((def) => def.name)
@@ -59,6 +60,16 @@ function main(): void {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, m]) => `${JSON.stringify(name)}: ${m.timeoutMs}`)
     if (declared.length > 0) timeouts.push([def.name, `{ ${declared.join(', ')} }`])
+    const shape = def.runtimeState?.shape
+    if (shape !== undefined) {
+      const fields = Object.entries(shape)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(
+          ([name, schema]) =>
+            `${JSON.stringify(name)}: ${JSON.stringify(schema.safeParse(undefined).success ? 'optional' : 'required')}`,
+        )
+      presence.push([def.name, `{ ${fields.join(', ')} }`])
+    }
     const found = stateLeavesOf(def)
     if (found.length === 0) continue
     leafCount += found.length
@@ -103,6 +114,17 @@ ${names.map((name) => `  ${JSON.stringify(name)},`).join('\n')}
 /** cap name -> the bindable leaves of its runtime state (absent: none). */
 export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>> = Object.freeze({
 ${leaves.map(([cap, rows]) => `  ${JSON.stringify(cap)}: ${rows},`).join('\n')}
+})
+
+/**
+ * cap name -> TOP-LEVEL runtime-state field -> whether a slice may omit it
+ * (\`optional\`: the schema accepts \`undefined\`) or must carry it. A cap with
+ * no \`runtimeState\` is absent.
+ */
+export const CAP_STATE_FIELD_PRESENCE: Readonly<
+  Record<string, Readonly<Record<string, 'required' | 'optional'>>>
+> = Object.freeze({
+${presence.map(([cap, rows]) => `  ${JSON.stringify(cap)}: ${rows},`).join('\n')}
 })
 
 /** cap name -> method -> the \`timeoutMs\` its definition declares (absent: the transport default). */

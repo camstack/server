@@ -7,6 +7,7 @@ import {
   projectCameraFunctions,
   projectCameraStatus,
   projectCapSlice,
+  sliceFieldDeclaration,
   projectDeviceStatus,
   projectMotion,
   projectTrackLifecycle,
@@ -847,7 +848,7 @@ describe('the derived half — the topic the catalog built IS the topic we publi
    * the log warned about a sibling nobody was waiting for (2026-09-05).
    * The missing extras are still NAMED, once, for the caller to log.
    */
-  it('publishes the primary and names the missing extras when only an extra is absent', () => {
+  it('publishes the primary and stays silent when only OPTIONAL extras are absent', () => {
     const projection = projectCapSlice('camstack-587', 'day-night', {
       mode: 'auto',
       lastFetchedAt: 1,
@@ -856,8 +857,32 @@ describe('the derived half — the topic the catalog built IS the topic we publi
       kind: 'values',
       entity: 'day_night',
       values: [{ topic: 'camstack/camstack-587/day_night', value: 'auto' }],
-      missingFields: ['sensitivity', 'switchDelaySec'],
     })
+  })
+
+  /**
+   * Optional means the provider may honestly not carry it (Reolink answers
+   * `false`). A field the SCHEMA does not declare at all is a catalog bug
+   * and stays loud, as does a declared-required field.
+   */
+  it('classifies a slice field by what the cap schema declares', () => {
+    expect(sliceFieldDeclaration('day-night', 'switchDelaySec')).toBe('optional')
+    expect(sliceFieldDeclaration('day-night', 'mode')).toBe('required')
+    expect(sliceFieldDeclaration('day-night', 'noSuchField')).toBe('undeclared')
+    expect(sliceFieldDeclaration('no-such-cap', 'mode')).toBe('undeclared')
+  })
+
+  it('every catalog field of a mapped capability is declared by the cap schema', () => {
+    const undeclared: string[] = []
+    for (const capName of Object.keys(CAP_ENTITY_MAP)) {
+      for (const ref of capEntities(capName)) {
+        if (ref.descriptor.platform === 'button') continue
+        if (sliceFieldDeclaration(capName, ref.descriptor.field) === 'undeclared') {
+          undeclared.push(`${capName}.${ref.descriptor.field}`)
+        }
+      }
+    }
+    expect(undeclared).toEqual([])
   })
 
   /** The fix itself: the field the cap declares is the field we read. */

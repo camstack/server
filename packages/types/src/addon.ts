@@ -136,6 +136,7 @@ export {
 export {
   CAP_ADVANCE_FIELDS,
   CAP_METHOD_TIMEOUTS_MS,
+  CAP_STATE_FIELD_PRESENCE,
   CAP_STATE_LEAVES,
 } from './generated/addon-cap-facts.js'
 export type { CapStateLeaf } from './generated/addon-cap-facts.js'

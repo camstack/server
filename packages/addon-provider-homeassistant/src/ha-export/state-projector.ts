@@ -13,6 +13,7 @@
  * which it swallows — so the entity silently never updates again.
  */
 import { COCO_TO_MACRO } from '@camstack/types'
+import { CAP_STATE_FIELD_PRESENCE } from '@camstack/types/addon'
 import {
   CAP_ENTITY_MAP,
   capEntities,
@@ -66,11 +67,12 @@ export interface CapProjectionValues {
   readonly entity: string
   readonly values: readonly StateValue[]
   /**
-   * EXTRA entities whose field the slice does not carry. Present only when
-   * non-empty. An extra the cap declares optional (`day-night.sensitivity`
-   * on a vendor without a photocell) must not silence the PRIMARY — it
-   * did, and "Camera sala da pranzo" never received a `mode` — but it
-   * is still named so the caller can say, once, which entity stays empty.
+   * EXTRA entities whose field the slice does not carry AND the cap schema
+   * does not declare optional (a required or undeclared field: a defect).
+   * Present only when non-empty. An extra the cap declares optional
+   * (`day-night.sensitivity` on a vendor without a photocell) is neither
+   * named nor warned about, and it must not silence the PRIMARY — it did,
+   * and "Camera sala da pranzo" never received a `mode`.
    */
   readonly missingFields?: readonly string[]
 }
@@ -168,6 +170,22 @@ function renderCapValue(mapping: CapEntityDescriptor, raw: unknown): string | nu
   }
 }
 
+/** What a capability's slice schema says about one field. */
+export type SliceFieldDeclaration = 'required' | 'optional' | 'undeclared'
+
+/**
+ * Whether the cap's `runtimeState` schema (the schema-free `CAP_STATE_FIELD_PRESENCE` fact, D28) declares `field`, and whether it
+ * may be absent. An OPTIONAL field a provider does not carry is an honest
+ * answer (Reolink reports `switchDelaySec` unsupported); a field the schema
+ * does not declare at all is a catalog bug and must stay loud.
+ */
+export function sliceFieldDeclaration(capName: string, field: string): SliceFieldDeclaration {
+  const fields = CAP_STATE_FIELD_PRESENCE[capName]
+  // A dotted path (`resources.cpuPercent`) is declared by its first segment.
+  const root = field.split('.')[0] ?? field
+  return fields?.[root] ?? 'undeclared'
+}
+
 /**
  * One capability slice → the derived entity's value.
  *
@@ -211,7 +229,10 @@ export function projectCapSlice(
           sliceFields: Object.keys(slice),
         }
       }
-      missingFields.push(ref.descriptor.field)
+      // An optional field the provider does not carry is not a defect.
+      if (sliceFieldDeclaration(capName, ref.descriptor.field) !== 'optional') {
+        missingFields.push(ref.descriptor.field)
+      }
       continue
     }
     const raw = read.value

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Recording bands accept an optional battery range (min/max percent); configs without it parse unchanged.
 
+### Changed
+
+- Schema-free per-capability state-field presence fact for addons
+
 ## [1.2.607] - 2026-11-20
 
 ### Changed
