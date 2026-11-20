@@ -396,6 +396,89 @@ describe('StateRefreshScheduler (D1062)', () => {
     })
   })
 
+  describe('a device that keeps failing (backoff)', () => {
+    function failingRig(failing: Set<number>): Rig {
+      r = rig()
+      r.scheduler.dispose()
+      const policies = r.policies
+      const calls = r.calls
+      const logs = r.logs
+      const scheduler = new StateRefreshScheduler({
+        policies,
+        logger: logger(logs),
+        holdsPending: () => false,
+        holdRemainingMs: () => 0,
+        refresh: async (_route, deviceIds, reason) => {
+          calls.push({ kind: 'refresh', deviceIds, reason, at: Date.now() })
+          if (deviceIds.some((id) => failing.has(id))) throw new Error('cloud said 503')
+        },
+        resubscribe: async () => undefined,
+      })
+      return { ...r, scheduler }
+    }
+    const at = (rr: Rig, id: number): number[] =>
+      refreshes(rr, 'schedule')
+        .filter((c) => c.deviceIds.includes(id))
+        .map((c) => c.at)
+
+    it('doubles the wait per failure up to the cap', async () => {
+      const failing = new Set([7])
+      r = failingRig(failing)
+      declare(r, 7, { batch: false })
+      await vi.advanceTimersByTimeAsync(700_000)
+      // interval 15 s: 15, then +30, +60, +120, +240 (capped at 300 s)
+      expect(at(r, 7)).toEqual([15_000, 45_000, 105_000, 225_000, 465_000])
+    })
+
+    it('a success resets the wait to the declared interval', async () => {
+      const failing = new Set([7])
+      r = failingRig(failing)
+      declare(r, 7, { batch: false })
+      await vi.advanceTimersByTimeAsync(50_000) // reads at 15 s and 45 s failed
+      failing.delete(7)
+      await vi.advanceTimersByTimeAsync(100_000)
+      // the third read (105 s) succeeds, then the cadence is 15 s again
+      expect(at(r, 7).slice(0, 6)).toEqual([15_000, 45_000, 105_000, 120_000, 135_000, 150_000])
+      expect(r.logs).toContainEqual(
+        expect.objectContaining({
+          level: 'info',
+          extras: expect.objectContaining({ tags: { deviceId: 7 } }),
+        }),
+      )
+    })
+
+    it('does not slow the other devices', async () => {
+      r = failingRig(new Set([7]))
+      declare(r, 7, { batch: false })
+      declare(r, 8, { batch: false })
+      await vi.advanceTimersByTimeAsync(100_000)
+      expect(at(r, 8)).toEqual([15_000, 30_000, 45_000, 60_000, 75_000, 90_000])
+      expect(at(r, 7)).toEqual([15_000, 45_000, 105_000].filter((t) => t <= 100_000))
+    })
+
+    it('backs a failing batch off as a whole', async () => {
+      r = failingRig(new Set([7]))
+      declare(r, 7)
+      await vi.advanceTimersByTimeAsync(50_000)
+      expect(at(r, 7)).toEqual([15_000, 45_000])
+    })
+
+    it('every failure is a warn with the device tag and the retry delay', async () => {
+      r = failingRig(new Set([7]))
+      declare(r, 7, { batch: false })
+      await vi.advanceTimersByTimeAsync(20_000)
+      expect(r.logs).toContainEqual(
+        expect.objectContaining({
+          level: 'warn',
+          extras: expect.objectContaining({
+            tags: { deviceId: 7 },
+            meta: expect.objectContaining({ retryInMs: 30_000, consecutiveFailures: 1 }),
+          }),
+        }),
+      )
+    })
+  })
+
   describe('push integrations', () => {
     it('a push that confirms within the window spares the read', async () => {
       r = rig()
