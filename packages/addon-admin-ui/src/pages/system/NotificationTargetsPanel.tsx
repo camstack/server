@@ -49,6 +49,22 @@ function OwnerCell({ row }: { readonly row: PanelRow }): ReactElement | null {
   )
 }
 
+/** The core notifier owns the group kind: its rows say so, so a group reads apart from a vendor's target. */
+const CORE_ADDON_ID = 'core-notifier'
+
+function sourceColumn(label: string, coreLabel: string): DataColumn<PanelRow> {
+  return {
+    key: 'source',
+    header: label,
+    nowrap: true,
+    sortValue: (row) => (row.kind === 'instance' && row.addonId === CORE_ADDON_ID ? 0 : 1),
+    render: (row) =>
+      row.kind === 'instance' && row.addonId === CORE_ADDON_ID ? (
+        <Badge variant="info">{coreLabel}</Badge>
+      ) : null,
+  }
+}
+
 function ownerColumn(label: string): DataColumn<PanelRow> {
   return {
     key: 'owner',
@@ -125,7 +141,13 @@ export function NotificationTargetsPanel(): ReactElement {
           'system.notificationTargets.sendTestHint',
           'Send test message delivers a real notification to the destination typed above, before you save.',
         )}
-        extraColumns={[ownerColumn(t('system.notificationTargets.owner', 'Owner'))]}
+        extraColumns={[
+          ownerColumn(t('system.notificationTargets.owner', 'Owner')),
+          sourceColumn(
+            t('system.notificationTargets.source', 'Source'),
+            t('system.notificationTargets.coreBadge', 'core'),
+          ),
+        ]}
         rowActions={rowActions}
       />
       {testTarget !== null && testKind !== undefined && (

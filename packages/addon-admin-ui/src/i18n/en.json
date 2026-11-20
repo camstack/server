@@ -841,7 +841,9 @@
       "testTarget": "Send a test to {{name}}",
       "unknownUser": "unknown user",
       "sendTest": "Send test message",
-      "sendTestHint": "Send test message delivers a real notification to the destination typed above, before you save."
+      "sendTestHint": "Send test message delivers a real notification to the destination typed above, before you save.",
+      "source": "Source",
+      "coreBadge": "core"
     },
     "notificationTestPanel": {
       "level": "Level",
@@ -14011,6 +14013,60 @@
       "exportQueued": "Export queued.",
       "openExports": "Open Library → Exports",
       "tracksFailed": "Track facts could not be read — {{reason}}"
+    }
+  },
+  "notifierGroup": {
+    "collapse": "Hide policy",
+    "expand": "Show policy",
+    "missingTarget": "Missing target {{id}}",
+    "paused": "paused",
+    "enabled": "Deliver to this member",
+    "remove": "Remove {{name}} from the group",
+    "when": "Receives",
+    "when_always": "Always",
+    "when_schedule": "During a schedule",
+    "when_alarm": "When the alarm panel is in a state",
+    "scheduleEmpty": "Always — add a window to restrict when it receives.",
+    "allStates": "Any state",
+    "alarmStates": "Alarm states that deliver",
+    "fields": "Fields to deliver",
+    "allFields": "All",
+    "titleTemplate": "Title template",
+    "bodyTemplate": "Body template",
+    "templateHint": "Use {{title}} and {{body}} for the notification text. Empty keeps the original.",
+    "minPriority": "Minimum priority",
+    "anyPriority": "Any priority",
+    "throttle": "At most one per (seconds)",
+    "noThrottle": "No limit",
+    "receives": "Receives",
+    "receivesNothing": "nothing (every field is off)",
+    "members": "Members",
+    "invalidRows": "{{count}} saved member(s) could not be read and are left out.",
+    "emptyTitle": "No members yet",
+    "emptyHint": "Search a notifier below to add it to this group.",
+    "search": "Search notifiers to add",
+    "noCandidates": "No other notifier matches. Groups cannot be members.",
+    "add": "Add",
+    "field": {
+      "title": "Title",
+      "body": "Body",
+      "attachments": "Attachments",
+      "actions": "Actions",
+      "priority": "Priority",
+      "sound": "Sound",
+      "clickUrl": "Click link"
+    },
+    "alarm": {
+      "disarmed": "Disarmed",
+      "armed_home": "Armed home",
+      "armed_away": "Armed away",
+      "armed_night": "Armed night",
+      "armed_vacation": "Armed vacation",
+      "armed_custom_bypass": "Armed custom",
+      "arming": "Arming",
+      "disarming": "Disarming",
+      "pending": "Pending",
+      "triggered": "Triggered"
     }
   }
 }

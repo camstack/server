@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - connectionEpoch is documented as changing on every reconnect; any change makes the hub read every device once.
+- A notification-target instances spec can name the edit-dialog widgets of a kind.
 
 ## [1.2.613] - 2026-11-20
 

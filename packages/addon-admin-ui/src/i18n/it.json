@@ -841,7 +841,9 @@
       "testTarget": "Invia un test a {{name}}",
       "unknownUser": "utente sconosciuto",
       "sendTest": "Invia messaggio di prova",
-      "sendTestHint": "Invia messaggio di prova recapita una notifica vera alla destinazione indicata sopra, prima di salvare."
+      "sendTestHint": "Invia messaggio di prova recapita una notifica vera alla destinazione indicata sopra, prima di salvare.",
+      "source": "Origine",
+      "coreBadge": "core"
     },
     "notificationTestPanel": {
       "level": "Livello",
@@ -14033,6 +14035,60 @@
       "exportQueued": "Esportazione in coda.",
       "openExports": "Apri Libreria → Esportazioni",
       "tracksFailed": "Impossibile leggere i dati delle tracce — {{reason}}"
+    }
+  },
+  "notifierGroup": {
+    "collapse": "Nascondi regole",
+    "expand": "Mostra regole",
+    "missingTarget": "Destinazione mancante {{id}}",
+    "paused": "in pausa",
+    "enabled": "Consegna a questo membro",
+    "remove": "Rimuovi {{name}} dal gruppo",
+    "when": "Riceve",
+    "when_always": "Sempre",
+    "when_schedule": "In una fascia oraria",
+    "when_alarm": "Quando l'allarme è in uno stato",
+    "scheduleEmpty": "Sempre — aggiungi una fascia per limitare quando riceve.",
+    "allStates": "Qualsiasi stato",
+    "alarmStates": "Stati dell'allarme che consegnano",
+    "fields": "Campi da consegnare",
+    "allFields": "Tutti",
+    "titleTemplate": "Modello del titolo",
+    "bodyTemplate": "Modello del testo",
+    "templateHint": "Usa {{title}} e {{body}} per il testo della notifica. Vuoto mantiene l'originale.",
+    "minPriority": "Priorità minima",
+    "anyPriority": "Qualsiasi priorità",
+    "throttle": "Al massimo una ogni (secondi)",
+    "noThrottle": "Nessun limite",
+    "receives": "Riceve",
+    "receivesNothing": "niente (tutti i campi sono spenti)",
+    "members": "Membri",
+    "invalidRows": "{{count}} membri salvati non si possono leggere e vengono esclusi.",
+    "emptyTitle": "Ancora nessun membro",
+    "emptyHint": "Cerca un notificatore qui sotto per aggiungerlo al gruppo.",
+    "search": "Cerca notificatori da aggiungere",
+    "noCandidates": "Nessun altro notificatore corrisponde. I gruppi non possono essere membri.",
+    "add": "Aggiungi",
+    "field": {
+      "title": "Titolo",
+      "body": "Testo",
+      "attachments": "Allegati",
+      "actions": "Azioni",
+      "priority": "Priorità",
+      "sound": "Suono",
+      "clickUrl": "Link al tocco"
+    },
+    "alarm": {
+      "disarmed": "Disinserito",
+      "armed_home": "Inserito casa",
+      "armed_away": "Inserito fuori",
+      "armed_night": "Inserito notte",
+      "armed_vacation": "Inserito vacanza",
+      "armed_custom_bypass": "Inserito personalizzato",
+      "arming": "In inserimento",
+      "disarming": "In disinserimento",
+      "pending": "In attesa",
+      "triggered": "Scattato"
     }
   }
 }

@@ -12,6 +12,9 @@ import {
 } from '@camstack/types'
 import { groupRecordKinds, groupTargetKind } from './group-descriptor.js'
 
+/** The admin widget that draws the member editor of a group (a generic id the client maps to a component). */
+export const GROUP_MEMBERS_WIDGET = 'notifier/group-members'
+
 export interface GroupInstancesDeps {
   readonly mintId: () => string
   /** The ids of the groups as last read. */
@@ -48,6 +51,10 @@ export function groupInstancesSpec(deps: GroupInstancesDeps): NotificationTarget
     kinds: groupRecordKinds,
     mintId: deps.mintId,
     canProbe: () => false,
+    widgets: (kind) =>
+      kind === NOTIFIER_GROUP_KIND
+        ? [{ id: GROUP_MEMBERS_WIDGET, placement: 'connection' }]
+        : undefined,
     validate: ({ kind, config }) => {
       if (kind !== NOTIFIER_GROUP_KIND) return undefined
       validateGroupMembers(config, NO_GROUPS)

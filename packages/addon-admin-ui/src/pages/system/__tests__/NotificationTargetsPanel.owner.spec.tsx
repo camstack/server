@@ -28,7 +28,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
               state.hangUsers ? new Promise(() => undefined) : Promise.resolve(state.users),
           },
         },
-        notificationOutput: { listTargetKinds: { query: () => Promise.resolve([]) } },
+        notificationOutput: {
+          listTargetKinds: { query: () => Promise.resolve([]) },
+        },
       },
     }),
   }
@@ -38,8 +40,25 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
   InstancesTable: ({
     extraColumns,
   }: {
-    extraColumns: ReadonlyArray<{ render: (row: unknown) => ReactElement }>
-  }) => <div data-testid="owner">{extraColumns[0]?.render({ kind: 'instance', id: 't1' })}</div>,
+    extraColumns: ReadonlyArray<{
+      key: string
+      render: (row: unknown) => ReactElement | null
+    }>
+  }) => (
+    <div>
+      <div data-testid="owner">{extraColumns[0]?.render({ kind: 'instance', id: 't1' })}</div>
+      <div data-testid="source-core">
+        {extraColumns
+          .find((c) => c.key === 'source')
+          ?.render({ kind: 'instance', id: 'g1', addonId: 'core-notifier' })}
+      </div>
+      <div data-testid="source-vendor">
+        {extraColumns
+          .find((c) => c.key === 'source')
+          ?.render({ kind: 'instance', id: 't1', addonId: 'notifiers' })}
+      </div>
+    </div>
+  ),
 }))
 
 import { NotificationTargetsPanel } from '../NotificationTargetsPanel'
@@ -77,5 +96,13 @@ describe('NotificationTargetsPanel owner cell', () => {
     renderPanel()
     expect(screen.getByTestId('owner').textContent).not.toContain('usr_8f3a')
     expect(screen.getByTestId('owner').textContent).toBe('')
+  })
+})
+
+describe('NotificationTargetsPanel source column', () => {
+  it('badges a target the core notifier owns and nobody else', () => {
+    renderPanel()
+    expect(screen.getByTestId('source-core').textContent).toBe('core')
+    expect(screen.getByTestId('source-vendor').textContent).toBe('')
   })
 })

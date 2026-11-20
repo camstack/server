@@ -10,6 +10,11 @@
 import type { ComponentType } from 'react'
 import type { ConfigUISchema } from '../../types/config-ui'
 import {
+  GROUP_MEMBERS_WIDGET_ID,
+  GroupMembersWidget,
+  groupMembersOwnedKeys,
+} from '../notifier-group/GroupMembersWidget'
+import {
   STORAGE_PATH_WIDGET_ID,
   StoragePathWidget,
   storagePathOwnedKeys,
@@ -31,6 +36,7 @@ export interface KindWidget {
 
 const KIND_WIDGETS: ReadonlyMap<string, KindWidget> = new Map<string, KindWidget>([
   [STORAGE_PATH_WIDGET_ID, { Component: StoragePathWidget, ownedKeys: storagePathOwnedKeys }],
+  [GROUP_MEMBERS_WIDGET_ID, { Component: GroupMembersWidget, ownedKeys: groupMembersOwnedKeys }],
 ])
 
 /** `null` = this build ships no widget with that id. */
@@ -38,18 +44,22 @@ export function kindWidget(id: string): KindWidget | null {
   return KIND_WIDGETS.get(id) ?? null
 }
 
-/** The schema without the fields a widget draws itself. */
+/** The schema without the fields a widget draws itself; a section it empties goes with them. */
 export function withoutFields<
   S extends {
-    readonly sections: readonly { readonly fields: readonly { readonly key: string }[] }[]
+    readonly sections: readonly {
+      readonly fields: readonly { readonly key: string }[]
+    }[]
   },
 >(schema: S, keys: readonly string[]): S {
   if (keys.length === 0) return schema
   return {
     ...schema,
-    sections: schema.sections.map((section) => ({
-      ...section,
-      fields: section.fields.filter((field) => !keys.includes(field.key)),
-    })),
+    sections: schema.sections
+      .map((section) => ({
+        ...section,
+        fields: section.fields.filter((field) => !keys.includes(field.key)),
+      }))
+      .filter((section) => section.fields.length > 0),
   }
 }

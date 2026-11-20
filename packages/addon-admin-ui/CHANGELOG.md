@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An embedded camera waits for its device type before drawing, instead of flashing the generic card
 - Device page: the camera stream panel offers Show zones, and live detection boxes line up on portrait and 4:3 cameras
 - A discovered notifier that is already a target is shown as already added and cannot be picked again.
+- Notification targets: a core notifier group can be added from Add target, with a member search and a per-member policy editor (when, fields, templates, priority, throttle) and a preview, and its row carries a core badge.
 
 ## [1.2.721] - 2026-11-20
 

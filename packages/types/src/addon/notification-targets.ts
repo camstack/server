@@ -341,6 +341,11 @@ export interface NotificationTargetInstancesSpec {
   /** Which kinds have a probe (the others are `canTest: false`). */
   readonly canProbe: (kind: string) => boolean
   /**
+   * Parts of a kind's edit dialog the flat form cannot draw, by generic widget id (placement
+   * `connection`). Absent: the kind's form is drawn by the plain fields alone.
+   */
+  readonly widgets?: (kind: string) => IntegrationInstanceKind['widgets']
+  /**
    * The save-time rule of a kind, on the body a save would leave (the form's values flat, secrets
    * left out): throws a reason an operator can read to refuse the write, or returns keys the record
    * keeps with it. Absent: the kind accepts what its form accepts.
@@ -394,6 +399,9 @@ export function notificationTargetParts(
       functionCap: NOTIFICATION_OUTPUT_CAP,
       role: 'services',
       canTest,
+      ...(spec.widgets?.(descriptor.kind) !== undefined
+        ? { widgets: spec.widgets(descriptor.kind) }
+        : {}),
       // The brand mark the provider stamped on its descriptor travels with the kind.
       ...(descriptor.iconUrl !== undefined ? { iconUrl: descriptor.iconUrl } : {}),
       ...(descriptor.iconMediaType !== undefined
@@ -515,7 +523,11 @@ export function scopeInstancesToCaller(
       await requireOwned(input.id, user.userId)
       const switched = await inner.setInstanceEnabled(input)
       logger.info('notification target switched', {
-        meta: { targetId: input.id, owner: user.userId, enabled: input.enabled },
+        meta: {
+          targetId: input.id,
+          owner: user.userId,
+          enabled: input.enabled,
+        },
       })
       return switched
     },
@@ -635,7 +647,11 @@ export async function moveTargetRows(
   for (const row of rows) {
     if (!ports.hasKind(row.kind)) {
       skipped += 1
-      ports.skipped({ id: row.id, kind: row.kind, reason: 'this provider does not serve the kind' })
+      ports.skipped({
+        id: row.id,
+        kind: row.kind,
+        reason: 'this provider does not serve the kind',
+      })
       continue
     }
     const reason = await moveOne(ports, row, secretKeysByKind(row.kind))
@@ -778,7 +794,10 @@ export interface NotificationTargetRef {
 /** The answer of {@link listNotificationTargets}: what was read, and who could not be read. */
 export interface NotificationTargetsRead {
   readonly targets: readonly NotificationTargetRef[]
-  readonly unreadable: readonly { readonly addonId: string; readonly error: string }[]
+  readonly unreadable: readonly {
+    readonly addonId: string
+    readonly error: string
+  }[]
 }
 
 /**
@@ -816,7 +835,9 @@ export function instanceApiOverTargets(targetsNow: () => readonly Target[]): Ins
   return {
     capabilities: {
       getCapability: {
-        query: async () => ({ providers: [...new Set(targetsNow().map((t) => t.addonId))] }),
+        query: async () => ({
+          providers: [...new Set(targetsNow().map((t) => t.addonId))],
+        }),
       },
     },
     integrationInstances: {
