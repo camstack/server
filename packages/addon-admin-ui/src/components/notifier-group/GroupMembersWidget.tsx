@@ -11,7 +11,14 @@ import { useTranslation } from 'react-i18next'
 import { useNotificationTargets } from '../../pages/system/use-notification-targets'
 import type { KindWidgetProps } from '../instances/kind-widgets'
 import { GroupMemberCard } from './GroupMemberCard'
-import { MEMBERS_KEY, pickCandidates, readMembers, withMembers } from './group-members-model'
+import {
+  kindLabelOf,
+  MEMBERS_KEY,
+  pickCandidates,
+  readMembers,
+  withMembers,
+} from './group-members-model'
+import { useTargetKinds } from './use-target-kinds'
 
 export const GROUP_MEMBERS_WIDGET_ID = 'notifier/group-members'
 
@@ -24,6 +31,7 @@ export function groupMembersOwnedKeys(): readonly string[] {
 export function GroupMembersWidget({ values, onValuesChange }: KindWidgetProps): ReactElement {
   const { t } = useTranslation()
   const targets = useNotificationTargets()
+  const kinds = useTargetKinds()
   const [query, setQuery] = useState('')
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set())
   const { members, invalid } = readMembers(values)
@@ -69,7 +77,7 @@ export function GroupMembersWidget({ values, onValuesChange }: KindWidgetProps):
                 key={member.targetId}
                 member={member}
                 name={target?.name ?? member.targetId}
-                kindLabel={target?.kind ?? ''}
+                kindLabel={target === undefined ? '' : kindLabelOf(kinds.data, target)}
                 known={target !== undefined || targets.data === undefined}
                 defaultOpen={fresh.has(member.targetId)}
                 onChange={(next) =>
@@ -123,7 +131,9 @@ export function GroupMembersWidget({ values, onValuesChange }: KindWidgetProps):
                 <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                   {target.name}
                 </span>
-                <span className="text-xs text-foreground-muted">{target.kind}</span>
+                <span className="text-xs text-foreground-muted">
+                  {kindLabelOf(kinds.data, target)}
+                </span>
                 <Button size="sm" variant="ghost" onClick={() => add(target)}>
                   <Plus className="h-3.5 w-3.5" />
                   {t('notifierGroup.add', 'Add')}

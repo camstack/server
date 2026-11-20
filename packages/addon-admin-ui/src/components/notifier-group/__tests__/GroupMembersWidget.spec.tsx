@@ -32,8 +32,17 @@ vi.mock('../../../pages/system/use-notification-targets', () => ({
     ],
   }),
 }))
+vi.mock('../use-target-kinds', () => ({
+  useTargetKinds: () => ({
+    data: [{ kind: 'ntfy', label: 'ntfy.sh', icon: 'bell', addonId: 'notifiers' }],
+  }),
+}))
 vi.mock('../GroupMemberCard', () => ({
-  GroupMemberCard: ({ name }: { name: string }) => <div data-testid="card">{name}</div>,
+  GroupMemberCard: ({ name, kindLabel }: { name: string; kindLabel: string }) => (
+    <div data-testid="card">
+      {name}|{kindLabel}
+    </div>
+  ),
 }))
 
 import { GroupMembersWidget } from '../GroupMembersWidget'
@@ -47,6 +56,7 @@ describe('GroupMembersWidget', () => {
       <GroupMembersWidget schema={SCHEMA} values={{ name: 'x' }} onValuesChange={onValuesChange} />,
     )
     expect(screen.queryByText('Other group')).toBeNull()
+    expect(screen.getByText('ntfy.sh')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Add/ }))
     expect(onValuesChange).toHaveBeenCalledWith({
       name: 'x',
@@ -63,6 +73,8 @@ describe('GroupMembersWidget', () => {
       />,
     )
     expect(screen.getAllByTestId('card')).toHaveLength(1)
+    // the catalogue's label, not the raw kind id
+    expect(screen.getByTestId('card').textContent).toBe('Phone|ntfy.sh')
     expect(screen.getByText(/No other notifier matches/)).toBeTruthy()
   })
 })

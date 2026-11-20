@@ -7,6 +7,7 @@ import {
   readMembers,
   withMembers,
   withoutKey,
+  kindLabelOf,
 } from '../group-members-model'
 
 const target = (id: string, kind: string, name = id): Target => ({
@@ -61,5 +62,20 @@ describe('group member model', () => {
     expect(previewOf({ targetId: 'a', templates: { title: 'Alert: {{title}}' } }).title).toBe(
       'Alert: Person at the front door',
     )
+  })
+})
+
+describe('kindLabelOf', () => {
+  const kinds = [
+    { kind: 'alexa-echo', label: 'Alexa Echo', addonId: 'alexa' },
+    { kind: 'alexa-echo', label: 'Other Echo', addonId: 'other' },
+  ]
+  it('names the kind by its catalogue label, matched on kind and providing addon', () => {
+    expect(kindLabelOf(kinds, { kind: 'alexa-echo', addonId: 'other' })).toBe('Other Echo')
+    expect(kindLabelOf(kinds, { kind: 'alexa-echo', addonId: 'alexa' })).toBe('Alexa Echo')
+  })
+  it('falls back to the kind id while the catalogue is unanswered or lacks the kind', () => {
+    expect(kindLabelOf(undefined, { kind: 'alexa-echo', addonId: 'alexa' })).toBe('alexa-echo')
+    expect(kindLabelOf(kinds, { kind: 'ntfy', addonId: 'alexa' })).toBe('ntfy')
   })
 })

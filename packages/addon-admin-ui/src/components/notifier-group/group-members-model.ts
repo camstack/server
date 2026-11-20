@@ -12,6 +12,7 @@ import {
   type GroupMemberWhen,
   type NotificationField,
   type Target,
+  type TargetKind,
 } from '@camstack/types'
 
 export const MEMBERS_KEY = 'members'
@@ -91,4 +92,19 @@ export function previewOf(member: GroupMember): {
 } {
   const shaped = shapeForMember(member, { ...PREVIEW_SAMPLE, format: 'text' })
   return { title: shaped.title ?? '', body: shaped.body }
+}
+
+/**
+ * The human label of a target's kind from the kind catalogue (the one the targets list reads), matched
+ * on kind AND providing addon. A catalogue that has not answered, or has no such kind, falls back to
+ * the raw kind id rather than to nothing.
+ */
+export type KindLabelSource = Pick<TargetKind, 'kind' | 'label' | 'addonId'>
+
+export function kindLabelOf(
+  kinds: readonly KindLabelSource[] | undefined,
+  target: Pick<Target, 'kind' | 'addonId'>,
+): string {
+  const match = kinds?.find((k) => k.kind === target.kind && k.addonId === target.addonId)
+  return match?.label ?? target.kind
 }
