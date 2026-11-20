@@ -108,6 +108,29 @@ function excusesOf(entry: unknown): JsonRecord {
   return isRecord(excuses) ? excuses : {}
 }
 
+/**
+ * State entries (`state[].field`) declared after the snapshot, by cap. The
+ * comparison leaves them out; the last spec requires each to be present.
+ */
+const ADDED_STATE_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  // The cell's charge state, beside the existing charging source (2026-11-20).
+  battery: ['chargeState'],
+}
+
+function stateOf(entry: unknown): readonly JsonRecord[] {
+  const state = isRecord(entry) ? entry['state'] : undefined
+  return Array.isArray(state) ? state.filter(isRecord) : []
+}
+
+function withoutAddedState(cap: string, entry: unknown): unknown {
+  const fields = ADDED_STATE_FIELDS[cap]
+  if (fields === undefined || !isRecord(entry)) return entry
+  return {
+    ...entry,
+    state: stateOf(entry).filter((s) => !fields.includes(String(s['field']))),
+  }
+}
+
 /** Role overrides (`overrides.byRole`) added after the snapshot, by cap. */
 const ADDED_ROLE_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
   switch: ['poe-port'],
@@ -142,7 +165,10 @@ function withoutAddedExcuses(cap: string, entry: unknown): unknown {
     Object.entries(excusesOf(entry)).filter(([method]) => !methods.includes(method)),
   )
   const { notOperatorFacing: _n, ...rest } = entry
-  return { ...rest, ...(Object.keys(excuses).length > 0 ? { notOperatorFacing: excuses } : {}) }
+  return {
+    ...rest,
+    ...(Object.keys(excuses).length > 0 ? { notOperatorFacing: excuses } : {}),
+  }
 }
 
 /** Actions whose `offeredWhen` gate was declared after the snapshot (D1058), by cap. */
@@ -215,7 +241,10 @@ function withoutAdditions(cap: string, current: unknown, before: unknown): unkno
     cap,
     withoutAddedEffects(
       cap,
-      withoutAddedOfferedWhen(cap, withoutAddedExcuses(cap, withoutAddedRoles(cap, current))),
+      withoutAddedOfferedWhen(
+        cap,
+        withoutAddedExcuses(cap, withoutAddedRoles(cap, withoutAddedState(cap, current))),
+      ),
     ),
     before,
   )
@@ -252,10 +281,25 @@ describe('the generated cap vocabulary', () => {
 
   it('is, cap by cap, the hand-written entry — apart from the listed additions', () => {
     for (const cap of Object.keys(before)) {
-      expect({ cap, entry: withoutAdditions(cap, now[cap], before[cap]) }).toEqual({
+      expect({
+        cap,
+        entry: withoutAdditions(cap, now[cap], before[cap]),
+      }).toEqual({
         cap,
         entry: before[cap],
       })
+    }
+  })
+
+  it('carries every listed state addition', () => {
+    for (const [cap, fields] of Object.entries(ADDED_STATE_FIELDS)) {
+      const present = stateOf(now[cap]).map((s) => String(s['field']))
+      for (const field of fields)
+        expect({ cap, field, present: present.includes(field) }).toEqual({
+          cap,
+          field,
+          present: true,
+        })
     }
   })
 
