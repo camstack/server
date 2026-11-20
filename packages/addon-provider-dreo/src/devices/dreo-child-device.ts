@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { BaseDevice, errMsg, type DeviceContext, type DeviceFeature } from '@camstack/types'
 import type { BaseDevice as DreoBaseDevice } from '@apocaliss92/nodedreo'
 import { dreoConnections } from '../dreo-gateway.js'
+import { registerDreoStateRefresh } from '../dreo-state-refresh.js'
 
 /**
  * Persisted config every Dreo accessory child carries. `dreoDeviceId` resolves
@@ -73,6 +74,14 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
     // `stateChanged` listener and replay the current cached values so the slice
     // reflects reality without waiting for the next push.
     this.registerCaps()
+    registerDreoStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.integrationId,
+      reapplyHandleState: () => {
+        this.requireHandle()
+        this.recomputeSlices()
+      },
+    })
     this.attachStateListener()
     this.recomputeSlices()
   }

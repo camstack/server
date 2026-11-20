@@ -96,6 +96,7 @@ export class DreoReconciler {
       const result = await this.#sweep.sweep({ ownerIds, listedIds, removeDevices })
       if (result.newSuspects > 0 && this.#rerun === null) {
         this.#rerun = setTimeout(() => {
+          // not-a-state-poll: one bounded second read of the integration list for the orphan sweep
           this.#rerun = null
           void this.reconcile()
         }, this.#sweep.minIntervalMs + 1_000)

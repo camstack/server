@@ -38,6 +38,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-reolink/src/reolink-hub-session.ts',
   'packages/addon-provider-reolink/src/reolink-state-refresh.ts',
   'packages/addon-provider-ecowitt',
+  'packages/addon-provider-dreo',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

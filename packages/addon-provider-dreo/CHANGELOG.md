@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dreo devices declare to the hub that their state arrives by push, so it never schedules a read; a command the cloud does not echo is re-applied from the live connection
+
 ## [0.2.168] - 2026-11-18
 
 ### Changed
