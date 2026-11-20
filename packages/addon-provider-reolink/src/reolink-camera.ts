@@ -158,6 +158,7 @@ import { withSessionLimit } from './session-limit.js'
 import { watchVideoFlow } from './video-flow.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
+import { autoConfigureEventPushOnce, type EventPushOnAddOutcome } from './event-push-on-add.js'
 import { repointWebhookOnce } from './webhook-generation.js'
 
 /**
@@ -2534,6 +2535,47 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.ctx.logger.info('baichuan-webhook: camera auto-configure applied', {
       tags: { deviceId: this.id },
       meta: { url: params.url },
+    })
+  }
+
+  /**
+   * Arm this camera's local event push ONCE, right after it is added (the provider's
+   * `onAfterCreate`). Reuses `autoConfigureBaichuanWebhook` / `autoConfigureEmailPush` as they
+   * are; the outcome is logged and recorded, and never throws: it must not block the add.
+   */
+  async autoConfigureEventPushOnAdd(): Promise<EventPushOnAddOutcome | 'already-ran'> {
+    return await autoConfigureEventPushOnce({
+      enabled: () => this.config.get('autoConfigureEventPush') !== false,
+      recordedOutcome: () => this.config.get('eventPushAutoConfigured'),
+      isEligible: () => this.isEmailPushEligible,
+      isBattery: () => this.isBattery,
+      method: () => this.config.get('batterySleepPushMethod') ?? 'auto',
+      configureWebhook: async () => await this.autoConfigureBaichuanWebhook(),
+      configureEmail: async () => await this.autoConfigureEmailPush(),
+      record: async (outcome) => {
+        await this.config.setAll({
+          eventPushAutoConfigured:
+            outcome.status === 'configured' ? `configured:${outcome.mechanism}` : outcome.status,
+        })
+      },
+      log: (outcome) => {
+        if (outcome.status === 'configured') {
+          this.ctx.logger.info('event-push: auto-configured on add', {
+            tags: { deviceId: this.id },
+            meta: { mechanism: outcome.mechanism },
+          })
+        } else if (outcome.status === 'skipped') {
+          this.ctx.logger.info('event-push: auto-configure on add skipped', {
+            tags: { deviceId: this.id },
+            meta: { reason: outcome.reason },
+          })
+        } else {
+          this.ctx.logger.warn('event-push: auto-configure on add failed', {
+            tags: { deviceId: this.id },
+            meta: { reason: outcome.reason },
+          })
+        }
+      },
     })
   }
 

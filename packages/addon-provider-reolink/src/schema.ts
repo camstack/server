@@ -616,6 +616,16 @@ export const reolinkCameraSchema = z.object({
    */
   webhookUrlGeneration: z.number().int().optional(),
   /**
+   * "Auto-configure event push on add": right after the camera is added, arm its local event push
+   * (HaCfg webhook for a standalone battery camera, else the camera mailbox). Default on.
+   */
+  autoConfigureEventPush: z.boolean().optional(),
+  /**
+   * What the one-time add-time run did (`configured:<mechanism>` | `skipped` | `failed`). Present
+   * means the run happened: a restart never writes the camera again.
+   */
+  eventPushAutoConfigured: z.string().optional(),
+  /**
    * On-camera motion detection master switch + sensitivity.
    * Pushed via `setMotionAlarm` (cmdId=47). The Reolink mobile
    * app + camera web UI use 1..50 (1 = least sensitive,

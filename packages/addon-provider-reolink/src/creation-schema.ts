@@ -191,6 +191,24 @@ export function buildCreationFormSchema(): ConfigUISchema {
           },
         ],
       },
+      {
+        id: 'events',
+        title: 'Events',
+        titleKey: 'provider-reolink:creation.s_events.title',
+        columns: 1,
+        fields: [
+          {
+            type: 'boolean',
+            key: 'autoConfigureEventPush',
+            label: 'Auto-configure event push on add',
+            labelKey: 'provider-reolink:creation.s_events.autoConfigureEventPush.label',
+            description:
+              'Once, right after the camera is added, set up its local push (webhook or camera mailbox) so motion and AI events reach CamStack.',
+            descriptionKey: 'provider-reolink:creation.s_events.autoConfigureEventPush.description',
+            default: true,
+          },
+        ],
+      },
     ],
   }
 }

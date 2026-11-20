@@ -1708,6 +1708,13 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
           const emailBridge = this.ensureEmailBridge()
           device.setEmailPushParamsResolver(() => emailBridge.buildCameraSetupParams(device))
           device.setBaichuanWebhookParamsResolver(() => this.buildWebhookParams(device))
+          // Once, right after the add: arm the camera's local event push (never blocks the add).
+          void device.autoConfigureEventPushOnAdd().catch((err: unknown) => {
+            ctx.logger.warn('event-push: auto-configure on add threw', {
+              tags: { deviceId: device.id },
+              meta: { error: err instanceof Error ? err.message : String(err) },
+            })
+          })
         }
         // Seed the orchestrator's per-device settings with
         // `motionSources: ['onboard']`. Best-effort.
