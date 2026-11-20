@@ -208,5 +208,20 @@
   "schema.s_hub.title": "Hub",
   "schema.s_hub.description": "This camera is connected through its NVR / Home Hub. Address and credentials belong to that integration; the channel is kept in line with the hub automatically.",
   "schema.s_hub.hubName.label": "Connected to",
-  "schema.s_hub.channel.label": "Hub channel"
+  "schema.s_hub.channel.label": "Hub channel",
+  "schema": {
+    "s_power-source": {
+      "title": "Power source",
+      "description": "Only switch to wired power when the adapter meets the camera's spec.",
+      "_readPowerSource": {
+        "label": "Power source"
+      },
+      "_switchToWiredPower": {
+        "label": "Wired power"
+      },
+      "_switchToBatteryPower": {
+        "label": "Battery power"
+      }
+    }
+  }
 }

@@ -1,5 +1,4 @@
 import type { EncStreamPatch } from '@apocaliss92/nodelink-js'
-import { resolveClipTimeZoneOnce } from './clips/clip-time-zone.js'
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import {
   ACCESSORY_LABEL,
@@ -8,8 +7,6 @@ import {
   BaseDevice,
   type BatteryStatus,
   batteryCapability,
-  lowPowerSleepCapability,
-  sleepSliceOfBattery,
   buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
   createEvent,
@@ -36,6 +33,7 @@ import {
   type IntercomAbility,
   imageSettingsCapability,
   intercomCapability,
+  lowPowerSleepCapability,
   type MotionZoneOptions,
   MotionZoneOptionsSchema,
   type MotionZoneStatus,
@@ -77,6 +75,7 @@ import {
   type StreamProfilePatch,
   type StreamSignal,
   sleep,
+  sleepSliceOfBattery,
   snapshotCapability,
   streamCatalogCapability,
   streamParamsCapability,
@@ -105,15 +104,22 @@ import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
 import { refreshSnapshotCacheOnce } from './battery-snapshot-refresh.js'
 import { resolveCameraUid } from './clips/clip-addressing.js'
 import { buildClipRefreshDeviceSection } from './clips/clip-refresh-settings.js'
+import { resolveClipTimeZoneOnce } from './clips/clip-time-zone.js'
 import type { ClipDeviceRef } from './clips/reolink-videoclips-provider.js'
 import { capDayNightModeToReolink, reolinkDayNightModeToCap } from './day-night-mapping.js'
 import {
   deriveReolinkCameraFeatures,
-  reolinkCameraSleeps,
   type ReolinkFeatureInputs,
   type ReolinkProbeFlags,
+  reolinkCameraSleeps,
 } from './device-features.js'
 import type { EmailPushParamsResolver } from './email-push-shared.js'
+import {
+  applyHubChildSections,
+  EMPTY_HUB_CHANNEL_SNAPSHOT,
+  HubChildPatchRefusedError,
+  judgeHubChildPatch,
+} from './hub-child-settings.js'
 import { reolinkExposureModeToCap } from './image-settings-mapping.js'
 import { denormalizeFromPercent, normalizeToPercent } from './image-value-normalization.js'
 import { CH_BAICHUAN, CH_HANDSHAKE } from './log-channels.js'
@@ -142,12 +148,6 @@ import {
   reolinkHubSessions,
 } from './reolink-hub-session.js'
 import { registerHubChildStateRefresh } from './reolink-state-refresh.js'
-import {
-  applyHubChildSections,
-  EMPTY_HUB_CHANNEL_SNAPSHOT,
-  HubChildPatchRefusedError,
-  judgeHubChildPatch,
-} from './hub-child-settings.js'
 import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
@@ -368,6 +368,13 @@ import {
   mapDetectionEvent,
   NATIVE_DETECTION_SUPPRESSED_LOG_MS,
 } from './native-detection-mapping.js'
+import {
+  type PowerSourceTarget,
+  ReadPowerSourceResultSchema,
+  readPowerSource,
+  SwitchPowerSourceResultSchema,
+  switchPowerSourceTo,
+} from './power-source.js'
 import { DEFAULT_GUARD_TIMEOUT_SECONDS } from './ptz-guard.js'
 import {
   resolveZoomStep,
@@ -689,6 +696,12 @@ const RefreshSettingsResultSchema = z.object({
   capsWarmed: z.number(),
   capsTotal: z.number(),
 })
+
+/** The two switch actions, one implementation each way. */
+const POWER_SWITCH_ACTIONS = [
+  ['switch-to-wired-power', 'adapter'],
+  ['switch-to-battery-power', 'battery'],
+] as const
 
 /** The uid out of a device's metadata bag, or nothing. Never a cast. */
 function metaUid(metadata: Record<string, unknown> | null): string | undefined {
@@ -2787,6 +2800,31 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
       },
     )
+    // Power source of a battery camera: a read-only status button and ONE switch
+    // implementation taking the mode (wired / battery). Battery cameras only; the
+    // buttons are in `buildPowerSourceSection`, gated the same way. Both are
+    // operator demand, so they wake a sleeping camera (like the refresh button);
+    // the write is dry-run first, sent once, never retried.
+    if (this.isBattery) {
+      this.registerDeviceAction(
+        'read-power-source',
+        deviceCustomAction(z.unknown(), ReadPowerSourceResultSchema, { kind: 'mutation' }),
+        async () => {
+          await this.wakeIfSleeping()
+          return { source: await readPowerSource(await this.powerSourceTarget()) }
+        },
+      )
+      for (const [action, mode] of POWER_SWITCH_ACTIONS) {
+        this.registerDeviceAction(
+          action,
+          deviceCustomAction(z.unknown(), SwitchPowerSourceResultSchema, { kind: 'mutation' }),
+          async () => {
+            await this.wakeIfSleeping()
+            return switchPowerSourceTo(await this.powerSourceTarget(), mode)
+          },
+        )
+      }
+    }
     this.registerDeviceAction(
       'refresh-sessions',
       deviceCustomAction(z.unknown(), z.void(), { kind: 'mutation' }),
@@ -3608,6 +3646,70 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       title: 'Camera Sessions',
       autoRefreshes: !this.isBattery,
     })
+  }
+
+  /** The hub API for a child, the camera's own otherwise, plus the channel to address. */
+  private async powerSourceTarget(): Promise<PowerSourceTarget> {
+    return {
+      api: await this.ensureApi(),
+      channel: this.getChannel(),
+      deviceId: this.id,
+      logger: this.ctx.logger,
+    }
+  }
+
+  /**
+   * Battery-cam power-source section (General tab): read the source, switch to
+   * wired or back to battery. Returns `[]` for a wired-only camera. The buttons
+   * dispatch the `read-power-source` / `switch-to-*-power` device actions.
+   */
+  private buildPowerSourceSection(): readonly ConfigUISchema['sections'][number][] {
+    if (!this.isBattery) return []
+    const switchMessage =
+      'Switch {outcome} · before: {before} · after: {after} · applied: {applied}'
+    return [
+      {
+        id: 'power-source',
+        tab: 'general',
+        title: 'Power source',
+        titleKey: 'provider-reolink:schema.s_power-source.title',
+        description: "Only switch to wired power when the adapter meets the camera's spec.",
+        descriptionKey: 'provider-reolink:schema.s_power-source.description',
+        columns: 1,
+        fields: [
+          {
+            type: 'device-action-button',
+            key: '_readPowerSource',
+            label: 'Power source',
+            labelKey: 'provider-reolink:schema.s_power-source._readPowerSource.label',
+            buttonLabel: 'Read power source',
+            action: 'read-power-source',
+            variant: 'default',
+            successMessage: 'Power source: {source}',
+          },
+          {
+            type: 'device-action-button',
+            key: '_switchToWiredPower',
+            label: 'Wired power',
+            labelKey: 'provider-reolink:schema.s_power-source._switchToWiredPower.label',
+            buttonLabel: 'Switch to wired power',
+            action: 'switch-to-wired-power',
+            variant: 'default',
+            successMessage: switchMessage,
+          },
+          {
+            type: 'device-action-button',
+            key: '_switchToBatteryPower',
+            label: 'Battery power',
+            labelKey: 'provider-reolink:schema.s_power-source._switchToBatteryPower.label',
+            buttonLabel: 'Switch to battery power',
+            action: 'switch-to-battery-power',
+            variant: 'default',
+            successMessage: switchMessage,
+          },
+        ],
+      },
+    ]
   }
 
   /**
@@ -10398,6 +10500,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // the camera being email-push-eligible (standalone, not
         // hub-attached). `buildEmailPushSection` returns `[]` otherwise.
         ...this.buildEmailPushSection(),
+        ...this.buildPowerSourceSection(),
         // Editable on-camera email/SMTP config — its own "Email" tab, built
         // like every other settings section (Connection / NTP / Audio).
         ...this.buildEmailTabSections(),
