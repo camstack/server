@@ -22,6 +22,7 @@ import { memo, useCallback, useMemo, useState, Suspense } from 'react'
 import type { Zone as CapZone } from '@camstack/types'
 import {
   MaskShapeCanvas,
+  capZoneToCanvas,
   useDeviceProxy,
   useDeviceStateSlice,
   useZoneEditing,
@@ -36,8 +37,6 @@ import {
   newZoneId,
   zoneKindToDrawingKind,
 } from './types'
-
-const DEFAULT_COLOR = '#3b82f6'
 
 const SUPPORTED_SHAPES = ['polygon', 'line'] as const
 
@@ -60,16 +59,6 @@ function pickUnusedZoneColor(existing: readonly { readonly color?: string }[]): 
     if (!used.has(c.toLowerCase())) return c
   }
   return ZONE_COLOR_PALETTE[existing.length % ZONE_COLOR_PALETTE.length]!
-}
-
-function capToCanvas(z: CapZone): CanvasZone {
-  return {
-    id: z.id,
-    name: z.name,
-    kind: z.kind,
-    color: z.color || DEFAULT_COLOR,
-    points: [...z.polygon],
-  }
 }
 
 function canvasToCap(z: CanvasZone): CapZone {
@@ -112,7 +101,7 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
           points: [...editingDraft.points],
         }
       }
-      return capToCanvas(cap)
+      return capZoneToCanvas(cap)
     })
   }, [capZones, editingDraft])
 

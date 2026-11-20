@@ -97,4 +97,25 @@ describe('boxes map onto the displayed image', () => {
     draw({ defaultShowDetections: false, defaultShowMotion: true, detectionsOnSnapshot: true })
     expect(screen.getByTestId('detection-boxes')).toBeTruthy()
   })
+
+  it('zones are off until the operator switches them on, then sit in the portrait image rect', () => {
+    draw({ zonesOverlay: <div data-testid="zones-layer" /> })
+    const img = screen.getByAltText('Camera snapshot')
+    Object.defineProperty(img, 'naturalWidth', { value: 1080 })
+    Object.defineProperty(img, 'naturalHeight', { value: 1920 })
+    fireEvent.load(img)
+    expect(screen.queryByTestId('zones-layer')).toBeNull()
+    fireEvent.click(screen.getByTitle('More controls'))
+    fireEvent.click(screen.getByText('Show zones'))
+    const layer = screen.getByTestId('snapshot-image-overlay')
+    expect(layer.style.height).toBe('100%')
+    expect(Number.parseFloat(layer.style.width)).toBeCloseTo(31.640625, 4)
+    expect(layer.contains(screen.getByTestId('zones-layer'))).toBe(true)
+  })
+
+  it('offers no Show zones switch without a zones layer', () => {
+    draw({})
+    fireEvent.click(screen.getByTitle('More controls'))
+    expect(screen.queryByText('Show zones')).toBeNull()
+  })
 })

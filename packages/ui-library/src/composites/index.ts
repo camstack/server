@@ -185,6 +185,15 @@ export type {
   MaskShapeCanvasProps,
   MaskShapeItem,
 } from './cap-settings/MaskShapeCanvas'
+export { ZonesReadOnlyLayer, type ZonesReadOnlyLayerProps } from './zones-layer/ZonesReadOnlyLayer'
+export {
+  capZoneToCanvas,
+  DEFAULT_ZONE_COLOR,
+  ZONE_SHAPE_KINDS,
+  zoneToItem,
+  type Zone as CanvasZone,
+  type ZoneKind as CanvasZoneKind,
+} from './zones-layer/zone-items'
 // Cap-settings components — resolved by componentId via admin-ui UI_COMPONENTS.
 // NOTE: MotionZonesSettings, PrivacyMaskSettings and MaskShapeCanvas are
 // intentionally NOT imported here — they pull in react-konva / konva at

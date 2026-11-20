@@ -9666,7 +9666,8 @@
       "cameraSnapshot": "Istantanea della telecamera",
       "download": "Scarica",
       "downloadSnapshot": "Scarica istantanea",
-      "refreshSnapshot": "Aggiorna istantanea"
+      "refreshSnapshot": "Aggiorna istantanea",
+      "showZones": "Mostra zone"
     },
     "addonGlobalSettingsForm": {
       "hide": "nascondi",

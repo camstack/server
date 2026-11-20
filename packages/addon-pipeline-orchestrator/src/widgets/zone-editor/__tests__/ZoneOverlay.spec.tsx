@@ -26,6 +26,26 @@ vi.mock('@camstack/ui-library', () => ({
     hoisted.canvasProps.current = props
     return null
   },
+  // The Zone -> drawing-plane mapping lives in ui-library (shared with the read-only layer).
+  zoneToItem: (z: { id: string; name: string; color: string; kind: string; points: unknown }) => ({
+    id: z.id,
+    label: z.name,
+    color: z.color,
+    shape: { kind: z.kind === 'tripwire' ? 'line' : 'polygon', points: z.points },
+  }),
+  capZoneToCanvas: (z: {
+    id: string
+    name: string
+    kind: string
+    color: string
+    polygon: unknown[]
+  }) => ({
+    id: z.id,
+    name: z.name,
+    kind: z.kind,
+    color: z.color,
+    points: [...z.polygon],
+  }),
   useSystem: () => ({ trpcClient: { zones: { addZone: { mutate: hoisted.addZone } } } }),
   // A cluster singleton has no per-device binding entry, so the proxy carries no `zones`.
   useDeviceProxy: () => ({ state: { zones: {} } }),

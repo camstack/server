@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Zone editor shares its Zone-to-canvas mapping with the read-only zones layer in ui-library
+
 ## [1.2.710] - 2026-11-20
 
 ### Changed

@@ -2611,6 +2611,13 @@
       "summary": "The cap-named card of a device: the kind when it binds the cap, null when it is one of these types but lacks the cap, undefined when the type is not one of these (the caller keeps resolving)."
     },
     {
+      "name": "capZoneToCanvas",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/zone-items.ts",
+      "summary": "Map a zone of the `zones` capability onto the drawing-plane model."
+    },
+    {
       "name": "Card",
       "kind": "component",
       "area": "primitives",
@@ -5214,6 +5221,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/media/model.ts",
       "summary": "Used when the device reports a level and declares no tighter range."
+    },
+    {
+      "name": "DEFAULT_ZONE_COLOR",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/zone-items.ts",
+      "summary": "Colour of a zone the cap stored without one."
     },
     {
       "name": "defaultAxisSpec",
@@ -18934,6 +18948,12 @@
           "doc": "Draw the detection boxes and motion (the \"Show detections\" / \"Show motion\" switches) on the snapshot too, not only on the live video, mapped"
         },
         {
+          "name": "zonesOverlay",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The device's configured zones, drawn read-only (a `ZonesReadOnlyLayer`). Supplying it adds a \"Show zones\" switch to the kebab menu, off by d"
+        },
+        {
           "name": "showStreamStats",
           "type": "boolean",
           "optional": true,
@@ -22068,6 +22088,13 @@
       "summary": "Remember a view mode; a storage that refuses only loses the memory."
     },
     {
+      "name": "ZONE_SHAPE_KINDS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/zone-items.ts",
+      "summary": "The shape kinds a zone can take on the drawing plane."
+    },
+    {
       "name": "ZoneEditingProvider",
       "kind": "component",
       "area": "contexts",
@@ -22081,6 +22108,28 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "ZonesReadOnlyLayer",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/ZonesReadOnlyLayer.tsx",
+      "summary": "ZonesReadOnlyLayer — the device's configured zones, drawn and not editable.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "zoneToItem",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/zone-items.ts",
+      "summary": "Map a drawing-plane zone onto one item of the shared canvas."
     }
   ],
   "viewerEntries": [

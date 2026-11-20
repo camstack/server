@@ -16,6 +16,7 @@ import {
   toStationaryOverlayBox,
   useVodPlayback,
   Button,
+  ZonesReadOnlyLayer,
 } from '@camstack/ui-library'
 
 import type { StationaryOverlayBox } from '@camstack/types'
@@ -176,6 +177,7 @@ export function StreamPanelContent({
             snapshotDownloadName: `snapshot-${String(deviceId)}.jpg`,
           }
         : {})}
+      {...(deviceIdReady ? { zonesOverlay: <ZonesReadOnlyLayer deviceId={deviceId} /> } : {})}
       showPlayStop
       snapshotSrc={snapshot.src}
       {...(snapshot.src ? { posterUrl: snapshot.src } : {})}

@@ -206,6 +206,13 @@ export interface StreamPanelProps {
    * image's own rect. Default false: the snapshot stays a clean still.
    */
   readonly detectionsOnSnapshot?: boolean
+  /**
+   * The device's configured zones, drawn read-only (a `ZonesReadOnlyLayer`).
+   * Supplying it adds a "Show zones" switch to the kebab menu, off by default;
+   * the layer is placed inside the picture's own rect on the still and on the
+   * live view, like the detection boxes.
+   */
+  readonly zonesOverlay?: ReactNode
 
   // --- Visibility ---
   /** Show stream stats in header (fps, uptime) (default: false) */
@@ -496,6 +503,7 @@ export function StreamPanel({
   onRefreshSnapshot,
   snapshotDownloadName,
   detectionsOnSnapshot = false,
+  zonesOverlay,
   showStreamStats = false,
   children,
   extraOverlay,
@@ -532,6 +540,30 @@ export function StreamPanel({
   const [showMoving, setShowMoving] = useState(true)
   const [showStationary, setShowStationary] = useState(true)
   const [showMotion, setShowMotion] = useState(defaultShowMotion)
+  const [showZones, setShowZones] = useState(false)
+  // The live frame's own size: `<video object-contain>` letterboxes a portrait
+  // or 4:3 picture inside the 16:9 box, and frame-normalised overlays follow it.
+  const [liveNatural, setLiveNatural] = useState<NaturalSize | null>(null)
+  const liveVideoCleanup = useRef<(() => void) | null>(null)
+  const handleLiveVideo = useCallback((el: HTMLVideoElement | null) => {
+    liveVideoCleanup.current?.()
+    liveVideoCleanup.current = null
+    if (!el) return
+    const read = (): void => {
+      setLiveNatural((prev) =>
+        prev && prev.w === el.videoWidth && prev.h === el.videoHeight
+          ? prev
+          : { w: el.videoWidth, h: el.videoHeight },
+      )
+    }
+    read()
+    el.addEventListener('loadedmetadata', read)
+    el.addEventListener('resize', read)
+    liveVideoCleanup.current = () => {
+      el.removeEventListener('loadedmetadata', read)
+      el.removeEventListener('resize', read)
+    }
+  }, [])
   const [internalStreamId, setInternalStreamId] = useState<string | null>(null)
 
   // VOD quality selector — lifted from HlsVideo so the selector renders in
@@ -648,6 +680,9 @@ export function StreamPanel({
   const isVod = Boolean(playbackUrl)
   const showingVideo = isVod || (showPlayStop ? isPlaying : true)
   const snapshotBoxes = detectionsOnSnapshot && hasDetections && (showDetections || showMotion)
+  const zonesShown = Boolean(zonesOverlay) && showZones
+  const liveBoxes = anyOverlay || zonesShown
+  const liveBox = containedImageBox(liveNatural?.w ?? 0, liveNatural?.h ?? 0)
 
   return (
     <div
@@ -875,6 +910,7 @@ export function StreamPanel({
               secondary action to surface, so non-camera stream-less
               hosts don't get an empty button. */}
           {(hasDetections ||
+            Boolean(zonesOverlay) ||
             ptzAvailable ||
             pipelineMetrics ||
             effectivePhase ||
@@ -995,6 +1031,13 @@ export function StreamPanel({
                       />
                     </>
                   )}
+                  {zonesOverlay ? (
+                    <MenuToggle
+                      label={t('uiLibrary.streamPanel.showZones', 'Show zones')}
+                      active={showZones}
+                      onClick={() => setShowZones((v) => !v)}
+                    />
+                  ) : null}
                   {ptzAvailable && (
                     <MenuToggle
                       label={t('uiLibrary.streamPanel.ptzControls', 'PTZ controls')}
@@ -1055,20 +1098,26 @@ export function StreamPanel({
               ? { onControlChannel: recordedPlayback.bindControlChannel }
               : {})}
             {...(posterUrl ? { posterUrl } : {})}
+            onVideoElement={handleLiveVideo}
             overlay={
-              anyOverlay || extraOverlay || ptzOverlayVisible ? (
+              liveBoxes || extraOverlay || ptzOverlayVisible ? (
                 <>
-                  {anyOverlay && (
-                    <DetectionOverlay
-                      detections={detections!}
-                      showPhaseIndicator={false}
-                      showMotionZones={showMotion}
-                      showMotionRaw={showMotion}
-                      showDetections={showDetections}
-                      showMoving={showMoving}
-                      showStationary={showStationary}
-                      {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
-                    />
+                  {liveBoxes && (
+                    <ImageRect box={liveBox} testId="live-image-overlay">
+                      {anyOverlay && (
+                        <DetectionOverlay
+                          detections={detections!}
+                          showPhaseIndicator={false}
+                          showMotionZones={showMotion}
+                          showMotionRaw={showMotion}
+                          showDetections={showDetections}
+                          showMoving={showMoving}
+                          showStationary={showStationary}
+                          {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
+                        />
+                      )}
+                      {zonesShown ? zonesOverlay : null}
+                    </ImageRect>
                   )}
                   {extraOverlay}
                   {ptzOverlayVisible && ptzOverlay}
@@ -1090,17 +1139,22 @@ export function StreamPanel({
           // events from the Konva stage. The toolbar Play button stays
           // wired regardless.
           imageOverlay={
-            snapshotBoxes ? (
-              <DetectionOverlay
-                detections={detections!}
-                showPhaseIndicator={false}
-                showMotionZones={showMotion}
-                showMotionRaw={showMotion}
-                showDetections={showDetections}
-                showMoving={showMoving}
-                showStationary={showStationary}
-                {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
-              />
+            snapshotBoxes || zonesShown ? (
+              <>
+                {snapshotBoxes ? (
+                  <DetectionOverlay
+                    detections={detections!}
+                    showPhaseIndicator={false}
+                    showMotionZones={showMotion}
+                    showMotionRaw={showMotion}
+                    showDetections={showDetections}
+                    showMoving={showMoving}
+                    showStationary={showStationary}
+                    {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
+                  />
+                ) : null}
+                {zonesShown ? zonesOverlay : null}
+              </>
             ) : null
           }
           extraOverlay={
@@ -1148,6 +1202,38 @@ export function containedImageBox(naturalWidth: number, naturalHeight: number): 
   return { left: (100 - width) / 2, top: 0, width, height: 100 }
 }
 
+interface NaturalSize {
+  readonly w: number
+  readonly h: number
+}
+
+/** Positions frame-normalised overlays over the picture's own rect (see `containedImageBox`). */
+function ImageRect({
+  box,
+  testId,
+  children,
+}: {
+  readonly box: ContainedBox
+  readonly testId: string
+  readonly children: ReactNode
+}) {
+  return (
+    <div
+      data-testid={testId}
+      className="absolute"
+      // ui-check-ok: computed geometry (percent of the image rect)
+      style={{
+        left: `${String(box.left)}%`,
+        top: `${String(box.top)}%`,
+        width: `${String(box.width)}%`,
+        height: `${String(box.height)}%`,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 // ── SnapshotPreview ──────────────────────────────────────────────────────────
 
 function SnapshotPreview({
@@ -1175,7 +1261,7 @@ function SnapshotPreview({
   readonly suppressPlayHover?: boolean
 }) {
   const t = useUiText()
-  const [natural, setNatural] = useState<{ readonly w: number; readonly h: number } | null>(null)
+  const [natural, setNatural] = useState<NaturalSize | null>(null)
   const imageBox = containedImageBox(natural?.w ?? 0, natural?.h ?? 0)
   // Keep the last-known image visible while a refresh is in flight.
   // The header refresh button already shows a spinner — flashing the
@@ -1194,19 +1280,9 @@ function SnapshotPreview({
           }
         />
         {imageOverlay ? (
-          <div
-            data-testid="snapshot-image-overlay"
-            className="absolute"
-            style={{
-              // ui-check-ok: computed geometry (percent of the image rect)
-              left: `${String(imageBox.left)}%`,
-              top: `${String(imageBox.top)}%`,
-              width: `${String(imageBox.width)}%`,
-              height: `${String(imageBox.height)}%`,
-            }}
-          >
+          <ImageRect box={imageBox} testId="snapshot-image-overlay">
             {imageOverlay}
-          </div>
+          </ImageRect>
         ) : null}
         {!suppressPlayHover && (
           <button

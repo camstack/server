@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A camera's device card opens its history in the card's own bounded History view instead of stretching the page
 - StreamPanel can offer a snapshot download and draw detection boxes on the snapshot
 - A camera snapshot draws detection boxes and motion inside the image's own rect, so a rotated or 4:3 camera is no longer offset
+- StreamPanel: a Show zones switch (off by default, read-only ZonesReadOnlyLayer sharing the zone editor's drawing model) and live-view overlays now follow the video's real picture rect instead of the letterboxed box
 
 ## [1.2.484] - 2026-11-20
 

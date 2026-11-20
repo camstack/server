@@ -14,27 +14,14 @@
  * Every `Zone.points` entry is already a `{ x, y }` normalized point, which is
  * structurally a `MaskPoint`, so the round-trip never reshapes coordinates.
  */
-import type { MaskShape, MaskShapeKind, MaskPoint } from '@camstack/types'
-import type { MaskShapeItem } from '@camstack/ui-library'
+import type { MaskShapeKind } from '@camstack/types'
+import type { CanvasZone as Zone, CanvasZoneKind as ZoneKind } from '@camstack/ui-library'
+import { zoneToItem } from '@camstack/ui-library'
 
-export type ZoneKind = 'polygon' | 'tripwire'
-
-export interface Zone {
-  id: string
-  name: string
-  kind: ZoneKind
-  color: string
-  points: MaskPoint[] // normalized 0-1
-}
-
-/** Map a domain `Zone` onto one editable item on the shared drawing plane. */
-export function zoneToItem(zone: Zone): MaskShapeItem {
-  const shape: MaskShape =
-    zone.kind === 'tripwire'
-      ? { kind: 'line', points: zone.points }
-      : { kind: 'polygon', points: zone.points }
-  return { id: zone.id, label: zone.name, color: zone.color, shape }
-}
+// The model and the Zone -> item mapping live in ui-library, shared with the
+// read-only zones layer; re-exported so the editor keeps its imports.
+export type { Zone, ZoneKind }
+export { zoneToItem }
 
 /** The domain kind a freshly-drawn shape maps back to. */
 export function shapeKindToZoneKind(kind: MaskShapeKind): ZoneKind {

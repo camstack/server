@@ -34,6 +34,10 @@ export default defineFixtures({
   area: 'camera-card',
   description: 'Camera card: generic battery / sleep / motion state on cameras 101 and 102',
   handlers: {
+    'deviceManager.getDevice': (i: unknown) => run(cameraArea, 'deviceManager.getDevice', i),
+    'deviceManager.getDeviceAggregate': (i: unknown) =>
+      run(cameraArea, 'deviceManager.getDeviceAggregate', i),
+    'deviceManager.getChildren': [],
     'deviceManager.getBindings': (i: { deviceId?: number }) => {
       const base = run(historyArea, 'deviceManager.getBindings', i) as {
         deviceId: number

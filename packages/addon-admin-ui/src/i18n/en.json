@@ -9644,7 +9644,8 @@
       "cameraSnapshot": "Camera snapshot",
       "download": "Download",
       "downloadSnapshot": "Download snapshot",
-      "refreshSnapshot": "Refresh snapshot"
+      "refreshSnapshot": "Refresh snapshot",
+      "showZones": "Show zones"
     },
     "addonGlobalSettingsForm": {
       "hide": "hide",
