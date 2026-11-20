@@ -439,6 +439,7 @@
   "embeddingEncoder.encodeText": "admin",
   "embeddingEncoder.getInfo": "admin",
   "embeddingEncoder.resetFailedModels": "admin",
+  "error.listFaultTypes": "protected",
   "faceGallery.assignFace": "admin",
   "faceGallery.assignFaces": "admin",
   "faceGallery.auditIdentitySamples": "admin",

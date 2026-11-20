@@ -153,6 +153,8 @@ export interface NcSystemEventFilterVisibility {
   readonly commandActions: boolean
   readonly commandOutcomes: boolean
   readonly commandActorKinds: boolean
+  /** The fault-code picker — only with a `device-attention-*` kind. */
+  readonly faultCodes: boolean
 }
 
 /**
@@ -181,6 +183,7 @@ export function systemEventFilterVisibility(
     commandActions: systemEventFilterAppliesToAnyKind(kinds, 'commandActions'),
     commandOutcomes: systemEventFilterAppliesToAnyKind(kinds, 'commandOutcomes'),
     commandActorKinds: systemEventFilterAppliesToAnyKind(kinds, 'commandActorKinds'),
+    faultCodes: systemEventFilterAppliesToAnyKind(kinds, 'faultCodes'),
   }
 }
 
@@ -214,6 +217,7 @@ export function systemEventFilterVisibilityFor(
     commandActions: allowed.includes('commandActions') && byKind.commandActions,
     commandOutcomes: allowed.includes('commandOutcomes') && byKind.commandOutcomes,
     commandActorKinds: allowed.includes('commandActorKinds') && byKind.commandActorKinds,
+    faultCodes: allowed.includes('faultCodes') && byKind.faultCodes,
   }
 }
 
@@ -369,6 +373,8 @@ export interface NcSystemEventFilterPatch {
   readonly deviceTypes?: readonly string[] | undefined
   readonly nodeIds?: readonly string[] | undefined
   readonly packageNames?: readonly string[] | undefined
+  /** `device-attention-*` only: the fault codes; empty = any fault. */
+  readonly faultCodes?: readonly string[] | undefined
   /** The rule's consumable threshold (D642); `undefined` = the default. */
   readonly consumableLowPercent?: number | undefined
 }
@@ -395,6 +401,7 @@ export function patchSystemEventFilters(
   const deviceTypes = pick(patch, 'deviceTypes', value?.deviceTypes)
   const nodeIds = pick(patch, 'nodeIds', value?.nodeIds)
   const packageNames = pick(patch, 'packageNames', value?.packageNames)
+  const faultCodes = pick(patch, 'faultCodes', value?.faultCodes)
   const consumableLowPercent = Object.prototype.hasOwnProperty.call(patch, 'consumableLowPercent')
     ? patch.consumableLowPercent
     : value?.consumableLowPercent
@@ -405,6 +412,7 @@ export function patchSystemEventFilters(
     ...(deviceTypes !== undefined ? { deviceTypes: [...deviceTypes] } : {}),
     ...(nodeIds !== undefined ? { nodeIds: [...nodeIds] } : {}),
     ...(packageNames !== undefined ? { packageNames: [...packageNames] } : {}),
+    ...(faultCodes !== undefined ? { faultCodes: [...faultCodes] } : {}),
     ...(consumableLowPercent !== undefined ? { consumableLowPercent } : {}),
   }
 }
@@ -437,6 +445,7 @@ function withKinds(
   const deviceTypes = visible.deviceTypes ? value?.deviceTypes : undefined
   const nodeIds = visible.nodes ? value?.nodeIds : undefined
   const packageNames = visible.packages ? value?.packageNames : undefined
+  const faultCodes = visible.faultCodes ? value?.faultCodes : undefined
   const consumableLowPercent = visible.consumableThreshold ? value?.consumableLowPercent : undefined
   return {
     kinds: [...kinds],
@@ -447,6 +456,7 @@ function withKinds(
     ...(deviceTypes && deviceTypes.length > 0 ? { deviceTypes: [...deviceTypes] } : {}),
     ...(nodeIds && nodeIds.length > 0 ? { nodeIds: [...nodeIds] } : {}),
     ...(packageNames && packageNames.length > 0 ? { packageNames: [...packageNames] } : {}),
+    ...(faultCodes && faultCodes.length > 0 ? { faultCodes: [...faultCodes] } : {}),
     ...(consumableLowPercent !== undefined ? { consumableLowPercent } : {}),
   }
 }

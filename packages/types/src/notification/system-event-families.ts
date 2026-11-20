@@ -121,6 +121,7 @@ export const NC_SYSTEM_EVENT_FAMILY_FILTERS: Readonly<
     'commandActions',
     'commandOutcomes',
     'commandActorKinds',
+    'faultCodes',
   ],
   system: ['nodeIds', 'packageNames'],
   alarm: ['deviceIds'],

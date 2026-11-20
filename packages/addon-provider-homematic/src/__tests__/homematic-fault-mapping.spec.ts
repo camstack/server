@@ -7,7 +7,9 @@ import type { HmSysVar, HmValue } from 'nodehomematic'
 import { describe, expect, it } from 'vitest'
 import {
   maintenanceFaultReading,
+  maintenanceFaultTypes,
   watchdogFaultReading,
+  watchdogFaultTypes,
   WATCHDOG_FAULTS,
 } from '../homematic-fault-mapping.js'
 
@@ -128,5 +130,25 @@ describe('maintenanceFaultReading', () => {
   it('ignores an ERROR_ parameter that is not a boolean flag', () => {
     const reading = maintenanceFaultReading(values({ UNREACH: false, ERROR_CODE: 7 }), NOW)
     expect(reading.active).toBe(false)
+  })
+})
+
+describe('the declared fault catalogs', () => {
+  it('the gateway catalog lists every WatchDog code with its words', () => {
+    const types = watchdogFaultTypes()
+    expect(types.map((t) => t.code)).toEqual(
+      expect.arrayContaining(['hb-rf-eth-connection', 'low-voltage', 'rfd-restart']),
+    )
+    expect(types.find((t) => t.code === 'hb-rf-eth-connection')).toEqual({
+      code: 'hb-rf-eth-connection',
+      label: 'HB-RF-ETH connection lost',
+      severity: 'error',
+    })
+  })
+
+  it('the device catalog lists the MAINTENANCE flags', () => {
+    expect(maintenanceFaultTypes().map((t) => t.code)).toEqual(
+      expect.arrayContaining(['UNREACH', 'LOW_BAT', 'CONFIG_PENDING']),
+    )
   })
 })

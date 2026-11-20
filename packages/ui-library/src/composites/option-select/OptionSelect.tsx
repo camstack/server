@@ -16,6 +16,7 @@ import { Badge } from '../../primitives/badge'
 import { TopLayerPortal } from '../../primitives/top-layer-portal'
 import {
   computeListboxCoords,
+  listboxAnchorStyle,
   isScrollInside,
   type ListboxCoords,
 } from '../../lib/listbox-position'
@@ -536,8 +537,7 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
           style={
             {
               position: 'fixed',
-              top: coords.top,
-              left: coords.left,
+              ...listboxAnchorStyle(coords),
               width: coords.width,
               maxHeight: coords.maxHeight,
               zIndex: 9999,

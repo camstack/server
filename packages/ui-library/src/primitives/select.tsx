@@ -15,7 +15,12 @@ import {
 } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '../lib/cn'
-import { computeListboxCoords, isScrollInside, type ListboxCoords } from '../lib/listbox-position'
+import {
+  computeListboxCoords,
+  isScrollInside,
+  listboxAnchorStyle,
+  type ListboxCoords,
+} from '../lib/listbox-position'
 import { findByPrefix, nextEnabled, parseSelectEntries, type SelectEntry } from './select-model'
 import { TopLayerPortal } from './top-layer-portal'
 
@@ -377,8 +382,7 @@ export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLB
               // ui-check-ok: computed viewport geometry of the floating list
               style={{
                 position: 'fixed',
-                top: coords.top,
-                left: coords.left,
+                ...listboxAnchorStyle(coords),
                 width: coords.width,
                 maxHeight: coords.maxHeight,
                 zIndex: 9999,

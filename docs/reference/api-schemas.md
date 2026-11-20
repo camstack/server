@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1116 shared schemas.**
+**1118 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2721,6 +2721,10 @@ Enum: `"empty-state" \| "duplicate-name" \| "duplicate-id" \| "too-many" \| "not
 - `direction?`: `FanDirectionSchema`
 - `oscillationAxes?`: `{ horizontal?: FanPresetAxisSchema; vertical?: FanPresetAxisSchema }`
 
+### `FaultTypesSchema`
+
+- `types`: `DeviceFaultSchema[]`
+
 ### `FeatureManifestSchema`
 
 - `streaming`: `boolean`
@@ -3430,6 +3434,10 @@ Enum: `"idle" \| "mowing" \| "paused" \| "docked" \| "error"`
 ### `LinkedDevicesModeSchema`
 
 Enum: `"manual"`
+
+### `ListFaultTypesInputSchema`
+
+- `deviceId`: `number`
 
 ### `LiveViewerCountSchema`
 
@@ -4857,6 +4865,7 @@ Enum: `"rule" \| "section"`
 - `nodeIds?`: `string[]`
 - `packageNames?`: `string[]`
 - `commandActions?`: `string[]`
+- `faultCodes?`: `string[]`
 - `commandOutcomes?`: `("confirmed" \| "already" \| "unconfirmed" \| "failed")[]`
 - `commandActorKinds?`: `("user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node")[]`
 - `consumableLowPercent?`: `number`

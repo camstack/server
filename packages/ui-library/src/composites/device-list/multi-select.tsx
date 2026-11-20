@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefO
 import { TopLayerPortal } from '../../primitives/top-layer-portal'
 import {
   computeListboxCoords,
+  listboxAnchorStyle,
   isScrollInside,
   type ListboxCoords,
 } from '../../lib/listbox-position'
@@ -141,8 +142,7 @@ export function MultiSelectDropdown({
           // ui-check-ok: fixed portal anchor from trigger getBoundingClientRect (same as Select)
           style={{
             position: 'fixed',
-            top: coords.top,
-            left: coords.left,
+            ...listboxAnchorStyle(coords),
             minWidth: coords.width,
             maxHeight: coords.maxHeight,
           }}

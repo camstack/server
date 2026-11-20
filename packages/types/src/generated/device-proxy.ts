@@ -693,6 +693,7 @@ export function createDeviceProxy(
   }
 
   const errorInterface = {
+    listFaultTypes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('error', 'error', 'listFaultTypes', 'query', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('error', 'error', 'getStatus', 'query', input, undefined, options),
   }
 

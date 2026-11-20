@@ -31,7 +31,13 @@ import {
   type DeclareIdentifiersResult,
 } from './declare-identifiers.js'
 import type { RawDeviceIdentifiers } from './device-identifiers.js'
-import { ERROR_STATUS_COLD, errorCapability, type ErrorStatus } from '../capabilities/error.cap.js'
+import {
+  ERROR_STATUS_COLD,
+  errorCapability,
+  type DeviceFaultType,
+  type ErrorStatus,
+} from '../capabilities/error.cap.js'
+import type { InferNativeProvider } from '../capabilities/capability-definition.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
   buildDeviceErrorAlert,
@@ -67,6 +73,8 @@ export abstract class BaseDevice<
   readonly type: DeviceType
   /** True when another process owns the base slices (`options.deviceStatus: 'external'`). */
   private readonly statusIsExternal: boolean
+  /** The fault catalog the integration declared; `[]` until it does. */
+  private faultTypes: readonly DeviceFaultType[] = []
   readonly name: string
   readonly parentDeviceId: number | null
   readonly role?: DeviceRole
@@ -564,10 +572,23 @@ export abstract class BaseDevice<
    * a restart is compared, not announced again.
    */
   protected registerErrorCap(): void {
-    this.ctx.registerNativeCap?.(errorCapability, {})
+    const provider: InferNativeProvider<typeof errorCapability> = {
+      listFaultTypes: async () => ({ types: [...this.faultTypes] }),
+    }
+    this.ctx.registerNativeCap?.(errorCapability, provider)
     if (this.runtimeState.getCapState(errorCapability.name) === undefined) {
       this.setCapSlice(errorCapability, ERROR_STATUS_COLD)
     }
+  }
+
+  /**
+   * Declare the fault kinds this device's integration can raise (code, label,
+   * severity), served by `error.listFaultTypes` so a rule's code picker is
+   * offered the integration's own words. The default is `[]`; a fault outside
+   * the catalog is still published. Call it before or after `registerErrorCap`.
+   */
+  protected declareFaultTypes(types: readonly DeviceFaultType[]): void {
+    this.faultTypes = types.map((type) => ({ ...type }))
   }
 
   /**

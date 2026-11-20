@@ -249,6 +249,16 @@ describe('HomematicGatewayDevice error cap', () => {
     expect(r.errorSlice()).toMatchObject({ active: null, code: null, lastFetchedAt: 0 })
   })
 
+  it('serves its WatchDog codes through error.listFaultTypes', async () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    expect(await callCap(r.providers, 'error', 'listFaultTypes', { deviceId: 7 })).toMatchObject({
+      types: expect.arrayContaining([
+        { code: 'hb-rf-eth-connection', label: 'HB-RF-ETH connection lost', severity: 'error' },
+      ]),
+    })
+  })
+
   it('publishes each WatchDog variable that is on as a fault, the error tier first', async () => {
     const r = rig(gatewayConfig)
     const device = new HomematicGatewayDevice(r.ctx)

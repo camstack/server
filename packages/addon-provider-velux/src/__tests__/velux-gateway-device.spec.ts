@@ -100,6 +100,10 @@ function publish(
     getConnection: () => ({ host: '192.168.20.65', password: 'secret' }),
     status: 'connected',
     firmware: '0.2.0.0.71.0',
+    attempted: true,
+    loginRefused: false,
+    unreachableSince: null,
+    lastError: null,
     ...source,
     // The stub implements only what the gateway device calls on a client.
     client: client as unknown as VeluxGatewayClient | null,

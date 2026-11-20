@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1536 methods.**
+**214 capabilities · 1537 methods.**
 
 ## Method index
 
@@ -494,6 +494,7 @@
 | `energySystem.getStatus` | query | protected | energy-system (auto) |
 | `enumSensor.getStatus` | query | protected | enum-sensor (auto) |
 | `error.getStatus` | query | protected | error (auto) |
+| `error.listFaultTypes` | query | protected | error |
 | `eventEmitter.getStatus` | query | protected | event-emitter (auto) |
 | `faceGallery.listIdentities` | query | protected | face-gallery |
 | `faceGallery.createIdentity` | mutation | admin | face-gallery |
@@ -2800,7 +2801,7 @@
 
 ### `error` → `error.*`
 
-- **Source:** `packages/types/src/capabilities/error.cap.ts:54`
+- **Source:** `packages/types/src/capabilities/error.cap.ts:67`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IErrorProvider`
@@ -2809,6 +2810,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `error.getStatus` | query | protected | `{ deviceId: number }` | `ErrorStatusSchema` |
+| listFaultTypes | `error.listFaultTypes` | query | protected | `ListFaultTypesInputSchema` | `FaultTypesSchema` |
 
 ### `event-emitter` → `eventEmitter.*`
 
@@ -3724,7 +3726,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3394`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3401`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`

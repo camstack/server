@@ -480,6 +480,7 @@
   "energySystem.getStatus": "viewer",
   "enumSensor.getStatus": "viewer",
   "error.getStatus": "viewer",
+  "error.listFaultTypes": "viewer",
   "eventEmitter.getStatus": "viewer",
   "faceGallery.assignFace": "feature:face-assignment",
   "faceGallery.assignFaces": "feature:face-assignment",

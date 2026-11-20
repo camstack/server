@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Power source setting no longer offers an empty choice.
+
+## [1.2.254] - 2026-11-20
+
+### Changed
+
 - The default Reolink integration offers only the camera mailbox (no connection fields, no Test); the camera mailbox link no longer appears on NVR / Home Hub integrations
 
 ### Fixed

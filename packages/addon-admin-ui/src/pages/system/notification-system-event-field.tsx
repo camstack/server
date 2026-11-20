@@ -61,6 +61,7 @@ import { RuleScopeField } from './RuleScopeField'
 import { NodeScopePicker, PackagePicker } from './scope-pickers'
 import { useHubRuleSchemaVerdict } from './hub-rule-schema-probe'
 import { useTranslation } from 'react-i18next'
+import { useFaultTypeOptions } from './useFaultTypeOptions'
 
 /** Where the cluster-wide battery threshold and reminder interval live: the
  *  hub's addon settings, section "Battery & offline alerts" of the post-analysis
@@ -130,6 +131,7 @@ export function SystemEventField({
     [cameras],
   )
   const visible = systemEventFilterVisibilityFor(family, kinds)
+  const faultTypes = useFaultTypeOptions(value?.deviceIds, visible.faultCodes)
   // D642 review I2: an old hub strips the threshold and refuses the tank
   // kinds without a word. Asked only by the family that has them.
   const hubSchema = useHubRuleSchemaVerdict(family === 'device-events')
@@ -275,6 +277,28 @@ export function SystemEventField({
                 }),
               )
             }}
+          />
+        </div>
+      )}
+
+      {visible.faultCodes && (
+        <div data-testid="system-event-fault-codes">
+          <label className={LABEL_CLASS}>
+            {t('system.notificationSystemEventField.faultCodes', 'Fault codes')}
+          </label>
+          <OptionListField
+            options={faultTypes.options}
+            value={value?.faultCodes ?? []}
+            loading={faultTypes.loading}
+            onChange={(next) => onChange(patchSystemEventFilters(value, { faultCodes: next }))}
+            emptyHint={t(
+              'system.notificationSystemEventField.faultCodesEmpty',
+              'No fault codes declared — type one, or leave empty for any fault.',
+            )}
+            placeholder={t(
+              'system.notificationSystemEventField.faultCodePlaceholder',
+              'Fault code… (empty = any fault)',
+            )}
           />
         </div>
       )}

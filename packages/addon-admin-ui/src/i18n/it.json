@@ -1200,7 +1200,10 @@
       "kindOfSystemRule": "Tipo di regola di sistema",
       "oneRuleAnswersOneQuestion": "Una regola risponde a una domanda: sui dispositivi, sull'installazione o sull'allarme. Cambiarla riparte da un elenco eventi vuoto.",
       "alarmPictures": "— quando una regola fa scattare l'allarme, questa notifica porta le immagini di quella regola.",
-      "hubOutdated": "Il server di questo hub è precedente alle soglie dei consumabili per regola e agli avvisi dei serbatoi: scarta la soglia di una regola al salvataggio (la regola giudica poi al {{percent}}%) e rifiuta gli eventi dei serbatoi. Aggiorna prima il server (@camstack/server) su ogni nodo."
+      "hubOutdated": "Il server di questo hub è precedente alle soglie dei consumabili per regola e agli avvisi dei serbatoi: scarta la soglia di una regola al salvataggio (la regola giudica poi al {{percent}}%) e rifiuta gli eventi dei serbatoi. Aggiorna prima il server (@camstack/server) su ogni nodo.",
+      "faultCodes": "Codici di guasto",
+      "faultCodesEmpty": "Nessun codice di guasto dichiarato: scrivine uno, o lascia vuoto per qualsiasi guasto.",
+      "faultCodePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)"
     },
     "scopePickers": {
       "theNodeHistoryCouldNot": "Impossibile leggere la cronologia dei nodi — i nodi offline potrebbero mancare da questo elenco.",
@@ -11881,7 +11884,7 @@
     },
     "structuralTabs": {
       "overview": "Panoramica",
-      "config": "Configurazione",
+      "config": "Impostazioni dispositivo",
       "customize": "Personalizza",
       "detectionPipeline": "Pipeline di rilevamento",
       "bindings": "Associazioni",

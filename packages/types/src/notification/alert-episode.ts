@@ -23,6 +23,7 @@ import {
   type AlertSeverity,
   type AlertStatus,
 } from '../capabilities/alerts.cap.js'
+import { DeviceFaultSchema, type DeviceFault } from '../capabilities/error.cap.js'
 import type { NcSystemEventKind } from '../capabilities/notification-rules.cap.js'
 
 export type AlertEpisodePhase = 'raised' | 'resolved'
@@ -41,6 +42,8 @@ export const AlertEpisodePayloadSchema = z.object({
   nodeId: z.string().optional(),
   /** The alert's own action link (where the operator acts on it), when it has one. */
   actionUrl: z.string().optional(),
+  /** A device fault episode: every active fault (`metadata.faults`), principal first. */
+  faults: z.array(DeviceFaultSchema).optional(),
   at: z.number(),
 })
 
@@ -110,12 +113,19 @@ export function deviceAttentionKind(
   return phase === 'raised' ? 'device-attention-required' : 'device-attention-resolved'
 }
 
+/** The faults a device-error alert carries in its metadata; none when absent or malformed. */
+function alertFaults(alert: Pick<Alert, 'metadata'>): DeviceFault[] | undefined {
+  const parsed = z.array(DeviceFaultSchema).safeParse(alert.metadata?.['faults'])
+  return parsed.success && parsed.data.length > 0 ? parsed.data : undefined
+}
+
 export function alertEpisodePayload(
   alert: Alert,
   phase: AlertEpisodePhase,
   at: number,
 ): AlertEpisodePayload {
   const nodeId = alertNodeId(alert)
+  const faults = alertFaults(alert)
   return {
     phase,
     episodeId: alertEpisodeId(alert),
@@ -129,6 +139,7 @@ export function alertEpisodePayload(
       : {}),
     ...(nodeId !== undefined ? { nodeId } : {}),
     ...(alert.action?.href !== undefined ? { actionUrl: alert.action.href } : {}),
+    ...(faults !== undefined ? { faults } : {}),
     at,
   }
 }

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9040 source files · 246 units claimed by at least one document (9009 files).**
+**253 units · 9043 source files · 246 units claimed by at least one document (9012 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -26,7 +26,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/pipeline-analytics` | 479 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 249 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +235 more, 41 ADRs | 2026-11-16 |
 | `packages/addon-post-analysis/src/notification-center` | 227 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +93 more, 27 ADRs | 2026-11-12 |
-| `packages/addon-admin-ui/src/pages` | 206 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +59 more, 8 ADRs | 2026-11-16 |
+| `packages/addon-admin-ui/src/pages` | 208 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +59 more, 8 ADRs | 2026-11-16 |
 | `packages/addon-pipeline/src/stream-broker` | 194 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +62 more, 21 ADRs | 2026-11-12 |
 | `packages/system/src/kernel` | 181 | `alerts-and-health`, `capabilities`, `detection-execution`, `device-model`, `kernel`, `storage`, `transport`, `update-and-release` | `architecture/overview.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +105 more, 21 ADRs | 2026-11-02 |
 | `packages/addon-pipeline/src/recorder` | 115 | `recorder` | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +77 more, 10 ADRs | 2026-11-12 |
@@ -77,10 +77,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-ecowitt` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homematic/src/ui` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-reolink/src/clips` | 27 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +20 more | 2026-11-08 |
+| `packages/addon-provider-velux` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-11-08 |
 | `packages/types/src/addon` | 27 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1013-one-instance-model.md`, `architecture/secrets-keychain.md`, +18 more, 1 ADR | 2026-10-18 |
 | `packages/addon-osd-manager` | 26 | `device-surfaces` | `architecture/osd-manager.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md`, +1 more, 1 ADR | 2026-11-10 |
 | `packages/addon-provider-homematic` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
-| `packages/addon-provider-velux` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-11-08 |
 | `packages/addon-export-alexa/src/endpoints` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +15 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-mqtt-ha` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +8 more, 1 ADR | 2026-10-01 |

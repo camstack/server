@@ -213,3 +213,19 @@ export function maintenanceFaultReading(
   if (known === 0) return unknown(now)
   return reading(faults, now)
 }
+
+// ── the declared fault catalogs (`error.listFaultTypes`) ───────────────
+
+/** The faults the CCU box can raise: its WatchDog variables. */
+export function watchdogFaultTypes(): DeviceFault[] {
+  return WATCHDOG_FAULTS.map(toFault)
+}
+
+/**
+ * The faults a device's MAINTENANCE channel can raise, by their fixed flags.
+ * The per-model `ERROR_*` flags are discovered from the channel, so they are
+ * published when raised but not listed here.
+ */
+export function maintenanceFaultTypes(): DeviceFault[] {
+  return MAINTENANCE_FAULTS.map(toFault)
+}

@@ -10,6 +10,11 @@ import {
   rebootCapability,
 } from '@camstack/types'
 import { veluxGatewayDeviceSchema } from '../config.js'
+import {
+  VELUX_GATEWAY_FAULT_TYPES,
+  VELUX_UNREACHABLE_FAULT_MS,
+  veluxGatewayFaultReading,
+} from '../velux-gateway-faults.js'
 import { gatewayMetadataPatch } from '../velux-gateway-metadata.js'
 import { veluxGateways } from '../velux-node-resolver.js'
 
@@ -34,6 +39,8 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
   private snapshotUnsub: (() => void) | null = null
   /** The last metadata written, so a push that changed nothing writes nothing. */
   private lastMetadataKey = ''
+  /** Fires when a run of failures crosses the unreachable threshold, so the fault is raised without another tick. */
+  private faultTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = veluxGatewayDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -42,6 +49,8 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
     this.online = this.sessionUp()
     this.registerRebootCap()
     this.registerAdminLinkCap()
+    this.declareFaultTypes(VELUX_GATEWAY_FAULT_TYPES)
+    this.registerErrorCap()
     void this.updateSourceInfo({ id: cfg.nativeId, system: 'velux' })
   }
 
@@ -54,6 +63,7 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
   }
 
   override async removeDevice(): Promise<void> {
+    this.clearFaultTimer()
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()
@@ -65,6 +75,7 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
 
   /** Follow the session: online state, and the box's firmware and host as device metadata. */
   private async sync(): Promise<void> {
+    await this.syncFaults()
     const up = this.sessionUp()
     if (this.online !== up) {
       this.markOnline(up)
@@ -91,6 +102,43 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
         tags: { deviceId: this.id },
         meta: { error: errMsg(err) },
       })
+    }
+  }
+
+  private clearFaultTimer(): void {
+    if (this.faultTimer !== null) clearTimeout(this.faultTimer)
+    this.faultTimer = null
+  }
+
+  /**
+   * Publish the session's fault (`velux-gateway-faults.ts`): `connection-lost`
+   * while the session is down, `unreachable` once the run of failures is old
+   * enough, `auth-failed` on a refused login, cleared on connect. Cold until
+   * the first connect attempt. A one-shot timer carries a young run of failures
+   * over the threshold, since no event arrives when time merely passes.
+   */
+  private async syncFaults(): Promise<void> {
+    this.clearFaultTimer()
+    const manager = veluxGateways.getManager(this.integrationId)
+    const now = Date.now()
+    const reading = veluxGatewayFaultReading(manager, now)
+    await this.publishError(reading)
+    if (reading.active === null && manager !== null && !manager.attempted) {
+      this.ctx.logger.debug('Velux gateway: no connect attempt yet, faults stay unknown', {
+        tags: { deviceId: this.id },
+      })
+    }
+    const since = manager?.unreachableSince ?? null
+    if (reading.code === 'connection-lost' && since !== null) {
+      const remaining = VELUX_UNREACHABLE_FAULT_MS - (now - since)
+      this.faultTimer = setTimeout(
+        () => {
+          this.faultTimer = null
+          void this.syncFaults()
+        },
+        Math.max(remaining, 0),
+      )
+      this.faultTimer.unref?.()
     }
   }
 

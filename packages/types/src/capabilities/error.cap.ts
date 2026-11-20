@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
 
 /** How loudly a fault wants the operator. Both tiers raise the attention event. */
@@ -15,6 +15,19 @@ export const DeviceFaultSchema = z.object({
   severity: DeviceErrorSeveritySchema,
 })
 export type DeviceFault = z.infer<typeof DeviceFaultSchema>
+
+/** One kind of fault a device CAN raise: the integration's own declared catalog entry. */
+export const DeviceFaultTypeSchema = DeviceFaultSchema
+export type DeviceFaultType = z.infer<typeof DeviceFaultTypeSchema>
+
+/**
+ * The fault catalog of a device, declared by its integration at runtime (never a
+ * code enum). A fault outside the catalog is still published and still matches
+ * a rule that names no code.
+ */
+export const ListFaultTypesInputSchema = z.object({ deviceId: z.number().int().nonnegative() })
+export const FaultTypesSchema = z.object({ types: z.array(DeviceFaultTypeSchema) })
+export type FaultTypes = z.infer<typeof FaultTypesSchema>
 
 /**
  * The fault a device reports right now. One slice per device.
@@ -56,7 +69,13 @@ export const errorCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  methods: {},
+  methods: {
+    /** The fault codes this device's integration can raise; `[]` when it declares none. */
+    listFaultTypes: method(ListFaultTypesInputSchema, FaultTypesSchema, {
+      kind: 'query',
+      auth: 'protected',
+    }),
+  },
   status: {
     schema: ErrorStatusSchema,
     kind: 'push',

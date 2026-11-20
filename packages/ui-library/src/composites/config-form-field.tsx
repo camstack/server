@@ -445,6 +445,20 @@ function BooleanField({
   )
 }
 
+/** A field that carries a non-empty default always has a value to fall back on. */
+function hasUsableDefault(field: { readonly default?: unknown }): boolean {
+  return field.default !== undefined && field.default !== null && field.default !== ''
+}
+
+/**
+ * The "— Select —" entry stands for "no value yet": offered only when the
+ * field is optional, has no default to fall back on, and the schema defines no
+ * empty option of its own.
+ */
+export function selectOffersPlaceholder(field: ConfigSelectField): boolean {
+  return !field.required && !hasUsableDefault(field) && !field.options.some((o) => o.value === '')
+}
+
 function SelectField({
   field,
   values,
@@ -465,9 +479,8 @@ function SelectField({
   // define a value="" entry. Otherwise two options share the same value and
   // the DOM picks the placeholder over the schema's semantic option (e.g.
   // "Auto (matches backend)").
-  const hasEmptyOption = field.options.some((o) => o.value === '')
   const options = [
-    ...(!field.required && !hasEmptyOption
+    ...(selectOffersPlaceholder(field)
       ? [
           {
             value: '',
@@ -2198,7 +2211,7 @@ function AddonActionSelectField({
               disabled={disabled}
               onChange={(e) => onChange(e.target.value)}
             >
-              {!hasEmptyValueOption && (
+              {!hasEmptyValueOption && !hasUsableDefault(field) && (
                 <option value="">{t('uiLibrary.configFormField.select', '— Select —')}</option>
               )}
               {(options ?? []).map((row, i) => {

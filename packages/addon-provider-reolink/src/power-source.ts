@@ -190,6 +190,7 @@ export function buildPowerSourceSettingsSection(input: {
           label: 'Power source',
           labelKey: 'provider-reolink:schema.s_power-source.powerSource.label',
           default: source,
+          required: true,
           options: [
             {
               value: 'adapter',

@@ -16,7 +16,7 @@ import { hmName } from './hm-name.js'
 import { buttonEventsSection } from './hm-button-events-section.js'
 import { devicePanelSection } from './hm-device-panel-section.js'
 import { publishKeyLinkStates, storedKeyLinkStates } from './hm-key-link-states.js'
-import { maintenanceFaultReading } from '../homematic-fault-mapping.js'
+import { maintenanceFaultReading, maintenanceFaultTypes } from '../homematic-fault-mapping.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
@@ -149,6 +149,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     }
     this.maintenanceChannel = channel.address
     for (const dp of channel.dataPoints) this.maintenanceValues.set(dp.parameter, dp.value)
+    this.declareFaultTypes(maintenanceFaultTypes())
     this.registerErrorCap()
     this.publishFaults()
   }

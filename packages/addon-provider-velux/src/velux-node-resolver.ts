@@ -13,6 +13,14 @@ export type VeluxNodeSource = {
   readonly status: VeluxGatewayStatus
   /** Firmware the gateway reported on its last connect, or null while unknown. */
   readonly firmware: string | null
+  /** A connect was tried since the manager started; before that the gateway's faults are unknown. */
+  readonly attempted: boolean
+  /** The last login was refused (a wrong password). */
+  readonly loginRefused: boolean
+  /** Ms epoch the current run of "cannot reach it" failures began; null while reachable. */
+  readonly unreachableSince: number | null
+  /** Why the last attempt or session failed, or null. */
+  readonly lastError: string | null
   readonly client: VeluxGatewayClient | null
 }
 

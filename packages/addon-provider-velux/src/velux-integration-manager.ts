@@ -103,6 +103,10 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
   readonly #recovery: VeluxPowerRecovery
   /** When the gateway first became unreachable in the current run of failures; null while reachable. */
   #unreachableSince: number | null = null
+  /** True once a connect was tried; the device's fault state is cold before that. */
+  #attempted = false
+  /** The last failed login was REFUSED (a wrong password), not a connection that could not be made. */
+  #loginRefused = false
   /** One-shot timer at `#unreachableSince + RECOVERY_UNREACHABLE_MS`; the decision never waits for a retry to land after it. */
   #recoveryDeadlineTimer: ReturnType<typeof setTimeout> | null = null
   #lastRecovery: VeluxRecoveryRecord | null = null
@@ -141,6 +145,21 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
   /** Why the last connection attempt failed, or null. */
   get lastError(): string | null {
     return this.#error
+  }
+
+  /** Whether a connect attempt was made since this manager started. */
+  get attempted(): boolean {
+    return this.#attempted
+  }
+
+  /** The gateway refused the login on the last attempt (a wrong password). */
+  get loginRefused(): boolean {
+    return this.#loginRefused
+  }
+
+  /** Ms epoch the current run of "cannot reach it" failures began; null while reachable. */
+  get unreachableSince(): number | null {
+    return this.#unreachableSince
   }
 
   /** Firmware the gateway reported on the last connect, or null while unknown. */
@@ -182,6 +201,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     }
     this.#wanted = true
     this.#attempt = 0
+    this.#loginRefused = false
     this.#clearUnreachable()
     this.#generation += 1
     await this.#connect()
@@ -221,6 +241,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     if (!this.#wanted || this.#client !== null) return
     const generation = this.#generation
     this.#status = 'connecting'
+    this.#attempted = true
     const client = this.#makeClient({
       host: this.#connection.host,
       password: this.#connection.password,
@@ -249,6 +270,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#nodes = new Map(client.listNodes().map((node) => [node.nodeId, node]))
     this.#status = 'connected'
     this.#error = null
+    this.#loginRefused = false
     this.#attempt = 0
     this.#clearUnreachable()
     this.#onConnected(this.#id)
@@ -277,6 +299,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     const refused = err instanceof VeluxLoginRefusedError
     this.#error = errMsg(err)
     this.#status = 'error'
+    this.#loginRefused = refused
     const delay = reconnectDelayMs(this.#attempt, refused)
     this.#attempt += 1
     this.#logger.warn('velux: connect failed', {
@@ -288,6 +311,8 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     })
     this.#scheduleRetry(delay)
     this.#trackUnreachable(err, refused)
+    // The gateway device re-reads its fault state on this tick.
+    this.#onNodesChanged(this.#id)
     void this.#maybeRecover()
   }
 

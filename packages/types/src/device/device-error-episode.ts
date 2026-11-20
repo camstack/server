@@ -1,5 +1,5 @@
 import type { Alert } from '../capabilities/alerts.cap.js'
-import type { ErrorStatus } from '../capabilities/error.cap.js'
+import type { DeviceFault, ErrorStatus } from '../capabilities/error.cap.js'
 
 /**
  * The attention episode of a device fault.
@@ -33,6 +33,15 @@ export function deviceErrorAlertId(deviceId: number): string {
   return `device-error:${String(deviceId)}`
 }
 
+/** Every active fault, the principal first; a status that lists none still names its principal. */
+function activeFaults(status: ErrorStatus): DeviceFault[] {
+  if (status.faults !== undefined && status.faults.length > 0) {
+    return status.faults.map(({ code, label, severity }) => ({ code, label, severity }))
+  }
+  if (status.code === null) return []
+  return [{ code: status.code, label: status.label ?? status.code, severity: status.severity }]
+}
+
 /** The alert that opens an episode. `since` is the fault's own start, else `now`. */
 export function buildDeviceErrorAlert(
   deviceId: number,
@@ -59,6 +68,8 @@ export function buildDeviceErrorAlert(
       episodeId: `${alertId}@${String(startedAt)}`,
       code: status.code,
       deviceSeverity: status.severity,
+      label: status.label,
+      faults: activeFaults(status),
     },
   }
 }

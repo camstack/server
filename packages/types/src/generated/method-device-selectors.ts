@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 648 methods carry a device reference, of which
+ * Coverage: 649 methods carry a device reference, of which
  * 202 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -230,6 +230,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'energySystem.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'enumSensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'error.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'error.listFaultTypes': [{ name: "deviceId", form: "single", optional: false }] as const,
   'eventEmitter.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'faceGallery.getFaceByTrack': [{ name: "deviceId", form: "single", optional: false }] as const,
   'faceGallery.listRecentFaces': [{ name: "deviceId", form: "single", optional: true }, { name: "deviceIds", form: "array", optional: true }] as const,

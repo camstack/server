@@ -3,12 +3,33 @@ const LISTBOX_MAX_HEIGHT_PX = 224 // max-h-56
 const VIEWPORT_MARGIN_PX = 8
 const MIN_LISTBOX_HEIGHT_PX = 96
 
-export type ListboxCoords = {
-  readonly top: number
+interface ListboxCoordsBase {
   readonly left: number
   readonly width: number
   readonly maxHeight: number
-  readonly placement: 'below' | 'above'
+}
+
+/**
+ * A list below its trigger is pinned by its TOP edge; a list above it by its
+ * BOTTOM edge, so a short list still sits `GAP` px over the trigger instead of
+ * floating where a full-height list would have started.
+ */
+export type ListboxCoords =
+  | (ListboxCoordsBase & { readonly placement: 'below'; readonly top: number })
+  | (ListboxCoordsBase & {
+      readonly placement: 'above'
+      readonly bottom: number
+    })
+
+export type ListboxAnchorStyle =
+  | { readonly top: number; readonly left: number }
+  | { readonly bottom: number; readonly left: number }
+
+/** The CSS offsets (`fixed`) that pin a list: `top` below, `bottom` above. */
+export function listboxAnchorStyle(coords: ListboxCoords): ListboxAnchorStyle {
+  return coords.placement === 'below'
+    ? { top: coords.top, left: coords.left }
+    : { bottom: coords.bottom, left: coords.left }
 }
 
 export interface ListboxPositionOptions {
@@ -41,10 +62,16 @@ export function computeListboxCoords(
     Math.min(rect.left, window.innerWidth - width - VIEWPORT_MARGIN_PX),
   )
   if (preferBelow) {
-    return { top: rect.bottom + LISTBOX_GAP_PX, left, width, maxHeight, placement: 'below' }
+    return {
+      top: rect.bottom + LISTBOX_GAP_PX,
+      left,
+      width,
+      maxHeight,
+      placement: 'below',
+    }
   }
   return {
-    top: Math.max(VIEWPORT_MARGIN_PX, rect.top - LISTBOX_GAP_PX - maxHeight),
+    bottom: window.innerHeight - rect.top + LISTBOX_GAP_PX,
     left,
     width,
     maxHeight,

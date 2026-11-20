@@ -10,7 +10,7 @@ import {
 } from '@camstack/types'
 import { homematicGatewayDeviceSchema } from '../config.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
-import { watchdogFaultReading } from '../homematic-fault-mapping.js'
+import { watchdogFaultReading, watchdogFaultTypes } from '../homematic-fault-mapping.js'
 import { gatewayMetadataPatch } from '../homematic-gateway-metadata.js'
 
 /** How often the CCU system variables are re-read: they are a snapshot, the CCU pushes no event for them. */
@@ -51,6 +51,7 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     this.integrationId = cfg.integrationId
     this.online = this.sessionUp()
     this.registerAdminLinkCap()
+    this.declareFaultTypes(watchdogFaultTypes())
     this.registerErrorCap()
     void this.updateSourceInfo({ id: cfg.nativeId, system: 'homematic' })
   }

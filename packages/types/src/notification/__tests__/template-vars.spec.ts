@@ -151,6 +151,22 @@ describe('templateVarsFor', () => {
     )
   })
 
+  it('offers the fault variables only to the device-attention kinds', () => {
+    const on = (kind: NcSystemEventKind): string[] =>
+      names(
+        templateVarsFor({
+          family: 'rule',
+          field: 'body',
+          kind: 'system',
+          systemEventKinds: [kind],
+        }),
+      )
+    for (const kind of ['device-attention-required', 'device-attention-resolved'] as const) {
+      expect(on(kind)).toEqual(expect.arrayContaining(['faultCode', 'faultLabel', 'faults']))
+    }
+    expect(on('device-offline')).not.toContain('faultCode')
+  })
+
   it('offers {{device}} on a system rule only for the kinds that carry a device', () => {
     const on = (kind: NcSystemEventKind): string[] =>
       names(

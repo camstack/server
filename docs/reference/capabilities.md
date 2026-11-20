@@ -60,7 +60,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |
 | `energy-system` | 1 | ✓ | ✓ | 16 series | — | — |
 | `enum-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
-| `error` | 1 | ✓ | ✓ | none | — | `provider-dreame` |
+| `error` | 2 | ✓ | ✓ | none | — | `provider-dreame` |
 | `event-emitter` | 1 | ✓ | ✓ | none | — | — |
 | `fan-control` | 6 | ✓ | ✓ | 2 series | — | — |
 | `feature-probe` | 1 | ✓ | ✓ | none | — | — |

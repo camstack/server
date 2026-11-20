@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1536 method paths across 214 capabilities.
+ * Coverage: 1537 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -503,6 +503,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'energySystem.getStatus': { capName: "energy-system", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'enumSensor.getStatus': { capName: "enum-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'error.getStatus': { capName: "error", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'error.listFaultTypes': { capName: "error", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'eventEmitter.getStatus': { capName: "event-emitter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'faceGallery.assignFace': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
   'faceGallery.assignFaces': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,

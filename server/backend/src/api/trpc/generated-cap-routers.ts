@@ -7821,6 +7821,15 @@ export function createCapRouter_error(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
+    listFaultTypes: protectedProcedure
+      .input(errorCapability.methods.listFaultTypes.input.loose())
+      .output(errorCapability.methods.listFaultTypes.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('error', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listFaultTypes(methodInput as any)
+      }),
   })
 }
 

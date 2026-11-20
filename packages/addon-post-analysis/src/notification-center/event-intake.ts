@@ -778,6 +778,7 @@ function systemSubject(input: {
   /** Set only on a consumable band: the threshold it was judged at (D642). */
   readonly consumableLowPercent?: number
   /** Set only on `device-command` (D1022). */
+  readonly faultCodes?: readonly string[]
   readonly command?: {
     readonly action: string
     readonly outcome: string
@@ -818,6 +819,7 @@ function systemSubject(input: {
         ...(input.consumableLowPercent !== undefined
           ? { consumableLowPercent: input.consumableLowPercent }
           : {}),
+        ...(input.faultCodes !== undefined ? { faultCodes: input.faultCodes } : {}),
         ...(input.command !== undefined
           ? {
               commandAction: input.command.action,
@@ -1669,6 +1671,17 @@ function incomingFromAlertEpisode(
   })
 }
 
+/** `{{faultCode}}` / `{{faultLabel}}` (the principal) and `{{faults}}` (every label, joined). */
+function faultTextParams(faults: AlertEpisodePayload['faults']): Record<string, string> {
+  const [principal] = faults ?? []
+  if (principal === undefined) return { faultCode: '', faultLabel: '', faults: '' }
+  return {
+    faultCode: principal.code,
+    faultLabel: principal.label,
+    faults: (faults ?? []).map((f) => f.label).join(', '),
+  }
+}
+
 /**
  * A CRITICAL alert whose source is a DEVICE (D911) is announced in the devices
  * family — `device-attention-required` / `-resolved`, carrying the device id so
@@ -1699,8 +1712,10 @@ function incomingFromDeviceAttention(
       message: payload.message,
       category: payload.category,
       actionUrl: payload.actionUrl ?? '',
+      ...faultTextParams(payload.faults),
     },
     deviceId,
+    ...(payload.faults !== undefined ? { faultCodes: payload.faults.map((f) => f.code) } : {}),
     ...(identity !== undefined ? { deviceType: identity.type } : {}),
     ...(payload.nodeId !== undefined ? { nodeId: payload.nodeId } : {}),
   })

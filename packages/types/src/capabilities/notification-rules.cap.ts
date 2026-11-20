@@ -491,6 +491,13 @@ export const NcSystemEventConditionSchema = z.object({
    * pick from. The hub refuses an id the action index does not know.
    */
   commandActions: z.array(z.string().min(1)).min(1).optional(),
+  /**
+   * `device-attention-*` only: the fault CODES this rule speaks about (the
+   * integration declares them through `error.listFaultTypes`; free text is
+   * accepted too). Absent or empty = any fault. The rule matches when any
+   * fault of the episode is in the list.
+   */
+  faultCodes: z.array(z.string().min(1)).optional(),
   /** `device-command` only: how the command settled. A device's own change is not a command. */
   commandOutcomes: z.array(z.enum(NC_COMMAND_OUTCOMES)).min(1).optional(),
   /** `device-command` only: who asked (`user`, `addon`, `action`, `scheduler`, `composition`, `node`). */

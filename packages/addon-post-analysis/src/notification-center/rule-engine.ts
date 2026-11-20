@@ -277,6 +277,8 @@ export interface NcSystemEventSubject {
   readonly commandAction?: string
   readonly commandOutcome?: string
   readonly commandActorKind?: string
+  /** `device-attention-*` only: the codes of the episode's faults. A `faultCodes` filter matches any of them. */
+  readonly faultCodes?: readonly string[]
   readonly data: Readonly<Record<string, unknown>>
 }
 
@@ -1545,6 +1547,13 @@ function systemEventExclusion(
   if (wantedActorKinds !== undefined && applies('commandActorKinds')) {
     const kind = wantedActorKinds.find((k) => k === subject.commandActorKind)
     if (kind === undefined) return 'commandActorKinds'
+  }
+  // A fault-code list narrows only when it names something: empty or absent is
+  // "any fault". A subject with no codes fails closed under a non-empty list.
+  const wantedFaults = condition.faultCodes
+  if (wantedFaults !== undefined && wantedFaults.length > 0 && applies('faultCodes')) {
+    const codes = subject.faultCodes ?? []
+    if (!codes.some((code) => wantedFaults.includes(code))) return 'faultCodes'
   }
   // THE RULE'S CONSUMABLE THRESHOLD (D642). Unlike the lists above it is in
   // force even when the rule does not state it (the default, 15): a consumable
