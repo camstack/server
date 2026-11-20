@@ -28,6 +28,7 @@ import { useDeviceIntercom } from '../../hooks/useDeviceIntercom'
 import { ReplTerminal } from '../shared/ReplTerminal'
 import { IntercomPanel } from './IntercomPanel'
 import { vodPanelProps } from './vod-panel-props'
+import { layersNode, splitOverlayLayers } from './overlay-layers'
 import { hubOrigin } from '../../lib/mount'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -143,16 +144,9 @@ export function StreamPanelContent({
   // MP4 is handed to hls.js and parsed as a manifest (D549 decision 22).
   const vodProps = vodPanelProps(vod.request, playbackToken)
 
-  const extraOverlay =
-    layers.length > 0 ? (
-      <>
-        {layers.map((layer) => (
-          <div key={layer.id} className="absolute inset-0">
-            {layer.node}
-          </div>
-        ))}
-      </>
-    ) : null
+  const { frame: frameLayers, image: imageLayers } = splitOverlayLayers(layers)
+  const extraOverlay = layersNode(frameLayers)
+  const imageExtraOverlay = layersNode(imageLayers)
   return (
     <StreamPanel
       serverUrl={serverUrl}
@@ -191,6 +185,7 @@ export function StreamPanelContent({
       intercomShown={intercomActive}
       onIntercomToggle={onIntercomToggle}
       extraOverlay={extraOverlay}
+      {...(imageExtraOverlay !== null ? { imageExtraOverlay } : {})}
       chromeless
       className="h-full"
     />

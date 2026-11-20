@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Camera card: the Show zones switch only appears when the camera has zones
+- Camera card: image-placed player layers (the zone editor) are routed into the picture's rect
 
 ## [1.2.722] - 2026-11-20
 

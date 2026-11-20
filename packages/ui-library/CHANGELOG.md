@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Camera card: the Show zones switch only appears when the camera has zones
+- Zone editor: StreamPanel and the player overlay registry accept an image-placed layer, drawn inside the picture's own rect instead of the whole 16:9 box
 
 ## [1.2.485] - 2026-11-20
 

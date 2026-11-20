@@ -18972,6 +18972,12 @@
           "doc": "Extra overlay node composited on top of the video, alongside the built-in detection overlay. Used by callers to layer device-scoped controls"
         },
         {
+          "name": "imageExtraOverlay",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Overlay whose coordinates are fractions of the IMAGE (the zone editor), not of the 16:9 box around it. Placed inside the picture's own rect "
+        },
+        {
           "name": "ptzAvailable",
           "type": "boolean",
           "optional": true,

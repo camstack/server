@@ -61,6 +61,13 @@ describe('live overlays map onto the displayed video', () => {
     expect(layer.contains(screen.getByTestId('detection-boxes'))).toBe(true)
   })
 
+  it('an image-placed layer rides in the live image rect', async () => {
+    drawLive({ imageExtraOverlay: <div data-testid="editor-layer" /> })
+    await act(async () => undefined)
+    const rect = screen.getByTestId('live-image-overlay')
+    expect(rect.contains(screen.getByTestId('editor-layer'))).toBe(true)
+  })
+
   it('zones ride in the same rect on the live view once switched on', async () => {
     drawLive({ zonesOverlay: <div data-testid="zones-layer" /> })
     await act(async () => undefined)

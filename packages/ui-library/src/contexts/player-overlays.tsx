@@ -57,6 +57,12 @@ export interface PlayerOverlayLayer {
    *  are drawn at order 0; addon-contributed layers should pick a
    *  higher value (e.g. 100) to land on top. */
   readonly order: number
+  /**
+   * `'frame'` (default): spans the whole 16:9 player box. `'image'`: spans the
+   * picture's own rect, so frame-normalised coordinates (a zone editor) land on
+   * the subject on a letterboxed or pillarboxed camera.
+   */
+  readonly placement?: 'frame' | 'image'
   readonly node: ReactNode
 }
 

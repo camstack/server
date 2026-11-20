@@ -229,6 +229,15 @@ export interface StreamPanelProps {
   readonly extraOverlay?: ReactNode
 
   /**
+   * Overlay whose coordinates are fractions of the IMAGE (the zone editor), not
+   * of the 16:9 box around it. Placed inside the picture's own rect
+   * (`containedImageBox`) on the live view and on the still, always visible —
+   * unlike `extraOverlay`, which spans the whole box. On a recorded clip, whose
+   * size is unknown, it spans the box.
+   */
+  readonly imageExtraOverlay?: ReactNode
+
+  /**
    * Whether the device supports PTZ. When true, the header shows a
    * "PTZ" toggle next to detect/motion.
    */
@@ -507,6 +516,7 @@ export function StreamPanel({
   showStreamStats = false,
   children,
   extraOverlay,
+  imageExtraOverlay,
   ptzAvailable = false,
   ptzShown = false,
   ptzOverlay,
@@ -681,7 +691,7 @@ export function StreamPanel({
   const showingVideo = isVod || (showPlayStop ? isPlaying : true)
   const snapshotBoxes = detectionsOnSnapshot && hasDetections && (showDetections || showMotion)
   const zonesShown = Boolean(zonesOverlay) && showZones
-  const liveBoxes = anyOverlay || zonesShown
+  const liveBoxes = anyOverlay || zonesShown || Boolean(imageExtraOverlay)
   const liveBox = containedImageBox(liveNatural?.w ?? 0, liveNatural?.h ?? 0)
 
   return (
@@ -1066,6 +1076,7 @@ export function StreamPanel({
             selectedLevel={vodLevel}
             {...(posterUrl ? { posterUrl } : {})}
           />
+          {imageExtraOverlay ? <div className="absolute inset-0">{imageExtraOverlay}</div> : null}
           {extraOverlay || ptzOverlayVisible ? (
             <>
               {extraOverlay}
@@ -1117,6 +1128,7 @@ export function StreamPanel({
                         />
                       )}
                       {zonesShown ? zonesOverlay : null}
+                      {imageExtraOverlay}
                     </ImageRect>
                   )}
                   {extraOverlay}
@@ -1139,7 +1151,7 @@ export function StreamPanel({
           // events from the Konva stage. The toolbar Play button stays
           // wired regardless.
           imageOverlay={
-            snapshotBoxes || zonesShown ? (
+            snapshotBoxes || zonesShown || imageExtraOverlay ? (
               <>
                 {snapshotBoxes ? (
                   <DetectionOverlay
@@ -1154,6 +1166,7 @@ export function StreamPanel({
                   />
                 ) : null}
                 {zonesShown ? zonesOverlay : null}
+                {imageExtraOverlay}
               </>
             ) : null
           }
@@ -1165,7 +1178,9 @@ export function StreamPanel({
               </>
             ) : null
           }
-          suppressPlayHover={Boolean(extraOverlay) || ptzOverlayVisible}
+          suppressPlayHover={
+            Boolean(extraOverlay) || Boolean(imageExtraOverlay) || ptzOverlayVisible
+          }
         />
       )}
 

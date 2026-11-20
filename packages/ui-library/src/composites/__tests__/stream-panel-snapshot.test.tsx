@@ -113,6 +113,33 @@ describe('boxes map onto the displayed image', () => {
     expect(layer.contains(screen.getByTestId('zones-layer'))).toBe(true)
   })
 
+  it('an image-placed layer (the zone editor) sits in the same image rect as the read-only zones', () => {
+    draw({
+      zonesOverlay: <div data-testid="zones-layer" />,
+      imageExtraOverlay: <div data-testid="editor-layer" />,
+    })
+    const img = screen.getByAltText('Camera snapshot')
+    Object.defineProperty(img, 'naturalWidth', { value: 1080 })
+    Object.defineProperty(img, 'naturalHeight', { value: 1920 })
+    fireEvent.load(img)
+    fireEvent.click(screen.getByTitle('More controls'))
+    fireEvent.click(screen.getByText('Show zones'))
+    const rect = screen.getByTestId('snapshot-image-overlay')
+    expect(rect.contains(screen.getByTestId('editor-layer'))).toBe(true)
+    expect(rect.contains(screen.getByTestId('zones-layer'))).toBe(true)
+    expect(Number.parseFloat(rect.style.width)).toBeCloseTo(31.640625, 4)
+  })
+
+  it('an image-placed layer is always shown, with no switch', () => {
+    draw({ imageExtraOverlay: <div data-testid="editor-layer" /> })
+    const img = screen.getByAltText('Camera snapshot')
+    Object.defineProperty(img, 'naturalWidth', { value: 1080 })
+    Object.defineProperty(img, 'naturalHeight', { value: 1920 })
+    fireEvent.load(img)
+    const rect = screen.getByTestId('snapshot-image-overlay')
+    expect(rect.contains(screen.getByTestId('editor-layer'))).toBe(true)
+  })
+
   it('offers no Show zones switch without a zones layer', () => {
     draw({})
     fireEvent.click(screen.getByTitle('More controls'))

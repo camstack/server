@@ -95,6 +95,8 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
     () => ({
       id: 'zones',
       order: 100, // above PTZ overlay (order 0) so handles aren't occluded
+      // Zone points are fractions of the IMAGE: sit inside its rect, not the 16:9 box.
+      placement: 'image' as const,
       node: <ZoneOverlay deviceId={deviceId} />,
     }),
     [deviceId],
