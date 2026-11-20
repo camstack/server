@@ -11,11 +11,28 @@ import { NOW } from './_time'
 
 const MINUTE_MS = 60_000
 
+// Zones are fractions of the IMAGE. 102 (portrait) has one covering exactly the
+// synthetic subject of `stubs/snapshot-frames`; 101 (4:3) has none.
+const SUBJECT_ZONE = {
+  id: 'zone-subject',
+  name: 'Subject',
+  kind: 'polygon',
+  color: '#ec4899',
+  polygon: [
+    { x: 0.2, y: 0.3 },
+    { x: 0.8, y: 0.3 },
+    { x: 0.8, y: 0.7 },
+    { x: 0.2, y: 0.7 },
+  ],
+}
+
 const SLICES: Readonly<Record<number, Readonly<Record<string, unknown>>>> = {
   101: {
+    zones: { zones: [] },
     motion: { detected: false, lastDetectedAt: NOW - 2 * MINUTE_MS, autoClearAfterMs: null },
   },
   102: {
+    zones: { zones: [SUBJECT_ZONE] },
     battery: { level: 82, charging: 'none', sleeping: true, lastUpdated: NOW },
     'low-power-sleep': { sleeping: true, lastUpdated: NOW },
     motion: { detected: false, lastDetectedAt: NOW - 14 * MINUTE_MS, autoClearAfterMs: null },
@@ -32,7 +49,8 @@ const slicesOf = (id: number | undefined): Readonly<Record<string, unknown>> =>
 
 export default defineFixtures({
   area: 'camera-card',
-  description: 'Camera card: generic battery / sleep / motion state on cameras 101 and 102',
+  description:
+    'Camera card: battery / sleep / motion state, synthetic stills (101 4:3 with no zones, 102 portrait with a zone)',
   handlers: {
     'deviceManager.getDevice': (i: unknown) => run(cameraArea, 'deviceManager.getDevice', i),
     'deviceManager.getDeviceAggregate': (i: unknown) =>

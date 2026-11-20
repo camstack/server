@@ -12,6 +12,7 @@ import * as path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+import { SNAPSHOT_FRAMES } from './stubs/snapshot-frames'
 import { TRAINING_FRAME_SVG } from './stubs/training-frame'
 
 const HERE = import.meta.dirname
@@ -195,6 +196,22 @@ function trainingFrames(): Plugin {
   }
 }
 
+/** `/addon/snapshot/media/<id>.jpg` — the camera-card fixtures' synthetic stills (see `stubs/snapshot-frames`). */
+function snapshotFrames(): Plugin {
+  return {
+    name: 'ui-shots-snapshot-frames',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const m = /^\/addon\/snapshot\/media\/(\d+)\.jpg/.exec(req.url ?? '')
+        const svg = m === null ? undefined : SNAPSHOT_FRAMES[Number(m[1])]
+        if (svg === undefined) return next()
+        res.setHeader('content-type', 'image/svg+xml')
+        res.end(svg)
+      })
+    },
+  }
+}
+
 const adminVersion = (
   JSON.parse(
     fs.readFileSync(path.join(PACKAGES, 'addon-admin-ui/package.json'), 'utf8'),
@@ -215,6 +232,7 @@ export default defineConfig({
     tailwindcss(),
     addonAssets(),
     trainingFrames(),
+    snapshotFrames(),
   ],
   resolve: {
     alias: [
