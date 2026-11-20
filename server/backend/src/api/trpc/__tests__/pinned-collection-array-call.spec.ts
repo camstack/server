@@ -50,3 +50,39 @@ describe('addon pin of a collection ARRAY method (child to parent)', () => {
     ).rejects.toThrow(/no provider with addonId "provider-nope".*provider-other/)
   })
 })
+
+/**
+ * A provider that is a CLASS INSTANCE keeps its `this` on this path: the
+ * `action-source` provider reads `this.deps`, and a detached call threw
+ * "Cannot read properties of undefined (reading 'deps')".
+ */
+class ClassActionSource {
+  constructor(private readonly deps: { readonly id: string }) {}
+  async listActions(): Promise<readonly { readonly id: string }[]> {
+    return [{ id: this.deps.id }]
+  }
+}
+
+describe('class-instance provider on the collection array path', () => {
+  const source = new ClassActionSource({ id: 'core-blocks:fan-1' })
+  const classReg: Registry = {
+    getDefinition: () => ({ mode: 'collection' }),
+    getProviderByAddonId: () => source,
+    getProviderAddonIds: () => ['core-blocks'],
+    getCollectionEntries: () => [['core-blocks', source]],
+  } as unknown as Registry
+
+  it('the union keeps `this`', async () => {
+    expect(await aggregateCollectionCall(classReg, 'action-source', 'listActions', {})).toEqual([
+      { id: 'core-blocks:fan-1' },
+    ])
+  })
+
+  it('a pinned call keeps `this`', async () => {
+    expect(
+      await pinnedCollectionCall(classReg, 'action-source', 'listActions', {
+        addonId: 'core-blocks',
+      }),
+    ).toEqual({ value: [{ id: 'core-blocks:fan-1' }] })
+  })
+})

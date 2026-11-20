@@ -355,7 +355,8 @@ export async function pinnedCollectionCall(
   // Args pass through unchanged, exactly as the `nodeId` pin on this path
   // already does: a provider destructures the fields it needs and ignores the
   // selector. Stripping it here would diverge from that for no gain.
-  return { value: typeof fn === 'function' ? await fn(args) : undefined }
+  // `call(provider, …)`: a class-instance provider reads `this`.
+  return { value: typeof fn === 'function' ? await fn.call(provider, args) : undefined }
 }
 
 /**
@@ -375,7 +376,7 @@ function concatArrayMethod(
       providers.map(async (p): Promise<readonly unknown[]> => {
         const fn = p[method]
         if (typeof fn !== 'function') return []
-        const out: unknown = await fn(input)
+        const out: unknown = await fn.call(p, input)
         return Array.isArray(out) ? (out as readonly unknown[]) : []
       }),
     )
