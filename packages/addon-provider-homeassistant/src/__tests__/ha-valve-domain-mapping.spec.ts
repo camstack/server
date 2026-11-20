@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceFeature } from '@camstack/types'
+import { DeviceType } from '@camstack/types'
 import { mapHaEntityToCamStack, inferParentDeviceType } from '../ha-domain-mapping.js'
 
 describe('ha-domain-mapping — valve', () => {
@@ -11,28 +11,19 @@ describe('ha-domain-mapping — valve', () => {
     expect(m?.capabilities).toEqual(['valve'])
   })
 
-  it('sets ValvePositionable iff supported_features & 4 (SET_POSITION)', () => {
-    // SET_POSITION bit set (4) → positionable.
+  it('carries supported_features through for the child; no feature is listed (derived from the cap, #459)', () => {
     const withPos = mapHaEntityToCamStack({
       domain: 'valve',
       deviceClass: 'water',
       attributes: { supported_features: 1 | 2 | 4 | 8 },
     })
-    expect(withPos?.features).toContain(DeviceFeature.ValvePositionable)
-
-    // OPEN | CLOSE | STOP only (no SET_POSITION) → not positionable.
-    const noPos = mapHaEntityToCamStack({
-      domain: 'valve',
-      deviceClass: 'gas',
-      attributes: { supported_features: 1 | 2 | 8 },
-    })
-    expect(noPos?.features).not.toContain(DeviceFeature.ValvePositionable)
-    expect(noPos?.features).toEqual([])
+    expect(withPos?.supportedFeatures).toBe(15)
+    expect(withPos?.features).toBeUndefined()
   })
 
-  it('omits ValvePositionable when supported_features is absent', () => {
+  it('omits supportedFeatures when the attribute is absent', () => {
     const m = mapHaEntityToCamStack({ domain: 'valve', deviceClass: null, attributes: {} })
-    expect(m?.features).toEqual([])
+    expect(m?.supportedFeatures).toBeUndefined()
   })
 })
 

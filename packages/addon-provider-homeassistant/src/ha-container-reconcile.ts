@@ -24,6 +24,7 @@ export interface HaContainerEntityConfig {
   deviceClass?: string
   options?: string[]
   features?: string[]
+  supportedFeatures?: number
   name?: string
   /** Locale-render shape for a `DateTimeSensor`-role enum sensor — seeded into
    *  the cap slice by the child so the UI renders the ISO `value` formatted. */
@@ -79,6 +80,7 @@ const containerEntitySchema = z.object({
   deviceClass: z.string().optional(),
   options: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
+  supportedFeatures: z.number().int().nonnegative().optional(),
   name: z.string().optional(),
   dateTimeFormat: EnumSensorDateTimeFormatSchema.optional(),
   entityCategory: z.enum(['config', 'diagnostic']).optional(),
@@ -123,6 +125,9 @@ function mapContainerEntities(haDevice: HaDiscoveredDevice): HaContainerEntityCo
       ...(ent.mappedTo.features !== undefined && ent.mappedTo.features.length > 0
         ? { features: [...ent.mappedTo.features] }
         : {}),
+      ...(ent.mappedTo.supportedFeatures !== undefined
+        ? { supportedFeatures: ent.mappedTo.supportedFeatures }
+        : {}),
       ...(ent.mappedTo.dateTimeFormat !== undefined
         ? { dateTimeFormat: ent.mappedTo.dateTimeFormat }
         : {}),
@@ -144,6 +149,7 @@ function derivedKey(e: HaContainerEntityConfig): string {
     deviceClass: e.deviceClass ?? null,
     options: e.options ?? null,
     features: e.features ?? null,
+    supportedFeatures: e.supportedFeatures ?? null,
     dateTimeFormat: e.dateTimeFormat ?? null,
     meterEntities: e.meterEntities ?? null,
   })
@@ -171,6 +177,7 @@ function childConfigPatch(e: HaContainerEntityConfig): Record<string, unknown> {
     ...(e.deviceClass !== undefined ? { deviceClass: e.deviceClass } : {}),
     ...(e.options !== undefined ? { options: e.options } : {}),
     ...(e.features !== undefined ? { features: e.features } : {}),
+    ...(e.supportedFeatures !== undefined ? { supportedFeatures: e.supportedFeatures } : {}),
     ...(e.dateTimeFormat !== undefined ? { dateTimeFormat: e.dateTimeFormat } : {}),
     ...(e.meterEntities !== undefined ? { meterEntities: e.meterEntities } : {}),
     ...(e.role !== undefined ? { role: e.role } : {}),

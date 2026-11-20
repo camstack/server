@@ -21,6 +21,8 @@ export interface HaDeviceSource {
    *  `supported_features` OPEN bit). Surfaced on `device.features` so the UI
    *  gates feature-specific affordances (the lock "Open door" button, …). */
   readonly features?: readonly string[]
+  /** HA `supported_features` bitmask, captured at adoption for a valve: the child registers only the methods it allows. */
+  readonly supportedFeatures?: number
 }
 
 /**
@@ -46,6 +48,7 @@ export const haSourceSchemaFields = {
   integrationId: z.string().optional(),
   options: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
+  supportedFeatures: z.number().int().nonnegative().optional(),
   /** Sibling meter sensors whose readings this entity carries as `power-meter` (D951). */
   meterEntities: z
     .object({
@@ -99,6 +102,9 @@ export function readHaSource(config: Record<string, unknown>): HaDeviceSource | 
       : {}),
     ...(opts !== undefined ? { options: opts } : {}),
     ...(feats !== undefined ? { features: feats } : {}),
+    ...(typeof config['supportedFeatures'] === 'number'
+      ? { supportedFeatures: config['supportedFeatures'] }
+      : {}),
   }
   return out
 }

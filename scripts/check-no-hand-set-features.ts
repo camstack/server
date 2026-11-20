@@ -70,7 +70,7 @@ export const PINS: Readonly<Record<string, number>> = {
   'packages/addon-provider-homeassistant/src/devices/ha-container-device.ts': 1,
   'packages/addon-provider-homeassistant/src/ha-base-child-device.ts': 3,
   'packages/addon-provider-homeassistant/src/ha-container-reconcile.ts': 1,
-  'packages/addon-provider-homeassistant/src/ha-domain-mapping.ts': 33,
+  'packages/addon-provider-homeassistant/src/ha-domain-mapping.ts': 32,
   'packages/addon-provider-homeassistant/src/ha-standalone-entity.ts': 2,
   'packages/addon-provider-homematic/src/devices/hm-container-device.ts': 1,
   'packages/addon-provider-onvif/src/onvif-camera.ts': 1,

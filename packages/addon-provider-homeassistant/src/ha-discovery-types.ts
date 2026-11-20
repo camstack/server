@@ -46,6 +46,8 @@ const HaEntityMappingSchema = z
     /** Mapping-derived DeviceFeature flags (e.g. `lock-open`). Persisted onto
      *  the child's `device.features` so the UI gates feature affordances. */
     features: z.array(z.string()).readonly().optional(),
+    /** HA `supported_features` bitmask for a domain whose cap methods follow it (valve). */
+    supportedFeatures: z.number().int().nonnegative().optional(),
     /** Locale-render shape for a `DateTimeSensor`-role enum sensor
      *  (`device_class=timestamp` → `'datetime'`, `date` → `'date'`). Threaded
      *  onto the child config so the enum-sensor device seeds it into the cap

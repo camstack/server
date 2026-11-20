@@ -1408,6 +1408,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
               role: mapping.role,
               capabilities: [...mapping.capabilities],
               features: mapping.features ? [...mapping.features] : [],
+              ...(mapping.supportedFeatures !== undefined
+                ? { supportedFeatures: mapping.supportedFeatures }
+                : {}),
               ...(mapping.dateTimeFormat !== undefined
                 ? { dateTimeFormat: mapping.dateTimeFormat }
                 : {}),

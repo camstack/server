@@ -34,7 +34,7 @@ import {
   type DeviceConstructor,
   type DeviceContext,
   type DeviceStatusOwnership,
-  type DeviceFeature,
+  DeviceFeature,
   DeviceType,
   errMsg,
   fanControlCapability,
@@ -128,6 +128,7 @@ export class ComposedDevice
   implements ComposedDeviceHandle
 {
   private sharedFeatures: readonly DeviceFeature[] = []
+  private valvePositionable = false
   /** Features of caps bound on the device by others (a wrapper): derived from its bindings, never listed here. */
   private boundFeatures: readonly DeviceFeature[] = []
   private extraCaps: ReadonlySet<string> = new Set()
@@ -238,7 +239,7 @@ export class ComposedDevice
         },
       })
     })
-    this.syncTypedCaps(caps)
+    this.syncTypedCaps(caps, modes)
     this.sharedFeatures = [...modes]
     void this.refreshFeatures()
   }
@@ -249,7 +250,7 @@ export class ComposedDevice
    * keeps serving nothing it did not before. Every method fans out; the group
    * refuses the ones its members do not all share.
    */
-  private syncTypedCaps(caps: readonly string[]): void {
+  private syncTypedCaps(caps: readonly string[], modes: readonly DeviceFeature[]): void {
     const call = (cap: string, method: string, args: Readonly<Record<string, unknown>>) =>
       this.dispatch(cap, method, present(args))
     this.ensureExtra(fanControlCapability.name, caps.includes(fanControlCapability.name), () => {
@@ -272,12 +273,24 @@ export class ComposedDevice
           call('cover', 'setTiltPosition', { tiltPosition: input.tiltPosition }),
       })
     })
+    // `setPosition` is served only while every member's valve positions: the kernel derives
+    // `ValvePositionable` from the method being there. A change re-registers the cap.
+    const positionable = modes.includes(DeviceFeature.ValvePositionable)
+    if (positionable !== this.valvePositionable) {
+      this.ensureExtra(valveCapability.name, false, () => {})
+      this.valvePositionable = positionable
+    }
     this.ensureExtra(valveCapability.name, caps.includes(valveCapability.name), () => {
       this.ctx.registerNativeCap(valveCapability, {
         open: () => call('valve', 'open', {}),
         close: () => call('valve', 'close', {}),
         stop: () => call('valve', 'stop', {}),
-        setPosition: (input) => call('valve', 'setPosition', { position: input.position }),
+        ...(positionable
+          ? {
+              setPosition: (input: { readonly position: number }) =>
+                call('valve', 'setPosition', { position: input.position }),
+            }
+          : {}),
       })
     })
     this.ensureExtra(lockControlCapability.name, caps.includes(lockControlCapability.name), () => {

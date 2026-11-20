@@ -31,6 +31,8 @@ export interface HaEntityMapping {
    *  addon's adoption flow writes these to `device.features` so the UI
    *  gates sub-controls without a slice fetch. */
   readonly features?: readonly DeviceFeature[]
+  /** HA `supported_features` bitmask, threaded to the child for a domain whose methods follow it (valve). */
+  readonly supportedFeatures?: number
   /** Locale-render shape for a `DateTimeSensor`-role enum sensor: HA
    *  `device_class=timestamp` → `'datetime'`, `device_class=date` → `'date'`,
    *  a time-only sensor → `'time'`. Threaded to the child config so the
@@ -316,16 +318,15 @@ function mapValve(
   attributes: Record<string, unknown>,
   _deviceClass: string | null,
 ): HaEntityMapping {
-  const features: DeviceFeature[] = []
+  // HA valve supported_features bitmask: OPEN = 1, CLOSE = 2, SET_POSITION = 4, STOP = 8.
+  // No feature is listed here: the child registers `setPosition` only when SET_POSITION
+  // is set, and the kernel derives `ValvePositionable` from the bound `valve` cap (#459).
   const sf = readNumericAttr(attributes, 'supported_features')
-  // HA valve supported_features bitmask:
-  //  - OPEN = 1, CLOSE = 2, SET_POSITION = 4, STOP = 8
-  if (sf !== null && (sf & 4) !== 0) features.push(DeviceFeature.ValvePositionable)
   return {
     deviceType: DeviceType.Valve,
     role: null,
     capabilities: ['valve'],
-    features,
+    ...(sf !== null ? { supportedFeatures: sf } : {}),
   }
 }
 

@@ -131,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An operator-confirmed identity link whose evidence is gone no longer acts: its power-source contribution is withdrawn so the port the camera moved to can contribute, and a restart through it is refused as link-lost; an orphan customization's link stamp is withdrawn even though its camera was removed.
 - A host with an Intel iGPU and an NVIDIA card keeps OpenVINO on the iGPU; the NVIDIA card is reported present but not usable (no CUDA execution provider).
 - The registry switch move (body to registry) is a ledgered migration that backfills a row for every existing instance, services included
+- A composed valve offers set-position only while every member valve can be positioned
 
 ### Removed
 

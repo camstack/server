@@ -110,6 +110,9 @@ export function buildStandaloneEntityConfig(args: {
     ...(mapping.features !== undefined && mapping.features.length > 0
       ? { features: [...mapping.features] }
       : {}),
+    ...(mapping.supportedFeatures !== undefined
+      ? { supportedFeatures: mapping.supportedFeatures }
+      : {}),
     ...(mapping.dateTimeFormat !== undefined ? { dateTimeFormat: mapping.dateTimeFormat } : {}),
     ...(integrationId !== undefined ? { integrationId } : {}),
     name: name ?? entity.name,
@@ -273,6 +276,7 @@ export interface StandaloneEntitySpec {
   deviceClass?: string
   options?: readonly string[]
   features?: readonly string[]
+  supportedFeatures?: number
   /** Locale-render shape for a `DateTimeSensor`-role enum sensor — seeded into
    *  the cap slice by the device so the UI renders the ISO `value` formatted. */
   dateTimeFormat?: EnumSensorDateTimeFormat
@@ -313,6 +317,9 @@ export function readPersistedStandaloneSpec(device: IDevice): StandaloneEntitySp
     ...(source?.deviceClass !== undefined ? { deviceClass: source.deviceClass } : {}),
     ...(source?.options !== undefined ? { options: source.options } : {}),
     ...(source?.features !== undefined ? { features: source.features } : {}),
+    ...(source?.supportedFeatures !== undefined
+      ? { supportedFeatures: source.supportedFeatures }
+      : {}),
     ...(dateTimeFormat !== undefined ? { dateTimeFormat } : {}),
   }
 }
@@ -359,6 +366,9 @@ export function buildFreshStandaloneSpec(entity: HaDiscoveredEntity): Standalone
     ...(source?.deviceClass !== undefined ? { deviceClass: source.deviceClass } : {}),
     ...(source?.options !== undefined ? { options: source.options } : {}),
     ...(source?.features !== undefined ? { features: source.features } : {}),
+    ...(source?.supportedFeatures !== undefined
+      ? { supportedFeatures: source.supportedFeatures }
+      : {}),
     ...(dateTimeFormat !== undefined ? { dateTimeFormat } : {}),
   }
 }
@@ -379,6 +389,7 @@ function standaloneDerivedKey(s: StandaloneEntitySpec): string {
     deviceClass: s.deviceClass ?? null,
     options: s.options ?? null,
     features: s.features ?? null,
+    supportedFeatures: s.supportedFeatures ?? null,
     dateTimeFormat: s.dateTimeFormat ?? null,
   })
 }
@@ -393,6 +404,7 @@ function standaloneConfigPatch(s: StandaloneEntitySpec): Record<string, unknown>
     ...(s.deviceClass !== undefined ? { deviceClass: s.deviceClass } : {}),
     ...(s.options !== undefined ? { options: [...s.options] } : {}),
     ...(s.features !== undefined ? { features: [...s.features] } : {}),
+    ...(s.supportedFeatures !== undefined ? { supportedFeatures: s.supportedFeatures } : {}),
     ...(s.dateTimeFormat !== undefined ? { dateTimeFormat: s.dateTimeFormat } : {}),
   }
 }

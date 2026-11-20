@@ -45,6 +45,8 @@ function buildValveCtx(
       brokerId: 'broker-ha',
       entityId,
       capabilities: ['valve'],
+      // OPEN | CLOSE | SET_POSITION | STOP: the child serves setPosition (#459).
+      supportedFeatures: 15,
     },
     initialRuntimeState: {},
     eventBus: {

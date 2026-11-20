@@ -35,6 +35,7 @@ const haEntitySchema = z.object({
   /** Mapping-derived DeviceFeature flags (e.g. `lock-open`) — surfaced on the
    *  child's `device.features` so the UI gates feature affordances. */
   features: z.array(z.string()).optional(),
+  supportedFeatures: z.number().int().nonnegative().optional(),
   /** HA friendly_name — persisted so the child device name survives
    *  a reboot without a discovery round-trip. Falls back to entityId. */
   name: z.string().optional(),
@@ -456,6 +457,7 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
         ...(e.deviceClass !== undefined ? { deviceClass: e.deviceClass } : {}),
         ...(e.options !== undefined ? { options: e.options } : {}),
         ...(e.features !== undefined ? { features: e.features } : {}),
+        ...(e.supportedFeatures !== undefined ? { supportedFeatures: e.supportedFeatures } : {}),
         ...(e.dateTimeFormat !== undefined ? { dateTimeFormat: e.dateTimeFormat } : {}),
         ...(e.meterEntities !== undefined ? { meterEntities: e.meterEntities } : {}),
         ...(e.role !== undefined ? { role: e.role } : {}),

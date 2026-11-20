@@ -86,7 +86,7 @@ export const DEVICE_FEATURE_REQUIREMENTS = {
   [DeviceFeature.CoverPositionable]: bound('cover', ['setPosition']),
   [DeviceFeature.CoverTilt]: bound('cover', ['setTiltPosition']),
   [DeviceFeature.CoverStoppable]: bound('cover', ['stop']),
-  [DeviceFeature.ValvePositionable]: bound('valve', ['setPosition']),
+  [DeviceFeature.ValvePositionable]: derived('valve', ['setPosition']),
   [DeviceFeature.FanSpeed]: bound('fan-control', ['setPercentage']),
   [DeviceFeature.FanPreset]: bound('fan-control', ['setPreset']),
   [DeviceFeature.FanDirection]: bound('fan-control', ['setDirection']),

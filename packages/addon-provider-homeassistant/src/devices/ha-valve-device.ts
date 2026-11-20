@@ -5,6 +5,7 @@ import {
   type ValveStatus,
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
+import { readHaSource } from '../ha-device-source.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const COLD_START: ValveStatus = {
@@ -45,6 +46,12 @@ export class HaValveDevice extends HaBaseChildDevice {
     })
   }
 
+  /** HA valve `supported_features`: OPEN = 1, CLOSE = 2, SET_POSITION = 4, STOP = 8. */
+  private supportsSetPosition(): boolean {
+    const sf = readHaSource(this.ctx.persistedConfig ?? {})?.supportedFeatures
+    return sf !== undefined && (sf & 4) !== 0
+  }
+
   private registerValveCap(): void {
     const provider: InferNativeProvider<typeof valveCapability> = {
       getStatus: async () => {
@@ -59,9 +66,15 @@ export class HaValveDevice extends HaBaseChildDevice {
       stop: async () => {
         await this.callHaService('valve', 'stop_valve')
       },
-      setPosition: async ({ position }) => {
-        await this.callHaService('valve', 'set_valve_position', { position })
-      },
+      // Only a valve whose `supported_features` has SET_POSITION serves it: the kernel
+      // derives `ValvePositionable` from the method being there (#459).
+      ...(this.supportsSetPosition()
+        ? {
+            setPosition: async ({ position }: { readonly position: number }) => {
+              await this.callHaService('valve', 'set_valve_position', { position })
+            },
+          }
+        : {}),
     }
     this.ctx.registerNativeCap(valveCapability, provider)
   }
