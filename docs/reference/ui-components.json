@@ -20641,13 +20641,6 @@
       "summary": "useDeviceDetections — subscribes to motion, raw motion, and detection events for a device."
     },
     {
-      "name": "useDeviceHasZones",
-      "kind": "hook",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/zones-layer/ZonesReadOnlyLayer.tsx",
-      "summary": "Does the device have at least one configured zone? `false` while the slice is unanswered too: a \"Show zones\" switch has nothing to reveal until zones exist."
-    },
-    {
       "name": "useDeviceId",
       "kind": "hook",
       "area": "contexts",
@@ -20786,6 +20779,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-device-webrtc.ts",
       "summary": "useDeviceWebrtc — WebRTC signaling hook for device-scoped streaming."
+    },
+    {
+      "name": "useDeviceZonesPresence",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/zones-layer/ZonesReadOnlyLayer.tsx",
+      "summary": "Does the device have at least one configured zone? A \"Show zones\" switch is offered only on `present`; an unanswered slice is `pending`, never `absent` (D315)."
     },
     {
       "name": "useDevShell",

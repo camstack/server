@@ -21,7 +21,7 @@ vi.mock('../../cap-settings/MaskShapeCanvas', () => ({
   ),
 }))
 
-import { useDeviceHasZones, ZonesReadOnlyLayer } from '../ZonesReadOnlyLayer'
+import { useDeviceZonesPresence, ZonesReadOnlyLayer } from '../ZonesReadOnlyLayer'
 
 afterEach(cleanup)
 
@@ -66,13 +66,13 @@ describe('ZonesReadOnlyLayer', () => {
   })
 })
 
-describe('useDeviceHasZones', () => {
-  it('is false for no slice and for an empty one, true once a zone exists', () => {
+describe('useDeviceZonesPresence', () => {
+  it('is pending for no slice, absent for an empty one, present once a zone exists', () => {
     slice.value = undefined
-    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(false)
+    expect(renderHook(() => useDeviceZonesPresence(7)).result.current).toBe('pending')
     slice.value = { zones: [] }
-    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(false)
+    expect(renderHook(() => useDeviceZonesPresence(7)).result.current).toBe('absent')
     slice.value = { zones: [{ id: 'a' }] }
-    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(true)
+    expect(renderHook(() => useDeviceZonesPresence(7)).result.current).toBe('present')
   })
 })

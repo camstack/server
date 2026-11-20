@@ -187,7 +187,8 @@ export type {
 } from './cap-settings/MaskShapeCanvas'
 export {
   ZonesReadOnlyLayer,
-  useDeviceHasZones,
+  useDeviceZonesPresence,
+  type DeviceZonesPresence,
   type ZonesReadOnlyLayerProps,
 } from './zones-layer/ZonesReadOnlyLayer'
 export {
