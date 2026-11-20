@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.719] - 2026-11-20
+
 ### Fixed
 
 - Devices list fills its page, the Add device dialog keeps its logs and Save footer visible on the manual tab, and the device Overview no longer repeats the web interface link

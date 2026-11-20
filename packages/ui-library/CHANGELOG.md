@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.483] - 2026-11-20
+
 ### Fixed
 
 - The device list type and integration filters open above the table instead of adding scrollbars, and the list scrolls inside the height it is given
