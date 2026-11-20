@@ -42,7 +42,6 @@ function allowed(rel: string): boolean {
   if (rel === path.join('packages', 'develop', 'src', 'scaffold', 'addon.ts')) return true
   if (rel === path.join('packages', 'develop', 'src', '__tests__', 'integration-scaffold.spec.ts'))
     return true
-  if (rel === path.join('packages', 'mcp-dev', 'src', '__tests__', 'knowledge.spec.ts')) return true
   return false
 }
 

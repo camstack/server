@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The standalone camstack-mcp-develop server binary is retired in favour of `camstack mcp --toolsets develop`; the package stays as the library behind that toolset, and registerDevelopTools takes options to register a subset
+
 ## [0.1.31] - 2026-11-06
 
 ### Changed

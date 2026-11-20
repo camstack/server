@@ -11,7 +11,6 @@ applies-to:
   - packages/develop/src/hub/session-store.ts
   - packages/develop/src/hub/session-refresh.ts
   - packages/develop/src/hub/login-hints.ts
-  - packages/mcp-dev/src/ops/hub.ts
   - packages/develop/src/mcp/query-gate.ts
   - scripts/hub/hub.mjs
 ---
@@ -49,5 +48,5 @@ automatically and every tool uses it.
 ## Enforcement
 
 Tests in `packages/develop/src/hub/__tests__/session-refresh.spec.ts` and
-`packages/mcp-dev/src/__tests__/ops-admin-hint.spec.ts`; `camstack login --admin`
+`mcp-dev` `ops-admin-hint.spec.ts` (planning repo); `camstack login --admin`
 must error in `packages/cli/src/cli.ts`.

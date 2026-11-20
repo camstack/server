@@ -9,7 +9,7 @@
       "command": "sh",
       "args": [
         "-c",
-        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); cd \"$root\" && exec node packages/mcp-dev/dist/server.js \"$@\"",
+        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); main=$(dirname \"$(git -C \"$root\" rev-parse --path-format=absolute --git-common-dir)\"); export CAMSTACK_WORKSPACE=\"$root\"; cd \"$root\" && exec node \"$main/../planning/tools/mcp-dev/dist/server.js\" \"$@\"",
         "camstack-dev"
       ],
       "type": "stdio"
@@ -18,7 +18,7 @@
       "command": "sh",
       "args": [
         "-c",
-        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); cd \"$root\" && exec node packages/mcp-dev/dist/server.js \"$@\"",
+        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); main=$(dirname \"$(git -C \"$root\" rev-parse --path-format=absolute --git-common-dir)\"); export CAMSTACK_WORKSPACE=\"$root\"; cd \"$root\" && exec node \"$main/../planning/tools/mcp-dev/dist/server.js\" \"$@\"",
         "camstack-ops",
         "--toolsets",
         "ops"

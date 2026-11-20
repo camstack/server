@@ -183,7 +183,7 @@ retried, retrieval pinned to the park's node, offline node never dispatched),
 is retried on LATER frames, bounded, nothing is dispatched at an offline
 node).
 
-The fleet number: the `keyframe_presence` ops tool (`packages/mcp-dev/src/ops/censuses.ts`; it replaced `keyframe-presence.mjs`, D835) — per-camera
+The fleet number: the `keyframe_presence` ops tool (`mcp-dev` `ops/censuses.ts` (planning repo); it replaced `keyframe-presence.mjs`, D835) — per-camera
 `keyFrame` / zero-media presence over a window from `listTracks` +
 `debug.analyze`, the measurement that caught D419. Run it before and after a
 deploy that touches this path; 99.5 % is the number to keep.

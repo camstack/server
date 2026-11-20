@@ -2,7 +2,7 @@
 
 ## Summary
 
-1. **There is one CamStack MCP server: `@camstack/mcp-develop`.** It lives in `packages/mcp-develop/src/server.ts` and is a single 205-line file. It runs over stdio only, has no auth, and exposes 13 tools. It has no resources and no prompts: `resources/list` returns -32601.
+1. **There is one CamStack MCP server: `@camstack/mcp-develop`.** It lives in `packages/mcp-develop/src/server.ts` and is a single 205-line file. It runs over stdio only, has no auth, and exposes 13 tools. It has no resources and no prompts: `resources/list` returns -32601. <!-- drift-ok -->
 2. **The server is a thin wrapper over `@camstack/develop`,** the library the `camstack develop` CLI also uses. Its tools are an addon and cap catalogue, `find_example` (13 curated examples), `validate_addon`, `scaffold_addon`, `scaffold_cap_stub`, `extend_addon`, and `list_skills` / `get_skill`.
 3. **It works.** The develop tests pass (13 of 13) and the mcp-develop test passes (1 of 1). Both typechecks are clean. A `tsc` build into scratch succeeded. I started it over stdio and listed and called its tools: `get_capability recording` and `find_example notifier` answered correctly.
    - The only test covers the library, not the MCP server itself.
@@ -411,6 +411,8 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 4. **Log fetching asks WHICH log provider.** Do not assume Grafana/Loki: a user may only have the onboard winston destination, or another `log-destination`. List the configured log-destination providers and query the chosen one, e.g. through `logDestination.query` per provider.
 5. Commit the UI component catalogue, viewer kit included: YES.
 6. **NO styling guard / CI check for now.** It would block CI again. `check_ui_file` stays a tool the developer runs, not a gate.
+
+**Moved 2026-11-20 (planning #301): `@camstack/mcp-dev` now lives in the private planning repo (under `tools/` there); the `packages/mcp-dev` paths below are historical.** <!-- drift-ok -->
 
 **Status (2026-10-13): P1–P4 landed (P1 first; see the later entries).** Private package `@camstack/mcp-dev` (`camstack-dev` binary, `"private": true`, never published, run only from the operator's machine; registered in `.mcp.json`) — NOT the public `@camstack/mcp-develop`. Offline toolsets knowledge / ui / caps / addons / ci. The UI tools wrap the existing `scripts/ui/cli.ts` and the committed `docs/reference/ui-components.json` (one catalogue, no second generator); `check_ui_file` is a tool only, with no styling CI guard (decision 6). Open from P1: the viewer's React Native kit components are not in the catalogue (only its tokens are); P2 ops, P3 models/release and P4 skills/guards are not started.
 

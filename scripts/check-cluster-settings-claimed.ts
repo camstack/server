@@ -35,7 +35,7 @@ import { clusterHooksIn, walk } from './check-scoped-settings-declared'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Packages whose sources describe the hooks rather than implement them. */
-const NOT_ADDON_PACKAGES = new Set(['types', 'develop', 'mcp-dev', 'cli'])
+const NOT_ADDON_PACKAGES = new Set(['types', 'develop', 'cli'])
 
 export interface DeclaredClusterCap {
   readonly cap: string

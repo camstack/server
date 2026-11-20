@@ -1,11 +1,12 @@
 # @camstack/mcp-develop
 
-> **Deprecated.** This package is an alias for one more release. The same tools
-> now ship inside the CLI: `npm i -g camstack`, then
+> **The standalone server is retired.** The tools ship inside the CLI:
+> `npm i -g camstack`, then
 > `claude mcp add camstack -- camstack mcp --toolsets develop`.
+> This package stays as the library behind that toolset
+> (`registerDevelopTools`); it no longer has a binary.
 
-MCP server (stdio) for CamStack plugin authors. Run it with
-`npx @camstack/mcp-develop`; it wraps `@camstack/develop`.
+Tool registrations for CamStack plugin authors; they wrap `@camstack/develop`.
 
 ## Workspace tools
 
@@ -47,13 +48,6 @@ Hub methods used (`pipelineAnalytics.*` unless noted): `deviceManager.listAll`,
 TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin token;
 the hub's refusal is shown as-is. Tokens never appear in output.
 
-```json
-{ "mcpServers": { "camstack-develop": {
-  "command": "npx", "args": ["@camstack/mcp-develop"],
-  "env": { "CAMSTACK_HUB_URL": "https://hub.local:4443",
-           "CAMSTACK_HUB_TOKEN_FILE": "/home/me/.camstack/review.token",
-           "CAMSTACK_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
-```
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 

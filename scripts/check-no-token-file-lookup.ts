@@ -11,7 +11,7 @@
  * `packages/develop/src/hub/`, or `scripts/hub/credentials.mjs` for a script);
  * `--token-file` is an explicit override and names no default path.
  *
- * Scope: `scripts/`, `tests/e2e/` and the CLI / develop / mcp-dev sources,
+ * Scope: `scripts/`, `tests/e2e/` and the CLI / develop sources,
  * excluding specs and this file. Comment-only lines are skipped. Textual.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -23,13 +23,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const LOOKUP =
   /scratchpad['"`/,\s)]*\.tok\b|['"`]\.tok['"`]|CAMSTACK_ADMIN_TOKEN_FILE|findAdminTokenFile|adminTokenFileForServer|\.admin-token['"`]/
 
-const ROOTS = [
-  'scripts',
-  'tests/e2e',
-  'packages/cli/src',
-  'packages/develop/src',
-  'packages/mcp-dev/src',
-]
+const ROOTS = ['scripts', 'tests/e2e', 'packages/cli/src', 'packages/develop/src']
 const SKIP_DIRS = new Set(['dist', 'node_modules', '__tests__', '__mocks__', 'generated'])
 const SOURCE_RE = /\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/
 const NON_RUNTIME_RE = /\.(?:spec|test)\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/

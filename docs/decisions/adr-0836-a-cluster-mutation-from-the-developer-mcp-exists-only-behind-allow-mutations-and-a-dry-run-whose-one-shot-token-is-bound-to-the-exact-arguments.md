@@ -6,9 +6,6 @@ date: 2026-10-13
 supersedes:
 applies-to:
   - packages/develop/src/mcp/mutation-gate.ts
-  - packages/mcp-dev/src/ops/hub.ts
-  - packages/mcp-dev/src/models/**
-  - packages/mcp-dev/src/release/commands.ts
 ---
 
 ## Context

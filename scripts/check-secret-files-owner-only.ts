@@ -29,8 +29,6 @@ export const ALLOWED: Readonly<Record<string, string>> = {
   'packages/types/src/util/owner-only-file.ts': 'the helper itself: the POSIX half of the rule',
   'packages/develop/src/hub/session-store.ts':
     'the operator CLI on their own machine, in their home directory — not an agent',
-  'packages/mcp-dev/src/ops/download.ts':
-    'a developer tool downloading to the operator machine — not a node',
   'packages/system/src/builtins/system-backup/backup-encryption.ts':
     'hub-only: an encrypted archive; the key never lands in this file',
   'packages/system/src/builtins/system-backup/system-backup.service.ts':

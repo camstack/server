@@ -8,7 +8,6 @@ applies-to:
   - scripts/check-catalog-licence.ts
   - scripts/gen-model-licenses.ts
   - scripts/lib/model-catalogs.ts
-  - packages/mcp-dev/src/ops/censuses.ts
   - packages/addon-pipeline/src/detection-pipeline/registry/model-licenses.ts
   - packages/addon-post-analysis/src/embedding-encoder/catalogs/model-licenses.ts
   - packages/addon-ai/src/runtime/llm-model-licenses.ts
@@ -64,7 +63,7 @@ behind the catalog the day SigLIP 2 and YuNet landed.
    SigLIP 2 (D649).
 5. **A legacy entry whose terms cannot be defended is retired, not hidden** —
    `animals-10`, `bird-nabirds-404`, `vehicle-type-efficientnet` — once a
-   read-only census (the `model_pin_census` ops tool, `packages/mcp-dev/src/ops/censuses.ts`; it replaced `model-pin-census.mjs`, D835) shows no live pin to
+   read-only census (the `model_pin_census` ops tool, `mcp-dev` `ops/censuses.ts` (planning repo); it replaced `model-pin-census.mjs`, D835) shows no live pin to
    it. It joins `RETIRED_MODEL_IDS` (D643), so a saved pin runs the step's
    default, which is the entry that replaced it, and is reported as a
    substitution.

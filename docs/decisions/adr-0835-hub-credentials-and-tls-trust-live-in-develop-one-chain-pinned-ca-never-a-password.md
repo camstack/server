@@ -10,7 +10,6 @@ applies-to:
   - packages/develop/src/hub/hub-url.ts
   - packages/develop/src/hub/hub-tls.ts
   - packages/develop/src/hub/hub-client.ts
-  - packages/mcp-dev/src/ops/hub.ts
   - packages/develop/src/mcp/query-gate.ts
   - scripts/hub/hub.mjs
 ---
@@ -87,6 +86,6 @@ Hub access is one module set in `@camstack/develop` (`packages/develop/src/hub`)
 
 `packages/develop/src/hub/__tests__/{credentials,session-refresh,hub-access}.spec.ts`
 (chain order, tier, no password input, session store, address resolution, pinned
-CA, tRPC envelope), `packages/mcp-dev/src/__tests__/ops-gate.spec.ts` (query-only,
+CA, tRPC envelope), `mcp-dev` `ops-gate.spec.ts` (planning repo) (query-only,
 admin tier, secret-bearing methods, env ignored, redaction, truncation) and
 `ops-mcp.spec.ts` (every ops tool annotated read-only over MCP).

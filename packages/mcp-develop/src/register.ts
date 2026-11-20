@@ -2,7 +2,9 @@
  * The `develop` toolset: workspace tools plus `track_review_*`. Registered
  * both by the `camstack-mcp-develop` bin and by `camstack mcp --toolsets develop`.
  */
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat.js'
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 import {
   extendAddon,
@@ -42,72 +44,97 @@ function workspaceRootFromEnv(): string {
   return requireWorkspaceRoot(process.cwd())
 }
 
-export function registerDevelopTools(server: McpServer): void {
-  server.tool(
-    'list_addons',
-    'List workspace packages that declare camstack.addons[]',
-    {},
-    async () => text(listAddonPackages(workspaceRootFromEnv())),
+/**
+ * How a host registers the develop tools. The `camstack mcp` toolset passes
+ * nothing and gets all of them. A host that already owns some names (the
+ * private operator MCP keeps its own capability and skill tools) passes
+ * `only` and takes the rest from here instead of copying them.
+ */
+export interface RegisterDevelopOptions {
+  /** Register just these tool names. The hub-facing `track_review_*` tools need `trackReview: true` then. */
+  readonly only?: readonly string[]
+  /** Register the `track_review_*` tools. Defaults to on when `only` is absent. */
+  readonly trackReview?: boolean
+  /** The workspace the tools read; defaults to `CAMSTACK_WORKSPACE`, else the working directory's. */
+  readonly workspaceRoot?: () => string
+  /** Annotation class for a tool name, when the host classifies its tools. */
+  readonly annotationsFor?: (name: string) => ToolAnnotations | undefined
+}
+
+export function registerDevelopTools(
+  server: McpServer,
+  options: RegisterDevelopOptions = {},
+): void {
+  const root = options.workspaceRoot ?? workspaceRootFromEnv
+  const reg = <Args extends ZodRawShapeCompat>(
+    name: string,
+    description: string,
+    schema: Args,
+    cb: ToolCallback<Args>,
+  ): void => {
+    if (options.only !== undefined && !options.only.includes(name)) return
+    const annotations = options.annotationsFor?.(name)
+    if (annotations === undefined) server.tool(name, description, schema, cb)
+    else server.tool(name, description, schema, annotations, cb)
+  }
+
+  reg('list_addons', 'List workspace packages that declare camstack.addons[]', {}, async () =>
+    text(listAddonPackages(root())),
   )
 
-  server.tool(
+  reg(
     'get_addon',
     'Resolve one addon package by id, npm name, or path',
     { query: z.string() },
     async ({ query }) => {
-      const pkg = findAddonPackage(workspaceRootFromEnv(), query)
+      const pkg = findAddonPackage(root(), query)
       if (!pkg) return text({ error: `not found: ${query}` })
       return text(pkg)
     },
   )
 
-  server.tool(
+  reg(
     'list_capabilities',
     'List capability definitions from packages/types *.cap.ts sources',
     {},
-    async () => text(listCapabilities(workspaceRootFromEnv())),
+    async () => text(listCapabilities(root())),
   )
 
-  server.tool(
-    'get_capability',
-    'Get one capability by name',
-    { name: z.string() },
-    async ({ name }) => {
-      const cap = getCapability(workspaceRootFromEnv(), name)
-      if (!cap) return text({ error: `not found: ${name}` })
-      return text(cap)
-    },
-  )
+  reg('get_capability', 'Get one capability by name', { name: z.string() }, async ({ name }) => {
+    const cap = getCapability(root(), name)
+    if (!cap) return text({ error: `not found: ${name}` })
+    return text(cap)
+  })
 
-  server.tool(
+  reg(
     'who_provides',
     'Which addons declare a given capability name',
     { capName: z.string() },
-    async ({ capName }) => text(whoProvides(workspaceRootFromEnv(), capName)),
+    async ({ capName }) => text(whoProvides(root(), capName)),
   )
 
-  server.tool(
+  reg(
     'list_examples',
     'Curated core-package examples (providers, notifiers, OSD, …)',
     {},
     async () => text(listExamples()),
   )
 
-  server.tool(
+  reg(
     'find_example',
     'Rank curated examples for a free-text query',
     { query: z.string() },
-    async ({ query }) => text(findExample(workspaceRootFromEnv(), query)),
+    async ({ query }) => text(findExample(root(), query)),
   )
 
-  server.tool(
+  reg(
     'validate_addon',
     'Validate manifest + vite entries (+ known caps). Omit query for whole workspace.',
     { query: z.string().optional() },
-    async ({ query }) => text(validateAddon(workspaceRootFromEnv(), query)),
+    async ({ query }) => text(validateAddon(root(), query)),
   )
 
-  server.tool(
+  reg(
     'scaffold_addon',
     'Create packages/addon-<name>/ with BaseAddon stub + vite entries map',
     {
@@ -121,7 +148,7 @@ export function registerDevelopTools(server: McpServer): void {
     async (args) =>
       text(
         scaffoldAddon({
-          workspaceRoot: workspaceRootFromEnv(),
+          workspaceRoot: root(),
           name: args.name,
           ...(args.displayName !== undefined ? { displayName: args.displayName } : {}),
           ...(args.description !== undefined ? { description: args.description } : {}),
@@ -132,7 +159,7 @@ export function registerDevelopTools(server: McpServer): void {
       ),
   )
 
-  server.tool(
+  reg(
     'scaffold_cap_stub',
     'Write a *.cap.ts stub (does not edit index.ts or run codegen)',
     {
@@ -144,7 +171,7 @@ export function registerDevelopTools(server: McpServer): void {
     async (args) =>
       text(
         scaffoldCapStub({
-          workspaceRoot: workspaceRootFromEnv(),
+          workspaceRoot: root(),
           name: args.name,
           ...(args.scope !== undefined ? { scope: args.scope } : {}),
           ...(args.mode !== undefined ? { mode: args.mode } : {}),
@@ -153,7 +180,7 @@ export function registerDevelopTools(server: McpServer): void {
       ),
   )
 
-  server.tool(
+  reg(
     'extend_addon',
     'Add a new manifest entry + source + vite key to an existing addon package',
     {
@@ -166,7 +193,7 @@ export function registerDevelopTools(server: McpServer): void {
     async (args) =>
       text(
         extendAddon({
-          workspaceRoot: workspaceRootFromEnv(),
+          workspaceRoot: root(),
           addon: args.addon,
           entryId: args.entryId,
           ...(args.displayName !== undefined ? { displayName: args.displayName } : {}),
@@ -176,11 +203,11 @@ export function registerDevelopTools(server: McpServer): void {
       ),
   )
 
-  server.tool('list_skills', 'List portable skill-pack markdown procedures', {}, async () =>
+  reg('list_skills', 'List portable skill-pack markdown procedures', {}, async () =>
     text(listSkills()),
   )
 
-  server.tool(
+  reg(
     'get_skill',
     'Read one skill markdown file (camstack-addon | camstack-capability | camstack-secrets | camstack-docs | architecture | track-review; the old ids add-addon / add-capability / sync-docs still resolve)',
     { id: z.string() },
@@ -197,6 +224,7 @@ export function registerDevelopTools(server: McpServer): void {
     return cachedHub
   }
 
+  if (!(options.trackReview ?? options.only === undefined)) return
   registerTrackReviewTools(server, {
     getHub: reviewHub,
     now: () => Date.now(),

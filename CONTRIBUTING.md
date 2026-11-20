@@ -94,7 +94,7 @@ camstack develop skill <id>
 manifest, that each `entry` has a source file and a matching vite entries
 key, and that a capability declared as `{ "name": "..." }` exists in this
 workspace. A string in `capabilities` is not checked by that pass. The CLI and `@camstack/mcp-develop` write unless you pass
-`--dry-run` or `dryRun: true`. The private `@camstack/mcp-dev` tool is the
+`--dry-run` or `dryRun: true`. The private operator MCP (`mcp-dev`, in the planning repo) is the
 other way around: `scaffold_addon` is a dry run unless `dryRun: false`.
 
 Tools on `@camstack/mcp-develop` (workspace only, no hub):
@@ -123,11 +123,13 @@ The skill pack ships in `@camstack/develop` (`skills/`). The ids are
 `architecture`, and `track-review`. The page the pack links is
 [Develop → MCP and skills](https://docs.camstack.com/docs/develop/mcp-and-skills).
 
-### This repository — `@camstack/mcp-dev` (not published)
+### The operator MCP (`mcp-dev`, private)
 
-`packages/mcp-dev` (`camstack-dev`) is the operator MCP for developing
-CamStack itself. `package.json` marks it `private`. It is not on npm. It wraps
-the same `@camstack/develop` addon tools and adds the workspace knowledge
+`camstack-dev` is the operator MCP for developing CamStack itself. It lives in
+the private planning repo (`tools/mcp-dev`), reads a camstack-server checkout,
+and is not on npm. The repo's `.mcp.json` launches it from the sibling
+`planning` clone. It takes the addon-author read tools from
+`@camstack/mcp-develop` and adds the workspace knowledge
 tools: `search_knowledge`, `get_decision`, `decisions_for_path`, `traps_for`,
 `guards_for`, `subsystem_of`, `subsystem_map`, `read_section`,
 `next_adr_number`, `list_skills`, `get_skill`, `find_ui_component`,
