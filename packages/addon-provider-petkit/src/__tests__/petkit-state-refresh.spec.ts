@@ -53,6 +53,7 @@ function publish(handle: ReturnType<typeof makeHandle>, pollIntervalMs?: number)
 
 function makeFeeder() {
   const registrations: Registration[] = []
+  const warn = vi.fn()
   let runtimeStateRef: IDeviceRuntimeState | null = null
   const ctx = {
     id: 3,
@@ -98,7 +99,7 @@ function makeFeeder() {
     logger: {
       debug: vi.fn(),
       info: vi.fn(),
-      warn: vi.fn(),
+      warn,
       error: vi.fn(),
       child: vi.fn(),
       withTags: vi.fn(),
@@ -107,7 +108,7 @@ function makeFeeder() {
   const device = new PetkitFeederDevice(ctx)
   return {
     device,
-    warn: ctx.logger.warn,
+    warn,
     reg: (name: string) => registrations.find((r) => r.cap.name === name),
     status: () => device.runtimeState.getCapState<PetFeederStatus>('pet-feeder'),
   }
