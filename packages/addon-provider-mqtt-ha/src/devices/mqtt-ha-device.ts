@@ -54,6 +54,7 @@ import type { MqttHaCap, MqttHaMeterField } from '../mqtt-ha-domain-mapping.js'
 import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-role.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import { matchIrProfile } from '../mqtt-ha-ir-profiles.js'
+import { registerMqttHaStateRefresh } from '../mqtt-ha-state-refresh.js'
 import { MqttHaIrBridge } from './mqtt-ha-ir-bridge.js'
 import {
   mqttHaDeviceSchema,
@@ -125,6 +126,11 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         this.onMessage(entity, topic, payload),
       )
     }
+    registerMqttHaStateRefresh({
+      ctx: this.ctx,
+      brokerId: this.brokerId,
+      reapplyCache: () => this.refresh(),
+    })
     this.refresh()
   }
 
@@ -607,7 +613,6 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
               ? entity.payloadOn
               : entity.payloadOff
         await this.command(entity, entity.commandTopic, payload)
-        this.setCapSlice(switchCapability, { on, lastChangedAt: Date.now() })
       },
     }
     this.registerStatusOnly(switchCapability, provider, COLD)
@@ -625,7 +630,6 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       getStatus: async () => this.getCapSlice(brightnessCapability) ?? COLD,
       setBrightness: async ({ level: percentage }) => {
         await this.lightCommand({ brightnessPct: percentage })
-        this.setCapSlice(brightnessCapability, { level: percentage, lastChangedAt: Date.now() })
       },
     }
     this.registerStatusOnly(brightnessCapability, provider, COLD)

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9053 source files · 246 units claimed by at least one document (9022 files).**
+**253 units · 9054 source files · 246 units claimed by at least one document (9023 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -82,8 +82,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-osd-manager` | 26 | `device-surfaces` | `architecture/osd-manager.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md`, +1 more, 1 ADR | 2026-11-10 |
 | `packages/addon-provider-homematic` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
 | `packages/addon-export-alexa/src/endpoints` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +15 more, 2 ADRs | 2026-08-26 |
+| `packages/addon-provider-mqtt-ha` | 25 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-dreo` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-11-08 |
-| `packages/addon-provider-mqtt-ha` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +8 more, 1 ADR | 2026-10-01 |
 | `packages/addon-export-google` | 23 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, +6 more | 2026-08-28 |
 | `packages/addon-google-services` | 22 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |

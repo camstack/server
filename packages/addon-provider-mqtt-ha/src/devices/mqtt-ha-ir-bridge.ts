@@ -123,6 +123,7 @@ export class MqttHaIrBridge {
     // entity held earlier (retained or previous) never reaches the waiter.
     const next = new Promise<string | null>((resolve) => {
       const timer = setTimeout(() => {
+        // not-a-state-poll: the learn request's own deadline, reads no state
         this.waiter = null
         resolve(null)
       }, timeoutMs)

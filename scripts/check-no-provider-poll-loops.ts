@@ -42,6 +42,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-tuya',
   'packages/addon-provider-petkit',
   'packages/addon-provider-esphome',
+  'packages/addon-provider-mqtt-ha',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

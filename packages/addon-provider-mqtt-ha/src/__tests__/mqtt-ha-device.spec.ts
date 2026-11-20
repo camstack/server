@@ -60,6 +60,8 @@ interface Harness {
   readonly state: () => IDeviceRuntimeState
   /** Every native cap provider the device registered, by cap name. */
   readonly providers: Map<string, unknown>
+  /** The registration options of each native cap, by cap name. */
+  readonly options: Map<string, unknown>
   readonly setRole: ReturnType<typeof vi.fn>
   readonly info: ReturnType<typeof vi.fn>
 }
@@ -77,7 +79,10 @@ function build(
   let runtime: IDeviceRuntimeState | null = null
   const emitted: unknown[] = []
   const providers = new Map<string, unknown>()
-  let switchProvider: { setState: (input: { on: boolean }) => Promise<void> } | null = null
+  const options = new Map<string, unknown>()
+  let switchProvider: {
+    setState: (input: { on: boolean }) => Promise<void>
+  } | null = null
   const setRole = vi.fn(async () => {})
   const info = vi.fn()
   const ctx = {
@@ -101,23 +106,34 @@ function build(
       getRecent: vi.fn(() => []),
     },
     persistConfig: vi.fn(async () => {}),
-    fetchDevice: vi.fn(async () => ({ deviceState: { setCapSlice: vi.fn(async () => {}) } })),
+    fetchDevice: vi.fn(async () => ({
+      deviceState: { setCapSlice: vi.fn(async () => {}) },
+    })),
     devices: {},
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
     },
-    registerNativeCap: vi.fn((cap: { name: string; runtimeState?: unknown }, provider: unknown) => {
-      providers.set(cap.name, provider)
-      if (cap.name === 'switch') {
-        switchProvider = provider as { setState: (input: { on: boolean }) => Promise<void> }
-      }
-      if (cap.runtimeState && runtime) {
-        runtime.installCapSchema(
-          cap.name,
-          cap.runtimeState as Parameters<IDeviceRuntimeState['installCapSchema']>[1],
-        )
-      }
-    }),
+    registerNativeCap: vi.fn(
+      (
+        cap: { name: string; runtimeState?: unknown },
+        provider: unknown,
+        registration?: unknown,
+      ) => {
+        providers.set(cap.name, provider)
+        options.set(cap.name, registration)
+        if (cap.name === 'switch') {
+          switchProvider = provider as {
+            setState: (input: { on: boolean }) => Promise<void>
+          }
+        }
+        if (cap.runtimeState && runtime) {
+          runtime.installCapSchema(
+            cap.name,
+            cap.runtimeState as Parameters<IDeviceRuntimeState['installCapSchema']>[1],
+          )
+        }
+      },
+    ),
     api: {
       deviceManager: {
         registerDevice: { mutate: vi.fn(async () => ({})) },
@@ -139,6 +155,7 @@ function build(
     device,
     emitted,
     providers,
+    options,
     setRole,
     info,
     setSwitch: async (on) => {
@@ -167,6 +184,57 @@ function deliver(
   }
 }
 
+describe('MqttHaDevice device-state-refresh (D1062)', () => {
+  const refreshOf = (h: Harness): (() => Promise<unknown>) => {
+    const provider = h.providers.get('device-state-refresh')
+    if (typeof provider !== 'object' || provider === null || !('refresh' in provider)) {
+      throw new Error('no refresh provider registered')
+    }
+    const call: unknown = provider.refresh
+    if (typeof call !== 'function') throw new Error('refresh is not a function')
+    return () => Promise.resolve(call({ deviceIds: [9], reason: 'command' }))
+  }
+
+  it('declares push full for the broker, so the core never schedules a read', async () => {
+    const h = build(DeviceType.Switch, configOf(plugMessages()))
+    await h.device.onActivate()
+    expect(h.options.get('device-state-refresh')).toMatchObject({
+      stateRefresh: { integrationId: BROKER, push: 'full', batch: false },
+    })
+  })
+
+  it('a refresh re-applies the broker cache a missed message left behind', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const h = build(DeviceType.Switch, configOf(plugMessages()))
+    await h.device.onActivate()
+    expect(h.state().getCapState('switch')).toMatchObject({ on: null })
+    // Recorded but never delivered to the device (a dropped notification).
+    mqttHaStateGateway.recordMessage(
+      BROKER,
+      'zigbee2mqtt/Kitchen plug',
+      JSON.stringify({ state: 'ON' }),
+    )
+    expect(h.state().getCapState('switch')).toMatchObject({ on: null })
+    await refreshOf(h)()
+    expect(h.state().getCapState('switch')).toMatchObject({ on: true })
+  })
+
+  it('a command leaves the slice to the device report (D1061: the hub holds the value)', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const h = build(DeviceType.Switch, configOf(plugMessages()))
+    await h.device.onActivate()
+    deliver(
+      mqttHaStateGateway,
+      entitiesOf(plugMessages()),
+      'zigbee2mqtt/Kitchen plug',
+      JSON.stringify({ state: 'ON' }),
+    )
+    mqttHaStateGateway.setPublisher(vi.fn(async () => {}))
+    await h.setSwitch(false)
+    expect(h.state().getCapState('switch')).toMatchObject({ on: true })
+  })
+})
+
 describe('MqttHaDevice on a zigbee2mqtt plug', () => {
   it('folds power, energy, voltage and current into one power-meter slice', async () => {
     const h = build(DeviceType.Switch, configOf(plugMessages()))
@@ -176,7 +244,13 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
       mqttHaStateGateway,
       entities,
       'zigbee2mqtt/Kitchen plug',
-      JSON.stringify({ state: 'ON', power: 42.5, energy: 3.2, voltage: 231, current: 0.19 }),
+      JSON.stringify({
+        state: 'ON',
+        power: 42.5,
+        energy: 3.2,
+        voltage: 231,
+        current: 0.19,
+      }),
     )
     const meter = h.state().getCapState('power-meter')
     expect(meter).toMatchObject({ power: 42.5, voltage: 231, current: 0.19 })
@@ -188,7 +262,10 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
     mqttHaStateGateway.clearBroker(BROKER)
     const h = build(DeviceType.Switch, configOf(plugMessages()))
     await h.device.onActivate()
-    expect(h.state().getCapState('switch')).toMatchObject({ on: null, lastChangedAt: 0 })
+    expect(h.state().getCapState('switch')).toMatchObject({
+      on: null,
+      lastChangedAt: 0,
+    })
   })
 
   it('migrates a legacy restored off-with-no-change-time slice to unknown, after the cap schema is registered', async () => {
@@ -197,7 +274,10 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
       switch: { on: false, lastChangedAt: 0 },
     })
     await expect(h.device.onActivate()).resolves.toBeUndefined()
-    expect(h.state().getCapState('switch')).toMatchObject({ on: null, lastChangedAt: 0 })
+    expect(h.state().getCapState('switch')).toMatchObject({
+      on: null,
+      lastChangedAt: 0,
+    })
   })
 
   it('publishes the switch command on its command topic', async () => {
@@ -248,7 +328,9 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
         e.category === EventCategory.EventEmitted,
     )
     expect(fired).toHaveLength(1)
-    expect(h.state().getCapState('event-emitter')).toMatchObject({ eventCountSinceStart: 1 })
+    expect(h.state().getCapState('event-emitter')).toMatchObject({
+      eventCountSinceStart: 1,
+    })
   })
 
   it('fires the plain payload of a device trigger, and lists an event it had not been told about', async () => {
@@ -277,7 +359,10 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
   it('stamps contact-sensor when a restored contact has no role, and leaves a set role alone', async () => {
     const missing = build(DeviceType.Sensor, configOf(contactMessages()))
     await missing.device.onActivate()
-    expect(missing.setRole).toHaveBeenCalledWith({ deviceId: 9, role: 'contact-sensor' })
+    expect(missing.setRole).toHaveBeenCalledWith({
+      deviceId: 9,
+      role: 'contact-sensor',
+    })
     expect(missing.info).toHaveBeenCalledWith(
       expect.stringContaining('role'),
       expect.objectContaining({ tags: { deviceId: 9 } }),
@@ -415,7 +500,10 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
       IR_TOPIC,
       JSON.stringify({ learned_ir_code: 'AxAAIABAAw==', linkquality: 87 }),
     )
-    expect((await pending).native).toEqual({ format: 'tuya', code: 'AxAAIABAAw==' })
+    expect((await pending).native).toEqual({
+      format: 'tuya',
+      code: 'AxAAIABAAw==',
+    })
   })
 
   it('learn times out with a typed error when nothing arrives', async () => {
@@ -507,7 +595,11 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
       h.state().getCapState<{
         lastSend?: { ok: boolean; error: string | null; medium: string }
       }>('ir-transmitter')?.lastSend,
-    ).toMatchObject({ ok: false, error: 'ir-transmitter.too-long', medium: 'ir' })
+    ).toMatchObject({
+      ok: false,
+      error: 'ir-transmitter.too-long',
+      medium: 'ir',
+    })
   })
 
   it('learn refuses an undecodable code with a typed error', async () => {
@@ -515,6 +607,8 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     const pending = provider.learn({ timeoutMs: 5000 })
     await vi.waitFor(() => expect(published).toHaveLength(1))
     deliver(mqttHaStateGateway, entities, IR_TOPIC, JSON.stringify({ learned_ir_code: '!!!' }))
-    await expect(pending).rejects.toMatchObject({ i18nCode: 'ir-transmitter.learn-undecodable' })
+    await expect(pending).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.learn-undecodable',
+    })
   })
 })
