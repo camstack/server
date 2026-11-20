@@ -97,6 +97,8 @@ interface MockBroker {
   readonly broker: IStreamBroker
   /** Subscriptions that are real consumers (not warm-up ghosts). */
   readonly realSubscribers: () => number
+  /** SDP-parameter-set listeners still registered. */
+  readonly sdpListeners: () => number
 }
 
 function sps(profileLevelId: string): Buffer {
@@ -107,7 +109,8 @@ function sps(profileLevelId: string): Buffer {
   ])
 }
 
-function makeMockBroker(profileLevelId: string): MockBroker {
+/** `cold`: a broker that has not dialled yet and never delivers its SPS. */
+function makeMockBroker(profileLevelId: string, opts: { cold?: boolean } = {}): MockBroker {
   const stats: BrokerStats = {
     status: 'streaming',
     inputFps: 30,
@@ -115,7 +118,7 @@ function makeMockBroker(profileLevelId: string): MockBroker {
     uptimeMs: 60_000,
     bitrateKbps: 2000,
     idrIntervalMs: 2000,
-    codec: 'h264',
+    codec: opts.cold === true ? undefined : 'h264',
     totalBytes: 1_000,
     packetCount: 10,
     rtspClients: 0,
@@ -125,6 +128,7 @@ function makeMockBroker(profileLevelId: string): MockBroker {
     preBufferPackets: 10,
   }
   let real = 0
+  let listeners = 0
   const noop = (): Unsubscribe => () => undefined
   const broker = {
     getStats: () => stats,
@@ -140,13 +144,20 @@ function makeMockBroker(profileLevelId: string): MockBroker {
     },
     onVideoRtp: () => noop(),
     updateConsumerAttributionBySession: () => true,
-    getSdpParameterSets: () => [sps(profileLevelId)],
-    onSdpParameterSets: () => noop(),
+    getSdpParameterSets: () => (opts.cold === true ? null : [sps(profileLevelId)]),
+    onSdpParameterSets: (): Unsubscribe => {
+      listeners += 1
+      let live = true
+      return () => {
+        if (live) listeners -= 1
+        live = false
+      }
+    },
     onSourceRestart: () => noop(),
     getSourceType: () => 'rtsp',
     isRtpSource: () => false,
-  } as unknown as IStreamBroker
-  return { broker, realSubscribers: () => real }
+  } as unknown as IStreamBroker // test boundary: a partial IStreamBroker with only what setup reads
+  return { broker, realSubscribers: () => real, sdpListeners: () => listeners }
 }
 
 function offerWithLevels(...profileLevelIds: string[]): string {
@@ -217,6 +228,33 @@ describe('level-capped client offer', () => {
     server.registerBroker('101/low', sub.broker)
     await server.handleOffer('101/high', offerWithLevels(...CHROME))
     expect(main.realSubscribers()).toBe(1)
+    expect(sub.realSubscribers()).toBe(0)
+    expect(captured[0]?.transcodeToBaseline).toBe(false)
+  })
+
+  it('transcodes when the only substream is itself above the client level', async () => {
+    server.registerBroker('101/low', makeMockBroker('4d0028').broker) // Main L4.0
+    await server.handleOffer('101/high', offerWithLevels(...STRICT_SAFARI))
+    expect(main.realSubscribers()).toBe(1)
+    expect(captured[0]?.transcodeToBaseline).toBe(true)
+  })
+
+  it('leaves no SPS listener behind when a cold substream never reports, and transcodes', async () => {
+    const cold = makeMockBroker(SUB_360P, { cold: true })
+    server.registerBroker('101/low', cold.broker)
+    await server.handleOffer('101/high', offerWithLevels(...STRICT_SAFARI))
+    expect(cold.sdpListeners()).toBe(0)
+    expect(cold.realSubscribers()).toBe(0)
+    expect(captured[0]?.transcodeToBaseline).toBe(true)
+  }, 10_000)
+
+  it('never treats a Baseline source as capped (Firefox-style offer, passthrough)', async () => {
+    const baseline = makeMockBroker('420033') // Baseline L5.1
+    server.unregisterBroker('101/high')
+    server.registerBroker('101/high', baseline.broker)
+    server.registerBroker('101/low', sub.broker)
+    await server.handleOffer('101/high', offerWithLevels('42e01f'))
+    expect(baseline.realSubscribers()).toBe(1)
     expect(sub.realSubscribers()).toBe(0)
     expect(captured[0]?.transcodeToBaseline).toBe(false)
   })

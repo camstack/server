@@ -110,6 +110,9 @@ export interface AdaptiveControllerConfig
 
 export interface AdaptiveControllerOptions {
   readonly initialTier: Tier
+  /** Highest rung the ladder may climb to; undefined = no limit. A client
+   *  whose decoder cannot take the rungs above must not be sent to them. */
+  readonly maxTier?: Tier
   readonly config: AdaptiveControllerConfig
   /**
    * Per-tier count of MEASURED downgrades this viewer's session has already
@@ -377,7 +380,9 @@ export class AdaptiveController {
 
   private nextTier(): Tier | null {
     const idx = TIER_ORDER.indexOf(this.tier)
-    return idx <= 0 ? null : (TIER_ORDER[idx - 1] ?? null)
+    const next = idx <= 0 ? null : (TIER_ORDER[idx - 1] ?? null)
+    if (next === null || this.opts.maxTier === undefined) return next
+    return TIER_ORDER.indexOf(next) < TIER_ORDER.indexOf(this.opts.maxTier) ? null : next
   }
 
   /**

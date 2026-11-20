@@ -112,6 +112,16 @@ describe('AdaptiveController', () => {
     expect(calls).toContain('tier:mid')
   })
 
+  it('never climbs above maxTier (a client whose decoder cannot take the rungs above)', () => {
+    const { ctrl, calls } = makeController({ initialTier: 'low', maxTier: 'low' })
+    ctrl.tick(0)
+    ctrl.onLoss({ packetsLost: 0, highestSequence: 1000 }, 59_000)
+    ctrl.onLoss({ packetsLost: 0, highestSequence: 2000 }, 60_000)
+    ctrl.tick(60_500)
+    expect(calls).toEqual([])
+    // Control: the same health with no ceiling does climb (the test above).
+  })
+
   it('ramps promotion confidence across recreated sessions and caps it', () => {
     const config = {
       analyzeWindowMs: 15_000,
