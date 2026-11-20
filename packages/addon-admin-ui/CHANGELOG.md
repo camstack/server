@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A camera embedded from the hub (viewer device sheet) now uses the camera card with a bounded history
+- An embedded camera opens on its snapshot: go live from the stream picker, refresh, download and show detections
+- An embedded camera waits for its device type before drawing, instead of flashing the generic card
+- Device page: the camera stream panel offers Show zones, and live detection boxes line up on portrait and 4:3 cameras
 - A discovered notifier that is already a target is shown as already added and cannot be picked again.
 
 ## [1.2.721] - 2026-11-20
@@ -19,10 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A camera embedded from the hub (viewer device sheet) now uses the camera card with a bounded history
-- An embedded camera opens on its snapshot: go live from the stream picker, refresh, download and show detections
-- An embedded camera waits for its device type before drawing, instead of flashing the generic card
-- Device page: the camera stream panel offers Show zones, and live detection boxes line up on portrait and 4:3 cameras
 
 ## [1.2.720] - 2026-11-20
 
