@@ -52,17 +52,12 @@
  * the precedent is `check-device-selection-in-sync.ts`.
  */
 import { existsSync, readFileSync } from 'node:fs'
+import { literals, type ListSource } from './lib/nc-mirror-lists.ts'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
 
 /** Where a string-literal list lives: the file, and the text that opens it. */
-interface ListSource {
-  readonly path: string
-  /** The list starts at the first `[` after this marker. */
-  readonly marker: string
-}
-
 interface KeyListPair {
   readonly label: string
   readonly authority: ListSource
@@ -275,29 +270,6 @@ function read(path: string): string | null {
   if (path.startsWith('camstack/')) return null
   problems.push(`${path} is missing — it is in THIS repository`)
   return null
-}
-
-/**
- * Comments out of the way before a list is read as text: an enum documented
- * member by member (`NcSystemEventKindSchema`) carries apostrophes and
- * brackets in its comments, and a reader that saw them would read the prose.
- */
-function stripComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1')
-}
-
-/** The string literals of the bracketed list after `marker`, or an error line. */
-function literals(src: string, source: ListSource, allowEmpty = false): readonly string[] | string {
-  const at = src.indexOf(source.marker)
-  if (at === -1) return `${source.path}: \`${source.marker}\` not found`
-  const code = stripComments(src.slice(at + source.marker.length))
-  const open = code.indexOf('[')
-  const close = open === -1 ? -1 : code.indexOf(']', open)
-  if (open === -1 || close === -1) return `${source.path}: no [...] list after \`${source.marker}\``
-  const items = [...code.slice(open + 1, close).matchAll(/'([^']+)'/g)].map((m) => m[1] ?? '')
-  if (items.length === 0 && !allowEmpty)
-    return `${source.path}: the list after \`${source.marker}\` is empty — the read is broken`
-  return items
 }
 
 /** The `z.enum([...])` a field of the object after `objectMarker` parses with. */

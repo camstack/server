@@ -63,8 +63,8 @@ ends `sent`, like a snooze) with an info line naming the node and version. A
   landing to supersede with, and a stale "updating" goes out. That is the same
   reach `server-updated` itself has on the hub; this record does not widen it.
 - Installed phones parse the served template catalog with their own kind enum,
-  so both kinds are held back from the SERVED catalog
-  (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`), as the tank kinds were. A phone
+  so both kinds were held back from the SERVED catalog
+  (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`, empty today since viewer 1.0.728; the mechanism remains), as the tank kinds were. A phone
   that has not installed the viewer OTA mirroring them still drops a rule that
   selects one; that is unavoidable for any new kind.
 - The viewer's kind mirror cannot run ahead of the PUBLISHED types it is

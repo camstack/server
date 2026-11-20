@@ -65,8 +65,8 @@ a rule must be able to opt into `error` separately from `critical`.
   notified retroactively: its episode was already admitted.
 - A write lost to a crash costs one duplicate notification of a still-open
   episode (write-behind ledger), never a lost one.
-- The viewer's catalog mirror holds the three kinds back until its OTA
-  (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
+- The viewer's catalog mirror held the three kinds back until its OTA
+  (viewer 1.0.728 is installed: `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` is empty today, the mechanism remains).
 
 ## Enforcement
 

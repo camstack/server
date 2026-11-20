@@ -1080,8 +1080,8 @@ command is identified ONLY by its vocabulary action id (D983). Filters:
 know with `unknown-command-action`), `commandOutcomes`
 (`confirmed|already|unconfirmed|failed`) and `commandActorKinds`
 (`user|addon|action|scheduler|composition|node`). Template variables
-`actionLabel`, `actorLabel`, `outcomeLabel`. The kind is held back from an old
-viewer (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
+`actionLabel`, `actorLabel`, `outcomeLabel`. The kind was held back from an old
+viewer until viewer 1.0.728 (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` is empty today).
 
 ### A system-event filter is scoped to its kind family
 
@@ -2278,11 +2278,11 @@ that: it opened at 25 and has nothing left to raise.
   `supply-band.ts`). It applies to every device; an item that reports its own
   `status` is never judged from its level, and a `waste` item with only a level
   is still not judged. A fountain's `water` tank is such an item.
-- **Held back from the served template catalog.** The installed viewers parse
+- **Held back from the served template catalog (mechanism; empty today).** The installed viewers parse
   `getTemplateCatalog` as a whole, with a strict kind enum, so
-  `servedTemplateVars()` drops `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` until
-  the viewer mirrors them (the D723 restart kinds were released on viewer 1.0.667). `check-nc-mirrors-in-sync.ts` reads that list as the
-  viewer's allowance and fails the day the viewer catches up.
+  `servedTemplateVars()` drops the kinds in `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` until
+  the viewer mirrors them. The list is `[]` since viewer 1.0.728 (the D723 restart kinds were released on viewer 1.0.667). `check-nc-mirrors-in-sync.ts` reads that list as the
+  viewer's allowance (it accepts only the literal `= []` as empty) and notes any held-back kind the viewer already parses.
 - **`consumables` is `durability: 'restored'`**, so a wake-window reading (the
   Dreame mower's CMS counters) survives an addon restart.
 - **A tank change counts once it has HELD** `NC_TANK_HOLD_MS` (60 s). It is
@@ -2371,8 +2371,8 @@ one durable row per notified open episode) is what makes both paths safe togethe
 
 A critical alert already open when its first matching rule is created is not
 notified retroactively. If NC is down nothing notifies; the reconcile notifies
-when it is back. The viewer holds the three kinds back from its catalog until its
-OTA (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
+when it is back. The three kinds were held back from the viewer's catalog until its
+OTA (viewer 1.0.728 installed; `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` is empty today, the mechanism remains).
 
 ### An alert notification carries the alert's own action
 

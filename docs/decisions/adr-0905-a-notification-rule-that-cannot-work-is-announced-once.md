@@ -50,8 +50,8 @@ filter at all — they would have been a family with nothing to configure.
 
 - The verdicts are in RAM: a restart announces a still-broken rule once more.
 - Timelapse and summary rules are not judged yet.
-- The kinds are held back from the served template catalog until the viewer
-  OTA that mirrors them is installed (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
+- The kinds were held back from the served template catalog until the viewer
+  OTA that mirrors them was installed (viewer 1.0.728; `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` is empty today, the mechanism remains).
 
 ## Enforcement
 
