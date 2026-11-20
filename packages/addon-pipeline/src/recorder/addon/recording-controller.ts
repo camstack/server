@@ -76,7 +76,11 @@ import {
   withRecordingIntent,
 } from '../../stream-broker/rtsp/restream-intent.js'
 import { activeBandAt, type BatteryContext } from '../band-engine.js'
-import { resolveBatteryLevel, type BatteryHold } from '../battery-hysteresis.js'
+import {
+  resolveBatteryLevel,
+  type BatteryHold,
+  type BatteryReading,
+} from '../battery-hysteresis.js'
 import type { SegmentStore } from '../segment-store.js'
 import {
   type AttachWindow,
@@ -150,7 +154,7 @@ export interface RecordingControllerDeps {
    * reading, stale, unparseable). A slice read — it must never wake the camera.
    * Absent = no device has a readable charge.
    */
-  readonly readBatteryLevel?: (deviceId: number) => Promise<number | null>
+  readonly readBatteryLevel?: (deviceId: number) => Promise<BatteryReading | null>
   /** Enumerate every device id that has a persisted config (boot restore seed). */
   readonly enabledDeviceIds: () => Promise<readonly number[]>
   /**
@@ -725,6 +729,8 @@ export class RecordingController {
   private readonly batteryHolds = new Map<number, BatteryHold>()
   /** Per device: the charge decisions are made against; absent = unknown. */
   private readonly batteryLevels = new Map<number, number>()
+  /** Per device: when a flip held back only by the dwell may happen. */
+  private readonly batteryDwellUntil = new Map<number, number>()
   /** Devices whose "charge unknown, unconditioned bands only" line was written. */
   private readonly batteryUnknownLogged = new Set<number>()
   /**
@@ -1332,6 +1338,19 @@ export class RecordingController {
     }
   }
 
+  /**
+   * A band flip held back only by the dwell has no event behind it: the charge
+   * already crossed the bound and nothing else will move. Arm the dwell expiry
+   * unless an earlier wake-up is already armed, so 5 minutes means 5 minutes.
+   */
+  private armBatteryDwell(deviceId: number): void {
+    const until = this.batteryDwellUntil.get(deviceId)
+    if (until === undefined || this.stopped || this.paused) return
+    const armed = this.wakeups.nextAtMs(deviceId)
+    if (armed !== undefined && armed <= until) return
+    this.wakeups.arm(deviceId, until, 'battery-dwell')
+  }
+
   /** The charge decisions are made against; `level: null` = unknown. */
   private batteryCtx(deviceId: number): BatteryContext {
     return { level: this.batteryLevels.get(deviceId) ?? null }
@@ -1349,10 +1368,11 @@ export class RecordingController {
     if (!bands.some((b) => b.battery !== undefined)) {
       this.batteryHolds.delete(deviceId)
       this.batteryLevels.delete(deviceId)
+      this.batteryDwellUntil.delete(deviceId)
       this.batteryUnknownLogged.delete(deviceId)
       return
     }
-    let raw: number | null = null
+    let raw: BatteryReading | null = null
     try {
       raw = (await this.deps.readBatteryLevel?.(deviceId)) ?? null
     } catch (err: unknown) {
@@ -1366,6 +1386,8 @@ export class RecordingController {
     const resolved = resolveBatteryLevel({ bands, at: new Date(nowMs), raw, hold: before, nowMs })
     if (resolved.hold === null) this.batteryHolds.delete(deviceId)
     else this.batteryHolds.set(deviceId, resolved.hold)
+    if (resolved.dwellUntilMs === undefined) this.batteryDwellUntil.delete(deviceId)
+    else this.batteryDwellUntil.set(deviceId, resolved.dwellUntilMs)
     if (resolved.level === null) {
       this.batteryLevels.delete(deviceId)
       if (!this.batteryUnknownLogged.has(deviceId)) {
@@ -1422,6 +1444,10 @@ export class RecordingController {
    */
   async onConfigChanged(deviceId: number): Promise<void> {
     if (this.stopped || this.paused) return
+    // A hold names a band by INDEX; after an edit or reorder that index can
+    // point at another band, so the hysteresis memory starts over.
+    this.batteryHolds.delete(deviceId)
+    this.batteryDwellUntil.delete(deviceId)
     await this.evaluateDevice(deviceId)
   }
 
@@ -1808,6 +1834,7 @@ export class RecordingController {
     // does not depend on whether the attach succeeds, and a device whose attach
     // throws must still get its band edge.
     this.scheduleNextDecision(deviceId, config, battery)
+    this.armBatteryDwell(deviceId)
 
     if (!wantRecording) {
       this.reportUnrecordable(deviceId, config)

@@ -1,5 +1,5 @@
 import { batteryCapability, type AddonApi } from '@camstack/types'
-import { batteryLevelFromSlice } from '../battery-hysteresis.js'
+import { batteryLevelFromSlice, type BatteryReading } from '../battery-hysteresis.js'
 import { withDeadline } from './with-deadline.js'
 
 /** The one hub call the charge read makes. */
@@ -17,7 +17,7 @@ export function batteryLevelReader(
   api: BatteryLevelApi,
   readTimeoutMs: number,
   nowMs: () => number,
-): (deviceId: number) => Promise<number | null> {
+): (deviceId: number) => Promise<BatteryReading | null> {
   return async (deviceId) => {
     const slice = await withDeadline(
       api.deviceState.getCapSlice.query({ deviceId, capName: batteryCapability.name }),

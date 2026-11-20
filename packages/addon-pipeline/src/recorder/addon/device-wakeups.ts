@@ -43,6 +43,7 @@ export interface DeviceWakeupsDeps {
 
 export class DeviceWakeups {
   private readonly timers = new Map<number, NodeJS.Timeout>()
+  private readonly dueAt = new Map<number, number>()
 
   constructor(private readonly deps: DeviceWakeupsDeps) {}
 
@@ -59,10 +60,12 @@ export class DeviceWakeups {
     )
     const timer = setTimeout(() => {
       this.timers.delete(deviceId)
+      this.dueAt.delete(deviceId)
       this.deps.fire(deviceId)
     }, delayMs)
     timer.unref?.()
     this.timers.set(deviceId, timer)
+    this.dueAt.set(deviceId, atMs)
     this.deps.logger.debug('recorder: device wake-up armed', {
       tags: { deviceId },
       meta: { atMs, delayMs, reason },
@@ -75,12 +78,19 @@ export class DeviceWakeups {
     if (timer === undefined) return
     clearTimeout(timer)
     this.timers.delete(deviceId)
+    this.dueAt.delete(deviceId)
+  }
+
+  /** The instant this device's pending wake-up is due, or `undefined` when none. */
+  nextAtMs(deviceId: number): number | undefined {
+    return this.dueAt.get(deviceId)
   }
 
   /** Drop every pending wake-up — shutdown and maintenance pause. */
   cancelAll(): void {
     for (const timer of this.timers.values()) clearTimeout(timer)
     this.timers.clear()
+    this.dueAt.clear()
   }
 
   /** Devices with a wake-up pending — for tests and for shutdown assertions. */

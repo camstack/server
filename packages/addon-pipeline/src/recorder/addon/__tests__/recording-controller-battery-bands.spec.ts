@@ -13,7 +13,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { RecordingConfig } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BATTERY_BAND_DWELL_MS } from '../../battery-hysteresis.js'
+import { BATTERY_BAND_DWELL_MS, BATTERY_LEVEL_STALE_MS } from '../../battery-hysteresis.js'
 import { RecordingController, type RecordingControllerDeps } from '../recording-controller'
 import { settleUntil } from './settle.js'
 import { recordingsLocationOfMode } from '../roots.js'
@@ -126,7 +126,7 @@ function makeHarness(root: string, config: RecordingConfig): Harness {
     } as never,
     loadConfig: async () => config,
     enabledDeviceIds: async () => [DEVICE_ID],
-    readBatteryLevel: async () => level,
+    readBatteryLevel: async () => (level === null ? null : { level, observedAtMs: clock }),
     locations: () => [
       recordingsLocationOfMode({ id: 'recordings:default', type: 'recordings', root }, 'active'),
     ],
@@ -228,6 +228,60 @@ describe('battery-conditioned bands', () => {
     const unknown = h.logs.filter((l) => l.msg.includes('battery level unknown'))
     expect(unknown).toHaveLength(1)
     expect(unknown[0]?.tags).toMatchObject({ deviceId: DEVICE_ID })
+
+    await h.controller.stop()
+  })
+
+  const unpinned = (h: Harness): boolean =>
+    h.logs.some((l) => l.msg.includes('recorder unpinned broker source'))
+
+  it('a charge older than 12 h is UNKNOWN: a conditioned band stops matching', async () => {
+    const h = makeHarness(root, BANDED)
+    h.setLevel(60)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+    expect(unpinned(h)).toBe(false)
+
+    // The camera went quiet: reads fail from here on and the held 60 % ages out.
+    h.setLevel(null)
+    h.setClock(T + BATTERY_LEVEL_STALE_MS + 1)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+    await settleUntil(() => unpinned(h), 'a stale charge no longer holds the continuous band')
+
+    await h.controller.stop()
+  })
+
+  it('a config edit drops the hysteresis memory (the band index may name another band)', async () => {
+    const h = makeHarness(root, BANDED)
+    h.setLevel(80)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+
+    // Inside the dwell the fall to 30 % is held back: still recording.
+    h.setLevel(30)
+    h.setClock(T + 60_000)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+    expect(unpinned(h)).toBe(false)
+
+    // After an edit the old hold means nothing: 30 % is judged afresh.
+    await h.controller.onConfigChanged(DEVICE_ID)
+    await settleUntil(() => unpinned(h), 'the edit re-judged the charge from scratch')
+
+    await h.controller.stop()
+  })
+
+  it('a flip held back only by the dwell fires AT the dwell expiry, not at the next tick', async () => {
+    const h = makeHarness(root, BANDED)
+    h.setLevel(80)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+
+    h.setLevel(30)
+    h.setClock(T + 60_000)
+    await h.controller.onBatteryChanged(DEVICE_ID)
+    expect(unpinned(h)).toBe(false)
+
+    // No event arrives; only the armed wake-up can move it.
+    h.setClock(T + BATTERY_BAND_DWELL_MS)
+    await vi.advanceTimersByTimeAsync(BATTERY_BAND_DWELL_MS - 60_000)
+    await settleUntil(() => unpinned(h), 'the dwell expiry re-decided the device')
 
     await h.controller.stop()
   })
