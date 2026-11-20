@@ -26,7 +26,7 @@ import { MemberLedger } from './member-ledger.js'
 import { readMemberKinds } from './member-kinds.js'
 
 export class CoreNotifierAddon extends BaseAddon {
-  readonly id = NOTIFIER_GROUP_ADDON_ID
+  readonly id: string = NOTIFIER_GROUP_ADDON_ID
 
   constructor() {
     super({})

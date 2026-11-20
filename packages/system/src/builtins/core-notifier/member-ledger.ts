@@ -13,10 +13,10 @@ import { createHash } from 'node:crypto'
 const KEY_SEPARATOR = '\u0000'
 
 /** How long a delivered member is remembered: longer than any outbox retry horizon. */
-export const DELIVERED_TTL_MS = 30 * 60_000
+export const DELIVERED_TTL_MS: number = 30 * 60_000
 
 /** The most entries either map holds; the oldest go first. */
-export const LEDGER_MAX_ENTRIES = 5000
+export const LEDGER_MAX_ENTRIES: number = 5000
 
 export interface MemberLedgerOptions {
   readonly now: () => number

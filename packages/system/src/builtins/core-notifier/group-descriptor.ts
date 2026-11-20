@@ -7,6 +7,7 @@ import {
   NOTIFIER_GROUP_ADDON_ID,
   NOTIFIER_GROUP_KIND,
   notificationTargetKinds,
+  type NotificationTargetRecordKind,
   type TargetKind,
   type TargetKindCaps,
 } from '@camstack/types'
@@ -81,4 +82,5 @@ export function groupTargetKind(): TargetKind {
   }
 }
 
-export const groupRecordKinds = notificationTargetKinds([groupTargetKind()])
+export const groupRecordKinds: Readonly<Record<string, NotificationTargetRecordKind>> =
+  notificationTargetKinds([groupTargetKind()])
