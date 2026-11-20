@@ -52,6 +52,9 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-wyze/src/wyze-state-refresh.ts',
   // Amcrest: the camera's reachability read moved to the core; the motion-stream and PTZ timers are not polls.
   'packages/addon-provider-amcrest/src/amcrest-camera.ts',
+  // Hikvision: reachability, the OSD snapshot and the floodlight moved to the core; the alarm/PTZ/motion timers are not polls.
+  'packages/addon-provider-hikvision/src/hikvision-camera.ts',
+  'packages/addon-provider-hikvision/src/accessories/light.ts',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

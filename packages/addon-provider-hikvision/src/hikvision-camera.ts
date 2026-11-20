@@ -63,7 +63,7 @@ import {
   providerMotionEvent,
   ptzAutotrackCapability,
   ptzCapability,
-  type ReachabilityPollHandle,
+  type ReachabilityRefreshHandle,
   RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
   rebootCapability,
   recordingOnboardCapability,
@@ -72,7 +72,7 @@ import {
   type StreamProfile,
   type StreamProfilePatch,
   snapshotCapability,
-  startReachabilityPoll,
+  registerReachabilityRefresh,
   streamCatalogCapability,
   streamParamsCapability,
   summarisePrivacyAudio,
@@ -203,6 +203,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => reject(new Error(`${label} timed out after ${String(ms)}ms`)), ms)
+    // not-a-state-poll: request deadline, reads no state
   })
   try {
     return await Promise.race([promise, timeout])
@@ -406,10 +407,11 @@ export class HikvisionCamera
    *  section in the camera settings UI; null until the first refresh
    *  succeeds. */
   private osdSnapshot: HikvisionOverlayConfig | null = null
-  /** Periodic OSD-snapshot poll. Overlays change rarely so 5min is
-   *  plenty; the cap's own getStatus refreshes on demand for the
-   *  universal overlay UI. */
-  private osdPollTimer: ReturnType<typeof setInterval> | null = null
+  /** When the OSD snapshot was last read from the camera (ms). Overlays change
+   *  rarely, so the core's reachability read refreshes it only once it is older
+   *  than {@link OSD_POLL_INTERVAL_MS}; the cap's own getStatus refreshes on
+   *  demand for the universal overlay UI. */
+  private osdFetchedAt = 0
   /** Last snapshot channel we logged, so `resolveSnapshotChannel` emits one
    *  line per CHANGE instead of one per capture. */
   private lastSnapshotChannelLogged: string | null = null
@@ -418,7 +420,7 @@ export class HikvisionCamera
   /** Control-plane reachability poll — drives `device.online` from ISAPI
    *  `getDeviceInfo` liveness, decoupled from stream-broker video health.
    *  Started in `onActivate`, stopped in `removeDevice`. */
-  private reachabilityPoll: ReachabilityPollHandle | null = null
+  private reachabilityPoll: ReachabilityRefreshHandle | null = null
 
   constructor(ctx: DeviceContext) {
     super(ctx, hikvisionCameraSchema, { type: DeviceType.Camera })
@@ -1102,6 +1104,7 @@ export class HikvisionCamera
         // Cache for the readonly OSD section in the camera settings
         // UI — hydrateSchema reads from this.osdSnapshot synchronously.
         this.osdSnapshot = config
+        this.osdFetchedAt = Date.now()
         const overlays: OsdOverlay[] = []
         // Date/time — firmware-rendered; operator can only flip
         // visibility, not edit the format.
@@ -1319,24 +1322,25 @@ export class HikvisionCamera
     // failure (camera offline, ISAPI 4xx) just leaves the section
     // showing "—" until the next periodic poll.
     void this.refreshOsdSnapshot()
-    if (this.osdPollTimer === null) {
-      this.osdPollTimer = setInterval(() => {
-        void this.refreshOsdSnapshot()
-      }, HikvisionCamera.OSD_POLL_INTERVAL_MS)
-    }
     this.startReachabilityPolling()
   }
 
-  /** Start the control-plane reachability poll: an ISAPI `getDeviceInfo`
-   *  round-trip every 30s drives `device.online`, with hysteresis. This
-   *  replaces the old stream-health→online mirror so an on-demand (idle)
-   *  camera that is reachable still reports ONLINE. Idempotent. */
+  /** Register the control-plane reachability read: an ISAPI `getDeviceInfo`
+   *  round-trip drives `device.online`, with hysteresis. The hub's state
+   *  refresh decides when it runs (D1062, no timer here); the first probe runs
+   *  now. This replaces the old stream-health→online mirror so an on-demand
+   *  (idle) camera that is reachable still reports ONLINE. The same read
+   *  refreshes the OSD snapshot once it is older than 5 min. Idempotent. */
   private startReachabilityPolling(): void {
     if (this.reachabilityPoll) return
-    this.reachabilityPoll = startReachabilityPoll({
+    this.reachabilityPoll = registerReachabilityRefresh({
+      ctx: this.ctx,
       probe: async () => {
         const isapi = this.ensureClient()
         await isapi.getDeviceInfo()
+        if (Date.now() - this.osdFetchedAt >= HikvisionCamera.OSD_POLL_INTERVAL_MS) {
+          void this.refreshOsdSnapshot()
+        }
         return true
       },
       setOnline: (online) => {
@@ -1345,6 +1349,7 @@ export class HikvisionCamera
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
+    void this.reachabilityPoll.probeNow()
   }
 
   /** Single-flight OSD config fetch; updates the in-memory snapshot
@@ -1354,6 +1359,7 @@ export class HikvisionCamera
       const isapi = this.ensureClient()
       const config = await isapi.getOverlayConfig(DEFAULT_CAMERA_NUMBER)
       if (config) this.osdSnapshot = config
+      this.osdFetchedAt = Date.now()
     } catch (err) {
       this.ctx.logger.debug('osd snapshot refresh failed', {
         tags: { deviceId: this.id },
@@ -1870,6 +1876,7 @@ export class HikvisionCamera
           zoom: isapiSpeedFor(zoom, speed),
         })
         await new Promise<void>((r) => setTimeout(r, PTZ_MOVE_IMPULSE_MS))
+        // not-a-state-poll: PTZ move impulse length, reads no state
         await isapi.ptzContinuous(cameraNumber, { pan: 0, tilt: 0, zoom: 0 })
       },
       continuousMove: async ({ deviceId, pan, tilt, zoom, speed }) => {
@@ -3757,6 +3764,7 @@ export class HikvisionCamera
     // Exponential backoff capped at 60s — same shape as Reolink.
     const delayMs = Math.min(60_000, 1_000 * 2 ** Math.min(attempts, 6))
     this.alarmReconnectTimer = setTimeout(() => {
+      // not-a-state-poll: reconnect backoff of the alarm stream, reads no state
       this.alarmReconnectTimer = null
       this.ensureAlarmSubscription()
     }, delayMs)
@@ -3884,6 +3892,7 @@ export class HikvisionCamera
     const existing = this.motionInactiveTimers.get(camStreamId)
     if (existing) clearTimeout(existing)
     const timer = setTimeout(() => {
+      // not-a-state-poll: ends a motion after its inactivity hold, reads nothing
       const clearedAt = Date.now()
       this.lastMotionAt.set(camStreamId, 0)
       this.motionInactiveTimers.delete(camStreamId)
@@ -5283,10 +5292,6 @@ export class HikvisionCamera
 
   override async removeDevice(): Promise<void> {
     this.ctx.logger.info('Removing Hikvision camera', { tags: { deviceId: this.id } })
-    if (this.osdPollTimer) {
-      clearInterval(this.osdPollTimer)
-      this.osdPollTimer = null
-    }
     this.reachabilityPoll?.stop()
     this.reachabilityPoll = null
     await this.disconnectAll()

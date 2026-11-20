@@ -36,7 +36,6 @@ function makeTeardownSubject(): {
       logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
       api: { streamBroker: { retractCameraStream: { mutate: retract } } },
     },
-    osdPollTimer: null,
     reachabilityPoll: null,
     published,
     disconnectAll,

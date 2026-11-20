@@ -10,9 +10,9 @@
  *                     is currently on
  *
  * State model: switch + brightness live in the runtime-state slice; a
- * 30s background poll re-reads firmware so external changes (mobile
- * app, NVR-shared light config edits) surface in the UI without
- * operator action.
+ * hub's scheduled read (`device-state-refresh`, D1062) re-reads firmware so
+ * external changes (mobile app, NVR-shared light config edits) surface in the
+ * UI without operator action.
  *
  * Settings:
  *   - `mode`              — which mode the camera should use when
@@ -34,7 +34,9 @@ import {
   type BrightnessStatus,
   brightnessCapability,
   DeviceType,
+  deviceStateRefreshCapability,
   hydrateSchema,
+  type StateRefreshPolicy,
   type SwitchStatus,
   switchCapability,
 } from '@camstack/types'
@@ -70,12 +72,11 @@ export interface HikvisionLightHost extends HikvisionAccessoryHost {
   lightSupportedModes(): readonly string[]
 }
 
-const POLL_INTERVAL_MS = 30_000
+/** The core reads the floodlight this often (D1062); the camera has no push. */
+export const LIGHT_REFRESH_INTERVAL_MS = 30_000
 
 export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySchema> {
   readonly features = []
-
-  private pollTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(
     ctx: DeviceContext,
@@ -87,7 +88,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     })
     this.registerSwitchCap()
     this.registerBrightnessCap()
-    this.startPolling()
+    this.registerStateRefresh()
   }
 
   private get cameraNumber(): number {
@@ -112,33 +113,46 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     )
   }
 
-  /** Refresh on/off + brightness from firmware. The lib's
+  /** Read on/off + brightness from firmware. The lib's
    *  `getSupplementLight` returns both in one call so we coalesce them
-   *  here and write both slices atomically. */
+   *  here and write both slices atomically. THROWS when the camera cannot
+   *  be read, so the core backs the cadence off (D1062). */
   private async refreshFromFirmware(): Promise<void> {
-    try {
-      const isapi = this.parent.ensureClient()
-      const state = await isapi.getSupplementLight(this.cameraNumber)
-      if (!state) return
-      const on = state.mode !== 'close'
-      const ts = Date.now()
-      const previousSwitch = this.switchView()
-      const switchChangedAt = previousSwitch.on === on ? previousSwitch.lastChangedAt : ts
-      this.setCapSlice(switchCapability, { on, lastChangedAt: switchChangedAt })
-      if (typeof state.brightness === 'number') {
-        const previousBrightness = this.brightnessView()
-        const brightChangedAt =
-          previousBrightness.level === state.brightness ? previousBrightness.lastChangedAt : ts
-        this.setCapSlice(brightnessCapability, {
-          level: state.brightness,
-          lastChangedAt: brightChangedAt,
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.debug('hikvision light refresh failed', {
-        meta: { error: err instanceof Error ? err.message : String(err) },
+    const isapi = this.parent.ensureClient()
+    const state = await isapi.getSupplementLight(this.cameraNumber)
+    if (!state) return
+    const on = state.mode !== 'close'
+    const ts = Date.now()
+    const previousSwitch = this.switchView()
+    const switchChangedAt = previousSwitch.on === on ? previousSwitch.lastChangedAt : ts
+    this.setCapSlice(switchCapability, { on, lastChangedAt: switchChangedAt })
+    if (typeof state.brightness === 'number') {
+      const previousBrightness = this.brightnessView()
+      const brightChangedAt =
+        previousBrightness.level === state.brightness ? previousBrightness.lastChangedAt : ts
+      this.setCapSlice(brightnessCapability, {
+        level: state.brightness,
+        lastChangedAt: brightChangedAt,
       })
     }
+  }
+
+  /** The floodlight is polled (`push: 'none'`): the hub decides when to read it and reads once after each command. */
+  private registerStateRefresh(): void {
+    const policy: StateRefreshPolicy = {
+      integrationId: this.ctx.stableId,
+      minIntervalMs: LIGHT_REFRESH_INTERVAL_MS,
+      batch: false,
+      push: 'none',
+    }
+    const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
+      refresh: async () => {
+        await this.refreshFromFirmware()
+        return { ok: true }
+      },
+      resubscribe: async () => ({ ok: true }),
+    }
+    this.ctx.registerNativeCap(deviceStateRefreshCapability, provider, { stateRefresh: policy })
   }
 
   private async applyOn(on: boolean, brightness: number): Promise<void> {
@@ -151,29 +165,14 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
       this.cameraNumber,
       on ? { mode, whiteLightBrightness: brightness } : { mode },
     )
-    const ts = Date.now()
-    this.setCapSlice(switchCapability, { on, lastChangedAt: ts })
-    if (on) this.setCapSlice(brightnessCapability, { level: brightness, lastChangedAt: ts })
-  }
-
-  private startPolling(): void {
-    if (this.pollTimer) return
-    this.pollTimer = setInterval(() => {
-      void this.refreshFromFirmware()
-    }, POLL_INTERVAL_MS)
-  }
-
-  override async removeDevice(): Promise<void> {
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer)
-      this.pollTimer = null
-    }
+    // No slice write here: the hub reads the light right after a command
+    // returns (D1062), and that read is what the slice shows.
   }
 
   private registerSwitchCap(): void {
     const provider: InferNativeProvider<typeof switchCapability> = {
-      // Read straight from the runtime-state slice — the 30s background
-      // poll + setState writes keep it fresh. CLAUDE.md anti-pattern:
+      // Read straight from the runtime-state slice — the hub's
+      // scheduled read + the read after each command keep it fresh. CLAUDE.md anti-pattern:
       // don't refresh-on-every-getStatus; the slice IS the cache.
       getStatus: async (): Promise<SwitchStatus> => this.switchView(),
       setState: async ({ deviceId, on }) => {

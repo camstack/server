@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Camera reachability, the OSD snapshot and the floodlight state are read when the hub schedules it (every 30 s) instead of on the camera's own timers; the floodlight shows what the camera reports after a command, not the command
+
 ## [1.2.192] - 2026-11-20
 
 ### Changed
