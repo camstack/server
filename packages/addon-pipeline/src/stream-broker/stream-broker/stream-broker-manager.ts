@@ -2315,6 +2315,7 @@ export class StreamBrokerManager {
       // generic reconnecting placeholder.
       const sleeping = data.status?.sleeping === true
       this.recordBatterySleep(deviceId, data.status)
+      this.applyAsleepToDevice(deviceId, sleeping)
       this.applyPlaceholderReasonToDevice(deviceId, sleeping ? 'sleeping' : 'reconnecting')
     })
 
@@ -6147,6 +6148,14 @@ export class StreamBrokerManager {
    * to the per-device broker set. Providers stay oblivious — they
    * only mutate their own runtime state.
    */
+  private applyAsleepToDevice(deviceId: number, asleep: boolean): void {
+    const streamMap = this.cameraStreams.get(deviceId)
+    if (!streamMap) return
+    for (const camStreamId of streamMap.keys()) {
+      this.brokers.get(brokerIdFor(deviceId, camStreamId))?.setDeviceAsleep(asleep)
+    }
+  }
+
   private applyPlaceholderReasonToDevice(deviceId: number, reason: PlaceholderReason): void {
     const streamMap = this.cameraStreams.get(deviceId)
     if (!streamMap) return

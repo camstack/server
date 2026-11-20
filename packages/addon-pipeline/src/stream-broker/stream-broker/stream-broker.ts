@@ -303,6 +303,22 @@ export class StreamBroker implements IStreamBroker {
    */
   private firstVideoWatchdog: ReturnType<typeof setTimeout> | undefined
   /**
+   * The device's COMMITTED sleep state, pushed by the manager from the battery
+   * status event (in-memory, off the event path — never a read, D49). `false`
+   * is both "awake" and "unknown": only a committed `sleeping: true` changes
+   * what the first-video watchdog does.
+   */
+  private deviceAsleep = false
+  /** Which watchdog fired against a sleeping camera and is waiting for the wake. */
+  private watchdogAwaitingWake: 'first-video' | 'activity' | null = null
+  /**
+   * Bounds the wait for a wake. A committed `sleeping:true` whose wake event
+   * never arrives (dropped telemetry, D8) must not leave the stream dark
+   * forever: past the bound the watchdog reconnects as it did before.
+   */
+  private sleepWaitTimer: ReturnType<typeof setTimeout> | undefined
+  private static readonly SLEEP_WAIT_MAX_MS = 45_000
+  /**
    * Wall-clock timeout for the first-video watchdog. Long enough that
    * a healthy live cam comfortably emits its first IDR within the
    * window (typical: ~1-2s after rfc4571 TCP connect on PoE cams,
@@ -1285,6 +1301,7 @@ export class StreamBroker implements IStreamBroker {
   async stop(): Promise<void> {
     this.logger?.info('Broker stopping')
     this.stopping = true
+    this.clearSleepWaitBound()
     this.manualStop = true
     this._status = 'stopped'
 
@@ -4093,6 +4110,9 @@ export class StreamBroker implements IStreamBroker {
    */
   private armFirstVideoWatchdog(): void {
     if (this.firstVideoWatchdog) return
+    // Already waiting for the wake: a duplicate `onVideoTrack` must not re-arm
+    // a timer that would log the same wait again.
+    if (this.watchdogAwaitingWake !== null) return
     if (this.manualStop || this.stopping) return
     const timeoutMs = this.firstVideoTimeoutMs()
     this.firstVideoWatchdog = setTimeout(() => {
@@ -4118,38 +4138,64 @@ export class StreamBroker implements IStreamBroker {
         })
         return
       }
-      this.logger?.warn(
-        'first-video watchdog: no video RTP after source connect — forcing reconnect',
-        {
-          tags: { deviceId: this.numericDeviceId },
-          meta: {
-            timeoutMs,
-            ...this.sourceMetaForLog(),
+      // A camera whose COMMITTED state is asleep has no video to deliver, and a
+      // forced reconnect against it only burns dials until it wakes by itself
+      // (3629, 2026-11-20: three reconnects in 35 s, the camera woke at +33 s).
+      // Wait for the wake instead — say so once, reconnect once on the wake.
+      // Unknown sleep state never reaches here as `true`: today's behaviour.
+      if (this.deviceAsleep) {
+        if (this.watchdogAwaitingWake !== null) return
+        this.watchdogAwaitingWake = 'first-video'
+        this.armSleepWaitBound()
+        this.logger?.info(
+          'first-video watchdog: camera is asleep — waiting for the wake instead of reconnecting',
+          {
+            tags: { deviceId: this.numericDeviceId },
+            meta: { timeoutMs, ...this.sourceMetaForLog() },
           },
-        },
-      )
-      // Tear down the reader → lib detects TCP close → releases its
-      // dedicated session → next dial triggers a fresh session. This
-      // mirrors the user's "click restart" workaround.
-      this.destroyRfc4571Reader()
-      this._status = 'error'
-      // Treat this as a fresh recovery cycle rather than a continuation
-      // of an exponential-backoff sequence — the user noticed the
-      // stuck state after wake-up, the manual restart resets backoff,
-      // and we're emulating that.
-      this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
-      this.nextDialAllowedAt = 0
-      this.lastRefreshRequestAt = 0
-      // Provider refresh is a LOOPBACK concern only: the misleading
-      // `rfc4571`-in-the-message log used to fire (and this refresh used to
-      // round-trip) even for a native RTSP broker, which has no publisher to
-      // republish. Siblings (`onError`, the activity-watchdog expiry) already
-      // gate this on the source type; match them.
-      if (this.source?.type === 'rfc4571') {
-        this.notifySourceRefresh()
+        )
+        return
       }
-      this.scheduleReconnect()
+      this.forceFirstVideoReconnect(timeoutMs)
     }, timeoutMs)
+  }
+
+  /**
+   * Tear the reader down and re-dial from scratch: the first-video watchdog's
+   * remedy for a connection that delivered no video RTP.
+   */
+  private forceFirstVideoReconnect(timeoutMs: number): void {
+    this.logger?.warn(
+      'first-video watchdog: no video RTP after source connect — forcing reconnect',
+      {
+        tags: { deviceId: this.numericDeviceId },
+        meta: {
+          timeoutMs,
+          ...this.sourceMetaForLog(),
+        },
+      },
+    )
+    // Tear down the reader → lib detects TCP close → releases its
+    // dedicated session → next dial triggers a fresh session. This
+    // mirrors the user's "click restart" workaround.
+    this.destroyRfc4571Reader()
+    this._status = 'error'
+    // Treat this as a fresh recovery cycle rather than a continuation
+    // of an exponential-backoff sequence — the user noticed the
+    // stuck state after wake-up, the manual restart resets backoff,
+    // and we're emulating that.
+    this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
+    this.nextDialAllowedAt = 0
+    this.lastRefreshRequestAt = 0
+    // Provider refresh is a LOOPBACK concern only: the misleading
+    // `rfc4571`-in-the-message log used to fire (and this refresh used to
+    // round-trip) even for a native RTSP broker, which has no publisher to
+    // republish. Siblings (`onError`, the activity-watchdog expiry) already
+    // gate this on the source type; match them.
+    if (this.source?.type === 'rfc4571') {
+      this.notifySourceRefresh()
+    }
+    this.scheduleReconnect()
   }
 
   /**
@@ -4168,8 +4214,52 @@ export class StreamBroker implements IStreamBroker {
       : StreamBroker.FIRST_VIDEO_TIMEOUT_MS
   }
 
+  /**
+   * Record the device's committed sleep state. On the wake, a first-video
+   * watchdog that was holding off reconnects ONCE (unless video flowed meanwhile).
+   */
+  setDeviceAsleep(asleep: boolean): void {
+    const wasAsleep = this.deviceAsleep
+    this.deviceAsleep = asleep
+    const waiting = this.watchdogAwaitingWake
+    if (!wasAsleep || asleep || waiting === null) return
+    this.watchdogAwaitingWake = null
+    this.clearSleepWaitBound()
+    if (this.manualStop || this.stopping) return
+    if (waiting === 'first-video' && this.videoRtpSeen > 0) return
+    this.logger?.info('watchdog: camera woke — reconnecting once', {
+      tags: { deviceId: this.numericDeviceId },
+      meta: this.sourceMetaForLog(),
+    })
+    this.forceFirstVideoReconnect(this.firstVideoTimeoutMs())
+  }
+
+  /** Arm the bound on a wait for the wake (see `sleepWaitTimer`). */
+  private armSleepWaitBound(): void {
+    this.clearSleepWaitBound()
+    this.sleepWaitTimer = setTimeout(() => {
+      this.sleepWaitTimer = undefined
+      if (this.watchdogAwaitingWake === null) return
+      this.watchdogAwaitingWake = null
+      if (this.manualStop || this.stopping) return
+      this.logger?.warn('watchdog: no wake within the bound — reconnecting anyway', {
+        tags: { deviceId: this.numericDeviceId },
+        meta: { boundMs: StreamBroker.SLEEP_WAIT_MAX_MS, ...this.sourceMetaForLog() },
+      })
+      this.forceFirstVideoReconnect(this.firstVideoTimeoutMs())
+    }, StreamBroker.SLEEP_WAIT_MAX_MS)
+  }
+
+  private clearSleepWaitBound(): void {
+    if (!this.sleepWaitTimer) return
+    clearTimeout(this.sleepWaitTimer)
+    this.sleepWaitTimer = undefined
+  }
+
   /** Cancel the first-video watchdog. Idempotent. */
   private cancelFirstVideoWatchdog(): void {
+    this.watchdogAwaitingWake = null
+    this.clearSleepWaitBound()
     if (!this.firstVideoWatchdog) return
     clearTimeout(this.firstVideoWatchdog)
     this.firstVideoWatchdog = undefined
@@ -4270,6 +4360,23 @@ export class StreamBroker implements IStreamBroker {
               timeoutMs: StreamBroker.RTP_ACTIVITY_TIMEOUT_MS,
               firedCount: this.rtpActivityWatchdogFiredCount,
             },
+          },
+        )
+      }
+      return
+    }
+
+    // Same rule as the first-video watchdog: a camera whose committed state is
+    // asleep is waited for, not reconnected against; the wake reconnects once.
+    if (this.deviceAsleep) {
+      if (this.watchdogAwaitingWake === null) {
+        this.watchdogAwaitingWake = 'activity'
+        this.armSleepWaitBound()
+        this.logger?.info(
+          'activity watchdog: camera is asleep — waiting for the wake instead of reconnecting',
+          {
+            tags: { deviceId: this.numericDeviceId },
+            meta: { timeoutMs: StreamBroker.RTP_ACTIVITY_TIMEOUT_MS, ...this.sourceMetaForLog() },
           },
         )
       }
