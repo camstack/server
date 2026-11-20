@@ -10,6 +10,8 @@ export interface PetkitConnectionSurface {
   readonly infos: readonly PetkitDeviceInfo[]
   /** Live feeder handles, keyed by PetKit device id. */
   readonly handles: ReadonlyMap<string, FeederDevice>
+  /** The integration's `pollIntervalMs` setting, which only slows the core's read cadence (D1062). */
+  readonly pollIntervalMs?: number
 }
 
 /** Sink the integration manager publishes its live surface to (the resolver). */
@@ -86,6 +88,11 @@ export class PetkitFacadeResolver {
       current?.delete(cb)
       if (current && current.size === 0) this.#subs.delete(integrationId)
     }
+  }
+
+  /** The integration's poll interval setting, or undefined when unknown. */
+  pollIntervalMs(integrationId: string): number | undefined {
+    return this.#surfaces.get(integrationId)?.pollIntervalMs
   }
 
   /** The discovered feeder roster for an integration, or empty when unknown. */

@@ -40,6 +40,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-ecowitt',
   'packages/addon-provider-dreo',
   'packages/addon-provider-tuya',
+  'packages/addon-provider-petkit',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

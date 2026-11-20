@@ -187,7 +187,11 @@ export class PetkitIntegrationManager {
         }
       }
 
-      const surface: PetkitConnectionSurface = { infos: feederInfos, handles }
+      const surface: PetkitConnectionSurface = {
+        infos: feederInfos,
+        handles,
+        pollIntervalMs: this.#connection.pollIntervalMs,
+      }
       this.#surfaceSink.set(this.#id, surface)
 
       this.#feederCount = handles.size
