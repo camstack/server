@@ -10,12 +10,13 @@ import {
   resyncCapability,
   resyncThroughAdoption,
 } from '@camstack/types'
-import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
+import type { Homematic, HmDevice, HmValue, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { hmName } from './hm-name.js'
 import { buttonEventsSection } from './hm-button-events-section.js'
 import { devicePanelSection } from './hm-device-panel-section.js'
 import { publishKeyLinkStates, storedKeyLinkStates } from './hm-key-link-states.js'
+import { maintenanceFaultReading } from '../homematic-fault-mapping.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
@@ -61,6 +62,10 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   private readonly address: string
   private readonly integrationId: string
 
+  /** MAINTENANCE channel address and its last known flag values; null when the device has no such channel. */
+  private maintenanceChannel: string | null = null
+  private readonly maintenanceValues = new Map<string, HmValue>()
+
   /** Unsubscribe for the facade `valueChanged` reachability listener. */
   private valueChangedUnsub: (() => void) | null = null
   /** Unsubscribe for the session fan-out that re-stamps names once the CCU answers. */
@@ -84,6 +89,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     // device is present but reachability is unknown, default online=true.
     this.online = this.deriveOnline(hmDevice)
     this.attachReachabilityListener()
+    this.attachErrorCap(hmDevice)
     void this.refreshButtonEvents()
 
     void this.updateSourceInfo({ id: this.address, system: 'homematic' })
@@ -125,11 +131,50 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     return !reach.unreach
   }
 
+  // ── faults (the MAINTENANCE service flags) ────────────────────────────────
+
+  /**
+   * Declare the `error` cap when the device has a MAINTENANCE channel, seed the
+   * flags it already carries, and publish them. A device without one has no
+   * service flags to read, so it declares nothing (and says so).
+   */
+  private attachErrorCap(hmDevice: HmDevice | null): void {
+    const channel = hmDevice?.channels.find((c) => c.type?.toUpperCase() === 'MAINTENANCE')
+    if (hmDevice === null || channel === undefined) {
+      this.ctx.logger.debug('HmContainerDevice: no MAINTENANCE channel, no error cap', {
+        tags: { deviceId: this.id },
+        meta: { address: this.address },
+      })
+      return
+    }
+    this.maintenanceChannel = channel.address
+    for (const dp of channel.dataPoints) this.maintenanceValues.set(dp.parameter, dp.value)
+    this.registerErrorCap()
+    this.publishFaults()
+  }
+
+  private onMaintenanceEvent(event: ValueChangedEvent): void {
+    if (this.maintenanceChannel === null || event.channel !== this.maintenanceChannel) return
+    this.maintenanceValues.set(event.parameter.toUpperCase(), event.value)
+    this.publishFaults()
+  }
+
+  private publishFaults(): void {
+    const reading = maintenanceFaultReading(this.maintenanceValues, Date.now())
+    this.publishError(reading).catch((err: unknown) => {
+      this.ctx.logger.warn('HmContainerDevice: could not publish the device fault', {
+        tags: { deviceId: this.id },
+        meta: { address: this.address, error: errMsg(err) },
+      })
+    })
+  }
+
   private attachReachabilityListener(): void {
     const facade = this.facade
     if (!facade) return
     this.valueChangedUnsub = facade.on('valueChanged', (event: ValueChangedEvent) => {
       if (event.device !== this.address) return
+      this.onMaintenanceEvent(event)
       if (!REACHABILITY_PARAMS.has(event.parameter.toUpperCase())) return
       const next = !event.value
       if (this.online !== next) this.markOnline(next)

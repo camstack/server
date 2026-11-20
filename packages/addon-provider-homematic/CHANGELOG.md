@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Homematic CCU reports its WatchDog faults (HB-RF-ETH connection, low voltage, radio and ReGa restarts, no internet, unclean shutdown) and each device its MAINTENANCE faults (unreachable, low battery, pending configuration, duty cycle, errors) on the Fault capability
+
 ## [1.2.208] - 2026-11-19
 
 ### Changed

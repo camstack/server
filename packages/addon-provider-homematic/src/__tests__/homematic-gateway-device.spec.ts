@@ -4,6 +4,7 @@
  * it refuses to claim.
  */
 import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import type { HmSysVar, HmValue, Homematic } from 'nodehomematic'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HomematicConfig } from '../config.js'
 import { HomematicGatewayDevice } from '../devices/homematic-gateway-device.js'
@@ -18,6 +19,7 @@ interface Rig {
   readonly providers: Map<string, unknown>
   readonly logger: RecordingLogger
   readonly setMetadata: ReturnType<typeof vi.fn>
+  readonly errorSlice: () => unknown
 }
 
 function rig(config: Record<string, unknown>): Rig {
@@ -59,7 +61,13 @@ function rig(config: Record<string, unknown>): Rig {
     api: { deviceManager: { setMetadata: { mutate: setMetadata } } },
     logger,
   } as unknown as DeviceContext
-  return { ctx, providers, logger, setMetadata }
+  return {
+    ctx,
+    providers,
+    logger,
+    setMetadata,
+    errorSlice: () => runtime?.getCapState('error'),
+  }
 }
 
 const gatewayConfig = { integrationId: INT, system: 'homematic', nativeId: `${INT}:gateway` }
@@ -203,5 +211,121 @@ describe('HomematicGatewayDevice', () => {
     homematicFacades.emitSnapshot(INT)
     await Promise.resolve()
     expect(device.online).toBe(true)
+  })
+})
+
+// ── the CCU's own faults: WatchDog system variables on the `error` cap ──────────
+
+function sysvar(name: string, value: HmValue): HmSysVar {
+  return { id: name, name, type: 'LOGIC', value, writable: false, isInternal: false }
+}
+
+interface FakeHub {
+  vars: HmSysVar[]
+  failRefresh: boolean
+  refreshes: number
+}
+
+/** The two facade calls the gateway reads system variables through (the documented stub boundary). */
+function publishHub(hub: FakeHub): void {
+  const stub = {
+    refreshHub: async (): Promise<void> => {
+      hub.refreshes += 1
+      if (hub.failRefresh) throw new Error('rega unreachable')
+    },
+    systemVariables: (): HmSysVar[] => hub.vars,
+  }
+  homematicFacades.set(INT, stub as unknown as Homematic)
+}
+
+describe('HomematicGatewayDevice error cap', () => {
+  const watchdog = (key: string, value: HmValue): HmSysVar => sysvar(`SV WatchDog: ${key}`, value)
+  const hubWith = (vars: HmSysVar[]): FakeHub => ({ refreshes: 0, failRefresh: false, vars })
+
+  it('declares the cap and stays unknown (never "no fault") before the first read', () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    expect(r.providers.has('error')).toBe(true)
+    expect(r.errorSlice()).toMatchObject({ active: null, code: null, lastFetchedAt: 0 })
+  })
+
+  it('publishes each WatchDog variable that is on as a fault, the error tier first', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    publishHub(
+      hubWith([
+        watchdog('no-internet', true),
+        watchdog('hb-rf-eth-connection', true),
+        watchdog('low-voltage', false),
+      ]),
+    )
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({
+      active: true,
+      code: 'hb-rf-eth-connection',
+      severity: 'error',
+      faults: [{ code: 'hb-rf-eth-connection' }, { code: 'no-internet' }],
+    })
+  })
+
+  it('clears when the variables turn off', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const hub = hubWith([watchdog('hb-rf-eth-connection', true)])
+    publishHub(hub)
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: true })
+    hub.vars = [watchdog('hb-rf-eth-connection', false)]
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: false, code: null, faults: [] })
+  })
+
+  it('a failed read changes nothing and says so on the device', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const hub = hubWith([watchdog('hb-rf-eth-connection', true)])
+    publishHub(hub)
+    await device.pollFaults()
+    hub.failRefresh = true
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: true, code: 'hb-rf-eth-connection' })
+    expect(
+      r.logger.lines.some(
+        (l) =>
+          l.level === 'warn' && /fault read failed/.test(l.message) && l.tags['deviceId'] === 7,
+      ),
+    ).toBe(true)
+  })
+
+  it('stays unknown when no read succeeded, and when the CCU has no WatchDog variable', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    publishHub({ refreshes: 0, failRefresh: true, vars: [] })
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: null })
+    publishHub(hubWith([sysvar('Presence', true)]))
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: null })
+    expect(
+      r.logger.lines.some((l) => /no WatchDog/.test(l.message) && l.tags['deviceId'] === 7),
+    ).toBe(true)
+  })
+
+  it('reads nothing while the session is down, and logs the skip', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    const session = publish({ host: '192.168.10.40', tls: false })
+    session.status = 'disconnected'
+    const hub = hubWith([])
+    publishHub(hub)
+    await device.pollFaults()
+    expect(hub.refreshes).toBe(0)
+    expect(r.logger.lines.some((l) => /skipped/.test(l.message) && l.tags['deviceId'] === 7)).toBe(
+      true,
+    )
   })
 })
