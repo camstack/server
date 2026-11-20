@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The battery badge on the device page now opens the power source, charge state, voltage, current, temperature, sleep state and last contact; unknown values are left out.
+
 ## [1.2.478] - 2026-11-20
 
 ### Changed

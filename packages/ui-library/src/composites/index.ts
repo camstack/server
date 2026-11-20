@@ -32,6 +32,9 @@ export type { AudioWaveformProps } from './audio-waveform'
 export { AudioWaveform } from './audio-waveform'
 export type { BatteryBadgeProps, BatteryStatusLike } from './battery-badge'
 export { BatteryBadge } from './battery-badge'
+export { BatteryDetails } from './battery-details-list'
+export type { BatteryDetailRow } from './battery-details'
+export { batteryDetailRows } from './battery-details'
 export {
   BATTERY_BADGE_LOW_KEY,
   BATTERY_BADGE_NORMAL_KEY,

@@ -14,6 +14,7 @@
 import type { JSX } from 'react'
 import {
   Battery,
+  BatteryCharging,
   BatteryFull,
   BatteryLow,
   BatteryMedium,
@@ -23,6 +24,9 @@ import {
   Sun,
 } from 'lucide-react'
 import { useUiText } from '../contexts/ui-text'
+import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
+import { BatteryDetails } from './battery-details-list'
+import { batteryDetailRows } from './battery-details'
 import { cn } from '../lib/cn'
 import {
   BATTERY_BADGE_LOW_KEY,
@@ -39,6 +43,12 @@ export interface BatteryStatusLike {
   /** True for a binary LOW_BAT source with no real % — render "Normal"/"Low"
    *  instead of a misleading exact percentage. */
   readonly binary?: boolean
+  /** What the CELL is doing; absent / `'unknown'` = not known, render nothing. */
+  readonly chargeState?: 'charging' | 'full' | 'idle' | 'unknown'
+  readonly voltage?: number | null
+  readonly currentMa?: number | null
+  readonly temperatureC?: number | null
+  readonly lastContactAt?: number
 }
 
 export interface BatteryBadgeProps {
@@ -119,12 +129,12 @@ export function BatteryBadge({
     )
   }
 
-  const Icon = pickIcon(percentage)
+  const Icon = status.chargeState === 'charging' ? BatteryCharging : pickIcon(percentage)
   const color = levelColor(percentage, charging)
   const ChargingGlyph = charging === 'solar' ? Sun : charging === 'dc' ? Plug : null
   const showSleeping = sleeping
 
-  return (
+  const badge = (
     <span
       className={cn('inline-flex items-center gap-1 text-[10px] font-medium', color, className)}
       title={[
@@ -147,5 +157,21 @@ export function BatteryBadge({
         <span className="text-foreground-subtle">{charging}</span>
       )}
     </span>
+  )
+
+  // Full variant: the badge opens the charging parameters + sleep state.
+  if (variant !== 'full') return badge
+  return (
+    <Popover>
+      <PopoverTrigger
+        aria-label={t('uiLibrary.batteryBadge.detailsAria', 'Battery details')}
+        className="inline-flex items-center rounded-md hover:bg-surface-hover"
+      >
+        {badge}
+      </PopoverTrigger>
+      <PopoverContent align="start" className="min-w-[220px] p-2">
+        <BatteryDetails rows={batteryDetailRows(status)} />
+      </PopoverContent>
+    </Popover>
   )
 }

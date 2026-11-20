@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery details strings (English and Italian) for the device page battery popover.
+
 ## [1.2.712] - 2026-11-20
 
 ### Changed

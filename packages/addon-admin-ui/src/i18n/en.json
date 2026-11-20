@@ -8672,7 +8672,8 @@
       "normal": "Normal",
       "titlePercent": "Battery: {{percent}}%",
       "charging": "charging ({{source}})",
-      "sleeping": "sleeping"
+      "sleeping": "sleeping",
+      "detailsAria": "Battery details"
     },
     "coverageTrack": {
       "ariaLabel": "Recorded coverage timeline"
@@ -11232,6 +11233,27 @@
       "discard": "Discard",
       "save": "Save",
       "saving": "Saving…"
+    },
+    "batteryDetails": {
+      "source": "Power source",
+      "cell": "Battery",
+      "voltage": "Voltage",
+      "current": "Current",
+      "temperature": "Temperature",
+      "sleep": "Sleep state",
+      "lastContact": "Last contact",
+      "mains": "Mains",
+      "solar": "Solar",
+      "batteryOnly": "Battery only",
+      "charging": "Charging",
+      "full": "Full",
+      "notCharging": "Not charging",
+      "asleep": "Asleep",
+      "awake": "Awake",
+      "agoNow": "just now",
+      "agoMinutes": "{{count}}m ago",
+      "agoHours": "{{count}}h ago",
+      "agoDays": "{{count}}d ago"
     }
   },
   "helpers": {

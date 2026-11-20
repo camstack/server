@@ -45,6 +45,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/ffmpeg-params-preview')) {
   const { FfmpegParamsPreview } = await import('./ffmpeg-params-preview')
   createRoot(root).render(<FfmpegParamsPreview />)
+} else if (window.location.pathname.startsWith('/battery-details-preview')) {
+  const { BatteryDetailsPreview } = await import('./battery-details-preview')
+  createRoot(root).render(<BatteryDetailsPreview />)
 } else if (window.location.pathname.startsWith('/form-save-bar-preview')) {
   const { FormSaveBarPreview } = await import('./form-save-bar-preview')
   createRoot(root).render(<FormSaveBarPreview />)

@@ -8694,7 +8694,8 @@
       "normal": "Normale",
       "titlePercent": "Batteria: {{percent}}%",
       "charging": "in carica ({{source}})",
-      "sleeping": "in sospensione"
+      "sleeping": "in sospensione",
+      "detailsAria": "Dettagli batteria"
     },
     "coverageTrack": {
       "ariaLabel": "Timeline della copertura registrata"
@@ -11254,6 +11255,27 @@
       "discard": "Annulla modifiche",
       "save": "Salva",
       "saving": "Salvataggio…"
+    },
+    "batteryDetails": {
+      "source": "Alimentazione",
+      "cell": "Batteria",
+      "voltage": "Tensione",
+      "current": "Corrente",
+      "temperature": "Temperatura",
+      "sleep": "Stato di riposo",
+      "lastContact": "Ultimo contatto",
+      "mains": "Rete elettrica",
+      "solar": "Solare",
+      "batteryOnly": "Solo batteria",
+      "charging": "In carica",
+      "full": "Carica completa",
+      "notCharging": "Non in carica",
+      "asleep": "In sospensione",
+      "awake": "Attiva",
+      "agoNow": "adesso",
+      "agoMinutes": "{{count}} min fa",
+      "agoHours": "{{count}} h fa",
+      "agoDays": "{{count}} g fa"
     }
   },
   "helpers": {

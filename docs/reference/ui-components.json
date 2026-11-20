@@ -1961,6 +1961,28 @@
       "summary": "Bottom-left: the device's own battery."
     },
     {
+      "name": "batteryDetailRows",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/battery-details.ts",
+      "summary": "Battery detail rows — the selection and formatting logic behind the battery popover on the device detail. Pure: it decides WHICH facts are known and what they read as; labels are translated by the renderer."
+    },
+    {
+      "name": "BatteryDetails",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/battery-details-list.tsx",
+      "summary": "BatteryDetails — label/value list of the known battery facts (see `batteryDetailRows`). Rendered inside the full BatteryBadge popover.",
+      "props": [
+        {
+          "name": "rows",
+          "type": "readonly BatteryDetailRow[]",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "BINARY_BATTERY_LOW_BELOW",
       "kind": "constant",
       "area": "composites",
