@@ -972,6 +972,10 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         sourceType: 'device',
         sourceId: '101',
         actionUrl: '/devices/101',
+        faults: [
+          { code: 'pin-required', label: 'Camera PIN required', severity: 'error' },
+          { code: 'cloud-offline', label: 'Cloud link lost', severity: 'warning' },
+        ],
         at: SYS_AT,
       }),
   },
@@ -989,6 +993,10 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         sourceType: 'device',
         sourceId: '101',
         actionUrl: '/devices/101',
+        faults: [
+          { code: 'pin-required', label: 'Camera PIN required', severity: 'error' },
+          { code: 'cloud-offline', label: 'Cloud link lost', severity: 'warning' },
+        ],
         at: SYS_AT,
       }),
   },
