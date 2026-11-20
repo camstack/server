@@ -57,6 +57,7 @@ import { createLineTail, handleNodeExit } from './node-exit-handler'
 import { createChildShutdownWatch } from './node-shutdown-watch'
 import { probeHungChild } from './hang-probe'
 import { startRestartIntentWatch } from './restart-intent-watch'
+import { createQuitAbortGuard } from './quit-abort-guard'
 import { roleLabel, summarizeNodeRootStatus } from './node-supervisor'
 import { appendShellLog, formatFatal } from './shell-log'
 import {
@@ -1258,9 +1259,28 @@ app.on('window-all-closed', () => {
   }
 })
 
+// A quit that never completes (the native updater refuses to install an update that is downloaded
+// but not staged) must not leave `appQuitting` set: the node's next exit would not be relaunched.
+const quitAbortGuard = createQuitAbortGuard({
+  clearQuitting: () => {
+    appQuitting = false
+    ;(app as { isQuitting?: boolean }).isQuitting = false
+  },
+  nodeRunning: () => nodeManager.isRunning,
+  consumeRestartIntent: () => {
+    consumeRestartIntent(nodeDataDir())
+  },
+  startNode: startNodeProcess,
+  log: (line) => {
+    appendShellLog(shellLogPath(), line)
+    console.log(line)
+  },
+})
+
 function markQuitting(): void {
   appQuitting = true
   ;(app as { isQuitting?: boolean }).isQuitting = true
+  quitAbortGuard.onQuitting()
 }
 
 app.on('before-quit', () => {
