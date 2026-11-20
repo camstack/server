@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Tuya devices declare that their state arrives by push and answer the hub's read with a query of the device; a switch no longer shows a commanded value before the device confirms it
+
 ## [0.2.162] - 2026-11-18
 
 ### Changed

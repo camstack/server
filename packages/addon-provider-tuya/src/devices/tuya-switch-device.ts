@@ -41,7 +41,6 @@ export class TuyaSwitchDevice extends TuyaBaseDevice {
           throw new Error(`TuyaSwitchDevice: LAN client unavailable (device=${this.tuyaDeviceId})`)
         }
         await handle.set(booleanDpPatch(this.switchDp, on))
-        this.runtimeState.setCapState(CAP_NAME, { on, lastChangedAt: Date.now() })
       },
     }
     this.ctx.registerNativeCap(switchCapability, provider)

@@ -7,6 +7,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { tuyaConnections, type TuyaDeviceHandle } from '../tuya-gateway.js'
+import { registerTuyaStateRefresh } from '../tuya-state-refresh.js'
 
 /**
  * Persisted config every Tuya accessory child carries. `integrationId` +
@@ -60,6 +61,18 @@ export abstract class TuyaChildDevice extends BaseDevice<typeof tuyaChildSchema>
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerControlCap()
+    registerTuyaStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.integrationId,
+      readDevice: async () => {
+        const handle = this.resolveHandle()
+        if (handle === null) {
+          throw new Error(`Tuya child: LAN client unavailable (device=${this.tuyaDeviceId})`)
+        }
+        await handle.get()
+        tuyaConnections.emitDps(this.integrationId, this.tuyaDeviceId)
+      },
+    })
     this.attachDpsListener()
     this.recomputeSlice()
   }

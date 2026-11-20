@@ -23,6 +23,8 @@ export interface TuyaDeviceHandle {
   readonly dps: Readonly<Record<string, unknown>>
   /** Write one or more datapoints. */
   set(dps: Record<string, unknown>): Promise<void>
+  /** Query the device and return its current datapoint map. */
+  get(): Promise<Readonly<Record<string, unknown>>>
 }
 
 /**

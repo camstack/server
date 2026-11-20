@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { DEFAULT_SWITCH_DP } from '../tuya-dp-mapping.js'
 import { tuyaConnections } from '../tuya-gateway.js'
 import { tuyaIdentifiers } from '../tuya-identifiers.js'
+import { registerTuyaStateRefresh } from '../tuya-state-refresh.js'
 
 /**
  * Persisted config every adopted Tuya device carries. `tuyaDeviceId` +
@@ -90,6 +91,11 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCaps()
+    registerTuyaStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.integrationId,
+      readDevice: () => this.readDevice(),
+    })
     void this.declareVendorIdentity()
     await this.startConnection()
   }
@@ -150,6 +156,16 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
       }
     }
     return Promise.resolve()
+  }
+
+  /** The read the core asks for: query the device, then fold the answer in like a push. */
+  private async readDevice(): Promise<void> {
+    const handle = this.#handle
+    if (handle === null) {
+      throw new Error(`Tuya device: LAN client unavailable (device=${this.tuyaDeviceId})`)
+    }
+    await handle.get()
+    this.handleDpsPush()
   }
 
   private handleDpsPush(): void {

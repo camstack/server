@@ -78,7 +78,6 @@ export class TuyaTargetTempSelectDevice extends TuyaChildDevice {
       }
       const raw = this.#scale === 1 ? degrees : Math.round(degrees * this.#scale)
       await handle.set(numberDpPatch(this.#dp, raw))
-      this.runtimeState.setCapState(CAP_NAME, this.#slice(label))
     }
     const provider: InferNativeProvider<typeof controlCapability> = {
       getStatus,

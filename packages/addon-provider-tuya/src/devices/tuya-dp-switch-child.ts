@@ -49,7 +49,6 @@ export class TuyaDpSwitchDevice extends TuyaChildDevice {
           )
         }
         await handle.set(booleanDpPatch(this.#dp, on))
-        this.runtimeState.setCapState(CAP_NAME, { on, lastChangedAt: Date.now() })
       },
     }
     this.ctx.registerNativeCap(switchCapability, provider)
