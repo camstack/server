@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-mqtt-ha",
-  "version": "0.1.52",
+  "version": "0.1.53",
   "description": "Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config",
   "keywords": [
     "camstack",
@@ -62,7 +62,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.895"
+      "server": ">=1.2.924"
     }
   },
   "files": [

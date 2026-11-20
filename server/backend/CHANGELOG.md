@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.924] - 2026-11-20
+
 ### Changed
 
 - A device whose state read keeps failing is now read less and less often (doubling up to 5 minutes) instead of at the same interval, and returns to the normal cadence on its first success

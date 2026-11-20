@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.163] - 2026-11-20
+
 ### Changed
 
 - Tuya devices declare that their state arrives by push and answer the hub's read with a query of the device; a switch no longer shows a commanded value before the device confirms it; when a device's LAN connection comes back on its own the hub reads the account again

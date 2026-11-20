@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.614] - 2026-11-20
+
 ### Changed
 
 - connectionEpoch is documented as changing on every reconnect; any change makes the hub read every device once.

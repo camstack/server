@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.53] - 2026-11-20
+
 ### Changed
 
 - MQTT devices declare to the hub that their state arrives by push, so it never schedules a read; a switch or brightness command no longer shows the commanded value before the device confirms it

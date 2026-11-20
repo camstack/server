@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.485] - 2026-11-20
+
 ### Changed
 
 - Adding a notifier no longer offers a discovered device that is already a target: it is listed as already added, with the target's name, and cannot be picked again.
