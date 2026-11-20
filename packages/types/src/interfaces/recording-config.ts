@@ -206,6 +206,18 @@ export type RecordingBandTriggers = z.infer<typeof RecordingBandTriggersSchema>
 export const RecordingBandAudioSchema = z.enum(['on', 'muted'])
 export type RecordingBandAudio = z.infer<typeof RecordingBandAudioSchema>
 
+/**
+ * A battery condition on a band: the band covers a charge level only when
+ * `min <= level < max` (half-open; a missing bound is unbounded). OPTIONAL —
+ * an absent key means "any charge", which is what every config written before
+ * it meant. A band WITH a condition is never met while the charge is unknown.
+ */
+export const RecordingBandBatterySchema = z.object({
+  min: z.number().min(0).max(100).optional(),
+  max: z.number().min(0).max(100).optional(),
+})
+export type RecordingBandBattery = z.infer<typeof RecordingBandBatterySchema>
+
 export const RecordingBandSchema = z.object({
   days: z.array(RecordingWeekdaySchema),
   start: z.string().regex(HHMM),
@@ -217,6 +229,7 @@ export const RecordingBandSchema = z.object({
    * missing must keep meaning what it meant. See {@link RecordingBandAudioSchema}.
    */
   audio: RecordingBandAudioSchema.optional(),
+  battery: RecordingBandBatterySchema.optional(),
   triggers: RecordingBandTriggersSchema.optional(),
   /**
    * RETIRED (D381). A band no longer carries a pre-buffer of its own.

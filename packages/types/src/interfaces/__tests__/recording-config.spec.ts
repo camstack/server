@@ -342,3 +342,18 @@ describe('stripRetiredBandPreBufferSec — the retired band pre-buffer', () => {
     expect(DEFAULT_EVENTS_BAND_BUFFER_SEC.postBufferSec).toBe(30)
   })
 })
+
+describe('band battery condition', () => {
+  const base = { days: [], start: '00:00', end: '00:00', mode: 'events' } as const
+
+  it('parses a band written before the key existed', () => {
+    expect(RecordingBandSchema.parse({ ...base }).battery).toBeUndefined()
+  })
+
+  it('round-trips a condition and rejects out-of-range bounds', () => {
+    const ok = RecordingBandSchema.parse({ ...base, battery: { min: 20, max: 50 } })
+    expect(ok.battery).toEqual({ min: 20, max: 50 })
+    expect(RecordingBandSchema.safeParse({ ...base, battery: { min: -1 } }).success).toBe(false)
+    expect(RecordingBandSchema.safeParse({ ...base, battery: { max: 101 } }).success).toBe(false)
+  })
+})

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9077 source files · 1325 file(s) in no subsystem.**
+**31 subsystems · 9079 source files · 1325 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -34,7 +34,7 @@ commits. A generated page may not.
 | Post-analysis — tracking, the confirmation gate and media | 510 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-11-12 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-11-12 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 306 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +102 more, 27 ADRs | 2026-11-12 | ✅ |
-| Recorder, scrub and recorded playback | 143 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, +94 more, 19 ADRs | 2026-11-12 | ⚠️ |
+| Recorder, scrub and recorded playback | 145 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, +94 more, 19 ADRs | 2026-11-12 | ⚠️ |
 | Stream broker, WebRTC and live delivery | 174 | `decisions/adr-1013-one-instance-model.md`, `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +46 more, 16 ADRs | 2026-11-12 | ✅ |
 | Audio analysis and audio delivery | 18 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +10 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `decisions/adr-1013-one-instance-model.md`, `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, +3 more, 4 ADRs | 2026-10-24 | ⚠️ |
@@ -162,7 +162,7 @@ Writes continuous recordings to disk and serves the recorded read path — scrub
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-pipeline/src/recorder/**`, `packages/addon-pipeline/src/stream-broker/recorded/**`
-- **Files**: 143 (143 claimed by some document)
+- **Files**: 145 (145 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Stream broker, WebRTC and live delivery

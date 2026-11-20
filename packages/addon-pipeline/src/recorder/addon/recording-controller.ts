@@ -75,7 +75,8 @@ import {
   RECORDING_PRE_ROLL_REQUEST_MS,
   withRecordingIntent,
 } from '../../stream-broker/rtsp/restream-intent.js'
-import { activeBandAt } from '../band-engine.js'
+import { activeBandAt, type BatteryContext } from '../band-engine.js'
+import { resolveBatteryLevel, type BatteryHold } from '../battery-hysteresis.js'
 import type { SegmentStore } from '../segment-store.js'
 import {
   type AttachWindow,
@@ -144,6 +145,12 @@ export interface RecordingControllerDeps {
   readonly segmentStore: SegmentStore
   /** Load the persisted config for one device (bands materialized). */
   readonly loadConfig: (deviceId: number) => Promise<RecordingConfig>
+  /**
+   * The owner's published charge for one device, `null` when unknown (no
+   * reading, stale, unparseable). A slice read — it must never wake the camera.
+   * Absent = no device has a readable charge.
+   */
+  readonly readBatteryLevel?: (deviceId: number) => Promise<number | null>
   /** Enumerate every device id that has a persisted config (boot restore seed). */
   readonly enabledDeviceIds: () => Promise<readonly number[]>
   /**
@@ -714,6 +721,12 @@ export class RecordingController {
    * records again.
    */
   private readonly unrecordableReported = new Set<number>()
+  /** Per device: the band the charge last selected (hysteresis memory). */
+  private readonly batteryHolds = new Map<number, BatteryHold>()
+  /** Per device: the charge decisions are made against; absent = unknown. */
+  private readonly batteryLevels = new Map<number, number>()
+  /** Devices whose "charge unknown, unconditioned bands only" line was written. */
+  private readonly batteryUnknownLogged = new Set<number>()
   /**
    * Profiles the last attach skipped (stream not published / getStream threw).
    * `evaluateDevice` retries only these on the converge tick so a dead `low`
@@ -799,7 +812,11 @@ export class RecordingController {
    * failed attach still gets its band edge, and only a failure to READ the
    * config can lose a wake-up.
    */
-  private scheduleNextDecision(deviceId: number, config: RecordingConfig): void {
+  private scheduleNextDecision(
+    deviceId: number,
+    config: RecordingConfig,
+    battery?: BatteryContext,
+  ): void {
     if (this.stopped || this.paused) {
       this.wakeups.cancel(deviceId)
       return
@@ -808,6 +825,7 @@ export class RecordingController {
       config,
       triggers: this.triggersFor(deviceId),
       nowMs: this.now(),
+      ...(battery !== undefined ? { battery } : {}),
     })
     if (next === null) {
       // Nothing can change without an event this controller already receives: a
@@ -1073,7 +1091,11 @@ export class RecordingController {
       const config = await this.deps.loadConfig(deviceId)
       if (config.enabled !== true) return
       const nowMs = this.now()
-      const band = activeBandAt({ bands: effectiveBands(config) }, new Date(nowMs))
+      const band = activeBandAt(
+        { bands: effectiveBands(config) },
+        new Date(nowMs),
+        this.batteryCtx(deviceId),
+      )
       if (!band || band.mode !== 'events') return
       const { postMs } = resolveBandBufferMs(band)
       // Exactly the horizon `pruneTriggerHistory` keeps: past it, a recovered
@@ -1307,6 +1329,89 @@ export class RecordingController {
         'recorder: device signal attach deferred — stream not available yet (retries on next broker ready/reconcile)',
         { tags: { deviceId }, meta: { source: triggerKey(source), active, error: errMsg(err) } },
       )
+    }
+  }
+
+  /** The charge decisions are made against; `level: null` = unknown. */
+  private batteryCtx(deviceId: number): BatteryContext {
+    return { level: this.batteryLevels.get(deviceId) ?? null }
+  }
+
+  /**
+   * Refresh the resolved charge for one device. The cheap question first: a
+   * config with no battery-conditioned band never reads a slice. Never throws
+   * and never wakes the camera (a slice read, D224); a failed or stale read is
+   * UNKNOWN, which keeps the last resolved band and otherwise leaves only
+   * unconditioned bands applying — it is never 0.
+   */
+  private async refreshBattery(deviceId: number, config: RecordingConfig): Promise<void> {
+    const bands = effectiveBands(config)
+    if (!bands.some((b) => b.battery !== undefined)) {
+      this.batteryHolds.delete(deviceId)
+      this.batteryLevels.delete(deviceId)
+      this.batteryUnknownLogged.delete(deviceId)
+      return
+    }
+    let raw: number | null = null
+    try {
+      raw = (await this.deps.readBatteryLevel?.(deviceId)) ?? null
+    } catch (err: unknown) {
+      this.deps.logger.warn('recorder: battery level read failed — treated as unknown', {
+        tags: { deviceId },
+        meta: { error: errMsg(err) },
+      })
+    }
+    const nowMs = this.now()
+    const before = this.batteryHolds.get(deviceId) ?? null
+    const resolved = resolveBatteryLevel({ bands, at: new Date(nowMs), raw, hold: before, nowMs })
+    if (resolved.hold === null) this.batteryHolds.delete(deviceId)
+    else this.batteryHolds.set(deviceId, resolved.hold)
+    if (resolved.level === null) {
+      this.batteryLevels.delete(deviceId)
+      if (!this.batteryUnknownLogged.has(deviceId)) {
+        this.batteryUnknownLogged.add(deviceId)
+        this.deps.logger.info(
+          'recorder: battery level unknown — only bands without a battery condition apply',
+          { tags: { deviceId } },
+        )
+      }
+      return
+    }
+    this.batteryUnknownLogged.delete(deviceId)
+    this.batteryLevels.set(deviceId, resolved.level)
+    const after = resolved.hold
+    if (after !== null && (before === null || before.bandIndex !== after.bandIndex)) {
+      const landed = after.bandIndex >= 0 ? bands[after.bandIndex] : undefined
+      this.deps.logger.info(
+        landed === undefined
+          ? 'recorder: battery level left every band — recording stops (the running segment finishes)'
+          : 'recorder: battery level moved the active band',
+        {
+          tags: { deviceId },
+          meta: {
+            level: after.level,
+            fromBand: before?.bandIndex ?? null,
+            toBand: after.bandIndex,
+            toMode: landed?.mode ?? null,
+          },
+        },
+      )
+    }
+  }
+
+  /**
+   * The owner's battery slice changed: re-decide. Same deferral as a trigger —
+   * a failed attach is re-queued on the readiness queue and retried.
+   */
+  async onBatteryChanged(deviceId: number): Promise<void> {
+    if (this.stopped || this.paused) return
+    try {
+      await this.evaluateDevice(deviceId)
+    } catch (err: unknown) {
+      this.deps.logger.warn('recorder: battery re-evaluation failed — retried by the reconcile', {
+        tags: { deviceId },
+        meta: { error: errMsg(err) },
+      })
     }
   }
 
@@ -1598,7 +1703,11 @@ export class RecordingController {
     let band: RecordingBand | null
     try {
       const config = await this.deps.loadConfig(deviceId)
-      band = activeBandAt({ bands: effectiveBands(config) }, new Date(atMs))
+      band = activeBandAt(
+        { bands: effectiveBands(config) },
+        new Date(atMs),
+        this.batteryCtx(deviceId),
+      )
     } catch (err: unknown) {
       this.deps.logger.warn('recorder: audio trigger qualification skipped — config read failed', {
         tags: { deviceId },
@@ -1621,7 +1730,11 @@ export class RecordingController {
   private async postBufferMsFor(deviceId: number, atMs: number): Promise<number> {
     try {
       const config = await this.deps.loadConfig(deviceId)
-      const band = activeBandAt({ bands: effectiveBands(config) }, new Date(atMs))
+      const band = activeBandAt(
+        { bands: effectiveBands(config) },
+        new Date(atMs),
+        this.batteryCtx(deviceId),
+      )
       if (band) return resolveBandBufferMs(band).postMs
     } catch (err: unknown) {
       this.deps.logger.warn(
@@ -1676,7 +1789,15 @@ export class RecordingController {
     if (this.stopped || this.paused) return
     const config = await this.deps.loadConfig(deviceId)
     if (this.stopped || this.paused) return
-    const wantRecording = shouldRecordAt(config, this.triggersFor(deviceId), new Date(this.now()))
+    await this.refreshBattery(deviceId, config)
+    if (this.stopped || this.paused) return
+    const battery = this.batteryCtx(deviceId)
+    const wantRecording = shouldRecordAt(
+      config,
+      this.triggersFor(deviceId),
+      new Date(this.now()),
+      battery,
+    )
     // NC stall monitor: expected iff the band decision says we should write.
     // Switched-off / disabled / out-of-window clears the episode without a
     // "healthy" recovery (that would look like a fault that cured itself).
@@ -1686,7 +1807,7 @@ export class RecordingController {
     // was just made against, and BEFORE the attach/detach work: the schedule
     // does not depend on whether the attach succeeds, and a device whose attach
     // throws must still get its band edge.
-    this.scheduleNextDecision(deviceId, config)
+    this.scheduleNextDecision(deviceId, config, battery)
 
     if (!wantRecording) {
       this.reportUnrecordable(deviceId, config)
@@ -1761,7 +1882,7 @@ export class RecordingController {
       )
       return
     }
-    const band = activeBandAt({ bands }, new Date(this.now()))
+    const band = activeBandAt({ bands }, new Date(this.now()), this.batteryCtx(deviceId))
     if (band === null || eventsBandCanEverDemand(band)) return
     this.unrecordableReported.add(deviceId)
     this.deps.logger.warn(
@@ -1883,14 +2004,23 @@ export class RecordingController {
       throw new Error(`recorder controller: no assigned broker sources for device ${deviceId}`)
     }
     const segmentSeconds = config.segmentSeconds ?? this.deps.segmentSeconds
-    const bandAudio = bandAudioAt(config, new Date(this.now()))
+    const attachBattery = this.batteryCtx(deviceId)
+    const bandAudio = bandAudioAt(config, new Date(this.now()), attachBattery)
     await this.sweepDeviceStaging(deviceId, segmentSeconds)
 
     const recordings: ProfileRecording[] = []
     const failed: CamProfile[] = []
     for (const profile of profiles) {
       try {
-        recordings.push(await this.attachProfile(deviceId, profile, segmentSeconds, bandAudio))
+        recordings.push(
+          await this.attachProfile(
+            deviceId,
+            profile,
+            segmentSeconds,
+            bandAudio,
+            attachBattery.level,
+          ),
+        )
       } catch (err: unknown) {
         failed.push(profile)
         this.deps.logger.warn(
@@ -1974,7 +2104,8 @@ export class RecordingController {
     }
     const have = new Set(current.map((r) => r.profile))
     const segmentSeconds = config.segmentSeconds ?? this.deps.segmentSeconds
-    const bandAudio = bandAudioAt(config, new Date(this.now()))
+    const attachBattery = this.batteryCtx(deviceId)
+    const bandAudio = bandAudioAt(config, new Date(this.now()), attachBattery)
     await this.sweepDeviceStaging(deviceId, segmentSeconds)
     const added: ProfileRecording[] = []
     for (const profile of [...skipped]) {
@@ -1983,7 +2114,15 @@ export class RecordingController {
         continue
       }
       try {
-        added.push(await this.attachProfile(deviceId, profile, segmentSeconds, bandAudio))
+        added.push(
+          await this.attachProfile(
+            deviceId,
+            profile,
+            segmentSeconds,
+            bandAudio,
+            attachBattery.level,
+          ),
+        )
         skipped.delete(profile)
       } catch (err: unknown) {
         this.deps.logger.warn(
@@ -2213,6 +2352,7 @@ export class RecordingController {
     profile: CamProfile,
     segmentSeconds: number,
     audio: RecordingBandAudio,
+    batteryLevel: number | null,
   ): Promise<ProfileRecording> {
     const attachProfileStartMs = this.now()
     // The cheap question first: no pinned binary, no writer — so nothing is
@@ -2497,7 +2637,7 @@ export class RecordingController {
           // The LIVE gate's decision, carried to the KEEP gate: a segment this
           // attach could not physically have produced any sooner is kept even
           // if the demand window closed while ffmpeg was still dialling.
-          { attachedAtMs: writerStartedMs, segmentSeconds },
+          { attachedAtMs: writerStartedMs, segmentSeconds, batteryLevel },
           startMs,
           durMs,
           flatAbsPath,
@@ -2536,7 +2676,13 @@ export class RecordingController {
   ): Promise<void> {
     try {
       const config = await this.deps.loadConfig(deviceId)
-      const band = activeBandAt({ bands: effectiveBands(config) }, new Date(startMs + durMs))
+      // The charge the ATTACH was decided against, not a fresh read: a segment
+      // is judged by the decision that produced it, so a charge that moved
+      // while ffmpeg wrote cannot retroactively discard footage the live gate
+      // asked for.
+      const band = activeBandAt({ bands: effectiveBands(config) }, new Date(startMs + durMs), {
+        level: attach.batteryLevel ?? null,
+      })
       const triggers = this.triggersFor(deviceId)
       if (
         band?.mode === 'events' &&

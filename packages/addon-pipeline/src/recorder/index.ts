@@ -20,7 +20,8 @@ export {
   WeekdaySchema,
 } from './config-types.js'
 export type { RecordingBandsConfig, RecordingBand, BandMode, BandTriggers } from './config-types.js'
-export { activeBandAt, bandActiveAt } from './band-engine.js'
+export { activeBandAt, bandActiveAt, batteryAdmits } from './band-engine.js'
+export type { BatteryContext } from './band-engine.js'
 export { SegmentStore } from './segment-store.js'
 export type { SegmentStoreDeps, FinalizedSegmentInput } from './segment-store.js'
 export { subscribeEventCapture } from './event-capture.js'

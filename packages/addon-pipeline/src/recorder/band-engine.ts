@@ -5,7 +5,31 @@ function toMin(hhmm: string): number {
   return Number(h) * 60 + Number(m)
 }
 
-export function bandActiveAt(band: RecordingBand, date: Date): boolean {
+/**
+ * The battery state a decision is made against. `level` is `null` when the
+ * charge is UNKNOWN (never read, stale, unparseable) — never `0`.
+ */
+export interface BatteryContext {
+  readonly level: number | null
+}
+
+/**
+ * Whether `battery` admits the charge: half-open `min <= level < max`, a
+ * missing bound unbounded. A band WITH a condition is not met while the charge
+ * is unknown; a band without one never asks.
+ */
+export function batteryAdmits(band: RecordingBand, battery: BatteryContext | undefined): boolean {
+  const cond = band.battery
+  if (cond === undefined) return true
+  const level = battery?.level ?? null
+  if (level === null) return false
+  if (cond.min !== undefined && level < cond.min) return false
+  if (cond.max !== undefined && level >= cond.max) return false
+  return true
+}
+
+export function bandActiveAt(band: RecordingBand, date: Date, battery?: BatteryContext): boolean {
+  if (!batteryAdmits(band, battery)) return false
   const wd = date.getDay()
   const prevWd = (wd + 6) % 7
   const t = date.getHours() * 60 + date.getMinutes()
@@ -28,6 +52,7 @@ export function bandActiveAt(band: RecordingBand, date: Date): boolean {
 export function activeBandAt<B extends RecordingBand>(
   config: { readonly bands: readonly B[] },
   date: Date,
+  battery?: BatteryContext,
 ): B | null {
-  return config.bands.find((b) => bandActiveAt(b, date)) ?? null
+  return config.bands.find((b) => bandActiveAt(b, date, battery)) ?? null
 }

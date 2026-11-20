@@ -37,7 +37,7 @@
  * them defines it.
  */
 import type { RecordingBand, RecordingConfig } from '@camstack/types'
-import { activeBandAt } from '../band-engine.js'
+import { activeBandAt, type BatteryContext } from '../band-engine.js'
 import {
   bandTriggerSources,
   effectiveBands,
@@ -81,6 +81,8 @@ export interface DecisionScheduleInput {
   readonly config: RecordingConfig
   readonly triggers: TriggerState
   readonly nowMs: number
+  /** The resolved charge; absent = unknown (battery-conditioned bands never match). */
+  readonly battery?: BatteryContext
 }
 
 /** Local-calendar instant for `HH:MM` on the given local Y/M/D (day may overflow). */
@@ -121,15 +123,19 @@ function candidateEdgesMs(bands: readonly RecordingBand[], nowMs: number): reado
  * band objects with the same fields yield an edge that changes nothing, which
  * costs one wasted wake-up and never costs footage.
  */
-export function nextBandEdgeMs(config: RecordingConfig, nowMs: number): number | null {
+export function nextBandEdgeMs(
+  config: RecordingConfig,
+  nowMs: number,
+  battery?: BatteryContext,
+): number | null {
   const bands = effectiveBands(config)
   if (bands.length === 0) return null
-  const current = activeBandAt({ bands }, new Date(nowMs))
+  const current = activeBandAt({ bands }, new Date(nowMs), battery)
   const candidates = [...new Set(candidateEdgesMs(bands, nowMs))]
     .filter((ms) => ms > nowMs)
     .toSorted((a, b) => a - b)
   for (const ms of candidates) {
-    if (activeBandAt({ bands }, new Date(ms)) !== current) return ms
+    if (activeBandAt({ bands }, new Date(ms), battery) !== current) return ms
   }
   return null
 }
@@ -176,14 +182,14 @@ export function eventsWindowCloseMs(
  * the wake-up is attributable in the log without correlating timestamps.
  */
 export function nextDecisionChangeAt(input: DecisionScheduleInput): DecisionChange | null {
-  const { config, triggers, nowMs } = input
+  const { config, triggers, nowMs, battery } = input
   // A disabled config records nothing whatever the clock does; it re-enters
   // through `onConfigChanged`, which is an RPC and cannot be dropped.
   if (!config.enabled) return null
   const bands = effectiveBands(config)
   if (bands.length === 0) return null
-  const band = activeBandAt({ bands }, new Date(nowMs))
-  const edgeMs = nextBandEdgeMs(config, nowMs)
+  const band = activeBandAt({ bands }, new Date(nowMs), battery)
+  const edgeMs = nextBandEdgeMs(config, nowMs, battery)
   const closeMs = band === null ? null : eventsWindowCloseMs(band, triggers, nowMs)
   if (closeMs === null) return edgeMs === null ? null : { atMs: edgeMs, reason: 'band-edge' }
   if (edgeMs === null || closeMs <= edgeMs) return { atMs: closeMs, reason: 'window-close' }

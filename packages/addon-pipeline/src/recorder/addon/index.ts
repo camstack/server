@@ -62,6 +62,7 @@ import {
   recordingCapability,
   recordingExportCapability,
   recordingSignalCapability,
+  batteryCapability,
   memoizePinnedFfmpeg,
   sleep,
   storageEvictableCapability,
@@ -93,6 +94,7 @@ import { StillFrameService } from '../still/still-frame-service.js'
 import type { LowSegmentRow } from '../still/still-source.js'
 import { StorageEvictableProvider } from '../storage-evictable-provider.js'
 import type { Accounting } from '../types.js'
+import { batteryLevelReader } from './battery-level-reader.js'
 import { CalendarIndex, hourSegmentsFromIndex } from './calendar-index.js'
 import { ArchiveFloorReader } from './calendar-window.js'
 import { archiveDeviceUsageOf, archiveUsageComplete } from './device-storage-usage.js'
@@ -420,6 +422,9 @@ function isSegmentStoreLogExtras(extras: unknown): extras is SegmentStoreLogExtr
   return typeof extras === 'object' && extras !== null && ('tags' in extras || 'error' in extras)
 }
 
+/** Bound on the owner-slice read that gives a device's charge. */
+const BATTERY_LEVEL_READ_TIMEOUT_MS = 3_000
+
 export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
   private nodeId = 'hub'
   /**
@@ -619,6 +624,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    * own: the controller holds and releases (`onSignalLevel`).
    */
   private signalTriggerUnsub: (() => void) | null = null
+  private batteryUnsub: (() => void) | null = null
   /**
    * Edge memory + reverse index (source device → cameras) for the sensor
    * trigger. Constructed once per addon instance: `startedAtMs` is the floor a
@@ -1066,6 +1072,9 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
       // 2026-08-25); the last successful read is what a failure serves instead.
       // See `config-mirror.ts` (D466).
       loadConfig: this.configMirror.read,
+      readBatteryLevel: batteryLevelReader(this.ctx.api, BATTERY_LEVEL_READ_TIMEOUT_MS, () =>
+        Date.now(),
+      ),
       enabledDeviceIds: async () => [...(await readDeviceConfigs(this.configStore())).keys()],
       /**
        * The DURABLE half of the trigger path (D8/D11). `pipelineAnalytics` rows
@@ -1921,6 +1930,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     this.sensorTriggerUnsub = null
     this.signalTriggerUnsub?.()
     this.signalTriggerUnsub = null
+    this.batteryUnsub?.()
+    this.batteryUnsub = null
     this.locationChangeUnsub?.()
     this.locationChangeUnsub = null
     this.locationRefresher?.dispose()
@@ -2338,6 +2349,21 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
             level.data.active,
             atMs,
           )
+        },
+      )
+    }
+
+    // The CHARGE feed: a `battery` slice change re-decides the device, because a
+    // band may carry a battery condition. Same bus category and cheap-gate shape
+    // as the signal feed. The controller's own cheap question (no conditioned
+    // band, no slice read) keeps the fleet's battery churn at one config read.
+    if (this.batteryUnsub === null) {
+      this.batteryUnsub = this.ctx.eventBus.subscribe(
+        { category: EventCategory.DeviceStateChanged },
+        (event) => {
+          const parsed = parseSensorStateChanged(event.data)
+          if (parsed === null || parsed.capName !== batteryCapability.name) return
+          void this.controller?.onBatteryChanged(parsed.deviceId)
         },
       )
     }

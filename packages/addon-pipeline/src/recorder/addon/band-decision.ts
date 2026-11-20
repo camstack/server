@@ -24,7 +24,7 @@ import type {
   RecordingBandAudio,
   RecordingConfig,
 } from '@camstack/types'
-import { activeBandAt } from '../band-engine.js'
+import { activeBandAt, type BatteryContext } from '../band-engine.js'
 
 /**
  * A band the DECISION reads — an authored {@link RecordingBand} plus the one
@@ -598,11 +598,15 @@ function eventsBandDemanded(band: EffectiveBand, triggers: TriggerState, atMs: n
  * Continuous-only gate retained for callers that classify footage as continuous
  * vs events; the live attach/detach decision now uses {@link shouldRecordAt}.
  */
-export function shouldRecordContinuousAt(config: RecordingConfig, at: Date): boolean {
+export function shouldRecordContinuousAt(
+  config: RecordingConfig,
+  at: Date,
+  battery?: BatteryContext,
+): boolean {
   if (!config.enabled) return false
   const bands = effectiveBands(config)
   if (bands.length === 0) return false
-  const band = activeBandAt({ bands }, at)
+  const band = activeBandAt({ bands }, at, battery)
   return band?.mode === 'continuous'
 }
 
@@ -614,11 +618,15 @@ export function shouldRecordContinuousAt(config: RecordingConfig, at: Date): boo
  * configured is the one that loses no evidence: `on`, which is byte-for-byte
  * what every band did before the key existed.
  */
-export function bandAudioAt(config: RecordingConfig, at: Date): RecordingBandAudio {
+export function bandAudioAt(
+  config: RecordingConfig,
+  at: Date,
+  battery?: BatteryContext,
+): RecordingBandAudio {
   if (!config.enabled) return 'on'
   const bands = effectiveBands(config)
   if (bands.length === 0) return 'on'
-  return activeBandAt({ bands }, at)?.audio ?? 'on'
+  return activeBandAt({ bands }, at, battery)?.audio ?? 'on'
 }
 
 /**
@@ -626,11 +634,16 @@ export function bandAudioAt(config: RecordingConfig, at: Date): RecordingBandAud
  * attach/detach gate: enabled + a band covers `at` + that band demands now
  * (continuous always; events within `postBufferSec` of a qualifying trigger).
  */
-export function shouldRecordAt(config: RecordingConfig, triggers: TriggerState, at: Date): boolean {
+export function shouldRecordAt(
+  config: RecordingConfig,
+  triggers: TriggerState,
+  at: Date,
+  battery?: BatteryContext,
+): boolean {
   if (!config.enabled) return false
   const bands = effectiveBands(config)
   if (bands.length === 0) return false
-  const band = activeBandAt({ bands }, at)
+  const band = activeBandAt({ bands }, at, battery)
   if (!band) return false
   if (band.mode === 'continuous') return true
   return eventsBandDemanded(band, triggers, at.getTime())
@@ -656,6 +669,8 @@ export interface AttachWindow {
   readonly attachedAtMs: number
   /** Segment length that writer was spawned with (seconds). */
   readonly segmentSeconds: number
+  /** The charge the attach was decided against; absent/null = unknown. */
+  readonly batteryLevel?: number | null
 }
 
 /**
