@@ -15,7 +15,10 @@ import {
   ADDON_SETTINGS_BARE_ROWS_MIGRATION_ID,
 } from '../../../migrations/hub/2026-11-06-addon-settings-bare-rows.js'
 import { MigrationEngine } from '../migrations/migration-engine.js'
-import { applyEdits } from '../migrations/migration-edits.js'
+import { applyEdits, type MigrationEditScope } from '../migrations/migration-edits.js'
+
+/** The addon plan's scope: its owner, no records engine (it edits keys only). */
+const GOOGLE_SCOPE: MigrationEditScope = { owner: 'google-services', records: null, now: Date.now }
 import type { HubMigration } from '../migrations/migration-types.js'
 import { openOwnedSqliteFile } from '../owned-sqlite-file.js'
 import { SqliteSnapshotter } from '../sqlite-snapshotter.js'
@@ -256,7 +259,9 @@ describe('why it exists: an addon plan over a bare row', () => {
     try {
       const plan = await planDropConfigBrokersAndLegacyOauth(portsOver(before))
       expect(plan.edits).toHaveLength(1)
-      expect(() => applyEdits(before, plan)).toThrow(/precondition failed for deleteKeys/)
+      expect(() => applyEdits(before, plan, GOOGLE_SCOPE)).toThrow(
+        /precondition failed for deleteKeys/,
+      )
     } finally {
       before.close()
     }
@@ -266,7 +271,7 @@ describe('why it exists: an addon plan over a bare row', () => {
     const wrapped = new Database(h.pathOf('settings'))
     try {
       const plan = await planDropConfigBrokersAndLegacyOauth(portsOver(wrapped))
-      applyEdits(wrapped, plan)
+      applyEdits(wrapped, plan, GOOGLE_SCOPE)
       expect(
         wrapped
           .prepare('SELECT 1 FROM "addon-settings" WHERE id = ?')

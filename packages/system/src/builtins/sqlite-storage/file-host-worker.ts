@@ -124,7 +124,14 @@ async function main(): Promise<void> {
   const control = controlTargetOf(backend, threadId)
   // The hub catalogue is imported HERE, not sent: code never crosses postMessage (D987).
   const migrateTarget: MigrateTarget | null =
-    db === null ? null : migrateTargetOf(db, spec.databaseId, HUB_MIGRATIONS)
+    db === null
+      ? null
+      : migrateTargetOf(
+          db,
+          spec.databaseId,
+          HUB_MIGRATIONS,
+          recordsEngine === null ? null : recordsEngine.migrationWriter(),
+        )
 
   // Only a vector answer transfers its buffers; rows are cloned (see the client).
   const answer = (id: number, result: unknown, transfer = false): void =>

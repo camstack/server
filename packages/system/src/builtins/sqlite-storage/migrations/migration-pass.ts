@@ -42,6 +42,7 @@ import {
   type MigrateOp,
   type MigrateOutput,
   type MigrationNote,
+  type MigrationRecordWriter,
   type PassOutcome,
   type PassStatus,
   type PreparedPass,
@@ -182,9 +183,13 @@ function totalChanges(db: Database.Database): number {
 }
 
 /** Run a hub migration's body: `sql` writes itself, `plan` returns edits the engine applies. */
-function executeBody(db: Database.Database, m: HubMigration): MigrationNote | undefined {
+function executeBody(
+  db: Database.Database,
+  m: HubMigration,
+  records: MigrationRecordWriter | null,
+): MigrationNote | undefined {
   if ('plan' in m) {
-    applyEdits(db, m.plan(db))
+    applyEdits(db, m.plan(db), { owner: m.meta.owner, records, now: Date.now })
     return undefined
   }
   return m.run(db)
@@ -274,6 +279,7 @@ export function applyFile(
   databaseId: DataStoreDatabase,
   catalogue: readonly HubMigration[],
   input: ApplyPassInput,
+  records: MigrationRecordWriter | null,
 ): AppliedPass {
   ensureLedger(db)
   const rows = readRows(db)
@@ -354,7 +360,7 @@ export function applyFile(
       let note: MigrationNote | undefined
       const rowsChanged = db.transaction((): number => {
         const before = totalChanges(db)
-        note = executeBody(db, m)
+        note = executeBody(db, m, records)
         const changed = totalChanges(db) - before
         writeRow(db, meta, {
           ...common,
@@ -437,6 +443,7 @@ export function dryRunOf(
   databaseId: DataStoreDatabase,
   catalogue: readonly HubMigration[],
   id: string,
+  records: MigrationRecordWriter | null,
 ): MigrationDryRunResult {
   const m = ownEntries(catalogue, databaseId).find((candidate) => candidate.meta.id === id)
   if (m === undefined) throw new Error(`migration ${id} is not a ${databaseId} migration`)
@@ -445,7 +452,7 @@ export function dryRunOf(
     db.transaction(() => {
       const before = tableCounts(db)
       const changesBefore = totalChanges(db)
-      executeBody(db, m)
+      executeBody(db, m, records)
       const rowsChanged = totalChanges(db) - changesBefore
       const after = tableCounts(db)
       const tables = [...new Set([...before.keys(), ...after.keys()])]
@@ -514,6 +521,7 @@ export function markFailedRow(
 export function applyPlanFile(
   db: Database.Database,
   input: MigrateInput<'applyPlan'>,
+  records: MigrationRecordWriter | null,
 ): MigrateOutput<'applyPlan'> {
   ensureLedger(db)
   const { meta } = input
@@ -522,7 +530,7 @@ export function applyPlanFile(
   try {
     const rowsChanged = db.transaction((): number => {
       const before = totalChanges(db)
-      applyEdits(db, input.plan)
+      applyEdits(db, input.plan, { owner: meta.owner, records, now: Date.now })
       const changed = totalChanges(db) - before
       writeRow(db, meta, {
         ...common,
@@ -593,15 +601,20 @@ export function migrateTargetOf(
   db: Database.Database,
   databaseId: DataStoreDatabase,
   catalogue: readonly HubMigration[],
+  /**
+   * This file's records engine on the SAME connection (`null` when the file has none):
+   * a plan's record and tombstone edits go through it inside the migration's transaction.
+   */
+  records: MigrationRecordWriter | null,
 ): MigrateTarget {
   return {
     prepare: (input) => prepareFile(db, databaseId, catalogue, input),
-    apply: (input) => applyFile(db, databaseId, catalogue, input),
+    apply: (input) => applyFile(db, databaseId, catalogue, input, records),
     ledger: () => ledgerOf(db, databaseId, catalogue),
-    dryRun: (input) => dryRunOf(db, databaseId, catalogue, input.id),
+    dryRun: (input) => dryRunOf(db, databaseId, catalogue, input.id, records),
     reset: (input) => resetRows(db, input.ids),
     markFailed: (input) => markFailedRow(db, databaseId, catalogue, input),
-    applyPlan: (input) => applyPlanFile(db, input),
+    applyPlan: (input) => applyPlanFile(db, input, records),
     record: (input) => recordRow(db, databaseId, input),
   }
 }

@@ -280,14 +280,14 @@ describe('plan body (hub-owned)', () => {
     await file.stop()
   }, 60_000)
 
-  it('refuses a record edit by name — records are written by the records engine', async () => {
+  it('writes a record through the records engine, which refuses a kind nobody declared', async () => {
     const { engine, file } = await boot([
       hubPlan('records', 1, () => ({
-        edits: [{ op: 'upsertRecord', kind: 'k', recordKey: 'r', value: {} }],
+        edits: [{ op: 'upsertRecord', owner: 'ecowitt', kind: 'k', recordKey: 'r', value: {} }],
       })),
     ])
     expect(statuses()).toEqual({ 'hub/2026-11-01-records': 'failed' })
-    expect((await engine.listLedger())[0]?.error).toMatch(/records engine/)
+    expect((await engine.listLedger())[0]?.error).toMatch(/declared no kind "k"/)
     await file.stop()
   }, 60_000)
 })

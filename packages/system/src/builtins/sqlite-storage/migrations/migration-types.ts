@@ -9,6 +9,7 @@ import type {
   MigrationMeta,
   MigrationPlan,
   MigrationStatus,
+  RecordInput,
 } from '@camstack/types'
 
 /** The one prepared-statement surface a migration body may use. */
@@ -26,6 +27,21 @@ export interface MigrationStatement {
 export interface MigrationDatabase {
   exec(sql: string): unknown
   prepare(sql: string): MigrationStatement
+}
+
+/**
+ * The records engine of the migration's own file, bound to its connection (planning#584).
+ * Every call is synchronous and opens no transaction: it runs inside the per-migration
+ * transaction, so a record it writes commits or rolls back with the plan's other edits and
+ * the ledger row. It applies the engine's own rules (`writeRecord` / `deleteRecord`);
+ * a kind with secret fields is refused (the keychain is outside the transaction).
+ */
+export interface MigrationRecordWriter {
+  /** The stored body, or `null` when no row. Throws on an undeclared kind. */
+  read(owner: string, kind: string, id: string): Readonly<Record<string, unknown>> | null
+  upsert(owner: string, kind: string, record: RecordInput): void
+  /** Whether a row was deleted. */
+  remove(owner: string, kind: string, id: string): boolean
 }
 
 /** The owner of every migration that ships with the hub itself. */

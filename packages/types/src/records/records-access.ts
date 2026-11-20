@@ -217,6 +217,28 @@ function zodSummary(error: z.ZodError): string {
     .join('; ')
 }
 
+/**
+ * The ONE body check of a record kind: its Zod schema, and an object at the
+ * root. `ctx.records` runs it before every write; a migration edit builder
+ * (`recordUpsertEdit`) runs it too, so a plan carries a body the kind accepts.
+ * `shaped` is the body after secret leaves were turned into what the schema
+ * reads (the caller's job; a kind without secrets passes it as is).
+ */
+export function parseRecordBody(
+  def: Pick<DefinedRecordKind, 'name' | 'schema'>,
+  id: string,
+  shaped: unknown,
+): Record<string, unknown> {
+  const parsed = def.schema.safeParse(shaped)
+  if (!parsed.success) {
+    throw new InvalidRecordError(`${def.name}/${id}: ${zodSummary(parsed.error)}`)
+  }
+  if (!isRecord(parsed.data)) {
+    throw new InvalidRecordError(`${def.name}/${id}: the body must be an object`)
+  }
+  return parsed.data
+}
+
 function toRow<T>(view: RecordView, data: T): RecordRow<T> {
   return {
     id: view.id,
@@ -350,14 +372,7 @@ class KindHandle<T> implements RecordKindHandle<T> {
           return intent.kind === 'keep' ? REDACTED_SECRET : leaf.value
         })
       : data
-    const parsed = this.def.schema.safeParse(shaped)
-    if (!parsed.success) {
-      throw new InvalidRecordError(`${this.name}/${id}: ${zodSummary(parsed.error)}`)
-    }
-    if (!isRecord(parsed.data)) {
-      throw new InvalidRecordError(`${this.name}/${id}: the body must be an object`)
-    }
-    return parsed.data
+    return parseRecordBody({ name: this.name, schema: this.def.schema }, id, shaped)
   }
 
   async get(id: string): Promise<RecordRow<T> | null> {

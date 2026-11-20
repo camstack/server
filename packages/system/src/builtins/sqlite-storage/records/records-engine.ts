@@ -35,6 +35,7 @@ import {
   assertTransactScope,
 } from '@camstack/types'
 import { declareKind, ensureRecordsSchema, type KindRow, loadKinds } from './records-catalog.js'
+import type { MigrationRecordWriter } from '../migrations/migration-types.js'
 import type {
   DropKindResult,
   KindRef,
@@ -608,6 +609,33 @@ export class RecordsEngine implements RecordsEngineOps {
   private refsOfRows(k: KindRow, rows: readonly { readonly data: string }[]): string[] {
     if (k.declaration.secretPaths.length === 0) return []
     return rows.flatMap((row) => [...markersOf(k.declaration, parseBody(row.data)).values()])
+  }
+
+  /**
+   * The engine as a migration `plan` writes through it (D987 M3, planning#584): the very
+   * `writeRecord` / `deleteRecord` of `put` and `transact`, synchronous, with NO
+   * transaction of its own — the caller holds the per-migration one on this connection.
+   */
+  migrationWriter(): MigrationRecordWriter {
+    const writable = (owner: string, kind: string): KindRow => {
+      const k = this.kindOf(owner, kind)
+      if (k.declaration.secretPaths.length > 0) {
+        throw new InvalidRecordError(
+          `${kind}: a kind with secret fields cannot be written by a migration plan (the keychain is outside its transaction)`,
+        )
+      }
+      return k
+    }
+    return {
+      read: (owner, kind, id) => {
+        const stored = this.storedRow(this.kindOf(owner, kind), id)
+        return stored === undefined ? null : parseBody(stored.data)
+      },
+      upsert: (owner, kind, record) => {
+        this.writeRecord(owner, writable(owner, kind), record, undefined, this.now())
+      },
+      remove: (owner, kind, id) => this.deleteRecord(writable(owner, kind), id).deleted,
+    }
   }
 
   async delete(input: OwnedInput<'delete'>): Promise<RecordsOutput<'delete'>> {

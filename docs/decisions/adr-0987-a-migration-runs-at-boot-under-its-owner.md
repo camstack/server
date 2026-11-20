@@ -97,9 +97,35 @@ pre-migration snapshot, same rollback; the engine orders steps across owners by
   `deleteRow`); the ENGINE applies them in the same transaction as the `applied`
   row. `precondition` is `preconditionOf(canonical JSON of what the plan read)`;
   a mismatch refuses the apply. A hub-owned plan is `plan(db)`.
-- `upsertRecord` / `deleteRecord` are refused by name: the records engine owns the
-  derived columns (`device_id`, `at`, `expires_at`, `rev`), so a record migration is a
-  procedure through the records cap.
+- (Revised by planning#584, 2026-11-20; it was "refused by name, a record migration is a
+  procedure".) A plan also writes instance records and devices, in the SAME transaction,
+  ledger row and pre-migration snapshot as its SQL edits:
+  - `upsertRecord` / `deleteRecord` (`owner`, `kind`, `recordKey`, optional `deviceId` /
+    `at`): the file applies them through ITS records engine, bound to the migration's
+    connection (`RecordsEngine.migrationWriter()`, the `writeRecord` / `deleteRecord` of
+    `put` and `transact`, no transaction of its own), so the derived columns (`device_id`,
+    `at`, `expires_at`, `rev`) and the kind's rules hold as for any write. The body is
+    checked by the kind's Zod schema when the plan builds the edit (`recordUpsertEdit`
+    calls `parseRecordBody`, the check `ctx.records` runs): one validator, not two. A kind
+    with secret fields, or one not declared yet, is refused — the keychain is outside the
+    transaction, and an addon declares its kinds before `runMigrations`.
+  - `rekeyDevice` (`deviceId`, new `addonId` / `stableId`): one update of the
+    `device-manager:devices` row; its key and `deviceId` never change, so settings,
+    history and events keyed by the id keep it. A pair another device holds is refused.
+  - `tombstoneDevice` (`deviceId`): what `removeDevice` records (D865) — the row goes, the
+    `tombstones` record is written (an existing one keeps its earlier `deletedAt`), the
+    device's `addon-device-settings` and `device-runtime-state` rows are cleared. The data
+    hooks run off the tombstone through the D865 reconcile. The keychain, the bindings,
+    field claims and identity links live outside this file and are NOT touched.
+  - Both device edits carry `deviceIdentityPrecondition({ addonId, stableId })`.
+  - A hub plan names any record owner. An addon plan writes only its own kinds, re-keys
+    only a device whose `addonId` before or after is its own, tombstones only its own.
+
+  Rejected: keeping the move a `procedure` through `ctx.records` (#580 had to do that, so
+  the records changed outside the migration's transaction and a failure half-way left
+  half a move), and raw `putRow` on the `records` table (it would leave the derived
+  columns stale). Spec: `migration-records-devices.spec.ts` (real SQLite; removing the
+  per-migration transaction turns both rollback specs red).
 - A `procedure` body calls the owning addon through a typed port
   (`IntegrationMigrationPorts` for the integration case: create with
   `originStableId` and keychain `secretKeys`, re-stamp children keeping `deviceId`

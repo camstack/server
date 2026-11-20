@@ -333,6 +333,7 @@ export class InlineOwnedFile extends OwnedFileBase {
       db,
       this.databaseId,
       this.deps.migrationCatalogue ?? HUB_MIGRATIONS,
+      this.recordsEngine === null ? null : this.recordsEngine.migrationWriter(),
     )
     return callMigrate(target, op, input)
   }

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toggle on a switch reads its current state and flips it, and refuses when that state is unknown.
 - Storage drain locations now emit a regular progress event and a one-time completion event (#538).
 - Workload started / stopped / crashed / recovered events are raised from a workload's state changes
+- A data migration can now move instance records, re-key a device (keeping its id, settings and history) and tombstone a device in the same transaction as its other edits, so a failure rolls all of it back together.
 
 ### Changed
 

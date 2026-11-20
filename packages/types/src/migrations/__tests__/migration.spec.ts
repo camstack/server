@@ -125,8 +125,10 @@ describe('MigrationPlan', () => {
       { op: 'deleteKeys', scope: 'x:addon-settings', keys: ['a'], precondition: 'h' },
       { op: 'putRow', table: 't', key: { id: 1 }, row: { id: 1 } },
       { op: 'deleteRow', table: 't', key: { id: 1 } },
-      { op: 'upsertRecord', kind: 'k', recordKey: 'r', value: {} },
-      { op: 'deleteRecord', kind: 'k', recordKey: 'r' },
+      { op: 'upsertRecord', owner: 'o', kind: 'k', recordKey: 'r', value: {} },
+      { op: 'deleteRecord', owner: 'o', kind: 'k', recordKey: 'r' },
+      { op: 'rekeyDevice', deviceId: 7, addonId: 'a', stableId: 's', precondition: 'h' },
+      { op: 'tombstoneDevice', deviceId: 7, precondition: 'h' },
     ]
     expect(MigrationPlanSchema.safeParse({ edits }).success).toBe(true)
     expect(MigrationPlanSchema.safeParse({ edits: [{ op: 'truncate' }] }).success).toBe(false)

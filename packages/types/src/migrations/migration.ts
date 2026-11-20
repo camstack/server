@@ -234,17 +234,50 @@ export const MigrationEditSchema = z.discriminatedUnion('op', [
     key: z.record(z.string(), z.unknown()),
     precondition: PreconditionSchema,
   }),
+  /**
+   * A record of `(owner, kind)`, written by the records engine inside the migration's
+   * transaction (its header, size and index rules). `value` is the body the kind's schema
+   * already accepted: build it with `recordUpsertEdit`. `precondition` is over the stored
+   * BODY (`null` when no row).
+   */
   z.object({
     op: z.literal('upsertRecord'),
+    owner: z.string().min(1),
     kind: z.string().min(1),
     recordKey: z.string().min(1),
-    value: z.unknown(),
+    deviceId: z.number().int().positive().optional(),
+    at: z.number().int().nonnegative().optional(),
+    value: z.record(z.string(), z.unknown()),
     precondition: PreconditionSchema,
   }),
   z.object({
     op: z.literal('deleteRecord'),
+    owner: z.string().min(1),
     kind: z.string().min(1),
     recordKey: z.string().min(1),
+    precondition: PreconditionSchema,
+  }),
+  /**
+   * Give device `deviceId` a new identity (`addonId`, `stableId`). The row key and the
+   * `deviceId` never change, so every store keyed by the id (settings, history, events)
+   * keeps it. `precondition` is over `{ addonId, stableId }` as the plan read them.
+   */
+  z.object({
+    op: z.literal('rekeyDevice'),
+    deviceId: z.number().int().positive(),
+    addonId: z.string().min(1),
+    stableId: z.string().min(1),
+    precondition: PreconditionSchema,
+  }),
+  /**
+   * Delete device `deviceId` as `removeDevice` records it (D865): the row goes, the
+   * tombstone is written, the device's per-device settings and runtime-state rows are
+   * cleared — all in the migration's transaction. `precondition` is over
+   * `{ addonId, stableId }` as the plan read them.
+   */
+  z.object({
+    op: z.literal('tombstoneDevice'),
+    deviceId: z.number().int().positive(),
     precondition: PreconditionSchema,
   }),
 ])

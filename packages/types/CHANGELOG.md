@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Migration edits for records and devices: recordUpsertEdit, recordDeleteEdit, rekeyDeviceEdit, tombstoneDeviceEdit.
+
 ### Changed
 
 - Schema-free per-capability state-field presence fact for addons
