@@ -296,6 +296,7 @@ describe('customize declaration guard', () => {
       'doorbell',
       'fan-control',
       'fan-presets',
+      'heat-pump-status',
       'lock-control',
       'motion',
       'power-meter',
