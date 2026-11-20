@@ -7052,7 +7052,8 @@
         "viewer": "Viewer",
         "destinations": "Destinations",
         "levels": "Levels",
-        "diagnostics": "Diagnostics"
+        "diagnostics": "Diagnostics",
+        "events": "Events"
       },
       "secrets": {
         "revealRefused": "Reveal refused",
@@ -7752,7 +7753,8 @@
         "cooldown": "{{source}}, {{seconds}}s cooldown",
         "motionStart": "motion start",
         "motionStop": "motion stop"
-      }
+      },
+      "filterAll": "All"
     },
     "appShell": {
       "openMenu": "Open menu"
@@ -11254,6 +11256,35 @@
       "agoMinutes": "{{count}}m ago",
       "agoHours": "{{count}}h ago",
       "agoDays": "{{count}}d ago"
+    },
+    "eventPicker": {
+      "search": "Find a category…",
+      "all": "All",
+      "none": "None",
+      "defaults": "Defaults",
+      "noMatches": "No matching category",
+      "noise": "Frequent",
+      "customTitle": "Custom pattern",
+      "customPlaceholder": "exact.id or prefix.*",
+      "customAdd": "Add pattern",
+      "customRemove": "Remove {{pattern}}",
+      "group": {
+        "devices": "Devices",
+        "detection": "Detection",
+        "recording": "Recording",
+        "storage": "Storage",
+        "streams": "Streams",
+        "pipeline": "Pipeline",
+        "enrichment": "Enrichment",
+        "notifications": "Notifications",
+        "integrations": "Integrations",
+        "addons": "Addons",
+        "agents": "Agents",
+        "network": "Network",
+        "backup": "Backup",
+        "system": "System",
+        "metrics": "Metrics"
+      }
     }
   },
   "helpers": {

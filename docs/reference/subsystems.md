@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9074 source files · 1325 file(s) in no subsystem.**
+**31 subsystems · 9077 source files · 1325 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -42,7 +42,7 @@ commits. A generated page may not.
 | Secrets and the keychain | 29 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +26 more, 5 ADRs | 2026-11-11 | ✅ |
 | Auth, scopes and method tiers | 97 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +33 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 181 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +117 more, 18 ADRs | 2026-11-02 | ⚠️ |
-| Shared types, schemas and enums | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +35 more, 5 ADRs | 2026-11-02 | ⚠️ |
+| Shared types, schemas and enums | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +36 more, 5 ADRs | 2026-11-02 | ⚠️ |
 | Update, release, OTA and agent delivery | 76 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +38 more, 10 ADRs | 2026-11-12 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 405 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +58 more, 20 ADRs | 2026-11-08 | ⚠️ |
 | Remote access and networking | 77 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +20 more | 2026-10-21 | ⚠️ |
@@ -50,7 +50,7 @@ commits. A generated page may not.
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +44 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 44 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1834 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +175 more, 15 ADRs | 2026-11-16 | ✅ |
+| Admin UI and the shared component library | 1837 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +176 more, 15 ADRs | 2026-11-16 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +23 more, 7 ADRs | 2026-11-16 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 907 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +189 more, 14 ADRs | 2026-11-12 | ⚠️ |
@@ -306,7 +306,7 @@ The operator's web console, and the design-system package every CamStack surface
 
 - **Owner doc**: `docs/architecture/ui.md`
 - **Code**: `packages/addon-admin-ui/**`, `packages/addon-agent-ui/**`, `packages/ui-library/**`
-- **Files**: 1834 (1834 claimed by some document)
+- **Files**: 1837 (1837 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack

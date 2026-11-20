@@ -685,7 +685,7 @@
       "need": "A live log or event tail",
       "admin": "`LogStream`, `EventStream`",
       "viewer": "—",
-      "notes": ""
+      "notes": "`EventStream`'s filter is `EventCategoryPicker`: the catalogued categories (`EVENT_CATEGORY_CATALOG`) grouped as the catalogue groups them, plus a custom pattern row (exact id or `prefix.*`). Use the picker, never a flat select of `EventCategory`; `onCategoriesChange` reports the selection (Logs → Events keeps it in `?categories=`)"
     },
     {
       "need": "A bottom sheet / side drawer on mobile",
@@ -8240,6 +8240,39 @@
       ]
     },
     {
+      "name": "EventCategoryPicker",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/event-category-picker.tsx",
+      "summary": "EventCategoryPicker — choose which event categories a view follows.",
+      "props": [
+        {
+          "name": "value",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": "The selection: exact category ids and `prefix.*` patterns."
+        },
+        {
+          "name": "onChange",
+          "type": "(next: readonly string[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "defaults",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": "What \"Defaults\" restores."
+        },
+        {
+          "name": "lang",
+          "type": "string",
+          "optional": true,
+          "doc": "Admin language (`<html lang>`); labels follow it. Defaults to the document's."
+        }
+      ]
+    },
+    {
       "name": "eventEntriesOf",
       "kind": "function",
       "area": "composites",
@@ -8380,6 +8413,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "onCategoriesChange",
+          "type": "(next: readonly string[]) => void",
+          "optional": true,
+          "doc": "Called with the new selection (exact ids and `prefix.*` patterns) whenever the user changes it in the picker or resets it."
         },
         {
           "name": "liveBuffer",

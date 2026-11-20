@@ -446,6 +446,8 @@ export type {
   FloatingEventStreamProps,
 } from './event-stream'
 export { EventStream, FloatingEventStream } from './event-stream'
+export { EventCategoryPicker } from './event-category-picker'
+export type { EventCategoryPickerProps } from './event-category-picker'
 // --- Extensions panel (D648 slots; `slots` filter for the Customize tab, D676) ---
 export {
   ExtensionsPanel,

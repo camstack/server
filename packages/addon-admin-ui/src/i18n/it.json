@@ -7127,7 +7127,8 @@
         "viewer": "Visualizzatore",
         "destinations": "Destinazioni",
         "levels": "Livelli",
-        "diagnostics": "Diagnostica"
+        "diagnostics": "Diagnostica",
+        "events": "Eventi"
       },
       "secrets": {
         "revealRefused": "Rivelazione rifiutata",
@@ -7774,7 +7775,8 @@
         "cooldown": "{{source}}, raffreddamento {{seconds}}s",
         "motionStart": "inizio movimento",
         "motionStop": "fine movimento"
-      }
+      },
+      "filterAll": "Tutti"
     },
     "appShell": {
       "openMenu": "Apri il menu"
@@ -11276,6 +11278,35 @@
       "agoMinutes": "{{count}} min fa",
       "agoHours": "{{count}} h fa",
       "agoDays": "{{count}} g fa"
+    },
+    "eventPicker": {
+      "search": "Cerca una categoria…",
+      "all": "Tutte",
+      "none": "Nessuna",
+      "defaults": "Predefinite",
+      "noMatches": "Nessuna categoria corrispondente",
+      "noise": "Frequente",
+      "customTitle": "Pattern personalizzato",
+      "customPlaceholder": "id.esatto o prefisso.*",
+      "customAdd": "Aggiungi pattern",
+      "customRemove": "Rimuovi {{pattern}}",
+      "group": {
+        "devices": "Dispositivi",
+        "detection": "Rilevamento",
+        "recording": "Registrazione",
+        "storage": "Archiviazione",
+        "streams": "Stream",
+        "pipeline": "Pipeline",
+        "enrichment": "Arricchimento",
+        "notifications": "Notifiche",
+        "integrations": "Integrazioni",
+        "addons": "Addon",
+        "agents": "Agent",
+        "network": "Rete",
+        "backup": "Backup",
+        "system": "Sistema",
+        "metrics": "Metriche"
+      }
     }
   },
   "helpers": {

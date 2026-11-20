@@ -1,5 +1,5 @@
 /**
- * `/system/logs` — Viewer / Destinations / Levels / Diagnostics.
+ * `/system/logs` — Viewer / Events / Destinations / Levels / Diagnostics.
  *
  * Shell is library `SectionedPage` (OSD template).
  */
@@ -13,6 +13,7 @@ import { AdminSectionedPage } from '../../components/AdminSectionedPage'
 import { INTEGRATION_HUB_OWNED_PARAMS, INTEGRATION_HUB_PAGES } from '../../lib/integration-hub-url'
 import { navChromeForPath } from '../../lib/nav-items'
 import { LogDiagnosticsPage } from './LogDiagnostics'
+import { EVENTS_CATEGORIES_PARAM, LogEventsTab } from './LogEvents'
 import { LoggingPage } from './Logging'
 import { LogLevelsPage } from './LogLevels'
 
@@ -54,7 +55,17 @@ export function LogsPage() {
       defaultSection="viewer"
       sectionsLabel={`${chrome.title} sections`}
       sections={[
-        { id: 'viewer', label: t('admin.system.logs.viewer', 'Viewer'), content: <LogViewerTab /> },
+        {
+          id: 'viewer',
+          label: t('admin.system.logs.viewer', 'Viewer'),
+          content: <LogViewerTab />,
+        },
+        {
+          id: 'events',
+          label: t('admin.system.logs.events', 'Events'),
+          content: <LogEventsTab />,
+          ownedParams: [EVENTS_CATEGORIES_PARAM],
+        },
         {
           id: INTEGRATION_HUB_PAGES.logging.tab,
           label: t('admin.system.logs.destinations', 'Destinations'),

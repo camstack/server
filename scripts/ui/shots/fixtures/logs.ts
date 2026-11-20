@@ -100,6 +100,54 @@ function page(): unknown {
   }
 }
 
+// The Events section: `systemEvents.getRecent`, newest last like the ring.
+const EVENT_ROWS: readonly {
+  id: string
+  ageMin: number
+  category: string
+  data: object
+  source: object
+}[] = [
+  {
+    id: 'e-1',
+    ageMin: 2,
+    category: 'addon.started',
+    data: { addonId: 'provider-onvif' },
+    source: {
+      type: 'addon',
+      id: 'provider-onvif',
+      nodeId: 'hub',
+      addonId: 'provider-onvif',
+    },
+  },
+  {
+    id: 'e-2',
+    ageMin: 5,
+    category: 'motion.on-motion-changed',
+    data: { detected: true, source: 'camera' },
+    source: { type: 'device', id: 101, nodeId: 'hub', deviceId: 101 },
+  },
+  {
+    id: 'e-3',
+    ageMin: 9,
+    category: 'agent.online',
+    data: {},
+    source: { type: 'agent', id: 'garage-nuc', nodeId: 'garage-nuc' },
+  },
+  {
+    id: 'e-4',
+    ageMin: 15,
+    category: 'addon.crashed',
+    data: { error: 'exited with code 1' },
+    source: {
+      type: 'addon',
+      id: 'notifier-mail',
+      nodeId: 'hub',
+      addonId: 'notifier-mail',
+    },
+  },
+]
+
 const FILTERS = {
   deviceId: true,
   addonId: true,
@@ -146,6 +194,13 @@ export default defineFixtures({
         metadata: {},
       },
     ],
+    'systemEvents.getRecent': EVENT_ROWS.map((e) => ({
+      id: e.id,
+      timestamp: iso(NOW - e.ageMin * MINUTE),
+      source: e.source,
+      category: e.category,
+      data: e.data,
+    })),
     'logs.sources': [
       {
         addonId: 'winston-logging',

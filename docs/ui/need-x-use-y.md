@@ -72,7 +72,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | Pick a timezone / icon / unit / model | `TimezoneSelector`, `IconPicker`, `UnitPicker`, `ModelPicker` | — | |
 | Enter a number tied to a physical quantity (a threshold, a portion) | `QuantityValueInput` (stored number plus the unit the person picks; emits `{ value, unit }`) | — | A bare `Input type="number"` on a quantity field is the bug it exists to prevent |
 | Live camera video | `CameraStreamPlayer`, `StreamPanel` | the embed player (`embed/`) | WebRTC only |
-| A live log or event tail | `LogStream`, `EventStream` | — | |
+| A live log or event tail | `LogStream`, `EventStream` | — | `EventStream`'s filter is `EventCategoryPicker`: the catalogued categories (`EVENT_CATEGORY_CATALOG`) grouped as the catalogue groups them, plus a custom pattern row (exact id or `prefix.*`). Use the picker, never a flat select of `EventCategory`; `onCategoriesChange` reports the selection (Logs → Events keeps it in `?categories=`) |
 | A bottom sheet / side drawer on mobile | `BottomSheet`, `MobileDrawer` | `SheetModal` | |
 | Code or JSON shown verbatim | `CodeBlock` | — | |
 | A QR code | `QrCode` | — | |

@@ -14,7 +14,6 @@
  * tRPC subscription cleans up automatically. The historical query
  * input refreshes when the active category set changes.
  */
-import { Checkbox } from '../primitives/checkbox'
 import { useEffect, useRef, useState, useMemo, useCallback, type JSX } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import {
@@ -41,13 +40,14 @@ import {
   Target,
   Filter,
   RotateCcw,
-  Search,
 } from 'lucide-react'
-import { EventCategory, publicEventCategories } from '@camstack/types'
+import { EventCategory, noiseEventCategories, offerableEventCategories } from '@camstack/types'
 import { trpc } from '../trpc-react'
 import { cn } from '../lib/cn'
 import { defaultUiText, useUiText, type UiTextFn } from '../contexts/ui-text'
 import { useLiveBuffer, type LiveBuffer } from '../hooks/use-live-buffer'
+import { createCategoryMatcher } from '../lib/event-category-selection'
+import { EventCategoryPicker } from './event-category-picker'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -124,6 +124,8 @@ export interface EventStreamProps {
   /** Show the multiselect filter button in the toolbar (default true). */
   readonly showCategoryFilter?: boolean
   readonly showFilters?: boolean
+  /** Called with the new selection (exact ids and `prefix.*` patterns) whenever the user changes it in the picker or resets it. */
+  readonly onCategoriesChange?: (next: readonly string[]) => void
   /**
    * Optional controlled live buffer. When provided, the stream reads
    * + appends to this external store rather than its own `useState`,
@@ -312,7 +314,11 @@ const CATEGORY_STYLES: Record<string, CategoryStyleDef> = {
 function getStyle(t: UiTextFn, category: string, data?: Record<string, unknown>): CategoryStyle {
   const def = CATEGORY_STYLES[category]
   const base: CategoryStyle = def
-    ? { icon: def.icon, color: def.color, label: t(def.labelKey, def.labelFallback) }
+    ? {
+        icon: def.icon,
+        color: def.color,
+        label: t(def.labelKey, def.labelFallback),
+      }
     : {
         icon: Play,
         color: 'bg-foreground-subtle/10 text-foreground-subtle border-border',
@@ -329,50 +335,25 @@ function getStyle(t: UiTextFn, category: string, data?: Record<string, unknown>)
   return base
 }
 
-/** Every PUBLIC EventCategory value, sorted alphabetically — the owner-only
- *  categories the routers refuse (D224) are not offered, a filter that can
- *  never match is not a filter. Computed once at module load — drives the
- *  multiselect popover. */
-const ALL_EVENT_CATEGORIES: readonly string[] = Object.freeze([...publicEventCategories()])
+/** Every category the picker offers: public and not deprecated, sorted. The
+ *  owner-only categories the routers refuse (D224) are not offered — a filter
+ *  that can never match is not a filter. */
+const ALL_EVENT_CATEGORIES: readonly string[] = Object.freeze([...offerableEventCategories()])
 
 /**
- * Categories that are emitted at high frequency (~1 Hz per camera /
- * per node / per engine) and pollute the live events tab without
- * conveying anything an operator scans an event log to see. They
- * still fan out to dedicated UI panels that subscribe by name
- * (StreamPanel for stream-broker.metrics-snapshot, NodeDetailHeader
- * for pipeline.runner-load-snapshot, etc.) — the events-tab default
- * just opts them out of the catch-all "All" view. The operator can
- * opt back in via the multiselect popover.
- *
- * Mirrors `RING_BUFFER_DENY_PATTERNS` in `addon-context-factory.ts`
- * — same set, same rationale: high-frequency, low-value-for-the-
- * operator categories. Kept in sync manually because the UI bundle
- * doesn't import the kernel server module.
+ * Categories that are emitted at high frequency (~1 Hz per camera / per node /
+ * per engine) and pollute the live events tab without conveying anything an
+ * operator scans an event log to see. They still fan out to the dedicated
+ * panels that subscribe by name; the default view just leaves them out and the
+ * operator can opt back in through the picker. The set is the catalogue's
+ * `noise` flag (the one the event ring's deny list derives from), except the
+ * camera-motion bridge's `motion.on-motion-changed`: it is flagged noise for
+ * the ring, but it is the motion event an operator scans, so it stays visible.
  */
-const LIVE_NOISE_CATEGORIES: readonly string[] = Object.freeze([
-  EventCategory.PipelineCameraMetricsSnapshot,
-  EventCategory.PipelineRunnerLoadSnapshot,
-  EventCategory.PipelineEngineMetricsSnapshot,
-  EventCategory.PipelineInferenceResult,
-  EventCategory.PipelineTrace,
-  EventCategory.PipelineProgress,
-  EventCategory.StreamBrokerMetricsSnapshot,
-  EventCategory.MetricsNodeResourcesSnapshot,
-  EventCategory.MetricsNodeProcessesSnapshot,
-  EventCategory.ClusterTopologySnapshot,
-  EventCategory.MotionAnalysis,
-  EventCategory.MotionZonesRaw,
-  EventCategory.DetectionResult,
-  EventCategory.PipelineAudioInferenceResult,
-  EventCategory.PlatformProbePhase,
-  EventCategory.BenchmarkProgress,
-  EventCategory.ModelDownloadProgress,
-  // A camera's RAW motion push (D673, ~1 Hz): the bridge's MotionOnMotionChanged is the one to scan.
-  EventCategory.ProviderMotion,
-])
-
-const LIVE_NOISE_SET: ReadonlySet<string> = new Set(LIVE_NOISE_CATEGORIES)
+const SHOWN_DESPITE_NOISE: ReadonlySet<string> = new Set([EventCategory.MotionOnMotionChanged])
+const LIVE_NOISE_SET: ReadonlySet<string> = new Set(
+  noiseEventCategories().filter((c) => !SHOWN_DESPITE_NOISE.has(c)),
+)
 
 /** Categories visible in the events tab by default. The "All" badge
  *  reflects this set, not the raw enum. */
@@ -498,7 +479,12 @@ export function summarizeEvent(
     if (detections.length === 0) return null
     return detections
       .map((d) => {
-        const obj = d as { class?: unknown; macroClass?: unknown; label?: unknown; score?: number }
+        const obj = d as {
+          class?: unknown
+          macroClass?: unknown
+          label?: unknown
+          score?: number
+        }
         const rawLabel = obj.macroClass ?? obj.class ?? obj.label
         const label = typeof rawLabel === 'string' ? rawLabel : ''
         const score = obj.score
@@ -606,6 +592,7 @@ export function EventStream({
   limit = 50,
   showCategoryFilter = true,
   showFilters: _showFilters = false,
+  onCategoriesChange,
   liveBuffer: externalBuffer,
   onClose,
   className,
@@ -631,6 +618,19 @@ export function EventStream({
     }
   }, [defaultsKey, defaultsArray])
 
+  const categoryMatcher = useMemo(() => createCategoryMatcher(activeCategories), [activeCategories])
+  const allSelected = useMemo(
+    () => ALL_EVENT_CATEGORIES.every((c) => categoryMatcher(c)),
+    [categoryMatcher],
+  )
+  const changeSelection = useCallback(
+    (next: readonly string[]) => {
+      setActiveCategories(new Set(next))
+      onCategoriesChange?.(next)
+    },
+    [onCategoriesChange],
+  )
+
   // Always-live fallback buffer keeps the hook order stable. When the
   // parent provides an external buffer (DeviceActivityPanel) the local
   // one stays empty; when no parent provides one, the component still
@@ -642,7 +642,6 @@ export function EventStream({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [searchText, setSearchText] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState('')
   const [clearedAt, setClearedAt] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const filterRootRef = useRef<HTMLDivElement>(null)
@@ -703,11 +702,11 @@ export function EventStream({
   // same.
   const getRecentInput = useMemo(() => {
     const s: Record<string, unknown> = { ...scopeInput, limit }
-    if (activeArray.length > 0 && activeArray.length < ALL_EVENT_CATEGORIES.length) {
+    if (activeArray.length > 0 && !allSelected) {
       s.category = activeArray
     }
     return s
-  }, [scopeInput, limit, activeKey, activeArray])
+  }, [scopeInput, limit, activeKey, activeArray, allSelected])
   const { data: initialEvents, isLoading } = trpc.systemEvents.getRecent.useQuery(getRecentInput, {
     staleTime: 30_000,
   })
@@ -728,10 +727,10 @@ export function EventStream({
   // The activeCategories Set is read through a ref so the
   // subscription callback always sees the current filter without
   // resubscribing on toggle.
-  const activeCategoriesRef = useRef(activeCategories)
+  const categoryMatcherRef = useRef(categoryMatcher)
   useEffect(() => {
-    activeCategoriesRef.current = activeCategories
-  }, [activeCategories])
+    categoryMatcherRef.current = categoryMatcher
+  }, [categoryMatcher])
   const subInput: Record<string, unknown> = scopeInput
   trpc.systemEvents.subscribe.useSubscription(subInput, {
     onData: (raw: unknown) => {
@@ -740,7 +739,7 @@ export function EventStream({
       if (!matchesScope(entry, agentId, addonId, deviceId)) return
       // Skip categories the user has filtered out. Prevents the
       // 300-slot ring from being clobbered by background noise.
-      if (!activeCategoriesRef.current.has(entry.category)) return
+      if (!categoryMatcherRef.current(entry.category)) return
       buffer.append(entry)
     },
   })
@@ -775,7 +774,7 @@ export function EventStream({
     for (const e of (initialEvents ?? []) as EventEntry[]) byId.set(e.id, e)
     for (const e of liveEvents) byId.set(e.id, e)
 
-    let list = [...byId.values()].filter((e) => activeCategories.has(e.category)).filter(hasContent)
+    let list = [...byId.values()].filter((e) => categoryMatcher(e.category)).filter(hasContent)
     if (clearedAt > 0) {
       list = list.filter((e) => new Date(e.timestamp).getTime() > clearedAt)
     }
@@ -810,7 +809,7 @@ export function EventStream({
     return list.toSorted(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     )
-  }, [initialEvents, liveEvents, activeCategories, searchText, clearedAt, t])
+  }, [initialEvents, liveEvents, categoryMatcher, searchText, clearedAt, t])
 
   const toggleRow = useCallback((id: string) => {
     setExpandedRows((prev) => {
@@ -821,20 +820,11 @@ export function EventStream({
     })
   }, [])
 
-  const toggleCategory = useCallback((cat: string) => {
-    setActiveCategories((prev) => {
-      const next = new Set(prev)
-      if (next.has(cat)) next.delete(cat)
-      else next.add(cat)
-      return next
-    })
-  }, [])
-
   const handleReset = useCallback(() => {
-    setActiveCategories(new Set(defaultsArray))
+    changeSelection(defaultsArray)
     setSearchText('')
     setClearedAt(0)
-  }, [defaultsArray])
+  }, [defaultsArray, changeSelection])
 
   const handleClear = useCallback(() => {
     setClearedAt(Date.now())
@@ -874,25 +864,9 @@ export function EventStream({
     [formatEventForCopy],
   )
 
-  const handleSelectAll = useCallback(() => {
-    setActiveCategories(new Set(ALL_EVENT_CATEGORIES))
-  }, [])
-
-  const handleSelectNone = useCallback(() => {
-    setActiveCategories(new Set())
-  }, [])
-
-  // Categories filtered by the in-popover search box
-  const filteredPopoverCategories = useMemo(() => {
-    const needle = categorySearch.trim().toLowerCase()
-    if (!needle) return ALL_EVENT_CATEGORIES
-    return ALL_EVENT_CATEGORIES.filter((c) => c.toLowerCase().includes(needle))
-  }, [categorySearch])
-
-  const totalAvailable = ALL_EVENT_CATEGORIES.length
-  const totalActive = activeCategories.size
-  const allSelected = totalActive === totalAvailable
-  const filterLabel = allSelected ? 'All' : `${totalActive}/${totalAvailable}`
+  const filterLabel = allSelected
+    ? t('uiLibrary.eventStream.filterAll', 'All')
+    : String(activeCategories.size)
 
   return (
     <div
@@ -946,19 +920,21 @@ export function EventStream({
                 title={t('uiLibrary.eventStream.pickEvents', 'Pick events to track')}
               >
                 <Filter className="h-2.5 w-2.5" />
-                {t('uiLibrary.eventStream.filter', 'Filter ({{label}})', { label: filterLabel })}
+                {t('uiLibrary.eventStream.filter', 'Filter ({{label}})', {
+                  label: filterLabel,
+                })}
               </button>
               {filterOpen && (
-                <CategoryFilterPopover
-                  search={categorySearch}
-                  onSearchChange={setCategorySearch}
-                  categories={filteredPopoverCategories}
-                  active={activeCategories}
-                  onToggle={toggleCategory}
-                  onSelectAll={handleSelectAll}
-                  onSelectNone={handleSelectNone}
-                  onResetDefaults={handleReset}
-                />
+                <div
+                  className="fixed inset-x-2 top-28 z-20 flex max-h-[70vh] flex-col rounded-md border border-border bg-surface shadow-lg sm:absolute sm:inset-x-auto sm:top-full sm:left-0 sm:mt-1 sm:max-h-96 sm:w-80"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EventCategoryPicker
+                    value={[...activeCategories]}
+                    onChange={changeSelection}
+                    defaults={defaultsArray}
+                  />
+                </div>
               )}
             </div>
           )}
@@ -1025,7 +1001,9 @@ export function EventStream({
 
           {liveEvents.length > 0 && (
             <span className="text-[9px] text-emerald-400 font-medium">
-              {t('uiLibrary.eventStream.live', '+{{count}} live', { count: liveEvents.length })}
+              {t('uiLibrary.eventStream.live', '+{{count}} live', {
+                count: liveEvents.length,
+              })}
             </span>
           )}
         </div>
@@ -1130,116 +1108,6 @@ export function EventStream({
             })}
           </div>
         )}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Multiselect popover
-// ---------------------------------------------------------------------------
-
-interface CategoryFilterPopoverProps {
-  readonly search: string
-  readonly onSearchChange: (next: string) => void
-  readonly categories: readonly string[]
-  readonly active: ReadonlySet<string>
-  readonly onToggle: (cat: string) => void
-  readonly onSelectAll: () => void
-  readonly onSelectNone: () => void
-  readonly onResetDefaults: () => void
-}
-
-function CategoryFilterPopover({
-  search,
-  onSearchChange,
-  categories,
-  active,
-  onToggle,
-  onSelectAll,
-  onSelectNone,
-  onResetDefaults,
-}: CategoryFilterPopoverProps) {
-  const t = useUiText()
-  return (
-    <div
-      className="absolute z-20 top-full mt-1 left-0 w-72 max-h-80 rounded-md border border-border bg-surface shadow-lg flex flex-col"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/50">
-        <Search className="h-3 w-3 text-foreground-subtle" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={t('uiLibrary.eventStream.filterCategories', 'Filter categories…')}
-          className="flex-1 bg-transparent text-[10px] focus:outline-none text-foreground placeholder:text-foreground-subtle"
-          autoFocus
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => onSearchChange('')}
-            className="text-foreground-subtle hover:text-foreground"
-          >
-            <X className="h-2.5 w-2.5" />
-          </button>
-        )}
-      </div>
-      <div className="flex items-center gap-1 px-2 py-1 border-b border-border/50 text-[9px]">
-        <button
-          type="button"
-          onClick={onSelectAll}
-          className="px-1.5 py-0.5 rounded border border-border text-foreground-subtle hover:text-foreground"
-        >
-          {t('uiLibrary.eventStream.all', 'All')}
-        </button>
-        <button
-          type="button"
-          onClick={onSelectNone}
-          className="px-1.5 py-0.5 rounded border border-border text-foreground-subtle hover:text-foreground"
-        >
-          {t('uiLibrary.eventStream.none', 'None')}
-        </button>
-        <button
-          type="button"
-          onClick={onResetDefaults}
-          className="px-1.5 py-0.5 rounded border border-border text-foreground-subtle hover:text-foreground"
-        >
-          {t('uiLibrary.eventStream.defaults', 'Defaults')}
-        </button>
-      </div>
-      <div className="overflow-y-auto flex-1">
-        {categories.length === 0 && (
-          <div className="text-[10px] text-foreground-subtle italic px-2 py-3 text-center">
-            {t('uiLibrary.eventStream.noMatches', 'No matches')}
-          </div>
-        )}
-        {categories.map((cat) => {
-          const checked = active.has(cat)
-          const style = getStyle(t, cat)
-          const Icon = style.icon
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => onToggle(cat)}
-              className="w-full flex items-center gap-2 px-2 py-1 text-left hover:bg-surface-hover/40 text-[10px]"
-            >
-              <Checkbox readOnly checked={checked} className="" />
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium shrink-0',
-                  style.color,
-                )}
-              >
-                <Icon className="h-2.5 w-2.5" />
-                {style.label}
-              </span>
-              <span className="text-foreground-subtle font-mono truncate">{cat}</span>
-            </button>
-          )
-        })}
       </div>
     </div>
   )
