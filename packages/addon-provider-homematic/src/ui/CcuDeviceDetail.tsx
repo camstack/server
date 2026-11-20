@@ -34,7 +34,7 @@ import type { CcuTrpc } from './ccu-client.js'
 import { centralKey } from './central-key.js'
 import { belongsToDevice, camstackDevicePagePath, ccuInterfaceOf } from './device-route.js'
 import { dateTimeOrDash, percentOrDash, textOrDash } from './format.js'
-import { keyEventStatuses, type KeyEventStatus } from './key-event-programs.js'
+import { EVENTS_LABEL, keyEventStatuses, type KeyEventStatus } from './key-event-programs.js'
 import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
@@ -451,13 +451,7 @@ function KeyRow(props: {
             variant={status.state === 'ok' ? 'success' : 'warning'}
             data-testid={`hm-key-event-${status.state}`}
           >
-            {t(
-              status.state === 'ok'
-                ? 'devices.eventsOk'
-                : status.state === 'inactive'
-                  ? 'devices.eventsInactive'
-                  : 'devices.eventsMissing',
-            )}
+            {t(EVENTS_LABEL[status.state])}
           </Badge>
         )}
       </div>
@@ -607,7 +601,9 @@ function FaultsBlock(props: {
   const ownMessages = (messages.data?.messages ?? []).filter((message) =>
     belongsToDevice(message.address, device.address),
   )
-  const ready = faults.data !== undefined && messages.data !== undefined
+  const unreported = faults.data?.unreported.includes(device.address) === true
+  const ready =
+    faults.data !== undefined && messages.data !== undefined && messages.data.error === null
   return (
     <TableBlock headingId="hm-detail-faults" title={t('detail.faultsTitle')}>
       {faults.error !== null && <BlockError title={t('detail.faultsUnavailable')} read={faults} />}
@@ -633,7 +629,10 @@ function FaultsBlock(props: {
           <span className="text-foreground-subtle">{dateTimeOrDash(message.timestamp)}</span>
         </div>
       ))}
-      {ready && own === undefined && ownMessages.length === 0 && (
+      {unreported && own === undefined && (
+        <p className="text-sm text-foreground-subtle">{t('detail.faultsUnreported')}</p>
+      )}
+      {ready && !unreported && own === undefined && ownMessages.length === 0 && (
         <p className="text-sm text-foreground-subtle">{t('detail.faultsNone')}</p>
       )}
     </TableBlock>

@@ -32,7 +32,7 @@ import { percentOrDash, textOrDash } from './format.js'
 import { ChannelConfigDialog } from './ChannelConfigDialog.js'
 import { CcuDeviceDetail } from './CcuDeviceDetail.js'
 import { camstackDevicePagePath, DEVICE_PARAM, resolveDeviceSelection } from './device-route.js'
-import { deviceKeyEventState, keyEventStatuses, type KeyEventState } from './key-event-programs.js'
+import { deviceKeyEventState, EVENTS_LABEL, keyEventStatuses } from './key-event-programs.js'
 import { centralKey } from './central-key.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { RenameDeviceDialog, type DeviceRenameDraft } from './RenameDeviceDialog.js'
@@ -117,14 +117,6 @@ function DeviceName(props: {
       {row.name !== null && <span className="text-xs text-foreground-subtle">{row.address}</span>}
     </div>
   )
-}
-
-const EVENTS_LABEL: Readonly<
-  Record<KeyEventState, 'devices.eventsOk' | 'devices.eventsInactive' | 'devices.eventsMissing'>
-> = {
-  ok: 'devices.eventsOk',
-  inactive: 'devices.eventsInactive',
-  missing: 'devices.eventsMissing',
 }
 
 /** "events: ok / missing program" for a device with keys; nothing for a device without. */

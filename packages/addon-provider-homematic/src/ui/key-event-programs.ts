@@ -7,6 +7,15 @@ import type { CcuProgram } from '../ccu/ccu-schemas.js'
  */
 export type KeyEventState = 'ok' | 'inactive' | 'missing'
 
+/** The one badge label per state, shared by the table column and the detail. */
+export const EVENTS_LABEL: Readonly<
+  Record<KeyEventState, 'devices.eventsOk' | 'devices.eventsInactive' | 'devices.eventsMissing'>
+> = {
+  ok: 'devices.eventsOk',
+  inactive: 'devices.eventsInactive',
+  missing: 'devices.eventsMissing',
+}
+
 export interface KeyEventStatus {
   readonly address: string
   readonly state: KeyEventState

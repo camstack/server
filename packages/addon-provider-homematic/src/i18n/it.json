@@ -60,7 +60,9 @@
     "severityError": "Errore",
     "severityWarning": "Avviso",
     "faultsMore": "+{{count}} altri",
-    "openDevice": "Apri dispositivo"
+    "openDevice": "Apri dispositivo",
+    "faultsUnreported_one": "{{count}} dispositivo non ha ancora riportato i flag di servizio, quindi il suo stato è sconosciuto",
+    "faultsUnreported_other": "{{count}} dispositivi non hanno ancora riportato i flag di servizio, quindi il loro stato è sconosciuto"
   },
   "devices": {
     "colDevice": "Dispositivo",
@@ -440,6 +442,7 @@
     "faultsTitle": "Guasti e messaggi di servizio",
     "faultsNone": "Nessun guasto o messaggio di servizio attivo",
     "faultsUnavailable": "Guasti non disponibili",
-    "messagesUnavailable": "Messaggi di servizio non disponibili"
+    "messagesUnavailable": "Messaggi di servizio non disponibili",
+    "faultsUnreported": "La CCU non ha ancora riportato i flag di servizio di questo dispositivo"
   }
 }

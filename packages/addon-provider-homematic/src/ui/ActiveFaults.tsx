@@ -100,16 +100,33 @@ export function ActiveFaults(props: {
       ) : faults.data === undefined ? (
         <Skeleton className="h-16 w-full" />
       ) : faults.data.faults.length === 0 ? (
-        <EmptyState title={t('overview.noFaults')} />
+        <>
+          <EmptyState title={t('overview.noFaults')} />
+          <Unreported count={faults.data.unreported.length} />
+        </>
       ) : (
-        <DataTable
-          columns={columns}
-          rows={faults.data.faults}
-          rowKey={(row) => row.address}
-          minWidthPx={520}
-          defaultSort={{ columnKey: 'severity', dir: 'asc' }}
-        />
+        <>
+          <DataTable
+            columns={columns}
+            rows={faults.data.faults}
+            rowKey={(row) => row.address}
+            minWidthPx={520}
+            defaultSort={{ columnKey: 'severity', dir: 'asc' }}
+          />
+          <Unreported count={faults.data.unreported.length} />
+        </>
       )}
     </TableBlock>
+  )
+}
+
+/** Devices the CCU has not reported yet are unknown, never counted as healthy. */
+function Unreported(props: { readonly count: number }): ReactNode {
+  const { t } = useT()
+  if (props.count === 0) return null
+  return (
+    <p className="text-sm text-foreground-subtle">
+      {t('overview.faultsUnreported', { count: props.count })}
+    </p>
   )
 }

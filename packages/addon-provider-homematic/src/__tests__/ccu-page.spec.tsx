@@ -95,7 +95,7 @@ describe('HomematicCcuPage overview', () => {
     listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
     ccuOverview: () => OVERVIEW,
     listServiceMessages: () => ({ messages: [MESSAGE], error: null }),
-    listCcuFaults: () => ({ faults: [] }),
+    listCcuFaults: () => ({ faults: [], unreported: [] }),
   }
 
   it('shows the CCU, its interface health and the service messages', async () => {

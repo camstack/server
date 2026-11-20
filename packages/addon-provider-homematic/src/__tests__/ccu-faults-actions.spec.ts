@@ -45,7 +45,7 @@ describe('listCcuFaults', () => {
     expect(out.faults[0]?.faults.map((fault) => fault.code)).toEqual(['UNREACH', 'LOW_BAT'])
   })
 
-  it('does not list a device whose flags the CCU never reported (unknown is not a fault)', async () => {
+  it('names a device whose flags the CCU never reported instead of dropping it (unknown is not "fine")', async () => {
     const { deps } = fakeDeps({
       devices: () => [device('NEW', null, {})],
       serviceMessages: async () => [],
@@ -54,6 +54,7 @@ describe('listCcuFaults', () => {
       integrationId: 'hm_1',
     })
     expect(out.faults).toEqual([])
+    expect(out.unreported).toEqual(['NEW'])
   })
 
   it('carries the adopted CamStack device id and the since of the matching service message', async () => {
@@ -82,7 +83,7 @@ describe('listCcuFaults', () => {
   })
 
   it('still answers when only the since lookup fails, and refuses a CCU that is not connected', async () => {
-    const { deps } = fakeDeps({
+    const { deps, logger } = fakeDeps({
       devices: () => [device('ABC', 'Lamp', { UNREACH: true })],
       serviceMessages: async () => {
         throw new Error('no credentials')
@@ -91,6 +92,9 @@ describe('listCcuFaults', () => {
     const handlers = buildCcuFaultHandlers(deps)
     const out = await handlers.listCcuFaults({ integrationId: 'hm_1' })
     expect(out.faults[0]?.since).toBeNull()
+    expect(
+      logger.lines.some((line) => line.level === 'warn' && /service messages/.test(line.message)),
+    ).toBe(true)
     await expect(handlers.listCcuFaults({ integrationId: 'nope' })).rejects.toThrow(/not connected/)
   })
 })

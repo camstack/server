@@ -35,8 +35,8 @@ export function faultSince(
 /**
  * The active faults CamStack derives from the CCU: the same pure mapping that
  * fills a device's `error` cap, read from the facade's cached MAINTENANCE values.
- * A device whose flags the CCU has not reported is UNKNOWN and is not listed
- * (never "no fault"). Only the `since` lookup is best effort; the device read
+ * A device whose flags the CCU has not reported is UNKNOWN: it is not a fault
+ * row but is named in `unreported`, so no caller reads it as "no fault". Only the `since` lookup is best effort; the device read
  * itself throws, so the page shows its warning instead of an empty list.
  */
 export function buildCcuFaultHandlers(deps: CcuActionDeps) {
@@ -44,11 +44,24 @@ export function buildCcuFaultHandlers(deps: CcuActionDeps) {
     listCcuFaults: async (input: { readonly integrationId: string }): Promise<CcuFaultsResult> => {
       const facade = requireFacade(deps, input.integrationId)
       const adopted = await deps.adoptedAddresses(input.integrationId)
-      const messages = await facade.serviceMessages().catch(() => [])
+      const messages = await facade.serviceMessages().catch((error: unknown) => {
+        deps.logger.warn('listCcuFaults: service messages unreadable, fault start times omitted', {
+          meta: {
+            integrationId: input.integrationId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        })
+        return []
+      })
       const now = Date.now()
       const faults: CcuFaultRow[] = []
+      const unreported: string[] = []
       for (const device of facade.devices()) {
         const reading = maintenanceFaultReading(maintenanceValues(device), now)
+        if (reading.active === null) {
+          unreported.push(device.address)
+          continue
+        }
         const readingFaults = reading.faults ?? []
         const principal = readingFaults[0]
         if (reading.active !== true || principal === undefined) continue
@@ -69,7 +82,7 @@ export function buildCcuFaultHandlers(deps: CcuActionDeps) {
         })
       }
       faults.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1))
-      return { faults }
+      return { faults, unreported }
     },
   }
 }

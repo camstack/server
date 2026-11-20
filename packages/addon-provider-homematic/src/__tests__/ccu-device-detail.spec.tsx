@@ -108,7 +108,7 @@ const HANDLERS: Record<string, Handler> = {
   listHeatingGroups: () => ({ groups: [], groupsError: null, thermostats: [], candidates: [] }),
   listCcuLinks: () => ({ links: [], senders: [], receivers: [], failures: [] }),
   listServiceMessages: () => ({ messages: [], error: null }),
-  listCcuFaults: () => ({ faults: [] }),
+  listCcuFaults: () => ({ faults: [], unreported: [] }),
 }
 
 function mountAt(
@@ -162,6 +162,32 @@ describe('the Devices table no longer carries the event quick actions', () => {
   it('offers them in the detail instead', async () => {
     mountAt('?tab=devices&device=BTN1')
     expect(await screen.findByRole('button', { name: 'Central link' })).toBeTruthy()
+  })
+})
+
+describe('faults in the detail', () => {
+  it('says "not reported" for an unreported device, never "no faults"', async () => {
+    mountAt('?tab=devices&device=BTN1', {
+      ...HANDLERS,
+      listCcuFaults: () => ({ faults: [], unreported: ['BTN1'] }),
+    })
+    expect(
+      await screen.findByText("The CCU has not reported this device's service flags yet"),
+    ).toBeTruthy()
+    expect(screen.queryByText('No active faults or service messages')).toBeNull()
+  })
+
+  it('does not claim "no faults" beside a service-messages warning', async () => {
+    const faultsRead = vi.fn(() => ({ faults: [], unreported: [] }))
+    mountAt('?tab=devices&device=BTN1', {
+      ...HANDLERS,
+      listCcuFaults: faultsRead,
+      listServiceMessages: () => ({ messages: [], error: 'CCU did not answer' }),
+    })
+    expect(await screen.findByText('CCU did not answer')).toBeTruthy()
+    await waitFor(() => expect(faultsRead).toHaveBeenCalled())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByText('No active faults or service messages')).toBeNull()
   })
 })
 
@@ -225,6 +251,7 @@ describe('Active faults on the Overview', () => {
               faults: [{ code: 'UNREACH', label: 'Device unreachable', severity: 'error' }],
             },
           ],
+          unreported: [],
         }),
       },
       navigate,
@@ -247,6 +274,15 @@ describe('Active faults on the Overview', () => {
     expect(await screen.findByText('Active faults unavailable')).toBeTruthy()
     expect(screen.getByText('CCU did not answer')).toBeTruthy()
     expect(screen.queryByText('No active faults')).toBeNull()
+  })
+
+  it('names how many devices have not reported, instead of calling them healthy', async () => {
+    mountAt('', { ...base, listCcuFaults: () => ({ faults: [], unreported: ['BTN1', 'PLN1'] }) })
+    expect(
+      await screen.findByText(
+        '2 devices have not reported their service flags yet, so their state is unknown',
+      ),
+    ).toBeTruthy()
   })
 
   it('says "No active faults" only from an answer with none', async () => {

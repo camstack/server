@@ -600,5 +600,9 @@ export const CcuFaultRowSchema = z.object({
 })
 export type CcuFaultRow = z.infer<typeof CcuFaultRowSchema>
 
-export const CcuFaultsResultSchema = z.object({ faults: z.array(CcuFaultRowSchema) })
+export const CcuFaultsResultSchema = z.object({
+  faults: z.array(CcuFaultRowSchema),
+  /** Devices whose service flags the CCU has not reported: unknown, never "no fault". */
+  unreported: z.array(z.string()),
+})
 export type CcuFaultsResult = z.infer<typeof CcuFaultsResultSchema>

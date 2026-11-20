@@ -60,7 +60,9 @@
     "severityError": "Error",
     "severityWarning": "Warning",
     "faultsMore": "+{{count}} more",
-    "openDevice": "Open device"
+    "openDevice": "Open device",
+    "faultsUnreported_one": "{{count}} device has not reported its service flags yet, so its state is unknown",
+    "faultsUnreported_other": "{{count}} devices have not reported their service flags yet, so their state is unknown"
   },
   "devices": {
     "colDevice": "Device",
@@ -440,6 +442,7 @@
     "faultsTitle": "Faults and service messages",
     "faultsNone": "No active faults or service messages",
     "faultsUnavailable": "Faults unavailable",
-    "messagesUnavailable": "Service messages unavailable"
+    "messagesUnavailable": "Service messages unavailable",
+    "faultsUnreported": "The CCU has not reported this device's service flags yet"
   }
 }
