@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.604] - 2026-11-20
+
 ### Changed
 
 - Energy systems now record the storage capacity next to the other storage series
