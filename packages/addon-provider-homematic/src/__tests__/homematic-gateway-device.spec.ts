@@ -406,6 +406,16 @@ describe('HomematicGatewayDevice state refresh (D1062)', () => {
     })
   })
 
+  it('a refresh and a snapshot-triggered read in flight together read the CCU once', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const hub: FakeHub = { refreshes: 0, failRefresh: false, vars: [faultVar(true)] }
+    publishHub(hub)
+    await Promise.all([refresh(r.providers), device.pollFaults()])
+    expect(hub.refreshes).toBe(1)
+  })
+
   it('owns no timer: nothing is read while time passes', async () => {
     vi.useFakeTimers()
     try {

@@ -81,6 +81,8 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
   private deps: WyzeCameraDeps | null = null
   private readonly publishedStreamIds = new Set<string>()
   private lastMotionEventTs = 0
+  /** True while the cloud client is absent, so the sign-out is logged once, not per read. */
+  private cloudSignedOut = false
   /** Codec of the materialised stream — h264 until the lib reports H265. */
   private currentCodec: 'h264' | 'h265' = 'h264'
 
@@ -327,10 +329,26 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
     })
   }
 
-  /** One read of the cloud events; throws when the cloud cannot answer, so the core backs off. */
+  /** One read of the cloud events. A cloud that ANSWERS with an error throws, so the core backs
+   *  off; no cloud client (signed out) is not a failed read: nothing to read, logged once on the
+   *  change. */
   private async pollCloudMotion(): Promise<void> {
     const cloud = this.deps?.cloud() ?? null
-    if (!cloud) throw new Error('Wyze cloud client is not signed in')
+    if (!cloud) {
+      if (!this.cloudSignedOut) {
+        this.cloudSignedOut = true
+        this.ctx.logger.warn('cloud motion not read: the Wyze cloud client is not signed in', {
+          tags: { deviceId: this.id },
+        })
+      }
+      return
+    }
+    if (this.cloudSignedOut) {
+      this.cloudSignedOut = false
+      this.ctx.logger.info('cloud motion read resumed: the Wyze cloud client is signed in', {
+        tags: { deviceId: this.id },
+      })
+    }
     const mac = this.config.get('mac')
     const events = await cloud.getEventList({ macs: [mac], count: 10 })
     let newest: { timestamp: number; aiTags: readonly string[] } | null = null

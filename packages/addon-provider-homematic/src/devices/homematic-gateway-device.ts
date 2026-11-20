@@ -82,14 +82,22 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
   /**
    * The core's read (D1062): the CCU's WatchDog system variables, published as
    * faults. It THROWS when the session is down or the CCU does not answer, so
-   * the core backs the cadence off; the previous reading stands meanwhile.
+   * the core backs the cadence off; the previous reading stands meanwhile. It
+   * shares the `polling` guard with `pollFaults`: a read already in flight
+   * publishes the same reading, so a second one is not started.
    */
   private async refreshFaults(): Promise<void> {
+    if (this.polling) return
     const facade = homematicFacades.get(this.integrationId)
     if (!this.sessionUp() || facade === null) {
       throw new Error(`Homematic CCU not connected (integration ${this.integrationId})`)
     }
-    await this.readFaultsFrom(facade)
+    this.polling = true
+    try {
+      await this.readFaultsFrom(facade)
+    } finally {
+      this.polling = false
+    }
   }
 
   private async readFaultsFrom(

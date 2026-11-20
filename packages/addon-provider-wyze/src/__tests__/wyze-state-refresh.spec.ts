@@ -32,12 +32,15 @@ function makeSubject(options: {
     ['mac', MAC],
     ['integrationId', 'wyze-int'],
   ])
+  const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() }
   const subject = {
     id: 620,
     lastMotionEventTs: 0,
+    cloudSignedOut: false,
+    signedIn: options.signedIn !== false,
     config: { get: (key: string) => config.get(key) },
     deps: {
-      cloud: () => (options.signedIn === false ? null : { getEventList: vi.fn(options.events) }),
+      cloud: () => (subject.signedIn ? { getEventList: vi.fn(options.events) } : null),
     },
     emitMotion: (timestamp: number) =>
       emitted.push({
@@ -46,6 +49,7 @@ function makeSubject(options: {
       }),
     pollCloudMotion: WyzeCamera.prototype['pollCloudMotion'],
     ctx: {
+      logger,
       registerNativeCap: (cap: { name: string }, provider: unknown, registration?: unknown) => {
         registered.push({ name: cap.name, provider, registration })
       },
@@ -60,7 +64,7 @@ function makeSubject(options: {
     if (typeof call !== 'function') throw new Error('refresh is not a function')
     return call({ deviceId: 620, deviceIds: [620], reason: 'interval' })
   }
-  return { subject, registered, emitted, refresh }
+  return { subject, registered, emitted, refresh, logger }
 }
 
 describe('Wyze cloud motion through device-state-refresh (D1062)', () => {
@@ -109,13 +113,26 @@ describe('Wyze cloud motion through device-state-refresh (D1062)', () => {
     })
     WyzeCamera.prototype['startMotionPolling'].call(down.subject)
     await expect(down.refresh()).rejects.toThrow(/cloud 500/)
-    const out = makeSubject({
-      motionSource: 'cloud',
-      events: async () => [],
-      signedIn: false,
+  })
+
+  it('signed out is not a failed read: it returns, logs once on the change, and logs the return', async () => {
+    const h = makeSubject({ motionSource: 'cloud', events: async () => [], signedIn: false })
+    WyzeCamera.prototype['startMotionPolling'].call(h.subject)
+    await expect(h.refresh()).resolves.toEqual({ ok: true })
+    await expect(h.refresh()).resolves.toEqual({ ok: true })
+    await expect(h.refresh()).resolves.toEqual({ ok: true })
+    expect(h.logger.warn).toHaveBeenCalledTimes(1)
+    expect(h.logger.warn).toHaveBeenCalledWith(expect.stringContaining('not signed in'), {
+      tags: { deviceId: 620 },
     })
-    WyzeCamera.prototype['startMotionPolling'].call(out.subject)
-    await expect(out.refresh()).rejects.toThrow(/not signed in/)
+    h.subject.signedIn = true
+    await h.refresh()
+    expect(h.logger.info).toHaveBeenCalledWith(expect.stringContaining('resumed'), {
+      tags: { deviceId: 620 },
+    })
+    h.subject.signedIn = false
+    await h.refresh()
+    expect(h.logger.warn).toHaveBeenCalledTimes(2)
   })
 
   it('owns no timer: nothing is read while time passes', async () => {
