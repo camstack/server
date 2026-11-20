@@ -209,19 +209,9 @@
   "schema.s_hub.description": "Questa telecamera è collegata tramite il suo NVR / Home Hub. Indirizzo e credenziali appartengono a quell'integrazione; il canale resta allineato all'hub in automatico.",
   "schema.s_hub.hubName.label": "Collegata a",
   "schema.s_hub.channel.label": "Canale dell'hub",
-  "schema": {
-    "s_power-source": {
-      "title": "Sorgente di alimentazione",
-      "description": "Passa all'alimentazione cablata solo se l'alimentatore rispetta le specifiche della telecamera.",
-      "_readPowerSource": {
-        "label": "Sorgente di alimentazione"
-      },
-      "_switchToWiredPower": {
-        "label": "Alimentazione cablata"
-      },
-      "_switchToBatteryPower": {
-        "label": "Alimentazione a batteria"
-      }
-    }
-  }
+  "schema.s_power-source.title": "Sorgente di alimentazione",
+  "schema.s_power-source.description": "Passa all'alimentazione cablata solo se l'alimentatore rispetta le specifiche della telecamera.",
+  "schema.s_power-source._readPowerSource.label": "Sorgente di alimentazione",
+  "schema.s_power-source._switchToWiredPower.label": "Alimentazione cablata",
+  "schema.s_power-source._switchToBatteryPower.label": "Alimentazione a batteria"
 }
