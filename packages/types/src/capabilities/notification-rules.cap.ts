@@ -1668,6 +1668,15 @@ export const NcRuleInputSchema = z.object({
    */
   askVerdict: z.boolean().optional(),
   /**
+   * An ALERT notification (`alert-critical`, `alert-error`, device attention)
+   * carries the alert's own action — an open-URL button and, for an `invoke`
+   * action, a token-authed button that runs it. Absent and `true` mean ON;
+   * `false` switches it off for this rule. `.optional()`, never `.default()`
+   * (a Zod default does not run on the addon cap path), so a rule authored
+   * before this field keeps the action.
+   */
+  offerAlertAction: z.boolean().optional(),
+  /**
    * Operator tags (D1054), kept on the rule like a core block's. Absent = no
    * tags. `.optional()`, never `.default()`: a partial `updateRule` patch that
    * does not name `tags` keeps the stored ones (the store merges), and an

@@ -75,6 +75,8 @@ function describeGrant(grant: NcActionGrant): string {
       return `${grant.packages.length} addon update(s) on ${grant.nodeId}`
     case 'server-update':
       return `Server update on ${grant.nodeId}`
+    case 'alert-invoke':
+      return `Alert action ${grant.addonId}.${grant.invokeAction}`
     case 'detection-verdict':
       if (grant.verdict === 'wrong-label')
         return 'Marked label wrong, class right — kept for retraining'
@@ -135,6 +137,8 @@ function grantMeta(grant: NcActionGrant): Readonly<Record<string, unknown>> {
       return { ...common, nodeId: grant.nodeId, packages: grant.packages }
     case 'server-update':
       return { ...common, nodeId: grant.nodeId }
+    case 'alert-invoke':
+      return { ...common, addonId: grant.addonId, invokeAction: grant.invokeAction }
     case 'detection-verdict':
       return {
         ...common,

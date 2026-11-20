@@ -31,6 +31,7 @@
  */
 
 import type {
+  AlertEpisodeAction,
   IScopedLogger,
   NcConfirmExpect,
   NcMediaImage,
@@ -642,6 +643,12 @@ export interface NcOutboxPayload {
       readonly alarmSource?: NcRuleFireRef
       /** The incident's other subjects (D705) — see `NcSystemEventSubject`. */
       readonly alarmFollowers?: readonly NcRuleFireRef[]
+      /**
+       * An alert's own action (`Alert.action`), frozen on a RAISED alert episode so
+       * the notification can offer it (`alert-action-buttons.ts`). Absent on every
+       * other kind, on a resolved edge and on an alert with no action.
+       */
+      readonly alertAction?: AlertEpisodeAction
       readonly deviceId?: number
       /**
        * The device's `DeviceType` at intake. Frozen here — not looked up at

@@ -2374,6 +2374,25 @@ notified retroactively. If NC is down nothing notifies; the reconcile notifies
 when it is back. The viewer holds the three kinds back from its catalog until its
 OTA (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
 
+### An alert notification carries the alert's own action
+
+A RAISED episode carries `Alert.action` whole (`AlertEpisodePayload.action`; `actionUrl` stays for
+`{{actionUrl}}`). The intake freezes it on the row (`systemEvent.alertAction`) and
+`alert-action-buttons.ts` turns it into buttons at delivery:
+
+- `href` → an open-URL action, ABSOLUTE, on the `publicEndpoint` role (`publicUrlBase`, D734 — never
+  the `notificationTaps` app link, never `127.0.0.1`). An `app` and a `server` action are both
+  `<origin><href>`. No reachable address, no action. A target whose kind has no buttons
+  (`caps.actions: 0`) taps into it instead (`clickUrl`), unless the rule authored one.
+- `invoke` → a background button on the D47 token plane, grant kind `alert-invoke`: the grant freezes
+  `{addonId, action, input}`, a tap runs exactly that through `addons.custom`, once (15 min window).
+  Dropped on a link-only target — a preview bot must not run it.
+- a rule's `offerAlertAction: false` switches both off; absent means on. A resolved edge has none.
+
+A `server` href behind `access: 'admin'` (the Google "Sign in again") answers a phone browser with no
+session by redirecting to `/login?next=<route+query>`; the login page honours `next` with a full
+navigation, so the flow resumes after sign-in.
+
 ## A rule that cannot work says so ([D905](../decisions/adr-0905-a-notification-rule-that-cannot-work-is-announced-once.md), 2026-10-22)
 
 On the reload tick, after the prune, `NcRuleHealthMonitor`

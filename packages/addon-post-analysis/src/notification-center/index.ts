@@ -237,6 +237,7 @@ import {
   runGrantedAction as runRunGrantedAction,
   applyGrantedAddonUpdate as runApplyGrantedAddonUpdate,
   applyGrantedServerUpdate as runApplyGrantedServerUpdate,
+  applyGrantedAlertInvoke as runApplyGrantedAlertInvoke,
   applyGrantedDetectionVerdict as runApplyGrantedDetectionVerdict,
   announceServerUpdate as runAnnounceServerUpdate,
   announceAddonUpdate as runAnnounceAddonUpdate,
@@ -843,6 +844,8 @@ export class NotificationCenter implements NcEventConsumer {
       applyGrantedArmAnyway: (panel, grant) => self.applyGrantedArmAnyway(panel, grant),
       applyGrantedBypassInput: (panel, grant) => self.applyGrantedBypassInput(panel, grant),
       applyGrantedServerUpdate: (grant) => self.applyGrantedServerUpdate(grant),
+      applyGrantedAlertInvoke: (grant) =>
+        runApplyGrantedAlertInvoke(self.grantedActionsHost(), grant),
       applyGrantedDetectionVerdict: (grant) => self.applyGrantedDetectionVerdict(grant),
       now: self.now,
       get verdicts() {

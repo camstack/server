@@ -9,6 +9,11 @@ import { verdictButtonRefusal, verdictButtonSpecs } from './detection-verdict-bu
 import { buildActionButtons, buildAlarmButtons, buildSnoozeButtons } from './action-buttons.js'
 import type { NcActionGrant, NcVerdictValue } from './action-token.js'
 import { NcActionTokenRegistry, actionTtlMs } from './action-token.js'
+import {
+  buildAlertInvokeAction,
+  buildAlertOpenAction,
+  ALERT_INVOKE_BUTTON_ID,
+} from './alert-action-buttons.js'
 import { addonUpdateButtonRefusal, buildAddonUpdateButtons } from './addon-update-buttons.js'
 import { intrusionDeviceOf } from './alarm/alarm-push-policy.js'
 import type { NcMintButtonsInput, NcOutboxSystemEvent } from './dispatcher.js'
@@ -130,20 +135,79 @@ export async function mintButtons(
   host: MintButtonsHost,
   input: NcMintButtonsInput,
 ): Promise<readonly NotificationAction[]> {
-  const mint = host.deps.mintActionUrl
-  if (mint === undefined) return []
   const stored = host.rules.get(input.ruleId)
   // The panel's own ANNOUNCEMENT has no stored rule — it is addressed to
   // `announceTargets` — but it is where the refusal's Arm anyway lives, so it
   // still gets the ALARM buttons (and only those: no Action, no snooze).
   const announcement = stored === null && input.ruleId === NC_ALARM_ANNOUNCE_RULE_ID
   if (stored === null && !announcement) return []
+  // An alert's own link needs no token: it is an absolute URL on the public
+  // endpoint, so it is built before the token plane and survives its absence.
+  const alertAction =
+    stored !== null && stored.offerAlertAction !== false
+      ? input.systemEvent?.alertAction
+      : undefined
+  if (stored?.offerAlertAction === false && input.systemEvent?.alertAction !== undefined) {
+    host.logger.debug('alert notification carries no action — the rule switched it off', {
+      tags: { deviceId: input.deviceId },
+      meta: { ruleId: input.ruleId, targetId: input.targetId },
+    })
+  }
+  const publicBase =
+    alertAction?.href === undefined
+      ? null
+      : await (host.deps.dispatcher.publicUrlBase?.() ?? Promise.resolve(null)).catch(() => null)
+  const alertOpen = buildAlertOpenAction(alertAction, publicBase)
+  if (alertAction?.href !== undefined && alertOpen === null) {
+    host.logger.info('alert notification carries no open-link — no reachable public address', {
+      tags: { deviceId: input.deviceId },
+      meta: { ruleId: input.ruleId, targetId: input.targetId },
+    })
+  }
+  const openActions: readonly NotificationAction[] = alertOpen === null ? [] : [alertOpen]
+  const mint = host.deps.mintActionUrl
+  if (mint === undefined) return openActions
 
   // Each family pushes ONE draft per button it returns, in the order it
   // returns them, so a draft and its rendered button share an index. The
   // draft carries its own TTL: a disarm link must not live as long as a
   // snooze one just because they arrived on the same notification.
   const drafts: NcButtonDraft[] = []
+
+  // 00. The alert's own `invoke`. First, so that on a channel that keeps only
+  //     its first few buttons the one thing the alert asks of the operator is
+  //     never the one dropped. The grant freezes the row's `{addonId, action,
+  //     input}` and nothing else.
+  const invokeRunnable = host.deps.invokeAddonAction !== undefined
+  if (alertAction?.invoke !== undefined && !invokeRunnable) {
+    host.logger.info('alert notification carries no invoke button — no addon action runner wired', {
+      tags: { deviceId: input.deviceId },
+      meta: { ruleId: input.ruleId, targetId: input.targetId },
+    })
+  }
+  const alertInvokeButtons: NotificationAction[] = []
+  if (alertAction !== undefined && invokeRunnable) {
+    const button = buildAlertInvokeAction(alertAction, (spec) => {
+      const id = randomUUID()
+      drafts.push({
+        id,
+        ttlMs: actionTtlMs({ kind: 'alert-invoke' }),
+        grant: (expiresAt) => ({
+          kind: 'alert-invoke',
+          id,
+          addonId: spec.addonId,
+          invokeAction: spec.action,
+          ...(spec.input !== undefined ? { invokeInput: spec.input } : {}),
+          deviceId: input.deviceId,
+          actionId: ALERT_INVOKE_BUTTON_ID,
+          targetId: input.targetId,
+          expiresAt,
+        }),
+      })
+      return id
+    })
+    if (button !== null) alertInvokeButtons.push(button)
+  }
 
   // 0. "Was this detection right?" (#243). First, so that on a channel that
   //    keeps only its first few buttons the question the operator opted into
@@ -486,6 +550,7 @@ export async function mintButtons(
   }
 
   const out = [
+    ...alertInvokeButtons,
     ...verdictButtons,
     ...actionButtons,
     ...snoozeButtons,
@@ -493,7 +558,7 @@ export async function mintButtons(
     ...updateButtons,
     ...serverButtons,
   ]
-  if (out.length === 0) return []
+  if (out.length === 0) return openActions
 
   const now = host.now()
   const resolved: NotificationAction[] = []
@@ -509,12 +574,12 @@ export async function mintButtons(
         tags: { deviceId: input.deviceId },
         meta: { ruleId: input.ruleId },
       })
-      return []
+      return openActions
     }
     host.actionTokens.put(slot.grant(expMs))
     resolved.push({ ...action, url })
   }
-  return resolved
+  return [...openActions, ...resolved]
 }
 /** "Silenzia 30 min" / "Silenzia 1 h", in the hub's language. Whole hours
  *  read as hours — `Silenzia 120 min` is arithmetic the operator should not

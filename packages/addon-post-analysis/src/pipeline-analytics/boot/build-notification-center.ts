@@ -458,6 +458,12 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           return { ok: false as const, error: errMsg(err) }
         }
       },
+      // An alert notification's invoke button: the addon custom action the
+      // ALERT declared, with the arguments its grant froze. Over `ctx.api`
+      // like every door above (this addon is forked).
+      invokeAddonAction: async ({ addonId, action, input }) => {
+        await this.ctx.api.addons.custom.mutate({ addonId, action, input })
+      },
       // The Correct / Wrong buttons' one door into the retrain lifecycle: the
       // very mark the Library writes. The lifecycle's deliberate refusals come
       // back as NAMED reasons (the tap page says why), anything else throws.

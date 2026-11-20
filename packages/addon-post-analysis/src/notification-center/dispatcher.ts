@@ -53,6 +53,7 @@ export type { NcConfirmGateInput } from './confirm-gate.js'
 import { artifactKindForMediaType, type NcArtifactPublishMeta } from './artifact-index.js'
 import { ncClockText } from './clock-text.js'
 import { NC_CONFIRM_FALLBACK_TIMEOUT_MS, type NcConfirmGateInput } from './confirm-gate.js'
+import { ALERT_OPEN_BUTTON_ID } from './alert-action-buttons.js'
 import { defaultTapUrl } from './default-tap-url.js'
 import { footageSourceFor } from './footage-source.js'
 import {
@@ -2394,7 +2395,18 @@ export class NcDispatcher {
     // the body instead. Every other button on such a kind is dropped as before.
     const linkOnly = target.maxActions === 0
     const verdictLinks = linkOnly ? verdictLinkLines(minted) : ''
-    const actions = linkOnly ? minted.filter((a) => !isVerdictAction(a)) : minted
+    const actions = linkOnly
+      ? minted.filter((a) => !isVerdictAction(a) && a.id !== ALERT_OPEN_BUTTON_ID)
+      : minted
+    // A target with NO buttons cannot show the alert's open-link as one, so the
+    // tap itself opens it — unless the rule authored its own `clickUrl`, which
+    // always wins. The alert's action replaces the default admin tap: it is
+    // where THIS alert is acted on.
+    const alertOpenUrl = linkOnly
+      ? minted.find((a) => a.id === ALERT_OPEN_BUTTON_ID)?.url
+      : undefined
+    const clickUrl =
+      params.clickUrl === undefined && alertOpenUrl !== undefined ? alertOpenUrl : tapUrl
     const withLinks = (text: string): string =>
       verdictLinks === '' ? text : `${text}\n\n${verdictLinks}`
     const notification: NcNotificationInput = {
@@ -2405,7 +2417,7 @@ export class NcDispatcher {
       ),
       ...params,
       ...(delivery !== undefined ? { delivery } : {}),
-      ...(tapUrl !== null ? { clickUrl: tapUrl } : {}),
+      ...(clickUrl !== null && clickUrl !== undefined ? { clickUrl } : {}),
       // No row carries a push tag (D686, D692): a notifier is one-shot.
       ...(systemEvent !== undefined
         ? systemEvent.deviceId !== undefined

@@ -18,6 +18,7 @@
  */
 import { z } from 'zod'
 import {
+  AlertActionSchema,
   AlertSeveritySchema,
   type Alert,
   type AlertSeverity,
@@ -42,12 +43,22 @@ export const AlertEpisodePayloadSchema = z.object({
   nodeId: z.string().optional(),
   /** The alert's own action link (where the operator acts on it), when it has one. */
   actionUrl: z.string().optional(),
+  /**
+   * The alert's WHOLE action — label, link, navigation and `invoke` — on a
+   * raised episode, so a notification can offer it (an absolute open-URL
+   * button, a token-authed invoke button). `actionUrl` stays for the
+   * `{{actionUrl}}` template variable. Additive: an episode published before
+   * this field has none.
+   */
+  action: AlertActionSchema.optional(),
   /** A device fault episode: every active fault (`metadata.faults`), principal first. */
   faults: z.array(DeviceFaultSchema).optional(),
   at: z.number(),
 })
 
 export type AlertEpisodePayload = z.infer<typeof AlertEpisodePayloadSchema>
+/** The alert's own action, as an episode carries it. */
+export type AlertEpisodeAction = NonNullable<AlertEpisodePayload['action']>
 
 /** The payload of an `alert.episode` event's `data`, or `null` when it is not one. */
 export function parseAlertEpisodePayload(data: unknown): AlertEpisodePayload | null {
@@ -139,6 +150,8 @@ export function alertEpisodePayload(
       : {}),
     ...(nodeId !== undefined ? { nodeId } : {}),
     ...(alert.action?.href !== undefined ? { actionUrl: alert.action.href } : {}),
+    // A resolved episode has nothing left to act on.
+    ...(phase === 'raised' && alert.action !== undefined ? { action: alert.action } : {}),
     ...(faults !== undefined ? { faults } : {}),
     at,
   }

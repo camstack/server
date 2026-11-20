@@ -2373,6 +2373,7 @@ export {
   isAlertEpisodeSeverity,
   parseAlertEpisodePayload,
   AlertEpisodePayloadSchema,
+  type AlertEpisodeAction,
   type AlertEpisodePayload,
   type AlertEpisodePhase,
 } from './notification/alert-episode.js'

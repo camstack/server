@@ -26,6 +26,7 @@ import type {
   NcSystemEventFilterKey,
   NcSystemEventKind,
   NcThrottleGranularity,
+  AlertEpisodeAction,
   ObjectEvent,
   SensorEvent,
   Track,
@@ -240,6 +241,12 @@ export interface NcSystemEventSubject {
    * one mosaic (`alarm/alarm-incident-group.ts`). Absent when there were none.
    */
   readonly alarmFollowers?: readonly NcRuleFireRef[]
+  /**
+   * An alert's own action (`Alert.action`), frozen on a RAISED alert episode so
+   * the notification can offer it (`alert-action-buttons.ts`). Absent on every
+   * other kind, on a resolved edge and on an alert with no action.
+   */
+  readonly alertAction?: AlertEpisodeAction
   readonly deviceId?: number
   /**
    * The device's TYPE (`DeviceType` value) at the moment of the event, read

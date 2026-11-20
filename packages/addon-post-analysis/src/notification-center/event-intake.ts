@@ -33,6 +33,7 @@ import {
   deviceAttentionKind,
   DeviceCommandSettledEventSchema,
   findVocabAction,
+  type AlertEpisodeAction,
   type AlertEpisodePayload,
   type TransitionActor,
   type AudioEvent,
@@ -775,6 +776,8 @@ function systemSubject(input: {
   readonly alarmSource?: NcRuleFireRef
   /** Set only beside `alarmSource` on `alarm-triggered` (D705). */
   readonly alarmFollowers?: readonly NcRuleFireRef[]
+  /** Set only on a RAISED alert episode that has an action. */
+  readonly alertAction?: AlertEpisodeAction
   /** Set only on a consumable band: the threshold it was judged at (D642). */
   readonly consumableLowPercent?: number
   /** Set only on `device-command` (D1022). */
@@ -816,6 +819,7 @@ function systemSubject(input: {
         ...(input.alarmFollowers !== undefined && input.alarmFollowers.length > 0
           ? { alarmFollowers: input.alarmFollowers }
           : {}),
+        ...(input.alertAction !== undefined ? { alertAction: input.alertAction } : {}),
         ...(input.consumableLowPercent !== undefined
           ? { consumableLowPercent: input.consumableLowPercent }
           : {}),
@@ -1668,7 +1672,17 @@ function incomingFromAlertEpisode(
       actionUrl: payload.actionUrl ?? '',
     },
     ...(payload.nodeId !== undefined ? { nodeId: payload.nodeId } : {}),
+    ...raisedAlertAction(payload),
   })
+}
+
+/** The alert's own action, only on the RAISED edge — a resolved one has nothing to act on. */
+function raisedAlertAction(payload: AlertEpisodePayload): {
+  readonly alertAction?: AlertEpisodeAction
+} {
+  return payload.phase === 'raised' && payload.action !== undefined
+    ? { alertAction: payload.action }
+    : {}
 }
 
 /** `{{faultCode}}` / `{{faultLabel}}` (the principal) and `{{faults}}` (every label, joined). */
@@ -1718,6 +1732,7 @@ function incomingFromDeviceAttention(
     ...(payload.faults !== undefined ? { faultCodes: payload.faults.map((f) => f.code) } : {}),
     ...(identity !== undefined ? { deviceType: identity.type } : {}),
     ...(payload.nodeId !== undefined ? { nodeId: payload.nodeId } : {}),
+    ...raisedAlertAction(payload),
   })
 }
 

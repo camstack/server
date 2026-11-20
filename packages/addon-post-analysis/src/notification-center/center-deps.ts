@@ -395,6 +395,16 @@ export interface NotificationCenterDeps {
    */
   readonly applyServerUpdate?: (input: { readonly nodeId: string }) => Promise<NcAddonUpdateOutcome>
   /**
+   * Run ONE addon custom action (`addons.custom`) — what an alert's `invoke`
+   * button runs on a tap. Optional: a wiring without it mints no invoke
+   * button. A throw is the failure; the grant already froze every argument.
+   */
+  readonly invokeAddonAction?: (input: {
+    readonly addonId: string
+    readonly action: string
+    readonly input?: Readonly<Record<string, unknown>>
+  }) => Promise<void>
+  /**
    * Mark ONE track for retraining — the SAME mark the Library writes
    * (`pipelineAnalytics.setTrackFlags({ markForTrain: true })`), so a verdict
    * button feeds the retrain flow exactly like marking in the Library does.

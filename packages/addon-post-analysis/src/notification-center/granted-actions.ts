@@ -12,6 +12,7 @@ import type {
   NcDetectionVerdictGrant,
   NcRunActionGrant,
   NcServerUpdateGrant,
+  NcAlertInvokeGrant,
   NcSnoozeGrant,
   NcVerdictSubject,
 } from './action-token.js'
@@ -80,6 +81,7 @@ export interface GrantedActionsHost {
   applyGrantedArmAnyway(panel: NcAlarmPanelPort, grant: NcAlarmArmAnywayGrant): Promise<void>
   applyGrantedBypassInput(panel: NcAlarmPanelPort, grant: NcAlarmBypassInputGrant): Promise<void>
   applyGrantedServerUpdate(grant: NcServerUpdateGrant): Promise<void>
+  applyGrantedAlertInvoke(grant: NcAlertInvokeGrant): Promise<void>
   applyGrantedDetectionVerdict(grant: NcDetectionVerdictGrant): Promise<void>
   applyGrantedSnooze(grant: NcSnoozeGrant): Promise<void>
   readonly deps: NotificationCenterDeps
@@ -263,9 +265,41 @@ export async function runGrantedAction(
       return host.applyGrantedAddonUpdate(grant)
     case 'server-update':
       return host.applyGrantedServerUpdate(grant)
+    case 'alert-invoke':
+      return host.applyGrantedAlertInvoke(grant)
     case 'detection-verdict':
       return host.applyGrantedDetectionVerdict(grant)
   }
+}
+
+/**
+ * Run the addon custom action an alert notification's button was minted for.
+ *
+ * Exactly the frozen `{addonId, action, input}` — no argument comes from the
+ * request. A refusal or a throw from the addon propagates so the plane's line
+ * says the run failed instead of reporting a spent token as success.
+ */
+export async function applyGrantedAlertInvoke(
+  host: GrantedActionsHost,
+  grant: NcAlertInvokeGrant,
+): Promise<void> {
+  const invoke = host.deps.invokeAddonAction
+  if (invoke === undefined) throw new Error('no addon action runner is wired on this node')
+  try {
+    await invoke({
+      addonId: grant.addonId,
+      action: grant.invokeAction,
+      ...(grant.invokeInput !== undefined ? { input: grant.invokeInput } : {}),
+    })
+  } catch (err) {
+    host.logger.warn('alert action from a notification button failed', {
+      meta: { addonId: grant.addonId, action: grant.invokeAction, error: String(err) },
+    })
+    throw err instanceof Error ? err : new Error(String(err))
+  }
+  host.logger.info('alert action run from a notification button', {
+    meta: { addonId: grant.addonId, action: grant.invokeAction },
+  })
 }
 
 /** What a person is told when the retrain lifecycle refuses the mark. */
@@ -394,7 +428,10 @@ export async function applyGrantedDetectionVerdict(
 }
 
 /** The track the grant's id lives on now: its L2 survivor, or itself. A failed lookup is the id as asked. */
-async function survivorOf(host: GrantedActionsHost, grant: NcDetectionVerdictGrant): Promise<string> {
+async function survivorOf(
+  host: GrantedActionsHost,
+  grant: NcDetectionVerdictGrant,
+): Promise<string> {
   const resolve = host.deps.resolveTrackAlias
   if (resolve === undefined) return grant.trackId
   try {

@@ -185,6 +185,22 @@ export interface NcServerUpdateGrant extends NcActionGrantBase {
 }
 
 /**
+ * Run ONE addon custom action: the `invoke` an alert declared as its own
+ * action (`Alert.action.invoke`, e.g. "Sign in again").
+ *
+ * The grant freezes `{addonId, action, input}` from the outbox row and nothing
+ * else — a forwarded or edited URL carries only `(id, exp, sig)`, so it can
+ * neither name another addon or action nor change the input. Single-use
+ * like every grant.
+ */
+export interface NcAlertInvokeGrant extends NcActionGrantBase {
+  readonly kind: 'alert-invoke'
+  readonly addonId: string
+  readonly invokeAction: string
+  readonly invokeInput?: Readonly<Record<string, unknown>>
+}
+
+/**
  * "This detection was right / wrong": mark ONE track for retraining (#243).
  *
  * The grant freezes WHICH track (the one the notification reported), the
@@ -271,6 +287,7 @@ export type NcActionGrant =
   | NcAlarmGrant
   | NcAddonUpdateGrant
   | NcServerUpdateGrant
+  | NcAlertInvokeGrant
   | NcDetectionVerdictGrant
 
 /** Why a claim did not produce a grant. Each is a DIFFERENT thing to tell a
@@ -367,6 +384,7 @@ export type NcActionTtlSubject =
   | { readonly kind: 'alarm'; readonly action: NcAlarmGrant['action'] }
   | { readonly kind: 'addon-update' }
   | { readonly kind: 'server-update' }
+  | { readonly kind: 'alert-invoke' }
   | { readonly kind: 'detection-verdict' }
 
 /**
@@ -405,6 +423,10 @@ export function actionTtlMs(subject: NcActionTtlSubject): number {
     // is exactly where the notification's own tap target (`/system/nodes?node=…`,
     // D305) sends them.
     case 'server-update':
+      return DEFAULT_ACTION_TTL_MS
+    // The Action window: the alert it answers is current now, and an operator
+    // who reads it later opens the app, where the alert still shows its action.
+    case 'alert-invoke':
       return DEFAULT_ACTION_TTL_MS
     // A day. The blast radius is the smallest in this file (one more
     // retraining mark on a track the recipient was shown, bounded by the
