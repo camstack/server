@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding a notifier no longer offers a discovered device that is already a target: it is listed as already added, with the target's name, and cannot be picked again.
 - A camera's device card opens its history in the card's own bounded History view instead of stretching the page
 - StreamPanel can offer a snapshot download and draw detection boxes on the snapshot
+- A camera snapshot draws detection boxes and motion inside the image's own rect, so a rotated or 4:3 camera is no longer offset
 
 ## [1.2.484] - 2026-11-20
 

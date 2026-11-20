@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../camera-stream-player', () => ({
@@ -9,7 +9,7 @@ vi.mock('../detection-overlay', () => ({
   DetectionOverlay: () => <div data-testid="detection-boxes" />,
 }))
 
-import { StreamPanel, type StreamPanelProps } from '../stream-panel'
+import { containedImageBox, StreamPanel, type StreamPanelProps } from '../stream-panel'
 
 const never = vi.fn()
 const detections = {
@@ -60,5 +60,41 @@ describe('StreamPanel snapshot', () => {
     cleanup()
     draw({ defaultShowDetections: false, detectionsOnSnapshot: true })
     expect(screen.queryByTestId('detection-boxes')).toBeNull()
+  })
+})
+
+describe('boxes map onto the displayed image', () => {
+  it('a rotated (portrait) camera is pillarboxed: the rect is the image, not the 16:9 box', () => {
+    const box = containedImageBox(1080, 1920)
+    expect(box.height).toBe(100)
+    expect(box.top).toBe(0)
+    expect(box.width).toBeCloseTo((9 / 16 / (16 / 9)) * 100, 5)
+    expect(box.left).toBeCloseTo((100 - box.width) / 2, 5)
+  })
+
+  it('a 4:3 camera is pillarboxed, a 21:9 one letterboxed, 16:9 fills the box', () => {
+    expect(containedImageBox(1600, 1200).width).toBeCloseTo(75, 5)
+    const wide = containedImageBox(2100, 900)
+    expect(wide.width).toBe(100)
+    expect(wide.height).toBeCloseTo((16 / 9 / (21 / 9)) * 100, 5)
+    expect(containedImageBox(1920, 1080)).toEqual({ left: 0, top: 0, width: 100, height: 100 })
+    expect(containedImageBox(0, 0)).toEqual({ left: 0, top: 0, width: 100, height: 100 })
+  })
+
+  it('the overlay is placed inside the loaded image rect of a portrait still', () => {
+    draw({ defaultShowDetections: true, detectionsOnSnapshot: true })
+    const img = screen.getByAltText('Camera snapshot')
+    Object.defineProperty(img, 'naturalWidth', { value: 1080 })
+    Object.defineProperty(img, 'naturalHeight', { value: 1920 })
+    fireEvent.load(img)
+    const layer = screen.getByTestId('snapshot-image-overlay')
+    expect(layer.style.height).toBe('100%')
+    expect(Number.parseFloat(layer.style.width)).toBeCloseTo(31.640625, 4)
+    expect(layer.contains(screen.getByTestId('detection-boxes'))).toBe(true)
+  })
+
+  it('motion on the still follows the Show motion switch, off by default', () => {
+    draw({ defaultShowDetections: false, defaultShowMotion: true, detectionsOnSnapshot: true })
+    expect(screen.getByTestId('detection-boxes')).toBeTruthy()
   })
 })

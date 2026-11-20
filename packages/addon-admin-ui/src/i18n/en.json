@@ -9641,7 +9641,10 @@
       "stationary": "…stationary",
       "showMotion": "Show motion",
       "ptzControls": "PTZ controls",
-      "cameraSnapshot": "Camera snapshot"
+      "cameraSnapshot": "Camera snapshot",
+      "download": "Download",
+      "downloadSnapshot": "Download snapshot",
+      "refreshSnapshot": "Refresh snapshot"
     },
     "addonGlobalSettingsForm": {
       "hide": "hide",

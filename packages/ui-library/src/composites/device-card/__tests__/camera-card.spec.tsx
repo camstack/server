@@ -9,9 +9,7 @@ const slices = vi.hoisted(() => ({
   seriesCount: 0,
 }))
 
-vi.mock('../../../contexts/system-context', () => ({
-  useTrpcClient: () => ({}),
-}))
+vi.mock('../../../contexts/system-context', () => ({ useTrpcClient: () => ({}) }))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
     ...(slices.battery === undefined ? {} : { battery: {} }),

@@ -169,7 +169,7 @@ export function StreamPanelContent({
       detections={detections}
       {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
       defaultShowDetections={!stillFirst}
-      defaultShowMotion
+      defaultShowMotion={!stillFirst}
       {...(stillFirst
         ? {
             detectionsOnSnapshot: true,
@@ -346,9 +346,7 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
 
   const onRestartDevice = async () => {
     const ok = await confirm({
-      title: t('device.panelContent.reboot', 'Reboot "{{deviceName}}"?', {
-        deviceName,
-      }),
+      title: t('device.panelContent.reboot', 'Reboot "{{deviceName}}"?', { deviceName }),
       message: t(
         'device.panelContent.theDeviceWillGoOffline',
         'The device will go offline for ~30 seconds while the firmware restarts.',

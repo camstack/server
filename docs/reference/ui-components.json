@@ -18931,7 +18931,7 @@
           "name": "detectionsOnSnapshot",
           "type": "boolean",
           "optional": true,
-          "doc": "Draw the detection boxes (the \"Show detections\" switch) on the snapshot too, not only on the live video. Default false: the snapshot stays a"
+          "doc": "Draw the detection boxes and motion (the \"Show detections\" / \"Show motion\" switches) on the snapshot too, not only on the live video, mapped"
         },
         {
           "name": "showStreamStats",

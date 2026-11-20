@@ -9663,7 +9663,10 @@
       "stationary": "…fermi",
       "showMotion": "Mostra movimento",
       "ptzControls": "Controlli PTZ",
-      "cameraSnapshot": "Istantanea della telecamera"
+      "cameraSnapshot": "Istantanea della telecamera",
+      "download": "Scarica",
+      "downloadSnapshot": "Scarica istantanea",
+      "refreshSnapshot": "Aggiorna istantanea"
     },
     "addonGlobalSettingsForm": {
       "hide": "nascondi",

@@ -37,10 +37,7 @@ import type { DeviceDetailModuleProps } from './types'
 /** One cache per mounted module when the host does not lend its own. */
 function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
   const [own] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: { queries: { retry: false, staleTime: 5_000 } },
-      }),
+    () => new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 5_000 } } }),
   )
   return lent ?? own
 }
@@ -79,7 +76,8 @@ function CardBody({
 
 /**
  * A camera goes through the base card like every device: its scene is the
- * host's stream panel (snapshot first, go live from its stream picker), its history the card's bounded History view.
+ * host's stream panel (snapshot first, go live from its stream picker), its
+ * history the card's bounded History view.
  */
 function CameraBody({
   deviceId,
@@ -124,6 +122,9 @@ function ModuleBody(
 ): ReactNode {
   const kind = useConnectedCardKind(props.deviceId)
   const device = useDeviceManagerGetDevice({ deviceId: props.deviceId })
+  // The device type decides the card: wait for it rather than draw the hero
+  // and swap to the camera card (a remount) when it arrives.
+  if (device.status === 'pending') return <Skeleton className="h-72 w-full" />
   if (device.data?.type === DeviceType.Camera) {
     return (
       <CameraBody

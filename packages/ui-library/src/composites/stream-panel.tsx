@@ -201,8 +201,9 @@ export interface StreamPanelProps {
    */
   readonly snapshotDownloadName?: string
   /**
-   * Draw the detection boxes (the "Show detections" switch) on the snapshot
-   * too, not only on the live video. Default false: the snapshot stays a clean still.
+   * Draw the detection boxes and motion (the "Show detections" / "Show motion"
+   * switches) on the snapshot too, not only on the live video, mapped onto the
+   * image's own rect. Default false: the snapshot stays a clean still.
    */
   readonly detectionsOnSnapshot?: boolean
 
@@ -646,7 +647,7 @@ export function StreamPanel({
   // toggle governs live only).
   const isVod = Boolean(playbackUrl)
   const showingVideo = isVod || (showPlayStop ? isPlaying : true)
-  const snapshotBoxes = detectionsOnSnapshot && hasDetections && showDetections
+  const snapshotBoxes = detectionsOnSnapshot && hasDetections && (showDetections || showMotion)
 
   return (
     <div
@@ -845,6 +846,7 @@ export function StreamPanel({
               disabled={snapshotLoading}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
               title={t('uiLibrary.streamPanel.forceRefresh', 'Force snapshot refresh')}
+              aria-label={t('uiLibrary.streamPanel.refreshSnapshot', 'Refresh snapshot')}
             >
               <RefreshIcon className={`h-3 w-3 ${snapshotLoading ? 'animate-spin' : ''}`} />
               <span className="hidden xl:inline">
@@ -1087,21 +1089,23 @@ export function StreamPanel({
           // click-to-play hover layer — otherwise it would steal pointer
           // events from the Konva stage. The toolbar Play button stays
           // wired regardless.
+          imageOverlay={
+            snapshotBoxes ? (
+              <DetectionOverlay
+                detections={detections!}
+                showPhaseIndicator={false}
+                showMotionZones={showMotion}
+                showMotionRaw={showMotion}
+                showDetections={showDetections}
+                showMoving={showMoving}
+                showStationary={showStationary}
+                {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
+              />
+            ) : null
+          }
           extraOverlay={
-            extraOverlay || ptzOverlayVisible || snapshotBoxes ? (
+            extraOverlay || ptzOverlayVisible ? (
               <>
-                {snapshotBoxes && (
-                  <DetectionOverlay
-                    detections={detections!}
-                    showPhaseIndicator={false}
-                    showMotionZones={false}
-                    showMotionRaw={false}
-                    showDetections={showDetections}
-                    showMoving={showMoving}
-                    showStationary={showStationary}
-                    {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
-                  />
-                )}
                 {extraOverlay}
                 {ptzOverlayVisible && ptzOverlay}
               </>
@@ -1116,6 +1120,34 @@ export function StreamPanel({
   )
 }
 
+/** The snapshot box is 16:9 (`aspect-video`); the image is drawn `object-contain` inside it. */
+const SNAPSHOT_BOX_ASPECT = 16 / 9
+
+export interface ContainedBox {
+  readonly left: number
+  readonly top: number
+  readonly width: number
+  readonly height: number
+}
+
+/**
+ * Where an `object-contain` image of this size really sits inside the 16:9
+ * snapshot box, as percentages of the box. A rotated (portrait) or 4:3 camera
+ * is letterboxed, and an overlay laid over the whole box would put every
+ * detection box off the subject: overlays belong inside this rect.
+ */
+export function containedImageBox(naturalWidth: number, naturalHeight: number): ContainedBox {
+  const full: ContainedBox = { left: 0, top: 0, width: 100, height: 100 }
+  if (naturalWidth <= 0 || naturalHeight <= 0) return full
+  const aspect = naturalWidth / naturalHeight
+  if (aspect > SNAPSHOT_BOX_ASPECT) {
+    const height = (SNAPSHOT_BOX_ASPECT / aspect) * 100
+    return { left: 0, top: (100 - height) / 2, width: 100, height }
+  }
+  const width = (aspect / SNAPSHOT_BOX_ASPECT) * 100
+  return { left: (100 - width) / 2, top: 0, width, height: 100 }
+}
+
 // ── SnapshotPreview ──────────────────────────────────────────────────────────
 
 function SnapshotPreview({
@@ -1124,6 +1156,7 @@ function SnapshotPreview({
   onPlay,
   onRetry,
   extraOverlay,
+  imageOverlay,
   suppressPlayHover = false,
 }: {
   readonly src: string | null
@@ -1133,12 +1166,17 @@ function SnapshotPreview({
   /** Layered overlays (zones, PTZ, …) painted on top of the still
    *  image so editing surfaces stay usable while paused. */
   readonly extraOverlay?: ReactNode
+  /** Frame-normalised overlays (detection boxes): drawn over the IMAGE'S own
+   *  rect, not the letterboxed box around it. */
+  readonly imageOverlay?: ReactNode
   /** Hide the click-to-play hover button — used when an overlay is
    *  active so it doesn't steal pointer events from Konva-style
    *  stages. The toolbar Play button stays available. */
   readonly suppressPlayHover?: boolean
 }) {
   const t = useUiText()
+  const [natural, setNatural] = useState<{ readonly w: number; readonly h: number } | null>(null)
+  const imageBox = containedImageBox(natural?.w ?? 0, natural?.h ?? 0)
   // Keep the last-known image visible while a refresh is in flight.
   // The header refresh button already shows a spinner — flashing the
   // viewport to a full-screen loader on every refetch makes the page
@@ -1151,7 +1189,25 @@ function SnapshotPreview({
           src={src}
           alt={t('uiLibrary.streamPanel.cameraSnapshot', 'Camera snapshot')}
           className="w-full h-full object-contain"
+          onLoad={(e) =>
+            setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+          }
         />
+        {imageOverlay ? (
+          <div
+            data-testid="snapshot-image-overlay"
+            className="absolute"
+            style={{
+              // ui-check-ok: computed geometry (percent of the image rect)
+              left: `${String(imageBox.left)}%`,
+              top: `${String(imageBox.top)}%`,
+              width: `${String(imageBox.width)}%`,
+              height: `${String(imageBox.height)}%`,
+            }}
+          >
+            {imageOverlay}
+          </div>
+        ) : null}
         {!suppressPlayHover && (
           <button
             onClick={onPlay}
