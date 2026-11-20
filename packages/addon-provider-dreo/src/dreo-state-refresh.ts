@@ -2,10 +2,16 @@
  * Dreo's side of the core state refresh (D1062): HOW to read, never WHEN.
  *
  * Every device state arrives over the account's WebSocket (`push: 'full'`), so
- * the core never schedules a read. The read it can ask for is the one after a
- * command no push confirmed: it re-applies the live handle's state to the
- * device's slices. The library offers no upstream read of a device it already
- * holds, so the handle's cache (what the push folds into) is what is served.
+ * the core never schedules a read. The `refresh` it can ask for is NOT an
+ * upstream read: the library offers none for a device it already holds, so it
+ * only re-applies the handle's cached state (what the push folds into) to the
+ * device's slices. It cannot discover a change the WebSocket missed.
+ *
+ * Open (D1061): the library echoes a command into its own cached state, so a
+ * later device push of the same value emits no event and the core's hold cannot
+ * be confirmed by it; adopting the hold waits for a nodedreo change. The
+ * WebSocket's reconnect is private to the library, so no connection epoch is
+ * published either.
  */
 import {
   deviceStateRefreshCapability,
