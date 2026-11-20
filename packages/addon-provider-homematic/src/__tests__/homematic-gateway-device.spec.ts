@@ -339,3 +339,92 @@ describe('HomematicGatewayDevice error cap', () => {
     )
   })
 })
+
+// ── the core reads the CCU, the device owns no clock (D1062) ────────────────────
+
+describe('HomematicGatewayDevice state refresh (D1062)', () => {
+  const faultVar = (on: boolean): HmSysVar => sysvar('SV WatchDog: hb-rf-eth-connection', on)
+  const refresh = (providers: Map<string, unknown>): Promise<unknown> =>
+    callCap(providers, 'device-state-refresh', 'refresh', {
+      deviceId: 7,
+      deviceIds: [7],
+      reason: 'interval',
+    })
+
+  it('declares a polled gateway (push none, 30 s) under its integration', () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    const call = vi
+      .mocked(r.ctx.registerNativeCap)
+      .mock.calls.find(([cap]) => cap.name === 'device-state-refresh')
+    expect(call?.[2]).toMatchObject({
+      stateRefresh: {
+        integrationId: INT,
+        minIntervalMs: 30_000,
+        push: 'none',
+        batch: false,
+      },
+    })
+  })
+
+  it('a refresh reads the WatchDog variables into the error slice', async () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const hub: FakeHub = {
+      refreshes: 0,
+      failRefresh: false,
+      vars: [faultVar(true)],
+    }
+    publishHub(hub)
+    await refresh(r.providers)
+    expect(hub.refreshes).toBe(1)
+    expect(r.errorSlice()).toMatchObject({
+      active: true,
+      code: 'hb-rf-eth-connection',
+    })
+  })
+
+  it('a refresh the CCU cannot serve fails, so the core backs off; the previous reading stands', async () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    const session = publish({ host: '192.168.10.40', tls: false })
+    const hub: FakeHub = {
+      refreshes: 0,
+      failRefresh: false,
+      vars: [faultVar(true)],
+    }
+    publishHub(hub)
+    await refresh(r.providers)
+    hub.failRefresh = true
+    await expect(refresh(r.providers)).rejects.toThrow(/rega unreachable/)
+    session.status = 'disconnected'
+    await expect(refresh(r.providers)).rejects.toThrow(/not connected/)
+    expect(r.errorSlice()).toMatchObject({
+      active: true,
+      code: 'hb-rf-eth-connection',
+    })
+  })
+
+  it('owns no timer: nothing is read while time passes', async () => {
+    vi.useFakeTimers()
+    try {
+      const r = rig(gatewayConfig)
+      const device = new HomematicGatewayDevice(r.ctx)
+      publish({ host: '192.168.10.40', tls: false })
+      const hub: FakeHub = {
+        refreshes: 0,
+        failRefresh: false,
+        vars: [faultVar(false)],
+      }
+      publishHub(hub)
+      await device.onActivate()
+      const afterActivation = hub.refreshes
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      expect(hub.refreshes).toBe(afterActivation)
+      await device.removeDevice()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

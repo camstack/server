@@ -43,6 +43,10 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-petkit',
   'packages/addon-provider-esphome',
   'packages/addon-provider-mqtt-ha',
+  // Homematic's radio devices are pushed by the CCU; only the gateway's WatchDog read moved to the core.
+  // The connect retry, the orphan sweep rerun and the call limiter keep timers that read no state.
+  'packages/addon-provider-homematic/src/devices/homematic-gateway-device.ts',
+  'packages/addon-provider-homematic/src/homematic-state-refresh.ts',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

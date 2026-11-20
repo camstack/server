@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Homematic CCU page: a per-device detail view (identity, live state, button-event programs, configuration, direct links, faults) opened from the Devices table or by URL, an Events column showing whether a program references each button, and an Active faults section on the Overview; the event quick actions moved from the table into the detail
+- The CCU's WatchDog faults are read when the hub schedules it, every 30 s while the box answers and slower while it does not, instead of on the gateway's own timer
 
 ## [1.2.209] - 2026-11-20
 

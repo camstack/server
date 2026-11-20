@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9074 source files · 246 units claimed by at least one document (9043 files).**
+**253 units · 9075 source files · 246 units claimed by at least one document (9044 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -76,11 +76,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-notifiers` | 29 | `notification-center` | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md`, +1 more, 1 ADR | 2026-11-12 |
 | `packages/addon-export-alexa/src/handlers` | 28 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +12 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-ecowitt` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
+| `packages/addon-provider-homematic` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
 | `packages/addon-provider-reolink/src/clips` | 27 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +20 more | 2026-11-08 |
 | `packages/addon-provider-velux` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-11-08 |
 | `packages/types/src/addon` | 27 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1013-one-instance-model.md`, `architecture/secrets-keychain.md`, +18 more, 1 ADR | 2026-10-18 |
 | `packages/addon-osd-manager` | 26 | `device-surfaces` | `architecture/osd-manager.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md`, +1 more, 1 ADR | 2026-11-10 |
-| `packages/addon-provider-homematic` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
 | `packages/addon-export-alexa/src/endpoints` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +15 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-mqtt-ha` | 25 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-dreo` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-11-08 |

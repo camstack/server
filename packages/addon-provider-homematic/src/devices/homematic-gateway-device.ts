@@ -12,9 +12,7 @@ import { homematicGatewayDeviceSchema } from '../config.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { watchdogFaultReading, watchdogFaultTypes } from '../homematic-fault-mapping.js'
 import { gatewayMetadataPatch } from '../homematic-gateway-metadata.js'
-
-/** How often the CCU system variables are re-read: they are a snapshot, the CCU pushes no event for them. */
-export const WATCHDOG_POLL_MS = 30_000
+import { registerHomematicStateRefresh } from '../homematic-state-refresh.js'
 
 /**
  * The physical CCU3 / RaspberryMatic box, as a {@link DeviceType.Gateway}. Its
@@ -25,7 +23,8 @@ export const WATCHDOG_POLL_MS = 30_000
  * - `device-admin-link`, the CCU's own WebUI.
  *
  * - `error`, the faults the CCU WatchDog add-on raises as system variables
- *   (`homematic-fault-mapping.ts`), re-read every {@link WATCHDOG_POLL_MS}.
+ *   (`homematic-fault-mapping.ts`), read by the core's `device-state-refresh` (D1062),
+ *   because the CCU pushes no event for them.
  *
  * There is no `reboot` and no `update`: nodehomematic has no call that restarts
  * the CCU, and its firmware call installs an update on a radio DEVICE by its
@@ -41,7 +40,6 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
   private snapshotUnsub: (() => void) | null = null
   /** The last metadata written, so a state change that altered nothing writes nothing. */
   private lastMetadataKey = ''
-  private pollTimer: ReturnType<typeof setInterval> | null = null
   private polling = false
   private warnedReadFailure = false
 
@@ -53,6 +51,11 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     this.registerAdminLinkCap()
     this.declareFaultTypes(watchdogFaultTypes())
     this.registerErrorCap()
+    registerHomematicStateRefresh({
+      ctx,
+      integrationId: cfg.integrationId,
+      readFaults: () => this.refreshFaults(),
+    })
     void this.updateSourceInfo({ id: cfg.nativeId, system: 'homematic' })
   }
 
@@ -63,16 +66,10 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
       if (this.sessionUp()) void this.pollFaults()
     })
     await this.sync()
-    this.pollTimer = setInterval(() => {
-      void this.pollFaults()
-    }, WATCHDOG_POLL_MS)
-    this.pollTimer.unref()
     await this.pollFaults()
   }
 
   override async removeDevice(): Promise<void> {
-    if (this.pollTimer !== null) clearInterval(this.pollTimer)
-    this.pollTimer = null
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()
@@ -83,9 +80,37 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
   }
 
   /**
-   * Read the CCU's WatchDog system variables and publish them as faults. A read
-   * that fails changes nothing (the previous reading stands), and every branch
-   * that publishes nothing leaves a line on the device.
+   * The core's read (D1062): the CCU's WatchDog system variables, published as
+   * faults. It THROWS when the session is down or the CCU does not answer, so
+   * the core backs the cadence off; the previous reading stands meanwhile.
+   */
+  private async refreshFaults(): Promise<void> {
+    const facade = homematicFacades.get(this.integrationId)
+    if (!this.sessionUp() || facade === null) {
+      throw new Error(`Homematic CCU not connected (integration ${this.integrationId})`)
+    }
+    await this.readFaultsFrom(facade)
+  }
+
+  private async readFaultsFrom(
+    facade: NonNullable<ReturnType<typeof homematicFacades.get>>,
+  ): Promise<void> {
+    await facade.refreshHub()
+    const reading = watchdogFaultReading(facade.systemVariables(), Date.now())
+    if (reading.active === null) {
+      this.ctx.logger.debug(
+        'Homematic gateway: no WatchDog system variable readable on the CCU, faults stay unknown',
+        { tags: { deviceId: this.id } },
+      )
+    }
+    this.warnedReadFailure = false
+    await this.publishError(reading)
+  }
+
+  /**
+   * Read the faults when the CCU announced a new snapshot (it just reconnected
+   * or changed). A read that fails changes nothing (the previous reading
+   * stands), and every branch that publishes nothing leaves a line on the device.
    */
   async pollFaults(): Promise<void> {
     if (this.polling) return
@@ -99,16 +124,7 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     }
     this.polling = true
     try {
-      await facade.refreshHub()
-      const reading = watchdogFaultReading(facade.systemVariables(), Date.now())
-      if (reading.active === null) {
-        this.ctx.logger.debug(
-          'Homematic gateway: no WatchDog system variable readable on the CCU, faults stay unknown',
-          { tags },
-        )
-      }
-      this.warnedReadFailure = false
-      await this.publishError(reading)
+      await this.readFaultsFrom(facade)
     } catch (err) {
       const log = this.warnedReadFailure ? this.ctx.logger.debug : this.ctx.logger.warn
       this.warnedReadFailure = true
