@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Power-source button labels show translated text instead of their keys.
+
 ## [1.2.252] - 2026-11-20
 
 ### Changed
