@@ -3021,3 +3021,22 @@ export type {
   NativeCapOptions,
   ResolvedCommandHold,
 } from './device/command-hold.js'
+export {
+  decideMember,
+  GroupMemberSchema,
+  GroupMemberWhenSchema,
+  groupMembersOf,
+  NOTIFIER_GROUP_ADDON_ID,
+  NOTIFIER_GROUP_KIND,
+  renderMemberTemplate,
+  shapeForMember,
+  unionTargetKindCaps,
+} from './notification/notifier-group.js'
+export type {
+  GroupMember,
+  GroupMembersRead,
+  GroupMemberWhen,
+  GroupSkipReason,
+  MemberDecision,
+  MemberDecisionInput,
+} from './notification/notifier-group.js'

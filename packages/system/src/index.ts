@@ -135,6 +135,7 @@ export { CalendarsAddon } from './builtins/calendars/index.js'
 export { ComposerAddon } from './builtins/composer/index.js'
 export { ConsoleDestination, ConsoleLoggingAddon } from './builtins/console-logging/index.js'
 export { CoreBlocksAddon } from './builtins/core-blocks/index.js'
+export { CoreNotifierAddon } from './builtins/core-notifier/index.js'
 export { DeviceManagerAddon } from './builtins/device-manager/index.js'
 /**
  * The per-device wrapper activation (D556). Exported because it is the

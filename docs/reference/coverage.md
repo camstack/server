@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9057 source files · 246 units claimed by at least one document (9026 files).**
+**253 units · 9064 source files · 246 units claimed by at least one document (9033 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -22,7 +22,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-admin-ui/src/components` | 686 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +87 more, 4 ADRs | 2026-11-11 |
 | `packages/ui-library/src/composites` | 686 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +58 more, 3 ADRs | 2026-11-11 |
 | `scripts` | 634 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +157 more, 14 ADRs | 2026-11-12 |
-| `packages/system/src/builtins` | 517 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +206 more, 21 ADRs | 2026-11-08 |
+| `packages/system/src/builtins` | 523 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +207 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 479 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 249 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +235 more, 41 ADRs | 2026-11-16 |
 | `packages/addon-post-analysis/src/notification-center` | 228 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +94 more, 27 ADRs | 2026-11-12 |
@@ -71,8 +71,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-bosch/src/shc` | 30 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +3 more | 2026-11-08 |
 | `packages/addon-provider-unraid` | 30 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md` | 2026-11-08 |
+| `packages/types/src/notification` | 30 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-19-viewer-notification-rule-parity.md` _(covers)_, `architecture/notifications.md`, +28 more, 3 ADRs | 2026-11-12 |
 | `packages/addon-notifiers` | 29 | `notification-center` | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md`, +1 more, 1 ADR | 2026-11-12 |
-| `packages/types/src/notification` | 29 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-19-viewer-notification-rule-parity.md` _(covers)_, `architecture/notifications.md`, +27 more, 3 ADRs | 2026-11-12 |
 | `packages/addon-export-alexa/src/handlers` | 28 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +12 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-ecowitt` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homematic/src/ui` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |

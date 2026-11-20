@@ -56,6 +56,9 @@ const base = buildLibPreset({
       'src/builtins/system-config/system-config.addon.ts',
     'builtins/calendars/index': 'src/builtins/calendars/index.ts',
     'builtins/calendars/calendars.addon': 'src/builtins/calendars/calendars.addon.ts',
+    'builtins/core-notifier/index': 'src/builtins/core-notifier/index.ts',
+    'builtins/core-notifier/core-notifier.addon':
+      'src/builtins/core-notifier/core-notifier.addon.ts',
     'builtins/addon-pages-aggregator/index': 'src/builtins/addon-pages-aggregator/index.ts',
     'builtins/addon-pages-aggregator/addon-pages-aggregator.addon':
       'src/builtins/addon-pages-aggregator/addon-pages-aggregator.addon.ts',

@@ -348,6 +348,27 @@
         ]
       },
       {
+        "id": "core-notifier",
+        "category": "system",
+        "name": "Core Notifier",
+        "icon": "assets/core-notifier/icon.svg",
+        "color": "#4f46e5",
+        "description": "Owns the notifier group: a notification target that delivers to other targets, each member under its own policy (schedule, alarm state, fields, minimum priority, throttle). Hub-only; a group has no credentials of its own.",
+        "entry": "./dist/builtins/core-notifier/index.js",
+        "protected": true,
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "notification-output"
+          },
+          {
+            "name": "integration-instances"
+          }
+        ]
+      },
+      {
         "id": "addon-pages-aggregator",
         "category": "system",
         "name": "Addon Pages Aggregator",

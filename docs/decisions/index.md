@@ -4,7 +4,7 @@
 
 # Decisions
 
-1037 architecture decision records. One file per decision, never
+1038 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1050,6 +1050,7 @@ that rots.
 | D1068 | [An event category is catalogued or it does not compile](adr-1068-a-category-is-catalogued-or-it-does-not-compile.md) | ✅ accepted | 2026-11-20 |
 | D1069 | [A heat pump's electrical power and energy are overridable by a device the operator picks](adr-1069-a-heat-pumps-electrical-power-and-energy-are-overridable-by-a-device-the-operator-picks.md) | ✅ accepted | 2026-11-20 |
 | D1070 | [A sensor notification takes a LIVE picture of every linked camera, never the wrapper's cached frame](adr-1070-a-sensor-notification-takes-a-live-picture-of-every-linked-camera.md) | ✅ accepted | 2026-11-20 |
+| D1071 | [A notifier group is a notification target owned by the core, built in Notifications](adr-1071-a-notifier-group-is-a-target-owned-by-the-core-built-in-notifications.md) | 💭 proposed | 2026-11-20 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

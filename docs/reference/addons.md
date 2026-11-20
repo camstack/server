@@ -4,7 +4,7 @@
 
 # Addons
 
-94 addon manifests across 51 packages.
+95 addon manifests across 51 packages.
 
 One addon = one `addon-runner` process by default. A shared `execution.group`
 collapses its members into ONE process so their cap calls resolve in-process
@@ -40,6 +40,7 @@ this column exists to stop.
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
 | `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `hero-layout` `integration-instances` `power-source` `remote` `remote-layout-components` `schedulers` `tags` `template` `timed-run` |
+| `core-notifier` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `integration-instances` `notification-output` |
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
 | `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` |
@@ -121,4 +122,4 @@ this column exists to stop.
 - `networking` — 5
 - `pipeline` — 8
 - `providers` — 26
-- `system` — 42
+- `system` — 43
