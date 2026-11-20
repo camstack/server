@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The alert episode event carries the alert's whole action, and notification rules gain offerAlertAction (default on).
 - A device whose state read keeps failing is now read less and less often (doubling up to 5 minutes) instead of at the same interval, and returns to the normal cadence on its first success
+- A provider that reconnects now makes the hub read its devices again even when it re-registers a single-device account, and a backed-off device returns to its normal cadence after any successful read
 
 ## [1.2.922] - 2026-11-20
 

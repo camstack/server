@@ -463,6 +463,44 @@ describe('StateRefreshScheduler (D1062)', () => {
       expect(at(r, 7)).toEqual([15_000, 45_000])
     })
 
+    it('a success on a command read ends a batch group backoff at once', async () => {
+      const failing = new Set([7])
+      r = failingRig(failing)
+      declare(r, 7)
+      await vi.advanceTimersByTimeAsync(20_000) // the 15 s read failed: next due at 45 s
+      failing.delete(7)
+      await r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: 'setState' }, 'ok')
+      await vi.advanceTimersByTimeAsync(40_000)
+      // the command read at 20 s proved the device: due 15 s later, not at 45 s
+      expect(at(r, 7)).toEqual([15_000, 35_000, 50_000])
+    })
+
+    it('a failed command read does not back the scheduled reads off', async () => {
+      r = failingRig(new Set([7]))
+      declare(r, 7, { batch: false })
+      await r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: 'setState' }, 'ok')
+      await vi.advanceTimersByTimeAsync(16_000)
+      expect(at(r, 7)).toEqual([15_000])
+      const retries = r.logs
+        .filter((l) => l.level === 'warn')
+        .map(
+          (l) =>
+            (l.extras?.meta as { consecutiveFailures?: number } | undefined)?.consecutiveFailures,
+        )
+      expect(retries).toEqual([0, 1]) // the command read counted nothing, the scheduled one is the first failure
+    })
+
+    it('a failed command read on one device does not push a batch group out', async () => {
+      const failing = new Set([7])
+      r = failingRig(failing)
+      declare(r, 7)
+      declare(r, 8)
+      await r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: 'setState' }, 'ok')
+      failing.delete(7)
+      await vi.advanceTimersByTimeAsync(16_000)
+      expect(at(r, 7)).toEqual([15_000])
+    })
+
     it('every failure is a warn with the device tag and the retry delay', async () => {
       r = failingRig(new Set([7]))
       declare(r, 7, { batch: false })
@@ -522,6 +560,19 @@ describe('StateRefreshScheduler (D1062)', () => {
       r.scheduler.onReport(7)
       await vi.advanceTimersByTimeAsync(50_000)
       expect(r.calls).toEqual([])
+    })
+
+    it('a reconnect published by re-registering the cap still re-reads (one-device account)', async () => {
+      r = rig()
+      declare(r, 7, { push: 'full', connectionEpoch: 1 })
+      await vi.advanceTimersByTimeAsync(1)
+      r.calls.length = 0
+      // A provider re-registers its cap to publish the new epoch: the device
+      // is dropped for a moment, so its single-device account group is too.
+      r.policies.delete('in-process', 7)
+      declare(r, 7, { push: 'full', connectionEpoch: 2 })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(refreshes(r, 'schedule')).toEqual([expect.objectContaining({ deviceIds: [7] })])
     })
 
     it('a reconnect re-reads every device of the integration', async () => {

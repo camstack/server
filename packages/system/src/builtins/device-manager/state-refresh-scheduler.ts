@@ -107,7 +107,6 @@ interface GroupState {
   scheduleTimer: Timer | null
   heartbeatTimer: Timer | null
   lastReportAt: number
-  epoch: number | undefined
 }
 
 function groupKeyOf(entry: StateRefreshPolicyEntry): string {
@@ -121,6 +120,8 @@ function errorMessage(err: unknown): string {
 export class StateRefreshScheduler {
   private readonly devices = new Map<number, DeviceSchedule>()
   private readonly groups = new Map<string, GroupState>()
+  /** The highest connection epoch seen per integration, kept while its group is gone. */
+  private readonly epochs = new Map<string, number>()
   private readonly unsubscribe: () => void
   private disposed = false
 
@@ -217,15 +218,17 @@ export class StateRefreshScheduler {
     }
   }
 
-  /** Track the group's connection epoch; `true` when it moved past a known one. */
+  /**
+   * Track an integration's connection epoch; `true` when it moved past the
+   * highest one seen. Kept across a gap (a provider re-registers its cap to
+   * publish a new policy, which drops the device and its group for a moment).
+   */
   private noteEpoch(entry: StateRefreshPolicyEntry): boolean {
     const epoch = entry.policy.connectionEpoch
     if (epoch === undefined) return false
     const key = groupKeyOf(entry)
-    const group = this.groups.get(key)
-    if (group === undefined) return false
-    const previous = group.epoch
-    if (previous === undefined || epoch > previous) group.epoch = epoch
+    const previous = this.epochs.get(key)
+    if (previous === undefined || epoch > previous) this.epochs.set(key, epoch)
     return previous !== undefined && epoch > previous
   }
 
@@ -255,7 +258,6 @@ export class StateRefreshScheduler {
           scheduleTimer: null,
           heartbeatTimer: null,
           lastReportAt: now,
-          epoch: first?.entry.policy.connectionEpoch,
         })
       } else {
         existing.devices = devices
@@ -526,7 +528,13 @@ export class StateRefreshScheduler {
     await settled
   }
 
+  /**
+   * A read that succeeded ends a backoff: the device is due at the declared
+   * interval from now, whichever read (schedule, command, burst) proved it.
+   */
   private noteSuccess(deviceIds: readonly number[]): void {
+    const now = Date.now()
+    const keys = new Set<string>()
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
       if (device === undefined || device.failures === 0) continue
@@ -535,12 +543,26 @@ export class StateRefreshScheduler {
         meta: { failedReads: device.failures },
       })
       device.failures = 0
+      const intervalMs = effectiveRefreshIntervalMs(device.entry.policy)
+      if (!device.entry.policy.batch) device.dueAt = now + intervalMs
+      keys.add(groupKeyOf(device.entry))
+    }
+    for (const key of keys) {
+      const group = this.groups.get(key)
+      const policy = group === undefined ? undefined : this.groupPolicy(group)
+      if (group !== undefined && policy?.batch === true) {
+        group.dueAt = now + effectiveRefreshIntervalMs(policy)
+      }
+      this.armSchedule(key)
     }
   }
 
   /**
-   * A failed read is a warn per device and pushes the device's next scheduled
-   * read out: doubling from the interval, capped, reset by the next success.
+   * A failed read is a warn per device. Only a SCHEDULED read that failed backs
+   * the device off (doubling from the interval, capped, reset by the next
+   * success): a command or burst read has its own cadence and says nothing
+   * about the scheduled one. A batched group backs off only when the failed
+   * read covered the whole group.
    */
   private noteFailure(
     deviceIds: readonly number[],
@@ -548,16 +570,19 @@ export class StateRefreshScheduler {
     err: unknown,
   ): void {
     const now = Date.now()
+    const scheduled = reason === 'schedule'
     const keys = new Set<string>()
     let groupFailures = 0
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
       if (device === undefined) continue
-      device.failures += 1
+      if (scheduled) device.failures += 1
       groupFailures = Math.max(groupFailures, device.failures)
       const intervalMs = effectiveRefreshIntervalMs(device.entry.policy)
       const retryInMs = failureBackoffMs(intervalMs, device.failures)
-      if (!device.entry.policy.batch) device.dueAt = Math.max(device.dueAt, now + retryInMs)
+      if (scheduled && !device.entry.policy.batch) {
+        device.dueAt = Math.max(device.dueAt, now + retryInMs)
+      }
       keys.add(groupKeyOf(device.entry))
       this.deps.logger.warn('state refresh failed', {
         tags: { deviceId },
@@ -565,18 +590,22 @@ export class StateRefreshScheduler {
           reason,
           error: errorMessage(err),
           consecutiveFailures: device.failures,
-          retryInMs: device.entry.policy.push === 'full' ? undefined : retryInMs,
+          retryInMs: scheduled && device.entry.policy.push !== 'full' ? retryInMs : undefined,
         },
       })
     }
+    if (!scheduled) return
     for (const key of keys) {
       const group = this.groups.get(key)
       const policy = group === undefined ? undefined : this.groupPolicy(group)
       if (group !== undefined && policy?.batch === true) {
-        group.dueAt = Math.max(
-          group.dueAt,
-          now + failureBackoffMs(effectiveRefreshIntervalMs(policy), groupFailures),
-        )
+        const wholeGroup = [...group.devices].every((id) => deviceIds.includes(id))
+        if (wholeGroup) {
+          group.dueAt = Math.max(
+            group.dueAt,
+            now + failureBackoffMs(effectiveRefreshIntervalMs(policy), groupFailures),
+          )
+        }
       }
       this.armSchedule(key)
     }
