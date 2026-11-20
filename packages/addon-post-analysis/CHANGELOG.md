@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A notification rule on a device fault can be narrowed to fault codes; the message can use {{faultCode}}, {{faultLabel}} and {{faults}}
 
+### Changed
+
+- A sensor notification now takes a live picture of every linked camera instead of attaching the camera's cached frame, so a door sensor linked to a mains or awake battery camera no longer ships without a picture.
+
 ## [1.2.718] - 2026-11-19
 
 ### Fixed

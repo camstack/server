@@ -243,7 +243,7 @@ describe('NcLinkedStillShelf', () => {
     })
   })
 
-  it('force is used only for a sleeping camera whose set allows a wake — never an awake, unreachable, disabled or offline one', async () => {
+  it('every awake camera is photographed LIVE, a sleeping one is woken by the same forced capture — an unreachable, disabled or offline one is never dialled', async () => {
     const calls: Array<[number, boolean]> = []
     const shelf = shelfWith({
       isOnline: (id) => id !== 105,
@@ -260,8 +260,10 @@ describe('NcLinkedStillShelf', () => {
       wakeSleeping: true,
     })
     await until(() => shelf.get(set.mosaicOwnerId))
-    expect(calls.filter(([, forced]) => forced)).toEqual([[102, true]])
-    expect(calls.map(([id]) => id).includes(105)).toBe(false)
+    expect(calls.sort(([a], [b]) => a - b)).toEqual([
+      [101, true],
+      [102, true],
+    ])
   })
 })
 
@@ -472,7 +474,7 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
     const set = shelf.captureSet(3243, [101, 102], 1_000)
     await until(
       () => lines.find((l) => l.msg.startsWith('sensor notification pictures ready')),
-      4_000,
+      8_000,
     )
     expect(lines).toContainEqual(
       expect.objectContaining({
@@ -483,7 +485,7 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
     )
     const mosaic = shelf.get(set.mosaicOwnerId) ?? []
     expect(await widthOf(mosaic[0]!.base64)).toBe(64) // 101 alone, as the plain still
-  }, 8_000)
+  }, 12_000)
 
   it('the exclusion line names its reason', async () => {
     const lines: MetaLine[] = []
@@ -560,10 +562,10 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
   })
 })
 
-describe('NcLinkedStillShelf — state read in parallel with the capture (fix round 2)', () => {
-  it('dials the camera while the state read is still in flight', async () => {
+describe('NcLinkedStillShelf — the state read comes before the capture (fix round 2)', () => {
+  it('reads the state BEFORE dialling: a live capture of a sleeping camera would wake it', async () => {
     let stateSettled = false
-    const dialledWhilePending: boolean[] = []
+    const dialledAfterState: boolean[] = []
     const shelf = shelfWith({
       getSnapshotState: () =>
         new Promise((r) =>
@@ -573,13 +575,13 @@ describe('NcLinkedStillShelf — state read in parallel with the capture (fix ro
           }, 50),
         ),
       getSnapshot: async () => {
-        dialledWhilePending.push(!stateSettled)
+        dialledAfterState.push(stateSettled)
         return jpeg()
       },
     })
     const set = shelf.captureSet(3243, [101], 1_000)
     await until(() => shelf.get(set.mosaicOwnerId))
-    expect(dialledWhilePending).toEqual([true])
+    expect(dialledAfterState).toEqual([true])
   })
 
   it('a SLOW state read that answers a blocking reason still excludes (bounded by the capture, not 200 ms)', async () => {
@@ -672,23 +674,26 @@ describe('NcLinkedStillShelf — a failed state read must not destroy the wake (
     throw new Error('getDebugState: no native provider implementing it')
   }
 
-  it('state unknown + an EMPTY unforced capture on a battery camera → the D998 wake is taken', async () => {
+  it('state unknown + the rule allows the wake → the camera is taken live directly, one forced capture', async () => {
     const forced: boolean[] = []
     const shelf = shelfWith({
       getSnapshotState: failingState,
       isBatteryCamera: async () => true,
       getSnapshot: async (_id, opts) => {
         forced.push(opts?.force === true)
-        return opts?.force === true ? jpeg() : null
+        return jpeg()
       },
     })
-    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true, ruleIds: ['r1'] })
+    const set = shelf.captureSet(3243, [101], 1_000, {
+      wakeSleeping: true,
+      ruleIds: ['r1'],
+    })
     const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
-    expect(forced).toEqual([false, true])
+    expect(forced).toEqual([true])
   })
 
-  it('a camera that is NOT a battery camera is never woken on an unknown state', async () => {
+  it('a live capture that brings nothing falls back to ONE unforced read; nothing ships when that is empty too', async () => {
     const forced: boolean[] = []
     const lines: MetaLine[] = []
     const shelf = shelfWith({
@@ -702,7 +707,7 @@ describe('NcLinkedStillShelf — a failed state read must not destroy the wake (
     })
     const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
     await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
-    expect(forced).toEqual([false])
+    expect(forced).toEqual([true, false])
     expect(shelf.get(set.mosaicOwnerId)).toEqual([])
   })
 
@@ -725,7 +730,10 @@ describe('NcLinkedStillShelf — a failed state read must not destroy the wake (
 
   it('the failed state read names its error at warn, on the camera (D391)', async () => {
     const lines: MetaLine[] = []
-    const shelf = shelfWith({ getSnapshotState: failingState, logger: metaLogger(lines) })
+    const shelf = shelfWith({
+      getSnapshotState: failingState,
+      logger: metaLogger(lines),
+    })
     const set = shelf.captureSet(3243, [101], 1_000)
     await until(() => shelf.get(set.mosaicOwnerId))
     const line = lines.find((l) => l.level === 'warn' && l.deviceId === 101)
@@ -734,143 +742,132 @@ describe('NcLinkedStillShelf — a failed state read must not destroy the wake (
   })
 })
 
-describe('NcLinkedStillShelf — a stale tile is re-polled, not dropped (D60, kitchen)', () => {
-  it('a frame older than the event on the first read is re-captured until it lands fresh', async () => {
-    let reads = 0
-    let captures = 0
+describe('NcLinkedStillShelf — a notification always takes a LIVE picture (supersedes the D60 re-poll)', () => {
+  const awake = async (): Promise<{ reason: null }> => ({ reason: null })
+
+  it('a cached frame is never attached when the live capture succeeds — one forced read, no unforced one', async () => {
+    const calls: boolean[] = []
+    let live = false
     const lines: MetaLine[] = []
     const shelf = shelfWith({
-      getSnapshot: async () => {
-        captures += 1
+      getSnapshotState: awake,
+      getSnapshot: async (_id, opts) => {
+        calls.push(opts?.force === true)
+        if (opts?.force === true) live = true
         return jpeg()
       },
-      getFrameCapturedAt: async () => {
-        reads += 1
-        // The wrapper settles a soft miss with its old hit once, then refreshes.
-        return new Map([[101, reads === 1 ? 1_000 - 60_000 : 1_000]])
-      },
+      // The wrapper's cache is 60 s old until a forced capture refreshed it.
+      getFrameCapturedAt: async () => new Map([[101, live ? 1_000 : 1_000 - 60_000]]),
       logger: metaLogger(lines),
     })
     const set = shelf.captureSet(3243, [101], 1_000)
     const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
-    expect(captures).toBe(2)
-    expect(lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'landed')).toBeDefined()
+    expect(calls).toEqual([true])
+    const line = lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'landed')
+    expect(line?.meta).toMatchObject({ live: true })
+    expect(typeof line?.meta?.['liveMs']).toBe('number')
   })
 
-  it('pendingUntil is open while the re-poll runs, so the dispatcher waits for it', async () => {
+  it('an AWAKE battery camera is taken live too, whatever the wake policy — nothing is woken', async () => {
+    const calls: boolean[] = []
+    const lines: MetaLine[] = []
     const shelf = shelfWith({
-      getFrameCapturedAt: async () => new Map([[101, 1_000 - 60_000]]),
+      getSnapshotState: awake,
+      isBatteryCamera: async () => true,
+      getSnapshot: async (_id, opts) => {
+        calls.push(opts?.force === true)
+        return jpeg()
+      },
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: false })
+    await until(() => shelf.get(set.mosaicOwnerId))
+    expect(calls).toEqual([true])
+    expect(lines.some((l) => l.msg.startsWith('linked battery camera woken'))).toBe(false)
+  })
+
+  it('pendingUntil is open while the live capture runs, so the dispatcher waits for it', async () => {
+    const shelf = shelfWith({
+      getSnapshotState: awake,
+      getSnapshot: () => new Promise((r) => setTimeout(() => r(jpeg()), 100)),
     })
     const set = shelf.captureSet(3243, [101], 1_000)
     await until(() => shelf.pendingUntil(set.cameraOwnerIds[0]!) !== undefined)
     expect(shelf.pendingUntil(set.cameraOwnerIds[0]!)).toBeGreaterThan(1_000)
   })
 
-  it('a frame that never freshens is dropped at the bound, as stale', async () => {
+  it('a live frame that is STILL older than the event is dropped as stale, not re-polled (safety check)', async () => {
+    const calls: boolean[] = []
     const lines: MetaLine[] = []
     const shelf = shelfWith({
+      getSnapshotState: awake,
+      getSnapshot: async (_id, opts) => {
+        calls.push(opts?.force === true)
+        return jpeg()
+      },
       getFrameCapturedAt: async () => new Map([[101, 1_000 - 60_000]]),
       logger: metaLogger(lines),
     })
     const set = shelf.captureSet(3243, [101], 1_000)
-    await until(
-      () => lines.find((l) => l.msg.startsWith('sensor notification has no linked')),
-      6_000,
-    )
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
     expect(shelf.get(set.mosaicOwnerId)).toEqual([])
-    expect(lines.find((l) => l.meta?.['outcome'] === 'stale')).toBeDefined()
+    expect(calls).toEqual([true])
+    expect(lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'stale')).toBeDefined()
   })
-})
 
-describe('NcLinkedStillShelf — a battery camera that answered awake with no usable picture is woken', () => {
-  const awake = async (): Promise<{ reason: null }> => ({ reason: null })
-  const WOKEN = 'linked battery camera woken for the sensor notification'
-
-  it('awake verdict + unforced TIMEOUT on a battery camera → one forced wake, tile lands', async () => {
+  it('live fails, the unforced read is recent → that frame ships, the failure is named', async () => {
     const calls: boolean[] = []
     const lines: MetaLine[] = []
     const shelf = shelfWith({
       getSnapshotState: awake,
-      isBatteryCamera: async () => true,
-      getSnapshot: (_id, opts) => {
-        calls.push(opts?.force === true)
-        return opts?.force === true ? Promise.resolve(jpeg()) : new Promise(() => undefined)
-      },
-      logger: metaLogger(lines),
-    })
-    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
-    const mosaic = await until(() => shelf.get(set.mosaicOwnerId), 6_000)
-    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
-    expect(calls).toEqual([false, true])
-    const why = lines.find((l) => l.msg.startsWith('linked battery camera answered awake'))
-    expect(why?.deviceId).toBe(101)
-    expect(why?.meta).toMatchObject({ sensorId: 3243, capture: 'timeout' })
-  })
-
-  it('awake verdict + a STALE frame on a battery camera → woken once, tile lands', async () => {
-    const calls: boolean[] = []
-    const lines: MetaLine[] = []
-    const shelf = shelfWith({
-      getSnapshotState: awake,
-      isBatteryCamera: async () => true,
       getSnapshot: async (_id, opts) => {
         calls.push(opts?.force === true)
-        return jpeg()
+        return opts?.force === true ? null : jpeg()
       },
-      getFrameCapturedAt: async () => new Map([[101, 1_000 - 155_798]]),
       logger: metaLogger(lines),
     })
-    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    const set = shelf.captureSet(3243, [101], 1_000)
     const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
-    expect(calls).toEqual([false, true])
-    const why = lines.find((l) => l.msg === 'linked battery camera frame is stale — waking it')
-    expect(why?.meta).toMatchObject({ sensorId: 3243, capture: 'stale' })
-    expect(lines.filter((l) => l.msg === WOKEN)).toHaveLength(1)
+    expect(calls).toEqual([true, false])
+    const warn = lines.find((l) => l.msg.startsWith('linked camera live capture failed'))
+    expect(warn?.deviceId).toBe(101)
+    expect(warn?.meta).toMatchObject({ liveFailure: 'empty' })
   })
 
-  it('a MAINS camera with a stale frame is re-polled unforced, never forced', async () => {
-    const calls: boolean[] = []
-    let reads = 0
+  it('live fails and the cached frame is old → dropped, with the live failure on the tile line', async () => {
+    const lines: MetaLine[] = []
     const shelf = shelfWith({
       getSnapshotState: awake,
-      isBatteryCamera: async () => false,
+      getSnapshot: async (_id, opts) => (opts?.force === true ? null : jpeg()),
+      getFrameCapturedAt: async () => new Map([[101, 1_000 - 937_909]]),
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000)
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
+    expect(shelf.get(set.mosaicOwnerId)).toEqual([])
+    const line = lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'stale')
+    expect(line?.meta).toMatchObject({ liveFailure: 'empty' })
+  })
+
+  it('unknown state, no wake allowed, battery unknown → the unforced read only, never forced', async () => {
+    const calls: boolean[] = []
+    const shelf = shelfWith({
+      getSnapshotState: async () => undefined,
       getSnapshot: async (_id, opts) => {
         calls.push(opts?.force === true)
         return jpeg()
       },
-      getFrameCapturedAt: async () => {
-        reads += 1
-        return new Map([[101, reads === 1 ? 1_000 - 60_000 : 1_000]])
-      },
     })
-    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: false })
     await until(() => shelf.get(set.mosaicOwnerId))
-    expect(calls).toEqual([false, false])
-  })
-
-  it('wakeSleeping off → a battery camera is never forced, whatever the capture did', async () => {
-    const calls: boolean[] = []
-    const lines: MetaLine[] = []
-    const shelf = shelfWith({
-      getSnapshotState: awake,
-      isBatteryCamera: async () => true,
-      getSnapshot: async (_id, opts) => {
-        calls.push(opts?.force === true)
-        return null
-      },
-      logger: metaLogger(lines),
-    })
-    shelf.captureSet(3243, [101], 1_000, { wakeSleeping: false })
-    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
     expect(calls).toEqual([false])
   })
 
-  it('a wake refused inside the min gap leaves the stale tile to the D60 re-poll', async () => {
+  it('a wake refused inside the min gap does not stop an awake camera being taken live', async () => {
     let t = 1_000
     let asleep = true
-    let reads = 0
     const forced: number[] = []
     const shelf = shelfWith({
       now: () => t,
@@ -880,34 +877,14 @@ describe('NcLinkedStillShelf — a battery camera that answered awake with no us
         if (opts?.force === true) forced.push(id)
         return jpeg()
       },
-      getFrameCapturedAt: async () => {
-        reads += 1
-        return new Map([[101, reads === 1 ? t - 60_000 : t]])
-      },
     })
     const first = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
     await until(() => shelf.get(first.mosaicOwnerId))
     t += 30_000
     asleep = false
-    reads = 0
     const second = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
     const mosaic = await until(() => shelf.get(second.mosaicOwnerId))
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
-    expect(forced).toEqual([101])
-  })
-
-  it('a wake that brings nothing names its reason on the tile (D400)', async () => {
-    const lines: MetaLine[] = []
-    const shelf = shelfWith({
-      getSnapshotState: awake,
-      isBatteryCamera: async () => true,
-      getSnapshot: async () => null,
-      logger: metaLogger(lines),
-    })
-    shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
-    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
-    expect(
-      lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'wake-refused'),
-    ).toBeDefined()
+    expect(forced).toEqual([101, 101])
   })
 })

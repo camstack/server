@@ -400,7 +400,7 @@ describe('one sensor-level evaluation carries the linked stills', () => {
     const stills = h.center.beginLinkedStills(linkedRequest([101], NOW, []))
     expect(stills).toBeDefined()
     expect(stills?.cameraIds).toEqual([101])
-    expect(h.snapshotCalls).toEqual([101])
+    await vi.waitFor(() => expect(h.snapshotCalls).toEqual([101]))
   })
 
   it('a sensor-level row never logs "device event has no marker track"', async () => {

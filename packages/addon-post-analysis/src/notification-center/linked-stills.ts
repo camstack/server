@@ -10,8 +10,9 @@
  * one composition are decisions about the set, and none of them belongs in a
  * shelf that photographs one camera for an absence.
  *
- * A SLEEPING battery camera is woken by one forced capture when the rule leaves
- * it allowed (D998) — bounded, once per gap per camera, never by a poll.
+ * Every linked camera is photographed LIVE (one forced capture, bounded), never
+ * from the wrapper's cache; a SLEEPING battery camera is woken by that forced
+ * capture when the rule leaves it allowed (D998) — once per gap per camera.
  *
  * Two reads can only ever ADD a camera back, never take one away on their own
  * failure (D49): a wrapper-state read (run in parallel with the capture) that
@@ -50,14 +51,11 @@ const NC_LINKED_WAKE_POLL_MS = 1_000
 export const NC_LINKED_WAKE_MIN_GAP_MS = 60_000
 
 /**
- * D60 — a tile the freshness read calls stale is RE-POLLED, unforced, until the
- * wrapper hands back a frame from the event or this bound is spent. The wrapper
- * settles a soft miss with its old cached hit; one more ask, a moment later,
- * usually finds the refreshed one. The bound sits inside the dispatcher's still
- * deadline (`NC_STILL_WAIT_MS`, 3 s): the row waits for it through `pendingUntil`.
+ * A notification always takes a LIVE picture of each linked camera: one forced
+ * capture, bounded. The margin keeps the row's still-wait open past it.
  */
-const NC_LINKED_STALE_POLL_MS = 500
-const NC_LINKED_STALE_MAX_POLLS = 5
+export const NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS = 4_000
+const NC_LINKED_PENDING_MARGIN_MS = 1_000
 
 /** Per camera — the marker's own bound (`SENSOR_MARKER_SNAPSHOT_TIMEOUT_MS`). */
 const SENSOR_LINKED_CAPTURE_TIMEOUT_MS = 2_500
@@ -196,6 +194,11 @@ interface TileResult {
   readonly stateUnknown?: NcLinkedStateUnknown
   /** This camera was woken by a forced capture. */
   readonly woken?: true
+  /** The picture was taken by a forced (live) capture, not read from the wrapper's cache. */
+  readonly live?: true
+  readonly liveMs?: number
+  /** The live capture failed (outcome and cause); what the tile carries is the fallback read. */
+  readonly liveFailure?: string
   readonly tookMs: number
 }
 
@@ -346,11 +349,7 @@ export class NcLinkedStillShelf {
     let judged: readonly TileResult[]
     try {
       const results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, ctx)))
-      judged = await this.repollStale(
-        ctx,
-        atMs,
-        await this.wakeStaleBattery(ctx, await this.judgeFreshness(stills.sensorId, results, atMs)),
-      )
+      judged = await this.judgeFreshness(stills.sensorId, results, atMs)
     } finally {
       this.pendingWakes.delete(setId)
     }
@@ -399,12 +398,9 @@ export class NcLinkedStillShelf {
         tookMs: took(),
       }
     }
-    // In parallel: the state read costs no time of its own, and its answer is
-    // applied to whatever the capture brought back.
-    const [verdict, capture] = await Promise.all([
-      this.wrapperVerdict(cameraId),
-      this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS),
-    ])
+    // The state read is capture-free and comes FIRST: a LIVE (forced) capture
+    // of a sleeping battery camera would wake it, and only the rule may.
+    const verdict = await this.wrapperVerdict(cameraId)
     const excluded = (reason: NcLinkedExclusionReason): TileResult => ({
       cameraId,
       outcome: 'excluded',
@@ -417,61 +413,84 @@ export class NcLinkedStillShelf {
     if (verdict.reason === 'unreachable' && ctx.options.wakeSleeping) {
       return excluded('wake-skipped:unreachable')
     }
-    if (verdict.reason !== null) {
-      // The bytes, if any, are the wrapper's state card — never a photograph.
-      return excluded(verdict.reason)
+    // A blocking reason: whatever bytes exist are the wrapper's state card.
+    if (verdict.reason !== null) return excluded(verdict.reason)
+    const stateUnknown = verdict.unknown !== null ? { stateUnknown: verdict.unknown } : {}
+    if (await this.mayTakeLive(cameraId, ctx, verdict)) {
+      return { ...(await this.takeLive(cameraId, ctx)), ...stateUnknown }
     }
-    // D49: a state that could not be read must not destroy the wake. A sleeping
-    // battery camera answers an unforced capture with nothing, and the wrapper
-    // that would have said `sleeping` is the very read that failed.
-    //
-    // The same holds when the read ANSWERED awake: the state is the fallible
-    // side (a hub-summary sleep flip refused inside its grace left a sleeping
-    // camera reading awake while the provider served `cached-snapshot,
-    // sleeping`). So on a battery camera an unforced capture that came back
-    // nothing — `timeout` or `empty` — is followed by ONE forced wake whatever
-    // the verdict said. A mains camera has nothing to wake: it keeps its tile.
-    const brought = capture.outcome === 'timeout' || capture.outcome === 'empty'
-    if (brought && ctx.options.wakeSleeping && (await this.isBatteryCamera(cameraId))) {
-      this.deps.logger.info(
-        verdict.unknown !== null
-          ? 'linked camera state unknown and capture empty — waking as a battery camera'
-          : 'linked battery camera answered awake with no picture — waking it',
-        {
-          tags: { deviceId: cameraId },
-          meta: {
-            sensorId: ctx.sensorId,
-            capture: capture.outcome,
-            ...(verdict.unknown !== null ? { stateUnknown: verdict.unknown } : {}),
-          },
-        },
-      )
-      return this.wakeOne(cameraId, ctx)
-    }
-    return {
-      cameraId,
-      ...capture,
-      ...(verdict.unknown !== null ? { stateUnknown: verdict.unknown } : {}),
-      tookMs: took(),
-    }
+    // Unknown state on a camera that may be a battery one, and the rule did not
+    // leave a wake allowed: the unforced read, whose frame the freshness check judges.
+    const capture = await this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS)
+    return { cameraId, ...capture, ...stateUnknown, tookMs: took() }
   }
 
-  /** Only a camera KNOWN to be a battery camera is woken on an unknown state. */
-  private async isBatteryCamera(cameraId: number): Promise<boolean> {
+  /**
+   * A notification always takes a LIVE picture. Allowed when the wrapper says
+   * the camera is awake, when the rule left waking allowed (a forced capture IS
+   * the wake), or when the battery slice says it is mains. Unknown state on a
+   * possible battery camera without the rule's leave stays unforced (D49, D998).
+   */
+  private async mayTakeLive(
+    cameraId: number,
+    ctx: SetContext,
+    verdict: WrapperVerdict,
+  ): Promise<boolean> {
+    if (verdict.unknown === null) return true
+    if (ctx.options.wakeSleeping) return true
+    return this.isKnownMains(cameraId)
+  }
+
+  /**
+   * One forced capture, bounded. A failed live capture is never a cached frame
+   * shipped as the picture: one unforced read follows, and only a frame the
+   * freshness check accepts as recent survives. Both outcomes are named.
+   */
+  private async takeLive(cameraId: number, ctx: SetContext): Promise<TileResult> {
+    this.markPendingUntil(
+      ctx.setId,
+      this.deps.now() +
+        NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS +
+        SENSOR_LINKED_CAPTURE_TIMEOUT_MS +
+        NC_LINKED_PENDING_MARGIN_MS,
+    )
+    const t0 = this.deps.now()
+    const live = await this.captureStill(cameraId, true, NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS)
+    const liveMs = this.deps.now() - t0
+    if (live.outcome === 'landed') {
+      return { cameraId, ...live, live: true, liveMs, tookMs: this.deps.now() - ctx.startedAt }
+    }
+    const liveFailure = `${live.outcome}${live.reason !== undefined ? `: ${live.reason}` : ''}`
+    const tookMs = (): number => this.deps.now() - ctx.startedAt
+    // A camera that did not answer a forced capture in time will not answer a plain one.
+    if (live.outcome === 'timeout') {
+      this.deps.logger.warn('linked camera live capture timed out', {
+        tags: { deviceId: cameraId },
+        meta: { sensorId: ctx.sensorId, liveMs, boundMs: NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS },
+      })
+      return { cameraId, ...live, liveFailure, tookMs: tookMs() }
+    }
+    this.deps.logger.warn('linked camera live capture failed — trying a recent cached frame', {
+      tags: { deviceId: cameraId },
+      meta: { sensorId: ctx.sensorId, liveMs, liveFailure },
+    })
+    const cached = await this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS)
+    return { cameraId, ...cached, liveFailure, tookMs: tookMs() }
+  }
+
+  /** Only a camera the battery slice says is NOT a battery camera is taken live on an unknown state. */
+  private async isKnownMains(cameraId: number): Promise<boolean> {
     const read = this.deps.isBatteryCamera
     if (read === undefined) return false
     try {
-      const isBattery = await withTimeout(
-        read(cameraId),
-        SENSOR_LINKED_BATTERY_READ_TIMEOUT_MS,
-        'battery read',
+      return (
+        (await withTimeout(
+          read(cameraId),
+          SENSOR_LINKED_BATTERY_READ_TIMEOUT_MS,
+          'battery read',
+        )) === false
       )
-      return isBattery === true
-    } catch (err: unknown) {
-      this.deps.logger.warn('linked camera battery read failed — not woken on an unknown state', {
-        tags: { deviceId: cameraId },
-        meta: { error: String(err) },
-      })
+    } catch {
       return false
     }
   }
@@ -507,33 +526,6 @@ export class NcLinkedStillShelf {
       woken: true,
       tookMs: took(),
     }
-  }
-
-  /**
-   * A battery camera whose unforced frame came back OLD is asleep behind a
-   * cached picture: ask it once, forced, instead of re-polling a camera that
-   * will not freshen on its own. One wake per camera per set — a tile already
-   * woken is never woken again — and a mains camera keeps the D60 re-poll.
-   */
-  private async wakeStaleBattery(
-    ctx: SetContext,
-    judged: readonly TileResult[],
-  ): Promise<readonly TileResult[]> {
-    if (!ctx.options.wakeSleeping) return judged
-    return Promise.all(
-      judged.map(async (r): Promise<TileResult> => {
-        if (r.outcome !== 'stale' || r.woken === true) return r
-        if (!(await this.isBatteryCamera(r.cameraId))) return r
-        this.deps.logger.info('linked battery camera frame is stale — waking it', {
-          tags: { deviceId: r.cameraId },
-          meta: { sensorId: ctx.sensorId, capture: 'stale', reason: r.reason ?? null },
-        })
-        const woken = await this.wakeOne(r.cameraId, ctx)
-        // A wake that was never taken (inside the min gap, policy…) leaves the
-        // stale tile to the D60 re-poll; only a wake that RAN replaces it.
-        return woken.outcome === 'excluded' ? r : woken
-      }),
-    )
   }
 
   /** A camera another wake already started: never forced, re-polled within the bound. */
@@ -573,59 +565,6 @@ export class NcLinkedStillShelf {
 
   private markPendingUntil(setId: string, until: number): void {
     this.pendingWakes.set(setId, Math.max(this.pendingWakes.get(setId) ?? 0, until))
-  }
-
-  /**
-   * D60: a `stale` tile asks again (unforced — a poll never wakes) until its
-   * frame is from the event or the bound is spent; the row's still-wait is held
-   * open meanwhile. A camera that never freshens stays `stale`, said on its line.
-   */
-  private async repollStale(
-    ctx: SetContext,
-    atMs: number,
-    judged: readonly TileResult[],
-  ): Promise<readonly TileResult[]> {
-    let current = judged
-    if (!current.some((r) => r.outcome === 'stale')) return current
-    this.markPendingUntil(
-      ctx.setId,
-      this.deps.now() + NC_LINKED_STALE_POLL_MS * (NC_LINKED_STALE_MAX_POLLS + 1),
-    )
-    for (let i = 0; i < NC_LINKED_STALE_MAX_POLLS; i++) {
-      const waiting = current.filter((r) => r.outcome === 'stale').map((r) => r.cameraId)
-      if (waiting.length === 0) break
-      await new Promise<void>((resolve) => setTimeout(resolve, NC_LINKED_STALE_POLL_MS))
-      const recaptured = await Promise.all(
-        waiting.map(async (cameraId): Promise<TileResult | null> => {
-          const capture = await this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS)
-          return capture.outcome === 'landed' && capture.jpeg !== undefined
-            ? {
-                cameraId,
-                outcome: 'landed',
-                jpeg: capture.jpeg,
-                tookMs: this.deps.now() - ctx.startedAt,
-              }
-            : null
-        }),
-      )
-      const landedAgain = recaptured.filter((r): r is TileResult => r !== null)
-      if (landedAgain.length === 0) continue
-      const rejudged = await this.judgeFreshness(ctx.sensorId, landedAgain, atMs)
-      const fresh = new Map(
-        rejudged.filter((r) => r.outcome === 'landed').map((r) => [r.cameraId, r]),
-      )
-      current = current.map((r) => fresh.get(r.cameraId) ?? r)
-      for (const cameraId of fresh.keys()) {
-        this.deps.logger.info(
-          'linked camera frame was stale — a re-poll brought one from the event',
-          {
-            tags: { deviceId: cameraId },
-            meta: { sensorId: ctx.sensorId, polls: i + 1 },
-          },
-        )
-      }
-    }
-    return current
   }
 
   /** A wake that brought nothing back names itself, not the generic `empty`. */
@@ -742,6 +681,8 @@ export class NcLinkedStillShelf {
         outcome: 'stale',
         reason: `frame ${String(atMs - at)} ms older than the event`,
         ...(r.woken === true ? { woken: true as const } : {}),
+        ...(r.live === true ? { live: true as const, liveMs: r.liveMs } : {}),
+        ...(r.liveFailure !== undefined ? { liveFailure: r.liveFailure } : {}),
         tookMs: r.tookMs,
       }
     })
@@ -808,6 +749,8 @@ export class NcLinkedStillShelf {
         tookMs: r.tookMs,
         ...(r.reason !== undefined ? { reason: r.reason } : {}),
         ...(r.stateUnknown !== undefined ? { stateUnknown: r.stateUnknown } : {}),
+        ...(r.live === true ? { live: true, liveMs: r.liveMs } : {}),
+        ...(r.liveFailure !== undefined ? { liveFailure: r.liveFailure } : {}),
       },
     }
     if (r.outcome === 'excluded') {
@@ -817,6 +760,8 @@ export class NcLinkedStillShelf {
         'linked camera photographed for the sensor notification — state unknown, tile kept',
         extras,
       )
+    } else if (r.outcome === 'landed' && r.live === true) {
+      this.deps.logger.info('linked camera photographed live for the sensor notification', extras)
     } else if (r.outcome === 'landed') {
       this.deps.logger.debug('linked camera photographed for the sensor notification', extras)
     } else {
