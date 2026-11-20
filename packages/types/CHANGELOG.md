@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The error capability lists the fault types a device can raise (listFaultTypes), declared by its integration
+- Automation steps carry an enabled flag and a notify step kind; stream sources can declare a maximum session length (maxSessionMs)
+
 ## [1.2.611] - 2026-11-20
 
 ### Added
 
 - An integration kind can be marked not creatable, so Add never offers it
-- The error capability lists the fault types a device can raise (listFaultTypes), declared by its integration
 
 ## [1.2.610] - 2026-11-20
 
