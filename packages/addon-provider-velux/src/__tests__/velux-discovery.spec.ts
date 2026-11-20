@@ -202,6 +202,10 @@ describe('VeluxNodeResolver.findNode', () => {
       getConnection: () => ({ host: '10.0.0.5', password: 'x' }),
       status: 'connected',
       firmware: null,
+      attempted: true,
+      loginRefused: false,
+      unreachableSince: null,
+      lastError: null,
       client: null,
     }
     resolver.set(INT, source)
