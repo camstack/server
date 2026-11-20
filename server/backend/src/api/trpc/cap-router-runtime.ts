@@ -107,6 +107,28 @@ function isGlobalCollection(reg: CapabilityRegistry, capName: string): boolean {
 }
 
 /**
+ * Every method of a provider — own and inherited from its class chain — bound to
+ * it. `{ ...provider }` keeps only own enumerable properties, so a class-instance
+ * provider (`FanPresetActionSource`) would lose `runAction` / `stopAction` on the
+ * union, and a method that survived would lose its `this`.
+ */
+function boundMethodsOf(provider: ResolvedProvider): Record<string, (input?: unknown) => unknown> {
+  const bound: Record<string, (input?: unknown) => unknown> = {}
+  for (
+    let proto: object | null = provider;
+    proto !== null && proto !== Object.prototype;
+    proto = Object.getPrototypeOf(proto)
+  ) {
+    for (const name of Object.getOwnPropertyNames(proto)) {
+      if (name === 'constructor' || name in bound) continue
+      const fn = Object.getOwnPropertyDescriptor(proto, name)?.value
+      if (typeof fn === 'function') bound[name] = (input?: unknown) => fn.call(provider, input)
+    }
+  }
+  return bound
+}
+
+/**
  * Resolve a collection cap's provider exactly as the codegen-emitted
  * mount did:
  *   - `addonId` set → that addon's provider directly (bypasses the
@@ -117,7 +139,7 @@ function isGlobalCollection(reg: CapabilityRegistry, capName: string): boolean {
  *     ENABLED provider; non-array methods fall through to the first.
  *   - else → the first enabled provider.
  */
-function resolveCollectionProvider(
+export function resolveCollectionProvider(
   reg: CapabilityRegistry | null,
   capName: string,
   addonId: string | undefined,
@@ -133,7 +155,10 @@ function resolveCollectionProvider(
   if (first === undefined) return null
   const arrayMethods = COLLECTION_ARRAY_METHODS.get(capName)
   if (!arrayMethods || arrayMethods.length === 0) return first
-  const aggregate: Record<string, (input?: unknown) => unknown> = { ...first }
+  const aggregate: Record<string, (input?: unknown) => unknown> = {
+    ...first,
+    ...boundMethodsOf(first),
+  }
   for (const method of arrayMethods) {
     aggregate[method] = concatArrayMethod(providers, method)
   }

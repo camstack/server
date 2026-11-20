@@ -7,7 +7,11 @@
  * `onUnownedCall` runs the aggregate first, then the pin: both are driven here.
  */
 import { describe, expect, it } from 'vitest'
-import { aggregateCollectionCall, pinnedCollectionCall } from '../cap-router-runtime.js'
+import {
+  aggregateCollectionCall,
+  pinnedCollectionCall,
+  resolveCollectionProvider,
+} from '../cap-router-runtime.js'
 
 type Provider = Record<string, (input?: unknown) => unknown>
 type Registry = NonNullable<Parameters<typeof pinnedCollectionCall>[0]>
@@ -84,5 +88,31 @@ describe('class-instance provider on the collection array path', () => {
         addonId: 'core-blocks',
       }),
     ).toEqual({ value: [{ id: 'core-blocks:fan-1' }] })
+  })
+})
+
+describe("the collection union keeps a class provider's scalar methods", () => {
+  class ScalarSource {
+    constructor(private readonly deps: { readonly ran: string[] }) {}
+    async listActions(): Promise<readonly string[]> {
+      return []
+    }
+    async runAction(input: { readonly actionId: string }): Promise<void> {
+      this.deps.ran.push(input.actionId)
+    }
+  }
+
+  it('runAction on the unpinned union reaches the provider with its `this`', async () => {
+    const ran: string[] = []
+    const source = new ScalarSource({ ran })
+    const reg = {
+      getDefinition: () => ({ mode: 'collection' }),
+      getCollectionEntries: () => [['core-blocks', source]],
+    } as unknown as Registry
+    const union = resolveCollectionProvider(reg, 'action-source', undefined)
+    const run = union?.['runAction']
+    expect(typeof run).toBe('function')
+    if (typeof run === 'function') await run({ actionId: 'core-blocks:fan-1' })
+    expect(ran).toEqual(['core-blocks:fan-1'])
   })
 })
