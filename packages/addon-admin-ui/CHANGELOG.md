@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A discovered notifier that is already a target is shown as already added and cannot be picked again.
+
 ## [1.2.721] - 2026-11-20
 
 ### Added
