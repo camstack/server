@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.673] - 2026-11-20
+
 ### Added
 
 - A recording band can carry a battery range (for example 50% and up continuous, 20-50% events, below that nothing); the charge is read from the camera's published state, never by waking it, and a band flips only after 3 points and 5 minutes.

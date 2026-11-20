@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.252] - 2026-11-20
+
 ### Changed
 
 - Battery cameras get a Power source section: read whether the camera runs on the adapter or the battery, and switch between wired and battery power (dry-run first, read back after; only switch to wired power when the adapter meets the camera's spec).

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.608] - 2026-11-20
+
 ### Added
 
 - Recording bands accept an optional battery range (min/max percent); configs without it parse unchanged.
