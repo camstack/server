@@ -262,18 +262,12 @@ export class HikvisionCamera
   readonly type = DeviceType.Camera as const
 
   /**
-   * Features derived from the persisted `deviceCache` probe — surfaced
-   * via `device-manager.getDevice`. Conservative by default: we only
-   * report capabilities the device claimed during the last successful
-   * probe (no default-on for accessory caps that may not be wired).
+   * Only what no cap says yet. Rebootable, PanTiltZoom, PtzAutotrack and
+   * TwoWayAudio are derived by the kernel from the `reboot` / `ptz` /
+   * `ptz-autotrack` / `intercom` caps this camera registers (#459).
    */
   get features(): readonly DeviceFeature[] {
-    const cfg = this.config.get('deviceCache')
-    const out: DeviceFeature[] = [DeviceFeature.NativeSnapshot, DeviceFeature.Rebootable]
-    if (cfg?.hasPtz === true) out.push(DeviceFeature.PanTiltZoom)
-    if (cfg?.hasAutotrack === true) out.push(DeviceFeature.PtzAutotrack)
-    if (this.intercomEnabled()) out.push(DeviceFeature.TwoWayAudio)
-    return out
+    return [DeviceFeature.NativeSnapshot]
   }
 
   /**
@@ -302,6 +296,7 @@ export class HikvisionCamera
 
   /** Idempotent guard for the `ptz-autotrack` cap. */
   private ptzAutotrackRegistered = false
+  private ptzRegistered = false
   /** Idempotent guard for the `intercom` cap. */
   private intercomRegistered = false
   /**
@@ -524,6 +519,15 @@ export class HikvisionCamera
     // (`probeAndPersistAccessoryCaps`) re-invokes once `hasIntercom`
     // lands so the cap appears without a restart.
     this.registerIntercomIfSupported()
+
+    // PTZ and autotrack from the persisted probe, so a restart exposes them
+    // (and the features the kernel derives from them) before the first probe
+    // runs. The probe re-registers through the same idempotent methods.
+    const cache = this.config.get('deviceCache')
+    if (cache?.hasPtz === true) {
+      this.registerPtzCap(DEFAULT_CAMERA_NUMBER)
+      if (cache.hasAutotrack === true) this.registerPtzAutotrackCap(DEFAULT_CAMERA_NUMBER)
+    }
 
     // OSD overlays — every Hikvision channel exposes `/overlays`,
     // including legacy DS-7600 firmwares. The provider proxies the
@@ -1841,17 +1845,13 @@ export class HikvisionCamera
     // registration. The ctor's call no-opped because `hasIntercom`
     // was undefined; this second pass picks it up without restart.
     this.registerIntercomIfSupported()
-
-    // Re-publish the meta blob so probe-driven feature flags
-    // (`TwoWayAudio`, `PanTiltZoom`, `PtzAutotrack`) appear in
-    // `deviceManager.listAll` immediately — without this they only
-    // surface on the next server restart for forked-worker devices.
-    void this.refreshFeatures()
   }
 
   // ── PTZ cap ──────────────────────────────────────────────────────
 
   private registerPtzCap(cameraNumber: number): void {
+    if (this.ptzRegistered) return
+    this.ptzRegistered = true
     const isapi = this.ensureClient()
     const provider: InferNativeProvider<typeof ptzCapability> = {
       move: async ({ deviceId, pan, tilt, zoom, speed }) => {

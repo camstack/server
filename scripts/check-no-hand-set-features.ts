@@ -66,7 +66,7 @@ export const PINS: Readonly<Record<string, number>> = {
   'packages/addon-provider-esphome/src/devices/esp-child-device.ts': 1,
   'packages/addon-provider-gree/src/devices/gree-ac-device.ts': 2,
   'packages/addon-provider-hikvision/src/accessories/light.ts': 1,
-  'packages/addon-provider-hikvision/src/hikvision-camera.ts': 2,
+  'packages/addon-provider-hikvision/src/hikvision-camera.ts': 1,
   'packages/addon-provider-homeassistant/src/devices/ha-container-device.ts': 1,
   'packages/addon-provider-homeassistant/src/ha-base-child-device.ts': 3,
   'packages/addon-provider-homeassistant/src/ha-container-reconcile.ts': 1,
