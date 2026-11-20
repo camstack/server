@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A recording band ending at 23:59 (the 24/7 setting) now covers its last minute, so recording no longer pauses at 23:59 every night
+- A battery camera known to be asleep is now waited for instead of being reconnected in a loop by the stream watchdogs; the stream reconnects once when it wakes
+
 ## [1.2.674] - 2026-11-20
 
 ### Changed
 
 - WebRTC live view on a strict Safari/iOS client that only decodes H.264 level 3.1 now serves the camera's lower-resolution stream instead of a black picture, re-encoding only when no substream fits.
 - A node with an NVIDIA card (CUDA) now defaults to the larger yolov9m-320 instead of the CPU model
-
-### Fixed
-
-- A recording band ending at 23:59 (the 24/7 setting) now covers its last minute, so recording no longer pauses at 23:59 every night
-- A battery camera known to be asleep is now waited for instead of being reconnected in a loop by the stream watchdogs; the stream reconnects once when it wakes
 
 ## [1.2.673] - 2026-11-20
 
