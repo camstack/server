@@ -15,9 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A camera's device page shows its history inside the camera card, so the camera no longer has a separate History tab
 - The device page's Config tab is now called Device settings.
-### Changed
-
 - The automation Then list: + Step asks which kind of step first (no blank device-command modal), each step has an enable switch, and a Send notification step.
+- The automation Run code step is a typed editor that completes ctx and vars and starts from a commented template, and the notification test panel offers only the text fields a target delivers
 
 ## [1.2.719] - 2026-11-20
 

@@ -16,7 +16,7 @@
 
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor as MonacoEditor } from 'monaco-editor'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** One declaration file handed to the compiler. */
 export interface EditorExtraLib {
@@ -51,6 +51,8 @@ export interface CodeEditorProps {
   readonly onDiagnostics?: (diagnostics: readonly EditorDiagnostic[]) => void
   readonly readOnly?: boolean
   readonly heightPx?: number
+  /** TS diagnostic codes the checker must not raise (a snippet that is a function body, not a module). */
+  readonly ignoreDiagnosticCodes?: readonly number[]
   /** Follows the admin theme; Monaco has no CSS-variable theming. */
   readonly dark?: boolean
 }
@@ -112,13 +114,16 @@ export function CodeEditor({
   onDiagnostics,
   readOnly = false,
   heightPx = 420,
+  ignoreDiagnosticCodes,
   dark = true,
 }: CodeEditorProps) {
   const monacoRef = useRef<Monaco | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   const handleMount = useCallback<OnMount>(
     (editor, monaco) => {
       monacoRef.current = monaco
+      setMounted(true)
       applyExtraLibs(monaco, extraLibs)
 
       if (onDiagnostics === undefined) return
@@ -148,6 +153,22 @@ export function CodeEditor({
     if (monaco === null) return
     applyExtraLibs(monaco, extraLibs)
   }, [extraLibs])
+
+  // Applied for this editor's lifetime and restored on unmount: the TS defaults are global.
+  useEffect(() => {
+    const monaco = monacoRef.current
+    if (monaco === null || ignoreDiagnosticCodes === undefined) return
+    const ts = monaco.languages.typescript.typescriptDefaults
+    const previous = ts.getDiagnosticsOptions()
+    ts.setDiagnosticsOptions({
+      ...previous,
+      diagnosticCodesToIgnore: [
+        ...(previous.diagnosticCodesToIgnore ?? []),
+        ...ignoreDiagnosticCodes,
+      ],
+    })
+    return () => ts.setDiagnosticsOptions(previous)
+  }, [ignoreDiagnosticCodes, mounted])
 
   return (
     <Editor

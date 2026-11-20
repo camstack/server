@@ -22,6 +22,7 @@ import type {
 import { AUTOMATION_LEAF_KINDS, leafCatalogEntry, seedLeaf } from '@camstack/types'
 import type { z } from 'zod'
 import i18n from '../../../i18n/index'
+import { CODE_STEP_TEMPLATE } from '../../../components/code/automation-code-step'
 import { newRepeat } from './repeat-model'
 import { newWaitUntil } from './wait-until-model'
 
@@ -145,7 +146,7 @@ export function newAction(kind: ActionKind): AutomationAction {
     case 'wait':
       return { kind, seconds: 5 }
     case 'code':
-      return { kind, code: '// runs inside this automation, with ctx in scope\n' }
+      return { kind, code: CODE_STEP_TEMPLATE }
     case 'action':
       return { kind, actionId: '' }
     case 'notify':

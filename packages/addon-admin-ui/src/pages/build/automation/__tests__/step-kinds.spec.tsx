@@ -27,6 +27,9 @@ vi.mock('../../flow/CommandStep', () => ({
 vi.mock('../RunActionFields', () => ({ RunActionFields: () => null }))
 vi.mock('../NotifyFields', () => ({ NotifyFields: () => null }))
 vi.mock('../WhenTree', () => ({ WhenTree: () => null }))
+vi.mock('../../../../components/code/AutomationCodeEditor', () => ({
+  AutomationCodeEditor: () => null,
+}))
 
 import { stepToneAt, traceDetails, traceView } from '../../flow/trace-view'
 import { ACTION_KINDS, ActionList } from '../ActionList'

@@ -20,15 +20,8 @@
  */
 
 import type { AutomationAction } from '@camstack/types'
-import {
-  Badge,
-  Button,
-  Input,
-  Select,
-  Switch,
-  type DeviceListState,
-  Textarea,
-} from '@camstack/ui-library'
+import { AutomationCodeEditor } from '../../../components/code/AutomationCodeEditor'
+import { Badge, Button, Input, Select, Switch, type DeviceListState } from '@camstack/ui-library'
 import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
@@ -370,20 +363,16 @@ export function ActionList({
           )}
 
           {action.kind === 'code' && (
-            <label className="block">
+            <div className="block">
               <PickerLabel>{t('automation.actionList.code', 'Code')}</PickerLabel>
-              <Textarea
-                className="h-32 w-full rounded-md border border-border bg-surface p-2 font-mono text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              <AutomationCodeEditor
                 value={action.code}
-                spellCheck={false}
-                onChange={(e) =>
-                  onChange(replaceAt(actions, index, { ...action, code: e.target.value }))
-                }
+                onChange={(code) => onChange(replaceAt(actions, index, { ...action, code }))}
               />
               <span className="mt-1 block text-xs text-foreground-subtle">
                 <Trans i18nKey="automation.actionList.codeHint" components={{ code: <code /> }} />
               </span>
-            </label>
+            </div>
           )}
 
           {action.kind === 'command' && (
