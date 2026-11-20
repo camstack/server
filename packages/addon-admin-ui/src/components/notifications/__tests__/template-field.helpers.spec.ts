@@ -191,12 +191,12 @@ describe('restoreHeldBackKinds', () => {
     systemEventKinds: ['alert-critical'],
   }
 
-  it('the served catalog alone offers a held-back kind nothing of its own', () => {
+  it('the served catalog alone offers the alert kinds their variables (nothing is held back)', () => {
     const names = varsForContext(servedTemplateVars(), alertRule).map((d) => d.name)
-    expect(names).not.toContain('severity')
+    expect(names).toContain('severity')
   })
 
-  it('restored, it offers the severity variable', () => {
+  it('restored, it still offers the severity variable', () => {
     const names = varsForContext(restoreHeldBackKinds(servedTemplateVars()), alertRule).map(
       (d) => d.name,
     )

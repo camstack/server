@@ -74,21 +74,21 @@ describe('NC_TEMPLATE_VARS', () => {
  * (`scripts/check-nc-mirrors-in-sync.ts` expires the list when it does).
  */
 describe('the SERVED template catalog holds back kinds the viewer cannot parse', () => {
-  it('holds back the alert episode kinds and the D905 rule-health kinds today (D934 dropped tanks)', () => {
-    expect([...NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS]).toEqual([
+  it('holds nothing back today: the viewer OTA mirroring every kind is installed', () => {
+    expect([...NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS]).toEqual([])
+  })
+
+  it('serves the kinds that were held back until the viewer OTA', () => {
+    const served = new Set(servedTemplateVars().flatMap((d) => d.systemEventKinds ?? []))
+    const wasHeldBack: readonly NcSystemEventKind[] = [
       'alert-critical',
-      'alert-error',
-      'alert-critical-resolved',
-      'device-attention-required',
-      'device-attention-resolved',
-      'rule-broken',
-      'rule-repaired',
-      'package-llm-silent',
-      'package-llm-answered',
       'device-command',
-      'storage-drain-progress',
       'storage-drain-complete',
-    ])
+      'rule-broken',
+    ]
+    for (const kind of wasHeldBack) {
+      expect(served.has(kind), kind).toBe(true)
+    }
   })
 
   it('no served descriptor names a held-back kind', () => {

@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A notification-target instances spec can name the edit-dialog widgets of a kind.
 - Notifier group schema: per-member policy (when, fields, templates, priority, throttle) and the group target kind
 
+### Changed
+
+- Notification templates: the alert, device-attention, rule-health, package-confirm, device-command and storage-drain system-event kinds are served to the viewer again
+
 ## [1.2.614] - 2026-11-20
 
 ### Changed

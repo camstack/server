@@ -287,7 +287,7 @@ function stripComments(text: string): string {
 }
 
 /** The string literals of the bracketed list after `marker`, or an error line. */
-function literals(src: string, source: ListSource): readonly string[] | string {
+function literals(src: string, source: ListSource, allowEmpty = false): readonly string[] | string {
   const at = src.indexOf(source.marker)
   if (at === -1) return `${source.path}: \`${source.marker}\` not found`
   const code = stripComments(src.slice(at + source.marker.length))
@@ -295,7 +295,7 @@ function literals(src: string, source: ListSource): readonly string[] | string {
   const close = open === -1 ? -1 : code.indexOf(']', open)
   if (open === -1 || close === -1) return `${source.path}: no [...] list after \`${source.marker}\``
   const items = [...code.slice(open + 1, close).matchAll(/'([^']+)'/g)].map((m) => m[1] ?? '')
-  if (items.length === 0)
+  if (items.length === 0 && !allowEmpty)
     return `${source.path}: the list after \`${source.marker}\` is empty — the read is broken`
   return items
 }
@@ -416,7 +416,8 @@ function checkRetiredAllowance(
 function readRepoList(source: ListSource): readonly string[] {
   const src = read(source.path)
   if (src === null) return []
-  const keys = literals(src, source)
+  // A held-back list is EMPTY once every viewer OTA is installed: empty is its resting state.
+  const keys = literals(src, source, true)
   if (typeof keys === 'string') {
     problems.push(keys)
     return []

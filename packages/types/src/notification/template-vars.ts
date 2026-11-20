@@ -1421,35 +1421,13 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
  * `NcTemplateVarKindSchema` froze the rule kinds for). The in-process catalog
  * keeps them: the producer parity and the preview render read it.
  *
- * SELF-EXPIRING: `scripts/check-nc-mirrors-in-sync.ts` reads this list as the
- * viewer's allowance and fails the day the viewer mirrors one of these kinds —
- * delete it from here then, and the served catalog names it again.
+ * EMPTY today: the viewer OTA that mirrors every kind (1.0.728) is installed,
+ * so the hub serves them all. A kind the hub produces BEFORE the viewer
+ * mirrors it goes back here until `scripts/check-nc-mirrors-in-sync.ts`
+ * (which reads this list as the viewer's allowance and notes any held-back
+ * kind the viewer already parses) says its OTA is installed.
  */
-export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKind[] = [
-  // The alert-centre episode kinds: a phone that has not installed the OTA
-  // mirroring them would fail the catalog parse on `{{severity}}`.
-  'alert-critical',
-  'alert-error',
-  'alert-critical-resolved',
-  // D911: the device-attention kinds share the alert vocabulary (`{{title}}`,
-  // `{{actionUrl}}`) a phone without the OTA does not know.
-  'device-attention-required',
-  'device-attention-resolved',
-  // D905: a phone that has not installed the OTA mirroring the rule-health
-  // kinds would fail the whole catalog parse on them.
-  'rule-broken',
-  'rule-repaired',
-  // D931: the package-confirm pair. A phone that has not mirrored the kinds
-  // would fail the catalog parse on them. `message` carries the last latency.
-  'package-llm-silent',
-  'package-llm-answered',
-  // D1022: the device-command kind and its `{{actionLabel}}` / `{{actorLabel}}`.
-  'device-command',
-  // #538: a drain's progress ping and its completion event. A phone that has
-  // not mirrored the two kinds would fail the whole catalog parse on them.
-  'storage-drain-progress',
-  'storage-drain-complete',
-]
+export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKind[] = []
 
 /**
  * The catalog as `getTemplateCatalog` SERVES it: every descriptor, with the
