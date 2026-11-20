@@ -62,6 +62,9 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
   protected readonly switchDp: string
 
   #handle: TuyaDevice | null = null
+  /** Tells the core the LAN client came back by itself (a new connection epoch). */
+  #announceReconnect: (() => void) | null = null
+  #lostConnection = false
 
   protected constructor(ctx: DeviceContext, type: DeviceType) {
     const cfg = tuyaDeviceConfigSchema.parse(ctx.persistedConfig ?? {})
@@ -91,7 +94,7 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCaps()
-    registerTuyaStateRefresh({
+    this.#announceReconnect = registerTuyaStateRefresh({
       ctx: this.ctx,
       integrationId: this.integrationId,
       readDevice: () => this.readDevice(),
@@ -181,6 +184,11 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
   }
 
   private markConnected(connected: boolean): void {
+    if (!connected) this.#lostConnection = true
+    else if (this.#lostConnection) {
+      this.#lostConnection = false
+      this.#announceReconnect?.()
+    }
     if (this.online === connected) return
     this.markOnline(connected)
   }

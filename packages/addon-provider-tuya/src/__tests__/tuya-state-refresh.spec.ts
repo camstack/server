@@ -8,11 +8,19 @@ import {
 } from '@camstack/types'
 
 /** The LAN client: a connected fake that keeps the datapoints the "device" reports. */
-const lan = vi.hoisted(() => ({ dps: {} as Record<string, unknown>, sets: [] as unknown[] }))
+const lan = vi.hoisted(() => ({
+  dps: {} as Record<string, unknown>,
+  sets: [] as unknown[],
+  clients: [] as { emit(event: string): boolean }[],
+}))
 
 vi.mock('@apocaliss92/nodetuya', async () => {
   const { EventEmitter } = await import('node:events')
   class FakeTuyaDevice extends EventEmitter {
+    constructor() {
+      super()
+      lan.clients.push(this)
+    }
     get dps(): Record<string, unknown> {
       return lan.dps
     }
@@ -75,6 +83,10 @@ function makeCtx(persistedConfig: Record<string, unknown>) {
         }
       },
     ),
+    unregisterNativeCap: vi.fn((name: string) => {
+      const at = registrations.findIndex((r) => r.cap.name === name)
+      if (at >= 0) registrations.splice(at, 1)
+    }),
     api: {
       deviceManager: {
         registerDevice: { mutate: vi.fn(async () => ({})) },
@@ -115,6 +127,7 @@ async function childSwitch() {
 beforeEach(() => {
   lan.dps = { '1': false }
   lan.sets = []
+  lan.clients = []
   tuyaConnections.clear()
 })
 
@@ -126,6 +139,18 @@ describe('Tuya device-state-refresh (D1062)', () => {
       push: 'full',
       batch: false,
     })
+  })
+
+  it('a LAN reconnect bumps the connection epoch, so the core reads the device again', async () => {
+    const { reg } = await ownerSwitch()
+    const epoch = (): unknown =>
+      reg(deviceStateRefreshCapability.name)?.options?.stateRefresh?.['connectionEpoch']
+    const first = epoch()
+    lan.clients[0]?.emit('connected') // the first connect is not a reconnect
+    expect(epoch()).toBe(first)
+    lan.clients[0]?.emit('disconnected')
+    lan.clients[0]?.emit('connected')
+    expect(epoch()).toBeGreaterThan(typeof first === 'number' ? first : -1)
   })
 
   it('an owner refresh queries the device and moves the slice to what it reports', async () => {

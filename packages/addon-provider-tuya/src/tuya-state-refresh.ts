@@ -18,7 +18,24 @@ import {
 export const TUYA_MIN_REFRESH_INTERVAL_MS = 1_000
 
 /** The part of a device context the refresh registration uses. */
-export type TuyaRefreshContext = Pick<DeviceContext, 'registerNativeCap'>
+export type TuyaRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>
+
+/**
+ * One counter per account. The core compares an account's epoch against the
+ * highest it saw, so every device of the account draws its bump from the same
+ * counter: a reconnect of ANY device then reads the whole account.
+ */
+const epochs = new Map<string, number>()
+
+function currentEpoch(integrationId: string): number {
+  return epochs.get(integrationId) ?? 0
+}
+
+function nextEpoch(integrationId: string): number {
+  const next = currentEpoch(integrationId) + 1
+  epochs.set(integrationId, next)
+  return next
+}
 
 export interface TuyaStateRefreshTarget {
   readonly ctx: TuyaRefreshContext
@@ -27,16 +44,22 @@ export interface TuyaStateRefreshTarget {
   readonly readDevice: () => Promise<void>
 }
 
-export function tuyaRefreshPolicy(integrationId: string): StateRefreshPolicy {
+export function tuyaRefreshPolicy(integrationId: string, connectionEpoch = 0): StateRefreshPolicy {
   return {
     integrationId,
+    connectionEpoch,
     minIntervalMs: TUYA_MIN_REFRESH_INTERVAL_MS,
     batch: false,
     push: 'full',
   }
 }
 
-export function registerTuyaStateRefresh(target: TuyaStateRefreshTarget): void {
+/**
+ * Register the device's refresh cap. The returned function is to be called when
+ * the LAN client reconnected on its own: it publishes a higher connection epoch
+ * so the core reads the account again (pushes lost while it was down).
+ */
+export function registerTuyaStateRefresh(target: TuyaStateRefreshTarget): () => void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
       await target.readDevice()
@@ -44,7 +67,16 @@ export function registerTuyaStateRefresh(target: TuyaStateRefreshTarget): void {
     },
     resubscribe: async () => ({ ok: true }),
   }
-  target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: tuyaRefreshPolicy(target.integrationId),
-  })
+  const register = (epoch: number): void => {
+    target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
+      stateRefresh: tuyaRefreshPolicy(target.integrationId, epoch),
+    })
+  }
+  register(currentEpoch(target.integrationId))
+  return () => {
+    const unregister = target.ctx.unregisterNativeCap
+    if (unregister === undefined) return
+    unregister.call(target.ctx, deviceStateRefreshCapability.name)
+    register(nextEpoch(target.integrationId))
+  }
 }
