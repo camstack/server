@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.698] - 2026-11-20
+
 ### Changed
 
 - A Home Assistant valve's position control now follows the entity's own supported features, derived from the valve capability

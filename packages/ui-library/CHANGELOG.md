@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.481] - 2026-11-20
+
 ### Changed
 
 - Event filter: pick from the catalogued event categories, grouped and labelled, or add a custom pattern (an exact id or prefix.*)

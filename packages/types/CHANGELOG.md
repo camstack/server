@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.607] - 2026-11-20
+
 ### Changed
 
 - Valve positionable is now derived from the bound valve capability instead of a driver's own claim

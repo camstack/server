@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.250] - 2026-11-20
+
 ### Changed
 
 - A Reolink battery camera that is being recorded or watched now stays awake: a firmware sleep notification no longer cuts its live stream while a consumer is attached

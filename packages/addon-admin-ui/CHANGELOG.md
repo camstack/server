@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.715] - 2026-11-20
+
 ### Changed
 
 - Logs has an Events section: a live and recent system event stream with a category picker and custom pattern, kept in the URL
