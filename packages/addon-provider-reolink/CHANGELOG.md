@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.249] - 2026-11-20
+
 ### Changed
 
 - Battery cameras report the charge state (charging, full, idle), battery voltage in volts, current and temperature when the firmware sends them
