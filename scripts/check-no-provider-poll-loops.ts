@@ -56,6 +56,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-hikvision/src/hikvision-camera.ts',
   'packages/addon-provider-hikvision/src/accessories/light.ts',
   'packages/addon-provider-onvif',
+  'packages/addon-provider-rtsp',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

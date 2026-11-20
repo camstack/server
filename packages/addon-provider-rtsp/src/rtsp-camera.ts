@@ -9,7 +9,7 @@ import {
   maskUrlCredentials,
   streamCatalogCapability,
   CamProfileSchema,
-  startReachabilityPoll,
+  registerReachabilityRefresh,
 } from '@camstack/types'
 import type {
   CamStreamDescriptor,
@@ -18,7 +18,7 @@ import type {
   DeviceContext,
   ICameraDevice,
   InferNativeProvider,
-  ReachabilityPollHandle,
+  ReachabilityRefreshHandle,
   StreamMetadata,
   StreamQuality,
   StreamSourceEntry,
@@ -101,10 +101,11 @@ export class RtspCamera extends BaseDevice<typeof rtspCameraSchema> implements I
   features = [] as const satisfies readonly DeviceFeature[]
 
   /** Control-plane reachability poll — an RTSP `OPTIONS`/TCP-connect probe to
-   *  the camera's RTSP port every 30s drives `device.online`, decoupled from
+   *  the camera's RTSP port drives `device.online` (read by the hub's state
+   *  refresh, D1062), decoupled from
    *  stream-broker video health. Started in `onActivate`, stopped in
    *  `removeDevice`. */
-  private reachabilityPoll: ReachabilityPollHandle | null = null
+  private reachabilityPoll: ReachabilityRefreshHandle | null = null
 
   constructor(ctx: DeviceContext) {
     super(ctx, rtspCameraSchema, { type: DeviceType.Camera })
@@ -123,12 +124,14 @@ export class RtspCamera extends BaseDevice<typeof rtspCameraSchema> implements I
     this.startReachabilityPolling()
   }
 
-  /** Start the RTSP reachability poll: a lightweight `OPTIONS`/TCP-connect
-   *  probe to the first configured stream's `host:port` every 30s drives
-   *  `device.online`, with hysteresis. Idempotent. */
+  /** Register the RTSP reachability read: a lightweight `OPTIONS`/TCP-connect
+   *  probe to the first configured stream's `host:port` drives `device.online`,
+   *  with hysteresis. The hub's state refresh decides when it runs (D1062, no
+   *  timer here); the first probe runs now. Idempotent. */
   private startReachabilityPolling(): void {
     if (this.reachabilityPoll) return
-    this.reachabilityPoll = startReachabilityPoll({
+    this.reachabilityPoll = registerReachabilityRefresh({
+      ctx: this.ctx,
       probe: async () => {
         const streams = this.config.get('streams')
         const url = streams[0]?.url
@@ -141,6 +144,7 @@ export class RtspCamera extends BaseDevice<typeof rtspCameraSchema> implements I
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
+    void this.reachabilityPoll.probeNow()
   }
 
   /** Per-probe TCP/RTSP round-trip budget — a dead host resolves as a miss. */

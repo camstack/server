@@ -58,6 +58,7 @@ export async function probeRtspReachable(url: string, timeoutMs: number): Promis
     }
 
     socket.setTimeout(timeoutMs)
+    // not-a-state-poll: socket deadline of one probe, not a cadence
     socket.once('timeout', () => finish(connected))
     socket.once('error', () => finish(false))
     socket.once('connect', () => {
