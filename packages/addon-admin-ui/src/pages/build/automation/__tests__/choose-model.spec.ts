@@ -73,11 +73,12 @@ describe('choose-model (#500)', () => {
 })
 
 describe('parallel members (#500)', () => {
-  it('takes a command, an action and a wait, and refuses a set, a stop and a block step', () => {
+  it('takes a command, an action, a notification and a wait, and refuses a set, a stop and a block step', () => {
     expect(isParallelMember({ kind: 'wait', seconds: 5 })).toBe(true)
+    expect(isParallelMember({ kind: 'notify', targetId: 't', body: 'M' })).toBe(true)
     expect(isParallelMember({ kind: 'set', vars: {} })).toBe(false)
     expect(isParallelMember({ kind: 'stop', reason: '', outcome: 'ok' })).toBe(false)
     expect(isParallelMember({ kind: 'parallel', steps: [] })).toBe(false)
-    expect(PARALLEL_KINDS).toEqual(['command', 'action', 'wait'])
+    expect(PARALLEL_KINDS).toEqual(['command', 'action', 'notify', 'wait'])
   })
 })
