@@ -107,6 +107,7 @@ function makeFeeder() {
   const device = new PetkitFeederDevice(ctx)
   return {
     device,
+    warn: ctx.logger.warn,
     reg: (name: string) => registrations.find((r) => r.cap.name === name),
     status: () => device.runtimeState.getCapState<PetFeederStatus>('pet-feeder'),
   }
@@ -171,6 +172,29 @@ describe('PetKit device-state-refresh (D1062)', () => {
         reason: 'schedule',
       } as never),
     ).rejects.toThrow(/429/)
+  })
+
+  it('a refresh the core asked for is not logged by the provider (the core logs it)', async () => {
+    const handle = makeHandle({ childLock: 0 })
+    publish(handle)
+    const { device, reg, warn } = makeFeeder()
+    await device.onActivate()
+    await new Promise((resolve) => setTimeout(resolve, 0)) // the activation read settles
+    warn.mockClear()
+    handle.refresh.mockRejectedValueOnce(new Error('429'))
+    await reg(deviceStateRefreshCapability.name)
+      ?.provider['refresh']?.({ deviceIds: [3], reason: 'schedule' } as never)
+      .catch(() => undefined)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('a feed is held as feeding, so the core reads again 3 s and 10 s after it', async () => {
+    publish(makeHandle({ childLock: 0 }))
+    const { device, reg } = makeFeeder()
+    await device.onActivate()
+    expect(reg('pet-feeder')?.options).toMatchObject({
+      commands: { feed: { extraEffects: [{ field: 'feeding', value: true }] } },
+    })
   })
 
   it('a command does not read the cloud itself: the core reads after it', async () => {

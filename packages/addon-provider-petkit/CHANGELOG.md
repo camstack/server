@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- PetKit feeders are read on the hub's schedule (at least every 30 s, slower if the account interval is set) and once after each command; a status read answers at once and refreshes in the background
+- PetKit feeders are read on the hub's schedule (at least every 30 s, slower if the account interval is set) and once after each command; a status read answers at once and refreshes in the background; the faster 10 s cadence after feeder activity is gone (30 s flat, plus the hub's reads 3 s and 10 s after a feed)
 
 ## [0.2.171] - 2026-11-17
 

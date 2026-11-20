@@ -31,6 +31,9 @@ import { petkitSession } from '../petkit-session.js'
 import { petkitIdentifiers } from '../petkit-identifiers.js'
 
 const PET_FEEDER_CAP = 'pet-feeder'
+
+/** How long a feed is shown as in progress while the cloud has not confirmed it. */
+const FEED_HOLD_MS = 20_000
 /** How long a slice stays "fresh" before a read triggers a re-poll. */
 const STALE_MS = 15_000
 
@@ -263,12 +266,19 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     }
   }
 
-  /** Read the cloud once for the activation / surface read; a failure is logged, never thrown. */
+  /**
+   * Read the cloud once for the activation / surface / stale-read paths, which
+   * no core refresh covers: a failure is logged here, never thrown. (A read the
+   * core asked for fails to the core, which logs it.)
+   */
   private async refreshFromCloud(): Promise<void> {
     try {
       await this.readFromCloud()
-    } catch {
-      // already logged and reported by readFromCloud
+    } catch (err: unknown) {
+      this.ctx.logger.warn('petkit feeder: refresh failed', {
+        tags: { deviceId: this.id },
+        meta: { petkitDeviceId: this.petkitDeviceId, error: errMsg(err) },
+      })
     }
   }
 
@@ -282,10 +292,6 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
       // report it once per integration, never per feeder.
       petkitSession.failure(this.integrationId, err)
       petkitConnections.reportFailure(this.integrationId, err)
-      this.ctx.logger.warn('petkit feeder: refresh failed', {
-        tags: { deviceId: this.id },
-        meta: { petkitDeviceId: this.petkitDeviceId, error: errMsg(err) },
-      })
       throw err
     }
     void petkitSession.ok(this.integrationId)
@@ -443,6 +449,12 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
         await this.requireHandle().setVolume(level)
       },
     }
-    this.ctx.registerNativeCap(petFeederCapability, provider)
+    // A feed is shown as feeding until the cloud says so (D1061): the hold also
+    // keeps the core's 3 s / 10 s follow-up reads running after it.
+    this.ctx.registerNativeCap(petFeederCapability, provider, {
+      commands: {
+        feed: { holdMs: FEED_HOLD_MS, extraEffects: [{ field: 'feeding', value: true }] },
+      },
+    })
   }
 }
