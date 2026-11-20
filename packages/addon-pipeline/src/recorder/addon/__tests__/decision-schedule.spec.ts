@@ -81,6 +81,14 @@ describe('nextDecisionChangeAt — nothing can ever change', () => {
     expect(nextDecisionChangeAt({ config, triggers: NO_TRIGGERS, nowMs: localAt(12) })).toBeNull()
   })
 
+  it('arms no band-edge for an all-day continuous band authored 00:00-23:59', () => {
+    const config: RecordingConfig = {
+      enabled: true,
+      bands: [{ days: [], start: '00:00', end: '23:59', mode: 'continuous' }],
+    }
+    expect(nextDecisionChangeAt({ config, triggers: NO_TRIGGERS, nowMs: localAt(12) })).toBeNull()
+  })
+
   it('returns null for an always-on events band with no trigger yet — only a trigger can change it', () => {
     const config: RecordingConfig = {
       enabled: true,

@@ -19,6 +19,21 @@ describe('bandActiveAt', () => {
     expect(bandActiveAt(b, at(2026, 5, 15, 20, 0))).toBe(false)
     expect(bandActiveAt(b, at(2026, 5, 15, 7, 59))).toBe(false)
   })
+  it('an end of 23:59 means the end of the day: 23:59:30 is inside an all-day band', () => {
+    const b = band({ start: '00:00', end: '23:59' })
+    expect(bandActiveAt(b, new Date(2026, 5, 15, 23, 59, 30))).toBe(true)
+    expect(bandActiveAt(b, at(2026, 5, 15, 0, 0))).toBe(true)
+  })
+  it('an overnight-style 22:00-23:59 band also covers 23:59', () => {
+    const b = band({ start: '22:00', end: '23:59' })
+    expect(bandActiveAt(b, at(2026, 5, 15, 23, 59))).toBe(true)
+    expect(bandActiveAt(b, at(2026, 5, 15, 21, 59))).toBe(false)
+  })
+  it('a 08:00-18:00 band stays exclusive at 18:00', () => {
+    const b = band({ start: '08:00', end: '18:00' })
+    expect(bandActiveAt(b, at(2026, 5, 15, 17, 59))).toBe(true)
+    expect(bandActiveAt(b, at(2026, 5, 15, 18, 0))).toBe(false)
+  })
   it('overnight window wraps past midnight onto the next day', () => {
     const b = band({ days: [1], start: '22:00', end: '06:00' })
     expect(bandActiveAt(b, at(2026, 5, 15, 23, 0))).toBe(true)

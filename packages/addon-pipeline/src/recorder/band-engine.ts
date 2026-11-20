@@ -1,8 +1,21 @@
 import type { RecordingBand } from './config-types.js'
 
+const MINUTES_PER_DAY = 1440
+const LAST_MINUTE_OF_DAY = MINUTES_PER_DAY - 1
+
 function toMin(hhmm: string): number {
   const [h, m] = hhmm.split(':')
   return Number(h) * 60 + Number(m)
+}
+
+/**
+ * A band's END as an exclusive minute. `23:59` is how the admin UI authors "to
+ * the end of the day" (`00:00–23:59`), so it means 1440: with a literal 1439 the
+ * last minute of every day fell outside an all-day band.
+ */
+function endMin(hhmm: string): number {
+  const m = toMin(hhmm)
+  return m === LAST_MINUTE_OF_DAY ? MINUTES_PER_DAY : m
 }
 
 /**
@@ -34,7 +47,7 @@ export function bandActiveAt(band: RecordingBand, date: Date, battery?: BatteryC
   const prevWd = (wd + 6) % 7
   const t = date.getHours() * 60 + date.getMinutes()
   const s = toMin(band.start)
-  const e = toMin(band.end)
+  const e = endMin(band.end)
   const applies = (d: number): boolean => band.days.length === 0 || band.days.includes(d)
 
   if (s < e) return applies(wd) && t >= s && t < e
