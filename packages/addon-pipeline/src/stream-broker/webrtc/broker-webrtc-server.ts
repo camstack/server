@@ -479,6 +479,15 @@ interface SessionEntry {
   readonly liveDemanded: boolean
 }
 
+/** A lower-resolution stream of the same camera that fits the client's H.264 level. */
+interface LevelFittingPick {
+  readonly brokerId: string
+  readonly broker: IStreamBroker
+  readonly profileLevelId: string
+  /** The warm-up demand held on a broker that was cold; null when it was warm. */
+  readonly release: Unsubscribe | null
+}
+
 /** The setup-time facts an in-place tier switch rebinds a session with (D733). */
 interface SessionRebind {
   readonly deviceId: number
@@ -588,6 +597,57 @@ export function resolveClientOfferTranscodeToBaseline(
     0,
   )
   return maxOfferedIdc < sourceIdc
+}
+
+/** level_idc (last byte of a profile-level-id) as a number, e.g. `4d0033` ->
+ *  51 (5.1), `42e01f` -> 31 (3.1). 0 for malformed input. */
+function h264LevelIdc(profileLevelId: string): number {
+  if (profileLevelId.length < 6) return 0
+  const level = Number.parseInt(profileLevelId.slice(4, 6), 16)
+  return Number.isNaN(level) ? 0 : level
+}
+
+/**
+ * Whether the client's decoder can take the source's PROFILE but advertised
+ * only a LOWER LEVEL than the source's. Strict WebKit/iOS offers
+ * `42e01f` / `640c1f` (L3.1) and is negotiated at L3.1; a 4K Main L5.1 source
+ * then shows black. Desktop Chrome offers a high level (...34) for Main/High and
+ * is NOT capped.
+ *
+ * A level check was removed once as a force-transcode decided from the SOURCE
+ * alone (it re-encoded sources a client decodes fine). This one is decided from
+ * the client's offer: capped iff the offer holds a profile at least as capable
+ * as the source's AND no such profile offers a level >= the source's. A
+ * Baseline source is never capped (Firefox offers only L3.1 Baseline and
+ * decodes any level); an offer with no compatible profile is the profile rule's
+ * business (`resolveClientOfferTranscodeToBaseline`).
+ */
+export function isClientOfferLevelCapped(
+  sessionCodec: 'H264' | 'H265',
+  sourceProfileLevelId: string | undefined,
+  offeredProfileLevelIds: readonly string[],
+): boolean {
+  if (sessionCodec !== 'H264') return false
+  if (!sourceProfileLevelId) return false
+  if (isBaselineProfileLevelId(sourceProfileLevelId)) return false
+  const sourceIdc = h264ProfileIdc(sourceProfileLevelId)
+  const sourceLevel = h264LevelIdc(sourceProfileLevelId)
+  const compatible = offeredProfileLevelIds.filter((plid) => h264ProfileIdc(plid) >= sourceIdc)
+  if (compatible.length === 0) return false
+  const maxLevel = compatible.reduce((max, plid) => Math.max(max, h264LevelIdc(plid)), 0)
+  return maxLevel < sourceLevel
+}
+
+/** Whether a stream with this profile-level-id is served to the client as is:
+ *  its profile decodes and its level fits the offer. */
+export function clientOfferFitsStream(
+  profileLevelId: string,
+  offeredProfileLevelIds: readonly string[],
+): boolean {
+  return (
+    !resolveClientOfferTranscodeToBaseline('H264', profileLevelId, offeredProfileLevelIds) &&
+    !isClientOfferLevelCapped('H264', profileLevelId, offeredProfileLevelIds)
+  )
 }
 
 /**
@@ -728,7 +788,12 @@ function makeSourceRtpForwarder(input: SourceRtpForwarderInput): (rtpData: Buffe
       firstRtpForwarded = true
       sessionLogger.info('RTP session: first source RTP forwarded to repacketizer', {
         tags: { deviceId },
-        meta: { sessionId, brokerId, codec: sessionCodec, bytes: rtpData.length },
+        meta: {
+          sessionId,
+          brokerId,
+          codec: sessionCodec,
+          bytes: rtpData.length,
+        },
       })
     }
     try {
@@ -1268,7 +1333,10 @@ export class BrokerWebrtcServer {
     // here means the residue is transport / event-loop scheduling, not this
     // path.
     const offerStart = Date.now()
-    const setup = await this.setupSessionForBroker(streamId, hints, { ...opts, clientOfferSdp })
+    const setup = await this.setupSessionForBroker(streamId, hints, {
+      ...opts,
+      clientOfferSdp,
+    })
     const setupMs = Date.now() - offerStart
     try {
       // Relay policy must be set BEFORE handleOffer builds the PeerConnection.
@@ -1408,19 +1476,20 @@ export class BrokerWebrtcServer {
       }
     }
 
-    const brokerId = this.resolveBrokerId(streamId, resolveHints)
+    let brokerId = this.resolveBrokerId(streamId, resolveHints)
     // A broker that is being REBUILT is not a stream that is gone. Every addon
     // respawn tears them down and re-registers them a few seconds later; a
     // viewer reconnecting inside that window used to fail terminally, and the
     // operator's only cure was pause/play — the same call, later. Wait for it.
-    const broker =
+    const resolvedBroker =
       this.brokers.get(brokerId) ?? (await this.waitForBroker(brokerId, BROKER_REAPPEAR_WAIT_MS))
-    if (!broker) {
+    if (!resolvedBroker) {
       throw new Error(
         `No broker for stream "${streamId}" (resolved: "${brokerId}") after waiting ` +
           `${String(BROKER_REAPPEAR_WAIT_MS)}ms for one to register`,
       )
     }
+    let broker: IStreamBroker = resolvedBroker
 
     // Transcode-down rung (BUG #4): when the controller forced a transcode-down,
     // the recreated session re-encodes its egress to a reduced (≤360p, low
@@ -1516,7 +1585,11 @@ export class BrokerWebrtcServer {
       await new Promise<void>((resolve) => {
         const timer = setTimeout(() => {
           sessionLogger.warn('broker SDP wait timed out — falling back to default codec', {
-            meta: { brokerId, currentCodec: broker.getStats().codec ?? null, timeoutMs: 2500 },
+            meta: {
+              brokerId,
+              currentCodec: broker.getStats().codec ?? null,
+              timeoutMs: 2500,
+            },
           })
           resolve()
         }, 2500)
@@ -1530,8 +1603,71 @@ export class BrokerWebrtcServer {
       sessionLogger.info('broker warm-up complete', {
         // `waitedMs` — the success case previously logged no duration, so a
         // 2-second cold-dial wait was indistinguishable from a 5 ms one.
-        meta: { brokerId, detectedCodec: broker.getStats().codec ?? null, waitedMs: warmUpMs },
+        meta: {
+          brokerId,
+          detectedCodec: broker.getStats().codec ?? null,
+          waitedMs: warmUpMs,
+        },
       })
+    }
+
+    // A client whose decoder advertises only a LOWER H.264 level than the
+    // source (strict WebKit: L3.1 against a 4K L5.1 main) is negotiated at that
+    // level and shows black. Serve the camera's own lower-resolution stream
+    // when one fits - no CPU - and let the transcode rule below take over only
+    // when none does.
+    if (!deferLive && opts.clientOfferSdp !== undefined && broker.getStats().codec === 'h264') {
+      const offered = extractOfferedH264ProfileLevelIds(opts.clientOfferSdp)
+      const mainProfile = deriveH264ProfileLevelId(
+        broker.getSdpParameterSets(),
+        broker.getPreBuffer(),
+      )
+      if (mainProfile !== undefined && isClientOfferLevelCapped('H264', mainProfile, offered)) {
+        const pick = await this.pickLevelFittingBroker({
+          deviceId,
+          currentBrokerId: brokerId,
+          offered,
+        })
+        if (pick !== null) {
+          sessionLogger.info(
+            'WebRTC: client decodes a lower H.264 level than the source - serving the lower-resolution stream',
+            {
+              tags: { deviceId },
+              meta: {
+                reason: 'client-level-below-source',
+                fromBrokerId: brokerId,
+                toBrokerId: pick.brokerId,
+                sourceProfileLevelId: mainProfile,
+                servedProfileLevelId: pick.profileLevelId,
+                offeredProfileLevelIds: offered,
+              },
+            },
+          )
+          // The substream's own warm-up demand (when it was cold) holds it up
+          // until the real subscription below attaches, like the main one.
+          const releaseMainWarmUp = warmUpUnsubscribe
+          const releasePickWarmUp = pick.release
+          warmUpUnsubscribe = () => {
+            releaseMainWarmUp?.()
+            releasePickWarmUp?.()
+          }
+          brokerId = pick.brokerId
+          broker = pick.broker
+        } else {
+          sessionLogger.info(
+            'WebRTC: client decodes a lower H.264 level than the source and no lower-resolution stream fits - re-encoding to Constrained Baseline',
+            {
+              tags: { deviceId },
+              meta: {
+                reason: 'client-level-below-source-no-substream',
+                brokerId,
+                sourceProfileLevelId: mainProfile,
+                offeredProfileLevelIds: offered,
+              },
+            },
+          )
+        }
+      }
     }
 
     const brokerCodec = broker.getStats().codec ?? 'h264'
@@ -1563,7 +1699,16 @@ export class BrokerWebrtcServer {
     // discriminator any wake-up debugging needs.
     sessionLogger.info(
       `WebRTC session: codec=${sessionCodec} brokerCodec=${brokerCodec} sourceType=${sourceType ?? 'null'} isRtp=${isRtp} repacketizer=${useRtpRepacketizer}`,
-      { meta: { brokerId, sessionCodec, brokerCodec, sourceType, isRtp, useRtpRepacketizer } },
+      {
+        meta: {
+          brokerId,
+          sessionCodec,
+          brokerCodec,
+          sourceType,
+          isRtp,
+          useRtpRepacketizer,
+        },
+      },
     )
 
     // Create push-based FrameSource from broker's encoded data. The overflow
@@ -1907,7 +2052,10 @@ export class BrokerWebrtcServer {
               const urls = Array.isArray(entry.urls) ? entry.urls : [entry.urls]
               const stunOnly = urls.filter((u) => !u.startsWith('turn:') && !u.startsWith('turns:'))
               if (stunOnly.length === 0) return null
-              return { ...entry, urls: stunOnly.length === 1 ? stunOnly[0]! : stunOnly }
+              return {
+                ...entry,
+                urls: stunOnly.length === 1 ? stunOnly[0]! : stunOnly,
+              }
             })
             .filter((e): e is NonNullable<typeof e> => e !== null)
         : allIceServers
@@ -1935,7 +2083,7 @@ export class BrokerWebrtcServer {
           sessionCodec,
           sourceProfileLevelId,
           offeredProfileLevelIds,
-        )
+        ) || isClientOfferLevelCapped(sessionCodec, sourceProfileLevelId, offeredProfileLevelIds)
       : resolveBrokerTranscodeToBaseline(sessionCodec, sourceProfileLevelId)
     if (transcodeToBaseline) {
       sessionLogger.info(
@@ -1957,7 +2105,14 @@ export class BrokerWebrtcServer {
     ) {
       sessionLogger.info(
         'WebRTC: client offered a profile that decodes the non-Baseline H.264 source — passthrough (no re-encode)',
-        { meta: { brokerId, sessionId, sourceProfileLevelId, offeredProfileLevelIds } },
+        {
+          meta: {
+            brokerId,
+            sessionId,
+            sourceProfileLevelId,
+            offeredProfileLevelIds,
+          },
+        },
       )
     }
 
@@ -1981,7 +2136,11 @@ export class BrokerWebrtcServer {
       sessionId,
       source,
       ...(talkback !== undefined
-        ? { intercom: { onAudioReceived: (data, format) => talkback.onAudio(data, format) } }
+        ? {
+            intercom: {
+              onAudioReceived: (data, format) => talkback.onAudio(data, format),
+            },
+          }
         : {}),
       sourceCodec: sessionCodec,
       transcodeToBaseline,
@@ -2036,7 +2195,12 @@ export class BrokerWebrtcServer {
       if (sdpPs && sdpPs.length > 0) {
         seedFromSdp(sdpPs)
         sessionLogger.info('RTP session seeded from SDP at create-time', {
-          meta: { sessionId, brokerId, codec: sessionCodec, psCount: sdpPs.length },
+          meta: {
+            sessionId,
+            brokerId,
+            codec: sessionCodec,
+            psCount: sdpPs.length,
+          },
         })
       } else {
         // Battery-cam wake-up: broker is still dialing rfc4571, so
@@ -2057,7 +2221,12 @@ export class BrokerWebrtcServer {
           try {
             seedFromSdp(ps)
             sessionLogger.info('RTP session seeded from SDP late delivery', {
-              meta: { sessionId, brokerId, codec: sessionCodec, psCount: ps.length },
+              meta: {
+                sessionId,
+                brokerId,
+                codec: sessionCodec,
+                psCount: ps.length,
+              },
             })
           } catch (err) {
             sessionLogger.warn('seedCodecInfoFromSdp threw', {
@@ -2151,7 +2320,13 @@ export class BrokerWebrtcServer {
       const refuse = (why: string): void => {
         sessionLogger.info(`clip-intent session: re-offer refused — ${why}`, {
           tags: { deviceId },
-          meta: { sessionId, brokerId, requested: next.kind, pending: pendingReoffer, reason },
+          meta: {
+            sessionId,
+            brokerId,
+            requested: next.kind,
+            pending: pendingReoffer,
+            reason,
+          },
         })
       }
       if (!deferLive) return refuse('the session is live already')
@@ -2317,7 +2492,11 @@ export class BrokerWebrtcServer {
               segmentDurMs: args.segmentDurMs,
               epochMs: args.epochMs,
             })
-            return { gopStartMs: res.gopStartMs, gopDurMs: res.gopDurMs, bytes: res.data }
+            return {
+              gopStartMs: res.gopStartMs,
+              gopDurMs: res.gopDurMs,
+              bytes: res.data,
+            }
           }
         : undefined
       const readClip = this.readClipBytes
@@ -2530,7 +2709,13 @@ export class BrokerWebrtcServer {
           onLog: (msg, data) =>
             sessionLogger.info(msg, {
               tags: { deviceId: clip ? clip.deviceId : deviceId },
-              meta: { sessionId, deviceId, profile, clipId: clip?.clipId, ...data },
+              meta: {
+                sessionId,
+                deviceId,
+                profile,
+                clipId: clip?.clipId,
+                ...data,
+              },
             }),
         })
         // A clip feeder answers one more question than the recorder's: how
@@ -2568,7 +2753,13 @@ export class BrokerWebrtcServer {
                 // A failed warm costs nothing but the head start — but it LOGS:
                 // a silent warm failure reads exactly like a warm that worked.
                 sessionLogger.warn('recorded: warm failed', {
-                  meta: { sessionId, deviceId, profile, epochMs, error: errMsg(err) },
+                  meta: {
+                    sessionId,
+                    deviceId,
+                    profile,
+                    epochMs,
+                    error: errMsg(err),
+                  },
                 })
               })
             }
@@ -2584,7 +2775,10 @@ export class BrokerWebrtcServer {
             }
           : {}),
         onLog: (msg, data) =>
-          sessionLogger.warn(msg, { tags: { deviceId }, meta: { sessionId, ...data } }),
+          sessionLogger.warn(msg, {
+            tags: { deviceId },
+            meta: { sessionId, ...data },
+          }),
       })
       // Expose the coordinator to the adaptive ladder so it can suspend itself
       // while the pointer is off live (see `startAdaptive`).
@@ -2612,7 +2806,12 @@ export class BrokerWebrtcServer {
         replayClip = () => {
           sessionLogger.info('clip playback: replaying the clip at its own codec', {
             tags: { deviceId: clip.deviceId },
-            meta: { sessionId, clipId: clip.clipId, codec: sessionCodec, offsetMs },
+            meta: {
+              sessionId,
+              clipId: clip.clipId,
+              codec: sessionCodec,
+              offsetMs,
+            },
           })
           void timeline
             .handleControl({
@@ -2758,7 +2957,10 @@ export class BrokerWebrtcServer {
   }
 
   /** Trickle ICE — the server's gathered candidates for a session (poll). */
-  getIceCandidates(sessionId: string): { candidates: IceCandidatePayload[]; done: boolean } {
+  getIceCandidates(sessionId: string): {
+    candidates: IceCandidatePayload[]
+    done: boolean
+  } {
     const entry = this.sessions.get(sessionId)
     if (!entry) return { candidates: [], done: true }
     return entry.session.getIceCandidatesSnapshot()
@@ -2939,7 +3141,12 @@ export class BrokerWebrtcServer {
             climbHold: controller.climbHold === null ? null : toWireClimbHold(controller.climbHold),
           }
         : decision !== null
-          ? { lastDecision: decision, failures: [], upgradeCount: 0, climbHold: null }
+          ? {
+              lastDecision: decision,
+              failures: [],
+              upgradeCount: 0,
+              climbHold: null,
+            }
           : null
     let brokerStats: ReturnType<IStreamBroker['getStats']> | null = null
     try {
@@ -3027,7 +3234,11 @@ export class BrokerWebrtcServer {
     const candidates: RungCandidate[] = []
     for (const [bid, broker] of this.brokers) {
       if (bid.startsWith(prefix)) {
-        candidates.push({ brokerId: bid, tier: this.profileTierResolver?.(bid) ?? null, broker })
+        candidates.push({
+          brokerId: bid,
+          tier: this.profileTierResolver?.(bid) ?? null,
+          broker,
+        })
       }
     }
     // The same preference a re-offer's resolution applies: the rung a climb
@@ -3181,7 +3392,15 @@ export class BrokerWebrtcServer {
           const rtpSent = entry.session.rtpPacketsSentTotal
           const serverSending = rtpSent > lastRtpSent
           lastRtpSent = rtpSent
-          this.feedAdaptive({ entry, deviceId, controller, meter, client, serverSending, now })
+          this.feedAdaptive({
+            entry,
+            deviceId,
+            controller,
+            meter,
+            client,
+            serverSending,
+            now,
+          })
 
           const pct = client?.packetLossPercent ?? null
           if (pct !== null && pct !== undefined) {
@@ -3340,7 +3559,10 @@ export class BrokerWebrtcServer {
     const out: { brokerId: string; tier: CamProfile | null }[] = []
     for (const bid of this.brokers.keys()) {
       if (bid.startsWith(prefix))
-        out.push({ brokerId: bid, tier: this.profileTierResolver?.(bid) ?? null })
+        out.push({
+          brokerId: bid,
+          tier: this.profileTierResolver?.(bid) ?? null,
+        })
     }
     return out
   }
@@ -3414,7 +3636,14 @@ export class BrokerWebrtcServer {
   ): void {
     this.logger.info('adaptive: tier switch needs a re-offer — cannot stay on the session', {
       tags: { deviceId },
-      meta: { sessionId, deviceId, tier, fromBrokerId: entry.brokerId, reason, cause: why },
+      meta: {
+        sessionId,
+        deviceId,
+        tier,
+        fromBrokerId: entry.brokerId,
+        reason,
+        cause: why,
+      },
     })
   }
 
@@ -3454,7 +3683,8 @@ export class BrokerWebrtcServer {
       const profile = deriveH264ProfileLevelId(target.getSdpParameterSets(), target.getPreBuffer())
       needsBaselineTranscode =
         rebind.offeredProfileLevelIds !== undefined
-          ? resolveClientOfferTranscodeToBaseline('H264', profile, rebind.offeredProfileLevelIds)
+          ? resolveClientOfferTranscodeToBaseline('H264', profile, rebind.offeredProfileLevelIds) ||
+            isClientOfferLevelCapped('H264', profile, rebind.offeredProfileLevelIds)
           : resolveBrokerTranscodeToBaseline('H264', profile)
     }
     return {
@@ -3501,7 +3731,9 @@ export class BrokerWebrtcServer {
       return { kind: 'refused', reason: 'tier-unavailable' }
     }
     if (this.sessions.get(sessionId) !== entry) return { kind: 'abandoned' }
-    const targetId = this.selectBestBroker(String(deviceId), { prefersTier: tier })
+    const targetId = this.selectBestBroker(String(deviceId), {
+      prefersTier: tier,
+    })
     const target = this.brokers.get(targetId)
     // The rung the wanted tier resolves to. A camera with two streams serves no
     // `mid`: the re-offer always landed such a move on the smallest rung and
@@ -3514,7 +3746,14 @@ export class BrokerWebrtcServer {
         'adaptive: wanted tier is not served — the session stays on its rung',
         {
           tags: { deviceId },
-          meta: { sessionId, deviceId, tier, landed, brokerId: targetId, cause: why },
+          meta: {
+            sessionId,
+            deviceId,
+            tier,
+            landed,
+            brokerId: targetId,
+            cause: why,
+          },
         },
       )
       return { kind: 'committed' }
@@ -3534,7 +3773,14 @@ export class BrokerWebrtcServer {
       'adaptive: tier switch staying on the session — waiting for a keyframe',
       {
         tags: { deviceId },
-        meta: { sessionId, deviceId, tier, fromBrokerId, toBrokerId: targetId, cause: why },
+        meta: {
+          sessionId,
+          deviceId,
+          tier,
+          fromBrokerId,
+          toBrokerId: targetId,
+          cause: why,
+        },
       },
     )
     return new Promise<InPlaceOutcome>((resolve) => {
@@ -3648,7 +3894,12 @@ export class BrokerWebrtcServer {
     entry.unsubSourceRestart = target.onSourceRestart((reason: string) => {
       sessionLogger.info('broker re-dialed the source — re-syncing session', {
         tags: { deviceId },
-        meta: { sessionId: sw.sessionId, brokerId: sw.targetId, deviceId, reason },
+        meta: {
+          sessionId: sw.sessionId,
+          brokerId: sw.targetId,
+          deviceId,
+          reason,
+        },
       })
       session.onSourceRestarted(reason)
     })
@@ -3724,10 +3975,18 @@ export class BrokerWebrtcServer {
       forceTranscodeDown: forceTranscodeDown || (prev?.forceTranscodeDown ?? false),
       failures,
       upgradeCount,
-      tryClimb: tryClimb ?? { failures: 0, notBefore: 0, lastRevert: null, trialFrom: null },
+      tryClimb: tryClimb ?? {
+        failures: 0,
+        notBefore: 0,
+        lastRevert: null,
+        trialFrom: null,
+      },
     })
     const epoch = (entry.session.pendingRenegotiation?.epoch ?? 0) + 1
-    entry.session.pendingRenegotiation = { target: { kind: 'adaptive' }, epoch }
+    entry.session.pendingRenegotiation = {
+      target: { kind: 'adaptive' },
+      epoch,
+    }
     this.logger.info('adaptive: scheduling renegotiation', {
       tags: { deviceId },
       meta: {
@@ -3828,6 +4087,67 @@ export class BrokerWebrtcServer {
     entry.closeSource()
   }
 
+  /**
+   * The camera's own lower-resolution stream whose profile and level fit the
+   * client's offer, or null. Candidates are the device's other brokers that own
+   * a profile tier below the current one, highest first; one that has not dialled
+   * yet is warmed (bounded) so its SPS can be read. The returned `release` holds
+   * the warm-up demand until the caller's real subscription attaches.
+   */
+  private async pickLevelFittingBroker(args: {
+    readonly deviceId: number
+    readonly currentBrokerId: string
+    readonly offered: readonly string[]
+  }): Promise<LevelFittingPick | null> {
+    const rank = (tier: CamProfile | null): number =>
+      tier === 'high' ? 2 : tier === 'mid' ? 1 : tier === 'low' ? 0 : -1
+    const currentRank = rank(this.profileTierResolver?.(args.currentBrokerId) ?? 'high')
+    const candidates = [...this.brokers]
+      .filter(
+        ([bid]) => bid.startsWith(`${String(args.deviceId)}/`) && bid !== args.currentBrokerId,
+      )
+      .map(([bid, b]) => ({
+        brokerId: bid,
+        broker: b,
+        tier: this.profileTierResolver?.(bid) ?? null,
+      }))
+      .filter((c) => c.tier !== null && rank(c.tier) < currentRank)
+      .sort((a, b) => rank(b.tier) - rank(a.tier))
+    for (const c of candidates) {
+      let release: Unsubscribe | null = null
+      if (!c.broker.getStats().codec) {
+        release = c.broker.onEncodedData(
+          () => {
+            /* level-fit warm-up no-op */
+          },
+          { kind: 'warmup', media: 'both' },
+        )
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 2500)
+          const unsub = c.broker.onSdpParameterSets(() => {
+            clearTimeout(timer)
+            unsub()
+            resolve()
+          })
+        })
+      }
+      const profileLevelId =
+        c.broker.getStats().codec === 'h264'
+          ? deriveH264ProfileLevelId(c.broker.getSdpParameterSets(), c.broker.getPreBuffer())
+          : undefined
+      if (profileLevelId !== undefined && clientOfferFitsStream(profileLevelId, args.offered)) {
+        return {
+          brokerId: c.brokerId,
+          broker: c.broker,
+          profileLevelId,
+          release,
+        }
+      }
+      release?.()
+    }
+    return null
+  }
+
   private resolveBrokerId(streamId: string, hints: ClientHints = {}): string {
     // Direct match — `webrtc-session.createSession` resolves the
     // discriminated `WebrtcStreamTarget` to a canonical brokerId
@@ -3913,7 +4233,9 @@ export class BrokerWebrtcServer {
       try {
         return await this.getIceServersFn()
       } catch (err) {
-        this.logger.warn('getIceServers failed', { meta: { error: errMsg(err) } })
+        this.logger.warn('getIceServers failed', {
+          meta: { error: errMsg(err) },
+        })
       }
     }
     return this.staticIceServers ?? []
