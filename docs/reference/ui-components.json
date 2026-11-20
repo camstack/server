@@ -2295,7 +2295,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/camera/CameraCard.tsx",
-      "summary": "A camera: the state chips on top, the host's scene full width under them, and the recorded history under that. The scene is the host's player with its own toolbar, so chips sit in a row above it, never over it. It is …",
+      "summary": "A camera: the state chips on top and the host's scene full width under them. The recorded history is the base card's History view: it replaces the scene in a box of the scene's height (or the host's, when it sized the…",
       "props": [
         {
           "name": "common",
@@ -2317,9 +2317,9 @@
         },
         {
           "name": "history",
-          "type": "ReactNode",
+          "type": "CardHistory | null",
           "optional": false,
-          "doc": "The recorded series under the scene; null when the device records none."
+          "doc": "The recorded series the History view shows; null when the device records none."
         },
         {
           "name": "showName",
@@ -3937,7 +3937,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedCameraCard.tsx",
-      "summary": "The card of a camera: the host's scene full width, state chips from the generic `battery`, `low-power-sleep` and `motion` caps over it, and the device history (the same view the History tab drew) under it — only once …",
+      "summary": "The card of a camera: the host's scene full width, state chips from the generic `battery`, `low-power-sleep` and `motion` caps over it, and the device history behind a History button (the base card's bounded History v…",
       "propsExtends": ["ConnectedCardProps"],
       "props": [
         {
@@ -20573,6 +20573,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-device-cap-slice.ts",
       "summary": "Read an arbitrary cap's runtime-state slice by its raw kebab-case name."
+    },
+    {
+      "name": "useDeviceCardFill",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "Whether the host gave the card a definite height (see )."
     },
     {
       "name": "useDeviceCardFrame",

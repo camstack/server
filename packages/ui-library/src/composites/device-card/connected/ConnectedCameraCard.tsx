@@ -7,6 +7,7 @@ import { useDeviceSeriesList } from '../../device-history/use-device-history'
 import { CameraCard } from '../scenes/camera/CameraCard'
 import { cameraChipsOf } from './camera-chips-model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
+import type { CardHistory } from '../shell/model'
 import { useCardCommon } from './use-card-common'
 
 export interface ConnectedCameraCardProps extends ConnectedCardProps {
@@ -23,7 +24,7 @@ export interface ConnectedCameraCardProps extends ConnectedCardProps {
 /**
  * The card of a camera: the host's scene full width, state chips from the
  * generic `battery`, `low-power-sleep` and `motion` caps over it, and the
- * device history (the same view the History tab drew) under it — only once
+ * device history behind a History button (the base card's bounded History view) — only once
  * device-history answered with a series (D315).
  */
 export function ConnectedCameraCard({
@@ -47,6 +48,19 @@ export function ConnectedCameraCard({
     series.presence === 'present' &&
     series.list.status === 'ok' &&
     (series.list.data?.length ?? 0) > 0
+  // Charts carry the host's navigation; the interactions list is the card's own.
+  const history: CardHistory | null =
+    recorded || card.common.history !== null
+      ? {
+          charts: recorded ? (
+            <DeviceHistoryView
+              deviceId={deviceId}
+              {...(onNavigate === undefined ? {} : { onNavigate })}
+            />
+          ) : null,
+          events: card.common.history?.events ?? null,
+        }
+      : null
   const chips = cameraChipsOf({ battery, sleep, motion }, Date.now(), t)
   return (
     <CameraCard
@@ -54,14 +68,7 @@ export function ConnectedCameraCard({
       chips={chips}
       scene={scene}
       showName={showName}
-      history={
-        recorded ? (
-          <DeviceHistoryView
-            deviceId={deviceId}
-            {...(onNavigate === undefined ? {} : { onNavigate })}
-          />
-        ) : null
-      }
+      history={history}
     />
   )
 }

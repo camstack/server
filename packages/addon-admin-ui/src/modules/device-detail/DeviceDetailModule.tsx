@@ -1,5 +1,6 @@
 import {
   ConfirmDialogProvider,
+  ConnectedCameraCard,
   ConnectedDeviceCard,
   ConnectedSensorCard,
   type ConnectedCardKind,
@@ -16,24 +17,30 @@ import {
   Skeleton,
   trpc,
   useConnectedCardKind,
+  useDeviceManagerGetDevice,
   useDeviceSeriesList,
   useIsPhone,
 } from '@camstack/ui-library'
+import { DeviceFeature, DeviceType } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { bridgeUiText } from '../../i18n/ui-text-bridge'
 import { historyTabVisible } from '../../components/device/history-tab'
+import { StreamPanelContent } from '../../components/device/PanelContent'
 import { RemoteHeroButton } from '../../components/remote/RemoteHeroButton'
-import { DeviceModuleProvider } from './module-context'
+import { DeviceModuleProvider, useDeviceModuleNavigation } from './module-context'
 import { useHeroLabels } from './use-hero-labels'
 import type { DeviceDetailModuleProps } from './types'
 
 /** One cache per mounted module when the host does not lend its own. */
 function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
   const [own] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 5_000 } } }),
+    () =>
+      new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 5_000 } },
+      }),
   )
   return lent ?? own
 }
@@ -70,6 +77,37 @@ function CardBody({
   )
 }
 
+/**
+ * A camera goes through the base card like every device: its scene is the
+ * host's stream panel, its history the card's bounded History view.
+ */
+function CameraBody({
+  deviceId,
+  canActuate,
+  onDrawn,
+  showName,
+  intercomAvailable,
+}: Pick<DeviceDetailModuleProps, 'deviceId' | 'onDrawn' | 'showName'> & {
+  readonly canActuate: boolean
+  readonly intercomAvailable: boolean
+}): ReactNode {
+  const { onNavigate } = useDeviceModuleNavigation()
+  useEffect(() => {
+    onDrawn?.(true)
+  }, [onDrawn])
+  return (
+    <div className="flex h-full justify-center">
+      <ConnectedCameraCard
+        deviceId={deviceId}
+        canActuate={canActuate}
+        showName={showName !== false}
+        {...(onNavigate === undefined ? {} : { onNavigate })}
+        scene={<StreamPanelContent deviceId={deviceId} intercomAvailable={intercomAvailable} />}
+      />
+    </div>
+  )
+}
+
 function ModuleBody(
   props: Pick<
     DeviceDetailModuleProps,
@@ -79,6 +117,18 @@ function ModuleBody(
   },
 ): ReactNode {
   const kind = useConnectedCardKind(props.deviceId)
+  const device = useDeviceManagerGetDevice({ deviceId: props.deviceId })
+  if (device.data?.type === DeviceType.Camera) {
+    return (
+      <CameraBody
+        deviceId={props.deviceId}
+        canActuate={props.canActuate}
+        onDrawn={props.onDrawn}
+        showName={props.showName}
+        intercomAvailable={(device.data.features ?? []).includes(DeviceFeature.TwoWayAudio)}
+      />
+    )
+  }
   if (kind === 'pending') return <Skeleton className="h-72 w-full" />
   if (kind !== null) {
     return (

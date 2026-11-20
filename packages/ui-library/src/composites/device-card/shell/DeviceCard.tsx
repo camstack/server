@@ -70,6 +70,11 @@ export function useDeviceCardFrame(): DeviceCardFrame {
   return useContext(DeviceCardFrameContext)
 }
 
+/** Whether the host gave the card a definite height (see {@link DeviceCardFrameProvider}). */
+export function useDeviceCardFill(): boolean {
+  return useContext(DeviceCardFillContext)
+}
+
 /** Frames every device card below it — a host page that draws the frame itself. */
 export function DeviceCardFrameProvider({
   frame,

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const slices = vi.hoisted(() => ({
@@ -9,7 +9,9 @@ const slices = vi.hoisted(() => ({
   seriesCount: 0,
 }))
 
-vi.mock('../../../contexts/system-context', () => ({ useTrpcClient: () => ({}) }))
+vi.mock('../../../contexts/system-context', () => ({
+  useTrpcClient: () => ({}),
+}))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
     ...(slices.battery === undefined ? {} : { battery: {} }),
@@ -25,7 +27,13 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
 }))
 vi.mock('../connected/use-card-common', () => ({
   useCardCommon: () => ({
-    common: { name: 'Porta retro', integration: null, online: true, readOnly: false },
+    common: {
+      name: 'Porta retro',
+      integration: null,
+      online: true,
+      readOnly: false,
+      history: null,
+    },
   }),
 }))
 vi.mock('../../device-history/use-device-history', () => ({
@@ -59,7 +67,7 @@ describe('ConnectedCameraCard', () => {
     draw()
     expect(screen.getByTestId('player')).toBeTruthy()
     expect(screen.queryByTestId('dc-camera-chips')).toBeNull()
-    expect(screen.queryByTestId('dc-camera-history')).toBeNull()
+    expect(screen.queryByTestId('dc-camera-open-history')).toBeNull()
   })
 
   it('draws a chip only for each generic cap the camera answers', () => {
@@ -80,12 +88,18 @@ describe('ConnectedCameraCard', () => {
     expect(screen.getByTestId('dc-camera-chip-sleep').textContent).toContain('Asleep')
   })
 
-  it('shows the history only once the device recorded a series', () => {
+  it('offers the history only once the device recorded a series, and opens it in place of the scene', () => {
     draw()
-    expect(screen.queryByTestId('history-view')).toBeNull()
+    expect(screen.queryByTestId('dc-camera-open-history')).toBeNull()
     cleanup()
     slices.seriesCount = 2
     draw()
+    expect(screen.queryByTestId('history-view')).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-camera-open-history'))
     expect(screen.getByTestId('history-view')).toBeTruthy()
+    expect(screen.getByTestId('dc-history')).toBeTruthy()
+    expect(screen.queryByTestId('player')).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-back'))
+    expect(screen.getByTestId('player')).toBeTruthy()
   })
 })
