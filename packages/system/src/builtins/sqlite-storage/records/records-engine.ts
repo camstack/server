@@ -473,6 +473,10 @@ export class RecordsEngine implements RecordsEngineOps {
         .get(header.id, header.deviceId, header.at, header.expiresAt, nowMs, json),
     )
     if (row === undefined) throw new Error('records: the upsert returned no revision')
+    // Not undone when an enclosing transaction (`transact`, a migration) rolls back:
+    // the id then loses its insert-only guard while no row holds it, so a later
+    // write of it is an ordinary insert. A migration names its ids and never
+    // writes an allocated one, so this costs it nothing.
     this.pendingAllocated.delete(allocatedKey)
     return { rev: row.rev, releasedRefs: checked.releasedRefs }
   }

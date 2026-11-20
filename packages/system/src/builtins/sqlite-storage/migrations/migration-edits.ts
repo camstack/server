@@ -18,7 +18,9 @@
  *   when the plan built the edit (`recordUpsertEdit`). planning#584.
  * - `rekeyDevice`: the `device-manager:devices` row of `deviceId` gets a new
  *   `(addonId, stableId)`; its key and `deviceId` never change, so every store keyed by
- *   the id keeps it. A pair another device holds is refused.
+ *   the id alone keeps it. The old provider's `addon-device-settings` rows (scoped
+ *   `<addonId>:<deviceId>.`) move under the new addon in the same transaction. A pair
+ *   another device holds, or a setting the new addon already has, is refused.
  * - `tombstoneDevice`: what `removeDevice` records (D865), in this transaction — the row
  *   goes, the `tombstones` record is written (an existing one keeps its earlier
  *   `deletedAt`), the device's `addon-device-settings` and `device-runtime-state` rows
@@ -256,9 +258,50 @@ function rekeyDevice(
       `rekeyDevice: ("${edit.addonId}", "${edit.stableId}") already belongs to another device`,
     )
   }
+  if (current.addonId !== edit.addonId) {
+    moveProviderSettings(db, edit.deviceId, current.addonId, edit.addonId)
+  }
   db.prepare(
     `UPDATE ${table(DEVICE_ROWS_COLLECTION)} SET addonId = ?, stableId = ? WHERE id = ?`,
   ).run(edit.addonId, edit.stableId, String(edit.deviceId))
+}
+
+/**
+ * The per-device settings store scopes a row by the PROVIDER's addon
+ * (`<addonId>:<deviceId>.<key>`, data `{ addonId, deviceId, key, value }`), so a
+ * re-key to another addon moves the old provider's rows under the new one; rows
+ * other addons keep about the device (`recorder:<id>.…`) stay where they are. A
+ * key the new owner already holds for this device is refused, never overwritten.
+ */
+function moveProviderSettings(
+  db: Database.Database,
+  deviceId: number,
+  fromAddon: string,
+  toAddon: string,
+): void {
+  if (!tableExists(db, DEVICE_SETTINGS_TABLE)) return
+  const fromScope = `${fromAddon}:${String(deviceId)}.`
+  const toScope = `${toAddon}:${String(deviceId)}.`
+  const rows = db
+    .prepare<[number, string], { id: string }>(
+      `SELECT id FROM ${table(DEVICE_SETTINGS_TABLE)} WHERE substr(id, 1, ?) = ?`,
+    )
+    .all(fromScope.length, fromScope)
+  const exists = db.prepare<[string], { id: string }>(
+    `SELECT id FROM ${table(DEVICE_SETTINGS_TABLE)} WHERE id = ?`,
+  )
+  const move = db.prepare<[string, string, string]>(
+    `UPDATE ${table(DEVICE_SETTINGS_TABLE)} SET id = ?, data = json_set(data, '$.addonId', ?) WHERE id = ?`,
+  )
+  for (const { id } of rows) {
+    const key = id.slice(fromScope.length)
+    if (exists.get(`${toScope}${key}`) !== undefined) {
+      throw new MigrationEditError(
+        `rekeyDevice: "${toAddon}" already has setting "${key}" for device ${deviceId}`,
+      )
+    }
+    move.run(`${toScope}${key}`, toAddon, id)
+  }
 }
 
 function tombstoneDevice(

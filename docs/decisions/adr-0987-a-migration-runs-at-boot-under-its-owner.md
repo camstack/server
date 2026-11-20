@@ -110,13 +110,23 @@ pre-migration snapshot, same rollback; the engine orders steps across owners by
     with secret fields, or one not declared yet, is refused — the keychain is outside the
     transaction, and an addon declares its kinds before `runMigrations`.
   - `rekeyDevice` (`deviceId`, new `addonId` / `stableId`): one update of the
-    `device-manager:devices` row; its key and `deviceId` never change, so settings,
-    history and events keyed by the id keep it. A pair another device holds is refused.
+    `device-manager:devices` row; its key and `deviceId` never change, so history and
+    events keyed by the id keep it. Per-device settings are scoped by the PROVIDER
+    (`<addonId>:<deviceId>.<key>`), so the old provider's rows move under the new addon
+    in the same transaction; other addons' rows about the device stay. A pair another
+    device holds, or a setting the new addon already has for the device, is refused.
   - `tombstoneDevice` (`deviceId`): what `removeDevice` records (D865) — the row goes, the
     `tombstones` record is written (an existing one keeps its earlier `deletedAt`), the
     device's `addon-device-settings` and `device-runtime-state` rows are cleared. The data
-    hooks run off the tombstone through the D865 reconcile. The keychain, the bindings,
-    field claims and identity links live outside this file and are NOT touched.
+    hooks run off the tombstone through the D865 reconcile. The keychain, the bindings
+    and field claims live outside this file and are NOT touched; the device-manager's
+    in-process indexes are not told either, so an identity link can still resolve to
+    the deleted device until the hub restarts.
+  - Boot order: a record edit needs its kind in the file's catalogue when the edit
+    APPLIES, or it fails with `UnknownRecordKindError` (`declared no kind`). An addon
+    declares its kinds before `runMigrations`. A hub plan runs before addons boot, so
+    it may write only kinds already declared in that file by an earlier boot — a kind
+    added in the same release is written by the owning addon's own plan, not the hub's.
   - Both device edits carry `deviceIdentityPrecondition({ addonId, stableId })`.
   - A hub plan names any record owner. An addon plan writes only its own kinds, re-keys
     only a device whose `addonId` before or after is its own, tombstones only its own.

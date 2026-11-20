@@ -89,7 +89,8 @@ beforeEach(async () => {
       ('44', 44, 'other', 'x-1', 'not theirs');
     CREATE TABLE "addon-device-settings" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);
     INSERT INTO "addon-device-settings" VALUES
-      ('${GRID_ADDON}:42.layout', '{"deviceId":"42","value":"2x2"}'),
+      ('${GRID_ADDON}:42.layout', '{"addonId":"${GRID_ADDON}","deviceId":"42","key":"layout","value":"2x2"}'),
+      ('recorder:42.recordingConfig', '{"addonId":"recorder","deviceId":"42","key":"recordingConfig","value":{"on":false}}'),
       ('recorder:43.recordingConfig', '{"deviceId":"43","value":{"on":true}}');
     CREATE TABLE "device-runtime-state" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);
     INSERT INTO "device-runtime-state" VALUES ('42', '{}'), ('43', '{}');
@@ -162,6 +163,13 @@ function settingsIds(): readonly string[] {
     .map((r) => r.id)
 }
 
+function settingsRow(id: string): unknown {
+  const row = db
+    .prepare<[string], { data: string }>('SELECT data FROM "addon-device-settings" WHERE id = ?')
+    .get(id)
+  return row === undefined ? null : JSON.parse(row.data)
+}
+
 describe('a plan moves a record and re-keys its device in one transaction', () => {
   it('keeps the marked field and the deviceId, and a rerun is a no-op', async () => {
     const t = target([{ meta: meta('hub', 'grid-to-block', 1), plan: () => movePlan() }])
@@ -175,8 +183,15 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
     expect(moved?.deviceId).toBe(42)
     expect(await engine.get({ owner: BLOCKS, kind: 'camera-grids', id: 'g1' })).toBeNull()
     expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: BLOCKS, stableId: 'composed-blk1' })
-    // Settings and runtime state keyed by the id are untouched by a re-key.
-    expect(settingsIds()).toContain(`${GRID_ADDON}:42.layout`)
+    // The provider's own settings follow it to the new owner; another addon's stay.
+    expect(settingsIds()).not.toContain(`${GRID_ADDON}:42.layout`)
+    expect(settingsIds()).toContain('recorder:42.recordingConfig')
+    expect(settingsRow(`${BLOCKS}:42.layout`)).toEqual({
+      addonId: BLOCKS,
+      deviceId: '42',
+      key: 'layout',
+      value: '2x2',
+    })
 
     const second = t.apply({ ...PASS, bootId: 'boot-2' })
     expect(second.outcomes).toEqual([])
@@ -199,6 +214,8 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
       OLD_GRID,
     )
     expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: GRID_ADDON, stableId: 'grid-1' })
+    expect(settingsIds()).toContain(`${GRID_ADDON}:42.layout`)
+    expect(settingsRow(`${BLOCKS}:42.layout`)).toBeNull()
   })
 
   it('applies the same move as an addon-owned plan (applyPlan)', async () => {
@@ -230,7 +247,7 @@ describe('tombstoneDevice', () => {
     expect(deviceRow(43)).toBeUndefined()
     const tomb = await engine.get({ owner: 'device-manager', kind: 'tombstones', id: '43' })
     expect(tomb?.data).toMatchObject({ providerAddonId: GRID_ADDON })
-    expect(settingsIds()).toEqual([`${GRID_ADDON}:42.layout`])
+    expect(settingsIds()).toEqual([`${GRID_ADDON}:42.layout`, 'recorder:42.recordingConfig'])
     expect(db.prepare('SELECT id FROM "device-runtime-state" ORDER BY id').all()).toEqual([
       { id: '42' },
     ])
@@ -301,6 +318,22 @@ describe('refusals', () => {
       ],
     })
     expect(stale.error).toMatch(/precondition failed for rekeyDevice/)
+
+    db.prepare('INSERT INTO "addon-device-settings" VALUES (?, ?)').run(
+      `${BLOCKS}:42.layout`,
+      '{"value":"already here"}',
+    )
+    const clash = applyAs('hub', {
+      edits: [
+        rekeyDeviceEdit(
+          42,
+          { addonId: GRID_ADDON, stableId: 'grid-1' },
+          { addonId: BLOCKS, stableId: 'b' },
+        ),
+      ],
+    })
+    expect(clash.error).toMatch(/already has setting "layout"/)
+    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: GRID_ADDON, stableId: 'grid-1' })
   })
 
   it('a record body the kind schema refuses never becomes an edit', () => {
