@@ -1675,6 +1675,16 @@ export {
   startReachabilityPoll,
 } from './device/reachability-poll.js'
 export type {
+  ReachabilityRefreshContext,
+  ReachabilityRefreshHandle,
+  ReachabilityRefreshOptions,
+} from './device/reachability-refresh.js'
+export {
+  REACHABILITY_REFRESH_INTERVAL_MS,
+  reachabilityRefreshPolicy,
+  registerReachabilityRefresh,
+} from './device/reachability-refresh.js'
+export type {
   RuntimeStateBridge,
   RuntimeStateStaleReadPolicy,
 } from './device/runtime-state-helpers.js'

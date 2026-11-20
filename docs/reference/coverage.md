@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9076 source files · 246 units claimed by at least one document (9045 files).**
+**253 units · 9077 source files · 246 units claimed by at least one document (9046 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline/src/recorder` | 115 | `recorder` | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +77 more, 10 ADRs | 2026-11-12 |
 | `server/backend/src/core` | 113 | `api-surface`, `auth`, `capabilities`, `device-model`, `logging`, `notification-center`, `remote-access`, `storage`, `stream-broker`, `transport`, `update-and-release` | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `architecture/addon-lifecycle.md`, +57 more, 7 ADRs | 2026-11-12 |
 | `server/backend/src/api` | 97 | `api-surface` | `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, `decisions/adr-0895-there-is-one-token-and-no-other-bearer-format-a-share-link-is-a-token-and-only-a-login-session-becomes-a-session.md`, +70 more, 10 ADRs | 2026-11-02 |
-| `packages/types/src/device` | 92 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md`, +41 more, 1 ADR | 2026-11-08 |
+| `packages/types/src/device` | 93 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md`, +41 more, 1 ADR | 2026-11-08 |
 | `packages/addon-pipeline-orchestrator` | 85 | `pipeline-orchestration`, `zones` | `decisions/adr-1013-one-instance-model.md`, `architecture/inference-devices.md`, `decisions/adr-0650-a-detail-step-the-elected-device-cannot-run-is-delegated-within-the-node.md`, +56 more, 13 ADRs | 2026-11-02 |
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +43 more, 11 ADRs | 2026-11-02 |
 | `packages/cli/src/mcp` | 72 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +3 more | 2026-11-04 |

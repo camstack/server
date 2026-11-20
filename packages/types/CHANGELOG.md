@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A camera provider can register its control-plane reachability probe with the hub's state refresh (registerReachabilityRefresh) instead of running its own timer
+
 ## [1.2.615] - 2026-11-20
 
 ### Added
