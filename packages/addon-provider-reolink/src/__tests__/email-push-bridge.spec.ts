@@ -67,6 +67,8 @@ interface FakeBroker {
   ring: { key: string; message: SmtpInboundMessage }[]
   lastSeq: number
   exists: boolean
+  /** Further mailboxes the operator made, beside the adopted one. */
+  others: string[]
   host: string | null
   claimedError: boolean
   addFailsWithInUse: boolean
@@ -87,6 +89,7 @@ function fakeBroker(): FakeBroker {
     ring: [],
     lastSeq: 0,
     exists: false,
+    others: [],
     host: '192.0.2.10',
     claimedError: false,
     addFailsWithInUse: false,
@@ -96,7 +99,10 @@ function fakeBroker(): FakeBroker {
     port: {
       list: async () => {
         if (state.providerMissing) throw new Error('no provider for capability broker')
-        return state.exists ? [{ id: SMTP_INBOUND_DEFAULT_ID }] : []
+        return [
+          ...(state.exists ? [{ id: SMTP_INBOUND_DEFAULT_ID }] : []),
+          ...state.others.map((id) => ({ id })),
+        ]
       },
       add: async ({ id, settings }) => {
         if (state.providerMissing) throw new Error('no provider for capability broker')
@@ -108,10 +114,10 @@ function fakeBroker(): FakeBroker {
         state.exists = true
         return { id }
       },
-      getBrokerConfig: async () => ({
+      getBrokerConfig: async (id) => ({
         host: state.host,
         hostReason: state.host === null ? 'set the Internal address under System → Network' : null,
-        port: 2525,
+        port: id === SMTP_INBOUND_DEFAULT_ID ? 2525 : 2626,
         domain: 'camstack.local',
         requireAuth: true,
         username: 'u',
@@ -553,7 +559,7 @@ describe('the email-push bridge: what a camera is told', () => {
 })
 
 describe('the email-push bridge: the mailbox link (D1013)', () => {
-  it('a standalone camera (no integration) makes the default integration an owner; a hub child keeps its own', async () => {
+  it('a hub child mails the mailbox, but only the default integration carries the link', async () => {
     const broker = fakeBroker()
     const links = fakeLinks({ 'int-default': '', 'int-hub': '' })
     const { bridge } = build(
@@ -565,8 +571,42 @@ describe('the email-push bridge: the mailbox link (D1013)', () => {
     await bridge.sync()
     expect(Object.fromEntries(links.rows)).toEqual({
       'int-default': SMTP_INBOUND_DEFAULT_ID,
-      'int-hub': SMTP_INBOUND_DEFAULT_ID,
+      'int-hub': '',
     })
+  })
+
+  it('a mailbox the operator picked on the default integration is the one used, and is never overwritten', async () => {
+    const broker = fakeBroker()
+    broker.exists = true
+    broker.others = ['smtp-inbound-2']
+    const links = fakeLinks({ 'int-default': 'smtp-inbound-2', 'int-hub': '' })
+    const { bridge } = build([camera(1, 'A', [], true, null)], broker, undefined, links)
+    await bridge.sync()
+    expect(broker.subscribes.map((s) => s.id)).toEqual(['smtp-inbound-2'])
+    expect(links.sets).toEqual([])
+    const params = await bridge.buildCameraSetupParams(camera(1, 'A', [], true, null))
+    expect(params?.managerPort).toBe(2626)
+  })
+
+  it('an operator pick survives when no camera needs the mailbox any more', async () => {
+    const broker = fakeBroker()
+    broker.others = ['smtp-inbound-2']
+    const links = fakeLinks({ 'int-default': 'smtp-inbound-2', 'int-hub': '' })
+    const cams = [camera(1, 'A', [], true, null)]
+    const { bridge } = build(cams, broker, undefined, links)
+    await bridge.sync()
+    cams.length = 0
+    await bridge.sync()
+    expect(links.rows.get('int-default')).toBe('smtp-inbound-2')
+  })
+
+  it('a stale link on a hub integration is cleared, never the default one', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks({ 'int-default': '', 'int-hub': SMTP_INBOUND_DEFAULT_ID })
+    const { bridge } = build([camera(1, 'A', [], true, null)], broker, undefined, links)
+    await bridge.sync()
+    expect(links.rows.get('int-hub')).toBe('')
+    expect(links.rows.get('int-default')).toBe(SMTP_INBOUND_DEFAULT_ID)
   })
 
   it('an unresolvable default integration is logged and retried at the next sync', async () => {

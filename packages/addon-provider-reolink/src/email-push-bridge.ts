@@ -190,6 +190,8 @@ export class EmailPushBridge {
   /** The last failure that was reported, so a mailbox provider that stays away is said once. */
   private lastFailure: string | null = null
   private chain: Promise<void> = Promise.resolve()
+  /** The integrations whose empty link this process filled (only those are released). */
+  private readonly filled = new Set<string>()
 
   constructor(private readonly deps: EmailPushBridgeDeps) {}
 
@@ -285,82 +287,125 @@ export class EmailPushBridge {
       if (this.brokerId !== null && this.subscriptionId !== null) {
         await this.deps.port.unsubscribe(this.brokerId, this.subscriptionId)
       }
-      // The mailbox is no longer in use: release the links so the operator can delete it. Only
-      // once this process held it, so a boot before the cameras registered never clears one.
-      if (this.brokerId !== null) await this.syncLinks(this.brokerId, new Set())
+      // The mailbox is no longer in use: release the link this process filled so the operator can
+      // delete it. Only once this process held it, so a boot before the cameras registered never
+      // clears one, and a mailbox the operator picked is never released.
+      if (this.brokerId !== null) {
+        await this.syncLinks(this.brokerId, await this.tryDefaultId(), false)
+      }
       this.subscriptionId = null
       this.declared = null
       return
     }
-    const { owners, complete } = await this.linkOwners()
-    const key = `${recipients.join(',')}|${[...owners].sort().join(',')}`
+    const { defaultId, complete } = await this.resolveDefault()
+    const picked = await this.pickedMailbox(defaultId)
+    const key = `${recipients.join(',')}|${defaultId ?? ''}|${picked ?? this.brokerId ?? ''}`
     if (!force && this.declared === key && this.subscriptionId !== null) return
-    const brokerId = await this.ensureMailbox()
+    const brokerId = picked ?? (await this.ensureMailbox())
+    if (this.brokerId !== null && this.brokerId !== brokerId && this.subscriptionId !== null) {
+      // The operator picked another mailbox: leave the old one before joining the new.
+      await this.deps.port.unsubscribe(this.brokerId, this.subscriptionId)
+      this.subscriptionId = null
+    }
     await this.seedBaseline(brokerId)
     const { subscriptionId } = await this.deps.port.subscribe(brokerId, recipients)
     this.brokerId = brokerId
     this.subscriptionId = subscriptionId
-    this.declared = (await this.syncLinks(brokerId, owners)) && complete ? key : null
+    const linked = await this.syncLinks(brokerId, defaultId, true)
+    this.declared =
+      linked && complete ? `${recipients.join(',')}|${defaultId ?? ''}|${brokerId}` : null
     await this.reconcile()
   }
 
   /**
-   * The integrations whose cameras mail the mailbox: they link to it. A hub child names its own
-   * integration; a standalone camera names none and belongs to the default one. `complete` is
-   * false when that default could not be resolved: the caller retries at the next sync.
+   * The default integration holds the mailbox link for every email-push camera (a hub child's
+   * integration carries none). `complete` is false when it could not be resolved: the caller
+   * retries at the next sync.
    */
-  private async linkOwners(): Promise<{ owners: ReadonlySet<string>; complete: boolean }> {
-    const owners = new Set<string>()
-    let standalone: BridgeCamera | null = null
-    for (const cam of this.deps.listCameras()) {
-      if (!cam.isEmailPushEligible) continue
-      if (cam.integrationId !== null) owners.add(cam.integrationId)
-      else standalone ??= cam
-    }
-    if (standalone === null) return { owners, complete: true }
+  private async resolveDefault(): Promise<{ defaultId: string | null; complete: boolean }> {
+    const cam = this.deps.listCameras().find((c) => c.isEmailPushEligible)
+    const tags = cam === undefined ? {} : { tags: { deviceId: cam.id } }
     let defaultId: string | null = null
     try {
       defaultId = await this.deps.defaultIntegrationId()
     } catch (err: unknown) {
       this.deps.logger.warn('email-push: the default integration could not be read', {
-        tags: { deviceId: standalone.id },
+        ...tags,
         meta: { error: errMsg(err) },
       })
-      return { owners, complete: false }
+      return { defaultId: null, complete: false }
     }
     if (defaultId === null) {
       this.deps.logger.warn(
-        'email-push: a standalone camera uses the mailbox but the default integration is not resolved yet; retrying at the next sync',
-        { tags: { deviceId: standalone.id }, meta: { cameraId: standalone.id } },
+        'email-push: a camera uses the mailbox but the default integration is not resolved yet; retrying at the next sync',
+        tags,
       )
-      return { owners, complete: false }
+      return { defaultId: null, complete: false }
     }
-    owners.add(defaultId)
-    return { owners, complete: true }
+    return { defaultId, complete: true }
+  }
+
+  private async tryDefaultId(): Promise<string | null> {
+    try {
+      return await this.deps.defaultIntegrationId()
+    } catch {
+      return null
+    }
   }
 
   /**
-   * Make the `mailboxId` links say who uses the mailbox: `owners` link to it, no other
-   * integration does. Idempotent, so an install whose mailbox already exists is filled from it
-   * (the mailbox is re-adopted by `ensureMailbox`) with nothing stored beforehand. False when the
-   * links could not be written: the caller retries at the next sync.
+   * The mailbox the operator picked on the default integration, or null while none is picked.
+   * A pick that no mailbox answers to throws: the bridge never swaps it for another one.
    */
-  private async syncLinks(brokerId: string, owners: ReadonlySet<string>): Promise<boolean> {
+  private async pickedMailbox(defaultId: string | null): Promise<string | null> {
+    if (defaultId === null) return null
+    const row = (await this.deps.links.list()).find((r) => r.id === defaultId)
+    if (row === undefined || row.mailboxId === '') return null
+    const known = await this.deps.port.list()
+    if (!known.some((m) => m.id === row.mailboxId)) {
+      throw new Error(
+        `the camera mailbox picked on the default integration (${row.mailboxId}) does not exist`,
+      )
+    }
+    return row.mailboxId
+  }
+
+  /** The mailbox a camera is pointed at: the operator's pick, else the one this addon adopts or creates. */
+  private async resolveMailbox(): Promise<string> {
+    const picked = await this.pickedMailbox(await this.tryDefaultId())
+    return picked ?? (await this.ensureMailbox())
+  }
+
+  /**
+   * Make the `mailboxId` link of the DEFAULT integration say it uses the mailbox. It is filled only
+   * while empty (a pick of the operator is never overwritten) and released only if this process
+   * filled it. A hub integration carries no link: a stale one is cleared. With no default
+   * resolved nothing is touched. False when the links could not be written.
+   */
+  private async syncLinks(
+    brokerId: string,
+    defaultId: string | null,
+    inUse: boolean,
+  ): Promise<boolean> {
+    if (defaultId === null) return true
     try {
       const rows = await this.deps.links.list()
       for (const row of rows) {
-        const wanted = owners.has(row.id) ? brokerId : ''
-        if (row.mailboxId !== wanted) await this.deps.links.set(row.id, wanted)
-      }
-      for (const owner of owners) {
-        if (!rows.some((row) => row.id === owner)) {
-          this.deps.logger.warn(
-            'email-push: an integration with email-push cameras has no record to link the mailbox from',
-            {
-              meta: { integrationId: owner, brokerId },
-            },
-          )
+        if (row.id !== defaultId) {
+          if (row.mailboxId !== '') await this.deps.links.set(row.id, '')
+        } else if (inUse && row.mailboxId === '') {
+          await this.deps.links.set(row.id, brokerId)
+          this.filled.add(row.id)
+        } else if (!inUse && this.filled.has(row.id) && row.mailboxId === brokerId) {
+          await this.deps.links.set(row.id, '')
+          this.filled.delete(row.id)
         }
+      }
+      if (inUse && !rows.some((row) => row.id === defaultId)) {
+        this.deps.logger.warn(
+          'email-push: the default integration has no record to link the mailbox from',
+          { meta: { integrationId: defaultId, brokerId } },
+        )
       }
       return true
     } catch (err: unknown) {
@@ -524,7 +569,7 @@ export class EmailPushBridge {
    */
   async buildCameraSetupParams(cam: BridgeCamera): Promise<EmailPushManagerSetupParams | null> {
     if (!cam.isEmailPushEligible) return null
-    const brokerId = await this.ensureMailbox()
+    const brokerId = await this.resolveMailbox()
     const parsed = SmtpInboundConfigSchema.safeParse(await this.deps.port.getBrokerConfig(brokerId))
     if (!parsed.success)
       throw new Error('The camera mailbox answered a configuration this build cannot read')

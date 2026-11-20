@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The default Reolink integration offers only the camera mailbox (no connection fields, no Test); the camera mailbox link no longer appears on NVR / Home Hub integrations
+
 ### Fixed
 
 - Turning PIR on or off on a sleeping battery camera now wakes it first instead of failing with a 400; the power source (wired or battery) is now an ordinary setting in its own section of the Advanced tab instead of buttons.

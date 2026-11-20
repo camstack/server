@@ -694,6 +694,26 @@ describe('Add: every creatable kind, with its icon', () => {
     ])
   })
 
+  it('never offers a kind the system creates itself (creatable: false)', () => {
+    const reolink: HolderData = {
+      addonId: 'reolink',
+      description: {
+        role: 'devices' as const,
+        instanceMode: 'multiple',
+        kind: 'connection',
+        canTest: true,
+        kinds: [
+          { id: 'default', label: 'Standalone', functionCap: 'device-provider', creatable: false },
+          { id: 'connection', label: 'Hub', functionCap: 'device-provider' },
+        ],
+      },
+      instances: [],
+    }
+    expect(creatableKinds([reolink], nameOf)).toEqual([
+      { addonId: 'reolink', kind: 'connection', label: 'Hub', providerName: 'name:reolink' },
+    ])
+  })
+
   it('a row carries its kind icon', () => {
     const [row] = buildRows({
       functionProviders: [{ addonId: 'notifiers', isActive: true }],

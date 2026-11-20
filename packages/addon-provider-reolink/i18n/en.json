@@ -213,5 +213,14 @@
   "schema.s_power-source.description": "Only switch to wired power when the adapter meets the camera's spec.",
   "schema.s_power-source.powerSource.label": "Power source",
   "schema.s_power-source.powerSource.o_adapter.label": "Wired power",
-  "schema.s_power-source.powerSource.o_battery.label": "Battery power"
+  "schema.s_power-source.powerSource.o_battery.label": "Battery power",
+  "connection": {
+    "s_mailbox": {
+      "title": "Camera mailbox",
+      "description": "The mailbox the standalone cameras send their email push to.",
+      "mailboxId": {
+        "label": "Camera mailbox"
+      }
+    }
+  }
 }

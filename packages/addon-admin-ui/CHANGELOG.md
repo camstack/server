@@ -7,15 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Devices list fills its page, the Add device dialog keeps its logs and Save footer visible on the manual tab, and the device Overview no longer repeats the web interface link
+- Add no longer offers an integration kind the system creates itself (the Reolink standalone-cameras integration)
+
 ## [1.2.718] - 2026-11-20
 
 ### Added
 
 - The heat pump's Customize tab offers Electrical power and Electrical energy sources
-
-### Fixed
-
-- Devices list fills its page, the Add device dialog keeps its logs and Save footer visible on the manual tab, and the device Overview no longer repeats the web interface link
 
 ## [1.2.717] - 2026-11-20
 

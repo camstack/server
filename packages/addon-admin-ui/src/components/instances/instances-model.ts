@@ -429,15 +429,18 @@ export function creatableKinds(
 ): readonly CreatableKind[] {
   return holders.flatMap((holder): readonly CreatableKind[] => {
     const providerName = nameOf(holder.addonId)
-    const kinds = holder.description.kinds ?? []
-    if (kinds.length === 0) return [{ addonId: holder.addonId, label: providerName, providerName }]
-    return kinds.map((k) => ({
-      addonId: holder.addonId,
-      kind: k.id,
-      label: k.label,
-      providerName,
-      ...(k.iconUrl !== undefined ? { iconUrl: k.iconUrl } : {}),
-    }))
+    const declared = holder.description.kinds ?? []
+    if (declared.length === 0)
+      return [{ addonId: holder.addonId, label: providerName, providerName }]
+    return declared
+      .filter((k) => k.creatable !== false)
+      .map((k) => ({
+        addonId: holder.addonId,
+        kind: k.id,
+        label: k.label,
+        providerName,
+        ...(k.iconUrl !== undefined ? { iconUrl: k.iconUrl } : {}),
+      }))
   })
 }
 

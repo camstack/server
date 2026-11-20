@@ -5,25 +5,27 @@
  * secret declared in the schema. The integrations registry owns the on/off switch (`role: devices`).
  */
 import {
+  type ConfigUISchema,
   defineEntryKind,
   entryBody,
   type IntegrationInstance,
   type IntegrationTestConnectionResult,
-  type RecordsAccess,
-  RecordIntegrationInstances,
+  linkFieldDescriptor,
   REDACTED_SECRET,
+  RecordIntegrationInstances,
+  type RecordsAccess,
   type ResolvedInstance,
 } from '@camstack/types'
 import { z } from 'zod'
+import { MAILBOX_LINK_FIELD, mailboxLinkField, SMTP_MAILBOX_LINK } from './email-push-bridge.js'
 import {
   buildHubInstanceSchema,
   type HubConnectionRead,
   isHubIntegration,
   readHubConnection,
 } from './hub-connection.js'
-import type { HubIntegrationConnection } from './reolink-hub-manager.js'
-import { mailboxLinkField } from './email-push-bridge.js'
 import { type ReolinkHubProbeFactory, testReolinkHubConnection } from './reolink-connection-test.js'
+import type { HubIntegrationConnection } from './reolink-hub-manager.js'
 import { ReolinkSocketDebugFlagSchema } from './schema.js'
 
 export const ReolinkConnectionBodySchema = entryBody({
@@ -37,8 +39,8 @@ export const ReolinkConnectionBodySchema = entryBody({
   model: z.string().nullish(),
   debugGeneral: z.boolean().nullish(),
   debugSocketLogs: z.array(ReolinkSocketDebugFlagSchema).nullish(),
-  // The camera mailbox this integration's standalone cameras mail (a link, D1013). The bridge
-  // fills it; empty or absent while none of them uses a mailbox.
+  // The camera mailbox the DEFAULT integration's standalone cameras mail (a link, D1013). The
+  // bridge fills it; empty or absent on a hub integration and while no camera uses a mailbox.
   mailboxId: mailboxLinkField(),
 })
 export type ReolinkConnectionBody = z.infer<typeof ReolinkConnectionBodySchema>
@@ -48,6 +50,36 @@ export const reolinkConnectionsEntryKind = defineEntryKind('connections', {
   schema: ReolinkConnectionBodySchema,
   writeTrigger: 'an operator adds, edits or removes a Reolink integration',
 })
+
+/** The kind of the default integration (standalone cameras): a name and the mailbox link, no Test. */
+export const REOLINK_DEFAULT_KIND = 'default'
+/** The kind of an NVR / Home Hub integration: its connection, with a Test. */
+export const REOLINK_HUB_KIND = 'connection'
+
+/** The form of the default integration: which camera mailbox its standalone cameras use. */
+export function buildDefaultInstanceSchema(): ConfigUISchema {
+  return {
+    sections: [
+      {
+        id: 'mailbox',
+        title: 'Camera mailbox',
+        titleKey: 'provider-reolink:connection.s_mailbox.title',
+        description: 'The mailbox the standalone cameras send their email push to.',
+        descriptionKey: 'provider-reolink:connection.s_mailbox.description',
+        columns: 1,
+        fields: [
+          {
+            ...linkFieldDescriptor(MAILBOX_LINK_FIELD, SMTP_MAILBOX_LINK, {
+              label: 'Camera mailbox',
+              required: false,
+            }),
+            labelKey: 'provider-reolink:connection.s_mailbox.mailboxId.label',
+          },
+        ],
+      },
+    ],
+  }
+}
 
 /** Every kind this addon declares, keyed by its name. */
 export const reolinkRecordKinds = {
@@ -199,9 +231,28 @@ export function buildReolinkInstances(
         kind: 'connection',
         canTest: true,
         kinds: [
-          { id: 'connection', label: 'Reolink', functionCap: 'device-provider', role: 'devices' },
+          {
+            id: REOLINK_DEFAULT_KIND,
+            label: 'Reolink standalone cameras',
+            functionCap: 'device-provider',
+            role: 'devices',
+            canTest: false,
+            creatable: false,
+          },
+          {
+            id: REOLINK_HUB_KIND,
+            label: 'Reolink NVR / Home Hub',
+            functionCap: 'device-provider',
+            role: 'devices',
+            canTest: true,
+          },
         ],
+        // Only the default integration's standalone cameras mail the mailbox.
+        links: [{ kind: REOLINK_DEFAULT_KIND, field: MAILBOX_LINK_FIELD, to: SMTP_MAILBOX_LINK }],
       },
+      // The record alone cannot tell the default from a hub; the provider's registry evidence does
+      // (`reolinkInstancesProvider`), and an instance it knows nothing about is a connection.
+      kindOf: () => REOLINK_HUB_KIND,
       formSchema: () => buildHubInstanceSchema(),
       initialBody: (name): ReolinkConnectionBody => ({ name }),
       configured: (body) => (body.host ?? '').length === 0 || (body.password ?? '').length > 0,
@@ -227,12 +278,17 @@ export function reolinkInstancesProvider(
   // default integration holds standalone cameras (a scan adds more of them); an NVR / Home Hub
   // integration adopts only its own children (a scan there would offer other hosts, which are new
   // integrations).
-  const withAddDevice = async (instance: IntegrationInstance): Promise<IntegrationInstance> => ({
-    ...instance,
-    addDevice: (await integrationIsHubCached(instances, deps.evidenceCache, instance.id))
-      ? 'children'
-      : 'scan',
-  })
+  const withAddDevice = async (instance: IntegrationInstance): Promise<IntegrationInstance> => {
+    const isHub = await integrationIsHubCached(instances, deps.evidenceCache, instance.id)
+    // The default kind only for an integration the registry named and that is no hub: a hub with
+    // a missing host stays testable, and so does one nothing is known about yet.
+    const known = deps.evidenceCache.get(instance.id) !== null
+    return {
+      ...instance,
+      kind: known && !isHub ? REOLINK_DEFAULT_KIND : REOLINK_HUB_KIND,
+      addDevice: isHub ? 'children' : 'scan',
+    }
+  }
   return {
     ...base,
     listInstances: async (input) =>
@@ -255,7 +311,7 @@ export function reolinkInstancesProvider(
           info: evidence.info,
           settings: body === null ? {} : hubSettingsOf(body),
         })
-      return isHub || body === null ? buildHubInstanceSchema() : { sections: [] }
+      return isHub || body === null ? buildHubInstanceSchema() : buildDefaultInstanceSchema()
     },
   }
 }

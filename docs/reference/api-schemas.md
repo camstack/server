@@ -3157,6 +3157,7 @@ Enum: `"scan" \| "children" \| "none"`
 - `iconMediaType?`: `string`
 - `role?`: `IntegrationInstanceRoleSchema`
 - `canTest?`: `boolean`
+- `creatable?`: `boolean`
 - `signIn?`: `{ basePath: string; methods?: ("device-code" \| "proxy")[] }`
 - `connectPath?`: `string`
 - `disconnectPath?`: `string`

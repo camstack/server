@@ -34,7 +34,7 @@ describe('the Reolink mailbox link', () => {
     const links = (await instances.describe()).links ?? []
     expect(links).toEqual([
       {
-        kind: 'connections',
+        kind: 'default',
         field: 'mailboxId',
         to: { cap: 'broker', kind: SMTP_INBOUND_KIND },
       },

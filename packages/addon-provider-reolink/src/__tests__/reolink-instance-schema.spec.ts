@@ -1,6 +1,6 @@
 /**
  * D985, one form per instance: an NVR / Home Hub integration is configured by its connection
- * only, the default integration shows no hub form. The create wizard has no id yet and always sets
+ * only, the default integration shows the mailbox link and no hub form. The create wizard has no id yet and always sets
  * up a NEW instance. The form is the `instanceFormSchema` of the instances provider.
  */
 import type {
@@ -9,16 +9,16 @@ import type {
   IIntegrationInstancesProvider,
   RecordIntegrationInstances,
 } from '@camstack/types'
+import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 import { isHubIntegration } from '../hub-connection.js'
 import {
   integrationIsHub,
-  ReolinkEvidenceCache,
   type ReolinkConnectionBody,
+  ReolinkEvidenceCache,
   reolinkInstancesProvider,
 } from '../reolink-instances.js'
-import { DeviceType } from '@camstack/types'
 
 interface FakeIntegration {
   readonly originStableId?: string
@@ -94,8 +94,8 @@ describe('Reolink per-instance integration form', () => {
     }
   })
 
-  it('the default integration shows no hub form', async () => {
-    expect(keysOf(await schemaFor('int-default'))).toEqual([])
+  it('the default integration shows the mailbox link and no hub form', async () => {
+    expect(keysOf(await schemaFor('int-default'))).toEqual(['mailboxId'])
   })
 
   it('an unreadable instance shows the hub form instead of a half form', async () => {

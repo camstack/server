@@ -92,6 +92,8 @@ export const IntegrationInstanceKindSchema = z.object({
   role: IntegrationInstanceRoleSchema.optional(),
   /** `testInstance` really probes the remote for this kind; absent takes the provider's `canTest`. */
   canTest: z.boolean().optional(),
+  /** `false`: Add never offers this kind (the system creates its one instance, e.g. a default integration). Absent = creatable. */
+  creatable: z.boolean().optional(),
   /** The kind signs in through a server-held interactive session. */
   signIn: z
     .object({
