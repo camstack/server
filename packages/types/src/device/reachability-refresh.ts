@@ -15,8 +15,10 @@
  * {@link REACHABILITY_PROBE_TIMEOUT_MS}; a thrown probe counts as a miss;
  * `isEnabled() === false` reads nothing and leaves `online` untouched.
  *
- * The core's first read is one interval after registration, so a device calls
- * `probeNow()` on activation to avoid a blind window.
+ * The core's first read is one interval after registration, so registering
+ * probes once at once (no blind window; a caller cannot forget it). A
+ * re-attach of the control client calls `reattach()`: it forgets the misses
+ * so far and probes again.
  */
 import { deviceStateRefreshCapability } from '../capabilities/device-state-refresh.cap.js'
 import type { InferNativeProvider } from '../capabilities/capability-definition.js'
@@ -33,7 +35,10 @@ import {
 export const REACHABILITY_REFRESH_INTERVAL_MS = REACHABILITY_POLL_INTERVAL_MS
 
 /** The part of a device context the registration uses. */
-export type ReachabilityRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'stableId'>
+export type ReachabilityRefreshContext = Pick<
+  DeviceContext,
+  'registerNativeCap' | 'stableId' | 'id'
+>
 
 export interface ReachabilityRefreshOptions {
   readonly ctx: ReachabilityRefreshContext
@@ -52,8 +57,10 @@ export interface ReachabilityRefreshOptions {
 }
 
 export interface ReachabilityRefreshHandle {
-  /** One probe now (the activation read); never rejects. */
+  /** One probe now; never rejects. */
   readonly probeNow: () => Promise<void>
+  /** The control client was replaced: forget the misses and probe again. */
+  readonly reattach: () => Promise<void>
   /** Ignore every later verdict (device removed). Idempotent. */
   readonly stop: () => void
 }
@@ -94,6 +101,7 @@ export function registerReachabilityRefresh(
   const miss = (reason: string): void => {
     consecutiveFailures += 1
     options.logger?.debug('reachability probe failed', {
+      tags: { deviceId: options.ctx.id },
       reason,
       consecutiveFailures,
       failuresToOffline,
@@ -133,8 +141,14 @@ export function registerReachabilityRefresh(
     stateRefresh: reachabilityRefreshPolicy(options.integrationId ?? options.ctx.stableId),
   })
 
+  void read()
+
   return {
     probeNow: read,
+    reattach: () => {
+      consecutiveFailures = 0
+      return read()
+    },
     stop: () => {
       stopped = true
     },

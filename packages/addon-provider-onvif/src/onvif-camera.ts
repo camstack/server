@@ -484,23 +484,24 @@ export class OnvifCamera implements IDevice, INativeSnapshot, ICameraDevice {
    *  still reports ONLINE. Registered once; every `attachClient` (reconnect)
    *  probes at once, since the probe reads whatever client is attached. */
   private startReachabilityPolling(): void {
-    if (this.reachabilityPoll === null) {
-      this.reachabilityPoll = registerReachabilityRefresh({
-        ctx: this.ctx,
-        probe: async () => {
-          const client = this.client
-          if (!client) return false
-          await client.getDeviceInfo()
-          return true
-        },
-        setOnline: (online) => {
-          this.markOnline(online)
-        },
-        isEnabled: () => !this.disabled && this.client !== null,
-        logger: this.ctx.logger,
-      })
+    if (this.reachabilityPoll !== null) {
+      void this.reachabilityPoll.reattach()
+      return
     }
-    void this.reachabilityPoll.probeNow()
+    this.reachabilityPoll = registerReachabilityRefresh({
+      ctx: this.ctx,
+      probe: async () => {
+        const client = this.client
+        if (!client) return false
+        await client.getDeviceInfo()
+        return true
+      },
+      setOnline: (online) => {
+        this.markOnline(online)
+      },
+      isEnabled: () => !this.disabled && this.client !== null,
+      logger: this.ctx.logger,
+    })
   }
 
   async removeDevice(): Promise<void> {

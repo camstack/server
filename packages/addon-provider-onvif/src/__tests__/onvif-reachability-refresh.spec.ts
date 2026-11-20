@@ -15,6 +15,7 @@ function makeSubject(getDeviceInfo: () => Promise<unknown>) {
     markOnline,
     ctx: {
       stableId: 'onvif:front',
+      id: 9,
       logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
       registerNativeCap: (cap: { name: string }, provider: unknown, options?: unknown) => {
         registered.push({ name: cap.name, provider, options })
@@ -80,5 +81,21 @@ describe('ONVIF reachability through device-state-refresh (D1062)', () => {
     expect(h.markOnline).not.toHaveBeenCalledWith(false)
     await h.refresh()
     expect(h.markOnline).toHaveBeenLastCalledWith(false)
+  })
+
+  it('a re-attach forgets the misses so far', async () => {
+    let up = true
+    const h = makeSubject(async () => {
+      if (!up) throw new Error('ECONNREFUSED')
+      return {}
+    })
+    OnvifCamera.prototype['startReachabilityPolling'].call(h.subject)
+    await vi.advanceTimersByTimeAsync(0)
+    up = false
+    await h.refresh()
+    await h.refresh()
+    OnvifCamera.prototype['startReachabilityPolling'].call(h.subject)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.markOnline).not.toHaveBeenCalledWith(false)
   })
 })

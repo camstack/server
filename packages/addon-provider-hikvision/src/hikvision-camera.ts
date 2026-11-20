@@ -1349,7 +1349,6 @@ export class HikvisionCamera
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
-    void this.reachabilityPoll.probeNow()
   }
 
   /** Single-flight OSD config fetch; updates the in-memory snapshot

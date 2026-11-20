@@ -144,7 +144,6 @@ export class RtspCamera extends BaseDevice<typeof rtspCameraSchema> implements I
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
-    void this.reachabilityPoll.probeNow()
   }
 
   /** Per-probe TCP/RTSP round-trip budget — a dead host resolves as a miss. */

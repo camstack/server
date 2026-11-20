@@ -909,7 +909,6 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
-    void this.reachabilityPoll.probeNow()
   }
 
   /**
