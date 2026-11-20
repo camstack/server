@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { TargetKindCaps } from '../../capabilities/notification-output.cap.js'
 import type { Notification } from '../../interfaces/notification.js'
 import {
+  clampToCaps,
   decideMember,
   groupMembersOf,
   renderMemberTemplate,
@@ -174,5 +175,36 @@ describe('unionTargetKindCaps', () => {
     const union = unionTargetKindCaps([])
     expect(union.text).toEqual({ title: true, body: true })
     expect(union.actions).toBe(0)
+  })
+})
+
+describe('clampToCaps', () => {
+  it('limits body, attachments, actions, sound and click URL to the kind', () => {
+    const clamped = clampToCaps(
+      {
+        ...BASE,
+        body: 'abcdefgh',
+        sound: 'bell',
+        clickUrl: '/x',
+        attachments: [
+          { mediaType: 'image', url: '/a.jpg' },
+          { mediaType: 'video', url: '/a.mp4' },
+        ],
+        actions: [
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+        ],
+      },
+      caps({
+        bodyMaxLen: 3,
+        attachments: { mediaTypes: ['image'], mode: 'url', max: 1 },
+        actions: 1,
+      }),
+    )
+    expect(clamped.body).toBe('abc')
+    expect(clamped.attachments).toEqual([{ mediaType: 'image', url: '/a.jpg' }])
+    expect(clamped.actions).toHaveLength(1)
+    expect(clamped.sound).toBeUndefined()
+    expect(clamped.clickUrl).toBeUndefined()
   })
 })

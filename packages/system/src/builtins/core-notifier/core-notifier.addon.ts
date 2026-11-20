@@ -11,6 +11,7 @@ import {
   type AddonInitResult,
   AlarmPanelStatusSchema,
   BaseAddon,
+  errMsg,
   buildNotificationTargetInstances,
   integrationInstancesCapability,
   listNotificationTargets,
@@ -22,6 +23,7 @@ import { EMPTY_GROUP_CAPS, groupRecordKinds, groupTargetKind } from './group-des
 import { groupInstancesSpec } from './group-instances.js'
 import { createGroupNotificationOutputProvider } from './group-notification-output.js'
 import { MemberLedger } from './member-ledger.js'
+import { readMemberKinds } from './member-kinds.js'
 
 export class CoreNotifierAddon extends BaseAddon {
   readonly id = NOTIFIER_GROUP_ADDON_ID
@@ -47,12 +49,7 @@ export class CoreNotifierAddon extends BaseAddon {
     const group = createGroupNotificationOutputProvider({
       store,
       listTargets: () => listNotificationTargets(api),
-      listMemberKinds: async () => {
-        const kinds = await api.notificationOutput.listTargetKinds.query({})
-        return kinds
-          .filter((kind) => kind.addonId !== NOTIFIER_GROUP_ADDON_ID)
-          .map((kind) => ({ kind: kind.kind, caps: kind.caps }))
-      },
+      listMemberKinds: () => readMemberKinds(api),
       sendToMember: (input) =>
         api.notificationOutput.send.mutate({
           addonId: input.addonId,
@@ -64,8 +61,17 @@ export class CoreNotifierAddon extends BaseAddon {
           const status = AlarmPanelStatusSchema.safeParse(
             await api.alarmPanel.getStatus.query({ deviceId }),
           )
-          return status.success ? status.data.state : null
-        } catch {
+          if (status.success) return status.data.state
+          logger.warn('alarm panel status is not readable; the member is skipped', {
+            tags: { deviceId },
+            meta: { deviceId, error: status.error.message },
+          })
+          return null
+        } catch (err) {
+          logger.warn('alarm panel read failed; the member is skipped', {
+            tags: { deviceId },
+            meta: { deviceId, error: errMsg(err) },
+          })
           return null
         }
       },

@@ -3022,6 +3022,7 @@ export type {
   ResolvedCommandHold,
 } from './device/command-hold.js'
 export {
+  clampToCaps,
   decideMember,
   GroupMemberSchema,
   GroupMemberWhenSchema,

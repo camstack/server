@@ -8,6 +8,8 @@
  * lost notification.
  */
 
+import { createHash } from 'node:crypto'
+
 const KEY_SEPARATOR = '\u0000'
 
 /** How long a delivered member is remembered: longer than any outbox retry horizon. */
@@ -33,24 +35,37 @@ export class MemberLedger {
     this.maxEntries = options.maxEntries ?? LEDGER_MAX_ENTRIES
   }
 
-  /** The notification key of a send, or null when it carries nothing to recognise a retry by. */
+  /**
+   * The key a retry of one send is recognised by. The rule id (`metadata.ruleId`) is part of it when
+   * the notification carries one, so two rules on the same event never share a key. With an event id
+   * or tag the key is that id; with neither it is a hash of the content (title, body, device).
+   */
   static notificationKey(input: {
     readonly eventId?: string | undefined
     readonly tag?: string | undefined
+    readonly title?: string | undefined
     readonly body: string
-  }): string | null {
+    readonly deviceId?: number | undefined
+    readonly metadata?: Readonly<Record<string, unknown>> | undefined
+  }): string {
+    const rule = input.metadata?.['ruleId']
+    const ruleId = typeof rule === 'string' || typeof rule === 'number' ? String(rule) : ''
     const id = input.eventId ?? input.tag
-    return id === undefined ? null : `${id}${KEY_SEPARATOR}${input.body}`
+    if (id !== undefined) return [id, ruleId, input.body].join(KEY_SEPARATOR)
+    const hash = createHash('sha256')
+      .update(
+        [input.title ?? '', input.body, String(input.deviceId ?? ''), ruleId].join(KEY_SEPARATOR),
+      )
+      .digest('hex')
+    return ['content', hash].join(KEY_SEPARATOR)
   }
 
-  wasDelivered(groupId: string, notificationKey: string | null, memberId: string): boolean {
-    if (notificationKey === null) return false
+  wasDelivered(groupId: string, notificationKey: string, memberId: string): boolean {
     this.sweep(this.delivered, this.ttlMs)
     return this.delivered.has(this.deliveredKey(groupId, notificationKey, memberId))
   }
 
-  markDelivered(groupId: string, notificationKey: string | null, memberId: string): void {
-    if (notificationKey === null) return
+  markDelivered(groupId: string, notificationKey: string, memberId: string): void {
     this.remember(this.delivered, this.deliveredKey(groupId, notificationKey, memberId))
   }
 

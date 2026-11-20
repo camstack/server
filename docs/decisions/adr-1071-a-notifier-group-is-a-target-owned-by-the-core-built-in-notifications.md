@@ -34,14 +34,24 @@ instances of `notification-output`, so they reach a group with no change.
   center does not strip a field a member needs.
 - The result is per member; an outbox retry re-sends only the members that failed (an in-memory
   delivered-set keyed by notification and member, with a TTL: a restart costs one duplicate at worst).
+- A retry is recognised by a key: the event id (or tag), the notification's `metadata.ruleId` when it carries
+  one, and the body, so two rules on the same event are never deduplicated against each other. With
+  neither an event id nor a tag the key is a hash of title, body, device id and rule id.
+- Only a complete read may call a member's target unknown. When a holder of `notification-output` could not
+  be read and the target is missing, the member FAILS (the outbox retries it); it is never skipped (D49).
+- Each member receives the notification clamped to ITS OWN kind's caps (body length, attachments, actions,
+  sound, click URL). The union caps only keep the notification center from stripping a field before the
+  group sees it.
 - A group has no secrets and no destination keys (D634): members keep their own.
 
 No capability changes: only a provider and a record kind are added.
 
 ## Consequences
 
-- The members' union caps are read from the catalogue of the other providers; the provider answers a
-  re-entrant `listTargetKinds` from its last value instead of asking itself.
+- The members' union caps and per-kind caps are read from the catalogue with the group's own kind dropped at
+  the source (`readMemberKinds`). Concurrent callers share one read; a failed read caches nothing and serves
+  the last good value, or throws when there is none. The catalogue read fans out to this provider too, so a
+  call made from inside that read (marked with `AsyncLocalStorage`) answers at once and its row is discarded.
 - The save-time nested check uses the group ids as last read; the send-time skip is the guarantee.
 - `SendResult` carries no per-member breakdown: the summary is in `error` on failure, and the detail is in
   the logs. A test panel showing sent / skipped / failed per member needs a cap field and is a later step.

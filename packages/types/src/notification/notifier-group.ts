@@ -190,3 +190,27 @@ export function unionTargetKindCaps(list: readonly TargetKindCaps[]): TargetKind
     bodyMaxLen: Math.max(1, ...list.map((caps) => caps.bodyMaxLen)),
   }
 }
+
+/**
+ * The notification as ONE member's own kind can take it: its text fields, body length, attachment
+ * media types and count, action count, sound and click URL. The group's union caps only keep the
+ * notification center from stripping a field before the group sees it; a member gets its own limits.
+ */
+export function clampToCaps(notification: Notification, caps: TargetKindCaps): Notification {
+  const { attachments, actions, sound, clickUrl, ...rest } = notification
+  const kept = (attachments ?? [])
+    .filter((attachment) => caps.attachments.mediaTypes.includes(attachment.mediaType))
+    .slice(0, caps.attachments.max)
+  const buttons = (actions ?? []).slice(0, caps.actions)
+  return {
+    ...rest,
+    body: caps.text?.body === false ? '' : notification.body.slice(0, caps.bodyMaxLen),
+    ...(caps.text?.title === false || notification.title === undefined
+      ? { title: undefined }
+      : { title: notification.title }),
+    ...(kept.length > 0 ? { attachments: kept } : {}),
+    ...(buttons.length > 0 ? { actions: buttons } : {}),
+    ...(caps.sound && sound !== undefined ? { sound } : {}),
+    ...(caps.clickUrl && clickUrl !== undefined ? { clickUrl } : {}),
+  }
+}
