@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Battery status now carries the cell state (charging, full, idle), current in mA and temperature in °C beside the existing level, source and voltage
+- A crop camera helper kind (a one-cell derived camera over one source) with the shared crop geometry: seed rectangle, ratio presets and ratio-locked resize.
 
 ## [1.2.604] - 2026-11-20
 

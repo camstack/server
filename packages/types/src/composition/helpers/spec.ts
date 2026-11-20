@@ -283,6 +283,55 @@ export function newGridHelperSpec(): GridHelperSpec {
   }
 }
 
+/** The ratio presets of a crop camera. `free` leaves the handles unlocked. */
+export const CROP_ASPECTS = ['16:9', '4:3', '1:1', 'free'] as const
+export type CropAspect = (typeof CROP_ASPECTS)[number]
+export const DEFAULT_CROP_ASPECT: CropAspect = '16:9'
+
+/**
+ * A crop camera (#611): a derived camera showing one section of ONE source. It
+ * is a one-cell grid on the camera-grid engine, so the profiles, the sizing,
+ * the no-upscale rule and the detection mapping are the grid's. `rect` is
+ * normalized against the source (D519); pixels exist only at runtime. `aspect`
+ * is the preset the editor locks the handles to; it is stored so the editor
+ * reopens on the same lock.
+ */
+export type CropHelperSpec = {
+  readonly kind: 'crop'
+  readonly source: CompositionSourceRef
+  readonly rect: GridRect
+  readonly aspect: CropAspect
+  readonly fps: number
+  readonly publishedProfiles: readonly GridProfile[]
+}
+
+const cropHelperObject = z.object({
+  kind: z.literal('crop'),
+  source: CompositionSourceRefSchema,
+  rect: GridRectSchema,
+  aspect: z.enum(CROP_ASPECTS),
+  fps: z.number().int().min(1).max(60),
+  publishedProfiles: z.array(z.enum(GRID_PROFILES)).max(3),
+})
+
+export const CropHelperSpecSchema: z.ZodType<CropHelperSpec> = cropHelperObject
+
+/** A new crop of `source`, with the rectangle the editor starts from. */
+export function newCropHelperSpec(
+  source: CompositionSourceRef,
+  rect: GridRect,
+  aspect: CropAspect = DEFAULT_CROP_ASPECT,
+): CropHelperSpec {
+  return {
+    kind: 'crop',
+    source,
+    rect,
+    aspect,
+    fps: DEFAULT_GRID_FPS,
+    publishedProfiles: [...DEFAULT_GRID_PROFILES],
+  }
+}
+
 /**
  * A Terminal camera (planning#580): the camera of one Terminal, created on the
  * Terminal page. The composer declares the camera; addon-terminal serves it.
@@ -308,10 +357,12 @@ export type HelperSpec =
   | ExpressionHelperSpec
   | DerivativeHelperSpec
   | GridHelperSpec
+  | CropHelperSpec
   | TerminalHelperSpec
 
 export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kind', [
   gridHelperObject,
+  cropHelperObject,
   terminalHelperObject,
   GroupHelperSpecSchema,
   statisticHelperObject,
@@ -344,21 +395,24 @@ export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
     case 'expression':
       return spec.inputs.map((input) => input.member)
     case 'grid':
+    case 'crop':
     case 'terminal':
       return []
   }
 }
 
 /** The kinds whose camera an engine serves on the composer's row (planning#580). */
-export const ENGINE_HOSTED_HELPER_KINDS = ['grid', 'terminal'] as const
+export const ENGINE_HOSTED_HELPER_KINDS = ['grid', 'crop', 'terminal'] as const
 export type EngineHostedHelperKind = (typeof ENGINE_HOSTED_HELPER_KINDS)[number]
-export type EngineHostedHelperSpec = GridHelperSpec | TerminalHelperSpec
+export type EngineHostedHelperSpec = GridHelperSpec | CropHelperSpec | TerminalHelperSpec
 
 export function isEngineHostedHelper(spec: HelperSpec): spec is EngineHostedHelperSpec {
-  return spec.kind === 'grid' || spec.kind === 'terminal'
+  return spec.kind === 'grid' || spec.kind === 'crop' || spec.kind === 'terminal'
 }
 
-/** The devices a helper depends on without reading a field of them: a grid's cell sources. */
+/** The devices a helper depends on without reading a field of them: a grid's cell sources, a crop's source. */
 export function helperDeviceRefs(spec: HelperSpec): readonly CompositionSourceRef[] {
-  return spec.kind === 'grid' ? spec.cells.map((cell) => cell.source) : []
+  if (spec.kind === 'grid') return spec.cells.map((cell) => cell.source)
+  if (spec.kind === 'crop') return [spec.source]
+  return []
 }

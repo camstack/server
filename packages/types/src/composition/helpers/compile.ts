@@ -219,6 +219,7 @@ export function compileHelper(
     case 'expression':
       return compileMath(expressionDraft(spec))
     case 'grid':
+    case 'crop':
     case 'terminal':
       return parseDraft(engineHostedDraft(spec))
   }
