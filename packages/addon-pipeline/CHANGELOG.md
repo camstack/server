@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- iPad/Safari live view of a High-profile 4K camera goes back to passthrough instead of a software re-encode; only a source whose profile the client does not offer is level-capped
+
 ## [1.2.676] - 2026-11-20
 
 ### Changed

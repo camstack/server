@@ -258,4 +258,18 @@ describe('level-capped client offer', () => {
     expect(sub.realSubscribers()).toBe(0)
     expect(captured[0]?.transcodeToBaseline).toBe(false)
   })
+
+  it('keeps passthrough for a High L5.1 source when the strict offer lists High itself', async () => {
+    const highSource = makeMockBroker('640033') // High L5.1
+    server.unregisterBroker('101/high')
+    server.registerBroker('101/high', highSource.broker)
+    // The camera's substream reports the same SPS profile-level-id, so no tier would fit.
+    server.registerBroker('101/low', makeMockBroker('640033').broker)
+    await server.handleOffer('101/high', offerWithLevels(...STRICT_SAFARI))
+    expect(highSource.realSubscribers()).toBe(1)
+    expect(captured[0]?.transcodeToBaseline).toBe(false)
+    expect(
+      log.info.mock.calls.some((c) => String(c[0]).includes('no lower-resolution stream fits')),
+    ).toBe(false)
+  })
 })

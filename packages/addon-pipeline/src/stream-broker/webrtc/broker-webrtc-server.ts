@@ -617,7 +617,8 @@ function h264LevelIdc(profileLevelId: string): number {
  * A level check was removed once as a force-transcode decided from the SOURCE
  * alone (it re-encoded sources a client decodes fine). This one is decided from
  * the client's offer: capped iff the offer holds a profile at least as capable
- * as the source's AND no such profile offers a level >= the source's. A
+ * as the source's AND no such profile offers a level >= the source's, AND the
+ * offer does not list the source's exact profile (that client decodes it as is). A
  * Baseline source is never capped (Firefox offers only L3.1 Baseline and
  * decodes any level); an offer with no compatible profile is the profile rule's
  * business (`resolveClientOfferTranscodeToBaseline`).
@@ -632,6 +633,11 @@ export function isClientOfferLevelCapped(
   if (isBaselineProfileLevelId(sourceProfileLevelId)) return false
   const sourceIdc = h264ProfileIdc(sourceProfileLevelId)
   const sourceLevel = h264LevelIdc(sourceProfileLevelId)
+  // The offer lists the source's own profile (a High source, a High line
+  // offered at L3.1): that client decodes such sources untouched, whatever
+  // level the line states. The black case is a source whose profile is NOT
+  // offered as such (Main source, only High/Baseline lines).
+  if (offeredProfileLevelIds.some((plid) => h264ProfileIdc(plid) === sourceIdc)) return false
   const compatible = offeredProfileLevelIds.filter((plid) => h264ProfileIdc(plid) >= sourceIdc)
   if (compatible.length === 0) return false
   const maxLevel = compatible.reduce((max, plid) => Math.max(max, h264LevelIdc(plid)), 0)
