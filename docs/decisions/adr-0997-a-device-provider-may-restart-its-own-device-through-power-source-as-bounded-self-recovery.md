@@ -1,13 +1,11 @@
 ---
 id: D997
 title: A device's own provider may call power-source forceRestart for its own device, as a bounded self-recovery
-status: proposed
+status: superseded
+superseded-by: D1072
 date: 2026-11-02
 supersedes:
 applies-to:
-  - packages/types/src/capabilities/power-source.cap.ts
-  - packages/addon-provider-velux/src/velux-power-recovery.ts
-  - packages/addon-provider-velux/src/velux-integration-manager.ts
 ---
 
 ## Context

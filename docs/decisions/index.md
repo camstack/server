@@ -4,7 +4,7 @@
 
 # Decisions
 
-1038 architecture decision records. One file per decision, never
+1039 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -974,7 +974,7 @@ that rots.
 | D994 | [Passive discovery and a 30-minute sweep feed one persisted proposal stream](adr-0994-passive-discovery-feeds-one-persisted-proposal-stream.md) | ✅ accepted | 2026-11-02 |
 | D995 | [A debug watch is a hub-held window pushed as interest, never a stored value](adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md) | ✅ accepted | 2026-11-02 |
 | D996 | [Connection-holding addons are integration instances, a system collection cap over typed record kinds](adr-0996-connection-holding-addons-are-integration-instances.md) | ✅ accepted | 2026-11-02 |
-| D997 | [A device's own provider may call power-source forceRestart for its own device, as a bounded self-recovery](adr-0997-a-device-provider-may-restart-its-own-device-through-power-source-as-bounded-self-recovery.md) | 💭 proposed | 2026-11-02 |
+| D997 | [A device's own provider may call power-source forceRestart for its own device, as a bounded self-recovery](adr-0997-a-device-provider-may-restart-its-own-device-through-power-source-as-bounded-self-recovery.md) | ↩︎ superseded | 2026-11-02 |
 | D998 | [A notification that needs a sleeping battery camera wakes it once, by the rule's leave, and waits bounded](adr-0998-a-notification-that-needs-a-sleeping-battery-camera-wakes-it-once-by-the-rules-leave-and-waits-bounded.md) | 💭 proposed | 2026-11-02 |
 | D999 | [Inbound camera alarms ride existing planes — SMTP is a broker kind, HTTP is the addon data plane](adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md) | ✅ accepted (supersedes D986 §6 (inbound receivers as a hub builtin)) | 2026-11-02 |
 | D1000 | [A parcel still is taken from a frame that still exists](adr-1000-a-parcel-still-is-taken-from-a-frame-that-still-exists.md) | 💭 proposed | 2026-11-02 |
@@ -1051,6 +1051,7 @@ that rots.
 | D1069 | [A heat pump's electrical power and energy are overridable by a device the operator picks](adr-1069-a-heat-pumps-electrical-power-and-energy-are-overridable-by-a-device-the-operator-picks.md) | ✅ accepted | 2026-11-20 |
 | D1070 | [A sensor notification takes a LIVE picture of every linked camera, never the wrapper's cached frame](adr-1070-a-sensor-notification-takes-a-live-picture-of-every-linked-camera.md) | ✅ accepted | 2026-11-20 |
 | D1071 | [A notifier group is a notification target owned by the core, built in Notifications](adr-1071-a-notifier-group-is-a-target-owned-by-the-core-built-in-notifications.md) | 💭 proposed | 2026-11-20 |
+| D1072 | [A provider never restarts its own power source; recovery is an operator automation on the error cap](adr-1072-a-provider-never-restarts-its-own-power-source-recovery-is-an-operator-automation-on-the-error-cap.md) | ✅ accepted (supersedes D997) | 2026-11-21 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

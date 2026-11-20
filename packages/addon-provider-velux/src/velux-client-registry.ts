@@ -1,7 +1,6 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { sameVeluxConnection, type VeluxConnectionConfig } from './config.js'
 import type { VeluxGatewayClientFactory } from './velux-client-contract.js'
-import type { PowerCycleStore, PowerSourcePort } from './velux-power-recovery.js'
 import { VeluxIntegrationManager } from './velux-integration-manager.js'
 import { veluxGateways } from './velux-node-resolver.js'
 
@@ -9,8 +8,6 @@ export interface VeluxClientRegistryDeps {
   readonly onConnected?: (integrationId: string) => void
   readonly onDisconnected?: (integrationId: string) => void
   readonly makeClient?: VeluxGatewayClientFactory
-  readonly powerSource?: PowerSourcePort
-  readonly powerCycleStore?: PowerCycleStore
 }
 
 interface VeluxClientEntry {
@@ -29,15 +26,11 @@ export class VeluxClientRegistry {
   #onConnected: (integrationId: string) => void
   #onDisconnected: (integrationId: string) => void
   readonly #makeClient: VeluxGatewayClientFactory | undefined
-  readonly #powerSource: PowerSourcePort | undefined
-  readonly #powerCycleStore: PowerCycleStore | undefined
   readonly #entries: Map<string, VeluxClientEntry> = new Map()
 
   constructor(logger: IScopedLogger, deps: VeluxClientRegistryDeps = {}) {
     this.#logger = logger
     this.#makeClient = deps.makeClient
-    this.#powerSource = deps.powerSource
-    this.#powerCycleStore = deps.powerCycleStore
     this.#onConnected = deps.onConnected ?? (() => undefined)
     this.#onDisconnected = deps.onDisconnected ?? (() => undefined)
   }
@@ -79,8 +72,6 @@ export class VeluxClientRegistry {
       onDisconnected: (id) => this.#onDisconnected(id),
       onNodesChanged: (id) => veluxGateways.emitSnapshot(id),
       ...(this.#makeClient === undefined ? {} : { makeClient: this.#makeClient }),
-      ...(this.#powerSource === undefined ? {} : { powerSource: this.#powerSource }),
-      ...(this.#powerCycleStore === undefined ? {} : { powerCycleStore: this.#powerCycleStore }),
     })
     this.#entries.set(integrationId, { name, manager, connection })
     veluxGateways.set(integrationId, manager)

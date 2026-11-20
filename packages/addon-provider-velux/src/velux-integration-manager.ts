@@ -1,13 +1,6 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { VeluxConnectionConfig } from './config.js'
 import { KlfGatewayClient } from './klf-gateway-client.js'
-import {
-  type PowerCycleStore,
-  type PowerSourcePort,
-  RECOVERY_UNREACHABLE_MS,
-  type VeluxRecoveryRecord,
-  VeluxPowerRecovery,
-} from './velux-power-recovery.js'
 import { classifyProbeFailure } from './velux-connection-test.js'
 import type { VeluxGatewayStatus, VeluxNodeSource } from './velux-node-resolver.js'
 import {
@@ -64,9 +57,6 @@ export interface VeluxIntegrationManagerOptions {
   /** Fired when the node set changed (a push, a (re)connect, or a drop) so the
    *  devices of this gateway re-read their node. */
   readonly onNodesChanged: (integrationId: string) => void
-  /** The gateway device's `power-source` link: restarts a wedged gateway. */
-  readonly powerSource?: PowerSourcePort
-  readonly powerCycleStore?: PowerCycleStore
   /** Factory seam — defaults to the real KLF-200 client. */
   readonly makeClient?: VeluxGatewayClientFactory
 }
@@ -100,16 +90,12 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
   #retryTimer: ReturnType<typeof setTimeout> | null = null
   /** Bumped by every start/stop so a connect that finishes late can tell it was superseded. */
   #generation = 0
-  readonly #recovery: VeluxPowerRecovery
   /** When the gateway first became unreachable in the current run of failures; null while reachable. */
   #unreachableSince: number | null = null
   /** True once a connect was tried; the device's fault state is cold before that. */
   #attempted = false
   /** The last failed login was REFUSED (a wrong password), not a connection that could not be made. */
   #loginRefused = false
-  /** One-shot timer at `#unreachableSince + RECOVERY_UNREACHABLE_MS`; the decision never waits for a retry to land after it. */
-  #recoveryDeadlineTimer: ReturnType<typeof setTimeout> | null = null
-  #lastRecovery: VeluxRecoveryRecord | null = null
 
   constructor(options: VeluxIntegrationManagerOptions) {
     this.#id = options.id
@@ -119,17 +105,6 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#onDisconnected = options.onDisconnected
     this.#onNodesChanged = options.onNodesChanged
     this.#makeClient = options.makeClient ?? defaultVeluxClientFactory
-    this.#recovery = new VeluxPowerRecovery({
-      integrationId: options.id,
-      logger: this.#logger,
-      ...(options.powerSource === undefined ? {} : { powerSource: options.powerSource }),
-      ...(options.powerCycleStore === undefined ? {} : { store: options.powerCycleStore }),
-    })
-  }
-
-  /** What the last power-cycle recovery did, or null if none ran since this manager started. */
-  get lastRecovery(): VeluxRecoveryRecord | null {
-    return this.#lastRecovery
   }
 
   /** The integration id this session belongs to. */
@@ -213,7 +188,6 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#generation += 1
     this.#cancelRetry()
     this.#clearUnreachable()
-    this.#recovery.abort()
     const client = this.#client
     this.#detach()
     this.#nodes = new Map()
@@ -313,7 +287,6 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#trackUnreachable(err, refused)
     // The gateway device re-reads its fault state on this tick.
     this.#onNodesChanged(this.#id)
-    void this.#maybeRecover()
   }
 
   /** A run of failures that say "cannot reach it" (refused, timeout, TLS); a wrong password is not one. */
@@ -325,54 +298,11 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     const kind = classifyProbeFailure(err).kind
     if ((kind === 'unreachable' || kind === 'tls') && this.#unreachableSince === null) {
       this.#unreachableSince = Date.now()
-      this.#armRecoveryDeadline()
     }
   }
 
   #clearUnreachable(): void {
     this.#unreachableSince = null
-    if (this.#recoveryDeadlineTimer !== null) clearTimeout(this.#recoveryDeadlineTimer)
-    this.#recoveryDeadlineTimer = null
-  }
-
-  /**
-   * Decide at the deadline, not at the next failed attempt (the backoff can
-   * land minutes after it). A connect in flight is left alone: its own failure
-   * path asks again.
-   */
-  #armRecoveryDeadline(): void {
-    const generation = this.#generation
-    this.#recoveryDeadlineTimer = setTimeout(() => {
-      this.#recoveryDeadlineTimer = null
-      if (generation !== this.#generation || !this.#wanted) return
-      if (this.#status === 'connecting') return
-      void this.#maybeRecover()
-    }, RECOVERY_UNREACHABLE_MS)
-    this.#recoveryDeadlineTimer.unref?.()
-  }
-
-  /** Power-cycle the gateway when it has been unreachable long enough and a switch is set. */
-  async #maybeRecover(): Promise<void> {
-    const since = this.#unreachableSince
-    if (since === null || !this.#wanted) return
-    const generation = this.#generation
-    const result = await this.#recovery.maybeRecover({
-      unreachableForMs: Date.now() - since,
-      hasLiveSession: this.#status === 'connected',
-      onCycleStart: () => {
-        this.#cancelRetry()
-        this.#clearUnreachable()
-      },
-    })
-    if (result.kind !== 'done') return
-    this.#lastRecovery = result.record
-    if (generation !== this.#generation || !this.#wanted) return
-    this.#attempt = 0
-    this.#clearUnreachable()
-    this.#logger.info('velux: reconnecting after the power cycle', {
-      meta: { outcome: result.record.outcome },
-    })
-    await this.#connect()
   }
 
   /** The gateway ended an ESTABLISHED session. */

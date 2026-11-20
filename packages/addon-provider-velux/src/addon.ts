@@ -23,6 +23,7 @@ import {
   type RecordIntegrationInstances,
   rowsDepsOver,
 } from '@camstack/types'
+import { VELUX_DROP_POWER_RESTART_KEYS_MIGRATION } from './migrations/drop-power-restart-keys.js'
 import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
 import { veluxActions } from './custom-actions.js'
 import { VeluxCoverDevice } from './devices/velux-cover-device.js'
@@ -31,9 +32,7 @@ import { VeluxRainSensorDevice } from './devices/velux-rain-sensor-device.js'
 import { VeluxWindowDevice } from './devices/velux-window-device.js'
 import { setKlfLibraryLogSink } from './klf-library-log.js'
 import { buildVeluxAdoptionProvider } from './velux-adoption-provider.js'
-import { gatewayNativeId } from './velux-discovery.js'
 import { VeluxClientRegistry } from './velux-client-registry.js'
-import type { PowerCycleStore, PowerSourcePort } from './velux-power-recovery.js'
 import { buildVeluxConnectionTestProvider } from './velux-connection-test.js'
 import { cascadeRemoveDevicesForIntegration } from './velux-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './velux-integration-offline.js'
@@ -106,6 +105,12 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       ],
       (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: veluxConnectionsEntryKind }),
     )
+    await this.runMigrations([VELUX_DROP_POWER_RESTART_KEYS_MIGRATION], (api) => ({
+      storedKeys: async () => Object.keys((await api.settings.read({})).store),
+      deleteKeys: async (keys) => {
+        await api.settings.deleteKeys({ keys: [...keys] })
+      },
+    }))
     this.instances = buildVeluxInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
       tester: this.buildConnectionTestProvider(),
@@ -116,10 +121,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.debug(`klf-200-api ${level}: ${message}`)
     })
 
-    this.clients = new VeluxClientRegistry(this.ctx.logger, {
-      powerSource: this.buildPowerSourcePort(),
-      powerCycleStore: this.buildPowerCycleStore(),
-    })
+    this.clients = new VeluxClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
       this.setIntegrationDevicesOnline(integrationId, true)
     })
@@ -344,61 +346,6 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       integrationId,
       logger: this.ctx.logger,
     })
-  }
-
-  /** The gateway device's `power-source` cap, through `ctx.api`; the cap owns off, wait, on. */
-  private buildPowerSourcePort(): PowerSourcePort {
-    return {
-      gatewayDevice: async (integrationId) => {
-        const reg = this.ctx.kernel.deviceRegistry
-        const devices = this.ctx.kernel.devices
-        if (!reg || !devices)
-          return { kind: 'unknown', error: 'the device registry is unavailable' }
-        let failure: string | null = null
-        for (const d of reg.getAllForAddon(this.addonId)) {
-          if (d.parentDeviceId !== null) continue
-          try {
-            const config = await devices.loadConfig(d.id)
-            if (
-              config['system'] === 'velux' &&
-              config['nativeId'] === gatewayNativeId(integrationId)
-            ) {
-              return { kind: 'found', deviceId: d.id }
-            }
-          } catch (err) {
-            // A failed read is not absence: say so, and keep looking at the others.
-            failure = errMsg(err)
-            this.ctx.logger.warn(
-              'velux: a device config could not be read for the gateway lookup',
-              {
-                tags: { integrationId, deviceId: d.id },
-                meta: { error: failure },
-              },
-            )
-          }
-        }
-        return failure === null ? { kind: 'missing' } : { kind: 'unknown', error: failure }
-      },
-      getStatus: (deviceId) => this.ctx.api.powerSource.getStatus.query({ deviceId }),
-      forceRestart: (deviceId) => this.ctx.api.powerSource.forceRestart.mutate({ deviceId }),
-    }
-  }
-
-  /** The last restart attempt per integration, in the addon store, so a respawn keeps the cooldown. */
-  private buildPowerCycleStore(): PowerCycleStore {
-    // One flat key per integration: `writeAddonStore` merges top-level keys, so
-    // one integration's write never rewrites another's (no whole-map read-modify-write).
-    const key = (integrationId: string): string => `powerRestartAt:${integrationId}`
-    return {
-      read: async (integrationId) => {
-        const store = (await this.ctx.settings?.readAddonStore()) ?? {}
-        const at: unknown = store[key(integrationId)]
-        return typeof at === 'number' ? at : null
-      },
-      write: async (integrationId, at) => {
-        await this.ctx.settings?.writeAddonStore({ [key(integrationId)]: at })
-      },
-    }
   }
 
   private buildConnectionTestProvider(): IConnectionProbe {

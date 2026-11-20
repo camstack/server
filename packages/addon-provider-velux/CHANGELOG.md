@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The gateway no longer restarts its own power source: an automation on the gateway fault now does it (notification, then restart, at most every 30 minutes), and the stored last-restart time is removed
+
 ## [0.2.173] - 2026-11-20
 
 ### Changed
