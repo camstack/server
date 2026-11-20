@@ -251,7 +251,7 @@ describe('a drain waits only on frames with a pending consumer (D656)', () => {
     // alive: the native crop goes out BEFORE the teardown…
     const served = withRetainedReader(store, handle, async () => {
       const attempt = await nativeCrop({ x: 0, y: 0, w: 1, h: 1 })
-      expect(attempt).toEqual({ kind: 'miss' })
+      expect(attempt).toMatchObject({ kind: 'miss' })
       return store.cropAsync(handle, { x: 0, y: 0, w: 1, h: 1 })
     })
     await vi.advanceTimersByTimeAsync(0)

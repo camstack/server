@@ -166,6 +166,67 @@ describe('parkTrackFrame (runner side)', () => {
     })
   })
 
+  describe('the refusal line tells the three causes apart', () => {
+    const lease = {
+      sessionId: 4,
+      workerState: 'live' as const,
+      sessionAgeMs: 90_000,
+      framesSinceFrame: 2,
+      holdFrames: 8,
+      outsideHold: false,
+      openImages: 3,
+    }
+
+    async function refuse(handleAgeMs: number, leaseFacts: typeof lease): Promise<unknown> {
+      const spy = makeLoggerSpy()
+      const clock = [31_000, 31_020]
+      const deps = makeDeps({
+        logger: spy.logger,
+        now: () => clock.shift() ?? 31_020,
+        resolvePixels: vi.fn(async () => ({
+          pixels: null,
+          tier: 'miss' as const,
+          missReason: 'worker-lease-gone' as const,
+          handleAgeMs,
+          workerReason: undefined,
+          lease: leaseFacts,
+        })),
+      })
+      await parkTrackFrame(deps, { ...input, timestamp: 1_000 })
+      const warned = spy.calls.find((c) => c.level === 'warn')
+      return warned?.extras
+    }
+
+    it('carries frame age, request and resolve spans, and the lease facts', async () => {
+      const meta = await refuse(1_200, lease)
+      expect(meta).toMatchObject({
+        meta: {
+          frameTimestamp: 1_000,
+          parkRequestedAt: 31_000,
+          frameAgeMs: 30_000,
+          resolveMs: 20,
+          lease,
+        },
+      })
+    })
+
+    it('(a) a park asked for long after the frame is a late request', async () => {
+      expect(await refuse(18_000, lease)).toMatchObject({
+        meta: { suspectedCause: 'late-request' },
+      })
+    })
+
+    it('(b) a worker no longer live is a replaced worker', async () => {
+      const meta = await refuse(1_200, { ...lease, workerState: 'exited' })
+      expect(meta).toMatchObject({ meta: { suspectedCause: 'worker-replaced' } })
+    })
+
+    it('(c) a young frame already outside the hold window is evicted by the hold', async () => {
+      const meta = await refuse(1_200, { ...lease, framesSinceFrame: 9, outsideHold: true })
+      expect(meta).toMatchObject({ meta: { suspectedCause: 'evicted-by-hold' } })
+    })
+  })
+
   it('a ram-fullframe tier is refused — a parcel is native or nothing', async () => {
     const spy = makeLoggerSpy()
     const deps = makeDeps({

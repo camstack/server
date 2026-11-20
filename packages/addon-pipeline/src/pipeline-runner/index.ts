@@ -149,6 +149,8 @@ import type {
 } from '../session-decode/session-decode-coordinator.js'
 import { isSessionDecodeReadGone } from '../session-decode/session-decode-read-gone.js'
 import type { NativeCropRequester } from '../session-decode/session-decode-pump.js'
+import type { NativeCropLeaseFacts } from '../session-decode/video-frame-generator.js'
+import { suspectLeaseLossCause } from './lease-miss-cause.js'
 import { startSessionDecodePump } from '../session-decode/session-decode-pump.js'
 import type { VideoFrameSource } from '../session-decode/video-frame-generator.js'
 import { resolveHubHostname } from '../shared/hub-hostname.js'
@@ -3617,6 +3619,8 @@ export default class PipelineRunnerAddon
     /** The worker's own sentence for the miss; diagnostic only. */
     workerReason: string | undefined
     handleAgeMs: number | null
+    /** What the decode session knew of the lease at the miss; diagnostic only. */
+    lease: NativeCropLeaseFacts | undefined
   }> {
     const b = input.bbox
     const isFullFrame = b.x <= 0.001 && b.y <= 0.001 && b.w >= 0.999 && b.h >= 0.999
@@ -3651,6 +3655,7 @@ export default class PipelineRunnerAddon
     // was an untagged `debug` line, so a per-camera query returned misses and
     // no reasons. Diagnostic only: nothing branches on this text.
     let workerReason: string | undefined
+    let leaseFacts: NativeCropLeaseFacts | undefined
     if (!isUnboundedFullFrame) {
       // The registry applies the AGE bound before anything crosses a process
       // boundary (ADR-0419): an `expired` handle is refused here, so the
@@ -3671,6 +3676,7 @@ export default class PipelineRunnerAddon
         } else {
           missReason = 'worker-lease-gone'
           workerReason = attempt.workerReason
+          leaseFacts = attempt.lease
         }
       } else if (found.kind === 'expired') {
         missReason = 'handle-expired'
@@ -3706,6 +3712,12 @@ export default class PipelineRunnerAddon
             // 1 102 times" into "hall missed 1 102 times, and here is which
             // of the four failures each was".
             ...(workerReason !== undefined ? { workerReason } : {}),
+            // Which suspected cause this miss points at, and the numbers behind
+            // it: the worker session that took the lease and whether it is
+            // still the live one, and where the frame sits against the
+            // `holdFrames` window.
+            suspectedCause: suspectLeaseLossCause(leaseFacts, handleAgeMs),
+            ...(leaseFacts !== undefined ? { lease: leaseFacts } : {}),
           },
         }
         // A REFUSAL and a MISS are different events and must not share a
@@ -3745,6 +3757,7 @@ export default class PipelineRunnerAddon
       missReason,
       handleAgeMs,
       workerReason,
+      lease: leaseFacts,
     }
   }
 

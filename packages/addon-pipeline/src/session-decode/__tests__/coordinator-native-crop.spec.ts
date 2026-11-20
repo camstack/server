@@ -4,7 +4,7 @@ import {
   createSessionDecodeCoordinator,
   type ForkedChildLike,
 } from '../session-decode-coordinator.js'
-import type { VideoFrame, VideoFrameSource } from '../video-frame-generator.js'
+import type { NativeCropAttempt, VideoFrame, VideoFrameSource } from '../video-frame-generator.js'
 import type { WorkerReply, WorkerRequest } from '../worker-protocol.js'
 import { testLease } from './test-lease-knobs.js'
 
@@ -111,7 +111,7 @@ describe('coordinator native crop (via FrameImage.nativeCrop)', () => {
     const req = fake.sent.find((m) => m.kind === 'nativeCrop')
     const requestId = req && req.kind === 'nativeCrop' ? req.requestId : -1
     fake.emit({ kind: 'nativeCropMiss', requestId })
-    expect(await p).toEqual({ kind: 'miss' })
+    expect(await p).toMatchObject({ kind: 'miss' })
   })
 
   it('still works after the frame is closed (native crops outlive the toBuffer lifetime)', async () => {
@@ -134,7 +134,61 @@ describe('coordinator native crop (via FrameImage.nativeCrop)', () => {
     const { frame } = await firstFrame(fake, logger)
     const p = frame.image.nativeCrop!({ x: 0, y: 0, w: 0.5, h: 0.5 })
     fake.emitExit()
-    expect(await p).toEqual({ kind: 'miss' })
+    expect(await p).toMatchObject({ kind: 'miss' })
+  })
+
+  describe('lease facts on a miss (which of the three causes lost the frame)', () => {
+    async function missFor(frame: VideoFrame, reply: 'miss' | 'exit'): Promise<NativeCropAttempt> {
+      const p = frame.image.nativeCrop!({ x: 0.4, y: 0.4, w: 0.1, h: 0.1 })
+      const req = fake.sent.find((m) => m.kind === 'nativeCrop')
+      const requestId = req && req.kind === 'nativeCrop' ? req.requestId : -1
+      if (reply === 'exit') fake.emitExit()
+      else fake.emit({ kind: 'nativeCropMiss', requestId })
+      return p
+    }
+
+    it('a fresh frame on a live worker is inside the hold', async () => {
+      const { frame } = await firstFrame(fake, logger)
+      const miss = await missFor(frame, 'miss')
+      expect(miss).toMatchObject({
+        kind: 'miss',
+        lease: {
+          workerState: 'live',
+          framesSinceFrame: 0,
+          holdFrames: 8,
+          outsideHold: false,
+          openImages: 1,
+        },
+      })
+    })
+
+    it('a frame older than the 8 newest delivered is outside the hold', async () => {
+      const { frame, iterator } = await firstFrame(fake, logger)
+      for (let i = 0; i < 8; i++) {
+        const next = iterator.next()
+        fake.emit({
+          kind: 'frame',
+          frameId: 100 + i,
+          timestamp: 2 + i,
+          width: 3840,
+          height: 2160,
+          format: 'rgb',
+        })
+        await next
+      }
+      const miss = await missFor(frame, 'miss')
+      expect(miss).toMatchObject({
+        lease: { framesSinceFrame: 8, holdFrames: 8, outsideHold: true, workerState: 'live' },
+      })
+    })
+
+    it('a worker that died is reported exited, with the session id that took the lease', async () => {
+      const { frame } = await firstFrame(fake, logger)
+      const miss = await missFor(frame, 'exit')
+      expect(miss).toMatchObject({ lease: { workerState: 'exited' } })
+      if (miss.kind !== 'miss' || miss.lease === undefined) throw new Error('no lease facts')
+      expect(Number.isInteger(miss.lease.sessionId)).toBe(true)
+    })
   })
 
   it('carries the worker reason back to the CALLER, not only to the debug log', async () => {
@@ -143,7 +197,7 @@ describe('coordinator native crop (via FrameImage.nativeCrop)', () => {
     const req = fake.sent.find((m) => m.kind === 'nativeCrop')
     const requestId = req && req.kind === 'nativeCrop' ? req.requestId : -1
     fake.emit({ kind: 'nativeCropMiss', requestId, reason: 'crop failed — sws_scale -22' })
-    expect(await p).toEqual({ kind: 'miss', workerReason: 'crop failed — sws_scale -22' })
+    expect(await p).toMatchObject({ kind: 'miss', workerReason: 'crop failed — sws_scale -22' })
     expect(logger.debug).toHaveBeenCalledWith(
       'session-decode: native crop miss',
       expect.objectContaining({ meta: { requestId, reason: 'crop failed — sws_scale -22' } }),

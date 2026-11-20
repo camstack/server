@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A native crop miss and a refused frame park now log the frame age, whether the decode worker is still the one that took the lease, and whether the frame fell out of the held-frames window, so a lost best shot can be traced to its cause.
+
 ## [1.2.675] - 2026-11-20
 
 ### Fixed

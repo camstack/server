@@ -28,6 +28,8 @@
  */
 import type { IPipelineRunnerProvider, IScopedLogger, ParkTrackFrameResult } from '@camstack/types'
 import type { ParkedFrameStore } from '../session-decode/parked-frame-store.js'
+import type { NativeCropLeaseFacts } from '../session-decode/video-frame-generator.js'
+import { suspectLeaseLossCause } from './lease-miss-cause.js'
 import type { NativeCropMissReason, NativeCropPixels, NativeCropTier } from './native-crop-tier.js'
 
 /** Input of the `parkTrackFrame` cap method, derived from the cap definition. */
@@ -40,6 +42,8 @@ export interface ResolvedParkPixels {
   readonly missReason: NativeCropMissReason | null
   readonly handleAgeMs: number | null
   readonly workerReason: string | undefined
+  /** What the decode session knew of the lease at the miss; diagnostic only. */
+  readonly lease?: NativeCropLeaseFacts
 }
 
 export interface TrackFrameParkDeps {
@@ -55,6 +59,8 @@ export interface TrackFrameParkDeps {
   /** The runner's single JPEG encoder; `null` when the encode throws. */
   encodeJpeg(pixels: NativeCropPixels): Promise<Buffer | null>
   readonly logger: IScopedLogger
+  /** Wall clock; injectable so a spec can pin the request-to-resolve spans. */
+  readonly now?: () => number
 }
 
 /** Park one frame for one track. Never throws; a refusal is an answer. */
@@ -64,6 +70,8 @@ export async function parkTrackFrame(
 ): Promise<ParkTrackFrameResult> {
   const { deviceId, trackId, kind } = input
   const handleKey = `${input.handle.shmId}#${input.handle.slot}#${input.handle.seq}`
+  const now = deps.now ?? Date.now
+  const requestedAt = now()
   const resolved = await deps.resolvePixels({
     handle: input.handle,
     bbox: input.bbox,
@@ -86,6 +94,19 @@ export async function parkTrackFrame(
         // The number that says which hop was late: how old the handle was
         // when the hub's decision reached this node. Null = never registered.
         handleAgeMs: resolved.handleAgeMs,
+        // The clocks that say which hop was late. `frameTimestamp` is the
+        // frame's instant on the CALLER's clock (the hub's, cross-node), so
+        // `frameAgeMs` is only as good as that clock; `handleAgeMs` is the
+        // same-process measure. `resolveMs` is this node's own resolve cost.
+        frameTimestamp: input.timestamp,
+        parkRequestedAt: requestedAt,
+        frameAgeMs: requestedAt - input.timestamp,
+        resolveMs: now() - requestedAt,
+        suspectedCause: suspectLeaseLossCause(resolved.lease, resolved.handleAgeMs),
+        // Which worker session took the lease and whether it is still alive,
+        // plus the held-set facts (`framesSinceFrame` vs `holdFrames`,
+        // `outsideHold`). Absent when no worker was reached.
+        ...(resolved.lease !== undefined ? { lease: resolved.lease } : {}),
         servedTier: resolved.tier,
         handle: handleKey,
         ...(resolved.workerReason !== undefined ? { workerReason: resolved.workerReason } : {}),

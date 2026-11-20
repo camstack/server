@@ -246,7 +246,7 @@ describe('session-decode drain — the remaining gates (D652 fix round 1)', () =
     const req = fake.sent.find((m) => m.kind === 'nativeCrop')
     if (!req || req.kind !== 'nativeCrop') throw new Error('expected a nativeCrop request')
     fake.reply({ kind: 'nativeCropMiss', requestId: req.requestId })
-    await expect(crop).resolves.toEqual({ kind: 'miss' })
+    await expect(crop).resolves.toMatchObject({ kind: 'miss' })
     await vi.advanceTimersByTimeAsync(0)
     expect(fake.kill).toHaveBeenCalledTimes(1)
     await returned
@@ -329,7 +329,7 @@ describe('session-decode drain — the remaining gates (D652 fix round 1)', () =
     const returned = it2.return()
     await vi.advanceTimersByTimeAsync(0)
     const late = await image.nativeCrop?.({ x: 0, y: 0, w: 1, h: 1 })
-    expect(late).toEqual({ kind: 'miss', workerReason: NATIVE_CROP_REFUSED_DRAINING })
+    expect(late).toMatchObject({ kind: 'miss', workerReason: NATIVE_CROP_REFUSED_DRAINING })
     expect(fake.sent.some((m) => m.kind === 'nativeCrop')).toBe(false)
     fake.answerToBuffer(1)
     await read

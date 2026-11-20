@@ -42,6 +42,7 @@ import type {
   FrameImage,
   FrameImageOptions,
   NativeCropAttempt,
+  NativeCropLeaseFacts,
   NormalizedBbox,
   VideoFrame,
   VideoFrameGenerator,
@@ -374,7 +375,17 @@ function toError(err: unknown): Error {
  * instance is created per `generateVideoFrames()` call (i.e. per forked
  * child) — never shared across sessions.
  */
+/** Process-wide counter naming each decode session (one worker), for lease diagnostics. */
+let nextSessionId = 1
+
 class SessionDecodeSession {
+  /** Names this worker in a `native crop miss` line: the session that took a lease. */
+  private readonly sessionId = nextSessionId++
+  private readonly createdAt = Date.now()
+  /** Frames this session has yielded; each image keeps its own ordinal. */
+  private framesDelivered = 0
+  /** The `holdFrames` the worker was started under: the size of its held set. */
+  private holdFrames = 0
   private pendingPull: PendingPullWaiter | null = null
   private readonly pendingToBuffers = new Map<number, PendingToBufferWaiter[]>()
   /** Outstanding `nativeCrop` requests, keyed by the monotonic `requestId`. */
@@ -430,6 +441,7 @@ class SessionDecodeSession {
     lease: WorkerLeaseKnobs,
     hwaccel: SessionHwaccelOffer,
   ): void {
+    this.holdFrames = lease.values.holdFrames
     this.trySend({ kind: 'start', source, opts, lease, hwaccel })
   }
 
@@ -484,6 +496,31 @@ class SessionDecodeSession {
    * rejects — native crops are strictly best-effort with a free fallback.
    */
   requestNativeCrop(
+    frameId: number,
+    bbox: NormalizedBbox,
+    maxWidth: number | undefined,
+    ordinal: number,
+  ): Promise<NativeCropAttempt> {
+    return this.sendNativeCrop(frameId, bbox, maxWidth).then((attempt) =>
+      attempt.kind === 'miss' ? { ...attempt, lease: this.leaseFacts(ordinal) } : attempt,
+    )
+  }
+
+  /** The lease facts for the frame delivered as number `ordinal`, as of now. */
+  private leaseFacts(ordinal: number): NativeCropLeaseFacts {
+    const framesSinceFrame = Math.max(0, this.framesDelivered - ordinal)
+    return {
+      sessionId: this.sessionId,
+      workerState: this.exited ? 'exited' : this.stopRequested ? 'draining' : 'live',
+      sessionAgeMs: Date.now() - this.createdAt,
+      framesSinceFrame,
+      holdFrames: this.holdFrames,
+      outsideHold: framesSinceFrame >= this.holdFrames,
+      openImages: this.consumerImages + this.retainedImages,
+    }
+  }
+
+  private sendNativeCrop(
     frameId: number,
     bbox: NormalizedBbox,
     maxWidth: number | undefined,
@@ -549,8 +586,10 @@ class SessionDecodeSession {
   }
 
   /** A yielded image the consumer now holds — see {@link consumerImages}. */
-  noteImageOpened(): void {
+  noteImageOpened(): number {
     this.consumerImages += 1
+    this.framesDelivered += 1
+    return this.framesDelivered
   }
 
   /**
@@ -1111,7 +1150,7 @@ class SessionDecodeSession {
 function buildFrameImage(session: SessionDecodeSession, reply: FrameWorkerReply): FrameImage {
   let closed = false
   let pendingConsumer = true
-  session.noteImageOpened()
+  const ordinal = session.noteImageOpened()
   return {
     width: reply.width,
     height: reply.height,
@@ -1129,7 +1168,7 @@ function buildFrameImage(session: SessionDecodeSession, reply: FrameWorkerReply)
     // distinct, late read (after detection has run) that must outlive the
     // per-frame `toBuffer` close. A miss resolves `null`.
     nativeCrop: (bbox: NormalizedBbox, maxWidth?: number): Promise<NativeCropAttempt> =>
-      session.requestNativeCrop(reply.frameId, bbox, maxWidth),
+      session.requestNativeCrop(reply.frameId, bbox, maxWidth, ordinal),
     cutTiles: (bboxes: readonly NormalizedBbox[]): void => session.cutTiles(reply.frameId, bboxes),
     releaseNativeLease: (): void => session.releaseLease(reply.frameId),
     markInferred: (): void => session.markInferred(reply.frameId),

@@ -48,7 +48,36 @@ export interface NativeCropResult {
  */
 export type NativeCropAttempt =
   | { readonly kind: 'crop'; readonly crop: NativeCropResult }
-  | { readonly kind: 'miss'; readonly workerReason?: string }
+  | {
+      readonly kind: 'miss'
+      readonly workerReason?: string
+      /** What the decode session knew about the lease when the miss resolved. */
+      readonly lease?: NativeCropLeaseFacts
+    }
+
+/**
+ * What the decode session (the parent half of the worker) can say about a
+ * frame's lease at the instant a native crop missed. Diagnostic only: nothing
+ * branches on it. It tells the three suspected causes of a lost best-shot frame
+ * apart: a late request, a worker that was replaced and took its leases with
+ * it, and a frame pushed out of the `holdFrames` window by newer ones.
+ */
+export interface NativeCropLeaseFacts {
+  /** Process-wide id of the decode session (one worker) that took the lease. */
+  readonly sessionId: number
+  /** `live`; `draining` once a teardown was asked; `exited` once the worker is gone. */
+  readonly workerState: 'live' | 'draining' | 'exited'
+  /** How long the session had been running when the miss resolved. */
+  readonly sessionAgeMs: number
+  /** Frames this session delivered after the one asked about. */
+  readonly framesSinceFrame: number
+  /** The hold window this session started under (`holdFrames`). */
+  readonly holdFrames: number
+  /** `framesSinceFrame >= holdFrames`: the frame fell out of the newest-N held set. */
+  readonly outsideHold: boolean
+  /** Frames this session yielded that a holder still keeps open (not yet closed). */
+  readonly openImages: number
+}
 
 /**
  * Represents a single video frame image with format and buffer capabilities.
