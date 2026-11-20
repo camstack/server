@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The battery badge on the device page now opens the power source, charge state, voltage, current, temperature, sleep state and last contact; unknown values are left out.
+- The camera grid's per-cell crop canvas is now a shared piece, and its rectangle and grips use the theme's primary colour
 
 ## [1.2.478] - 2026-11-20
 

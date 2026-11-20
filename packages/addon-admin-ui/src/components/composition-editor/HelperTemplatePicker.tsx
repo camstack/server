@@ -13,6 +13,7 @@ import type { TFunction } from 'i18next'
 import {
   BarChart3,
   Blocks,
+  Crop,
   Divide,
   Gauge,
   LayoutGrid,
@@ -71,7 +72,13 @@ export function HelperTemplatePicker({
             onPreset?.(preset.id)
             return
           }
-          if (key === 'statistic' || key === 'integral' || key === 'grid' || key === 'terminal') {
+          if (
+            key === 'statistic' ||
+            key === 'integral' ||
+            key === 'grid' ||
+            key === 'terminal' ||
+            key === 'crop'
+          ) {
             onPick({ kind: key })
             return
           }
@@ -108,7 +115,11 @@ export function HelperTemplatePicker({
           {
             id: 'cameras',
             label: t('helper.section.cameras'),
-            tiles: [cameraTile('grid', LayoutGrid, t), cameraTile('terminal', MonitorPlay, t)],
+            tiles: [
+              cameraTile('grid', LayoutGrid, t),
+              cameraTile('crop', Crop, t),
+              cameraTile('terminal', MonitorPlay, t),
+            ],
           },
           {
             id: 'advanced',
@@ -177,7 +188,11 @@ function historyTile(
 }
 
 /** A camera block an engine hosts: a grid of cameras, or a Terminal's screen (planning#580). */
-function cameraTile(id: 'grid' | 'terminal', Icon: typeof LayoutGrid, t: TFunction): PickerTile {
+function cameraTile(
+  id: 'grid' | 'crop' | 'terminal',
+  Icon: typeof LayoutGrid,
+  t: TFunction,
+): PickerTile {
   const label = t(`helper.template.${id}`)
   return {
     key: id,

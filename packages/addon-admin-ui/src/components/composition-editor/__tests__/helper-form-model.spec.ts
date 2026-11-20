@@ -8,6 +8,7 @@ import {
   type GroupTemplate,
   groupTemplate,
   type HelperMember,
+  newCropHelperSpec,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
@@ -51,7 +52,12 @@ const garden: HelperMember = {
 }
 
 function temperature(members: readonly HelperMember[]): GroupHelperSpec {
-  return { kind: 'group', templateId: 'temperature', aggregate: 'mean', members: [...members] }
+  return {
+    kind: 'group',
+    templateId: 'temperature',
+    aggregate: 'mean',
+    members: [...members],
+  }
 }
 
 describe('helper template groups', () => {
@@ -114,21 +120,33 @@ describe('helper template groups', () => {
   it('does not treat an unanswered member as a light with no shared controls', () => {
     expect(
       sharedCapsView([
-        { kind: 'ready', caps: ['switch', 'brightness', 'color'], features: [] },
+        {
+          kind: 'ready',
+          caps: ['switch', 'brightness', 'color'],
+          features: [],
+        },
         { kind: 'pending' },
       ]),
     ).toEqual({ kind: 'pending' })
     expect(
       sharedCapsView([
-        { kind: 'ready', caps: ['switch', 'brightness', 'color'], features: ['light-color-rgb'] },
+        {
+          kind: 'ready',
+          caps: ['switch', 'brightness', 'color'],
+          features: ['light-color-rgb'],
+        },
         { kind: 'ready', caps: ['switch', 'brightness'], features: [] },
       ]),
     ).toEqual({ kind: 'ready', caps: ['switch', 'brightness'], modes: [] })
   })
 
   it('reads a per-member command result and leaves an absent slice as none', () => {
-    expect(commandResultsFromSnapshot({ kind: 'answered', caps: {} })).toEqual({ kind: 'none' })
-    expect(commandResultsFromSnapshot({ kind: 'pending' })).toEqual({ kind: 'pending' })
+    expect(commandResultsFromSnapshot({ kind: 'answered', caps: {} })).toEqual({
+      kind: 'none',
+    })
+    expect(commandResultsFromSnapshot({ kind: 'pending' })).toEqual({
+      kind: 'pending',
+    })
     expect(
       commandResultsFromSnapshot({
         kind: 'answered',
@@ -168,7 +186,12 @@ describe('helper template groups', () => {
     const draft = draftForTemplate('temperature')
     expect(draft).not.toBeNull()
     if (draft === null) return
-    const named = { ...draft, name: 'Front door', aggregate: 'max' as const, members: [porch] }
+    const named = {
+      ...draft,
+      name: 'Front door',
+      aggregate: 'max' as const,
+      members: [porch],
+    }
     expect(withTemplate(named, 'temperature')).toBe(named)
     const next = withTemplate(named, 'humidity')
     expect(next.templateId).toBe('humidity')
@@ -223,13 +246,19 @@ describe('group status on the device page', () => {
     const template = draftForTemplate('temperature')
     expect(template).not.toBeNull()
     const reading = outputReading(
-      { kind: 'answered', caps: { 'temperature-sensor': { temperature: null } } },
+      {
+        kind: 'answered',
+        caps: { 'temperature-sensor': { temperature: null } },
+      },
       requireTemplate('temperature'),
     )
     expect(reading).toEqual({ kind: 'empty' })
     expect(
       outputReading(
-        { kind: 'answered', caps: { 'temperature-sensor': { temperature: 21.4 } } },
+        {
+          kind: 'answered',
+          caps: { 'temperature-sensor': { temperature: 21.4 } },
+        },
         requireTemplate('temperature'),
       ),
     ).toEqual({ kind: 'number', value: 21.4, unit: '°C' })
@@ -239,23 +268,35 @@ describe('group status on the device page', () => {
         caps: { 'group-status': { included: 2, excluded: 1, total: 3 } },
       }),
     ).toEqual({ kind: 'ready', included: 2, excluded: 1, total: 3 })
-    expect(groupStatusFromSnapshot({ kind: 'pending' })).toEqual({ kind: 'pending' })
-    expect(groupStatusFromSnapshot({ kind: 'answered', caps: {} })).toEqual({ kind: 'absent' })
+    expect(groupStatusFromSnapshot({ kind: 'pending' })).toEqual({
+      kind: 'pending',
+    })
+    expect(groupStatusFromSnapshot({ kind: 'answered', caps: {} })).toEqual({
+      kind: 'absent',
+    })
   })
 
   it('names excluded members and does not call an unanswered member excluded', () => {
     expect(memberPresence({ fleet: 'pending', deviceOnline: false, field: 'empty' })).toBe(
       'unknown',
     )
-    expect(memberPresence({ fleet: 'answered', deviceOnline: false, field: 'value' })).toBe(
-      'excluded',
-    )
+    expect(
+      memberPresence({
+        fleet: 'answered',
+        deviceOnline: false,
+        field: 'value',
+      }),
+    ).toBe('excluded')
     expect(memberPresence({ fleet: 'answered', deviceOnline: true, field: 'value' })).toBe(
       'reporting',
     )
-    expect(memberPresence({ fleet: 'answered', deviceOnline: null, field: 'missing' })).toBe(
-      'excluded',
-    )
+    expect(
+      memberPresence({
+        fleet: 'answered',
+        deviceOnline: null,
+        field: 'missing',
+      }),
+    ).toBe('excluded')
     expect(
       namedExcluded([
         { name: 'Porch', presence: 'reporting' },
@@ -354,7 +395,13 @@ describe('math drafts', () => {
     expect(canSaveDraft(picked)).toBe(true)
     expect(canSaveDraft({ ...picked, low: 30 } as typeof picked)).toBe(false)
     const spec = specFromDraft(picked)
-    expect(spec).toMatchObject({ kind: 'threshold', high: 25, low: 20, onForMs: 0, offForMs: 0 })
+    expect(spec).toMatchObject({
+      kind: 'threshold',
+      high: 25,
+      low: 20,
+      onForMs: 0,
+      offForMs: 0,
+    })
     expect(compileDraft(picked).ok).toBe(true)
     expect(draftMembers(picked)).toEqual([reading(1)])
   })
@@ -404,7 +451,10 @@ describe('math drafts', () => {
     expect(canSaveDraft(draft)).toBe(false)
     const picked = withDraftMembers(draft, [reading(1)])
     expect(canSaveDraft(picked)).toBe(true)
-    expect(specFromDraft(picked)).toMatchObject({ kind: 'derivative', per: 'hour' })
+    expect(specFromDraft(picked)).toMatchObject({
+      kind: 'derivative',
+      per: 'hour',
+    })
   })
 
   it('opens a stored math helper back as the same draft', () => {
@@ -468,7 +518,11 @@ describe('actuator groups of every type', () => {
   it('shares only what every member can take, and stays pending until all answered', () => {
     expect(
       sharedMethodsView('cover', [
-        { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-tilt'] },
+        {
+          kind: 'ready',
+          caps: ['cover'],
+          features: ['cover-positionable', 'cover-tilt'],
+        },
         { kind: 'pending' },
       ]),
     ).toEqual({ kind: 'pending' })
@@ -478,7 +532,11 @@ describe('actuator groups of every type', () => {
         caps: ['cover'],
         features: ['cover-positionable', 'cover-tilt', 'cover-stoppable'],
       },
-      { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-stoppable'] },
+      {
+        kind: 'ready',
+        caps: ['cover'],
+        features: ['cover-positionable', 'cover-stoppable'],
+      },
     ])
     expect(view).toMatchObject({ kind: 'ready' })
     if (view.kind !== 'ready') return
@@ -489,7 +547,9 @@ describe('actuator groups of every type', () => {
     ])
     if (noStop.kind !== 'ready') throw new Error('expected ready')
     expect(noStop.methods).toEqual(['cover.open', 'cover.close'])
-    expect(sharedMethodsView('cover', [{ kind: 'error' }])).toEqual({ kind: 'unavailable' })
+    expect(sharedMethodsView('cover', [{ kind: 'error' }])).toEqual({
+      kind: 'unavailable',
+    })
   })
 
   it('reads a state string as a value on a member of a state group', () => {
@@ -497,5 +557,44 @@ describe('actuator groups of every type', () => {
     expect(fieldStateOf('success', caps, 'cover', 'state')).toBe('empty')
     expect(fieldStateOf('success', caps, 'cover', 'state', true)).toBe('value')
     expect(fieldStateOf('success', { cover: {} }, 'cover', 'state', true)).toBe('missing')
+  })
+})
+
+describe('a crop camera draft', () => {
+  const source = { addonId: 'reolink', stableId: 'cam-yard' }
+
+  it('starts on 16:9 with no source, which cannot be saved or compiled', () => {
+    const draft = draftForPick({ kind: 'crop' })
+    if (draft?.kind !== 'crop') throw new Error('expected a crop draft')
+    expect(draft.aspect).toBe('16:9')
+    expect(draft.source).toBeNull()
+    expect(specFromDraft(draft)).toBeNull()
+    expect(canSaveDraft({ ...draft, name: 'Yard' })).toBe(false)
+    expect(compileDraft(draft).ok).toBe(false)
+  })
+
+  it('compiles to a one-source crop block once named and sourced', () => {
+    const draft = draftForPick({ kind: 'crop' })
+    if (draft?.kind !== 'crop') throw new Error('expected a crop draft')
+    const ready = { ...draft, name: 'Yard', source }
+    expect(canSaveDraft(ready)).toBe(true)
+    const compiled = compileDraft(ready)
+    expect(compiled.ok).toBe(true)
+    if (!compiled.ok) return
+    expect(compiled.composition.helper).toMatchObject({
+      kind: 'crop',
+      source,
+      aspect: '16:9',
+    })
+  })
+
+  it('is a camera block edited on its block, never reopened as a wizard draft', () => {
+    const spec = newCropHelperSpec(source, {
+      x: 0.1,
+      y: 0.1,
+      width: 0.5,
+      height: 0.28,
+    })
+    expect(draftFromHelper(spec, 'Yard', '')).toBeNull()
   })
 })

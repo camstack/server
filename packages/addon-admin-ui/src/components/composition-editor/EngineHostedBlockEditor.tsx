@@ -2,13 +2,22 @@
  * A camera block an engine hosts, edited on its block (planning#580). A grid
  * lays out its cells on the camera its block made, through that camera's own
  * `camera-grid-layout`; a Terminal camera changes which Terminal it shows,
- * through the block. Neither has members, so neither opens the helper wizard.
+ * through the block; a crop camera redraws its rectangle on its source's
+ * snapshot, through the block. None has members, so none opens the helper wizard.
  */
-import { type Composition, compileHelper, type EngineHostedHelperSpec } from '@camstack/types'
-import { CameraGridLayoutEditor, ErrorBox } from '@camstack/ui-library'
+import {
+  type Composition,
+  compileHelper,
+  type CropHelperSpec,
+  type EngineHostedHelperSpec,
+} from '@camstack/types'
+import { Button, CameraGridLayoutEditor, ErrorBox } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CropCameraEditor, type CropValue } from './CropCameraEditor'
+import { fleetRowOf } from './command-sources'
 import { TerminalCameraPicker } from './TerminalCameraPicker'
+import { useCandidateDevices } from '../device/customize/assignments/use-source-candidates'
 
 export interface EngineHostedBlockEditorProps {
   readonly blockId: string
@@ -51,6 +60,10 @@ export function EngineHostedBlockEditor({
     return <CameraGridLayoutEditor deviceId={deviceId} />
   }
 
+  if (helper.kind === 'crop') {
+    return <CropBlockEditor helper={helper} saving={saving} onWrite={onWrite} />
+  }
+
   const change = async (terminalId: string): Promise<void> => {
     if (terminalId === helper.terminalId) return
     setError(null)
@@ -75,6 +88,66 @@ export function EngineHostedBlockEditor({
         onChange={(terminalId) => void change(terminalId)}
       />
       {error !== null && <ErrorBox title={t('helper.terminal.saveFailed')} message={error} />}
+    </div>
+  )
+}
+
+interface CropBlockEditorProps {
+  readonly helper: CropHelperSpec
+  readonly saving: boolean
+  readonly onWrite: (composition: Composition) => Promise<void>
+}
+
+/**
+ * An existing crop camera: the creation editor, opened on its stored rectangle.
+ * Dragging only edits a local copy; Save writes the compiled block once. The
+ * source camera is fixed — another source is another crop camera.
+ */
+function CropBlockEditor({ helper, saving, onWrite }: CropBlockEditorProps): ReactNode {
+  const { t } = useTranslation()
+  const fleet = useCandidateDevices(true)
+  const [value, setValue] = useState<CropValue>({
+    rect: helper.rect,
+    aspect: helper.aspect,
+  })
+  const [error, setError] = useState<string | null>(null)
+  const row = fleet.kind === 'known' ? fleetRowOf(fleet.value, helper.source) : null
+  const changed = value.rect !== helper.rect || value.aspect !== helper.aspect
+
+  const save = async (): Promise<void> => {
+    setError(null)
+    const compiled = compileHelper({ ...helper, ...value })
+    if (!compiled.ok) {
+      setError(compiled.problems.map((p) => p.message).join('; '))
+      return
+    }
+    try {
+      await onWrite(compiled.composition)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  return (
+    <div className="flex max-w-xl flex-col gap-2" data-testid="crop-block-editor">
+      <CropCameraEditor
+        sourceDeviceId={row === null ? null : row.id}
+        value={value}
+        reseedOnLoad={false}
+        disabled={saving}
+        onChange={setValue}
+      />
+      {error !== null && <ErrorBox title={t('helper.crop.saveFailed')} message={error} />}
+      <div>
+        <Button
+          size="sm"
+          disabled={saving || !changed}
+          data-testid="crop-save"
+          onClick={() => void save()}
+        >
+          {t('helper.crop.save')}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -9,7 +9,11 @@ import {
   type AggregateReducer,
   type ArithmeticHelperSpec,
   type ArithmeticOp,
+  type CropAspect,
+  DEFAULT_CROP_ASPECT,
+  type GridRect,
   type Composition,
+  type CompositionSourceRef,
   type CompositionProblem,
   compileHelper,
   type DerivativeHelperSpec,
@@ -27,7 +31,9 @@ import {
   type HelperSpec,
   type IntegralHelperSpec,
   MAX_HELPER_MEMBERS,
+  newCropHelperSpec,
   newGridHelperSpec,
+  seedCropRect,
   type ResetPeriod,
   reducerForActive,
   type RollingWindow,
@@ -45,6 +51,9 @@ import {
   type StatisticWindow,
 } from '@camstack/types'
 import { CREATE_TEMPLATE_PARAM, CREATE_TERMINAL_PARAM } from '../../lib/customization-routes'
+
+/** The source frame shape a crop is seeded for until its snapshot has loaded. */
+export const DEFAULT_SOURCE_ASPECT = 16 / 9
 
 export type HelperPickerId = GroupTemplateId
 
@@ -141,8 +150,22 @@ export interface TerminalCameraFormDraft {
   readonly terminalId: string | null
 }
 
+/**
+ * A crop camera: a section of ONE source camera as a derived camera (#611). The
+ * rectangle is normalized against the source; `aspect` is the preset the editor
+ * locks the handles to.
+ */
+export interface CropFormDraft {
+  readonly kind: 'crop'
+  readonly name: string
+  readonly room: string
+  readonly source: CompositionSourceRef | null
+  readonly rect: GridRect
+  readonly aspect: CropAspect
+}
+
 /** The camera blocks an engine hosts: no members, no parameters step. */
-export type CameraFormDraft = GridFormDraft | TerminalCameraFormDraft
+export type CameraFormDraft = GridFormDraft | TerminalCameraFormDraft | CropFormDraft
 
 export type HelperDraft =
   | HelperFormDraft
@@ -152,7 +175,7 @@ export type HelperDraft =
   | CameraFormDraft
 
 export function isCameraDraft(draft: HelperDraft): draft is CameraFormDraft {
-  return draft.kind === 'grid' || draft.kind === 'terminal'
+  return draft.kind === 'grid' || draft.kind === 'terminal' || draft.kind === 'crop'
 }
 
 export type HelperTemplatePick =
@@ -165,6 +188,7 @@ export type HelperTemplatePick =
   | { readonly kind: 'derivative' }
   | { readonly kind: 'grid' }
   | { readonly kind: 'terminal' }
+  | { readonly kind: 'crop' }
 
 /** The math tiles, in the order the picker shows them. A sum is one tile per operation. */
 export type MathTileId = 'threshold' | ArithmeticOp | 'expression' | 'derivative'
@@ -221,7 +245,11 @@ export type OutputReading =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unavailable'; readonly message: string }
   | { readonly kind: 'empty' }
-  | { readonly kind: 'number'; readonly value: number; readonly unit: string | undefined }
+  | {
+      readonly kind: 'number'
+      readonly value: number
+      readonly unit: string | undefined
+    }
   | { readonly kind: 'boolean'; readonly value: boolean }
 
 export type MemberCapRead =
@@ -236,7 +264,11 @@ export type MemberCapRead =
 export type SharedCapsView =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unavailable' }
-  | { readonly kind: 'ready'; readonly caps: readonly string[]; readonly modes: readonly string[] }
+  | {
+      readonly kind: 'ready'
+      readonly caps: readonly string[]
+      readonly modes: readonly string[]
+    }
 
 /** What a group offers, as `cap.method`, once every member's bindings have answered. */
 export type SharedMethodsView =
@@ -341,13 +373,31 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
 export function draftFromCreateLink(params: URLSearchParams): HelperDraft | null {
   if (params.get(CREATE_TEMPLATE_PARAM) !== 'terminal') return null
   const terminalId = params.get(CREATE_TERMINAL_PARAM)
-  return { kind: 'terminal', name: '', room: '', terminalId: terminalId === '' ? null : terminalId }
+  return {
+    kind: 'terminal',
+    name: '',
+    room: '',
+    terminalId: terminalId === '' ? null : terminalId,
+  }
+}
+
+/** A crop draft with no source yet: the default preset, seeded for a 16:9 frame until the snapshot says otherwise. */
+export function newCropDraft(): CropFormDraft {
+  return {
+    kind: 'crop',
+    name: '',
+    room: '',
+    source: null,
+    rect: seedCropRect(DEFAULT_CROP_ASPECT, DEFAULT_SOURCE_ASPECT),
+    aspect: DEFAULT_CROP_ASPECT,
+  }
 }
 
 export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
   if (pick.kind === 'group') return draftForTemplate(pick.templateId)
   if (pick.kind === 'grid') return { kind: 'grid', name: '', room: '' }
   if (pick.kind === 'terminal') return { kind: 'terminal', name: '', room: '', terminalId: null }
+  if (pick.kind === 'crop') return newCropDraft()
   if (pick.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -374,7 +424,14 @@ export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
     return { kind: 'arithmetic', op: pick.op, name: '', room: '', inputs: [] }
   }
   if (pick.kind === 'expression') {
-    return { kind: 'expression', expr: '', output: 'number', name: '', room: '', inputs: [] }
+    return {
+      kind: 'expression',
+      expr: '',
+      output: 'number',
+      name: '',
+      room: '',
+      inputs: [],
+    }
   }
   if (pick.kind === 'derivative') {
     return {
@@ -397,7 +454,7 @@ export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
 
 /** A camera block an engine hosts is edited on its block, never through the helper wizard. */
 export function draftFromHelper(spec: HelperSpec, name: string, room: string): HelperDraft | null {
-  if (spec.kind === 'grid' || spec.kind === 'terminal') return null
+  if (spec.kind === 'grid' || spec.kind === 'terminal' || spec.kind === 'crop') return null
   if (spec.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -409,7 +466,13 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
     }
   }
   if (spec.kind === 'integral') {
-    return { kind: 'integral', reset: spec.reset, name, room, source: copyMember(spec.source) }
+    return {
+      kind: 'integral',
+      reset: spec.reset,
+      name,
+      room,
+      source: copyMember(spec.source),
+    }
   }
   if (spec.kind === 'threshold') {
     return {
@@ -424,7 +487,13 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
     }
   }
   if (spec.kind === 'arithmetic') {
-    return { kind: 'arithmetic', op: spec.op, name, room, inputs: spec.inputs.map(copyMember) }
+    return {
+      kind: 'arithmetic',
+      op: spec.op,
+      name,
+      room,
+      inputs: spec.inputs.map(copyMember),
+    }
   }
   if (spec.kind === 'expression') {
     return {
@@ -433,7 +502,10 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
       output: spec.output,
       name,
       room,
-      inputs: spec.inputs.map((input) => ({ name: input.name, member: copyMember(input.member) })),
+      inputs: spec.inputs.map((input) => ({
+        name: input.name,
+        member: copyMember(input.member),
+      })),
     }
   }
   if (spec.kind === 'derivative') {
@@ -526,6 +598,9 @@ export function specFromDraft(draft: HelperDraft): HelperSpec | null {
   if (draft.kind === 'expression') return expressionSpec(draft)
   if (draft.kind === 'derivative') return derivativeSpec(draft)
   if (draft.kind === 'grid') return newGridHelperSpec()
+  if (draft.kind === 'crop') {
+    return draft.source === null ? null : newCropHelperSpec(draft.source, draft.rect, draft.aspect)
+  }
   if (draft.kind === 'terminal') {
     return draft.terminalId === null ? null : { kind: 'terminal', terminalId: draft.terminalId }
   }
@@ -568,7 +643,14 @@ const MISSING_TERMINAL: CompositionProblem = {
   message: 'pick the Terminal this camera shows', // i18n-ignore: refusal line in the engine's own vocabulary
 }
 
+const MISSING_CROP_SOURCE: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.source',
+  message: 'pick the camera this crop shows a section of', // i18n-ignore: refusal line in the engine's own vocabulary
+}
+
 function missingFor(draft: HelperDraft): CompositionProblem {
+  if (draft.kind === 'crop') return MISSING_CROP_SOURCE
   if (draft.kind === 'terminal') return MISSING_TERMINAL
   if (draft.kind === 'group') return MISSING_INPUTS
   if (draft.kind === 'threshold') return MISSING_READING
@@ -600,6 +682,7 @@ export async function writeHelper(
 
 export function canSaveDraft(draft: HelperDraft): boolean {
   if (draft.kind === 'grid') return draft.name.trim() !== ''
+  if (draft.kind === 'crop') return draft.name.trim() !== '' && draft.source !== null
   if (draft.kind === 'terminal') return draft.name.trim() !== '' && draft.terminalId !== null
   if (draft.kind === 'statistic' || draft.kind === 'integral' || draft.kind === 'derivative') {
     return draft.source !== null
@@ -806,7 +889,11 @@ function thresholdSpec(draft: ThresholdFormDraft): ThresholdHelperSpec | null {
 
 function arithmeticSpec(draft: ArithmeticFormDraft): ArithmeticHelperSpec | null {
   if (draft.inputs.length === 0) return null
-  return { kind: 'arithmetic', op: draft.op, inputs: draft.inputs.map(copyMember) }
+  return {
+    kind: 'arithmetic',
+    op: draft.op,
+    inputs: draft.inputs.map(copyMember),
+  }
 }
 
 function expressionSpec(draft: ExpressionFormDraft): ExpressionHelperSpec | null {
@@ -834,7 +921,11 @@ function derivativeSpec(draft: DerivativeFormDraft): DerivativeHelperSpec | null
 
 function copyRolling(window: RollingWindow): RollingWindow {
   if (window.customMinutes === undefined) return { kind: 'rolling', span: window.span }
-  return { kind: 'rolling', span: window.span, customMinutes: window.customMinutes }
+  return {
+    kind: 'rolling',
+    span: window.span,
+    customMinutes: window.customMinutes,
+  }
 }
 
 const INPUT_NAMES = 'abcdefghijklmnopqrstuvwxyz'
@@ -901,12 +992,19 @@ export function withDraftMembers(
 function copyWindow(window: StatisticWindow): StatisticWindow {
   if (window.kind === 'calendar') return { kind: 'calendar', period: window.period }
   if (window.customMinutes === undefined) return { kind: 'rolling', span: window.span }
-  return { kind: 'rolling', span: window.span, customMinutes: window.customMinutes }
+  return {
+    kind: 'rolling',
+    span: window.span,
+    customMinutes: window.customMinutes,
+  }
 }
 
 function copyMember(member: HelperMember): HelperMember {
   return {
-    source: { addonId: member.source.addonId, stableId: member.source.stableId },
+    source: {
+      addonId: member.source.addonId,
+      stableId: member.source.stableId,
+    },
     cap: member.cap,
     fieldPath: member.fieldPath,
   }

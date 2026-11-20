@@ -42,6 +42,14 @@ import { useDevices } from '../../hooks/use-devices.js'
 import { useDeviceSnapshotImage } from '../../hooks/use-device-snapshot.js'
 import { WidgetPanel } from '../widget-panel.js'
 import {
+  capturePointer,
+  DRAG_SURFACE,
+  HANDLE_HIT,
+  HANDLE_STYLE,
+  HANDLES,
+  SourceCropCanvas,
+} from './SourceCropCanvas.js'
+import {
   autofillCellRects,
   clampNormalizedRect,
   moveNormalizedRect,
@@ -81,53 +89,6 @@ interface DragState {
   readonly startX: number
   readonly startY: number
   readonly origin: GridNormalizedRect
-}
-
-/**
- * A rectangle being dragged must not also PAN THE PAGE.
- *
- * On a phone a pointerdown on a `div` is a scroll gesture until the browser is
- * told otherwise, and `preventDefault` in the handler is too late — the browser
- * has already decided. `touch-action: none` is the only thing that makes a drag
- * work with a finger, and every surface that starts one carries it.
- */
-const DRAG_SURFACE = { touchAction: 'none' } as const
-
-/**
- * Finger-sized hit area around a grip.
- *
- * The visible square stays small (it sits ON the picture being edited and a big
- * one hides what it is positioning); the TOUCHABLE box around it is 24px, which
- * is the smallest target size that does not need a fingernail. The two are
- * different boxes on purpose — making the dot itself 24px would cover a quarter
- * of a small cell.
- */
-const HANDLE_HIT = 'absolute flex h-6 w-6 items-center justify-center'
-
-/** The eight grips, in the order they are drawn. */
-const HANDLES: readonly GridResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
-
-const HANDLE_STYLE: Readonly<Record<GridResizeHandle, string>> = {
-  nw: '-top-3 -left-3 cursor-nw-resize',
-  n: '-top-3 left-1/2 -translate-x-1/2 cursor-n-resize',
-  ne: '-top-3 -right-3 cursor-ne-resize',
-  e: 'top-1/2 -right-3 -translate-y-1/2 cursor-e-resize',
-  se: '-bottom-3 -right-3 cursor-se-resize',
-  s: '-bottom-3 left-1/2 -translate-x-1/2 cursor-s-resize',
-  sw: '-bottom-3 -left-3 cursor-sw-resize',
-  w: 'top-1/2 -left-3 -translate-y-1/2 cursor-w-resize',
-}
-
-/**
- * Start a drag and KEEP it, even when the finger leaves the rectangle.
- *
- * Without pointer capture a drag ends the moment the pointer crosses the box it
- * started in — which on a phone is immediately, because the box is small and
- * the finger is not. With capture the events keep coming to the element that
- * was grabbed and still bubble to the canvas that does the arithmetic.
- */
-function capturePointer(event: React.PointerEvent<HTMLElement>): void {
-  event.currentTarget.setPointerCapture(event.pointerId)
 }
 
 /** Move or resize, from one drag and one delta. */
@@ -566,7 +527,7 @@ function GridCellBox({ cell, selected, onSelect, onDragStart }: GridCellBoxProps
         capturePointer(event)
         onDragStart('move', event)
       }}
-      className={`absolute cursor-move border ${selected ? 'border-accent' : 'border-border/60'}`}
+      className={`absolute cursor-move border ${selected ? 'border-primary' : 'border-border/60'}`}
       style={{
         ...DRAG_SURFACE,
         left: `${String(cell.cell.x * 100)}%`,
@@ -595,7 +556,7 @@ function GridCellBox({ cell, selected, onSelect, onDragStart }: GridCellBoxProps
             className={`${HANDLE_HIT} ${HANDLE_STYLE[handle]}`}
             style={DRAG_SURFACE}
           >
-            <span className="h-2.5 w-2.5 bg-accent" />
+            <span className="h-2.5 w-2.5 bg-primary" />
           </div>
         ))}
     </div>
@@ -686,46 +647,12 @@ interface SourceCropEditorProps {
 }
 
 /**
- * The crop, on the source camera's own frame.
- *
- * The whole snapshot is drawn at full opacity behind a dimmed overlay, and the
- * selected rectangle is the hole in it: what is INSIDE is what the grid will
- * show. Drawing it the other way round — bright rectangle on a dark picture —
- * reads as "this part is highlighted", which is not the same claim.
- *
- * Its drag state is local. The canvas above owns cell placement and this owns
- * the crop; sharing one drag state would mean every pointer move on either
- * canvas consulted a `target` discriminator to decide whether it was for the
- * other one.
+ * The crop of one grid cell, on the source camera's own frame: the shared
+ * {@link SourceCropCanvas} with the eight grips, plus the whole-frame reset.
  */
 function SourceCropEditor({ deviceId, source, onChange }: SourceCropEditorProps) {
   const t = useUiText()
-  const { src } = useDeviceSnapshotImage(deviceId, { width: 640 })
-  const [drag, setDrag] = useState<Omit<DragState, 'index' | 'target'> | null>(null)
-  // The camera's OWN frame shape, measured from the snapshot.
-  //
-  // This box used to be hard-coded to 16:9 with an `object-cover` image, which
-  // silently CUT a source that is not 16:9 — so the rectangle drawn here was
-  // measured against a cropped picture and did not mean what the addon would
-  // apply. The crop is normalized against the WHOLE frame, so the frame has to
-  // be what is on screen, whole.
-  const [sourceAspect, setSourceAspect] = useState<number | null>(null)
-
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (drag === null) return
-    const bounds = event.currentTarget.getBoundingClientRect()
-    if (bounds.width === 0 || bounds.height === 0) return
-    onChange(
-      applyDrag(
-        { ...drag, index: 0, target: 'source' },
-        (event.clientX - drag.startX) / bounds.width,
-        (event.clientY - drag.startY) / bounds.height,
-      ),
-    )
-  }
-
   const full = source.x === 0 && source.y === 0 && source.width === 1 && source.height === 1
-
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
@@ -744,89 +671,17 @@ function SourceCropEditor({ deviceId, source, onChange }: SourceCropEditorProps)
           {t('uiLibrary.cameraGridLayout.wholeFrame', 'Whole frame')}
         </button>
       </div>
-      <div
-        className="relative w-full select-none overflow-hidden rounded border border-border bg-black"
-        style={{ aspectRatio: String(sourceAspect ?? 16 / 9), ...DRAG_SURFACE }}
-        onPointerMove={onPointerMove}
-        onPointerUp={() => {
-          setDrag(null)
+      <SourceCropCanvas
+        deviceId={deviceId}
+        rect={source}
+        onDrag={(drag) => {
+          onChange(
+            drag.mode === 'move'
+              ? moveNormalizedRect(drag.origin, drag.dx, drag.dy)
+              : resizeNormalizedRectFrom(drag.origin, drag.mode, drag.dx, drag.dy),
+          )
         }}
-        onPointerCancel={() => {
-          setDrag(null)
-        }}
-      >
-        {src === null ? (
-          <div className="absolute inset-0 flex items-center justify-center text-[10px] text-foreground-subtle">
-            {t(
-              'uiLibrary.cameraGridLayout.noSnapshot',
-              'No snapshot from this camera yet — the numbers below still apply.',
-            )}
-          </div>
-        ) : (
-          <img
-            src={src}
-            alt=""
-            className="absolute inset-0 h-full w-full"
-            onLoad={(event) => {
-              const { naturalWidth, naturalHeight } = event.currentTarget
-              if (naturalWidth > 0 && naturalHeight > 0) {
-                setSourceAspect(naturalWidth / naturalHeight)
-              }
-            }}
-          />
-        )}
-        {/* Everything outside the crop is dimmed, so the rectangle reads as a
-            window rather than as a highlight. */}
-        <div className="pointer-events-none absolute inset-0 bg-black/55" />
-        <div
-          role="presentation"
-          onPointerDown={(event) => {
-            capturePointer(event)
-            setDrag({
-              mode: 'move',
-              startX: event.clientX,
-              startY: event.clientY,
-              origin: source,
-            })
-          }}
-          className="absolute cursor-move border border-accent"
-          style={{
-            ...DRAG_SURFACE,
-            left: `${String(source.x * 100)}%`,
-            top: `${String(source.y * 100)}%`,
-            width: `${String(source.width * 100)}%`,
-            height: `${String(source.height * 100)}%`,
-            backgroundImage: src === null ? undefined : `url(${src})`,
-            backgroundSize: `${String(100 / source.width)}% ${String(100 / source.height)}%`,
-            backgroundPosition:
-              source.width >= 1 && source.height >= 1
-                ? 'center'
-                : `${String((source.x / Math.max(1e-6, 1 - source.width)) * 100)}% ` +
-                  `${String((source.y / Math.max(1e-6, 1 - source.height)) * 100)}%`,
-          }}
-        >
-          {HANDLES.map((handle) => (
-            <div
-              key={handle}
-              role="presentation"
-              onPointerDown={(event) => {
-                event.stopPropagation()
-                capturePointer(event)
-                setDrag({
-                  mode: handle,
-                  startX: event.clientX,
-                  startY: event.clientY,
-                  origin: source,
-                })
-              }}
-              className={`${HANDLE_HIT} ${HANDLE_STYLE[handle]}`}
-              style={DRAG_SURFACE}
-            >
-              <span className="h-2.5 w-2.5 bg-accent" />
-            </div>
-          ))}
-        </div>
-      </div>
+      />
     </div>
   )
 }
@@ -892,7 +747,7 @@ function CropSlider({ label, value, onChange }: CropSliderProps) {
         }}
         // A range input is a drag too: without this the page scrolls instead.
         style={DRAG_SURFACE}
-        className="h-5 w-full accent-accent"
+        className="h-5 w-full accent-primary"
       />
     </label>
   )

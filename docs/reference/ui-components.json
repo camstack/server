@@ -17610,6 +17610,45 @@
       "summary": "Return a NEW array of `rows` ordered by `sort`."
     },
     {
+      "name": "SourceCropCanvas",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/cap-settings/SourceCropCanvas.tsx",
+      "summary": "The source camera's own frame with ONE highlighted rectangle: the part a cell (or a crop camera) takes. Shared by the grid editor's per-cell crop and the crop camera editor so there is a single canvas.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "rect",
+          "type": "GridNormalizedRect",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "handles",
+          "type": "readonly GridResizeHandle[]",
+          "optional": true,
+          "doc": "Grips to draw; all eight by default."
+        },
+        {
+          "name": "onDrag",
+          "type": "(drag: SourceCropDrag) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSourceAspect",
+          "type": "(aspect: number) => void",
+          "optional": true,
+          "doc": "Called once the snapshot has told the frame's real aspect."
+        }
+      ]
+    },
+    {
       "name": "SourceSelectKey",
       "kind": "component",
       "area": "composites",

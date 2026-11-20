@@ -22,6 +22,36 @@ vi.mock('@camstack/ui-library', async () => {
     CameraGridLayoutEditor: ({ deviceId }: { readonly deviceId: number }) => (
       <div data-testid="grid-layout-editor" data-device-id={deviceId} />
     ),
+    SourceCropCanvas: ({
+      deviceId,
+      rect,
+      onDrag,
+    }: {
+      readonly deviceId: number
+      readonly rect: {
+        readonly x: number
+        readonly y: number
+        readonly width: number
+        readonly height: number
+      }
+      readonly onDrag: (drag: unknown) => void
+    }) => (
+      <button
+        type="button"
+        data-testid="crop-canvas"
+        data-device-id={deviceId}
+        onClick={() =>
+          onDrag({
+            mode: 'move',
+            origin: rect,
+            dx: 0.1,
+            dy: 0,
+            point: { x: 0, y: 0 },
+            sourceAspect: 16 / 9,
+          })
+        }
+      />
+    ),
     useCoreBlocksGetComposition: () => ({
       status: 'success',
       data: { state: 'loaded', view: h.view },
@@ -52,6 +82,24 @@ vi.mock('../TerminalCameraPicker', () => ({
       pick
     </button>
   ),
+}))
+
+vi.mock('../../device/customize/assignments/use-source-candidates', () => ({
+  useCandidateDevices: () => ({
+    kind: 'known',
+    value: [
+      {
+        id: 77,
+        name: 'Yard',
+        addonId: 'reolink',
+        stableId: 'cam-yard',
+        type: 'camera',
+        location: null,
+        isCamera: true,
+        integration: null,
+      },
+    ],
+  }),
 }))
 
 vi.mock('../HelperWizard', () => ({
@@ -147,5 +195,39 @@ describe('a camera block on its editor', () => {
         },
       },
     })
+  })
+
+  const CROP = {
+    kind: 'crop',
+    source: { addonId: 'reolink', stableId: 'cam-yard' },
+    rect: { x: 0.2, y: 0.2, width: 0.5, height: 0.28125 },
+    aspect: '16:9',
+    fps: 10,
+    publishedProfiles: ['mid', 'low'],
+  }
+
+  it('a crop camera opens the crop editor on its source, never the Terminal picker', () => {
+    h.view = cameraView(CROP, 4602)
+    renderEditor()
+    expect(screen.getByTestId('crop-block-editor')).toBeTruthy()
+    expect(screen.getByTestId('crop-canvas').getAttribute('data-device-id')).toBe('77')
+    expect(screen.queryByTestId('terminal-camera-picker')).toBeNull()
+    expect(screen.queryByTestId('terminal-camera-editor')).toBeNull()
+    expect(h.update).not.toHaveBeenCalled()
+  })
+
+  it('a moved crop is written once, on Save, as a crop block', async () => {
+    h.view = cameraView(CROP, 4602)
+    renderEditor()
+    const save = screen.getByTestId('crop-save')
+    expect((save as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByTestId('crop-canvas'))
+    fireEvent.click(save)
+    await vi.waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
+    const written = h.update.mock.calls[0]?.[0] as {
+      block: { composition: { helper: { kind: string; rect: { x: number } } } }
+    }
+    expect(written.block.composition.helper.kind).toBe('crop')
+    expect(written.block.composition.helper.rect.x).toBeCloseTo(0.3)
   })
 })

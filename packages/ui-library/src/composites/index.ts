@@ -172,6 +172,11 @@ export {
   CameraGridLayoutEditor,
   type CameraGridLayoutEditorProps,
 } from './cap-settings/CameraGridLayoutEditor'
+export {
+  SourceCropCanvas,
+  type SourceCropCanvasProps,
+  type SourceCropDrag,
+} from './cap-settings/SourceCropCanvas'
 // CapSettingsComponentProps is a plain interface — safe to import from the barrel
 // type-only (no module code executes for type-only imports).
 export type { CapSettingsComponentProps } from './cap-settings/index'

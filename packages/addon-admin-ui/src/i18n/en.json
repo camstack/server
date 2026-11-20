@@ -12347,7 +12347,8 @@
       "composition": "Free composition",
       "device": "New device",
       "grid": "Camera grid",
-      "terminal": "Terminal camera"
+      "terminal": "Terminal camera",
+      "crop": "Crop camera"
     },
     "aggregate": {
       "mean": "Mean",
@@ -12390,7 +12391,8 @@
       "camera": {
         "grid": "Name the grid. You lay out its cells on the device once it is saved.",
         "terminal": "Name the camera and pick the Terminal it shows.",
-        "gridCells": "Place the cameras on the grid, then open the device."
+        "gridCells": "Place the cameras on the grid, then open the device.",
+        "crop": "Name the crop, pick the camera and drag the rectangle over the part to show."
       }
     },
     "reducer": "Combine by",
@@ -12485,7 +12487,8 @@
       "media-player": "New media player group",
       "climate": "New climate group",
       "grid": "New camera grid",
-      "terminal": "New Terminal camera"
+      "terminal": "New Terminal camera",
+      "crop": "New crop camera"
     },
     "detail": {
       "statistic": "Minimum, maximum, time-weighted mean, sum, count or change over a range, read from history. Sum is for a counter; a gauge's sum is the integral.",
@@ -12502,7 +12505,8 @@
       "composition": "Build the device block by block: pick its type and edit its fields yourself.",
       "device": "Create a device of the type you choose. Power metrics, running state and the rest are added afterwards in Customize.",
       "grid": "Several cameras tiled into one camera. Lay out the cells after saving.",
-      "terminal": "A Terminal's screen as a live camera. Each Terminal shows on one camera."
+      "terminal": "A Terminal's screen as a live camera. Each Terminal shows on one camera.",
+      "crop": "A section of one camera as its own camera. Pick the camera, then drag the rectangle over the part to show."
     },
     "stat": "Statistic",
     "statName": {
@@ -12674,7 +12678,16 @@
     },
     "searchTemplates": "Search templates",
     "noMatchingTemplates": "No template matches your search",
-    "gridDone": "Done, open device"
+    "gridDone": "Done, open device",
+    "crop": {
+      "pickSource": "Pick a camera to draw the crop on its picture.",
+      "source": "Camera to crop",
+      "ratio": "Ratio",
+      "free": "Free",
+      "hint": "Drag the rectangle to move it, drag a corner to resize it.",
+      "save": "Save crop",
+      "saveFailed": "Could not change the crop"
+    }
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

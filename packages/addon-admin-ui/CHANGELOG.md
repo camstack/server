@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Battery details strings (English and Italian) for the device page battery popover.
+- New Crop camera in Build-your-self: pick a camera and draw the section to show on its snapshot, with 16:9, 4:3, 1:1 and free ratios; an existing crop camera reopens the same editor
 
 ## [1.2.712] - 2026-11-20
 

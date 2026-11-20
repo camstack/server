@@ -3,7 +3,7 @@
  * is a camera grid: its block lays out two cameras on the grid camera 4600.
  * `/build/compositions/blk-terminal-cam` is a Terminal camera showing BTM Hub;
  * Top garage-nuc is shown by another block, so the picker names that block.
- * Invented data.
+ * `/build/compositions/blk-crop` is a crop camera of Driveway. Invented data.
  */
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
@@ -48,10 +48,20 @@ const GARAGE_CAM = block('blk-garage-cam', 'Garage screen', {
   terminalId: T_GARAGE,
 })
 
+const CROP_BLOCK = block('blk-crop', 'Driveway crop', {
+  kind: 'crop',
+  source: { addonId: 'provider-onvif', stableId: 'cam-4101' },
+  rect: { x: 0.18, y: 0.22, width: 0.45, height: 0.253125 },
+  aspect: '16:9',
+  fps: 10,
+  publishedProfiles: ['mid', 'low'],
+})
+
 const DEVICE_OF: Readonly<Record<string, number>> = {
   'blk-grid': 4600,
   'blk-terminal-cam': 4601,
   'blk-garage-cam': 4602,
+  'blk-crop': 4603,
 }
 
 const answered = (b: { readonly id: string }) => ({
@@ -97,7 +107,9 @@ export default defineFixtures({
   description: 'a camera grid block and a Terminal camera block, one Terminal already taken',
   handlers: {
     'coreBlocks.getComposition': (input: { blockId?: string }) => {
-      const found = [GRID_BLOCK, HUB_CAM, GARAGE_CAM].find((b) => b.id === input.blockId)
+      const found = [GRID_BLOCK, HUB_CAM, GARAGE_CAM, CROP_BLOCK].find(
+        (b) => b.id === input.blockId,
+      )
       return {
         state: 'loaded',
         view: found === undefined ? null : { block: found, state: answered(found) },
@@ -105,7 +117,7 @@ export default defineFixtures({
     },
     'coreBlocks.listCompositions': {
       state: 'loaded',
-      views: [GRID_BLOCK, HUB_CAM, GARAGE_CAM].map((b) => ({
+      views: [GRID_BLOCK, HUB_CAM, GARAGE_CAM, CROP_BLOCK].map((b) => ({
         block: b,
         state: answered(b),
       })),

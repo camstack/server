@@ -12369,7 +12369,8 @@
       "composition": "Composizione libera",
       "device": "Nuovo dispositivo",
       "grid": "Griglia di telecamere",
-      "terminal": "Telecamera del Terminale"
+      "terminal": "Telecamera del Terminale",
+      "crop": "Camera ritagliata"
     },
     "aggregate": {
       "mean": "Media",
@@ -12412,7 +12413,8 @@
       "camera": {
         "grid": "Dai un nome alla griglia. Le celle si dispongono sul dispositivo dopo il salvataggio.",
         "terminal": "Dai un nome alla telecamera e scegli il Terminale da mostrare.",
-        "gridCells": "Disponi le camere sulla griglia, poi apri il dispositivo."
+        "gridCells": "Disponi le camere sulla griglia, poi apri il dispositivo.",
+        "crop": "Dai un nome al ritaglio, scegli la telecamera e trascina il rettangolo sulla parte da mostrare."
       }
     },
     "reducer": "Combina con",
@@ -12507,7 +12509,8 @@
       "media-player": "Nuovo gruppo di lettori multimediali",
       "climate": "Nuovo gruppo di clima",
       "grid": "Nuova griglia di telecamere",
-      "terminal": "Nuova telecamera del Terminale"
+      "terminal": "Nuova telecamera del Terminale",
+      "crop": "Nuova camera ritagliata"
     },
     "detail": {
       "statistic": "Minimo, massimo, media pesata nel tempo, somma, conteggio o variazione su un intervallo, letti dallo storico. La somma è per un contatore; la somma di un valore istantaneo è l'integrale.",
@@ -12524,7 +12527,8 @@
       "composition": "Costruisci il dispositivo blocco per blocco: scegli il tipo e modifica i campi a mano.",
       "device": "Crea un dispositivo del tipo che scegli. Metriche di potenza, stato di funzionamento e il resto si aggiungono dopo, in Personalizza.",
       "grid": "Più telecamere affiancate in una sola. Disponi le celle dopo il salvataggio.",
-      "terminal": "Lo schermo di un Terminale come telecamera dal vivo. Ogni Terminale appare in una sola telecamera."
+      "terminal": "Lo schermo di un Terminale come telecamera dal vivo. Ogni Terminale appare in una sola telecamera.",
+      "crop": "Una parte di una telecamera come telecamera a sé. Scegli la telecamera, poi trascina il rettangolo sulla parte da mostrare."
     },
     "stat": "Statistica",
     "statName": {
@@ -12696,7 +12700,16 @@
     },
     "searchTemplates": "Cerca modelli",
     "noMatchingTemplates": "Nessun modello corrisponde alla ricerca",
-    "gridDone": "Fatto, apri il dispositivo"
+    "gridDone": "Fatto, apri il dispositivo",
+    "crop": {
+      "pickSource": "Scegli una telecamera per disegnare il ritaglio sulla sua immagine.",
+      "source": "Telecamera da ritagliare",
+      "ratio": "Proporzioni",
+      "free": "Libero",
+      "hint": "Trascina il rettangolo per spostarlo, trascina un angolo per ridimensionarlo.",
+      "save": "Salva ritaglio",
+      "saveFailed": "Impossibile modificare il ritaglio"
+    }
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",

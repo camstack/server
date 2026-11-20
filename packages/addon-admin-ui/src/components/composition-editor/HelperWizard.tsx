@@ -30,6 +30,7 @@ import { SourceSelector } from '../device/customize/source-selector/SourceSelect
 import { devicePath } from '../../lib/customization-routes'
 import { RefusalList } from './RefusalList'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
+import { CropCameraFields } from './CropCameraFields'
 import { TerminalCameraPicker } from './TerminalCameraPicker'
 import {
   canSaveDraft,
@@ -275,6 +276,7 @@ export function HelperWizard({
           data-testid="helper-camera-parameters"
         >
           <NameField name={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
+          {draft.kind === 'crop' && <CropCameraFields draft={draft} onChange={setDraft} />}
           {draft.kind === 'terminal' && (
             <TerminalCameraPicker
               value={draft.terminalId}
