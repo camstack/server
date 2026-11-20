@@ -47,10 +47,10 @@ import {
   privacyMaskCapability,
   providerMotionEvent,
   ptzCapability,
-  type ReachabilityPollHandle,
+  type ReachabilityRefreshHandle,
   recordingOnboardCapability,
   snapshotCapability,
-  startReachabilityPoll,
+  registerReachabilityRefresh,
   streamCatalogCapability,
   streamParamsCapability,
   summarisePrivacyAudio,
@@ -232,7 +232,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   /** Control-plane reachability poll — drives `device.online` from Dahua CGI
    *  `getDeviceInfo` liveness, decoupled from stream-broker video health.
    *  Started in `onActivate`, stopped in `removeDevice`. */
-  private reachabilityPoll: ReachabilityPollHandle | null = null
+  private reachabilityPoll: ReachabilityRefreshHandle | null = null
 
   /** Single-flight guard for the `stream-params` camera refresh. */
   private streamParamsRefreshInFlight: Promise<void> | null = null
@@ -528,6 +528,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     const attempts = ++this.eventStreamReconnectAttempts
     const delayMs = Math.min(60_000, 1_000 * 2 ** Math.min(attempts, 6))
     this.eventStreamReconnectTimer = setTimeout(() => {
+      // not-a-state-poll: reconnect backoff of the motion event stream, reads no state
       this.eventStreamReconnectTimer = null
       this.ensureEventSubscription()
     }, delayMs)
@@ -569,6 +570,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     // Heartbeat re-emit while any Start is held (see MOTION_KEEPALIVE_MS).
     if (!wasHeld && this.motionKeepaliveTimer === null) {
       this.motionKeepaliveTimer = setInterval(() => {
+        // not-a-state-poll: re-emits a held motion start as a heartbeat, reads nothing
         this.emitMotion(true, Date.now())
       }, AmcrestCamera.MOTION_KEEPALIVE_MS)
     }
@@ -594,6 +596,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   private armMotionPulseHold(): void {
     if (this.motionPulseTimer !== null) clearTimeout(this.motionPulseTimer)
     this.motionPulseTimer = setTimeout(() => {
+      // not-a-state-poll: ends a motion pulse after its hold, reads nothing
       this.motionPulseTimer = null
       if (this.activeMotionCodes.size > 0) return
       this.finishMotion(Date.now())
@@ -885,13 +888,15 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     return hydrateSchema(schema, values)
   }
 
-  /** Start the control-plane reachability poll: a Dahua CGI `getDeviceInfo`
-   *  round-trip every 30s drives `device.online`, with hysteresis. Replaces
-   *  the old stream-health→online mirror so an on-demand (idle) but reachable
-   *  camera still reports ONLINE. Idempotent. */
+  /** Register the control-plane reachability read: a Dahua CGI `getDeviceInfo`
+   *  round-trip drives `device.online`, with hysteresis. The hub's state
+   *  refresh decides when it runs (D1062, no timer here); the first probe runs
+   *  now. Replaces the old stream-health→online mirror so an on-demand (idle)
+   *  but reachable camera still reports ONLINE. Idempotent. */
   private startReachabilityPolling(): void {
     if (this.reachabilityPoll) return
-    this.reachabilityPoll = startReachabilityPoll({
+    this.reachabilityPoll = registerReachabilityRefresh({
+      ctx: this.ctx,
       probe: async () => {
         const client = this.ensureClient()
         const info = await client.getDeviceInfo()
@@ -904,6 +909,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
+    void this.reachabilityPoll.probeNow()
   }
 
   /**
@@ -1288,6 +1294,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         // own `stop` (which calls clearPtzAutoStop) supersedes it; either way
         // the stop is chained AFTER the start, so the head always halts.
         this.ptzAutoStopTimer = setTimeout(() => {
+          // not-a-state-poll: backstop stop of a lone PTZ move, reads nothing
           this.ptzAutoStopTimer = null
           this.enqueuePtz('auto-stop', () => this.stopActivePtz())
         }, AmcrestCamera.PTZ_PULSE_MS)

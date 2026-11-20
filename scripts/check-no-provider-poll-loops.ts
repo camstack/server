@@ -50,6 +50,8 @@ export const MIGRATED: readonly string[] = [
   // Wyze: the cloud motion read moved to the core; the stream server's idle timer and the ffmpeg deadline are not polls.
   'packages/addon-provider-wyze/src/wyze-camera.ts',
   'packages/addon-provider-wyze/src/wyze-state-refresh.ts',
+  // Amcrest: the camera's reachability read moved to the core; the motion-stream and PTZ timers are not polls.
+  'packages/addon-provider-amcrest/src/amcrest-camera.ts',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/
