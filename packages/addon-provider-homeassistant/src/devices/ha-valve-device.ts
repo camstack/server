@@ -1,4 +1,5 @@
 import {
+  DeviceFeature,
   valveCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -48,8 +49,12 @@ export class HaValveDevice extends HaBaseChildDevice {
 
   /** HA valve `supported_features`: OPEN = 1, CLOSE = 2, SET_POSITION = 4, STOP = 8. */
   private supportsSetPosition(): boolean {
-    const sf = readHaSource(this.ctx.persistedConfig ?? {})?.supportedFeatures
-    return sf !== undefined && (sf & 4) !== 0
+    const source = readHaSource(this.ctx.persistedConfig ?? {})
+    if (source?.supportedFeatures !== undefined) return (source.supportedFeatures & 4) !== 0
+    // A valve adopted before the bitmask was persisted carries only the feature
+    // list it was adopted with; keep serving what it already had until a reconcile
+    // rewrites the config.
+    return source?.features?.includes(DeviceFeature.ValvePositionable) === true
   }
 
   private registerValveCap(): void {

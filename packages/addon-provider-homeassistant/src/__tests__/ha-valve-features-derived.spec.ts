@@ -22,7 +22,10 @@ import { describe, expect, it } from 'vitest'
 import { HaValveDevice } from '../devices/ha-valve-device.js'
 import { mapHaEntityToCamStack } from '../ha-domain-mapping.js'
 
-function makeValve(supportedFeatures: number | undefined): readonly DeviceBindingEntry[] {
+function makeValve(
+  supportedFeatures: number | undefined,
+  legacyFeatures?: readonly string[],
+): readonly DeviceBindingEntry[] {
   const registered: { name: string; provider: object }[] = []
   let runtime: IDeviceRuntimeState | null = null
   // The kernel's DeviceContext is far wider than the child reads: the one documented spec boundary.
@@ -46,6 +49,7 @@ function makeValve(supportedFeatures: number | undefined): readonly DeviceBindin
       entityId: 'valve.main',
       capabilities: ['valve'],
       ...(supportedFeatures !== undefined ? { supportedFeatures } : {}),
+      ...(legacyFeatures !== undefined ? { features: legacyFeatures } : {}),
     },
     initialRuntimeState: {},
     eventBus: {
@@ -117,6 +121,17 @@ describe('HA valve: ValvePositionable is derived from the bound cap', () => {
 
   it('no supported_features at all: not positionable', () => {
     expect(derived(makeValve(undefined))).not.toContain(DeviceFeature.ValvePositionable)
+  })
+
+  it('a valve adopted before the bitmask was persisted (features only) keeps setPosition', () => {
+    const entries = makeValve(undefined, ['valve-positionable'])
+    expect(derived(entries)).toContain(DeviceFeature.ValvePositionable)
+  })
+
+  it('the persisted bitmask wins over a stale legacy feature list', () => {
+    expect(derived(makeValve(1 | 2 | 8, ['valve-positionable']))).not.toContain(
+      DeviceFeature.ValvePositionable,
+    )
   })
 
   it('the mapping hands the child the bitmask and lists no feature', () => {
