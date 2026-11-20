@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ESPHome entities declare to the hub that their state arrives by push, so it never schedules a read; the hub's read after a command re-applies the board's last reported state
+
 ## [0.1.26] - 2026-11-18
 
 ### Changed

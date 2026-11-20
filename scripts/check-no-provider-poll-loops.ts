@@ -41,6 +41,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-dreo',
   'packages/addon-provider-tuya',
   'packages/addon-provider-petkit',
+  'packages/addon-provider-esphome',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

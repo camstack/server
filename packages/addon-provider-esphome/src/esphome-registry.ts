@@ -48,6 +48,7 @@ export interface EspRegistryDeps {
 
 const defaultSchedule: EspScheduler = (run, delayMs) => {
   const timer = setTimeout(run, delayMs)
+  // not-a-state-poll: reconnect backoff of the board link, reads no state
   timer.unref()
   return () => clearTimeout(timer)
 }

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { BaseDevice, type DeviceContext, type DeviceFeature } from '@camstack/types'
 import { espLinkHub } from '../esphome-link-hub.js'
 import type { EspCommand, EspLink, EspState } from '../esphome-link.js'
+import { registerEspStateRefresh } from '../esphome-state-refresh.js'
 
 /** Entity kinds a child can be built for (see `esphome-entity-spec.ts`). */
 export const ESP_CHILD_KINDS = [
@@ -95,6 +96,17 @@ export abstract class EspChildDevice extends BaseDevice<typeof espChildSchema> {
     })
     const link = espLinkHub.link(this.brokerId)
     if (link !== null) this.replay(link)
+    registerEspStateRefresh({
+      ctx: this.ctx,
+      brokerId: this.brokerId,
+      replayLink: () => {
+        const live = espLinkHub.link(this.brokerId)
+        if (live === null) {
+          throw new Error(`ESPHome board is not connected (broker ${this.brokerId})`)
+        }
+        this.replay(live)
+      },
+    })
   }
 
   /** Send a command to the board; a board that is not reachable refuses by name. */

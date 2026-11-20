@@ -32,6 +32,8 @@ export interface FakeCtx {
   readonly ctx: DeviceContext
   /** Providers the device registered, by capability name. */
   readonly providers: Map<string, unknown>
+  /** The options each capability was registered with, by capability name. */
+  readonly capOptions: Map<string, unknown>
 }
 
 /**
@@ -45,6 +47,7 @@ export function makeCtx(
 ): FakeCtx {
   let runtimeStateRef: IDeviceRuntimeState | null = null
   const providers = new Map<string, unknown>()
+  const capOptions = new Map<string, unknown>()
   const type = options.type ?? DeviceType.Container
   const ctx = {
     id: 7,
@@ -68,8 +71,13 @@ export function makeCtx(
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtimeStateRef = rs
     },
-    registerNativeCap: (cap: { name: string; runtimeState?: unknown }, provider: unknown) => {
+    registerNativeCap: (
+      cap: { name: string; runtimeState?: unknown },
+      provider: unknown,
+      registration?: unknown,
+    ) => {
       providers.set(cap.name, provider)
+      capOptions.set(cap.name, registration)
       if (cap.runtimeState && runtimeStateRef) {
         runtimeStateRef.installCapSchema(
           cap.name,
@@ -80,5 +88,5 @@ export function makeCtx(
     logger: captureLogger(options.logs ?? []),
     api: options.api ?? {},
   } as unknown as DeviceContext
-  return { ctx, providers }
+  return { ctx, providers, capOptions }
 }
