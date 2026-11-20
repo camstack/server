@@ -279,6 +279,15 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
    *  inverse `101 - userValue` (lower raw = more sensitive).
    *  Mirrors `refreshSwitchFromExternal`'s reverse transform. */
   private async pushConfigToFirmware(enable: boolean): Promise<void> {
+    // A sleeping battery camera answers the read-modify-write with a 400 and
+    // an empty body: wake it first, and never send into a camera that stayed asleep.
+    if (this.parent.wakeForWrite && !(await this.parent.wakeForWrite())) {
+      this.ctx.logger.warn('pir write not sent — the battery camera could not be woken', {
+        tags: { deviceId: this.id },
+        meta: { channel: this.channel },
+      })
+      throw new Error('The camera is asleep and could not be woken; try again in a moment.')
+    }
     const api = await this.api
     const sensitive = this.config.get('pirSensitive')
     const reduceAlarm = this.config.get('pirReduceAlarm')

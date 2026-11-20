@@ -1,5 +1,5 @@
 import type { BatteryPowerSourceMode, SwitchPowerSourceResult } from '@apocaliss92/nodelink-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { ConfigUISchema, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
 
 /**
@@ -24,11 +24,6 @@ export const PowerSourceModeSchema = z.enum(POWER_SOURCE_MODES)
 /** What a read says: a mode, or `unknown` when the read failed or the firmware is silent. */
 export const PowerSourceReadingSchema = z.enum(['adapter', 'battery', 'unknown'])
 export type PowerSourceReading = z.infer<typeof PowerSourceReadingSchema>
-
-export const ReadPowerSourceResultSchema = z.object({
-  source: PowerSourceReadingSchema,
-})
-export type ReadPowerSourceResult = z.infer<typeof ReadPowerSourceResultSchema>
 
 /** The device (or this code) declined before any real write was sent. */
 export const PowerSourceRefusalReasonSchema = z.enum(['dry-run-refused', 'dry-run-failed'])
@@ -163,4 +158,76 @@ export async function switchPowerSourceTo(
     })
   }
   return { outcome: 'sent', mode, accepted: result.accepted, before, after, applied }
+}
+
+/** The settings key of the power source: an ordinary select, owned by the camera (never stored). */
+export const POWER_SOURCE_SETTING_KEY = 'powerSource'
+
+/**
+ * The power source as a setting, in its own section of the Advanced tab.
+ * Only a battery camera whose read ANSWERED with a mode has one: a camera that
+ * was never asked, or that did not answer, shows nothing rather than a guess.
+ */
+export function buildPowerSourceSettingsSection(input: {
+  readonly isBattery: boolean
+  readonly source: PowerSourceReading | undefined
+}): readonly ConfigUISchema['sections'][number][] {
+  const { isBattery, source } = input
+  if (!isBattery || source === undefined || source === 'unknown') return []
+  return [
+    {
+      id: 'power-source',
+      tab: 'advanced',
+      title: 'Power source',
+      titleKey: 'provider-reolink:schema.s_power-source.title',
+      description: "Only switch to wired power when the adapter meets the camera's spec.",
+      descriptionKey: 'provider-reolink:schema.s_power-source.description',
+      columns: 1,
+      fields: [
+        {
+          type: 'select',
+          key: POWER_SOURCE_SETTING_KEY,
+          label: 'Power source',
+          labelKey: 'provider-reolink:schema.s_power-source.powerSource.label',
+          default: source,
+          options: [
+            {
+              value: 'adapter',
+              label: 'Wired power',
+              labelKey: 'provider-reolink:schema.s_power-source.powerSource.o_adapter.label',
+            },
+            {
+              value: 'battery',
+              label: 'Battery power',
+              labelKey: 'provider-reolink:schema.s_power-source.powerSource.o_battery.label',
+            },
+          ],
+        },
+      ],
+    },
+  ]
+}
+
+/**
+ * Apply the setting: switch the camera and REFUSE to call a switch that did not
+ * land a success — the settings form keeps the operator's edit, marked unsaved.
+ */
+export async function applyPowerSourceSetting(
+  target: PowerSourceTarget,
+  value: unknown,
+): Promise<void> {
+  const mode = PowerSourceModeSchema.safeParse(value)
+  if (!mode.success) {
+    throw new Error(`Not a power source: ${String(value)}`)
+  }
+  const outcome = await switchPowerSourceTo(target, mode.data)
+  if (outcome.outcome === 'refused') {
+    throw new Error(`The camera refused the power source switch (${outcome.reason})`)
+  }
+  if (outcome.outcome === 'failed') {
+    throw new Error(`The power source switch failed: ${outcome.error}`)
+  }
+  if (!outcome.applied) {
+    throw new Error(`The camera did not take the power source switch (it reports ${outcome.after})`)
+  }
 }

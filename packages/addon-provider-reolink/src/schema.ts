@@ -533,6 +533,17 @@ export const reolinkCameraSchema = z.object({
         })
         .optional(),
       /**
+       * The power source of a battery camera (`getPowerSource`): `adapter`,
+       * `battery`, or `unknown` when the read failed or the firmware is
+       * silent. Drives the Advanced tab's "Power source" setting; `unknown`
+       * hides it.
+       */
+      powerSourceSnapshot: z
+        .object({
+          source: z.enum(['adapter', 'battery', 'unknown']),
+        })
+        .optional(),
+      /**
        * Snapshot of the camera's auto-reboot schedule from
        * `getAutoReboot` (cmd_id 101). Drives the "Auto reboot" section
        * defaults on the Advanced tab. `weekDay` is the lib's `DayOfWeek`

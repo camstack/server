@@ -211,7 +211,7 @@
   "schema.s_hub.channel.label": "Canale dell'hub",
   "schema.s_power-source.title": "Sorgente di alimentazione",
   "schema.s_power-source.description": "Passa all'alimentazione cablata solo se l'alimentatore rispetta le specifiche della telecamera.",
-  "schema.s_power-source._readPowerSource.label": "Sorgente di alimentazione",
-  "schema.s_power-source._switchToWiredPower.label": "Alimentazione cablata",
-  "schema.s_power-source._switchToBatteryPower.label": "Alimentazione a batteria"
+  "schema.s_power-source.powerSource.label": "Sorgente di alimentazione",
+  "schema.s_power-source.powerSource.o_adapter.label": "Alimentazione cablata",
+  "schema.s_power-source.powerSource.o_battery.label": "Alimentazione a batteria"
 }

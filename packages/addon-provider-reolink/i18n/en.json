@@ -211,7 +211,7 @@
   "schema.s_hub.channel.label": "Hub channel",
   "schema.s_power-source.title": "Power source",
   "schema.s_power-source.description": "Only switch to wired power when the adapter meets the camera's spec.",
-  "schema.s_power-source._readPowerSource.label": "Power source",
-  "schema.s_power-source._switchToWiredPower.label": "Wired power",
-  "schema.s_power-source._switchToBatteryPower.label": "Battery power"
+  "schema.s_power-source.powerSource.label": "Power source",
+  "schema.s_power-source.powerSource.o_adapter.label": "Wired power",
+  "schema.s_power-source.powerSource.o_battery.label": "Battery power"
 }

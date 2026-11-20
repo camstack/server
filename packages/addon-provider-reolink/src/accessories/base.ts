@@ -110,6 +110,10 @@ export interface ReolinkAccessoryHost {
    *  startup probe path). For wired cams this should always return
    *  false. Optional for back-compat. */
   isSleeping?(): boolean
+  /** Wake a sleeping battery parent before an operator WRITE (a sleeping
+   *  camera answers it 400 with an empty body). Resolves true when the camera
+   *  is awake (or was never asleep), false when it could not be woken. */
+  wakeForWrite?(): Promise<boolean>
   /** Accessories register themselves with the parent at construction
    *  so the parent's centralised `alignAuxDevicesState` can iterate
    *  them. Optional for back-compat — when absent the accessory
