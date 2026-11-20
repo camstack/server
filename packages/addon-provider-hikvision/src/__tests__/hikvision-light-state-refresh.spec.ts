@@ -4,6 +4,7 @@
  * slice shows.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { brightnessCapability, switchCapability } from '@camstack/types'
 import { HikvisionLightAccessory } from '../accessories/light.js'
 
 interface Supplement {
@@ -96,5 +97,65 @@ describe('Hikvision floodlight through device-state-refresh (D1062)', () => {
     HikvisionLightAccessory.prototype['registerStateRefresh'].call(h.subject)
     await vi.advanceTimersByTimeAsync(10 * 60_000)
     expect(h.getSupplement).not.toHaveBeenCalled()
+  })
+
+  describe('what the operator sees after a command (D1061)', () => {
+    it('the switch and brightness commands declare the effect the core holds until the read', () => {
+      const on = switchCapability.methods.setState.actions?.find((a) => a.id === 'switch.on')
+      const off = switchCapability.methods.setState.actions?.find((a) => a.id === 'switch.off')
+      const set = brightnessCapability.methods.setBrightness.actions?.find(
+        (a) => a.id === 'brightness.set',
+      )
+      expect(on?.effect).toEqual({ field: 'on', value: true })
+      expect(off?.effect).toEqual({ field: 'on', value: false })
+      expect(set?.effect).toEqual({ field: 'level', fromArg: 'level' })
+    })
+
+    it('setState reaches the camera and writes no slice (the hold shows the commanded value)', async () => {
+      const h = makeSubject(async () => null)
+      const subject = { ...h.subject, id: 5, applyOn: HikvisionLightAccessory.prototype['applyOn'] }
+      HikvisionLightAccessory.prototype['registerSwitchCap'].call(subject)
+      h.setCapSlice.mockClear()
+      const provider = h.registered.find((r) => r.name === 'switch')?.provider
+      if (typeof provider !== 'object' || provider === null || !('setState' in provider)) {
+        throw new Error('no switch provider')
+      }
+      const call: unknown = provider.setState
+      if (typeof call !== 'function') throw new Error('setState is not a function')
+      await call({ deviceId: 5, on: true })
+      expect(h.setSupplementLight).toHaveBeenCalledOnce()
+      expect(h.setCapSlice).not.toHaveBeenCalled()
+    })
+
+    it('brightness reaches the camera only while the light is on; off it is stashed for the next on', async () => {
+      const h = makeSubject(async () => null)
+      let on = false
+      const subject = {
+        ...h.subject,
+        id: 5,
+        config: { get: () => 100 },
+        switchView: () => ({ on, lastChangedAt: 0 }),
+        applyOn: HikvisionLightAccessory.prototype['applyOn'],
+      }
+      HikvisionLightAccessory.prototype['registerBrightnessCap'].call(subject)
+      const provider = h.registered.find((r) => r.name === 'brightness')?.provider
+      if (typeof provider !== 'object' || provider === null || !('setBrightness' in provider)) {
+        throw new Error('no brightness provider')
+      }
+      const call: unknown = provider.setBrightness
+      if (typeof call !== 'function') throw new Error('setBrightness is not a function')
+      h.setCapSlice.mockClear()
+      await call({ deviceId: 5, level: 30 })
+      expect(h.setSupplementLight).not.toHaveBeenCalled()
+      expect(h.setCapSlice).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'brightness' }),
+        expect.objectContaining({ level: 30 }),
+      )
+      on = true
+      h.setCapSlice.mockClear()
+      await call({ deviceId: 5, level: 70 })
+      expect(h.setSupplementLight).toHaveBeenCalledOnce()
+      expect(h.setCapSlice).not.toHaveBeenCalled()
+    })
   })
 })

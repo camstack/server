@@ -137,7 +137,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     }
   }
 
-  /** The floodlight is polled (`push: 'none'`): the hub decides when to read it and reads once after each command. */
+  /** The floodlight is polled (`push: 'none'`): the hub decides when to read it, and again 3 s and 10 s after each command. */
   private registerStateRefresh(): void {
     const policy: StateRefreshPolicy = {
       integrationId: this.ctx.stableId,
@@ -165,8 +165,10 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
       this.cameraNumber,
       on ? { mode, whiteLightBrightness: brightness } : { mode },
     )
-    // No slice write here: the hub reads the light right after a command
-    // returns (D1062), and that read is what the slice shows.
+    // No slice write here. The command's catalog effect (switch `on`, brightness
+    // `level`) is held by the core and shown as the commanded value (D1061)
+    // while it re-reads the light 3 s and 10 s later (D1062); that read then
+    // replaces the held value with what the camera reports.
   }
 
   private registerSwitchCap(): void {
