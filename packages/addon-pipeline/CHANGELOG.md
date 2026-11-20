@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.674] - 2026-11-20
+
 ### Changed
 
 - WebRTC live view on a strict Safari/iOS client that only decodes H.264 level 3.1 now serves the camera's lower-resolution stream instead of a black picture, re-encoding only when no substream fits.

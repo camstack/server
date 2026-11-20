@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.699] - 2026-11-20
+
 ### Changed
 
 - Home Assistant export no longer warns about optional day-night fields (e.g. switch delay) a camera does not report

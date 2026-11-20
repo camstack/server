@@ -1,6 +1,6 @@
 {
   "name": "@camstack/mcp-develop",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "description": "Library behind `camstack mcp --toolsets develop`: registers the addon-author tools (catalogue, scaffold, validate, find_example, track review) on an MCP server. The standalone server binary is retired.",
   "keywords": [
     "camstack",

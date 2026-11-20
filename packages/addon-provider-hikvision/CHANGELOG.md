@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.192] - 2026-11-20
+
 ### Changed
 
 - A Hikvision camera's PTZ, autotrack, two-way audio and reboot features now follow the caps the camera registers, instead of a list the driver kept

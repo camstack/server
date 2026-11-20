@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.918",
+  "version": "1.2.919",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,10 +66,12 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.716",
-        "@camstack/addon-agent-ui": ">=1.2.420",
-        "@camstack/addon-pipeline": ">=1.2.673",
-        "@camstack/addon-provider-reolink": ">=1.2.252"
+        "@camstack/addon-admin-ui": ">=1.2.717",
+        "@camstack/addon-pipeline": ">=1.2.674",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.710",
+        "@camstack/addon-provider-hikvision": ">=1.2.192",
+        "@camstack/addon-provider-homeassistant": ">=1.2.699",
+        "@camstack/addon-provider-reolink": ">=1.2.253"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
