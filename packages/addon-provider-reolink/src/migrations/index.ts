@@ -9,15 +9,15 @@ import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-pu
 import { REOLINK_ROWS_TO_RECORD_MIGRATION } from './integration-rows-to-record.js'
 
 export {
-  REOLINK_ROWS_TO_RECORD_ID,
-  REOLINK_ROWS_TO_RECORD_MIGRATION,
-} from './integration-rows-to-record.js'
-export {
   type EmailPushMigrationPorts,
   type LegacyMailboxSettings,
   type PendingMailbox,
   PendingMailboxSchema,
 } from './email-push-to-mailbox.js'
+export {
+  REOLINK_ROWS_TO_RECORD_ID,
+  REOLINK_ROWS_TO_RECORD_MIGRATION,
+} from './integration-rows-to-record.js'
 
 export const DROP_WEBHOOK_INTAKE_SETTINGS_ID =
   'provider-reolink/2026-11-02-drop-webhook-intake-settings'
@@ -69,12 +69,16 @@ export const CLAIM_DEVICES_DATE = '2026-11-04'
  * integration a hub migration created is never the default, so it is not eligible. The integration
  * settings themselves stay where they are until this addon's own wave moves them.
  */
+export const REOLINK_CLAIM_ELIGIBLE = (integration: {
+  readonly info: Readonly<Record<string, unknown>>
+}): boolean => integration.info[MIGRATED_FROM_HUB_KEY] === undefined
+
 export const REOLINK_CLAIM_MIGRATION = claimDevicesMigration({
   addonId: 'provider-reolink',
   date: CLAIM_DEVICES_DATE,
   seq: 3,
   dependsOn: [],
-  eligible: (integration) => integration.info[MIGRATED_FROM_HUB_KEY] === undefined,
+  eligible: REOLINK_CLAIM_ELIGIBLE,
 })
 
 /**

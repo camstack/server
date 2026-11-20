@@ -114,6 +114,7 @@ import {
   reolinkCameraSleeps,
 } from './device-features.js'
 import type { EmailPushParamsResolver } from './email-push-shared.js'
+import { smtpPasswordToWrite } from './email-smtp-password.js'
 import {
   applyHubChildSections,
   EMPTY_HUB_CHANNEL_SNAPSHOT,
@@ -2406,6 +2407,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.ctx.logger.info('email-push: camera auto-configure applied', {
       tags: { deviceId: this.id },
     })
+    // The mailbox credentials now on the camera: the Email tab reads the password as set.
+    if (params.authPassword !== undefined) {
+      await this.config.setAll({ emailPassword: params.authPassword })
+    }
     // Re-read the camera's own config so the settings section reflects what we
     // just wrote (best-effort — the cam is awake here).
     await this.refreshCameraEmailConfig().catch(() => {
@@ -3851,8 +3856,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     if (typeof fields.emailSmtpServer === 'string') patch.smtpServer = fields.emailSmtpServer
     if (typeof fields.emailSmtpPort === 'number') patch.smtpPort = fields.emailSmtpPort
     if (typeof fields.emailUserName === 'string') patch.userName = fields.emailUserName
-    if (typeof fields.emailPassword === 'string' && fields.emailPassword.length > 0)
-      patch.password = fields.emailPassword
+    const smtpPassword = smtpPasswordToWrite(fields.emailPassword)
+    if (smtpPassword !== null) patch.password = smtpPassword
     if (typeof fields.emailSsl === 'boolean') patch.ssl = fields.emailSsl ? 1 : 0
     if (typeof fields.emailRecipient1 === 'string') patch.address1 = fields.emailRecipient1
     if (typeof fields.emailRecipient2 === 'string') patch.address2 = fields.emailRecipient2
@@ -10468,12 +10473,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             username: this.config.get('username'),
             password: this.config.get('password'),
           }),
-      // Email/SMTP — camera-side config, shown live from the snapshot (no
-      // local persist). Password is never echoed back (blank = leave as-is).
+      // Email/SMTP — camera-side config, shown live from the snapshot. The password is a keychain
+      // secret stored per device when written (the form shows set / not set; blank = keep).
       emailSmtpServer: emailSnap?.smtpServer ?? '',
       emailSmtpPort: emailSnap?.smtpPort ?? 587,
       emailUserName: emailSnap?.userName ?? '',
-      emailPassword: '',
+      emailPassword: this.config.get('emailPassword'),
       emailSsl: emailSnap?.ssl ?? false,
       emailRecipient1: emailSnap?.recipients?.[0] ?? '',
       emailRecipient2: emailSnap?.recipients?.[1] ?? '',
@@ -10773,12 +10778,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
     if (Object.values(emailFields).some((v) => v !== undefined)) {
       // Edited Email-tab fields → write to the camera + realign the snapshot.
+      let written = true
       await this.applyEmailConfigPatch(emailFields).catch((err: unknown) => {
+        written = false
         this.ctx.logger.warn('email config write failed', {
           tags: { deviceId: this.id },
           meta: { error: err instanceof Error ? err.message : String(err) },
         })
       })
+      // The password reads as set only once the camera accepted it.
+      const stored = smtpPasswordToWrite(emailPassword)
+      if (written && stored !== null) await this.config.setAll({ emailPassword: stored })
     }
     // OSD keys are camera-writes, not config — an osd-only save leaves
     // `rest` empty but must still reach the setOsd dispatcher (and the

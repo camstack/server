@@ -155,10 +155,11 @@ interface FakeLinks {
   readonly rows: Map<string, string>
   readonly sets: { id: string; mailboxId: string }[]
   failSets: number
+  defaultId: string | null
 }
 
 function fakeLinks(rows: Record<string, string> = { 'int-default': '', 'int-hub': '' }): FakeLinks {
-  return { rows: new Map(Object.entries(rows)), sets: [], failSets: 0 }
+  return { rows: new Map(Object.entries(rows)), sets: [], failSets: 0, defaultId: 'int-default' }
 }
 
 function build(
@@ -189,6 +190,7 @@ function build(
       },
     },
     listCameras: () => cameras,
+    defaultIntegrationId: async () => links.defaultId,
     logger,
     ...(pending === undefined
       ? {}
@@ -551,6 +553,35 @@ describe('the email-push bridge: what a camera is told', () => {
 })
 
 describe('the email-push bridge: the mailbox link (D1013)', () => {
+  it('a standalone camera (no integration) makes the default integration an owner; a hub child keeps its own', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks({ 'int-default': '', 'int-hub': '' })
+    const { bridge } = build(
+      [camera(1, 'A', [], true, null), camera(2, 'H', [], true, 'int-hub')],
+      broker,
+      undefined,
+      links,
+    )
+    await bridge.sync()
+    expect(Object.fromEntries(links.rows)).toEqual({
+      'int-default': SMTP_INBOUND_DEFAULT_ID,
+      'int-hub': SMTP_INBOUND_DEFAULT_ID,
+    })
+  })
+
+  it('an unresolvable default integration is logged and retried at the next sync', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks({ 'int-default': '' })
+    links.defaultId = null
+    const { bridge, logger } = build([camera(1, 'A', [], true, null)], broker, undefined, links)
+    await bridge.sync()
+    expect(logger.warn).toHaveBeenCalled()
+    expect(links.rows.get('int-default')).toBe('')
+    links.defaultId = 'int-default'
+    await bridge.sync()
+    expect(links.rows.get('int-default')).toBe(SMTP_INBOUND_DEFAULT_ID)
+  })
+
   it('links the integration of an eligible camera to the mailbox, and no other integration', async () => {
     const broker = fakeBroker()
     const links = fakeLinks()

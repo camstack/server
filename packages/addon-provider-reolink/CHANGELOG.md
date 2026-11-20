@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Turning PIR on or off on a sleeping battery camera now wakes it first instead of failing with a 400; the power source (wired or battery) is now an ordinary setting in its own section of the Advanced tab instead of buttons.
+- A standalone camera that uses the camera mailbox now links the default Reolink integration to it, so the mailbox no longer looks unused
+- The camera SMTP password on the Email tab is kept per camera as a secret, and the field shows whether one is set
 
 ## [1.2.253] - 2026-11-20
 

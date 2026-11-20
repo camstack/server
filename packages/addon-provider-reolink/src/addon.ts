@@ -8,8 +8,8 @@ import type {
   AddonContext,
   AddonInitResult,
   ConfigUISchema,
-  CreationSchemaContext,
   CreateDeviceSpec,
+  CreationSchemaContext,
   DeviceConstructor,
   DeviceSummary,
   DiscoveryCandidate,
@@ -29,6 +29,7 @@ import {
   createLogChannelsProvider,
   DeviceType,
   defaultIntegrationApiOver,
+  defaultIntegrationOf,
   defaultIntegrationPortsOver,
   defineAddonMigrations,
   deviceAdoptionCapability,
@@ -72,29 +73,20 @@ import {
 } from './baichuan-webhook-shared.js'
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
 import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
-import { mailboxLinkStoreOver } from './mailbox-link-store.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
 import { type LegacyWebhookIntake, startLegacyWebhookIntake } from './legacy-webhook-intake.js'
+import { mailboxLinkStoreOver } from './mailbox-link-store.js'
 import {
   type EmailPushMigrationPorts,
   type LegacyMailboxSettings,
   type PendingMailbox,
   PendingMailboxSchema,
+  REOLINK_CLAIM_ELIGIBLE,
   REOLINK_INTEGRATION_MIGRATIONS,
   REOLINK_MIGRATIONS,
 } from './migrations/index.js'
-import {
-  buildReolinkInstances,
-  integrationIsHub,
-  ReolinkEvidenceCache,
-  type ReolinkConnectionBody,
-  reolinkConnectionsEntryKind,
-  reolinkInstancesProvider,
-  readHubConnections,
-  reolinkRecordKinds,
-} from './reolink-instances.js'
-import { liveReolinkHubProbe } from './reolink-connection-test.js'
 import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
+import { liveReolinkHubProbe } from './reolink-connection-test.js'
 import {
   mapReolinkDiscoveryToCandidates,
   type OnboardedReolinkDevice,
@@ -103,6 +95,16 @@ import {
 import { ReolinkGatewayDevice } from './reolink-gateway-device.js'
 import { createReolinkHubManager, type ReolinkHubManager } from './reolink-hub-manager.js'
 import { hubGatewayNativeId, reolinkHubSessions } from './reolink-hub-session.js'
+import {
+  buildReolinkInstances,
+  integrationIsHub,
+  type ReolinkConnectionBody,
+  ReolinkEvidenceCache,
+  readHubConnections,
+  reolinkConnectionsEntryKind,
+  reolinkInstancesProvider,
+  reolinkRecordKinds,
+} from './reolink-instances.js'
 import {
   REOLINK_DISCOVERY_MODES,
   scanReolinkSubnets,
@@ -497,12 +499,25 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     return records
   }
 
+  /**
+   * The registry id of the default integration (standalone cameras): the lowest-numbered one this
+   * addon owns that no hub migration created, the same rule as the device claim (D1007).
+   */
+  private async resolveDefaultIntegrationId(): Promise<string | null> {
+    const all = await this.ctx.api.integrations.list.query()
+    const mine = all
+      .filter((i) => i.addonId === this.ctx.id)
+      .map((i) => ({ id: i.id, name: i.name, info: { ...i.info } }))
+    return defaultIntegrationOf(mine, REOLINK_CLAIM_ELIGIBLE)?.id ?? null
+  }
+
   /** The camera mailbox bridge, built once. */
   private ensureEmailBridge(): EmailPushBridge {
     this.emailBridge ??= new EmailPushBridge({
       port: createBrokerPort(this.ctx.api),
       links: mailboxLinkStoreOver(this.requireRecords()),
       listCameras: () => this.listReolinkCameras(),
+      defaultIntegrationId: () => this.resolveDefaultIntegrationId(),
       logger: this.ctx.logger.child('email-push'),
       pending: {
         read: () => this.readPendingMailbox(),

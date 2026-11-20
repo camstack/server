@@ -131,6 +131,11 @@ export const reolinkCameraSchema = z.object({
   username: z.string().default('admin').describe('Username'),
   /** Empty for a camera adopted from an NVR / Home Hub: it borrows its integration's session. */
   password: z.string().default('').describe('Password').meta({ secret: true }),
+  /**
+   * The SMTP password last written to the camera on the Email tab (or by Auto-configure email
+   * push). A keychain secret: the form shows set / not set, never the value.
+   */
+  emailPassword: z.string().default('').describe('Camera SMTP password').meta({ secret: true }),
   // NOTE: `channels` removed in the architectural cleanup pass —
   // channel layout is fully determined by `deviceCache.channelCount`
   // (single-channel default 1) plus the lib's `buildVideoStreamOptions()`

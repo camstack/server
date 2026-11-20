@@ -20,8 +20,8 @@ import {
   SMTP_INBOUND_KIND,
   SmtpInboundConfigSchema,
   type SmtpInboundMessage,
-  type SmtpInboundSettings,
   SmtpInboundMessageSchema,
+  type SmtpInboundSettings,
   SmtpInboundSinceSchema,
   smtpSinceKey,
 } from '@camstack/types'
@@ -137,6 +137,11 @@ export interface EmailPushBridgeDeps {
   readonly port: BrokerPort
   readonly links: MailboxLinkStore
   readonly listCameras: () => readonly BridgeCamera[]
+  /**
+   * The registry id of the default integration (the one standalone cameras belong to), or null
+   * when it cannot be resolved right now. Read from the integration registry at each sync.
+   */
+  readonly defaultIntegrationId: () => Promise<string | null>
   readonly logger: IScopedLogger
   /**
    * The settings the old intake had, kept by the migration until the mailbox exists. The mailbox
@@ -287,7 +292,7 @@ export class EmailPushBridge {
       this.declared = null
       return
     }
-    const owners = this.linkOwners()
+    const { owners, complete } = await this.linkOwners()
     const key = `${recipients.join(',')}|${[...owners].sort().join(',')}`
     if (!force && this.declared === key && this.subscriptionId !== null) return
     const brokerId = await this.ensureMailbox()
@@ -295,17 +300,43 @@ export class EmailPushBridge {
     const { subscriptionId } = await this.deps.port.subscribe(brokerId, recipients)
     this.brokerId = brokerId
     this.subscriptionId = subscriptionId
-    this.declared = (await this.syncLinks(brokerId, owners)) ? key : null
+    this.declared = (await this.syncLinks(brokerId, owners)) && complete ? key : null
     await this.reconcile()
   }
 
-  /** The integrations whose standalone cameras mail the mailbox: they link to it. */
-  private linkOwners(): ReadonlySet<string> {
+  /**
+   * The integrations whose cameras mail the mailbox: they link to it. A hub child names its own
+   * integration; a standalone camera names none and belongs to the default one. `complete` is
+   * false when that default could not be resolved: the caller retries at the next sync.
+   */
+  private async linkOwners(): Promise<{ owners: ReadonlySet<string>; complete: boolean }> {
     const owners = new Set<string>()
+    let standalone: BridgeCamera | null = null
     for (const cam of this.deps.listCameras()) {
-      if (cam.isEmailPushEligible && cam.integrationId !== null) owners.add(cam.integrationId)
+      if (!cam.isEmailPushEligible) continue
+      if (cam.integrationId !== null) owners.add(cam.integrationId)
+      else standalone ??= cam
     }
-    return owners
+    if (standalone === null) return { owners, complete: true }
+    let defaultId: string | null = null
+    try {
+      defaultId = await this.deps.defaultIntegrationId()
+    } catch (err: unknown) {
+      this.deps.logger.warn('email-push: the default integration could not be read', {
+        tags: { deviceId: standalone.id },
+        meta: { error: errMsg(err) },
+      })
+      return { owners, complete: false }
+    }
+    if (defaultId === null) {
+      this.deps.logger.warn(
+        'email-push: a standalone camera uses the mailbox but the default integration is not resolved yet; retrying at the next sync',
+        { tags: { deviceId: standalone.id }, meta: { cameraId: standalone.id } },
+      )
+      return { owners, complete: false }
+    }
+    owners.add(defaultId)
+    return { owners, complete: true }
   }
 
   /**
