@@ -95,6 +95,7 @@ describe('HomematicCcuPage overview', () => {
     listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
     ccuOverview: () => OVERVIEW,
     listServiceMessages: () => ({ messages: [MESSAGE], error: null }),
+    listCcuFaults: () => ({ faults: [] }),
   }
 
   it('shows the CCU, its interface health and the service messages', async () => {
@@ -607,7 +608,7 @@ describe('HomematicCcuPage button events', () => {
   }
 
   it('shows what each key actuates and turns presses on only after confirmation', async () => {
-    window.history.replaceState(null, '', '/?tab=devices')
+    window.history.replaceState(null, '', `/?tab=devices&device=${BS2.address}`)
     const set = vi.fn().mockReturnValue({ ok: true })
     const fake = fakeTrpc({
       listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
@@ -615,8 +616,7 @@ describe('HomematicCcuPage button events', () => {
       setButtonEvents: set,
     })
     mountPage(fake.trpc)
-    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Central link' }))
     const dialog = await screen.findByTestId('hm-button-events-dialog')
     expect(within(dialog).getByText('Direct links: Luce bagno (00315F298E5093:4)')).toBeTruthy()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Enable button events' }))
@@ -633,7 +633,7 @@ describe('HomematicCcuPage button events', () => {
   })
 
   it('keeps the dialog open and shows saving, then saved, on the row', async () => {
-    window.history.replaceState(null, '', '/?tab=devices')
+    window.history.replaceState(null, '', `/?tab=devices&device=${BS2.address}`)
     let reads = 0
     let finish: (value: { ok: true }) => void = () => undefined
     const set = vi.fn().mockImplementation(
@@ -652,8 +652,7 @@ describe('HomematicCcuPage button events', () => {
       setButtonEvents: set,
     })
     mountPage(fake.trpc)
-    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Central link' }))
     const dialog = await screen.findByTestId('hm-button-events-dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Enable button events' }))
     const confirm = await screen.findByRole('dialog', { name: /Enable button events/ })
@@ -666,7 +665,7 @@ describe('HomematicCcuPage button events', () => {
   })
 
   it('keeps the dialog open and shows the error on the row', async () => {
-    window.history.replaceState(null, '', '/?tab=devices')
+    window.history.replaceState(null, '', `/?tab=devices&device=${BS2.address}`)
     const fake = fakeTrpc({
       listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
       listCcuDevices: () => ({
@@ -677,8 +676,7 @@ describe('HomematicCcuPage button events', () => {
       },
     })
     mountPage(fake.trpc)
-    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Central link' }))
     const dialog = await screen.findByTestId('hm-button-events-dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Disable button events' }))
     const confirm = await screen.findByRole('dialog', { name: /Disable button events/ })

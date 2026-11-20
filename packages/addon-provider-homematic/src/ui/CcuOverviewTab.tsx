@@ -9,6 +9,7 @@ import {
   Skeleton,
   StatCard,
   StatusBadge,
+  type AddonPageProps,
   type DataColumn,
 } from '@camstack/ui-library'
 import { Radio } from 'lucide-react'
@@ -21,6 +22,7 @@ import {
 } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
+import { ActiveFaults } from './ActiveFaults.js'
 import { dateTimeOrDash, percentOrDash, textOrDash } from './format.js'
 import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
@@ -34,8 +36,12 @@ function connectionStatus(connected: boolean | null): 'online' | 'offline' | 'un
 }
 
 /** CCU overview: what the CCU says about itself, its interfaces and their radio health, and its service messages. */
-export function CcuOverviewTab(props: { readonly trpc: CcuTrpc; readonly integrationId: string }) {
-  const { trpc, integrationId } = props
+export function CcuOverviewTab(props: {
+  readonly trpc: CcuTrpc
+  readonly integrationId: string
+  readonly navigate: AddonPageProps['navigate']
+}) {
+  const { trpc, integrationId, navigate } = props
   const { t } = useT()
   const input = useMemo(() => ({ integrationId }), [integrationId])
   const overview = useCcuData(trpc, 'ccuOverview', input, CcuOverviewSchema)
@@ -163,6 +169,7 @@ export function CcuOverviewTab(props: { readonly trpc: CcuTrpc; readonly integra
           </div>
         )}
       </SectionCard>
+      <ActiveFaults trpc={trpc} integrationId={integrationId} navigate={navigate} />
       <TableBlock headingId="hm-ccu-interfaces" title={t('overview.interfacesTitle')}>
         {overview.data?.interfacesError ? (
           <ErrorBox

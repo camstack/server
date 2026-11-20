@@ -1,30 +1,38 @@
 import { useMemo, useState } from 'react'
 import {
   Badge,
+  Button,
+  EmptyState,
+  Skeleton,
   DataTable,
   DataTableFilterBar,
   ErrorBox,
   KebabMenu,
   useDataTableFilter,
+  useUrlQueryParam,
   type AddonPageProps,
   type DataColumn,
   type DataTableFilterConfig,
   type KebabMenuItem,
 } from '@camstack/ui-library'
-import { ExternalLink, MousePointerClick, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
+import { ExternalLink, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import {
   CcuDevicesResultSchema,
+  CcuProgramsResultSchema,
   DeviceRenameResultSchema,
   NamedObjectSchema,
   OkResultSchema,
   type CcuChannelRow,
   type CcuDeviceRow,
+  type CcuProgramsResult,
 } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
 import { ChannelConfigDialog } from './ChannelConfigDialog.js'
-import { ButtonEventsDialog } from './ButtonEventsDialog.js'
+import { CcuDeviceDetail } from './CcuDeviceDetail.js'
+import { camstackDevicePagePath, DEVICE_PARAM, resolveDeviceSelection } from './device-route.js'
+import { deviceKeyEventState, keyEventStatuses, type KeyEventState } from './key-event-programs.js'
 import { centralKey } from './central-key.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { RenameDeviceDialog, type DeviceRenameDraft } from './RenameDeviceDialog.js'
@@ -54,13 +62,7 @@ function signalText(row: CcuDeviceRow): string {
   return row.rssi === null ? '—' : `${row.rssi} dBm`
 }
 
-/**
- * The admin device page. Same path as `devicePath` in addon-admin-ui
- * (`lib/customization-routes.ts`); the host's `navigate` resolves the basename.
- */
-export function camstackDevicePagePath(deviceId: number): string {
-  return `/devices/${deviceId}` // hub-path-ok: AddonPageProps.navigate, basename-aware
-}
+export { camstackDevicePagePath }
 
 function deviceMenuPrefix(
   row: CcuDeviceRow,
@@ -105,6 +107,7 @@ function DeviceName(props: {
           className="text-primary hover:underline"
           onClick={(event) => {
             event.preventDefault()
+            event.stopPropagation()
             navigate(path)
           }}
         >
@@ -114,6 +117,42 @@ function DeviceName(props: {
       {row.name !== null && <span className="text-xs text-foreground-subtle">{row.address}</span>}
     </div>
   )
+}
+
+const EVENTS_LABEL: Readonly<
+  Record<KeyEventState, 'devices.eventsOk' | 'devices.eventsInactive' | 'devices.eventsMissing'>
+> = {
+  ok: 'devices.eventsOk',
+  inactive: 'devices.eventsInactive',
+  missing: 'devices.eventsMissing',
+}
+
+/** "events: ok / missing program" for a device with keys; nothing for a device without. */
+function EventsBadge(props: {
+  readonly row: CcuDeviceRow
+  readonly programs: {
+    readonly data: CcuProgramsResult | undefined
+    readonly error: string | null
+  }
+}) {
+  const { row, programs } = props
+  const { t } = useT()
+  if (row.keyChannels.length === 0) return <span className="text-foreground-subtle">—</span>
+  if (programs.data === undefined) {
+    return programs.error === null ? (
+      <span className="text-foreground-subtle">—</span>
+    ) : (
+      <Badge variant="info">{t('devices.eventsUnknown')}</Badge>
+    )
+  }
+  const state = deviceKeyEventState(
+    keyEventStatuses(
+      row.keyChannels.map((channel) => channel.address),
+      programs.data.programs,
+    ),
+  )
+  if (state === null) return <span className="text-foreground-subtle">—</span>
+  return <Badge variant={state === 'ok' ? 'success' : 'warning'}>{t(EVENTS_LABEL[state])}</Badge>
 }
 
 /** The CCU device list: identity, firmware and the health flags the WebUI buries in "Servicemeldungen". */
@@ -131,7 +170,8 @@ export function CcuDevicesTab(props: {
   const write = useCcuWrite(trpc)
   const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
   const [configuring, setConfiguring] = useState<CcuDeviceRow | null>(null)
-  const [buttonAddress, setButtonAddress] = useState<string | null>(null)
+  const [deviceParam, setDeviceParam] = useUrlQueryParam(DEVICE_PARAM)
+  const programs = useCcuData(trpc, 'listCcuPrograms', input, CcuProgramsResultSchema)
   const [renaming, setRenaming] = useState<CcuDeviceRow | null>(null)
 
   const renameDevice = async (device: CcuDeviceRow, draft: DeviceRenameDraft): Promise<void> => {
@@ -175,7 +215,12 @@ export function CcuDevicesTab(props: {
   const removeDevice = async (device: CcuDeviceRow, draft: DeleteDraft): Promise<void> => {
     const done = await write({
       action: 'deleteCcuDevice',
-      input: { integrationId, address: device.address, reset: draft.reset, force: draft.force },
+      input: {
+        integrationId,
+        address: device.address,
+        reset: draft.reset,
+        force: draft.force,
+      },
       schema: OkResultSchema,
       title: t('devices.deleteTitle'),
       message: t(draft.reset ? 'devices.deleteMessageReset' : 'devices.deleteMessage', {
@@ -274,49 +319,48 @@ export function CcuDevicesTab(props: {
         ),
       },
       {
+        key: 'events',
+        header: t('devices.colEvents'),
+        nowrap: false,
+        notSortableReason: 'Needs the programs list',
+        render: (row) => <EventsBadge row={row} programs={programs} />,
+      },
+      {
         key: 'actions',
         header: '',
         align: 'right',
         notSortableReason: 'Action column',
         render: (row) => (
-          <KebabMenu
-            items={[
-              ...deviceMenuPrefix(row, t('devices.openDevicePage'), navigate),
-              ...(row.keyChannels.length > 0
-                ? [
-                    {
-                      id: 'button-events',
-                      label: t('devices.buttonEventsAction'),
-                      icon: MousePointerClick,
-                      onClick: () => setButtonAddress(row.address),
-                    },
-                  ]
-                : []),
-              {
-                id: 'rename',
-                label: t('devices.renameAction'),
-                icon: Pencil,
-                onClick: () => setRenaming(row),
-              },
-              {
-                id: 'configure',
-                label: t('devices.configureAction'),
-                icon: SlidersHorizontal,
-                onClick: () => setConfiguring(row),
-              },
-              {
-                id: 'delete',
-                label: t('devices.deleteAction'),
-                icon: Trash2,
-                danger: true,
-                onClick: () => setDeleting(row),
-              },
-            ]}
-          />
+          <span onClick={(event) => event.stopPropagation()}>
+            <KebabMenu
+              items={[
+                ...deviceMenuPrefix(row, t('devices.openDevicePage'), navigate),
+                {
+                  id: 'rename',
+                  label: t('devices.renameAction'),
+                  icon: Pencil,
+                  onClick: () => setRenaming(row),
+                },
+                {
+                  id: 'configure',
+                  label: t('devices.configureAction'),
+                  icon: SlidersHorizontal,
+                  onClick: () => setConfiguring(row),
+                },
+                {
+                  id: 'delete',
+                  label: t('devices.deleteAction'),
+                  icon: Trash2,
+                  danger: true,
+                  onClick: () => setDeleting(row),
+                },
+              ]}
+            />
+          </span>
         ),
       },
     ],
-    [navigate, t],
+    [navigate, t, programs],
   )
 
   if (devices.error !== null) {
@@ -325,9 +369,7 @@ export function CcuDevicesTab(props: {
     )
   }
 
-  const buttons =
-    buttonAddress === null ? null : (rows.find((row) => row.address === buttonAddress) ?? null)
-
+  const selection = resolveDeviceSelection(deviceParam, devices.data?.devices)
   const groupLabel: Readonly<Record<string, string>> = {
     issue: t('devices.groupIssue'),
     type: t('devices.groupType'),
@@ -343,54 +385,74 @@ export function CcuDevicesTab(props: {
 
   return (
     <div className="flex flex-col gap-3">
-      <DataTableFilterBar
-        state={filter.state}
-        facets={filter.facets}
-        groups={filter.groups.map((group) => ({
-          ...group,
-          label: groupLabel[group.id] ?? group.id,
-          ...(group.id === 'issue' ? { facetLabel: issueLabel } : {}),
-        }))}
-        labels={{
-          searchPlaceholder: t('devices.searchPlaceholder'),
-          searchLabel: t('devices.searchLabel'),
-          facetsLabel: t('devices.facetsLabel'),
-          clearLabel: t('devices.clearFilters'),
-        }}
-        onSearch={filter.setSearch}
-        onToggleFacet={filter.toggleFacet}
-        onToggleGroupFacet={filter.toggleGroupFacet}
-        onClear={filter.clear}
-      />
-      <DataTable
-        columns={columns}
-        rows={filter.rows}
-        rowKey={(row) => row.address}
-        minWidthPx={760}
-        pageSize={25}
-        emptyMessage={
-          devices.loading
-            ? t('common.loading')
-            : filter.active
-              ? t('devices.noMatch')
-              : t('devices.none')
-        }
-      />
+      {selection.kind === 'pending' && <Skeleton className="h-32 w-full" />}
+      {selection.kind === 'missing' && (
+        <EmptyState
+          title={t('detail.notFoundTitle')}
+          description={t('detail.notFound', { address: selection.address })}
+          action={
+            <Button type="button" variant="outline" size="sm" onClick={() => setDeviceParam(null)}>
+              {t('detail.back')}
+            </Button>
+          }
+        />
+      )}
+      {selection.kind === 'found' && (
+        <CcuDeviceDetail
+          trpc={trpc}
+          integrationId={integrationId}
+          device={selection.device}
+          programs={{ data: programs.data, error: programs.error }}
+          navigate={navigate}
+          onBack={() => setDeviceParam(null)}
+          onChanged={() => {
+            devices.reload()
+            programs.reload()
+          }}
+        />
+      )}
+      <div className={selection.kind === 'none' ? 'flex flex-col gap-3' : 'hidden'}>
+        <DataTableFilterBar
+          state={filter.state}
+          facets={filter.facets}
+          groups={filter.groups.map((group) => ({
+            ...group,
+            label: groupLabel[group.id] ?? group.id,
+            ...(group.id === 'issue' ? { facetLabel: issueLabel } : {}),
+          }))}
+          labels={{
+            searchPlaceholder: t('devices.searchPlaceholder'),
+            searchLabel: t('devices.searchLabel'),
+            facetsLabel: t('devices.facetsLabel'),
+            clearLabel: t('devices.clearFilters'),
+          }}
+          onSearch={filter.setSearch}
+          onToggleFacet={filter.toggleFacet}
+          onToggleGroupFacet={filter.toggleGroupFacet}
+          onClear={filter.clear}
+        />
+        <DataTable
+          columns={columns}
+          rows={filter.rows}
+          rowKey={(row) => row.address}
+          minWidthPx={760}
+          pageSize={25}
+          onRowClick={(row) => setDeviceParam(row.address)}
+          emptyMessage={
+            devices.loading
+              ? t('common.loading')
+              : filter.active
+                ? t('devices.noMatch')
+                : t('devices.none')
+          }
+        />
+      </div>
       {configuring !== null && (
         <ChannelConfigDialog
           trpc={trpc}
           integrationId={integrationId}
           device={configuring}
           onClose={() => setConfiguring(null)}
-        />
-      )}
-      {buttons !== null && (
-        <ButtonEventsDialog
-          trpc={trpc}
-          integrationId={integrationId}
-          device={buttons}
-          onClose={() => setButtonAddress(null)}
-          onChanged={() => devices.reload()}
         />
       )}
       {renaming !== null && (

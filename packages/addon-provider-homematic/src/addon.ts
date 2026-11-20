@@ -34,6 +34,7 @@ import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuDeviceStateHandlers } from './ccu/ccu-device-state-actions.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
+import { buildCcuFaultHandlers } from './ccu/ccu-faults-actions.js'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuLinkHandlers } from './ccu/ccu-links-actions.js'
@@ -186,6 +187,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       actionHandlers: {
         ...buildCcuOverviewHandlers(this.ccuActionDeps()),
         ...buildCcuDevicesHandlers(this.ccuActionDeps()),
+        ...buildCcuFaultHandlers(this.ccuActionDeps()),
         ...buildCcuHeatingHandlers(this.ccuActionDeps()),
         ...buildCcuPairingHandlers(this.ccuActionDeps()),
         ...buildCcuConfigHandlers(this.ccuActionDeps()),

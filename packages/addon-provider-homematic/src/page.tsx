@@ -15,6 +15,7 @@ import { type ReactNode, useMemo } from 'react'
 import { z } from 'zod'
 import { CcuListItemSchema } from './ccu/ccu-schemas.js'
 import { useT } from './i18n/index.js'
+import { DEVICE_PARAM } from './ui/device-route.js'
 import { CcuDevicesTab } from './ui/CcuDevicesTab.js'
 import { CcuHeatingTab } from './ui/CcuHeatingTab.js'
 import { CcuLinksTab } from './ui/CcuLinksTab.js'
@@ -37,6 +38,7 @@ export default function HomematicCcuPage(props: AddonPageProps) {
   const { t } = useT()
   const [ccuParam, setCcuParam] = useUrlQueryParam('ccu')
   const [tabParam, setTabParam] = useUrlQueryParam('tab')
+  const [, setDeviceParam] = useUrlQueryParam(DEVICE_PARAM)
   const list = useCcuData(trpc, 'listCcus', NO_INPUT, CcuListSchema)
 
   const ccus = list.data
@@ -78,7 +80,10 @@ export default function HomematicCcuPage(props: AddonPageProps) {
       defaultSection="overview"
       sectionsLabel={t('page.sectionsLabel')}
       activeSection={tabParam ?? 'overview'}
-      onSectionChange={(id) => setTabParam(id === 'overview' ? null : id)}
+      onSectionChange={(id) => {
+        setDeviceParam(null)
+        setTabParam(id === 'overview' ? null : id)
+      }}
       actions={
         ccus !== undefined && ccus.length > 1 ? (
           <Select
@@ -93,7 +98,9 @@ export default function HomematicCcuPage(props: AddonPageProps) {
         {
           id: 'overview',
           label: t('page.tabOverview'),
-          content: body(<CcuOverviewTab trpc={trpc} integrationId={integrationId} />),
+          content: body(
+            <CcuOverviewTab trpc={trpc} integrationId={integrationId} navigate={props.navigate} />,
+          ),
         },
         {
           id: 'devices',

@@ -25,6 +25,7 @@ function device(
     unreach: false,
     configPending: false,
     sabotage: false,
+    deviceId: null,
     keyChannels: [],
     ...extra,
   }
@@ -37,6 +38,7 @@ const DEVICES = [
     updatable: true,
   }),
   device('0001D3C99C5678', 'HmIP-BS2', 'Hall buttons', {
+    deviceId: 950,
     rooms: ['Hall'],
     functions: ['Light'],
     keyChannels: [
@@ -168,6 +170,30 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
       },
     ],
     interfacesError: null,
+  },
+  listCcuFaults: {
+    faults: [
+      {
+        address: 'NEQ1234567',
+        name: 'Study radiator',
+        deviceId: null,
+        severity: 'error',
+        code: 'UNREACH',
+        label: 'Device unreachable',
+        since: TS - 3 * 60 * 60_000,
+        faults: [{ code: 'UNREACH', label: 'Device unreachable', severity: 'error' }],
+      },
+      {
+        address: '0001D3C99C1234',
+        name: 'Bedroom radiator',
+        deviceId: 951,
+        severity: 'warning',
+        code: 'LOWBAT',
+        label: 'Battery low',
+        since: null,
+        faults: [{ code: 'LOWBAT', label: 'Battery low', severity: 'warning' }],
+      },
+    ],
   },
   listServiceMessages: {
     messages: [
@@ -355,12 +381,6 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
           {
             address: '0001D3C99C5678:1',
             channelName: 'Left',
-            deviceName: 'Hall buttons',
-            deviceId: 950,
-          },
-          {
-            address: '0001D3C99C5678:2',
-            channelName: null,
             deviceName: 'Hall buttons',
             deviceId: 950,
           },

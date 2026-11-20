@@ -575,3 +575,30 @@ export const SetValueInputSchema = IntegrationRefSchema.extend({
   deviceId: z.number().int().optional(),
   confirmed: ConfirmedSchema,
 })
+
+// ── Active faults (the overview's "Active faults" section) ─────────────────
+
+export const CcuFaultSchema = z.object({
+  code: z.string(),
+  label: z.string(),
+  severity: z.enum(['error', 'warning']),
+})
+export type CcuFault = z.infer<typeof CcuFaultSchema>
+
+/** One device with at least one active fault: the principal fault (errors first) and every fault. */
+export const CcuFaultRowSchema = z.object({
+  address: z.string(),
+  name: z.string().nullable(),
+  /** CamStack device id when the CCU device is adopted. */
+  deviceId: z.number().int().nullable(),
+  severity: z.enum(['error', 'warning']),
+  code: z.string(),
+  label: z.string(),
+  /** Epoch milliseconds of the matching service message; `null` when the CCU did not say. */
+  since: z.number().nullable(),
+  faults: z.array(CcuFaultSchema),
+})
+export type CcuFaultRow = z.infer<typeof CcuFaultRowSchema>
+
+export const CcuFaultsResultSchema = z.object({ faults: z.array(CcuFaultRowSchema) })
+export type CcuFaultsResult = z.infer<typeof CcuFaultsResultSchema>

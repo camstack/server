@@ -5,7 +5,7 @@ import { hmName } from '../devices/hm-name.js'
 /** `RSSI_*` reports this when the device has no signal reading. */
 const RSSI_UNKNOWN = 65535
 
-function maintenanceChannel(device: HmDevice): HmChannel | undefined {
+export function maintenanceChannel(device: HmDevice): HmChannel | undefined {
   return (
     device.channels.find((channel) => channel.type?.toUpperCase() === 'MAINTENANCE') ??
     device.channels.find((channel) => channel.index === 0)

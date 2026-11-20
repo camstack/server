@@ -4,6 +4,7 @@ import { z } from 'zod'
 import {
   AcknowledgeInputSchema,
   CcuDeviceStateSchema,
+  CcuFaultsResultSchema,
   CcuDevicesResultSchema,
   CcuLinksResultSchema,
   CcuListItemSchema,
@@ -75,6 +76,10 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   listServiceMessages: customAction(IntegrationRefSchema, ServiceMessagesResultSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  listCcuFaults: customAction(IntegrationRefSchema, CcuFaultsResultSchema, {
     kind: 'query',
     auth: 'admin',
   }),
