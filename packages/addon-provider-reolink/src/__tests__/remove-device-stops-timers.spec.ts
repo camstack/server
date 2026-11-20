@@ -27,6 +27,7 @@ function makeCamera() {
     isHubChild: { value: () => false },
     config: { value: { get: () => undefined } },
     state: { value: { battery: {} } },
+    keepAwake: { value: { stop: vi.fn() } },
     runBatteryUpdate: { value: refreshTick },
     disconnectAll: { value: vi.fn(async () => undefined) },
   })

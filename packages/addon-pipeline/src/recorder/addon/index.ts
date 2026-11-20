@@ -625,6 +625,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    */
   private signalTriggerUnsub: (() => void) | null = null
   private batteryUnsub: (() => void) | null = null
+  private sourceRestartUnsub: (() => void) | null = null
   /**
    * Edge memory + reverse index (source device → cameras) for the sensor
    * trigger. Constructed once per addon instance: `startedAtMs` is the floor a
@@ -1932,6 +1933,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     this.signalTriggerUnsub = null
     this.batteryUnsub?.()
     this.batteryUnsub = null
+    this.sourceRestartUnsub?.()
+    this.sourceRestartUnsub = null
     this.locationChangeUnsub?.()
     this.locationChangeUnsub = null
     this.locationRefresher?.dispose()
@@ -2349,6 +2352,17 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
             level.data.active,
             atMs,
           )
+        },
+      )
+    }
+
+    // The broker's re-dial: the writer cannot see the cut itself, so recover it
+    // now instead of waiting for the idle bound.
+    if (this.sourceRestartUnsub === null) {
+      this.sourceRestartUnsub = this.ctx.eventBus.subscribe(
+        { category: EventCategory.StreamBrokerOnSourceRestart },
+        (event) => {
+          void this.controller?.onSourceRestarted(event.data.deviceId, event.data.reason)
         },
       )
     }

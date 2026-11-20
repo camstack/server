@@ -53,6 +53,8 @@ function apply(mirror: SleepMirror, attempt: Attempt): boolean {
     source: attempt.source,
     lastFirstHandCommitAt: mirror.lastFirstHandCommitAt,
     nowMs: attempt.atMs,
+    videoFlowing: false,
+    wired: false,
   })
   if (decision.kind !== 'commit') return false
   if (decision.stampFirstHand) mirror.lastFirstHandCommitAt = attempt.atMs

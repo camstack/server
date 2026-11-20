@@ -472,6 +472,14 @@ export enum EventCategory {
    */
   StreamBrokerOnRequestStreamSourceRefresh = 'stream-broker.onRequestStreamSourceRefresh',
   /**
+   * A broker RE-DIALED its source (every dial after the first). A consumer that
+   * reads the broker over a transport that does not announce the cut — the
+   * recorder's ffmpeg writer — learns here instead of through its idle clock.
+   * Telemetry: a dropped event only means the idle clock recovers it later.
+   * Payload: `{ deviceId, camStreamId, brokerId, reason }`.
+   */
+  StreamBrokerOnSourceRestart = 'stream-broker.onSourceRestart',
+  /**
    * A camera provider changed a device's stream parameters (codec /
    * resolution / bitrate / a stream added or removed). A LOW-LATENCY NUDGE
    * for the stream-broker's catalog reconcile: it carries NO authoritative

@@ -97,6 +97,15 @@ export const SLEEP_HYSTERESIS_MS = 5_000
  */
 export const HUB_SUMMARY_SLEEP_GRACE_MS = 180_000
 
+/**
+ * How recent the last video packet must be for the stream to count as
+ * flowing. A camera that is delivering video is awake, whatever a second-hand
+ * claim says: a Home Hub child on DC power was marked sleeping every 28 min
+ * (and by the lagging hub summary) while its RTP was running, which froze the
+ * snapshot tile on "sleeping".
+ */
+export const VIDEO_FLOW_FRESH_MS = 5_000
+
 export interface SleepCommitInput {
   /** What the slice says right now. */
   readonly current: boolean
@@ -109,12 +118,16 @@ export interface SleepCommitInput {
    */
   readonly lastFirstHandCommitAt: number
   readonly nowMs: number
+  /** Video packets reached the broker within {@link VIDEO_FLOW_FRESH_MS}. */
+  readonly videoFlowing: boolean
+  /** The power source read is `adapter`: this camera never sleeps. */
+  readonly wired: boolean
 }
 
 /** Why a commit was refused, for the log line that has to name it. */
 export interface SleepCommitRefusal {
   readonly kind: 'refused'
-  readonly reason: 'hysteresis' | 'summary-grace'
+  readonly reason: 'hysteresis' | 'summary-grace' | 'video-flowing' | 'wired'
   /** The window the refusal was measured against. */
   readonly windowMs: number
   /** How long ago the last first-hand commit was. */
@@ -133,6 +146,15 @@ export type SleepCommitDecision =
        */
       readonly stampFirstHand: boolean
     }
+
+/**
+ * A source that is not the camera's own reading of itself: the parent's
+ * summaries, and a pushed `simple-event` (the Home Hub's session cut arrives
+ * as one).
+ */
+function isSecondHand(source: SleepCommitSource): boolean {
+  return source === 'hub-summary' || source === 'hub-reconcile' || source === 'simple-event'
+}
 
 /** A source whose verdict comes from the parent NVR's channel summary. */
 function isSummarySourced(source: SleepCommitSource): boolean {
@@ -155,8 +177,25 @@ function isSummarySourced(source: SleepCommitSource): boolean {
  *     observation inside the grace says otherwise.
  */
 export function decideSleepCommit(input: SleepCommitInput): SleepCommitDecision {
-  const { current, next, source, lastFirstHandCommitAt, nowMs } = input
+  const { current, next, source, lastFirstHandCommitAt, nowMs, videoFlowing, wired } = input
   if (current === next) return { kind: 'unchanged' }
+
+  // Sleep truth: a second-hand "asleep" never beats what the wire shows, and a
+  // wired camera is never asleep.
+  if (next === true && isSecondHand(source)) {
+    const sinceMs = nowMs - lastFirstHandCommitAt
+    if (wired) {
+      return { kind: 'refused', reason: 'wired', windowMs: 0, sinceLastChangeMs: sinceMs }
+    }
+    if (videoFlowing) {
+      return {
+        kind: 'refused',
+        reason: 'video-flowing',
+        windowMs: VIDEO_FLOW_FRESH_MS,
+        sinceLastChangeMs: sinceMs,
+      }
+    }
+  }
 
   const summarySourced = isSummarySourced(source)
   const firstHandWake = source === 'confirmed-wake' && next === false

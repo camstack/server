@@ -1412,6 +1412,17 @@ export interface EventCatalog {
     readonly camStreamId: string
   }
   /**
+   * The broker re-dialed a source (a declared `maxSessionMs` limit, a
+   * stall): every reader that cannot see the cut itself (the recorder's
+   * writer) recovers now — see `EventCategory.StreamBrokerOnSourceRestart`.
+   */
+  'stream-broker.onSourceRestart': {
+    readonly deviceId: number
+    readonly camStreamId: string
+    readonly brokerId: string
+    readonly reason: string
+  }
+  /**
    * Low-latency nudge: a provider changed a device's stream parameters.
    * Carries NO authoritative data — the stream-broker re-pulls that device's
    * `stream-catalog` on receipt. See `EventCategory.StreamParamsChanged`.

@@ -59,8 +59,18 @@ export type { ActionTarget }
 export const WAIT_MAX_SECONDS = 3600
 const WAIT_TOO_LONG = `a wait is at most one hour (${WAIT_MAX_SECONDS} s)`
 
+/**
+ * Every step kind may be switched off without deleting it: `enabled: false`
+ * skips the step (and, for a block step, its whole subtree), traced `disabled`.
+ * Absent means enabled.
+ */
+export const stepEnabledShape = {
+  enabled: z.boolean().optional(),
+}
+
 export const AutomationWaitStepSchema = z.object({
   kind: z.literal('wait'),
+  ...stepEnabledShape,
   seconds: z.number().min(0).max(WAIT_MAX_SECONDS, WAIT_TOO_LONG),
 })
 
@@ -70,6 +80,7 @@ export const AutomationWaitStepSchema = z.object({
  */
 export const AutomationCommandStepBaseSchema = z.object({
   kind: z.literal('command'),
+  ...stepEnabledShape,
   /** WHO the step acts on. */
   target: ActionTargetSchema,
   /** The vocabulary action this step performs (`cover.open`). */
@@ -177,6 +188,7 @@ export const STOP_REASON_MAX = 200
 /** End the run here, on purpose. `reason` may carry `{{vars.x}}` slots. */
 export const AutomationStopStepSchema = z.object({
   kind: z.literal('stop'),
+  ...stepEnabledShape,
   reason: z
     .string()
     .min(1, 'a stop needs a reason: it is what the run trace shows')
@@ -200,6 +212,7 @@ export const RESERVED_RUN_VARS: readonly string[] = ['kind', 'leaf', 'at']
  */
 export const AutomationSetStepSchema = z.object({
   kind: z.literal('set'),
+  ...stepEnabledShape,
   vars: z
     .record(z.string(), z.union([z.string().max(SET_VAR_VALUE_MAX), z.number(), z.boolean()]))
     .refine((vars) => Object.keys(vars).every((name) => SET_VAR_NAME_RE.test(name)), {
@@ -217,8 +230,29 @@ export const AutomationSetStepSchema = z.object({
 })
 export type AutomationSetStep = z.infer<typeof AutomationSetStepSchema>
 
+export const NOTIFY_TITLE_MAX = 200
+export const NOTIFY_BODY_MAX = 2000
+
+/**
+ * Send a notification through one notification target (the same targets the
+ * notification centre addresses). Title and body may carry `{{vars.x}}` slots.
+ * Not a device command: a notification target is an instance of the
+ * `notification-output` cap, not a device.
+ */
+export const AutomationNotifyStepSchema = z.object({
+  kind: z.literal('notify'),
+  ...stepEnabledShape,
+  /** The notification target (an instance id of `notification-output`). */
+  targetId: z.string().min(1, 'pick the notification target'),
+  title: z.string().max(NOTIFY_TITLE_MAX).optional(),
+  body: z.string().min(1, 'a notification needs a message').max(NOTIFY_BODY_MAX),
+  ...continueOnErrorShape,
+})
+export type AutomationNotifyStep = z.infer<typeof AutomationNotifyStepSchema>
+
 const AutomationRunActionStepSchema = z.object({
   kind: z.literal('action'),
+  ...stepEnabledShape,
   /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
   actionId: z.string().min(1),
   /** Values for the action's declared variables; the others take their default. */
@@ -246,6 +280,7 @@ export const WAIT_UNTIL_TIMEOUT_MAX_S = 21_600
 export const AutomationWaitUntilStepSchema = z
   .object({
     kind: z.literal('wait-until'),
+    ...stepEnabledShape,
     when: AutomationWhenSchema,
     timeoutS: z
       .number()
@@ -283,6 +318,7 @@ const plainStepSchemas = [
   AutomationStopStepSchema.omit({ if: true }).strict(),
   AutomationSetStepSchema.omit({ if: true }).strict(),
   AutomationRunActionStepSchema.strict(),
+  AutomationNotifyStepSchema.strict(),
 ] as const
 
 /**
@@ -299,7 +335,11 @@ export const PARALLEL_STEPS_MAX = 5
 
 /** A step that can run beside others: it writes no variable and does not end the run. */
 const AutomationParallelMemberSchema = AutomationBranchStepSchema.refine(
-  (step) => step.kind === 'command' || step.kind === 'action' || step.kind === 'wait',
+  (step) =>
+    step.kind === 'command' ||
+    step.kind === 'action' ||
+    step.kind === 'notify' ||
+    step.kind === 'wait',
   'a parallel holds device commands, actions and waits only: a set or a stop beside other steps has no order',
 )
 
@@ -311,6 +351,7 @@ const AutomationParallelMemberSchema = AutomationBranchStepSchema.refine(
 export const AutomationParallelStepSchema = z
   .object({
     kind: z.literal('parallel'),
+    ...stepEnabledShape,
     steps: z
       .array(AutomationParallelMemberSchema)
       .min(PARALLEL_STEPS_MIN, 'a parallel needs at least two steps')
@@ -389,6 +430,7 @@ function repeatSchemaOf<S extends z.ZodType>(step: S) {
   return z
     .object({
       kind: z.literal('repeat'),
+      ...stepEnabledShape,
       loop: AutomationRepeatLoopSchema,
       steps: z
         .array(step)
@@ -409,6 +451,7 @@ function chooseSchemaOf<S extends z.ZodType>(step: S) {
   const steps = z.array(step).max(STEP_ELSE_MAX)
   return z.object({
     kind: z.literal('choose'),
+    ...stepEnabledShape,
     branches: z
       .array(
         z.object({
@@ -456,8 +499,10 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   AutomationParallelStepSchema,
   AutomationRepeatStepSchema,
   AutomationRunActionStepSchema,
+  AutomationNotifyStepSchema,
   z.object({
     kind: z.literal('code'),
+    ...stepEnabledShape,
     /** Compiled into the automation's OWN block by esbuild — not a third
      *  runtime, not a `vm`, and not dynamically evaluated. */
     code: z.string().min(1).max(20_000),
@@ -556,6 +601,7 @@ export const AutomationRecipeSchema: z.ZodType<AutomationRecipe, AutomationRecip
 export function stepGuardOf(action: AutomationAction): AutomationWhen | undefined {
   switch (action.kind) {
     case 'action':
+    case 'notify':
     case 'code':
     case 'choose':
     case 'wait-until':

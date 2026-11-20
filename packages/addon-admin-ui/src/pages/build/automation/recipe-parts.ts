@@ -148,6 +148,8 @@ export function newAction(kind: ActionKind): AutomationAction {
       return { kind, code: '// runs inside this automation, with ctx in scope\n' }
     case 'action':
       return { kind, actionId: '' }
+    case 'notify':
+      return { kind, targetId: '', body: '' }
     case 'stop':
       return { kind, reason: '', outcome: 'ok' }
     case 'set':

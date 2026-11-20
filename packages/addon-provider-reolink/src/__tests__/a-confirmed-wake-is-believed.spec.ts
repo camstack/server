@@ -93,6 +93,8 @@ describe('a wake we drove and confirmed', () => {
         source: 'confirmed-wake',
         lastFirstHandCommitAt: nowMs - 1_000,
         nowMs,
+        videoFlowing: false,
+        wired: false,
       }),
     ).toEqual({ kind: 'commit', stampFirstHand: true })
   })

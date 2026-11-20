@@ -6408,7 +6408,11 @@
       "kindChoose": "Choose",
       "kindWaitUntil": "Wait until",
       "kindParallel": "At the same time",
-      "kindRepeat": "Repeat"
+      "kindRepeat": "Repeat",
+      "pickKindTitle": "Add a step",
+      "kindNotify": "Send notification",
+      "stepEnabled": "Step enabled",
+      "stepDisabledHint": "Disabled: skipped when the automation runs"
     },
     "automationEditor": {
       "name": "Name",
@@ -6793,6 +6797,16 @@
       "gone": "{{id}} (no longer declared)",
       "staleHint": "This row names something the device no longer declares, so it will not start a run. Pick again.",
       "extraHint": "This row also carries filters set outside the editor ({{what}}); they are kept as they are."
+    },
+    "notify": {
+      "targetsError": "The notification targets could not be read.",
+      "target": "Send through",
+      "pickTarget": "Pick a target",
+      "targetGone": "{{id}} (no longer exists)",
+      "targetOff": "{{name}} (off)",
+      "title": "Title (optional)",
+      "body": "Message",
+      "hint": "Use {{vars.name}} to put a value of the run in the text."
     }
   },
   "accessDenied": {

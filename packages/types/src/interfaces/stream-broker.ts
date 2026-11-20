@@ -65,6 +65,13 @@ export interface StreamSource {
    */
   readonly allowStall?: boolean
   /**
+   * The longest continuous session the source keeps open, in ms. When set, the
+   * broker performs a PLANNED re-dial of a live source just before it elapses
+   * and announces it to consumers (`onSourceRestart`). Absent = never re-dialed
+   * on a timer.
+   */
+  readonly maxSessionMs?: number
+  /**
    * When set, the broker ingests this source THROUGH ffmpeg (`-c copy`) instead
    * of a native TS client — the "ffmpeg parser". Carries the transport + operator
    * normalization args. Set by the manager from the per-camStream `sourceParser`

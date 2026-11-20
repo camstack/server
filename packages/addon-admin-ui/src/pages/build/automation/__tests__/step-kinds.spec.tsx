@@ -25,6 +25,7 @@ vi.mock('../../flow/CommandStep', () => ({
   CommandStep: () => <span data-testid="fake-command" />,
 }))
 vi.mock('../RunActionFields', () => ({ RunActionFields: () => null }))
+vi.mock('../NotifyFields', () => ({ NotifyFields: () => null }))
 vi.mock('../WhenTree', () => ({ WhenTree: () => null }))
 
 import { stepToneAt, traceDetails, traceView } from '../../flow/trace-view'
@@ -47,6 +48,7 @@ const VALID: Readonly<Record<ActionKind, AutomationAction>> = {
   wait: WAIT,
   command: { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'switch.on' },
   action: { kind: 'action', actionId: 'internal:abc' },
+  notify: { kind: 'notify', targetId: 'zentik-admin', body: 'hello' },
   code: { kind: 'code', code: 'ctx.log.info("x")' },
   stop: { kind: 'stop', reason: 'done', outcome: 'ok' },
   set: { kind: 'set', vars: { room: 'kitchen' } },

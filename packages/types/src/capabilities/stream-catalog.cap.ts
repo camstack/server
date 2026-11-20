@@ -47,6 +47,15 @@ export const CamStreamDescriptorSchema = z.object({
   profileHint: CamProfileSchema.optional(),
   /** Transport-specific opaque metadata (e.g. rfc4571 SDP). */
   metadata: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * The longest continuous session the SOURCE will keep open, in ms, declared by
+   * the provider that knows it (a hub that cuts every child's session on a
+   * timer). Absent = no limit. The broker re-dials a live source a little
+   * BEFORE this elapses, on its own terms and announced to consumers, so the
+   * source's cut never lands mid-recording. Declare slightly under what was
+   * observed.
+   */
+  maxSessionMs: z.number().int().positive().optional(),
 })
 export type CamStreamDescriptor = z.infer<typeof CamStreamDescriptorSchema>
 

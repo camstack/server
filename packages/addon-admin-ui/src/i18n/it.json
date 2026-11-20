@@ -6483,7 +6483,11 @@
       "kindChoose": "Scegli",
       "kindWaitUntil": "Attendi finché",
       "kindParallel": "Contemporaneamente",
-      "kindRepeat": "Ripeti"
+      "kindRepeat": "Ripeti",
+      "pickKindTitle": "Aggiungi un passo",
+      "kindNotify": "Invia notifica",
+      "stepEnabled": "Passo attivo",
+      "stepDisabledHint": "Disattivato: saltato quando l'automazione parte"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6868,6 +6872,16 @@
       "gone": "{{id}} (non più dichiarato)",
       "staleHint": "Questa riga indica qualcosa che il dispositivo non dichiara più, quindi non avvierà un'esecuzione. Scegli di nuovo.",
       "extraHint": "Questa riga contiene anche filtri impostati fuori dall'editor ({{what}}); restano invariati."
+    },
+    "notify": {
+      "targetsError": "Impossibile leggere i target di notifica.",
+      "target": "Invia tramite",
+      "pickTarget": "Scegli un target",
+      "targetGone": "{{id}} (non esiste più)",
+      "targetOff": "{{name}} (spento)",
+      "title": "Titolo (facoltativo)",
+      "body": "Messaggio",
+      "hint": "Usa {{vars.nome}} per inserire un valore dell esecuzione nel testo."
     }
   },
   "accessDenied": {

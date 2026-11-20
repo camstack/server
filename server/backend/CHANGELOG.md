@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A stream source can declare its maximum session length (maxSessionMs) and the broker re-dials it before the limit, announcing the restart through a new StreamBrokerOnSourceRestart event
+- Automation steps can be switched off without deleting them (a disabled step is skipped and traced as disabled), and a new Send notification step sends through any notification target.
+
 ## [1.2.921] - 2026-11-20
 
 ### Changed

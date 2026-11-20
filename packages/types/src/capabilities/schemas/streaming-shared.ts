@@ -108,6 +108,15 @@ export const CameraStreamSchema = z.object({
    */
   autoEligible: z.boolean().optional(),
   /**
+   * The longest continuous session the SOURCE will keep open, in ms, declared by
+   * the provider that knows it (a hub that cuts every child's session on a
+   * timer). Absent = no limit. The broker re-dials a live source a little
+   * BEFORE this elapses, on its own terms and announced to consumers, so the
+   * source's cut never lands mid-recording. Declare slightly under what was
+   * observed.
+   */
+  maxSessionMs: z.number().int().positive().optional(),
+  /**
    * The profile slot the PUBLISHER says this stream is: `low` for a stream
    * whose only sensible role is the low-bandwidth one, `high` for a main
    * stream. Consulted by the broker's automatic ranking

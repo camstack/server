@@ -180,6 +180,8 @@ export class StreamBroker implements IStreamBroker {
    */
   private dialCount = 0
   private readonly sourceRestartObservers = new Set<(reason: string) => void>()
+  /** Armed per dial when the source declares `maxSessionMs`; see {@link armSessionLimit}. */
+  private sessionLimitTimer: ReturnType<typeof setTimeout> | undefined
   private nativeClient: NativeRtspClient | null = null
   private rfc4571Reader: Rfc4571Reader | null = null
   private rtmpReader: RtmpReader | null = null
@@ -1055,6 +1057,50 @@ export class StreamBroker implements IStreamBroker {
     this.scheduleReconnect()
   }
 
+  /**
+   * A source that declares `maxSessionMs` has a peer that cuts the session on a
+   * timer. Arm a one-shot for THIS dial's session: a little before the peer
+   * cuts, re-dial on our terms. The re-dial goes through {@link redial} and
+   * therefore through `notifySourceRestart`, so consumers that cannot see the
+   * cut (the recorder's writer, WebRTC sessions) roll over at once instead of
+   * waiting on their idle clocks. A source without the field is never re-dialed
+   * on a timer.
+   *
+   * The new dial does NOT overlap the old one: the peer's limit is on the
+   * session itself, so a second concurrent dial would be the very thing the
+   * peer refuses. The old reader is torn down and the new dial starts
+   * immediately (backoff reset by `redial`), leaving a gap of one reconnect —
+   * a few seconds — instead of the peer's cut plus the consumers' idle bound.
+   */
+  private armSessionLimit(source: StreamSource): void {
+    this.clearSessionLimit()
+    const limitMs = source.maxSessionMs
+    if (limitMs === undefined) return
+    const timer = setTimeout(() => {
+      this.sessionLimitTimer = undefined
+      if (this.manualStop || this.stopping) return
+      if (!this.hasLiveIntent()) {
+        this.logger?.debug(
+          'source session limit reached with nobody attached — the next dial starts a fresh session',
+          { meta: { maxSessionMs: limitMs } },
+        )
+        return
+      }
+      this.logger?.info('planned re-dial before the source session limit', {
+        meta: { maxSessionMs: limitMs },
+      })
+      this.redial('session-limit')
+    }, limitMs)
+    if (typeof timer.unref === 'function') timer.unref()
+    this.sessionLimitTimer = timer
+  }
+
+  private clearSessionLimit(): void {
+    if (this.sessionLimitTimer === undefined) return
+    clearTimeout(this.sessionLimitTimer)
+    this.sessionLimitTimer = undefined
+  }
+
   kickReconnect(): void {
     if (this.manualStop || this.stopping || !this.source) return
     if (!this.hasLiveIntent()) return
@@ -1254,6 +1300,7 @@ export class StreamBroker implements IStreamBroker {
     // visible as a restart that stalled.
     if (this.dialCount > 0) this.notifySourceRestart()
     this.dialCount += 1
+    this.armSessionLimit(source)
 
     // Reset the per-dial video-RTP counter. It gates the first-video watchdog
     // (`if (videoRtpSeen > 0) return`) and drives the milestone log. Before this
@@ -1302,6 +1349,7 @@ export class StreamBroker implements IStreamBroker {
     this.logger?.info('Broker stopping')
     this.stopping = true
     this.clearSleepWaitBound()
+    this.clearSessionLimit()
     this.manualStop = true
     this._status = 'stopped'
 

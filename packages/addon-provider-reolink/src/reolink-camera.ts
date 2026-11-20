@@ -149,7 +149,13 @@ import {
   reolinkHubSessions,
 } from './reolink-hub-session.js'
 import { registerHubChildStateRefresh } from './reolink-state-refresh.js'
-import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
+import {
+  VIDEO_FLOW_FRESH_MS,
+  decideSleepCommit,
+  type SleepCommitSource,
+} from './sleep-state-decision.js'
+import { withSessionLimit } from './session-limit.js'
+import { watchVideoFlow } from './video-flow.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
 import { repointWebhookOnce } from './webhook-generation.js'
@@ -377,6 +383,7 @@ import {
   readPowerSource,
 } from './power-source.js'
 import { DEFAULT_GUARD_TIMEOUT_SECONDS } from './ptz-guard.js'
+import { KEEP_AWAKE_INTERVAL_MS, createKeepAwakeLoop } from './keep-awake-loop.js'
 import {
   resolveZoomStep,
   ZOOM_FACTOR_SCALE,
@@ -836,8 +843,50 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private nextEventHealthCheckAt = 0
   /** Active video streams keyed by camStreamId. */
   private readonly active = new Map<string, ActiveStream>()
+
+  /**
+   * Stream-scoped keep-awake (battery only): while a consumer holds a stream,
+   * a periodic wake stops the firmware from entering standby. Reconciled with
+   * `this.active` through `syncKeepAwake()` after every mutation of the map.
+   */
+  private readonly keepAwake = createKeepAwakeLoop({
+    intervalMs: KEEP_AWAKE_INTERVAL_MS,
+    isBattery: () => this.isBattery,
+    wake: async () => {
+      const api = await this.ensureApi()
+      await api.wakeUp(this.getChannel(), { attempts: 1, waitAfterWakeMs: 0 })
+    },
+    // One-shot: the loop re-arms itself after every tick.
+    setTimer: (fn, ms) => setTimeout(fn, ms),
+    clearTimer: (h) => clearTimeout(h),
+    onStart: (activeStreams) =>
+      this.ctx.logger.info('keep-awake: started', {
+        tags: { deviceId: this.id },
+        meta: { activeStreams },
+      }),
+    onStop: (activeStreams) =>
+      this.ctx.logger.info('keep-awake: stopped', {
+        tags: { deviceId: this.id },
+        meta: { activeStreams },
+      }),
+    onFailure: (err, first) => {
+      const log = first
+        ? this.ctx.logger.info.bind(this.ctx.logger)
+        : this.ctx.logger.debug.bind(this.ctx.logger)
+      log('keep-awake: wake failed', {
+        tags: { deviceId: this.id },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    },
+  })
+
+  private syncKeepAwake(): void {
+    this.keepAwake.sync(this.active.size)
+  }
   /** Login lock — concurrent demand events must not race the login flow. */
   private loginPromise: Promise<ReolinkBaichuanApi> | null = null
+  /** Wall-clock ms of the last video packet the stream server produced; 0 = none yet. */
+  private lastVideoFlowAt = 0
   /** True once we've discovered (via getBatteryInfo) that this is a battery cam. */
   private isBattery = false
   /**
@@ -3351,16 +3400,26 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       source,
       lastFirstHandCommitAt: this.sleepStateChangedAt,
       nowMs: Date.now(),
+      videoFlowing: Date.now() - this.lastVideoFlowAt < VIDEO_FLOW_FRESH_MS,
+      wired: this.config.get('deviceCache')?.powerSourceSnapshot?.source === 'adapter',
     })
     if (decision.kind === 'unchanged') return false
     if (decision.kind === 'refused') {
       // Both refusals are logged, and both name the source — a refusal that
       // does not say WHO was refused cannot be told from one that says the
       // camera never spoke.
-      this.ctx.logger.debug(
+      const refusalLog =
+        decision.reason === 'video-flowing' || decision.reason === 'wired'
+          ? this.ctx.logger.info.bind(this.ctx.logger)
+          : this.ctx.logger.debug.bind(this.ctx.logger)
+      refusalLog(
         decision.reason === 'hysteresis'
           ? 'ignoring sleep inference flap within hysteresis window'
-          : 'hub-summary sleep flip refused — fresher first-hand state inside grace',
+          : decision.reason === 'video-flowing'
+            ? 'sleep claim refused — video is flowing'
+            : decision.reason === 'wired'
+              ? 'sleep claim refused — camera is on a wired power source'
+              : 'hub-summary sleep flip refused — fresher first-hand state inside grace',
         {
           tags: { deviceId: this.id },
           meta: {
@@ -3368,6 +3427,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             source,
             windowMs: decision.windowMs,
             sinceLastChangeMs: decision.sinceLastChangeMs,
+            reason: decision.reason,
           },
         },
       )
@@ -7516,7 +7576,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * See `native-sdp-overlay.ts`.
    */
   private withLiveNativeSdp(descriptors: readonly CamStreamDescriptor[]): CamStreamDescriptor[] {
-    return overlayLiveNativeRfc4571Sdp(descriptors, (camStreamId): LiveRfc4571Endpoint | null => {
+    const limited = withSessionLimit(descriptors, {
+      isHubChild: this.isHubChild(),
+      isBattery: this.isBattery,
+    })
+    return overlayLiveNativeRfc4571Sdp(limited, (camStreamId): LiveRfc4571Endpoint | null => {
       const server = this.active.get(camStreamId)?.server
       if (!server?.server?.listening) return null
       return {
@@ -7996,6 +8060,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         ...(entry.fps !== undefined ? { fps: entry.fps } : {}),
         ...(entry.codec !== undefined ? { codec: entry.codec } : {}),
         ...(entry.metadata ? { metadata: entry.metadata } : {}),
+        ...(entry.maxSessionMs !== undefined ? { maxSessionMs: entry.maxSessionMs } : {}),
         deviceFeatures: entry.deviceFeatures ?? [...this.features],
         autoEligible: entry.autoEligible ?? true,
       })
@@ -8094,6 +8159,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.stopBatteryUpdatePolling()
     this.stopAlignAuxPolling()
     this.stopWatchdogs()
+    this.keepAwake.stop()
     this.detachFromHubSession()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
@@ -8154,6 +8220,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         /* already closed */
       }
       this.active.delete(camStreamId)
+      this.syncKeepAwake()
     }
 
     let api: ReolinkBaichuanApi
@@ -8223,6 +8290,20 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       server,
     }
     this.active.set(camStreamId, entry)
+    this.syncKeepAwake()
+
+    // Stamp every video packet: the sleep rule refuses a second-hand "asleep"
+    // while the wire shows video (`sleep-state-decision.ts`).
+    const stopVideoWatch = watchVideoFlow(
+      server.videoStream,
+      () => {
+        this.lastVideoFlowAt = Date.now()
+      },
+      () =>
+        this.ctx.logger.warn('rfc4571: unknown video stream kind — video flow not observed', {
+          tags: { deviceId: this.id, camStreamId },
+        }),
+    )
 
     // Note: the lib's idle-teardown closes its TCP listener after ~15s with
     // no clients. Without this listener the cache would survive the
@@ -8231,9 +8312,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // the function. Evicting on `'close'` keeps the cache truthful
     // even when nobody asks for a while.
     server.server.once('close', () => {
+      stopVideoWatch()
       const current = this.active.get(camStreamId)
       if (current?.server === server) {
         this.active.delete(camStreamId)
+        this.syncKeepAwake()
         this.ctx.logger.debug('rfc4571: server closed — evicting cache entry', {
           tags: { deviceId: this.id, camStreamId },
         })
@@ -8295,6 +8378,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private async closeActiveStreams(reason: string): Promise<void> {
     const entries = [...this.active.values()]
     this.active.clear()
+    this.keepAwake.stop()
     if (entries.length === 0) return
     this.ctx.logger.debug('Closing active RFC 4571 servers', {
       tags: { deviceId: this.id },
@@ -9266,6 +9350,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.stopWatchdogs()
     const entries = [...this.active.values()]
     this.active.clear()
+    this.keepAwake.stop()
     for (const entry of entries) {
       try {
         await entry.server.close('disconnect-all')

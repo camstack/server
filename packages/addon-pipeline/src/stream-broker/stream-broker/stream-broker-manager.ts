@@ -2935,6 +2935,7 @@ export class StreamBrokerManager {
       deviceFeatures?: readonly string[]
       autoEligible?: boolean
       profileHint?: CamProfile
+      maxSessionMs?: number
       metadata?: Readonly<Record<string, unknown>>
       brokerOwned?: boolean
     },
@@ -2956,6 +2957,9 @@ export class StreamBrokerManager {
     // Sticky like `autoEligible`: the publisher's statement of what the stream
     // IS does not evaporate on a re-publish that omits it.
     const profileHint = input.profileHint ?? existing?.profileHint
+    // NOT sticky: the limit is the provider's current statement, and a re-publish
+    // that drops it means the source no longer has one.
+    const maxSessionMs = input.maxSessionMs
     // Sticky across re-publishes, like `autoEligible`: a broker-owned stream
     // that a later upsert silently demoted to provider-owned would be swept by
     // the very next reconcile tick.
@@ -2978,6 +2982,7 @@ export class StreamBrokerManager {
       deviceFeatures,
       autoEligible,
       ...(profileHint !== undefined ? { profileHint } : {}),
+      ...(maxSessionMs !== undefined ? { maxSessionMs } : {}),
       brokerOwned,
     }
     streamMap.set(camStreamId, cam)
@@ -3011,6 +3016,8 @@ export class StreamBrokerManager {
     /** The slot the publisher says this stream IS — honoured by the automatic
      *  ranking before the pixel heuristic (`rankInitialAssignment`). */
     profileHint?: CamProfile
+    /** The longest session the source keeps open (ms) — see `StreamSource.maxSessionMs`. */
+    maxSessionMs?: number
     /**
      * Transport-specific opaque metadata. Stored alongside the stream
      * record and forwarded to the source reader via
@@ -8090,6 +8097,7 @@ export class StreamBrokerManager {
     // Pre-compose pass-through metadata so the publisher's opaque payload
     // (e.g. `pull-rfc4571` SDP) reaches the broker reader unchanged.
     const passthroughMeta = cam.metadata ?? {}
+    const sessionLimit = cam.maxSessionMs !== undefined ? { maxSessionMs: cam.maxSessionMs } : {}
     switch (cam.kind) {
       case 'push-annexb':
         return {
@@ -8106,6 +8114,7 @@ export class StreamBrokerManager {
           url: cam.url ?? '',
           ...codec,
           ...parser,
+          ...sessionLimit,
           metadata: { kind: 'pull-rtsp', label, ...passthroughMeta },
         }
       }
@@ -8116,6 +8125,7 @@ export class StreamBrokerManager {
           url: cam.url ?? '',
           ...codec,
           ...parser,
+          ...sessionLimit,
           metadata: { kind: 'pull-rtmp', label, ...passthroughMeta },
         }
       }
@@ -8156,6 +8166,7 @@ export class StreamBrokerManager {
           url: cam.url ?? '',
           ...codec,
           ...stall,
+          ...sessionLimit,
           metadata: { kind: 'pull-rfc4571', label, ...passthroughMeta },
         }
       case 'derived':
@@ -8350,6 +8361,17 @@ export class StreamBrokerManager {
     })
     broker.setRequestSourceRefresh(() => {
       this.emitRequestStreamSourceRefresh(deviceId, camStreamId, brokerId)
+    })
+    // A re-dial cuts every reader that cannot see the cut itself (the
+    // recorder's ffmpeg writer): announce it so they recover now, not after
+    // their idle bound.
+    broker.onSourceRestart((reason) => {
+      this.emitCapEvent(EventCategory.StreamBrokerOnSourceRestart, deviceId, {
+        deviceId,
+        camStreamId,
+        brokerId,
+        reason,
+      })
     })
     // The SENTRY. Everything it needs lives here and nowhere else: the
     // probed geometry and codec, the snapshot cache, the device name and the

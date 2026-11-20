@@ -67,6 +67,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'code' }
     case 'action':
       return { kind: 'action' }
+    case 'notify':
+      return { kind: 'notify' }
     case 'stop':
       return { kind: 'stop' }
     case 'wait-until':
@@ -388,6 +390,18 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
         if (result.outcome !== 'ran') {
           throw new Error('action ' + ${j(action.actionId)} + ' ' + result.outcome + (result.message === undefined ? '' : ': ' + result.message))
         }`
+    case 'notify':
+      return `        // a notification through one target: the one send path the exporters use
+        const sent = await sendToExportedTarget(ctx.api, ctx.logger, {
+          exporter: 'automation',
+          targetId: ${j(action.targetId)},
+          notification: {
+            body: String(substitute(${j(action.body)}, vars)),
+            ${action.title === undefined ? '' : `title: String(substitute(${j(action.title)}, vars)),`}
+          },
+        })
+        if (sent.status === 'refused') throw new Error('notification target ' + sent.reason)
+        if (sent.status === 'failed') throw new Error('notification failed: ' + sent.message)`
     case 'stop':
       return `        // end the run here, on purpose: the steps after it are not-run with this reason
         scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`
@@ -406,7 +420,10 @@ ${action.code
 }
 
 function continues(action: AutomationAction): boolean {
-  return (action.kind === 'command' || action.kind === 'action') && action.continueOnError === true
+  return (
+    (action.kind === 'command' || action.kind === 'action' || action.kind === 'notify') &&
+    action.continueOnError === true
+  )
 }
 
 /** Where a step sits: the expression of its trace meta, and its path in the recipe. */
@@ -540,6 +557,14 @@ function emitRepeatLoop(loop: AutomationRepeatLoop, site: StepSite): string {
 
 /** One step, wherever it sits: a block step emits its own steps one level down, under its path. */
 function emitStep(action: AutomationAction, site: StepSite): string {
+  const emitted = emitStepEnabled(action, site)
+  if (action.enabled !== false) return emitted
+  // the step's own `meta:` is the first one in its text; nested steps come after it
+  const marker = `meta: ${site.meta},`
+  return emitted.replace(marker, `${marker}\n      disabled: true,`)
+}
+
+function emitStepEnabled(action: AutomationAction, site: StepSite): string {
   if (action.kind === 'repeat') {
     return `    {
       meta: ${site.meta},
@@ -680,6 +705,7 @@ import {
   resolveStepArgs,
   resolveStepArgsWithTemplates,
   runForDevices,
+  sendToExportedTarget,
   vocabCall,
   evaluateStepCondition,
   runSteps,

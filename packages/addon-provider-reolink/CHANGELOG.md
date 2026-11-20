@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Power source setting no longer offers an empty choice.
+- Battery cameras are kept awake while a live or recorded stream is attached, so continuous recording is no longer cut by the camera's standby.
+- A battery camera that is streaming is no longer shown as sleeping because of a hub or sleep-push claim, and a camera on a wired power source ignores those claims; a Home Hub child is re-dialed cleanly just before the hub's 28-minute session cut
 
 ## [1.2.254] - 2026-11-20
 

@@ -33,6 +33,7 @@ export {
   runForDevices,
   runSteps,
 } from '../step-runner.js'
+export { sendToExportedTarget } from '../export-entities.js'
 export { buildTriggerTrace, isSkippedTrace, mergeSkipTraces } from '../trace.js'
 export {
   nextOccurrence,

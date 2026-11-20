@@ -79,6 +79,8 @@ export interface RunnableStep {
   readonly guard?: () => Promise<StepConditionVerdict>
   /** Run when the guard reads `false`; never when it reads `unknown`. */
   readonly otherwise?: readonly RunnableStep[]
+  /** `enabled: false` on the step: it is traced `skipped` (`disabled`) and, for a block step, nothing under it runs. */
+  readonly disabled?: true
   /** A failure of THIS step is traced `failed-continued` and the sequence goes on (#500). */
   readonly continueOnError?: boolean
   /** A `choose` step (#500): `run` is not called, the first branch that reads true is. */
@@ -339,6 +341,9 @@ function withoutNested(trace: AutomationStepTrace): NestedStepTrace {
   return steps === undefined ? rest : { ...rest, steps: steps.map(plainRow) }
 }
 
+/** The trace message of a step switched off with `enabled: false`. */
+export const DISABLED_STEP_MESSAGE = 'disabled'
+
 export async function runSteps(
   steps: readonly RunnableStep[],
   options: RunStepsOptions,
@@ -366,6 +371,18 @@ export async function runSteps(
         path,
         outcome: 'not-run',
         message: failed ? 'an earlier step failed' : options.abortReason,
+      })
+      continue
+    }
+    if (step.disabled === true) {
+      const at = options.now()
+      traces.push({
+        ...step.meta,
+        path,
+        startedAt: at,
+        endedAt: at,
+        outcome: 'skipped',
+        message: DISABLED_STEP_MESSAGE,
       })
       continue
     }
@@ -981,7 +998,10 @@ export function buildActionSteps(
   deps: ActionStepDeps,
 ): RunnableStep[] {
   return steps.map((step): RunnableStep => {
-    const guarded = guardOf(step, vars, deps)
+    const guarded = {
+      ...guardOf(step, vars, deps),
+      ...(step.enabled === false ? { disabled: true as const } : {}),
+    }
     const meta = stepMetaOfAction(step)
     if (step.kind === 'wait') {
       return { meta, ...guarded, run: () => deps.sleep(step.seconds * 1000) }

@@ -114,6 +114,29 @@ describe('parseRecipeFromCode', () => {
     if (parsed.ok) expect(parsed.recipe).toEqual(RICH)
   })
 
+  it('keeps `enabled: false` on a step, nested ones and a notify step included', () => {
+    const disabled: AutomationRecipe = {
+      ...MINIMAL,
+      actions: [
+        { kind: 'wait', seconds: 1, enabled: false },
+        { kind: 'notify', targetId: 'zentik-admin', title: 'T', body: 'B', enabled: false },
+        {
+          kind: 'choose',
+          enabled: false,
+          branches: [
+            {
+              if: { kind: 'all', children: [] },
+              steps: [{ kind: 'wait', seconds: 2, enabled: false }],
+            },
+          ],
+        },
+      ],
+    }
+    const parsed = parseRecipeFromCode(generateAutomationBlock({ name: 'Off', recipe: disabled }))
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) expect(parsed.recipe).toEqual(disabled)
+  })
+
   it('keeps the unit the person picked, on a leaf and on a step arg', () => {
     const withUnits: AutomationRecipe = {
       when: {

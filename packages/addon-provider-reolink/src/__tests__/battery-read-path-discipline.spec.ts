@@ -228,6 +228,8 @@ describe('sleep-state hysteresis is asymmetric', () => {
           source,
           lastFirstHandCommitAt: nowMs - 1_000,
           nowMs,
+          videoFlowing: false,
+          wired: false,
         }),
       ).toMatchObject({ kind: 'commit' })
     }

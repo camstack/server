@@ -38,6 +38,7 @@ import type { BlockTone, StepDetailView } from '../flow/trace-view'
 import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
+import { NotifyFields } from './NotifyFields'
 import { RunActionFields } from './RunActionFields'
 import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
@@ -47,11 +48,14 @@ import { SetVarsFields } from './SetVarsFields'
 import { RepeatFields } from './RepeatFields'
 import { StepGuard, StepIf } from './StepGuard'
 import { WaitUntilFields } from './WaitUntilFields'
+import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { type StepChoice, type StepKindOption, StepKindPicker } from './StepKindPicker'
 
 export const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
   { value: 'command', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
+  { value: 'notify', labelKey: 'automation.actionList.kindNotify' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
   { value: 'wait-until', labelKey: 'automation.actionList.kindWaitUntil' },
   { value: 'set', labelKey: 'automation.actionList.kindSet' },
@@ -119,11 +123,34 @@ export function ActionList({
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
+  const [picking, setPicking] = useState(false)
   const kinds = ACTION_KINDS.filter(
     (k) =>
       (allowedKinds === undefined || allowedKinds.includes(k.value)) &&
       (flowControl || !FLOW_KINDS.includes(k.value)),
   )
+  // the order the operator reads the choices in
+  const pickOrder: readonly StepChoice[] = [
+    'command',
+    'notify',
+    'wait',
+    'wait-until',
+    'set',
+    'choose',
+    'parallel',
+    'repeat',
+    'code',
+    'action',
+    'stop',
+  ]
+  const pickOptions: readonly StepKindOption[] = pickOrder.flatMap((choice) => {
+    const hit = kinds.find((k) => k.value === choice)
+    return hit === undefined ? [] : [{ value: choice, labelKey: hit.labelKey }]
+  })
+  const addChosen = (choice: StepChoice): void => {
+    setPicking(false)
+    onChange([...actions, newAction(choice)])
+  }
   const guardHint = t(
     'automation.actionList.flowGuardHint',
     'Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.',
@@ -148,7 +175,9 @@ export function ActionList({
       {actions.map((action, index) => (
         <div
           key={`${action.kind}-${String(index)}`}
-          className={`space-y-2 rounded border p-3 ${
+          data-testid={`step-card-${String(index)}`}
+          data-disabled={action.enabled === false ? 'true' : 'false'}
+          className={`space-y-2 rounded border p-3 ${action.enabled === false ? 'opacity-60' : ''} ${
             stepTones === undefined ? 'border-border' : toneBorderClass(stepTones[index] ?? 'idle')
           }`}
         >
@@ -166,6 +195,16 @@ export function ActionList({
               />
             </label>
             <div className="ml-auto flex items-center gap-1">
+              <Switch
+                data-testid={`step-enabled-${String(index)}`}
+                checked={action.enabled !== false}
+                title={t('automation.actionList.stepDisabledHint')}
+                aria-label={t('automation.actionList.stepEnabled', 'Step enabled')}
+                onCheckedChange={(on) => {
+                  const { enabled: _flag, ...rest } = action
+                  onChange(replaceAt(actions, index, on ? rest : { ...rest, enabled: false }))
+                }}
+              />
               <MoveButtons
                 move={{
                   up: index === 0 ? null : () => onChange(moveItem(actions, index, index - 1)),
@@ -338,7 +377,7 @@ export function ActionList({
                 value={action.code}
                 spellCheck={false}
                 onChange={(e) =>
-                  onChange(replaceAt(actions, index, { kind: 'code', code: e.target.value }))
+                  onChange(replaceAt(actions, index, { ...action, code: e.target.value }))
                 }
               />
               <span className="mt-1 block text-xs text-foreground-subtle">
@@ -357,12 +396,21 @@ export function ActionList({
                 onChange(
                   replaceAt(actions, index, {
                     ...next,
+                    ...(action.enabled === false ? { enabled: false } : {}),
                     ...(action.continueOnError === true ? { continueOnError: true } : {}),
                     ...(action.if === undefined ? {} : { if: action.if }),
                     ...(action.else === undefined ? {} : { else: action.else }),
                   }),
                 )
               }
+            />
+          )}
+
+          {action.kind === 'notify' && (
+            <NotifyFields
+              index={index}
+              step={action}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}
 
@@ -373,6 +421,7 @@ export function ActionList({
                 onChange(
                   replaceAt(actions, index, {
                     ...next,
+                    ...(action.enabled === false ? { enabled: false } : {}),
                     ...(action.continueOnError === true ? { continueOnError: true } : {}),
                   }),
                 )
@@ -380,18 +429,24 @@ export function ActionList({
             />
           )}
 
-          {flowControl && (action.kind === 'command' || action.kind === 'action') && (
-            <Switch
-              data-testid={`continue-on-error-${String(index)}`}
-              checked={action.continueOnError === true}
-              label={t('automation.actionList.continueOnError', 'Continue if this step fails')}
-              aria-label={t('automation.actionList.continueOnError', 'Continue if this step fails')}
-              onCheckedChange={(on) => {
-                const { continueOnError: _flag, ...rest } = action
-                onChange(replaceAt(actions, index, on ? { ...rest, continueOnError: true } : rest))
-              }}
-            />
-          )}
+          {flowControl &&
+            (action.kind === 'command' || action.kind === 'action' || action.kind === 'notify') && (
+              <Switch
+                data-testid={`continue-on-error-${String(index)}`}
+                checked={action.continueOnError === true}
+                label={t('automation.actionList.continueOnError', 'Continue if this step fails')}
+                aria-label={t(
+                  'automation.actionList.continueOnError',
+                  'Continue if this step fails',
+                )}
+                onCheckedChange={(on) => {
+                  const { continueOnError: _flag, ...rest } = action
+                  onChange(
+                    replaceAt(actions, index, on ? { ...rest, continueOnError: true } : rest),
+                  )
+                }}
+              />
+            )}
 
           {!nested && (action.kind === 'wait' || action.kind === 'command') && (
             <StepGuard
@@ -412,11 +467,18 @@ export function ActionList({
         </div>
       ))}
 
+      <StepKindPicker
+        open={picking}
+        options={pickOptions}
+        onOpenChange={setPicking}
+        onPick={addChosen}
+      />
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           disabled={maxSteps !== undefined && actions.length >= maxSteps}
-          onClick={() => onChange([...actions, newAction(kinds[0]?.value ?? 'command')])}
+          data-testid="add-step"
+          onClick={() => setPicking(true)}
         >
           <Plus className="h-4 w-4" /> {t('automation.actionList.addStep')}
         </Button>

@@ -7,7 +7,7 @@ import type { AutomationAction } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../FieldPicker', async () => {
   const actual = await vi.importActual<typeof import('../FieldPicker')>('../FieldPicker')
@@ -41,6 +41,22 @@ vi.mock('@camstack/ui-library', async () => {
 })
 
 import { ActionList } from '../ActionList'
+
+// jsdom has no <dialog> modal API (the step-kind picker is a dialog).
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  }
+  HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  }
+})
+
+/** "+ Step" asks for the kind first: click it, then choose one (a device command by default). */
+function addStep(button: HTMLElement, kind = 'command'): void {
+  fireEvent.click(button)
+  fireEvent.click(screen.getByTestId(`step-kind-option-${kind}`))
+}
 
 let latest: readonly AutomationAction[] = []
 
@@ -123,7 +139,7 @@ describe('ActionList choose (#500)', () => {
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Choose')
     fireEvent.click(screen.getByRole('option', { name: 'Choose' }))
     const branch = within(screen.getByTestId('choose-branch-0-0'))
-    fireEvent.click(branch.getByRole('button', { name: 'Step' }))
+    addStep(branch.getByRole('button', { name: 'Step' }))
     fireEvent.click(branch.getByTestId('step-kind-0'))
     const inner = screen.getAllByRole('option').map((o) => o.textContent)
     expect(inner).toEqual(
@@ -244,7 +260,7 @@ describe('ActionList parallel (#500)', () => {
     render(<Harness flow initial={[PARALLEL]} />)
     const box = within(screen.getByTestId('parallel-steps-0'))
     const add = box.getByRole('button', { name: 'Step' })
-    for (let i = 0; i < 5; i++) fireEvent.click(add)
+    for (let i = 0; i < 5; i++) addStep(add)
     expect(latest[0]).toMatchObject({ kind: 'parallel' })
     expect(latest[0]?.kind === 'parallel' ? latest[0].steps.length : 0).toBe(5)
     expect(box.getByRole('button', { name: 'Step' })).toHaveProperty('disabled', true)
@@ -321,7 +337,7 @@ describe('ActionList repeat (#500)', () => {
     render(<Harness flow initial={[REPEAT]} />)
     const box = within(screen.getByTestId('repeat-steps-0'))
     const add = box.getByRole('button', { name: 'Step' })
-    for (let i = 0; i < 10; i++) fireEvent.click(add)
+    for (let i = 0; i < 10; i++) addStep(add)
     expect(latest[0]?.kind === 'repeat' ? latest[0].steps.length : 0).toBe(10)
     expect(box.getByRole('button', { name: 'Step' })).toHaveProperty('disabled', true)
     fireEvent.click(box.getByTestId('step-kind-0'))
@@ -350,7 +366,7 @@ describe('ActionList, two levels of block steps (#500)', () => {
     pick(body, 'step-kind-0', 'Choose')
     expect(latest[0]).toMatchObject({ kind: 'repeat', steps: [{ kind: 'choose' }] })
     const branch = within(body.getByTestId('choose-branch-0-0'))
-    fireEvent.click(branch.getByRole('button', { name: 'Step' }))
+    addStep(branch.getByRole('button', { name: 'Step' }))
     expect(latest[0]).toMatchObject({
       kind: 'repeat',
       steps: [{ kind: 'choose', branches: [{ steps: [{ kind: 'command' }] }] }],

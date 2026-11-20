@@ -418,6 +418,13 @@ export interface ActiveWriterDir {
 const DEFAULT_WATCH_INTERVAL_MS = 2_000
 
 /**
+ * Minimum gap between two source-restart recoveries of one device. A camera
+ * whose source flaps re-dials in a storm; re-pinning on every dial would
+ * detach and attach the writer in a loop. The idle clock still backstops it.
+ */
+export const SOURCE_RESTART_RECOVERY_MIN_INTERVAL_MS = 30_000
+
+/**
  * Liveness cadence — "is a pinned writer producing nothing?". Unchanged: the
  * question is an in-memory scan over `active`, it costs nothing, and its bound
  * (`writerIdleBoundMs`, floor 90 s) is sized against this beat.
@@ -1465,6 +1472,9 @@ export class RecordingController {
    * Bounded OUTER retry (RECONCILE_TICK_MS / fillMissingProfiles cadence),
    * never a tight loop.
    */
+  /** When each device last had its writers recovered by a source restart. */
+  private readonly lastSourceRestartRecoveryAt = new Map<number, number>()
+
   private async recoverWriterGaveUp(deviceId: number, profile?: CamProfile): Promise<void> {
     if (this.stopped) return
     const current = this.active.get(deviceId)
@@ -1533,6 +1543,35 @@ export class RecordingController {
         },
       )
     }
+  }
+
+  /**
+   * The broker re-dialed a source of this device. The writer reads the broker
+   * over a transport that does not announce the cut, so without this it would
+   * notice only through its idle clock (`writerIdleBoundMs`, a ~108 s gap on a
+   * Home Hub child that is cut every 28 min). Recover it now, through the same
+   * path an idle writer takes. Telemetry-driven: a missed event only means the
+   * idle clock recovers it later.
+   */
+  async onSourceRestarted(deviceId: number, reason: string): Promise<void> {
+    if (this.stopped || this.paused) return
+    const current = this.active.get(deviceId)
+    if (!current || current.length === 0) return
+    const now = this.now()
+    const last = this.lastSourceRestartRecoveryAt.get(deviceId)
+    if (last !== undefined && now - last < SOURCE_RESTART_RECOVERY_MIN_INTERVAL_MS) {
+      this.deps.logger.debug('recorder: source restart ignored — recovered a moment ago', {
+        tags: { deviceId },
+        meta: { reason, sinceLastMs: now - last },
+      })
+      return
+    }
+    this.lastSourceRestartRecoveryAt.set(deviceId, now)
+    this.deps.logger.info('recorder: broker re-dialed the source — recovering the writer now', {
+      tags: { deviceId },
+      meta: { reason, profiles: current.map((r) => r.profile) },
+    })
+    await this.recoverWriterGaveUp(deviceId)
   }
 
   /** Did this writer finalize a segment within its idle bound? Seeding at the pin does not count. */

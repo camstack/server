@@ -18,6 +18,7 @@ import { cn } from '../../lib/cn'
 import { ResponsiveTypeFilter } from './type-filter'
 import { useFloatingListbox, type MultiSelectOption } from './multi-select'
 import { TopLayerPortal } from '../../primitives/top-layer-portal'
+import { listboxAnchorStyle } from '../../lib/listbox-position'
 
 export interface FilterChipsAddonOption {
   readonly id: string
@@ -187,8 +188,7 @@ function IntegrationMultiSelect({
           // ui-check-ok: fixed portal anchor from trigger getBoundingClientRect (same as Select)
           style={{
             position: 'fixed',
-            top: coords.top,
-            left: coords.left,
+            ...listboxAnchorStyle(coords),
             minWidth: coords.width,
             maxHeight: coords.maxHeight,
           }}

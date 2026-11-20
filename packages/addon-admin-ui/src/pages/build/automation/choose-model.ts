@@ -19,7 +19,7 @@ export type ChooseBranch = AutomationChooseStep['branches'][number]
 export const BRANCH_KINDS: readonly ActionKind[] = ['command', 'action', 'wait', 'set', 'stop']
 
 /** The step kinds a parallel may hold: nothing that writes a variable or ends the run. */
-export const PARALLEL_KINDS: readonly ActionKind[] = ['command', 'action', 'wait']
+export const PARALLEL_KINDS: readonly ActionKind[] = ['command', 'action', 'notify', 'wait']
 
 export type ParallelMember = AutomationParallelStep['steps'][number]
 

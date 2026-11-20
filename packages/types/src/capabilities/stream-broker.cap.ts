@@ -531,6 +531,8 @@ export const streamBrokerCapability = {
         /** The slot the publisher says this stream IS — see `CameraStreamSchema.profileHint`. */
         profileHint: CamProfileSchema.optional(),
         metadata: z.record(z.string(), z.unknown()).optional(),
+        /** The longest session the source keeps open (ms) — see `CameraStreamSchema.maxSessionMs`. */
+        maxSessionMs: z.number().int().positive().optional(),
         /** Required when kind === 'derived' — the source camStreamId the
          *  derived broker reads its encoded plane from.
          *  The runtime guard (broker manager, Task 10) enforces presence for
@@ -1008,6 +1010,14 @@ export const streamBrokerCapability = {
         deviceId: z.number().int().nonnegative(),
         camStreamId: z.string(),
         brokerId: z.string(),
+      }),
+    ),
+    onSourceRestart: event(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        camStreamId: z.string(),
+        brokerId: z.string(),
+        reason: z.string(),
       }),
     ),
   },

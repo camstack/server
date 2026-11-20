@@ -388,6 +388,11 @@ export const EVENT_CATEGORY_CATALOG: Readonly<Record<EventCategory, EventCategor
     'Stream source refresh requested',
     'Aggiornamento sorgente stream richiesto',
   ),
+  [EventCategory.StreamBrokerOnSourceRestart]: e(
+    'streams',
+    'Stream source restarted',
+    'Sorgente stream riavviata',
+  ),
   [EventCategory.StreamParamsChanged]: e(
     'streams',
     'Stream parameters changed',

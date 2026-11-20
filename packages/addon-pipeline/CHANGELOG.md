@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A native crop miss and a refused frame park now log the frame age, whether the decode worker is still the one that took the lease, and whether the frame fell out of the held-frames window, so a lost best shot can be traced to its cause.
+- The recorder recovers a camera's writers at once when the stream broker re-dials its source, instead of after a ~108 s idle gap; a source that declares a maximum session length is re-dialed by the broker just before it
 
 ## [1.2.675] - 2026-11-20
 

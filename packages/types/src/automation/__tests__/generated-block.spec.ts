@@ -12,6 +12,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { generateAutomationBlock } from '../codegen.js'
 import type { TimeSpec, WeekdayKey } from '../../time/time-spec.js'
 import { DeviceType } from '../../device/device-type.js'
+import type { Target } from '../../capabilities/notification-output.cap.js'
+import { instanceApiOverTargets } from '../../addon/notification-targets.js'
 import { type FakeRegistry, fakeRegistry } from './target-fixtures.js'
 import {
   type AutomationRecipe,
@@ -49,6 +51,8 @@ interface Harness {
   readonly ledger: Ledger
   readonly reports: Array<Record<string, unknown>>
   readonly actionRuns: Array<Record<string, unknown>>
+  /** Every `notificationOutput.send` the block made. */
+  readonly notificationSends: Array<Record<string, unknown>>
   /** `unconfirmed`: reads that asked for the effective view instead of the device's (D1061). */
   readonly sliceReads: { count: number; unconfirmed: number }
   emit(category: string, data: Record<string, unknown>, deviceId?: number): void
@@ -120,6 +124,8 @@ interface Options {
   readonly failStampRead?: boolean
   /** The logger throws on this message: a crash OUTSIDE every step. */
   readonly throwOnLog?: string
+  /** The notification targets `notificationOutput.send` may address. */
+  readonly targets?: readonly Target[]
   /** What `actions.run` answers. */
   readonly actionOutcome?: { outcome: string; message?: string }
   /** What the hub's template renderer answers per template (D1021). */
@@ -141,6 +147,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
   const ledger: Ledger = options.ledger ?? { doc: EMPTY_AUTOMATION_STATE }
   const reports: Array<Record<string, unknown>> = []
   const actionRuns: Array<Record<string, unknown>> = []
+  const notificationSends: Array<Record<string, unknown>> = []
   const sliceReads = { count: 0, unconfirmed: 0 }
   const mutate = vi.fn(async () => undefined)
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
@@ -182,6 +189,15 @@ function start(block: BlockFn, options: Options = {}): Harness {
                   ? ledger.doc.traces
                   : appendTrace(ledger.doc.traces, input.trace, input.keepTraces ?? 20),
             }
+          },
+        },
+      },
+      ...instanceApiOverTargets(() => options.targets ?? []),
+      notificationOutput: {
+        send: {
+          mutate: async (input: Record<string, unknown>) => {
+            notificationSends.push(input)
+            return { success: true }
           },
         },
       },
@@ -247,6 +263,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
     ledger,
     reports,
     actionRuns,
+    notificationSends,
     sliceReads,
     emit: (category, data, deviceId) => {
       for (const h of [...handlers]) {
@@ -2432,5 +2449,55 @@ describe('device-fired trigger', () => {
     slices['40|event-emitter'] = status(press())
     await settle(31_000)
     expect(h.actionRuns).toHaveLength(0)
+  })
+})
+
+describe('a notify step and a disabled step', () => {
+  const TARGET: Target = {
+    id: 'zentik-admin',
+    name: 'Zentik admin',
+    kind: 'zentik',
+    addonId: 'addon-zentik',
+    enabled: true,
+    config: {},
+  }
+  const recipe = (notifyEnabled: boolean): AutomationRecipe => ({
+    when: MOTION,
+    actions: [
+      {
+        kind: 'notify',
+        targetId: 'zentik-admin',
+        title: 'CCU {{vars.deviceId}}',
+        body: 'HB-RF-ETH is down',
+        ...(notifyEnabled ? {} : { enabled: false }),
+      },
+      { kind: 'wait', seconds: 1 },
+      SIREN,
+    ],
+  })
+
+  it('sends through the picked target with the substituted title and body', async () => {
+    const h = start(await load(recipe(true)), { targets: [TARGET] })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 5)
+    await settle(2_000)
+    expect(h.notificationSends).toHaveLength(1)
+    expect(h.notificationSends[0]).toMatchObject({
+      targetId: 'zentik-admin',
+      addonId: 'addon-zentik',
+      notification: { body: 'HB-RF-ETH is down', title: 'CCU 5' },
+    })
+  })
+
+  it('a disabled notify step sends nothing, is traced disabled, and its siblings run', async () => {
+    const h = start(await load(recipe(false)), { targets: [TARGET] })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 5)
+    await settle(2_000)
+    expect(h.notificationSends).toHaveLength(0)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    const steps = h.traces()[0]?.steps.map((s) => [s.path, s.outcome, s.message])
+    expect(steps?.[0]).toEqual(['actions.0', 'skipped', 'disabled'])
+    expect(steps?.[2]).toEqual(['actions.2', 'ok', undefined])
   })
 })
