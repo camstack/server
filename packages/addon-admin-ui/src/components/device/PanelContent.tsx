@@ -17,6 +17,7 @@ import {
   useVodPlayback,
   Button,
   ZonesReadOnlyLayer,
+  useDeviceHasZones,
 } from '@camstack/ui-library'
 
 import type { StationaryOverlayBox } from '@camstack/types'
@@ -56,6 +57,7 @@ export function StreamPanelContent({
   const system = useSystem()
   const serverUrl = typeof window !== 'undefined' ? hubOrigin() : ''
   const deviceIdReady = Number.isFinite(deviceId)
+  const hasZones = useDeviceHasZones(deviceIdReady ? deviceId : null)
   const detections = useDeviceDetections(deviceIdReady ? deviceId : null)
   // The census. It is NOT in the detection stream — a promoted parked object is
   // dropped from the tracker on purpose — so the stationary layer is fed from
@@ -177,7 +179,9 @@ export function StreamPanelContent({
             snapshotDownloadName: `snapshot-${String(deviceId)}.jpg`,
           }
         : {})}
-      {...(deviceIdReady ? { zonesOverlay: <ZonesReadOnlyLayer deviceId={deviceId} /> } : {})}
+      {...(deviceIdReady && hasZones
+        ? { zonesOverlay: <ZonesReadOnlyLayer deviceId={deviceId} /> }
+        : {})}
       showPlayStop
       snapshotSrc={snapshot.src}
       {...(snapshot.src ? { posterUrl: snapshot.src } : {})}

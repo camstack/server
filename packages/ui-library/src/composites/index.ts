@@ -185,7 +185,11 @@ export type {
   MaskShapeCanvasProps,
   MaskShapeItem,
 } from './cap-settings/MaskShapeCanvas'
-export { ZonesReadOnlyLayer, type ZonesReadOnlyLayerProps } from './zones-layer/ZonesReadOnlyLayer'
+export {
+  ZonesReadOnlyLayer,
+  useDeviceHasZones,
+  type ZonesReadOnlyLayerProps,
+} from './zones-layer/ZonesReadOnlyLayer'
 export {
   capZoneToCanvas,
   DEFAULT_ZONE_COLOR,

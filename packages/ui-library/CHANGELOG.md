@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Camera card: the Show zones switch only appears when the camera has zones
+
 ## [1.2.485] - 2026-11-20
 
 ### Changed

@@ -26,6 +26,17 @@ export interface ZonesReadOnlyLayerProps {
   readonly deviceId: number
 }
 
+/**
+ * Does the device have at least one configured zone? `false` while the slice is
+ * unanswered too: a "Show zones" switch has nothing to reveal until zones exist.
+ */
+export function useDeviceHasZones(deviceId: number | null): boolean {
+  const system = useSystem()
+  const dev = useDeviceProxy(system.trpcClient, deviceId)
+  const slice = useDeviceStateSlice(dev?.state.zones)
+  return (slice?.zones.length ?? 0) > 0
+}
+
 export function ZonesReadOnlyLayer({ deviceId }: ZonesReadOnlyLayerProps): JSX.Element | null {
   const system = useSystem()
   const dev = useDeviceProxy(system.trpcClient, deviceId)

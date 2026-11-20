@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification targets: a core notifier group can be added from Add target, with a member search and a per-member policy editor (when, fields, templates, priority, throttle) and a preview, and its row carries a core badge.
 
+### Changed
+
+- Camera card: the Show zones switch only appears when the camera has zones
+
 ## [1.2.722] - 2026-11-20
 
 ### Changed

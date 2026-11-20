@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, renderHook, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { MaskShapeCanvasProps } from '../../cap-settings/MaskShapeCanvas'
 
@@ -21,7 +21,7 @@ vi.mock('../../cap-settings/MaskShapeCanvas', () => ({
   ),
 }))
 
-import { ZonesReadOnlyLayer } from '../ZonesReadOnlyLayer'
+import { useDeviceHasZones, ZonesReadOnlyLayer } from '../ZonesReadOnlyLayer'
 
 afterEach(cleanup)
 
@@ -63,5 +63,16 @@ describe('ZonesReadOnlyLayer', () => {
     slice.value = { zones: [] }
     const { container } = render(<ZonesReadOnlyLayer deviceId={7} />)
     expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('useDeviceHasZones', () => {
+  it('is false for no slice and for an empty one, true once a zone exists', () => {
+    slice.value = undefined
+    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(false)
+    slice.value = { zones: [] }
+    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(false)
+    slice.value = { zones: [{ id: 'a' }] }
+    expect(renderHook(() => useDeviceHasZones(7)).result.current).toBe(true)
   })
 })
