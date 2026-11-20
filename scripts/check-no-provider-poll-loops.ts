@@ -55,6 +55,7 @@ export const MIGRATED: readonly string[] = [
   // Hikvision: reachability, the OSD snapshot and the floodlight moved to the core; the alarm/PTZ/motion timers are not polls.
   'packages/addon-provider-hikvision/src/hikvision-camera.ts',
   'packages/addon-provider-hikvision/src/accessories/light.ts',
+  'packages/addon-provider-onvif',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/

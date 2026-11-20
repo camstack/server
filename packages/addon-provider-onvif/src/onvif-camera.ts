@@ -6,7 +6,7 @@ import type {
   INativeSnapshot,
   InferNativeProvider,
   InferProvider,
-  ReachabilityPollHandle,
+  ReachabilityRefreshHandle,
   StreamSourceEntry,
 } from '@camstack/types'
 import {
@@ -18,7 +18,7 @@ import {
   deviceAdminLinkCapability,
   ptzCapability,
   snapshotCapability,
-  startReachabilityPoll,
+  registerReachabilityRefresh,
 } from '@camstack/types'
 import { z } from 'zod'
 import type { OnvifClient } from './onvif-client.js'
@@ -107,7 +107,7 @@ export class OnvifCamera implements IDevice, INativeSnapshot, ICameraDevice {
   /** Control-plane reachability poll — drives `online` from ONVIF
    *  `getDeviceInformation` liveness, decoupled from stream-broker video
    *  health. Started on `attachClient`, stopped on `removeDevice`. */
-  private reachabilityPoll: ReachabilityPollHandle | null = null
+  private reachabilityPoll: ReachabilityRefreshHandle | null = null
 
   constructor(
     ctx: DeviceContext,
@@ -477,26 +477,30 @@ export class OnvifCamera implements IDevice, INativeSnapshot, ICameraDevice {
     return null
   }
 
-  /** Start the control-plane reachability poll: an ONVIF
-   *  `getDeviceInformation` round-trip every 30s drives `online`, with
-   *  hysteresis. Replaces the old stream-health→online coupling so a
-   *  reachable on-demand camera still reports ONLINE. Re-armed on each
-   *  `attachClient` (reconnect) — the prior poll is stopped first. */
+  /** Register the control-plane reachability read: an ONVIF
+   *  `getDeviceInformation` round-trip drives `online`, with hysteresis. The
+   *  hub's state refresh decides when it runs (D1062, no timer here). Replaces
+   *  the old stream-health→online coupling so a reachable on-demand camera
+   *  still reports ONLINE. Registered once; every `attachClient` (reconnect)
+   *  probes at once, since the probe reads whatever client is attached. */
   private startReachabilityPolling(): void {
-    this.reachabilityPoll?.stop()
-    this.reachabilityPoll = startReachabilityPoll({
-      probe: async () => {
-        const client = this.client
-        if (!client) return false
-        await client.getDeviceInfo()
-        return true
-      },
-      setOnline: (online) => {
-        this.markOnline(online)
-      },
-      isEnabled: () => !this.disabled && this.client !== null,
-      logger: this.ctx.logger,
-    })
+    if (this.reachabilityPoll === null) {
+      this.reachabilityPoll = registerReachabilityRefresh({
+        ctx: this.ctx,
+        probe: async () => {
+          const client = this.client
+          if (!client) return false
+          await client.getDeviceInfo()
+          return true
+        },
+        setOnline: (online) => {
+          this.markOnline(online)
+        },
+        isEnabled: () => !this.disabled && this.client !== null,
+        logger: this.ctx.logger,
+      })
+    }
+    void this.reachabilityPoll.probeNow()
   }
 
   async removeDevice(): Promise<void> {

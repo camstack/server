@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Camera reachability (online/offline) is probed when the hub schedules it, every 30 s, instead of on the camera's own timer; going offline still takes three missed probes
+
 ## [1.2.161] - 2026-11-18
 
 ### Changed
