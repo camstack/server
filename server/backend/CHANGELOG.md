@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Notifications: a notifier group delivers one notification to several notifiers, each member with its own schedule, alarm-state, fields, priority and throttle policy
+
 ## [1.2.924] - 2026-11-20
 
 ### Changed
 
 - A device whose state read keeps failing is now read less and less often (doubling up to 5 minutes) instead of at the same interval, and returns to the normal cadence on its first success
 - A provider that reconnects now makes the hub read its devices again even when it re-registers a single-device account, and a backed-off device returns to its normal cadence after any successful read
-- Notifications: a notifier group delivers one notification to several notifiers, each member with its own schedule, alarm-state, fields, priority and throttle policy
 
 ## [1.2.923] - 2026-11-20
 
