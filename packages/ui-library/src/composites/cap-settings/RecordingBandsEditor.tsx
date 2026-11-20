@@ -16,7 +16,12 @@ import {
   RECORDING_AUDIO_TRIGGER_OFFERED_DBFS,
 } from '@camstack/types'
 import type { RecordingBand, RecordingBandMode } from '@camstack/types'
-import { emptyBand, withBandAt, removeBandAt } from './recording-config-form'
+import {
+  batteryFloorWithNoRecording,
+  emptyBand,
+  withBandAt,
+  removeBandAt,
+} from './recording-config-form'
 
 interface RecordingBandsEditorProps {
   readonly bands: readonly RecordingBand[]
@@ -70,6 +75,8 @@ export function RecordingBandsEditor({
   sensorContext,
 }: RecordingBandsEditorProps): JSX.Element {
   const t = useUiText()
+  const batteryOperated = sensorContext?.batteryOperated === true
+  const noRecordingBelow = batteryFloorWithNoRecording(bands)
   return (
     <div className="space-y-2">
       {bands.length === 0 ? (
@@ -84,9 +91,19 @@ export function RecordingBandsEditor({
             onChange={(patch) => onChange(withBandAt(bands, i, patch))}
             onRemove={() => onChange(removeBandAt(bands, i))}
             sensorContext={sensorContext}
+            showBattery={batteryOperated || band.battery !== undefined}
           />
         ))
       )}
+      {noRecordingBelow !== null ? (
+        <p role="alert" className="text-[11px] text-warning">
+          {t(
+            'uiLibrary.recordingBands.batteryGap',
+            'Below {{level}}% nothing is recorded, events included.',
+            { level: noRecordingBelow },
+          )}
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={() => onChange([...bands, emptyBand()])}
@@ -112,6 +129,12 @@ export interface RecordingSensorContext {
    * feature has none to program. Absent = the host did not ask.
    */
   readonly deviceSignal?: DeviceSignalPresence
+  /**
+   * Does the camera publish a `battery` charge? When true a band offers a
+   * charge range. A band that already carries one always shows it, so it can
+   * be removed.
+   */
+  readonly batteryOperated?: boolean
 }
 
 /**
@@ -165,13 +188,14 @@ interface BandRowProps {
   readonly onChange: (patch: Partial<RecordingBand>) => void
   readonly onRemove: () => void
   readonly sensorContext?: RecordingSensorContext
+  readonly showBattery: boolean
 }
 
 function numOrUndef(value: string): number | undefined {
   return value === '' ? undefined : Number(value)
 }
 
-function BandRow({ band, onChange, onRemove, sensorContext }: BandRowProps) {
+function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandRowProps) {
   const t = useUiText()
   const toggleDay = (value: number): void => {
     // An empty `days` means "every day" to the band engine, and every chip
@@ -180,6 +204,12 @@ function BandRow({ band, onChange, onRemove, sensorContext }: BandRowProps) {
     const current = band.days.length === 0 ? WEEKDAY_VALUES : band.days
     const days = current.includes(value) ? current.filter((d) => d !== value) : [...current, value]
     onChange({ days })
+  }
+  const setBattery = (patch: { min?: number | undefined; max?: number | undefined }): void => {
+    const next = { ...band.battery, ...patch }
+    onChange({
+      battery: next.min === undefined && next.max === undefined ? undefined : next,
+    })
   }
   const setTriggers = (patch: Partial<NonNullable<RecordingBand['triggers']>>): void =>
     onChange({ triggers: { ...band.triggers, ...patch } })
@@ -202,6 +232,35 @@ function BandRow({ band, onChange, onRemove, sensorContext }: BandRowProps) {
           onChange={(e) => onChange({ end: e.target.value })}
           className="rounded-md border border-border bg-background px-1 py-0.5"
         />
+        {showBattery ? (
+          <span className="flex items-center gap-1">
+            <span className="text-foreground-subtle">
+              {t('uiLibrary.recordingBands.battery', 'Battery')}
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              aria-label={t('uiLibrary.recordingBands.batteryMin', 'Battery from (%)')}
+              placeholder="0"
+              value={band.battery?.min ?? ''}
+              onChange={(e) => setBattery({ min: numOrUndef(e.target.value) })}
+              className="w-14 rounded-md border border-border bg-background px-1 py-0.5"
+            />
+            <span className="text-foreground-subtle">–</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              aria-label={t('uiLibrary.recordingBands.batteryMax', 'Battery below (%)')}
+              placeholder="100"
+              value={band.battery?.max ?? ''}
+              onChange={(e) => setBattery({ max: numOrUndef(e.target.value) })}
+              className="w-14 rounded-md border border-border bg-background px-1 py-0.5"
+            />
+            <span className="text-foreground-subtle">%</span>
+          </span>
+        ) : null}
         <span className="flex gap-1">
           {BAND_MODE_VALUES.map((mode) => (
             <button

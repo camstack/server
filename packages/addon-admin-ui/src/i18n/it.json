@@ -8503,7 +8503,11 @@
       "threshold": "Soglia audio in dBFS",
       "objects": "Oggetti",
       "triggerOn": "Attiva su {{class}}",
-      "postBuffer": "Post-buffer"
+      "postBuffer": "Post-buffer",
+      "battery": "Batteria",
+      "batteryMin": "Batteria da (%)",
+      "batteryMax": "Batteria sotto (%)",
+      "batteryGap": "Sotto il {{level}}% non viene registrato nulla, eventi compresi."
     },
     "deviceExport": {
       "linked": "Collegato",

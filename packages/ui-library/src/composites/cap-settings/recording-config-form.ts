@@ -42,6 +42,31 @@ export function withBandAt(
   return bands.map((band, i) => (i === index ? { ...band, ...patch } : band))
 }
 
+/**
+ * The charge below which NO band records (events included), for the editor's
+ * warning — or `null` when there is nothing to warn about: no band carries a
+ * battery condition, or the lowest charges are covered. Time of day is ignored
+ * on purpose: the warning is about the charge axis, and a band that covers a
+ * charge at any hour is not a gap.
+ */
+export function batteryFloorWithNoRecording(bands: readonly RecordingBand[]): number | null {
+  if (!bands.some((b) => b.battery !== undefined)) return null
+  const covers = (level: number): boolean =>
+    bands.some((b) => {
+      const cond = b.battery
+      if (cond === undefined) return true
+      return (
+        (cond.min === undefined || level >= cond.min) &&
+        (cond.max === undefined || level < cond.max)
+      )
+    })
+  if (covers(0)) return null
+  for (let level = 1; level <= 100; level += 1) {
+    if (covers(level)) return level
+  }
+  return null
+}
+
 export function removeBandAt(bands: readonly RecordingBand[], index: number): RecordingBand[] {
   return bands.filter((_, i) => i !== index)
 }

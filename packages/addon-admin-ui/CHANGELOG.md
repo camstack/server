@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Recording band editor labels for the battery range.
+
 ## [1.2.715] - 2026-11-20
 
 ### Changed

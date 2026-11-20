@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The recording band editor offers a battery range on battery cameras and warns when a charge level records nothing.
+
 ## [1.2.481] - 2026-11-20
 
 ### Changed

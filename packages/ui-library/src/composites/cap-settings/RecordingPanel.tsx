@@ -54,6 +54,9 @@ export function RecordingPanel({ deviceId }: HostWidgetProps): JSX.Element {
         : bindingsQuery.data.entries.some((e) => e.capName === 'recording-signal')
           ? 'present'
           : 'absent'
+  const batteryOperated =
+    bindingsQuery.status === 'success' &&
+    bindingsQuery.data.entries.some((e) => e.capName === 'battery')
   const setConfig = useRecordingArchiveSetDeviceConfig()
   const rescanStorage = useRecordingArchiveRescanStorage()
   const { data: profileSlots } = useStreamBrokerListAllProfileSlots(undefined, {
@@ -123,7 +126,7 @@ export function RecordingPanel({ deviceId }: HostWidgetProps): JSX.Element {
             availableProfiles={availableProfiles}
             saving={setConfig.isPending}
             onSave={saveConfig}
-            sensorContext={{ cameraId: deviceId, deviceSignal }}
+            sensorContext={{ cameraId: deviceId, deviceSignal, batteryOperated }}
           />
         ) : (
           <div className="px-1 py-2 text-xs text-foreground-subtle">
