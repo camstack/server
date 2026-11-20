@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery status now carries the cell state (charging, full, idle), current in mA and temperature in °C beside the existing level, source and voltage
+
 ## [1.2.604] - 2026-11-20
 
 ### Changed
 
 - Energy systems now record the storage capacity next to the other storage series
-- Battery status now carries the cell state (charging, full, idle), current in mA and temperature in °C beside the existing level, source and voltage
 
 ## [1.2.603] - 2026-11-19
 
