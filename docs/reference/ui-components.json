@@ -18922,6 +18922,18 @@
           "doc": "Callback to refresh snapshot"
         },
         {
+          "name": "snapshotDownloadName",
+          "type": "string",
+          "optional": true,
+          "doc": "File name of the snapshot download. Present: a Download button saves the snapshot the panel shows while it is not playing. Absent: no button"
+        },
+        {
+          "name": "detectionsOnSnapshot",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the detection boxes (the \"Show detections\" switch) on the snapshot too, not only on the live video. Default false: the snapshot stays a"
+        },
+        {
           "name": "showStreamStats",
           "type": "boolean",
           "optional": true,

@@ -42,11 +42,15 @@ interface StreamPanelContentProps {
    *  starts/stops the PTT session DIRECTLY — no extra tab to open.
    *  Sourced from `DeviceFeature.TwoWayAudio`. */
   intercomAvailable?: boolean
+  /** A still-first host (the embedded camera card): the snapshot can be
+   *  downloaded, shows the detection boxes on demand (off until asked). */
+  stillFirst?: boolean
 }
 
 export function StreamPanelContent({
   deviceId,
   intercomAvailable = false,
+  stillFirst = false,
 }: StreamPanelContentProps) {
   const system = useSystem()
   const serverUrl = typeof window !== 'undefined' ? hubOrigin() : ''
@@ -164,8 +168,14 @@ export function StreamPanelContent({
       phase={detections.phase}
       detections={detections}
       {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
-      defaultShowDetections
+      defaultShowDetections={!stillFirst}
       defaultShowMotion
+      {...(stillFirst
+        ? {
+            detectionsOnSnapshot: true,
+            snapshotDownloadName: `snapshot-${String(deviceId)}.jpg`,
+          }
+        : {})}
       showPlayStop
       snapshotSrc={snapshot.src}
       {...(snapshot.src ? { posterUrl: snapshot.src } : {})}
@@ -336,7 +346,9 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
 
   const onRestartDevice = async () => {
     const ok = await confirm({
-      title: t('device.panelContent.reboot', 'Reboot "{{deviceName}}"?', { deviceName }),
+      title: t('device.panelContent.reboot', 'Reboot "{{deviceName}}"?', {
+        deviceName,
+      }),
       message: t(
         'device.panelContent.theDeviceWillGoOffline',
         'The device will go offline for ~30 seconds while the firmware restarts.',

@@ -79,7 +79,7 @@ function CardBody({
 
 /**
  * A camera goes through the base card like every device: its scene is the
- * host's stream panel, its history the card's bounded History view.
+ * host's stream panel (snapshot first, go live from its stream picker), its history the card's bounded History view.
  */
 function CameraBody({
   deviceId,
@@ -102,7 +102,13 @@ function CameraBody({
         canActuate={canActuate}
         showName={showName !== false}
         {...(onNavigate === undefined ? {} : { onNavigate })}
-        scene={<StreamPanelContent deviceId={deviceId} intercomAvailable={intercomAvailable} />}
+        scene={
+          <StreamPanelContent
+            deviceId={deviceId}
+            intercomAvailable={intercomAvailable}
+            stillFirst
+          />
+        }
       />
     </div>
   )

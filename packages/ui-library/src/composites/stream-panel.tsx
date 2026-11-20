@@ -195,6 +195,16 @@ export interface StreamPanelProps {
   readonly snapshotLoading?: boolean
   /** Callback to refresh snapshot */
   readonly onRefreshSnapshot?: () => void
+  /**
+   * File name of the snapshot download. Present: a Download button saves the
+   * snapshot the panel shows while it is not playing. Absent: no button.
+   */
+  readonly snapshotDownloadName?: string
+  /**
+   * Draw the detection boxes (the "Show detections" switch) on the snapshot
+   * too, not only on the live video. Default false: the snapshot stays a clean still.
+   */
+  readonly detectionsOnSnapshot?: boolean
 
   // --- Visibility ---
   /** Show stream stats in header (fps, uptime) (default: false) */
@@ -391,6 +401,24 @@ function LiveIcon({ className }: { readonly className?: string }) {
   )
 }
 
+function DownloadIcon({ className }: { readonly className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
 function RefreshIcon({ className }: { readonly className?: string }) {
   return (
     <svg
@@ -465,6 +493,8 @@ export function StreamPanel({
   snapshotSrc,
   snapshotLoading = false,
   onRefreshSnapshot,
+  snapshotDownloadName,
+  detectionsOnSnapshot = false,
   showStreamStats = false,
   children,
   extraOverlay,
@@ -616,6 +646,7 @@ export function StreamPanel({
   // toggle governs live only).
   const isVod = Boolean(playbackUrl)
   const showingVideo = isVod || (showPlayStop ? isPlaying : true)
+  const snapshotBoxes = detectionsOnSnapshot && hasDetections && showDetections
 
   return (
     <div
@@ -820,6 +851,21 @@ export function StreamPanel({
                 {t('uiLibrary.streamPanel.snapshot', 'Snapshot')}
               </span>
             </button>
+          )}
+
+          {snapshotDownloadName !== undefined && snapshotSrc && !showingVideo && (
+            <a
+              data-testid="stream-snapshot-download"
+              href={snapshotSrc}
+              download={snapshotDownloadName}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
+              title={t('uiLibrary.streamPanel.downloadSnapshot', 'Download snapshot')}
+            >
+              <DownloadIcon className="h-3 w-3" />
+              <span className="hidden xl:inline">
+                {t('uiLibrary.streamPanel.download', 'Download')}
+              </span>
+            </a>
           )}
 
           {/* Kebab — secondary controls (toggles, stats, snapshot
@@ -1042,8 +1088,20 @@ export function StreamPanel({
           // events from the Konva stage. The toolbar Play button stays
           // wired regardless.
           extraOverlay={
-            extraOverlay || ptzOverlayVisible ? (
+            extraOverlay || ptzOverlayVisible || snapshotBoxes ? (
               <>
+                {snapshotBoxes && (
+                  <DetectionOverlay
+                    detections={detections!}
+                    showPhaseIndicator={false}
+                    showMotionZones={false}
+                    showMotionRaw={false}
+                    showDetections={showDetections}
+                    showMoving={showMoving}
+                    showStationary={showStationary}
+                    {...(stationaryObjects !== undefined ? { stationaryObjects } : {})}
+                  />
+                )}
                 {extraOverlay}
                 {ptzOverlayVisible && ptzOverlay}
               </>
