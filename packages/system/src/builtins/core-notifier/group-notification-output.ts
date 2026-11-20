@@ -9,7 +9,6 @@
  * that is itself a group is refused (`nested-group`); every skip is logged with its reason and the
  * group's tags (D391); a retry re-sends only the members that failed (the ledger).
  */
-import { AsyncLocalStorage } from 'node:async_hooks'
 import {
   type AlarmState,
   clampToCaps,
@@ -29,22 +28,9 @@ import {
   type Target,
   type TargetKind,
   type TargetKindCaps,
-  unionTargetKindCaps,
 } from '@camstack/types'
 import { groupTargetKind } from './group-descriptor.js'
 import { MemberLedger } from './member-ledger.js'
-
-interface CapsSnapshot {
-  readonly at: number
-  readonly union: TargetKindCaps
-  readonly byKind: ReadonlyMap<string, TargetKindCaps>
-}
-
-/** What the group's own re-entrant catalogue answer carries; the reader discards that row. */
-const UNREAD_CAPS: TargetKindCaps = unionTargetKindCaps([])
-
-/** How long the union of the members' caps is reused before it is read again. */
-const CAPS_TTL_MS = 30_000
 
 /** A target kind and what it delivers. */
 export interface MemberKindCaps {
@@ -82,7 +68,7 @@ export interface GroupNotificationOutputDeps {
       readonly error: string
     }[]
   }>
-  /** The kind catalogue of the OTHER providers (the group's own is never asked: it would recurse). */
+  /** The kind catalogue without the group's own kind: what each member's kind delivers. */
   readonly listMemberKinds: () => Promise<readonly MemberKindCaps[]>
   readonly sendToMember: (input: {
     readonly addonId: string
@@ -113,71 +99,8 @@ function summary(outcomes: readonly MemberOutcome[]): string {
 export function createGroupNotificationOutputProvider(deps: GroupNotificationOutputDeps): {
   readonly provider: INotificationOutputProvider
   readonly deliver: (group: Target, notification: Notification) => Promise<GroupDeliveryReport>
-  /** The ids of the groups as last read, for the sync save-time nested-group check. */
-  readonly knownGroupIds: () => ReadonlySet<string>
 } {
   const { logger } = deps
-  let groupIds: ReadonlySet<string> = new Set()
-  let snapshot: CapsSnapshot | null = null
-  let inFlight: Promise<CapsSnapshot> | null = null
-  // Marks the async chain of a catalogue read. That read fans out to every provider, this one
-  // included; the group's own answer is dropped at the source (`readMemberKinds`), so the re-entrant
-  // call must answer without waiting on the read it is part of.
-  const reading = new AsyncLocalStorage<true>()
-
-  async function compute(): Promise<CapsSnapshot> {
-    const [stored, read, kinds] = await Promise.all([
-      deps.store.list(),
-      deps.listTargets(),
-      deps.listMemberKinds(),
-    ])
-    groupIds = new Set(stored.map((group) => group.id))
-    const kindOfTarget = new Map(read.targets.map((target) => [target.id, target.kind]))
-    const memberKinds = new Set(
-      stored.flatMap((group) =>
-        groupMembersOf(group.config).members.flatMap((member) => {
-          const kind = kindOfTarget.get(member.targetId)
-          return kind === undefined || kind === NOTIFIER_GROUP_KIND ? [] : [kind]
-        }),
-      ),
-    )
-    return {
-      at: deps.now(),
-      union: unionTargetKindCaps(
-        kinds.filter((kind) => memberKinds.has(kind.kind)).map((kind) => kind.caps),
-      ),
-      byKind: new Map(kinds.map((kind) => [kind.kind, kind.caps])),
-    }
-  }
-
-  /**
-   * The union and the per-kind caps, shared: concurrent callers await ONE computation. A failed read
-   * caches nothing; the last good snapshot is served when there is one, otherwise the failure
-   * propagates (an unread catalogue is never presented as an empty one).
-   */
-  async function capsSnapshot(): Promise<CapsSnapshot> {
-    if (snapshot !== null && deps.now() - snapshot.at < CAPS_TTL_MS) return snapshot
-    if (inFlight !== null) return inFlight
-    const run = reading
-      .run(true, compute)
-      .then((fresh) => {
-        snapshot = fresh
-        return fresh
-      })
-      .catch((err: unknown) => {
-        if (snapshot === null) throw err
-        logger.warn('group caps could not be read; serving the last good ones', {
-          meta: { error: errMsg(err) },
-        })
-        return snapshot
-      })
-      .finally(() => {
-        inFlight = null
-      })
-    inFlight = run
-    return run
-  }
-
   async function deliverMember(
     group: Target,
     member: GroupMember,
@@ -274,8 +197,9 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     const targets = new Map(read.targets.map((target) => [target.id, target]))
     const unreadableHolders = read.unreadable.map((holder) => holder.addonId)
     const key = MemberLedger.notificationKey(notification)
-    const byKind = await capsSnapshot()
-      .then((caps) => caps.byKind)
+    const byKind = await deps
+      .listMemberKinds()
+      .then((kinds) => new Map(kinds.map((kind) => [kind.kind, kind.caps])))
       .catch((err: unknown): ReadonlyMap<string, TargetKindCaps> => {
         logger.warn('member kind caps could not be read; members degrade on their own', {
           tags: { groupId: group.id },
@@ -304,10 +228,7 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
   }
 
   const provider: INotificationOutputProvider = {
-    listTargetKinds: async (): Promise<TargetKind[]> => {
-      if (reading.getStore() === true) return [groupTargetKind(snapshot?.union ?? UNREAD_CAPS)]
-      return [groupTargetKind((await capsSnapshot()).union)]
-    },
+    listTargetKinds: async (): Promise<TargetKind[]> => [groupTargetKind()],
     discoverTargets: async () => [],
     probeTargetConfig: async ({ kind }) => ({
       ok: false,
@@ -322,5 +243,5 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     testTarget: async ({ targetId, sample }) =>
       sendTo(await deps.store.getById(targetId), targetId, sample ?? CANNED),
   }
-  return { provider, deliver, knownGroupIds: () => groupIds }
+  return { provider, deliver }
 }

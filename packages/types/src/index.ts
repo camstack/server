@@ -3031,7 +3031,6 @@ export {
   NOTIFIER_GROUP_KIND,
   renderMemberTemplate,
   shapeForMember,
-  unionTargetKindCaps,
 } from './notification/notifier-group.js'
 export type {
   GroupMember,

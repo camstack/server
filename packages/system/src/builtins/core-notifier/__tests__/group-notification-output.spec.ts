@@ -8,7 +8,7 @@ import {
   type TargetKindCaps,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { EMPTY_GROUP_CAPS } from '../group-descriptor.js'
+import { GROUP_CAPS } from '../group-descriptor.js'
 import {
   createGroupNotificationOutputProvider,
   type MemberKindCaps,
@@ -334,147 +334,35 @@ describe('group send', () => {
 })
 
 describe('group kind caps', () => {
-  const titleOnly: TargetKindCaps = {
-    text: { title: true, body: false },
-    attachments: { mediaTypes: [], mode: 'url', max: 0 },
-    actions: 0,
-    levels: [],
-    format: ['text'],
-    clickUrl: false,
-    sound: false,
-    ttl: false,
-    bodyMaxLen: 80,
-  }
-  const rich: TargetKindCaps = {
-    attachments: { mediaTypes: ['image'], mode: 'url', max: 1 },
-    actions: 3,
-    levels: [],
-    format: ['text'],
-    clickUrl: true,
-    sound: false,
-    ttl: false,
-    bodyMaxLen: 500,
-  }
-
-  it('is the union of what the members of the groups deliver', async () => {
-    const r = rig()
-    const { provider } = r.build(
-      [ref('alexa', 'alexa'), ref('zentik', 'zentik'), ref('other', 'other')],
-      [group([{ targetId: 'alexa' }, { targetId: 'zentik' }])],
-      [
-        { kind: 'alexa', caps: titleOnly },
-        { kind: 'zentik', caps: rich },
-        { kind: 'other', caps: { ...rich, actions: 9 } },
-      ],
-    )
-    const [kind] = await provider.listTargetKinds({})
-    expect(kind?.kind).toBe('group')
-    expect(kind?.caps.actions).toBe(3)
-    expect(kind?.caps.attachments.mediaTypes).toEqual(['image'])
-    expect(kind?.caps.clickUrl).toBe(true)
-  })
-
-  it('serves title and body before any member is known', async () => {
-    const r = rig()
-    const { provider } = r.build([])
-    const [kind] = await provider.listTargetKinds({})
-    expect(kind?.caps).toEqual(EMPTY_GROUP_CAPS)
-  })
-})
-
-describe('group kind caps: shared read, TTL, failure', () => {
-  const kind = (id: string): MemberKindCaps => ({ kind: id, caps: EMPTY_GROUP_CAPS })
-
-  it('concurrent callers await ONE computation and all get the computed value', async () => {
-    const r = rig()
-    let reads = 0
-    let release: () => void = () => {}
-    const gate = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    const rich = { ...EMPTY_GROUP_CAPS, actions: 4 }
-    const { provider } = r.build([ref('a', 'ntfy')], [group([{ targetId: 'a' }])], [], {
-      listMemberKinds: async () => {
-        reads += 1
-        await gate
-        return [{ kind: 'ntfy', caps: rich }]
-      },
-    })
-    const calls = [
-      provider.listTargetKinds({}),
-      provider.listTargetKinds({}),
-      provider.listTargetKinds({}),
-    ]
-    release()
-    const answers = await Promise.all(calls)
-    expect(reads).toBe(1)
-    for (const answer of answers) expect(answer[0]?.caps.actions).toBe(4)
-  })
-
-  it('is read again only after the TTL', async () => {
+  it('declares static permissive caps and reads no catalogue to answer', async () => {
     const r = rig()
     let reads = 0
     const { provider } = r.build([], [], [], {
       listMemberKinds: async () => {
         reads += 1
-        return [kind('x')]
-      },
-    })
-    await provider.listTargetKinds({})
-    await provider.listTargetKinds({})
-    expect(reads).toBe(1)
-    r.clock.now += 31_000
-    await provider.listTargetKinds({})
-    expect(reads).toBe(2)
-  })
-
-  it('a failed first read throws and caches nothing; the next call reads again', async () => {
-    const r = rig()
-    let reads = 0
-    const { provider } = r.build([], [], [], {
-      listMemberKinds: async () => {
-        reads += 1
-        if (reads === 1) throw new Error('catalogue down')
-        return [kind('x')]
-      },
-    })
-    await expect(provider.listTargetKinds({})).rejects.toThrow('catalogue down')
-    const [answer] = await provider.listTargetKinds({})
-    expect(answer?.kind).toBe('group')
-    expect(reads).toBe(2)
-  })
-
-  it('a failed refresh serves the last good value, and warns', async () => {
-    const r = rig()
-    let fail = false
-    const rich = { ...EMPTY_GROUP_CAPS, actions: 4 }
-    const { provider } = r.build([ref('a', 'ntfy')], [group([{ targetId: 'a' }])], [], {
-      listMemberKinds: async () => {
-        if (fail) throw new Error('catalogue down')
-        return [{ kind: 'ntfy', caps: rich }]
-      },
-    })
-    expect((await provider.listTargetKinds({}))[0]?.caps.actions).toBe(4)
-    fail = true
-    r.clock.now += 31_000
-    expect((await provider.listTargetKinds({}))[0]?.caps.actions).toBe(4)
-    expect(r.lines.some((l) => l.level === 'warn' && l.message.includes('last good'))).toBe(true)
-  })
-
-  it('a re-entrant call from inside the catalogue read does not wait on it', async () => {
-    const r = rig()
-    const holder: { provider: ReturnType<typeof createGroupNotificationOutputProvider> | null } = {
-      provider: null,
-    }
-    const built = r.build([], [], [], {
-      // The real read fans out to every provider, this one included.
-      listMemberKinds: async () => {
-        await holder.provider?.provider.listTargetKinds({})
         return []
       },
     })
-    holder.provider = built
-    const [answer] = await built.provider.listTargetKinds({})
-    expect(answer?.kind).toBe('group')
+    const [kind] = await provider.listTargetKinds({})
+    expect(kind?.kind).toBe('group')
+    expect(kind?.caps).toEqual(GROUP_CAPS)
+    expect(kind?.caps.attachments.mediaTypes).toEqual(['image', 'video', 'gif', 'audio', 'icon'])
+    expect(reads).toBe(0)
+  })
+
+  it('a failed member-caps read warns and the member is sent unclamped, to degrade on its own', async () => {
+    const r = rig()
+    const g = group([{ targetId: 'a' }])
+    const { deliver } = r.build([ref('a', 'ntfy')], [g], [], {
+      listMemberKinds: async () => {
+        throw new Error('catalogue down')
+      },
+    })
+    const report = await deliver(g, NOTIFICATION)
+    expect(report.outcomes[0]?.status).toBe('sent')
+    expect(r.sent[0]?.notification.body).toBe('Front door opened')
+    const line = r.lines.find((l) => l.message.includes('kind caps could not be read'))
+    expect(line?.level).toBe('warn')
+    expect(line?.tags).toEqual({ groupId: 'g1' })
   })
 })

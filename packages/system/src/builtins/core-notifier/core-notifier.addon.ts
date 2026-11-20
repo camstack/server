@@ -19,8 +19,8 @@ import {
   NotificationTargetStore,
   notificationOutputCapability,
 } from '@camstack/types'
-import { EMPTY_GROUP_CAPS, groupRecordKinds, groupTargetKind } from './group-descriptor.js'
-import { groupInstancesSpec } from './group-instances.js'
+import { groupRecordKinds, groupTargetKind } from './group-descriptor.js'
+import { groupInstancesSpec, refuseNestedGroups } from './group-instances.js'
 import { createGroupNotificationOutputProvider } from './group-notification-output.js'
 import { MemberLedger } from './member-ledger.js'
 import { readMemberKinds } from './member-kinds.js'
@@ -43,7 +43,7 @@ export class CoreNotifierAddon extends BaseAddon {
       records,
       NOTIFIER_GROUP_ADDON_ID,
       groupRecordKinds,
-      [groupTargetKind(EMPTY_GROUP_CAPS)],
+      [groupTargetKind()],
       { logger },
     )
     const group = createGroupNotificationOutputProvider({
@@ -79,12 +79,9 @@ export class CoreNotifierAddon extends BaseAddon {
       now: () => Date.now(),
       logger,
     })
-    const instances = buildNotificationTargetInstances(
-      records,
-      groupInstancesSpec({
-        mintId: () => randomUUID(),
-        knownGroupIds: group.knownGroupIds,
-      }),
+    const instances = refuseNestedGroups(
+      buildNotificationTargetInstances(records, groupInstancesSpec({ mintId: () => randomUUID() })),
+      async () => new Set((await store.list()).map((target) => target.id)),
     )
     this.ctx.logger.info('CoreNotifier initialized')
     return {

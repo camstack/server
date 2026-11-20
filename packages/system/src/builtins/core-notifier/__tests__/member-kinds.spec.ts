@@ -1,9 +1,9 @@
 import { type TargetKindCaps } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { EMPTY_GROUP_CAPS } from '../group-descriptor.js'
+import { GROUP_CAPS } from '../group-descriptor.js'
 import { readMemberKinds } from '../member-kinds.js'
 
-const caps: TargetKindCaps = EMPTY_GROUP_CAPS
+const caps: TargetKindCaps = GROUP_CAPS
 
 describe('readMemberKinds', () => {
   it('drops the group kind at the source and keeps every other provider', async () => {

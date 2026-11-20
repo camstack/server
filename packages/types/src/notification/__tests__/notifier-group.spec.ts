@@ -7,7 +7,6 @@ import {
   groupMembersOf,
   renderMemberTemplate,
   shapeForMember,
-  unionTargetKindCaps,
 } from '../notifier-group.js'
 
 const BASE: Notification = {
@@ -155,29 +154,6 @@ describe('shapeForMember', () => {
   })
 })
 
-describe('unionTargetKindCaps', () => {
-  it('is the union of what the members deliver', () => {
-    const union = unionTargetKindCaps([
-      caps({ text: { title: true, body: false }, sound: true }),
-      caps({
-        attachments: { mediaTypes: ['image'], mode: 'url', max: 1 },
-        actions: 3,
-        bodyMaxLen: 500,
-      }),
-    ])
-    expect(union.text).toEqual({ title: true, body: true })
-    expect(union.attachments.mediaTypes).toEqual(['image'])
-    expect(union.actions).toBe(3)
-    expect(union.sound).toBe(true)
-    expect(union.bodyMaxLen).toBe(500)
-  })
-  it('an empty list delivers title and body only', () => {
-    const union = unionTargetKindCaps([])
-    expect(union.text).toEqual({ title: true, body: true })
-    expect(union.actions).toBe(0)
-  })
-})
-
 describe('clampToCaps', () => {
   it('limits body, attachments, actions, sound and click URL to the kind', () => {
     const clamped = clampToCaps(
@@ -206,5 +182,12 @@ describe('clampToCaps', () => {
     expect(clamped.actions).toHaveLength(1)
     expect(clamped.sound).toBeUndefined()
     expect(clamped.clickUrl).toBeUndefined()
+  })
+  it('drops a level the member kind does not declare, keeps one it does', () => {
+    const withLevel = { ...BASE, level: 'critical' }
+    expect(clampToCaps(withLevel, caps({})).level).toBeUndefined()
+    expect(
+      clampToCaps(withLevel, caps({ levels: [{ id: 'critical', label: 'C', ordinal: 5 }] })).level,
+    ).toBe('critical')
   })
 })

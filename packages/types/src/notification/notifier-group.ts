@@ -5,8 +5,8 @@
  * core builtin `core-notifier`. Its body holds a `members` list; each member is a target id plus the
  * policy that decides whether, and with what content, that member receives a notification.
  *
- * Everything here is pure: the schemas, the per-member decision, the content shaping and the union of
- * the members' capabilities. Delivery, the throttle and the retry ledger live in the builtin.
+ * Everything here is pure: the schemas, the per-member decision, the content shaping and the clamp to a
+ * member's own capabilities. Delivery, the throttle and the retry ledger live in the builtin.
  */
 import { z } from 'zod'
 import { AlarmStateSchema } from '../capabilities/alarm-panel.cap.js'
@@ -157,47 +157,12 @@ export function shapeForMember(member: GroupMember, notification: Notification):
 }
 
 /**
- * What a group delivers: the union of what its members deliver (D1030), so the notification center
- * does not strip a field a member needs. No members = title and body.
- */
-export function unionTargetKindCaps(list: readonly TargetKindCaps[]): TargetKindCaps {
-  const levels = new Map<string, TargetKindCaps['levels'][number]>()
-  for (const caps of list) for (const level of caps.levels) levels.set(level.id, level)
-  const mediaTypes = new Set(list.flatMap((caps) => caps.attachments.mediaTypes))
-  const modes = new Set(list.map((caps) => caps.attachments.mode))
-  const withAttachments = list.filter((caps) => caps.attachments.max > 0)
-  const maxBytes = withAttachments
-    .map((caps) => caps.attachments.maxBytes)
-    .filter((bytes): bytes is number => bytes !== undefined)
-  return {
-    text: {
-      title: list.length === 0 || list.some((caps) => caps.text?.title ?? true),
-      body: list.length === 0 || list.some((caps) => caps.text?.body ?? true),
-    },
-    attachments: {
-      mediaTypes: [...mediaTypes],
-      mode: modes.size > 1 || modes.has('both') ? 'both' : (list[0]?.attachments.mode ?? 'url'),
-      max: Math.max(0, ...list.map((caps) => caps.attachments.max)),
-      ...(maxBytes.length > 0 ? { maxBytes: Math.max(...maxBytes) } : {}),
-    },
-    actions: Math.max(0, ...list.map((caps) => caps.actions)),
-    actionIcons: list.some((caps) => caps.actionIcons === true),
-    levels: [...levels.values()],
-    format: [...new Set(list.flatMap((caps) => caps.format)).add('text')],
-    clickUrl: list.some((caps) => caps.clickUrl),
-    sound: list.some((caps) => caps.sound),
-    ttl: list.some((caps) => caps.ttl),
-    bodyMaxLen: Math.max(1, ...list.map((caps) => caps.bodyMaxLen)),
-  }
-}
-
-/**
  * The notification as ONE member's own kind can take it: its text fields, body length, attachment
- * media types and count, action count, sound and click URL. The group's union caps only keep the
+ * media types and count, action count, level, sound and click URL. The group's own caps are permissive and only keep the
  * notification center from stripping a field before the group sees it; a member gets its own limits.
  */
 export function clampToCaps(notification: Notification, caps: TargetKindCaps): Notification {
-  const { attachments, actions, sound, clickUrl, ...rest } = notification
+  const { attachments, actions, sound, clickUrl, level, ...rest } = notification
   const kept = (attachments ?? [])
     .filter((attachment) => caps.attachments.mediaTypes.includes(attachment.mediaType))
     .slice(0, caps.attachments.max)
@@ -210,6 +175,7 @@ export function clampToCaps(notification: Notification, caps: TargetKindCaps): N
       : { title: notification.title }),
     ...(kept.length > 0 ? { attachments: kept } : {}),
     ...(buttons.length > 0 ? { actions: buttons } : {}),
+    ...(level !== undefined && caps.levels.some((known) => known.id === level) ? { level } : {}),
     ...(caps.sound && sound !== undefined ? { sound } : {}),
     ...(caps.clickUrl && clickUrl !== undefined ? { clickUrl } : {}),
   }

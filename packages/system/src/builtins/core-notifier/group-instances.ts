@@ -5,16 +5,16 @@
  */
 import {
   type GroupMember,
+  type IIntegrationInstancesProvider,
   GroupMemberSchema,
   type NotificationTargetInstancesSpec,
   NOTIFIER_GROUP_KIND,
 } from '@camstack/types'
-import { groupRecordKinds, groupTargetKind, EMPTY_GROUP_CAPS } from './group-descriptor.js'
+import { groupRecordKinds, groupTargetKind } from './group-descriptor.js'
 
 export interface GroupInstancesDeps {
   readonly mintId: () => string
   /** The ids of the groups as last read. */
-  readonly knownGroupIds: () => ReadonlySet<string>
 }
 
 /** The members of a form body, or the reason the body cannot be saved. */
@@ -39,16 +39,45 @@ export function validateGroupMembers(
   return members
 }
 
+/** The save rule that needs no other record: rows readable, no duplicate. Nesting is checked against the store. */
+const NO_GROUPS: ReadonlySet<string> = new Set()
+
 export function groupInstancesSpec(deps: GroupInstancesDeps): NotificationTargetInstancesSpec {
   return {
-    descriptors: [groupTargetKind(EMPTY_GROUP_CAPS)],
+    descriptors: [groupTargetKind()],
     kinds: groupRecordKinds,
     mintId: deps.mintId,
     canProbe: () => false,
     validate: ({ kind, config }) => {
       if (kind !== NOTIFIER_GROUP_KIND) return undefined
-      validateGroupMembers(config, deps.knownGroupIds())
+      validateGroupMembers(config, NO_GROUPS)
       return undefined
+    },
+  }
+}
+
+/**
+ * The instances provider with the nested-group rule in front of every write: the ids of the groups
+ * are read from the store (async), so the rule is a step before `createInstance` / `updateInstance`
+ * rather than the synchronous save rule of the spec.
+ */
+export function refuseNestedGroups(
+  provider: IIntegrationInstancesProvider,
+  listGroupIds: () => Promise<ReadonlySet<string>>,
+): IIntegrationInstancesProvider {
+  const check = async (values: Readonly<Record<string, unknown>> | undefined): Promise<void> => {
+    if (values === undefined) return
+    validateGroupMembers(values, await listGroupIds())
+  }
+  return {
+    ...provider,
+    createInstance: async (input, ...rest) => {
+      await check(input.values)
+      return provider.createInstance(input, ...rest)
+    },
+    updateInstance: async (input, ...rest) => {
+      await check(input.values)
+      return provider.updateInstance(input, ...rest)
     },
   }
 }
