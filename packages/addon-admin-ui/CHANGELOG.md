@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.718] - 2026-11-20
+
 ### Added
 
 - The heat pump's Customize tab offers Electrical power and Electrical energy sources
