@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The camera-grid engine hosts crop cameras: a crop is a derived camera showing one section of a source, with the grid's 1:1 profiles and detection mapping.
+
 ## [1.2.915] - 2026-11-20
 
 ### Changed

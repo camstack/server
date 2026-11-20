@@ -9,6 +9,7 @@ import {
   compileHelper,
   type Composition,
   type CompositionSourceRef,
+  type CropHelperSpec,
   type GridCellSpec,
   type GridHelperSpec,
   type GridLayoutCell,
@@ -36,6 +37,22 @@ export interface GridComposition {
   readonly cells: readonly GridCellConfig[]
 }
 
+/**
+ * The block specs this engine serves. A crop (#611) is a ONE-cell grid: the
+ * cell covers the whole canvas and its source rectangle is the crop, so the
+ * profiles, the derived canvas, the no-upscale rule and the detection mapping
+ * are the grid's, unchanged.
+ */
+export type GridBlockSpec = GridHelperSpec | CropHelperSpec
+
+/** The cell of a crop: the whole canvas. */
+export const CROP_FULL_CELL: NormalizedRect = { x: 0, y: 0, width: 1, height: 1 }
+
+/** Every source a block reads, in cell order. */
+export function gridBlockSourceRefs(spec: GridBlockSpec): readonly CompositionSourceRef[] {
+  return spec.kind === 'crop' ? [spec.source] : spec.cells.map((cell) => cell.source)
+}
+
 export function sourceRefKey(ref: CompositionSourceRef): string {
   return `${ref.addonId}\u0000${ref.stableId}`
 }
@@ -52,9 +69,14 @@ export interface ResolvedGridCells {
  * from composing the cells that remain.
  */
 export function resolveGridCells(
-  spec: GridHelperSpec,
+  spec: GridBlockSpec,
   deviceIdOf: (ref: CompositionSourceRef) => number | null,
 ): ResolvedGridCells {
+  if (spec.kind === 'crop') {
+    const deviceId = deviceIdOf(spec.source)
+    if (deviceId === null) return { cells: [], unresolved: [spec.source] }
+    return { cells: [{ deviceId, source: spec.rect, cell: CROP_FULL_CELL }], unresolved: [] }
+  }
   const cells: GridCellConfig[] = []
   const unresolved: CompositionSourceRef[] = []
   for (const cell of spec.cells) {
@@ -100,7 +122,7 @@ export function gridSpecFromPatch(
 }
 
 /** The composition a grid spec compiles to — the shape a block of this kind stores. */
-export function gridComposition(spec: GridHelperSpec): Composition {
+export function gridComposition(spec: GridBlockSpec): Composition {
   const compiled = compileHelper(spec)
   if (!compiled.ok) {
     throw new Error(

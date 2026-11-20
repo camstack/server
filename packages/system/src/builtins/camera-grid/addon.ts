@@ -37,7 +37,6 @@ import type {
   CompositionSourceRef,
   DeviceProxy,
   EngineHostedBlock,
-  GridHelperSpec,
   GridLayoutPatch,
   GridLayoutView,
   HostedEngineDevice,
@@ -67,7 +66,9 @@ import {
 import { GridCameraDevice, installGridCameraRuntime } from './grid-camera-device.js'
 import { acquireWithRetry } from './acquire-retry.js'
 import {
+  type GridBlockSpec,
   type GridComposition,
+  gridBlockSourceRefs,
   gridComposition,
   gridSpecFromPatch,
   resolveGridCells,
@@ -139,7 +140,7 @@ class GridSessionEntry {
 
 /** A grid block this engine hosts: the block as last read, its cells resolved, its device. */
 interface HostedGrid {
-  readonly block: EngineHostedBlock<GridHelperSpec>
+  readonly block: EngineHostedBlock<GridBlockSpec>
   readonly layout: GridComposition
   readonly hosted: HostedEngineDevice<GridCameraDevice>
 }
@@ -345,14 +346,17 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
       return
     }
-    const read = selectEngineHostedBlocks('grid', compositions, composerRows)
-    if (read.kind === 'untrusted') {
+    const grids = selectEngineHostedBlocks('grid', compositions, composerRows)
+    const crops = selectEngineHostedBlocks('crop', compositions, composerRows)
+    if (grids.kind === 'untrusted' || crops.kind === 'untrusted') {
       this.ctx.logger.info('camera grid: the blocks are not loaded yet - nothing changes', {
-        meta: { reason: read.reason },
+        meta: { reason: grids.kind === 'untrusted' ? grids.reason : 'not loaded' },
       })
       return
     }
-    const wanted = read.blocks.filter((block) => block.enabled)
+    // A crop (#611) is a one-cell grid: both kinds are hosted by the same device path.
+    const hostable: readonly EngineHostedBlock<GridBlockSpec>[] = [...grids.blocks, ...crops.blocks]
+    const wanted = hostable.filter((block) => block.enabled)
     const { withdraw } = this.withdrawalGate.judge(
       this.grids.keys(),
       new Set(wanted.map((block) => block.blockId)),
@@ -374,7 +378,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
   /** Build (or refresh) one grid. A failure is logged per device and leaves the previous state. */
   private async hostOne(
-    block: EngineHostedBlock<GridHelperSpec>,
+    block: EngineHostedBlock<GridBlockSpec>,
     sources: SourceIndex,
   ): Promise<HostedGrid | null> {
     const previous = this.gridById(block.blockId)
@@ -418,11 +422,13 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * and named.
    */
   private layoutOf(
-    block: EngineHostedBlock<GridHelperSpec>,
+    block: EngineHostedBlock<GridBlockSpec>,
     sources: SourceIndex,
     previous: HostedGrid | null,
   ): GridComposition {
-    const blind = block.spec.cells.some((cell) => sources.unreadAddons.has(cell.source.addonId))
+    const blind = gridBlockSourceRefs(block.spec).some((ref) =>
+      sources.unreadAddons.has(ref.addonId),
+    )
     if (blind && previous !== null) return { ...previous.layout, fps: block.spec.fps }
     const { cells, unresolved } = resolveGridCells(
       block.spec,
@@ -439,9 +445,11 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
   /** One indexed read per source addon (`listAll({ addonId })`), never the fleet. */
   private async readSources(
-    blocks: readonly EngineHostedBlock<GridHelperSpec>[],
+    blocks: readonly EngineHostedBlock<GridBlockSpec>[],
   ): Promise<SourceIndex> {
-    const addonIds = new Set(blocks.flatMap((b) => b.spec.cells.map((c) => c.source.addonId)))
+    const addonIds = new Set(
+      blocks.flatMap((b) => gridBlockSourceRefs(b.spec).map((ref) => ref.addonId)),
+    )
     const ids = new Map<string, number>()
     const unreadAddons = new Set<string>()
     for (const addonId of addonIds) {
@@ -1091,6 +1099,12 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       const grid = this.gridForDevice(input.deviceId)
       if (grid === null) {
         throw new Error(`camera-grid: device ${String(input.deviceId)} is not a grid camera`)
+      }
+      if (grid.block.spec.kind !== 'grid') {
+        // A crop's rectangle is its spec, edited through its block; a layout save is a grid's.
+        throw new Error(
+          `camera-grid: device ${String(input.deviceId)} is a crop camera - its layout is not a grid's to save`,
+        )
       }
       const refs = await this.sourceRefs(input.cells.map((cell) => cell.deviceId))
       const spec = gridSpecFromPatch(grid.block.spec, input, (id) => refs.get(id) ?? null)

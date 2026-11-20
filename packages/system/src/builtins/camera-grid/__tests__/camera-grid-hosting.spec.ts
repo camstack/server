@@ -15,6 +15,7 @@ import {
   type CapabilityDefinition,
   type CompositionListRead,
   type CoreBlock,
+  type CropHelperSpec,
   type DeviceContext,
   DeviceType,
   type GridHelperSpec,
@@ -41,7 +42,11 @@ function logger(): IScopedLogger {
   } as unknown as IScopedLogger
 }
 
-function gridBlock(id: string, spec: GridHelperSpec, name = `block ${id}`): CoreBlock {
+function gridBlock(
+  id: string,
+  spec: GridHelperSpec | CropHelperSpec,
+  name = `block ${id}`,
+): CoreBlock {
   return {
     id,
     name,
@@ -270,6 +275,22 @@ describe('CameraGridAddon — grids are core blocks it hosts (planning#580)', ()
     expect(w.loadContext).toHaveBeenCalledWith('composed-g1', 4581, null, { blockId: 'g1' })
     expect(w.providers.has('stream-catalog')).toBe(true)
     expect(w.getBindings).toHaveBeenCalledWith({ deviceId: 4581 })
+    expect(w.writeDeviceStore).toHaveBeenCalledWith(4581, { analysisSilenced: true })
+  })
+
+  it('hosts a crop block (#611) on its composer row like a grid, silenced once', async () => {
+    const crop: CropHelperSpec = {
+      kind: 'crop',
+      source: { addonId: 'provider-rtsp', stableId: 'cam-a' },
+      rect: { x: 0.2, y: 0.2, width: 0.5, height: 0.5 },
+      aspect: 'free',
+      fps: 10,
+      publishedProfiles: ['mid', 'low'],
+    }
+    const w = world({ reads: [loaded(gridBlock('g1', crop))] })
+    await boot(w)
+    expect(w.loadContext).toHaveBeenCalledWith('composed-g1', 4581, null, { blockId: 'g1' })
+    expect(w.providers.has('stream-catalog')).toBe(true)
     expect(w.writeDeviceStore).toHaveBeenCalledWith(4581, { analysisSilenced: true })
   })
 
