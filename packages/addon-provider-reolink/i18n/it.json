@@ -214,13 +214,7 @@
   "schema.s_power-source.powerSource.label": "Sorgente di alimentazione",
   "schema.s_power-source.powerSource.o_adapter.label": "Alimentazione cablata",
   "schema.s_power-source.powerSource.o_battery.label": "Alimentazione a batteria",
-  "connection": {
-    "s_mailbox": {
-      "title": "Casella email delle telecamere",
-      "description": "La casella a cui le telecamere singole inviano le notifiche email.",
-      "mailboxId": {
-        "label": "Casella email delle telecamere"
-      }
-    }
-  }
+  "connection.s_mailbox.title": "Casella email delle telecamere",
+  "connection.s_mailbox.description": "La casella a cui le telecamere singole inviano le notifiche email.",
+  "connection.s_mailbox.mailboxId.label": "Casella email delle telecamere"
 }
