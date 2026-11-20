@@ -36,8 +36,10 @@ describe('resolveDefaultDetectionModel — real catalog', () => {
     expect(resolveDefaultDetectionModel('onnx', 'cpu', 'onnx')).toBe('yolov9s-320')
   })
 
-  it('ONNX CUDA (nvidia) → yolov9s-320 (unmapped → CPU default)', () => {
-    expect(resolveDefaultDetectionModel('onnx', 'cuda', 'onnx')).toBe('yolov9s-320')
+  it('ONNX CUDA (nvidia) → yolov9m-320 (nvidia-gpu class, larger than the CPU default)', () => {
+    expect(resolveDefaultDetectionModel('onnx', 'cuda', 'onnx')).toBe('yolov9m-320')
+    expect(resolveDefaultDetectionModel('cuda', null, 'onnx')).toBe('yolov9m-320')
+    expect(resolveDefaultDetectionModel('onnx', 'cpu', 'onnx')).toBe('yolov9s-320')
   })
 
   it('unknown backend → yolov9s-320', () => {

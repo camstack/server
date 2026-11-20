@@ -64,6 +64,8 @@ export function classifyInferenceHardware(hw: HardwareInfo): HardwareClassificat
   if (INTEL_CORE_ULTRA.test(cpuModel)) return { hardwareClass: 'intel-core-ultra', cpuModel }
   if (INTEL_N_SERIES.test(cpuModel)) return { hardwareClass: 'intel-n-series', cpuModel }
   if (AMD_PHOENIX.test(cpuModel)) return { hardwareClass: 'amd-phoenix', cpuModel }
+  // A usable NVIDIA card on a CPU with no measured class: the card is what the table knows.
+  if (hw.nvidia?.usable === true) return { hardwareClass: 'nvidia-gpu', cpuModel }
   return { hardwareClass: 'unknown', cpuModel }
 }
 
@@ -80,6 +82,8 @@ export function acceleratorKindOf(deviceKey: string, hw: HardwareInfo): Accelera
   if (backend === 'openvino' && device === 'gpu') return 'intel-igpu'
   // AMD iGPU via ONNX WebGPU EP (P1). NPU (vitisai:npu) lands in P2.
   if (backend === 'onnx' && device === 'webgpu') return 'amd-igpu'
+  // CUDA execution provider (device key `cuda:0` or `onnx:cuda`).
+  if (backend === 'cuda' || (backend === 'onnx' && device === 'cuda')) return 'nvidia-gpu'
   if (backend === 'vitisai' && device === 'npu') return 'amd-npu'
   const isCpu = backend === 'cpu' || device === 'cpu'
   if (isCpu) return hw.arch === 'arm64' ? 'arm-cpu' : 'x86-cpu'

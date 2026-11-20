@@ -104,7 +104,7 @@ describe('inference-device-model — pure default model map', () => {
     expect(defaultModelIdForDevice('edgetpu:usb:1')).toBe('yolov9s-320-edgetpu')
     expect(defaultModelIdForDevice('coreml:all')).toBe('yolov9m-640')
     expect(defaultModelIdForDevice('cpu')).toBe('yolov9s-320')
-    expect(defaultModelIdForDevice('cuda:gpu')).toBe('yolov9s-320')
+    expect(defaultModelIdForDevice('cuda:gpu')).toBe('yolov9m-320')
     expect(defaultModelIdForDevice('mystery:thing')).toBe('yolov9s-320')
   })
 

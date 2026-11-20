@@ -22,6 +22,7 @@ const ACCELERATOR_LABEL: Readonly<Record<string, string>> = {
   'intel-igpu': 'Intel iGPU',
   'amd-igpu': 'AMD iGPU (WebGPU)',
   'amd-npu': 'AMD XDNA NPU',
+  'nvidia-gpu': 'NVIDIA GPU (CUDA)',
   'x86-cpu': 'CPU',
   'arm-cpu': 'CPU',
   'apple-ane': 'Apple Neural Engine',
@@ -34,6 +35,7 @@ const HARDWARE_LABEL: Readonly<Record<string, string>> = {
   'apple-m-base': 'Apple M (base)',
   'apple-m-pro': 'Apple M Pro / Max / Ultra',
   'amd-phoenix': 'AMD Ryzen Phoenix / Hawk Point',
+  'nvidia-gpu': 'NVIDIA GPU (estimate)',
   unknown: 'Not measured',
 }
 

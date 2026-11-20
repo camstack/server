@@ -8,7 +8,8 @@ import { defaultModelIdForDevice } from '../inference-device-model.js'
 
 const TABLE: readonly (readonly [string, string])[] = [
   ['cpu', 'yolov9s-320'],
-  ['cuda:0', 'yolov9s-320'],
+  ['cuda:0', 'yolov9m-320'],
+  ['onnx:cuda', 'yolov9m-320'],
   ['openvino:gpu', 'yolov9m-320-int8'],
   ['openvino:npu', 'yolov9m-320-int8'],
   ['openvino:cpu', 'yolov9m-320-int8'],

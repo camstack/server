@@ -150,6 +150,18 @@ export const DETECTOR_PERF: DetectorPerfTable = {
     },
     coral: { 'yolov9s-320-edgetpu': { p50Ms: 32, fps: 31, measured: true } },
   },
+  // ESTIMATE, no hardware: mid-range NVIDIA (RTX 2060 / Turing sm_75, ~6 GB), ONNX Runtime
+  // CUDA, FP32. See detector-latency.json `nvidiaGpuMethod`. Replace with a measurement.
+  'nvidia-gpu': {
+    'nvidia-gpu': {
+      'yolov9t-320': { p50Ms: 12, fps: 83, measured: false },
+      'yolov9t-640': { p50Ms: 16, fps: 62, measured: false },
+      'yolov9s-320': { p50Ms: 13, fps: 77, measured: false },
+      'yolov9s-640': { p50Ms: 20, fps: 50, measured: false },
+      'yolov9m-320': { p50Ms: 16, fps: 62, measured: false },
+      'yolov9m-640': { p50Ms: 32, fps: 31, measured: false },
+    },
+  },
   'apple-m-pro': {
     'apple-ane': {
       'yolov9t-320': { p50Ms: 1.1, fps: 952, measured: true },

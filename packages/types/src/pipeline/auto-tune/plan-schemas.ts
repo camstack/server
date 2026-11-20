@@ -20,6 +20,9 @@ export const HardwareClassIdSchema = z.enum([
   'apple-m-base',
   'apple-m-pro',
   'amd-phoenix',
+  // A node with a usable NVIDIA card whose CPU matches no measured class. The column is an
+  // ESTIMATE for a mid-range card (RTX 2060 class), not a measurement.
+  'nvidia-gpu',
   'unknown',
 ])
 
@@ -28,6 +31,7 @@ export const AcceleratorKindSchema = z.enum([
   'intel-igpu',
   'amd-igpu',
   'amd-npu',
+  'nvidia-gpu',
   'x86-cpu',
   'arm-cpu',
   'apple-ane',

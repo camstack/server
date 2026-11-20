@@ -9,7 +9,8 @@
     "amdIgpuMethod": "scripts/bench-detector-latency-column.mjs (skill camstack-benchmark-detection): restartAddon(detection-pipeline); rearm; 1 cold + 3 warm runPipelineTest plane=frame alone; p50 = median of warm inferMs. Re-measured 2026-10-23 (all six family models, none shed) with the D845 render-node fix running: probe as uid 1001 in the agent container reported render-node=ok and providers=[WebGpuExecutionProvider], raw session.run p50 12.5 ms (t-320) and 161 ms (m-640); sysfs gpu_busy_percent rose to 20-38 % during the run. Raw: scratchpad/detector-latency-amd-phoenix-amd-igpu-20261023.json.",
     "amdIgpuStale": "The amd-phoenix/amd-igpu cells of 2026-10-10 (yolov9t-320 188 ms, slower than the ONNX CPU column at 24 ms) were the software path (D845) and were replaced on 2026-10-23; see docs/benchmarks/2026-10-10-amd-webgpu-catalog.md.",
     "n100IgpuRefresh": "intel-n-series/intel-igpu cells yolov9t-640-int8, yolov9s-640-int8, yolov9m-320-int8 and yolov9m-640-int8 were re-measured on agent-a (N100, openvino:gpu) on 2026-10-24 with scripts/bench-detector-latency-column.mjs: restartAddon(detection-pipeline), rearm, 1 cold + 3 warm runPipelineTest plane=frame object-detection alone, p50 = median of warm inferMs, fps = round(1000/p50). That fps is the single-request ceiling. The node's OpenVINO GPU pool runs one worker at concurrency 1, so the 4-in-flight fps from the 2026-10-07 transcription was not copied into these four cells. The other cells in the column are unchanged. Raw: scratchpad/lu-2026-10-24/detector-latency-intel-n-series-intel-igpu.json (gitignored). Narrative: docs/benchmarks/2026-10-24-agent-a-after-vaapi.md.",
-    "coralPcie": "Coral columns (D912): ONE cell each, yolov9s-320-edgetpu, the Coral default (D908); it is YOLOv9-s at 320, so it belongs to the YOLOv9 family D745 locks the table to, and the Edge TPU 512 build and the SSD stay out. p50 32 ms / 31 fps is the SLOWEST of the three units measured on agent-b (2026-10-22: edgetpu:usb 32, edgetpu:pci 29, edgetpu:pci:1 23 ms; same harness, 1 cold + 3 warm, docs/benchmarks/2026-10-22-coral-pcie-amd-phoenix.md second section), so a PCIe unit is sized conservatively and the one cell serves every bus. amd-phoenix/coral is measured; the other hardware classes carry the same cell as measured:false (the invoke runs on the TPU, the host only adds the bus and the Python step, and no Coral was benchmarked on those hosts). A Coral is sized only when the operator ENABLED it (D39 stays: a Coral is never enabled automatically). The other measured Coral step latencies (ssd-mobilenet-v2-coco-edgetpu 14-16 ms, bird-classifier 9-10, yunet-2023mar 22-29, yolox-tiny-plate ~61) are in the same benchmark file."
+    "coralPcie": "Coral columns (D912): ONE cell each, yolov9s-320-edgetpu, the Coral default (D908); it is YOLOv9-s at 320, so it belongs to the YOLOv9 family D745 locks the table to, and the Edge TPU 512 build and the SSD stay out. p50 32 ms / 31 fps is the SLOWEST of the three units measured on agent-b (2026-10-22: edgetpu:usb 32, edgetpu:pci 29, edgetpu:pci:1 23 ms; same harness, 1 cold + 3 warm, docs/benchmarks/2026-10-22-coral-pcie-amd-phoenix.md second section), so a PCIe unit is sized conservatively and the one cell serves every bus. amd-phoenix/coral is measured; the other hardware classes carry the same cell as measured:false (the invoke runs on the TPU, the host only adds the bus and the Python step, and no Coral was benchmarked on those hosts). A Coral is sized only when the operator ENABLED it (D39 stays: a Coral is never enabled automatically). The other measured Coral step latencies (ssd-mobilenet-v2-coco-edgetpu 14-16 ms, bird-classifier 9-10, yunet-2023mar 22-29, yolox-tiny-plate ~61) are in the same benchmark file.",
+    "nvidiaGpuMethod": "estimate (no hardware), mid-range NVIDIA reference RTX 2060 (Turing, sm_75, ~6 GB), ONNX Runtime CUDA EP, FP32. Raw session.run from published ORT-CUDA YOLO numbers on that class of card, YOLOv9 t/s/m scaled by FLOPs: ~4/5/8 ms at 320 and ~8/11/22 ms at 640; plus the ~8-10 ms pool step overhead measured on the AMD WebGPU column (decode, letterbox, IPC, postprocess), rounded up. fps = round(1000/p50). A real benchmark replaces every cell and sets measured:true."
   },
   "columns": {
     "intel-core-ultra/intel-npu": {
@@ -565,6 +566,42 @@
       "measured": false,
       "cells": {
         "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": false
+        }
+      }
+    },
+    "nvidia-gpu/nvidia-gpu": {
+      "source": "estimate (no hardware), mid-range NVIDIA reference RTX 2060 (Turing, sm_75, ~6 GB), ONNX Runtime CUDA EP, FP32. Raw session.run from published ORT-CUDA YOLO numbers on that class of card, YOLOv9 t/s/m scaled by FLOPs: ~4/5/8 ms at 320 and ~8/11/22 ms at 640; plus the ~8-10 ms pool step overhead measured on the AMD WebGPU column (decode, letterbox, IPC, postprocess), rounded up. fps = round(1000/p50). A real benchmark replaces every cell and sets measured:true.",
+      "measured": false,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 12,
+          "fps": 83,
+          "measured": false
+        },
+        "yolov9t-640": {
+          "p50Ms": 16,
+          "fps": 62,
+          "measured": false
+        },
+        "yolov9s-320": {
+          "p50Ms": 13,
+          "fps": 77,
+          "measured": false
+        },
+        "yolov9s-640": {
+          "p50Ms": 20,
+          "fps": 50,
+          "measured": false
+        },
+        "yolov9m-320": {
+          "p50Ms": 16,
+          "fps": 62,
+          "measured": false
+        },
+        "yolov9m-640": {
           "p50Ms": 32,
           "fps": 31,
           "measured": false

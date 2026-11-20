@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Schema-free per-capability state-field presence fact for addons
+- Auto tune knows an NVIDIA GPU (CUDA) column: an estimate for a mid-range card, replaced by a real benchmark
 
 ## [1.2.608] - 2026-11-20
 

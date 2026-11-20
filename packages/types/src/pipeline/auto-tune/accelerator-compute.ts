@@ -255,6 +255,11 @@ function scaleColumn(
 export function resolveLatencyColumn(input: ResolveLatencyInput): ResolvedLatencyColumn | null {
   const perf = input.perf ?? DETECTOR_PERF
   const references = input.references ?? REFERENCE_COMPUTE
+  // The card, not the host CPU, is what the nvidia-gpu column describes.
+  if (input.accelerator === 'nvidia-gpu') {
+    const card = classColumn(perf, 'nvidia-gpu', 'nvidia-gpu')
+    return card === undefined ? null : { column: card, estimatedFrom: null }
+  }
   const measured = classColumn(perf, input.hardwareClass, input.accelerator)
   // Core Ultra, Apple, Phoenix: the column is the measurement, not a scale.
   if (measured !== undefined && input.hardwareClass !== 'intel-n-series') {

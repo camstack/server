@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import type { HardwareInfo } from '../../../interfaces/platform.js'
 import type { ModelFormat } from '../../../types/models.js'
 import type { NodeRecommendation } from '../plan-schemas.js'
-import { classifyInferenceHardware } from '../hardware-class.js'
+import { acceleratorKindOf, classifyInferenceHardware } from '../hardware-class.js'
 import { type AutoTuneNodeInput, capacitySessionsOf, recommendNode } from '../recommend.js'
 
 function hw(
@@ -101,6 +101,25 @@ describe('classifyInferenceHardware', () => {
     expect(classifyInferenceHardware(hw('AMD Ryzen 5 8600G', 'x64', 'linux')).hardwareClass).toBe(
       'amd-phoenix',
     )
+  })
+
+  it('a usable NVIDIA card on an unmeasured CPU is nvidia-gpu; a measured CPU class wins', () => {
+    const card = { type: 'nvidia', name: 'RTX 2060', memoryMB: 6144, usable: true } as const
+    const withCard = (cpu: string): HardwareInfo => ({ ...hw(cpu, 'x64', 'linux'), nvidia: card })
+    expect(classifyInferenceHardware(withCard('AMD Ryzen 7 5800X')).hardwareClass).toBe(
+      'nvidia-gpu',
+    )
+    expect(classifyInferenceHardware(withCard('Intel(R) N100')).hardwareClass).toBe(
+      'intel-n-series',
+    )
+    expect(
+      classifyInferenceHardware({
+        ...withCard('AMD Ryzen 7 5800X'),
+        nvidia: { ...card, usable: false, reason: 'no-cuda-execution-provider' },
+      }).hardwareClass,
+    ).toBe('unknown')
+    expect(acceleratorKindOf('cuda:0', withCard('AMD Ryzen 7 5800X'))).toBe('nvidia-gpu')
+    expect(acceleratorKindOf('onnx:cuda', withCard('AMD Ryzen 7 5800X'))).toBe('nvidia-gpu')
   })
 })
 

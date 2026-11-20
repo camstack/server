@@ -130,7 +130,9 @@ export function defaultModelIdForDevice(deviceKey: string): string {
   // is ~1 fps there). Without this the column header named the CPU default while
   // the runner ran yolov9t-320.
   if (backend === 'onnx' && device === 'webgpu') return 'yolov9t-320'
-  // onnx / cpu / cuda / anything else → the step's CPU default (yolov9s-320).
+  // NVIDIA (ORT CUDA) — the runner's `nvidia-gpu` class (estimate, no card benchmarked).
+  if (backend === 'cuda' || (backend === 'onnx' && device === 'cuda')) return 'yolov9m-320'
+  // onnx / cpu / anything else → the step's CPU default (yolov9s-320).
   return 'yolov9s-320'
 }
 

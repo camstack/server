@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device column header names yolov9m-320 for a CUDA device
+
 ## [1.2.709] - 2026-11-19
 
 ### Changed

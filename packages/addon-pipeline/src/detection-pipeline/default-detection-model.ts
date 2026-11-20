@@ -37,6 +37,7 @@ type AcceleratorClass =
   | 'intel-gpu'
   | 'openvino-cpu'
   | 'amd-igpu'
+  | 'nvidia-gpu'
   | 'cpu'
 
 /**
@@ -66,6 +67,9 @@ const MODEL_BY_CLASS: Readonly<Record<AcceleratorClass, string>> = {
   'openvino-cpu': 'yolov9m-320-int8',
   // Warm ~192 ms on agent-b WebGPU; m-320 is ~1 fps and m-640 sheds.
   'amd-igpu': 'yolov9t-320',
+  // ESTIMATE (no card benchmarked): mid-range NVIDIA (RTX 2060 class) runs m-320 at ~16 ms
+  // FP32 through ORT CUDA; 640 stays an Auto tune / operator pick (see D745).
+  'nvidia-gpu': 'yolov9m-320',
   cpu: 'yolov9s-320',
 }
 
@@ -108,7 +112,10 @@ function classifyAccelerator(backend: string, device: string | null): Accelerato
   if (b === 'onnx' && d === 'webgpu') return 'amd-igpu'
   if (b === 'webgpu' || b === 'amd-igpu') return 'amd-igpu'
 
-  // onnx (cpu/cuda), 'cpu', 'cuda', or any unknown backend → CPU default.
+  // ONNX CUDA (NVIDIA) — device key `cuda:0` / `onnx:cuda`.
+  if (b === 'cuda' || (b === 'onnx' && d === 'cuda')) return 'nvidia-gpu'
+
+  // onnx (cpu), 'cpu', or any unknown backend → CPU default.
   return 'cpu'
 }
 
