@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alert episodes carry the alert's whole action, and notification rules gain offerAlertAction
+
 ## [1.2.612] - 2026-11-20
 
 ### Added

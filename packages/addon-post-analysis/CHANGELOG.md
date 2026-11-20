@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A sensor notification now takes a live picture of every linked camera instead of attaching the camera's cached frame, so a door sensor linked to a mains or awake battery camera no longer ships without a picture.
+- A camera's own event picture is now taken live from an awake camera instead of reusing its cached frame, and a camera just woken for a sensor notification is asked once more if its frame is still old.
+- An alert notification now carries the alert's own action: an open link on the public address, and for a custom action a one-tap button that runs it; a rule can switch it off (offerAlertAction).
+
 ## [1.2.719] - 2026-11-20
 
 ### Added
@@ -15,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A sensor notification now takes a live picture of every linked camera instead of attaching the camera's cached frame, so a door sensor linked to a mains or awake battery camera no longer ships without a picture.
-- A camera's own event picture is now taken live from an awake camera instead of reusing its cached frame, and a camera just woken for a sensor notification is asked once more if its frame is still old.
-- An alert notification now carries the alert's own action: an open link on the public address, and for a custom action a one-tap button that runs it; a rule can switch it off (offerAlertAction).
 
 ## [1.2.718] - 2026-11-19
 
