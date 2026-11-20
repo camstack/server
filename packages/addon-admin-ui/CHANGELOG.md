@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.721] - 2026-11-20
+
 ### Added
 
 - The notification rule editor can switch off the alert's own action button on a rule that fires on an alert.

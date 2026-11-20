@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.720] - 2026-11-20
+
 ### Changed
 
 - A sensor notification now takes a live picture of every linked camera instead of attaching the camera's cached frame, so a door sensor linked to a mains or awake battery camera no longer ships without a picture.

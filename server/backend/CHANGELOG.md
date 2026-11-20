@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.923] - 2026-11-20
+
 ### Changed
 
 - The alert episode event carries the alert's whole action, and notification rules gain offerAlertAction (default on).
