@@ -297,6 +297,44 @@ describe('NcLinkedStillShelf — waking a sleeping battery camera (D998)', () =>
     })
   })
 
+  it('a woken camera whose frame is still stale gets ONE more forced capture, and the fresh frame lands', async () => {
+    const calls: boolean[] = []
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async (_id, opts) => {
+        calls.push(opts?.force === true)
+        return jpeg()
+      },
+      // Stale after the wake capture, fresh after the retry.
+      getFrameCapturedAt: async () => new Map([[101, calls.length >= 2 ? 1_000 : 1_000 - 60_000]]),
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
+    expect(calls).toEqual([true, true])
+    expect(lines.some((l) => l.msg.includes('forcing once more'))).toBe(true)
+  })
+
+  it('a woken camera that is STILL stale after the retry is dropped, with no third capture', async () => {
+    const calls: boolean[] = []
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async (_id, opts) => {
+        calls.push(opts?.force === true)
+        return jpeg()
+      },
+      getFrameCapturedAt: async () => new Map([[101, 1_000 - 60_000]]),
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
+    expect(shelf.get(set.mosaicOwnerId)).toEqual([])
+    expect(calls).toEqual([true, true])
+  })
+
   it('not allowed: excluded as wake-skipped:policy and never forced', async () => {
     const lines: MetaLine[] = []
     const forced: number[] = []

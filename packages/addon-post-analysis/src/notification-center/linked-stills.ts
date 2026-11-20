@@ -349,7 +349,11 @@ export class NcLinkedStillShelf {
     let judged: readonly TileResult[]
     try {
       const results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, ctx)))
-      judged = await this.judgeFreshness(stills.sensorId, results, atMs)
+      judged = await this.retryStaleWoken(
+        ctx,
+        atMs,
+        await this.judgeFreshness(stills.sensorId, results, atMs),
+      )
     } finally {
       this.pendingWakes.delete(setId)
     }
@@ -565,6 +569,49 @@ export class NcLinkedStillShelf {
 
   private markPendingUntil(setId: string, until: number): void {
     this.pendingWakes.set(setId, Math.max(this.pendingWakes.get(setId) ?? 0, until))
+  }
+
+  /**
+   * A camera the wake just brought up can still hand back the frame it cached
+   * before sleeping: one more forced capture, inside the same live bound, and
+   * the freshness check judges it again. No loop.
+   */
+  private async retryStaleWoken(
+    ctx: SetContext,
+    atMs: number,
+    judged: readonly TileResult[],
+  ): Promise<readonly TileResult[]> {
+    const stale = judged.filter((r) => r.outcome === 'stale' && r.woken === true)
+    if (stale.length === 0) return judged
+    this.markPendingUntil(
+      ctx.setId,
+      this.deps.now() + NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS + NC_LINKED_PENDING_MARGIN_MS,
+    )
+    const retried = await Promise.all(
+      stale.map(async (r): Promise<TileResult> => {
+        this.deps.logger.info(
+          'linked camera woken but its frame is still stale — forcing once more',
+          {
+            tags: { deviceId: r.cameraId },
+            meta: { sensorId: ctx.sensorId, reason: r.reason ?? null },
+          },
+        )
+        const capture = await this.captureStill(r.cameraId, true, NC_LINKED_LIVE_CAPTURE_TIMEOUT_MS)
+        return capture.outcome === 'landed' && capture.jpeg !== undefined
+          ? {
+              cameraId: r.cameraId,
+              outcome: 'landed',
+              jpeg: capture.jpeg,
+              woken: true,
+              live: true,
+              tookMs: this.deps.now() - ctx.startedAt,
+            }
+          : r
+      }),
+    )
+    const rejudged = await this.judgeFreshness(ctx.sensorId, retried, atMs)
+    const byCamera = new Map(rejudged.map((r): [number, TileResult] => [r.cameraId, r]))
+    return judged.map((r) => byCamera.get(r.cameraId) ?? r)
   }
 
   /** A wake that brought nothing back names itself, not the generic `empty`. */

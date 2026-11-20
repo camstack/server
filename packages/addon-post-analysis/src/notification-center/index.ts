@@ -948,6 +948,12 @@ export class NotificationCenter implements NcEventConsumer {
       getSnapshot !== undefined
         ? new NcStillShelf({
             getSnapshot,
+            ...(deps.getSnapshotState !== undefined
+              ? { getSnapshotState: deps.getSnapshotState }
+              : {}),
+            ...(deps.getFrameCapturedAt !== undefined
+              ? { getFrameCapturedAt: deps.getFrameCapturedAt }
+              : {}),
             ...(deps.getPastStill !== undefined ? { getPastStill: deps.getPastStill } : {}),
             logger: this.logger.child('still-shelf'),
             now: this.now,

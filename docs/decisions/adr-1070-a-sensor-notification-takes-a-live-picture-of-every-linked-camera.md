@@ -6,6 +6,7 @@ date: 2026-11-20
 supersedes:
 applies-to:
   - packages/addon-post-analysis/src/notification-center/linked-stills.ts
+  - packages/addon-post-analysis/src/notification-center/still-shelf.ts
 ---
 
 ## Context
@@ -30,6 +31,13 @@ is never the primary picture: only when the live capture FAILS (not times out) i
 one unforced read tried, and only a frame the freshness check (10 s) accepts
 ships. The unforced re-poll loop is removed. Each camera's line says taken live
 (`live`, `liveMs`) or failed (`liveFailure`, the cause).
+
+The same rule covers the camera-own event still (`still-shelf.ts`, source
+`live`): a camera the wrapper reports awake gets one forced capture, with the same
+fallback, freshness check and `live` / `liveMs` / `liveFailure` fields; any other
+state keeps the unforced read, so a sound or a freed space never wakes a camera.
+The `past` source (a frame at the event time) is unchanged. A camera the wake just
+brought up whose frame is still stale gets ONE more forced capture, no loop.
 
 ## Consequences
 

@@ -137,6 +137,9 @@ export type NcStillSource = 'live' | 'past'
 
 /** A hanging snapshot cap must not pin a capture slot forever. */
 const SNAPSHOT_TIMEOUT_MS = 8_000
+const STATE_READ_TIMEOUT_MS = 1_000
+/** A cached fallback frame older than this at the event is not a picture of it. */
+const MAX_FALLBACK_FRAME_AGE_MS = 10_000
 
 /**
  * The bound on a PAST capture (D691). It may be served from the recordings
@@ -155,6 +158,15 @@ export const NC_PAST_STILL_TIMEOUT_MS = 32_000
 const MAX_CAPTURES = 64
 
 /** One photograph, and whatever the fetch has made of it so far. */
+type StillShot = { readonly base64: string; readonly contentType: string }
+
+/** What a LIVE capture says about itself, for the outcome line. */
+interface LiveNote {
+  readonly live?: true
+  readonly liveMs?: number
+  readonly liveFailure?: string
+}
+
 interface HeldCapture {
   readonly deviceId: number
   readonly trigger: NcStillTrigger
@@ -173,7 +185,21 @@ export interface NcStillShelfDeps {
    */
   readonly getSnapshot: (
     deviceId: number,
+    opts?: { readonly force?: boolean },
   ) => Promise<{ readonly base64: string; readonly contentType: string } | null>
+  /**
+   * The capture-free wrapper state. A camera it reports AWAKE is photographed
+   * LIVE (one forced capture — nothing to wake); any other answer, or none,
+   * keeps the unforced read, so a sound or a freed space never walks past the
+   * sleep gate.
+   */
+  readonly getSnapshotState?: (
+    deviceId: number,
+  ) => Promise<{ readonly reason: string | null } | undefined>
+  /** The capture time of the wrapper's frame; the freshness check on a fallback read. */
+  readonly getFrameCapturedAt?: (
+    deviceIds: readonly number[],
+  ) => Promise<ReadonlyMap<number, number | null>>
   /**
    * A frame of `deviceId` at the PAST instant `atMs`, cut from the clip ring
    * (D691). Absent where nothing can serve one — a `past` capture is then not
@@ -296,14 +322,15 @@ export class NcStillShelf {
   ): Promise<void> {
     try {
       const pastStill = this.deps.getPastStill
-      const pending =
-        source === 'past' && pastStill !== undefined
-          ? pastStill(deviceId, atMs)
-          : this.deps.getSnapshot(deviceId)
-      const shot = await withTimeout(
-        pending,
-        source === 'past' ? NC_PAST_STILL_TIMEOUT_MS : SNAPSHOT_TIMEOUT_MS,
-      )
+      let live: LiveNote = {}
+      let shot: StillShot | null
+      if (source === 'past' && pastStill !== undefined) {
+        shot = await withTimeout(pastStill(deviceId, atMs), NC_PAST_STILL_TIMEOUT_MS)
+      } else {
+        const taken = await this.takeNow(deviceId, atMs)
+        shot = taken.shot
+        live = taken.note
+      }
       if (shot === null || shot.base64.length === 0) {
         this.reportMiss(
           deviceId,
@@ -340,11 +367,85 @@ export class NcStillShelf {
           source,
           atMs,
           bytes: data.byteLength,
+          ...(live.live === true ? { live: true, liveMs: live.liveMs } : {}),
+          ...(live.liveFailure !== undefined ? { liveFailure: live.liveFailure } : {}),
           tookMs: this.deps.now() - held.startedAt,
         },
       })
     } catch (err) {
       this.reportMiss(deviceId, trigger, err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  /**
+   * The picture NOW: a camera the wrapper reports awake is photographed live
+   * (one forced capture, bounded). A failed live capture is followed by one
+   * unforced read, and only a frame the freshness check accepts ships; a live
+   * timeout rethrows (the camera will not answer a plain read either). Any other
+   * state keeps the unforced read.
+   */
+  private async takeNow(
+    deviceId: number,
+    atMs: number,
+  ): Promise<{ readonly shot: StillShot | null; readonly note: LiveNote }> {
+    if (!(await this.isAwake(deviceId))) {
+      return {
+        shot: await withTimeout(this.deps.getSnapshot(deviceId), SNAPSHOT_TIMEOUT_MS),
+        note: {},
+      }
+    }
+    const t0 = this.deps.now()
+    let liveFailure: string
+    try {
+      const shot = await withTimeout(
+        this.deps.getSnapshot(deviceId, { force: true }),
+        SNAPSHOT_TIMEOUT_MS,
+      )
+      if (shot !== null && shot.base64.length > 0) {
+        return { shot, note: { live: true, liveMs: this.deps.now() - t0 } }
+      }
+      liveFailure = 'empty'
+    } catch (err: unknown) {
+      if (err instanceof StillTimeout) {
+        this.deps.logger.warn('camera live capture timed out', {
+          tags: { deviceId },
+          meta: { liveMs: this.deps.now() - t0, boundMs: SNAPSHOT_TIMEOUT_MS },
+        })
+        throw err
+      }
+      liveFailure = `error: ${err instanceof Error ? err.message : String(err)}`
+    }
+    this.deps.logger.warn('camera live capture failed — trying a recent cached frame', {
+      tags: { deviceId },
+      meta: { liveMs: this.deps.now() - t0, liveFailure },
+    })
+    const cached = await withTimeout(this.deps.getSnapshot(deviceId), SNAPSHOT_TIMEOUT_MS)
+    if (cached !== null && !(await this.isRecent(deviceId, atMs))) {
+      throw new Error(`live capture failed (${liveFailure}) and the cached frame is stale`)
+    }
+    return { shot: cached, note: { liveFailure } }
+  }
+
+  private async isAwake(deviceId: number): Promise<boolean> {
+    const read = this.deps.getSnapshotState
+    if (read === undefined) return false
+    try {
+      const state = await withTimeout(read(deviceId), STATE_READ_TIMEOUT_MS)
+      return state !== undefined && state.reason === null
+    } catch {
+      return false
+    }
+  }
+
+  /** Unknown capture time keeps the frame; only a known old one drops it. */
+  private async isRecent(deviceId: number, atMs: number): Promise<boolean> {
+    const read = this.deps.getFrameCapturedAt
+    if (read === undefined) return true
+    try {
+      const at = (await withTimeout(read([deviceId]), STATE_READ_TIMEOUT_MS)).get(deviceId)
+      return at === undefined || at === null || at >= atMs - MAX_FALLBACK_FRAME_AGE_MS
+    } catch {
+      return true
     }
   }
 
@@ -384,11 +485,17 @@ export function stillShelfMedia(data: Buffer, timestamp: number): readonly Media
   return [file('keyFrameSmall'), file('keyFrame'), file('fullFrame')]
 }
 
+class StillTimeout extends Error {
+  constructor(ms: number) {
+    super(`snapshot cap timed out after ${String(ms)}ms`)
+  }
+}
+
 /** Reject if `promise` does not settle within `ms`. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error(`snapshot cap timed out after ${String(ms)}ms`))
+      reject(new StillTimeout(ms))
     }, ms)
     promise.then(
       (value) => {
