@@ -8941,7 +8941,8 @@
       "nodeLacksCapability": "{{name}} (not installed on this node)",
       "discoverNotReadyPick": "Fill in the fields above to load the list.",
       "discoverFailedPick": "Could not load the list: {{message}}.",
-      "discoverEmptyPick": "Nothing was found."
+      "discoverEmptyPick": "Nothing was found.",
+      "alreadyAdded": "{{label}} — already added as {{name}}"
     },
     "confirmActionButton": {
       "cancel": "Cancel",

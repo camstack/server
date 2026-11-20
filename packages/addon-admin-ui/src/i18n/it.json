@@ -8963,7 +8963,8 @@
       "nodeLacksCapability": "{{name}} (non installato su questo nodo)",
       "discoverNotReadyPick": "Compila i campi sopra per caricare l'elenco.",
       "discoverFailedPick": "Impossibile caricare l'elenco: {{message}}.",
-      "discoverEmptyPick": "Non è stato trovato nulla."
+      "discoverEmptyPick": "Non è stato trovato nulla.",
+      "alreadyAdded": "{{label}} — già aggiunto come {{name}}"
     },
     "confirmActionButton": {
       "cancel": "Annulla",

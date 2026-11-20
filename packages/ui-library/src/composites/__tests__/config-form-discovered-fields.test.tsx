@@ -30,6 +30,15 @@ const asked: DiscoverInput[] = []
 let candidates: readonly Candidate[] = []
 let failure: Error | null = null
 let loading = false
+let existingTargets:
+  | readonly {
+      id: string
+      name: string
+      kind: string
+      formValues: Record<string, unknown>
+    }[]
+  | undefined = []
+let destinationKeys: readonly string[] | undefined
 
 vi.mock('../../hooks/use-instances-of-cap', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../hooks/use-instances-of-cap')>()
@@ -65,6 +74,13 @@ vi.mock('../../hooks/use-instances-of-cap', async (importOriginal) => {
 })
 
 vi.mock('../../generated/system-hooks', () => ({
+  useIntegrationInstancesListInstances: () => ({
+    data: existingTargets,
+    isError: false,
+  }),
+  useNotificationOutputListTargetKinds: () => ({
+    data: [{ kind: 'homeassistant', destinationKeys }],
+  }),
   useNotificationOutputDiscoverTargets: (
     input: DiscoverInput,
     options: { readonly enabled: boolean },
@@ -166,6 +182,8 @@ describe('select with discoverOptions', () => {
   beforeEach(() => {
     asked.length = 0
     failure = null
+    existingTargets = []
+    destinationKeys = undefined
     candidates = [
       {
         kind: 'homeassistant',
@@ -206,6 +224,41 @@ describe('select with discoverOptions', () => {
     expect(screen.getByTestId('values').textContent).toContain('"service":"mobile_app_pixel_7"')
   })
 
+  it('shows a candidate that is already a target as taken, and cannot pick it', async () => {
+    existingTargets = [
+      {
+        id: 't1',
+        name: 'My phone',
+        kind: 'homeassistant',
+        formValues: { service: 'mobile_app_pixel_7', brokerId: 'b1' },
+      },
+    ]
+    render(<Form />)
+    selectOption(screen.getAllByRole('combobox')[0]!, 'b1')
+    await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(2), {
+      timeout: 3000,
+    })
+    fireEvent.change(screen.getAllByRole('combobox')[1]!, { target: { value: 'pixel' } })
+    expect(screen.getByTestId('config-select-service-option-mobile_app_pixel_7')).toHaveTextContent(
+      'Pixel 7 — already added as My phone',
+    )
+    fireEvent.click(screen.getByTestId('config-select-service-option-mobile_app_pixel_7'))
+    expect(screen.getByTestId('values').textContent).not.toContain('mobile_app_pixel_7')
+  })
+
+  it('offers every candidate normally while the existing targets are unanswered', async () => {
+    existingTargets = undefined
+    render(<Form />)
+    selectOption(screen.getAllByRole('combobox')[0]!, 'b1')
+    await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(2), {
+      timeout: 3000,
+    })
+    fireEvent.change(screen.getAllByRole('combobox')[1]!, { target: { value: 'pixel' } })
+    expect(
+      screen.getByTestId('config-select-service-option-mobile_app_pixel_7'),
+    ).not.toHaveTextContent('Already added')
+  })
+
   it('keeps free text when the fetch fails, saying why', async () => {
     failure = new Error('broker unreachable')
     render(<Form initial={{ brokerId: 'b1' }} />)
@@ -238,7 +291,11 @@ describe('select with discoverOptions', () => {
 
 const servicesField: ConfigField = {
   ...serviceField,
-  discoverOptions: { kind: 'homeassistant', dependsOn: ['brokerId'], multiple: true },
+  discoverOptions: {
+    kind: 'homeassistant',
+    dependsOn: ['brokerId'],
+    multiple: true,
+  },
 }
 
 function ManyForm({ initial = {} }: { readonly initial?: Record<string, unknown> }) {

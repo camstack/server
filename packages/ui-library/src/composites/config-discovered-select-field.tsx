@@ -10,17 +10,25 @@
  */
 import { useMemo, type JSX } from 'react'
 import type { ConfigSelectField } from '@camstack/types'
-import { useNotificationOutputDiscoverTargets } from '../generated/system-hooks'
+import {
+  useIntegrationInstancesListInstances,
+  useNotificationOutputDiscoverTargets,
+  useNotificationOutputListTargetKinds,
+} from '../generated/system-hooks'
 import { useUiText } from '../contexts/ui-text'
 import { useDebouncedString } from '../hooks/use-debounced-string'
 import { Input } from '../primitives/input'
 import { OptionSelect } from './option-select/OptionSelect'
+import type { OptionSelectOption } from './option-select/option-select-model'
+import { findAdoptedTarget, type AdoptedTarget } from './discovered-adoption'
 
 const TYPING_DEBOUNCE_MS = 500
 
 export interface DiscoveredOption {
   readonly value: string
   readonly label: string
+  /** The name of the existing target this candidate already is; absent when it is new or not yet known. */
+  readonly adoptedBy?: string
 }
 
 type ConfigValue = string | number | boolean
@@ -48,6 +56,7 @@ function optionsFrom(
     readonly config: Record<string, unknown>
   }[],
   key: string,
+  adopted: (config: Record<string, unknown>) => string | undefined,
 ): readonly DiscoveredOption[] {
   const seen = new Set<string>()
   const options: DiscoveredOption[] = []
@@ -55,7 +64,12 @@ function optionsFrom(
     const raw = candidate.config[key]
     if (typeof raw !== 'string' || raw === '' || seen.has(raw)) continue
     seen.add(raw)
-    options.push({ value: raw, label: candidate.suggestedName })
+    const adoptedBy = adopted(candidate.config)
+    options.push({
+      value: raw,
+      label: candidate.suggestedName,
+      ...(adoptedBy !== undefined ? { adoptedBy } : {}),
+    })
   }
   return options
 }
@@ -90,8 +104,32 @@ export function useDiscoveredOptions(
     { kind, config },
     { enabled: ready && settled, retry: false },
   )
+  // Existing targets count only once their query ANSWERED; until then nothing is marked.
+  const existing = useIntegrationInstancesListInstances({}, { enabled: ready, retry: false })
+  const kinds = useNotificationOutputListTargetKinds({}, { enabled: ready, retry: false })
+  const adoptedList = useMemo<readonly AdoptedTarget[] | undefined>(
+    () =>
+      !Array.isArray(existing.data) || existing.isError
+        ? undefined
+        : existing.data.map((instance) => ({
+            id: instance.id,
+            name: instance.name,
+            kind: instance.kind,
+            values: instance.formValues,
+          })),
+    [existing.data, existing.isError],
+  )
+  const identityKeys = (Array.isArray(kinds.data) ? kinds.data : []).find(
+    (entry) => entry.kind === kind,
+  )?.destinationKeys
   const found =
-    ready && settled && query.data !== undefined ? optionsFrom(query.data, field.key) : []
+    ready && settled && query.data !== undefined
+      ? optionsFrom(
+          query.data,
+          field.key,
+          (config) => findAdoptedTarget(kind, config, identityKeys, adoptedList)?.name,
+        )
+      : []
   return { ready, settled, query, found }
 }
 
@@ -111,7 +149,24 @@ export function ConfigDiscoveredSelectControl({
   readonly controlId: string
 }): JSX.Element {
   const t = useUiText()
-  const { ready, settled, query, found } = useDiscoveredOptions(field, values)
+  const { ready, settled, query, found: discovered } = useDiscoveredOptions(field, values)
+  // A candidate that already is a target cannot be added again; the one being edited (the stored
+  // value) and the ones already ticked stay selectable.
+  const keep = new Set([...pickedValues(value), ...(typeof value === 'string' ? [value] : [])])
+  const found = discovered.map(
+    (option): OptionSelectOption =>
+      option.adoptedBy !== undefined && !keep.has(option.value)
+        ? {
+            value: option.value,
+            label: t(
+              'uiLibrary.configFormField.alreadyAdded',
+              '{{label}} — already added as {{name}}',
+              { label: option.label, name: option.adoptedBy },
+            ),
+            disabled: true,
+          }
+        : { value: option.value, label: option.label },
+  )
 
   const current = value === undefined || value === null ? '' : String(value)
   const disabledNow = disabled || field.disabled
