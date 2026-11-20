@@ -471,8 +471,8 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
   )
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex shrink-0 items-center justify-between gap-3 flex-wrap">
         <FilterChips
           typeOptions={typeFilterOptions}
           selectedTypes={url.state.types}
@@ -544,53 +544,63 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
           least one device is selected. Responsive: full toolbar at sm+, a
           compact menu at L1 (handled inside DeviceBatchActionsBar). */}
       {batchActions !== undefined && batchActive && (
-        <DeviceBatchActionsBar
-          selectedIds={activeSelected}
-          onClear={clearSelection}
-          remove={batchActions.remove}
-          disable={batchActions.disable}
-          enable={batchActions.enable}
-        />
+        <div className="shrink-0">
+          <DeviceBatchActionsBar
+            selectedIds={activeSelected}
+            onClear={clearSelection}
+            remove={batchActions.remove}
+            disable={batchActions.disable}
+            enable={batchActions.enable}
+          />
+        </div>
       )}
 
-      {isEmpty ? (
-        <DeviceListEmptyState
-          variant={integrationPending ? 'pending' : isFiltered ? 'filtered' : 'nofilter'}
-          onClearFilters={isFiltered && !integrationPending ? url.clearFilters : undefined}
-        />
-      ) : (
-        <TagEntriesProvider value={tagRegistry.entries}>
-          <ContainerChildrenProvider value={grouped.accessoriesByParent}>
-            {showTagGroups ? (
-              <div className="space-y-4" data-testid="tag-groups-devices">
-                {pageTagGroupRows.map((group) => (
-                  <section
-                    key={group.key}
-                    className="space-y-1.5"
-                    aria-label={group.tag ?? t('uiLibrary.tags.untagged', 'No tag')}
-                  >
-                    <h4 className="flex items-center gap-2 text-xs font-medium text-foreground-muted">
-                      {group.tag === null ? (
-                        t('uiLibrary.tags.untagged', 'No tag')
-                      ) : (
-                        <TagChip name={group.tag} entries={tagRegistry.entries} />
-                      )}
-                      <span className="tabular-nums text-foreground-subtle">{group.total}</span>
-                    </h4>
-                    <RowModelsProvider
-                      deviceIds={rowModelDeviceIds(group.rows, grouped.accessoriesByParent)}
+      {/* The rows own the leftover height and scroll inside it, so the toolbar
+          above and the pager below stay put and the table fills a page that
+          gives this list a height. Under a parent of auto height (a nested
+          list inside an expanded integration row) it simply sizes to content. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {isEmpty ? (
+          <DeviceListEmptyState
+            variant={integrationPending ? 'pending' : isFiltered ? 'filtered' : 'nofilter'}
+            onClearFilters={isFiltered && !integrationPending ? url.clearFilters : undefined}
+          />
+        ) : (
+          <TagEntriesProvider value={tagRegistry.entries}>
+            <ContainerChildrenProvider value={grouped.accessoriesByParent}>
+              {showTagGroups ? (
+                <div className="space-y-4" data-testid="tag-groups-devices">
+                  {pageTagGroupRows.map((group) => (
+                    <section
+                      key={group.key}
+                      className="space-y-1.5"
+                      aria-label={group.tag ?? t('uiLibrary.tags.untagged', 'No tag')}
                     >
-                      {renderTable(group.rows)}
-                    </RowModelsProvider>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <RowModelsProvider deviceIds={rowModelIds}>{renderTable(pageRows)}</RowModelsProvider>
-            )}
-          </ContainerChildrenProvider>
-        </TagEntriesProvider>
-      )}
+                      <h4 className="flex items-center gap-2 text-xs font-medium text-foreground-muted">
+                        {group.tag === null ? (
+                          t('uiLibrary.tags.untagged', 'No tag')
+                        ) : (
+                          <TagChip name={group.tag} entries={tagRegistry.entries} />
+                        )}
+                        <span className="tabular-nums text-foreground-subtle">{group.total}</span>
+                      </h4>
+                      <RowModelsProvider
+                        deviceIds={rowModelDeviceIds(group.rows, grouped.accessoriesByParent)}
+                      >
+                        {renderTable(group.rows)}
+                      </RowModelsProvider>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <RowModelsProvider deviceIds={rowModelIds}>
+                  {renderTable(pageRows)}
+                </RowModelsProvider>
+              )}
+            </ContainerChildrenProvider>
+          </TagEntriesProvider>
+        )}
+      </div>
 
       {/* Bottom controls — per-page size selector + total count alongside the
        * pager. Rendered whenever the table list is non-empty so the size can
@@ -604,7 +614,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
        * the standalone total is the only count. The "Per page" selector is
        * always visible (list non-empty). */}
       {!isEmpty && (
-        <div className="flex items-center justify-between gap-4 flex-wrap pt-2 text-[11px] text-foreground-subtle">
+        <div className="flex shrink-0 items-center justify-between gap-4 flex-wrap pt-2 text-[11px] text-foreground-subtle">
           <div className="inline-flex items-center gap-2">
             {totalItems <= tablePageSize && (
               <span>
@@ -640,7 +650,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
        * integration, so the "filtered by X" line is redundant. Pagination
        * is the only useful overall affordance there, and it lives above. */}
       {forceIntegrationId === undefined && isFiltered && totalItems > 0 && (
-        <p className="text-[11px] text-foreground-subtle">
+        <p className="shrink-0 text-[11px] text-foreground-subtle">
           {effectiveAddons.length > 0 ? (
             <UiTrans
               uiKey="uiLibrary.deviceModeList.showingFiltered"

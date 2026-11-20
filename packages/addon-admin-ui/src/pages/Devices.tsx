@@ -176,6 +176,9 @@ export function DevicesPage(): ReactNode {
     <AdminPage
       icon={Camera}
       title={t('nav.devices', 'Devices')}
+      // The list fills the page and scrolls inside; with orphans listed below
+      // the page flows naturally instead and the outer area scrolls.
+      fill={orphanDevices.length === 0}
       actions={
         <>
           <Button variant="outline" size="sm" onClick={() => navigate(BROWSE_INTEGRATIONS_URL)}>

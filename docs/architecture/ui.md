@@ -683,7 +683,7 @@ means never run** and must never render as 1 Jan 1970.
 
 The `device-admin-link` cap answers "where is this device's own management
 page", and the answer appears twice: as the `DeviceWebInterfaceCard` base card
-in the device detail's info tab (`components/device/DeviceWebInterfaceCard.tsx`)
+in the device quick-detail panel (`components/device/DeviceWebInterfaceCard.tsx`)
 and as a bordered pill in the device detail header
 (`components/device/DeviceAdminLinkButton.tsx`), between the camera function
 switches and the kebab — ahead of the kebab because it OPENS something rather

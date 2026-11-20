@@ -16,7 +16,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { ResponsiveTypeFilter } from './type-filter'
-import type { MultiSelectOption } from './multi-select'
+import { useFloatingListbox, type MultiSelectOption } from './multi-select'
+import { TopLayerPortal } from '../../primitives/top-layer-portal'
 
 export interface FilterChipsAddonOption {
   readonly id: string
@@ -123,13 +124,16 @@ function IntegrationMultiSelect({
   const t = useUiText()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const { listRef, coords } = useFloatingListbox(open, rootRef)
 
   // Dismiss on outside click / tap / Escape.
   useEffect(() => {
     if (!open) return
     const onOutside = (e: MouseEvent | TouchEvent): void => {
-      const target = e.target as Node | null
-      if (target && rootRef.current && !rootRef.current.contains(target)) setOpen(false)
+      const target = e.target instanceof Node ? e.target : null
+      if (!target) return
+      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return
+      setOpen(false)
     }
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') setOpen(false)
@@ -175,10 +179,20 @@ function IntegrationMultiSelect({
         </span>
         <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
       </button>
-      {open && (
-        <div
+      {open && coords !== null && typeof document !== 'undefined' && (
+        <TopLayerPortal
+          anchor={rootRef}
+          surfaceRef={listRef}
           role="listbox"
-          className="absolute left-0 top-full mt-1 z-30 min-w-[180px] max-h-72 overflow-y-auto rounded-lg border border-border bg-surface shadow-xl py-1"
+          // ui-check-ok: fixed portal anchor from trigger getBoundingClientRect (same as Select)
+          style={{
+            position: 'fixed',
+            top: coords.top,
+            left: coords.left,
+            minWidth: coords.width,
+            maxHeight: coords.maxHeight,
+          }}
+          className="z-50 overflow-y-auto rounded-lg border border-border bg-surface shadow-xl py-1"
         >
           {count > 0 && (
             <button
@@ -216,7 +230,7 @@ function IntegrationMultiSelect({
               </button>
             )
           })}
-        </div>
+        </TopLayerPortal>
       )}
     </div>
   )

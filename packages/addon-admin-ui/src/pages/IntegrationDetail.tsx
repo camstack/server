@@ -471,7 +471,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   return (
     // `overflow-x-hidden`: the nested DeviceList table scrolls its own body
     // (sticky NAME + inner x-scroll); the page frame never h-scrolls.
-    <div className="p-4 space-y-4 overflow-x-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-x-hidden p-4">
       <Breadcrumb
         items={[
           {
@@ -644,34 +644,36 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           `forceIntegrationId` so the integration-chip group is hidden. URL
           scope is 'root' because this IS the root view for the page (no
           nesting). */}
-      <DeviceList
-        context="integration-detail"
-        devices={deviceList}
-        trpc={system.trpcClient}
-        integrationOf={integrationOf}
-        forceIntegrationId={integrationId}
-        urlScope="root"
-        lsKey={`integration-detail:${integration.addonId}`}
-        resolveIntegrationIcon={deviceIntegrationIcon}
-        resolveParent={resolveParent}
-        onNavigate={onDeviceNavigate}
-        rowOperation={removal.rowOperation}
-        batchActions={{
-          remove: removal.remove,
-          disable: disableMutation.mutate,
-          enable: enableMutation.mutate,
-        }}
-        // Built-in confirmed per-row delete (table feature). The table renders
-        // the red trash + the centered "Delete device?" confirm itself; we only
-        // declare the destructive action. Replaces the former renderRowAction +
-        // ad-hoc confirm stopgap.
-        // A fixed integration's devices belong to the addon that declared them:
-        // removing one leaves a hub that recreates it on the next boot, which
-        // reads as a bug rather than as the refusal it is.
-        {...(isFixed
-          ? {}
-          : { onDeleteDevice: (d: { id: number }) => removal.remove({ deviceId: d.id }) })}
-      />
+      <div className="min-h-0 flex-1">
+        <DeviceList
+          context="integration-detail"
+          devices={deviceList}
+          trpc={system.trpcClient}
+          integrationOf={integrationOf}
+          forceIntegrationId={integrationId}
+          urlScope="root"
+          lsKey={`integration-detail:${integration.addonId}`}
+          resolveIntegrationIcon={deviceIntegrationIcon}
+          resolveParent={resolveParent}
+          onNavigate={onDeviceNavigate}
+          rowOperation={removal.rowOperation}
+          batchActions={{
+            remove: removal.remove,
+            disable: disableMutation.mutate,
+            enable: enableMutation.mutate,
+          }}
+          // Built-in confirmed per-row delete (table feature). The table renders
+          // the red trash + the centered "Delete device?" confirm itself; we only
+          // declare the destructive action. Replaces the former renderRowAction +
+          // ad-hoc confirm stopgap.
+          // A fixed integration's devices belong to the addon that declared them:
+          // removing one leaves a hub that recreates it on the next boot, which
+          // reads as a bug rather than as the refusal it is.
+          {...(isFixed
+            ? {}
+            : { onDeleteDevice: (d: { id: number }) => removal.remove({ deviceId: d.id }) })}
+        />
+      </div>
 
       {showAddDevice && integrationId && integrationKind !== null && (
         <AddDeviceModal

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The heat pump's Customize tab offers Electrical power and Electrical energy sources
 
+### Fixed
+
+- Devices list fills its page, the Add device dialog keeps its logs and Save footer visible on the manual tab, and the device Overview no longer repeats the web interface link
+
 ## [1.2.717] - 2026-11-20
 
 ### Changed

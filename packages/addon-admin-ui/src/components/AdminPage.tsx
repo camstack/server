@@ -18,6 +18,8 @@ interface AdminPageProps {
    * section does not stack a second page chrome.
    */
   readonly embedded?: boolean
+  /** Fill the parent height; an inner list owns the scroll (`PageShell fill`). */
+  readonly fill?: boolean
   readonly children: ReactNode
 }
 
@@ -28,11 +30,19 @@ export function AdminPage({
   actions,
   nav,
   embedded = false,
+  fill = false,
   children,
 }: AdminPageProps) {
   if (embedded) return <>{children}</>
   return (
-    <PageShell icon={icon} title={title} subtitle={subtitle} actions={actions} nav={nav}>
+    <PageShell
+      icon={icon}
+      title={title}
+      subtitle={subtitle}
+      actions={actions}
+      nav={nav}
+      fill={fill}
+    >
       {children}
     </PageShell>
   )

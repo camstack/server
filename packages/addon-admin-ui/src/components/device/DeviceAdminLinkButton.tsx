@@ -2,7 +2,7 @@
  * <DeviceAdminLinkButton> — the device-detail header's "open this device's own
  * config page" action.
  *
- * Same answer as the info tab's `DeviceWebInterfaceCard`, from the SAME hook
+ * Same answer as the quick-detail `DeviceWebInterfaceCard`, from the SAME hook
  * (`useDeviceAdminLink`), deliberately: two surfaces that derived the gate
  * separately would sooner or later disagree about one device, and the operator
  * would be right to believe whichever one told him there was a page.

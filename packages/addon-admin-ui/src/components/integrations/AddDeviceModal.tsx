@@ -28,6 +28,9 @@ import { AddDeviceForm, useManualCreationAvailability } from './AddDeviceDialog'
 import { AdoptDevicesPanel } from './AdoptDevicesModal'
 import { NetworkCandidatesPanel } from './NetworkCandidatesPanel'
 
+/** Keeps the dialog's flex column unbroken down to a panel's DialogBody. */
+const TAB_CHAIN = 'flex min-h-0 flex-1 flex-col'
+
 type TabId = 'network' | 'manual' | 'pairing'
 
 /** A pairing tab an integration adds beside the network and manual ones (a Matter share code). */
@@ -124,8 +127,11 @@ export function AddDeviceModal({
   const body = (): ReactElement => {
     if (tabCount > 1) {
       return (
-        <Tabs value={active} onValueChange={(v) => setPicked(toTabId(v))}>
-          <TabsList>
+        // Every wrapper between the dialog and a panel's DialogBody stays a
+        // flex column with min-h-0, or the body cannot scroll and the dialog
+        // clips the test logs and the footer off its bottom.
+        <Tabs value={active} onValueChange={(v) => setPicked(toTabId(v))} className={TAB_CHAIN}>
+          <TabsList className="shrink-0">
             {hasNetwork && (
               <TabsTrigger value="network">
                 {t('integrations.addDeviceModal.tabNetwork', 'Found on the network')}
@@ -138,8 +144,16 @@ export function AddDeviceModal({
             )}
             {pairing !== undefined && <TabsTrigger value="pairing">{pairing.label}</TabsTrigger>}
           </TabsList>
-          {hasNetwork && <TabsContent value="network">{network}</TabsContent>}
-          {hasManual && <TabsContent value="manual">{form}</TabsContent>}
+          {hasNetwork && (
+            <TabsContent value="network" className={TAB_CHAIN}>
+              {network}
+            </TabsContent>
+          )}
+          {hasManual && (
+            <TabsContent value="manual" className={TAB_CHAIN}>
+              {form}
+            </TabsContent>
+          )}
           {/* Hidden, not unmounted: a commission in flight survives a tab switch. */}
           {pairing !== undefined && (
             <div

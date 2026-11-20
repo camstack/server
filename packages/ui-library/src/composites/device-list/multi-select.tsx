@@ -1,5 +1,11 @@
 import { useUiText } from '../../contexts/ui-text'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { TopLayerPortal } from '../../primitives/top-layer-portal'
+import {
+  computeListboxCoords,
+  isScrollInside,
+  type ListboxCoords,
+} from '../../lib/listbox-position'
 import { Check, ChevronDown, type LucideIcon } from 'lucide-react'
 
 export interface MultiSelectOption {
@@ -27,6 +33,43 @@ export interface MultiSelectDropdownProps {
  * horizontal room the container has. Shared by the device list's generic-mode
  * type filter and any other multi-select needs.
  */
+const LIST_MIN_WIDTH_PX = 180
+
+/**
+ * Anchors a dropdown list to its trigger in viewport coordinates, so the list
+ * can be portalled out of any scroll / overflow ancestor (a table's scroll
+ * area would otherwise grow scrollbars when the list opens). It follows the
+ * trigger on scroll and resize.
+ */
+export function useFloatingListbox(
+  open: boolean,
+  triggerRef: RefObject<HTMLElement | null>,
+): { readonly listRef: RefObject<HTMLDivElement | null>; readonly coords: ListboxCoords | null } {
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const [coords, setCoords] = useState<ListboxCoords | null>(null)
+  useLayoutEffect(() => {
+    if (!open) {
+      setCoords(null)
+      return
+    }
+    const update = (): void => {
+      const trigger = triggerRef.current
+      if (trigger) setCoords(computeListboxCoords(trigger, { minWidth: LIST_MIN_WIDTH_PX }))
+    }
+    update()
+    const onScroll = (event: Event): void => {
+      if (!isScrollInside(event, listRef.current)) update()
+    }
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [open, triggerRef])
+  return { listRef, coords }
+}
+
 export function MultiSelectDropdown({
   label,
   options,
@@ -38,12 +81,15 @@ export function MultiSelectDropdown({
   const t = useUiText()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const { listRef, coords } = useFloatingListbox(open, rootRef)
 
   useEffect(() => {
     if (!open) return
     const onOutside = (e: MouseEvent | TouchEvent): void => {
       const target = e.target instanceof Node ? e.target : null
-      if (target && rootRef.current && !rootRef.current.contains(target)) setOpen(false)
+      if (!target) return
+      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return
+      setOpen(false)
     }
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') setOpen(false)
@@ -87,10 +133,20 @@ export function MultiSelectDropdown({
         </span>
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
-        <div
+      {open && coords !== null && typeof document !== 'undefined' && (
+        <TopLayerPortal
+          anchor={rootRef}
+          surfaceRef={listRef}
           role="listbox"
-          className="absolute left-0 top-full mt-1 z-30 min-w-[180px] max-h-72 overflow-y-auto rounded-lg border border-border bg-surface shadow-xl py-1"
+          // ui-check-ok: fixed portal anchor from trigger getBoundingClientRect (same as Select)
+          style={{
+            position: 'fixed',
+            top: coords.top,
+            left: coords.left,
+            minWidth: coords.width,
+            maxHeight: coords.maxHeight,
+          }}
+          className="z-50 overflow-y-auto rounded-lg border border-border bg-surface shadow-xl py-1"
         >
           {count > 0 && (
             <button
@@ -130,7 +186,7 @@ export function MultiSelectDropdown({
               </div>
             )
           })}
-        </div>
+        </TopLayerPortal>
       )}
     </div>
   )
