@@ -559,7 +559,10 @@
           "gif": "GIF"
         }
       },
-      "searchRules": "Search rules"
+      "searchRules": "Search rules",
+      "offerAlertAction": "Offer the alert’s action",
+      "offerAlertActionAria": "offer the alert’s action",
+      "offerAlertActionHint": "The notification carries the alert’s own button, such as signing in again."
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simulate an event",

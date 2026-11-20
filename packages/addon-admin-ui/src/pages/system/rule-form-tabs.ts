@@ -118,6 +118,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
       'snoozeAllowGlobal',
       'snoozeOptions',
       'askVerdict',
+      'offerAlertAction',
       'cooldownSec',
       'cooldownScope',
       'cooldownGranularity',

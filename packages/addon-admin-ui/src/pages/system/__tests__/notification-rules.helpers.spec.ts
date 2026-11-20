@@ -165,6 +165,41 @@ describe('"Ask me to confirm detections" round-trips (#243)', () => {
   })
 })
 
+describe('"Offer the alert\u2019s action" round-trips', () => {
+  const alertForm = {
+    ...emptyRuleForm('system-event'),
+    name: 'x',
+    targetIds: ['t1'],
+    conditions: { systemEvent: { kinds: ['alert-critical' as const] } },
+  }
+
+  it('writes nothing until the operator touches it (absent = on)', () => {
+    expect(buildRuleInput(alertForm).offerAlertAction).toBeUndefined()
+  })
+
+  it('writes an explicit false, and an explicit true to switch a stored false back on', () => {
+    expect(buildRuleInput({ ...alertForm, offerAlertAction: false }).offerAlertAction).toBe(false)
+    expect(buildRuleInput({ ...alertForm, offerAlertAction: true }).offerAlertAction).toBe(true)
+  })
+
+  it('survives an edit', () => {
+    const rule = sampleRule({
+      delivery: 'system-event',
+      conditions: { systemEvent: { kinds: ['alert-error'] } },
+      offerAlertAction: false,
+    })
+    expect(buildRuleInput(ruleToForm(rule)).offerAlertAction).toBe(false)
+  })
+
+  it('never reaches the hub from a rule that is not on an alert kind', () => {
+    const device = {
+      ...alertForm,
+      conditions: { systemEvent: { kinds: ['node-offline' as const] } },
+    }
+    expect(buildRuleInput({ ...device, offerAlertAction: false }).offerAlertAction).toBeUndefined()
+  })
+})
+
 describe('the throttle survives a save', () => {
   it('carries `granularity` through an edit', () => {
     // It did NOT: `buildRuleInput` rebuilt the throttle from `cooldownSec` and

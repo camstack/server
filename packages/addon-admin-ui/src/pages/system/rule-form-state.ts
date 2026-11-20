@@ -196,6 +196,11 @@ export interface NcRuleFormState {
    */
   readonly askVerdict: boolean | undefined
   /**
+   * "Offer the alert's action". `undefined` = absent on the rule = ON; only an
+   * explicit `false` switches it off.
+   */
+  readonly offerAlertAction: boolean | undefined
+  /**
    * What the rule ACTUATES, and the buttons its notification carries.
    *
    * Authored as one block because a button references an Action by id — two
@@ -430,6 +435,7 @@ export function emptyRuleForm(
     // buttons, and the hub's defaults are the right answer for one.
     snoozeOptions: undefined,
     askVerdict: undefined,
+    offerAlertAction: undefined,
     actions: EMPTY_RULE_ACTIONS,
     cooldownSec: NC_DEFAULT_COOLDOWN_SEC,
     // The store's own defaults (`NcThrottleSchema`): per camera, one window
@@ -479,6 +485,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
     // restore the defaults on the next save.
     snoozeOptions: rule.snoozeOptions,
     askVerdict: rule.askVerdict,
+    offerAlertAction: rule.offerAlertAction,
     actions: actionsToForm(rule.actions),
     cooldownSec: rule.throttle.cooldownSec,
     cooldownScope: rule.throttle.scope,
@@ -752,6 +759,21 @@ function keepGroupWithin(prev: NcRuleFormState, next: NcRuleFormState): NcRuleFo
  */
 export function verdictApplies(form: Pick<NcRuleFormState, 'delivery'>): boolean {
   return form.delivery === 'immediate' || form.delivery === 'track-end'
+}
+
+/** System-event kinds whose notification can carry the alert's own action. */
+const ALERT_ACTION_KINDS: ReadonlySet<string> = new Set([
+  'alert-critical',
+  'alert-error',
+  'device-attention-required',
+])
+
+/**
+ * Can this rule offer an alert's action? Only a rule whose trigger is a system
+ * event of an alert kind — any other rule has no alert to take the action from.
+ */
+export function alertActionApplies(form: Pick<NcRuleFormState, 'conditions'>): boolean {
+  return (form.conditions.systemEvent?.kinds ?? []).some((kind) => ALERT_ACTION_KINDS.has(kind))
 }
 
 export function groupingIsSent(

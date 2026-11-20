@@ -36,6 +36,7 @@ import {
   isStateSummaryForm,
   type NcRuleFormState,
   systemEventDeliveryForSave,
+  alertActionApplies,
   verdictApplies,
 } from './rule-form-state'
 
@@ -397,6 +398,12 @@ export function buildRuleInput(
     // either way: `false` is what switches a stored `true` off.
     ...(form.askVerdict !== undefined && verdictApplies(form)
       ? { askVerdict: form.askVerdict }
+      : {}),
+    // Absent = on. Written only once the operator touched it, and only while
+    // the trigger is an alert kind; an explicit `true` is what switches a
+    // stored `false` back on (a patch merge keeps the stored value otherwise).
+    ...(form.offerAlertAction !== undefined && alertActionApplies(form)
+      ? { offerAlertAction: form.offerAlertAction }
       : {}),
     // Not authored here, carried verbatim: on an edit the merge would keep
     // them anyway, but a DUPLICATE is a create and would lose them.

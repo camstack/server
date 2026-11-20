@@ -175,6 +175,7 @@ import {
   ruleTabsFor,
   ruleToForm,
   snoozeChoiceLabel,
+  alertActionApplies,
   verdictApplies,
   withLocalConditionDescriptors,
 } from './notification-rules.helpers'
@@ -1577,6 +1578,30 @@ function RuleFormDialog({
                 {t(
                   'system.notificationRules.askVerdictHint',
                   'The notification carries Correct and Wrong. A tap marks the detection for retraining, the same mark as in the Library, and records who was asked and when. Channels with no buttons (email, Pushover, Gotify, WhatsApp, Discord) get the same two choices as links.',
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* The alert's own action: only a rule on an alert kind has one. */}
+          {alertActionApplies(form) && (
+            <div>
+              <label className="flex items-center gap-2 text-[11px] font-medium text-foreground">
+                <Switch
+                  checked={form.offerAlertAction !== false}
+                  onCheckedChange={(next) => patch({ offerAlertAction: next })}
+                  aria-label={t(
+                    'system.notificationRules.offerAlertActionAria',
+                    'offer the alert’s action',
+                  )}
+                  data-testid="rule-offer-alert-action"
+                />
+                {t('system.notificationRules.offerAlertAction', 'Offer the alert’s action')}
+              </label>
+              <p className="text-[10px] text-foreground-subtle mt-1">
+                {t(
+                  'system.notificationRules.offerAlertActionHint',
+                  'The notification carries the alert’s own button, such as signing in again.',
                 )}
               </p>
             </div>

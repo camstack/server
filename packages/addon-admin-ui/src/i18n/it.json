@@ -559,7 +559,10 @@
           "gif": "GIF"
         }
       },
-      "searchRules": "Cerca regole"
+      "searchRules": "Cerca regole",
+      "offerAlertAction": "Offri l’azione dell’avviso",
+      "offerAlertActionAria": "offri l’azione dell’avviso",
+      "offerAlertActionHint": "La notifica porta il pulsante dell’avviso stesso, ad esempio accedere di nuovo."
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simula un evento",
