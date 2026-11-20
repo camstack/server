@@ -15,14 +15,15 @@
  * server-side degrade engine ever runs — the `renderedAs` report then
  * confirms what actually happened on the wire.
  */
-import type {
-  Attachment,
-  AttachmentMediaType,
-  Notification,
-  NotificationAction,
-  NotificationFormat,
-  TargetKindCaps,
-  TargetKindLevel,
+import {
+  deliverableFields,
+  type Attachment,
+  type AttachmentMediaType,
+  type Notification,
+  type NotificationAction,
+  type NotificationFormat,
+  type TargetKindCaps,
+  type TargetKindLevel,
 } from '@camstack/types'
 import { hubPath } from '../../lib/mount'
 import i18n from '../../i18n/index'
@@ -61,6 +62,9 @@ export interface VisibleControls {
   readonly levels: readonly TargetKindLevel[]
   readonly formats: readonly NotificationFormat[]
   readonly bodyMaxLen: number
+  /** The kind delivers a title / a body (`deliverableFields`, the one reading of `caps.text`). */
+  readonly showTitle: boolean
+  readonly showBody: boolean
   /** Media-type URL slots to render (the kind's `mediaTypes`). */
   readonly attachmentSlots: readonly AttachmentMediaType[]
   readonly attachmentMode: TargetKindCaps['attachments']['mode']
@@ -107,7 +111,10 @@ const NON_EMPTY = (s: string | undefined): s is string => typeof s === 'string' 
 
 /** Which controls a kind's caps expose. */
 export function visibleControls(caps: TargetKindCaps): VisibleControls {
+  const delivered = deliverableFields(caps)
   return {
+    showTitle: delivered.includes('title'),
+    showBody: delivered.includes('body'),
     levels: caps.levels,
     formats: caps.format,
     bodyMaxLen: caps.bodyMaxLen,
@@ -177,11 +184,13 @@ export function composeTestSample(caps: TargetKindCaps, form: TestFormState): No
   const actions = resolveActions(caps, form.actions)
   const ttlSeconds = caps.ttl && NON_EMPTY(form.ttl) ? Number(form.ttl) : undefined
 
+  const delivered = deliverableFields(caps)
   const sample: Notification = {
-    body: form.body,
+    // `body` is required by the schema; a kind that does not deliver one is sent an empty one.
+    body: delivered.includes('body') ? form.body : '',
     format: resolveFormat(caps, form.format),
     priority: clampPriority(form.priority),
-    ...(NON_EMPTY(form.title) ? { title: form.title } : {}),
+    ...(delivered.includes('title') && NON_EMPTY(form.title) ? { title: form.title } : {}),
     ...(level ? { level } : {}),
     ...(attachments.length > 0 ? { attachments } : {}),
     ...(actions.length > 0 ? { actions } : {}),
@@ -191,6 +200,28 @@ export function composeTestSample(caps: TargetKindCaps, form: TestFormState): No
     ...(NON_EMPTY(form.tag) ? { tag: form.tag } : {}),
   }
   return sample
+}
+
+/**
+ * Whether the form carries something to send: the text field the kind actually
+ * delivers must be filled (the body when it delivers one, else the title).
+ */
+export function canSendTest(caps: TargetKindCaps, form: TestFormState): boolean {
+  const delivered = deliverableFields(caps)
+  if (delivered.includes('body')) return form.body.length > 0
+  if (delivered.includes('title')) return form.title.length > 0
+  return true
+}
+
+/** Keep a preset's text in a field the kind delivers: no body, the message goes in the title. */
+function fitText(caps: TargetKindCaps, form: TestFormState): TestFormState {
+  const delivered = deliverableFields(caps)
+  const hasBody = delivered.includes('body')
+  const hasTitle = delivered.includes('title')
+  if (hasBody && hasTitle) return form
+  if (hasBody) return { ...form, title: '' }
+  if (hasTitle) return { ...form, title: form.body.length > 0 ? form.body : form.title, body: '' }
+  return { ...form, title: '', body: '' }
 }
 
 function clampPriority(p: number): number {
@@ -263,7 +294,8 @@ export function availablePresets(caps: TargetKindCaps): readonly TestPresetId[] 
   }
   if (caps.actions > 0) out.push('actions')
   if (caps.levels.length > 0) out.push('critical')
-  out.push('overflow')
+  // The overflow probe is a body longer than the limit: pointless on a kind that delivers none.
+  if (deliverableFields(caps).includes('body')) out.push('overflow')
   return out
 }
 
@@ -286,6 +318,10 @@ function mediaPreset(
  * control the kind doesn't have. Pure — the panel calls it to seed state.
  */
 export function buildPreset(caps: TargetKindCaps, preset: TestPresetId): TestFormState {
+  return fitText(caps, buildRawPreset(caps, preset))
+}
+
+function buildRawPreset(caps: TargetKindCaps, preset: TestPresetId): TestFormState {
   const base = emptyForm(caps)
   switch (preset) {
     case 'text':

@@ -39,6 +39,7 @@ import { useMemo, useState } from 'react'
 import {
   availablePresets,
   buildPreset,
+  canSendTest,
   composeTestSample,
   emptyForm,
   type TestFormState,
@@ -103,7 +104,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
   const [result, setResult] = useState<TestResult | null>(null)
 
   const sample = useMemo(() => composeTestSample(kind.caps, form), [kind.caps, form])
-  const bodyLen = form.body.length
+  const bodyLen = controls.showBody ? form.body.length : 0
   const overflow = bodyLen > controls.bodyMaxLen
 
   const patch = (p: Partial<TestFormState>): void => setForm((prev) => ({ ...prev, ...p }))
@@ -272,30 +273,34 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
           )}
 
           {/* Title + body */}
-          <div>
-            <label className={LABEL_CLASS}>
-              {t('system.notificationTestPanel.testTitle', 'Title')}
-            </label>
-            <Input
-              className={FIELD_CLASS}
-              value={form.title}
-              onChange={(e) => patch({ title: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>
-              {t('system.notificationTestPanel.body')}{' '}
-              <span className={overflow ? 'text-danger' : 'text-foreground-subtle'}>
-                ({bodyLen}/{controls.bodyMaxLen}
-                {overflow ? ` — ${t('system.notificationTestPanel.overflow')}` : ''})
-              </span>
-            </label>
-            <Textarea
-              className={`${FIELD_CLASS} min-h-[80px] resize-y`}
-              value={form.body}
-              onChange={(e) => patch({ body: e.target.value })}
-            />
-          </div>
+          {controls.showTitle && (
+            <div>
+              <label className={LABEL_CLASS}>
+                {t('system.notificationTestPanel.testTitle', 'Title')}
+              </label>
+              <Input
+                className={FIELD_CLASS}
+                value={form.title}
+                onChange={(e) => patch({ title: e.target.value })}
+              />
+            </div>
+          )}
+          {controls.showBody && (
+            <div>
+              <label className={LABEL_CLASS}>
+                {t('system.notificationTestPanel.body')}{' '}
+                <span className={overflow ? 'text-danger' : 'text-foreground-subtle'}>
+                  ({bodyLen}/{controls.bodyMaxLen}
+                  {overflow ? ` — ${t('system.notificationTestPanel.overflow')}` : ''})
+                </span>
+              </label>
+              <Textarea
+                className={`${FIELD_CLASS} min-h-[80px] resize-y`}
+                value={form.body}
+                onChange={(e) => patch({ body: e.target.value })}
+              />
+            </div>
+          )}
 
           {/* Attachments */}
           {controls.attachmentSlots.length > 0 && (
@@ -434,7 +439,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
           <Button
             size="sm"
             type="button"
-            disabled={testMutation.isPending || form.body.length === 0}
+            disabled={testMutation.isPending || !canSendTest(kind.caps, form)}
             onClick={() => testMutation.mutate()}
           >
             {testMutation.isPending ? (

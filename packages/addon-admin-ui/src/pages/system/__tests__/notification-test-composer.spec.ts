@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest'
 import {
   availablePresets,
   buildPreset,
+  canSendTest,
   composeTestSample,
   criticalLevel,
   emptyForm,
@@ -385,5 +386,62 @@ describe('buildPreset', () => {
   it('actions preset for a no-action kind yields no actions', () => {
     const s = composeTestSample(pushover, buildPreset(pushover, 'actions'))
     expect(s.actions).toBeUndefined()
+  })
+})
+
+// ── A kind that delivers only a title (`caps.text`, e.g. a speaker) ──
+
+const speech: TargetKindCaps = {
+  attachments: { mediaTypes: [], mode: 'bytes', max: 0 },
+  actions: 0,
+  levels: [],
+  format: ['text'],
+  clickUrl: false,
+  sound: false,
+  ttl: false,
+  bodyMaxLen: 200,
+  text: { title: true, body: false },
+}
+
+describe('a title-only kind', () => {
+  it('shows the title and no body', () => {
+    expect(visibleControls(speech)).toMatchObject({ showTitle: true, showBody: false })
+    expect(visibleControls(ntfy)).toMatchObject({ showTitle: true, showBody: true })
+  })
+
+  it('sends the title and an empty body', () => {
+    const sample = composeTestSample(speech, {
+      ...emptyForm(speech),
+      title: 'Hello',
+      body: 'ignored',
+    })
+    expect(sample.title).toBe('Hello')
+    expect(sample.body).toBe('')
+  })
+
+  it('gates Send on the title, not the body', () => {
+    expect(canSendTest(speech, emptyForm(speech))).toBe(false)
+    expect(canSendTest(speech, { ...emptyForm(speech), title: 'Hello' })).toBe(true)
+  })
+
+  it('a both-kind still needs the body', () => {
+    expect(canSendTest(ntfy, { ...emptyForm(ntfy), title: 'Hello' })).toBe(false)
+    expect(canSendTest(ntfy, { ...emptyForm(ntfy), body: 'Hello' })).toBe(true)
+  })
+
+  it('presets carry the message in the title and offer no overflow probe', () => {
+    const form = buildPreset(speech, 'text')
+    expect(form.body).toBe('')
+    expect(form.title.length).toBeGreaterThan(0)
+    expect(canSendTest(speech, form)).toBe(true)
+    expect(availablePresets(speech)).not.toContain('overflow')
+    expect(availablePresets(ntfy)).toContain('overflow')
+  })
+
+  it('a body-only kind never sends a title', () => {
+    const bodyOnly: TargetKindCaps = { ...speech, text: { title: false, body: true } }
+    const sample = composeTestSample(bodyOnly, { ...emptyForm(bodyOnly), title: 'X', body: 'Y' })
+    expect(sample.title).toBeUndefined()
+    expect(sample.body).toBe('Y')
   })
 })
