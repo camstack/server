@@ -234,6 +234,9 @@ describe('every Customize target reaches a composed device (D1004)', () => {
       'fan-control.vertical-sweepFrom',
       'fan-control.vertical-sweepTo',
       'fan-control.preset',
+      // A heat pump's electrical readings: replace links on its own heat-pump-status.
+      'heat-pump-status.electrical-power',
+      'heat-pump-status.electrical-energy',
       'lock-control.door-contact',
       'motion.detected',
     ])
