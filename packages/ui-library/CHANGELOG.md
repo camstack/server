@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.484] - 2026-11-20
+
 ### Changed
 
 - A Select list that opens above its field now sits right over it instead of floating far above, and a select with a default value no longer offers the empty "— Select —" entry.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.922] - 2026-11-20
+
 ### Changed
 
 - A stream source can declare its maximum session length (maxSessionMs) and the broker re-dials it before the limit, announcing the restart through a new StreamBrokerOnSourceRestart event

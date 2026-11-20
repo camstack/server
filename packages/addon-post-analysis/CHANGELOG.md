@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.719] - 2026-11-20
+
 ### Added
 
 - A notification rule on a device fault can be narrowed to fault codes; the message can use {{faultCode}}, {{faultLabel}} and {{faults}}

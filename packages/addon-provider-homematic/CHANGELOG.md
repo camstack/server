@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.209] - 2026-11-20
+
 ### Added
 
 - The CCU gateway and its devices declare their fault codes, so a rule can pick them

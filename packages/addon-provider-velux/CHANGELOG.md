@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.173] - 2026-11-20
+
 ### Changed
 
 - The Velux gateway reports its session as faults on the error capability: connection-lost while the session is down, unreachable after 2 minutes, auth-failed when the login is refused; cleared on connect.

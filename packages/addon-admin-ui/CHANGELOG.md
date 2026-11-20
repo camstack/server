@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.720] - 2026-11-20
+
 ### Added
 
 - The notification rule editor offers a fault-code picker (the codes the integration declares, or free text) for device-needs-attention rules
