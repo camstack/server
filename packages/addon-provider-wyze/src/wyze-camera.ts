@@ -48,6 +48,7 @@ import {
 } from './mapping.js'
 import { keyframeToJpeg } from './snapshot-ffmpeg.js'
 import { wyzeCameraSchema } from './schema.js'
+import { registerWyzeStateRefresh } from './wyze-state-refresh.js'
 import { WyzeStreamServerManager } from './wyze-stream-server.js'
 
 /**
@@ -79,7 +80,6 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
   private readonly streamManager: WyzeStreamServerManager
   private deps: WyzeCameraDeps | null = null
   private readonly publishedStreamIds = new Set<string>()
-  private cloudMotionTimer: ReturnType<typeof setInterval> | null = null
   private lastMotionEventTs = 0
   /** Codec of the materialised stream — h264 until the lib reports H265. */
   private currentCodec: 'h264' | 'h265' = 'h264'
@@ -312,42 +312,37 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
   }
 
   /**
-   * Start the configured motion source. `cloud` polls the Wyze events API
-   * (works while the camera sleeps); `boa` reads the on-camera SD-card
-   * poller — only available while a P2P session is open, so it is wired
-   * lazily when a stream materialises (out of scope for the poll loop).
+   * Start the configured motion source. `cloud` is read by the core's
+   * `device-state-refresh` (D1062: it owns the cadence, this camera owns no
+   * timer); `boa` reads the on-camera SD-card poller — only available while a
+   * P2P session is open, so it is wired lazily when a stream materialises.
    */
   private startMotionPolling(): void {
     if (this.config.get('motionSource') !== 'cloud') return
-    if (this.cloudMotionTimer) return
-    const POLL_MS = 15_000
-    this.cloudMotionTimer = setInterval(() => {
-      void this.pollCloudMotion()
-    }, POLL_MS)
+    registerWyzeStateRefresh({
+      ctx: this.ctx,
+      integrationId: this.config.get('integrationId'),
+      mac: this.config.get('mac'),
+      readMotion: () => this.pollCloudMotion(),
+    })
   }
 
+  /** One read of the cloud events; throws when the cloud cannot answer, so the core backs off. */
   private async pollCloudMotion(): Promise<void> {
     const cloud = this.deps?.cloud() ?? null
-    if (!cloud) return
+    if (!cloud) throw new Error('Wyze cloud client is not signed in')
     const mac = this.config.get('mac')
-    try {
-      const events = await cloud.getEventList({ macs: [mac], count: 10 })
-      let newest: { timestamp: number; aiTags: readonly string[] } | null = null
-      for (const ev of events) {
-        if (ev.deviceMac !== mac || ev.alarmType !== 'motion') continue
-        if (newest === null || ev.timestamp > newest.timestamp) {
-          newest = { timestamp: ev.timestamp, aiTags: ev.aiTags }
-        }
+    const events = await cloud.getEventList({ macs: [mac], count: 10 })
+    let newest: { timestamp: number; aiTags: readonly string[] } | null = null
+    for (const ev of events) {
+      if (ev.deviceMac !== mac || ev.alarmType !== 'motion') continue
+      if (newest === null || ev.timestamp > newest.timestamp) {
+        newest = { timestamp: ev.timestamp, aiTags: ev.aiTags }
       }
-      if (!newest || newest.timestamp <= this.lastMotionEventTs) return
-      this.lastMotionEventTs = newest.timestamp
-      this.emitMotion(newest.timestamp)
-    } catch (err) {
-      this.ctx.logger.debug('motion: cloud event poll failed', {
-        tags: { deviceId: this.id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
     }
+    if (!newest || newest.timestamp <= this.lastMotionEventTs) return
+    this.lastMotionEventTs = newest.timestamp
+    this.emitMotion(newest.timestamp)
   }
 
   /**
@@ -530,10 +525,6 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
 
   override async removeDevice(): Promise<void> {
     this.ctx.logger.info('Removing Wyze camera', { meta: { stableId: this.stableId } })
-    if (this.cloudMotionTimer) {
-      clearInterval(this.cloudMotionTimer)
-      this.cloudMotionTimer = null
-    }
     await this.endTalk()
     // Close-first: tear down the P2P session BEFORE retracting streams.
     await this.streamManager.close('removeDevice')

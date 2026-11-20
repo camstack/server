@@ -47,6 +47,9 @@ export const MIGRATED: readonly string[] = [
   // The connect retry, the orphan sweep rerun and the call limiter keep timers that read no state.
   'packages/addon-provider-homematic/src/devices/homematic-gateway-device.ts',
   'packages/addon-provider-homematic/src/homematic-state-refresh.ts',
+  // Wyze: the cloud motion read moved to the core; the stream server's idle timer and the ffmpeg deadline are not polls.
+  'packages/addon-provider-wyze/src/wyze-camera.ts',
+  'packages/addon-provider-wyze/src/wyze-state-refresh.ts',
 ]
 
 const LOOP = /\bset(?:Interval|Timeout)\s*\(|\bpoll(?:Timer|Loop)\b|#?startPollLoop\b/
