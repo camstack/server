@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.480] - 2026-11-20
+
 ### Changed
 
 - The camera grid's per-cell crop canvas is now a shared piece, and its rectangle and grips use the theme's primary colour

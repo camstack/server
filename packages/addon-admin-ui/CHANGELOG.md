@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.714] - 2026-11-20
+
 ### Changed
 
 - New Crop camera in Build-your-self: pick a camera and draw the section to show on its snapshot, with 16:9, 4:3, 1:1 and free ratios; an existing crop camera reopens the same editor
