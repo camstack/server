@@ -2291,6 +2291,58 @@
       "summary": "ButtonHeroCard — large press-actuator card for the device-detail hero area."
     },
     {
+      "name": "CameraCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/camera/CameraCard.tsx",
+      "summary": "A camera: the state chips on top, the host's scene full width under them, and the recorded history under that. The scene is the host's player with its own toolbar, so chips sit in a row above it, never over it. It is …",
+      "props": [
+        {
+          "name": "common",
+          "type": "CardCommon",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "chips",
+          "type": "readonly CameraChip[]",
+          "optional": false,
+          "doc": "State chips drawn over the top of the scene; only the facts the device knows."
+        },
+        {
+          "name": "scene",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The camera's live / snapshot view, owned by the host (the device page's player)."
+        },
+        {
+          "name": "history",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The recorded series under the scene; null when the device records none."
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "cameraChipsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/camera-chips-model.ts",
+      "summary": "The state chips over a camera's scene, from generic caps only: charge level (`battery`), where the power comes from (`battery.charging`), asleep or awake (`low-power-sleep`, else the battery's own flag) and the last m…"
+    },
+    {
       "name": "CameraGridLayoutEditor",
       "kind": "component",
       "area": "composites",
@@ -3879,6 +3931,28 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedActionCards.tsx",
       "summary": "A `button`: fire-only, so the card is a press and nothing else."
+    },
+    {
+      "name": "ConnectedCameraCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedCameraCard.tsx",
+      "summary": "The card of a camera: the host's scene full width, state chips from the generic `battery`, `low-power-sleep` and `motion` caps over it, and the device history (the same view the History tab drew) under it — only once …",
+      "propsExtends": ["ConnectedCardProps"],
+      "props": [
+        {
+          "name": "scene",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The camera's live / snapshot view with its current play behaviour. The host owns it (the admin device page mounts its stream panel), so the "
+        },
+        {
+          "name": "onNavigate",
+          "type": "(path: string) => void",
+          "optional": true,
+          "doc": "Navigates inside the host app from a history chart's menu."
+        }
+      ]
     },
     {
       "name": "connectedCardKindOf",
@@ -20499,6 +20573,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-device-cap-slice.ts",
       "summary": "Read an arbitrary cap's runtime-state slice by its raw kebab-case name."
+    },
+    {
+      "name": "useDeviceCardFrame",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "The frame the nearest asks for (default `card`)."
     },
     {
       "name": "useDeviceCommand",

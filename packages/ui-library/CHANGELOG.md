@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device list type and integration filters open above the table instead of adding scrollbars, and the list scrolls inside the height it is given
 
+### Changed
+
+- A camera device card: the live view full width with state chips (charge, power source, asleep or awake, last motion) over it and the device history under it
+
 ## [1.2.482] - 2026-11-20
 
 ### Added

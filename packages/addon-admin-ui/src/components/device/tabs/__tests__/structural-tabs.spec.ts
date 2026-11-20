@@ -13,7 +13,6 @@ describe('structural tabs — Customize (D676 ruling 1)', () => {
       'overview',
       'config',
       'customize',
-      'history',
       'detection-pipeline',
       'bindings',
     ])
@@ -27,7 +26,6 @@ describe('structural tabs — Customize (D676 ruling 1)', () => {
     expect(structuralTabsFor('camera', false, true).map((t) => t.id)).toEqual([
       'overview',
       'config',
-      'history',
       'detection-pipeline',
       'bindings',
     ])
@@ -35,9 +33,13 @@ describe('structural tabs — Customize (D676 ruling 1)', () => {
 })
 
 describe('structural tabs — History (D899)', () => {
-  it('every real device with recorded series has a History tab, for admins and viewers alike', () => {
+  it('every real non-camera device with recorded series has a History tab, for admins and viewers alike', () => {
     expect(structuralTabsFor('climate', false, true).map((t) => t.id)).toContain('history')
     expect(structuralTabsFor('dishwasher', true, true).map((t) => t.id)).toContain('history')
+  })
+  it('a camera has none — its card embeds the history under the scene', () => {
+    expect(structuralTabsFor('camera', true, true).map((t) => t.id)).not.toContain('history')
+    expect(structuralTabsFor('camera', false, true).map((t) => t.id)).not.toContain('history')
   })
   it('a container has none — device-history does not record it', () => {
     expect(structuralTabsFor('container', true, true).map((t) => t.id)).not.toContain('history')

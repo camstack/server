@@ -10977,7 +10977,17 @@
           "underMinute": "<1m"
         }
       },
-      "onMotion": "On motion"
+      "onMotion": "On motion",
+      "camera": {
+        "asleep": "Asleep",
+        "awake": "Awake",
+        "history": "History",
+        "motionNow": "Motion now",
+        "motionSince": "Motion {{since}} ago",
+        "onBattery": "Battery",
+        "solar": "Solar",
+        "wired": "Wired"
+      }
     },
     "language": "en",
     "measurement": {

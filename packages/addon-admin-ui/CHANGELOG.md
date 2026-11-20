@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Devices list fills its page, the Add device dialog keeps its logs and Save footer visible on the manual tab, and the device Overview no longer repeats the web interface link
 - Add no longer offers an integration kind the system creates itself (the Reolink standalone-cameras integration)
 
+### Changed
+
+- A camera's device page shows its history inside the camera card, so the camera no longer has a separate History tab
+
 ## [1.2.718] - 2026-11-20
 
 ### Added

@@ -47,8 +47,9 @@ export interface StructuralTab {
 /** The device page's History tab id (`?tab=history`). */
 export const HISTORY_TAB_ID = 'history'
 
-// `history` (D899) is structural on every REAL device that has recorded
-// series: its body is the library's `DeviceHistoryView`, not a schema.
+// `history` (D899) is structural on every REAL non-camera device that has
+// recorded series: its body is the library's `DeviceHistoryView`, not a schema.
+// A camera's card embeds that same view under its scene, so a camera has no tab.
 // device-history records nothing for a container (D850), and a device whose
 // bound caps declare no `history` (a gateway) has no series — neither gets an
 // empty tab. The series gate is the caller's `historyTabVisible` answer: a
@@ -107,6 +108,6 @@ export function structuralTabsFor(
     (t) =>
       (isCamera || !t.cameraOnly) &&
       (isAdmin || !t.adminOnly) &&
-      (recorded || t.id !== HISTORY_TAB_ID),
+      (t.id !== HISTORY_TAB_ID || (recorded && !isCamera)),
   ).map(({ id, labelKey }) => ({ id, label: i18n.t(labelKey) }))
 }

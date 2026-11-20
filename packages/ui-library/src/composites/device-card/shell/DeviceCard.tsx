@@ -65,6 +65,11 @@ export interface DeviceCardFrameProviderProps {
   readonly children: ReactNode
 }
 
+/** The frame the nearest {@link DeviceCardFrameProvider} asks for (default `card`). */
+export function useDeviceCardFrame(): DeviceCardFrame {
+  return useContext(DeviceCardFrameContext)
+}
+
 /** Frames every device card below it — a host page that draws the frame itself. */
 export function DeviceCardFrameProvider({
   frame,

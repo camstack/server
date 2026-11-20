@@ -10999,7 +10999,17 @@
           "underMinute": "<1m"
         }
       },
-      "onMotion": "Al movimento"
+      "onMotion": "Al movimento",
+      "camera": {
+        "asleep": "In standby",
+        "awake": "Sveglia",
+        "history": "Storico",
+        "motionNow": "Movimento ora",
+        "motionSince": "Movimento {{since}} fa",
+        "onBattery": "Batteria",
+        "solar": "Solare",
+        "wired": "Alimentata"
+      }
     },
     "language": "it",
     "measurement": {

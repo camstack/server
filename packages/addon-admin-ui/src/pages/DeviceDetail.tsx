@@ -10,6 +10,7 @@ import {
 import {
   BatteryBadge,
   Breadcrumb,
+  ConnectedCameraCard,
   DeviceCardFrameProvider,
   Button,
   type ContainerChild,
@@ -494,7 +495,8 @@ export function DeviceDetailPage() {
     for (const t of [
       ...structuralTabsFor(deviceTypeStr, isAdmin, hasHistory).filter(
         // The module's hero opens History itself (D1023): a drawn hero owns it.
-        (tab) => !(tab.id === HISTORY_TAB_ID && modelDrawn && !isCamera),
+        // A camera never has the tab: its card embeds the history.
+        (tab) => !(tab.id === HISTORY_TAB_ID && modelDrawn),
       ),
       ...addonTabs,
       ...childAddonTabs,
@@ -505,16 +507,7 @@ export function DeviceDetailPage() {
       out.push(t)
     }
     return out
-  }, [
-    deviceTypeStr,
-    isAdmin,
-    hasHistory,
-    addonTabs,
-    childAddonTabs,
-    showConfigTab,
-    modelDrawn,
-    isCamera,
-  ])
+  }, [deviceTypeStr, isAdmin, hasHistory, addonTabs, childAddonTabs, showConfigTab, modelDrawn])
 
   // Effective active tab — the desired id from the URL if (and only if)
   // it's present in the available `tabs`, else 'overview'. We do NOT
@@ -1361,7 +1354,7 @@ export function DeviceDetailPage() {
                     <div
                       className={
                         isCamera
-                          ? 'flex-shrink-0 border-b border-border-subtle bg-black'
+                          ? 'flex-shrink-0 border-b border-border-subtle bg-surface'
                           : isMobile
                             ? // Mobile stacks the columns; the whole <main> scrolls,
                               // so the hero keeps its natural height here.
@@ -1375,10 +1368,25 @@ export function DeviceDetailPage() {
                       }
                     >
                       {isCamera ? (
-                        <StreamPanelContent
-                          deviceId={deviceId}
-                          intercomAvailable={capabilities.includes(DeviceFeature.TwoWayAudio)}
-                        />
+                        // The page header already names the camera: the card is
+                        // bare, and embeds the stream panel as its scene.
+                        <div data-card-frame="bare" className="p-2 sm:p-4">
+                          <DeviceCardFrameProvider frame="bare">
+                            <ConnectedCameraCard
+                              deviceId={deviceId}
+                              showName={false}
+                              onNavigate={(path) => navigate(path)}
+                              scene={
+                                <StreamPanelContent
+                                  deviceId={deviceId}
+                                  intercomAvailable={capabilities.includes(
+                                    DeviceFeature.TwoWayAudio,
+                                  )}
+                                />
+                              }
+                            />
+                          </DeviceCardFrameProvider>
+                        </div>
                       ) : (
                         // A plain wrapper: the hero's `h-full` must not resolve
                         // against the slot, or it claims the widgets' height too.

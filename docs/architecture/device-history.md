@@ -339,7 +339,9 @@ happened.
 
 ## Where it is read (UI, D899)
 
-- **A device's History tab** (`?tab=history` on every real device) and the
+- **A device's History tab** (`?tab=history` on every real non-camera device
+  whose card is not drawn; a camera has none — its device card embeds the same
+  view under the scene) and the
   camera's **Live Stats** tab (fixed to the last 24 h) are one component,
   `DeviceHistoryView` (`packages/ui-library/src/composites/device-history/`):
   `listSeries`, then `queryMany` in batches of 24 with `resolution: 'auto'`.
