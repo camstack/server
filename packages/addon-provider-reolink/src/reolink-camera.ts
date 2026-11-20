@@ -148,7 +148,11 @@ import {
   HubChildPatchRefusedError,
   judgeHubChildPatch,
 } from './hub-child-settings.js'
-import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
+import {
+  decideSleepCommit,
+  type SleepCommitSource,
+  shouldIgnoreSleepPush,
+} from './sleep-state-decision.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
 import { repointWebhookOnce } from './webhook-generation.js'
@@ -876,6 +880,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * `sleep-state-decision.ts` for the measurement (D603).
    */
   private sleepStateChangedAt = 0
+  /** True once the 'sleep push ignored' line was logged for the current consumer-attached stretch. */
+  private sleepPushIgnoreLogged = false
   /**
    * Wall-clock ms of the last PROACTIVE wake — one we issued on our own
    * initiative (background snapshot refresh), not because the operator
@@ -12036,6 +12042,21 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
 
     if (event.type === 'sleeping') {
+      // A consumer (recorder, live view) holds the stream: the camera is
+      // being kept awake on purpose, so a `sleeping` push neither commits
+      // sleep nor tears the stream down (that teardown cut a recorded
+      // battery camera into 40-110 s gaps). Logged once per stretch.
+      if (this.isBattery && shouldIgnoreSleepPush({ activeStreams: this.active.size })) {
+        if (!this.sleepPushIgnoreLogged) {
+          this.sleepPushIgnoreLogged = true
+          this.ctx.logger.info(
+            `sleep push ignored: ${this.active.size} active stream consumer(s)`,
+            { tags: { deviceId: this.id }, meta: { activeStreams: this.active.size } },
+          )
+        }
+        return
+      }
+      this.sleepPushIgnoreLogged = false
       const wasSleeping = this.sleeping
       // Everything below is gated on an ACCEPTED transition (as before —
       // the gate used to be `acceptSleepingTransition`, now folded into
