@@ -16,6 +16,7 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
+import type { NativeCropLeaseFacts } from '../../session-decode/video-frame-generator.js'
 import { ParkedFrameStore } from '../../session-decode/parked-frame-store.js'
 import {
   parkTrackFrame,
@@ -167,9 +168,9 @@ describe('parkTrackFrame (runner side)', () => {
   })
 
   describe('the refusal line tells the three causes apart', () => {
-    const lease = {
+    const lease: NativeCropLeaseFacts = {
       sessionId: 4,
-      workerState: 'live' as const,
+      workerState: 'live',
       sessionAgeMs: 90_000,
       framesSinceFrame: 2,
       holdFrames: 8,
@@ -177,7 +178,7 @@ describe('parkTrackFrame (runner side)', () => {
       openImages: 3,
     }
 
-    async function refuse(handleAgeMs: number, leaseFacts: typeof lease): Promise<unknown> {
+    async function refuse(handleAgeMs: number, leaseFacts: NativeCropLeaseFacts): Promise<unknown> {
       const spy = makeLoggerSpy()
       const clock = [31_000, 31_020]
       const deps = makeDeps({
