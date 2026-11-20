@@ -4,7 +4,7 @@
 
 # Decisions
 
-1033 architecture decision records. One file per decision, never
+1034 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1046,6 +1046,7 @@ that rots.
 | D1064 | [A machine an integration talks to is a Host; a Gateway exists only when necessary](adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md) | ✅ accepted | 2026-11-18 |
 | D1065 | [A pipeline step is switched per cluster, node and device; a camera toggles only what the cluster allows](adr-1065-a-step-is-switched-per-cluster-node-and-device-and-the-camera-toggles-only-what-the-cluster-allows.md) | ✅ accepted | 2026-11-18 |
 | D1066 | [The hub registry row is the only stored switch of an instance, and a registry read never calls an addon](adr-1066-the-hub-registry-row-is-the-only-stored-switch-of-an-instance-reads-never-call-an-addon.md) | ✅ accepted (supersedes D1015) | 2026-11-19 |
+| D1067 | [A crop is a derived camera, a one-cell composition on the camera grid engine, never a stream of its source](adr-1067-a-crop-is-a-derived-camera-a-one-cell-composition-never-a-stream-of-its-source.md) | ✅ accepted | 2026-11-20 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

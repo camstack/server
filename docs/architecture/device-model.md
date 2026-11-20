@@ -927,6 +927,24 @@ left out. **Unlocking a lock group is refused unless the call says
 sent or recorded without it, and the device page asks first. Locking needs no
 confirmation. The per-member outcome of every fan-out is on `group-commands`.
 
+### A crop camera: a derived camera showing one section of its source ([D1067](../decisions/adr-1067-a-crop-is-a-derived-camera-a-one-cell-composition-never-a-stream-of-its-source.md))
+
+A crop is a helper kind, `crop`, a sibling of `grid`. Its spec
+(`CropHelperSpec` in `packages/types/src/composition/helpers/spec.ts`) names one
+source, a normalized rectangle on that source, a ratio preset (16:9 by default,
+4:3, 1:1 or Free) and the profiles it publishes. The crop is a new device with
+its own profiles. It is never a stream published on the source camera, so the
+source's own profiles are not changed.
+
+The camera-grid engine serves a crop and a grid through the same provider. A crop
+compiles to a one-cell layout whose cell covers the whole canvas and whose source
+rectangle is the crop. Its profiles, sizing, no-upscale rule and detection mapping
+are the grid's. Detections of the source are mapped onto the crop, and a box
+outside the crop is not drawn. Output is always re-encoded. `saveGridLayout`
+refuses a crop, because a crop's rectangle is edited through its own block.
+
+The word is CROP throughout; "zoom" is not used.
+
 ### Running from the device's own switch
 
 A composed device of a type that offers "running", with an actuator switch (its own
