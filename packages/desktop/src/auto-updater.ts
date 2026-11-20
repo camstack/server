@@ -9,6 +9,7 @@ import { app, autoUpdater as nativeAutoUpdater, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import type { DesktopProduct } from './product/desktop-product'
 import { createNativeStagingWatch, type NativeStagingWatch } from './native-staging-watch'
+import { installUpdateIfStaged } from './install-update'
 import { updateChannelForProduct } from './product/update-channel'
 
 /** How long Squirrel.Mac gets to fetch a downloaded update before it is asked again. */
@@ -165,8 +166,12 @@ export function initAutoUpdater(
       console.log(
         `[updater] install and restart requested (downloaded=${state.downloaded}, nativeStaged=${nativeWatch?.isStaged() ?? 'n/a'})`,
       )
-      nativeWatch?.nudgeIfNotStaged('install and restart')
-      autoUpdater.quitAndInstall(false, true)
+      installUpdateIfStaged({
+        isStaged: nativeWatch !== null ? () => nativeWatch.isStaged() : null,
+        nudgeIfNotStaged: () => void nativeWatch?.nudgeIfNotStaged('install and restart'),
+        quitAndInstall: () => autoUpdater.quitAndInstall(false, true),
+        warn: (line) => console.warn(line),
+      })
     },
     getState: () => state,
   }
