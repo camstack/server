@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 13 caps. Field keys are `runtimeState` paths. No Zod.
+ * 14 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -679,6 +679,77 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: false,
+      },
+    ],
+  },
+  'heat-pump-status': {
+    version: 1,
+    targets: [
+      {
+        id: 'electrical-power',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.HeatPump],
+        apply: 'replace',
+        vocabularyCap: 'heat-pump-status',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'W',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'power.electricalW',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'electrical-energy',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.HeatPump],
+        apply: 'replace',
+        vocabularyCap: 'heat-pump-status',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'kWh',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'energy.electricalKwh',
+        valueKind: 'number',
+        nullable: true,
+      },
+    ],
+    overridable: [
+      {
+        path: 'power.electricalW',
+        by: 'electrical-power',
+      },
+      {
+        path: 'energy.electricalKwh',
+        by: 'electrical-energy',
       },
     ],
   },

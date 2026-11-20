@@ -2792,7 +2792,8 @@
         "lock-control": "Contatto porta",
         "fan-control": "Ventilatore",
         "climate-control": "Sensore stanza",
-        "weather-station": "Stazione meteo"
+        "weather-station": "Stazione meteo",
+        "heat-pump-status": "Pompa di calore"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",
@@ -2899,6 +2900,10 @@
           "vertical-angle": "Angolo verticale (°)",
           "vertical-sweepFrom": "Oscillazione verticale da (°)",
           "vertical-sweepTo": "Oscillazione verticale fino a (°)"
+        },
+        "heat-pump-status": {
+          "electrical-power": "Potenza elettrica",
+          "electrical-energy": "Energia elettrica"
         }
       }
     },
@@ -3056,7 +3061,8 @@
         "running-state": "In funzione",
         "fan-control": "Ventola",
         "climate-control": "Sensore stanza",
-        "weather-station": "Stazione meteo"
+        "weather-station": "Stazione meteo",
+        "heat-pump-status": "Pompa di calore"
       },
       "edit": "Modifica",
       "editWhat": "Modifica {{title}}",

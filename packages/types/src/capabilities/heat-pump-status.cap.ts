@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec, ScalarCustomizeTarget } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { IconKeySchema } from '../device/icon-catalog.js'
 import { readingMeta } from '../units/quantity.js'
@@ -129,6 +130,43 @@ export function heatPumpInstantCop(power: HeatPumpPower): number | null {
   return thermalW / electricalW
 }
 
+const HEAT_PUMP_CUSTOMIZE_DEVICE_TYPES = [DeviceType.HeatPump] as const
+
+/** One electrical reading the operator may take from a device they pick, unit checked. */
+function electricalTarget(id: string, path: string, unit: string): ScalarCustomizeTarget {
+  return {
+    id,
+    cardinality: 'scalar',
+    vocabulary: { cap: 'heat-pump-status' },
+    deviceTypes: HEAT_PUMP_CUSTOMIZE_DEVICE_TYPES,
+    apply: 'replace',
+    path,
+    sources: [{ kind: 'numeric', requiredUnit: unit, transforms: [{ kind: 'identity' }] }],
+    sourceReport: { status: 'assignment-status' },
+  }
+}
+
+const HEAT_PUMP_TARGETS: readonly ScalarCustomizeTarget[] = [
+  electricalTarget('electrical-power', 'power.electricalW', 'W'),
+  electricalTarget('electrical-energy', 'energy.electricalKwh', 'kWh'),
+]
+
+/**
+ * Customize (D984, #476): a gateway that reports no instantaneous electrical
+ * power (the cloud ones) or whose energy meter the operator trusts less than a
+ * dedicated one lets the OPERATOR pick a device for `power.electricalW` and
+ * `energy.electricalKwh` — a `replace` over a field listed in `overridable`,
+ * nothing else. The replaced value IS the cap field, so the instant COP, the
+ * hero pills and the history use it; nothing is linked by itself (D356), the
+ * unit is checked, and a source that does not answer releases the field back to
+ * the native reading (never a 0, D393).
+ */
+const heatPumpStatusCustomize = {
+  version: 1,
+  overridable: HEAT_PUMP_TARGETS.map((target) => ({ path: target.path, by: target.id })),
+  targets: HEAT_PUMP_TARGETS,
+} as const satisfies CapabilityCustomizeSpec
+
 export const heatPumpStatusCapability = {
   name: 'heat-pump-status',
   scope: 'device',
@@ -147,6 +185,7 @@ export const heatPumpStatusCapability = {
    * (the series are recorded). See `RuntimeStateDurability`.
    */
   durability: 'session',
+  customize: heatPumpStatusCustomize,
   /**
    * History (D850, D917): `circuits[]` is a keyed array — one series per circuit and
    * field, named by the circuit's label. The mode is a state (D896); the energy

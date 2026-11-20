@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A heat pump's electrical power and energy can be read from a device you pick in Customize
+
 ## [1.2.609] - 2026-11-20
 
 ### Added

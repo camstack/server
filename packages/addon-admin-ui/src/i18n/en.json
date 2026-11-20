@@ -2717,7 +2717,8 @@
         "lock-control": "Door contact",
         "fan-control": "Fan",
         "climate-control": "Room sensor",
-        "weather-station": "Weather station"
+        "weather-station": "Weather station",
+        "heat-pump-status": "Heat pump"
       },
       "add": "+ Add",
       "change": "Change",
@@ -2824,6 +2825,10 @@
           "vertical-angle": "Vertical angle (°)",
           "vertical-sweepFrom": "Vertical sweep from (°)",
           "vertical-sweepTo": "Vertical sweep to (°)"
+        },
+        "heat-pump-status": {
+          "electrical-power": "Electrical power",
+          "electrical-energy": "Electrical energy"
         }
       }
     },
@@ -2981,7 +2986,8 @@
         "running-state": "Running",
         "fan-control": "Fan",
         "climate-control": "Room sensor",
-        "weather-station": "Weather station"
+        "weather-station": "Weather station",
+        "heat-pump-status": "Heat pump"
       },
       "edit": "Edit",
       "editWhat": "Edit {{title}}",
