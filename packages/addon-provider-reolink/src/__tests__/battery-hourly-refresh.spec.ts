@@ -216,7 +216,7 @@ describe('scheduled battery refresh (D847)', () => {
   })
 
   it('the retry waits out the backoff and then succeeds', async () => {
-    const r = rig({ awake: true, nextOutcome: { failed: ['snapshot'] } })
+    const r = rig({ awake: true, nextOutcome: { failed: ['battery'] } })
     await vi.advanceTimersByTimeAsync(2 * MIN)
     expect(r.counts.refreshes).toBe(1)
     r.state.nextOutcome = { failed: [] }
@@ -225,6 +225,20 @@ describe('scheduled battery refresh (D847)', () => {
     await vi.advanceTimersByTimeAsync(10 * MIN)
     expect(r.counts.refreshes).toBe(2)
     expect(r.state.stamp).toBeDefined()
+    r.stop()
+  })
+
+  // 2026-11-20/21, device 640 (Argus 3E): the only failure was "snapshot cache
+  // did not move (a stale frame was served)" — the camera ANSWERED, it just had
+  // no newer picture. Every retry is a full refresh (and a wake when asleep), so
+  // a window that failed ONLY on the snapshot is done: stamped, said once.
+  it('a window whose only failure is a stale snapshot is stamped, not retried', async () => {
+    const r = rig({ awake: true, nextOutcome: { failed: ['snapshot'] } })
+    await vi.advanceTimersByTimeAsync((3 * HOUR) / 4)
+    expect(r.counts.refreshes).toBe(1)
+    expect(r.state.stamp).toBeDefined()
+    const warn = r.logger.warns.find((l) => l.message.includes('snapshot did not move'))
+    expect(warn?.extras.tags).toEqual({ deviceId: DEVICE_ID })
     r.stop()
   })
 

@@ -32,7 +32,9 @@
  *   The deadline is what gives an awake moment the whole window to arrive
  *   first and spare the camera the wake.
  * - One refresh at a time: a second request while one runs joins it.
- * - A failed attempt does not stamp. It is retried at the next opportunity, at
+ * - A failed attempt does not stamp — except one whose only failure is a stale
+ *   snapshot, which is stamped (the camera answered; see `run`).
+ *   Any other failure is retried at the next opportunity, at
  *   most {@link MAX_ATTEMPTS_PER_WINDOW} attempts per window and never closer
  *   than {@link RETRY_BACKOFF_MS} — a camera that will not answer costs the
  *   battery two wakes a window at worst, never a loop.
@@ -63,6 +65,8 @@ export const BATTERY_REFRESH_TICK_MS = 60_000
 export const MAX_ATTEMPTS_PER_WINDOW = 2
 /** The least time between two attempts in one window. */
 export const RETRY_BACKOFF_MS = 10 * 60_000
+/** The one refresh step whose failure does not hold the window open. */
+const SOFT_FAILURE_STEP = 'snapshot'
 const MAX_WAKE_LEAD_MS = 5 * 60_000
 const STAGGER_SLOTS = 60
 
@@ -253,7 +257,18 @@ export class BatteryHourlyRefresh {
         })
       }
       const outcome = await this.deps.refreshAll()
-      if (outcome.failed.length > 0) {
+      // A stale snapshot is not a failed refresh: the camera answered, it just
+      // had no newer picture, and asking again only repeats a full refresh (a
+      // wake, when asleep) for the same answer. It is the one failure that does
+      // not hold the window open — said once, under the device tag.
+      const hardFailures = outcome.failed.filter((step) => step !== SOFT_FAILURE_STEP)
+      if (hardFailures.length === 0 && outcome.failed.length > 0) {
+        logger.warn('battery hourly refresh: snapshot did not move — window stamped, not retried', {
+          tags: { deviceId },
+          meta: { failed: outcome.failed, attempt: this.attempts },
+        })
+      }
+      if (hardFailures.length > 0) {
         logger.warn('battery hourly refresh incomplete — not stamped, retried at the next chance', {
           tags: { deviceId },
           meta: { failed: outcome.failed, attempt: this.attempts, retryAfterMs: RETRY_BACKOFF_MS },
