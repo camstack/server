@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A unit entered on a command inside a choose branch, a parallel or repeat body or an else is converted on save like a top-level one
+- An action can now hold every step an automation's Then can (notify, http request, probe, wait until, set, stop, choose, parallel, repeat and a call to another action), except a code step; a save that would make actions call each other in a circle is refused.
 - Customize specs can declare a source group, so one device can fill several scalar targets of a cap at once
 - New notification variable faultsDetail: every active device fault as label (code)
 
@@ -20,11 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export panels report an Alexa link whose proactive updates are paused as linked, with a push status that can be unknown
 ### Added
 
-- An action can now hold every step an automation's Then can (notify, http request, probe, wait until, set, stop, choose, parallel, repeat and a call to another action), except a code step; a save that would make actions call each other in a circle is refused.
 
 ### Changed
 
-- A unit entered on a command inside a choose branch, a parallel or repeat body or an else is converted on save like a top-level one
 
 ## [1.2.617] - 2026-11-21
 
