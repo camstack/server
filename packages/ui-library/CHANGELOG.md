@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Export panel: an Alexa link whose proactive updates are paused reads 'Linked — proactive updates paused', and a status that has not answered reads 'Unknown' instead of 'Unlinked'
+- The device card footer trend now shows its scale: min and max with the unit, the time span (start to now) and the latest value
 
 ## [1.2.488] - 2026-11-21
 

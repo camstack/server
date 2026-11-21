@@ -257,6 +257,27 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
       at: () => 1,
     }),
   ],
+  // The sensor cards of the `sensor-card` fixture: the hot water temperature and the generator power.
+  1501: [
+    spec({
+      key: 'cap:temperature-sensor.temperature',
+      scope: '',
+      kind: 'gauge',
+      unit: '°C',
+      displayName: 'Temperature',
+      at: (t) => 47 + 6 * Math.sin(DAY_PHASE(t)) + 1.2 * wave(t, 40 * MINUTE),
+    }),
+  ],
+  1503: [
+    spec({
+      key: 'cap:power-meter.power',
+      scope: '',
+      kind: 'gauge',
+      unit: 'W',
+      displayName: 'Power',
+      at: (t) => 1100 + 260 * wave(t, 5 * H) + 60 * wave(t, 23 * MINUTE),
+    }),
+  ],
   202: [
     spec({
       key: 'cap:dishwasher.state',

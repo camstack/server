@@ -18,6 +18,8 @@ export interface PrimaryTrend {
   readonly points: readonly SparklinePoint[]
   /** The declared quantity of the series; `undefined` when the cap states no known unit. */
   readonly quantity: ReadingQuantity | undefined
+  /** The unit the cap's field declares; `null` when it declares none. */
+  readonly unit: string | null
 }
 
 /** The series keys worth reading for a device: the declared primary of each enabled cap. */
@@ -30,21 +32,22 @@ export function primaryTrendKeys(enabledCaps: readonly string[]): readonly strin
 
 function pointsOf(entry: DeviceHistoryQueryManyEntry | undefined): readonly SparklinePoint[] {
   if (entry === undefined || !entry.ok) return []
-  return (entry.result.series[0]?.points ?? []).map((p) => ({ x: p.t, v: p.mean ?? p.last }))
+  return (entry.result.series[0]?.points ?? []).map((p) => ({
+    x: p.t,
+    v: p.mean ?? p.last,
+  }))
 }
 
 function hasLine(points: readonly SparklinePoint[]): boolean {
   return points.filter((p) => p.v !== null).length >= MIN_POINTS
 }
 
-function quantityOfKey(enabledCaps: readonly string[], key: string): ReadingQuantity | undefined {
+function declaredUnitOfKey(enabledCaps: readonly string[], key: string): string | undefined {
   const cap = enabledCaps.find((c) => primarySeriesKey(c) === key)
   const primary = cap === undefined ? undefined : HISTORY_PRIMARY[cap]
-  const unit =
-    cap === undefined || primary === undefined
-      ? undefined
-      : HISTORY_CATALOG[cap]?.[primary.field]?.unit
-  return quantityFromUnit(unit)
+  return cap === undefined || primary === undefined
+    ? undefined
+    : HISTORY_CATALOG[cap]?.[primary.field]?.unit
 }
 
 /**
@@ -63,5 +66,11 @@ export function pickPrimaryTrend(input: {
     hasData: (k) => hasLine(pointsFor(k)),
   })
   if (key === null) return null
-  return { key, points: pointsFor(key), quantity: quantityOfKey(input.enabledCaps, key) }
+  const unit = declaredUnitOfKey(input.enabledCaps, key)
+  return {
+    key,
+    points: pointsFor(key),
+    quantity: quantityFromUnit(unit),
+    unit: unit ?? null,
+  }
 }

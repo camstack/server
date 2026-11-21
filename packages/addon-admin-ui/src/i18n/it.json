@@ -11101,6 +11101,10 @@
         "onBattery": "Batteria",
         "solar": "Solare",
         "wired": "Alimentata"
+      },
+      "trend": {
+        "start": "{{hours}} h fa",
+        "now": "ora"
       }
     },
     "language": "it",

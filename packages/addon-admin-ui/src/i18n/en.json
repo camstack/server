@@ -11079,6 +11079,10 @@
         "onBattery": "Battery",
         "solar": "Solar",
         "wired": "Wired"
+      },
+      "trend": {
+        "start": "{{hours}} h ago",
+        "now": "now"
       }
     },
     "language": "en",
