@@ -3051,7 +3051,7 @@
       "linkActive": "Active",
       "group": {
         "sourceDevice": "Source device",
-        "hint": "Fills every reading this device provides. Each reading below can still use its own source.",
+        "hint": "Picking a device replaces the current mapping of every reading it provides, custom transforms included. Readings it does not provide stay as they are.",
         "mixed": "Mixed sources",
         "filled": "Filled: {{names}}.",
         "skipped": "Not provided by this device, left as they were: {{names}}.",

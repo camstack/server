@@ -21,7 +21,7 @@ import { vocabularyFieldLabel } from '../vocabulary-field-label'
 import { fillSourceGroup, type GroupFillResult, groupSourceState } from './source-group'
 
 export interface SourceGroupProps {
-  readonly device: DeviceInfo
+  readonly device: Pick<DeviceInfo, 'id'>
   readonly handle: CustomizationHandle
   readonly cap: string
   readonly group: CustomizeSourceGroup
@@ -66,7 +66,7 @@ export function SourceGroupCell(props: SourceGroupProps): ReactNode {
         contextDeviceId={props.device.id}
         recentKey={`customize-group-${props.cap}`}
         testId={`source-group-picker-${props.cap}`}
-        disabled={!answered || props.handle.saving}
+        disabled={!answered || props.handle.saving || outcome.kind === 'filling'}
         clearable={false}
         value={shownId === null ? null : { deviceId: shownId }}
         onChange={(picked) => {
@@ -100,12 +100,17 @@ function GroupFillRunner(props: GroupFillRunnerProps): null {
   const wireable = useDeviceManagerGetWireableFields({ deviceId: props.deviceId })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: props.deviceId })
   const ran = useRef(false)
+  // The composition is read when the save is made, from the latest handle: an edit a per-field row
+  // saved while this runner waited for the device's data must not be overwritten by an older copy.
+  const latest = useRef(props.handle)
+  latest.current = props.handle
+  const handleAnswered = props.handle.state.kind === 'none' || props.handle.state.kind === 'present'
   const source =
     candidates.kind === 'known'
       ? (candidates.value.find((row) => row.id === props.deviceId) ?? null)
       : null
   const ready = wireable.status === 'success' && snapshot.status !== 'pending' && source !== null
-  const { handle, cap, group, onDone } = props
+  const { cap, group, onDone } = props
   useEffect(() => {
     if (ran.current) return
     if (wireable.status === 'error') {
@@ -113,7 +118,7 @@ function GroupFillRunner(props: GroupFillRunnerProps): null {
       onDone({ kind: 'refused', reason: wireable.error?.message ?? '' })
       return
     }
-    if (!ready || wireable.data === undefined || source === null) return
+    if (!ready || !handleAnswered || wireable.data === undefined || source === null) return
     ran.current = true
     const catalog = liveWireableCatalog(
       wireable.data,
@@ -122,16 +127,16 @@ function GroupFillRunner(props: GroupFillRunnerProps): null {
     const result = fillSourceGroup({
       cap,
       group,
-      host: handle.target,
+      host: latest.current.target,
       source: { addonId: source.addonId, stableId: source.stableId },
       offers: scalarFieldOffers(catalog, snapshot.status === 'success' ? snapshot.data : null),
-      current: currentComposition(handle.state),
+      current: currentComposition(latest.current.state),
     })
     if (result.filled.length === 0 || result.composition === null) {
       onDone({ kind: 'done', result })
       return
     }
-    void handle.save(result.composition).then((saved) => {
+    void latest.current.save(result.composition).then((saved) => {
       onDone(
         saved.kind === 'refused'
           ? { kind: 'refused', reason: saved.reason }
@@ -140,6 +145,7 @@ function GroupFillRunner(props: GroupFillRunnerProps): null {
     })
   }, [
     ready,
+    handleAnswered,
     wireable.status,
     wireable.data,
     wireable.error,
@@ -148,7 +154,6 @@ function GroupFillRunner(props: GroupFillRunnerProps): null {
     source,
     cap,
     group,
-    handle,
     onDone,
   ])
   return null

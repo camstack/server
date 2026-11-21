@@ -3126,7 +3126,7 @@
       "linkActive": "Attivo",
       "group": {
         "sourceDevice": "Dispositivo sorgente",
-        "hint": "Compila ogni lettura fornita da questo dispositivo. Ogni lettura qui sotto può comunque usare una sorgente propria.",
+        "hint": "Scegliere un dispositivo sostituisce la mappatura attuale di ogni lettura che fornisce, trasformazioni personalizzate incluse. Le letture che non fornisce restano invariate.",
         "mixed": "Sorgenti diverse",
         "filled": "Compilati: {{names}}.",
         "skipped": "Non forniti da questo dispositivo, lasciati invariati: {{names}}.",

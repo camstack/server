@@ -820,6 +820,14 @@ composer's claim and merged at the hub. `lock()` is refused at dispatch while th
 door is open (the D963 redirect, composed with the media-player one in
 core-blocks); `unlock()` never is.
 
+A cap may also list `customize.sourceGroups: [{ id, targets }]`: the targets one
+device usually provides together (`power-meter`: power, energy, voltage,
+current). The Customize table shows one "Source device" row above them; picking a
+device REPLACES the stored link of every target its same cap exposes (custom
+transforms included) with an identity link and leaves the others untouched. The
+row stores nothing of its own: the per-target rows stay the authority and can
+still override. Declared in the spec, so `check-customize-coverage` judges it.
+
 ### A fan's oscillation axes and preset, linked by hand (D1034)
 
 [D1034](../decisions/adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md).
