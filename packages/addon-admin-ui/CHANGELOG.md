@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.733] - 2026-11-21
+
 ### Changed
 
 - The device quick modal opens on one section with the device card and the details together, and lets you rename the device and set its room and role in place

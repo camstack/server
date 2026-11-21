@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.495] - 2026-11-21
+
 ### Changed
 
 - The upstream-supply popover on a device card is more compact: Turn on, Turn off and Restart are one button group, and a switch that cannot be commanded shows Restart only
