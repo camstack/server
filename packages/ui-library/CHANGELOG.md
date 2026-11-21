@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Every number follows one rule: the precision you set wins, otherwise at most two decimals with trailing zeros trimmed; cards, charts and the energy card honour the device's Precision from Customize
+- The upstream-supply popover on a device card is more compact: Turn on, Turn off and Restart are one button group, and a switch that cannot be commanded shows Restart only
 
 ## [1.2.493] - 2026-11-21
 

@@ -2,6 +2,7 @@ import { type ReactElement, useState } from 'react'
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { Button } from '../../../primitives/button'
+import { ButtonGroup } from '../parts/ButtonGroup'
 import { CardButton } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
 import { CardGatingProvider, useCardGating } from './gating'
@@ -100,25 +101,39 @@ export function SupplyChip({ supply, readOnly, onAction }: SupplyChipProps): Rea
                 : null,
             }}
           >
-            <div className="flex flex-wrap gap-1.5">
-              <CardButton
-                glyph="power"
-                disabled={busy || supply.state === 'on'}
-                onClick={() => onAction('on')}
-              >
-                {t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-              </CardButton>
-              <CardButton
-                glyph="power"
-                disabled={busy || supply.state === 'off'}
-                onClick={() => onAction('off')}
-              >
-                {t('uiLibrary.deviceCard.turnOff', 'Turn off')}
-              </CardButton>
-              <CardButton glyph="restart" disabled={busy} onClick={() => onAction('restart')}>
-                {t('uiLibrary.deviceCard.supply.restart', 'Restart')}
-              </CardButton>
-            </div>
+            <ButtonGroup
+              mode="actions"
+              ariaLabel={t('uiLibrary.deviceCard.supply.title', 'Upstream supply')}
+              testId="dc-supply-actions"
+              value={null}
+              onChange={(id) => {
+                if (id === 'on' || id === 'off' || id === 'restart') onAction(id)
+              }}
+              options={[
+                ...(supply.settable === false
+                  ? []
+                  : [
+                      {
+                        id: 'on',
+                        glyph: 'power' as const,
+                        label: t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+                        disabled: busy || supply.state === 'on',
+                      },
+                      {
+                        id: 'off',
+                        glyph: 'power' as const,
+                        label: t('uiLibrary.deviceCard.turnOff', 'Turn off'),
+                        disabled: busy || supply.state === 'off',
+                      },
+                    ]),
+                {
+                  id: 'restart',
+                  glyph: 'restart' as const,
+                  label: t('uiLibrary.deviceCard.supply.restart', 'Restart'),
+                  disabled: busy,
+                },
+              ]}
+            />
           </CardGatingProvider>
         </div>
       ) : null}

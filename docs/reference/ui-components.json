@@ -2308,6 +2308,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "mode",
+          "type": "'choice' | 'actions'",
+          "optional": true,
+          "doc": "`choice` (default): mutually exclusive chips, one pressed. `actions`: one joined strip of commands, none pressed; `value` is ignored."
         }
       ]
     },

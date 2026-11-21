@@ -235,6 +235,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
               : supply.data.switchOn === false
                 ? 'off'
                 : 'on',
+            settable: supply.data.switchSettable !== false,
           }
         : null,
     faults: cardFaultsOf(fault),

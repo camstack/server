@@ -34,6 +34,8 @@ export type CardSupplyAction = 'on' | 'off' | 'restart'
 export interface CardSupply {
   readonly name: string
   readonly state: CardSupplyState
+  /** False when the switch cannot be commanded on/off (restart stays). Absent = settable. */
+  readonly settable?: boolean
 }
 
 export interface CardConsumable {
