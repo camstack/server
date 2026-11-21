@@ -208,6 +208,25 @@ describe('transition correlator (D1022)', () => {
     expect(w.out.every((t) => t.outcome === 'confirmed')).toBe(true)
   })
 
+  it.each([
+    ['state first', { state: 'open', position: 100 }],
+    ['position first', { position: 100, state: 'open' }],
+  ])('the final write of a setPosition credits every changed field to the sender (%s)', (_o, next) => {
+    const w = world({ '7|cover': { state: 'opening', position: 6 } })
+    w.command('cover', 'setPosition', { position: 100 }, ALEXA)
+    w.write('cover', next)
+    expect(w.out.map((t) => t.field).sort()).toEqual(['position', 'state'])
+    expect(w.out.every((t) => t.outcome === 'confirmed')).toBe(true)
+    expect(w.out.every((t) => t.actor.kind === 'addon')).toBe(true)
+  })
+
+  it('a state change on a cap with no pending command stays the device', () => {
+    const w = world({ '7|cover': { state: 'closed', position: 0 } })
+    w.write('cover', { state: 'opening', position: 0 })
+    expect(w.out).toHaveLength(1)
+    expect(w.out[0]).toMatchObject({ field: 'state', outcome: 'device', actor: { kind: 'device' } })
+  })
+
   it('a command whose call threw is failed, with the scrubbed message, and is not matched later', async () => {
     const w = world({ '7|switch': { on: false } })
     const failure = Promise.reject(

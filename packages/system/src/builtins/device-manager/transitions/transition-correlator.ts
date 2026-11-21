@@ -154,8 +154,13 @@ export class TransitionCorrelator {
     const fields = auditedFields(capName)
     if (fields.size === 0) return
     const now = this.deps.now()
-    // The command one write was attributed to: its other changed fields are its too.
-    let claimed: Pending | undefined
+    interface FieldChange {
+      readonly field: string
+      readonly before: unknown
+      readonly after: unknown
+      readonly neverHeld: boolean
+    }
+    const changes: FieldChange[] = []
     for (const field of fields) {
       const hadBefore = prior !== undefined && Object.hasOwn(prior, field)
       const has = Object.hasOwn(slice, field)
@@ -163,17 +168,47 @@ export class TransitionCorrelator {
       const before = hadBefore ? prior[field] : undefined
       const after = has ? slice[field] : undefined
       if (sameValue(before, after)) continue
+      changes.push({ field, before, after, neverHeld: !hadBefore })
+    }
+    // The command one write belongs to is decided first, from every changed field, so the order
+    // the audited fields are visited in never decides who a sibling field is credited to.
+    let claimed: Pending | undefined = this.commandMatchedBy(deviceId, capName, changes, now)
+    for (const change of changes) {
       claimed = this.attribute(
         deviceId,
         capName,
-        field,
-        toTransitionValue(before),
-        toTransitionValue(after),
+        change.field,
+        toTransitionValue(change.before),
+        toTransitionValue(change.after),
         now,
         claimed,
-        !hadBefore,
+        change.neverHeld,
       )
     }
+  }
+
+  /** The newest live command whose effect one of `changes` fulfils, if any. */
+  private commandMatchedBy(
+    deviceId: number,
+    capName: string,
+    changes: readonly { readonly field: string; readonly after: unknown }[],
+    now: number,
+  ): Pending | undefined {
+    const live = (this.pending.get(this.keyOf(deviceId, capName)) ?? []).filter(
+      (e) => !e.settled && e.expiresAt > now,
+    )
+    return [...live]
+      .reverse()
+      .find(
+        (e) =>
+          e.effect !== null &&
+          changes.some(
+            (c) =>
+              e.effect !== null &&
+              e.effect.field === c.field &&
+              sameValue(e.effect.value, toTransitionValue(c.after)),
+          ),
+      )
   }
 
   /** Expire every pending command past its window. Driven by the sender's tick. */

@@ -426,7 +426,9 @@ run, scheduler) or the device.
   the previous one). Audited fields are those vocabulary effects name; a cap
   with none costs one map lookup. A command with no effect (stop) is stored with
   field `*` and takes the next change of its cap. The first slice a cap reports
-  is not a change.
+  is not a change. One write is attributed as a whole: the command any changed
+  field fulfils is found first, then every other audited field that changed in
+  the same write is credited to it, whatever order the fields are visited in.
 - **Delivery.** `transitions-sender.ts` flushes every 2 s in batches of at most
   500 through `deviceTransitions.record` (only the kernel caller is accepted).
   The queue holds 10 000; past it the oldest rows are dropped, logged with
