@@ -7,7 +7,7 @@
  * `data.code`), the keeper took that for a transient failure and reconnected
  * with the same dead token, round and round until the user was signed out.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { System } from '../system.js'
 
 function jwtWithExp(exp: number): string {
@@ -22,25 +22,41 @@ interface Handshake {
   readonly token: string | undefined
 }
 
-class FakeSocket {
-  static instances: FakeSocket[] = []
+/**
+ * What the fake hub saw during ONE test. A System a test closed can still have
+ * a socket timer in flight when the next test starts; it must write into its
+ * own test's record, never into the next test's.
+ */
+interface HubRecord {
   /** Tokens the "hub" refuses: it closes such a socket with 4401, like the real one. */
-  static dead = new Set<string>()
-  static handshakes: Handshake[] = []
-  static wsMessages: string[] = []
+  readonly dead: Set<string>
+  readonly handshakes: Handshake[]
+  readonly wsMessages: string[]
+  sockets: number
+}
+
+function newHub(): HubRecord {
+  return { dead: new Set(), handshakes: [], wsMessages: [], sockets: 0 }
+}
+
+let hub: HubRecord = newHub()
+
+class FakeSocket {
+  /** The test whose System opened this socket, fixed at construction. */
+  private readonly owner: HubRecord = hub
   readyState = 0
   private listeners = new Map<string, Array<(ev: unknown) => void>>()
   readonly index: number
   constructor(readonly url: string) {
-    this.index = FakeSocket.instances.length
-    FakeSocket.instances.push(this)
+    this.index = this.owner.sockets++
     setTimeout(() => {
+      if (this.readyState === 3) return
       this.readyState = 1
       this.emit('open', {})
     }, 0)
   }
   send(raw: string): void {
-    FakeSocket.wsMessages.push(raw)
+    this.owner.wsMessages.push(raw)
     const msg: unknown = JSON.parse(raw)
     if (typeof msg !== 'object' || msg === null) return
     if (Reflect.get(msg, 'method') !== 'connectionParams') return
@@ -48,9 +64,10 @@ class FakeSocket {
     const token: unknown =
       data !== null && typeof data === 'object' ? Reflect.get(data, 'token') : undefined
     const tok = typeof token === 'string' ? token : undefined
-    FakeSocket.handshakes.push({ socket: this.index, token: tok })
-    if (tok !== undefined && FakeSocket.dead.has(tok)) {
+    this.owner.handshakes.push({ socket: this.index, token: tok })
+    if (tok !== undefined && this.owner.dead.has(tok)) {
       setTimeout(() => {
+        if (this.readyState === 3) return
         this.readyState = 3
         this.emit('close', { code: 4401, reason: 'session ended' })
       }, 0)
@@ -86,14 +103,16 @@ function trpcUnauthorized(): Response {
   )
 }
 
-const settle = (ms = 80): Promise<void> => new Promise((r) => setTimeout(r, ms))
+/** Wait for what the test asserts on, never for a wall-clock interval. */
+const until = (condition: () => boolean): Promise<void> =>
+  vi.waitFor(() => expect(condition()).toBe(true), { timeout: 5_000, interval: 5 })
+
+beforeEach(() => {
+  hub = newHub()
+})
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  FakeSocket.instances = []
-  FakeSocket.dead = new Set()
-  FakeSocket.handshakes = []
-  FakeSocket.wsMessages = []
 })
 
 function stub(fetchImpl: (url: string) => Response): ReturnType<typeof vi.fn> {
@@ -112,7 +131,7 @@ describe('credential recovery over HTTP', () => {
     const fetchMock = stub(() =>
       trpcOk({ token: 'tok-new', refreshToken: 'rt-2', expiresAt: Date.now() + 7_200_000 }),
     )
-    FakeSocket.dead.add('tok-old')
+    hub.dead.add('tok-old')
     const sys: System = new System({
       serverUrl: 'http://hub.test',
       token: 'tok-old',
@@ -122,12 +141,12 @@ describe('credential recovery over HTTP', () => {
         await sys.refreshSession('rt-1')
       },
     })
-    await settle()
+    await until(() => hub.handshakes.at(-1)?.token === 'tok-new')
 
-    expect(FakeSocket.handshakes[0]?.token).toBe('tok-old')
-    expect(FakeSocket.handshakes.at(-1)?.token).toBe('tok-new')
+    expect(hub.handshakes[0]?.token).toBe('tok-old')
+    expect(hub.handshakes.at(-1)?.token).toBe('tok-new')
     expect(fetchedUrls(fetchMock).some((u) => u.includes('auth.refreshSession'))).toBe(true)
-    expect(FakeSocket.wsMessages.some((m) => m.includes('refreshSession'))).toBe(false)
+    expect(hub.wsMessages.some((m) => m.includes('refreshSession'))).toBe(false)
     sys.close()
   })
 
@@ -144,9 +163,9 @@ describe('credential recovery over HTTP', () => {
         await sys.refreshSession('rt-1')
       },
     })
-    await settle()
+    await until(() => hub.handshakes.length > 0)
 
-    expect(FakeSocket.handshakes.map((h) => h.token)).toEqual(['tok-new'])
+    expect(hub.handshakes.map((h) => h.token)).toEqual(['tok-new'])
     sys.close()
   })
 
@@ -161,10 +180,10 @@ describe('credential recovery over HTTP', () => {
         await sys.refreshSession('rt-1')
       },
     })
-    await settle()
+    await until(() => hub.handshakes.length > 0)
 
-    expect(FakeSocket.handshakes.length).toBeGreaterThan(0)
-    expect(FakeSocket.handshakes.every((h) => h.token === undefined)).toBe(true)
+    expect(hub.handshakes.length).toBeGreaterThan(0)
+    expect(hub.handshakes.every((h) => h.token === undefined)).toBe(true)
     sys.close()
   })
 
@@ -173,7 +192,7 @@ describe('credential recovery over HTTP', () => {
     const sys = new System({ serverUrl: 'http://hub.test', useWebSocket: true, retryDelayMs: 1 })
     await sys.trpcClient.auth.listLoginMethods.query()
     expect(fetchedUrls(fetchMock).some((u) => u.includes('auth.listLoginMethods'))).toBe(true)
-    expect(FakeSocket.wsMessages.some((m) => m.includes('listLoginMethods'))).toBe(false)
+    expect(hub.wsMessages.some((m) => m.includes('listLoginMethods'))).toBe(false)
     sys.close()
   })
 })
