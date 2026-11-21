@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.727] - 2026-11-21
+
 ### Changed
 
 - An Alexa link with paused proactive updates and an unknown link status have their own labels in the export panel

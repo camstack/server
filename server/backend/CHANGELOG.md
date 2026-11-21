@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.929] - 2026-11-21
+
 ### Changed
 
 - The types package inside the server closure is now one ESM file per module (CommonJS unchanged), so addons deployed against it stay lighter

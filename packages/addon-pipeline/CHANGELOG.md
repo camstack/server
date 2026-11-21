@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.679] - 2026-11-21
+
 ### Changed
 
 - A battery camera whose publisher does not list the sleeps feature (Reolink Argus) is now given up on after the materialize deadline instead of being logged in to in a loop

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.618] - 2026-11-21
+
 ### Changed
 
 - Addon bundles now carry only the part of the types package they reach: the types build is tree-shakable (one ESM file per module, pure-marked initializers), which cuts addon heap by 35-75 MB and BaseDevice.state reads a schema-free cap-name table
