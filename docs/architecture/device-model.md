@@ -400,8 +400,9 @@ What went wrong, each once, on 2026-09-06 — the reasons the steps are what the
   consumer held the stream: a dead battery camera was logged in to ~60 times an
   hour for days (device 640). A battery camera that does not come up within the
   materialize deadline, or after four watchdog kills with no video, is GIVEN UP
-  once (one line under the device tag); only an edge dials it again — the
-  camera observed awake, a fresh demand edge, a re-publish of a real source,
+  once (one line under the device tag); only three edges dial it again — the
+  camera observed awake, a NEW live consumer attaching (not a sentry session,
+  not churn that adds none), a re-publish of a real non-sentinel source,
   never a timer. The sentry pump feeds a picture and never dials
   ([D1073](../decisions/adr-1073-a-battery-camera-that-does-not-answer-is-given-up-on-once-and-only-an-edge-dials-it-again.md)).
   The hourly refresh stamps a window whose only failure is a stale snapshot.

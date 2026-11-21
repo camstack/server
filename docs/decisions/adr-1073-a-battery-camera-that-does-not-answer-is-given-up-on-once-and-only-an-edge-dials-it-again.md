@@ -29,9 +29,12 @@ consumer in the log.
 For a battery camera (`DeviceFeature.Sleeps`) the broker bounds its effort and
 then stops, once, with a line under the device tag: a materialize that does not
 land inside its deadline, or four watchdog kills with no video between them,
-suspend the broker as "given up". Only an edge restarts it: the camera observed
-awake (`setDeviceAsleep(false)`), a fresh demand edge, or the publisher
-re-publishing a real source. Never a timer. Watchdog kills on a battery camera
+suspend the broker as "given up", leaving the same demand state as `suspend()`
+(`demandActive` false, observer told). Exactly three edges restart it: the
+camera observed awake (`setDeviceAsleep(false)`); a NEW live consumer attaching
+(any holder `hasLiveIntent` counts, a sentry session or a consumer leaving does
+not) or a camera-reported wake hold; the publisher re-publishing a real,
+non-`lazy:` source (`kickReconnect`). Never a timer. Watchdog kills on a battery camera
 keep the exponential backoff instead of resetting it. Wired cameras are
 unchanged.
 

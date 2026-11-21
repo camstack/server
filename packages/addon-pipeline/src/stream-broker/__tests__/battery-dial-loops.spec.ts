@@ -17,9 +17,11 @@
  *  - the next awake transition (or a fresh demand edge) is what tries again.
  */
 import * as net from 'node:net'
+import { Socket } from 'node:net'
 import type { IScopedLogger, StreamSource } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
+import { RtspSession } from '../rtsp/rtsp-session.js'
 
 const HOUR = 3_600_000
 const SDP = ['v=0', 'm=video 0 RTP/AVP 96', 'a=rtpmap:96 H264/90000'].join('\r\n')
@@ -57,6 +59,7 @@ describe('battery camera: the lazy materialize is not retried for ever', () => {
   let broker: StreamBroker
   let logger: IScopedLogger
   let requests: number
+  let unsubscribeFirst: () => void = () => {}
 
   const setup = async (battery: boolean): Promise<void> => {
     vi.useFakeTimers({
@@ -67,7 +70,7 @@ describe('battery camera: the lazy materialize is not retried for ever', () => {
     broker = new StreamBroker('640/native:main', logger)
     broker.setBatteryProbe(() => battery)
     // A consumer with live intent (a recording, a live view): the broker dials.
-    broker.onEncodedData(() => {})
+    unsubscribeFirst = broker.onEncodedData(() => {})
     broker.setSourceProvider(() => lazySource())
     broker.setRequestSourceRefresh(() => {
       requests++
@@ -104,6 +107,74 @@ describe('battery camera: the lazy materialize is not retried for ever', () => {
     await vi.advanceTimersByTimeAsync(HOUR / 2)
     expect(requests).toBeGreaterThan(afterFirst)
     expect(requests).toBeLessThanOrEqual(2 * 25)
+  })
+
+  // THE EDGES that end a give-up. The give-up leaves the same demand state as
+  // `suspend()`, and a NEW live consumer (never a sentry) is what dials again.
+  it('(a) the last consumer leaves, a new one attaches: exactly one bounded episode', async () => {
+    await setup(true)
+    await vi.advanceTimersByTimeAsync(60_000)
+    const gaveUpAt = requests
+    unsubscribeFirst()
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(requests).toBe(gaveUpAt)
+
+    broker.onEncodedData(() => {})
+    await vi.advanceTimersByTimeAsync(HOUR / 2)
+    expect(requests).toBeGreaterThan(gaveUpAt)
+    expect(requests - gaveUpAt).toBeLessThanOrEqual(25)
+  })
+
+  it('(b) a recorder stays attached, then a live viewer attaches: one bounded episode', async () => {
+    await setup(true)
+    await vi.advanceTimersByTimeAsync(60_000)
+    const gaveUpAt = requests
+    // Churn that adds no live consumer is not an edge.
+    await vi.advanceTimersByTimeAsync(HOUR / 4)
+    expect(requests).toBe(gaveUpAt)
+
+    broker.onEncodedData(() => {})
+    await vi.advanceTimersByTimeAsync(HOUR / 2)
+    expect(requests).toBeGreaterThan(gaveUpAt)
+    expect(requests - gaveUpAt).toBeLessThanOrEqual(25)
+  })
+
+  it('(c) a sentry session attaching after the give-up does not dial', async () => {
+    await setup(true)
+    await vi.advanceTimersByTimeAsync(60_000)
+    const gaveUpAt = requests
+    broker.getRtspRestreamer().addSession(
+      new RtspSession(new Socket(), '', undefined, true, {
+        intent: 'sentry',
+        preRollRequestMs: 0,
+      }),
+    )
+    await vi.advanceTimersByTimeAsync(HOUR / 2)
+    expect(requests).toBe(gaveUpAt)
+  })
+
+  it('a re-publish of a REAL source revives a given-up broker; the sentinel going back does not', async () => {
+    let published: StreamSource = lazySource()
+    await setup(true)
+    broker.setSourceProvider(() => published)
+    await vi.advanceTimersByTimeAsync(60_000)
+    const gaveUpAt = requests
+
+    broker.kickReconnect()
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(requests).toBe(gaveUpAt)
+
+    published = { ...realSource(1), url: 'tcp://127.0.0.1:1' }
+    broker.kickReconnect()
+    await vi.advanceTimersByTimeAsync(1_000)
+    const resumed = vi
+      .mocked(logger.info)
+      .mock.calls.filter(([msg]) => typeof msg === 'string' && msg.includes('is back'))
+    expect(resumed).toHaveLength(1)
+    expect(resumed[0]?.[1]).toMatchObject({
+      tags: { deviceId: 640 },
+      meta: { trigger: 'republish' },
+    })
   })
 
   it('leaves a wired camera exactly as it was: it keeps retrying on the backoff', async () => {

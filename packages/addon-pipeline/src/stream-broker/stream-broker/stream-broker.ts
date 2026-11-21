@@ -978,6 +978,20 @@ export class StreamBroker implements IStreamBroker {
     this.batteryProbe = probe
   }
 
+  /** Live-intent holders right now (sentry sessions excluded), for edge detection. */
+  private intentSeen = 0
+  private liveIntentCount(): number {
+    return (
+      this.encodedCallbacks.size +
+      this.rtpVideoCallbacks.size +
+      this.audioChunkPlane.subscriberCount +
+      this.rtspRestreamer.getLiveIntentSessionCount() +
+      this.pipeServer.getClientCount() +
+      (this.prebufferHold !== null ? 1 : 0) +
+      (holdIsLive(this.wakeHold, Date.now()) ? 1 : 0)
+    )
+  }
+
   private isBattery(): boolean {
     return this.batteryProbe?.() === true
   }
@@ -992,6 +1006,13 @@ export class StreamBroker implements IStreamBroker {
     this._suspended = true
     this._status = 'idle'
     this.materializeRequestedAt = 0
+    // The same demand state `suspend()` leaves: nobody is being served, so a
+    // derived feeder stops and the next live consumer is a real edge.
+    if (this.demandActive) {
+      this.demandActive = false
+      this.demandObserver?.(false)
+    }
+    this.intentSeen = this.liveIntentCount()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = undefined
@@ -1012,7 +1033,13 @@ export class StreamBroker implements IStreamBroker {
     if (this.dialGaveUp === null || this.manualStop || this.stopping) return
     if (!this.hasLiveIntent()) return
     const fresh = this.resolveCurrentSource()
-    if (!fresh) return
+    if (!fresh) {
+      this.logger?.info('battery camera is back but the catalog has no source — staying given up', {
+        tags: { deviceId: this.numericDeviceId },
+        meta: { trigger },
+      })
+      return
+    }
     this.dialGaveUp = null
     this.watchdogKills = 0
     this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
@@ -1023,7 +1050,10 @@ export class StreamBroker implements IStreamBroker {
       meta: { trigger },
     })
     this.start(fresh).catch((err) => {
-      this.logger?.error('resume failed', { meta: { error: errMsg(err) } })
+      this.logger?.error('resume failed', {
+        tags: { deviceId: this.numericDeviceId },
+        meta: { error: errMsg(err) },
+      })
       this._suspended = true
       this._status = 'idle'
     })
@@ -1448,6 +1478,7 @@ export class StreamBroker implements IStreamBroker {
   async stop(): Promise<void> {
     this.logger?.info('Broker stopping')
     this.stopping = true
+    this.dialGaveUp = null
     this.clearSleepWaitBound()
     this.clearSessionLimit()
     this.manualStop = true
@@ -1945,12 +1976,19 @@ export class StreamBroker implements IStreamBroker {
     // consumer add/remove edges that drive suspend/resume.
     this.reconcileAudioConsumer()
 
-    if (this.hasLiveIntent()) {
+    // A given-up battery camera is revived by a NEW live consumer (or a
+    // camera-reported hold), never by churn that adds none: a sentry session
+    // attaching, or a consumer leaving, changes nothing here.
+    const intentNow = this.liveIntentCount()
+    const grew = intentNow > this.intentSeen
+    this.intentSeen = intentNow
+    if (this.dialGaveUp !== null && this.hasLiveIntent() && !grew) {
+      // stays given up
+    } else if (this.hasLiveIntent()) {
       // Signal the demand edge (false→true) before resuming so an external
       // producer (derived feeder) starts spawning immediately. Idempotent —
       // only the transition fires; repeated demanded checks are no-ops.
-      const demandEdge = !this.demandActive
-      if (demandEdge) {
+      if (!this.demandActive) {
         this.demandActive = true
         this.demandObserver?.(true)
       }
@@ -1972,12 +2010,7 @@ export class StreamBroker implements IStreamBroker {
       // (`startRfc4571Reader`'s `.catch`) already triggers a refresh
       // when the cached URL goes stale; that's the only case where
       // we actually need the publisher to wake the cam.
-      // A battery camera given up on is resumed by an EDGE only (a new demand
-      // edge here); a sentry session attaching beside a stuck consumer is
-      // not one, and neither is any other consumer churn.
-      if (this._suspended && this.dialGaveUp !== null && !demandEdge) {
-        // stays given up
-      } else if (this._suspended) {
+      if (this._suspended) {
         const fresh = this.resolveCurrentSource()
         if (fresh) {
           this.cancelResumeRetry()
@@ -3612,6 +3645,7 @@ export class StreamBroker implements IStreamBroker {
         this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
         this.nextDialAllowedAt = 0
         this.watchdogKills = 0
+        this.dialGaveUp = null
         this.stopErrorPlaceholder()
         // First RTP packet of this connection cycle — the watchdog
         // can stand down. Cheap to call when already cancelled.
