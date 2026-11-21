@@ -114,6 +114,10 @@ const SPAWN_ALLOWLIST: ReadonlyArray<readonly [string, string]> = [
     'packages/addon-pipeline/src/pipeline-runner/node-bench/bench-frames.ts',
     'node benchmark: one-shot decode of the verified bench clip into RAM at run start — file in, frames out, run to completion; not live media',
   ],
+  [
+    'packages/addon-pipeline/src/pipeline-runner/node-bench/decode-bench-source.ts',
+    'node benchmark (D1078): one-shot encode of a decode-profile stream to a cached file — file or test pattern in, elementary stream out, run to completion; not live media',
+  ],
   // ── LOCAL BENCHES. A developer tool run by hand against a recorded clip:
   // outside `src/`, never built, never shipped, never on a node.
   [

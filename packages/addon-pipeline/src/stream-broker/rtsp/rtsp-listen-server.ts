@@ -246,15 +246,22 @@ export class RtspListenServer {
     return this.port
   }
 
-  async start(port: number): Promise<void> {
+  /**
+   * Listen on `port` (0 = any free one, read back with {@link getPort}). With
+   * `host` the server answers on that interface only — the node benchmark's
+   * loopback streams (D1078) have no reason to be reachable from the network.
+   */
+  async start(port: number, host?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.server = net.createServer((socket) => this.handleConnection(socket))
       this.server.on('error', reject)
-      this.server.listen(port, () => {
+      const onListening = (): void => {
         const addr = this.server!.address()
         this.port = typeof addr === 'object' && addr ? addr.port : port
         resolve()
-      })
+      }
+      if (host === undefined) this.server.listen(port, onListening)
+      else this.server.listen(port, host, onListening)
     })
   }
 

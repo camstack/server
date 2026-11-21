@@ -15,6 +15,7 @@ import {
   initialDraft,
   planOf,
   preflightLines,
+  progressLine,
   resultRow,
   runLine,
   toggleDevice,
@@ -55,7 +56,7 @@ describe('plan editor', () => {
       plan: {
         nodeId: 'mac',
         devices: [{ deviceKey: 'coreml:all', modelIds: ['yolov9m-640'] }],
-        phases: ['device', 'pipeline'],
+        phases: ['device', 'pipeline', 'decode'],
         steps: [],
         fpsPerStream: 10,
         budgetMinutes: 45,
@@ -82,13 +83,19 @@ describe('plan editor', () => {
     const d = togglePhase(toggleStep(initialDraft(CANDIDATES), 'face-detection'), 'pipeline')
     const plan = planOf(d)
     expect(plan.kind === 'plan' && plan.plan.steps).toEqual([])
-    expect(plan.kind === 'plan' && plan.plan.phases).toEqual(['device'])
+    expect(plan.kind === 'plan' && plan.plan.phases).toEqual(['device', 'decode'])
   })
 
   it('an empty selection is not a plan, and says why', () => {
     const d = toggleModel(initialDraft(CANDIDATES), 'coreml:all', 'yolov9m-640')
-    expect(planOf(d)).toEqual({ kind: 'incomplete', why: 'Choose at least one device and model.' })
-    const none = togglePhase(togglePhase(initialDraft(CANDIDATES), 'device'), 'pipeline')
+    expect(planOf(d)).toEqual({
+      kind: 'incomplete',
+      why: 'Choose at least one device and model.',
+    })
+    const none = togglePhase(
+      togglePhase(togglePhase(initialDraft(CANDIDATES), 'device'), 'pipeline'),
+      'decode',
+    )
     expect(planOf(none).kind).toBe('incomplete')
   })
 })
@@ -190,5 +197,57 @@ describe('formatting', () => {
     expect(row.capacity).toBe('6 sessions')
     expect(row.standing).toContain('runtime changed')
     expect(row.flags).toEqual(['contaminated', 'reference images'])
+  })
+
+  it('a new draft measures decode too, and the plan carries it', () => {
+    const draft = initialDraft(CANDIDATES)
+    expect(draft.phases).toContain('decode')
+    const out = planOf(draft)
+    expect(out.kind === 'plan' ? out.plan.phases : []).toContain('decode')
+  })
+
+  it('a decode result row names the stream, the decoder and the streams it held', () => {
+    const view: NodeBenchmarkResultView = {
+      id: 'r:1',
+      runId: 'r',
+      nodeId: 'hub',
+      cell: {
+        phase: 'decode',
+        profile: { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+        maxStreams: 4,
+        limitedBy: 'fps',
+        hardware: true,
+        decoder: 'vaapi',
+        motion: true,
+        warmupMs: 0,
+        ramp: [],
+      },
+      fpsPerStream: 5,
+      fingerprint: null,
+      clip: null,
+      contaminated: false,
+      stayingCameras: [],
+      partialRun: false,
+      measuredAtMs: 0,
+      standing: 'fresh',
+      staleWhy: null,
+    }
+    const row = resultRow(view, 'en-GB')
+    expect(row.deviceKey).toBe('vaapi')
+    expect(row.modelId).toBe('3840×2160 H265 · 15 fps')
+    expect(row.what).toBe('Decode and motion')
+    expect(row.capacity).toBe('4 streams')
+    expect(row.latency).toBe('—')
+    expect(
+      progressLine({
+        phase: 'decode',
+        deviceKey: null,
+        modelId: null,
+        load: 2,
+        cellsDone: 1,
+        cellsTotal: 4,
+        message: '3840×2160 H265: 2 streams',
+      }),
+    ).toBe('Decode · 3840×2160 H265: 2 streams (1/4)')
   })
 })

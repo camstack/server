@@ -78,6 +78,17 @@ const deviceCell: NodeBenchCell = {
   warmupMs: 900,
   ramp: [],
 }
+const decodeCell: NodeBenchCell = {
+  phase: 'decode',
+  profile: { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+  maxStreams: 4,
+  limitedBy: 'fps',
+  hardware: true,
+  decoder: 'vaapi',
+  motion: true,
+  warmupMs: 800,
+  ramp: [],
+}
 const pipelineCell = (stepsFired: string[]): NodeBenchCell => ({
   phase: 'pipeline',
   deviceKey: 'coreml:all',
@@ -94,6 +105,7 @@ function runnerStatus(
   state: NodeBenchRunnerStatus['state'],
   cells: NodeBenchCell[] = [],
   activeCameraIds: number[] = [],
+  skipped: string[] = [],
 ): NodeBenchRunnerStatus {
   return {
     runId: 'r1',
@@ -105,6 +117,7 @@ function runnerStatus(
     clip: null,
     activeCameraIds,
     deletedModels: [],
+    skipped,
     error: state === 'failed' ? 'pool died' : null,
     startedAtMs: 0,
     finishedAtMs: null,
@@ -349,6 +362,25 @@ describe('NodeBenchmarkService', () => {
     expect(h.persistence.manifest).toBeNull()
   })
 
+  it('a decode cell is stored next to the detector cells, and a profile the node skipped is named on the run', async () => {
+    const h = harness({
+      statuses: [
+        runnerStatus(
+          'done',
+          [deviceCell, decodeCell],
+          [],
+          ['decode 1920x1080 h264: no ffmpeg on this node'],
+        ),
+      ],
+    })
+    await h.service.start(PLAN)
+    await until(h, () => h.service.status().run?.state === 'done')
+    expect(h.persistence.results.map((r) => r.cell.phase)).toEqual(['device', 'decode'])
+    expect(h.service.status().run?.error).toBe(
+      'Not measured: decode 1920x1080 h264: no ffmpeg on this node.',
+    )
+  })
+
   it('a hub run is always contaminated (its duties never stop)', async () => {
     const h = harness()
     await h.service.start({ ...PLAN, nodeId: 'hub' })
@@ -366,5 +398,11 @@ describe('publishableCells', () => {
   it('keeps a pipeline cell whose every requested step fired', () => {
     const cell = pipelineCell(['face-detection'])
     expect(publishableCells([cell], ['face-detection']).kept).toEqual([cell])
+  })
+  it('never drops a decode cell — it fires no pipeline step', () => {
+    expect(publishableCells([decodeCell], ['face-detection'])).toEqual({
+      kept: [decodeCell],
+      unfired: [],
+    })
   })
 })

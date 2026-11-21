@@ -346,4 +346,14 @@ describe('RunnerDecodeWorkers — the runner wiring', () => {
     expect(tracked[1]?.worker.killNow).toHaveBeenCalledTimes(1)
     expect(hook.listeners.size).toBe(0)
   })
+
+  it('a benchmark stream is forked into the set and claimed against no camera (D1078)', () => {
+    const hook = new FakeExitHook()
+    const { workers, tracked } = runnerWith(hook)
+    workers.forkUnclaimed({ ...SOURCE, deviceId: -1 })
+    expect(tracked[0]?.deps.costRegistry).toBeUndefined()
+    expect(tracked[0]?.deps.liveWorkers).toBeDefined()
+    expect(workers.shutdown()).toBe(1)
+    expect(tracked[0]?.worker.killNow).toHaveBeenCalledTimes(1)
+  })
 })

@@ -2,6 +2,11 @@
  * Binds the node benchmark host (D791) to the runner's in-process executor:
  * every call is pinned to THIS node, so the frame never leaves the process
  * group that owns it (D9) and the numbers are this node's.
+ *
+ * The `decode` measurement (D1078) is bound here too: the stream is encoded
+ * with the node's ffmpeg, served on the loopback by the broker's restream
+ * code, and decoded by the runner's own decode-worker fork with the hwaccel
+ * offer and lease knobs a session gets.
  */
 import os from 'node:os'
 import {
@@ -12,10 +17,17 @@ import {
   type NodeBenchFingerprint,
   nodePin,
 } from '@camstack/types'
+import { WasmMotionDetector } from '../../motion-wasm/wasm-motion-detector.js'
+import type { ForkedChildLike } from '../../session-decode/session-decode-coordinator.js'
+import type { WorkerLeaseKnobs } from '../../session-decode/native-lease-knobs.js'
+import type { SessionHwaccelOffer } from '../../session-decode/session-hwaccel.js'
+import type { VideoFrameSource } from '../../session-decode/video-frame-generator.js'
 import { getSharp } from '../../shared/lazy-sharp.js'
 import { startStallSampler } from '../capacity/stall-sampler.js'
-import { loadBenchFrames } from './bench-frames.js'
-import type { BenchFrame } from './node-bench-driver.js'
+import { type BenchFrameDeps, ensureBenchClip, loadBenchFrames } from './bench-frames.js'
+import { type DecodeBenchMotionPass, openDecodeBenchRig } from './decode-bench-rig.js'
+import { ensureDecodeBenchSource, runFfmpegToFile } from './decode-bench-source.js'
+import { type BenchFrame, PIPELINE_RAM_FREE_MIN_PCT } from './node-bench-driver.js'
 import { NodeBenchHost } from './node-bench-host.js'
 
 const DETECTOR_ADDON = 'object-detection'
@@ -26,11 +38,30 @@ function isModelFormat(value: string): value is ModelFormat {
   return (MODEL_FORMATS as readonly string[]).includes(value)
 }
 
+/** The runner's session decode path, as the `decode` measurement borrows it. */
+export interface NodeBenchDecodePath {
+  /** Fork one decode worker: killed with the runner, claimed against no camera. */
+  readonly fork: (source: VideoFrameSource) => ForkedChildLike
+  readonly lease: () => WorkerLeaseKnobs
+  readonly hwaccel: () => SessionHwaccelOffer
+  /** Bring the lease knobs and the hwaccel offer up to date, as a session spawn does. */
+  readonly refresh: () => Promise<void>
+}
+
+/** Refuse the next decode worker while the node is under the free-RAM limit. */
+function ramAdmission(): string | null {
+  const freePct = Math.round((os.freemem() / os.totalmem()) * 1000) / 10
+  return freePct < PIPELINE_RAM_FREE_MIN_PCT
+    ? `ram free ${Math.round(freePct)}% < ${PIPELINE_RAM_FREE_MIN_PCT}%`
+    : null
+}
+
 export function createNodeBenchHost(deps: {
   readonly nodeId: string
   readonly ctx: () => AddonContext
   readonly activeCameraIds: () => readonly number[]
   readonly pipelineVersion: string | null
+  readonly decode: NodeBenchDecodePath
 }): NodeBenchHost {
   const api = () => {
     const a = deps.ctx().api
@@ -47,31 +78,84 @@ export function createNodeBenchHost(deps: {
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })
-    return { data: new Uint8Array(data), width: info.width, height: info.height }
+    return {
+      data: new Uint8Array(data),
+      width: info.width,
+      height: info.height,
+    }
+  }
+
+  const frameDeps = (): BenchFrameDeps => ({
+    dataDir: deps.ctx().dataDir,
+    ensureFfmpeg: () => deps.ctx().deps.ensureFfmpeg(),
+    fetch: globalThis.fetch,
+    referenceImages: async () => {
+      const list = await api().pipelineExecutor.listReferenceImages.query(undefined, pin())
+      const out: Uint8Array[] = []
+      for (const entry of list) {
+        const img = await api().pipelineExecutor.getReferenceImage.query(
+          { filename: entry.filename },
+          pin(),
+        )
+        if (img) out.push(new Uint8Array(Buffer.from(img.base64, 'base64')))
+      }
+      return out
+    },
+    decodeJpeg,
+    log: (message, meta) => log.info(message, meta ? { meta } : undefined),
+  })
+
+  // One motion kernel for every bench stream, as one serves every camera of a
+  // node; loaded on the first decode profile. A kernel that cannot be loaded
+  // is said once — the cell then records that motion did not run.
+  let motion: Promise<DecodeBenchMotionPass | null> | null = null
+  const motionPass = (): Promise<DecodeBenchMotionPass | null> => {
+    motion ??= (async (): Promise<DecodeBenchMotionPass | null> => {
+      try {
+        const detector = new WasmMotionDetector()
+        await detector.load()
+        return (previous, current, width, height) => {
+          detector.ensureSize(width, height)
+          detector.detect(previous, current)
+        }
+      } catch (err) {
+        log.warn('node bench: the motion kernel could not be loaded — decode is measured alone', {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+        return null
+      }
+    })()
+    return motion
   }
 
   return new NodeBenchHost({
     nodeId: deps.nodeId,
-    loadFrames: () =>
-      loadBenchFrames({
-        dataDir: deps.ctx().dataDir,
-        ensureFfmpeg: () => deps.ctx().deps.ensureFfmpeg(),
-        fetch: globalThis.fetch,
-        referenceImages: async () => {
-          const list = await api().pipelineExecutor.listReferenceImages.query(undefined, pin())
-          const out: Uint8Array[] = []
-          for (const entry of list) {
-            const img = await api().pipelineExecutor.getReferenceImage.query(
-              { filename: entry.filename },
-              pin(),
-            )
-            if (img) out.push(new Uint8Array(Buffer.from(img.base64, 'base64')))
-          }
-          return out
+    loadFrames: () => loadBenchFrames(frameDeps()),
+    openDecodeRig: async (profile, input) => {
+      const prepared = await ensureDecodeBenchSource(
+        {
+          dataDir: deps.ctx().dataDir,
+          ensureFfmpeg: () => deps.ctx().deps.ensureFfmpeg(),
+          clipFile: () => ensureBenchClip(frameDeps()),
+          runFfmpeg: runFfmpegToFile,
+          log: (message, meta) => log.info(message, meta ? { meta } : undefined),
         },
-        decodeJpeg,
-        log: (message, meta) => log.info(message, meta ? { meta } : undefined),
-      }),
+        profile,
+      )
+      if (prepared.kind === 'skipped') return prepared
+      await deps.decode.refresh()
+      const rig = await openDecodeBenchRig({
+        source: prepared.source,
+        motionFps: input.fpsPerStream,
+        fork: deps.decode.fork,
+        lease: deps.decode.lease,
+        hwaccel: deps.decode.hwaccel,
+        logger: log,
+        motion: await motionPass(),
+        admit: ramAdmission,
+      })
+      return { kind: 'ready', rig }
+    },
     dispatch: async ({ steps, deviceKey, plane, frame }) => {
       const result = await api().pipelineExecutor.runPipeline.mutate(
         {

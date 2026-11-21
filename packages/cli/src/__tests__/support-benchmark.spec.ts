@@ -250,6 +250,45 @@ describe('support_benchmark_status', () => {
     expect(writes(calls)).toEqual([])
   })
 
+  it('a stored decode cell is reported on its own and does not hide the device cells', async () => {
+    const { ctx } = fakeHub({
+      'pipelineOrchestrator.getNodeBenchmarkStatus': { run: null },
+      'pipelineOrchestrator.listNodeBenchmarkResults': [
+        {
+          nodeId: 'hub',
+          cell: { phase: 'device', deviceKey: 'openvino:npu', modelId: 'm', p50Ms: 3, fps: 300 },
+        },
+        {
+          nodeId: 'hub',
+          cell: {
+            phase: 'decode',
+            profile: { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+            maxStreams: 4,
+            limitedBy: 'fps',
+            hardware: true,
+            decoder: 'vaapi',
+          },
+        },
+      ],
+    })
+    const out = await supportBenchmarkStatus(ctx, {})
+    expect(out).toMatchObject({
+      status: 'ok',
+      unavailable: {},
+      storedResults: [{ deviceKey: 'openvino:npu', modelId: 'm' }],
+      storedDecode: [
+        {
+          nodeId: 'hub',
+          profile: { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+          maxStreams: 4,
+          limitedBy: 'fps',
+          hardware: true,
+          decoder: 'vaapi',
+        },
+      ],
+    })
+  })
+
   it('an unreadable part is named, not zero', async () => {
     const { ctx } = fakeHub({
       'pipelineOrchestrator.getNodeBenchmarkStatus': new Error('boom'),

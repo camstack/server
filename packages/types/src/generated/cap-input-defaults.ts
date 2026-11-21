@@ -103,17 +103,17 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   "pipeline-orchestrator": {
     "applyAutoTune": {"headroom":0.4,"minSessionsPerDevice":2},
     "getHealthDigest": {"history":1},
-    "getNodeBenchmarkPreflight": {"phases":["device","pipeline"],"steps":[],"fpsPerStream":10,"budgetMinutes":45,"keepDownloadedModels":false,"acceptInsufficientHeadroom":false},
+    "getNodeBenchmarkPreflight": {"phases":["device","pipeline","decode"],"steps":[],"fpsPerStream":10,"budgetMinutes":45,"keepDownloadedModels":false,"acceptInsufficientHeadroom":false},
     "getPlacementStats": {"windowMs":3600000},
     "planAutoTune": {"headroom":0.4,"minSessionsPerDevice":2},
     "setLoadBalancingShares": {"nodes":{},"devices":{}},
-    "startNodeBenchmark": {"phases":["device","pipeline"],"steps":[],"fpsPerStream":10,"budgetMinutes":45,"keepDownloadedModels":false,"acceptInsufficientHeadroom":false},
+    "startNodeBenchmark": {"phases":["device","pipeline","decode"],"steps":[],"fpsPerStream":10,"budgetMinutes":45,"keepDownloadedModels":false,"acceptInsufficientHeadroom":false},
     "suggestShares": {"headroom":0.4,"source":"hardware"},
   },
   "pipeline-runner": {
     "attachCamera": {"detectionMode":"on-motion","audioMode":"always-on","motionCooldownMs":30000,"motionFps":4,"detectionFps":10,"motionSources":["analyzer"],"detectionSources":["pipeline"],"pipelineEnabled":true,"zones":[],"onboardMotionDrivesAnalyzer":true,"preRollInferenceEnabled":true,"preRollInferenceFrames":12,"occupancyRecheckEnabled":true,"occupancyRecheckSec":300,"occupancyRecheckFrames":4,"frameSource":{"kind":"local-broker"}},
     "reportMotion": {"source":"analyzer"},
-    "startNodeBench": {"steps":[],"settleSec":5,"measureSec":20,"keepDownloadedModels":false},
+    "startNodeBench": {"decodeProfiles":[{"width":3840,"height":2160,"fps":15,"codec":"h265"},{"width":1920,"height":1080,"fps":15,"codec":"h264"}],"steps":[],"settleSec":5,"measureSec":20,"keepDownloadedModels":false},
   },
   "recording-archive": {
     "renderClip": {"preRollSec":3,"postRollSec":7,"maxWidth":640},

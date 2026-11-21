@@ -426,6 +426,14 @@ export function NodeBenchmarkSection({ trpc }: { readonly trpc: Trpc }): ReactNo
                   />
                   {t('measure.pipelineLoad')}
                 </label>
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={draft.phases.includes('decode')}
+                    disabled={!editing}
+                    onChange={() => setDraft(togglePhase(draft, 'decode'))}
+                  />
+                  {t('measure.decode')}
+                </label>
               </div>
               {draft.phases.includes('pipeline') && (
                 <div className="flex flex-wrap gap-3 text-xs">

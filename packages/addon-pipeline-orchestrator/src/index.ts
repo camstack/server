@@ -119,7 +119,7 @@ import {
   type IAddonWidgetsSourceProvider,
   isAutomaticShareSource,
   measuredCapacityFromResults,
-  nodeCapacityVerdicts,
+  nodeCapacityVerdictsFromResults,
   measuredDetectorCells,
   nodePin,
   pinUnderBenchmark,
@@ -3139,12 +3139,11 @@ export default class PipelineOrchestratorAddon
   ): Promise<readonly NodeCapacityVerdict[]> {
     const rows = this.nodeBenchmarkStore?.listResults() ?? []
     if (rows.length === 0) return []
-    const nodeIds = [...new Set(rows.map((r) => r.nodeId))]
-    return nodeCapacityVerdicts({
+    return nodeCapacityVerdictsFromResults(rows, {
       ...(input.nodeId !== undefined ? { nodeId: input.nodeId } : {}),
+      nowMs: Date.now(),
+      currentPools: await this.readCurrentPools(rows),
       runs: await this.deviceRunsNow(),
-      measured: await this.readMeasuredCapacity(nodeIds),
-      decode: new Map(),
     })
   }
 
@@ -3168,7 +3167,12 @@ export default class PipelineOrchestratorAddon
   ): Promise<Record<string, Record<string, CurrentPool>>> {
     const out: Record<string, Record<string, CurrentPool>> = {}
     const api = this.ctx.api
-    const pairs = new Set(rows.map((r) => `${r.nodeId}\u0000${r.cell.deviceKey}`))
+    // A decode cell names no inference device, so it has no pool to compare.
+    const pairs = new Set(
+      rows.flatMap((r) =>
+        r.cell.phase === 'decode' ? [] : [`${r.nodeId}\u0000${r.cell.deviceKey}`],
+      ),
+    )
     const now = Date.now()
     await Promise.all(
       [...pairs].map(async (key) => {

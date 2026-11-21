@@ -576,18 +576,63 @@ export async function supportBenchmarkRun(
 // ---------------------------------------------------------------------------
 // support_benchmark_status (read)
 
+const DecodeProfileSchema = z.object({
+  width: z.number(),
+  height: z.number(),
+  fps: z.number(),
+  codec: z.string(),
+})
+
+/**
+ * One stored cell. A detector cell names a device and a model; a decode cell
+ * names neither — it carries the stream it decoded and the streams it held.
+ */
 const ResultsSchema = z.array(
   z.looseObject({
     nodeId: z.string(),
     cell: z.looseObject({
       phase: z.string(),
-      deviceKey: z.string(),
-      modelId: z.string(),
+      deviceKey: z.string().optional(),
+      modelId: z.string().optional(),
       p50Ms: z.number().optional(),
       fps: z.number().optional(),
+      profile: DecodeProfileSchema.optional(),
+      maxStreams: z.number().optional(),
+      limitedBy: z.string().optional(),
+      hardware: z.boolean().optional(),
+      decoder: z.string().optional(),
     }),
   }),
 )
+type StoredResult = z.infer<typeof ResultsSchema>[number]
+
+export interface StoredDecodeResult {
+  readonly nodeId: string
+  readonly profile: z.infer<typeof DecodeProfileSchema>
+  /** Concurrent streams of `profile` the node decoded at the profile rate, with motion. */
+  readonly maxStreams: number
+  /** What stopped the ramp (`fps`, `cpu`, `ram`, …; `none` = it never failed). */
+  readonly limitedBy: string | null
+  readonly hardware: boolean | null
+  readonly decoder: string | null
+}
+
+function storedDecodeOf(r: StoredResult): readonly StoredDecodeResult[] {
+  const { cell } = r
+  if (cell.phase !== 'decode' || cell.profile === undefined || cell.maxStreams === undefined) {
+    return []
+  }
+  return [
+    {
+      nodeId: r.nodeId,
+      profile: cell.profile,
+      maxStreams: cell.maxStreams,
+      limitedBy: cell.limitedBy ?? null,
+      hardware: cell.hardware ?? null,
+      decoder: cell.decoder ?? null,
+    },
+  ]
+}
 
 export interface BenchmarkStatusResult {
   readonly status: 'ok'
@@ -606,6 +651,8 @@ export interface BenchmarkStatusResult {
     readonly p50Ms: number | null
     readonly fps: number | null
   }[]
+  /** Decode cells of the same benchmark: camera streams decoded at full rate, per profile. */
+  readonly storedDecode: readonly StoredDecodeResult[]
   readonly unavailable: { readonly [part: string]: string }
   readonly note: string
 }
@@ -654,16 +701,24 @@ export async function supportBenchmarkStatus(
           : null,
       storedResults: results.ok
         ? results.value
-            .filter((r) => r.cell.phase === 'device')
+            .flatMap((r) =>
+              r.cell.phase === 'device' &&
+              r.cell.deviceKey !== undefined &&
+              r.cell.modelId !== undefined
+                ? [
+                    {
+                      nodeId: r.nodeId,
+                      deviceKey: r.cell.deviceKey,
+                      modelId: r.cell.modelId,
+                      p50Ms: r.cell.p50Ms ?? null,
+                      fps: r.cell.fps ?? null,
+                    },
+                  ]
+                : [],
+            )
             .slice(0, MAX_STORED)
-            .map((r) => ({
-              nodeId: r.nodeId,
-              deviceKey: r.cell.deviceKey,
-              modelId: r.cell.modelId,
-              p50Ms: r.cell.p50Ms ?? null,
-              fps: r.cell.fps ?? null,
-            }))
         : [],
+      storedDecode: results.ok ? results.value.flatMap(storedDecodeOf).slice(0, MAX_STORED) : [],
       unavailable,
       note: "This is the hub's own node benchmark (capacity ramp). The Auto-tune latency table is filled with support_benchmark_run.",
     }

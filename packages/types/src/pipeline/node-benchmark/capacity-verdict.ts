@@ -14,15 +14,7 @@
  */
 import { z } from 'zod'
 import { capacityForModel, type NodeMeasuredCapacity } from '../load-balancing/capacity-shares.js'
-
-/** The encoded stream shape a decode measurement offered. */
-export const NodeDecodeProfileSchema = z.object({
-  width: z.number(),
-  height: z.number(),
-  fps: z.number(),
-  codec: z.enum(['h264', 'h265']),
-})
-export type NodeDecodeProfile = z.infer<typeof NodeDecodeProfileSchema>
+import { NodeDecodeProfileSchema } from './schemas.js'
 
 /** One device's part of the detection capacity. */
 export const NodeCapacityDetectionCellSchema = z.object({
@@ -47,7 +39,7 @@ export const NodeDecodeCapacitySchema = z.object({
   maxStreams: z.number(),
   measuredAtMs: z.number(),
   profile: NodeDecodeProfileSchema,
-  /** A hardware decoder carried the streams (false = software). */
+  /** Every stream ran on a hardware decoder (false = at least one in software). */
   hardware: z.boolean(),
   decoder: z.string(),
 })

@@ -5,24 +5,36 @@
  * reads that as `runner-lost` and restores the cluster), stops itself at the
  * deadline whatever the hub does, and deletes the models it downloaded that
  * were not installed before (unless told to keep them).
+ *
+ * The detector measurements (`device`, `pipeline`) run first, on frames
+ * decoded once into RAM; the `decode` measurement (D1078) runs after them, on
+ * real decode workers. A measurement the run asked for and could not make is
+ * named in `skipped` with its reason — an absent cell is never left unexplained.
  */
 import os from 'node:os'
 import {
+  decodeProfileId,
   type NodeBenchCell,
+  type NodeBenchClip,
   type NodeBenchFingerprint,
   type NodeBenchProgress,
   type NodeBenchRunnerInput,
   NodeBenchRunnerInputSchema,
   type NodeBenchRunnerInputRaw,
   type NodeBenchRunnerStatus,
+  type NodeDecodeProfile,
   type PipelineStepInputOutput,
 } from '@camstack/types'
 import type { CapacityStallWindow } from '../capacity/capacity-runner.js'
 import type { BenchFrameSet } from './bench-frames.js'
+import { DecodeBenchDriver, type DecodeRigOutcome } from './decode-bench-driver.js'
 import { type BenchDispatchResult, type BenchFrame, NodeBenchDriver } from './node-bench-driver.js'
 
 /** Node CPU % between two calls (all cores), and free RAM %. */
-export function createSystemSampler(): () => { cpuPct: number; ramFreePct: number } {
+export function createSystemSampler(): () => {
+  cpuPct: number
+  ramFreePct: number
+} {
   const totals = (): { idle: number; total: number } =>
     os.cpus().reduce(
       (acc, c) => {
@@ -60,18 +72,78 @@ export interface NodeBenchHostDeps {
     stepIds: readonly string[],
   ) => Promise<readonly PipelineStepInputOutput[]>
   readonly fingerprint: (deviceKeys: readonly string[]) => Promise<NodeBenchFingerprint>
+  /**
+   * The streams of one decode profile (D1078), or the reason this node cannot
+   * be offered it. Opened once per profile; the driver closes it.
+   */
+  readonly openDecodeRig: (
+    profile: NodeDecodeProfile,
+    input: NodeBenchRunnerInput,
+  ) => Promise<DecodeRigOutcome>
   /** Detector model copies on the node now, as `modelId/format` keys. */
   readonly installedDetectorModels: () => Promise<ReadonlySet<string>>
   /** Delete one detector model copy (`modelId/format`) the run downloaded. */
   readonly deleteDetectorModel: (key: string) => Promise<void>
   /** Cameras running on this node now (they share the pools). */
   readonly activeCameraIds: () => readonly number[]
-  readonly startStallSampler: () => { snapshot: () => CapacityStallWindow; stop: () => void }
+  readonly startStallSampler: () => {
+    snapshot: () => CapacityStallWindow
+    stop: () => void
+  }
   readonly sampleSystem?: () => { cpuPct: number; ramFreePct: number }
   readonly log: (level: 'info' | 'warn', message: string, meta?: Record<string, unknown>) => void
   readonly now?: () => number
   /** Test seam: the pacer's sleep (default a real unref'd timer). */
   readonly sleepUntil?: (t: number) => Promise<void>
+}
+
+/** What a decode-only run loads in place of the detector frames. */
+const NO_FRAMES: {
+  readonly frames: readonly BenchFrame[]
+  readonly clip: NodeBenchClip | null
+} = {
+  frames: [],
+  clip: null,
+}
+
+function detectorCellCount(input: NodeBenchRunnerInput): number {
+  const device = input.phases.includes('device')
+    ? input.devices.reduce((n, d) => n + d.modelIds.length, 0)
+    : 0
+  return device + (input.phases.includes('pipeline') ? input.devices.length : 0)
+}
+
+function decodeCellCount(input: NodeBenchRunnerInput): number {
+  return input.phases.includes('decode') ? input.decodeProfiles.length : 0
+}
+
+/** The fields of the `node bench cell` line, per measurement. */
+function cellLogFields(cell: NodeBenchCell): Record<string, unknown> {
+  switch (cell.phase) {
+    case 'device':
+      return {
+        deviceKey: cell.deviceKey,
+        modelId: cell.modelId,
+        kMax: cell.kMax,
+        fps: cell.fps,
+        p95Ms: cell.p95Ms,
+      }
+    case 'pipeline':
+      return {
+        deviceKey: cell.deviceKey,
+        modelId: cell.modelId,
+        maxSessions: cell.maxSessions,
+        stepsFired: cell.stepsFired.join(','),
+      }
+    case 'decode':
+      return {
+        profile: decodeProfileId(cell.profile),
+        maxStreams: cell.maxStreams,
+        decoder: cell.decoder,
+        hardware: cell.hardware,
+        motion: cell.motion,
+      }
+  }
 }
 
 interface RunState {
@@ -112,6 +184,7 @@ export class NodeBenchHost {
         clip: null,
         activeCameraIds: [...this.deps.activeCameraIds()],
         deletedModels: [],
+        skipped: [],
         error: null,
         startedAtMs: this.now(),
         finishedAtMs: null,
@@ -156,19 +229,30 @@ export class NodeBenchHost {
     const shouldStop = (): boolean => state.stop || this.now() >= input.deadlineAtMs
     const sampler = this.deps.startStallSampler()
     const installedBefore = await this.deps.installedDetectorModels().catch(() => null)
+    const sleepUntil =
+      this.deps.sleepUntil ??
+      ((t: number): Promise<void> =>
+        new Promise((resolve) => {
+          const timer = setTimeout(resolve, Math.max(0, t - this.now()))
+          timer.unref?.()
+        }))
+    const sampleSystem = this.deps.sampleSystem ?? createSystemSampler()
+    const detectorCells = detectorCellCount(input)
+    const cellsTotal = detectorCells + decodeCellCount(input)
     try {
       this.patch(state, {
-        progress: this.preparing(input, 'decoding the bench frames'),
+        progress: this.preparing(cellsTotal, 'decoding the bench frames'),
       })
       const deviceKeys = input.devices.map((d) => d.deviceKey)
+      // A decode-only run reads no detector frame: nothing is decoded for it.
       const [frameSet, fingerprint] = await Promise.all([
-        this.deps.loadFrames(),
+        detectorCells > 0 ? this.deps.loadFrames() : Promise.resolve(NO_FRAMES),
         this.deps.fingerprint(deviceKeys).catch(() => null),
       ])
       this.patch(state, { clip: frameSet.clip, fingerprint })
       this.deps.log('info', 'node bench start', {
         runId: input.runId,
-        clip: frameSet.clip.id,
+        clip: frameSet.clip?.id ?? null,
         frames: frameSet.frames.length,
         devices: deviceKeys,
         phases: input.phases,
@@ -179,36 +263,52 @@ export class NodeBenchHost {
         dispatch: this.deps.dispatch,
         pipelineSteps: (modelId) => this.deps.pipelineSteps(modelId, input.steps),
         now: () => this.now(),
-        sleepUntil:
-          this.deps.sleepUntil ??
-          ((t) =>
-            new Promise((resolve) => {
-              const timer = setTimeout(resolve, Math.max(0, t - this.now()))
-              timer.unref?.()
-            })),
+        sleepUntil,
         shouldStop,
         stallSnapshot: sampler.snapshot,
         rssMb: () => Math.round(process.memoryUsage().rss / 1e6),
-        sampleSystem: this.deps.sampleSystem ?? createSystemSampler(),
+        sampleSystem,
         onProgress: (progress: NodeBenchProgress) => {
           this.noteActiveCameras(state)
-          this.patch(state, { progress })
+          this.patch(state, { progress: { ...progress, cellsTotal } })
         },
-        onCell: (cell: NodeBenchCell) => {
-          this.patch(state, { cells: [...state.status.cells, cell] })
-          this.deps.log('info', 'node bench cell', {
-            runId: input.runId,
-            phase: cell.phase,
-            deviceKey: cell.deviceKey,
-            modelId: cell.modelId,
-            ...(cell.phase === 'device'
-              ? { kMax: cell.kMax, fps: cell.fps, p95Ms: cell.p95Ms }
-              : { maxSessions: cell.maxSessions, stepsFired: cell.stepsFired.join(',') }),
-            limitedBy: cell.limitedBy,
-          })
-        },
+        onCell: (cell: NodeBenchCell) => this.noteCell(input, state, cell),
       })
       await driver.run()
+      if (input.phases.includes('decode')) {
+        let profilesDone = 0
+        await new DecodeBenchDriver({
+          input,
+          openRig: (profile) => this.deps.openDecodeRig(profile, input),
+          now: () => this.now(),
+          sleepUntil,
+          shouldStop,
+          stallSnapshot: sampler.snapshot,
+          sampleSystem,
+          onProgress: (progress) => {
+            this.noteActiveCameras(state)
+            this.patch(state, {
+              progress: {
+                ...progress,
+                cellsDone: detectorCells + profilesDone,
+                cellsTotal,
+              },
+            })
+          },
+          onCell: (cell) => this.noteCell(input, state, cell),
+          onSkipped: (reason) => {
+            // A measurement asked for and not made is said, here and on the status.
+            this.patch(state, { skipped: [...state.status.skipped, reason] })
+            this.deps.log('warn', 'node bench: measurement skipped', {
+              runId: input.runId,
+              reason,
+            })
+          },
+          onProfileDone: () => {
+            profilesDone += 1
+          },
+        }).run()
+      }
       this.patch(state, { state: shouldStop() ? 'aborted' : 'done' })
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err)
@@ -221,17 +321,24 @@ export class NodeBenchHost {
     }
   }
 
-  private preparing(input: NodeBenchRunnerInput, message: string): NodeBenchProgress {
+  private noteCell(input: NodeBenchRunnerInput, state: RunState, cell: NodeBenchCell): void {
+    this.patch(state, { cells: [...state.status.cells, cell] })
+    this.deps.log('info', 'node bench cell', {
+      runId: input.runId,
+      phase: cell.phase,
+      ...cellLogFields(cell),
+      limitedBy: cell.limitedBy,
+    })
+  }
+
+  private preparing(cellsTotal: number, message: string): NodeBenchProgress {
     return {
       phase: 'preparing',
       deviceKey: null,
       modelId: null,
       load: null,
       cellsDone: 0,
-      cellsTotal:
-        (input.phases.includes('device')
-          ? input.devices.reduce((n, d) => n + d.modelIds.length, 0)
-          : 0) + (input.phases.includes('pipeline') ? input.devices.length : 0),
+      cellsTotal,
       message,
     }
   }

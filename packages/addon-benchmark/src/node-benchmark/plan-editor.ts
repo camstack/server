@@ -10,6 +10,7 @@ import type {
   NodeBenchmarkPlanInput,
   NodeBenchmarkPreflight,
   NodeBenchmarkResultView,
+  NodeDecodeProfile,
   NodeBenchmarkRun,
   NodeBenchProgress,
 } from '@camstack/types'
@@ -34,7 +35,7 @@ export interface PlanDraft {
   readonly acceptInsufficientHeadroom: boolean
 }
 
-export const DEFAULT_PHASES: readonly NodeBenchmarkPhase[] = ['device', 'pipeline']
+export const DEFAULT_PHASES: readonly NodeBenchmarkPhase[] = ['device', 'pipeline', 'decode']
 
 /**
  * The editor's starting point for a node: every enabled, available device
@@ -201,8 +202,13 @@ export function progressLine(p: NodeBenchProgress): string {
     p.phase === 'device'
       ? translate('progress.device', { device: p.deviceKey ?? '', model: p.modelId ?? '' })
       : p.phase === 'pipeline'
-        ? translate('progress.pipeline', { device: p.deviceKey ?? '', model: p.modelId ?? '' })
-        : p.phase
+        ? translate('progress.pipeline', {
+            device: p.deviceKey ?? '',
+            model: p.modelId ?? '',
+          })
+        : p.phase === 'decode'
+          ? translate('progress.decode')
+          : p.phase
   return `${what} · ${p.message} (${p.cellsDone}/${p.cellsTotal})`
 }
 
@@ -231,6 +237,16 @@ function staleReason(why: NodeBenchmarkResultView['staleWhy']): string {
   return translate('standing.stalePool')
 }
 
+/** A decode profile as the operator reads a camera stream: size, codec, rate. */
+export function profileLabel(profile: NodeDecodeProfile): string {
+  return translate('result.decodeProfile', {
+    width: profile.width,
+    height: profile.height,
+    codec: profile.codec.toUpperCase(),
+    fps: profile.fps,
+  })
+}
+
 /** A stored result as one table row. */
 export interface ResultRow {
   readonly id: string
@@ -252,20 +268,32 @@ export function resultRow(r: NodeBenchmarkResultView, locale?: string): ResultRo
     ...(r.partialRun ? [translate('flags.partialRun')] : []),
     ...(r.clip?.id === 'reference-images' ? [translate('flags.referenceImages')] : []),
   ]
+  const decode = cell.phase === 'decode'
   return {
     id: r.id,
-    deviceKey: cell.deviceKey,
-    modelId: cell.modelId,
+    // A decode cell belongs to no inference device: the decoder and the
+    // stream it carried stand where the device and the model do.
+    deviceKey: decode ? cell.decoder : cell.deviceKey,
+    modelId: decode ? profileLabel(cell.profile) : cell.modelId,
     what:
       cell.phase === 'device'
         ? translate('result.deviceCapacity')
-        : translate(cell.steps.length > 0 ? 'result.pipelineWithSteps' : 'result.pipeline', {
-            steps: cell.steps.join(', '),
-          }),
+        : cell.phase === 'decode'
+          ? translate('result.decode')
+          : translate(cell.steps.length > 0 ? 'result.pipelineWithSteps' : 'result.pipeline', {
+              steps: cell.steps.join(', '),
+            }),
     capacity:
       cell.phase === 'device'
-        ? translate('result.capacityDevice', { streams: cell.kMax, fps: cell.fps })
-        : translate('result.capacityPipeline', { sessions: cell.maxSessions }),
+        ? translate('result.capacityDevice', {
+            streams: cell.kMax,
+            fps: cell.fps,
+          })
+        : cell.phase === 'decode'
+          ? translate('result.capacityDecode', { count: cell.maxStreams })
+          : translate('result.capacityPipeline', {
+              sessions: cell.maxSessions,
+            }),
     latency: cell.phase === 'device' ? `p50 ${cell.p50Ms} ms · p95 ${cell.p95Ms} ms` : '—',
     limitedBy: cell.limitedBy,
     measuredAt: new Date(r.measuredAtMs).toLocaleString(locale),

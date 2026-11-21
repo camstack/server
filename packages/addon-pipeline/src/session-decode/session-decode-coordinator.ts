@@ -840,6 +840,7 @@ class SessionDecodeSession {
           decoderCreateMs: raw.decoderCreateMs,
           firstDecodeMs: raw.firstDecodeMs,
           streamInfoProbed: raw.streamInfoProbed,
+          ...(raw.decodeBackend !== undefined ? { decodeBackend: raw.decodeBackend } : {}),
         })
         return
       case 'preRollSettled':

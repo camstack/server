@@ -188,6 +188,17 @@ export class RunnerDecodeWorkers {
   }
 
   /**
+   * Fork one worker that serves NO camera — a node-benchmark decode stream
+   * (D1078). Registered like any other, so shutdown and process exit kill it,
+   * and claimed against no device: its cost is the benchmark's, and a claim
+   * would show a camera that does not exist in the per-camera cost.
+   */
+  readonly forkUnclaimed = (source: VideoFrameSource): ForkedChildLike => {
+    this.armExitHook()
+    return this.deps.fork(source, { liveWorkers: this.live })
+  }
+
+  /**
    * The addon is shutting down: kill every worker, and every later fork at
    * once. Synchronous, so it is done before the runner's `process.exit`.
    */

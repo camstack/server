@@ -2,8 +2,10 @@
  * Which node benchmark result still beats the table (D791). Pure.
  *
  * A row is FRESH when it is the newest for its cell (node × device × phase
- * × model [× steps]), younger than the stale bound (30 days), and was
- * measured on the pool the node runs today (same runtime, same tuning). A
+ * × model [× steps]; node × profile for a decode cell), younger than the
+ * stale bound (30 days), and was measured on the pool the node runs today
+ * (same runtime, same tuning). A decode cell names no inference pool, so only
+ * its age can make it stale. A
  * fresh row is what Auto tune and the automatic shares read; anything else
  * falls back to the latency table and says why.
  *
@@ -15,6 +17,13 @@ import type {
   NodeMeasuredCapacity,
 } from '../load-balancing/capacity-shares.js'
 import {
+  nodeCapacityVerdicts,
+  type DeviceRunsModel,
+  type NodeCapacityVerdict,
+  type NodeDecodeCapacity,
+} from './capacity-verdict.js'
+import {
+  decodeProfileId,
   NODE_BENCHMARK_DEFAULTS,
   type NodeBenchmarkResult,
   type NodeBenchmarkResultView,
@@ -44,6 +53,8 @@ export interface Standing {
 /** The cell a row measures — two rows with the same key measure the same thing. */
 export function resultCellKey(row: NodeBenchmarkResult): string {
   const { cell } = row
+  if (cell.phase === 'decode')
+    return [row.nodeId, 'decode', decodeProfileId(cell.profile)].join('|')
   const steps = cell.phase === 'pipeline' ? cell.steps.toSorted().join(',') : ''
   return [row.nodeId, cell.deviceKey, cell.phase, cell.modelId, steps].join('|')
 }
@@ -51,6 +62,7 @@ export function resultCellKey(row: NodeBenchmarkResult): string {
 function staleWhy(row: NodeBenchmarkResult, ctx: StandingContext): Standing['staleWhy'] {
   const bound = ctx.staleAfterMs ?? NODE_BENCHMARK_DEFAULTS.staleAfterDays * 86_400_000
   if (ctx.nowMs - row.measuredAtMs > bound) return 'age'
+  if (row.cell.phase === 'decode') return null
   const now = ctx.currentPools[row.nodeId]?.[row.cell.deviceKey]
   const then = row.fingerprint?.pools[row.cell.deviceKey]
   if (now === undefined || then === undefined) return null
@@ -159,6 +171,7 @@ export function measuredCapacityFromResults(
   for (const row of freshResults(rows, ctx)) {
     if (!nodeIds.includes(row.nodeId)) continue
     const candidate = capacityOfRow(row)
+    if (candidate === null) continue
     const devices = byNode.get(row.nodeId) ?? new Map<string, DeviceMeasuredCapacity>()
     const key = `${candidate.deviceKey}\u0000${candidate.modelId ?? ''}`
     const held = devices.get(key)
@@ -181,8 +194,10 @@ export function measuredCapacityFromResults(
   return out
 }
 
-function capacityOfRow(row: NodeBenchmarkResult): DeviceMeasuredCapacity {
+/** The detection capacity a row stands for; a decode row stands for none. */
+function capacityOfRow(row: NodeBenchmarkResult): DeviceMeasuredCapacity | null {
   const { cell } = row
+  if (cell.phase === 'decode') return null
   return cell.phase === 'pipeline'
     ? {
         deviceKey: cell.deviceKey,
@@ -204,4 +219,57 @@ function capacityOfRow(row: NodeBenchmarkResult): DeviceMeasuredCapacity {
 function betterCapacityCell(a: DeviceMeasuredCapacity, b: DeviceMeasuredCapacity): boolean {
   if (a.phase !== b.phase) return a.phase === 'pipeline'
   return a.measuredAtMs > b.measuredAtMs
+}
+
+/**
+ * Per node, the decode capacity its fresh `decode` cells measured: the profile
+ * that carried the FEWEST streams. A node is sized for its heaviest cameras —
+ * the lighter profile's larger number would promise streams the heavy one
+ * cannot keep. A node with no fresh decode cell is absent (unknown, never 0);
+ * a profile that carried no stream is a measured zero.
+ */
+export function decodeCapacityFromResults(
+  rows: readonly NodeBenchmarkResult[],
+  nodeIds: readonly string[],
+  ctx: StandingContext,
+): ReadonlyMap<string, NodeDecodeCapacity> {
+  const out = new Map<string, NodeDecodeCapacity>()
+  for (const row of freshResults(rows, ctx)) {
+    const { cell } = row
+    if (cell.phase !== 'decode' || !nodeIds.includes(row.nodeId)) continue
+    const held = out.get(row.nodeId)
+    if (held !== undefined && held.maxStreams <= cell.maxStreams) continue
+    out.set(row.nodeId, {
+      maxStreams: cell.maxStreams,
+      measuredAtMs: row.measuredAtMs,
+      profile: cell.profile,
+      hardware: cell.hardware,
+      decoder: cell.decoder,
+    })
+  }
+  return out
+}
+
+export interface CapacityVerdictContext extends StandingContext {
+  /** Only this node; absent = every node with a fresh cell. */
+  readonly nodeId?: string
+  /** The model each device runs now. */
+  readonly runs: readonly DeviceRunsModel[]
+}
+
+/**
+ * The capacity verdict of every node the stored rows measured: its detection
+ * cells and its decode cells, both read FRESH from the same rows (D1078).
+ */
+export function nodeCapacityVerdictsFromResults(
+  rows: readonly NodeBenchmarkResult[],
+  ctx: CapacityVerdictContext,
+): readonly NodeCapacityVerdict[] {
+  const nodeIds = [...new Set(rows.map((r) => r.nodeId))]
+  return nodeCapacityVerdicts({
+    ...(ctx.nodeId !== undefined ? { nodeId: ctx.nodeId } : {}),
+    runs: ctx.runs,
+    measured: measuredCapacityFromResults(rows, nodeIds, ctx),
+    decode: decodeCapacityFromResults(rows, nodeIds, ctx),
+  })
 }

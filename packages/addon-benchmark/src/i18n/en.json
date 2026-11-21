@@ -113,7 +113,8 @@
   },
   "progress": {
     "device": "device {{device}} · {{model}}",
-    "pipeline": "pipeline {{device}} · {{model}}"
+    "pipeline": "pipeline {{device}} · {{model}}",
+    "decode": "Decode"
   },
   "endReason": {
     "operator-abort": "stopped by you",
@@ -133,7 +134,11 @@
     "pipeline": "Pipeline",
     "pipelineWithSteps": "Pipeline + {{steps}}",
     "capacityDevice": "{{streams}} streams · {{fps}} fps",
-    "capacityPipeline": "{{sessions}} sessions"
+    "capacityPipeline": "{{sessions}} sessions",
+    "decode": "Decode and motion",
+    "decodeProfile": "{{width}}×{{height}} {{codec}} · {{fps}} fps",
+    "capacityDecode_one": "{{count}} stream",
+    "capacityDecode_other": "{{count}} streams"
   },
   "standing": {
     "fresh": "Used by Auto tune and the shares",
@@ -183,7 +188,8 @@
     "fps": "fps per camera",
     "budget": "time budget (min)",
     "keepModels": "Keep downloaded models",
-    "acceptHeadroom": "Start although the other nodes cannot carry every session"
+    "acceptHeadroom": "Start although the other nodes cannot carry every session",
+    "decode": "Decode capacity (camera streams decoded at full rate, with motion)"
   },
   "start": {
     "label": "Start benchmark",

@@ -70,6 +70,19 @@ describe('worker protocol guards', () => {
     ).toBe(false)
   })
 
+  it('a dialTiming may name the decode backend, and only as a string', () => {
+    const timing = {
+      kind: 'dialTiming',
+      hwContextMs: 12,
+      demuxerOpenMs: 40,
+      decoderCreateMs: 90,
+      firstDecodeMs: 310,
+      streamInfoProbed: false,
+    }
+    expect(isWorkerReply({ ...timing, decodeBackend: 'vaapi' })).toBe(true)
+    expect(isWorkerReply({ ...timing, decodeBackend: 1 })).toBe(false)
+  })
+
   it('accepts nativeCropMiss with and without a reason', () => {
     expect(isWorkerReply({ kind: 'nativeCropMiss', requestId: 4 })).toBe(true)
     expect(

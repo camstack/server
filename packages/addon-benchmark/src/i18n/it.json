@@ -113,7 +113,8 @@
   },
   "progress": {
     "device": "dispositivo {{device}} · {{model}}",
-    "pipeline": "pipeline {{device}} · {{model}}"
+    "pipeline": "pipeline {{device}} · {{model}}",
+    "decode": "Decodifica"
   },
   "endReason": {
     "operator-abort": "interrotto da te",
@@ -133,7 +134,11 @@
     "pipeline": "Pipeline",
     "pipelineWithSteps": "Pipeline + {{steps}}",
     "capacityDevice": "{{streams}} stream · {{fps}} fps",
-    "capacityPipeline": "{{sessions}} sessioni"
+    "capacityPipeline": "{{sessions}} sessioni",
+    "decode": "Decodifica e movimento",
+    "decodeProfile": "{{width}}×{{height}} {{codec}} · {{fps}} fps",
+    "capacityDecode_one": "{{count}} flusso",
+    "capacityDecode_other": "{{count}} flussi"
   },
   "standing": {
     "fresh": "Usato da Auto tune e dalle quote",
@@ -183,7 +188,8 @@
     "fps": "fps per telecamera",
     "budget": "tempo massimo (min)",
     "keepModels": "Conserva i modelli scaricati",
-    "acceptHeadroom": "Avvia anche se gli altri nodi non possono sostenere ogni sessione"
+    "acceptHeadroom": "Avvia anche se gli altri nodi non possono sostenere ogni sessione",
+    "decode": "Capacità di decodifica (flussi camera decodificati a piena frequenza, con movimento)"
   },
   "start": {
     "label": "Avvia il benchmark",

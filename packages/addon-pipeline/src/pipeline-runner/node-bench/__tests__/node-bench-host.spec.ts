@@ -29,6 +29,10 @@ function host(over: Partial<NodeBenchHostDeps> = {}, clock = new VirtualClock())
       os: null,
       pools: {},
     }),
+    openDecodeRig: async () => ({
+      kind: 'skipped',
+      reason: 'no decode worker in this test',
+    }),
     installedDetectorModels: async () => installed,
     deleteDetectorModel: async (key) => {
       deleted.push(key)
@@ -101,5 +105,67 @@ describe('NodeBenchHost', () => {
 
   it('an unknown run reads null (a restarted runner)', () => {
     expect(host().h.status('nope')).toBeNull()
+  })
+
+  it('a decode-only run decodes no detector frame and names what it could not measure', async () => {
+    const loadFrames = vi.fn(async () => {
+      throw new Error('no detector frame is needed')
+    })
+    const { h, clock } = host({ loadFrames })
+    h.start({ ...INPUT, runId: 'd1', phases: ['decode' as const] })
+    await clock.run(60_000)
+    await vi.waitFor(() => expect(h.status('d1')?.state).toBe('done'))
+    expect(loadFrames).not.toHaveBeenCalled()
+    expect(h.status('d1')?.cells).toEqual([])
+    expect(h.status('d1')?.skipped).toEqual([
+      'decode 2160p-h265-15: no decode worker in this test',
+      'decode 1080p-h264-15: no decode worker in this test',
+    ])
+  })
+
+  it('stores a decode cell next to the detector cells, after them', async () => {
+    const clock = new VirtualClock()
+    let closed = 0
+    const { h } = host(
+      {
+        openDecodeRig: async (profile) => ({
+          kind: 'ready',
+          rig: {
+            scaleTo: async () => ({ ready: true, reason: null }),
+            beginWindow: () => undefined,
+            // Every stream keeps the profile rate at every load.
+            endWindow: () => [
+              {
+                frames: profile.fps * 2,
+                ageP95Ms: 30,
+                errors: 0,
+                decoder: 'videotoolbox',
+              },
+            ],
+            motionRan: () => true,
+            close: async () => {
+              closed += 1
+            },
+          },
+        }),
+      },
+      clock,
+    )
+    h.start({
+      ...INPUT,
+      runId: 'd2',
+      phases: ['device' as const, 'decode' as const],
+      decodeProfiles: [{ width: 1920, height: 1080, fps: 15, codec: 'h264' as const }],
+    })
+    await clock.run(30 * 60_000)
+    await vi.waitFor(() => expect(h.status('d2')?.state).toBe('done'))
+    const cells = h.status('d2')?.cells ?? []
+    expect(cells.map((c) => c.phase)).toEqual(['device', 'decode'])
+    expect(cells[1]).toMatchObject({
+      decoder: 'videotoolbox',
+      hardware: true,
+      limitedBy: 'none',
+    })
+    expect(closed).toBe(1)
   })
 })

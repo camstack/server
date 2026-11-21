@@ -11,6 +11,7 @@
  *    run is flagged contaminated.
  */
 import {
+  NODE_BENCH_DECODE_PROFILES,
   NODE_BENCHMARK_DEFAULTS,
   type NodeBenchmarkMovingCamera,
   type NodeBenchmarkPlan,
@@ -74,6 +75,10 @@ export function classifyCamerasForBenchmark(
 /** Ramp steps the runner tries per cell, at most. */
 export const DEVICE_RAMP: readonly number[] = [1, 2, 4, 6, 8, 12, 16, 24, 32]
 export const PIPELINE_RAMP: readonly number[] = [1, 2, 3, 4, 6, 8, 10, 12, 16]
+/** Concurrent streams the `decode` measurement tries per profile. */
+export const DECODE_RAMP: readonly number[] = [1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 32]
+/** Encoding one synthetic clip per profile on the node, at most. */
+const DECODE_SOURCE_PER_PROFILE_MS = 60_000
 
 /** Fixed costs around the measurement: drain, clip, warm-ups, restore. */
 const OVERHEAD_MS = 3 * 60_000
@@ -100,6 +105,11 @@ export function estimateNodeBenchmarkDurationMs(
   }
   if (plan.phases.includes('pipeline')) {
     total += plan.devices.length * (WARMUP_PER_CELL_MS + PIPELINE_RAMP.length * stepMs)
+  }
+  if (plan.phases.includes('decode')) {
+    total +=
+      NODE_BENCH_DECODE_PROFILES.length *
+      (DECODE_SOURCE_PER_PROFILE_MS + WARMUP_PER_CELL_MS + DECODE_RAMP.length * stepMs)
   }
   return Math.min(total, plan.budgetMinutes * 60_000)
 }

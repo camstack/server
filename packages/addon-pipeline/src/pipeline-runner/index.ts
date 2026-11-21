@@ -3896,6 +3896,15 @@ export default class PipelineRunnerAddon
           .filter((m) => m.phase !== 'idle')
           .map((m) => m.deviceId),
       pipelineVersion: null,
+      decode: {
+        fork: this.decodeWorkers.forkUnclaimed,
+        lease: this.resolveSessionLeaseKnobs,
+        hwaccel: this.resolveSessionHwaccel,
+        refresh: async () => {
+          await this.refreshNativeLeaseSettings()
+          await this.sessionHwaccel.refresh(this.ctxIfReady?.kernel.hwaccel)
+        },
+      },
     })
     return this.nodeBenchHost
   }

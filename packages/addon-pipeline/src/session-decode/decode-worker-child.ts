@@ -893,6 +893,8 @@ export class DecodeWorkerChild {
    * `null` = unresolved, the platform order applies.
    */
   private hwaccelOffer: SessionHwaccelOffer = null
+  /** The backend {@link hwContext} was created for — named on the dial timing. */
+  private hwBackend: HwAccelBackend | null = null
   /**
    * DEDICATED full-frame GPU→system download filtergraph
    * (`scale_<be>=iw:ih,hwdownload,format=nv12,format=yuv420p`) used ONLY to
@@ -2672,6 +2674,7 @@ export class DecodeWorkerChild {
         decoderCreateMs,
         firstDecodeMs: Date.now() - decodeStartedAt,
         streamInfoProbed: opened.streamInfoProbed,
+        decodeBackend: this.hwBackend ?? 'software',
       })
       this.consumeDecodedFrame(frame)
       // The GPU-filter probe (or a runtime degrade) asked to re-dial as
@@ -3293,6 +3296,7 @@ export class DecodeWorkerChild {
         continue
       }
       this.hwContext = hw
+      this.hwBackend = backend
       this.gpuScaleFilter = gpuScaleFilterForBackend(backend)
       this.hwFilterDecision = this.gpuScaleFilter !== null ? 'undecided' : 'software'
       return

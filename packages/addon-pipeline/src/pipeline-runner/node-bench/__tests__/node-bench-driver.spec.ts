@@ -138,7 +138,7 @@ describe('NodeBenchDriver — stopping', () => {
       stopAfterCells: 1,
       input: { devices: [{ deviceKey: 'npu', modelIds: ['m1', 'm2', 'm3'] }] },
     })
-    expect(cells.map((c) => c.modelId)).toEqual(['m1'])
+    expect(cells.map((c) => (c.phase === 'decode' ? null : c.modelId))).toEqual(['m1'])
   })
 })
 

@@ -446,6 +446,8 @@ export class NodeBenchmarkService {
       unfired.length > 0
         ? `Not stored: the pipeline measurement's steps ${unfired.join(', ')} never produced a result on the clip.`
         : null,
+      // A decode profile the node could not be offered stores no cell — say why.
+      ...(status?.skipped ?? []).map((why) => `Not measured: ${why}.`),
     ].filter((n): n is string => n !== null)
     try {
       if (rows.length > 0) await this.deps.persistence.writeResults(rows)

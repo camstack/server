@@ -104,9 +104,14 @@ export function listNodeBenchmarkResultViews(
   },
 ): readonly NodeBenchmarkResultView[] {
   const standings = resultStandings(rows, ctx)
+  // A device filter is about detector cells; a decode cell belongs to no device.
   return rows
     .filter((r) => input.nodeId === undefined || r.nodeId === input.nodeId)
-    .filter((r) => input.deviceKey === undefined || r.cell.deviceKey === input.deviceKey)
+    .filter(
+      (r) =>
+        input.deviceKey === undefined ||
+        (r.cell.phase !== 'decode' && r.cell.deviceKey === input.deviceKey),
+    )
     .toSorted((a, b) => b.measuredAtMs - a.measuredAtMs)
     .map((r) => ({
       ...r,

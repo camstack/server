@@ -18,7 +18,12 @@
  *  - `pipeline` — the chosen detector plus the operator's detail steps
  *    (faces, plates, classifiers, CLIP…), on varied frames from the bench
  *    clip: how many parallel sessions the node carries before latency, drops,
- *    CPU, RAM or the event loop give out.
+ *    CPU, RAM or the event loop give out;
+ *  - `decode` — the node, no accelerator of the inference plane: an encoded
+ *    camera-like stream (a profile: resolution, rate, codec) served on the
+ *    loopback and decoded by the session decode worker a camera gets, with a
+ *    motion pass on its frames: how many concurrent streams keep the profile
+ *    frame rate inside the same CPU and RAM limits (D1078).
  */
 import { z } from 'zod'
 
@@ -40,9 +45,39 @@ export const NODE_BENCHMARK_DEFAULTS = {
   maxModelsPerDevice: 6,
 } as const
 
-/** The two measurements a run can make. */
-export const NodeBenchmarkPhaseSchema = z.enum(['device', 'pipeline'])
+/** The measurements a run can make. */
+export const NodeBenchmarkPhaseSchema = z.enum(['device', 'pipeline', 'decode'])
 export type NodeBenchmarkPhase = z.infer<typeof NodeBenchmarkPhaseSchema>
+
+/** The encoded stream shape a decode measurement offers. */
+export const NodeDecodeProfileSchema = z.object({
+  width: z.number(),
+  height: z.number(),
+  fps: z.number(),
+  codec: z.enum(['h264', 'h265']),
+})
+export type NodeDecodeProfile = z.infer<typeof NodeDecodeProfileSchema>
+
+/**
+ * The camera-like streams the `decode` measurement ramps, heaviest first: a
+ * 4K H.265 main stream and a 1080p H.264 one, at a camera frame rate.
+ */
+export const NODE_BENCH_DECODE_PROFILES: readonly NodeDecodeProfile[] = [
+  { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+  { width: 1920, height: 1080, fps: 15, codec: 'h264' },
+]
+
+/** `2160p-h265-15` — the stable name of a profile (cell key, file name, label). */
+export function decodeProfileId(profile: NodeDecodeProfile): string {
+  return `${profile.height}p-${profile.codec}-${profile.fps}`
+}
+
+/**
+ * A decode ramp step holds while EVERY stream delivers at least this share of
+ * the profile frame rate over the accounted window (a camera's own rate
+ * wanders a few percent; a decoder that cannot keep up falls well below).
+ */
+export const DECODE_MIN_FPS_RATIO = 0.9
 
 export const NodeBenchmarkDevicePlanSchema = z.object({
   /** `<backend>:<device>` — `openvino:npu`, `coreml:all`, `cpu`. */
@@ -60,7 +95,7 @@ export const NodeBenchmarkPlanSchema = z.object({
   nodeId: z.string().min(1),
   devices: z.array(NodeBenchmarkDevicePlanSchema).min(1),
   /** Which measurements run. At least one. */
-  phases: z.array(NodeBenchmarkPhaseSchema).min(1).default(['device', 'pipeline']),
+  phases: z.array(NodeBenchmarkPhaseSchema).min(1).default(['device', 'pipeline', 'decode']),
   /**
    * Detail steps (catalog step ids under the root: faces, plates,
    * classifiers, CLIP…) the `pipeline` measurement enables. The root
@@ -144,10 +179,10 @@ export type NodeBenchmarkPreflight = z.infer<typeof NodeBenchmarkPreflightSchema
 
 /** Where the measuring runner is. */
 export const NodeBenchProgressSchema = z.object({
-  phase: z.enum(['preparing', 'device', 'pipeline', 'cleanup']),
+  phase: z.enum(['preparing', 'device', 'pipeline', 'decode', 'cleanup']),
   deviceKey: z.string().nullable(),
   modelId: z.string().nullable(),
-  /** Streams (device) or sessions (pipeline) of the step running now. */
+  /** Streams (device, decode) or sessions (pipeline) of the step running now. */
   load: z.number().nullable(),
   cellsDone: z.number(),
   cellsTotal: z.number(),
@@ -155,9 +190,13 @@ export const NodeBenchProgressSchema = z.object({
 })
 export type NodeBenchProgress = z.infer<typeof NodeBenchProgressSchema>
 
-/** What limited a ramp. `none` = the ramp ran out of steps still passing. */
+/**
+ * What limited a ramp. `none` = the ramp ran out of steps still passing;
+ * `fps` = a decode stream fell under the profile frame rate.
+ */
 export const NodeBenchLimitSchema = z.enum([
   'p95',
+  'fps',
   'drops',
   'errors',
   'stall',
@@ -216,9 +255,57 @@ export const NodeBenchPipelineCellSchema = z.object({
 })
 export type NodeBenchPipelineCell = z.infer<typeof NodeBenchPipelineCellSchema>
 
+/**
+ * A decode stream is late when its frames reach the runner this long after
+ * the moment they were shot on the media clock: a decoder a few percent under
+ * real time passes the frame-rate bar for a while and falls behind for good.
+ */
+export const DECODE_MAX_FRAME_AGE_MS = 1000
+
+/** One step of a decode ramp: `load` concurrent streams of one profile. */
+export const NodeBenchDecodeRampStepSchema = z.object({
+  load: z.number(),
+  pass: z.boolean(),
+  /** Frames per second the SLOWEST stream delivered; null when one never started. */
+  minFps: z.number().nullable(),
+  /** p95 age of a delivered frame on the worst stream; null when none was delivered. */
+  ageP95Ms: z.number().nullable(),
+  cpuPct: z.number().nullable(),
+  ramFreePct: z.number().nullable(),
+  failReasons: z.array(z.string()).readonly(),
+})
+export type NodeBenchDecodeRampStep = z.infer<typeof NodeBenchDecodeRampStepSchema>
+
+/**
+ * One measured decode profile (the `decode` measurement) on the node. It names
+ * no inference device and no model: decode is the node's, not an accelerator's.
+ */
+export const NodeBenchDecodeCellSchema = z.object({
+  phase: z.literal('decode'),
+  profile: NodeDecodeProfileSchema,
+  /** Concurrent streams that kept the profile frame rate; 0 = not even one. */
+  maxStreams: z.number(),
+  limitedBy: NodeBenchLimitSchema,
+  /** Every held stream ran on a hardware decoder (false = at least one in software). */
+  hardware: z.boolean(),
+  /**
+   * The decode backend the workers reported at the last step that held:
+   * `vaapi`, `videotoolbox`, … or `software`; several joined by `+` when the
+   * streams did not all get the same one (a hardware decoder out of sessions).
+   */
+  decoder: z.string(),
+  /** A motion pass ran on the decoded frames, as a session runs it. */
+  motion: z.boolean(),
+  /** Milliseconds from the first worker fork to every stream of the first step decoding. */
+  warmupMs: z.number(),
+  ramp: z.array(NodeBenchDecodeRampStepSchema).readonly(),
+})
+export type NodeBenchDecodeCell = z.infer<typeof NodeBenchDecodeCellSchema>
+
 export const NodeBenchCellSchema = z.discriminatedUnion('phase', [
   NodeBenchDeviceCellSchema,
   NodeBenchPipelineCellSchema,
+  NodeBenchDecodeCellSchema,
 ])
 export type NodeBenchCell = z.infer<typeof NodeBenchCellSchema>
 
@@ -261,6 +348,8 @@ export const NodeBenchRunnerInputSchema = z.object({
   runId: z.string().min(1),
   devices: z.array(NodeBenchmarkDevicePlanSchema).min(1),
   phases: z.array(NodeBenchmarkPhaseSchema).min(1),
+  /** The profiles the `decode` measurement ramps, in order. */
+  decodeProfiles: z.array(NodeDecodeProfileSchema).default([...NODE_BENCH_DECODE_PROFILES]),
   /** The full detail step tree root for the `pipeline` measurement is built on the node from these ids. */
   steps: z.array(z.string()).default([]),
   fpsPerStream: z.number().int().min(1).max(30),
@@ -289,6 +378,12 @@ export const NodeBenchRunnerStatusSchema = z.object({
   activeCameraIds: z.array(z.number()).readonly(),
   /** Models the run downloaded and then deleted (not installed before). */
   deletedModels: z.array(z.string()).readonly(),
+  /**
+   * Measurements the run asked for and could not make, each with its reason
+   * (`decode 2160p-h265-15: no libx265 encoder`). A cell that is absent
+   * without a line here was never asked for.
+   */
+  skipped: z.array(z.string()).readonly().default([]),
   error: z.string().nullable(),
   startedAtMs: z.number(),
   finishedAtMs: z.number().nullable(),

@@ -1633,6 +1633,7 @@ export function makeFakeRunner(opts: FakeRunnerOptions): FakeRunner {
         clip: null,
         activeCameraIds: [],
         deletedModels: [],
+        skipped: [],
         error: null,
         startedAtMs: 0,
         finishedAtMs: null,

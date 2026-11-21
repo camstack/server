@@ -152,6 +152,34 @@ describe('session-decode pump — first-frame timing report', () => {
     })
   })
 
+  it('carries the decode backend the worker named, and leaves it absent when it named none', async () => {
+    const fake = createFakeChild()
+    const seen: FirstFrameTiming[] = []
+    startSessionDecodePump({
+      fork: () => fake.child,
+      lease: testLease,
+      hwaccel: () => null,
+      logger: makeLogger(),
+      source: SOURCE,
+      opts: { fps: 10, format: 'rgb' },
+      onFirstFrame: (timing) => seen.push(timing),
+      onDecodedFrame: () => {},
+    })
+    await flush()
+    fake.emit({
+      kind: 'dialTiming',
+      hwContextMs: 120,
+      demuxerOpenMs: 40,
+      decoderCreateMs: 90,
+      firstDecodeMs: 310,
+      streamInfoProbed: false,
+      decodeBackend: 'vaapi',
+    })
+    fake.emit({ kind: 'frame', frameId: 1, timestamp: 1, width: 4, height: 4, format: 'rgb' })
+    await flush()
+    expect(seen[0]?.dial?.decodeBackend).toBe('vaapi')
+  })
+
   it('reports nothing when the session ends before a first frame ever lands', async () => {
     const fake = createFakeChild()
     const seen: FirstFrameTiming[] = []

@@ -70,6 +70,12 @@ export interface WorkerDialTiming {
   readonly firstDecodeMs: number
   /** Whether the redundant `avformat_find_stream_info` probe ran. */
   readonly streamInfoProbed: boolean
+  /**
+   * The hardware device the decoder of this dial was bound to (`vaapi`,
+   * `videotoolbox`, …), or `software` when it had none. Absent on a worker
+   * that predates the field — unknown, which is not `software`.
+   */
+  readonly decodeBackend?: string
 }
 
 /**
@@ -515,7 +521,8 @@ export function isWorkerReply(value: unknown): value is WorkerReply {
         isFiniteNumber(value.demuxerOpenMs) &&
         isFiniteNumber(value.decoderCreateMs) &&
         isFiniteNumber(value.firstDecodeMs) &&
-        typeof value.streamInfoProbed === 'boolean'
+        typeof value.streamInfoProbed === 'boolean' &&
+        (value.decodeBackend === undefined || typeof value.decodeBackend === 'string')
       )
     default:
       return false
