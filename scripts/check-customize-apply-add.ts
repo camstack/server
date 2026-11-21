@@ -13,6 +13,7 @@ async function main(): Promise<void> {
     caps.map((cap) => ({
       capName: cap.capName,
       targets: cap.customize?.targets ?? [],
+      links: cap.customize?.links ?? [],
       overridable: cap.customize?.overridable ?? [],
     })),
   )

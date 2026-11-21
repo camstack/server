@@ -14,7 +14,7 @@ import type { DeviceType } from '../device/device-type.js'
  * cardinality without a renderer is a type error; `check-customize-coverage`
  * covers what a type cannot see.
  */
-export const CUSTOMIZE_CARDINALITIES = ['scalar', 'keyedArray', 'event', 'config'] as const
+export const CUSTOMIZE_CARDINALITIES = ['scalar', 'keyedArray', 'event', 'config', 'link'] as const
 export type CustomizeCardinality = (typeof CUSTOMIZE_CARDINALITIES)[number]
 
 /** The shapes of an event target; each has its own card in admin-ui. */
@@ -63,6 +63,35 @@ export interface CapabilityCustomizeSpec {
    * target keeps its own picker and overrides the group.
    */
   readonly sourceGroups?: readonly CustomizeSourceGroup[]
+  /**
+   * Whole-capability links (D1076): one stored `capLink` feature per declared
+   * link, projected into this cap's slice or referenced as a slot.
+   */
+  readonly links?: readonly CustomizeCapLink[]
+}
+
+/**
+ * `project`: the host cap's own slice is served from the source device's cap —
+ * the same cap (every top-level field, identity) or another one through `map`
+ * (host path -> source path). `reference`: nothing is written into the host
+ * slice; `slot` (a nullable top-level object of the host's state) names where a
+ * consumer reads the source device's own `sourceCap`.
+ */
+export const CUSTOMIZE_LINK_MODES = ['project', 'reference'] as const
+export type CustomizeLinkMode = (typeof CUSTOMIZE_LINK_MODES)[number]
+
+export interface CustomizeCapLink {
+  readonly id: string
+  /** The capability the source device must bind. */
+  readonly sourceCap: string
+  readonly mode: CustomizeLinkMode
+  /** A `reference` link only: the nullable top-level object of the host's state the link fills. */
+  readonly slot?: string
+  /** A `project` link to another cap only: host path -> source path. */
+  readonly map?: Readonly<Record<string, string>>
+  readonly deviceTypes?: readonly DeviceType[]
+  /** A link is always an ADD: it never replaces a native cap (D944). */
+  readonly apply: Extract<CustomizeApplyMode, 'add'>
 }
 
 /** A set of scalar targets of one cap that a single device can source together. */

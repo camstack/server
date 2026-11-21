@@ -20,6 +20,7 @@ import type {
   KeyedArrayLiteralSpec,
   ScalarCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
+import { judgeCustomizeLinks } from './customize-links.ts'
 import { CameraSensorModeSchema } from '../../packages/types/src/pipeline/camera-sensors.ts'
 import { CAP_VOCABULARY_BY_NAME } from '../../packages/types/src/device/cap-vocabulary/vocabulary.ts'
 import {
@@ -68,6 +69,12 @@ export type CustomizeViolationRule =
   | 'bad-config-method'
   | 'bad-override'
   | 'bad-source-group'
+  | 'duplicate-link'
+  | 'unknown-link-source-cap'
+  | 'bad-link-slot'
+  | 'bad-link-map'
+  | 'bad-link-project'
+  | 'bad-link-apply'
 
 export interface CustomizeViolation {
   readonly capName: string
@@ -100,6 +107,11 @@ export interface CustomizeCapView {
     | undefined
   readonly itemArray: CustomizeItemArrayView | undefined
   readonly customize: CapabilityCustomizeSpec | undefined
+  /**
+   * The runtime state of EVERY cap, by name (undefined = a cap with none): what a
+   * link's `sourceCap` is judged against (D1076).
+   */
+  readonly capStates?: ReadonlyMap<string, z.ZodObject<z.core.$ZodLooseShape> | undefined>
   readonly vocabularyHas: (ref: CustomizeVocabularyRef) => boolean
 }
 
@@ -124,11 +136,13 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
   const spec = view.customize
   const runtime = view.runtimeState
   if (spec === undefined) return []
-  const needsRuntime = spec.targets.some((target) => target.cardinality !== 'config')
+  const links = spec.links ?? []
+  const needsRuntime =
+    links.length > 0 || spec.targets.some((target) => target.cardinality !== 'config')
   if (needsRuntime && runtime === undefined) {
     return [fail(view, undefined, 'no-runtime-state', 'declares customize but no runtimeState')]
   }
-  if (spec.targets.length === 0) {
+  if (spec.targets.length === 0 && links.length === 0) {
     return [fail(view, undefined, 'empty-targets', 'customize declares no targets')]
   }
   return [
@@ -136,6 +150,7 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
     ...spec.targets.flatMap((target) => judgeTarget(view, target, runtime)),
     ...eventClaimsScalar(view, spec),
     ...judgeSourceGroups(view, spec),
+    ...judgeCustomizeLinks(view),
   ]
 }
 

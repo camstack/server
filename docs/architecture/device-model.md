@@ -828,6 +828,15 @@ transforms included) with an identity link and leaves the others untouched. The
 row stores nothing of its own: the per-target rows stay the authority and can
 still override. Declared in the spec, so `check-customize-coverage` judges it.
 
+### A whole capability, linked as one (D1076)
+
+A cap may declare `customize.links` (`CustomizeCapLink`): `{ id, sourceCap, mode, slot?, map?, apply: 'add' }`. The operator links a device once; the customization stores ONE `capLink` feature (`cap`, `linkId`, `source`), never a field per value.
+
+- `project` (same cap, e.g. a dryer's `power-meter` from a plug's): `planComposition` expands the feature into the identity field claims of the cap (every top-level state field, `lastFetchedAt` as a clock) or the declared `map`, and the usual claim path serves the host's own slice.
+- `reference` (a slot of another cap, e.g. `energy-system.heatPump` from `heat-pump-status`): no claim, no copy. A consumer asks `core-blocks.getCapLinks({ deviceId })` (non-admin) and reads the linked device's own cap; the answer is `not-loaded` until the store has been read.
+
+The planner refuses by name: `link-undeclared`, `link-source-cap-missing`, `link-native` (a project link on a cap the host serves itself, D944) and `link-overlaps-fields`. `core-blocks.migrateCapLinks({ dryRun })` turns old per-field identity links into one `capLink` and reports what it left alone.
+
 ### A fan's oscillation axes and preset, linked by hand (D1034)
 
 [D1034](../decisions/adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md).

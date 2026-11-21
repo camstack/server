@@ -294,6 +294,7 @@ describe('customize declaration guard', () => {
       'climate-control',
       'consumables',
       'doorbell',
+      'energy-system',
       'fan-control',
       'fan-presets',
       'heat-pump-status',

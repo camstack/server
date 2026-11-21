@@ -4,7 +4,7 @@
 
 # Decisions
 
-1042 architecture decision records. One file per decision, never
+1043 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1055,6 +1055,7 @@ that rots.
 | D1073 | [A battery camera that does not answer is given up on once, and only an edge dials it again](adr-1073-a-battery-camera-that-does-not-answer-is-given-up-on-once-and-only-an-edge-dials-it-again.md) | ✅ accepted | 2026-11-21 |
 | D1074 | [The types package is tree-shaken into addon bundles, and three guards, not the heap budget, hold it](adr-1074-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md) | ✅ accepted | 2026-11-21 |
 | D1075 | [A refused Alexa push grant pauses proactive pushes; it never removes the link](adr-1075-alexa-refused-push-grant-pauses-never-unlinks.md) | ✅ accepted | 2026-11-21 |
+| D1076 | [A device's capability, or a slot of it, is served by another device's capability as ONE link — projected when it is the same cap, referenced when it is a slot of another](adr-1076-a-device-cap-or-a-slot-of-it-is-served-by-another-device-cap-as-one-link.md) | ✅ accepted | 2026-11-21 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

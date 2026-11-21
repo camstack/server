@@ -3070,7 +3070,8 @@
         "fan-control": "Ventola",
         "climate-control": "Sensore stanza",
         "weather-station": "Stazione meteo",
-        "heat-pump-status": "Pompa di calore"
+        "heat-pump-status": "Pompa di calore",
+        "energy-system": "Energia"
       },
       "edit": "Modifica",
       "editWhat": "Modifica {{title}}",

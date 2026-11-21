@@ -139,6 +139,16 @@ const powerMeterCustomize = {
   ],
   // One meter device may fill all four readings; each reading still keeps its own source.
   sourceGroups: [{ id: 'meter-device', targets: ['power', 'energy', 'voltage', 'current'] }],
+  // The whole meter from one device (D1076): one stored link, never a value per reading.
+  links: [
+    {
+      id: 'meter-device',
+      sourceCap: 'power-meter',
+      mode: 'project',
+      apply: 'add',
+      deviceTypes: POWER_METER_CUSTOMIZE_DEVICE_TYPES,
+    },
+  ],
 } as const satisfies CapabilityCustomizeSpec
 
 export const powerMeterCapability = {

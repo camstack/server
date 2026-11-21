@@ -163,7 +163,7 @@ Singleton or collection providers, addressed without a device.
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `cluster-update` | 3 | — | — | — | — | — |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
-| `core-blocks` | 23 | — | — | — | — | `core-blocks` |
+| `core-blocks` | 25 | — | — | — | — | `core-blocks` |
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |

@@ -28,22 +28,32 @@ interface EventRecord {
 
 export async function loadCustomizeCaps(): Promise<readonly CustomizeCapView[]> {
   const out: CustomizeCapView[] = []
+  const capStates = new Map<string, z.ZodObject<z.core.$ZodLooseShape> | undefined>()
+  const defs: { readonly capName: string; readonly def: Record<string, unknown> }[] = []
   for (const info of parseAllCaps(CAPS_DIR)) {
     const file = info.fileName.replace(/\.js$/, '.ts')
     const mod: Record<string, unknown> = await import(pathToFileURL(path.join(CAPS_DIR, file)).href)
     const def = mod[info.exportName]
     if (!isRecord(def)) continue
+    capStates.set(
+      info.capName,
+      def.runtimeState instanceof z.ZodObject ? def.runtimeState : undefined,
+    )
+    defs.push({ capName: info.capName, def })
+  }
+  for (const { capName, def } of defs) {
     const customize = isCustomizeSpec(def.customize) ? def.customize : undefined
     if (customize === undefined) continue
     const runtime = def.runtimeState instanceof z.ZodObject ? def.runtimeState : undefined
     out.push({
-      capName: info.capName,
+      capName,
       runtimeState: runtime,
       methods: readMethods(def.methods),
       deviceTypes: readStrings(def.deviceTypes),
       events: readEvents(def.events),
       itemArray: readItemArray(def.status),
       customize,
+      capStates,
       vocabularyHas,
     })
   }

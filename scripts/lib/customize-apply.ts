@@ -21,6 +21,8 @@ export interface CustomizeApplyCap {
   readonly capName: string
   readonly targets: readonly CustomizeApplyTarget[]
   readonly overridable?: readonly CustomizeApplyOverridable[]
+  /** The whole-capability links (D1076): each one only ever adds. */
+  readonly links?: readonly { readonly id: string; readonly apply: string }[]
 }
 
 function replaceViolation(cap: CustomizeApplyCap, target: CustomizeApplyTarget): string | null {
@@ -57,6 +59,13 @@ export function customizeApplyViolations(caps: readonly CustomizeApplyCap[]): re
       if (target.apply === 'add') continue
       const found = replaceViolation(cap, target)
       if (found !== null) violations.push(found)
+    }
+    for (const link of cap.links ?? []) {
+      if (link.apply !== 'add') {
+        violations.push(
+          `${cap.capName} link ${link.id} apply is '${link.apply}' — a whole-cap link only adds (D944, D1076)`,
+        )
+      }
     }
     violations.push(...dangling(cap))
   }

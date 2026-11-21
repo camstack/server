@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { AutomationRecipeSchema, MAX_TRACE_KEEP } from '../automation/recipe.js'
 import { AutomationRunTraceSchema, AutomationStateDocSchema } from '../automation/trace.js'
+import {
+  CapLinksReadSchema,
+  MigrateCapLinksInputSchema,
+  MigrateCapLinksReportSchema,
+} from '../composition/cap-link.js'
 import { ComposableCapabilitiesSchema } from '../composition/composable-caps.js'
 import { type Composition, CompositionSchema } from '../composition/composition.js'
 import {
@@ -559,6 +564,26 @@ export const coreBlocksCapability = {
       CompositionCustomizationReadSchema,
       { auth: 'admin' },
     ),
+    /**
+     * The whole-capability links of one device (D1076), for the energy card
+     * and the Customize table. Not admin: the card runs in the viewer, and a
+     * link carries no stored value, only the pair it joins. `not-loaded`
+     * until the compositions have been read, never an empty list (D315).
+     */
+    getCapLinks: method(z.object({ deviceId: z.number().int() }), CapLinksReadSchema, {
+      auth: 'protected',
+    }),
+    /**
+     * D1076: turn the plain per-field identity links of one cap, from one
+     * source device, into ONE `capLink`. Mixed groups are reported and left
+     * alone; a feature an identity link stamped (D1063) is skipped; a second
+     * run changes nothing. Bounded by the stored customizations; a dry run
+     * writes nothing.
+     */
+    migrateCapLinks: method(MigrateCapLinksInputSchema, MigrateCapLinksReportSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     /**
      * The capabilities a composition may BUILD on a device of `deviceType`
      * (a new device, or added to an existing one), with their fields — the

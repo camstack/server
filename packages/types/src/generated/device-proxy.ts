@@ -371,7 +371,7 @@ export interface DeviceProxy {
   readonly actions: Pick<InferDeviceProxyCap<typeof actionsCapability>, 'get' | 'run' | 'listForCamera' | 'getLinks'>
   readonly addonSettings: Pick<InferDeviceProxyCap<typeof addonSettingsCapability>, 'getDeviceSettings' | 'updateDeviceSettings'>
   readonly audioAnalyzer: Pick<InferDeviceProxyCap<typeof audioAnalyzerCapability>, 'detachDevice'>
-  readonly coreBlocks: Pick<InferDeviceProxyCap<typeof coreBlocksCapability>, 'proposeRunningThreshold'>
+  readonly coreBlocks: Pick<InferDeviceProxyCap<typeof coreBlocksCapability>, 'getCapLinks' | 'proposeRunningThreshold'>
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
   readonly deviceExport: Pick<InferDeviceProxyCap<typeof deviceExportCapability>, 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled' | 'deleteSeriesRange'>
@@ -1303,6 +1303,7 @@ export function createDeviceProxy(
   }
 
   const coreBlocksInterface = {
+    getCapLinks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('coreBlocks', 'getCapLinks', 'query', input, undefined, options),
     proposeRunningThreshold: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('coreBlocks', 'proposeRunningThreshold', 'query', input, undefined, options),
   }
 

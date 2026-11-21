@@ -162,7 +162,7 @@ export function compositionSourceRefs(view: CompositionView): CompositionSourceR
   if (composition === null) return []
   const refs: CompositionSourceRef[] = []
   for (const feature of composition.features) {
-    if (feature.kind === 'passthrough') {
+    if (feature.kind === 'passthrough' || feature.kind === 'capLink') {
       refs.push(feature.source)
       continue
     }

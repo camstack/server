@@ -30,7 +30,9 @@ import {
   composedDeviceRef,
   compositionSourceKey,
   coreBlockComposition,
+  expandCapLinks,
   planComposition,
+  topLevelFieldsOf,
   replacedFieldKeys,
 } from '@camstack/types'
 
@@ -86,12 +88,14 @@ function peerOf(
   lookupCap: CapabilityLookup,
   candidateBlockId: string | null,
 ): PeerRead {
-  const { blockId, composition } = stored
+  const { blockId } = stored
+  // A capLink reads its source the way the fields it stands for do (D1076).
+  const composition = expandCapLinks(stored.composition, (cap) => topLevelFieldsOf(cap, lookupCap))
   if (composition.target.kind === 'new')
     return { peer: { blockId, target: composedDeviceRef(blockId), composition }, unread: null }
   const device = composition.target.device
   const key = compositionSourceKey(device)
-  const replaced = replacedOf(stored, targets.get(key), lookupCap)
+  const replaced = replacedOf({ blockId, composition }, targets.get(key), lookupCap)
   if (!('error' in replaced))
     return { peer: { blockId, target: device, composition, replaced }, unread: null }
   return {

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
@@ -104,6 +105,26 @@ export function energySystemSelfConsumptionPct(status: EnergySystemStatus): numb
   if (produced === null || exported === null || produced <= 0) return null
   return Math.max(0, Math.min(100, ((produced - exported) / produced) * 100))
 }
+
+/**
+ * The heat pump the system meters is a device of its own (D1076): the operator
+ * links it once and the card reads that device's `heat-pump-status` — thermal
+ * power, COP and the day's counters — beside the bus the system reports. Nothing
+ * is written into this slice.
+ */
+const energySystemCustomize = {
+  version: 1,
+  targets: [],
+  links: [
+    {
+      id: 'heat-pump',
+      sourceCap: 'heat-pump-status',
+      mode: 'reference',
+      slot: 'heatPump',
+      apply: 'add',
+    },
+  ],
+} as const satisfies CapabilityCustomizeSpec
 
 export const energySystemCapability = {
   name: 'energy-system',
@@ -230,6 +251,7 @@ export const energySystemCapability = {
     },
   },
   volatileStateFields: ['lastFetchedAt'],
+  customize: energySystemCustomize,
   vocabulary: { noun: t('Energy system', 'Sistema energetico'), order: 4020 },
 } as const satisfies CapabilityDefinition
 

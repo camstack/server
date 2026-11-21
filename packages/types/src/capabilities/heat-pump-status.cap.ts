@@ -130,6 +130,19 @@ export function heatPumpInstantCop(power: HeatPumpPower): number | null {
   return thermalW / electricalW
 }
 
+/**
+ * The COP of a period: thermal over electrical energy (kWh) of the SAME period,
+ * each a difference of the lifetime meters. Null unless both are known and the
+ * unit drew energy — a missing reading is never a 0 or a division by it (D393).
+ */
+export function heatPumpPeriodCop(
+  thermalKwh: number | null,
+  electricalKwh: number | null,
+): number | null {
+  if (thermalKwh === null || electricalKwh === null || electricalKwh <= 0) return null
+  return thermalKwh / electricalKwh
+}
+
 const HEAT_PUMP_CUSTOMIZE_DEVICE_TYPES = [DeviceType.HeatPump] as const
 
 /** One electrical reading the operator may take from a device they pick, unit checked. */

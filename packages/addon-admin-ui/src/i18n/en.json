@@ -2995,7 +2995,8 @@
         "fan-control": "Fan",
         "climate-control": "Room sensor",
         "weather-station": "Weather station",
-        "heat-pump-status": "Heat pump"
+        "heat-pump-status": "Heat pump",
+        "energy-system": "Energy"
       },
       "edit": "Edit",
       "editWhat": "Edit {{title}}",

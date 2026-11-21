@@ -62,6 +62,7 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
     ...(spec.sourceGroups === undefined || spec.sourceGroups.length === 0
       ? {}
       : { sourceGroups: spec.sourceGroups }),
+    ...(spec.links === undefined || spec.links.length === 0 ? {} : { links: spec.links }),
   }
   assertProjectedParameters(view.capName, spec, entry)
   return entry

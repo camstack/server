@@ -20,6 +20,7 @@ import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
   COMPOSER_ADDON_ID,
   type Composition,
+  type CompositionCapLinkFeature,
   type CompositionFieldRead,
   type CompositionFieldSource,
   type CompositionFieldsFeature,
@@ -30,6 +31,7 @@ import {
   fieldReads,
 } from './composition.js'
 import { planItems } from './composition-items.js'
+import { capLinkServedFields, declaredCapLink, expandCapLink, expandCapLinks } from './cap-link.js'
 import {
   commandedMethods,
   commandMethodProblems,
@@ -171,7 +173,7 @@ interface ComposableCap {
 }
 
 function composableCap(
-  feature: CompositionFieldsFeature,
+  feature: { readonly cap: string },
   at: string,
   lookupCap: CapabilityLookup,
 ): ComposableCap | CompositionProblem {
@@ -504,6 +506,95 @@ function nativeReplaceOrBlock(
 const customizeCatalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
 
 /**
+ * A `fields` feature of the same cap that writes a root the link serves: two
+ * writers for one field, refused by name (D1076).
+ */
+function overlapProblems(
+  composition: Composition,
+  feature: CompositionCapLinkFeature,
+  at: string,
+  served: ReadonlySet<string>,
+): readonly CompositionProblem[] {
+  return composition.features.flatMap((other, index): readonly CompositionProblem[] => {
+    if (other.kind !== 'fields' || other.cap !== feature.cap || !compositionFeatureEnabled(other)) {
+      return []
+    }
+    const paths = Object.keys(other.fields).filter((path) => served.has(path.split('.')[0] ?? path))
+    return paths.length === 0
+      ? []
+      : [
+          problem(
+            'link-overlaps-fields',
+            `features[${index}]`,
+            `\`${other.cap}\` is written by this feature (${paths.join(', ')}) and served by the link \`${feature.linkId}\` (${at}) — one writer per field`,
+          ),
+        ]
+  })
+}
+
+/**
+ * A whole-capability link (D1076). A `project` link is expanded to the field
+ * claims the composer already runs; a `reference` link writes nothing. The
+ * refusals are named, and the source is judged by `validateComposition`.
+ */
+function planCapLinkFeature(
+  composition: Composition,
+  feature: CompositionCapLinkFeature,
+  index: number,
+  planTarget: PlanTarget,
+  lookupCap: CapabilityLookup,
+  servedCommands: ReadonlySet<string>,
+): CompositionPlanResult {
+  const at = `features[${index}]`
+  const link = declaredCapLink(feature.cap, feature.linkId)
+  if (link === undefined) {
+    return refused(
+      problem('link-undeclared', at, `\`${feature.cap}\` declares no link \`${feature.linkId}\``),
+    )
+  }
+  if (planTarget.kind !== 'existing') {
+    return refused(
+      problem('reserved-variant', at, 'a capability link customizes an EXISTING device'),
+    )
+  }
+  const cap = composableCap(feature, at, lookupCap)
+  if ('code' in cap) return refused(cap)
+  const deviceType = planTarget.found.type
+  if (link.deviceTypes !== undefined && !link.deviceTypes.includes(deviceType)) {
+    return refused(
+      problem(
+        'wrong-device-type',
+        at,
+        `the link \`${link.id}\` of \`${feature.cap}\` is not offered on a \`${deviceType}\` device`,
+      ),
+    )
+  }
+  if (link.mode === 'project' && isNativeCap(planTarget.found, feature.cap)) {
+    return refused(
+      problem(
+        'link-native',
+        at,
+        `link-native: device ${planTarget.found.deviceId} serves \`${feature.cap}\` itself — a project link only adds it (D944)`,
+      ),
+    )
+  }
+  const served = new Set(
+    link.mode === 'project'
+      ? capLinkServedFields(link, cap.fields.keys())
+      : link.slot === undefined
+        ? []
+        : [link.slot],
+  )
+  const overlap = overlapProblems(composition, feature, at, served)
+  if (overlap.length > 0) return refused(...overlap)
+  const expanded = compositionFeatureEnabled(feature)
+    ? expandCapLink(feature, link, cap.fields.keys())
+    : null
+  if (expanded === null) return { problems: [], fields: [], features: [], events: [] }
+  return planFeature(expanded, index, { mode: 'add', deviceType }, lookupCap, servedCommands)
+}
+
+/**
  * D984: a feature may replace a NATIVE cap only when every field it writes is
  * one the cap lists in `overridable` — the cap's own typed allow-list, read from
  * the catalog. No items, no commands, no field outside the list; no cap is named.
@@ -572,6 +663,9 @@ export function planComposition(
         ),
       )
     }
+    if (feature.kind === 'capLink') {
+      return planCapLinkFeature(composition, feature, index, planTarget, lookupCap, servedCommands)
+    }
     const featureTarget = featureTargetOf(planTarget, feature, at)
     if (isPlanProblem(featureTarget)) {
       if (!compositionFeatureEnabled(feature) || planTarget.kind !== 'existing') {
@@ -609,13 +703,15 @@ export function planComposition(
 }
 
 export function compositionSourceRefs(composition: Composition): readonly CompositionSourceRef[] {
-  const refs = composition.features.flatMap((f) =>
-    compositionFeatureEnabled(f) && f.kind === 'fields'
+  const refs = composition.features.flatMap((f) => {
+    if (!compositionFeatureEnabled(f)) return []
+    if (f.kind === 'capLink') return [f.source]
+    return f.kind === 'fields'
       ? featureSources(f)
           .flatMap(fieldReads)
           .map((r) => r.source)
-      : [],
-  )
+      : []
+  })
   return [
     ...new Map(
       [...refs, ...forwardSourceRefs(composition)].map((r) => [compositionSourceKey(r), r]),
@@ -743,6 +839,46 @@ function liveKindProblems(
   ]
 }
 
+/**
+ * The source of an enabled capLink must exist, be readable and bind the link's
+ * `sourceCap` (judged through its bindings, D12). A `project` link's expanded
+ * fields are NOT judged a second time: the verdict is this one.
+ */
+function capLinkSourceProblems(
+  composition: Composition,
+  sources: ReadonlyMap<string, CompositionSourceDescription>,
+): readonly CompositionProblem[] {
+  return composition.features.flatMap((feature, index): readonly CompositionProblem[] => {
+    if (feature.kind !== 'capLink' || !compositionFeatureEnabled(feature)) return []
+    const link = declaredCapLink(feature.cap, feature.linkId)
+    if (link === undefined) return []
+    const at = `features[${index}].source`
+    const key = compositionSourceKey(feature.source)
+    const desc = sources.get(key)
+    if (desc === undefined || desc.kind === 'unreadable') {
+      const why = desc === undefined ? 'it was not read' : desc.error
+      return [
+        problem(
+          'source-unreadable',
+          at,
+          `could not read source \`${key}\` (${why}) — the save is refused rather than stored unchecked`,
+        ),
+      ]
+    }
+    if (desc.kind === 'absent')
+      return [problem('source-missing', at, `source \`${key}\` does not exist`)]
+    return desc.caps.has(link.sourceCap)
+      ? []
+      : [
+          problem(
+            'link-source-cap-missing',
+            at,
+            `source \`${key}\` (device ${desc.deviceId}) has no \`${link.sourceCap}\``,
+          ),
+        ]
+  })
+}
+
 function sourceProblems(
   fields: readonly CompositionFieldPlan[],
   ctx: ValidateCompositionContext,
@@ -851,16 +987,26 @@ function unreadDeviceOf(
  * `compositionEdges` throw `CompositionGraphError` — refused BY NAME as
  * `duplicate-target` (D391, D663) instead of escaping as an uncaught throw.
  */
+/** The top-level state fields of a cap, or null when the lookup does not know it. */
+export function topLevelFieldsOf(
+  cap: string,
+  lookupCap: CapabilityLookup,
+): readonly string[] | null {
+  const state = lookupCap(cap)?.runtimeState
+  return state === undefined ? null : [...describeTopLevelStateFields(state).keys()]
+}
+
 function cycleProblems(
   composition: Composition,
   ctx: ValidateCompositionContext,
   fields: readonly CompositionFieldPlan[],
   self: CandidateSelf,
 ): readonly CompositionProblem[] {
+  const lookupCap = ctx.lookupCap
   const candidate: CompositionPeer = {
     blockId: ctx.blockId ?? PENDING_BLOCK_ID,
     target: self.ref,
-    composition,
+    composition: expandCapLinks(composition, (cap) => topLevelFieldsOf(cap, lookupCap)),
     replaced: self.replaced,
   }
   const candidateKey = compositionSourceKey(candidate.target)
@@ -890,6 +1036,9 @@ export function validateComposition(
   ctx: ValidateCompositionContext,
 ): CompositionValidation {
   const plan = planComposition(composition, ctx.lookupCap, ctx.target ?? undefined)
+  const linkIndexes = new Set(
+    composition.features.flatMap((f, index) => (f.kind === 'capLink' ? [index] : [])),
+  )
   const self = candidateSelf(composition, ctx, plan)
   const refusedFeatures = plan.problems
     .filter((item) => item.code === 'native-capability-replace')
@@ -915,7 +1064,12 @@ export function validateComposition(
   )
   const problems = [
     ...plan.problems,
-    ...sourceProblems(plan.fields, ctx, self),
+    ...sourceProblems(
+      plan.fields.filter((field) => !linkIndexes.has(field.featureIndex)),
+      ctx,
+      self,
+    ),
+    ...capLinkSourceProblems(composition, ctx.sources),
     ...forwardSourceProblems(composition, ctx.sources),
     ...cycles,
     ...helperSaveProblems(composition, facts),

@@ -3210,6 +3210,32 @@ export function createCapRouter_coreBlocks(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCustomization(methodInput as any)
       }),
+    getCapLinks: protectedProcedure
+      .input(coreBlocksCapability.methods.getCapLinks.input.loose())
+      .output(coreBlocksCapability.methods.getCapLinks.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getCapLinks(methodInput as any)
+      }),
+    migrateCapLinks: adminProcedure
+      .input(coreBlocksCapability.methods.migrateCapLinks.input.loose())
+      .output(coreBlocksCapability.methods.migrateCapLinks.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.migrateCapLinks(methodInput as any)
+      }),
     listComposableCaps: adminProcedure
       .input(coreBlocksCapability.methods.listComposableCaps.input.loose())
       .output(coreBlocksCapability.methods.listComposableCaps.output)

@@ -36,7 +36,7 @@ export const CUSTOMIZE_SECTIONS = [
 ] as const
 export type CustomizeSection = (typeof CUSTOMIZE_SECTIONS)[number]
 
-export type CustomizeRowKind = 'scalar' | 'keyed' | 'event' | 'config'
+export type CustomizeRowKind = 'scalar' | 'keyed' | 'event' | 'config' | 'link'
 
 /** The caps that describe how a device is powered and what it draws. */
 const POWER_CAPS: ReadonlySet<string> = new Set(['power-meter', 'power-source', 'battery'])
@@ -56,6 +56,9 @@ const ROW_KIND_OF_CARDINALITY: Readonly<Record<CustomizeCardinality, CustomizeRo
   keyedArray: 'keyed',
   event: 'event',
   config: 'config',
+  // Placeholder (D1076): a whole-cap link is declared under `links`, not as a target, so no row
+  // is ever built from it yet; the real renderer is the next phase.
+  link: 'link',
 }
 
 function sectionOf(
@@ -73,6 +76,7 @@ function sectionOf(
     case 'keyed':
       return 'lists'
     case 'config':
+    case 'link':
       return 'extensions'
   }
 }

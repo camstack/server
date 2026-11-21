@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1537 method paths across 214 capabilities.
+ * Coverage: 1539 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -220,6 +220,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'coreBlocks.get': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getAutomationRunState': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getBlockSettings': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.getCapLinks': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getComposition': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getCustomization': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getTraces': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -227,6 +228,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'coreBlocks.list': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listComposableCaps': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listCompositions': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.migrateCapLinks': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.migrateRawSecrets': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.proposeRunningThreshold': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.reportAutomationRun': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

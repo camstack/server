@@ -77,6 +77,7 @@ import {
 } from './scheduler/scheduler-wiring.js'
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
+import { CapLinksService } from './cap-links.js'
 import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
@@ -1095,7 +1096,46 @@ export class CoreBlocksAddon extends BaseAddon {
       ...this.requireActions().runsApi,
 
       ...this.sharedCompositionApi(),
+
+      getCapLinks: async ({ deviceId }) => this.sharedCapLinks().read(deviceId),
+      migrateCapLinks: async ({ dryRun }) => this.sharedCapLinks().migrate(dryRun),
     }
+  }
+
+  private capLinks: CapLinksService | null = null
+
+  /** Whole-capability links (D1076): the read and the one-off migration, over `ctx.api`. */
+  private sharedCapLinks(): CapLinksService {
+    this.capLinks ??= this.buildCapLinks()
+    return this.capLinks
+  }
+
+  private buildCapLinks(): CapLinksService {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api) throw new Error('core-blocks: no ctx.api on this node — cap links cannot be read')
+      return api
+    }
+    const store = this.requireStore()
+    const compositions = this.sharedCompositionApi()
+    return new CapLinksService({
+      blocks: () => (store.isLoaded() ? store.list() : null),
+      refOfDevice: async (deviceId) => {
+        const found = await requireApi().deviceManager.getDevice.query({ deviceId })
+        return found === null ? null : { addonId: found.addonId, stableId: found.stableId }
+      },
+      deviceIdOf: (ref) => this.deviceIdOfRef(ref),
+      rewrite: async (block, composition) => {
+        const { block: updated } = await compositions.updateComposition({
+          blockId: block.id,
+          expectedUpdatedAt: block.updatedAt,
+          block: { composition },
+          caller: { userId: 'cap-links-migration', isAdmin: true },
+        })
+        return updated
+      },
+      logger: this.ctx.logger.child('cap-links'),
+    })
   }
 
   private sharedCompositionApi(): CompositionApi {

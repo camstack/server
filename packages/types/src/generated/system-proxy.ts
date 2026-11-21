@@ -94,7 +94,7 @@ export interface SystemProxy {
   readonly broker: Pick<InferProvider<typeof brokerCapability>, 'getBrokerConfig' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly clusterUpdate: Pick<InferProvider<typeof clusterUpdateCapability>, 'previewClusterUpdate' | 'startClusterUpdate' | 'getClusterUpdateJob'>
-  readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
+  readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'migrateCapLinks' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
   readonly deviceCredentials: Pick<InferProvider<typeof deviceCredentialsCapability>, 'listDeviceCredentials' | 'startEnrollment' | 'revokeDeviceCredential' | 'getDeviceCertificateSettings' | 'setDeviceCertificateSettings' | 'deleteDeviceCredential' | 'getDeviceCaStatus' | 'renameDeviceCredential'>
@@ -333,6 +333,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getComposition: (input?: unknown) => dispatch('coreBlocks', 'getComposition', 'query', input),
     listCompositions: (input?: unknown) => dispatch('coreBlocks', 'listCompositions', 'query', input),
     getCustomization: (input?: unknown) => dispatch('coreBlocks', 'getCustomization', 'query', input),
+    migrateCapLinks: (input?: unknown) => dispatch('coreBlocks', 'migrateCapLinks', 'mutation', input),
     listComposableCaps: (input?: unknown) => dispatch('coreBlocks', 'listComposableCaps', 'query', input),
     validateComposition: (input?: unknown) => dispatch('coreBlocks', 'validateComposition', 'mutation', input),
     reportAutomationRun: (input?: unknown) => dispatch('coreBlocks', 'reportAutomationRun', 'mutation', input),

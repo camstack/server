@@ -2698,6 +2698,7 @@ export {
   HeatPumpSystemSchema,
   HeatPumpTemperaturesSchema,
   heatPumpInstantCop,
+  heatPumpPeriodCop,
   heatPumpStatusCapability,
 } from './heat-pump-status.cap.js'
 export {

@@ -66,8 +66,9 @@ describe('customize coverage guard', () => {
     ])
   })
 
-  it('the link modules on disk are exactly the two registered kinds', () => {
+  it('the link modules on disk are exactly the registered kinds', () => {
     expect(listLinkSources(repoRoot)).toEqual([
+      'packages/types/src/composition/cap-link.ts',
       'packages/types/src/composition/lock-door-link.ts',
       'packages/types/src/composition/power-source-link.ts',
     ])

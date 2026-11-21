@@ -39,6 +39,11 @@ export const LINK_RENDERERS: Readonly<Record<CompositionLinkKind, LinkRenderer>>
     file: 'packages/addon-admin-ui/src/pages/DeviceDetail.tsx',
     marker: 'powerSource',
   },
+  'cap-link': {
+    source: 'packages/types/src/composition/cap-link.ts',
+    file: 'packages/addon-admin-ui/src/pages/build/composition-rows.ts',
+    marker: 'capLink',
+  },
 }
 
 export interface CoverageInput {

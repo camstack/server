@@ -6,5 +6,5 @@
  * of the lock) cannot ship quietly. A slot-backed link (`linked-devices`) is
  * covered by `EXTENSION_SLOT_IDS`, not here.
  */
-export const COMPOSITION_LINK_KINDS = ['lock-door-sensor', 'power-source'] as const
+export const COMPOSITION_LINK_KINDS = ['lock-door-sensor', 'power-source', 'cap-link'] as const
 export type CompositionLinkKind = (typeof COMPOSITION_LINK_KINDS)[number]

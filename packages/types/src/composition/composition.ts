@@ -282,9 +282,25 @@ export const CompositionPassthroughFeatureSchema = z.object({
 })
 export type CompositionPassthroughFeature = z.infer<typeof CompositionPassthroughFeatureSchema>
 
+/**
+ * `capLink` (D1076): a whole capability, or a slot of it, served by ONE source
+ * device. `linkId` names the link the cap declares in `customize.links`;
+ * nothing is stored per field. A `project` link is expanded into claims at plan
+ * time; a `reference` link writes nothing.
+ */
+export const CompositionCapLinkFeatureSchema = z.object({
+  kind: z.literal('capLink'),
+  cap: z.string().min(1),
+  linkId: z.string().min(1),
+  enabled: z.boolean().optional(),
+  source: CompositionSourceRefSchema,
+})
+export type CompositionCapLinkFeature = z.infer<typeof CompositionCapLinkFeatureSchema>
+
 export const CompositionFeatureSchema = z.discriminatedUnion('kind', [
   CompositionFieldsFeatureSchema,
   CompositionPassthroughFeatureSchema,
+  CompositionCapLinkFeatureSchema,
 ])
 export type CompositionFeature = z.infer<typeof CompositionFeatureSchema>
 

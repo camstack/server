@@ -267,6 +267,8 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           : featureOf(current, spec.cap) !== null
       case 'config':
         return true
+      case 'link':
+        return false
     }
   }
   const offCatalog = useMemo(

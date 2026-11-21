@@ -71,6 +71,14 @@ export const CompositionProblemCodeSchema = z.enum([
    * back on the next link pass. Unlinking the device takes it away.
    */
   'link-contribution-removed',
+  /** A `capLink` names a link the cap does not declare (D1076). */
+  'link-undeclared',
+  /** The source device does not bind the link's `sourceCap` (D1076, judged through its bindings). */
+  'link-source-cap-missing',
+  /** A `project` link on a cap the host serves itself (D944, D1076). */
+  'link-native',
+  /** A `fields` feature writes paths a `capLink` already serves (D1076). */
+  'link-overlaps-fields',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 

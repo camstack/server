@@ -12,6 +12,7 @@ import type {
   CustomizeEventEdge,
   CustomizeOverridable,
   CustomizeOverrideRule,
+  CustomizeCapLink,
   CustomizeSourceGroup,
   CustomizeSourceReport,
   CustomizeTargetSection,
@@ -128,6 +129,8 @@ export interface CustomizeCatalogEntry {
   readonly overridable?: readonly CustomizeOverridable[]
   /** Scalar targets one device may source together; absent means none. */
   readonly sourceGroups?: readonly CustomizeSourceGroup[]
+  /** Whole-capability links the cap declares (D1076); absent means none. */
+  readonly links?: readonly CustomizeCapLink[]
 }
 
 export type CustomizeCatalog = Readonly<Record<string, CustomizeCatalogEntry>>

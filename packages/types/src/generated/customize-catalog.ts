@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 14 caps. Field keys are `runtimeState` paths. No Zod.
+ * 15 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -327,6 +327,19 @@ export const CAP_CUSTOMIZE_CATALOG = {
         counterPath: 'pressCountSinceStart',
         highWater: 'composer-advance',
         debounceMs: 2000,
+      },
+    ],
+  },
+  'energy-system': {
+    version: 1,
+    targets: [],
+    links: [
+      {
+        id: 'heat-pump',
+        sourceCap: 'heat-pump-status',
+        mode: 'reference',
+        slot: 'heatPump',
+        apply: 'add',
       },
     ],
   },
@@ -1007,6 +1020,15 @@ export const CAP_CUSTOMIZE_CATALOG = {
           'voltage',
           'current',
         ],
+      },
+    ],
+    links: [
+      {
+        id: 'meter-device',
+        sourceCap: 'power-meter',
+        mode: 'project',
+        apply: 'add',
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder, DeviceType.Workload],
       },
     ],
   },

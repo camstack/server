@@ -605,6 +605,12 @@ export const useCoreBlocksListCompositions: typeof trpc.coreBlocks.listCompositi
 /** Generated alias around `trpc.coreBlocks.getCustomization.useQuery`. */
 export const useCoreBlocksGetCustomization: typeof trpc.coreBlocks.getCustomization.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.getCustomization.useQuery)
 
+/** Generated alias around `trpc.coreBlocks.getCapLinks.useQuery`. */
+export const useCoreBlocksGetCapLinks: typeof trpc.coreBlocks.getCapLinks.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.getCapLinks.useQuery)
+
+/** Generated alias around `trpc.coreBlocks.migrateCapLinks.useMutation`. */
+export const useCoreBlocksMigrateCapLinks: typeof trpc.coreBlocks.migrateCapLinks.useMutation = /*#__PURE__*/ alias(() => trpc.coreBlocks.migrateCapLinks.useMutation)
+
 /** Generated alias around `trpc.coreBlocks.listComposableCaps.useQuery`. */
 export const useCoreBlocksListComposableCaps: typeof trpc.coreBlocks.listComposableCaps.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.listComposableCaps.useQuery)
 
