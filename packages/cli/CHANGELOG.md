@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.237] - 2026-11-21
+
 ### Changed
 
 - host-check --cameras and the setup_feasibility assistant tool answer whether a machine can be the hub, with a provisional verdict and a link to share results from hardware that was never measured.
