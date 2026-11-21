@@ -16,7 +16,10 @@ import type {
   CapabilityDefinition,
   InferRuntimeState,
 } from '../capabilities/capability-definition.js'
-import { DEVICE_LOCAL_STATE_CAPS, type DeviceLocalState } from '../generated/device-local-state.js'
+import {
+  DEVICE_LOCAL_STATE_CAP_NAMES,
+  type DeviceLocalState,
+} from '../generated/device-local-state.js'
 import {
   SOURCE_INFO_METADATA_KEY,
   extractSourceInfoFromMetadata,
@@ -120,9 +123,9 @@ export abstract class BaseDevice<
           const k = key as keyof DeviceLocalState
           const existing = Reflect.get(target, k)
           if (existing !== undefined) return existing
-          const cap = DEVICE_LOCAL_STATE_CAPS[k]
-          if (!cap) return undefined
-          const proxy = this.sliceProxy(cap)
+          const capName = DEVICE_LOCAL_STATE_CAP_NAMES[k]
+          if (!capName) return undefined
+          const proxy = this.sliceProxyByName(capName)
           Reflect.set(target, k, proxy)
           return proxy
         },
@@ -688,31 +691,40 @@ export abstract class BaseDevice<
    * declare one proxy per cap they read/write directly.
    */
   protected sliceProxy<TCap extends CapabilityDefinition>(cap: TCap): InferRuntimeState<TCap> {
+    return this.sliceProxyByName(cap.name) as InferRuntimeState<TCap>
+  }
+
+  /**
+   * The same proxy built from a cap NAME: the proxy reads nothing else of the
+   * definition, and `this.state` has only names (a definition would put every
+   * device-native schema in the bundle of every device provider).
+   */
+  private sliceProxyByName(capName: string): Record<string, unknown> {
     const target: Record<string, unknown> = {}
     const handler: ProxyHandler<Record<string, unknown>> = {
       get: (_, key) => {
-        const slice = this.runtimeState.getCapState(cap.name)
+        const slice = this.runtimeState.getCapState(capName)
         return slice?.[key as string]
       },
       set: (_, key, value: unknown) => {
-        this.runtimeState.patchCapState(cap.name, { [key as string]: value })
+        this.runtimeState.patchCapState(capName, { [key as string]: value })
         return true
       },
       has: (_, key) => {
-        const slice = this.runtimeState.getCapState(cap.name)
+        const slice = this.runtimeState.getCapState(capName)
         return slice ? key in slice : false
       },
       ownKeys: () => {
-        const slice = this.runtimeState.getCapState(cap.name)
+        const slice = this.runtimeState.getCapState(capName)
         return slice ? Object.keys(slice) : []
       },
       getOwnPropertyDescriptor: (_, key) => {
-        const slice = this.runtimeState.getCapState(cap.name)
+        const slice = this.runtimeState.getCapState(capName)
         if (!slice || !(key in slice)) return undefined
         return { configurable: true, enumerable: true, value: slice[key as string] }
       },
     }
-    return new Proxy(target, handler) as InferRuntimeState<TCap>
+    return new Proxy(target, handler)
   }
 
   /**

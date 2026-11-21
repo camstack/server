@@ -287,14 +287,12 @@ ${returnFields}
   // typed `this.state.<newCap>` accessor — drivers don't have to
   // declare anything.
   const localStateImports = stateCaps
-    .map((c) => `import { ${c.exportName} } from '../capabilities/${c.fileName}'`)
+    .map((c) => `import type { ${c.exportName} } from '../capabilities/${c.fileName}'`)
     .join('\n')
   const localStateFieldDecls = stateCaps
     .map((c) => `  ${c.propertyName}: InferRuntimeState<typeof ${c.exportName}>`)
     .join('\n')
-  const localStateRegistry = stateCaps
-    .map((c) => `  ${c.propertyName}: ${c.exportName},`)
-    .join('\n')
+  const localStateRegistry = stateCaps.map((c) => `  ${c.propertyName}: '${c.capName}',`).join('\n')
   const capNameMapEntries = stateCaps
     .map((c) => `  '${c.capName}': InferRuntimeState<typeof ${c.exportName}>`)
     .join('\n')
@@ -303,7 +301,7 @@ ${returnFields}
 // Regenerate with: npx tsx scripts/generate-device-proxy.ts
 /* eslint-disable */
 
-import type { CapabilityDefinition, InferRuntimeState } from '../capabilities/capability-definition.js'
+import type { InferRuntimeState } from '../capabilities/capability-definition.js'
 ${localStateImports}
 
 /**
@@ -322,12 +320,13 @@ ${localStateFieldDecls}
 }
 
 /**
- * Runtime registry: cap-property-name → cap definition. \`BaseDevice\`'s
- * \`state\` getter looks up the cap definition here to construct a
- * \`sliceProxy()\` lazily on first access. Generated alongside the type
- * so type and runtime registry can never drift apart.
+ * Runtime registry: cap-property-name → cap NAME. \`BaseDevice\`'s \`state\`
+ * getter looks the name up here to construct a slice proxy lazily on first
+ * access; the proxy reads only \`cap.name\`. Names, not definitions, so this file
+ * pulls no schema into a bundle (guard \`check-device-local-state-schema-free\`,
+ * D1073). Generated alongside the type so type and registry can never drift apart.
  */
-export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityDefinition> = {
+export const DEVICE_LOCAL_STATE_CAP_NAMES: Readonly<Record<keyof DeviceLocalState, string>> = {
 ${localStateRegistry}
 }
 

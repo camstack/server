@@ -2,95 +2,95 @@
 // Regenerate with: npx tsx scripts/generate-device-proxy.ts
 /* eslint-disable */
 
-import type { CapabilityDefinition, InferRuntimeState } from '../capabilities/capability-definition.js'
-import { airQualitySensorCapability } from '../capabilities/air-quality-sensor.cap.js'
-import { alarmPanelCapability } from '../capabilities/alarm-panel.cap.js'
-import { ambientLightSensorCapability } from '../capabilities/ambient-light-sensor.cap.js'
-import { audioMetricsCapability } from '../capabilities/audio-metrics.cap.js'
-import { automationControlCapability } from '../capabilities/automation-control.cap.js'
-import { batteryCapability } from '../capabilities/battery.cap.js'
-import { binaryCapability } from '../capabilities/binary.cap.js'
-import { brightnessCapability } from '../capabilities/brightness.cap.js'
-import { cameraStreamsCapability } from '../capabilities/camera-streams.cap.js'
-import { carbonMonoxideCapability } from '../capabilities/carbon-monoxide.cap.js'
-import { climateControlCapability } from '../capabilities/climate-control.cap.js'
-import { colorCapability } from '../capabilities/color.cap.js'
-import { connectivityCapability } from '../capabilities/connectivity.cap.js'
-import { consumablesCapability } from '../capabilities/consumables.cap.js'
-import { contactCapability } from '../capabilities/contact.cap.js'
-import { controlCapability } from '../capabilities/control.cap.js'
-import { coverCapability } from '../capabilities/cover.cap.js'
-import { dayNightCapability } from '../capabilities/day-night.cap.js'
-import { deviceStatusCapability } from '../capabilities/device-status.cap.js'
-import { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
-import { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
-import { doorbellCapability } from '../capabilities/doorbell.cap.js'
-import { energySystemCapability } from '../capabilities/energy-system.cap.js'
-import { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
-import { errorCapability } from '../capabilities/error.cap.js'
-import { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
-import { fanControlCapability } from '../capabilities/fan-control.cap.js'
-import { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
-import { floodCapability } from '../capabilities/flood.cap.js'
-import { gasCapability } from '../capabilities/gas.cap.js'
-import { groupActiveCapability } from '../capabilities/group-active.cap.js'
-import { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
-import { groupStatusCapability } from '../capabilities/group-status.cap.js'
-import { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
-import { heatPumpStatusCapability } from '../capabilities/heat-pump-status.cap.js'
-import { humidifierCapability } from '../capabilities/humidifier.cap.js'
-import { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js'
-import { imageCapability } from '../capabilities/image.cap.js'
-import { imageSettingsCapability } from '../capabilities/image-settings.cap.js'
-import { intercomCapability } from '../capabilities/intercom.cap.js'
-import { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
-import { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
-import { lockControlCapability } from '../capabilities/lock-control.cap.js'
-import { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
-import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
-import { meterCapability } from '../capabilities/meter.cap.js'
-import { motionCapability } from '../capabilities/motion.cap.js'
-import { motionTriggerCapability } from '../capabilities/motion-trigger.cap.js'
-import { motionZonesCapability } from '../capabilities/motion-zones.cap.js'
-import { nativeObjectDetectionCapability } from '../capabilities/native-object-detection.cap.js'
-import { navigationCapability } from '../capabilities/navigation.cap.js'
-import { networkLinkCapability } from '../capabilities/network-link.cap.js'
-import { notifierCapability } from '../capabilities/notifier.cap.js'
-import { numericSensorCapability } from '../capabilities/numeric-sensor.cap.js'
-import { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
-import { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
-import { powerMeterCapability } from '../capabilities/power-meter.cap.js'
-import { powerSourceCapability } from '../capabilities/power-source.cap.js'
-import { presenceCapability } from '../capabilities/presence.cap.js'
-import { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
-import { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
-import { ptzAutotrackCapability } from '../capabilities/ptz-autotrack.cap.js'
-import { pumpCycleCapability } from '../capabilities/pump-cycle.cap.js'
-import { recordingOnboardCapability } from '../capabilities/recording-onboard.cap.js'
-import { recordingSignalCapability } from '../capabilities/recording-signal.cap.js'
-import { runningStateCapability } from '../capabilities/running-state.cap.js'
-import { sceneMonitorCapability } from '../capabilities/scene-monitor.cap.js'
-import { scriptRunnerCapability } from '../capabilities/script-runner.cap.js'
-import { sirenCapability } from '../capabilities/siren.cap.js'
-import { smokeCapability } from '../capabilities/smoke.cap.js'
-import { streamCatalogCapability } from '../capabilities/stream-catalog.cap.js'
-import { streamParamsCapability } from '../capabilities/stream-params.cap.js'
-import { streamSignalsCapability } from '../capabilities/stream-signals.cap.js'
-import { switchCapability } from '../capabilities/switch.cap.js'
-import { tamperCapability } from '../capabilities/tamper.cap.js'
-import { temperatureSensorCapability } from '../capabilities/temperature-sensor.cap.js'
-import { timedRunCapability } from '../capabilities/timed-run.cap.js'
-import { updateCapability } from '../capabilities/update.cap.js'
-import { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
-import { valveCapability } from '../capabilities/valve.cap.js'
-import { vibrationCapability } from '../capabilities/vibration.cap.js'
-import { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
-import { weatherCapability } from '../capabilities/weather.cap.js'
-import { weatherStationCapability } from '../capabilities/weather-station.cap.js'
-import { workloadCapability } from '../capabilities/workload.cap.js'
-import { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
-import { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
-import { zonesCapability } from '../capabilities/zones.cap.js'
+import type { InferRuntimeState } from '../capabilities/capability-definition.js'
+import type { airQualitySensorCapability } from '../capabilities/air-quality-sensor.cap.js'
+import type { alarmPanelCapability } from '../capabilities/alarm-panel.cap.js'
+import type { ambientLightSensorCapability } from '../capabilities/ambient-light-sensor.cap.js'
+import type { audioMetricsCapability } from '../capabilities/audio-metrics.cap.js'
+import type { automationControlCapability } from '../capabilities/automation-control.cap.js'
+import type { batteryCapability } from '../capabilities/battery.cap.js'
+import type { binaryCapability } from '../capabilities/binary.cap.js'
+import type { brightnessCapability } from '../capabilities/brightness.cap.js'
+import type { cameraStreamsCapability } from '../capabilities/camera-streams.cap.js'
+import type { carbonMonoxideCapability } from '../capabilities/carbon-monoxide.cap.js'
+import type { climateControlCapability } from '../capabilities/climate-control.cap.js'
+import type { colorCapability } from '../capabilities/color.cap.js'
+import type { connectivityCapability } from '../capabilities/connectivity.cap.js'
+import type { consumablesCapability } from '../capabilities/consumables.cap.js'
+import type { contactCapability } from '../capabilities/contact.cap.js'
+import type { controlCapability } from '../capabilities/control.cap.js'
+import type { coverCapability } from '../capabilities/cover.cap.js'
+import type { dayNightCapability } from '../capabilities/day-night.cap.js'
+import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
+import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
+import type { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
+import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
+import type { energySystemCapability } from '../capabilities/energy-system.cap.js'
+import type { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
+import type { errorCapability } from '../capabilities/error.cap.js'
+import type { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
+import type { fanControlCapability } from '../capabilities/fan-control.cap.js'
+import type { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
+import type { floodCapability } from '../capabilities/flood.cap.js'
+import type { gasCapability } from '../capabilities/gas.cap.js'
+import type { groupActiveCapability } from '../capabilities/group-active.cap.js'
+import type { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
+import type { groupStatusCapability } from '../capabilities/group-status.cap.js'
+import type { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
+import type { heatPumpStatusCapability } from '../capabilities/heat-pump-status.cap.js'
+import type { humidifierCapability } from '../capabilities/humidifier.cap.js'
+import type { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js'
+import type { imageCapability } from '../capabilities/image.cap.js'
+import type { imageSettingsCapability } from '../capabilities/image-settings.cap.js'
+import type { intercomCapability } from '../capabilities/intercom.cap.js'
+import type { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
+import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
+import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
+import type { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
+import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
+import type { meterCapability } from '../capabilities/meter.cap.js'
+import type { motionCapability } from '../capabilities/motion.cap.js'
+import type { motionTriggerCapability } from '../capabilities/motion-trigger.cap.js'
+import type { motionZonesCapability } from '../capabilities/motion-zones.cap.js'
+import type { nativeObjectDetectionCapability } from '../capabilities/native-object-detection.cap.js'
+import type { navigationCapability } from '../capabilities/navigation.cap.js'
+import type { networkLinkCapability } from '../capabilities/network-link.cap.js'
+import type { notifierCapability } from '../capabilities/notifier.cap.js'
+import type { numericSensorCapability } from '../capabilities/numeric-sensor.cap.js'
+import type { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
+import type { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
+import type { powerMeterCapability } from '../capabilities/power-meter.cap.js'
+import type { powerSourceCapability } from '../capabilities/power-source.cap.js'
+import type { presenceCapability } from '../capabilities/presence.cap.js'
+import type { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
+import type { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
+import type { ptzAutotrackCapability } from '../capabilities/ptz-autotrack.cap.js'
+import type { pumpCycleCapability } from '../capabilities/pump-cycle.cap.js'
+import type { recordingOnboardCapability } from '../capabilities/recording-onboard.cap.js'
+import type { recordingSignalCapability } from '../capabilities/recording-signal.cap.js'
+import type { runningStateCapability } from '../capabilities/running-state.cap.js'
+import type { sceneMonitorCapability } from '../capabilities/scene-monitor.cap.js'
+import type { scriptRunnerCapability } from '../capabilities/script-runner.cap.js'
+import type { sirenCapability } from '../capabilities/siren.cap.js'
+import type { smokeCapability } from '../capabilities/smoke.cap.js'
+import type { streamCatalogCapability } from '../capabilities/stream-catalog.cap.js'
+import type { streamParamsCapability } from '../capabilities/stream-params.cap.js'
+import type { streamSignalsCapability } from '../capabilities/stream-signals.cap.js'
+import type { switchCapability } from '../capabilities/switch.cap.js'
+import type { tamperCapability } from '../capabilities/tamper.cap.js'
+import type { temperatureSensorCapability } from '../capabilities/temperature-sensor.cap.js'
+import type { timedRunCapability } from '../capabilities/timed-run.cap.js'
+import type { updateCapability } from '../capabilities/update.cap.js'
+import type { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
+import type { valveCapability } from '../capabilities/valve.cap.js'
+import type { vibrationCapability } from '../capabilities/vibration.cap.js'
+import type { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
+import type { weatherCapability } from '../capabilities/weather.cap.js'
+import type { weatherStationCapability } from '../capabilities/weather-station.cap.js'
+import type { workloadCapability } from '../capabilities/workload.cap.js'
+import type { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
+import type { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
+import type { zonesCapability } from '../capabilities/zones.cap.js'
 
 /**
  * Server-side, write-capable per-cap state shape for any device that
@@ -195,100 +195,101 @@ export interface DeviceLocalState {
 }
 
 /**
- * Runtime registry: cap-property-name → cap definition. `BaseDevice`'s
- * `state` getter looks up the cap definition here to construct a
- * `sliceProxy()` lazily on first access. Generated alongside the type
- * so type and runtime registry can never drift apart.
+ * Runtime registry: cap-property-name → cap NAME. `BaseDevice`'s `state`
+ * getter looks the name up here to construct a slice proxy lazily on first
+ * access; the proxy reads only `cap.name`. Names, not definitions, so this file
+ * pulls no schema into a bundle (guard `check-device-local-state-schema-free`,
+ * D1073). Generated alongside the type so type and registry can never drift apart.
  */
-export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityDefinition> = {
-  airQualitySensor: airQualitySensorCapability,
-  alarmPanel: alarmPanelCapability,
-  ambientLightSensor: ambientLightSensorCapability,
-  audioMetrics: audioMetricsCapability,
-  automationControl: automationControlCapability,
-  battery: batteryCapability,
-  binary: binaryCapability,
-  brightness: brightnessCapability,
-  cameraStreams: cameraStreamsCapability,
-  carbonMonoxide: carbonMonoxideCapability,
-  climateControl: climateControlCapability,
-  color: colorCapability,
-  connectivity: connectivityCapability,
-  consumables: consumablesCapability,
-  contact: contactCapability,
-  control: controlCapability,
-  cover: coverCapability,
-  dayNight: dayNightCapability,
-  deviceStatus: deviceStatusCapability,
-  dishwasher: dishwasherCapability,
-  doNotDisturb: doNotDisturbCapability,
-  doorbell: doorbellCapability,
-  energySystem: energySystemCapability,
-  enumSensor: enumSensorCapability,
-  error: errorCapability,
-  eventEmitter: eventEmitterCapability,
-  fanControl: fanControlCapability,
-  featureProbe: featureProbeCapability,
-  flood: floodCapability,
-  gas: gasCapability,
-  groupActive: groupActiveCapability,
-  groupCommands: groupCommandsCapability,
-  groupStatus: groupStatusCapability,
-  heatingValve: heatingValveCapability,
-  heatPumpStatus: heatPumpStatusCapability,
-  humidifier: humidifierCapability,
-  humiditySensor: humiditySensorCapability,
-  image: imageCapability,
-  imageSettings: imageSettingsCapability,
-  intercom: intercomCapability,
-  irTransmitter: irTransmitterCapability,
-  lawnMowerControl: lawnMowerControlCapability,
-  lockControl: lockControlCapability,
-  lowPowerSleep: lowPowerSleepCapability,
-  mediaPlayer: mediaPlayerCapability,
-  meter: meterCapability,
-  motion: motionCapability,
-  motionTrigger: motionTriggerCapability,
-  motionZones: motionZonesCapability,
-  nativeObjectDetection: nativeObjectDetectionCapability,
-  navigation: navigationCapability,
-  networkLink: networkLinkCapability,
-  notifier: notifierCapability,
-  numericSensor: numericSensorCapability,
-  petFeeder: petFeederCapability,
-  petFountain: petFountainCapability,
-  powerMeter: powerMeterCapability,
-  powerSource: powerSourceCapability,
-  presence: presenceCapability,
-  pressureSensor: pressureSensorCapability,
-  privacyMask: privacyMaskCapability,
-  ptzAutotrack: ptzAutotrackCapability,
-  pumpCycle: pumpCycleCapability,
-  recordingOnboard: recordingOnboardCapability,
-  recordingSignal: recordingSignalCapability,
-  runningState: runningStateCapability,
-  sceneMonitor: sceneMonitorCapability,
-  scriptRunner: scriptRunnerCapability,
-  siren: sirenCapability,
-  smoke: smokeCapability,
-  streamCatalog: streamCatalogCapability,
-  streamParams: streamParamsCapability,
-  streamSignals: streamSignalsCapability,
-  switch: switchCapability,
-  tamper: tamperCapability,
-  temperatureSensor: temperatureSensorCapability,
-  timedRun: timedRunCapability,
-  update: updateCapability,
-  vacuumControl: vacuumControlCapability,
-  valve: valveCapability,
-  vibration: vibrationCapability,
-  waterHeater: waterHeaterCapability,
-  weather: weatherCapability,
-  weatherStation: weatherStationCapability,
-  workload: workloadCapability,
-  zoneAnalytics: zoneAnalyticsCapability,
-  zoneRules: zoneRulesCapability,
-  zones: zonesCapability,
+export const DEVICE_LOCAL_STATE_CAP_NAMES: Readonly<Record<keyof DeviceLocalState, string>> = {
+  airQualitySensor: 'air-quality-sensor',
+  alarmPanel: 'alarm-panel',
+  ambientLightSensor: 'ambient-light-sensor',
+  audioMetrics: 'audio-metrics',
+  automationControl: 'automation-control',
+  battery: 'battery',
+  binary: 'binary',
+  brightness: 'brightness',
+  cameraStreams: 'camera-streams',
+  carbonMonoxide: 'carbon-monoxide',
+  climateControl: 'climate-control',
+  color: 'color',
+  connectivity: 'connectivity',
+  consumables: 'consumables',
+  contact: 'contact',
+  control: 'control',
+  cover: 'cover',
+  dayNight: 'day-night',
+  deviceStatus: 'device-status',
+  dishwasher: 'dishwasher',
+  doNotDisturb: 'do-not-disturb',
+  doorbell: 'doorbell',
+  energySystem: 'energy-system',
+  enumSensor: 'enum-sensor',
+  error: 'error',
+  eventEmitter: 'event-emitter',
+  fanControl: 'fan-control',
+  featureProbe: 'feature-probe',
+  flood: 'flood',
+  gas: 'gas',
+  groupActive: 'group-active',
+  groupCommands: 'group-commands',
+  groupStatus: 'group-status',
+  heatingValve: 'heating-valve',
+  heatPumpStatus: 'heat-pump-status',
+  humidifier: 'humidifier',
+  humiditySensor: 'humidity-sensor',
+  image: 'image',
+  imageSettings: 'image-settings',
+  intercom: 'intercom',
+  irTransmitter: 'ir-transmitter',
+  lawnMowerControl: 'lawn-mower-control',
+  lockControl: 'lock-control',
+  lowPowerSleep: 'low-power-sleep',
+  mediaPlayer: 'media-player',
+  meter: 'meter',
+  motion: 'motion',
+  motionTrigger: 'motion-trigger',
+  motionZones: 'motion-zones',
+  nativeObjectDetection: 'native-object-detection',
+  navigation: 'navigation',
+  networkLink: 'network-link',
+  notifier: 'notifier',
+  numericSensor: 'numeric-sensor',
+  petFeeder: 'pet-feeder',
+  petFountain: 'pet-fountain',
+  powerMeter: 'power-meter',
+  powerSource: 'power-source',
+  presence: 'presence',
+  pressureSensor: 'pressure-sensor',
+  privacyMask: 'privacy-mask',
+  ptzAutotrack: 'ptz-autotrack',
+  pumpCycle: 'pump-cycle',
+  recordingOnboard: 'recording-onboard',
+  recordingSignal: 'recording-signal',
+  runningState: 'running-state',
+  sceneMonitor: 'scene-monitor',
+  scriptRunner: 'script-runner',
+  siren: 'siren',
+  smoke: 'smoke',
+  streamCatalog: 'stream-catalog',
+  streamParams: 'stream-params',
+  streamSignals: 'stream-signals',
+  switch: 'switch',
+  tamper: 'tamper',
+  temperatureSensor: 'temperature-sensor',
+  timedRun: 'timed-run',
+  update: 'update',
+  vacuumControl: 'vacuum-control',
+  valve: 'valve',
+  vibration: 'vibration',
+  waterHeater: 'water-heater',
+  weather: 'weather',
+  weatherStation: 'weather-station',
+  workload: 'workload',
+  zoneAnalytics: 'zone-analytics',
+  zoneRules: 'zone-rules',
+  zones: 'zones',
 }
 
 /**
