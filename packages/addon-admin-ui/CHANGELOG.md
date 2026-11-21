@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Camera card: the Show zones switch only appears when the camera has zones
+- Camera card: image-placed player layers (the zone editor) are routed into the picture's rect
+- Notifier group editor: a member shows its target kind's name (Alexa Echo) instead of the raw kind id
+
 ## [1.2.723] - 2026-11-20
 
 ### Added
@@ -15,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Camera card: the Show zones switch only appears when the camera has zones
-- Camera card: image-placed player layers (the zone editor) are routed into the picture's rect
-- Notifier group editor: a member shows its target kind's name (Alexa Echo) instead of the raw kind id
 
 ## [1.2.722] - 2026-11-20
 

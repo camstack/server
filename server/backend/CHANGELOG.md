@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fixed: listing the fan-preset actions no longer fails with "Cannot read properties of undefined (reading 'deps')" when the call goes through a pinned or aggregated collection route
+
 ## [1.2.925] - 2026-11-20
 
 ### Added
@@ -15,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Fixed: listing the fan-preset actions no longer fails with "Cannot read properties of undefined (reading 'deps')" when the call goes through a pinned or aggregated collection route
 
 ## [1.2.924] - 2026-11-20
 
