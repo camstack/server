@@ -33,6 +33,11 @@ export const ApiCatalogEntrySchema = z.object({
   /** `null` on a core route: it needs authentication only (plus admin where its tier says so). */
   scope: ApiCatalogScopeSchema.nullable(),
   hasInput: z.boolean(),
+  /**
+   * What the method does, carried by the cap itself (`METHOD_DESCRIPTIONS`).
+   * `null` when the cap declares none, and on a core route.
+   */
+  description: z.string().nullable(),
 })
 export type ApiCatalogEntry = z.infer<typeof ApiCatalogEntrySchema>
 

@@ -1955,6 +1955,8 @@ export {
   METHOD_ACCESS_MAP,
   SYSTEM_CAP_NAMES,
 } from './generated/method-access-map.js'
+// ── Generated method descriptions (codegen) ──────────────────────────
+export { METHOD_DESCRIPTIONS } from './generated/method-descriptions.js'
 // ── Generated method device selectors (codegen) ──────────────────────
 export type { DeviceRefField, DeviceRefForm } from './generated/method-device-selectors.js'
 export {

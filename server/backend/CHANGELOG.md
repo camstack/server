@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The capacity verdict route (getNodeCapacityVerdict) is served by the hub.
+- apiCatalog lists a description for every capability method that carries one
 
 ## [1.2.936] - 2026-11-21
 

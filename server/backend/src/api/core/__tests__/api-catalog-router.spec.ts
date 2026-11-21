@@ -24,6 +24,7 @@ import {
   trpcRouter,
 } from '../../trpc/trpc.middleware.js'
 import type { ApiCatalogEntry, CredentialScope } from '@camstack/types'
+import { METHOD_DESCRIPTIONS } from '@camstack/types'
 import { callableBy, createApiCatalogRouter } from '../api-catalog.router.js'
 
 const admin: AuthenticatedAgent = {
@@ -103,6 +104,16 @@ describe('apiCatalog.list', () => {
     expect(core?.scope).toBeNull()
   })
 
+  it('carries the description the cap declares for a cap route, null for a core route', async () => {
+    const { methods } = await buildApp().createCaller({ user: admin }).apiCatalog.list()
+    const cap = methods.find((m) => m.path === 'addons.list')
+    const core = methods.find((m) => m.path === 'widgets.ping')
+    const declared = METHOD_DESCRIPTIONS['addons.list']
+    expect(declared).toBeTruthy()
+    expect(cap?.description).toBe(declared)
+    expect(core?.description).toBeNull()
+  })
+
   it('marks every method callable for a full admin', async () => {
     const { methods } = await buildApp().createCaller({ user: admin }).apiCatalog.list()
     expect(methods.every((m) => m.callable === 'yes')).toBe(true)
@@ -171,6 +182,7 @@ function capEntry(path: string, tier: ApiCatalogEntry['tier']): ApiCatalogEntry 
     source: 'capability',
     scope: null,
     hasInput: true,
+    description: null,
   }
 }
 

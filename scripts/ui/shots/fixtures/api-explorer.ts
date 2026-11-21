@@ -66,6 +66,15 @@ const RAW: readonly ShotMethod[] = [
   { path: 'newFeature.status', kind: 'query', tier: 'protected', cap: null, hasInput: false },
 ]
 
+const SHOT_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  'deviceManager.getDevice': 'One device by id, with its kind, name, owning integration and state.',
+  'deviceManager.setDisabled':
+    'Disable or re-enable a device. A disabled device is reported off, never broken, and keeps its history.',
+  'recording.getConfig': 'The recording bands and retention one camera is configured with.',
+  'recording.setConfig':
+    'Replace one camera recording configuration; the recorder re-reads it at once.',
+}
+
 const METHODS = RAW.map((m) => {
   const dot = m.path.lastIndexOf('.')
   return {
@@ -80,6 +89,8 @@ const METHODS = RAW.map((m) => {
         ? null
         : { capName: m.cap.name, capScope: 'device', access: m.cap.access, role: 'viewer' },
     hasInput: m.hasInput,
+    // Only capability routes carry a description (from the cap's own JSDoc).
+    description: SHOT_DESCRIPTIONS[m.path] ?? null,
     // A device grant alone reaches getDevice: the explorer says it depends on the device.
     callable: m.path === 'deviceManager.getDevice' ? 'per-device' : 'yes',
   }

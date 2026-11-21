@@ -150,6 +150,9 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
     >
       <div className="space-y-4 p-3 sm:p-4">
         <p className="break-all font-mono text-sm text-foreground">{method.path}</p>
+        {method.description !== null && (
+          <p className="text-sm text-foreground-muted">{method.description}</p>
+        )}
         <KeyValueList
           items={[
             {

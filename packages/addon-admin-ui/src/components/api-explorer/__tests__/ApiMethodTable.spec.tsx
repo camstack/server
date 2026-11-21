@@ -18,6 +18,7 @@ function method(path: string, kind: ApiCatalogMethod['kind'] = 'query'): ApiCata
     source: 'core',
     scope: null,
     hasInput: false,
+    description: null,
     callable: 'yes',
   }
 }
@@ -30,6 +31,24 @@ const METHODS = [
 ]
 
 describe('ApiMethodTable', () => {
+  it('shows the cap-carried description under the method name, none for a method without', () => {
+    const described: ApiCatalogMethod = {
+      ...method('ptz.moveTo', 'mutation'),
+      description: 'Move the camera to an absolute pan/tilt position.',
+    }
+    render(
+      <ApiMethodTable
+        methods={[described, method('deviceManager.getDevice')]}
+        selectedPath="ptz.moveTo"
+        onSelect={() => undefined}
+      />,
+    )
+    expect(
+      screen.getByText('Move the camera to an absolute pan/tilt position.'),
+    ).toBeInTheDocument()
+    expect(screen.queryAllByText(/absolute pan/)).toHaveLength(1)
+  })
+
   it('shows every non-empty macro group with its count, other included', () => {
     render(<ApiMethodTable methods={METHODS} selectedPath={null} onSelect={() => undefined} />)
     expect(screen.getByText('Devices').parentElement).toHaveTextContent('2')

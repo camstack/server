@@ -28,7 +28,7 @@ export interface ApiMethodTableProps {
 }
 
 const FILTER_CONFIG: DataTableFilterConfig<ApiCatalogMethod> = {
-  searchText: (m) => [m.path, m.scope?.capName ?? ''],
+  searchText: (m) => [m.path, m.scope?.capName ?? '', m.description ?? ''],
   facetGroups: [
     { id: 'tier', value: (m) => m.tier },
     { id: 'source', value: (m) => m.source },
@@ -98,12 +98,19 @@ export function ApiMethodTable({
       header: t('system.apiExplorer.column.method'),
       sortValue: (m) => m.path,
       render: (m) => (
-        <span className="flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-xs">
-            <span className="text-foreground-muted">{m.router}.</span>
-            <span className="text-foreground">{m.method}</span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-xs">
+              <span className="text-foreground-muted">{m.router}.</span>
+              <span className="text-foreground">{m.method}</span>
+            </span>
+            <KindBadge kind={m.kind} />
           </span>
-          <KindBadge kind={m.kind} />
+          {m.description !== null && (
+            <span className="block max-w-xs truncate text-xs text-foreground-muted">
+              {m.description}
+            </span>
+          )}
         </span>
       ),
     },

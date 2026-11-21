@@ -105,6 +105,11 @@ const PARALLEL_CAP_STEPS: readonly Step[] = [
     cmd: ['npx', 'tsx', 'scripts/generate-method-access-map.ts'],
   },
   {
+    id: 'method-descriptions',
+    label: 'method descriptions     → packages/types/src/generated/method-descriptions.ts',
+    cmd: ['npx', 'tsx', 'scripts/generate-method-descriptions.ts'],
+  },
+  {
     id: 'scope-presets',
     label: 'scope presets          → packages/types/src/generated/scope-presets.ts',
     cmd: ['npx', 'tsx', 'scripts/generate-scope-presets.ts'],

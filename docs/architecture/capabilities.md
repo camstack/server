@@ -204,6 +204,15 @@ Two consequences when writing a new method:
   from `admin` to `protected` on exactly that reasoning. `getStorageUsage` is a
   deployment-wide figure and stays `admin`.
 
+## A method says what it does
+
+The API explorer shows one line per method, and that line is carried by the cap.
+Write a JSDoc above the method's property in the `*.cap.ts`: its first paragraph
+(plain text) is the description. An explicit `description` option on `method()` /
+`systemMethod()` wins over the JSDoc. `npm run codegen` extracts both into
+`generated/method-descriptions.ts` (`METHOD_DESCRIPTIONS`, keyed by tRPC path),
+which `apiCatalog.list` serves; a method with neither shows no line.
+
 ## Definition checklist
 
 For a capability holding device-scoped state:

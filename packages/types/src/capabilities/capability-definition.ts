@@ -197,6 +197,12 @@ export interface CapabilityMethodSchema<
   readonly actions?: readonly LooseMethodActionDecl[]
   /** Why this mutation is never a step (D1050) — the alternative to `actions`. */
   readonly notOperatorFacing?: string
+  /**
+   * What the method does, in plain text. Optional: codegen takes the first
+   * paragraph of the JSDoc above the method when this is unset
+   * (`METHOD_DESCRIPTIONS`); an explicit value wins over the JSDoc.
+   */
+  readonly description?: string
 }
 
 export const CapabilityEventFromStateSchema = z.object({
@@ -1579,6 +1585,8 @@ export interface CapabilityMethodOptions<
   readonly actions?: readonly MethodActionDecl<z.input<NoInfer<TIn>>>[]
   /** Why this mutation is never a step (D1050) — the alternative to `actions`. */
   readonly notOperatorFacing?: string
+  /** What the method does, plain text. Wins over the JSDoc codegen would otherwise take. */
+  readonly description?: string
 }
 
 /**
@@ -1642,6 +1650,7 @@ export function method<
     ...(options?.notOperatorFacing !== undefined
       ? { notOperatorFacing: options.notOperatorFacing }
       : {}),
+    ...(options?.description !== undefined ? { description: options.description } : {}),
     timeoutMs: options?.timeoutMs,
   }
 }

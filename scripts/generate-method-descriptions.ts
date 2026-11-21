@@ -1,0 +1,157 @@
+#!/usr/bin/env tsx
+/**
+ * Codegen: emit `METHOD_DESCRIPTIONS` — one plain-text sentence per capability
+ * method, carried by the cap itself, for the API explorer.
+ *
+ * Source, in order:
+ *   1. an explicit `description` option on `method()` / `systemMethod()`;
+ *   2. the first paragraph of the JSDoc above the method's property in the
+ *      `*.cap.ts` (read with the TypeScript parser, never a regex over text).
+ *
+ * A method with neither is simply absent from the map: the explorer shows no
+ * line for it, and `scripts/check-method-descriptions.ts`-style reports can
+ * count them. Keys are tRPC paths, the same `<routerKey>.<method>` as
+ * `METHOD_ACCESS_MAP`.
+ */
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import ts from 'typescript'
+import type {
+  CapabilityDefinition,
+  CapabilityMethodSchema,
+} from '../packages/types/src/capabilities/capability-definition.js'
+import { expandCapMethods } from '../packages/types/src/index.js'
+import { writeIfChanged } from './codegen-write.ts'
+
+const ROOT = path.resolve(import.meta.dirname ?? __dirname, '..')
+const CAPS_DIR = path.join(ROOT, 'packages/types/src/capabilities')
+const OUTPUT_FILE = path.join(ROOT, 'packages/types/src/generated/method-descriptions.ts')
+
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+}
+
+/** Plain text, first paragraph, one line. */
+export function firstParagraph(comment: string): string | null {
+  const paragraph = comment
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .find((p) => p.length > 0)
+  if (paragraph === undefined) return null
+  const plain = paragraph.replace(/`/g, '').replace(/\s+/g, ' ').trim()
+  return plain.length > 0 ? plain : null
+}
+
+function propertyKey(name: ts.PropertyName): string | null {
+  if (
+    ts.isIdentifier(name) ||
+    ts.isStringLiteral(name) ||
+    ts.isNoSubstitutionTemplateLiteral(name)
+  ) {
+    return name.text
+  }
+  return null
+}
+
+function stringProperty(obj: ts.ObjectLiteralExpression, key: string): string | null {
+  for (const prop of obj.properties) {
+    if (!ts.isPropertyAssignment(prop) || propertyKey(prop.name) !== key) continue
+    const init = prop.initializer
+    if (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) return init.text
+  }
+  return null
+}
+
+function jsdocOf(node: ts.Node): string | null {
+  for (const doc of ts.getJSDocCommentsAndTags(node)) {
+    if (!ts.isJSDoc(doc) || doc.comment === undefined) continue
+    const text = ts.getTextOfJSDocComment(doc.comment)
+    if (text !== undefined) return firstParagraph(text)
+  }
+  return null
+}
+
+/** `capName` → `methodName` → first JSDoc paragraph, read from one cap source file. */
+export function jsdocByMethod(source: string, fileName: string): Map<string, Map<string, string>> {
+  const out = new Map<string, Map<string, string>>()
+  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true)
+  const visit = (node: ts.Node): void => {
+    if (ts.isObjectLiteralExpression(node)) {
+      const capName = stringProperty(node, 'name')
+      const methods = node.properties.find(
+        (p): p is ts.PropertyAssignment =>
+          ts.isPropertyAssignment(p) &&
+          propertyKey(p.name) === 'methods' &&
+          ts.isObjectLiteralExpression(p.initializer),
+      )
+      if (
+        capName !== null &&
+        methods !== undefined &&
+        ts.isObjectLiteralExpression(methods.initializer)
+      ) {
+        const byMethod = new Map<string, string>()
+        for (const prop of methods.initializer.properties) {
+          if (!ts.isPropertyAssignment(prop)) continue
+          const key = propertyKey(prop.name)
+          const doc = jsdocOf(prop)
+          if (key !== null && doc !== null) byMethod.set(key, doc)
+        }
+        out.set(capName, byMethod)
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  return out
+}
+
+async function main(): Promise<void> {
+  const files = fs
+    .readdirSync(CAPS_DIR)
+    .filter((f) => f.endsWith('.cap.ts'))
+    .sort()
+  const entries: Array<readonly [string, string]> = []
+  let methodCount = 0
+  for (const file of files) {
+    const filePath = path.join(CAPS_DIR, file)
+    const mod: Record<string, unknown> = await import(filePath)
+    const exportName = Object.keys(mod).find((k) => k.endsWith('Capability'))
+    if (exportName === undefined) continue
+    const capDef = mod[exportName] as CapabilityDefinition
+    const routerKey = kebabToCamel(capDef.name)
+    const docs = jsdocByMethod(fs.readFileSync(filePath, 'utf-8'), filePath).get(capDef.name)
+    const methods = expandCapMethods(capDef) as Record<string, CapabilityMethodSchema>
+    for (const [methodName, m] of Object.entries(methods)) {
+      methodCount += 1
+      const text = m.description ?? docs?.get(methodName) ?? null
+      if (text !== null) entries.push([`${routerKey}.${methodName}`, text])
+    }
+  }
+  entries.sort((a, b) => a[0].localeCompare(b[0]))
+
+  const body = `/**
+ * AUTO-GENERATED by scripts/generate-method-descriptions.ts — DO NOT EDIT.
+ *
+ * What each capability method does, carried by the cap itself: the explicit
+ * \`description\` option, else the first JSDoc paragraph above the method.
+ * Keys are tRPC paths (\`<cap>.<method>\`); a method without either is absent.
+ *
+ * Coverage: ${entries.length} of ${methodCount} methods.
+ */
+/* eslint-disable */
+export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
+${entries.map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n')}
+})
+`
+  const res = writeIfChanged(OUTPUT_FILE, body)
+  console.log(
+    `method-descriptions: ${entries.length}/${methodCount} methods described${res.changed ? ' (written)' : ' (unchanged)'}`,
+  )
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err: unknown) => {
+    console.error(err)
+    process.exit(1)
+  })
+}

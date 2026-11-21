@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9133 source files · 1286 file(s) in no subsystem.**
+**31 subsystems · 9140 source files · 1286 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,12 +25,12 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 136 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +101 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 115 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +62 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 350 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +270 more, 51 ADRs | 2026-11-16 | ✅ |
+| Capability system and codegen | 351 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +270 more, 51 ADRs | 2026-11-21 | ✅ |
 | Device model and the provider contract | 181 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +80 more, 6 ADRs | 2026-11-08 | ✅ |
 | Device providers (per vendor) | 980 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 144 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-10-24 | ✅ |
-| Pipeline orchestration and placement | 210 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +108 more, 27 ADRs | 2026-11-02 | ✅ |
+| Pipeline orchestration and placement | 215 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +109 more, 27 ADRs | 2026-11-21 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 510 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-11-12 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-11-12 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 308 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +104 more, 27 ADRs | 2026-11-12 | ✅ |
@@ -53,7 +53,7 @@ commits. A generated page may not.
 | Admin UI and the shared component library | 1856 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +176 more, 15 ADRs | 2026-11-16 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +23 more, 7 ADRs | 2026-11-16 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 935 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +191 more, 14 ADRs | 2026-11-21 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 936 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +191 more, 14 ADRs | 2026-11-21 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 350 (349 claimed by some document)
+- **Files**: 351 (350 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract
@@ -126,7 +126,7 @@ Decides which node runs which camera's pipeline, and keeps sessions, balancing a
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline-orchestrator/src/*.ts`, `packages/addon-pipeline-orchestrator/src/durable/**`, `packages/addon-pipeline-orchestrator/src/camera-status/**`, `packages/addon-pipeline-orchestrator/src/camera-sensors/**`, `packages/addon-pipeline/src/pipeline-runner/**`, `packages/addon-pipeline-orchestrator/src/widgets/**`, `packages/addon-pipeline-orchestrator/src/auto-tune/**`, `packages/system/src/pipeline/**`, `packages/types/src/pipeline/**`
-- **Files**: 210 (210 claimed by some document)
+- **Files**: 215 (215 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Post-analysis — tracking, the confirmation gate and media
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 935 (480 claimed by some document)
-- **Uncovered**: `scripts` (189), `scripts/ui/shots/fixtures` (156), `scripts/lib` (22), `scripts/ui/shots/harness` (16), `packages/cli/src/commands` (14), `e2e/fixtures` (9), +18 more directories
+- **Files**: 936 (480 claimed by some document)
+- **Uncovered**: `scripts` (190), `scripts/ui/shots/fixtures` (156), `scripts/lib` (22), `scripts/ui/shots/harness` (16), `packages/cli/src/commands` (14), `e2e/fixtures` (9), +18 more directories
 
 ## Claimed by no subsystem
 

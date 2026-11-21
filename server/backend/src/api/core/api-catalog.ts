@@ -8,9 +8,12 @@
  *   - the token scope of a capability route is its `METHOD_ACCESS_MAP` row
  *     (the same row `protectedProcedure` authorizes against); a core route has
  *     none — it needs authentication only, plus `adminProcedure` where it says so;
+ *   - the description of a capability route is `METHOD_DESCRIPTIONS` (codegen: the
+ *     method's `description` option, else its JSDoc); a core route has none;
  *   - the input schema is the procedure's own Zod parser, as JSON Schema.
  */
 import { METHOD_ACCESS_MAP } from '@camstack/server/system'
+import { METHOD_DESCRIPTIONS } from '@camstack/types'
 import type {
   ApiCatalogEntry,
   ApiCatalogScope,
@@ -75,6 +78,7 @@ export function buildApiCatalog(
       source: scope === null ? 'core' : 'capability',
       scope,
       hasInput: shape.inputs.length > 0,
+      description: METHOD_DESCRIPTIONS[path] ?? null,
     })
   }
   return entries.toSorted((a, b) => a.path.localeCompare(b.path))

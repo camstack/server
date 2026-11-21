@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- API explorer: every method opens on a valid prefilled input, and each cap method shows what it does
+
 ## [1.2.734] - 2026-11-21
 
 ### Changed
