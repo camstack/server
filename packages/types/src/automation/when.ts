@@ -28,6 +28,7 @@ import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expre
 import { TimeSpecSchema, WeekdayKeySchema } from '../time/time-spec.js'
 import { QuantityValueSchema } from '../units/quantity-input.js'
 import { DetectionSubjectSchema, StationarySubjectSchema } from './detection-subject.js'
+import { FaultCodesSchema } from './device-fault.js'
 import { BecomesOperatorSchema, HOLD_MAX_MS, HoldSpecSchema } from './hold.js'
 
 /**
@@ -127,6 +128,18 @@ const DeviceBecomesLeafSchema = z
     }
   })
 
+/**
+ * A matching fault BECOMES active on a device (`device-fault.ts`): the device's
+ * whole fault list is read, not only its principal code. `codes` empty = any
+ * fault. Fires once per appearance; a fault already raised at start only seeds.
+ */
+const DeviceFaultRaisedLeafSchema = z.object({
+  kind: z.literal('device-fault-raised'),
+  ...eventLeafId,
+  deviceId: z.number().int().nonnegative(),
+  codes: FaultCodesSchema,
+})
+
 const DeviceEventLeafSchema = z.object({
   kind: z.literal('device-event'),
   ...eventLeafId,
@@ -214,6 +227,13 @@ const StationaryLeafSchema = z.object({
 })
 
 // ── state leaves ──────────────────────────────────────────────────────────
+
+/** "has a fault": a matching fault is active on the device NOW (its whole fault list). `codes` empty = any. */
+const DeviceFaultIsLeafSchema = z.object({
+  kind: z.literal('device-fault-is'),
+  deviceId: z.number().int().nonnegative(),
+  codes: FaultCodesSchema,
+})
 
 /** "is": one device field compared to one value, NOW. */
 const DeviceIsLeafSchema = z.object({
@@ -341,6 +361,7 @@ export type AutomationEventLeaf =
   | z.infer<typeof DeviceBecomesLeafSchema>
   | z.infer<typeof DeviceEventLeafSchema>
   | z.infer<typeof DeviceFiredLeafSchema>
+  | z.infer<typeof DeviceFaultRaisedLeafSchema>
   | z.infer<typeof ScheduleLeafSchema>
   | z.infer<typeof ManualLeafSchema>
   | z.infer<typeof IntervalLeafSchema>
@@ -349,6 +370,7 @@ export type AutomationEventLeaf =
 
 export type AutomationStateLeaf =
   | z.infer<typeof DeviceIsLeafSchema>
+  | z.infer<typeof DeviceFaultIsLeafSchema>
   | z.infer<typeof StationaryPresentLeafSchema>
   | z.infer<typeof ExpressionLeafSchema>
   | z.infer<typeof TimeIsLeafSchema>
@@ -360,6 +382,8 @@ export type DeviceBecomesLeaf = Extract<AutomationEventLeaf, { kind: 'device-bec
 export type DeviceFiredLeaf = Extract<AutomationEventLeaf, { kind: 'device-fired' }>
 export type DetectionLeaf = Extract<AutomationEventLeaf, { kind: 'detection' }>
 export type StationaryLeaf = Extract<AutomationEventLeaf, { kind: 'stationary' }>
+export type DeviceFaultRaisedLeaf = Extract<AutomationEventLeaf, { kind: 'device-fault-raised' }>
+export type DeviceFaultIsLeaf = Extract<AutomationStateLeaf, { kind: 'device-fault-is' }>
 export type DeviceIsLeaf = Extract<AutomationStateLeaf, { kind: 'device-is' }>
 export type StationaryPresentLeaf = Extract<AutomationStateLeaf, { kind: 'stationary-present' }>
 export type ExpressionLeaf = Extract<AutomationStateLeaf, { kind: 'expression' }>
@@ -388,12 +412,14 @@ export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
     DeviceBecomesLeafSchema,
     DeviceEventLeafSchema,
     DeviceFiredLeafSchema,
+    DeviceFaultRaisedLeafSchema,
     ScheduleLeafSchema,
     ManualLeafSchema,
     IntervalLeafSchema,
     DetectionLeafSchema,
     StationaryLeafSchema,
     DeviceIsLeafSchema,
+    DeviceFaultIsLeafSchema,
     StationaryPresentLeafSchema,
     ExpressionLeafSchema,
     TimeIsLeafSchema,
@@ -417,6 +443,7 @@ const EVENT_KINDS: ReadonlySet<string> = new Set([
   'device-becomes',
   'device-event',
   'device-fired',
+  'device-fault-raised',
   'schedule',
   'manual',
   'interval',
@@ -545,6 +572,7 @@ const LEAF_WORDS: Readonly<Record<string, string>> = {
   'device-becomes': 'a device value that becomes',
   'device-event': 'a device event',
   'device-fired': 'a device firing an event',
+  'device-fault-raised': 'a device fault being raised',
   schedule: 'a schedule',
   manual: 'a manual run',
   interval: 'an interval',

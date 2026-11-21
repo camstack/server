@@ -222,6 +222,40 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
     const reconcile = setInterval(() => { void check() }, RECONCILE_MS)
     disposers.push(() => clearInterval(reconcile))
   }`
+    case 'device-fault-raised':
+      return `  // event leaf ${path}: device fault raised — reads the device's WHOLE fault list
+  // (the principal code when it publishes no list). Fires ONCE when a wanted fault
+  // appears; the first good read only seeds, and a failed or unknown read changes
+  // nothing (D49).
+  {
+    const watch = new FaultRaisedWatch(${j(trigger.codes)})
+    const check = async (): Promise<void> => {
+      const read = await readCapSlice(${j(trigger.deviceId)}, 'error')
+      if (!read.ok) return
+      const field = (name: string): unknown =>
+        read.slice !== null && typeof read.slice === 'object' ? Reflect.get(read.slice, name) : undefined
+      const raised = watch.observe(readFault(field('active'), field('code'), field('faults')))
+      if (raised === undefined) return
+      void run(
+        {
+          kind: 'device-fault-raised',
+          leaf: ${at},
+          at: Date.now(),
+          deviceId: ${j(trigger.deviceId)},
+          faultCode: raised.code,
+        },
+        'fault ' + (raised.code === '' ? 'raised' : raised.code + ' raised'),
+      )
+    }
+    disposers.push(
+      ctx.eventBus.subscribe({ category: 'device.state-changed', deviceId: ${j(
+        trigger.deviceId,
+      )} }, () => { void check() }),
+    )
+    void check()
+    const reconcile = setInterval(() => { void check() }, RECONCILE_MS)
+    disposers.push(() => clearInterval(reconcile))
+  }`
     case 'device-becomes': {
       const hold = holdOf(trigger)
       const spec: Record<string, unknown> = {
@@ -688,6 +722,8 @@ import {
   DetectionTriggerFilter,
   DeviceFiredWatch,
   EventCategory,
+  FaultRaisedWatch,
+  readFault,
   RunGate,
   buildTriggerTrace,
   collectWhenMirrorSources,

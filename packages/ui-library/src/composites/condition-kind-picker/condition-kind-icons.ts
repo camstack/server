@@ -8,11 +8,13 @@ import {
   Eye,
   Hand,
   MousePointerClick,
+  OctagonAlert,
   ParkingSquare,
   Sigma,
   Split,
   Timer,
   ToggleLeft,
+  TriangleAlert,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -23,6 +25,8 @@ export const CONDITION_KIND_ICONS: Readonly<Record<AutomationLeafKind, LucideIco
   'device-becomes': Activity,
   'device-event': Bell,
   'device-fired': MousePointerClick,
+  'device-fault-raised': TriangleAlert,
+  'device-fault-is': OctagonAlert,
   schedule: CalendarClock,
   interval: Timer,
   manual: Hand,

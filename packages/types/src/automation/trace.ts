@@ -70,6 +70,7 @@ export const AutomationConditionTraceNodeSchema = z.object({
     // state leaves ("is"); `condition` is its name on an old trace
     'condition',
     'device-is',
+    'device-fault-is',
     'expression',
     'stationary-present',
     'time-is',
@@ -78,6 +79,7 @@ export const AutomationConditionTraceNodeSchema = z.object({
     'device-becomes',
     'device-event',
     'device-fired',
+    'device-fault-raised',
     'schedule',
     'interval',
     'manual',

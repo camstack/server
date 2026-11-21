@@ -18,6 +18,7 @@ import type { TimeSite } from '../time/time-spec.js'
 import { isQuantityValue } from '../units/quantity-input.js'
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
 import { anySubjectMatches } from './detection-subject.js'
+import { describeWantedFaults, faultMatches, readFault } from './device-fault.js'
 import {
   type HoldReading,
   type HoldSpec,
@@ -88,6 +89,9 @@ export function stableIdMapOf(devices: readonly StableIdDevice[]): Map<string, n
 /** The cap whose runtime-state slice IS the occupancy snapshot, parked objects included. */
 const ZONE_ANALYTICS_CAP = 'zone-analytics'
 
+/** The cap whose slice holds a device's faults. */
+const ERROR_CAP = 'error'
+
 function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
   switch (cond.kind) {
     case 'all':
@@ -99,6 +103,9 @@ function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
       return
     case 'device-is':
       out.push({ kind: 'device', deviceId: cond.deviceId, cap: cond.cap })
+      return
+    case 'device-fault-is':
+      out.push({ kind: 'device', deviceId: cond.deviceId, cap: ERROR_CAP })
       return
     case 'stationary-present':
       out.push({ kind: 'device', deviceId: cond.deviceId, cap: ZONE_ANALYTICS_CAP })
@@ -593,6 +600,39 @@ function evalNode(
         ...base,
         outcome: ok ? 'pass' : 'fail',
         reason: `${cond.fieldPath} ${show(observed)}, expected ${OPERATOR_SYMBOL[cond.operator]} ${show(cond.value)}${hold === undefined ? '' : ` (${hold.why})`} → ${ok ? 'pass' : 'fail'}`,
+      })
+      return ok
+    }
+    case 'device-fault-is': {
+      const reading = readFault(
+        reader.read(cond.deviceId, ERROR_CAP, 'active'),
+        reader.read(cond.deviceId, ERROR_CAP, 'code'),
+        reader.read(cond.deviceId, ERROR_CAP, 'faults'),
+      )
+      const base = {
+        path,
+        kind: cond.kind,
+        deviceId: cond.deviceId,
+        cap: ERROR_CAP,
+        fieldPath: 'faults',
+        expected: cond.codes.join(', '),
+      } as const
+      if (reading === undefined) {
+        state.unknown = true
+        out.push({
+          ...base,
+          outcome: 'fail',
+          reason: 'whether the device has a fault is unknown → fail',
+        })
+        return false
+      }
+      const ok = faultMatches(reading, cond.codes)
+      const shown = reading.active ? reading.codes.join(', ') || 'a fault' : 'none'
+      out.push({
+        ...base,
+        outcome: ok ? 'pass' : 'fail',
+        observed: shown,
+        reason: `faults: ${shown}, expected ${describeWantedFaults(cond.codes)} → ${ok ? 'pass' : 'fail'}`,
       })
       return ok
     }

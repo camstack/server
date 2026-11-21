@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automations can start on, or be conditioned on, a device fault: pick the device and which of its faults count (all of its faults are checked, not just the main one); a value on an enum field is picked from its options with a custom-value escape.
+
 ## [1.2.724] - 2026-11-21
 
 ### Changed

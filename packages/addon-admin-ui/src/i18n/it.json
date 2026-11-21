@@ -6628,7 +6628,10 @@
       "eventNotDeclared": "non dichiarato"
     },
     "valueInput": {
-      "oneTwoThree": "uno, due, tre"
+      "oneTwoThree": "uno, due, tre",
+      "pickValue": "Scegli un valore",
+      "customValue": "Valore personalizzato…",
+      "customValueLabel": "Valore personalizzato"
     },
     "editor": {
       "listUnreadable": "La sua ricetta non è leggibile ({{reason}}), quindi non può essere aperta in modo visuale. Il codice è intatto e ancora in esecuzione — modificalo come script."
@@ -6788,6 +6791,16 @@
         "label": "Un pulsante o dispositivo scatta",
         "description": "Un dispositivo segnala uno degli eventi che dichiara: una pressione, una pressione lunga",
         "example": "il pulsante 3 del telecomando viene tenuto premuto"
+      },
+      "device-fault-raised": {
+        "label": "Un guasto del dispositivo si presenta",
+        "description": "Parte quando uno dei guasti scelti diventa attivo su un dispositivo, controllando tutti i suoi guasti, non solo il principale.",
+        "example": "Il gateway diventa irraggiungibile"
+      },
+      "device-fault-is": {
+        "label": "Un dispositivo ha un guasto",
+        "description": "Vero finché uno dei guasti scelti è attivo su un dispositivo, controllando tutti i suoi guasti, non solo il principale.",
+        "example": "Il gateway è irraggiungibile in questo momento"
       }
     },
     "leafPicker": {
@@ -6887,6 +6900,13 @@
       "title": "Titolo (facoltativo)",
       "body": "Messaggio",
       "hint": "Usa {{vars.nome}} per inserire un valore dell esecuzione nel testo."
+    },
+    "fault": {
+      "device": "Dispositivo",
+      "codes": "Guasto",
+      "catalogFailed": "Non è stato possibile leggere i guasti che questo dispositivo può segnalare: scrivi il codice a mano.",
+      "codesEmpty": "Questo dispositivo non dichiara codici di guasto: scrivine uno, o lascia vuoto per qualsiasi guasto.",
+      "codePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)"
     }
   },
   "accessDenied": {

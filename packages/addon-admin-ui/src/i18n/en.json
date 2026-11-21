@@ -6553,7 +6553,10 @@
       "eventNotDeclared": "not declared"
     },
     "valueInput": {
-      "oneTwoThree": "one, two, three"
+      "oneTwoThree": "one, two, three",
+      "pickValue": "Pick a value",
+      "customValue": "Custom value…",
+      "customValueLabel": "Custom value"
     },
     "editor": {
       "listUnreadable": "Its recipe cannot be read ({{reason}}), so it cannot be opened visually. The code is intact and still running — edit it as a script."
@@ -6713,6 +6716,16 @@
         "label": "A button or device fires",
         "description": "A device reports one of the events it declares: a button press, a long press",
         "example": "button 3 of the remote is held down"
+      },
+      "device-fault-raised": {
+        "label": "A device fault is raised",
+        "description": "Starts when one of the faults you pick becomes active on a device, checking all of its faults, not just the main one.",
+        "example": "The gateway becomes unreachable"
+      },
+      "device-fault-is": {
+        "label": "A device has a fault",
+        "description": "True while one of the faults you pick is active on a device, checking all of its faults, not just the main one.",
+        "example": "The gateway is unreachable right now"
       }
     },
     "leafPicker": {
@@ -6812,6 +6825,13 @@
       "title": "Title (optional)",
       "body": "Message",
       "hint": "Use {{vars.name}} to put a value of the run in the text."
+    },
+    "fault": {
+      "device": "Device",
+      "codes": "Fault",
+      "catalogFailed": "The faults this device can report could not be read — type the code by hand.",
+      "codesEmpty": "This device declares no fault codes — type one, or leave empty for any fault.",
+      "codePlaceholder": "Fault code… (empty = any fault)"
     }
   },
   "accessDenied": {

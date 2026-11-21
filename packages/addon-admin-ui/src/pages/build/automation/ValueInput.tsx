@@ -30,6 +30,7 @@ import {
   type ResolvedSensorDisplay,
 } from '@camstack/ui-library'
 import type { WireableField } from './recipe-parts'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export type ScalarValue = string | number | boolean
@@ -42,6 +43,53 @@ export interface ScalarValueInputProps {
   readonly deviceId?: number
   readonly cap?: string
   readonly onChange: (next: ScalarValue) => void
+}
+
+const CUSTOM_VALUE = '\u0000custom'
+
+interface PickOrCustomInputProps {
+  readonly value: string
+  readonly options: readonly { readonly value: string; readonly label: string }[]
+  readonly onChange: (next: string) => void
+}
+
+/**
+ * A value picked from a known set, with "Custom value…" as the way out: a value
+ * the set does not hold (a recipe written by hand) is shown as custom text and
+ * saved untouched, never blanked.
+ */
+export function PickOrCustomInput({ value, options, onChange }: PickOrCustomInputProps) {
+  const { t } = useTranslation()
+  const [chosenCustom, setChosenCustom] = useState(false)
+  const outside = value !== '' && !options.some((o) => o.value === value)
+  const custom = chosenCustom || outside
+  return (
+    <div className="flex flex-col gap-1">
+      <Select
+        value={custom ? CUSTOM_VALUE : value}
+        placeholder={t('automation.valueInput.pickValue', 'Pick a value')}
+        onChange={(e) => {
+          if (e.target.value === CUSTOM_VALUE) setChosenCustom(true)
+          else {
+            setChosenCustom(false)
+            onChange(e.target.value)
+          }
+        }}
+        options={[
+          ...options.map((o) => ({ value: o.value, label: o.label })),
+          { value: CUSTOM_VALUE, label: t('automation.valueInput.customValue', 'Custom value…') },
+        ]}
+      />
+      {custom ? (
+        <Input
+          value={value}
+          aria-label={t('automation.valueInput.customValueLabel', 'Custom value')}
+          placeholder={t('common.valueWord')}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : null}
+    </div>
+  )
 }
 
 export function ScalarValueInput({ value, field, deviceId, cap, onChange }: ScalarValueInputProps) {
@@ -62,10 +110,10 @@ export function ScalarValueInput({ value, field, deviceId, cap, onChange }: Scal
 
   if (field?.kind === 'enum' && field.enumValues !== undefined && field.enumValues.length > 0) {
     return (
-      <Select
+      <PickOrCustomInput
         value={String(value)}
-        onChange={(e) => onChange(e.target.value)}
         options={field.enumValues.map((v) => ({ value: v, label: v }))}
+        onChange={onChange}
       />
     )
   }

@@ -79,6 +79,15 @@ export type {
   FiredDataVars,
 } from './fired-trigger.js'
 export { DeviceFiredWatch, FIRED_RECOVERED_NOTE, firedDataVars } from './fired-trigger.js'
+export {
+  FaultCodesSchema,
+  FaultRaisedWatch,
+  describeWantedFaults,
+  faultMatches,
+  matchedFaultCodes,
+  readFault,
+} from './device-fault.js'
+export type { FaultRaise, FaultReading } from './device-fault.js'
 export type { TriggerVariable } from './trigger-variables.js'
 export { triggerLeafVariables, triggerVariablesOf } from './trigger-variables.js'
 export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'

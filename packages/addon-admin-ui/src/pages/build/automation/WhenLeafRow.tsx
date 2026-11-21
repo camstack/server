@@ -20,6 +20,7 @@ import { DeviceIsFields } from './DeviceIsFields'
 import { DeviceBecomesFields, DeviceEventFields, ManualFields, ScheduleFields } from './EventFields'
 import { ExpressionLeafRow } from './ExpressionLeafRow'
 import { PickerLabel } from './FieldPicker'
+import { FaultFields } from './FaultFields'
 import { FiredFields } from './FiredFields'
 import { type MoveControls, MoveButtons } from './MoveButtons'
 import { LeafKindPickerModal } from './LeafKindPickerModal'
@@ -145,6 +146,9 @@ function LeafFields({ leaf, devices, onChange }: LeafFieldsProps) {
       return <DeviceEventFields leaf={leaf} devices={devices} onChange={onChange} />
     case 'device-fired':
       return <FiredFields leaf={leaf} onChange={onChange} />
+    case 'device-fault-raised':
+    case 'device-fault-is':
+      return <FaultFields leaf={leaf} onChange={onChange} />
     case 'schedule':
       return <ScheduleFields leaf={leaf} onChange={onChange} />
     case 'interval':

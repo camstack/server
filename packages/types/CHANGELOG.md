@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automation rows "a device fault is raised" and "a device has a fault" match a device's whole fault list.
+
 ## [1.2.616] - 2026-11-21
 
 ### Changed

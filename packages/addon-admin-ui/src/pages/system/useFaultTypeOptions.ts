@@ -9,6 +9,8 @@ const ERROR_CAP = 'error'
 export interface FaultTypeOptions {
   readonly options: readonly PickOption[]
   readonly loading: boolean
+  /** A catalog read FAILED (as opposed to answering empty): the options are then incomplete. */
+  readonly failed: boolean
 }
 
 /**
@@ -45,5 +47,6 @@ export function useFaultTypeOptions(
   return {
     options: mergeFaultTypes(catalogs.map((q) => q.data)),
     loading: carriers.isLoading || catalogs.some((q) => q.isLoading),
+    failed: carriers.isError || catalogs.some((q) => q.isError),
   }
 }

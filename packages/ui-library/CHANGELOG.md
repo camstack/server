@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The condition kind picker has icons for the two device-fault rows.
+
 ## [1.2.486] - 2026-11-21
 
 ### Changed
