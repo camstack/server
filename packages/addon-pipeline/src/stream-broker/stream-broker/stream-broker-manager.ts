@@ -8364,7 +8364,17 @@ export class StreamBrokerManager {
     })
     // A battery camera that does not answer is given up on, never dialled in a
     // loop (`StreamBroker.giveUpDial`); read at use time, the feature can land late.
-    broker.setBatteryProbe(() => this.deviceHasFeature(deviceId, DeviceFeature.Sleeps))
+    // The verdict is the DEVICE's own (registry features, via `batteryProbe`),
+    // not only what a publisher stamped on its streams: the Reolink catalog
+    // never carries `sleeps` (the registry derives it from the low-power-sleep
+    // binding), so the stream features alone left the give-up dead. The read is
+    // in-memory; `ensureBatteryProbe` starts the registry read off the dial
+    // path, and until it answers the broker behaves as before (D49).
+    broker.setBatteryProbe(
+      () =>
+        this.deviceHasFeature(deviceId, DeviceFeature.Sleeps) ||
+        this.ensureBatteryProbe(deviceId, Date.now()).isBattery === true,
+    )
     // A re-dial cuts every reader that cannot see the cut itself (the
     // recorder's ffmpeg writer): announce it so they recover now, not after
     // their idle bound.
