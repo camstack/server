@@ -98,6 +98,7 @@ import { StreamPipeServer } from './stream-pipe-server'
  * (D272) rather than wired, because the reconnect ladder is a transport
  * property the operator has no way to reason about — not a tuning surface.
  */
+const LAZY_URL_PREFIX = 'lazy:rfc4571:'
 const INITIAL_RECONNECT_DELAY_MS = 1_000
 const MAX_RECONNECT_DELAY_MS = 30_000
 /** Grace period before suspending after last consumer leaves. */
@@ -304,6 +305,28 @@ export class StreamBroker implements IStreamBroker {
    * manual restart did.
    */
   private firstVideoWatchdog: ReturnType<typeof setTimeout> | undefined
+  /**
+   * Whether the device is a battery camera, asked at the moment of use (the
+   * manager reads the cam-stream's `Sleeps` feature; it can arrive after the
+   * broker exists). `null` ⇒ nobody said ⇒ not a battery camera, so a wired
+   * stream is never subject to the give-up below.
+   */
+  private batteryProbe: (() => boolean) | null = null
+  /**
+   * Why the broker stopped dialling a battery camera on its own, or `null`.
+   *
+   * A battery camera that does not answer is asleep or dead, and every further
+   * dial is a login on it — the wake the battery exists to avoid (device 640:
+   * ~60 an hour, for days). So after a bounded effort the dial loop ends, once,
+   * and only an EDGE restarts it: the camera observed awake, a fresh demand
+   * edge, or the publisher re-publishing a real source. Never a timer.
+   */
+  private dialGaveUp: 'materialize' | 'watchdog' | null = null
+  /** Consecutive watchdog kills with no video between them (battery only). */
+  private watchdogKills = 0
+  /** Kills in a row before a battery camera is given up on (1+2+4+8 s of backoff). */
+  private static readonly MAX_WATCHDOG_KILLS = 4
+
   /**
    * The device's COMMITTED sleep state, pushed by the manager from the battery
    * status event (in-memory, off the event path — never a read, D49). `false`
@@ -950,6 +973,75 @@ export class StreamBroker implements IStreamBroker {
     this.requestSourceRefresh = notify
   }
 
+  /** Tell the broker how to ask "is this a battery camera?" — see {@link batteryProbe}. */
+  setBatteryProbe(probe: () => boolean): void {
+    this.batteryProbe = probe
+  }
+
+  private isBattery(): boolean {
+    return this.batteryProbe?.() === true
+  }
+
+  /**
+   * End the dial loop of a battery camera: suspend with a stated reason, once.
+   * No timer is left behind; {@link resumeAfterGiveUp} is the way back.
+   */
+  private giveUpDial(reason: 'materialize' | 'watchdog', meta: Record<string, unknown>): void {
+    if (this.dialGaveUp !== null) return
+    this.dialGaveUp = reason
+    this._suspended = true
+    this._status = 'idle'
+    this.materializeRequestedAt = 0
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = undefined
+    }
+    this.destroyRfc4571Reader()
+    this.logger?.info(
+      'battery camera did not come up — dialling gave up until it is awake or demand returns',
+      { tags: { deviceId: this.numericDeviceId }, meta: { reason, ...meta } },
+    )
+  }
+
+  /**
+   * An edge that may end a give-up: the camera observed awake, or the publisher
+   * re-publishing a real (non-sentinel) source. Dials only when something still
+   * holds live intent; a fresh demand edge is handled by `checkDemand`.
+   */
+  private resumeAfterGiveUp(trigger: string): void {
+    if (this.dialGaveUp === null || this.manualStop || this.stopping) return
+    if (!this.hasLiveIntent()) return
+    const fresh = this.resolveCurrentSource()
+    if (!fresh) return
+    this.dialGaveUp = null
+    this.watchdogKills = 0
+    this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
+    this.nextDialAllowedAt = 0
+    this._suspended = false
+    this.logger?.info('battery camera is back — resuming the dial', {
+      tags: { deviceId: this.numericDeviceId },
+      meta: { trigger },
+    })
+    this.start(fresh).catch((err) => {
+      this.logger?.error('resume failed', { meta: { error: errMsg(err) } })
+      this._suspended = true
+      this._status = 'idle'
+    })
+  }
+
+  /**
+   * One more watchdog kill. Returns true when this was the last the broker
+   * allows — the dial loop is then given up and the caller must not reconnect.
+   * A wired camera is never counted.
+   */
+  private watchdogKillBounded(): boolean {
+    if (!this.isBattery()) return false
+    this.watchdogKills += 1
+    if (this.watchdogKills <= StreamBroker.MAX_WATCHDOG_KILLS) return false
+    this.giveUpDial('watchdog', { kills: this.watchdogKills })
+    return true
+  }
+
   /**
    * Arm the SENTRY — the fill for the window between "someone asked for this
    * camera" and "the camera is awake".
@@ -1104,6 +1196,14 @@ export class StreamBroker implements IStreamBroker {
   kickReconnect(): void {
     if (this.manualStop || this.stopping || !this.source) return
     if (!this.hasLiveIntent()) return
+    // A battery camera given up on is revived by a re-publish of a REAL source
+    // (it came up for another reason); the sentinel going back is not one.
+    if (this.dialGaveUp !== null) {
+      const published = this.resolveCurrentSource()
+      if (published && !published.url.startsWith(LAZY_URL_PREFIX))
+        this.resumeAfterGiveUp('republish')
+      return
+    }
     if (!this.reconnectTimer) return
     // Throttle. The kick is now fired on EVERY re-publish rather than only on a
     // changed URL, and a publisher in a republish loop would otherwise reset
@@ -1849,7 +1949,8 @@ export class StreamBroker implements IStreamBroker {
       // Signal the demand edge (false→true) before resuming so an external
       // producer (derived feeder) starts spawning immediately. Idempotent —
       // only the transition fires; repeated demanded checks are no-ops.
-      if (!this.demandActive) {
+      const demandEdge = !this.demandActive
+      if (demandEdge) {
         this.demandActive = true
         this.demandObserver?.(true)
       }
@@ -1871,10 +1972,17 @@ export class StreamBroker implements IStreamBroker {
       // (`startRfc4571Reader`'s `.catch`) already triggers a refresh
       // when the cached URL goes stale; that's the only case where
       // we actually need the publisher to wake the cam.
-      if (this._suspended) {
+      // A battery camera given up on is resumed by an EDGE only (a new demand
+      // edge here); a sentry session attaching beside a stuck consumer is
+      // not one, and neither is any other consumer churn.
+      if (this._suspended && this.dialGaveUp !== null && !demandEdge) {
+        // stays given up
+      } else if (this._suspended) {
         const fresh = this.resolveCurrentSource()
         if (fresh) {
           this.cancelResumeRetry()
+          this.dialGaveUp = null
+          this.watchdogKills = 0
           this._suspended = false
           this.logger?.info('demand detected — resuming stream')
           this.start(fresh).catch((err) => {
@@ -3503,6 +3611,7 @@ export class StreamBroker implements IStreamBroker {
         this._status = 'streaming'
         this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
         this.nextDialAllowedAt = 0
+        this.watchdogKills = 0
         this.stopErrorPlaceholder()
         // First RTP packet of this connection cycle — the watchdog
         // can stand down. Cheap to call when already cancelled.
@@ -4228,12 +4337,19 @@ export class StreamBroker implements IStreamBroker {
     // mirrors the user's "click restart" workaround.
     this.destroyRfc4571Reader()
     this._status = 'error'
-    // Treat this as a fresh recovery cycle rather than a continuation
-    // of an exponential-backoff sequence — the user noticed the
-    // stuck state after wake-up, the manual restart resets backoff,
-    // and we're emulating that.
-    this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
-    this.nextDialAllowedAt = 0
+    // A battery camera is retried on the exponential backoff and only a bounded
+    // number of times; the loop it used to run (reset to the floor on every
+    // kill) is what drained device 640. A wired camera keeps the reset.
+    if (this.isBattery()) {
+      if (this.watchdogKillBounded()) return
+    } else {
+      // Treat this as a fresh recovery cycle rather than a continuation
+      // of an exponential-backoff sequence — the user noticed the
+      // stuck state after wake-up, the manual restart resets backoff,
+      // and we're emulating that.
+      this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
+      this.nextDialAllowedAt = 0
+    }
     this.lastRefreshRequestAt = 0
     // Provider refresh is a LOOPBACK concern only: the misleading
     // `rfc4571`-in-the-message log used to fire (and this refresh used to
@@ -4269,6 +4385,10 @@ export class StreamBroker implements IStreamBroker {
   setDeviceAsleep(asleep: boolean): void {
     const wasAsleep = this.deviceAsleep
     this.deviceAsleep = asleep
+    if (!asleep && this.dialGaveUp !== null) {
+      this.resumeAfterGiveUp('awake')
+      return
+    }
     const waiting = this.watchdogAwaitingWake
     if (!wasAsleep || asleep || waiting === null) return
     this.watchdogAwaitingWake = null
@@ -4462,8 +4582,12 @@ export class StreamBroker implements IStreamBroker {
       }
       this.destroyRfc4571Reader()
       this._status = 'error'
-      this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
-      this.nextDialAllowedAt = 0
+      if (this.isBattery()) {
+        if (this.watchdogKillBounded()) return
+      } else {
+        this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
+        this.nextDialAllowedAt = 0
+      }
       // The lib's loopback may have idle-rotated — ask the publisher to
       // refresh before the next dial picks up a stale URL.
       this.notifySourceRefresh()
@@ -4668,6 +4792,12 @@ export class StreamBroker implements IStreamBroker {
       // Poll flat while the deadline holds; past it this is a failure and the
       // backoff is right again.
       const withinDeadline = waitedMs < StreamBroker.MATERIALIZE_WAIT_MS
+      // Past the deadline a battery camera is asleep or dead, and the backoff
+      // below would ask the publisher to log in on it every 30 s for ever.
+      if (!withinDeadline && this.isBattery()) {
+        this.giveUpDial('materialize', { waitedMs })
+        return
+      }
       if (withinDeadline) this.reconnectDelayMs = StreamBroker.MATERIALIZE_POLL_MS
       this.logger?.info('rfc4571: lazy URL — requesting publisher to materialize upstream', {
         tags: { deviceId: this.numericDeviceId },

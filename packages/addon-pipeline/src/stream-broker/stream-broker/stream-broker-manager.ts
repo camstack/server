@@ -8362,6 +8362,9 @@ export class StreamBrokerManager {
     broker.setRequestSourceRefresh(() => {
       this.emitRequestStreamSourceRefresh(deviceId, camStreamId, brokerId)
     })
+    // A battery camera that does not answer is given up on, never dialled in a
+    // loop (`StreamBroker.giveUpDial`); read at use time, the feature can land late.
+    broker.setBatteryProbe(() => this.deviceHasFeature(deviceId, DeviceFeature.Sleeps))
     // A re-dial cuts every reader that cannot see the cut itself (the
     // recorder's ffmpeg writer): announce it so they recover now, not after
     // their idle bound.

@@ -396,6 +396,15 @@ What went wrong, each once, on 2026-09-06 — the reasons the steps are what the
 - A re-publish (the sentinel going back) can itself trigger one dial and one
   wake when a consumer is still attached to the assignment; it settles on its
   own. Expect one extra open in the log, not a loop.
+- A materialize that never lands, retried on the 30 s backoff for as long as a
+  consumer held the stream: a dead battery camera was logged in to ~60 times an
+  hour for days (device 640). A battery camera that does not come up within the
+  materialize deadline, or after four watchdog kills with no video, is GIVEN UP
+  once (one line under the device tag); only an edge dials it again — the
+  camera observed awake, a fresh demand edge, a re-publish of a real source,
+  never a timer. The sentry pump feeds a picture and never dials
+  ([D1073](../decisions/adr-1073-a-battery-camera-that-does-not-answer-is-given-up-on-once-and-only-an-edge-dials-it-again.md)).
+  The hourly refresh stamps a window whose only failure is a stale snapshot.
 
 ## A per-device binding question reads ONE device, and rides an event mirror
 
