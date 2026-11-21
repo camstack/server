@@ -34,4 +34,10 @@ describe('formatNumeric', () => {
     expect(formatNumeric(21.4712, 3)).toBe('21.471')
     expect(formatNumeric(1.2, 2)).toBe('1.20')
   })
+
+  it('reads a non-finite value as a dash, with or without a precision', () => {
+    expect(formatNumeric(Number.NaN, undefined)).toBe('—')
+    expect(formatNumeric(Number.POSITIVE_INFINITY, 2)).toBe('—')
+    expect(formatNumeric(Number.NEGATIVE_INFINITY, undefined)).toBe('—')
+  })
 })

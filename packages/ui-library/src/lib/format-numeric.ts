@@ -9,6 +9,7 @@
 const DEFAULT_MAX_DECIMALS = 2
 
 export function formatNumeric(value: number, precision: number | undefined): string {
+  if (!Number.isFinite(value)) return '—'
   if (precision !== undefined) return value.toFixed(precision)
   if (Number.isInteger(value)) return String(value)
   const rounded = value.toFixed(DEFAULT_MAX_DECIMALS).replace(/\.?0+$/, '')

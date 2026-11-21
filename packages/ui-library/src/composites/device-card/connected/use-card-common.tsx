@@ -93,12 +93,12 @@ export function reachabilityOf(status: { readonly online: boolean } | undefined)
   return status === undefined ? null : status.online
 }
 
+/** A secondary power row: the device precision is about its primary reading, so these follow the default rule. */
 const reading = (
   id: string,
   label: string,
   value: number | null | undefined,
   unit: string,
-  precision: number | undefined,
   group = false,
 ): CardPowerDetail[] =>
   typeof value === 'number'
@@ -108,8 +108,8 @@ const reading = (
           label,
           value:
             unit === ''
-              ? formatNumeric(value, precision)
-              : `${formatNumeric(value, precision)} ${unit}`,
+              ? formatNumeric(value, undefined)
+              : `${formatNumeric(value, undefined)} ${unit}`,
           ...(group ? { group } : {}),
         },
       ]
@@ -174,33 +174,29 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
           t('uiLibrary.deviceCard.power.voltage', 'Voltage'),
           meter.voltage,
           'V',
-          precision,
         ),
         ...reading(
           'current',
           t('uiLibrary.deviceCard.power.current', 'Current'),
           meter.current,
           'A',
-          precision,
         ),
         ...reading(
           'powerFactor',
           t('uiLibrary.deviceCard.power.factor', 'Power factor'),
           meter.powerFactor,
           '',
-          precision,
         ),
         ...reading(
           'energy',
           t('uiLibrary.deviceCard.power.energy', 'Total energy'),
           meter.energy,
           'kWh',
-          precision,
           true,
         ),
       ],
     }
-  }, [meter, t, precision])
+  }, [meter, t])
 
   const consumablesBound = dev?.consumables !== undefined
   const items = useMemo((): readonly CardConsumable[] | null => {

@@ -2,7 +2,7 @@
 /**
  * One number rule for the UI: a reading or measurement is formatted by `formatNumeric`
  * (`@camstack/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two
- * decimals, trailing zeros trimmed. A hand-written `toFixed(` or `maximumFractionDigits` in runtime code of
+ * decimals, trailing zeros trimmed. A hand-written `toFixed(`, `toPrecision(`, `minimumFractionDigits` or `maximumFractionDigits` in runtime code of
  * `packages/ui-library/src` or `packages/addon-admin-ui/src` is a second rule, so it is refused.
  *
  * The allowlist below holds every use that is NOT a reading (byte sizes, geometry, whole-number
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SCANNED: readonly string[] = ['packages/ui-library/src', 'packages/addon-admin-ui/src']
 const FORMATTER = 'packages/ui-library/src/lib/format-numeric.ts'
-const USE_RE = /\.toFixed\(|maximumFractionDigits/g
+export const USE_RE = /\.toFixed\(|\.toPrecision\(|maximumFractionDigits|minimumFractionDigits/g
 
 interface AllowEntry {
   readonly file: string
@@ -32,12 +32,13 @@ const A = 'packages/addon-admin-ui/src/'
 const BYTES = 'a byte size with its unit, not a reading'
 const GEOM = 'SVG / CSS geometry or snapping math, not shown as a number'
 const WHOLE = 'a whole-number display (ms, fps, percent, kbps): no decimals to rule'
+const SCORE_PCT = 'a detection score shown as a whole percent'
 
 export const ALLOWLIST: readonly AllowEntry[] = [
   { file: `${U}detection-overlay.tsx`, uses: 1, reason: WHOLE },
-  { file: `${U}detection-result-tree.tsx`, uses: 3, reason: WHOLE },
+  { file: `${U}detection-result-tree.tsx`, uses: 3, reason: SCORE_PCT },
   { file: `${U}detection-canvas.tsx`, uses: 4, reason: WHOLE },
-  { file: `${U}stream-panel.tsx`, uses: 1, reason: WHOLE },
+  { file: `${U}stream-panel.tsx`, uses: 1, reason: 'average inference time in whole milliseconds' },
   { file: `${U}response-log.tsx`, uses: 1, reason: BYTES },
   { file: `${U}log-stream.tsx`, uses: 1, reason: BYTES },
   { file: `${U}webrtc-diagnostics/format.ts`, uses: 2, reason: BYTES },
@@ -52,6 +53,11 @@ export const ALLOWLIST: readonly AllowEntry[] = [
     file: `${U}stream-debug/stream-debug-overlay.tsx`,
     uses: 1,
     reason: 'debug overlay with an explicit digits argument per row',
+  },
+  {
+    file: `${U}quantity-value-input/quantity-value.ts`,
+    uses: 1,
+    reason: 'float-residue cleanup of a unit conversion, parsed back to a number',
   },
   { file: `${U}hero-scene/backdrops.tsx`, uses: 2, reason: GEOM },
   {
@@ -107,6 +113,17 @@ export const ALLOWLIST: readonly AllowEntry[] = [
     uses: 3,
     reason: 'centimetres whole, and track coordinates at 3 decimals',
   },
+  {
+    file: `${A}pages/build/flow/ArgField.tsx`,
+    uses: 1,
+    reason: 'float-residue cleanup of a unit conversion, parsed back to a number',
+  },
+  {
+    file: `${A}pages/build/flow/trace-view.ts`,
+    uses: 1,
+    reason:
+      'significant-digit rounding of a converted value in the flow trace, parsed back before it is shown',
+  },
   { file: `${A}lib/format-size.ts`, uses: 1, reason: BYTES },
   { file: `${A}pages/events-debug-tapes.helpers.ts`, uses: 2, reason: BYTES },
   { file: `${A}pages/DeviceDetail.tsx`, uses: 2, reason: WHOLE },
@@ -155,7 +172,7 @@ export function violations(counts: ReadonlyMap<string, number>): string[] {
     const cap = allowed.get(file) ?? 0
     if (n > cap) {
       out.push(
-        `${file}: ${String(n)} toFixed/maximumFractionDigits use(s), ${String(cap)} allowed — format a reading with formatNumeric(value, precision) from @camstack/ui-library`,
+        `${file}: ${String(n)} toFixed/toPrecision/FractionDigits use(s), ${String(cap)} allowed — format a reading with formatNumeric(value, precision) from @camstack/ui-library`,
       )
     }
   }

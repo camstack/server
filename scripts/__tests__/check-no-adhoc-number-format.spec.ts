@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ALLOWLIST, violations } from '../check-no-adhoc-number-format'
+import { ALLOWLIST, USE_RE, violations } from '../check-no-adhoc-number-format'
 
 describe('check-no-adhoc-number-format', () => {
   it('flags a file that is not allowlisted', () => {
@@ -28,5 +28,17 @@ describe('check-no-adhoc-number-format', () => {
 
   it('passes when every use is allowlisted', () => {
     expect(violations(new Map(ALLOWLIST.map((e) => [e.file, e.uses])))).toEqual([])
+  })
+
+  it('matches toPrecision and minimumFractionDigits as well as toFixed', () => {
+    for (const code of [
+      'x.toFixed(2)',
+      'x.toPrecision(4)',
+      '{ minimumFractionDigits: 1 }',
+      '{ maximumFractionDigits: 2 }',
+    ]) {
+      expect(code.match(USE_RE)?.length).toBe(1)
+    }
+    expect('x.toString()'.match(USE_RE)).toBeNull()
   })
 })
