@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 
 interface HeroMockProps {
@@ -20,6 +20,17 @@ interface HeroMockProps {
 
 const hero = vi.hoisted(() => ({
   props: null as (HeroMockProps & Record<string, unknown>) | null,
+}))
+
+const presence = vi.hoisted(() => ({
+  series: {
+    presence: 'pending' as 'pending' | 'present' | 'absent' | 'unknown',
+    list: { status: 'pending' } as {
+      status: 'pending' | 'error' | 'ok'
+      data?: readonly unknown[]
+    },
+  },
+  transitions: 'pending' as 'pending' | 'present' | 'absent' | 'unknown',
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -35,6 +46,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetRole: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerSetDisplay: () => ({ mutateAsync: vi.fn() }),
     useSystem: () => ({ trpcClient: {} }),
+    useDeviceSeriesList: () => presence.series,
+    useCapabilityPresence: (cap: string) =>
+      cap === 'device-transitions' ? presence.transitions : 'unknown',
+    DeviceHistoryView: () => <div data-testid="history-pane" />,
+    ActuationHistory: () => <div data-testid="actions-pane" />,
   }
 })
 
@@ -110,6 +126,43 @@ function openModal(): void {
 }
 
 describe('DeviceQuickDetail modal', () => {
+  beforeEach(() => {
+    presence.series = { presence: 'pending', list: { status: 'pending' } }
+    presence.transitions = 'pending'
+  })
+
+  it('shows the History tab only once listSeries answered with series', () => {
+    for (const [p, list] of [
+      ['pending', { status: 'pending' }],
+      ['present', { status: 'ok', data: [] }],
+      ['present', { status: 'error' }],
+    ] as const) {
+      presence.series = { presence: p, list }
+      const view = renderModal()
+      openModal()
+      expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
+      view.unmount()
+    }
+    presence.series = { presence: 'present', list: { status: 'ok', data: [{}] } }
+    renderModal()
+    openModal()
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(screen.getByTestId('history-pane')).toBeTruthy()
+  })
+
+  it('shows the Actions tab only when device-transitions is present', () => {
+    presence.transitions = 'absent'
+    const view = renderModal()
+    openModal()
+    expect(screen.queryByRole('button', { name: 'Actions' })).toBeNull()
+    view.unmount()
+    presence.transitions = 'present'
+    renderModal()
+    openModal()
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }))
+    expect(screen.getByTestId('actions-pane')).toBeTruthy()
+  })
+
   it('shows the viewer detail on Detail: the model card alone, in the bare frame, no History tab', () => {
     renderModal()
     openModal()
