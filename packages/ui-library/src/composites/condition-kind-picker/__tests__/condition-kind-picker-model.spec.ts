@@ -28,6 +28,16 @@ const TEXTS: Readonly<Record<AutomationLeafKind, KindTexts>> = {
     description: 'A device reports an event it declares',
     example: 'button 3 held down',
   },
+  'device-fault-raised': {
+    label: 'A device raises a fault',
+    description: 'A device reports a fault it declares',
+    example: 'the heater is unreachable',
+  },
+  'device-fault-is': {
+    label: 'Device has a fault',
+    description: 'A device has a fault, right now',
+    example: 'the pump is unreachable',
+  },
   'device-event': {
     label: 'An event happens',
     description: 'The system reports an event',
@@ -114,9 +124,11 @@ describe('buildKindPicker', () => {
     expect(devices?.items.map((i) => i.kind)).toEqual([
       'device-becomes',
       'device-fired',
+      'device-fault-raised',
       'device-is',
+      'device-fault-is',
     ])
-    expect(devices?.count).toBe(3)
+    expect(devices?.count).toBe(5)
     const cameras = view.groups[2]
     expect(cameras?.items.map((i) => i.role)).toEqual(['event', 'event', 'state'])
   })
