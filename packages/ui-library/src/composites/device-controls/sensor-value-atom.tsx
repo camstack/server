@@ -171,6 +171,12 @@ export function sliceForRoleReading(
   return { ...record, [field]: value }
 }
 
+/** Precision the provider declared on the slice (an integer 0-10), when present. */
+export function slicePrecision(slice: unknown): number | undefined {
+  const raw = sliceRecord(slice)?.['precision']
+  return typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 && raw <= 10 ? raw : undefined
+}
+
 export function hasBatteryNumericValue(slice: unknown, field: string): boolean {
   if (!isNumericSliceValue(slice)) return false
   const rawValue = (slice as Record<string, unknown>)[field]
@@ -527,6 +533,7 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
       roleDefault: device.role != null ? roleDefaultsData?.defaults[device.role] : undefined,
       quantity: descriptor.quantity ?? 'device',
       deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
+      declarationPrecision: slicePrecision(slice),
       unitPreferences,
     })
     const rendered = resolved.format(rawValue)

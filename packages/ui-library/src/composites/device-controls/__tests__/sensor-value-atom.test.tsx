@@ -243,9 +243,7 @@ describe('SensorValueAtom', () => {
   })
 
   describe('typed numeric sensor — temperature display rule', () => {
-    it('shows at most two decimals when the device sets no precision (the shared rule)', () => {
-      // The slice's own `precision` field is not read by the atom; only the
-      // device's Customize precision (display.precision) wins, covered above.
+    it('honours the precision carried on the slice when the device sets none', () => {
       mockSlice = { temperature: 24.567, precision: 1, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
@@ -253,9 +251,20 @@ describe('SensorValueAtom', () => {
       }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
-      // 24.567 → two decimals, not the old one-decimal rounding.
-      expect(badge.textContent).toContain('24.57')
+      expect(badge.textContent).toContain('24.6')
+      expect(badge.textContent).not.toContain('24.57')
       expect(badge.textContent).toContain('°C')
+    })
+
+    it('lets the device Customize precision win over the slice precision', () => {
+      mockSlice = { temperature: 24.567, precision: 1, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role: 'temperature-sensor',
+        display: { precision: 3 },
+      }
+      const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
+      expect((container.firstChild as HTMLElement).textContent).toContain('24.567')
     })
 
     it('renders auto-formatted value when precision is absent from the slice', () => {
