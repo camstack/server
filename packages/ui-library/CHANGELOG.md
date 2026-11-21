@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device tables: the name column fills the width the controls leave and ellipsises on the right on a phone (no sideways scroll or left clip), and row state labels, readouts and the timed-run buttons use the row's own text size
+- Generated hooks include pipelineOrchestrator.getNodeCapacityVerdict.
 
 ## [1.2.495] - 2026-11-21
 
