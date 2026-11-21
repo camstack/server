@@ -36,7 +36,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
-import { buildPirPayload, isBaichuan400, reducePirPayload } from './pir-payload.js'
+import { buildPirPayload, isBaichuan400 } from './pir-payload.js'
 import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 
 export const pirAccessorySchema = reolinkAccessoryBaseSchema.extend({
@@ -297,44 +297,19 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
     })
     try {
       await api.setPirInfo(payload, this.channel)
-      return
     } catch (err) {
       if (!isBaichuan400(err)) throw err
-      this.ctx.logger.warn(
-        'pir setPirInfo answered 400 — retrying with the fields the read reports',
-        {
-          tags: { deviceId: this.id },
-          meta: {
-            channel: this.channel,
-            attempt: 'full',
-            payload,
-            responseCode: 400,
-            error: err instanceof Error ? err.message : String(err),
-          },
-        },
-      )
-    }
-    const reported = await api.getPirInfo(this.channel)
-    const reduced = reducePirPayload(payload, reported.state)
-    try {
-      await api.setPirInfo(reduced, this.channel)
-      this.ctx.logger.info('pir setPirInfo succeeded with the reduced payload', {
-        tags: { deviceId: this.id },
-        meta: { channel: this.channel, attempt: 'reduced', payload: reduced },
-      })
-    } catch (err) {
-      this.ctx.logger.warn('pir setPirInfo failed on both attempts', {
+      this.ctx.logger.warn('pir setPirInfo refused by the camera', {
         tags: { deviceId: this.id },
         meta: {
           channel: this.channel,
-          attempt: 'reduced',
-          payload: reduced,
-          responseCode: isBaichuan400(err) ? 400 : null,
+          payload,
+          responseCode: 400,
           error: err instanceof Error ? err.message : String(err),
         },
       })
       throw new Error(
-        'The camera rejected the PIR settings (full and reduced request). Try again once it is awake, or change the PIR settings in the Reolink app.',
+        'The camera rejected the PIR settings. Try again once it is awake, or change the PIR settings in the Reolink app.',
       )
     }
   }

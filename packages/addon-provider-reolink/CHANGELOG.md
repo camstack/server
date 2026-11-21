@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery cameras without a PIR sensor no longer get a PIR switch, and a battery camera re-reads its accessories on a wake at most every 6 hours so a wrongly created accessory is removed without restarting the provider.
+
 ## [1.2.258] - 2026-11-21
 
 ### Changed

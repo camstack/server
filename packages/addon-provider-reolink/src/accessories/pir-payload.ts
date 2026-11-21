@@ -1,11 +1,6 @@
 /**
- * `SetPirInfo` payload building and the 400 fallback. Some firmwares answer
- * the full `{enable, sensitive, reduceAlarm, interval}` write with
- * `responseCode 400` and an empty body while `getPirInfo` works: the retry
- * sends only the fields that read reported for this model.
+ * `SetPirInfo` payload building and the firmware's 400 refusal check.
  */
-
-import type { PirState } from '@apocaliss92/nodelink-js'
 
 export interface PirWritePayload {
   enable: number
@@ -27,25 +22,6 @@ export function buildPirPayload(enable: boolean, cfg: PirConfigView): PirWritePa
     ...(typeof cfg.sensitive === 'number' ? { sensitive: 101 - cfg.sensitive } : {}),
     ...(typeof cfg.reduceAlarm === 'boolean' ? { reduceAlarm: cfg.reduceAlarm ? 1 : 0 } : {}),
     ...(typeof cfg.interval === 'number' ? { interval: cfg.interval } : {}),
-  }
-}
-
-/** Keep `enable` plus only the tuning fields the firmware reported on read. */
-export function reducePirPayload(
-  payload: PirWritePayload,
-  reported: PirState['state'],
-): PirWritePayload {
-  const has = (key: 'sensitive' | 'reduceAlarm' | 'interval'): boolean =>
-    typeof reported?.[key] === 'number'
-  return {
-    enable: payload.enable,
-    ...(has('sensitive') && payload.sensitive !== undefined
-      ? { sensitive: payload.sensitive }
-      : {}),
-    ...(has('reduceAlarm') && payload.reduceAlarm !== undefined
-      ? { reduceAlarm: payload.reduceAlarm }
-      : {}),
-    ...(has('interval') && payload.interval !== undefined ? { interval: payload.interval } : {}),
   }
 }
 
