@@ -20,8 +20,22 @@ function world(initial: Record<string, Record<string, unknown>> = {}) {
   let clock = 1_000_000
   const slices = new Map<string, Record<string, unknown>>(Object.entries(initial))
   const out: DeviceTransition[] = []
+  const logs: { message: string; deviceId: unknown }[] = []
   const correlator = new TransitionCorrelator({
     now: () => clock,
+    logger: {
+      debug: (message: string, ctx?: { tags?: { deviceId?: unknown } }) =>
+        void logs.push({ message, deviceId: ctx?.tags?.deviceId }),
+      info: () => undefined,
+      warn: () => undefined,
+      error: () => undefined,
+      child: () => {
+        throw new Error('unused')
+      },
+      withTags: () => {
+        throw new Error('unused')
+      },
+    },
     currentSlice: (deviceId, capName) => slices.get(`${deviceId}|${capName}`),
     emit: (t) => void out.push(t),
     prepareArgs: (_cap, _method, args) => ({ ...args }),
@@ -51,6 +65,7 @@ function world(initial: Record<string, Record<string, unknown>> = {}) {
   }
   return {
     correlator,
+    logs,
     out,
     command,
     write,
@@ -400,6 +415,72 @@ describe('transition correlator (D1022)', () => {
       }
       expect(w.out).toHaveLength(1)
       expect(w.out[0]).toMatchObject({ field: 'position', from: 0, outcome: 'device' })
+    })
+
+    it('a command whose target equals where the burst began is still confirmed (cover)', () => {
+      const w = world({ '7|cover': { state: 'open', position: 100 } })
+      w.write('cover', { state: 'opening', position: 100 })
+      w.advance(500)
+      w.command('cover', 'open', {}, ALEXA)
+      w.advance(500)
+      w.write('cover', { state: 'open', position: 100 })
+      expect(w.out).toHaveLength(1)
+      expect(w.out[0]).toMatchObject({
+        field: 'state',
+        from: 'open',
+        to: 'open',
+        outcome: 'confirmed',
+        actor: ALEXA,
+      })
+      expect(w.correlator.pendingCount()).toBe(0)
+      w.advance(COMMAND_MATCH_WINDOW_MS)
+      w.correlator.sweep()
+      expect(w.out).toHaveLength(1)
+    })
+
+    it('a command whose target equals where the burst began is still confirmed (switch)', () => {
+      const w = world({ '7|switch': { on: true } })
+      w.write('switch', { on: false })
+      w.advance(500)
+      w.command('switch', 'setState', { on: true }, USER)
+      w.advance(500)
+      w.write('switch', { on: true })
+      expect(w.out).toEqual([
+        expect.objectContaining({
+          field: 'on',
+          from: true,
+          to: true,
+          outcome: 'confirmed',
+          actor: USER,
+        }),
+      ])
+      expect(w.correlator.pendingCount()).toBe(0)
+    })
+
+    it('a device row is stamped with the last change of the burst, not the flush', () => {
+      const w = world({ '7|switch': { on: false } })
+      const start = 1_000_000
+      w.write('switch', { on: true })
+      w.advance(2_000)
+      w.write('switch', { on: false })
+      w.advance(1_000)
+      w.write('switch', { on: true })
+      w.settle()
+      expect(w.out).toHaveLength(1)
+      expect(w.out[0]?.at).toBe(start + 3_000)
+    })
+
+    it('names the there-and-back field and the dropped burst, tagged with the device', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true })
+      w.write('switch', { on: false })
+      w.settle()
+      expect(w.logs).toEqual([
+        expect.objectContaining({ deviceId: 7, message: expect.stringContaining('came back') }),
+      ])
+      w.write('switch', { on: true })
+      w.correlator.forgetDevice(7)
+      expect(w.logs[1]).toMatchObject({ deviceId: 7, message: expect.stringContaining('dropped') })
     })
 
     it('a flush on dispose writes the held burst', () => {

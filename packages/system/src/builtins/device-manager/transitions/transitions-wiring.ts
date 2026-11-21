@@ -91,6 +91,7 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
   }
   const correlator = new TransitionCorrelator({
     now,
+    logger: deps.logger,
     currentSlice: (deviceId, capName) => deps.mirror.currentSlice(deviceId, capName),
     emit: (row) => {
       sender.enqueue(row)

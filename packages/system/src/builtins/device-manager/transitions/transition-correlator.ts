@@ -19,6 +19,7 @@ import {
   type CommandEffect,
   type DeviceCommandObservation,
   type DeviceTransition,
+  type IScopedLogger,
   type TransitionValue,
 } from '@camstack/types'
 import { redactLogText } from '../../../logging/log-redactor.js'
@@ -48,6 +49,8 @@ export type CurrentSlice = (
 ) => Readonly<Record<string, unknown>> | undefined
 
 export interface CorrelatorDeps {
+  /** Optional: names the branches that write nothing (a there-and-back field, a dropped burst). */
+  readonly logger?: IScopedLogger
   readonly now: () => number
   readonly currentSlice: CurrentSlice
   readonly emit: (transition: DeviceTransition) => void
@@ -57,6 +60,14 @@ export interface CorrelatorDeps {
     method: string,
     args: Readonly<Record<string, unknown>>,
   ) => Record<string, unknown>
+}
+
+/** One audited field that changed: before and after, and whether the mirror had ever held it. */
+interface FieldChange {
+  readonly field: string
+  readonly before: unknown
+  readonly after: unknown
+  readonly neverHeld: boolean
 }
 
 interface HeldField {
@@ -164,12 +175,6 @@ export class TransitionCorrelator {
     const fields = auditedFields(capName)
     if (fields.size === 0) return
     const now = this.deps.now()
-    interface FieldChange {
-      readonly field: string
-      readonly before: unknown
-      readonly after: unknown
-      readonly neverHeld: boolean
-    }
     const changes: FieldChange[] = []
     for (const field of fields) {
       const hadBefore = prior !== undefined && Object.hasOwn(prior, field)
@@ -205,8 +210,9 @@ export class TransitionCorrelator {
     }
     if (burst.fields.size === 0) return
     this.held.set(key, burst)
-    // A command fulfilled by the burst's net result ends it at once.
-    if (this.commandMatchedBy(deviceId, capName, this.netChanges(burst), now) !== undefined) {
+    // A command fulfilled by the value that just arrived ends the burst at once, even when the
+    // burst as a whole netted to nothing (the device went back to where the burst began).
+    if (this.commandMatchedBy(deviceId, capName, changes, now) !== undefined) {
       this.flushBurst(key, burst)
     }
   }
@@ -223,9 +229,7 @@ export class TransitionCorrelator {
   }
 
   /** The fields of a burst that ended somewhere other than where they started. */
-  private netChanges(
-    burst: HeldBurst,
-  ): { field: string; before: unknown; after: unknown; neverHeld: boolean }[] {
+  private netChanges(burst: HeldBurst): FieldChange[] {
     return [...burst.fields]
       .filter(([, f]) => !sameValue(f.before, f.after))
       .map(([field, f]) => ({ field, ...f }))
@@ -234,18 +238,27 @@ export class TransitionCorrelator {
   private flushBurst(key: string, burst: HeldBurst): void {
     this.held.delete(key)
     const net = this.netChanges(burst)
-    // The command one burst belongs to is decided first, from every changed field, so the order
-    // the audited fields are visited in never decides who a sibling field is credited to.
+    const { deviceId, capName } = burst
+    for (const [field, f] of burst.fields) {
+      if (net.some((c) => c.field === field)) continue
+      this.deps.logger?.debug(
+        `device-transitions: ${capName}.${field} went and came back inside one burst; no row`,
+        { tags: { deviceId } },
+      )
+    }
+    // The command one burst belongs to is decided first, from every field the burst touched, so
+    // the order the audited fields are visited in never decides who a sibling is credited to.
+    const touched = [...burst.fields].map(([field, f]) => ({ field, ...f }))
     let claimed: Pending | undefined = this.commandMatchedBy(
-      burst.deviceId,
-      burst.capName,
-      net,
+      deviceId,
+      capName,
+      touched,
       burst.lastAt,
     )
     for (const change of net) {
       claimed = this.attribute(
-        burst.deviceId,
-        burst.capName,
+        deviceId,
+        capName,
         change.field,
         toTransitionValue(change.before),
         toTransitionValue(change.after),
@@ -254,6 +267,43 @@ export class TransitionCorrelator {
         change.neverHeld,
       )
     }
+    // The command reached its target but the burst netted to nothing on that field: the actor
+    // really acted, so the command is confirmed with the burst's before and the target.
+    const effect = claimed?.effect
+    if (claimed !== undefined && effect !== null && effect !== undefined) {
+      if (!net.some((c) => c.field === effect.field)) {
+        const before = burst.fields.get(effect.field)?.before
+        this.confirmWithoutNet(
+          key,
+          claimed,
+          effect.field,
+          toTransitionValue(before),
+          toTransitionValue(effect.value),
+          burst.lastAt,
+        )
+      }
+    }
+  }
+
+  private confirmWithoutNet(
+    key: string,
+    entry: Pending,
+    field: string,
+    from: TransitionValue,
+    to: TransitionValue,
+    at: number,
+  ): void {
+    entry.settled = true
+    this.emit(entry, 'confirmed', field, from, to, at - entry.obs.at, undefined, at)
+    this.pruneSettled(key)
+  }
+
+  private pruneSettled(key: string): void {
+    const ring = this.pending.get(key)
+    if (ring === undefined) return
+    const rest = ring.filter((e) => !e.settled)
+    if (rest.length === 0) this.pending.delete(key)
+    else this.pending.set(key, rest)
   }
 
   private flushDue(now: number): void {
@@ -315,7 +365,12 @@ export class TransitionCorrelator {
   forgetDevice(deviceId: number): void {
     const prefix = `${deviceId}|`
     for (const key of [...this.held.keys()]) {
-      if (key.startsWith(prefix)) this.held.delete(key)
+      if (!key.startsWith(prefix)) continue
+      this.deps.logger?.debug(
+        `device-transitions: device removed with a held ${key.slice(prefix.length)} burst; dropped`,
+        { tags: { deviceId } },
+      )
+      this.held.delete(key)
     }
     for (const key of [...this.pending.keys()]) {
       if (key.startsWith(prefix)) this.pending.delete(key)
@@ -349,12 +404,8 @@ export class TransitionCorrelator {
       return undefined
     }
     matched.settled = true
-    this.emit(matched, 'confirmed', field, from, to, now - matched.obs.at)
-    if (ring !== undefined) {
-      const rest = ring.filter((e) => !e.settled)
-      if (rest.length === 0) this.pending.delete(key)
-      else this.pending.set(key, rest)
-    }
+    this.emit(matched, 'confirmed', field, from, to, now - matched.obs.at, undefined, now)
+    this.pruneSettled(key)
     return matched
   }
 
@@ -381,9 +432,9 @@ export class TransitionCorrelator {
     to: TransitionValue,
     matchedAfterMs: number | null,
     error?: string,
+    at: number = this.deps.now(),
   ): void {
     const { obs } = entry
-    const at = this.deps.now()
     this.deps.emit({
       id: this.nextId(obs.deviceId, at),
       deviceId: obs.deviceId,

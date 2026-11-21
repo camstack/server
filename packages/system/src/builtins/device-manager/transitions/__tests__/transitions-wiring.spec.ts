@@ -162,6 +162,17 @@ describe('device transitions wiring (D1022)', () => {
     await w.handle.stop()
   })
 
+  it('stop writes a burst still held, without waiting for the quiet window', async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    expect(w.recorded).toEqual([])
+    await w.handle.stop()
+    expect(w.recorded.flat()).toEqual([
+      expect.objectContaining({ field: 'on', from: false, to: true, outcome: 'device' }),
+    ])
+  })
+
   it('after stop nothing observes: no subscriber, the ticker is stopped', async () => {
     const w = setup()
     expect(getCommandObserverRegistry().observerCount()).toBe(1)
