@@ -153,6 +153,10 @@ interface RawIface {
 }
 
 const POLL_INTERVAL_MS = 30_000
+/** A tunnel-status pull is skipped when one ran this recently (the event is the fast path). */
+const TUNNEL_RECONCILE_MIN_INTERVAL_MS = 5_000
+/** A tunnel-status pull that does not answer in this time changes nothing. */
+const TUNNEL_RECONCILE_TIMEOUT_MS = 2_000
 /** Drop rotated IPv6 / dead extras from the persisted allowlist. */
 export const ALLOWLIST_RECONCILE_INTERVAL_MS: number = 60 * 60 * 1000
 
@@ -248,6 +252,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
    * `null` when no mesh provider is joined.
    */
   private meshEndpoint: MeshEndpointCache | null = null
+  private lastTunnelReconcileAt = 0
   private mdns: HubMdnsAdvertiser | null = null
   private discoveryWatcher: DiscoveryWatcher | null = null
   private watcherPassive = true
@@ -285,6 +290,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   }> {
     const port = (await this.resolveAdvertisedListenPort(null)).port
     await this.reconcileMeshEndpoint()
+    await this.reconcileTunnelHostname()
     const http = this.endpointsNow(false, false, 'http', port)
     const https = this.endpointsNow(false, false, 'https', port)
     return {
@@ -469,6 +475,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     httpsPort: number,
   ): Promise<ConnectionEndpoint[]> {
     await this.reconcileMeshEndpoint()
+    await this.reconcileTunnelHostname()
     const detected = withLanHttpsCounterparts(
       this.endpointsNow(includeLoopback, ipv4Only, scheme, httpsPort),
       httpsPort,
@@ -717,19 +724,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     // can't import cross-package so the parsing stays defensive.
     this.ctx.eventBus?.subscribe({ category: EventCategory.NetworkTunnelStarted }, (event) => {
       const parsed = NetworkTunnelStartedDataSchema.safeParse(event.data ?? {})
-      if (parsed.success) {
-        const data = parsed.data
-        try {
-          const hostname = new URL(data.url).hostname
-          // Ignore the pre-FQDN placeholders the tunnel emits before
-          // cloudflared's stdout reports the real *.trycloudflare.com.
-          if (hostname && !hostname.endsWith('.placeholder') && !hostname.startsWith('pending.')) {
-            this.setPublicHostname(hostname, data.stable !== false)
-          }
-        } catch {
-          // Malformed URL — leave the cached hostname as-is.
-        }
-      }
+      if (parsed.success) this.adoptTunnelUrl(parsed.data.url, parsed.data.stable)
     })
     this.ctx.eventBus?.subscribe({ category: EventCategory.NetworkTunnelStopped }, () =>
       this.setPublicHostname(''),
@@ -961,6 +956,50 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     this.ctx.logger.info('local-network: public hostname updated', {
       meta: { hostname: hostname || '(cleared)', stable },
     })
+  }
+
+  /**
+   * Adopt a tunnel URL as the public hostname. Ignores the pre-FQDN placeholders a tunnel
+   * reports before its real name is known, and a malformed URL (cache left as-is).
+   */
+  private adoptTunnelUrl(url: string, stable: boolean | undefined): void {
+    try {
+      const hostname = new URL(url).hostname
+      if (hostname && !hostname.endsWith('.placeholder') && !hostname.startsWith('pending.')) {
+        this.setPublicHostname(hostname, stable !== false)
+      }
+    } catch {
+      // Malformed URL — leave the cached hostname as-is.
+    }
+  }
+
+  /**
+   * Pull-reconcile the public tunnel hostname from the `network-access` provider (the start
+   * event is lossy — D8/D49). `connected` + endpoint adopts it, `connected: false` clears it, a
+   * FAILED read (throw, no provider, timeout) changes nothing. Throttled and time-boxed so a
+   * slow provider cannot hold up a palette build.
+   */
+  private async reconcileTunnelHostname(): Promise<void> {
+    const api = this.ctx.api
+    if (api === undefined) return
+    const now = Date.now()
+    if (now - this.lastTunnelReconcileAt < TUNNEL_RECONCILE_MIN_INTERVAL_MS) return
+    this.lastTunnelReconcileAt = now
+    let timer: NodeJS.Timeout | undefined
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), TUNNEL_RECONCILE_TIMEOUT_MS)
+      })
+      const status = await Promise.race([api.networkAccess.getStatus.query(), timeout])
+      if (!status.connected) this.setPublicHostname('')
+      else if (status.endpoint) this.adoptTunnelUrl(status.endpoint.url, status.endpoint.stable)
+    } catch (err: unknown) {
+      this.ctx.logger.debug('local-network: tunnel reconcile skipped', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
   }
 
   /**
