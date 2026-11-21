@@ -12,7 +12,14 @@ import { useUiText } from '../../../contexts/ui-text'
 import { DEVICE_CARD_CSS } from '../card-css'
 import { ValueChip } from '../parts/ValueChip'
 import { ConsumablesButton, ReasonLine, SupplyChip } from './BottomLine'
-import { BatteryCorner, MotionCorner, PowerCorner, RemoteCorner, StateCorner } from './Corner'
+import {
+  BatteryCorner,
+  CornerLayoutProvider,
+  MotionCorner,
+  PowerCorner,
+  RemoteCorner,
+  StateCorner,
+} from './Corner'
 import { type CardGating, CardGatingProvider } from './gating'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from './model'
 import { HistoryView, RemoteView } from './Overlays'
@@ -218,6 +225,32 @@ export function DeviceCard({
     common.supply !== null ||
     common.consumables !== null ||
     common.consumablesLoading === true
+  const wide = scene.wide === true
+  const corners = (
+    <>
+      <StateCorner
+        state={state}
+        {...(hasHistory ? { onOpenHistory: () => openView('history') } : {})}
+      />
+      {common.power === null ? null : <PowerCorner power={common.power} />}
+      {motion === null ? null : (
+        <MotionCorner
+          on={motion.on}
+          pending={motion.pending}
+          blocked={gating.blocked}
+          onToggle={(enabled) => actions?.onMotionTrigger?.(enabled)}
+        />
+      )}
+      {common.battery === null ? null : (
+        <BatteryCorner
+          shifted={motion !== null && !wide}
+          level={common.battery.level}
+          {...(common.battery.label === undefined ? {} : { label: common.battery.label })}
+        />
+      )}
+      {hasRemote ? <RemoteCorner onOpen={() => openView('remote')} /> : null}
+    </>
+  )
   return (
     <CardGatingProvider value={gating}>
       <article
@@ -260,38 +293,24 @@ export function DeviceCard({
               onBack={() => setView('scene')}
             />
           ) : (
-            <div ref={sceneRef} data-testid="dc-scene-box">
+            <div
+              ref={sceneRef}
+              data-testid="dc-scene-box"
+              className={wide ? 'flex flex-col gap-2' : undefined}
+            >
+              {wide ? (
+                <div
+                  data-testid="dc-frame-row"
+                  className="relative flex flex-wrap items-center gap-2"
+                >
+                  <CornerLayoutProvider value="frame">{corners}</CornerLayoutProvider>
+                </div>
+              ) : null}
               <SceneGrid
                 {...scene}
                 activity={activity}
-                bottomCorners={common.battery !== null || hasRemote || motion !== null}
-                corners={
-                  <>
-                    <StateCorner
-                      state={state}
-                      {...(hasHistory ? { onOpenHistory: () => openView('history') } : {})}
-                    />
-                    {common.power === null ? null : <PowerCorner power={common.power} />}
-                    {motion === null ? null : (
-                      <MotionCorner
-                        on={motion.on}
-                        pending={motion.pending}
-                        blocked={gating.blocked}
-                        onToggle={(enabled) => actions?.onMotionTrigger?.(enabled)}
-                      />
-                    )}
-                    {common.battery === null ? null : (
-                      <BatteryCorner
-                        shifted={motion !== null}
-                        level={common.battery.level}
-                        {...(common.battery.label === undefined
-                          ? {}
-                          : { label: common.battery.label })}
-                      />
-                    )}
-                    {hasRemote ? <RemoteCorner onOpen={() => openView('remote')} /> : null}
-                  </>
-                }
+                bottomCorners={!wide && (common.battery !== null || hasRemote || motion !== null)}
+                corners={wide ? null : corners}
               />
             </div>
           )}

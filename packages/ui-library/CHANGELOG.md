@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The condition kind picker has icons for the two device-fault rows.
 - Cover cards: the closure / opening slider row is now centred under the drawing instead of sitting on the left edge
 - Device cards can switch off the History / Actions view their state line opens, per card or for a whole host
+- The camera card now renders through the standard device card with a full-width scene: battery, sleep and motion sit in the card frame above the player, nothing is drawn over the video, and History uses the shared state/history view
 
 ## [1.2.486] - 2026-11-21
 

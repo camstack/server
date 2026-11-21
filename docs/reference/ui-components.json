@@ -2310,7 +2310,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/camera/CameraCard.tsx",
-      "summary": "A camera: the state chips on top and the host's scene full width under them. The recorded history is the base card's History view: it replaces the scene in a box of the scene's height (or the host's, when it sized the…",
+      "summary": "A camera: the base device card with its scene forced to full width. The host's player (with its own toolbar) is the whole scene and nothing is drawn over it; the state line, the History view, the battery and the rest …",
       "props": [
         {
           "name": "common",
@@ -2319,10 +2319,10 @@
           "doc": ""
         },
         {
-          "name": "chips",
-          "type": "readonly CameraChip[]",
+          "name": "state",
+          "type": "CardState",
           "optional": false,
-          "doc": "State chips drawn over the top of the scene; only the facts the device knows."
+          "doc": "What the camera is doing: asleep, motion now, awake (the base card's state line)."
         },
         {
           "name": "scene",
@@ -2331,10 +2331,10 @@
           "doc": "The camera's live / snapshot view, owned by the host (the device page's player)."
         },
         {
-          "name": "history",
-          "type": "CardHistory | null",
-          "optional": false,
-          "doc": "The recorded series the History view shows; null when the device records none."
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
         },
         {
           "name": "showName",
@@ -2351,13 +2351,6 @@
       ]
     },
     {
-      "name": "cameraChipsOf",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/connected/camera-chips-model.ts",
-      "summary": "The state chips over a camera's scene, from generic caps only: charge level (`battery`), where the power comes from (`battery.charging`), asleep or awake (`low-power-sleep`, else the battery's own flag) and the last m…"
-    },
-    {
       "name": "CameraGridLayoutEditor",
       "kind": "component",
       "area": "composites",
@@ -2371,6 +2364,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "cameraStateOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedCameraCard.tsx",
+      "summary": "The camera's state line, from generic caps only: asleep (`low-power-sleep`, else the battery's own flag), motion now, else awake, with the time of the last motion as the \"since\". Nothing is said about a fact the camer…"
     },
     {
       "name": "CameraStreamPlayer",
@@ -3959,7 +3959,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedCameraCard.tsx",
-      "summary": "The card of a camera: the host's scene full width, state chips from the generic `battery`, `low-power-sleep` and `motion` caps over it, and the device history behind a History button (the base card's bounded History v…",
+      "summary": "The card of a camera: the base device card with the host's scene full width and nothing over it. Its state line says asleep / motion / awake; battery, the on-motion switch and the History view (opened from the state l…",
       "propsExtends": ["ConnectedCardProps"],
       "props": [
         {
@@ -4608,6 +4608,13 @@
     },
     {
       "name": "CORNER_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": ""
+    },
+    {
+      "name": "CornerLayoutProvider",
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",

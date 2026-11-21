@@ -116,3 +116,30 @@ describe('DeviceCard frame', () => {
     })
   })
 })
+
+describe('DeviceCard wide scene', () => {
+  it('draws the scene full width with nothing over it; the indicators sit in a frame row', () => {
+    render(
+      <DeviceCard
+        kind="camera"
+        common={{ ...COMMON, battery: { level: 64 } }}
+        state={{ label: 'Awake', since: null, tone: 'primary' }}
+        scene={{ wide: true, image: <span data-testid="player">scene</span> }}
+      />,
+    )
+    const scene = screen.getByTestId('dc-scene')
+    expect(scene.hasAttribute('data-wide')).toBe(true)
+    expect(scene.contains(screen.getByTestId('player'))).toBe(true)
+    expect(scene.querySelector('[data-corner]')).toBeNull()
+    const row = screen.getByTestId('dc-frame-row')
+    expect(row.contains(screen.getByTestId('dc-state'))).toBe(true)
+    expect(row.contains(screen.getByTestId('dc-battery'))).toBe(true)
+    expect(screen.getByTestId('dc-battery').className).not.toContain('absolute')
+  })
+
+  it('a regular scene keeps its corners pinned over it', () => {
+    render(card())
+    expect(screen.getByTestId('dc-state').className).toContain('absolute')
+    expect(screen.queryByTestId('dc-frame-row')).toBeNull()
+  })
+})

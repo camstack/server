@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react'
+import { type Context, createContext, type ReactElement, type ReactNode, useContext } from 'react'
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { Button } from '../../../primitives/button'
@@ -16,8 +16,25 @@ const PLACE: Readonly<Record<CornerPlace, string>> = {
   br: 'bottom-2 right-2',
 }
 
-export const CORNER_CLASS =
-  'absolute z-10 inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-0.5 text-xs'
+const CORNER_BASE =
+  'inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-0.5 text-xs'
+
+export const CORNER_CLASS: string = `absolute z-10 ${CORNER_BASE}`
+
+/**
+ * Where the indicators sit: `overlay` (default) pins each to a corner of the
+ * scene; `frame` lays them out in a row of the card's frame, so a scene that
+ * must stay unobstructed (a camera's player) carries nothing on top of it.
+ */
+export type CornerLayout = 'overlay' | 'frame'
+
+const CornerLayoutContext: Context<CornerLayout> = createContext<CornerLayout>('overlay')
+
+export const CornerLayoutProvider: Context<CornerLayout>['Provider'] = CornerLayoutContext.Provider
+
+function useCornerClass(place: CornerPlace): string {
+  return useContext(CornerLayoutContext) === 'frame' ? CORNER_BASE : cn(CORNER_CLASS, PLACE[place])
+}
 
 export interface CornerProps {
   readonly place: CornerPlace
@@ -28,12 +45,9 @@ export interface CornerProps {
 
 /** One of the scene's four corners. */
 export function Corner({ place, className, children, testId }: CornerProps): ReactElement {
+  const placed = useCornerClass(place)
   return (
-    <span
-      data-corner={place}
-      data-testid={testId}
-      className={cn(CORNER_CLASS, PLACE[place], className)}
-    >
+    <span data-corner={place} data-testid={testId} className={cn(placed, className)}>
       {children}
     </span>
   )
@@ -64,6 +78,7 @@ const STATE_FIT = 'max-w-[calc(100%-1rem)]'
 /** Top-left: what the device is doing, and since when. */
 export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactElement {
   const t = useUiText()
+  const placed = useCornerClass('tl')
   const body = (
     <>
       {state.label === '' ? null : (
@@ -93,7 +108,7 @@ export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactEl
       data-testid="dc-state"
       aria-label={t('uiLibrary.deviceCard.openHistory', 'Open the history')}
       onClick={onOpenHistory}
-      className={cn(CORNER_CLASS, PLACE.tl, STATE_FIT, 'hover:bg-surface-hover')}
+      className={cn(placed, STATE_FIT, 'hover:bg-surface-hover')}
     >
       {body}
       <CardIcon glyph="open" className="h-3 w-3 text-primary" />
@@ -105,6 +120,7 @@ export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactEl
 export function PowerCorner({ power }: { readonly power: CardPower }): ReactElement {
   const t = useUiText()
   const pop = usePopover()
+  const placed = useCornerClass('tr')
   const drawing = (power.watts ?? 0) > 0
   const hasDetails = power.details.length > 0
   return (
@@ -117,8 +133,7 @@ export function PowerCorner({ power }: { readonly power: CardPower }): ReactElem
         aria-label={t('uiLibrary.deviceCard.powerDetails', 'Power details')}
         onClick={pop.toggle}
         className={cn(
-          CORNER_CLASS,
-          PLACE.tr,
+          placed,
           'font-semibold tabular-nums',
           drawing ? 'bg-primary/10 text-primary' : 'text-foreground-muted',
         )}
@@ -175,6 +190,7 @@ export function BatteryCorner({
 /** Bottom-right: opens the device's remote. */
 export function RemoteCorner({ onOpen }: { readonly onOpen: () => void }): ReactElement {
   const t = useUiText()
+  const placed = useCornerClass('br')
   return (
     <Button
       type="button"
@@ -184,8 +200,7 @@ export function RemoteCorner({ onOpen }: { readonly onOpen: () => void }): React
       aria-label={t('uiLibrary.deviceCard.remote', 'Remote')}
       onClick={onOpen}
       className={cn(
-        CORNER_CLASS,
-        PLACE.br,
+        placed,
         'border border-border bg-surface px-1.5 py-1 text-foreground hover:bg-surface-hover',
       )}
     >
@@ -205,6 +220,7 @@ export interface MotionCornerProps {
 /** Bottom-left: the "on motion" toggle, an icon with no text. */
 export function MotionCorner({ on, pending, blocked, onToggle }: MotionCornerProps): ReactElement {
   const t = useUiText()
+  const placed = useCornerClass('bl')
   return (
     <Button
       type="button"
@@ -218,8 +234,7 @@ export function MotionCorner({ on, pending, blocked, onToggle }: MotionCornerPro
       disabled={pending || blocked}
       onClick={() => onToggle(!on)}
       className={cn(
-        CORNER_CLASS,
-        PLACE.bl,
+        placed,
         'border px-1.5 py-1 transition-colors disabled:pointer-events-none',
         on ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground-muted',
         blocked && !pending && 'opacity-45',

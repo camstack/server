@@ -14,6 +14,12 @@ interface SceneZonesBase {
    * leak): the scene is washed in the danger colour.
    */
   readonly alert?: boolean
+  /**
+   * The scene is one full-width piece of content (a camera's player with its
+   * own toolbar): no side columns, no bottom rows, no frame of its own and
+   * nothing drawn over it. The card's indicators move to a row of its frame.
+   */
+  readonly wide?: boolean
 }
 
 /**
@@ -56,6 +62,18 @@ function columnStack(items: readonly ColumnItem[] | undefined): ReactNode {
  */
 export function SceneGrid(props: SceneGridProps): ReactElement {
   const { fx, image, bottom, corners, bottomCorners, activity, alert = false } = props
+  if (props.wide === true) {
+    return (
+      <div
+        data-testid="dc-scene"
+        data-wide
+        data-act={activity}
+        className="w-full min-w-0 overflow-hidden rounded-2xl"
+      >
+        {image}
+      </div>
+    )
+  }
   const left = columnStack(props.columns?.left)
   const right = columnStack(props.columns?.right)
   return (
