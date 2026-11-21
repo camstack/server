@@ -49,8 +49,15 @@ export interface AlexaInstanceFormInput {
   readonly now: number
 }
 
+/** Where an operator asks to be added as a beta tester of the public skill. */
+const ALEXA_BETA_REQUEST_URL = 'https://github.com/camstack/server/discussions/1'
+/** The public skill's beta invitation link; it enables the skill only for an invited account. */
+const ALEXA_BETA_INVITE_URL =
+  'https://skills-store.amazon.com/deeplink/tvt/7d4560de3556e17ce433ccca91d0ca3ac5540e94f8f15910f9c72b9c6fc9498a2267ee8ae84f120b34a2574b7a1e88abcdacf96beb4e6d5054d43a7e3ba12fafa0e88f42a12641dc5ddf51b2f64beeb85c90631a225c3558b074eab492b7d2844528ac07e47202d058cda70dd70b401b'
+
 const CONNECTION_DESCRIPTION = [
   'Public skill (default): enable the "CamStack" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
+  `The public skill is a beta: first request access in ${ALEXA_BETA_REQUEST_URL} with the e-mail of your Amazon account. Once you are invited, open ${ALEXA_BETA_INVITE_URL} on a device signed in to that account to enable the skill.`,
   "Custom skill: enter your skill id and deploy the skill Lambda from this addon's lambda-template in your own AWS account.",
   "Either way the skill's Lambda keeps the Amazon credentials (in a custom skill, in your SSM Parameter Store); this hub holds none. It receives short-lived event tokens from the Lambda's token broker with a credential unique to this link.",
   'This hub must be reachable from the internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …). The skill calls back on the hub\'s "Public endpoint" address, set on the Network page.',
