@@ -6,7 +6,7 @@
 import type { DeviceHistoryQueryResult } from '@camstack/types'
 import type { TimePoint } from '../../charts/chart-data'
 import { ENERGY_STILL_BELOW_W, type EnergyToday } from '../scenes/energy/model'
-import { netGridKwh, selfConsumptionPct, selfSufficiencyPct } from './energy-model'
+import { energyBalance, netGridKwh, selfConsumptionPct } from './energy-model'
 
 export interface EnergyDayWindow {
   /** Local midnight that opens the day. */
@@ -21,25 +21,30 @@ export function energyDayWindow(now: number, offsetDays: number): EnergyDayWindo
   const y = d.getFullYear()
   const m = d.getMonth()
   const day = d.getDate() - offsetDays
-  return { from: new Date(y, m, day).getTime(), to: new Date(y, m, day + 1).getTime() }
+  return {
+    from: new Date(y, m, day).getTime(),
+    to: new Date(y, m, day + 1).getTime(),
+  }
 }
 
 /**
  * The kWh a recorded counter grew by over a read: the sum of its points'
- * `delta`. Null when no point carries one — a day with no recording, or a
- * failed read, is "—", not 0.
+ * `delta`. A counter that was read but did not move (no point carries a delta,
+ * and the value held before the window is known) grew by 0. Null when nothing
+ * was read at all: no series, a day with no recording, a failed read (D393).
  */
 export function counterDayTotal(result: DeviceHistoryQueryResult | undefined): number | null {
-  const points = result?.series[0]?.points ?? []
+  const series = result?.series[0]
+  if (series === undefined) return null
   let total: number | null = null
-  for (const p of points) if (p.delta !== null) total = (total ?? 0) + p.delta
-  return total
+  for (const p of series.points) if (p.delta !== null) total = (total ?? 0) + p.delta
+  if (total !== null) return total
+  return series.before !== null && series.before.value !== null ? 0 : null
 }
 
 /** What the day's counters said, kWh; each null when that counter has no reading. */
 export interface EnergyDayTotals {
   readonly producedKwh: number | null
-  readonly houseKwh: number | null
   /** Null when the system has no heat pump series. */
   readonly heatPumpKwh: number | null
   readonly importedKwh: number | null
@@ -50,27 +55,22 @@ export interface EnergyDayTotals {
 
 const tenth = (v: number | null): number | null => (v === null ? null : Math.round(v * 10) / 10)
 
-/** House load of the day: the house plus the heat pump (which it excludes) when there is one. */
-function houseTotal(t: EnergyDayTotals, hasHeatPump: boolean): number | null {
-  const fromCounters =
-    t.houseKwh === null
-      ? null
-      : hasHeatPump
-        ? t.heatPumpKwh === null
-          ? null
-          : t.houseKwh + t.heatPumpKwh
-        : t.houseKwh
-  if (fromCounters !== null) return fromCounters
-  if (t.producedKwh === null || t.importedKwh === null || t.exportedKwh === null) return null
-  return t.producedKwh + t.importedKwh - t.exportedKwh
-}
-
 /** The card's day facts of a past day, from its counters. Null when nothing was recorded at all. */
 export function energyTodayOfDay(
   totals: EnergyDayTotals,
   hasHeatPump: boolean,
 ): EnergyToday | null {
-  const house = houseTotal(totals, hasHeatPump)
+  const balance = energyBalance(
+    {
+      producedKwh: totals.producedKwh,
+      importedKwh: totals.importedKwh,
+      exportedKwh: totals.exportedKwh,
+      chargedKwh: totals.chargedKwh,
+      dischargedKwh: totals.dischargedKwh,
+      heatPumpKwh: totals.heatPumpKwh,
+    },
+    hasHeatPump,
+  )
   const day: EnergyToday = {
     producedKwh: tenth(totals.producedKwh),
     selfConsumptionPct: selfConsumptionPct(totals.producedKwh, totals.exportedKwh),
@@ -78,8 +78,10 @@ export function energyTodayOfDay(
     exportedKwh: tenth(totals.exportedKwh),
     netGridKwh: netGridKwh(totals.importedKwh, totals.exportedKwh),
     heatPumpKwh: tenth(totals.heatPumpKwh),
-    houseKwh: tenth(house),
-    selfSufficiencyPct: selfSufficiencyPct(house, totals.importedKwh),
+    houseKwh: balance.consumptionKwh,
+    householdKwh: balance.householdKwh,
+    sources: balance.sources,
+    selfSufficiencyPct: balance.selfSufficiencyPct,
     autonomyHours: null,
     chargedTodayKwh: tenth(totals.chargedKwh),
     dischargedTodayKwh: tenth(totals.dischargedKwh),

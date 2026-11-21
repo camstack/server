@@ -25,14 +25,17 @@ const point = (
   states: null,
 })
 
-function counter(deltas: readonly (number | null)[]): DeviceHistoryQueryResult {
+function counter(
+  deltas: readonly (number | null)[],
+  before: number | null = null,
+): DeviceHistoryQueryResult {
   return {
     resolution: '5m',
     truncated: false,
     series: [
       {
         scope: '',
-        before: null,
+        before: before === null ? null : { t: -1, value: before, state: null },
         derivedFrom: null,
         points: deltas.map((d, i) => point(i * 300_000, d)),
       },
@@ -42,7 +45,6 @@ function counter(deltas: readonly (number | null)[]): DeviceHistoryQueryResult {
 
 const EMPTY: EnergyDayTotals = {
   producedKwh: null,
-  houseKwh: null,
   heatPumpKwh: null,
   importedKwh: null,
   exportedKwh: null,
@@ -97,30 +99,65 @@ describe('counterDayTotal', () => {
   it('keeps a genuine zero', () => {
     expect(counterDayTotal(counter([0, 0]))).toBe(0)
   })
+  it('a flat counter (no growth, held value known before the window) is 0, not unknown', () => {
+    expect(counterDayTotal(counter([], 1234.5))).toBe(0)
+    expect(counterDayTotal(counter([null, null], 8))).toBe(0)
+  })
+  it('a read with no series at all stays unknown', () => {
+    expect(counterDayTotal({ resolution: '5m', truncated: false, series: [] })).toBeNull()
+  })
 })
 
+/** The vendor-app day 2026-11-19 of the live system. */
+const DAY_1119: EnergyDayTotals = {
+  producedKwh: 9.3,
+  heatPumpKwh: 21.9,
+  importedKwh: 17.4,
+  exportedKwh: 0.1,
+  chargedKwh: 3.8,
+  dischargedKwh: 3.2,
+}
+
 describe('energyTodayOfDay', () => {
-  it('derives the shares and the net grid of a recorded day', () => {
-    const day = energyTodayOfDay(
-      { ...EMPTY, producedKwh: 20, houseKwh: 8, heatPumpKwh: 2, importedKwh: 2, exportedKwh: 5 },
-      true,
-    )
-    expect(day?.houseKwh).toBe(10)
-    expect(day?.selfConsumptionPct).toBe(75)
-    expect(day?.selfSufficiencyPct).toBe(80)
-    expect(day?.netGridKwh).toBe(-3)
+  it('the day balance: consumption, household, autarky and sources of 2026-11-19', () => {
+    const day = energyTodayOfDay(DAY_1119, true)
+    expect(day?.houseKwh).toBe(26)
+    expect(day?.householdKwh).toBe(4.1)
+    expect(day?.selfSufficiencyPct).toBeCloseTo(33.08, 1)
+    expect(Math.round(day?.sources?.solarPct ?? -1)).toBe(21)
+    expect(Math.round(day?.sources?.batteryPct ?? -1)).toBe(12)
+    expect(Math.round(day?.sources?.gridPct ?? -1)).toBe(67)
+    expect(day?.netGridKwh).toBe(17.3)
   })
-  it('falls back to produced + imported − exported when the house counters are missing', () => {
+  it('a flat grid export is 0 and does not empty the balance', () => {
+    const day = energyTodayOfDay({ ...DAY_1119, exportedKwh: 0 }, true)
+    expect(day?.exportedKwh).toBe(0)
+    expect(day?.houseKwh).toBe(26.1)
+  })
+  it('a system without storage counters has the storage contribute nothing', () => {
     const day = energyTodayOfDay(
       { ...EMPTY, producedKwh: 10, importedKwh: 3, exportedKwh: 4 },
       false,
     )
     expect(day?.houseKwh).toBe(9)
+    expect(day?.householdKwh).toBe(9)
   })
-  it('needs the heat pump counter when the system has one', () => {
-    const day = energyTodayOfDay({ ...EMPTY, houseKwh: 8, importedKwh: 2 }, true)
+  it('one storage counter known without the other is an unknown balance', () => {
+    const day = energyTodayOfDay({ ...DAY_1119, dischargedKwh: null }, true)
     expect(day?.houseKwh).toBeNull()
-    expect(day?.selfSufficiencyPct).toBeNull()
+    expect(day?.sources).toBeNull()
+  })
+  it('the household never goes below 0 and needs the heat pump counter when there is one', () => {
+    expect(energyTodayOfDay({ ...DAY_1119, heatPumpKwh: 40 }, true)?.householdKwh).toBe(0)
+    expect(energyTodayOfDay({ ...DAY_1119, heatPumpKwh: null }, true)?.householdKwh).toBeNull()
+  })
+  it('derives the self-consumption and the net grid of a recorded day', () => {
+    const day = energyTodayOfDay(
+      { ...EMPTY, producedKwh: 20, importedKwh: 2, exportedKwh: 5 },
+      false,
+    )
+    expect(day?.selfConsumptionPct).toBe(75)
+    expect(day?.netGridKwh).toBe(-3)
   })
   it('is null for a day with no reading at all', () => {
     expect(energyTodayOfDay(EMPTY, true)).toBeNull()

@@ -10771,7 +10771,7 @@
         "notProducing": "Not producing",
         "flows": "Energy flows",
         "storage": "Storage",
-        "houseToday": "House",
+        "houseToday": "Household",
         "selfSufficiency": "Self-sufficiency",
         "heatPumpNow": "Heat pump now",
         "soc": "Charge",
@@ -10807,7 +10807,17 @@
           "battery": "Battery",
           "heatPump": "Heat pump",
           "live": "Live now"
-        }
+        },
+        "centreImported": "Imported",
+        "centreExported": "Exported",
+        "centreProduced": "Produced",
+        "consumedToday": "Consumed",
+        "rowSources": "Sources",
+        "srcSolar": "Solar",
+        "srcBattery": "Battery",
+        "srcGrid": "Grid",
+        "dischargedDay": "Discharged",
+        "chargedDay": "Charged"
       },
       "ir": {
         "canLearn": "Can learn",

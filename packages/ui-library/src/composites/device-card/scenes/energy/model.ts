@@ -34,7 +34,12 @@ export interface EnergyToday {
   /** Imported − exported, kWh: + drew from the grid, − fed it. Null unless both are known. */
   readonly netGridKwh: number | null
   readonly heatPumpKwh: number | null
+  /** Everything consumed (household + heat pump), kWh. */
   readonly houseKwh: number | null
+  /** The household alone (consumption minus the heat pump), kWh. */
+  readonly householdKwh: number | null
+  /** Where the consumption came from; null unless the balance is known. */
+  readonly sources: EnergySourceSplit | null
   /** 1 − import today / house consumption today, clamped to 0..100. */
   readonly selfSufficiencyPct: number | null
   readonly autonomyHours: number | null
@@ -44,6 +49,13 @@ export interface EnergyToday {
   readonly healthPct: number | null
   /** Heat pump power ÷ house power, right now. */
   readonly heatPumpShareNowPct: number | null
+}
+
+/** Shares of the consumption by origin, each 0..100. */
+export interface EnergySourceSplit {
+  readonly solarPct: number
+  readonly batteryPct: number
+  readonly gridPct: number
 }
 
 export interface EnergyCardModel {

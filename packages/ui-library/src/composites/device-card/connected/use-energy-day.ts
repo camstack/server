@@ -54,7 +54,6 @@ const SOC_FIELD = 'storage.stateOfChargePct'
 
 const COUNTER_FIELDS = [
   'solar.energyKwh',
-  'house.energyKwh',
   'heatPump.energyKwh',
   'grid.importKwh',
   'grid.exportKwh',
@@ -113,7 +112,6 @@ function totalsOf(
   }
   return {
     producedKwh: total('solar.energyKwh'),
-    houseKwh: total('house.energyKwh'),
     heatPumpKwh: total('heatPump.energyKwh'),
     importedKwh: total('grid.importKwh'),
     exportedKwh: total('grid.exportKwh'),

@@ -10829,7 +10829,17 @@
           "battery": "Batteria",
           "heatPump": "Pompa di calore",
           "live": "Ora"
-        }
+        },
+        "centreImported": "Importato",
+        "centreExported": "Esportato",
+        "centreProduced": "Prodotto",
+        "consumedToday": "Consumi",
+        "rowSources": "Origine",
+        "srcSolar": "Solare",
+        "srcBattery": "Batteria",
+        "srcGrid": "Rete",
+        "dischargedDay": "Scaricata",
+        "chargedDay": "Caricata"
       },
       "ir": {
         "canLearn": "Può apprendere",

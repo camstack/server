@@ -25,7 +25,7 @@ export interface EnergyCardProps {
   readonly showName?: boolean
   /** The primary trend line, drawn under the readings. */
   readonly trend?: ReactElement
-  /** False when the scene's nodes show now but the card shows another day: they are dimmed and marked. */
+  /** False when the card shows a past day: the nodes read that day's kWh and the live state is hidden. */
   readonly nodesLive?: boolean
 }
 
@@ -71,6 +71,51 @@ export function energyNodes(flows: EnergyFlows, t: UiTextFn): readonly EnergyNod
   return out
 }
 
+const kwhValue = (v: number): string => `${Math.abs(v).toFixed(1)} kWh`
+
+/**
+ * The nodes of a past day, from its kWh totals: solar produced, the grid's net
+ * import or export, the battery's net charge or discharge, the household and
+ * the heat pump. The arrow follows the sign of the day's net flow; a node
+ * whose net rounds to 0.0 kWh is still. A total that is unknown draws no node.
+ */
+export function energyDayNodes(today: EnergyToday | null, t: UiTextFn): readonly EnergyNodeView[] {
+  if (today === null) return []
+  const out: EnergyNodeView[] = []
+  const add = (id: EnergyNodeId, kwhSigned: number | null, label: (k: number) => string): void => {
+    if (kwhSigned === null) return
+    const k = Math.round(kwhSigned * 10) / 10
+    out.push({
+      id,
+      watts: k,
+      label: label(k),
+      value: kwhValue(k),
+      still: k === 0,
+      animate: false,
+    })
+  }
+  const e = (key: string, fallback: string): string =>
+    t(`uiLibrary.deviceCard.energy.${key}`, fallback)
+  const charged = today.chargedTodayKwh
+  const discharged = today.dischargedTodayKwh
+  add('solar', today.producedKwh, () => e('solar', 'Solar'))
+  add('grid', today.netGridKwh, (k) =>
+    k === 0 ? e('grid', 'Grid') : k > 0 ? e('import', 'Import') : e('export', 'Export'),
+  )
+  add('battery', charged === null || discharged === null ? null : discharged - charged, (k) =>
+    k === 0
+      ? e('batteryIdle', 'Idle')
+      : k > 0
+        ? e('dischargedDay', 'Discharged')
+        : e('chargedDay', 'Charged'),
+  )
+  add('house', today.householdKwh === null ? null : -today.householdKwh, () => e('house', 'Home'))
+  add('heatPump', today.heatPumpKwh === null ? null : -today.heatPumpKwh, () =>
+    e('heatPump', 'Heat pump'),
+  )
+  return out
+}
+
 /** "· 4.2 kW" while producing; otherwise where the house draws from. */
 export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
   if (!energyIsStill(flows.solarW) && flows.solarW !== null) return formatKw(flows.solarW)
@@ -90,30 +135,42 @@ export function signedKwh(v: number | null): string {
   return `${sign}${Math.abs(v)} kWh`
 }
 
-/** The three figures of the centre circle for the selected day; a missing input reads "—", never 0. */
+/**
+ * The four figures of the centre circle for the selected day: self-sufficiency,
+ * imported, exported and produced. A missing input reads "—", never 0.
+ */
 export function energyCentreFigures(
   today: EnergyToday | null,
   t: UiTextFn,
 ): readonly EnergyCentreFigure[] {
   const e = (key: string, fallback: string): string =>
     t(`uiLibrary.deviceCard.energy.${key}`, fallback)
-  const pctOrDash = (v: number | null | undefined): string =>
-    v === null || v === undefined ? NO_VALUE : `${Math.round(v)}%`
+  const energy = (v: number | null | undefined): Pick<EnergyCentreFigure, 'value' | 'unit'> =>
+    v === null || v === undefined ? { value: NO_VALUE } : { value: v.toFixed(1), unit: 'kWh' }
+  const sufficiency = today?.selfSufficiencyPct
   return [
     {
       id: 'sufficiency',
       label: e('centreSufficiency', 'Self-sufficiency'),
-      value: pctOrDash(today?.selfSufficiencyPct),
+      value:
+        sufficiency === null || sufficiency === undefined
+          ? NO_VALUE
+          : `${Math.round(sufficiency)}%`,
     },
     {
-      id: 'selfUse',
-      label: e('centreSelfUse', 'Self-consumption'),
-      value: pctOrDash(today?.selfConsumptionPct),
+      id: 'imported',
+      label: e('centreImported', 'Imported'),
+      ...energy(today?.importedKwh),
     },
     {
-      id: 'netGrid',
-      label: e('centreNetGrid', 'Net grid'),
-      value: signedKwh(today?.netGridKwh ?? null),
+      id: 'exported',
+      label: e('centreExported', 'Exported'),
+      ...energy(today?.exportedKwh),
+    },
+    {
+      id: 'produced',
+      label: e('centreProduced', 'Produced'),
+      ...energy(today?.producedKwh),
     },
   ]
 }
@@ -146,9 +203,19 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
       label: e('rowFlows', 'Energy'),
       cells: [
         ['produced', e('produced', 'Produced'), kwh(today.producedKwh)],
-        ['house', e('houseToday', 'House'), kwh(today.houseKwh)],
+        ['consumed', e('consumedToday', 'Consumed'), kwh(today.houseKwh)],
+        ['house', e('houseToday', 'Household'), kwh(today.householdKwh)],
         ['imported', e('imported', 'Imported'), kwh(today.importedKwh)],
         ['exported', e('exported', 'Exported'), kwh(today.exportedKwh)],
+      ],
+    },
+    {
+      id: 'sources',
+      label: e('rowSources', 'Sources'),
+      cells: [
+        ['srcSolar', e('srcSolar', 'Solar'), pct(today.sources?.solarPct ?? null)],
+        ['srcBattery', e('srcBattery', 'Battery'), pct(today.sources?.batteryPct ?? null)],
+        ['srcGrid', e('srcGrid', 'Grid'), pct(today.sources?.gridPct ?? null)],
       ],
     },
     {
@@ -213,7 +280,8 @@ export function EnergyCard({
   nodesLive = true,
 }: EnergyCardProps): ReactElement {
   const t = useUiText()
-  const producing = model.activity === 'sun'
+  // A past day has no live state: nothing is "producing" or "since".
+  const producing = nodesLive && model.activity === 'sun'
   return (
     <DeviceCard
       kind="energy"
@@ -221,12 +289,14 @@ export function EnergyCard({
       actions={actions}
       orientation={orientation}
       showName={showName}
-      activity={model.activity}
+      activity={producing ? 'sun' : 'idle'}
       state={{
-        label: producing
-          ? t('uiLibrary.deviceCard.energy.producing', 'Producing')
-          : t('uiLibrary.deviceCard.energy.notProducing', 'Not producing'),
-        since: model.since,
+        label: !nodesLive
+          ? ''
+          : producing
+            ? t('uiLibrary.deviceCard.energy.producing', 'Producing')
+            : t('uiLibrary.deviceCard.energy.notProducing', 'Not producing'),
+        since: nodesLive ? model.since : null,
         tone: producing ? 'primary' : 'muted',
       }}
       scene={{
@@ -234,10 +304,8 @@ export function EnergyCard({
         columns: {},
         image: (
           <EnergyFlowIllustration
-            nodes={energyNodes(model.flows, t)}
+            nodes={nodesLive ? energyNodes(model.flows, t) : energyDayNodes(model.today, t)}
             centre={energyCentreFigures(model.today, t)}
-            stale={!nodesLive}
-            staleLabel={t('uiLibrary.deviceCard.energy.day.live', 'Live now')}
             ariaLabel={t('uiLibrary.deviceCard.energy.flows', 'Energy flows')}
             className="h-auto w-full max-w-96"
           />
@@ -245,7 +313,7 @@ export function EnergyCard({
         bottom: [
           ...(model.today === null
             ? []
-            : todayBottom(model.today, t, sceneShowsBatteryCharge(model.flows))),
+            : todayBottom(model.today, t, !nodesLive || sceneShowsBatteryCharge(model.flows))),
           ...(trend === undefined ? [] : [rowTrend('trend', { trend })]),
         ],
       }}

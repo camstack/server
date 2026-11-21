@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactElement, useState } from 'react'
+import type { ReactElement } from 'react'
 import { cn } from '../../../lib/cn'
 import { CHART_SERIES_TOKENS, type ChartSeriesToken } from '../../charts/chart-palette'
 import { CARD_ICONS, type CardGlyph } from '../icons'
@@ -16,6 +16,8 @@ export interface EnergyNodeView {
   readonly value: string
   /** True when the node draws nothing (no dots, no arrow, a dotted line). */
   readonly still: boolean
+  /** False for a day total (kWh): a solid line and an arrow, no running dots. Default true. */
+  readonly animate?: boolean
 }
 
 /** One figure of the centre circle: its short name and its value ("—" when unknown). */
@@ -23,15 +25,14 @@ export interface EnergyCentreFigure {
   readonly id: string
   readonly label: string
   readonly value: string
+  /** Small unit written after the value ("kWh"). */
+  readonly unit?: string
 }
 
 export interface EnergyFlowIllustrationProps {
   readonly nodes: readonly EnergyNodeView[]
   /** The day's figures drawn inside the enlarged bus circle; omit for the small bus dot. */
   readonly centre?: readonly EnergyCentreFigure[]
-  /** The nodes show a moment other than the selected day: dimmed, with `staleLabel` ("Live now"). */
-  readonly stale?: boolean
-  readonly staleLabel?: string
   readonly ariaLabel: string
   readonly className?: string
 }
@@ -70,8 +71,11 @@ const BUS = { x: 130, y: 92 } as const
 const R = 19
 /** The bus dot, and the circle that holds the day's figures. */
 const BUS_R = 6
-const CENTRE_R = 44
+const CENTRE_R = 48
 const ICON = 18
+/** Half-width and spacing of the centre figures' rows. */
+const ROW_DX = 38
+const ROW_DY = 14
 
 interface NodePlace {
   readonly x: number
@@ -83,7 +87,7 @@ interface NodePlace {
 }
 
 const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
-  solar: { x: 130, y: 22, lx: 154, ly: 16, anchor: 'start', glyph: 'solar' },
+  solar: { x: 130, y: -6, lx: 154, ly: -12, anchor: 'start', glyph: 'solar' },
   grid: { x: 28, y: 92, lx: 28, ly: 124, anchor: 'middle', glyph: 'grid' },
   battery: {
     x: 232,
@@ -132,7 +136,9 @@ function segment(place: NodePlace, inward: boolean, busR: number): Segment {
   const start = inward ? R : busR
   const end = inward ? busR : R
   const d = `M${(x0 + ux * start).toFixed(1)} ${(y0 + uy * start).toFixed(1)}L${(x1 - ux * end).toFixed(1)} ${(y1 - uy * end).toFixed(1)}`
-  return { d, mx: (x0 + x1) / 2, my: (y0 + y1) / 2, angle: (Math.atan2(uy, ux) * 180) / Math.PI }
+  const mx = (x0 + ux * start + x1 - ux * end) / 2
+  const my = (y0 + uy * start + y1 - uy * end) / 2
+  return { d, mx, my, angle: (Math.atan2(uy, ux) * 180) / Math.PI }
 }
 
 function Branch({
@@ -167,11 +173,13 @@ function Branch({
             fill="none"
             strokeWidth={3}
             stroke="currentColor"
-            data-live="true"
-            className="dc-energy-flow"
+            strokeLinecap="round"
+            data-live={node.animate === false ? undefined : 'true'}
+            className={node.animate === false ? undefined : 'dc-energy-flow'}
           />
           <path
             d="M-5 -5L4 0L-5 5Z"
+            data-testid={`dc-energy-arrow-${node.id}`}
             fill="currentColor"
             transform={`translate(${seg.mx.toFixed(1)} ${seg.my.toFixed(1)}) rotate(${seg.angle.toFixed(1)})`}
           />
@@ -216,61 +224,44 @@ function Node({ node }: { readonly node: EnergyNodeView }): ReactElement {
 }
 
 /**
- * The bus circle shows ONE figure of the day at a time (a small name over a
- * bold value) with a dot per figure under it; a tap, Enter or Space moves to
- * the next. It starts on the first figure.
+ * The day's four figures inside the bus circle as a list of rows: the name on
+ * the left, the value on the right with its unit small after it.
  */
 function CentreFigures({
   figures,
 }: {
   readonly figures: readonly EnergyCentreFigure[]
-}): ReactElement | null {
-  const [index, setIndex] = useState(0)
-  const shown = figures[index % Math.max(1, figures.length)]
-  if (shown === undefined) return null
-  const next = (): void => setIndex((i) => (i + 1) % figures.length)
-  const onKeyDown = (e: KeyboardEvent<SVGGElement>): void => {
-    if (e.key !== 'Enter' && e.key !== ' ') return
-    e.preventDefault()
-    next()
-  }
+}): ReactElement {
+  const rows = figures.slice(0, 4)
   return (
-    // biome-ignore lint/a11y/useSemanticElements: an SVG group cannot be a <button>
     <g
-      role="button"
-      tabIndex={0}
-      aria-label={`${shown.label}: ${shown.value}`}
+      role="group"
+      aria-label={rows.map((f) => `${f.label}: ${f.value}${f.unit ?? ''}`).join(', ')}
       data-testid="dc-energy-centre"
-      data-shown={shown.id}
-      textAnchor="middle"
-      className="cursor-pointer outline-none focus-visible:[&>circle]:stroke-primary"
-      onClick={next}
-      onKeyDown={onKeyDown}
     >
-      <circle cx={BUS.x} cy={BUS.y} r={CENTRE_R} className="fill-transparent stroke-transparent" />
-      <g data-testid={`dc-energy-centre-${shown.id}`}>
-        <text x={BUS.x} y={BUS.y - 8} className="fill-foreground-muted text-[10px]">
-          {shown.label}
-        </text>
-        <text
-          x={BUS.x}
-          y={BUS.y + 10}
-          className="fill-foreground text-[16px] font-semibold tabular-nums"
-        >
-          {shown.value}
-        </text>
-      </g>
-      {figures.map((f, i) => (
-        <circle
-          key={f.id}
-          cx={BUS.x + (i - (figures.length - 1) / 2) * 9}
-          cy={BUS.y + 29}
-          r={2}
-          data-testid={`dc-energy-centre-dot-${f.id}`}
-          data-active={f.id === shown.id}
-          className={f.id === shown.id ? 'fill-foreground' : 'fill-foreground-subtle'}
-        />
-      ))}
+      {rows.map((f, i) => {
+        const y = BUS.y + (i - (rows.length - 1) / 2) * ROW_DY + 3
+        return (
+          <g key={f.id} data-testid={`dc-energy-centre-${f.id}`}>
+            <text x={BUS.x - ROW_DX} y={y} className="fill-foreground-muted text-[6px]">
+              {f.label}
+            </text>
+            <text
+              x={BUS.x + ROW_DX}
+              y={y}
+              textAnchor="end"
+              className="fill-foreground text-[10px] font-semibold tabular-nums"
+            >
+              {f.value}
+              {f.unit === undefined ? null : (
+                <tspan dx={1.5} className="fill-foreground-muted text-[6.5px] font-normal">
+                  {f.unit}
+                </tspan>
+              )}
+            </text>
+          </g>
+        )
+      })}
     </g>
   )
 }
@@ -284,8 +275,6 @@ function CentreFigures({
 export function EnergyFlowIllustration({
   nodes,
   centre,
-  stale = false,
-  staleLabel,
   ariaLabel,
   className,
 }: EnergyFlowIllustrationProps): ReactElement {
@@ -293,13 +282,13 @@ export function EnergyFlowIllustration({
   const still = nodes.every((n) => n.still)
   return (
     <svg
-      viewBox="0 0 260 206"
+      viewBox="0 -32 260 238"
       role="img"
       aria-label={ariaLabel}
       data-still={still}
       className={cn('dc-energy overflow-visible', className)}
     >
-      <g className={stale ? 'opacity-40' : undefined} data-testid="dc-energy-branches">
+      <g data-testid="dc-energy-branches">
         {nodes.map((n) => (
           <Branch key={`b-${n.id}`} node={n} busR={busR} />
         ))}
@@ -312,21 +301,11 @@ export function EnergyFlowIllustration({
         className="fill-surface stroke-foreground-muted"
       />
       {centre === undefined ? null : <CentreFigures figures={centre} />}
-      <g className={stale ? 'opacity-40' : undefined} data-testid="dc-energy-nodes">
+      <g data-testid="dc-energy-nodes">
         {nodes.map((n) => (
           <Node key={`n-${n.id}`} node={n} />
         ))}
       </g>
-      {stale && staleLabel !== undefined ? (
-        <text
-          x={0}
-          y={12}
-          className="fill-foreground-muted text-[11px]"
-          data-testid="dc-energy-stale"
-        >
-          {staleLabel}
-        </text>
-      ) : null}
     </svg>
   )
 }

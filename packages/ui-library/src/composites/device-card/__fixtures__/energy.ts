@@ -47,6 +47,8 @@ function flows(
 const NO_DAILY_FACTS: Pick<
   NonNullable<EnergyCardModel['today']>,
   | 'houseKwh'
+  | 'householdKwh'
+  | 'sources'
   | 'netGridKwh'
   | 'selfSufficiencyPct'
   | 'autonomyHours'
@@ -57,6 +59,8 @@ const NO_DAILY_FACTS: Pick<
   | 'heatPumpShareNowPct'
 > = {
   houseKwh: null,
+  householdKwh: null,
+  sources: null,
   netGridKwh: null,
   selfSufficiencyPct: null,
   autonomyHours: null,

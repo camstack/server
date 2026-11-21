@@ -8,6 +8,7 @@
  */
 import helpersArea from './helpers'
 import { defineFixtures } from './_define'
+import { DEVICE_SERIES, queryResult, seriesInfo } from './_history-data'
 
 const ADDON = 'provider-enpal'
 
@@ -81,6 +82,14 @@ const base = (path: string): ((i: unknown) => unknown) => {
   const h = helpersArea.handlers[path]
   return typeof h === 'function' ? (i: unknown) => (h as (x: unknown) => unknown)(i) : () => h
 }
+/** The recorded series of the invented energy system (203) answer for both fixture devices. */
+const HISTORY_OF = 203
+interface QueryManyItem {
+  readonly deviceId?: number
+  readonly key: string
+  readonly scope?: string
+}
+const historyList = DEVICE_SERIES[HISTORY_OF] ?? []
 const isOurs = (id: number | undefined): boolean => id !== undefined && id in SLICES
 
 export default defineFixtures({
@@ -107,6 +116,19 @@ export default defineFixtures({
             })),
           }
         : base('deviceManager.getBindings')(i),
+    'deviceHistory.listSeries': (i: { deviceId: number }) =>
+      isOurs(i.deviceId) ? seriesInfo(historyList) : base('deviceHistory.listSeries')(i),
+    'deviceHistory.queryMany': (i: {
+      items: readonly QueryManyItem[]
+      from: number
+      to: number
+    }) => ({
+      results: i.items.map((item) => ({
+        ok: true,
+        result: queryResult(historyList, item.key, item.scope, i.from, i.to),
+      })),
+    }),
+    'deviceHistory.getDeviceEnabled': { enabled: true },
     'coreBlocks.getCustomization': { state: 'loaded', view: null },
     'deviceManager.getChildren': [],
     'powerSource.getStatus': {

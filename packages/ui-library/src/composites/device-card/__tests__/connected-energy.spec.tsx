@@ -59,6 +59,8 @@ const PAST_DAY = {
   netGridKwh: 1.5,
   heatPumpKwh: null,
   houseKwh: 12,
+  householdKwh: 12,
+  sources: null,
   selfSufficiencyPct: 66.7,
   autonomyHours: null,
   chargedTodayKwh: null,
@@ -67,13 +69,8 @@ const PAST_DAY = {
   healthPct: null,
   heatPumpShareNowPct: null,
 }
-/** The centre circle shows one figure; click it round to the one asked for and read it. */
+/** The centre circle shows four figures at once; read one by id. */
 function centreOf(id: string): string {
-  for (let i = 0; i < 3; i += 1) {
-    const circle = screen.getByTestId('dc-energy-centre')
-    if (circle.getAttribute('data-shown') === id) break
-    fireEvent.click(circle)
-  }
   return screen.getByTestId(`dc-energy-centre-${id}`).textContent ?? ''
 }
 const dayCalls = vi.hoisted(() => ({ offsets: [] as number[], past: true }))
@@ -116,9 +113,9 @@ afterEach(cleanup)
 describe('energyDailyFacts', () => {
   it('derives each fact from the slice', () => {
     const facts = energyDailyFacts(FULL)
-    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 13.24) * 100, 5)
+    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.34) * 100, 5)
     expect(facts.producedKwh).toBe(18.4)
-    expect(facts.houseKwh).toBe(13.2)
+    expect(facts.houseKwh).toBe(11.3)
     expect(facts.importedKwh).toBe(2.1)
     expect(facts.exportedKwh).toBe(7.3)
     expect(facts.autonomyHours).toBeCloseTo(7.4 / 0.9, 5)
@@ -153,8 +150,8 @@ describe('energyDailyFacts', () => {
       house: { powerW: 900, energyKwh: 8000, todayKwh: null },
     })
     // 18.44 + 2.1 − 7.3 = 13.24
-    expect(facts.houseKwh).toBe(13.2)
-    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 13.24) * 100, 5)
+    expect(facts.houseKwh).toBe(11.3)
+    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.34) * 100, 5)
   })
 
   it('a missing input is absent, never 0', () => {
@@ -256,7 +253,12 @@ describe('the energy system card', () => {
     render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.getByText('Charging · 74%')).toBeTruthy()
     expect(screen.getAllByTestId('dc-energy-today')[0]?.textContent).toContain('18.4 kWh')
-    expect(screen.queryByText('19%')).toBeNull()
+    // The corner's 19% is not drawn (a "19%" source share may sit in the totals).
+    expect(
+      screen
+        .queryAllByText('19%')
+        .filter((el) => el.closest('[data-testid="dc-energy-today"]') === null),
+    ).toEqual([])
   })
 
   it('every total of today is its own pill, and each names its unit', () => {
@@ -265,9 +267,12 @@ describe('the energy system card', () => {
     const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'Produced18.4 kWh',
-      'House13.2 kWh',
+      'Consumed11.3 kWh',
       'Imported2.1 kWh',
       'Exported7.3 kWh',
+      'Solar44%',
+      'Battery37%',
+      'Grid19%',
       'Now67%',
       'Health96%',
       'Autonomy≈ 8.2 h',
@@ -276,47 +281,21 @@ describe('the energy system card', () => {
     ])
   })
 
-  it('the centre circle shows self-sufficiency, self-consumption and the signed net grid', () => {
+  it('the centre circle shows self-sufficiency, imported, exported and produced together', () => {
     hub.slice = FULL
     render(<ConnectedEnergyCard deviceId={1} />)
-    const centre = centreOf
-    expect(centre('sufficiency')).toContain('84%')
-    expect(centre('selfUse')).toContain('60%')
-    // 2.1 imported − 7.3 exported: fed the grid.
-    expect(centre('netGrid')).toContain('−5.2 kWh')
-  })
-
-  it('the centre circle starts on self-sufficiency and a click or Enter/Space cycles the figures', () => {
-    hub.slice = FULL
-    render(<ConnectedEnergyCard deviceId={1} />)
-    const circle = screen.getByTestId('dc-energy-centre')
-    expect(circle.getAttribute('role')).toBe('button')
-    expect(circle.getAttribute('data-shown')).toBe('sufficiency')
-    expect(screen.queryByTestId('dc-energy-centre-selfUse')).toBeNull()
-    fireEvent.click(circle)
-    expect(circle.getAttribute('data-shown')).toBe('selfUse')
-    fireEvent.keyDown(circle, { key: 'Enter' })
-    expect(circle.getAttribute('data-shown')).toBe('netGrid')
-    fireEvent.keyDown(circle, { key: ' ' })
-    expect(circle.getAttribute('data-shown')).toBe('sufficiency')
-    expect(screen.getByTestId('dc-energy-centre-dot-sufficiency').getAttribute('data-active')).toBe(
-      'true',
-    )
-    expect(screen.getByTestId('dc-energy-centre-dot-netGrid').getAttribute('data-active')).toBe(
-      'false',
-    )
-  })
-
-  it('a net grid that drew from the grid carries a plus sign', () => {
-    hub.slice = { ...FULL, grid: { ...FULL.grid!, importTodayKwh: 9, exportTodayKwh: 1 } }
-    render(<ConnectedEnergyCard deviceId={1} />)
-    expect(centreOf('netGrid')).toContain('+8 kWh')
+    expect(centreOf('sufficiency')).toContain('81%')
+    expect(centreOf('imported')).toContain('2.1kWh')
+    expect(centreOf('exported')).toContain('7.3kWh')
+    expect(centreOf('produced')).toContain('18.4kWh')
+    expect(screen.getByTestId('dc-energy-centre').getAttribute('role')).toBe('group')
   })
 
   it('a missing input reads as a dash in the centre, never 0', () => {
     hub.slice = { ...FULL, grid: { ...FULL.grid!, importTodayKwh: null, exportTodayKwh: null } }
     render(<ConnectedEnergyCard deviceId={1} />)
-    expect(centreOf('netGrid')).toContain('—')
+    expect(centreOf('imported')).toContain('—')
+    expect(centreOf('exported')).toContain('—')
     expect(centreOf('sufficiency')).toContain('—')
   })
 
@@ -325,19 +304,21 @@ describe('the energy system card', () => {
     dayCalls.offsets = []
     render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.getByTestId('dc-energy-day-label').textContent).toBe('Today')
-    expect(screen.queryByTestId('dc-energy-stale')).toBeNull()
     expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByLabelText('Previous day'))
     expect(dayCalls.offsets.at(-1)).toBe(1)
-    // The scene's nodes still read now: dimmed and marked, never passed off as that day.
-    expect(screen.getByTestId('dc-energy-stale').textContent).toBe('Live now')
-    expect(centreOf('netGrid')).toContain('+1.5 kWh')
-    expect(centreOf('selfUse')).toContain('75%')
+    // The scene's nodes read that day's kWh, with no live marker or live state.
+    expect(screen.queryByText('Live now')).toBeNull()
+    expect(screen.queryByText('Producing')).toBeNull()
+    expect(screen.getByTestId('dc-energy-node-solar').textContent).toContain('10.0 kWh')
+    expect(screen.getByTestId('dc-energy-branch-grid').getAttribute('data-direction')).toBe('in')
+    expect(centreOf('imported')).toContain('4.0kWh')
+    expect(centreOf('exported')).toContain('2.5kWh')
     expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(screen.getByText('Today'))
     expect(dayCalls.offsets.at(-1)).toBe(0)
-    expect(screen.queryByTestId('dc-energy-stale')).toBeNull()
-    expect(centreOf('netGrid')).toContain('−5.2 kWh')
+    expect(screen.getByText('Producing')).toBeTruthy()
+    expect(centreOf('exported')).toContain('7.3kWh')
   })
 
   it('a past day with no recording shows dashes, not zeros', () => {
@@ -346,8 +327,8 @@ describe('the energy system card', () => {
     render(<ConnectedEnergyCard deviceId={1} />)
     fireEvent.click(screen.getByLabelText('Previous day'))
     dayCalls.past = true
-    expect(centreOf('netGrid')).toContain('—')
-    expect(centreOf('selfUse')).toContain('—')
+    expect(centreOf('imported')).toContain('—')
+    expect(centreOf('sufficiency')).toContain('—')
   })
 
   it('keeps the Charge pill when the scene does not draw the battery', () => {

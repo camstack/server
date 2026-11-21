@@ -4,7 +4,7 @@
  * is read from the model's `storage` part, never from the `battery` cap (#522).
  */
 import type { EnergySystemStatus } from '@camstack/types'
-import type { EnergyFlows, EnergyToday } from '../scenes/energy/model'
+import type { EnergyFlows, EnergySourceSplit, EnergyToday } from '../scenes/energy/model'
 
 /** Derived daily facts. Null is a missing input, not a stand-in for zero. */
 export interface EnergyDailyFacts {
@@ -31,7 +31,8 @@ export function energyFlowsOf(status: EnergySystemStatus): EnergyFlows {
   const storageW = status.storage?.powerW ?? null
   return {
     solarW: status.solar?.powerW ?? null,
-    gridW: status.grid?.powerW ?? null,
+    // A grid that exists but reports no power is idle (0 W), not absent.
+    gridW: status.grid === null ? null : (status.grid.powerW ?? 0),
     batteryW: storageW === null ? null : -storageW,
     batteryPct: status.storage?.stateOfChargePct ?? null,
     houseW: status.house?.powerW ?? null,
@@ -57,11 +58,18 @@ function reportedConsumptionTodayKwh(status: EnergySystemStatus): number | null 
 function houseConsumptionTodayKwh(status: EnergySystemStatus): number | null {
   const reported = reportedConsumptionTodayKwh(status)
   if (reported !== null) return reported
-  const produced = status.solar?.todayKwh ?? null
-  const imported = status.grid?.importTodayKwh ?? null
-  const exported = status.grid?.exportTodayKwh ?? null
-  if (produced === null || imported === null || exported === null) return null
-  return produced + imported - exported
+  return balanceConsumptionKwh(todayBalanceInput(status))
+}
+
+function todayBalanceInput(status: EnergySystemStatus): EnergyBalanceInput {
+  return {
+    producedKwh: status.solar?.todayKwh ?? null,
+    importedKwh: status.grid?.importTodayKwh ?? null,
+    exportedKwh: status.grid?.exportTodayKwh ?? null,
+    chargedKwh: status.storage?.chargedTodayKwh ?? null,
+    dischargedKwh: status.storage?.dischargedTodayKwh ?? null,
+    heatPumpKwh: status.heatPump?.todayKwh ?? null,
+  }
 }
 
 export function selfSufficiencyPct(
@@ -119,6 +127,71 @@ function heatPumpShareNowPct(status: EnergySystemStatus): number | null {
   return Math.max(0, Math.min(100, (heatPumpW / totalW) * 100))
 }
 
+/** The day totals the energy balance reads, kWh; null = that counter is unknown. */
+export interface EnergyBalanceInput {
+  readonly producedKwh: number | null
+  readonly importedKwh: number | null
+  readonly exportedKwh: number | null
+  readonly chargedKwh: number | null
+  readonly dischargedKwh: number | null
+  readonly heatPumpKwh: number | null
+}
+
+export interface EnergyBalance {
+  /** produced + imported − exported + discharged − charged; null when an input is unknown. */
+  readonly consumptionKwh: number | null
+  /** The consumption minus the heat pump, floored at 0. */
+  readonly householdKwh: number | null
+  /** 1 − imported / consumption, 0..100. */
+  readonly selfSufficiencyPct: number | null
+  readonly sources: EnergySourceSplit | null
+}
+
+/**
+ * produced + imported − exported + discharged − charged. The storage counters
+ * are both absent for a system without storage (no contribution); only one of
+ * them known is an unknown balance (D393).
+ */
+export function balanceConsumptionKwh(input: EnergyBalanceInput): number | null {
+  const { producedKwh: p, importedKwh: i, exportedKwh: x, chargedKwh: c, dischargedKwh: d } = input
+  if (p === null || i === null || x === null || (c === null) !== (d === null)) return null
+  return p + i - x + (d ?? 0) - (c ?? 0)
+}
+
+const share = (kwh: number, of: number): number => Math.max(0, Math.min(100, (kwh / of) * 100))
+
+/**
+ * The energy balance of a day: what was consumed and where it came from. The
+ * storage counters are both absent for a system without storage (no
+ * contribution); only one of them known is an unknown balance (D393).
+ */
+export function energyBalance(input: EnergyBalanceInput, hasHeatPump: boolean): EnergyBalance {
+  const { producedKwh: p, importedKwh: i, exportedKwh: x, chargedKwh: c, dischargedKwh: d } = input
+  const consumption = balanceConsumptionKwh(input)
+  const household =
+    consumption === null
+      ? null
+      : !hasHeatPump
+        ? consumption
+        : input.heatPumpKwh === null
+          ? null
+          : Math.max(0, consumption - input.heatPumpKwh)
+  const sources =
+    consumption === null || consumption <= 0 || p === null || i === null || x === null
+      ? null
+      : {
+          solarPct: share(Math.max(0, p - x - (c ?? 0)), consumption),
+          batteryPct: share(d ?? 0, consumption),
+          gridPct: share(i, consumption),
+        }
+  return {
+    consumptionKwh: tenth(consumption),
+    householdKwh: tenth(household),
+    selfSufficiencyPct: selfSufficiencyPct(consumption, i),
+    sources,
+  }
+}
+
 /** The daily facts of one energy-system slice. Pure; a missing input is null. */
 export function energyDailyFacts(status: EnergySystemStatus): EnergyDailyFacts {
   const house = houseConsumptionTodayKwh(status)
@@ -155,6 +228,8 @@ export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
     netGridKwh: facts.netGridKwh,
     heatPumpKwh: tenth(status.heatPump?.todayKwh ?? null),
     houseKwh: facts.houseKwh,
+    householdKwh: tenth(status.house?.todayKwh ?? null),
+    sources: energyBalance(todayBalanceInput(status), status.heatPump !== null).sources,
     selfSufficiencyPct: facts.selfSufficiencyPct,
     autonomyHours: facts.autonomyHours,
     chargedTodayKwh: facts.chargedTodayKwh,

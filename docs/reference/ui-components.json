@@ -1768,6 +1768,13 @@
       "summary": "The badge word. `latched` wins over `verdict`, because the latch is the thing the operator asked to be told and it outlives the live state."
     },
     {
+      "name": "balanceConsumptionKwh",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "produced + imported − exported + discharged − charged. The storage counters are both absent for a system without storage (no contribution); only one of them known is an unknown balance (D393)."
+    },
+    {
       "name": "BarSeries",
       "kind": "component",
       "area": "composites",
@@ -8003,6 +8010,13 @@
       "summary": ""
     },
     {
+      "name": "energyBalance",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "The energy balance of a day: what was consumed and where it came from. The storage counters are both absent for a system without storage (no contribution); only one of them known is an unknown balance (D393)."
+    },
+    {
       "name": "energyBuckets",
       "kind": "function",
       "area": "composites",
@@ -8050,7 +8064,7 @@
           "name": "nodesLive",
           "type": "boolean",
           "optional": true,
-          "doc": "False when the scene's nodes show now but the card shows another day: they are dimmed and marked."
+          "doc": "False when the card shows a past day: the nodes read that day's kWh and the live state is hidden."
         }
       ]
     },
@@ -8059,7 +8073,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
-      "summary": "The three figures of the centre circle for the selected day; a missing input reads \"—\", never 0."
+      "summary": "The four figures of the centre circle for the selected day: self-sufficiency, imported, exported and produced. A missing input reads \"—\", never 0."
     },
     {
       "name": "energyDailyFacts",
@@ -8067,6 +8081,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
       "summary": "The daily facts of one energy-system slice. Pure; a missing input is null."
+    },
+    {
+      "name": "energyDayNodes",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "The nodes of a past day, from its kWh totals: solar produced, the grid's net import or export, the battery's net charge or discharge, the household and the heat pump. The arrow follows the sign of the day's net flow; …"
     },
     {
       "name": "EnergyDayPanel",
@@ -8161,18 +8182,6 @@
           "type": "readonly EnergyCentreFigure[]",
           "optional": true,
           "doc": "The day's figures drawn inside the enlarged bus circle; omit for the small bus dot."
-        },
-        {
-          "name": "stale",
-          "type": "boolean",
-          "optional": true,
-          "doc": "The nodes show a moment other than the selected day: dimmed, with `staleLabel` (\"Live now\")."
-        },
-        {
-          "name": "staleLabel",
-          "type": "string",
-          "optional": true,
-          "doc": ""
         },
         {
           "name": "ariaLabel",
