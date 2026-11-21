@@ -392,3 +392,47 @@ describe('a config target (D963)', () => {
     })
   })
 })
+
+describe('a source group (one device fills several targets)', () => {
+  const runtime = z.object({
+    a: z.number().nullable().optional(),
+    b: z.number().nullable().optional(),
+    lastFetchedAt: z.number(),
+  })
+  const target = (id: string): ScalarCustomizeTarget => ({
+    ...percentageTarget(),
+    id,
+    path: id,
+    companions: [{ kind: 'clock', path: 'lastFetchedAt', when: 'always' }],
+    vocabulary: { cap: 'demo', stateField: id },
+  })
+  const spec = (groups: CapabilityCustomizeSpec['sourceGroups']): CapabilityCustomizeSpec => ({
+    version: 1,
+    targets: [target('a'), target('b')],
+    sourceGroups: groups,
+  })
+
+  it('accepts a group over declared scalar targets and projects it', () => {
+    const declared = spec([{ id: 'device', targets: ['a', 'b'] }])
+    expect(judgeCustomize(view(runtime, declared))).toEqual([])
+    expect(projectCustomize(view(runtime, declared)).sourceGroups).toEqual([
+      { id: 'device', targets: ['a', 'b'] },
+    ])
+  })
+
+  it('rejects a group naming a target the cap does not declare', () => {
+    const found = judgeCustomize(view(runtime, spec([{ id: 'device', targets: ['a', 'zzz'] }])))
+    expect(rules(found)).toEqual(['bad-source-group'])
+  })
+
+  it('rejects a one-target group and a target filed in two groups', () => {
+    expect(rules(judgeCustomize(view(runtime, spec([{ id: 'g', targets: ['a'] }]))))).toEqual([
+      'bad-source-group',
+    ])
+    const twice = spec([
+      { id: 'g', targets: ['a', 'b'] },
+      { id: 'h', targets: ['a', 'b'] },
+    ])
+    expect(rules(judgeCustomize(view(runtime, twice)))).toContain('bad-source-group')
+  })
+})

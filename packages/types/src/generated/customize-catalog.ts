@@ -998,6 +998,17 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
     ],
+    sourceGroups: [
+      {
+        id: 'meter-device',
+        targets: [
+          'power',
+          'energy',
+          'voltage',
+          'current',
+        ],
+      },
+    ],
   },
   'power-source': {
     version: 1,

@@ -57,6 +57,19 @@ export interface CapabilityCustomizeSpec {
   readonly targets: readonly CapabilityCustomizeTarget[]
   /** Native fields an extension may replace; absent means none (D944 stays whole). */
   readonly overridable?: readonly CustomizeOverridable[]
+  /**
+   * Scalar targets one source device may fill at once. The Customize table
+   * offers one "Source device" picker per group; storage stays per target, so a
+   * target keeps its own picker and overrides the group.
+   */
+  readonly sourceGroups?: readonly CustomizeSourceGroup[]
+}
+
+/** A set of scalar targets of one cap that a single device can source together. */
+export interface CustomizeSourceGroup {
+  readonly id: string
+  /** Ids of this cap's scalar targets; at least two. */
+  readonly targets: readonly string[]
 }
 
 /**

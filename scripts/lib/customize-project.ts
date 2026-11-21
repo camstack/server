@@ -59,6 +59,9 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
     ...(spec.overridable === undefined || spec.overridable.length === 0
       ? {}
       : { overridable: spec.overridable }),
+    ...(spec.sourceGroups === undefined || spec.sourceGroups.length === 0
+      ? {}
+      : { sourceGroups: spec.sourceGroups }),
   }
   assertProjectedParameters(view.capName, spec, entry)
   return entry

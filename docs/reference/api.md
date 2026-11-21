@@ -4163,7 +4163,7 @@
 
 ### `power-meter` → `powerMeter.*`
 
-- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:142`
+- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:144`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, switch, light, fan, climate, humidifier, water-heater, media-player, washer, dryer, dishwasher, vacuum, lawn-mower, pet-feeder, workload`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IPowerMeterProvider`
