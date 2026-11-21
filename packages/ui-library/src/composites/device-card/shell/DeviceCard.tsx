@@ -44,6 +44,13 @@ export interface DeviceCardProps {
    * {@link DeviceCardFrameProvider}, so a host frames every card it mounts.
    */
   readonly frame?: DeviceCardFrame
+  /**
+   * Whether the state corner opens the History / Actions view (default true,
+   * or what the nearest {@link DeviceCardFrameProvider} says). False draws the
+   * state as plain text: no click affordance and no view. A host that shows
+   * the same history and actions itself (the quick-detail tabs) turns it off.
+   */
+  readonly historyView?: boolean
 }
 
 export type DeviceCardView = 'scene' | 'history' | 'remote'
@@ -53,6 +60,7 @@ export type DeviceCardFrame = 'card' | 'bare'
 
 const DeviceCardFrameContext = createContext<DeviceCardFrame>('card')
 const DeviceCardFillContext = createContext<boolean>(false)
+const DeviceCardHistoryViewContext = createContext<boolean>(true)
 
 export interface DeviceCardFrameProviderProps {
   readonly frame: DeviceCardFrame
@@ -62,6 +70,8 @@ export interface DeviceCardFrameProviderProps {
    * swap in one box. The host's own chain must be `h-full` down to the card.
    */
   readonly fill?: boolean
+  /** False: no card below opens its History / Actions view (see {@link DeviceCardProps.historyView}). */
+  readonly historyView?: boolean
   readonly children: ReactNode
 }
 
@@ -75,15 +85,25 @@ export function useDeviceCardFill(): boolean {
   return useContext(DeviceCardFillContext)
 }
 
+/** Whether the nearest {@link DeviceCardFrameProvider} lets cards open their History / Actions view. */
+export function useDeviceCardHistoryView(): boolean {
+  return useContext(DeviceCardHistoryViewContext)
+}
+
 /** Frames every device card below it — a host page that draws the frame itself. */
 export function DeviceCardFrameProvider({
   frame,
   fill = false,
+  historyView = true,
   children,
 }: DeviceCardFrameProviderProps): ReactElement {
   return (
     <DeviceCardFrameContext.Provider value={frame}>
-      <DeviceCardFillContext.Provider value={fill}>{children}</DeviceCardFillContext.Provider>
+      <DeviceCardFillContext.Provider value={fill}>
+        <DeviceCardHistoryViewContext.Provider value={historyView}>
+          {children}
+        </DeviceCardHistoryViewContext.Provider>
+      </DeviceCardFillContext.Provider>
     </DeviceCardFrameContext.Provider>
   )
 }
@@ -163,8 +183,11 @@ export function DeviceCard({
   remoteExtra = null,
   initialView = 'scene',
   frame,
+  historyView,
 }: DeviceCardProps): ReactElement {
   const hostFrame = useContext(DeviceCardFrameContext)
+  const hostHistoryView = useDeviceCardHistoryView()
+  const historyOffered = historyView ?? hostHistoryView
   const bare = (frame ?? hostFrame) === 'bare'
   const gating = useGating(common)
   const fill = useContext(DeviceCardFillContext)
@@ -181,6 +204,7 @@ export function DeviceCard({
   const history = common.history
   const motion = common.motionTrigger ?? null
   const hasHistory =
+    historyOffered &&
     history !== null &&
     (history.charts !== null || history.events !== null || common.deviceId !== undefined)
   const remoteKeys = common.remote ?? []
@@ -219,7 +243,7 @@ export function DeviceCard({
           </h3>
         ) : null}
         <OverlayBoxProvider value={{ fill, height: sceneHeight }}>
-          {view === 'history' && history !== null ? (
+          {view === 'history' && history !== null && historyOffered ? (
             <HistoryView
               state={state}
               history={history}

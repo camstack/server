@@ -14,8 +14,10 @@
  * full page.
  */
 import {
+  ActuationHistory,
   Button,
   DeviceCardFrameProvider,
+  DeviceHistoryView,
   DeviceContextProvider,
   DeviceQuickDetailProvider,
   Dialog,
@@ -23,8 +25,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  useCapabilityPresence,
   useDeviceLabelById,
   useDeviceManagerGetDevice,
+  useDeviceSeriesList,
 } from '@camstack/ui-library'
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,9 +37,10 @@ import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { DeviceHeroCard, type DeviceHeroCardDevice } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
 import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
+import { historyTabVisible } from './history-tab'
 import { isDeviceExportSection } from './tabs/device-export-tab'
 
-type QuickTabId = 'detail' | 'info' | 'export'
+type QuickTabId = 'detail' | 'history' | 'actions' | 'info' | 'export'
 
 /**
  * The device card of the Detail tab. Every navigation the card starts (open
@@ -58,7 +63,8 @@ function DetailCard({
 }): ReactNode {
   const save = useQuickDetailSave()
   return (
-    <DeviceCardFrameProvider frame="bare" fill>
+    // History and Actions are tabs of this modal, so the card does not open its own view.
+    <DeviceCardFrameProvider frame="bare" fill historyView={false}>
       <DeviceHeroCard
         deviceId={deviceId}
         device={device}
@@ -96,7 +102,17 @@ function DeviceQuickDetailModal({
   // camera, a device with no card), which the viewer shows as an empty card.
   const [drawn, setDrawn] = useState<boolean | null>(null)
   const detailEmpty = drawn === false
-  const tab: QuickTabId = pickedTab === 'detail' && detailEmpty ? 'info' : pickedTab
+  const series = useDeviceSeriesList(deviceId)
+  const hasHistory = historyTabVisible(series.presence, series.list)
+  const hasActions = useCapabilityPresence('device-transitions') === 'present'
+  const tab: QuickTabId =
+    (pickedTab === 'detail' && detailEmpty) ||
+    (pickedTab === 'history' && !hasHistory) ||
+    (pickedTab === 'actions' && !hasActions)
+      ? detailEmpty
+        ? 'info'
+        : 'detail'
+      : pickedTab
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
   const deviceName = typeof device?.name === 'string' ? device.name : ''
   const name = useDeviceLabelById(
@@ -109,6 +125,12 @@ function DeviceQuickDetailModal({
     ...(detailEmpty
       ? []
       : [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]),
+    ...(hasHistory
+      ? [['history', t('deviceQuickDetail.tabHistory', { defaultValue: 'History' })] as const]
+      : []),
+    ...(hasActions
+      ? [['actions', t('deviceQuickDetail.tabActions', { defaultValue: 'Actions' })] as const]
+      : []),
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
     ['export', t('deviceQuickDetail.tabExport', { defaultValue: 'Export' })],
   ]
@@ -164,6 +186,8 @@ function DeviceQuickDetailModal({
                   <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
                 </div>
               ) : null}
+              {tab === 'history' ? <DeviceHistoryView deviceId={deviceId} /> : null}
+              {tab === 'actions' ? <ActuationHistory deviceId={deviceId} /> : null}
               <div className={tab === 'info' ? 'flex flex-col gap-3' : 'hidden'}>
                 <DeviceWebInterfaceCard deviceId={deviceId} />
                 <DeviceInfoAdapter />

@@ -7722,7 +7722,9 @@
     "tabExport": "Esportazione",
     "tabInfo": "Info dispositivo",
     "openPage": "Apri pagina dispositivo",
-    "tabDetail": "Dettaglio"
+    "tabDetail": "Dettaglio",
+    "tabHistory": "Storico",
+    "tabActions": "Azioni"
   },
   "nodes": {
     "general": {

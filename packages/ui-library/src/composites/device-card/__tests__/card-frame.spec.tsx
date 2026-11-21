@@ -15,6 +15,11 @@ const COMMON = mockupCommon({
   remote: [],
 })
 
+const WITH_HISTORY = {
+  ...COMMON,
+  history: { charts: <span>charts</span>, events: null },
+}
+
 function card(frame?: 'card' | 'bare') {
   return (
     <DeviceCard
@@ -58,5 +63,56 @@ describe('DeviceCard frame', () => {
     )
     const frames = screen.getAllByTestId('device-card').map((a) => a.getAttribute('data-frame'))
     expect(frames).toEqual(['bare', 'card'])
+  })
+
+  describe('the history view the state corner opens', () => {
+    const withHistory = (historyView?: boolean) => (
+      <DeviceCard
+        kind="plug"
+        common={WITH_HISTORY}
+        state={{ label: 'On', since: null, tone: 'primary' }}
+        scene={{ image: <span>scene</span> }}
+        {...(historyView === undefined ? {} : { historyView })}
+      />
+    )
+
+    it('is offered by default: the state is a button that opens the view', () => {
+      render(withHistory())
+      expect(screen.getByTestId('dc-state').tagName).toBe('BUTTON')
+    })
+
+    it('historyView={false}: plain state text, no button and no view', () => {
+      render(withHistory(false))
+      expect(screen.getByTestId('dc-state').tagName).not.toBe('BUTTON')
+      expect(screen.queryByRole('button', { name: 'Open the history' })).toBeNull()
+    })
+
+    it('a host turns it off for every card below it, and an explicit prop still wins', () => {
+      render(
+        <DeviceCardFrameProvider frame="card" historyView={false}>
+          {withHistory()}
+          {withHistory(true)}
+        </DeviceCardFrameProvider>,
+      )
+      expect(screen.getAllByTestId('dc-state').map((el) => el.tagName)).toEqual([
+        expect.not.stringMatching(/^BUTTON$/),
+        'BUTTON',
+      ])
+    })
+
+    it('does not open the history view even when asked to start on it', () => {
+      render(
+        <DeviceCard
+          kind="plug"
+          common={WITH_HISTORY}
+          state={{ label: 'On', since: null, tone: 'primary' }}
+          scene={{ image: <span>scene</span> }}
+          initialView="history"
+          historyView={false}
+        />,
+      )
+      expect(screen.queryByTestId('dc-history')).toBeNull()
+      expect(screen.getByText('scene')).toBeTruthy()
+    })
   })
 })

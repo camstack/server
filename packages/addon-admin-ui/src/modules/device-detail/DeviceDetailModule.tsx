@@ -17,6 +17,7 @@ import {
   Skeleton,
   trpc,
   useConnectedCardKind,
+  useDeviceCardHistoryView,
   useDeviceManagerGetDevice,
   useDeviceSeriesList,
   useIsPhone,
@@ -200,7 +201,9 @@ function HeroBody({
   const labels = useHeroLabels()
   const [historyOpen, setHistoryOpen] = useState(defaultHistoryOpen === true)
   const series = useDeviceSeriesList(deviceId)
-  const hasHistory = historyTabVisible(series.presence, series.list)
+  // A host that shows the history itself (the quick-detail tabs) turns the card's off.
+  const historyOffered = useDeviceCardHistoryView()
+  const hasHistory = historyOffered && historyTabVisible(series.presence, series.list)
   const openHistory = useCallback(() => setHistoryOpen(true), [])
   return (
     <>
