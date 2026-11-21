@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Alexa link with paused proactive updates and an unknown link status have their own labels in the export panel
 ### Changed
 
+- The action editor offers the same steps as an automation's Then (except code), and a wait step takes one number plus a unit (ms, s, min, h).
 
 ## [1.2.726] - 2026-11-21
 

@@ -15,6 +15,7 @@ import {
   type ActionInput,
   ActionInputSchema,
   type ActionStep,
+  ActionStepSchema,
   type ActionVariable,
 } from '@camstack/types'
 import { isVarRef } from '../flow/command-vocab'
@@ -72,7 +73,29 @@ export function draftOf(entry: ActionEntry | null): ActionDraft {
   }
 }
 
-/** Every variable a step reads, in order, without repeats. */
+/** `{{vars.name}}` (and `{{vars.name.field}}`) inside a string: the same form the runner substitutes. */
+const TEMPLATE_RE =
+  /\{\{(\s*)vars\.([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*)*)(\s*)\}\}/g
+
+/** A variable target (`{ kind: 'var', name }`) as the commands' device target spells it. */
+function isVarTarget(value: unknown): value is { readonly kind: 'var'; readonly name: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'kind' in value &&
+    value.kind === 'var' &&
+    'name' in value &&
+    typeof value.name === 'string'
+  )
+}
+
+/**
+ * Every variable a step reads, in order, without repeats, at any depth: a
+ * `$var` reference or a variable target in a command, a notify, an http
+ * request, a set, a probe, an action call, or any step nested in a choose,
+ * parallel, repeat or else. A `{{vars.x}}` inside a text is not counted: a
+ * `set` step may have written `x` itself, so it is not necessarily declared.
+ */
 export function variablesUsedBy(steps: readonly ActionStep[]): readonly string[] {
   const seen: string[] = []
   const note = (name: string): void => {
@@ -83,14 +106,14 @@ export function variablesUsedBy(steps: readonly ActionStep[]): readonly string[]
       note(value.$var)
       return
     }
+    if (isVarTarget(value)) {
+      note(value.name)
+      return
+    }
     if (Array.isArray(value)) value.forEach(walk)
     else if (typeof value === 'object' && value !== null) Object.values(value).forEach(walk)
   }
-  for (const step of steps) {
-    if (step.kind !== 'command') continue
-    if (step.target.kind === 'var') note(step.target.name)
-    walk(step.args)
-  }
+  walk(steps)
   return seen
 }
 
@@ -128,6 +151,14 @@ export function checkDraft(draft: ActionDraft): DraftCheck {
 
 function renameInValue(value: unknown, from: string, to: string): unknown {
   if (isVarRef(value)) return value.$var === from ? { $var: to } : value
+  if (isVarTarget(value)) return value.name === from ? { ...value, name: to } : value
+  if (typeof value === 'string') {
+    return value.replace(
+      TEMPLATE_RE,
+      (whole, open: string, name: string, rest: string, close: string) =>
+        name === from ? `{{${open}vars.${to}${rest}${close}}}` : whole,
+    )
+  }
   if (Array.isArray(value)) return value.map((v) => renameInValue(v, from, to))
   if (typeof value === 'object' && value !== null) {
     return Object.fromEntries(
@@ -137,23 +168,14 @@ function renameInValue(value: unknown, from: string, to: string): unknown {
   return value
 }
 
+/**
+ * The step with `from` renamed to `to` everywhere it reads it, nested steps
+ * included. Only names change, so the result still parses; a step that somehow
+ * does not is kept as it was rather than half-renamed.
+ */
 function renameInStep(step: ActionStep, from: string, to: string): ActionStep {
-  if (step.kind !== 'command') return step
-  const target =
-    step.target.kind === 'var' && step.target.name === from
-      ? { kind: 'var' as const, name: to }
-      : step.target
-  const args =
-    step.args === undefined
-      ? undefined
-      : Object.fromEntries(
-          Object.entries(step.args).map(([k, v]) => [k, renameInValue(v, from, to)]),
-        )
-  return {
-    ...step,
-    target,
-    ...(args === undefined ? {} : { args }),
-  }
+  const parsed = ActionStepSchema.safeParse(renameInValue(step, from, to))
+  return parsed.success ? parsed.data : step
 }
 
 /** The variable at `index`, renamed everywhere a step reads it. */

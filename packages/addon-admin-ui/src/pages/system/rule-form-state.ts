@@ -47,6 +47,7 @@ import {
   templateCarriesSummary,
   systemRuleKindOf,
   stepActuatesAlarmPanel,
+  flattenActionSteps,
 } from '@camstack/types'
 import { NEW_SYSTEM_EVENT_DELIVERY } from './notification-system-event-delivery'
 import { seedSystemEventForFamily } from './notification-system-events'
@@ -309,7 +310,7 @@ export function isRuleSnoozeExempt(
   for (const kind of conditions.systemEvent?.kinds ?? []) {
     if (NC_ALARM_KINDS.has(kind)) return true
   }
-  for (const step of steps) {
+  for (const step of flattenActionSteps(steps)) {
     if (stepActuatesAlarmPanel(step)) return true
   }
   return false

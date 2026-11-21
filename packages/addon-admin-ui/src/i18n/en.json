@@ -6427,7 +6427,8 @@
       "stepEnabled": "Step enabled",
       "stepDisabledHint": "Disabled: skipped when the automation runs",
       "kindProbe": "Ping / reachability",
-      "kindHttp": "HTTP request"
+      "kindHttp": "HTTP request",
+      "waitFor": "Wait for"
     },
     "automationEditor": {
       "name": "Name",
@@ -6792,7 +6793,8 @@
       "unitHours": "hours",
       "onTimeout": "If it does not happen in time",
       "continue": "Go on with the next step",
-      "stop": "Stop the run as a failure"
+      "stop": "Stop the run as a failure",
+      "unitMilliseconds": "milliseconds"
     },
     "parallel": {
       "hint": "These start together and the run goes on when all are done. If one fails, the run fails once the others finished."
@@ -12863,7 +12865,8 @@
         "description": "Give the variables this run should use.",
         "choose": "Choose…"
       },
-      "triggerAlarmName": "Trigger the alarm"
+      "triggerAlarmName": "Trigger the alarm",
+      "noCodeStep": "An action offers every step an automation does except a code step: code is compiled into an automation and an action has nothing to compile it into. A condition on whether an automation fired is not available here either."
     },
     "list": {
       "couldNotRead": "Could not read the actions",

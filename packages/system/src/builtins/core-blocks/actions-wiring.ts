@@ -18,6 +18,7 @@ import {
   type CapCall,
   type DeviceDirectory,
   EventCategory,
+  sendToExportedTarget,
   type IEventBus,
   type IScopedLogger,
   commandOrigin,
@@ -26,6 +27,7 @@ import {
 } from '@camstack/types'
 import { ActionsService, type ActionSources } from './actions-service.js'
 import { ActionsStore } from './actions-store.js'
+import { tcpConnect } from './tcp-connect.js'
 import { templateDoorOver } from './device-template-door.js'
 import { conditionDoorOver } from './step-condition-door.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
@@ -178,6 +180,24 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     invokeCap: invokeCapOver(deps.api),
     templates: templateDoorOver(deps.api),
     conditions: conditionDoorOver(deps.api),
+    effects: {
+      fetch: globalThis.fetch,
+      connect: tcpConnect,
+      sendNotification: async ({ targetId, title, body }) => {
+        const current = deps.api()
+        if (current === undefined) {
+          return {
+            status: 'failed',
+            message: 'no ctx.api on this node — the notification cannot be sent',
+          }
+        }
+        return sendToExportedTarget(current, deps.logger.child('actions'), {
+          exporter: 'actions',
+          targetId,
+          notification: { body, ...(title === undefined ? {} : { title }) },
+        })
+      },
+    },
     emit: (event: ActionRunChanged) =>
       deps.eventBus.emit({
         id: randomUUID(),

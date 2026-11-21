@@ -7,7 +7,10 @@
  * reaches this module without the whole vocabulary. `alarm-steps.spec.ts`
  * keeps the list equal to the vocabulary's `alarm-panel` actions.
  */
-import type { ActionStep } from '../automation/recipe.js'
+import type { ActionStep, AutomationBodyStep } from '../automation/recipe.js'
+
+/** A step of an Action at any depth: a top-level one, or one nested in a choose / parallel / repeat / else. */
+type AnyActionStep = ActionStep | AutomationBodyStep
 
 /** Every vocabulary action on the `alarm-panel` cap. */
 export const NC_ALARM_PANEL_ACTION_IDS = [
@@ -26,11 +29,11 @@ export const NC_ALARM_TRIGGER_ACTION_ID = 'alarm.trigger'
 const ALARM_PANEL_ACTIONS: ReadonlySet<string> = new Set(NC_ALARM_PANEL_ACTION_IDS)
 
 /** A command step on the alarm panel (arm, disarm or trigger). */
-export function stepActuatesAlarmPanel(step: ActionStep): boolean {
+export function stepActuatesAlarmPanel(step: AnyActionStep): boolean {
   return step.kind === 'command' && ALARM_PANEL_ACTIONS.has(step.actionId)
 }
 
 /** A command step that pulls the alarm panel's trigger. */
-export function stepPullsAlarmTrigger(step: ActionStep): boolean {
+export function stepPullsAlarmTrigger(step: AnyActionStep): boolean {
   return step.kind === 'command' && step.actionId === NC_ALARM_TRIGGER_ACTION_ID
 }

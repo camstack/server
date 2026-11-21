@@ -6,6 +6,7 @@ import { evaluateStepCondition } from '../step-condition.js'
 import {
   type ActionStep,
   ActionStepSchema,
+  NarrowActionStepSchema,
   AutomationActionSchema,
   CHOOSE_BRANCHES_MAX,
   CurrentAutomationRecipeSchema,
@@ -14,7 +15,6 @@ import {
   validateRecipeBounds,
 } from '../recipe.js'
 import {
-  buildActionSteps,
   type CapCall,
   type RunnableStep,
   repeatCheck,
@@ -23,6 +23,7 @@ import {
   runSteps,
   type StepFailure,
 } from '../step-runner.js'
+import { buildActionSteps } from '../action-steps.js'
 import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
 function options(overrides: Partial<RunStepsOptions> = {}): RunStepsOptions {
@@ -578,8 +579,8 @@ describe('choose schema (#500)', () => {
     ).toBe(false)
   })
 
-  it('a standalone list has no choose', () => {
-    expect(ActionStepSchema.safeParse({ kind: 'choose', branches: [branch] }).success).toBe(false)
+  it('an Action has the choose a Then has', () => {
+    expect(ActionStepSchema.safeParse({ kind: 'choose', branches: [branch] }).success).toBe(true)
   })
 
   it('a branch condition is checked like a step condition: a dangling "started by" is refused', () => {
@@ -625,12 +626,20 @@ describe('flow-control schema (#500)', () => {
     expect(issue([{ kind: 'set', vars: { 'not a name': 1 } }])).toContain('variable name')
   })
 
-  it('a standalone list keeps wait and cap only', () => {
+  it('an Action takes every kind a Then has, except code', () => {
     expect(ActionStepSchema.safeParse({ kind: 'stop', reason: 'x', outcome: 'ok' }).success).toBe(
-      false,
+      true,
     )
-    expect(ActionStepSchema.safeParse({ kind: 'set', vars: { a: 1 } }).success).toBe(false)
+    expect(ActionStepSchema.safeParse({ kind: 'set', vars: { a: 1 } }).success).toBe(true)
     expect(ActionStepSchema.safeParse({ kind: 'wait', seconds: 3600 }).success).toBe(true)
+    expect(ActionStepSchema.safeParse({ kind: 'code', code: 'x' }).success).toBe(false)
+  })
+
+  it('a scheduler point and a rule action list stay command and wait: NarrowActionStepSchema', () => {
+    expect(
+      NarrowActionStepSchema.safeParse({ kind: 'stop', reason: 'x', outcome: 'ok' }).success,
+    ).toBe(false)
+    expect(NarrowActionStepSchema.safeParse({ kind: 'wait', seconds: 3600 }).success).toBe(true)
   })
 })
 

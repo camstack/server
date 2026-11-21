@@ -32,8 +32,9 @@
  */
 import {
   type ActionInput,
-  ActionStepSchema,
+  NarrowActionStepSchema,
   type ActionStep,
+  type NarrowActionStep,
   type MigrationProcedureResult,
   NcRuleActionsSchema,
   type RecordKindHandle,
@@ -85,7 +86,7 @@ function clip(name: string): string {
 function sameAction(
   existing: MigratedAction,
   name: string,
-  steps: readonly ActionStep[],
+  steps: readonly NarrowActionStep[],
   minDelaySec: number | undefined,
 ): boolean {
   return (
@@ -110,7 +111,7 @@ class ActionBook {
 
   async ensure(
     rawName: string,
-    steps: readonly ActionStep[],
+    steps: readonly NarrowActionStep[],
     minDelaySec: number | undefined,
   ): Promise<string> {
     const name = clip(rawName)
@@ -131,10 +132,10 @@ class ActionBook {
 /** The steps of a legacy sequence row, or the first reason they do not parse. */
 function parseSteps(
   body: SequenceBody,
-): { readonly ok: true; readonly steps: readonly ActionStep[] } | { readonly ok: false } {
-  const steps: ActionStep[] = []
+): { readonly ok: true; readonly steps: readonly NarrowActionStep[] } | { readonly ok: false } {
+  const steps: NarrowActionStep[] = []
   for (const raw of body.actions) {
-    const parsed = ActionStepSchema.safeParse(raw)
+    const parsed = NarrowActionStepSchema.safeParse(raw)
     if (!parsed.success) return { ok: false }
     steps.push(parsed.data)
   }
@@ -166,7 +167,7 @@ async function reboundActions(
     const bindings: unknown = legacy[key]
     if (!Array.isArray(bindings)) continue
     const ids: string[] = []
-    let inline: ActionStep[] = []
+    let inline: NarrowActionStep[] = []
     let groups = 0
     const flush = async (): Promise<void> => {
       if (inline.length === 0) return
@@ -184,7 +185,7 @@ async function reboundActions(
         if (actionId === undefined) counters.danglingBindings += 1
         else if (!ids.includes(actionId)) ids.push(actionId)
       } else if (binding['kind'] === 'do') {
-        const step = ActionStepSchema.safeParse(binding['action'])
+        const step = NarrowActionStepSchema.safeParse(binding['action'])
         if (step.success) inline.push(step.data)
         else counters.danglingBindings += 1
       }

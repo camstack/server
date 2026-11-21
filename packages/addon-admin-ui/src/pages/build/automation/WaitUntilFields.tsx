@@ -3,9 +3,10 @@
  * long at most, and what a wait that ran out does.
  */
 import type { AutomationRecipe, AutomationWaitUntilStep } from '@camstack/types'
-import { ErrorBox, Input, Select } from '@camstack/ui-library'
+import { ErrorBox, Select } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
+import { DurationField } from './DurationField'
 import { PickerLabel } from './FieldPicker'
 import { guardProblem } from './StepGuard'
 import { WhenTree } from './WhenTree'
@@ -46,35 +47,19 @@ export function WaitUntilFields({ index, step, devices, onChange }: WaitUntilFie
       />
       {problem !== null && <ErrorBox variant="warning" message={problem} />}
       <div className="flex flex-wrap items-end gap-2">
-        <label className="w-24">
-          <PickerLabel>{t('automation.waitUntil.timeout', 'At most')}</PickerLabel>
-          <Input
-            type="number"
-            min={1}
-            data-testid={`wait-until-timeout-${String(index)}`}
-            value={String(timeout.value)}
-            onChange={(e) =>
-              onChange({ ...step, timeoutS: joinTimeout(Number(e.target.value), timeout.unit) })
-            }
-          />
-        </label>
-        <div className="w-32">
-          <Select
-            data-testid={`wait-until-unit-${String(index)}`}
-            aria-label={t('automation.waitUntil.unit', 'Unit')}
-            value={timeout.unit}
-            onChange={(e) =>
-              onChange({
-                ...step,
-                timeoutS: joinTimeout(
-                  timeout.value,
-                  isTimeoutUnit(e.target.value) ? e.target.value : timeout.unit,
-                ),
-              })
-            }
-            options={TIMEOUT_UNITS.map((unit) => ({ value: unit, label: unitLabel[unit] }))}
-          />
-        </div>
+        <DurationField
+          label={t('automation.waitUntil.timeout', 'At most')}
+          unitAriaLabel={t('automation.waitUntil.unit', 'Unit')}
+          value={timeout.value}
+          unit={timeout.unit}
+          units={TIMEOUT_UNITS}
+          unitLabel={unitLabel}
+          isUnit={isTimeoutUnit}
+          min={1}
+          valueTestId={`wait-until-timeout-${String(index)}`}
+          unitTestId={`wait-until-unit-${String(index)}`}
+          onChange={(value, unit) => onChange({ ...step, timeoutS: joinTimeout(value, unit) })}
+        />
         <label className="min-w-56 flex-1">
           <PickerLabel>
             {t('automation.waitUntil.onTimeout', 'If it does not happen in time')}

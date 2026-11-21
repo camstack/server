@@ -28,7 +28,6 @@ import type { AutomationAction, AutomationRecipe, AutomationRepeatLoop } from '.
 import {
   DEFAULT_TRACE_KEEP,
   nestedStepsOf,
-  REPEAT_ITEM_VAR,
   stepConditionsOf,
   stepGuardOf,
   validateRecipeBounds,
@@ -422,72 +421,42 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
         action.args ?? {},
       )}, vars)`
     case 'action':
+      // the step bodies are the ONE shared implementation (step-bodies.ts), also run by an Action
       return `        // an Action run, awaited: the step takes THAT run's outcome
-        const result = await ctx.api.actions.run.mutate({
-          actionId: ${j(action.actionId)},
-          variables: substituteVariables(${j(action.variables ?? {})}, vars),
-          wait: true,
-          origin: { blockId: BLOCK_ID ?? undefined },
-        })
-        if (result.outcome !== 'ran') {
-          throw new Error('action ' + ${j(action.actionId)} + ' ' + result.outcome + (result.message === undefined ? '' : ': ' + result.message))
-        }`
+        await runActionBody(${j(action)}, {
+          ...env,
+          run: (input) =>
+            ctx.api.actions.run.mutate({
+              actionId: input.actionId,
+              variables: input.variables,
+              wait: true,
+              origin: { blockId: BLOCK_ID ?? undefined },
+            }),
+        })`
     case 'notify':
       return `        // a notification through one target: the one send path the exporters use
-        const sent = await sendToExportedTarget(ctx.api, ctx.logger, {
-          exporter: 'automation',
-          targetId: ${j(action.targetId)},
-          notification: {
-            body: String(substitute(${j(action.body)}, vars)),
-            ${action.title === undefined ? '' : `title: String(substitute(${j(action.title)}, vars)),`}
-          },
-        })
-        if (sent.status === 'refused') throw new Error('notification target ' + sent.reason)
-        if (sent.status === 'failed') throw new Error('notification failed: ' + sent.message)`
+        await runNotifyBody(${j(action)}, {
+          ...env,
+          send: (input) =>
+            sendToExportedTarget(ctx.api, ctx.logger, {
+              exporter: 'automation',
+              targetId: input.targetId,
+              notification: { body: input.body, ...(input.title === undefined ? {} : { title: input.title }) },
+            }),
+        })`
     case 'probe':
       return `        // a TCP reachability probe: one measurement, an expectation, an optional retry window
-        const probed = await runProbeStep(
-          { connect: tcpConnect, now: () => Date.now(), sleep, isAborted: () => token.aborted },
-          {
-            host: String(substitute(${j(action.host)}, vars)),
-            port: ${j(action.port)},
-            timeoutSeconds: ${j(action.timeoutSeconds)},
-            ${action.expect === undefined ? '' : `expect: ${j(action.expect)},`}
-            ${action.retryUntilSeconds === undefined ? '' : `retryUntilSeconds: ${j(action.retryUntilSeconds)},`}
-          },
-        )
-        ${action.saveAs === undefined ? '' : `Object.assign(vars, reachVars(${j(action.saveAs)}, probed.result))`}
-        scope.setAttempts(probed.attempts, probed.message)
-        ctx.logger.info('probe finished', { host: String(substitute(${j(action.host)}, vars)), port: ${j(action.port)}, met: probed.met, attempts: probed.attempts, rttMs: probed.result.rttMs })
-        if (!probed.met) throw new Error('probe: ' + probed.message)`
+        await runProbeBody(${j(action)}, scope, { ...env, connect: tcpConnect })`
     case 'http-request':
       return `        // an HTTP request: one measurement, an expectation, an optional retry window.
         // Header values and the body are never logged or traced.
-        const httpUrl = String(substitute(${j(action.url)}, vars))
-        scope.setArgs({ method: ${j(action.method)}, url: redactUrl(httpUrl) })
-        const startedHttp = Date.now()
-        const requested = await runHttpStep(
-          { fetch: globalThis.fetch, now: () => Date.now(), sleep, isAborted: () => token.aborted },
-          {
-            method: ${j(action.method)},
-            url: httpUrl,
-            timeoutSeconds: ${j(action.timeoutSeconds)},
-            ${action.headers === undefined ? '' : `headers: substituteStrings(${j(action.headers)}, vars),`}
-            ${action.body === undefined ? '' : `body: String(substitute(${j(action.body)}, vars)),`}
-            ${action.expect === undefined ? '' : `expect: ${j(action.expect)},`}
-            ${action.retryUntilSeconds === undefined ? '' : `retryUntilSeconds: ${j(action.retryUntilSeconds)},`}
-          },
-        )
-        ${action.saveAs === undefined ? '' : `Object.assign(vars, reachVars(${j(action.saveAs)}, requested.result))`}
-        scope.setAttempts(requested.attempts, requested.message)
-        ctx.logger.info('http request finished', { method: ${j(action.method)}, url: redactUrl(httpUrl), status: requested.result.status, met: requested.met, attempts: requested.attempts, durationMs: Date.now() - startedHttp })
-        if (!requested.met) throw new Error('http request: ' + requested.message)`
+        await runHttpBody(${j(action)}, scope, { ...env, fetch: globalThis.fetch })`
     case 'stop':
       return `        // end the run here, on purpose: the steps after it are not-run with this reason
         scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`
     case 'set':
       return `        // write the run's own bag, for the steps after this one — substitution only
-        Object.assign(vars, substituteVariables(${j(action.vars)}, vars))`
+        runSetBody(${j(action)}, env)`
     case 'code':
       return `        // inline code action — a fragment of THIS block, bundled by esbuild
         await (async () => {
@@ -582,61 +551,26 @@ function emitWaitUntil(
   action: Extract<AutomationAction, { kind: 'wait-until' }>,
   site: StepSite,
 ): string {
-  const onTimeout =
-    action.onTimeout === 'stop' ? `scope.stop(message, 'failed')` : 'scope.markTimedOut(message)'
   return `    {
       meta: ${site.meta},
       run: async (scope) => {
         // woken by a report of one of its devices, by the reconcile tick, or by a restart
-        const waited = await waitUntil({
+        await runWaitUntilBody(${j(action)}, scope, {
+          ...env,
           read: () => evaluateCondition(${j(action.when)}, ${j(`${site.path}.when`)}, vars),
-          timeoutMs: ${j(action.timeoutS * 1000)},
-          now: () => Date.now(),
-          isAborted: () => token.aborted,
           nextWake: (ms) => waitForWake(ms, token, ${j(wakeDevicesOf(action.when))}),
-        })
-        if (waited.result === 'timed-out') {
-          const message = waitTimedOutMessage(${j(action.timeoutS)}, waited.lastReason)
-          ctx.logger.info('wait-until timed out', { step: ${j(site.path)}, onTimeout: ${j(action.onTimeout)}, reason: waited.lastReason })
-          ${onTimeout}
-        }
+        }, ${j(site.path)})
       },
     },`
 }
 
-/** How a `repeat` decides its iterations, as the fields of a RunnableRepeat. */
+/** How a `repeat` decides its iterations, as the fields of a RunnableRepeat: the shared `repeatLoopFields`. */
 function emitRepeatLoop(loop: AutomationRepeatLoop, site: StepSite): string {
-  switch (loop.by) {
-    case 'count':
-      return `limit: ${j(loop.count)}, limitIsTimeout: false,`
-    case 'forEach':
-      // `before` is also called once past the last device (the runner reads it
-      // before its limit): that call ends the loop. A loop one level down then
-      // gives back the device of the loop around it, when there is one; any
-      // other loop leaves its last device in place.
-      return `// once per device: the device id is in vars.${REPEAT_ITEM_VAR} for the steps of that iteration
-        limit: ${j(loop.target.ids.length)}, limitIsTimeout: false,
-        ...(() => {
-          const ids = ${j(loop.target.ids)}
-          let outer: unknown
-          return {
-            before: async (iteration) => {
-              if (iteration === 0) outer = vars[${j(REPEAT_ITEM_VAR)}]
-              if (iteration < ids.length) vars[${j(REPEAT_ITEM_VAR)}] = ids[iteration]
-              else if (${j(isNestedSite(site))} && outer !== undefined) vars[${j(REPEAT_ITEM_VAR)}] = outer
-              return { go: true }
-            },
-          }
-        })(),`
-    case 'while':
-    case 'until': {
-      const read = `repeatCheck(${j(loop.by)}, await evaluateCondition(${j(loop.when)}, ${j(`${site.path}.loop.when`)}, vars))`
-      const pause =
-        loop.waitS === undefined ? '' : `\n        between: () => sleep(${j(loop.waitS * 1000)}),`
-      return `limit: ${j(loop.maxIterations)}, limitIsTimeout: true,
-        ${loop.by === 'while' ? 'before' : 'after'}: async () => ${read},${pause}`
-    }
-  }
+  const read =
+    loop.by === 'while' || loop.by === 'until'
+      ? `read: (when) => evaluateCondition(when, ${j(`${site.path}.loop.when`)}, vars)`
+      : "read: async () => ({ result: 'unknown', reason: 'no condition' })"
+  return `...repeatLoopFields(${j(loop)}, { ...env, ${read} }, ${j(isNestedSite(site))}),`
 }
 
 /** One step, wherever it sits: a block step emits its own steps one level down, under its path. */
@@ -757,6 +691,7 @@ function renderAutomationBlock(input: GenerateAutomationBlockInput): string {
   AutomationRunVerdict,
   AutomationWhen,
   AutomationStepTrace,
+  BodyEnv,
   RunnableStep,
   StepScope,
   TimeSite,
@@ -795,13 +730,13 @@ import {
   vocabCall,
   evaluateStepCondition,
   runSteps,
-  runProbeStep,
-  runHttpStep,
-  redactUrl,
-  reachVars,
-  repeatCheck,
-  waitUntil,
-  waitTimedOutMessage,
+  runProbeBody,
+  runHttpBody,
+  runActionBody,
+  runNotifyBody,
+  runSetBody,
+  runWaitUntilBody,
+  repeatLoopFields,
   siteFor,
   validateTimeSpecForSite,
   zoneOnlySite,
@@ -1237,14 +1172,6 @@ ${
     return resolveStepArgs(value, vars, warnMissingVar)
   }
 
-  /** Header values, substituted: the values are text, and are never logged. */
-  function substituteStrings(
-    raw: Record<string, string>,
-    vars: Record<string, unknown>,
-  ): Record<string, string> {
-    return Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, String(substitute(value, vars))]))
-  }
-
   /** Open a TCP connection and close it again: resolves when the port answered. */
   async function tcpConnect(host: string, port: number, timeoutMs: number): Promise<void> {
     const net = await import('node:net')
@@ -1259,21 +1186,6 @@ ${
       socket.once('connect', () => done())
       socket.once('error', (err) => done(err))
     })
-  }
-
-  /** The variables handed to an Action step, substituted and kept to primitives. */
-  function substituteVariables(
-    raw: Record<string, string | number | boolean>,
-    vars: Record<string, unknown>,
-  ): Record<string, string | number | boolean> {
-    const out: Record<string, string | number | boolean> = {}
-    for (const [key, value] of Object.entries(raw)) {
-      const resolved = substitute(value, vars)
-      if (typeof resolved === 'string' || typeof resolved === 'number' || typeof resolved === 'boolean') {
-        out[key] = resolved
-      }
-    }
-    return out
   }
 
   async function actuate(
@@ -1323,6 +1235,15 @@ ${
     token: RunToken,
   ): Promise<{ steps: readonly AutomationStepTrace[]; failed: boolean }> {
     const sleep = (ms: number): Promise<void> => abortableSleep(ms, token)
+    // what a step does when it runs is shared with an Action's runner (step-bodies.ts)
+    const env: BodyEnv = {
+      vars,
+      substitute: (value) => substitute(value, vars),
+      sleep,
+      now: () => Date.now(),
+      isAborted: () => token.aborted,
+      info: (message, meta) => ctx.logger.info(message, meta),
+    }
     const steps: RunnableStep[] = [
 ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     ]

@@ -114,3 +114,52 @@ describe('action draft', () => {
     expect(newVariable([{ name: 'value', type: 'string' }]).name).toBe('value2')
   })
 })
+
+describe('an action with every step kind', () => {
+  const WIDE: ActionEntry = {
+    id: 'internal:wide',
+    name: 'Wide',
+    addonId: 'core-blocks',
+    source: 'internal',
+    readOnly: false,
+    status: { isRunning: false, lastRunAt: null, lastError: null },
+    variables: [{ name: 'room', type: 'string' }],
+    steps: [
+      { kind: 'notify', targetId: 't1', body: 'door open in {{vars.room}}' },
+      {
+        kind: 'http-request',
+        method: 'POST',
+        url: 'http://ccu.local/{{vars.room}}',
+        timeoutSeconds: 2,
+        body: '{"place":"{{vars.room}}"}',
+      },
+      {
+        kind: 'choose',
+        branches: [
+          {
+            if: { kind: 'all', children: [] },
+            steps: [
+              {
+                kind: 'command',
+                target: { kind: 'var', name: 'room' },
+                actionId: 'switch.on',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+
+  it('finds the variables read by nested steps, in a notify text it does not (a set may have written it)', () => {
+    expect(variablesUsedBy(draftOf(WIDE).steps)).toEqual(['room'])
+  })
+
+  it('renames a variable inside notify, http, nested commands and texts', () => {
+    const renamed = renameVariable(draftOf(WIDE), 0, 'zone')
+    expect(JSON.stringify(renamed.steps)).not.toContain('room')
+    expect(JSON.stringify(renamed.steps)).toContain('{{vars.zone}}')
+    expect(variablesUsedBy(renamed.steps)).toEqual(['zone'])
+    expect(checkDraft(renamed).ok).toBe(true)
+  })
+})

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { ActionTargetResolver } from '../action-target.js'
 import { AutomationRecipeSchema, type AutomationRecipe } from '../recipe.js'
 import {
-  buildActionSteps,
   DISABLED_STEP_MESSAGE,
   type RunnableStep,
   type RunStepsOptions,
   runSteps,
 } from '../step-runner.js'
+import { buildActionSteps } from '../action-steps.js'
 import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
 function options(): RunStepsOptions {

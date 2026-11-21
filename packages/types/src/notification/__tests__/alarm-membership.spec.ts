@@ -94,3 +94,20 @@ describe('sensorTransitionNeverFires (D640 × D630)', () => {
     expect([...NC_ALARM_OPENING_EVENT_KINDS]).toEqual(['contact', 'cover', 'lock', 'switch'])
   })
 })
+
+describe('ruleBelongsToAlarm — an Action with flow control', () => {
+  it('sees a panel trigger nested in a choose or a parallel, not only at the top level', () => {
+    const nested = (id: string): readonly ActionStep[] | undefined =>
+      id === 'internal:a1'
+        ? [
+            {
+              kind: 'choose',
+              branches: [{ if: { kind: 'all', children: [] }, steps: [TRIGGER_STEP] }],
+            },
+          ]
+        : undefined
+    expect(
+      ruleBelongsToAlarm({ conditions: {}, actions: onTriggerAction, actionStepsOf: nested }),
+    ).toBe(true)
+  })
+})

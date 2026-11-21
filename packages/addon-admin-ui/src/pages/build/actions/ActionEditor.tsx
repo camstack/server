@@ -9,6 +9,7 @@
 
 import {
   type ActionEntry,
+  ACTION_STEP_KINDS,
   type ActionStep,
   type AutomationAction,
   type AutomationRunTrace,
@@ -63,8 +64,18 @@ export interface ActionEditorProps {
   readonly preset?: string | null
 }
 
+/** The kinds the Action editor offers: one list with the schema's, so they cannot drift. */
+export const ACTION_EDITOR_KINDS = ACTION_STEP_KINDS
+
+/**
+ * An Action takes every step an automation's Then takes except `code`: a code
+ * step is TypeScript compiled into an automation's own block and run with that
+ * block's context, and an Action is stored data the cap runner interprets, with
+ * nothing to compile it into (`CODE_NOT_IN_ACTION`). The picker never offers it
+ * (`ACTION_STEP_KINDS`); this guard narrows the list's wider type for the draft.
+ */
 function isActionStep(action: AutomationAction): action is ActionStep {
-  return action.kind === 'command' || action.kind === 'wait'
+  return action.kind !== 'code'
 }
 
 function errorMessage(error: unknown): string {
@@ -280,7 +291,8 @@ export function ActionEditor({
               <ActionList
                 actions={draft.steps}
                 devices={devices}
-                allowedKinds={['command', 'wait']}
+                flowControl
+                allowedKinds={ACTION_EDITOR_KINDS}
                 stepTones={
                   view === null
                     ? undefined
@@ -294,6 +306,12 @@ export function ActionEditor({
                 variables={scope}
                 onChange={(steps) => setDraft({ ...draft, steps: steps.filter(isActionStep) })}
               />
+              <p className="text-xs text-foreground-muted">
+                {t(
+                  'actions.editor.noCodeStep',
+                  'An action offers every step an automation does except a code step: code is compiled into an automation and an action has nothing to compile it into. A condition on whether an automation fired is not available here either.',
+                )}
+              </p>
             </TraceBlock>
           </>
         )}

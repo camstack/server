@@ -15,10 +15,11 @@
  */
 
 import type { CommandOriginClaim } from '../audit/device-transition.js'
+import type { HttpFetch, TcpConnect } from './reach-steps.js'
+import type { NotifyBodyEnv, RunActionBodyEnv } from './step-bodies.js'
 import type { DeviceTemplateRender } from '../expression/device-template.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
-import { findVocabAction, vocabCall } from '../device/cap-vocabulary/action-index.js'
-import { type ActionStep } from './recipe.js'
+import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
 import type {
   EvaluateStepCondition,
   StepConditionResult,
@@ -911,6 +912,24 @@ export interface ActionStepDeps {
   ): Promise<ResolvedTarget>
   /** The action / automation the steps belong to, for the log line of an empty target. */
   readonly owner?: string
+  /**
+   * The effects of the steps beyond a device command. A consumer that has none
+   * leaves them out: the step then fails when it RUNS, traced with the reason,
+   * and never takes the steps around it down.
+   */
+  readonly now?: () => number
+  /** True once the run was cut short; checked by the steps that wait or retry. */
+  readonly isAborted?: () => boolean
+  readonly fetch?: HttpFetch
+  readonly connect?: TcpConnect
+  /** The one notification send path (a `notify` step). */
+  readonly sendNotification?: NotifyBodyEnv['send']
+  /** Run another Action and await it (an `action` step): the cycle guard is the provider's. */
+  readonly runAction?: RunActionBodyEnv['run']
+  /** The run's log line (a probe or request finished, a wait-until timed out). */
+  readonly info?: (message: string, meta: Readonly<Record<string, unknown>>) => void
+  /** How often a `wait-until` of an Action re-reads its condition; nothing wakes an Action, so it polls. */
+  readonly waitPollMs?: number
 }
 
 /**
@@ -929,12 +948,7 @@ export function commandStepMeta(target: ActionTarget, actionId: string): StepMet
   }
 }
 
-function stepMetaOfAction(step: ActionStep): StepMeta {
-  if (step.kind === 'wait') return { kind: 'wait' }
-  return commandStepMeta(step.target, step.actionId)
-}
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
+export function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
@@ -979,85 +993,4 @@ export async function runForDevices(
           .join('; '),
     )
   }
-}
-
-/**
- * The runnable form of an internal Action's steps, bound to one run's
- * variables. Variables are substituted per step, at the moment it runs, so a
- * missing one fails THAT step (traced) and leaves the later ones not-run.
- */
-/** The guard and the else list of a step, bound to the run (#472); `{}` for an unguarded step. */
-function guardOf(
-  step: ActionStep,
-  vars: StepVars,
-  deps: ActionStepDeps,
-): Pick<RunnableStep, 'guard' | 'otherwise'> {
-  const when = step.if
-  if (when === undefined) return {}
-  const evaluate = deps.evaluateCondition
-  return {
-    guard: async () =>
-      evaluate === undefined
-        ? { result: 'unknown', reason: 'this consumer has no condition evaluator' }
-        : evaluate(when),
-    ...(step.else === undefined ? {} : { otherwise: buildActionSteps(step.else, vars, deps) }),
-  }
-}
-
-export function buildActionSteps(
-  steps: readonly ActionStep[],
-  vars: StepVars,
-  deps: ActionStepDeps,
-): RunnableStep[] {
-  return steps.map((step): RunnableStep => {
-    const guarded = {
-      ...guardOf(step, vars, deps),
-      ...(step.enabled === false ? { disabled: true as const } : {}),
-    }
-    const meta = stepMetaOfAction(step)
-    if (step.kind === 'wait') {
-      return { meta, ...guarded, run: () => deps.sleep(step.seconds * 1000) }
-    }
-    return {
-      meta,
-      ...guarded,
-      run: async (scope) => {
-        // an unknown action id fails HERE, at run, before its target is resolved
-        vocabCall(step.actionId, undefined)
-        const templated = await resolveStepArgsWithTemplates(
-          step.args ?? {},
-          vars,
-          deps.onMissingVar,
-          deps.renderTemplates,
-        )
-        if (templated.notes.length > 0) scope.setTemplateNotes(templated.notes)
-        const args = isPlainRecord(templated.value) ? templated.value : {}
-        const target = await deps.resolveTarget(step.target, step.actionId, vars, {
-          actionId: step.actionId,
-          owner: deps.owner,
-        })
-        if (target.deviceIds.length === 0) {
-          scope.markEmpty(target.emptyReason ?? 'the target matched no device')
-          return
-        }
-        // the one place the action id becomes a cap method (baked args win)
-        const call = vocabCall(step.actionId, args)
-        scope.setArgs(args)
-        const [only] = target.deviceIds
-        if (target.deviceIds.length === 1 && only !== undefined) {
-          scope.setDeviceId(only)
-          await deps.invokeCap({
-            deviceId: only,
-            cap: call.cap,
-            method: call.method,
-            args: call.args,
-          })
-          return
-        }
-        await runForDevices(target.deviceIds, scope, (deviceId) =>
-          deps.invokeCap({ deviceId, cap: call.cap, method: call.method, args: call.args }),
-        )
-      },
-    }
-  })
 }

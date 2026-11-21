@@ -1177,6 +1177,27 @@ for actions and the scheduler; the generated block reads through its own
 mirror). The editor is the "Only if…" toggle of the shared action list
 (`StepGuard.tsx`).
 
+## An Action holds the steps an automation's Then holds
+
+An Action's own step list takes every Then step (`command`, `action`, `notify`,
+`probe`, `http-request`, `wait`, `wait-until`, `set`, `stop`, `choose`,
+`parallel`, `repeat`) and nothing else: `code` is refused (`CODE_NOT_IN_ACTION`,
+an Action is data the runner interprets, there is nothing to compile it into) and
+so is a `triggered-by` condition (`TRIGGERED_BY_NEEDS_AUTOMATION`, an Action has no
+firing automation). `ActionStepSchema` and `ACTION_STEP_KINDS` are the one
+definition; the admin editors offer exactly that list (`step-kinds-parity.spec.ts`).
+The `else` list of a guarded step stays command and wait; scheduler points and
+notification-rule action lists keep the narrow shape (`NarrowActionStep`).
+
+The Action runner (`buildActionSteps`, `packages/types/src/automation/action-steps.ts`)
+and the code generated for an automation call the same pure bodies
+(`step-bodies.ts`) for notify, probe, http-request, set, wait-until, action and the
+repeat loop, so a step cannot behave differently in the two places; the command
+step, `stop` and the guard / choose / parallel structure are still written twice.
+An Action that runs an Action is cut at both ends: `findActionCycle` refuses the
+save that closes a cycle, and a run carries a visited set and a depth bound of
+`ACTION_CALL_DEPTH_MAX` (8) and fails rather than recurses (`action-graph.ts`).
+
 ## Template variables of a caller, and the clock ([D1029](../decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md))
 
 Two names are not devices and are never bound to one.

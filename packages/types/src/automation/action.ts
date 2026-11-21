@@ -262,6 +262,8 @@ export const ActionErrorCodeSchema = z.enum([
   /** A non-admin run of an action whose template names a device that caller was not proven to see (D1021). */
   'template-scope',
   'busy',
+  /** An action that would run itself, directly or through other actions: refused at save, and again at run. */
+  'cycle',
 ])
 export type ActionErrorCode = z.infer<typeof ActionErrorCodeSchema>
 

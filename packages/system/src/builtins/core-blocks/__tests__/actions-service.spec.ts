@@ -1144,3 +1144,56 @@ describe('actions — a row stored with a device type D1033 retired', () => {
     ])
   })
 })
+
+describe('actions — an action that runs actions never loops', () => {
+  const CALL = (actionId: string): ActionStep => ({ kind: 'action', actionId })
+
+  it('refuses at save an update that closes a cycle, naming the path, and stores nothing', async () => {
+    const w = await world()
+    const { action: b } = await w.service.create({ action: { name: 'B', steps: [STEP(1)] } })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    await expect(
+      w.service.update({ actionId: b.id, action: { steps: [CALL(a.id)] } }),
+    ).rejects.toMatchObject({
+      code: 'cycle',
+      message: expect.stringContaining(`${b.id} -> ${a.id} -> ${b.id}`),
+    })
+    expect((await w.store.get(b.id))?.steps).toEqual([STEP(1)])
+  })
+
+  it('refuses at save an action that calls itself', async () => {
+    const w = await world()
+    const { action } = await w.service.create({ action: { name: 'Self', steps: [STEP(1)] } })
+    await expect(
+      w.service.update({ actionId: action.id, action: { steps: [CALL(action.id)] } }),
+    ).rejects.toMatchObject({ code: 'cycle' })
+  })
+
+  it('at run time stops a cycle that was stored past the save check: failed, logged with the action id, never hangs', async () => {
+    const w = await world()
+    const { action: b } = await w.service.create({ action: { name: 'B', steps: [STEP(1)] } })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    // what an older version, or a hand edit, could have stored
+    const stored = await w.store.get(b.id)
+    await w.putRaw(b.id.replace('internal:', ''), {
+      name: stored?.name,
+      steps: [CALL(a.id)],
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    const result = await w.service.run({ actionId: a.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('failed')
+    expect(
+      w.log.lines.some((l) => l.message.includes('cycle') && l.extras?.meta?.['actionId'] === a.id),
+    ).toBe(true)
+  })
+
+  it('runs an action that calls another and waits for it', async () => {
+    const w = await world()
+    const { action: b } = await w.service.create({ action: { name: 'B', steps: [STEP(7)] } })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    const result = await w.service.run({ actionId: a.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('ran')
+    expect(w.calls.map((c) => c.deviceId)).toEqual([7])
+  })
+})

@@ -91,8 +91,8 @@ describe('a recipe holding the two steps', () => {
       ],
     })
     const source = generateAutomationBlock({ name: 'CCU', recipe })
-    expect(source).toContain('runProbeStep')
-    expect(source).toContain('runHttpStep')
+    expect(source).toContain('runProbeBody')
+    expect(source).toContain('runHttpBody')
     expect(source).toContain('"kind":"http-request"')
   })
 })

@@ -1,4 +1,4 @@
-import { type ActionStep, type SchedulerInput, schedulersCapability } from '@camstack/types'
+import { type NarrowActionStep, type SchedulerInput, schedulersCapability } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   checkSchedulerDraft,
@@ -93,7 +93,7 @@ describe('point editor input', () => {
 })
 
 describe('save payload', () => {
-  const holdStep: ActionStep = {
+  const holdStep: NarrowActionStep = {
     kind: 'command',
     actionId: 'switch.on',
     target: { kind: 'devices', ids: [3] },

@@ -4,8 +4,8 @@
  * override policy.
  */
 import type {
-  ActionStep,
   AutomationAction,
+  NarrowActionStep,
   HoldOverride,
   SchedulerIssue,
   SchedulerPoint,
@@ -16,6 +16,7 @@ import { Button, Input, Select } from '@camstack/ui-library'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ActionList } from '../automation/ActionList'
+import type { ActionKind } from '../automation/recipe-parts'
 import type { AutomationDevice } from '../automation/automation-data'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import {
@@ -41,7 +42,14 @@ export interface PointEditorProps {
 const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']
 const GRACE_STEP_MS = 60_000
 
-function isActionStep(action: AutomationAction): action is ActionStep {
+/**
+ * A scheduler point is command + wait only: the engine runs a point's steps
+ * itself, not through the action runner, and the full vocabulary of an Action
+ * is not offered here (`NarrowActionStep`).
+ */
+const POINT_STEP_KINDS: readonly ActionKind[] = ['command', 'wait']
+
+function isActionStep(action: AutomationAction): action is NarrowActionStep {
   return action.kind === 'command' || action.kind === 'wait'
 }
 
@@ -195,7 +203,7 @@ export function PointEditor({
         <ActionList
           actions={point.steps}
           devices={devices}
-          allowedKinds={['command', 'wait']}
+          allowedKinds={POINT_STEP_KINDS}
           onChange={(steps) => onChange({ ...point, steps: steps.filter(isActionStep) })}
         />
       )}

@@ -20,7 +20,7 @@ import {
   validateTimeSpecForSite,
   WeekdayKeySchema,
 } from '../time/time-spec.js'
-import { ActionStepSchema } from './recipe.js'
+import { NarrowActionStepSchema } from './recipe.js'
 import {
   type AutomationWhen,
   AutomationWhenSchema,
@@ -91,7 +91,7 @@ export const DEFAULT_MAX_LATE_MS = 10 * 60_000
  */
 export const SCHEDULER_WAIT_MAX_SECONDS = 300
 
-const SchedulerStepSchema = ActionStepSchema.refine(
+const SchedulerStepSchema = NarrowActionStepSchema.refine(
   (step) => step.kind !== 'wait' || step.seconds <= SCHEDULER_WAIT_MAX_SECONDS,
   {
     message: `a scheduler point waits at most five minutes (${SCHEDULER_WAIT_MAX_SECONDS} s); put a longer wait in an action`,

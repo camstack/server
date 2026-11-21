@@ -44,6 +44,14 @@ import {
   ActionTargetResolver,
   type BoundCapsReader,
   buildActionSteps,
+  chainWith,
+  findActionCycle,
+  type HttpFetch,
+  NO_RUN_CHAIN,
+  type NotifyBodyEnv,
+  refuseRunUnder,
+  type RunChain,
+  type TcpConnect,
   collectDeviceTemplates,
   type DeviceDirectory,
   capUnitResolver,
@@ -109,6 +117,15 @@ export interface ActionsServiceDeps {
   readonly templates?: DeviceTemplateDoor
   /** Reads a conditional step's `if` (#472). */
   readonly conditions?: StepConditionDoor
+  /** What the steps beyond a device command reach out with; absent where there is none, and such a step then fails when it runs. */
+  readonly effects?: ActionRunEffects
+}
+
+/** The network and notification effects of an Action's probe, http-request and notify steps. */
+export interface ActionRunEffects {
+  readonly fetch?: HttpFetch
+  readonly connect?: TcpConnect
+  readonly sendNotification?: NotifyBodyEnv['send']
 }
 
 /** After a timeout stops a run, the call is answered once the run ended or this long passed. */
@@ -171,6 +188,7 @@ export class ActionsService implements IActionsProvider {
   private readonly targets: ActionTargetResolver
   private readonly templates: DeviceTemplateDoor | undefined
   private readonly conditions: StepConditionDoor | undefined
+  private readonly effects: ActionRunEffects | undefined
   private readonly running = new Map<string, RunningRun>()
   /** Last run START per action — the throttle's memory. */
   private readonly lastStartedAt = new Map<string, number>()
@@ -194,6 +212,7 @@ export class ActionsService implements IActionsProvider {
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
     this.templates = deps.templates
     this.conditions = deps.conditions
+    this.effects = deps.effects
   }
 
   /** A device was added, removed, moved or re-bound: forget the cached domains. */
@@ -330,7 +349,23 @@ export class ActionsService implements IActionsProvider {
 
   // ── run / stop ──────────────────────────────────────────────────────────
 
-  async run(input: RunInput): Promise<ActionRunResult> {
+  run(input: RunInput): Promise<ActionRunResult> {
+    return this.runUnder(input, NO_RUN_CHAIN)
+  }
+
+  /**
+   * One run, under the chain of Actions that started it (an `action` step runs
+   * an Action from inside a run): an Action already in the chain, or a chain
+   * past the depth bound, is refused — logged with the action id, never hung.
+   */
+  private async runUnder(input: RunInput, chain: RunChain): Promise<ActionRunResult> {
+    const refusal = refuseRunUnder(chain, input.actionId)
+    if (refusal !== null) {
+      this.logger.warn(`action run refused — ${refusal}`, {
+        meta: { actionId: input.actionId, chain: chain.ids },
+      })
+      throw new ActionError('cycle', refusal)
+    }
     await this.authorize(input.caller, input.actionId, input.deviceId, 'run')
     const entry = await this.find(input.actionId)
     if (entry === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
@@ -405,7 +440,17 @@ export class ActionsService implements IActionsProvider {
       lastRunAt: startedAt,
       lastError: null,
     })
-    const done = this.execute(entry, resolved.values, runId, startedAt, trigger, token, readable)
+    const done = this.execute(
+      entry,
+      resolved.values,
+      runId,
+      startedAt,
+      trigger,
+      token,
+      readable,
+      chainWith(chain, entry.id),
+      input,
+    )
     if (input.wait === true) return done
     void done
     return { runId, outcome: 'started' }
@@ -458,13 +503,15 @@ export class ActionsService implements IActionsProvider {
     trigger: AutomationRunTrace['trigger'],
     token: RunToken,
     readable: readonly number[] | undefined,
+    chain: RunChain,
+    started: RunInput,
   ): Promise<ActionRunResult> {
     let outcome: AutomationRunOutcome = 'failed'
     let steps: readonly AutomationStepTrace[] = []
     let message: string | undefined
     const deadline = this.armDeadline(entry.id, runId, token)
     try {
-      const runnable = this.runnableFor(entry, values, token, runId, readable)
+      const runnable = this.runnableFor(entry, values, token, runId, readable, chain, started)
       const running = runSteps(runnable, {
         pathPrefix: 'steps',
         isAborted: () => token.aborted,
@@ -585,6 +632,8 @@ export class ActionsService implements IActionsProvider {
     token: RunToken,
     runId: string,
     readable: readonly number[] | undefined,
+    chain: RunChain,
+    started: RunInput,
   ): RunnableStep[] {
     if (entry.source === 'internal') {
       const ruleFire = ruleFireOfClaim(readCurrentCommandOrigin())
@@ -609,6 +658,29 @@ export class ActionsService implements IActionsProvider {
           this.logger.warn('action template referenced a variable that was never set', {
             meta: { actionId: entry.id, variable: name },
           }),
+        now: this.now,
+        isAborted: () => token.aborted,
+        info: (message, meta) =>
+          this.logger.info(message, { meta: { actionId: entry.id, runId, ...meta } }),
+        runAction: async ({ actionId, variables }) => {
+          // the Action it runs is reached as the caller that started this one: no wider
+          const result = await this.runUnder(
+            {
+              caller: started.caller,
+              actionId,
+              variables,
+              wait: true,
+              ...(started.deviceId === undefined ? {} : { deviceId: started.deviceId }),
+            },
+            chain,
+          )
+          return { outcome: result.outcome, message: result.message }
+        },
+        ...(this.effects?.fetch === undefined ? {} : { fetch: this.effects.fetch }),
+        ...(this.effects?.connect === undefined ? {} : { connect: this.effects.connect }),
+        ...(this.effects?.sendNotification === undefined
+          ? {}
+          : { sendNotification: this.effects.sendNotification }),
       })
     }
     return [
@@ -692,6 +764,7 @@ export class ActionsService implements IActionsProvider {
       patch.steps ?? existing.steps ?? [],
       patch.name ?? existing.name,
     )
+    await this.requireNoCycle(input.actionId, steps, patch.name ?? existing.name)
     const action = await this.store.update(input.actionId, {
       name: patch.name ?? existing.name,
       steps,
@@ -757,6 +830,23 @@ export class ActionsService implements IActionsProvider {
       }
       throw err
     }
+  }
+
+  /** An Action that would run itself, directly or through others, is refused at save and names the cycle. */
+  private async requireNoCycle(
+    actionId: string,
+    steps: ActionInput['steps'],
+    actionName: string,
+  ): Promise<void> {
+    const cycle = await findActionCycle(actionId, steps, async (id) =>
+      isInternalActionId(id) ? (await this.store.get(id))?.steps : undefined,
+    )
+    if (cycle === null) return
+    const message = `action cycle: ${cycle.join(' -> ')}`
+    this.logger.warn('action save refused — it would run itself', {
+      meta: { action: actionName, actionId, cycle },
+    })
+    throw new ActionError('cycle', message)
   }
 
   /** An action whose waits alone exceed the run ceiling could never finish: refuse the save. */

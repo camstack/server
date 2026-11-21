@@ -771,6 +771,7 @@ export {
 // authored as, and the generator that compiles one to a core block ──
 export type {
   ActionStep,
+  NarrowActionStep,
   AutomationAction,
   AutomationAll,
   AutomationAny,
@@ -864,6 +865,9 @@ export type {
 } from './automation/index.js'
 export {
   ActionStepSchema,
+  ACTION_STEP_KINDS,
+  CODE_NOT_IN_ACTION,
+  NarrowActionStepSchema,
   AutomationActionSchema,
   AutomationCommandStepBaseSchema,
   AutomationCommandStepSchema,
@@ -1033,6 +1037,9 @@ export * from './automation/leaf-catalog.js'
 export * from './automation/scheduler.js'
 export * from './automation/step-condition.js'
 export * from './automation/step-runner.js'
+export * from './automation/action-steps.js'
+export * from './automation/action-graph.js'
+export * from './automation/step-bodies.js'
 export * from './automation/wait-until.js'
 export * from './automation/reach-steps.js'
 export * from './automation/export-entities.js'

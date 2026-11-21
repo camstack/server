@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addon bundles now carry only the part of the types package they reach: the types build is tree-shakable (one ESM file per module, pure-marked initializers), which cuts addon heap by 35-75 MB and BaseDevice.state reads a schema-free cap-name table
 - Export panels report an Alexa link whose proactive updates are paused as linked, with a push status that can be unknown
+### Added
+
+- An action can now hold every step an automation's Then can (notify, http request, probe, wait until, set, stop, choose, parallel, repeat and a call to another action), except a code step; a save that would make actions call each other in a circle is refused.
 
 ## [1.2.617] - 2026-11-21
 

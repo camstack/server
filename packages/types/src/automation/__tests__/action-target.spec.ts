@@ -6,7 +6,8 @@ import {
   CurrentAutomationRecipeSchema,
   type AutomationCommandStep,
 } from '../recipe.js'
-import { buildActionSteps, runSteps, type CapCall, type RunStepsOptions } from '../step-runner.js'
+import { buildActionSteps } from '../action-steps.js'
+import { runSteps, type CapCall, type RunStepsOptions } from '../step-runner.js'
 import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
 const ORIGIN = { actionId: 'internal:a1', owner: 'automation-7' } as const

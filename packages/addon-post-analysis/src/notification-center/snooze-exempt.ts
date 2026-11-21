@@ -34,7 +34,12 @@
  *     is absent proves nothing about a window created from the app.
  */
 
-import type { ActionStep, NcRule } from '@camstack/types'
+import {
+  flattenActionSteps,
+  type ActionStep,
+  type AutomationBodyStep,
+  type NcRule,
+} from '@camstack/types'
 import { NC_ALARM_SYSTEM_EVENT_KINDS, findVocabAction } from '@camstack/types'
 
 /** The cap whose presence in an Action makes the rule the alarm's trigger. */
@@ -49,13 +54,13 @@ export type SnoozeExemptRule = Pick<NcRule, 'conditions' | 'actions'>
 /** The steps of an Action by id, from the centre's RAM mirror of the Actions list. */
 export type ActionStepsOf = (actionId: string) => readonly ActionStep[] | undefined
 
-function stepActuatesAlarm(step: ActionStep): boolean {
+function stepActuatesAlarm(step: ActionStep | AutomationBodyStep): boolean {
   return step.kind === 'command' && findVocabAction(step.actionId)?.cap === ALARM_PANEL_CAP
 }
 
 function actionActuatesAlarm(actionId: string, actionStepsOf: ActionStepsOf | undefined): boolean {
   const steps = actionStepsOf?.(actionId)
-  return steps !== undefined && steps.some(stepActuatesAlarm)
+  return steps !== undefined && flattenActionSteps(steps).some(stepActuatesAlarm)
 }
 
 function actionsActuateAlarm(

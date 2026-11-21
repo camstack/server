@@ -22,7 +22,7 @@
 import type { AutomationAction } from '@camstack/types'
 import { AutomationCodeEditor } from '../../../components/code/AutomationCodeEditor'
 import { Badge, Button, Input, Select, Switch, type DeviceListState } from '@camstack/ui-library'
-import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
+import { PARALLEL_STEPS_MAX, STOP_REASON_MAX } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
@@ -42,7 +42,9 @@ import { isParallelMember, PARALLEL_KINDS } from './choose-model'
 import { SetVarsFields } from './SetVarsFields'
 import { RepeatFields } from './RepeatFields'
 import { StepGuard, StepIf } from './StepGuard'
+import { DurationField } from './DurationField'
 import { WaitUntilFields } from './WaitUntilFields'
+import { isWaitUnit, joinWait, splitWait, WAIT_UNITS } from './wait-until-model'
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { type StepChoice, type StepKindOption, StepKindPicker } from './StepKindPicker'
@@ -73,6 +75,23 @@ const FLOW_KINDS: readonly ActionKind[] = [
   'repeat',
 ]
 
+/**
+ * The kinds a list offers: the ones `allowedKinds` names (default: all), minus
+ * the flow kinds when the list is not an automation's own. The Then editor and
+ * the Action editor both ask this, so they cannot offer different kinds by
+ * accident (`step-kinds-parity.spec.ts`).
+ */
+export function offeredStepKinds(
+  allowedKinds: readonly ActionKind[] | undefined,
+  flowControl: boolean,
+): readonly ActionKind[] {
+  return ACTION_KINDS.filter(
+    (k) =>
+      (allowedKinds === undefined || allowedKinds.includes(k.value)) &&
+      (flowControl || !FLOW_KINDS.includes(k.value)),
+  ).map((k) => k.value)
+}
+
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
   readonly devices: readonly AutomationDevice[]
@@ -88,8 +107,9 @@ export interface ActionListProps {
   /** An else list or a branch of a choose: its steps carry no `if` of their own. */
   readonly nested?: boolean
   /**
-   * The list is an AUTOMATION's: it offers the stop and set steps and "continue
-   * if this fails". A standalone list (an action, a scheduler point) does not.
+   * The list offers the flow steps (stop, set, choose, wait-until, parallel,
+   * repeat) and "continue if this fails": an automation's Then, and an Action.
+   * A scheduler point does not.
    */
   readonly flowControl?: boolean
   /** The most steps the list takes; the add button is disabled there. Default: no bound here. */
@@ -121,11 +141,8 @@ export function ActionList({
 }: ActionListProps) {
   const { t } = useTranslation()
   const [picking, setPicking] = useState(false)
-  const kinds = ACTION_KINDS.filter(
-    (k) =>
-      (allowedKinds === undefined || allowedKinds.includes(k.value)) &&
-      (flowControl || !FLOW_KINDS.includes(k.value)),
-  )
+  const offered = offeredStepKinds(allowedKinds, flowControl)
+  const kinds = ACTION_KINDS.filter((k) => offered.includes(k.value))
   // the order the operator reads the choices in
   const pickOrder: readonly StepChoice[] = [
     'command',
@@ -225,20 +242,28 @@ export function ActionList({
           </div>
 
           {action.kind === 'wait' && (
-            <label className="block w-32">
-              <PickerLabel>{t('automation.actionList.seconds', 'Seconds')}</PickerLabel>
-              <Input
-                type="number"
+            <div className="flex flex-wrap items-end gap-2">
+              <DurationField
+                label={t('automation.actionList.waitFor', 'Wait for')}
+                unitAriaLabel={t('automation.waitUntil.unit', 'Unit')}
+                value={splitWait(action.seconds).value}
+                unit={splitWait(action.seconds).unit}
+                units={WAIT_UNITS}
+                unitLabel={{
+                  ms: t('automation.waitUntil.unitMilliseconds', 'milliseconds'),
+                  s: t('automation.waitUntil.unitSeconds', 'seconds'),
+                  min: t('automation.waitUntil.unitMinutes', 'minutes'),
+                  h: t('automation.waitUntil.unitHours', 'hours'),
+                }}
+                isUnit={isWaitUnit}
                 min={0}
-                max={WAIT_MAX_SECONDS}
-                value={String(action.seconds)}
-                onChange={(e) =>
-                  onChange(
-                    replaceAt(actions, index, { ...action, seconds: Number(e.target.value) }),
-                  )
+                valueTestId={`wait-value-${String(index)}`}
+                unitTestId={`wait-unit-${String(index)}`}
+                onChange={(value, unit) =>
+                  onChange(replaceAt(actions, index, { ...action, seconds: joinWait(value, unit) }))
                 }
               />
-            </label>
+            </div>
           )}
 
           {action.kind === 'stop' && (

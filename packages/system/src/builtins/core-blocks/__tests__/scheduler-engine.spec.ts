@@ -1,5 +1,5 @@
 import {
-  type ActionStep,
+  type NarrowActionStep,
   type AutomationWhen,
   type SchedulerInput,
   type SchedulerPoint,
@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest'
 import { ALL_DAYS, at, harness } from './scheduler-support.js'
 import type { StepConditionDoor } from '../step-condition-door.js'
 
-function turn(on: boolean, target: number | 'domain'): ActionStep {
+function turn(on: boolean, target: number | 'domain'): NarrowActionStep {
   return {
     kind: 'command',
     target: target === 'domain' ? { kind: 'domain' } : { kind: 'devices', ids: [target] },
@@ -24,7 +24,7 @@ function point(
   hh: number,
   mm: number,
   mode: SchedulerPoint['mode'],
-  steps: ActionStep[] = [],
+  steps: NarrowActionStep[] = [],
   extra: Partial<SchedulerPoint> = {},
 ): SchedulerPoint {
   return { id, at: { kind: 'clock', hh, mm }, mode, steps, ...extra }
@@ -80,7 +80,7 @@ describe('scheduler engine — device templates (D1021)', () => {
         check: async () => [],
       },
     })
-    const step: ActionStep = {
+    const step: NarrowActionStep = {
       kind: 'command',
       target: { kind: 'devices', ids: [1] },
       actionId: 'cover.position',
@@ -107,7 +107,7 @@ describe('scheduler engine — a conditional step (#472)', () => {
       devices: [{ id: 1 }],
       conditions,
     })
-    const step: ActionStep = {
+    const step: NarrowActionStep = {
       kind: 'command',
       target: { kind: 'devices', ids: [1] },
       actionId: 'cover.position',
@@ -149,7 +149,7 @@ describe('scheduler engine — an unreadable step condition (#472)', () => {
       devices: [{ id: 1 }],
       conditions,
     })
-    const step: ActionStep = {
+    const step: NarrowActionStep = {
       kind: 'command',
       target: { kind: 'devices', ids: [1] },
       actionId: 'cover.position',

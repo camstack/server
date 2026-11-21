@@ -6502,7 +6502,8 @@
       "stepEnabled": "Passo attivo",
       "stepDisabledHint": "Disattivato: saltato quando l'automazione parte",
       "kindProbe": "Ping / raggiungibilità",
-      "kindHttp": "Richiesta HTTP"
+      "kindHttp": "Richiesta HTTP",
+      "waitFor": "Attendi"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6867,7 +6868,8 @@
       "unitHours": "ore",
       "onTimeout": "Se non accade in tempo",
       "continue": "Prosegui con il passaggio successivo",
-      "stop": "Ferma l'esecuzione come errore"
+      "stop": "Ferma l'esecuzione come errore",
+      "unitMilliseconds": "millisecondi"
     },
     "parallel": {
       "hint": "Partono insieme e l'esecuzione prosegue quando tutti hanno finito. Se uno fallisce, l'esecuzione fallisce dopo che gli altri hanno finito."
@@ -12885,7 +12887,8 @@
         "description": "Indica le variabili da usare in questa esecuzione.",
         "choose": "Scegli…"
       },
-      "triggerAlarmName": "Fai scattare l'allarme"
+      "triggerAlarmName": "Fai scattare l'allarme",
+      "noCodeStep": "Un'azione offre tutti i passi di un'automazione tranne il passo di codice: il codice viene compilato dentro un'automazione e un'azione non ha nulla in cui compilarlo. Qui non è disponibile nemmeno la condizione su quale automazione è scattata."
     },
     "list": {
       "couldNotRead": "Impossibile leggere le azioni",

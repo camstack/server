@@ -17,6 +17,7 @@
  * opening-edge refusal: better a closing notification than a silent open).
  */
 import type { ActionStep } from '../automation/recipe.js'
+import { flattenActionSteps } from '../automation/action-graph.js'
 import { stepPullsAlarmTrigger } from './alarm-steps.js'
 import type { NcConditions, NcRuleActions } from '../capabilities/notification-rules.cap.js'
 
@@ -59,7 +60,7 @@ function actionPullsAlarmTrigger(
 ): boolean {
   const steps = actionStepsOf?.(actionId)
   if (steps === undefined) return false
-  return steps.some(stepPullsAlarmTrigger)
+  return flattenActionSteps(steps).some(stepPullsAlarmTrigger)
 }
 
 /** True when the rule's deviceState gate names any `armed_*` word. */

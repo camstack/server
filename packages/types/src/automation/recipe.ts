@@ -117,9 +117,11 @@ export const AutomationCommandStepSchema =
 export type AutomationCommandStep = z.infer<typeof AutomationCommandStepSchema>
 
 /**
- * The steps an internal Action may contain: command and wait, and nothing that can
- * call back into an Action — so an Action can never reach itself (no cycles).
- * This is the LEAF shape: no condition of its own.
+ * The leaf steps of an `else` list: command and wait, with no condition of their
+ * own. (An Action's own list is wider: {@link ActionStepSchema}. It may call
+ * another Action, so the cycle is cut elsewhere — `findActionCycle` refuses the
+ * save that closes one, and a run carries a visited set and a depth bound,
+ * `action-graph.ts`.)
  */
 export const LeafActionStepSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema,
@@ -153,18 +155,20 @@ const GuardedCommandStepSchema = AutomationCommandStepBaseSchema.extend(stepGuar
   .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
 
 /**
- * A step of a STANDALONE list (an action, a scheduler point, a preset): the
- * same two step kinds an automation runs, minus a guard that reads the
- * automation's trigger, which such a list does not have.
+ * The NARROW step of a list that runs a device command or waits, and nothing
+ * else: a scheduler point, a notification rule's action list. Pinned on
+ * purpose — such a list has no run bag, no notification target of its own and
+ * no place to nest a block, so it is not offered the rest of an Action's steps.
+ * It is a subset of {@link ActionStep}: a runner built for the wide step runs it.
  */
-export const ActionStepSchema = z
+export const NarrowActionStepSchema = z
   .discriminatedUnion('kind', [GuardedWaitStepSchema, GuardedCommandStepSchema])
   .superRefine((step, ctx) => {
     if (step.if !== undefined && hasTriggeredByLeaves(step.if)) {
       ctx.addIssue({ code: 'custom', message: TRIGGERED_BY_NEEDS_AUTOMATION, path: ['if'] })
     }
   })
-export type ActionStep = z.infer<typeof ActionStepSchema>
+export type NarrowActionStep = z.infer<typeof NarrowActionStepSchema>
 
 /**
  * Flow control of an AUTOMATION's list (#500). A standalone list (an action, a
@@ -376,7 +380,7 @@ export const AutomationHttpRequestStepSchema = z
   .strict()
 export type AutomationHttpRequestStep = z.infer<typeof AutomationHttpRequestStepSchema>
 
-const AutomationRunActionStepSchema = z.object({
+export const AutomationRunActionStepSchema = z.object({
   kind: z.literal('action'),
   ...stepEnabledShape,
   /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
@@ -385,6 +389,8 @@ const AutomationRunActionStepSchema = z.object({
   variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   ...continueOnErrorShape,
 })
+
+export type AutomationRunActionStep = z.infer<typeof AutomationRunActionStepSchema>
 
 /** How many branches one `choose` holds. */
 export const CHOOSE_BRANCHES_MAX = 6
@@ -639,6 +645,52 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   }),
 ])
 export type AutomationAction = z.infer<typeof AutomationActionSchema>
+
+/** Why an Action has no `code` step: it needs a block of its own, an Action is interpreted. */
+export const CODE_NOT_IN_ACTION =
+  'an action is interpreted, so it has no code step: a code step is bundled into the block of an automation'
+
+/**
+ * A step of an Action: exactly an automation's Then step, minus what cannot be
+ * interpreted (`code`, which is bundled into its own block) and what has no
+ * meaning without a trigger (`triggered-by`, refused with
+ * {@link TRIGGERED_BY_NEEDS_AUTOMATION}). The ONE runner builds it
+ * (`buildActionSteps`); the kinds offered are `ACTION_STEP_KINDS`.
+ * An `action` step runs another Action; the cycle is refused at save and again at run.
+ */
+export type ActionStep = Exclude<AutomationAction, { kind: 'code' }>
+/** The step as the parser accepts it (before defaults), named so a cap schema embedding it stays printable (TS7056). */
+export type ActionStepInput = z.input<typeof AutomationActionSchema>
+export const ActionStepSchema: z.ZodType<ActionStep, ActionStepInput> =
+  AutomationActionSchema.refine((step): step is ActionStep => step.kind !== 'code', {
+    message: CODE_NOT_IN_ACTION,
+  }).superRefine((step, ctx) => {
+    for (const condition of stepConditionsOf(step)) {
+      if (hasTriggeredByLeaves(condition.when)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: TRIGGERED_BY_NEEDS_AUTOMATION,
+          path: condition.path.split('.').map((part) => (/^\d+$/.test(part) ? Number(part) : part)),
+        })
+      }
+    }
+  })
+
+/** The step kinds an Action has (its editor offers these, the schema accepts these). */
+export const ACTION_STEP_KINDS = [
+  'command',
+  'action',
+  'notify',
+  'probe',
+  'http-request',
+  'wait',
+  'wait-until',
+  'set',
+  'stop',
+  'choose',
+  'parallel',
+  'repeat',
+] as const satisfies readonly ActionStep['kind'][]
 
 /**
  * How a trigger that arrives while the automation is busy (or cooling down) is

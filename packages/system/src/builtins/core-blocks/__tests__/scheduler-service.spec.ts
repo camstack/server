@@ -1,5 +1,5 @@
 import {
-  type ActionStep,
+  type NarrowActionStep,
   type BoundCapsReader,
   type SchedulerInput,
   SchedulerError,
@@ -14,7 +14,7 @@ import { coreBlocksRecordKinds } from '../record-kinds.js'
 
 const MIDNIGHT = at('2026-03-09T23:00:00Z')
 
-function turn(on: boolean, id: number): ActionStep {
+function turn(on: boolean, id: number): NarrowActionStep {
   return {
     kind: 'command',
     target: { kind: 'devices', ids: [id] },
@@ -90,7 +90,7 @@ async function service(boundCaps?: BoundCapsReader) {
 describe('schedulers service', () => {
   it('refuses a hold without an effect with a typed reason, and stores nothing', async () => {
     const { w, svc } = await service()
-    const step: ActionStep = {
+    const step: NarrowActionStep = {
       kind: 'command',
       target: { kind: 'devices', ids: [1] },
       actionId: 'button.press',

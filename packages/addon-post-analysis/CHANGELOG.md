@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device attention notification names every active fault with its code and label in the default text, and the resolved one names what cleared
+### Fixed
+
+- Notification rules see an alarm-panel command nested inside an action's choose, parallel or repeat when deciding whether a rule belongs to the alarm.
 
 ## [1.2.720] - 2026-11-20
 

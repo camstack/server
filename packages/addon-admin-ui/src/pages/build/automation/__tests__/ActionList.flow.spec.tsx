@@ -127,6 +127,29 @@ describe('ActionList flow control', () => {
   })
 })
 
+describe('ActionList wait step: one number and a unit', () => {
+  it('shows 90000 ms stored as 90 s, and writes a typed value back as the same stored seconds', () => {
+    render(<Harness flow initial={[{ kind: 'wait', seconds: 90 }]} />)
+    expect(screen.getByTestId('wait-value-0')).toHaveValue(90)
+    expect(screen.getByTestId('wait-unit-0')).toHaveTextContent('seconds')
+    fireEvent.change(screen.getByTestId('wait-value-0'), { target: { value: '1.5' } })
+    expect(latest).toEqual([{ kind: 'wait', seconds: 1.5 }])
+  })
+
+  it('shows a half second in milliseconds and a round number of minutes in minutes', () => {
+    render(<Harness flow initial={[{ kind: 'wait', seconds: 0.5 }]} />)
+    expect(screen.getByTestId('wait-value-0')).toHaveValue(500)
+    expect(screen.getByTestId('wait-unit-0')).toHaveTextContent('milliseconds')
+  })
+
+  it('switching the unit keeps the number: 5 seconds -> 5 minutes is 300 seconds', () => {
+    render(<Harness flow initial={[{ kind: 'wait', seconds: 5 }]} />)
+    fireEvent.click(screen.getByTestId('wait-unit-0'))
+    fireEvent.click(screen.getByRole('option', { name: 'minutes' }))
+    expect(latest).toEqual([{ kind: 'wait', seconds: 300 }])
+  })
+})
+
 describe('ActionList choose (#500)', () => {
   const CHOOSE: AutomationAction = {
     kind: 'choose',

@@ -131,6 +131,7 @@ export {
 } from './trace.js'
 export type {
   ActionStep,
+  NarrowActionStep,
   AutomationAction,
   AutomationCommandStep,
   AutomationRecipe,
@@ -154,6 +155,9 @@ export type {
 } from './recipe.js'
 export {
   ActionStepSchema,
+  ACTION_STEP_KINDS,
+  CODE_NOT_IN_ACTION,
+  NarrowActionStepSchema,
   AutomationActionSchema,
   AutomationCommandStepBaseSchema,
   AutomationCommandStepSchema,
@@ -287,6 +291,9 @@ export * from './action-target.js'
 export { assertStepsOffered, type BoundCapsReader } from './offered.js'
 export * from './step-condition.js'
 export * from './step-runner.js'
+export * from './action-steps.js'
+export * from './action-graph.js'
+export * from './step-bodies.js'
 export * from './wait-until.js'
 export * from './reach-steps.js'
 export {
