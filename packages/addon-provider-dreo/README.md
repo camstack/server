@@ -1,6 +1,6 @@
 # Dreo Provider
 
-Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket).
+Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 

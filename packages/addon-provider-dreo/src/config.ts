@@ -2,10 +2,9 @@ import { z } from 'zod'
 import type { ConfigUISchema } from '@camstack/types'
 
 /**
- * Dreo cloud regions the wrapped `@apocaliss92/nodedreo` client accepts. The
- * library does not export a region enum (region is a free `opts.region` string),
- * so we mirror the common Dreo regions locally and validate the operator-supplied
- * value at the system boundary. `us` is the default (the most common Dreo cloud).
+ * Dreo cloud regions the Python worker accepts (`us` and `eu` map onto the library's North
+ * America and Europe endpoints). The operator-supplied value is validated at the system
+ * boundary. `us` is the default (the most common Dreo cloud).
  */
 export const DREO_REGIONS = ['us', 'eu'] as const
 export const DreoRegionSchema = z.enum(DREO_REGIONS)
@@ -14,7 +13,7 @@ export type DreoRegionValue = z.infer<typeof DreoRegionSchema>
 /**
  * Operator-supplied Dreo account settings for ONE integration (= one cloud
  * account). The Dreo integration is cloud-only (REST auth + a persistent
- * WebSocket push), so the connection is just account credentials plus a region.
+ * WebSocket push, both inside the Python worker), so the connection is just account credentials plus a region.
  */
 export const dreoConfigSchema = z.object({
   email: z.string().min(1).describe('Dreo account email'),
@@ -23,31 +22,6 @@ export const dreoConfigSchema = z.object({
 })
 
 export type DreoConfig = z.infer<typeof dreoConfigSchema>
-
-/** Credentials object the `Nodedreo` constructor's first argument expects. */
-export interface DreoCredentials {
-  readonly email: string
-  readonly password: string
-}
-
-/** Options object the `Nodedreo` constructor's second argument accepts. */
-export interface DreoClientOptions {
-  readonly region: string
-}
-
-/**
- * Split the validated addon config into the two arguments the `Nodedreo`
- * constructor expects (`creds`, `opts`). Pure: same config in → same args out.
- */
-export function toDreoConstructorArgs(config: DreoConfig): {
-  readonly creds: DreoCredentials
-  readonly opts: DreoClientOptions
-} {
-  return {
-    creds: { email: config.email, password: config.password },
-    opts: { region: config.region },
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Account-mode connection (per-integration settings)

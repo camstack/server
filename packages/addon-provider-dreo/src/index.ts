@@ -1,10 +1,5 @@
 export { DreoProviderAddon } from './addon.js'
-export {
-  dreoConfigSchema,
-  toDreoConstructorArgs,
-  connectionFromSettings,
-  buildConnectionFormSchema,
-} from './config.js'
+export { dreoConfigSchema, connectionFromSettings, buildConnectionFormSchema } from './config.js'
 export type { DreoConfig, DreoRegionValue } from './config.js'
 export {
   classifyDreoModel,

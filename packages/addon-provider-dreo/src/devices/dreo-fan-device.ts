@@ -6,9 +6,13 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
 } from '@camstack/types'
-import { FanDevice as DreoFan } from '@apocaliss92/nodedreo'
 import { DreoChildDevice } from './dreo-child-device.js'
-import { levelToPercentage, percentageStep, percentageToLevel } from '../dreo-domain-mapping.js'
+import {
+  DREO_MAX_FAN_LEVEL,
+  levelToPercentage,
+  percentageStep,
+  percentageToLevel,
+} from '../dreo-domain-mapping.js'
 
 const SWITCH_CAP = 'switch'
 const FAN_CAP = 'fan-control'
@@ -28,15 +32,13 @@ const FAN_COLD_START: FanControlStatus = {
  * (speed percentage + oscillation) and maps the library `FanDevice` getters →
  * the two cap slices on every `stateChanged` push.
  *
- * Commands: switch.setState→`setPower()`; fan-control.setPercentage→`setSpeed()`
- * (percentage↔wind-level via the domain mapping); fan-control.setOscillating→
- * `setOscillate()`.
+ * Commands go through the worker and are NOT echoed into the slices: the hub holds a
+ * commanded value until the device's own report confirms it (D1061). switch.setState→power;
+ * fan-control.setPercentage→speed level (percentage↔level over the device's own range);
+ * fan-control.setOscillating→oscillation.
  *
- * TODO: per-model max fan level is not exposed by the library, so the
- * percentage↔level conversion uses a fixed `DREO_MAX_FAN_LEVEL` constant. A
- * later phase should probe the model's real max level. Preset / wind-mode
- * (`mode` / `windType`) and air-circulator horizontal/vertical oscillation are
- * also deferred — the `fan-control` cap models a single `oscillating` boolean.
+ * TODO: preset / wind-mode (`mode` / `windType`) and air-circulator horizontal/vertical
+ * oscillation are deferred — the `fan-control` cap models a single `oscillating` boolean.
  */
 export class DreoFanDevice extends DreoChildDevice {
   // Widens the base's `protected` constructor to public so `dreoChildFactory`
@@ -46,27 +48,12 @@ export class DreoFanDevice extends DreoChildDevice {
     super(ctx)
   }
 
-  /** Narrow the generic handle to the library's typed {@link DreoFan}, or null. */
-  private resolveFan(): DreoFan | null {
-    const handle = this.resolveHandle()
-    return handle instanceof DreoFan ? handle : null
-  }
-
-  /** The live typed fan handle, or throw a clear error when disconnected. */
-  private requireFan(): DreoFan {
-    const fan = this.resolveFan()
-    if (fan === null) {
-      throw new Error(`DreoFanDevice: fan handle unavailable (device=${this.dreoDeviceId})`)
-    }
-    return fan
-  }
-
   protected override registerCaps(): void {
     const switchProvider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<SwitchStatus>(SWITCH_CAP) ?? SWITCH_COLD_START,
       setState: async ({ on }) => {
-        this.requireFan().setPower(on)
+        await this.requireHandle().setPower(on)
       },
     }
     this.ctx.registerNativeCap(switchCapability, switchProvider)
@@ -76,15 +63,17 @@ export class DreoFanDevice extends DreoChildDevice {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
       setPercentage: async ({ speed: percentage }) => {
-        const fan = this.requireFan()
-        const level = percentageToLevel(percentage)
+        const handle = this.requireHandle()
+        const { speedMin, speedMax } = handle.state
+        const max = speedMax ?? DREO_MAX_FAN_LEVEL
+        const level = percentageToLevel(percentage, max)
         // 0% → power off; otherwise ensure power on then set the wind level.
         if (level <= 0) {
-          fan.setPower(false)
+          await handle.setPower(false)
           return
         }
-        if (!fan.power) fan.setPower(true)
-        fan.setSpeed(level)
+        if (handle.state.on !== true) await handle.setPower(true)
+        await handle.setSpeed(Math.max(level, speedMin ?? 1))
       },
       setPreset: async ({ preset }) => {
         // Preset / wind-mode mapping is deferred (see class TODO).
@@ -94,7 +83,7 @@ export class DreoFanDevice extends DreoChildDevice {
         throw new Error(`dreo fan: direction control not supported (got "${direction}")`)
       },
       setOscillating: async ({ oscillating }) => {
-        this.requireFan().setOscillate(oscillating)
+        await this.requireHandle().setOscillating(oscillating)
       },
     }
     this.ctx.registerNativeCap(fanControlCapability, fanProvider)
@@ -102,20 +91,22 @@ export class DreoFanDevice extends DreoChildDevice {
   }
 
   protected override recomputeSlices(): void {
-    const fan = this.resolveFan()
-    if (fan === null) return
+    const handle = this.resolveHandle()
+    if (handle === null) return
+    const { on, speed, speedMax, oscillating } = handle.state
+    const max = speedMax ?? DREO_MAX_FAN_LEVEL
     const now = Date.now()
 
-    const switchSlice: SwitchStatus = { on: fan.power, lastChangedAt: now }
+    const switchSlice: SwitchStatus = { on: on === true, lastChangedAt: now }
     this.runtimeState.setCapState(SWITCH_CAP, switchSlice)
 
     const fanSlice: FanControlStatus = {
-      speed: levelToPercentage(fan.speed),
-      percentageStep: percentageStep(),
+      speed: speed === null ? null : levelToPercentage(speed, max),
+      percentageStep: percentageStep(max),
       preset: '',
       availablePresets: [],
       direction: null,
-      oscillating: fan.oscillate,
+      oscillating,
       lastChangedAt: now,
     }
     this.runtimeState.setCapState(FAN_CAP, fanSlice)

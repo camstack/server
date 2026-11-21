@@ -25,14 +25,7 @@ async function world() {
   const mem = makeInMemoryRecords(ADDON)
   await mem.records.declare(dreoRecordKinds)
   const rows = new Map<string, Record<string, unknown>>([
-    [
-      'int_0001',
-      {
-        email: MARK_EMAIL,
-        password: SECRET,
-        region: 'eu',
-      },
-    ],
+    ['int_0001', { email: MARK_EMAIL, password: SECRET, region: 'eu' }],
   ])
   const cleared: string[] = []
   const api = {

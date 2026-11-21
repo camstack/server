@@ -1,17 +1,14 @@
 /**
  * Dreo's side of the core state refresh (D1062): HOW to read, never WHEN.
  *
- * Every device state arrives over the account's WebSocket (`push: 'full'`), so
- * the core never schedules a read. The `refresh` it can ask for is NOT an
- * upstream read: the library offers none for a device it already holds, so it
- * only re-applies the handle's cached state (what the push folds into) to the
- * device's slices. It cannot discover a change the WebSocket missed.
+ * Every device state arrives over the account's WebSocket (`push: 'full'`), so the core never
+ * schedules a read. The read it can ask for is the one after a command no push confirmed: a
+ * real read of the account from the cloud through the Python worker (not a cache re-apply),
+ * which the manager folds into the device handles.
  *
- * Open (D1061): the library echoes a command into its own cached state, so a
- * later device push of the same value emits no event and the core's hold cannot
- * be confirmed by it; adopting the hold waits for a nodedreo change. The
- * WebSocket's reconnect is private to the library, so no connection epoch is
- * published either.
+ * The library reconnects its WebSocket on its own and pushes sent while it was down are lost.
+ * The worker reports the reconnect, and the function {@link registerDreoStateRefresh} returns
+ * publishes a higher connection epoch so the core reads the account again.
  */
 import {
   deviceStateRefreshCapability,
@@ -24,34 +21,65 @@ import {
 export const DREO_MIN_REFRESH_INTERVAL_MS = 1_000
 
 /** The part of a device context the refresh registration uses. */
-export type DreoRefreshContext = Pick<DeviceContext, 'registerNativeCap'>
+export type DreoRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>
+
+/**
+ * One counter per account: the core compares an account's epoch with the highest it saw, so
+ * every device of the account draws its bump from the same counter and a reconnect read once
+ * covers the whole account.
+ */
+const epochs = new Map<string, number>()
+
+function currentEpoch(integrationId: string): number {
+  return epochs.get(integrationId) ?? 0
+}
+
+function nextEpoch(integrationId: string): number {
+  const next = currentEpoch(integrationId) + 1
+  epochs.set(integrationId, next)
+  return next
+}
 
 export interface DreoStateRefreshTarget {
   readonly ctx: DreoRefreshContext
   /** The integration (account) id. */
   readonly integrationId: string
-  /** Re-apply the live handle's state to the device's slices; throws when there is no connection. */
-  readonly reapplyHandleState: () => void
+  /** Read the account from the cloud and fold it in; throws when there is no connection. */
+  readonly readAccount: () => Promise<void>
 }
 
-export function dreoRefreshPolicy(integrationId: string): StateRefreshPolicy {
+export function dreoRefreshPolicy(integrationId: string, connectionEpoch = 0): StateRefreshPolicy {
   return {
     integrationId,
+    connectionEpoch,
     minIntervalMs: DREO_MIN_REFRESH_INTERVAL_MS,
     batch: false,
     push: 'full',
   }
 }
 
-export function registerDreoStateRefresh(target: DreoStateRefreshTarget): void {
+/**
+ * Register the device's refresh cap. Call the returned function when the account's channel
+ * came back: it re-registers the cap with a higher epoch.
+ */
+export function registerDreoStateRefresh(target: DreoStateRefreshTarget): () => void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
-      target.reapplyHandleState()
+      await target.readAccount()
       return { ok: true }
     },
     resubscribe: async () => ({ ok: true }),
   }
-  target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: dreoRefreshPolicy(target.integrationId),
-  })
+  const register = (epoch: number): void => {
+    target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
+      stateRefresh: dreoRefreshPolicy(target.integrationId, epoch),
+    })
+  }
+  register(currentEpoch(target.integrationId))
+  return () => {
+    const unregister = target.ctx.unregisterNativeCap
+    if (unregister === undefined) return
+    unregister.call(target.ctx, deviceStateRefreshCapability.name)
+    register(nextEpoch(target.integrationId))
+  }
 }

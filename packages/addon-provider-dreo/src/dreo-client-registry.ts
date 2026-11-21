@@ -19,9 +19,15 @@ import { type DreoConfig } from './config.js'
 import {
   DreoIntegrationManager,
   sameConnection,
+  type DreoBridgeFactory,
   type DreoIntegrationInfo,
 } from './dreo-integration-manager.js'
 import { dreoConnections } from './dreo-gateway.js'
+
+/** The factory used when the addon gave none: a connection then fails with this message. */
+function unavailableBridge(): never {
+  throw new Error('Dreo: no Python bridge is configured')
+}
 
 /** Minimal manager surface the registry depends on. */
 export type ManagerLike = Pick<
@@ -44,6 +50,8 @@ export interface DreoClientRegistryDeps {
   readonly onConnected?: (integrationId: string) => void
   readonly onDisconnected?: (integrationId: string) => void
   readonly makeManager?: ManagerFactory
+  /** Builds an account's Python bridge (the addon resolves the embedded Python once). */
+  readonly makeBridge?: DreoBridgeFactory
 }
 
 /** One integration's live manager + the connection it was built with. */
@@ -88,6 +96,7 @@ export class DreoClientRegistry {
           onConnected: opts.onConnected,
           onDisconnected: opts.onDisconnected,
           surfaceSink: dreoConnections,
+          makeBridge: deps.makeBridge ?? unavailableBridge,
         }))
   }
 

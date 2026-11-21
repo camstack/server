@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-provider-dreo",
   "version": "0.2.169",
-  "description": "Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket)",
+  "description": "Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker",
   "keywords": [
     "camstack",
     "addon",
@@ -52,6 +52,9 @@
         "execution": {
           "placement": "hub-only"
         },
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
         "capabilities": [
           {
             "name": "device-provider"
@@ -71,6 +74,7 @@
   },
   "files": [
     "dist",
+    "python",
     "i18n",
     "assets",
     "README.md",
@@ -84,7 +88,6 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@apocaliss92/nodedreo": "file:./vendor/apocaliss92-nodedreo-0.1.0.tgz",
     "@camstack/types": "*",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

@@ -6,7 +6,6 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
 } from '@camstack/types'
-import { HumidifierDevice as DreoHumidifier } from '@apocaliss92/nodedreo'
 import { DreoChildDevice } from './dreo-child-device.js'
 import { clampPercent } from '../dreo-domain-mapping.js'
 
@@ -18,10 +17,10 @@ const HUMIDITY_COLD_START: HumiditySensorStatus = { humidity: 0, lastFetchedAt: 
 
 /**
  * Dreo humidifier device. Registers `switch` (power) + `humidity-sensor` (the
- * relative-humidity `rh` the humidifier reports). Maps the library
- * `HumidifierDevice` getters → the two cap slices on every `stateChanged` push.
+ * relative humidity the humidifier reports). Maps the handle's reported state →
+ * the two cap slices on every state change.
  *
- * Commands: switch.setState→`setPower()`. The `humidity-sensor` cap is read-only
+ * Commands: switch.setState→power, through the worker and not echoed (D1061). The `humidity-sensor` cap is read-only
  * (the humidifier's internal hygrometer).
  *
  * TODO (deferred control surface): the humidifier exposes a TARGET humidity
@@ -39,25 +38,12 @@ export class DreoHumidifierDevice extends DreoChildDevice {
     super(ctx)
   }
 
-  private resolveHumidifier(): DreoHumidifier | null {
-    const handle = this.resolveHandle()
-    return handle instanceof DreoHumidifier ? handle : null
-  }
-
-  private requireHumidifier(): DreoHumidifier {
-    const humidifier = this.resolveHumidifier()
-    if (humidifier === null) {
-      throw new Error(`DreoHumidifierDevice: handle unavailable (device=${this.dreoDeviceId})`)
-    }
-    return humidifier
-  }
-
   protected override registerCaps(): void {
     const switchProvider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<SwitchStatus>(SWITCH_CAP) ?? SWITCH_COLD_START,
       setState: async ({ on }) => {
-        this.requireHumidifier().setPower(on)
+        await this.requireHandle().setPower(on)
       },
     }
     this.ctx.registerNativeCap(switchCapability, switchProvider)
@@ -72,21 +58,16 @@ export class DreoHumidifierDevice extends DreoChildDevice {
   }
 
   protected override recomputeSlices(): void {
-    const humidifier = this.resolveHumidifier()
-    if (humidifier === null) return
+    const handle = this.resolveHandle()
+    if (handle === null) return
+    const { on, humidity } = handle.state
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, {
-      on: humidifier.power,
-      lastChangedAt: now,
-    })
+    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
 
-    const percent = clampPercent(humidifier.rh)
+    const percent = clampPercent(humidity)
     if (percent !== null) {
-      this.runtimeState.setCapState(HUMIDITY_CAP, {
-        humidity: percent,
-        lastFetchedAt: now,
-      })
+      this.runtimeState.setCapState(HUMIDITY_CAP, { humidity: percent, lastFetchedAt: now })
     }
   }
 }

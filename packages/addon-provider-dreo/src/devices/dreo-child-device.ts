@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { BaseDevice, errMsg, type DeviceContext, type DeviceFeature } from '@camstack/types'
-import type { BaseDevice as DreoBaseDevice } from '@apocaliss92/nodedreo'
+import type { DreoDeviceHandle } from '../dreo-device-handle.js'
 import { dreoConnections } from '../dreo-gateway.js'
 import { registerDreoStateRefresh } from '../dreo-state-refresh.js'
 
@@ -25,11 +25,10 @@ export type DreoChildConfig = z.infer<typeof dreoChildSchema>
  * handle-resolution seam. Concrete subclasses register their cap(s) + attach a
  * `stateChanged` listener that recomputes their cap slices.
  *
- * Cap registration + the device's WebSocket push lifecycle are wired in
- * `onActivate` (mirrors `DreameChildDevice`) so `registerNativeCap` lands AFTER
- * the device is registered with the kernel. The library opens the device's
- * WebSocket push during the integration manager's `connect()`, so the live
- * handle is already streaming by the time this child activates.
+ * Cap registration + the handle's change listener are wired in `onActivate` (mirrors
+ * `DreameChildDevice`) so `registerNativeCap` lands AFTER the device is registered with the
+ * kernel. The worker opens the account's push channel during the integration manager's
+ * sign-in, so the live handle is already streaming by the time this child activates.
  */
 export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema> {
   readonly features: readonly DeviceFeature[] = []
@@ -41,8 +40,8 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
   /** Cloud model string (e.g. `DR-HTF008S`). */
   protected readonly model: string | undefined
 
-  /** Disposer for the handle `stateChanged` listener. */
-  private stateChangedUnsub: (() => void) | null = null
+  /** Disposers for the handle's change and reconnect listeners. */
+  private readonly handleUnsubs: Array<() => void> = []
 
   protected constructor(ctx: DeviceContext) {
     const persisted = dreoChildSchema.parse(ctx.persistedConfig ?? {})
@@ -55,12 +54,12 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
   }
 
   /** Resolve this child's live Dreo device handle, or null when disconnected. */
-  protected resolveHandle(): DreoBaseDevice | null {
+  protected resolveHandle(): DreoDeviceHandle | null {
     return dreoConnections.getDevice(this.integrationId, this.dreoDeviceId)
   }
 
   /** Narrow the optional handle to a present one or throw a clear error. */
-  protected requireHandle(): DreoBaseDevice {
+  protected requireHandle(): DreoDeviceHandle {
     const handle = this.resolveHandle()
     if (!handle) {
       throw new Error(`DreoChildDevice: cloud connection unavailable (device=${this.dreoDeviceId})`)
@@ -70,61 +69,58 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
-    // Register the cap(s) + seed the cold-start slice, THEN attach the live
-    // `stateChanged` listener and replay the current cached values so the slice
-    // reflects reality without waiting for the next push.
+    // Register the cap(s) + seed the cold-start slice, THEN attach the live listeners and
+    // replay the handle's last reported state so the slice reflects reality without
+    // waiting for the next push.
     this.registerCaps()
-    registerDreoStateRefresh({
+    const publishReconnect = registerDreoStateRefresh({
       ctx: this.ctx,
       integrationId: this.integrationId,
-      reapplyHandleState: () => {
-        this.requireHandle()
-        this.recomputeSlices()
-      },
+      readAccount: () => dreoConnections.refresh(this.integrationId),
     })
-    this.attachStateListener()
+    this.attachHandleListeners(publishReconnect)
     this.recomputeSlices()
   }
 
   override async removeDevice(): Promise<void> {
-    if (this.stateChangedUnsub) {
+    for (const unsub of this.handleUnsubs.splice(0)) {
       try {
-        this.stateChangedUnsub()
+        unsub()
       } catch {
         // best-effort — device is being torn down regardless
       }
-      this.stateChangedUnsub = null
     }
   }
 
-  /** Attach the library `stateChanged` listener (handle is per-device already). */
-  private attachStateListener(): void {
+  /** Attach the handle's change listener and the reconnect notice that bumps the epoch. */
+  private attachHandleListeners(publishReconnect: () => void): void {
     const handle = this.resolveHandle()
     if (!handle) {
       this.ctx.logger.debug('DreoChildDevice: handle not present; no live listener yet', {
+        tags: { deviceId: this.id },
         meta: { dreoDeviceId: this.dreoDeviceId },
       })
       return
     }
-    const onState = (): void => {
-      try {
-        this.recomputeSlices()
-      } catch (err) {
-        this.ctx.logger.warn('dreo child: stateChanged handler error', {
-          meta: { dreoDeviceId: this.dreoDeviceId, error: errMsg(err) },
-        })
-      }
-    }
-    handle.on('stateChanged', onState)
-    this.stateChangedUnsub = (): void => {
-      handle.off('stateChanged', onState)
-    }
+    this.handleUnsubs.push(
+      handle.onChange(() => {
+        try {
+          this.recomputeSlices()
+        } catch (err) {
+          this.ctx.logger.warn('dreo child: state change handler error', {
+            tags: { deviceId: this.id },
+            meta: { dreoDeviceId: this.dreoDeviceId, error: errMsg(err) },
+          })
+        }
+      }),
+      handle.onReconnect(publishReconnect),
+    )
   }
 
   /** Register the device-scoped cap(s) (subclass-specific). */
   protected abstract registerCaps(): void
 
-  /** Recompute + write this child's cap slice(s) from the live handle getters.
-   *  Called on activation (seed) and on every `stateChanged` push. */
+  /** Recompute + write this child's cap slice(s) from the handle's reported state.
+   *  Called on activation (seed) and on every state change. */
   protected abstract recomputeSlices(): void
 }

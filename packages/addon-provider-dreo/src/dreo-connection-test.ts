@@ -1,36 +1,32 @@
-import { DreoAuthError } from '@apocaliss92/nodedreo'
 import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { dreoConfigSchema } from './config.js'
-import type { DreoFacadeFactory } from './dreo-integration-manager.js'
+import { DreoBridgeError } from './dreo-bridge.js'
+import type { DreoBridgeFactory } from './dreo-integration-manager.js'
 
 /**
  * The credential probe of Dreo (`IConnectionProbe`, answered by `testInstance`) — validates
  * account credentials BEFORE the integration exists.
  *
- * The Dreo library already carries the credential check we need: `login()`
- * performs the cloud REST auth and throws `DreoAuthError` specifically when the
- * account/password/region combination is refused, as opposed to the transport
- * errors (`DreoTransportError`, `DreoApiError`) it throws when the round trip
- * itself failed. That distinction is what lets this provider answer `rejected`
- * and `inconclusive` honestly instead of collapsing both into "failed".
+ * The worker's `login` performs the cloud sign-in and answers the code `auth` specifically
+ * when the account/password/region combination is refused, as opposed to `unreachable` (or
+ * a worker that could not run) when the round trip itself failed. That distinction is what
+ * lets this provider answer `rejected` and `inconclusive` honestly instead of collapsing
+ * both into "failed".
  *
- * The session opened here is a THROWAWAY: no WebSocket is connected, no device
- * is instantiated, nothing is persisted, and the facade is closed on every
- * path. This runs while the operator is still looking at the create form, so it
- * must leave no trace whether it passes or fails.
+ * The session opened here is a THROWAWAY: its own worker process, nothing persisted, and the
+ * worker is closed on every path. The sign-in also opens the account's push channel and reads
+ * the device list; both go away with the worker.
  */
 
 export interface DreoConnectionTestDeps {
-  /** Factory seam — the real one builds a `Nodedreo`; tests inject a fake. */
-  readonly makeFacade: DreoFacadeFactory
+  /** Factory seam — the real one spawns the Python worker; tests inject a fake. */
+  readonly makeBridge: DreoBridgeFactory
   readonly logger: IScopedLogger
 }
 
 /** Human description of what pressing Test actually does. */
-export function buildDreoConnectionTestProvider(
-  deps: DreoConnectionTestDeps,
-): IConnectionProbe {
-  const { makeFacade, logger } = deps
+export function buildDreoConnectionTestProvider(deps: DreoConnectionTestDeps): IConnectionProbe {
+  const { makeBridge, logger } = deps
 
   return {
     testSettings: async ({ settings }) => {
@@ -39,9 +35,7 @@ export function buildDreoConnectionTestProvider(
       const parsed = dreoConfigSchema.safeParse(settings)
       if (!parsed.success) {
         const missing = parsed.error.issues.map((i) => i.path.join('.') || '(root)').join(', ')
-        logger.warn('Dreo connection test: settings incomplete', {
-          meta: { missing },
-        })
+        logger.warn('Dreo connection test: settings incomplete', { meta: { missing } })
         return {
           outcome: 'rejected',
           error: `Dreo account settings are incomplete or invalid: ${missing}`,
@@ -49,12 +43,13 @@ export function buildDreoConnectionTestProvider(
       }
 
       const startedAt = Date.now()
-      const facade = makeFacade(parsed.data)
+      let bridge: ReturnType<DreoBridgeFactory> | null = null
       try {
-        await facade.login()
+        bridge = makeBridge()
+        await bridge.login(parsed.data)
         return { outcome: 'validated', latencyMs: Date.now() - startedAt }
       } catch (err: unknown) {
-        if (err instanceof DreoAuthError) {
+        if (err instanceof DreoBridgeError && err.code === 'auth') {
           // OBSERVED refusal. Never echo the password back, and name the region
           // — a correct password against the wrong region fails exactly here.
           logger.warn('Dreo connection test: credentials refused', {
@@ -79,9 +74,9 @@ export function buildDreoConnectionTestProvider(
         }
       } finally {
         try {
-          facade.close()
+          bridge?.close()
         } catch (closeErr: unknown) {
-          logger.warn('Dreo connection test: facade close failed', {
+          logger.warn('Dreo connection test: bridge close failed', {
             meta: { error: errMsg(closeErr) },
           })
         }

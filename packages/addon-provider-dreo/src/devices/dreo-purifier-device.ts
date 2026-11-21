@@ -8,9 +8,13 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
 } from '@camstack/types'
-import { AirPurifierDevice as DreoPurifier } from '@apocaliss92/nodedreo'
 import { DreoChildDevice } from './dreo-child-device.js'
-import { levelToPercentage, percentageStep, percentageToLevel } from '../dreo-domain-mapping.js'
+import {
+  DREO_MAX_FAN_LEVEL,
+  levelToPercentage,
+  percentageStep,
+  percentageToLevel,
+} from '../dreo-domain-mapping.js'
 
 const SWITCH_CAP = 'switch'
 const FAN_CAP = 'fan-control'
@@ -29,12 +33,11 @@ const AQ_COLD_START: AirQualitySensorStatus = { lastFetchedAt: 0 }
 
 /**
  * Dreo air-purifier device. Registers `switch` (power) + `fan-control` (fan
- * speed) + `air-quality-sensor` (the PM2.5 the purifier reports). Maps the
- * library `AirPurifierDevice` getters → the three cap slices on every
- * `stateChanged` push.
+ * speed) + `air-quality-sensor` (the PM2.5 the purifier reports). Maps the handle's
+ * reported state → the three cap slices on every state change.
  *
- * Commands: switch.setState→`setPower()`; fan-control.setPercentage→
- * `setWindlevel()` (percentage↔wind-level). The `air-quality-sensor` cap has no
+ * Commands: switch.setState→power; fan-control.setPercentage→wind level
+ * (percentage↔wind-level). They go through the worker and are not echoed (D1061). The `air-quality-sensor` cap has no
  * methods — it is a read-only push slice carrying `pm25`.
  *
  * TODO: the purifier reports `mode` (auto/manual/sleep) as a string preset; that
@@ -49,25 +52,12 @@ export class DreoPurifierDevice extends DreoChildDevice {
     super(ctx)
   }
 
-  private resolvePurifier(): DreoPurifier | null {
-    const handle = this.resolveHandle()
-    return handle instanceof DreoPurifier ? handle : null
-  }
-
-  private requirePurifier(): DreoPurifier {
-    const purifier = this.resolvePurifier()
-    if (purifier === null) {
-      throw new Error(`DreoPurifierDevice: handle unavailable (device=${this.dreoDeviceId})`)
-    }
-    return purifier
-  }
-
   protected override registerCaps(): void {
     const switchProvider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<SwitchStatus>(SWITCH_CAP) ?? SWITCH_COLD_START,
       setState: async ({ on }) => {
-        this.requirePurifier().setPower(on)
+        await this.requireHandle().setPower(on)
       },
     }
     this.ctx.registerNativeCap(switchCapability, switchProvider)
@@ -77,14 +67,15 @@ export class DreoPurifierDevice extends DreoChildDevice {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
       setPercentage: async ({ speed: percentage }) => {
-        const purifier = this.requirePurifier()
-        const level = percentageToLevel(percentage)
+        const handle = this.requireHandle()
+        const { speedMin, speedMax } = handle.state
+        const level = percentageToLevel(percentage, speedMax ?? DREO_MAX_FAN_LEVEL)
         if (level <= 0) {
-          purifier.setPower(false)
+          await handle.setPower(false)
           return
         }
-        if (!purifier.power) purifier.setPower(true)
-        purifier.setWindlevel(level)
+        if (handle.state.on !== true) await handle.setPower(true)
+        await handle.setSpeed(Math.max(level, speedMin ?? 1))
       },
       setPreset: async ({ preset }) => {
         throw new Error(`dreo purifier: presets not yet supported (got "${preset}")`)
@@ -108,19 +99,17 @@ export class DreoPurifierDevice extends DreoChildDevice {
   }
 
   protected override recomputeSlices(): void {
-    const purifier = this.resolvePurifier()
-    if (purifier === null) return
+    const handle = this.resolveHandle()
+    if (handle === null) return
+    const { on, speed, speedMax, pm25 } = handle.state
+    const max = speedMax ?? DREO_MAX_FAN_LEVEL
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, {
-      on: purifier.power,
-      lastChangedAt: now,
-    })
+    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
 
-    const level = purifier.windlevel
     this.runtimeState.setCapState(FAN_CAP, {
-      speed: level === undefined ? null : levelToPercentage(level),
-      percentageStep: percentageStep(),
+      speed: speed === null ? null : levelToPercentage(speed, max),
+      percentageStep: percentageStep(max),
       preset: '',
       availablePresets: [],
       direction: null,
@@ -128,9 +117,8 @@ export class DreoPurifierDevice extends DreoChildDevice {
       lastChangedAt: now,
     })
 
-    const pm25 = purifier.pm25
     const aqSlice: AirQualitySensorStatus = {
-      ...(pm25 !== undefined ? { pm25 } : {}),
+      ...(pm25 !== null ? { pm25 } : {}),
       lastFetchedAt: now,
     }
     this.runtimeState.setCapState(AQ_CAP, aqSlice)

@@ -35,10 +35,7 @@ export function buildDreoCandidates(input: BuildDreoCandidatesInput): Discovered
       name: device.name.length > 0 ? device.name : device.deviceId,
       type: deviceTypeForKind(kind),
       status: 'online',
-      metadata: {
-        serialNumber: device.deviceId,
-        model: device.model,
-      },
+      metadata: { serialNumber: device.deviceId, model: device.model },
       alreadyAdopted: adoptedId !== null,
       adoptedDeviceId: adoptedId,
       capabilities: [...capsForKind(kind)],

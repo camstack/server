@@ -6,24 +6,26 @@ import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildDreoConnectionTestProvider } from '../dreo-connection-test.js'
 import { buildDreoInstances, dreoConnectionsEntryKind, dreoRecordKinds } from '../dreo-instances.js'
-import type { DreoFacadeFactory } from '../dreo-integration-manager.js'
+import { DreoBridgeError } from '../dreo-bridge.js'
+import type { DreoBridgeFactory } from '../dreo-integration-manager.js'
+import { FakeBridge } from './fake-bridge.js'
 
 const STORED_PASSWORD = 'stored-pw'
 
 /** A Dreo cloud that accepts exactly one password; records every account it was asked to sign in. */
 function setup() {
   const seen: Array<{ email: string; password: string; region: string }> = []
-  const makeFacade: DreoFacadeFactory = (config) => {
-    seen.push({ email: config.email, password: config.password, region: config.region })
-    return {
-      login: async () => {
-        if (config.password !== STORED_PASSWORD) throw new Error('refused')
-      },
-      close: async () => undefined,
-    } as unknown as ReturnType<DreoFacadeFactory>
+  const makeBridge: DreoBridgeFactory = () => {
+    const bridge = new FakeBridge()
+    bridge.login = async (config) => {
+      seen.push({ email: config.email, password: config.password, region: config.region })
+      if (config.password !== STORED_PASSWORD) throw new DreoBridgeError('auth', 'refused')
+      return []
+    }
+    return bridge
   }
   const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
-  const tester = buildDreoConnectionTestProvider({ makeFacade, logger: logger as never })
+  const tester = buildDreoConnectionTestProvider({ makeBridge, logger: logger as never })
   return { seen, tester, logger }
 }
 

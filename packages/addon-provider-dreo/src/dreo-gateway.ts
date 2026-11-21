@@ -1,33 +1,30 @@
-import type { BaseDevice as DreoBaseDevice, DreoDeviceInfo } from '@apocaliss92/nodedreo'
+import type { DreoDiscoverable } from './dreo-discovery.js'
+import type { DreoDeviceHandle } from './dreo-device-handle.js'
 
 /**
- * A live Dreo connection's discovered surface: the per-account device handles
- * (created via `Nodedreo.createDevice`) plus the raw discovery info rows. Unlike
- * the Dreame library, `Nodedreo` keeps its handle set private and requires an
- * explicit `createDevice(info)` per device — so the integration manager builds
- * + owns the handles and publishes them here keyed by `(integrationId, deviceId)`.
+ * A live Dreo connection's surface: the discovery rows of the account, a handle per device
+ * (owned and fed by the integration manager) and a way to read every device again from the
+ * cloud. Device classes resolve their handle by `(integrationId, deviceId)`.
  */
 export interface DreoConnectionSurface {
-  /** Discovery info rows (one per device on the account). */
-  readonly infos: readonly DreoDeviceInfo[]
+  /** One row per device on the account. */
+  readonly infos: readonly DreoDiscoverable[]
   /** Live device handles, keyed by Dreo `deviceId`. */
-  readonly handles: ReadonlyMap<string, DreoBaseDevice>
+  readonly handles: ReadonlyMap<string, DreoDeviceHandle>
+  /** Read every device of the account from the cloud and fold it into the handles. */
+  readonly refresh: () => Promise<void>
 }
 
 /**
- * Per-integration registry that device classes use to reach a live Dreo device
- * handle (and the discovery info) for a given Dreo account.
+ * Per-integration registry that device classes use to reach a live Dreo device handle (and
+ * the discovery rows) for a given Dreo account.
  *
- * Keyed by `integrationId`. Device classes pass the `brokerId` field of their
- * persisted config, which holds the integrationId (the field name predates
- * integration instances and stays, it is stored on adopted devices).
+ * Keyed by `integrationId`. Device classes pass the `brokerId` field of their persisted
+ * config, which holds the integrationId (the field name predates integration instances and
+ * stays, it is stored on adopted devices).
  *
- * The kernel constructs device classes with only a `DeviceContext` — it cannot
- * thread the handle in as a constructor arg. Like the Dreame addon's
- * `dreameFacades`, we keep it simple and in-process: the integration manager
- * owns the connection surface per registered account and publishes it here;
- * device classes resolve their live `BaseDevice` handle by `(integrationId,
- * deviceId)`.
+ * The kernel constructs device classes with only a `DeviceContext`, so the manager publishes
+ * the surface here, in-process, and the classes look their handle up.
  */
 export class DreoConnectionResolver {
   readonly #surfaces: Map<string, DreoConnectionSurface> = new Map()
@@ -41,8 +38,8 @@ export class DreoConnectionResolver {
     this.#surfaces.set(integrationId, surface)
   }
 
-  /** The discovery info rows for an integration id, or empty when unknown. */
-  infos(integrationId: string): readonly DreoDeviceInfo[] {
+  /** The discovery rows for an integration id, or empty when unknown. */
+  infos(integrationId: string): readonly DreoDiscoverable[] {
     return this.#surfaces.get(integrationId)?.infos ?? []
   }
 
@@ -57,12 +54,19 @@ export class DreoConnectionResolver {
     return Array.from(this.#surfaces.keys()).map((id) => ({ id }))
   }
 
-  /**
-   * Resolve the live {@link DreoBaseDevice} handle for a `(integrationId, deviceId)`
-   * pair, or null when the integration is unknown or the device is no longer present.
-   */
-  getDevice(integrationId: string, deviceId: string): DreoBaseDevice | null {
+  /** The live handle for a `(integrationId, deviceId)` pair, or null when the integration is
+   *  unknown or the device is no longer present. */
+  getDevice(integrationId: string, deviceId: string): DreoDeviceHandle | null {
     return this.#surfaces.get(integrationId)?.handles.get(deviceId) ?? null
+  }
+
+  /** Read the whole account again from the cloud; throws when the integration is not connected. */
+  async refresh(integrationId: string): Promise<void> {
+    const surface = this.#surfaces.get(integrationId)
+    if (surface === undefined) {
+      throw new Error(`Dreo: cloud connection unavailable (integration=${integrationId})`)
+    }
+    await surface.refresh()
   }
 
   /** Remove all registered surfaces (called on full shutdown). */

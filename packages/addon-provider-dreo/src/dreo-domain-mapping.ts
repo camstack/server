@@ -1,45 +1,48 @@
 import { DeviceType } from '@camstack/types'
-import { deviceTypeForModel, type DeviceType as DreoLibDeviceType } from '@apocaliss92/nodedreo'
 
 /**
- * The CamStack-supported Dreo device kinds. Derived from the library's
- * `deviceTypeForModel(model)` classification. Anything outside this set is
+ * The CamStack-supported Dreo device kinds, derived from the model prefix. Anything outside this set is
  * `unsupported` and skipped during discovery / adoption.
  *
- * - `fan` — tower fans + air circulators (library `towerFan` / `airCirculator` /
- *   `ceilingFan` / `evaporativeCooler`). Mapped to `fan-control` + `switch`.
- * - `purifier` — air purifiers (library `airPurifier`). Mapped to `fan-control` +
+ * - `fan` — tower fans + air circulators, ceiling fans and evaporative coolers. Mapped to `fan-control` + `switch`.
+ * - `purifier` — air purifiers. Mapped to `fan-control` +
  *   `switch` + `air-quality-sensor` (it reports PM2.5).
- * - `heater` — heaters (library `heater`). Mapped to `switch` + `temperature-sensor`
+ * - `heater` — heaters. Mapped to `switch` + `temperature-sensor`
  *   (no setpoint surface on the library — see TODO in the heater device).
- * - `humidifier` — humidifiers (library `humidifier`). Mapped to `switch` +
+ * - `humidifier` — humidifiers. Mapped to `switch` +
  *   `humidity-sensor` (it reports `rh`).
  */
 export type DreoDeviceKind = 'fan' | 'purifier' | 'heater' | 'humidifier' | 'unsupported'
 
-/** Library device-type strings we treat as a CamStack `fan` kind. */
-const FAN_LIB_TYPES: ReadonlySet<DreoLibDeviceType> = new Set<DreoLibDeviceType>([
-  'towerFan',
-  'airCirculator',
-  'ceilingFan',
-  'evaporativeCooler',
-])
+/** Model prefix → device family, first match wins (the Dreo cloud's model naming). */
+const MODEL_PREFIXES: readonly (readonly [string, DreoDeviceKind])[] = [
+  ['DR-HPF', 'fan'],
+  ['DR-HAF', 'fan'],
+  ['DR-HTF', 'fan'],
+  ['DR-HCF', 'fan'],
+  ['DR-HEC', 'fan'],
+  ['DR-HSH', 'heater'],
+  ['WH', 'heater'],
+  ['DR-HHM', 'humidifier'],
+  ['DR-HAP', 'purifier'],
+  // Portable AC, dehumidifier and the chef maker have no surface yet.
+  ['DR-HAC', 'unsupported'],
+  ['DR-HDH', 'unsupported'],
+  ['DR-KCM', 'unsupported'],
+]
 
 /**
- * Classify a Dreo cloud `model` string into a supported CamStack device kind.
- * Pure — delegates the model→library-type resolution to the library's
- * `deviceTypeForModel` so model-prefix knowledge stays in one place.
+ * Classify a Dreo cloud `model` string into a supported CamStack device kind by its prefix.
+ * Pure.
  *
  * NOTE: `ac` (portable AC) and `dehumidifier` are intentionally `unsupported`
- * for this INITIAL version — see the package report's flagged TODOs. The Gree
- * addon owns the climate-control surface; Dreo portable ACs are a follow-up.
+ * for this INITIAL version. The Gree addon owns the climate-control surface; Dreo
+ * portable ACs are a follow-up.
  */
 export function classifyDreoModel(model: string): DreoDeviceKind {
-  const libType = deviceTypeForModel(model)
-  if (FAN_LIB_TYPES.has(libType)) return 'fan'
-  if (libType === 'airPurifier') return 'purifier'
-  if (libType === 'heater') return 'heater'
-  if (libType === 'humidifier') return 'humidifier'
+  for (const [prefix, kind] of MODEL_PREFIXES) {
+    if (model.startsWith(prefix)) return kind
+  }
   return 'unsupported'
 }
 
@@ -86,9 +89,8 @@ export function capsForKind(kind: Exclude<DreoDeviceKind, 'unsupported'>): reado
  * between the two representations using the device's max level so the UI slider
  * and the wire value agree. Pure.
  *
- * `DREO_MAX_FAN_LEVEL` is the assumed ceiling — Dreo tower fans top out at 9 and
- * air circulators at 4–6. The library does not expose the per-model max, so we
- * use a conservative constant and clamp; a per-model max is a flagged TODO.
+ * `DREO_MAX_FAN_LEVEL` is the ceiling used when the device does not report its own range
+ * (the worker reports `speedMax` per model; tower fans top out at 9, air circulators at 4-6).
  */
 export const DREO_MAX_FAN_LEVEL = 9
 
@@ -117,7 +119,7 @@ export function percentageStep(maxLevel: number = DREO_MAX_FAN_LEVEL): number {
 }
 
 /** Clamp a raw battery / percentage-ish number into the 0..100 inclusive range. */
-export function clampPercent(value: number | undefined): number | null {
-  if (value === undefined || Number.isNaN(value)) return null
+export function clampPercent(value: number | null | undefined): number | null {
+  if (value === undefined || value === null || Number.isNaN(value)) return null
   return Math.max(0, Math.min(100, value))
 }

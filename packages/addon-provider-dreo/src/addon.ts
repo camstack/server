@@ -33,7 +33,9 @@ import {
   dreoRecordKinds,
 } from './dreo-instances.js'
 import { cascadeRemoveDevicesForIntegration } from './dreo-integration-device-cascade.js'
-import { defaultFacade } from './dreo-integration-manager.js'
+import { createDreoBridge } from './dreo-bridge.js'
+import type { DreoBridgeFactory } from './dreo-integration-manager.js'
+import { resolveDreoWorker } from './dreo-python-paths.js'
 import { type OfflineTarget, setIntegrationDevicesOnline } from './dreo-integration-offline.js'
 import { dreoSession } from './dreo-session.js'
 
@@ -43,7 +45,8 @@ const DREO_MIGRATIONS_DATE = '2026-11-05'
 /**
  * Dreo device-provider addon — one integration instance per Dreo account (D1007).
  *
- * Wraps the `@apocaliss92/nodedreo` Dreo cloud client (REST + WebSocket). Each
+ * Runs the MIT `pydreo-community` Dreo cloud library (REST + WebSocket) in one Python
+ * worker per account (`python/dreo_worker.py`, the embedded Python). Each
  * Dreo integration is a `connections` record carrying its own account
  * credentials; the addon holds one {@link DreoIntegrationManager} per
  * `integrationId` in {@link DreoClientRegistry} (`Map<integrationId, manager>`).
@@ -76,6 +79,8 @@ export class DreoProviderAddon extends BaseDeviceProvider {
   private integrationReconciler: DreoReconciler | null = null
   private clients: DreoClientRegistry | null = null
   private instances: RecordIntegrationInstances<DreoConnectionBody> | null = null
+  /** The embedded Python, or null with a logged reason: every Dreo connection then fails clearly. */
+  private pythonPath: string | null = null
 
   constructor() {
     super({})
@@ -87,6 +92,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-dreo: ctx.records is required (hub-only addon)')
     await records.declare(dreoRecordKinds)
+    this.pythonPath = await this.resolvePython()
     this.declareRegistrySwitch({
       kind: dreoConnectionsEntryKind,
       initialBody: (name) => ({ name }),
@@ -112,11 +118,9 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
     })
-    this.clients = new DreoClientRegistry(this.ctx.logger)
+    this.clients = new DreoClientRegistry(this.ctx.logger, { makeBridge: this.bridgeFactory() })
     this.clients.setOnConnected((integrationId) => {
-      this.ctx.logger.info('Dreo: integration connected', {
-        meta: { integrationId },
-      })
+      this.ctx.logger.info('Dreo: integration connected', { meta: { integrationId } })
       this.setIntegrationDevicesOnline(integrationId, true)
     })
     this.clients.setOnDisconnected((integrationId) => {
@@ -136,10 +140,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        {
-          capability: deviceAdoptionCapability,
-          provider: this.buildAdoptionProvider(),
-        },
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         {
           capability: integrationInstancesCapability,
           provider: this.requireInstances().toProvider(),
@@ -152,9 +153,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Dreo: provider shutdown error', {
-        meta: { error: errMsg(err) },
-      })
+      this.ctx.logger.warn('Dreo: provider shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
     this.integrationReconciler?.dispose()
@@ -270,6 +269,34 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     })
   }
 
+  // ── Python worker ───────────────────────────────────────────────────
+
+  private async resolvePython(): Promise<string | null> {
+    try {
+      const pythonPath = await this.ctx.deps.ensurePython()
+      if (pythonPath === null) {
+        this.ctx.logger.warn('Dreo: embedded Python is unavailable, no Dreo account can connect')
+      }
+      return pythonPath
+    } catch (err) {
+      this.ctx.logger.warn('Dreo: the Python bridge could not be prepared', {
+        meta: { error: errMsg(err) },
+      })
+      return null
+    }
+  }
+
+  /** One new worker per call; throws a clear error when the node has no Python. */
+  private bridgeFactory(): DreoBridgeFactory {
+    return () => {
+      const pythonPath = this.pythonPath
+      if (pythonPath === null) {
+        throw new Error('Dreo needs the embedded Python, which is unavailable on this node')
+      }
+      return createDreoBridge({ pythonPath, scriptPath: resolveDreoWorker() })
+    }
+  }
+
   // ── connection probe ────────────────────────────────────────────────
 
   /**
@@ -279,7 +306,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
    */
   private buildConnectionTestProvider(): IConnectionProbe {
     return buildDreoConnectionTestProvider({
-      makeFacade: defaultFacade,
+      makeBridge: this.bridgeFactory(),
       logger: this.ctx.logger,
     })
   }
@@ -324,10 +351,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
           integrationId,
         })
         const children = await devices.getChildren(device.id)
-        return {
-          deviceId: device.id,
-          accessoryDeviceIds: children.map((c) => c.id),
-        }
+        return { deviceId: device.id, accessoryDeviceIds: children.map((c) => c.id) }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)

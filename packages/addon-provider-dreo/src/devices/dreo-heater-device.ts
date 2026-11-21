@@ -6,7 +6,6 @@ import {
   type SwitchStatus,
   type TemperatureSensorStatus,
 } from '@camstack/types'
-import { HeaterDevice as DreoHeater } from '@apocaliss92/nodedreo'
 import { DreoChildDevice } from './dreo-child-device.js'
 
 const SWITCH_CAP = 'switch'
@@ -17,19 +16,18 @@ const TEMP_COLD_START: TemperatureSensorStatus = { temperature: 0, lastFetchedAt
 
 /**
  * Dreo heater device. Registers `switch` (power) + `temperature-sensor` (the
- * ambient temperature the heater reports). Maps the library `HeaterDevice`
- * getters → the two cap slices on every `stateChanged` push.
+ * ambient temperature the heater reports). Maps the handle's reported state →
+ * the two cap slices on every state change.
  *
- * Commands: switch.setState→`setPower()`. The `temperature-sensor` cap is
+ * Commands: switch.setState→power, through the worker and not echoed (D1061). The `temperature-sensor` cap is
  * read-only (the heater's internal thermometer).
  *
  * TODO (deferred climate surface): the heater has NO target-temperature
- * setpoint on the library (`HeaterDevice` exposes heat-level `htalevel` and an
- * `ecolevel`, not a degrees setpoint), so it is modelled as a switch + a
+ * setpoint in this bridge (the cloud exposes a heat level and an eco level, not a degrees
+ * setpoint), so it is modelled as a switch + a
  * temperature readout rather than the `climate-control` cap. A later phase could
  * map `htalevel` onto a `fan-control`-style level or add a vendor heat-level cap.
- * The heater's reported temperature unit (°C vs °F) is also assumed Celsius — a
- * follow-up should confirm and convert if the account is imperial.
+ * The worker converts the reported temperature to Celsius.
  */
 export class DreoHeaterDevice extends DreoChildDevice {
   // Widens the base's `protected` constructor to public so `dreoChildFactory`
@@ -39,25 +37,12 @@ export class DreoHeaterDevice extends DreoChildDevice {
     super(ctx)
   }
 
-  private resolveHeater(): DreoHeater | null {
-    const handle = this.resolveHandle()
-    return handle instanceof DreoHeater ? handle : null
-  }
-
-  private requireHeater(): DreoHeater {
-    const heater = this.resolveHeater()
-    if (heater === null) {
-      throw new Error(`DreoHeaterDevice: handle unavailable (device=${this.dreoDeviceId})`)
-    }
-    return heater
-  }
-
   protected override registerCaps(): void {
     const switchProvider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<SwitchStatus>(SWITCH_CAP) ?? SWITCH_COLD_START,
       setState: async ({ on }) => {
-        this.requireHeater().setPower(on)
+        await this.requireHandle().setPower(on)
       },
     }
     this.ctx.registerNativeCap(switchCapability, switchProvider)
@@ -72,21 +57,15 @@ export class DreoHeaterDevice extends DreoChildDevice {
   }
 
   protected override recomputeSlices(): void {
-    const heater = this.resolveHeater()
-    if (heater === null) return
+    const handle = this.resolveHandle()
+    if (handle === null) return
+    const { on, temperature } = handle.state
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, {
-      on: heater.power,
-      lastChangedAt: now,
-    })
+    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
 
-    const temperature = heater.temperature
-    if (temperature !== undefined) {
-      this.runtimeState.setCapState(TEMP_CAP, {
-        temperature: temperature,
-        lastFetchedAt: now,
-      })
+    if (temperature !== null) {
+      this.runtimeState.setCapState(TEMP_CAP, { temperature, lastFetchedAt: now })
     }
   }
 }
