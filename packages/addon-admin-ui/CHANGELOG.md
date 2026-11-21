@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize: a Source device picker above a capability's readings fills every reading the chosen device exposes at once (power meter: power, energy, voltage, current); each reading can still be overridden.
+
 ## [1.2.727] - 2026-11-21
 
 ### Changed
@@ -14,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Alexa link with paused proactive updates and an unknown link status have their own labels in the export panel
 ### Changed
 
-- Customize: a Source device picker above a capability's readings fills every reading the chosen device exposes at once (power meter: power, energy, voltage, current); each reading can still be overridden.
 
 ## [1.2.726] - 2026-11-21
 
