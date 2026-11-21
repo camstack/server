@@ -10,6 +10,7 @@ import { settingsToDreoConfig } from '../config.js'
 import { dreoConnections } from '../dreo-gateway.js'
 import { DreoIntegrationManager } from '../dreo-integration-manager.js'
 import { DreoFanDevice } from '../devices/dreo-fan-device.js'
+import { forgetDreoEpoch } from '../dreo-state-refresh.js'
 import { FakeBridge, IDLE_STATE } from './fake-bridge.js'
 
 interface Registration {
@@ -160,6 +161,41 @@ describe('Dreo device-state-refresh (D1062)', () => {
     const after = refreshReg()?.options?.stateRefresh?.['connectionEpoch']
     expect(typeof before).toBe('number')
     expect(after).toBe(Number(before) + 1)
+  })
+
+  it('one reconnect is one epoch bump for the account, however many devices it has', async () => {
+    const { bridge } = await liveAccount()
+    const first = makeFan()
+    const second = makeFan()
+    await first.device.onActivate()
+    await second.device.onActivate()
+    const before = Number(first.refreshReg()?.options?.stateRefresh?.['connectionEpoch'])
+    bridge.push({ push: 'channel', state: 'down' })
+    bridge.push({ push: 'channel', state: 'up' })
+    expect(first.refreshReg()?.options?.stateRefresh?.['connectionEpoch']).toBe(before + 1)
+    expect(second.refreshReg()?.options?.stateRefresh?.['connectionEpoch']).toBe(before + 1)
+  })
+
+  it('an unknown power value stays unknown in the slice, never false (D315)', async () => {
+    const { bridge } = await liveAccount()
+    const { device, power } = makeFan()
+    await device.onActivate()
+    bridge.push({ push: 'state', deviceId: 'dev-1', state: { ...IDLE_STATE, on: true } })
+    expect(power()).toBe(true)
+    bridge.push({ push: 'state', deviceId: 'dev-1', state: { ...IDLE_STATE, on: null } })
+    expect(power()).toBeNull()
+  })
+
+  it('forgets the epoch of a removed account', async () => {
+    const { bridge } = await liveAccount()
+    const first = makeFan()
+    await first.device.onActivate()
+    bridge.push({ push: 'channel', state: 'down' })
+    bridge.push({ push: 'channel', state: 'up' })
+    forgetDreoEpoch('acct-1')
+    const later = makeFan()
+    await later.device.onActivate()
+    expect(later.refreshReg()?.options?.stateRefresh?.['connectionEpoch']).toBe(0)
   })
 
   it('a pushed state reaches the slice; a command alone does not (D1061)', async () => {

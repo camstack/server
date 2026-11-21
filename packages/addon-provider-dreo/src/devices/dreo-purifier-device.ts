@@ -105,7 +105,7 @@ export class DreoPurifierDevice extends DreoChildDevice {
     const max = speedMax ?? DREO_MAX_FAN_LEVEL
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
+    this.runtimeState.setCapState(SWITCH_CAP, { on, lastChangedAt: now })
 
     this.runtimeState.setCapState(FAN_CAP, {
       speed: speed === null ? null : levelToPercentage(speed, max),

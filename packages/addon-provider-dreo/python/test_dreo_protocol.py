@@ -3,6 +3,7 @@ import unittest
 from typing import Any, Callable, Dict, List
 
 from dreo_protocol import Session, WorkerError, snapshot_of
+from dreo_worker import private_attribute
 
 
 class FakeUnits:
@@ -55,6 +56,7 @@ class FakeLibrary:
         self.applied: List[Any] = []
         self.on_channel: Callable[[str], None] = lambda _s: None
         self.fail_apply: str = ""
+        self.fire_callbacks_in_apply = False
 
     def login(self) -> None:
         pass
@@ -74,6 +76,9 @@ class FakeLibrary:
         self.applied.append((command, value))
         # The real library echoes a command into its own attributes.
         device.values["fan_speed" if command == "speed" else "is_on"] = value
+        if self.fire_callbacks_in_apply:
+            for cb in device.callbacks:
+                cb()
 
     def stop(self) -> None:
         self.applied.append("stopped")
@@ -153,6 +158,27 @@ class SessionTest(unittest.TestCase):
         ):
             with self.assertRaises(WorkerError):
                 self.session.handle({"op": "command", "deviceId": "dev-1", **bad})
+
+    def test_a_callback_during_a_command_never_reports_the_local_echo(self) -> None:
+        self.session.handle(login_message())
+        self.library.fire_callbacks_in_apply = True
+        self.session.handle({"op": "command", "deviceId": "dev-1", "command": "power", "value": True})
+        self.assertEqual(self.pushed, [])
+        self.assertEqual(self.session.handle({"op": "snapshot"})["states"]["dev-1"]["on"], False)
+
+    def test_a_server_update_after_a_command_is_reported_again(self) -> None:
+        self.session.handle(login_message())
+        self.session.handle({"op": "command", "deviceId": "dev-1", "command": "power", "value": True})
+        self.fan.server_update(is_on=True)
+        self.assertEqual(self.pushed[0]["state"]["on"], True)
+
+    def test_a_missing_library_internal_names_the_attribute_and_the_pin(self) -> None:
+        with self.assertRaises(WorkerError) as raised:
+            private_attribute(object(), "_outbox", "a device")
+        message = str(raised.exception)
+        self.assertIn("_outbox", message)
+        self.assertIn("1.11.11", message)
+        self.assertEqual(raised.exception.code, "api")
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ export class DreoHeaterDevice extends DreoChildDevice {
     const { on, temperature } = handle.state
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
+    this.runtimeState.setCapState(SWITCH_CAP, { on, lastChangedAt: now })
 
     if (temperature !== null) {
       this.runtimeState.setCapState(TEMP_CAP, { temperature, lastFetchedAt: now })

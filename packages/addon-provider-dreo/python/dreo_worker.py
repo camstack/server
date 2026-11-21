@@ -23,6 +23,19 @@ from dreo_protocol import Session, WorkerError  # noqa: E402
 REGION_CODES = {"us": "NA", "eu": "EU"}
 POWER_ATTRS = ("is_on", "poweron")
 COMMAND_ATTRS = {"speed": "fan_speed", "oscillating": "oscillating"}
+PINNED_VERSION = "1.11.11"
+
+
+def private_attribute(owner: Any, name: str, where: str) -> Any:
+    """A library internal this worker relies on; its absence names the attribute and the pin."""
+    try:
+        return getattr(owner, name)
+    except AttributeError:
+        raise WorkerError(
+            "api",
+            f"pydreo-community {PINNED_VERSION} is pinned, but {where}.{name} is missing: "
+            "the installed library is a different version",
+        ) from None
 
 
 class PyDreoLibrary:
@@ -63,12 +76,12 @@ class PyDreoLibrary:
         for device in self._client.devices:
             # Send inline: the setter then blocks until the cloud acknowledged and raises a
             # rejection to the caller, instead of dropping it from a timer thread.
-            device._outbox.timing = OutboxTiming.IMMEDIATE
+            private_attribute(device, "_outbox", "a device").timing = OutboxTiming.IMMEDIATE
         return list(self._client.devices)
 
     def start_push(self, on_channel: Callable[[str], None]) -> None:
-        transport = self._client._transport
-        original = transport._ws_handler
+        transport = private_attribute(self._client, "_transport", "PyDreo")
+        original = private_attribute(transport, "_ws_handler", "the transport")
 
         async def handler(ws: Any) -> None:
             on_channel("up")

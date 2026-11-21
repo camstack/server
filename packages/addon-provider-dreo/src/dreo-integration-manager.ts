@@ -8,7 +8,8 @@ import {
 } from './dreo-bridge.js'
 import { DreoDeviceHandle } from './dreo-device-handle.js'
 import type { DreoConnectionSurface } from './dreo-gateway.js'
-import { dreoSession } from './dreo-session.js'
+import { DreoWorkerGaveUpError, dreoSession } from './dreo-session.js'
+import { bumpDreoEpoch } from './dreo-state-refresh.js'
 
 /** Status of a single Dreo account connection. */
 export type DreoIntegrationStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -47,7 +48,15 @@ export interface DreoIntegrationManagerOptions {
   readonly session?: IntegrationSessionSink
   /** Waits before each respawn of a crashed worker; its length is the bound. */
   readonly respawnDelaysMs?: readonly number[]
+  /** A worker that stayed up this long earns its respawn budget back (D6). */
+  readonly stableUptimeMs?: number
 }
+
+/**
+ * A worker that signs in and then crashes again before this much uptime does not reset the
+ * respawn budget: a crash loop after a successful login ends in a give-up, not a forever loop.
+ */
+export const DREO_STABLE_UPTIME_MS = 5 * 60_000
 
 /** A crashed worker is respawned after these waits, then left failed (never an endless loop). */
 export const DREO_RESPAWN_DELAYS_MS: readonly number[] = [2_000, 5_000, 15_000, 30_000, 60_000]
@@ -74,6 +83,7 @@ export class DreoIntegrationManager {
   readonly #makeBridge: DreoBridgeFactory
   readonly #respawnDelaysMs: readonly number[]
   readonly #session: IntegrationSessionSink
+  readonly #stableUptimeMs: number
 
   /** Handles outlive a worker respawn: the device classes hold them. */
   readonly #handles = new Map<string, DreoDeviceHandle>()
@@ -85,6 +95,8 @@ export class DreoIntegrationManager {
   #channelWasDown = false
   #stopped = true
   #respawnAttempts = 0
+  #connectedAt: number | null = null
+  readonly #unsupportedLogged = new Set<string>()
   #respawnTimer: ReturnType<typeof setTimeout> | null = null
   #refreshInFlight: Promise<void> | null = null
 
@@ -99,6 +111,7 @@ export class DreoIntegrationManager {
     this.#makeBridge = options.makeBridge
     this.#respawnDelaysMs = options.respawnDelaysMs ?? DREO_RESPAWN_DELAYS_MS
     this.#session = options.session ?? dreoSession
+    this.#stableUptimeMs = options.stableUptimeMs ?? DREO_STABLE_UPTIME_MS
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -178,13 +191,24 @@ export class DreoIntegrationManager {
     this.#bridge = bridge
     this.#channelWasDown = false
     bridge.onPush((push) => this.#onPush(bridge, push))
-    let devices: readonly DreoBridgeDevice[]
+    let listed: readonly DreoBridgeDevice[]
     try {
-      devices = await bridge.login(this.#connection)
+      listed = await bridge.login(this.#connection)
     } catch (err: unknown) {
       if (this.#bridge === bridge) this.#bridge = null
       bridge.close()
       throw err
+    }
+    // A model the library cannot read has no state: it is neither adopted nor shown as "off".
+    const devices = listed.filter((device) => device.supported)
+    for (const device of listed) {
+      if (device.supported || this.#unsupportedLogged.has(device.deviceId)) continue
+      this.#unsupportedLogged.add(device.deviceId)
+      this.#logger.warn('DreoIntegrationManager: device model unsupported by the Dreo library', {
+        // Never adopted, so it has no numeric device id: the cloud serial names it.
+        tags: { integrationId: this.#id },
+        meta: { dreoDeviceId: device.deviceId, model: device.model },
+      })
     }
     this.#infos = [...devices]
     const seen = new Set<string>()
@@ -270,10 +294,15 @@ export class DreoIntegrationManager {
   }
 
   #notifyReconnected(): void {
+    bumpDreoEpoch(this.#id)
     for (const handle of this.#handles.values()) handle.notifyReconnected()
   }
 
   #onWorkerExited(code: number | null): void {
+    if (this.#connectedAt !== null && Date.now() - this.#connectedAt >= this.#stableUptimeMs) {
+      this.#respawnAttempts = 0
+    }
+    this.#connectedAt = null
     this.#bridge = null
     this.#refreshInFlight = null
     this.#status = 'error'
@@ -296,6 +325,7 @@ export class DreoIntegrationManager {
         tags: { integrationId: this.#id },
         meta: { attempts: this.#respawnAttempts },
       })
+      this.#session.failure(this.#id, new DreoWorkerGaveUpError(this.#respawnAttempts))
       return
     }
     this.#respawnAttempts += 1
@@ -314,7 +344,6 @@ export class DreoIntegrationManager {
         this.#closeBridge()
         return
       }
-      this.#respawnAttempts = 0
       this.#markConnected()
       this.#notifyReconnected()
     } catch (err: unknown) {
@@ -341,6 +370,7 @@ export class DreoIntegrationManager {
   }
 
   #markConnected(): void {
+    this.#connectedAt = Date.now()
     this.#status = 'connected'
     this.#error = null
     this.#lastCheckedAt = Date.now()

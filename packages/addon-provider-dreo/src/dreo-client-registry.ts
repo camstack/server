@@ -23,6 +23,7 @@ import {
   type DreoIntegrationInfo,
 } from './dreo-integration-manager.js'
 import { dreoConnections } from './dreo-gateway.js'
+import { forgetDreoEpoch } from './dreo-state-refresh.js'
 
 /** The factory used when the addon gave none: a connection then fails with this message. */
 function unavailableBridge(): never {
@@ -158,6 +159,7 @@ export class DreoClientRegistry {
     const entry = this.#entries.get(integrationId)
     if (!entry) return
     this.#entries.delete(integrationId)
+    forgetDreoEpoch(integrationId)
     // The manager clears its own surface from `dreoConnections` on stop().
     try {
       await entry.manager.stop()

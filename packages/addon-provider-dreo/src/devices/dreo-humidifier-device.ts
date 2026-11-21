@@ -63,7 +63,7 @@ export class DreoHumidifierDevice extends DreoChildDevice {
     const { on, humidity } = handle.state
     const now = Date.now()
 
-    this.runtimeState.setCapState(SWITCH_CAP, { on: on === true, lastChangedAt: now })
+    this.runtimeState.setCapState(SWITCH_CAP, { on, lastChangedAt: now })
 
     const percent = clampPercent(humidity)
     if (percent !== null) {

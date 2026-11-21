@@ -97,7 +97,7 @@ export class DreoFanDevice extends DreoChildDevice {
     const max = speedMax ?? DREO_MAX_FAN_LEVEL
     const now = Date.now()
 
-    const switchSlice: SwitchStatus = { on: on === true, lastChangedAt: now }
+    const switchSlice: SwitchStatus = { on, lastChangedAt: now }
     this.runtimeState.setCapState(SWITCH_CAP, switchSlice)
 
     const fanSlice: FanControlStatus = {

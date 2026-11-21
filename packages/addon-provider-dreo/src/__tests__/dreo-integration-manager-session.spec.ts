@@ -7,11 +7,19 @@ import { DreoIntegrationManager } from '../dreo-integration-manager.js'
 import { classifyDreoSessionError } from '../dreo-session.js'
 import { fanDevice, FakeBridge, IDLE_STATE } from './fake-bridge.js'
 
+const warnings: Array<{ message: string; deviceId: unknown }> = []
+
+function serialOf(meta: unknown): unknown {
+  return typeof meta === 'object' && meta !== null && 'dreoDeviceId' in meta
+    ? meta.dreoDeviceId
+    : undefined
+}
+
 function quietLogger(): IScopedLogger {
   const log: IScopedLogger = {
     debug: () => undefined,
     info: () => undefined,
-    warn: () => undefined,
+    warn: (message, options) => void warnings.push({ message, deviceId: serialOf(options?.meta) }),
     error: () => undefined,
     child: () => log,
     withTags: () => log,
@@ -137,6 +145,23 @@ describe('DreoIntegrationManager live state', () => {
   })
 })
 
+describe('DreoIntegrationManager unsupported models', () => {
+  it('adopts no device the library cannot read, and logs it once with its device id', async () => {
+    warnings.length = 0
+    const h = setup((b) => {
+      b.devices = [fanDevice('dev-1'), { ...fanDevice('dev-9'), supported: false }]
+    })
+    await h.manager.start()
+    const surface = lastSurface(h.surfaces)
+    expect(surface?.infos.map((i) => i.deviceId)).toEqual(['dev-1'])
+    expect([...(surface?.handles.keys() ?? [])]).toEqual(['dev-1'])
+    h.bridges[0]?.push({ push: 'exited', code: 1 })
+    await settle(() => h.bridges.length === 2)
+    const unsupported = warnings.filter((w) => /unsupported/.test(w.message))
+    expect(unsupported).toEqual([expect.objectContaining({ deviceId: 'dev-9' })])
+  })
+})
+
 describe('DreoIntegrationManager worker crash', () => {
   it('respawns the worker, keeps the handles and notifies a reconnect', async () => {
     const h = setup((b, index) => {
@@ -166,6 +191,20 @@ describe('DreoIntegrationManager worker crash', () => {
     await new Promise((r) => setTimeout(r, 30))
     expect(h.bridges).toHaveLength(3)
     expect(h.manager.getInfo().status).toBe('error')
+  })
+
+  it('gives up and raises the alert when a worker keeps crashing after a good sign-in', async () => {
+    const h = setup()
+    await h.manager.start()
+    h.bridges[0]?.push({ push: 'exited', code: 1 })
+    await settle(() => h.bridges.length === 2 && h.manager.getInfo().status === 'connected')
+    h.bridges[1]?.push({ push: 'exited', code: 1 })
+    await settle(() => h.bridges.length === 3 && h.manager.getInfo().status === 'connected')
+    h.bridges[2]?.push({ push: 'exited', code: 1 })
+    await new Promise((r) => setTimeout(r, 30))
+    expect(h.bridges).toHaveLength(3)
+    expect(h.manager.getInfo().status).toBe('error')
+    expect(h.calls).toContain('failure:b1:connection-lost')
   })
 
   it('ignores the exit of a worker that stop() already replaced', async () => {

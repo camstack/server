@@ -112,6 +112,7 @@ class Session:
         self._library: Any = None
         self._devices: Dict[str, Any] = {}
         self._reported: Dict[str, Dict[str, Any]] = {}
+        self._commanding: Dict[str, int] = {}
         self._lock = threading.Lock()
 
     def handle(self, message: Dict[str, Any]) -> Dict[str, Any]:
@@ -157,7 +158,8 @@ class Session:
             self._devices[device_id] = device
             self._reported[device_id] = snapshot_of(device)
             if info["supported"]:
-                device.add_attr_callback(lambda did=device_id: self._on_device(did))
+                # The library calls a callback with no arguments (`_do_callbacks`).
+                device.add_attr_callback(lambda *_args, did=device_id: self._on_device(did))
             described.append({**info, "state": self._reported[device_id]})
         self._library = library
         library.start_push(lambda state: self._emit({"push": "channel", "state": state}))
@@ -168,6 +170,11 @@ class Session:
         device = self._devices.get(device_id)
         if device is None:
             return
+        with self._lock:
+            if self._commanding.get(device_id, 0) > 0:
+                # A setter folds the commanded value into the device's own attributes before
+                # the cloud answers; reading them now would report that echo as device state.
+                return
         snapshot = snapshot_of(device)
         with self._lock:
             if self._reported.get(device_id) == snapshot:
@@ -200,7 +207,14 @@ class Session:
                 raise WorkerError("bad-request", "speed must be an integer")
         elif not isinstance(value, bool):
             raise WorkerError("bad-request", f"{command} must be a boolean")
-        library.apply(device, command, value)
+        device_id = self._text(message, "deviceId")
+        with self._lock:
+            self._commanding[device_id] = self._commanding.get(device_id, 0) + 1
+        try:
+            library.apply(device, command, value)
+        finally:
+            with self._lock:
+                self._commanding[device_id] -= 1
         return {}
 
     def _close(self) -> Dict[str, Any]:

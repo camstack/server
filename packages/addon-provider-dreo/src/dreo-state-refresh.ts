@@ -34,10 +34,19 @@ function currentEpoch(integrationId: string): number {
   return epochs.get(integrationId) ?? 0
 }
 
-function nextEpoch(integrationId: string): number {
+/**
+ * The account came back: one bump per reconnect, taken by the manager before it tells the
+ * devices, so every device of the account publishes the same new epoch.
+ */
+export function bumpDreoEpoch(integrationId: string): number {
   const next = currentEpoch(integrationId) + 1
   epochs.set(integrationId, next)
   return next
+}
+
+/** The account is gone for good: drop its counter (a re-added account starts clean). */
+export function forgetDreoEpoch(integrationId: string): void {
+  epochs.delete(integrationId)
 }
 
 export interface DreoStateRefreshTarget {
@@ -60,7 +69,7 @@ export function dreoRefreshPolicy(integrationId: string, connectionEpoch = 0): S
 
 /**
  * Register the device's refresh cap. Call the returned function when the account's channel
- * came back: it re-registers the cap with a higher epoch.
+ * came back (after {@link bumpDreoEpoch}): it re-registers the cap with the account's epoch.
  */
 export function registerDreoStateRefresh(target: DreoStateRefreshTarget): () => void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
@@ -80,6 +89,6 @@ export function registerDreoStateRefresh(target: DreoStateRefreshTarget): () => 
     const unregister = target.ctx.unregisterNativeCap
     if (unregister === undefined) return
     unregister.call(target.ctx, deviceStateRefreshCapability.name)
-    register(nextEpoch(target.integrationId))
+    register(currentEpoch(target.integrationId))
   }
 }
