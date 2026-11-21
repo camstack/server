@@ -1,0 +1,948 @@
+{
+  "schema": 1,
+  "revision": 1,
+  "contentHash": "10b2d5c6c70b4e01",
+  "docsBaseUrl": "https://camstack-docs.zentik.app",
+  "steps": [
+    {
+      "id": "feasibility",
+      "title": "Check that the machine can run it",
+      "phase": "before-install",
+      "page": "/docs/get-started#feasibility",
+      "summary": "Before installing anything, find out what the machine has and whether it can be a hub on its own for your cameras, or needs agents next to it.",
+      "actions": [
+        {
+          "id": "host-check",
+          "title": "Read the host",
+          "agent": {
+            "tool": "setup_host_check",
+            "next": "Keep the answer: the next action sizes the install from it."
+          },
+          "manual": {
+            "text": "On the machine that will run CamStack, run the host check. It lists the CPU, the accelerators it finds and the image to use, and it changes nothing.",
+            "command": "npx camstack host-check",
+            "page": "/docs/installation/accelerators"
+          }
+        },
+        {
+          "id": "size-it",
+          "title": "Size the install",
+          "agent": {
+            "tool": "setup_feasibility",
+            "args": {
+              "cameras": 8,
+              "mainStream": "4k",
+              "codec": "h265",
+              "recording": "continuous",
+              "retentionDays": 14
+            },
+            "next": "Ask the person for their own numbers first. Tell them the verdict and what it rests on; a host outside the measured tables gets a provisional verdict and the hardware report link."
+          },
+          "manual": {
+            "text": "Give the host check your camera count, their main stream, how you record and for how many days. It answers with the memory, CPU and disk the planning page measured for that load, and one verdict: hub only, hub plus agents, or not a hub.",
+            "command": "npx camstack host-check --cameras 8 --main-stream 4k --codec h265 --recording continuous --retention-days 14",
+            "page": "/docs/planning"
+          }
+        }
+      ]
+    },
+    {
+      "id": "install",
+      "title": "Install the hub",
+      "phase": "install",
+      "page": "/docs/get-started#install",
+      "summary": "Install the hub on the machine you checked, with the image and the device passthrough the host check named.",
+      "actions": [
+        {
+          "id": "install-guide",
+          "title": "Get the install for this host",
+          "agent": {
+            "tool": "setup_install_guide",
+            "args": {
+              "hostKind": "docker",
+              "role": "hub",
+              "accelerator": "intel"
+            },
+            "next": "Use the host kind and accelerator the host check reported. The person runs the commands; you never run an installer for them."
+          },
+          "manual": {
+            "text": "Pick the page for your host — Docker Compose, Unraid, Proxmox or a Mac — and follow it. Each one starts from the published template, so do not write a compose file from memory.",
+            "page": "/docs/installation"
+          }
+        },
+        {
+          "id": "find-the-hub",
+          "title": "Find the hub on the network",
+          "agent": {
+            "tool": "setup_discover_hubs",
+            "next": "Pass the address the person picks to setup_connect."
+          },
+          "manual": {
+            "text": "Open https://<host-ip>:4443 in a browser on the same network and accept the self-signed certificate.",
+            "page": "/docs/installation/first-run"
+          }
+        },
+        {
+          "id": "connect",
+          "title": "Point the assistant at the hub",
+          "agent": {
+            "tool": "setup_connect",
+            "args": {
+              "server": "https://<host-ip>:4443"
+            }
+          },
+          "manual": {
+            "none": "By hand there is nothing to connect: the browser is already on the hub."
+          }
+        }
+      ]
+    },
+    {
+      "id": "first-login",
+      "title": "Sign in and secure the admin account",
+      "phase": "install",
+      "page": "/docs/get-started#first-login",
+      "summary": "Sign in, replace the first-boot password and add a passkey or two-factor sign-in.",
+      "actions": [
+        {
+          "id": "sign-in",
+          "title": "Sign in",
+          "agent": {
+            "tool": "setup_login",
+            "args": {
+              "server": "https://<host-ip>:4443"
+            },
+            "next": "The person approves the sign-in in their browser; call setup_login_wait until it answers. A password is never typed into the chat."
+          },
+          "manual": {
+            "text": "Sign in as admin with the first-boot password changeme.",
+            "page": "/docs/installation/first-run"
+          }
+        },
+        {
+          "id": "secure-admin",
+          "title": "Replace the password and add a second factor",
+          "agent": {
+            "none": "Passwords and passkeys are never handled by an assistant. Send the person to the page below."
+          },
+          "manual": {
+            "text": "Change the password, then add a passkey or an authenticator app to the admin account.",
+            "ui": {
+              "route": "/system/identity",
+              "nav": [
+                "Administration",
+                "Identity & Access"
+              ]
+            },
+            "page": "/docs/get-started/admin-first-run"
+          }
+        }
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "Add agents, if the plan needs them",
+      "phase": "install",
+      "page": "/docs/get-started#agents",
+      "summary": "An agent is a second machine that takes detection or decoding off the hub. Skip this when the verdict was hub only.",
+      "actions": [
+        {
+          "id": "add-node",
+          "title": "Install and pair an agent",
+          "agent": {
+            "tool": "setup_add_node",
+            "args": {
+              "hostKind": "docker",
+              "accelerator": "intel",
+              "hubAddress": "<hub-ip>"
+            },
+            "next": "Pairing is confirmed by the person on both screens with the six digits shown; nothing is copied between machines."
+          },
+          "manual": {
+            "text": "Install the agent on the second machine, start pairing from the hub, and type the six digits each screen shows on the other one.",
+            "ui": {
+              "route": "/system/nodes",
+              "nav": [
+                "Cluster",
+                "Nodes"
+              ]
+            },
+            "page": "/docs/cluster/install-an-agent"
+          }
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "title": "Decide where recordings and event media go",
+      "phase": "make-it-work",
+      "page": "/docs/get-started#storage",
+      "summary": "Every kind of data has a storage location. The defaults sit on the data disk; point recordings at the disk that has the room.",
+      "actions": [
+        {
+          "id": "read-locations",
+          "title": "See the locations and their free space",
+          "agent": {
+            "tool": "setup_locations"
+          },
+          "manual": {
+            "text": "Open the Storage tab: one section per kind of data, each location with its mode and free space.",
+            "ui": {
+              "route": "/system/storage",
+              "nav": [
+                "Administration",
+                "Data"
+              ]
+            },
+            "page": "/docs/recording/storage"
+          }
+        },
+        {
+          "id": "add-location",
+          "title": "Add a location on the recording disk",
+          "agent": {
+            "tool": "configure_setup_location_create",
+            "args": {
+              "type": "recordings",
+              "name": "Recording disk",
+              "path": "/recordings"
+            },
+            "next": "Local paths only. A location that needs a password (SMB, SFTP, S3, WebDAV) is created by the person in the admin UI, never through a tool call."
+          },
+          "manual": {
+            "text": "Add a location, pick its provider and its path, and test it. Two locations of one kind cannot share a folder, or sit one inside the other.",
+            "ui": {
+              "route": "/system/storage",
+              "nav": [
+                "Administration",
+                "Data"
+              ]
+            },
+            "page": "/docs/recording/storage"
+          }
+        },
+        {
+          "id": "set-modes",
+          "title": "Choose which location takes new data",
+          "agent": {
+            "tool": "configure_setup_locations",
+            "next": "Send the changes of the proposal the person agreed to."
+          },
+          "manual": {
+            "text": "Set the location that takes new data to Active. Read-only keeps what is there; Drain empties it over time.",
+            "ui": {
+              "route": "/system/storage",
+              "nav": [
+                "Administration",
+                "Data"
+              ]
+            },
+            "page": "/docs/recording/storage"
+          }
+        }
+      ]
+    },
+    {
+      "id": "core-addons",
+      "title": "Check the core addons",
+      "phase": "make-it-work",
+      "page": "/docs/get-started/core-addons",
+      "summary": "The hub ships with what it needs to run. A camera integration, a relay for video away from home and a way to reach the hub from outside are yours to choose.",
+      "actions": [
+        {
+          "id": "read-core-addons",
+          "title": "See what is installed, configured or missing",
+          "agent": {
+            "tool": "setup_core_addons",
+            "next": "Act on its nextAction. Ask whether the person will open CamStack away from home before calling anything in the remote group required."
+          },
+          "manual": {
+            "text": "Open the Addons page and compare it with the core addons list: each row there says what it is for and where to configure it.",
+            "ui": {
+              "route": "/system/addons",
+              "nav": [
+                "Cluster",
+                "Addons"
+              ]
+            },
+            "page": "/docs/get-started/core-addons"
+          }
+        },
+        {
+          "id": "install-addon",
+          "title": "Install a missing addon",
+          "agent": {
+            "tool": "configure_addon_install",
+            "args": {
+              "packageName": "@camstack/addon-provider-onvif"
+            },
+            "next": "Find the package with configure_addons_search first."
+          },
+          "manual": {
+            "text": "Search the addon in the catalogue and install it.",
+            "ui": {
+              "route": "/system/addons",
+              "nav": [
+                "Cluster",
+                "Addons"
+              ]
+            },
+            "page": "/docs/get-started/addons"
+          }
+        },
+        {
+          "id": "configure-addon",
+          "title": "Give the addon its account",
+          "agent": {
+            "none": "An account token or key is a secret: it goes into the form in the admin UI, never through an assistant."
+          },
+          "manual": {
+            "text": "Open the addon under Connectivity, add its account or tunnel and test it.",
+            "ui": {
+              "route": "/system/integrations",
+              "nav": [
+                "Administration",
+                "Connectivity"
+              ]
+            },
+            "page": "/docs/get-started/core-addons"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cameras",
+      "title": "Add cameras, pick their streams, turn on recording",
+      "phase": "make-it-work",
+      "page": "/docs/get-started#cameras",
+      "summary": "Add each camera through its integration, check which stream does what, then decide what is recorded.",
+      "actions": [
+        {
+          "id": "camera-providers",
+          "title": "See how a camera can be added",
+          "agent": {
+            "tool": "configure_camera_providers"
+          },
+          "manual": {
+            "text": "Open Devices and start Add device: the list shows every installed camera integration.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/get-started/add-a-camera"
+          }
+        },
+        {
+          "id": "discover",
+          "title": "Discover cameras on the network",
+          "agent": {
+            "tool": "configure_camera_discover",
+            "args": {
+              "addonId": "provider-onvif"
+            }
+          },
+          "manual": {
+            "text": "Run discovery for the integration and pick the cameras it found.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/get-started/add-a-camera"
+          }
+        },
+        {
+          "id": "add-camera",
+          "title": "Add a camera",
+          "agent": {
+            "tool": "configure_camera_add",
+            "next": "The camera password is typed by the person into the admin UI when the integration asks for one."
+          },
+          "manual": {
+            "text": "Enter the address and the credentials of the camera and save.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/get-started/add-a-camera"
+          }
+        },
+        {
+          "id": "read-streams",
+          "title": "Check the stream of every camera",
+          "agent": {
+            "tool": "setup_streams"
+          },
+          "manual": {
+            "text": "Open a camera and its Streams tab: the main stream records, the low one feeds detection and the grid.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/get-started/add-a-camera"
+          }
+        },
+        {
+          "id": "set-streams",
+          "title": "Fix the stream roles",
+          "agent": {
+            "tool": "configure_setup_streams"
+          },
+          "manual": {
+            "text": "Assign the roles the proposal names on the Streams tab of the camera.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/get-started/add-a-camera"
+          }
+        },
+        {
+          "id": "read-recording",
+          "title": "See what is recorded",
+          "agent": {
+            "tool": "setup_recording"
+          },
+          "manual": {
+            "text": "Open the Recording tab of a camera: continuous, on events, or off, and for how long it is kept.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/recording"
+          }
+        },
+        {
+          "id": "set-recording",
+          "title": "Turn recording on",
+          "agent": {
+            "tool": "configure_setup_recording"
+          },
+          "manual": {
+            "text": "Pick continuous or events per camera and set the days to keep.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/recording"
+          }
+        }
+      ]
+    },
+    {
+      "id": "detection",
+      "title": "Measure the machine and tune detection",
+      "phase": "make-it-work",
+      "page": "/docs/get-started#detection",
+      "summary": "Run the node benchmark once per node. It measures how many cameras the node really decodes and detects, replaces the provisional verdict with a measured one, and lets Auto tune pick the models.",
+      "actions": [
+        {
+          "id": "read-benchmark",
+          "title": "See what is measured",
+          "agent": {
+            "tool": "setup_benchmark"
+          },
+          "manual": {
+            "text": "Open Benchmark and its Node benchmark tab: one row per node and device, measured or not.",
+            "ui": {
+              "route": "/addon/benchmark",
+              "nav": [
+                "Detection",
+                "Benchmark"
+              ]
+            },
+            "page": "/docs/tools/benchmark"
+          }
+        },
+        {
+          "id": "run-benchmark",
+          "title": "Run the node benchmark",
+          "agent": {
+            "tool": "support_benchmark_run",
+            "next": "It takes the node out of normal work for a few minutes and restores it; say so before the person confirms."
+          },
+          "manual": {
+            "text": "Start the benchmark for the node. Detection pauses on that node while it runs, then everything is restored.",
+            "ui": {
+              "route": "/addon/benchmark",
+              "nav": [
+                "Detection",
+                "Benchmark"
+              ]
+            },
+            "page": "/docs/tools/benchmark"
+          }
+        },
+        {
+          "id": "read-pipeline",
+          "title": "Read the Auto tune plan",
+          "agent": {
+            "tool": "setup_pipeline"
+          },
+          "manual": {
+            "text": "Open Pipeline and Auto tune: it proposes a model per device and how the cameras are spread over the nodes.",
+            "ui": {
+              "route": "/system/pipeline",
+              "nav": [
+                "Cluster",
+                "Pipeline"
+              ]
+            },
+            "page": "/docs/detection/choosing-a-detector"
+          }
+        },
+        {
+          "id": "apply-pipeline",
+          "title": "Apply the plan",
+          "agent": {
+            "tool": "configure_setup_pipeline",
+            "next": "Pass the planHash of the plan the person agreed to."
+          },
+          "manual": {
+            "text": "Apply the plan.",
+            "ui": {
+              "route": "/system/pipeline",
+              "nav": [
+                "Cluster",
+                "Pipeline"
+              ]
+            },
+            "page": "/docs/detection/choosing-a-detector"
+          }
+        },
+        {
+          "id": "accelerators",
+          "title": "Check that the accelerators are used",
+          "agent": {
+            "tool": "ops_accelerators"
+          },
+          "manual": {
+            "text": "On the Nodes page, each node lists the devices it found. A GPU the host check saw and the node does not list was not passed through.",
+            "ui": {
+              "route": "/system/nodes",
+              "nav": [
+                "Cluster",
+                "Nodes"
+              ]
+            },
+            "page": "/docs/installation/accelerators"
+          }
+        }
+      ]
+    },
+    {
+      "id": "remote-access",
+      "title": "Reach the hub away from home",
+      "phase": "finish",
+      "page": "/docs/get-started#remote-access",
+      "summary": "Suggested, never required: a hub used only at home is complete without it.",
+      "actions": [
+        {
+          "id": "read-remote-access",
+          "title": "See how the hub is reachable",
+          "agent": {
+            "tool": "configure_remote_access"
+          },
+          "manual": {
+            "text": "Open Network: the addresses of the hub, which one the apps use, and whether a public endpoint is set.",
+            "ui": {
+              "route": "/system/network",
+              "nav": [
+                "Administration",
+                "Network"
+              ]
+            },
+            "page": "/docs/network/remote-access"
+          }
+        },
+        {
+          "id": "set-remote-access",
+          "title": "Set the public endpoint",
+          "agent": {
+            "tool": "configure_remote_access_set"
+          },
+          "manual": {
+            "text": "Pick the tunnel or the address that is reachable from outside as the public endpoint.",
+            "ui": {
+              "route": "/system/network",
+              "nav": [
+                "Administration",
+                "Network"
+              ]
+            },
+            "page": "/docs/network/remote-access"
+          }
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Get told when something happens",
+      "phase": "finish",
+      "page": "/docs/get-started#notifications",
+      "summary": "A target is where a notification goes; a rule says when. Start with one target, one rule for system trouble and one for detections.",
+      "actions": [
+        {
+          "id": "read-targets",
+          "title": "See the notification targets",
+          "agent": {
+            "tool": "configure_notification_targets"
+          },
+          "manual": {
+            "text": "Open Notifications and its Targets tab.",
+            "ui": {
+              "route": "/system/notifications",
+              "nav": [
+                "Administration",
+                "Notifications"
+              ]
+            },
+            "page": "/docs/notifications/targets"
+          }
+        },
+        {
+          "id": "add-target",
+          "title": "Add a target",
+          "agent": {
+            "tool": "configure_notification_target_upsert",
+            "next": "A target that needs a token is created by the person in the admin UI."
+          },
+          "manual": {
+            "text": "Add the phone app, email or another target.",
+            "ui": {
+              "route": "/system/notifications",
+              "nav": [
+                "Administration",
+                "Notifications"
+              ]
+            },
+            "page": "/docs/notifications/targets"
+          }
+        },
+        {
+          "id": "test-target",
+          "title": "Send a test",
+          "agent": {
+            "tool": "configure_notification_target_test"
+          },
+          "manual": {
+            "text": "Send a test notification to the target.",
+            "ui": {
+              "route": "/system/notifications",
+              "nav": [
+                "Administration",
+                "Notifications"
+              ]
+            },
+            "page": "/docs/notifications/testing"
+          }
+        },
+        {
+          "id": "draft-rule",
+          "title": "Draft a rule from a few questions",
+          "agent": {
+            "tool": "configure_notification_rule_questionnaire",
+            "next": "Call it without answers to get the questions. Do it once for system alerts and once for detections."
+          },
+          "manual": {
+            "text": "Create a rule: what triggers it, on which cameras, and where it is sent.",
+            "ui": {
+              "route": "/system/notifications",
+              "nav": [
+                "Administration",
+                "Notifications"
+              ]
+            },
+            "page": "/docs/notifications/rules"
+          }
+        },
+        {
+          "id": "save-rule",
+          "title": "Save the rule",
+          "agent": {
+            "tool": "configure_notification_rule_save"
+          },
+          "manual": {
+            "text": "Save the rule and leave it enabled.",
+            "ui": {
+              "route": "/system/notifications",
+              "nav": [
+                "Administration",
+                "Notifications"
+              ]
+            },
+            "page": "/docs/notifications/rules"
+          }
+        }
+      ]
+    },
+    {
+      "id": "backups",
+      "title": "Schedule a backup",
+      "phase": "finish",
+      "page": "/docs/get-started#backups",
+      "summary": "A backup holds the configuration, not the footage. One destination with a schedule is enough.",
+      "actions": [
+        {
+          "id": "schedule-backup",
+          "title": "Add a destination and a schedule",
+          "agent": {
+            "none": "No tool writes backup settings yet. Send the person to the page below."
+          },
+          "manual": {
+            "text": "On the Backup tab, add a destination, set a schedule and run the first backup by hand.",
+            "ui": {
+              "route": "/system/backup",
+              "nav": [
+                "Administration",
+                "Data"
+              ]
+            },
+            "page": "/docs/admin/backup"
+          }
+        }
+      ]
+    },
+    {
+      "id": "keep-current",
+      "title": "Calibrate and keep it current",
+      "phase": "finish",
+      "page": "/docs/get-started#keep-current",
+      "summary": "Calibrate each camera once, and check for updates from time to time.",
+      "actions": [
+        {
+          "id": "calibrate",
+          "title": "Calibrate a camera",
+          "agent": {
+            "tool": "configure_calibrate_camera",
+            "next": "Apply what the person agrees to with configure_calibrate_apply."
+          },
+          "manual": {
+            "text": "Open a camera and run its calibration.",
+            "ui": {
+              "route": "/devices",
+              "nav": [
+                "Devices"
+              ]
+            },
+            "page": "/docs/detection/zones"
+          }
+        },
+        {
+          "id": "updates",
+          "title": "Check for updates",
+          "agent": {
+            "tool": "ops_update_check"
+          },
+          "manual": {
+            "text": "Open System: it shows the installed version and whether an update is waiting.",
+            "ui": {
+              "route": "/system",
+              "nav": [
+                "Administration",
+                "System"
+              ]
+            },
+            "page": "/docs/installation/updating"
+          }
+        }
+      ]
+    }
+  ],
+  "coreAddons": [
+    {
+      "id": "admin-and-sign-in",
+      "title": "Admin and sign-in",
+      "need": "seeded",
+      "why": "The admin UI, and signing in with a passkey or an identity provider.",
+      "addons": [
+        "admin-ui",
+        "auth-webauthn",
+        "auth-oidc"
+      ],
+      "page": "/docs/get-started/admin-first-run"
+    },
+    {
+      "id": "video-pipeline",
+      "title": "Streams, recording and detection",
+      "need": "seeded",
+      "why": "Holds every camera stream, records it, decodes it and runs motion and object detection on it.",
+      "addons": [
+        "stream-broker",
+        "recorder",
+        "decoder-nodeav",
+        "detection-pipeline",
+        "pipeline-runner",
+        "motion-wasm",
+        "pipeline-orchestrator"
+      ],
+      "page": "/docs/detection"
+    },
+    {
+      "id": "analytics",
+      "title": "Events and search",
+      "need": "seeded",
+      "why": "Turns detections into events, tracks and the searchable library.",
+      "addons": [
+        "pipeline-analytics",
+        "embedding-encoder"
+      ],
+      "page": "/docs/detection/tracking"
+    },
+    {
+      "id": "notifiers",
+      "title": "Notifications",
+      "need": "seeded",
+      "why": "Sends notifications to the targets you add.",
+      "addons": [
+        "notifiers"
+      ],
+      "page": "/docs/notifications"
+    },
+    {
+      "id": "benchmark",
+      "title": "Benchmark",
+      "need": "seeded",
+      "why": "Measures what each node can carry, so the plan rests on your hardware and not on a table.",
+      "addons": [
+        "benchmark"
+      ],
+      "page": "/docs/tools/benchmark"
+    },
+    {
+      "id": "camera-integration",
+      "title": "A camera integration",
+      "need": "required",
+      "why": "Nothing is recorded or detected until one integration brings a camera in. ONVIF and RTSP cover most cameras; the brand ones add what the brand offers.",
+      "addons": [
+        "provider-onvif",
+        "provider-rtsp",
+        "provider-reolink",
+        "provider-hikvision",
+        "provider-amcrest",
+        "provider-wyze"
+      ],
+      "page": "/docs/get-started/add-a-camera",
+      "ui": {
+        "route": "/integrations",
+        "nav": [
+          "Integrations"
+        ]
+      }
+    },
+    {
+      "id": "turn",
+      "title": "A TURN relay",
+      "need": "remote",
+      "why": "Live video away from home travels through a relay when the phone and the hub cannot reach each other directly, which is the case on most mobile networks. Without one, remote live view fails on those networks.",
+      "addons": [
+        "cloudflare-turn",
+        "static-turn"
+      ],
+      "page": "/docs/network/turn",
+      "ui": {
+        "route": "/system/integrations",
+        "nav": [
+          "Administration",
+          "Connectivity"
+        ]
+      }
+    },
+    {
+      "id": "remote-access",
+      "title": "A way in from outside",
+      "need": "suggested",
+      "why": "A tunnel or a private network gives the hub an address that works away from home, with no port opened on your router.",
+      "addons": [
+        "cloudflare-tunnel",
+        "tailscale-client",
+        "tailscale-ingress"
+      ],
+      "page": "/docs/network/remote-access",
+      "ui": {
+        "route": "/system/integrations",
+        "nav": [
+          "Administration",
+          "Connectivity"
+        ]
+      }
+    },
+    {
+      "id": "off-box-storage",
+      "title": "Storage on another machine",
+      "need": "suggested",
+      "why": "Recordings or backups on a NAS or in a bucket survive the loss of the hub.",
+      "addons": [
+        "smb-storage",
+        "sftp-storage",
+        "s3-storage",
+        "webdav-storage"
+      ],
+      "page": "/docs/recording/storage",
+      "ui": {
+        "route": "/system/storage",
+        "nav": [
+          "Administration",
+          "Data"
+        ]
+      }
+    }
+  ],
+  "sizing": {
+    "hubBaselineRamGb": [
+      5.5,
+      7
+    ],
+    "hubBaselineCores": [
+      0.5,
+      0.65
+    ],
+    "perCameraRamGb": 0.12,
+    "perCameraCores": 0.09,
+    "measuredHubCoresTypical": 2.2,
+    "measuredHubCoresBusy": 3.6,
+    "minHubRamGb": 16,
+    "tightHubRamGb": 8,
+    "agentRamGb": [
+      3.3,
+      4.8
+    ],
+    "gbPerDayPerMbit": 10.8,
+    "bitrateMbit": {
+      "4k-h265": 3.6,
+      "4k-h264": 6.3
+    },
+    "eventsOnlyGbPerDay": [
+      0.1,
+      16
+    ],
+    "measuredOn": [
+      "Intel Core Ultra 7 265K, integrated GPU and NPU",
+      "Intel N100, integrated GPU",
+      "Apple M2"
+    ],
+    "page": "/docs/planning"
+  },
+  "hardwareReport": {
+    "issuesUrl": "https://github.com/camstack/server/issues/new",
+    "template": "hardware_report.yml",
+    "labels": [
+      "hardware-report"
+    ],
+    "text": "This machine is not among the ones CamStack was measured on, so the sizing figures are not a promise for it. Share what the host check and the node benchmark found: it takes a minute and it makes the tables true for the next person with the same hardware. The report holds the CPU model, the accelerators and the benchmark numbers — no address, no hostname, no secret.",
+    "page": "/docs/get-started#hardware-report"
+  }
+}
