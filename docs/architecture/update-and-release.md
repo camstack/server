@@ -280,6 +280,17 @@ removes them from the installed `package.json` so the installer runs **no**
 per-addon `npm install`. `RUNTIME_NATIVE_KEEP` is empty: a self-contained dist
 requires nothing from a local `node_modules`.
 
+**The inlined `@camstack/types` is tree-shaken** ([D1073](../decisions/adr-1073-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md),
+amends [D15](../decisions/adr-0015.md) and [D28](../decisions/adr-0028.md)). `packages/types`
+also emits `dist/esm/` (one file per module, reached through the `module` export
+condition by a bundler; Node and vitest keep the bundled files), declares `"sideEffects": false`, and a
+build plugin (`tools/build/pure-initializers.ts`) marks every top-level
+`const X = call(...)` `/* @__PURE__ */`, never a bare statement (those build the event
+taxonomy). An addon keeps only the types code it reaches. Three guards hold it, on the
+BUILT addons: a canary schema that must not appear in any addon dist, the types code no
+addon code reaches (at most 40 KB), and a generated cap-name table with no schema import.
+The heap budget (`scripts/addon-dist-footprint-budgets.json`) is the backstop.
+
 The only exception is a **true native** (`.node`) or a lib that ships optional
 natives that cannot be bundled. Those are **host-external**: declared once as a
 dependency of `@camstack/server` (so they live in the framework closure) and

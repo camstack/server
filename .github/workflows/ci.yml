@@ -300,7 +300,7 @@ jobs:
         run: scripts/ci/run-barrel-guards.sh all
 
       # D28: no BUILT addon may name ALL_CAPABILITY_DEFINITIONS or grow the
-      # runner's heap by more than 60 MB (scripts/addon-dist-footprint-budgets.json
+      # runner's heap by more than 45 MB (scripts/addon-dist-footprint-budgets.json
       # grants a reasoned exception). Reads every packages/addon-*/dist, so it
       # runs right after the build. The runner-dist step above also probes
       # `@camstack/server/system/addon-utils` (seven hub runners load it).

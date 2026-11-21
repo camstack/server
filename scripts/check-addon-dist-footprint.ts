@@ -51,7 +51,7 @@ const RUNNER = path.join(ROOT, 'packages/system/dist/addon-runner.js')
 const BUDGETS_FILE = path.join(ROOT, 'scripts/addon-dist-footprint-budgets.json')
 
 /** Heap an addon may add on top of the bare runner unless it holds a budget. */
-export const DEFAULT_MAX_GROWTH_MB = 60
+export const DEFAULT_MAX_GROWTH_MB = 45
 
 /**
  * Packages whose addons are not forked runners. `@camstack/server/system` ships the
