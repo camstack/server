@@ -1510,7 +1510,8 @@ export const pipelineOrchestratorCapability = {
      * Node capacity verdict — per node with any fresh measurement: the
      * detection capacity (the node total over its devices, each at the cell
      * for the model it runs now), the decode capacity, and the smaller of the
-     * two with the plane that limits. A plane that was not measured is null,
+     * two with the plane that limits. The decode capacity is for the HEAVIEST
+     * measured profile (the fewest streams), the one a node is sized for. A plane that was not measured is null,
      * never zero; `complete` is true only when both are measured and fresh.
      */
     getNodeCapacityVerdict: method(

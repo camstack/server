@@ -65,6 +65,9 @@ export interface DecodeBenchRigDeps {
   readonly lease: () => WorkerLeaseKnobs
   readonly hwaccel: () => SessionHwaccelOffer
   readonly logger: IScopedLogger
+  /** The benchmark run and node the streams belong to; every line of the run carries them. */
+  readonly runId: string
+  readonly nodeId: string
   /** null = the motion kernel could not be loaded; the cell says motion did not run. */
   readonly motion: DecodeBenchMotionPass | null
   /** Asked before every fork: a reason to refuse the next stream, or null. */
@@ -192,6 +195,7 @@ class BenchStream {
     this.dead = true
     this.resolveFirst(reason)
     this.deps.logger.warn('node bench: decode stream failed', {
+      tags: { runId: this.deps.runId, nodeId: this.deps.nodeId },
       meta: { stream: this.ordinal + 1, reason },
     })
   }

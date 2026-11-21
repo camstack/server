@@ -121,6 +121,8 @@ function harness(over: { backend?: string | null; admit?: () => string | null } 
       lease: testLease,
       hwaccel: () => null,
       logger: makeLogger(),
+      runId: 'run-1',
+      nodeId: 'node-1',
       motion: null,
       admit: over.admit ?? (() => null),
       firstFrameTimeoutMs: 300,

@@ -226,7 +226,9 @@ function betterCapacityCell(a: DeviceMeasuredCapacity, b: DeviceMeasuredCapacity
  * that carried the FEWEST streams. A node is sized for its heaviest cameras —
  * the lighter profile's larger number would promise streams the heavy one
  * cannot keep. A node with no fresh decode cell is absent (unknown, never 0);
- * a profile that carried no stream is a measured zero.
+ * a profile that carried no stream at camera rate is a measured zero, while a
+ * ramp that failed for RAM, errors, an unstarted stream, a stall or CPU
+ * contention at its first step stores no cell at all (unknown, never 0).
  */
 export function decodeCapacityFromResults(
   rows: readonly NodeBenchmarkResult[],

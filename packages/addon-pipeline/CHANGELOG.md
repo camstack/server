@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The node benchmark measures how many camera streams (4K H.265, 1080p H.264) the node decodes at full rate with motion, through its real decode workers, hardware decode where available.
 
+### Changed
+
+- The node benchmark no longer records a decode capacity of zero for a stream that could not be measured (RAM, errors, no first frame, CPU contention); the profile is reported as skipped, and an abort cuts the settle and measure waits
+
 ## [1.2.679] - 2026-11-21
 
 ### Changed

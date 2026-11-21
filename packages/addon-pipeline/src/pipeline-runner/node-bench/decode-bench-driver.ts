@@ -102,6 +102,9 @@ interface StepInput {
   readonly system: DecodeSystemSample
 }
 
+/** How long one wait runs before it looks at an abort again. */
+const DECODE_WAIT_SLICE_MS = 250
+
 function round1(value: number): number {
   return Math.round(value * 10) / 10
 }
@@ -181,11 +184,27 @@ export class DecodeBenchDriver {
     })
   }
 
-  /** The cell of one profile; null when the ramp was cut short. */
+  /** Sleep to `t` in short slices, so an abort does not wait out the window. */
+  private async wait(t: number): Promise<void> {
+    while (!this.deps.shouldStop()) {
+      const left = t - this.deps.now()
+      if (left <= 0) return
+      await this.deps.sleepUntil(this.deps.now() + Math.min(left, DECODE_WAIT_SLICE_MS))
+    }
+  }
+
+  /**
+   * The cell of one profile; null when the ramp was cut short; a `skipped`
+   * reason when the FIRST step failed for a cause that is not a measurement.
+   * Only a rate or frame-age failure at load 1 is a measured zero (the node
+   * really cannot decode one stream at camera rate); RAM, errors, an
+   * unstarted stream, a stall or CPU contention say nothing about the decoder
+   * (D393: a failed measurement is null, never 0).
+   */
   private async ramp(
     profile: NodeDecodeProfile,
     rig: DecodeRig,
-  ): Promise<NodeBenchDecodeCell | null> {
+  ): Promise<NodeBenchDecodeCell | { readonly skipped: string } | null> {
     const { input } = this.deps
     const ramp: NodeBenchDecodeRampStep[] = []
     let held: readonly DecodeStreamWindow[] = []
@@ -211,14 +230,15 @@ export class DecodeBenchDriver {
         break
       }
       this.progress(profile, load, 'settle')
-      await this.deps.sleepUntil(this.deps.now() + input.settleSec * 1000)
+      await this.wait(this.deps.now() + input.settleSec * 1000)
       if (this.deps.shouldStop()) return null
       this.progress(profile, load, 'measure')
       const stallStart = this.deps.stallSnapshot()
       this.deps.sampleSystem()
       rig.beginWindow()
       const windowStart = this.deps.now()
-      await this.deps.sleepUntil(windowStart + input.measureSec * 1000)
+      await this.wait(windowStart + input.measureSec * 1000)
+      if (this.deps.shouldStop()) return null
       const windows = rig.endWindow()
       const step = evaluateDecodeStep({
         load,
@@ -234,6 +254,12 @@ export class DecodeBenchDriver {
       held = windows
     }
     const failed = ramp.find((s) => !s.pass)
+    if (failed !== undefined && failed.load === DECODE_RAMP[0]) {
+      const limit = decodeLimitOf(failed.failReasons)
+      if (limit !== 'fps' && limit !== 'p95') {
+        return { skipped: failed.failReasons.join('; ') }
+      }
+    }
     // The decoder of the streams that HELD; with none, of the ones that ran.
     const named = held.length > 0 ? held : seen
     return {
@@ -262,7 +288,13 @@ export class DecodeBenchDriver {
       }
       try {
         const cell = await this.ramp(profile, opened.rig)
-        if (cell !== null) this.deps.onCell(cell)
+        if (cell === null) {
+          // cut short by an abort: nothing to store
+        } else if ('skipped' in cell) {
+          this.deps.onSkipped(`decode ${decodeProfileId(profile)}: ${cell.skipped}`)
+        } else {
+          this.deps.onCell(cell)
+        }
       } finally {
         await opened.rig.close()
         this.deps.onProfileDone?.()

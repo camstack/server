@@ -170,14 +170,35 @@ describe('DecodeBenchDriver', () => {
     expect(cells[0]?.ramp.at(-1)?.cpuPct).toBe(120)
   })
 
-  it('stops at the free RAM limit', async () => {
-    const { cells } = await simulate({ ramFreePct: 10 })
-    expect(cells[0]).toMatchObject({ maxStreams: 0, limitedBy: 'ram' })
+  it('a first step that fails on free RAM measured nothing: no cell, the profile is skipped with the reason', async () => {
+    const { cells, skipped } = await simulate({ ramFreePct: 10 })
+    expect(cells).toEqual([])
+    expect(skipped).toHaveLength(1)
+    expect(skipped[0]).toMatch(/^decode .*: ram free 10%/)
+  })
+
+  it('a first stream that never delivers a frame is skipped, never a measured zero', async () => {
+    const { cells, skipped } = await simulate({ startable: 0 })
+    expect(cells).toEqual([])
+    expect(skipped[0]).toMatch(/unresolved/)
+  })
+
+  it('a first step cut by CPU contention is skipped, never a measured zero', async () => {
+    const { cells, skipped } = await simulate({ cpuPerStream: 200 })
+    expect(cells).toEqual([])
+    expect(skipped[0]).toMatch(/cpu/)
+  })
+
+  it('a node that really cannot decode one stream at camera rate stores a measured zero', async () => {
+    const { cells, skipped } = await simulate({ totalFps: 5 })
+    expect(skipped).toEqual([])
+    expect(cells[0]).toMatchObject({ maxStreams: 0, limitedBy: 'fps' })
   })
 
   it('frames that arrive late fail the step although the rate holds', async () => {
     const { cells } = await simulate({ ageMs: 1500 })
     expect(cells[0]).toMatchObject({ maxStreams: 0, limitedBy: 'p95' })
+    expect(cells[0]?.ramp).toHaveLength(1)
   })
 
   it('a stream that never starts ends the ramp as an error, with no rate invented', async () => {

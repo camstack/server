@@ -109,7 +109,7 @@ export function createNodeBenchHost(deps: {
   // node; loaded on the first decode profile. A kernel that cannot be loaded
   // is said once — the cell then records that motion did not run.
   let motion: Promise<DecodeBenchMotionPass | null> | null = null
-  const motionPass = (): Promise<DecodeBenchMotionPass | null> => {
+  const motionPass = (runId: string): Promise<DecodeBenchMotionPass | null> => {
     motion ??= (async (): Promise<DecodeBenchMotionPass | null> => {
       try {
         const detector = new WasmMotionDetector()
@@ -120,6 +120,7 @@ export function createNodeBenchHost(deps: {
         }
       } catch (err) {
         log.warn('node bench: the motion kernel could not be loaded — decode is measured alone', {
+          tags: { runId, nodeId: deps.nodeId },
           meta: { error: err instanceof Error ? err.message : String(err) },
         })
         return null
@@ -151,7 +152,9 @@ export function createNodeBenchHost(deps: {
         lease: deps.decode.lease,
         hwaccel: deps.decode.hwaccel,
         logger: log,
-        motion: await motionPass(),
+        motion: await motionPass(input.runId),
+        runId: input.runId,
+        nodeId: deps.nodeId,
         admit: ramAdmission,
       })
       return { kind: 'ready', rig }
