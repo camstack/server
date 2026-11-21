@@ -9,6 +9,7 @@
 import type { LooseVocabOpenArg, VocabLocale } from '@camstack/types'
 import {
   QuantityValueInput,
+  formatNumeric,
   boundsInPicked,
   typedToStored,
   DeviceTemplateField,
@@ -271,10 +272,9 @@ function ArgHint({ arg, value, issue }: ArgHintProps) {
           shownUnit ?? quantity.unit,
         )
   const unitText = shownUnit ?? ''
-  // A converted bound is a hint, not a measurement: 4 significant digits read cleanly.
-  const round = (n: number | undefined): number | undefined =>
-    n === undefined || quantity === undefined ? n : Number(n.toPrecision(4))
-  const bounds = { min: round(shown.min), max: round(shown.max) }
+  const show = (n: number | undefined): string | undefined =>
+    n === undefined ? n : formatNumeric(n, undefined)
+  const bounds = { min: show(shown.min), max: show(shown.max) }
   const range =
     bounds.min !== undefined && bounds.max !== undefined
       ? t('flow.arg.range', '{{min}} to {{max}} {{unit}}', {

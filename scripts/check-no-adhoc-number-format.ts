@@ -57,7 +57,8 @@ export const ALLOWLIST: readonly AllowEntry[] = [
   {
     file: `${U}quantity-value-input/quantity-value.ts`,
     uses: 1,
-    reason: 'float-residue cleanup of a unit conversion, parsed back to a number',
+    reason:
+      'float-residue cleanup of a converted value kept as the editable input value (it must round-trip, so it is not display-rounded)',
   },
   { file: `${U}hero-scene/backdrops.tsx`, uses: 2, reason: GEOM },
   {
@@ -112,17 +113,6 @@ export const ALLOWLIST: readonly AllowEntry[] = [
     file: `${A}components/device/tabs/TracksTab.tsx`,
     uses: 3,
     reason: 'centimetres whole, and track coordinates at 3 decimals',
-  },
-  {
-    file: `${A}pages/build/flow/ArgField.tsx`,
-    uses: 1,
-    reason: 'float-residue cleanup of a unit conversion, parsed back to a number',
-  },
-  {
-    file: `${A}pages/build/flow/trace-view.ts`,
-    uses: 1,
-    reason:
-      'significant-digit rounding of a converted value in the flow trace, parsed back before it is shown',
   },
   { file: `${A}lib/format-size.ts`, uses: 1, reason: BYTES },
   { file: `${A}pages/events-debug-tapes.helpers.ts`, uses: 2, reason: BYTES },

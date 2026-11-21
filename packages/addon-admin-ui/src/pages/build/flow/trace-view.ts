@@ -9,6 +9,7 @@
  *   idle — never reached (a step after the failure, or a run the mode refused)
  */
 
+import { formatNumeric } from '@camstack/ui-library'
 import {
   type AutomationRunTrace,
   type TraceNodeOutcome,
@@ -304,7 +305,6 @@ export function whenRunView(trace: AutomationRunTrace): WhenRunView {
 }
 
 /** Significant digits kept when a stored number is shown in another unit. */
-const UNIT_DIGITS = 6
 
 /**
  * A number the trace holds in the field's STORED (base) unit, shown in the unit
@@ -322,7 +322,7 @@ export function valueInUnit(
   }
   const converted = tryConvertUnit(value, baseUnit, unit)
   if (converted === undefined) return valueView(value)
-  return { kind: 'value', text: `${String(Number(converted.toPrecision(UNIT_DIGITS)))} ${unit}` }
+  return { kind: 'value', text: `${formatNumeric(converted, undefined)} ${unit}` }
 }
 
 export interface RunSummary {

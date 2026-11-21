@@ -384,6 +384,11 @@ describe('valueInUnit', () => {
     expect(valueInUnit(0.04, 'kg', 'g')).toEqual({ kind: 'value', text: '40 g' })
   })
 
+  it('shows a converted value with the shared number rule: at most two decimals', () => {
+    // 0.0123456 kg is 12.3456 g.
+    expect(valueInUnit(0.0123456, 'kg', 'g')).toEqual({ kind: 'value', text: '12.35 g' })
+  })
+
   it('keeps the raw number when the row picked no unit or the units cannot convert', () => {
     expect(valueInUnit(0.04, 'kg', undefined)).toEqual({ kind: 'value', text: '0.04' })
     expect(valueInUnit(5, 'kg', '°C')).toEqual({ kind: 'value', text: '5' })
