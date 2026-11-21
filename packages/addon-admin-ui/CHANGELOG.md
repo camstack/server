@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device quick modal opens on Device info, now its first tab
+
 ## [1.2.729] - 2026-11-21
 
 ### Changed
 
 - Energy card strings: centre figures and the day's source split (en, it)
-- The device quick modal opens on Device info, now its first tab
 
 ## [1.2.728] - 2026-11-21
 
