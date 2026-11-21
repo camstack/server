@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Every number follows one rule: the precision you set wins, otherwise at most two decimals with trailing zeros trimmed; cards, charts and the energy card honour the device's Precision from Customize
+
 ## [1.2.493] - 2026-11-21
 
 ### Changed
@@ -19,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A History chart titled by its unit follows the shown unit, and a value below 0.001 reads as below it instead of 0
 - History charts use the full width of their card, and a power or energy chart follows the device display unit, the unit picker, or scales to kW / kWh / MWh in the thousands on the axis, tooltip and readout
-- Every number follows one rule: the precision you set wins, otherwise at most two decimals with trailing zeros trimmed; cards, charts and the energy card honour the device's Precision from Customize
 
 ## [1.2.491] - 2026-11-21
 

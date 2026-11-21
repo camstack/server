@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Readings across the admin pages show at most two decimals, or the precision set in Customize
+
 ## [1.2.731] - 2026-11-21
 
 ### Changed
@@ -18,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device quick modal opens on Device info, now its first tab
-- Readings across the admin pages show at most two decimals, or the precision set in Customize
 
 ## [1.2.729] - 2026-11-21
 
