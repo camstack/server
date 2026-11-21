@@ -171,6 +171,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   })
   return {
     ...actual,
+    // The group's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    DeviceValuePicker: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
     useDeviceManagerGetDevice: () => ({
       status: deviceRead.current.status,
       data: deviceRead.current.status === 'success' ? device.current : undefined,
@@ -793,6 +795,8 @@ describe('CustomizeTab — a composed IR media player', () => {
     fireEvent.click(screen.getByTestId('customize-table-add'))
     expect(screen.getByTestId('customize-table-add-running-state.running')).toBeTruthy()
     expect(screen.getByTestId('customize-table-add-power-meter.power')).toBeTruthy()
+    // The meter's "Source device" picker is there from the start: one pick fills the four readings.
+    expect(screen.getByTestId('source-group-picker-power-meter')).toBeTruthy()
   })
 })
 

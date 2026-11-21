@@ -40,6 +40,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const pending = { status: 'pending', data: undefined, error: null }
   return {
     ...actual,
+    // The group's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    DeviceValuePicker: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
     useCoreBlocksGetComposition: () => compositionRead.current,
     useCoreBlocksUpdateComposition: mutation,
     useCoreBlocksListComposableCaps: () => composable.current,

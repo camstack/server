@@ -3048,7 +3048,15 @@
       "fixedValue": "Fixed value {{value}}",
       "formulaOf": "Formula: {{formula}}",
       "fromLink": "Added by a device link",
-      "linkActive": "Active"
+      "linkActive": "Active",
+      "group": {
+        "sourceDevice": "Source device",
+        "hint": "Fills every reading this device provides. Each reading below can still use its own source.",
+        "mixed": "Mixed sources",
+        "filled": "Filled: {{names}}.",
+        "skipped": "Not provided by this device, left as they were: {{names}}.",
+        "nothing": "This device provides none of these readings."
+      }
     },
     "followSwitch": {
       "label": "Follow the device's switch",

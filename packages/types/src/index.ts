@@ -2017,6 +2017,7 @@ export type {
   CustomizeCardinality,
   CustomizeEventShape,
   CustomizeEventEdge,
+  CustomizeSourceGroup,
   CustomizeTargetSection,
   EventCustomizeTarget,
   PulseEventCustomizeTarget,

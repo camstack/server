@@ -3123,7 +3123,15 @@
       "fixedValue": "Valore fisso {{value}}",
       "formulaOf": "Formula: {{formula}}",
       "fromLink": "Aggiunto da un collegamento tra dispositivi",
-      "linkActive": "Attivo"
+      "linkActive": "Attivo",
+      "group": {
+        "sourceDevice": "Dispositivo sorgente",
+        "hint": "Compila ogni lettura fornita da questo dispositivo. Ogni lettura qui sotto può comunque usare una sorgente propria.",
+        "mixed": "Sorgenti diverse",
+        "filled": "Compilati: {{names}}.",
+        "skipped": "Non forniti da questo dispositivo, lasciati invariati: {{names}}.",
+        "nothing": "Questo dispositivo non fornisce nessuna di queste letture."
+      }
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",
