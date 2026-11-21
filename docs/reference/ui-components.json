@@ -746,6 +746,21 @@
       "summary": "\"NPU\", \"ANE\", \"Coral\", \"CPU\" — chips and tabs."
     },
     {
+      "name": "ActuationHistory",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/ActuationHistory.tsx",
+      "summary": "The actuations of one device. The History view shows this instead of the values.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "addButton",
       "kind": "function",
       "area": "composites",
@@ -5832,6 +5847,12 @@
           "type": "DeviceCardFrame",
           "optional": true,
           "doc": "`card` (default): the card's own frame — border, surface, padding, max width and the top line. `bare`: only the scene and what hangs under i"
+        },
+        {
+          "name": "historyView",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Whether the state corner opens the History / Actions view (default true, or what the nearest says). False draws the state as plain text: no "
         }
       ]
     },
@@ -5853,6 +5874,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "The host gave the card a definite height (the viewer's sheet): the card takes all of it and the History / Remote overlays fill it, so the vi"
+        },
+        {
+          "name": "historyView",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False: no card below opens its History / Actions view (see )."
         },
         {
           "name": "children",
@@ -16168,7 +16195,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
-      "summary": "One horizontal track across the card."
+      "summary": "One horizontal track across the card. The track stops at a comfortable width (`HorizontalSlider`), so the row centres it like its siblings instead of leaving it on the left edge of the zone."
     },
     {
       "name": "rowStats",
@@ -20625,6 +20652,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
       "summary": "The frame the nearest asks for (default `card`)."
+    },
+    {
+      "name": "useDeviceCardHistoryView",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "Whether the nearest lets cards open their History / Actions view."
     },
     {
       "name": "useDeviceCommand",

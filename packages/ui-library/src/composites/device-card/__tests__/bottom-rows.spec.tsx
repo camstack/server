@@ -1,7 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as rows from '../shell/bottom-rows'
-import { BottomRow, rowLevels, rowList, rowStats, rowStepper, rowText } from '../shell/bottom-rows'
+import {
+  BottomRow,
+  rowLevels,
+  rowSlider,
+  rowList,
+  rowStats,
+  rowStepper,
+  rowText,
+} from '../shell/bottom-rows'
 import { SceneGrid } from '../shell/SceneGrid'
 
 describe('the bottom rows', () => {
@@ -92,5 +100,21 @@ describe('the bottom rows', () => {
     expect(kinds).toEqual(['list', 'levels', 'stepper'])
     expect(screen.getByText('Water')).toBeTruthy()
     expect((screen.getByLabelText('more') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('a slider row centres its track (the track stops at a comfortable width)', () => {
+    render(
+      <SceneGrid
+        image={<i />}
+        columns={{}}
+        bottom={[rowSlider('position', { slider: <input type="range" aria-label="Closure" /> })]}
+        corners={null}
+        bottomCorners={false}
+      />,
+    )
+    const track = screen.getByLabelText('Closure').parentElement
+    expect(track?.className.split(' ')).toEqual(
+      expect.arrayContaining(['flex', 'w-full', 'justify-center']),
+    )
   })
 })

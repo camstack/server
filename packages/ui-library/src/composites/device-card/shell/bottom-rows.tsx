@@ -187,9 +187,18 @@ export interface RowSliderProps extends RowBase {
   readonly slider: ReactElement
 }
 
-/** One horizontal track across the card. */
+/**
+ * One horizontal track across the card. The track stops at a comfortable width
+ * (`HorizontalSlider`), so the row centres it like its siblings instead of
+ * leaving it on the left edge of the zone.
+ */
 export function rowSlider(key: string, props: RowSliderProps): BottomRow {
-  return makeRow(key, 'slider', props.label, <div className="w-full">{props.slider}</div>)
+  return makeRow(
+    key,
+    'slider',
+    props.label,
+    <div className="flex w-full justify-center">{props.slider}</div>,
+  )
 }
 
 export interface RowTextProps extends RowBase {
