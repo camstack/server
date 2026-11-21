@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-homematic",
-  "version": "1.2.209",
+  "version": "1.2.210",
   "description": "Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library",
   "keywords": [
     "camstack",
@@ -80,9 +80,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.922",
+      "server": ">=1.2.926",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.720"
+        "@camstack/addon-admin-ui": ">=1.2.724"
       }
     }
   },

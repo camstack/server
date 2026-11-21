@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.712] - 2026-11-21
+
 ### Changed
 
 - Zone editor: zones are drawn and edited on the picture itself, not on the letterbox bars of a portrait or 4:3 camera

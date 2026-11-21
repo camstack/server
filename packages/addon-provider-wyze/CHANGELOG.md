@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.176] - 2026-11-21
+
 ### Changed
 
 - Cloud-motion cameras are read for new events when the hub schedules it (every 15 s, slower while the Wyze cloud fails) instead of on the camera's own timer

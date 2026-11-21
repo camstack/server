@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.210] - 2026-11-21
+
 ### Changed
 
 - Homematic CCU page: a per-device detail view (identity, live state, button-event programs, configuration, direct links, faults) opened from the Devices table or by URL, an Events column showing whether a program references each button, and an Active faults section on the Overview; the event quick actions moved from the table into the detail
