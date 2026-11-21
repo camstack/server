@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.728] - 2026-11-21
+
 ### Changed
 
 - Build sections: clicking a row of Automations, Actions, Schedulers, Code, Custom Device or Templates opens a quick modal with inline name and tags, the enable switch, recent runs and an Open button.

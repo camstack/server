@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.619] - 2026-11-21
+
 ### Changed
 
 - A unit entered on a command inside a choose branch, a parallel or repeat body or an else is converted on save like a top-level one
