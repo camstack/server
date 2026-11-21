@@ -69,17 +69,114 @@ function skeletonAt(raw: JsonSchema, root: JsonSchema, depth: number): unknown {
     case 'object':
       return objectSkeleton(schema, root, depth)
     case 'array':
-      return []
+      return arraySkeleton(schema, root, depth)
     case 'string':
-      return ''
+      return stringSkeleton(schema)
     case 'number':
     case 'integer':
-      return typeof schema['minimum'] === 'number' ? schema['minimum'] : 0
+      return numberSkeleton(schema, type === 'integer')
     case 'boolean':
       return false
     default:
       return isRecord(schema['properties']) ? objectSkeleton(schema, root, depth) : null
   }
+}
+
+/** One example per JSON Schema string `format`, valid for the parser that named it. */
+const FORMAT_EXAMPLES: Readonly<Record<string, string>> = {
+  uri: 'https://example.com',
+  url: 'https://example.com',
+  email: 'user@example.com',
+  uuid: '00000000-0000-4000-8000-000000000000',
+  'date-time': '2026-01-01T00:00:00.000Z',
+  date: '2026-01-01',
+  time: '00:00:00',
+  ipv4: '192.0.2.1',
+  ipv6: '2001:db8::1',
+  hostname: 'example.com',
+}
+
+/** Tried, in order, when a string carries a `pattern` and no `format` example fits. */
+const PATTERN_CANDIDATES: readonly string[] = [
+  'example',
+  'a',
+  'a0',
+  'a-b',
+  'a1-b2',
+  'example-1',
+  'a.b',
+  'a_b',
+  'a:b',
+  'abc:abc',
+  'a-b:c-d',
+  'example.com',
+  'mqtt://example.com',
+  'abcdef0',
+  '0'.repeat(64),
+  'A',
+  '0',
+  '1',
+  '0.0',
+]
+
+function patternFits(pattern: unknown, value: string): boolean {
+  if (typeof pattern !== 'string') return true
+  try {
+    return new RegExp(pattern, 'u').test(value)
+  } catch {
+    return true
+  }
+}
+
+function lengthFits(schema: JsonSchema, value: string): boolean {
+  const min = schema['minLength']
+  const max = schema['maxLength']
+  return (
+    (typeof min !== 'number' || value.length >= min) &&
+    (typeof max !== 'number' || value.length <= max)
+  )
+}
+
+/**
+ * A string the schema accepts: a format example, a pattern-matching candidate,
+ * or `x` repeated to the minimum length. A pattern no candidate fits (a regex
+ * nobody can invert in general) falls back to the empty string, and the audit
+ * names it.
+ */
+function stringSkeleton(schema: JsonSchema): string {
+  const format = schema['format']
+  const example = typeof format === 'string' ? FORMAT_EXAMPLES[format] : undefined
+  const min = typeof schema['minLength'] === 'number' ? schema['minLength'] : 0
+  // Without a pattern or a format only the length can matter.
+  const constrained = typeof schema['pattern'] === 'string' || example !== undefined
+  const candidates = !constrained
+    ? []
+    : example === undefined
+      ? PATTERN_CANDIDATES
+      : [example, ...PATTERN_CANDIDATES]
+  const padded = [...candidates, 'x'.repeat(min)]
+  const hit = padded.find((c) => patternFits(schema['pattern'], c) && lengthFits(schema, c))
+  if (hit !== undefined) return hit
+  return typeof schema['pattern'] === 'string' ? '' : 'x'.repeat(min)
+}
+
+function numberSkeleton(schema: JsonSchema, integer: boolean): number {
+  const min = schema['minimum']
+  const exclusiveMin = schema['exclusiveMinimum']
+  const max = schema['maximum']
+  if (typeof min === 'number') return min
+  if (typeof exclusiveMin === 'number')
+    return integer ? Math.floor(exclusiveMin) + 1 : exclusiveMin + 1
+  if (typeof max === 'number' && max < 0) return max
+  return 0
+}
+
+/** `minItems` elements of the item skeleton, so a required list is not refused as empty. */
+function arraySkeleton(schema: JsonSchema, root: JsonSchema, depth: number): readonly unknown[] {
+  const min = schema['minItems']
+  const items = schema['items']
+  if (typeof min !== 'number' || min <= 0 || !isRecord(items)) return []
+  return Array.from({ length: min }, () => skeletonAt(items, root, depth + 1))
 }
 
 function objectSkeleton(schema: JsonSchema, root: JsonSchema, depth: number): unknown {
@@ -99,6 +196,8 @@ function objectSkeleton(schema: JsonSchema, root: JsonSchema, depth: number): un
  */
 export function skeletonFromSchema(schema: JsonSchema | null): unknown {
   if (schema === null) return undefined
+  // A void / undefined / unknown input has no keys to draw: nothing to send.
+  if (Object.keys(schema).every((k) => k === '$schema' || k === '$defs')) return undefined
   return skeletonAt(schema, schema, 0)
 }
 

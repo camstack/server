@@ -32,6 +32,33 @@ const SCHEMA = {
 } as const
 
 describe('skeletonFromSchema', () => {
+  it('draws a value the schema accepts for a pattern, a format, a minimum length and a minimum item count', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        kind: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,47}$' },
+        url: { type: 'string', format: 'uri' },
+        id: { type: 'string', minLength: 1 },
+        list: { type: 'array', minItems: 2, items: { type: 'integer', minimum: 3 } },
+        n: { type: 'integer', exclusiveMinimum: 0 },
+      },
+      required: ['kind', 'url', 'id', 'list', 'n'],
+    } as const
+    expect(skeletonFromSchema(schema)).toEqual({
+      kind: 'example',
+      url: 'https://example.com',
+      id: 'x',
+      list: [3, 3],
+      n: 1,
+    })
+  })
+
+  it('has nothing to draw for a void input', () => {
+    expect(
+      skeletonFromSchema({ $schema: 'https://json-schema.org/draft/2020-12/schema' }),
+    ).toBeUndefined()
+  })
+
   it('fills only the required fields: minimum, first enum value, empty value of the type, $ref resolved', () => {
     expect(skeletonFromSchema(SCHEMA)).toEqual({ deviceId: 1, mode: 'on', filter: { kinds: [] } })
     // The skeleton passes the check it is shown under.
