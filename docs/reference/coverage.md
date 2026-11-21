@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 9108 source files · 246 units claimed by at least one document (9077 files).**
+**253 units · 9110 source files · 246 units claimed by at least one document (9079 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -147,6 +147,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-import-alexa/src/amazon-auth` | 9 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md`, `decisions/adr-1010-the-amazon-sign-in-and-renewal-are-in-house-the-alexa-addon-has-no-sign-in-library.md`, +2 more | — |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, +3 more | — |
 | `packages/addon-provider-homeassistant/src/migrations` | 9 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +1 more | 2026-11-08 |
+| `packages/addon-provider-reolink/src/accessories` | 9 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/nx-plugin` | 9 | `tooling` | — | — |
 | `packages/system/src/logging` | 9 | `logging`, `secrets` | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +9 more | 2026-10-21 |
 | `packages/types/src/units` | 9 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md` | — |
@@ -157,7 +158,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +2 more | — |
 | `packages/addon-post-analysis/src/migrations` | 7 | — | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md`, `decisions/adr-1028-a-notification-rule-only-runs-existing-actions.md` | — |
 | `packages/addon-provider-bosch/src/shared` | 7 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-bosch-homecom.md` _(covers)_, +2 more | 2026-11-08 |
-| `packages/addon-provider-reolink/src/accessories` | 7 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `server/backend/src/boot` | 7 | `kernel`, `secrets` | `decisions/adr-0171-the-hub-core-api-is-on-the-mesh-before-the-first-addon-boots.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, `decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md`, +4 more | — |
 | `packages/addon-admin-ui/src/layouts` | 6 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/migrations` | 6 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +4 more, 2 ADRs | 2026-08-26 |

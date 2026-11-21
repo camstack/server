@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A battery camera's ghost Floodlight child is now retired once a probe confirms it has no floodlight, floodlight and siren commands are refused on a camera without them, and a PIR write the camera answers with 400 is retried with only the fields it reports.
+
 ## [1.2.257] - 2026-11-21
 
 ### Changed

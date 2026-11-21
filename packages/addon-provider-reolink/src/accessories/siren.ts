@@ -49,6 +49,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
+import { assertAccessoryAbility } from './ability-guard.js'
 import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 import {
   buildReolinkSirenOptions,
@@ -301,6 +302,11 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
     }
   }
 
+  /** Refuse an operator write when the parent camera has no siren. */
+  private requireSiren(action: string): void {
+    assertAccessoryAbility(this.parent, 'hasSiren', this.ctx.logger, this.id, action)
+  }
+
   private registerSwitchCap(): void {
     const provider: InferNativeProvider<typeof switchCapability> = {
       // Slice-driven read — setState updates the slice on every write;
@@ -308,6 +314,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       getStatus: async (): Promise<SwitchStatus> => this.switchView(),
       setState: async ({ deviceId, on }) => {
         if (deviceId !== this.id) return
+        this.requireSiren('setState')
         const api = await this.api
         const duration = sirenPlayDuration(on, this.config.get('sirenDurationS'))
         // nodelink-js signature is (channel, on, duration) at runtime —
@@ -426,6 +433,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       getPlayChoices: async (): Promise<number[]> => sirenPlayChoices(this.sirenOptions()),
       trigger: async ({ deviceId, durationSeconds, plays: askedPlays }): Promise<SirenStatus> => {
         if (deviceId !== this.id) return this.sirenView()
+        this.requireSiren('trigger')
         const plan = planSirenTrigger(this.sirenOptions(), { durationSeconds, plays: askedPlays })
         if (plan.asked === 'refused') {
           this.ctx.logger.warn('siren trigger refused', {

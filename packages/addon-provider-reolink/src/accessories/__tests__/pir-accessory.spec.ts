@@ -11,7 +11,16 @@ interface SwitchProvider {
   setState(input: { deviceId: number; on: boolean }): Promise<void>
 }
 
-function build(wake: () => Promise<boolean>) {
+interface PirApiFake {
+  setPirInfo: (...args: unknown[]) => Promise<void>
+  getPirInfo?: (...args: unknown[]) => Promise<unknown>
+}
+
+function build(
+  wake: () => Promise<boolean>,
+  apiOverride?: PirApiFake,
+  config?: Record<string, unknown>,
+) {
   let runtime: IDeviceRuntimeState | null = null
   const providers: { switch?: SwitchProvider } = {}
   const calls: string[] = []
@@ -30,7 +39,7 @@ function build(wake: () => Promise<boolean>) {
       addonId: 'provider-reolink',
       metadata: {},
     },
-    persistedConfig: { kind: 'pir-sensor', channel: 0 },
+    persistedConfig: { kind: 'pir-sensor', channel: 0, ...config },
     initialRuntimeState: {},
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
     persistConfig: vi.fn(async () => {}),
@@ -52,14 +61,14 @@ function build(wake: () => Promise<boolean>) {
   } as unknown as DeviceContext
   const parent = {
     name: 'cam',
-    ensureApi: async () => ({ setPirInfo }),
+    ensureApi: async () => apiOverride ?? { setPirInfo },
     wakeForWrite: async () => {
       calls.push('wake')
       return wake()
     },
   }
   const device = new PirAccessory(ctx, parent)
-  return { device, providers, setPirInfo, calls }
+  return { device, providers, setPirInfo, calls, ctx }
 }
 
 describe('Reolink PIR accessory — writes to a battery camera', () => {
@@ -75,5 +84,41 @@ describe('Reolink PIR accessory — writes to a battery camera', () => {
       /asleep/i,
     )
     expect(h.setPirInfo).not.toHaveBeenCalled()
+  })
+
+  it('retries a 400 with only the fields getPirInfo reports, and logs the attempts', async () => {
+    const sent: unknown[] = []
+    const setPirInfo = vi.fn(async (payload: unknown) => {
+      sent.push(payload)
+      if (sent.length === 1)
+        throw new Error('Baichuan request failed (responseCode 400, empty body)')
+    })
+    const getPirInfo = vi.fn(async () => ({ enabled: true, state: { enable: 1, sensitive: 50 } }))
+    const h = build(
+      async () => true,
+      { setPirInfo, getPirInfo },
+      { pirSensitive: 40, pirReduceAlarm: true, pirIntervalS: 30 },
+    )
+    await h.providers.switch!.setState({ deviceId: 41, on: true })
+    expect(sent).toEqual([
+      { enable: 1, sensitive: 61, reduceAlarm: 1, interval: 30 },
+      { enable: 1, sensitive: 61 },
+    ])
+    expect(h.ctx.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('reduced payload'),
+      expect.objectContaining({ tags: { deviceId: 41 } }),
+    )
+  })
+
+  it('raises a clear operator error when the reduced write fails too', async () => {
+    const setPirInfo = vi.fn(async () => {
+      throw new Error('Baichuan request failed (responseCode 400, empty body)')
+    })
+    const getPirInfo = vi.fn(async () => ({ enabled: true, state: { enable: 1 } }))
+    const h = build(async () => true, { setPirInfo, getPirInfo })
+    await expect(h.providers.switch!.setState({ deviceId: 41, on: true })).rejects.toThrow(
+      /rejected the PIR settings/,
+    )
+    expect(setPirInfo).toHaveBeenCalledTimes(2)
   })
 })

@@ -42,6 +42,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
+import { assertAccessoryAbility } from './ability-guard.js'
 import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 
 /**
@@ -338,6 +339,11 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
     return this.getCapSlice(brightnessCapability) ?? { level: 100, lastChangedAt: 0 }
   }
 
+  /** Refuse an operator write when the parent camera has no floodlight. */
+  private requireFloodlight(action: string): void {
+    assertAccessoryAbility(this.parent, 'hasFloodlight', this.ctx.logger, this.id, action)
+  }
+
   private registerSwitchCap(): void {
     const provider: InferNativeProvider<typeof switchCapability> = {
       // Slice-driven read — the parent's align loop refreshes
@@ -346,6 +352,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
       getStatus: async (): Promise<SwitchStatus> => this.switchView(),
       setState: async ({ deviceId, on }) => {
         if (deviceId !== this.id) return
+        this.requireFloodlight('setState')
         const api = await this.api
         // CRITICAL: pass ONLY state, NEVER include brightness in a toggle.
         // Reolink firmware treats `SetWhiteLed { state, bright }` as a
@@ -370,6 +377,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
       getStatus: async (): Promise<BrightnessStatus> => this.brightnessView(),
       setBrightness: async ({ deviceId, level: percentage }) => {
         if (deviceId !== this.id) return
+        this.requireFloodlight('setBrightness')
         const value = Math.max(0, Math.min(100, percentage))
         // Lib accepts brightness only when the LED is on; otherwise we
         // just stash the slice value so the next setState({on:true})
@@ -404,6 +412,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
       getStatus: bridge.getStatus,
       setMotionTrigger: async ({ deviceId, enabled }) => {
         if (deviceId !== this.id) return
+        this.requireFloodlight('setMotionTrigger')
         this.ctx.logger.info('floodlight motion-trigger setMotionTrigger', {
           tags: { deviceId: this.id, channel: this.channel },
           meta: { enabled },

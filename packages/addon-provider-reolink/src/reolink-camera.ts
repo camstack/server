@@ -201,6 +201,7 @@ import type {
 import { z } from 'zod'
 import { createAccessoryDevice } from './accessories/index.js'
 import {
+  accessoryChildrenAnswerFor,
   accessoryKindsFor,
   effectiveProbeFlags,
   withPersistedProbe,
@@ -2223,7 +2224,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * enabled `hasFloodlight` via re-detection) appears on the next
    * parent register.
    */
-  override getAccessoryChildren(): readonly import('@camstack/types').AccessoryChildSpec[] {
+  override getAccessoryChildren(): import('@camstack/types').AccessoryChildrenAnswer {
     // Pre-probe → no accessory specs. Spawning before the firmware's
     // ability table is read (live slice OR persisted deviceCache) would
     // land orphans on a re-probe that drops a flag (e.g. a firmware
@@ -2261,7 +2262,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       push(AccessoryKind.PirSensor, DeviceType.Switch, ACCESSORY_LABEL[AccessoryKind.PirSensor])
     // Autotrack is NOT a child accessory — it's an extension of PTZ
     // exposed via the `ptz-autotrack` cap on the parent camera.
-    return out
+    return accessoryChildrenAnswerFor(this.hasProbed(), out)
   }
 
   /**
@@ -11681,6 +11682,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *  write (PIR, ...) wakes a sleeping battery camera first. */
   wakeForWrite(): Promise<boolean> {
     return this.wakeIfSleeping()
+  }
+
+  /** Implements `ReolinkAccessoryHost.probeAbility`: the effective probe flag
+   *  (live slice, else the persisted probe); `undefined` = never probed. */
+  probeAbility(flag: 'hasFloodlight' | 'hasSiren'): boolean | undefined {
+    const value = this.getProbeFlags<ReolinkProbeFlags>()[flag]
+    return typeof value === 'boolean' ? value : undefined
   }
 
   async ensureApi(): Promise<ReolinkBaichuanApi> {

@@ -24,7 +24,13 @@
  * unit-testable without standing up a full camera device.
  */
 
-import { AccessoryKind, type AccessoryKindValue } from '@camstack/types'
+import {
+  AccessoryKind,
+  type AccessoryChildrenAnswer,
+  type AccessoryChildSpec,
+  type AccessoryKindValue,
+  accessoryChildrenUnknown,
+} from '@camstack/types'
 
 /**
  * Reolink ability flags as stored in BOTH the `feature-probe` slice's
@@ -163,4 +169,21 @@ export function effectiveProbeFlags<F extends Record<string, unknown>>(
 ): F {
   if (sliceProbed || deviceCache?.probedAt === undefined) return sliceFlags
   return { ...sliceFlags, ...resolveAccessoryProbeFlags(false, {}, deviceCache) }
+}
+
+/**
+ * The typed answer for `getAccessoryChildren()`. A probe that completed THIS
+ * session is a definitive read (`complete`) even while the parent is asleep
+ * or offline, so the kernel's reconcile can retire a child whose flag is now
+ * false (it still needs a second agreeing probe, D49). Flags restored from
+ * `deviceCache` alone, or no probe at all, are `unknown`: they spawn but
+ * never prune. A legacy bare array was `unknown` whenever the parent was
+ * offline, which is how a ghost Floodlight outlived `hasFloodlight:false`.
+ */
+export function accessoryChildrenAnswerFor(
+  sliceProbed: boolean,
+  specs: readonly AccessoryChildSpec[],
+): AccessoryChildrenAnswer {
+  if (sliceProbed) return { kind: 'complete', children: specs }
+  return accessoryChildrenUnknown('no probe completed this session', specs)
 }

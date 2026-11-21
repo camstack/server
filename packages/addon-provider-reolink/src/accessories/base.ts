@@ -114,6 +114,9 @@ export interface ReolinkAccessoryHost {
    *  camera answers it 400 with an empty body). Resolves true when the camera
    *  is awake (or was never asleep), false when it could not be woken. */
   wakeForWrite?(): Promise<boolean>
+  /** The parent's effective probe flag (live slice, else the persisted
+   *  probe). `undefined` = never probed. Optional for back-compat. */
+  probeAbility?(flag: 'hasFloodlight' | 'hasSiren'): boolean | undefined
   /** Accessories register themselves with the parent at construction
    *  so the parent's centralised `alignAuxDevicesState` can iterate
    *  them. Optional for back-compat — when absent the accessory
