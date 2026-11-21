@@ -23,6 +23,10 @@ import {
 } from '../pipeline/health-digest/schemas.js'
 import { CameraSensorsConfigSchema, CameraSensorsStatusSchema } from '../pipeline/camera-sensors.js'
 import {
+  GetNodeCapacityVerdictInputSchema,
+  NodeCapacityVerdictSchema,
+} from '../pipeline/node-benchmark/capacity-verdict.js'
+import {
   ListNodeBenchmarkResultsInputSchema,
   NodeBenchmarkCandidatesSchema,
   NodeBenchmarkPlanSchema,
@@ -1500,6 +1504,18 @@ export const pipelineOrchestratorCapability = {
     listNodeBenchmarkResults: method(
       ListNodeBenchmarkResultsInputSchema,
       z.array(NodeBenchmarkResultViewSchema).readonly(),
+      { auth: 'admin' },
+    ),
+    /**
+     * Node capacity verdict — per node with any fresh measurement: the
+     * detection capacity (the node total over its devices, each at the cell
+     * for the model it runs now), the decode capacity, and the smaller of the
+     * two with the plane that limits. A plane that was not measured is null,
+     * never zero; `complete` is true only when both are measured and fresh.
+     */
+    getNodeCapacityVerdict: method(
+      GetNodeCapacityVerdictInputSchema,
+      z.array(NodeCapacityVerdictSchema).readonly(),
       { auth: 'admin' },
     ),
     /** Node benchmark — delete one result; Auto tune and the shares stop reading it. */

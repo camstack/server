@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1539 methods.**
+**214 capabilities · 1540 methods.**
 
 ## Method index
 
@@ -1038,6 +1038,7 @@
 | `pipelineOrchestrator.abortNodeBenchmark` | mutation | admin | pipeline-orchestrator |
 | `pipelineOrchestrator.getNodeBenchmarkCandidates` | query | admin | pipeline-orchestrator |
 | `pipelineOrchestrator.listNodeBenchmarkResults` | query | admin | pipeline-orchestrator |
+| `pipelineOrchestrator.getNodeCapacityVerdict` | query | admin | pipeline-orchestrator |
 | `pipelineOrchestrator.deleteNodeBenchmarkResult` | mutation | admin | pipeline-orchestrator |
 | `pipelineOrchestrator.getCameraSettings` | query | protected | pipeline-orchestrator |
 | `pipelineOrchestrator.setCameraStepToggle` | mutation | admin | pipeline-orchestrator |
@@ -4017,7 +4018,7 @@
 
 ### `pipeline-orchestrator` → `pipelineOrchestrator.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:848`
+- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:852`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IPipelineOrchestratorProvider`
@@ -4079,6 +4080,7 @@
 | abortNodeBenchmark | `pipelineOrchestrator.abortNodeBenchmark` | mutation | admin | `{ runId: string }` | `{ aborted: boolean }` |
 | getNodeBenchmarkCandidates | `pipelineOrchestrator.getNodeBenchmarkCandidates` | query | admin | `{ nodeId: string }` | `{ nodeId: string; reachable: boolean; devices: ({ deviceKey: string; enabled: boolean; available: boolean; suggested: string[]; all: string[]; currentModelId: string \| null })[]; steps: ({ id: string; name: string; slot: string })[] }` |
 | listNodeBenchmarkResults | `pipelineOrchestrator.listNodeBenchmarkResults` | query | admin | `{ nodeId?: string; deviceKey?: string }` | `({ id: string; runId: string; nodeId: string; cell: { phase: "device"; deviceKey: string; modelId: string; p50Ms: number; p95Ms: number; p99Ms: number; fps: number; kMax: number; limitedBy: "p95" \| "drops" \| "errors" \| "stall" \| "cpu" \| "ram" \| "none"; warmupMs: number; ramp: ({ load: number; pass: boolean; p95Ms: number; dropRatio: number; fps: number; cpuPct: number \| null; ramFreePct: number \| null; failReasons: string[] })[] } \| { phase: "pipeline"; deviceKey: string; modelId: string; steps: string[]; maxSessions: number; limitedBy: "p95" \| "drops" \| "errors" \| "stall" \| "cpu" \| "ram" \| "none"; stepsFired: string[]; warmupMs: number; ramp: ({ load: number; pass: boolean; p95Ms: number; dropRatio: number; fps: number; cpuPct: number \| null; ramFreePct: number \| null; failReasons: string[] })[] }; fpsPerStream: number; fingerprint: { pipelineVersion: string \| null; cpuModel: string \| null; ramGb: number \| null; os: string \| null; pools?: Record<string, { runtime: string; numWorkers: number; concurrency: number; batchMode: string }> = {} } \| null; clip: { id: string; revision: string \| null; frames: number; width: number; height: number } \| null; contaminated: boolean; stayingCameras: number[]; partialRun: boolean; measuredAtMs: number; standing: "fresh" \| "stale" \| "superseded"; staleWhy: "age" \| "runtime" \| "pool-tuning" \| null })[]` |
+| getNodeCapacityVerdict | `pipelineOrchestrator.getNodeCapacityVerdict` | query | admin | `{ nodeId?: string }` | `({ nodeId: string; detection: { maxSessions: number; measuredAtMs: number; cells: ({ deviceKey: string; modelId: string \| null; phase: "device" \| "pipeline"; maxSessions: number })[] } \| null; decode: { maxStreams: number; measuredAtMs: number; profile: { width: number; height: number; fps: number; codec: "h264" \| "h265" }; hardware: boolean; decoder: string } \| null; capacity: number \| null; limitedBy: "decode" \| "detection" \| null; complete: boolean })[]` |
 | deleteNodeBenchmarkResult | `pipelineOrchestrator.deleteNodeBenchmarkResult` | mutation | admin | `{ id: string }` | `{ deleted: boolean }` |
 | getCameraSettings | `pipelineOrchestrator.getCameraSettings` | query | protected | `{ deviceId: number }` | `{ stepToggles?: Record<string, boolean>; stepSettings?: Record<string, Record<string, unknown>> } \| null` |
 | setCameraStepToggle | `pipelineOrchestrator.setCameraStepToggle` | mutation | admin | `{ deviceId: number; addonId: string; enabled: boolean \| null }` | `{ success: true }` |

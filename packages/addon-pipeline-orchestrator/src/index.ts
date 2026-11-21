@@ -49,6 +49,8 @@ import type {
   CapacitySource,
   CurrentPool,
   EffectiveShares,
+  DeviceRunsModel,
+  GetNodeCapacityVerdictInput,
   ListNodeBenchmarkResultsInput,
   MeasuredLatency,
   NodeBenchmarkCandidates,
@@ -57,6 +59,7 @@ import type {
   NodeBenchmarkResult,
   NodeBenchmarkResultView,
   NodeBenchmarkStatus,
+  NodeCapacityVerdict,
   NodeMeasuredCapacity,
   LoadBalancingSharesInput,
   PlacementStats,
@@ -116,6 +119,7 @@ import {
   type IAddonWidgetsSourceProvider,
   isAutomaticShareSource,
   measuredCapacityFromResults,
+  nodeCapacityVerdicts,
   measuredDetectorCells,
   nodePin,
   pinUnderBenchmark,
@@ -3034,21 +3038,9 @@ export default class PipelineOrchestratorAddon
         if (store.listResults().length === 0) return new Set<string>()
         // The model each device runs now is the shares' own pick, and the
         // measured side is the shares' own reader — one predicate.
-        const hardware = await this.autoTune().suggestShares({
-          headroom: AUTO_SHARE_HEADROOM,
-          source: 'hardware',
-        })
-        const measured = await this.readMeasuredCapacity(hardware.nodes.map((n) => n.nodeId))
-        return benchmarkedDevices(
-          hardware.nodes.flatMap((n) =>
-            n.devices.map((d) => ({
-              nodeId: n.nodeId,
-              deviceKey: d.deviceKey,
-              modelId: d.modelId,
-            })),
-          ),
-          measured,
-        )
+        const runs = await this.deviceRunsNow()
+        const measured = await this.readMeasuredCapacity([...new Set(runs.map((r) => r.nodeId))])
+        return benchmarkedDevices(runs, measured)
       },
       runActive: () => this.benchmarkService().isRunActive(),
       pickModels: async (nodeId, deviceKeys) => {
@@ -3124,6 +3116,35 @@ export default class PipelineOrchestratorAddon
     return listNodeBenchmarkResultViews(rows, input, {
       nowMs: Date.now(),
       currentPools: await this.readCurrentPools(rows),
+    })
+  }
+
+  /**
+   * The model each device runs NOW — the automatic shares' own pick (Auto
+   * tune over the hardware table), the one predicate behind the shares, the
+   * automatic benchmark's "has results" and the capacity verdict.
+   */
+  private async deviceRunsNow(): Promise<readonly DeviceRunsModel[]> {
+    const hardware = await this.autoTune().suggestShares({
+      headroom: AUTO_SHARE_HEADROOM,
+      source: 'hardware',
+    })
+    return hardware.nodes.flatMap((n) =>
+      n.devices.map((d) => ({ nodeId: n.nodeId, deviceKey: d.deviceKey, modelId: d.modelId })),
+    )
+  }
+
+  async getNodeCapacityVerdict(
+    input: GetNodeCapacityVerdictInput,
+  ): Promise<readonly NodeCapacityVerdict[]> {
+    const rows = this.nodeBenchmarkStore?.listResults() ?? []
+    if (rows.length === 0) return []
+    const nodeIds = [...new Set(rows.map((r) => r.nodeId))]
+    return nodeCapacityVerdicts({
+      ...(input.nodeId !== undefined ? { nodeId: input.nodeId } : {}),
+      runs: await this.deviceRunsNow(),
+      measured: await this.readMeasuredCapacity(nodeIds),
+      decode: new Map(),
     })
   }
 

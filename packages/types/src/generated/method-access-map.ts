@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1539 method paths across 214 capabilities.
+ * Coverage: 1540 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1021,6 +1021,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'pipelineOrchestrator.getNodeBenchmarkCandidates': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getNodeBenchmarkPreflight': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getNodeBenchmarkStatus': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'pipelineOrchestrator.getNodeCapacityVerdict': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getNodeInferenceDevices': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getPipelineAssignment': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getPipelineAssignments': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

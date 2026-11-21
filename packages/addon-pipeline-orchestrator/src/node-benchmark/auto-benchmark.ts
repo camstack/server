@@ -26,6 +26,7 @@
  */
 import {
   capacityForModel,
+  type DeviceRunsModel,
   errMsg,
   type IScopedLogger,
   type NodeMeasuredCapacity,
@@ -33,12 +34,7 @@ import {
   type NodeBenchmarkPreflight,
 } from '@camstack/types'
 
-/** The model a device runs now, per Auto tune (the shares' own pick). */
-export interface DeviceRunsModel {
-  readonly nodeId: string
-  readonly deviceKey: string
-  readonly modelId: string | null
-}
+export type { DeviceRunsModel } from '@camstack/types'
 
 /**
  * `nodeId\0deviceKey` of every device that has a usable result: a fresh

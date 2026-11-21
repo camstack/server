@@ -2798,6 +2798,9 @@ export const usePipelineOrchestratorGetNodeBenchmarkCandidates: typeof trpc.pipe
 /** Generated alias around `trpc.pipelineOrchestrator.listNodeBenchmarkResults.useQuery`. */
 export const usePipelineOrchestratorListNodeBenchmarkResults: typeof trpc.pipelineOrchestrator.listNodeBenchmarkResults.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.listNodeBenchmarkResults.useQuery)
 
+/** Generated alias around `trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery`. */
+export const usePipelineOrchestratorGetNodeCapacityVerdict: typeof trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery)
+
 /** Generated alias around `trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation`. */
 export const usePipelineOrchestratorDeleteNodeBenchmarkResult: typeof trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation)
 

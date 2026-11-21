@@ -998,6 +998,7 @@
   "pipelineOrchestrator.getNodeBenchmarkCandidates": "admin",
   "pipelineOrchestrator.getNodeBenchmarkPreflight": "admin",
   "pipelineOrchestrator.getNodeBenchmarkStatus": "admin",
+  "pipelineOrchestrator.getNodeCapacityVerdict": "admin",
   "pipelineOrchestrator.getNodeInferenceDevices": "admin",
   "pipelineOrchestrator.getPipelineAssignment": "admin",
   "pipelineOrchestrator.getPipelineAssignments": "admin",

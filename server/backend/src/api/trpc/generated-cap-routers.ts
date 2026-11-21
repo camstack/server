@@ -15222,6 +15222,14 @@ export function createCapRouter_pipelineOrchestrator(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listNodeBenchmarkResults(input as any)
       }),
+    getNodeCapacityVerdict: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.getNodeCapacityVerdict.input.loose())
+      .output(pipelineOrchestratorCapability.methods.getNodeCapacityVerdict.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getNodeCapacityVerdict(input as any)
+      }),
     deleteNodeBenchmarkResult: adminProcedure
       .input(pipelineOrchestratorCapability.methods.deleteNodeBenchmarkResult.input.loose())
       .output(pipelineOrchestratorCapability.methods.deleteNodeBenchmarkResult.output)
