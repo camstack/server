@@ -129,6 +129,7 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
       unsubscribe()
       deps.mirror.setTransitionTap(null)
       stopTicker()
+      correlator.flush()
       await sender.flush()
       sender.abandon()
     },

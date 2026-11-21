@@ -436,8 +436,21 @@ run, scheduler) or the device.
 - **Args.** `command-args.ts`: routing keys dropped; secret paths (nested) and
   credential-named keys, at any depth, replaced by `***`; a bag over 1 KiB replaced
   by `{_truncated: true}`.
-- **Chatty fields.** A `device` row for one field is written at most once per
-  10 s; changes inside the window coalesce into one row released by the sweep.
+- **Settling.** One real change is one row per audited field, not one row per
+  report. Changes of a cap are held as ONE burst per (device, cap); a held field
+  is written from its value before the first change to its last value, and a
+  field that ended where it began writes nothing. The burst is written when a
+  pending command's effect is met by the burst's net result (at once, credited to
+  that command, `confirmed`), when the cap has been quiet for 5 s
+  (`SETTLE_QUIET_MS`; a command still unmatched then expires `unconfirmed` on its
+  own and the burst is the device's), or after 60 s of continuous change
+  (`SETTLE_MAX_HOLD_MS`). A cover opening is `state closed->open` and
+  `position 0->100`, not `open`, `6`, `opening`, `open`, `100`. The vocabulary
+  marks no value as transient, so the quiet window is the same for every cap; a
+  slow transient state (`opening`) that outlasts it is written as its own row.
+  `stop()` writes every held burst before the last send (D49); memory is one
+  burst per (device, cap). Live state and runtime slices are not touched, only
+  the audit.
 - **Reads.** `listTransitions` (per device, paged), `getTransition`,
   `listRecentTransitions` (admin), `getStatus` (`rows`, `lastWriteAt`,
   `refused`).

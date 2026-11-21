@@ -5,7 +5,7 @@ import type {
   DeviceTransition,
   IScopedLogger,
 } from '@camstack/types'
-import { COMMAND_MATCH_WINDOW_MS } from '../transition-correlator.js'
+import { COMMAND_MATCH_WINDOW_MS, SETTLE_QUIET_MS } from '../transition-correlator.js'
 import {
   __resetCommandObserverRegistryForTests,
   getCommandObserverRegistry,
@@ -87,6 +87,7 @@ describe('device transitions wiring (D1022)', () => {
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     getCommandObserverRegistry().observe(command({ method: 'notACommand' }))
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    w.clock.now += SETTLE_QUIET_MS
     w.t.tick()
     await Promise.resolve()
     await Promise.resolve()
@@ -152,6 +153,7 @@ describe('device transitions wiring (D1022)', () => {
     const w = setup()
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    w.clock.now += SETTLE_QUIET_MS
     w.t.tick()
     await Promise.resolve()
     await Promise.resolve()

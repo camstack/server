@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The public tunnel address is re-read from the tunnel provider, so the hub's public endpoint no longer falls back to the LAN address when the tunnel's start event was missed
 - Device history credits the final state change of a command (for example a cover going from opening to open) to whoever sent it, not only the position it targeted
+- Device history writes one row per settled change (a cover opening is closed→open, 0→100), not every intermediate report, and credits it to whoever sent the command
 
 ## [1.2.926] - 2026-11-21
 

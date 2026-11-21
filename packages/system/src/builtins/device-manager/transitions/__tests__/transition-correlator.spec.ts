@@ -2,8 +2,9 @@ import type { CommandActor, DeviceCommandObservation, DeviceTransition } from '@
 import { describe, expect, it } from 'vitest'
 import {
   COMMAND_MATCH_WINDOW_MS,
-  DEVICE_ROW_WINDOW_MS,
   PENDING_RING_MAX,
+  SETTLE_MAX_HOLD_MS,
+  SETTLE_QUIET_MS,
   TransitionCorrelator,
 } from '../transition-correlator.js'
 
@@ -56,6 +57,11 @@ function world(initial: Record<string, Record<string, unknown>> = {}) {
     advance: (ms: number): void => {
       clock += ms
     },
+    /** The cap goes quiet: the held burst is written by the next sweep. */
+    settle: (): void => {
+      clock += SETTLE_QUIET_MS
+      correlator.sweep()
+    },
   }
 }
 
@@ -81,6 +87,7 @@ describe('transition correlator (D1022)', () => {
   it('a change nobody asked for belongs to the device', () => {
     const w = world({ '7|switch': { on: false } })
     w.write('switch', { on: true })
+    w.settle()
     expect(w.out).toEqual([
       expect.objectContaining({
         outcome: 'device',
@@ -95,24 +102,34 @@ describe('transition correlator (D1022)', () => {
   it('the first slice a cap ever reports is learning the device, not a change', () => {
     const w = world()
     w.write('switch', { on: true })
+    w.settle()
     expect(w.out).toEqual([])
     w.write('switch', { on: false })
+    w.settle()
     expect(w.out).toEqual([expect.objectContaining({ outcome: 'device', from: true, to: false })])
   })
 
   it('a field absent from the prior slice and claimed by no command is the device being learned', () => {
     const w = world({ '7|switch': {} })
     w.write('switch', { on: true })
+    w.settle()
     expect(w.out).toEqual([])
     w.write('switch', { on: false })
+    w.settle()
     expect(w.out).toEqual([expect.objectContaining({ outcome: 'device', from: true, to: false })])
   })
 
   it('a field present in the prior slice that changes stays a device row', () => {
     const w = world({ '7|climate-control': { mode: 'cool' } })
     w.write('climate-control', { mode: 'off' })
+    w.settle()
     expect(w.out).toEqual([
-      expect.objectContaining({ outcome: 'device', field: 'mode', from: 'cool', to: 'off' }),
+      expect.objectContaining({
+        outcome: 'device',
+        field: 'mode',
+        from: 'cool',
+        to: 'off',
+      }),
     ])
   })
 
@@ -127,10 +144,16 @@ describe('transition correlator (D1022)', () => {
     const w = world({ '7|switch': { on: true } })
     w.command('switch', 'setState', { on: true })
     expect(w.out).toEqual([
-      expect.objectContaining({ outcome: 'already', from: true, to: true, actor: USER }),
+      expect.objectContaining({
+        outcome: 'already',
+        from: true,
+        to: true,
+        actor: USER,
+      }),
     ])
     expect(w.correlator.pendingCount()).toBe(0)
     w.write('switch', { on: false })
+    w.settle()
     expect(w.out[1]).toMatchObject({ outcome: 'device' })
   })
 
@@ -138,6 +161,7 @@ describe('transition correlator (D1022)', () => {
     const w = world({ '7|cover': { state: 'opening', position: 40 } })
     w.command('cover', 'stop', {}, ALEXA)
     w.write('cover', { state: 'open', position: 40 })
+    w.settle()
     expect(w.out).toHaveLength(1)
     expect(w.out[0]).toMatchObject({
       field: 'state',
@@ -161,7 +185,11 @@ describe('transition correlator (D1022)', () => {
     w.advance(COMMAND_MATCH_WINDOW_MS)
     w.correlator.sweep()
     expect(w.out).toHaveLength(2)
-    expect(w.out[1]).toMatchObject({ outcome: 'unconfirmed', actor: ALEXA, field: 'on' })
+    expect(w.out[1]).toMatchObject({
+      outcome: 'unconfirmed',
+      actor: ALEXA,
+      field: 'on',
+    })
   })
 
   it('a command that causes nothing inside its window is unconfirmed, from = to', () => {
@@ -188,6 +216,7 @@ describe('transition correlator (D1022)', () => {
     w.command('switch', 'setState', { on: true })
     w.advance(COMMAND_MATCH_WINDOW_MS + 1)
     w.write('switch', { on: true })
+    w.settle()
     expect(w.out[0]).toMatchObject({ outcome: 'device' })
   })
 
@@ -195,7 +224,11 @@ describe('transition correlator (D1022)', () => {
     const w = world()
     w.command('switch', 'setState', { on: true })
     w.write('switch', { on: true })
-    expect(w.out[0]).toMatchObject({ outcome: 'confirmed', from: null, to: true })
+    expect(w.out[0]).toMatchObject({
+      outcome: 'confirmed',
+      from: null,
+      to: true,
+    })
   })
 
   it('one write that changes several fields yields one row each, sharing the command', () => {
@@ -223,8 +256,13 @@ describe('transition correlator (D1022)', () => {
   it('a state change on a cap with no pending command stays the device', () => {
     const w = world({ '7|cover': { state: 'closed', position: 0 } })
     w.write('cover', { state: 'opening', position: 0 })
+    w.settle()
     expect(w.out).toHaveLength(1)
-    expect(w.out[0]).toMatchObject({ field: 'state', outcome: 'device', actor: { kind: 'device' } })
+    expect(w.out[0]).toMatchObject({
+      field: 'state',
+      outcome: 'device',
+      actor: { kind: 'device' },
+    })
   })
 
   it('a command whose call threw is failed, with the scrubbed message, and is not matched later', async () => {
@@ -236,10 +274,16 @@ describe('transition correlator (D1022)', () => {
     await failure.catch(() => undefined)
     await Promise.resolve()
     expect(w.out).toHaveLength(1)
-    expect(w.out[0]).toMatchObject({ outcome: 'failed', field: 'on', from: false, to: false })
+    expect(w.out[0]).toMatchObject({
+      outcome: 'failed',
+      field: 'on',
+      from: false,
+      to: false,
+    })
     expect(w.out[0]?.command?.error).toContain('device unreachable')
     expect(w.out[0]?.command?.error).not.toContain('abc123secret')
     w.write('switch', { on: true })
+    w.settle()
     expect(w.out[1]).toMatchObject({ outcome: 'device' })
   })
 
@@ -284,72 +328,96 @@ describe('transition correlator (D1022)', () => {
     expect(out[0]?.command?.args).toEqual({ redacted: true })
   })
 
-  describe('chatty device fields', () => {
-    it('writes the first change at once and coalesces the rest of the window into one row', () => {
+  describe('settling a burst (one row per field per settled change)', () => {
+    it('the 5500 cover: one setPosition, five reports, two rows credited to the sender', () => {
+      const w = world({ '7|cover': { state: 'closed', position: 0 } })
+      w.command('cover', 'setPosition', { position: 100 }, ALEXA)
+      w.advance(200)
+      w.write('cover', { state: 'open', position: 0 })
+      w.advance(300)
+      w.write('cover', { state: 'open', position: 6 })
+      w.advance(300)
+      w.write('cover', { state: 'opening', position: 6 })
+      expect(w.out).toEqual([])
+      w.advance(23_000)
+      w.write('cover', { state: 'open', position: 100 })
+      expect(w.out.map((t) => [t.field, t.from, t.to]).sort()).toEqual([
+        ['position', 0, 100],
+        ['state', 'closed', 'open'],
+      ])
+      expect(w.out.every((t) => t.outcome === 'confirmed' && t.actor === ALEXA)).toBe(true)
+    })
+
+    it('the same without a command: two rows, the device, written after the quiet window', () => {
+      const w = world({ '7|cover': { state: 'closed', position: 0 } })
+      w.write('cover', { state: 'open', position: 0 })
+      w.advance(500)
+      w.write('cover', { state: 'open', position: 6 })
+      w.advance(500)
+      w.write('cover', { state: 'opening', position: 6 })
+      w.advance(2_000)
+      w.write('cover', { state: 'open', position: 100 })
+      w.advance(SETTLE_QUIET_MS - 1)
+      w.correlator.sweep()
+      expect(w.out).toEqual([])
+      w.advance(1)
+      w.correlator.sweep()
+      expect(w.out.map((t) => [t.field, t.from, t.to]).sort()).toEqual([
+        ['position', 0, 100],
+        ['state', 'closed', 'open'],
+      ])
+      expect(w.out.every((t) => t.outcome === 'device' && t.actor.kind === 'device')).toBe(true)
+    })
+
+    it('a field that went there and back writes no row; its sibling still does', () => {
+      const w = world({ '7|cover': { state: 'closed', position: 0 } })
+      w.write('cover', { state: 'opening', position: 0 })
+      w.advance(100)
+      w.write('cover', { state: 'closed', position: 30 })
+      w.settle()
+      expect(w.out.map((t) => [t.field, t.from, t.to])).toEqual([['position', 0, 30]])
+    })
+
+    it('a flapping switch that ends where it began writes nothing', () => {
       const w = world({ '7|switch': { on: false } })
-      w.write('switch', { on: true }) // row 1: false -> true
-      for (const on of [false, true, false]) {
+      for (const on of [true, false, true, false]) {
         w.advance(100)
         w.write('switch', { on })
       }
+      w.settle()
+      expect(w.out).toEqual([])
+    })
+
+    it('a burst that never goes quiet is written after the maximum hold', () => {
+      const w = world({ '7|cover': { state: 'open', position: 0 } })
+      const step = SETTLE_QUIET_MS - 1_000
+      let position = 0
+      for (let t = 0; t <= SETTLE_MAX_HOLD_MS; t += step) {
+        position += 1
+        w.advance(step)
+        w.write('cover', { state: 'open', position })
+        w.correlator.sweep()
+      }
       expect(w.out).toHaveLength(1)
-      w.advance(DEVICE_ROW_WINDOW_MS)
-      w.correlator.sweep()
-      expect(w.out).toHaveLength(2)
-      expect(w.out[1]).toMatchObject({ outcome: 'device', from: true, to: false })
+      expect(w.out[0]).toMatchObject({ field: 'position', from: 0, outcome: 'device' })
     })
 
-    it('a flap that ends where the window started writes nothing more', () => {
+    it('a flush on dispose writes the held burst', () => {
       const w = world({ '7|switch': { on: false } })
       w.write('switch', { on: true })
-      w.advance(100)
-      w.write('switch', { on: false })
-      w.advance(100)
-      w.write('switch', { on: true })
-      w.advance(DEVICE_ROW_WINDOW_MS)
-      w.correlator.sweep()
+      expect(w.out).toEqual([])
+      w.correlator.flush()
+      expect(w.out).toEqual([expect.objectContaining({ outcome: 'device', from: false, to: true })])
+      w.correlator.flush()
       expect(w.out).toHaveLength(1)
     })
 
-    it('a change after the window is written at once', () => {
-      const w = world({ '7|switch': { on: false } })
-      w.write('switch', { on: true })
-      w.advance(DEVICE_ROW_WINDOW_MS)
-      w.write('switch', { on: false })
-      expect(w.out).toHaveLength(2)
-    })
-
-    it('never bounds a command: its change is confirmed inside the window', () => {
-      const w = world({ '7|switch': { on: false } })
-      w.write('switch', { on: true })
-      w.command('switch', 'setState', { on: false })
-      w.advance(50)
-      w.write('switch', { on: false })
-      expect(w.out).toHaveLength(2)
-      expect(w.out[1]).toMatchObject({ outcome: 'confirmed' })
-    })
-
-    it('a change held when the window closes is written before the next one, not lost', () => {
-      const w = world({ '7|switch': { on: false } })
-      w.write('switch', { on: true }) // t=0 written: false -> true
-      w.advance(5_000)
-      w.write('switch', { on: false }) // t=5 held: true -> false
-      w.advance(5_500)
-      w.write('switch', { on: true }) // t=10.5, no sweep yet: false -> true
-      expect(w.out.map((t) => [t.from, t.to])).toEqual([
-        [false, true],
-        [true, false],
-        [false, true],
-      ])
-    })
-
-    it('a removed device keeps no window', () => {
+    it('a removed device keeps no held burst', () => {
       const w = world({ '7|switch': { on: false } })
       w.write('switch', { on: true })
       w.correlator.forgetDevice(7)
-      w.advance(10)
-      w.write('switch', { on: false })
-      expect(w.out).toHaveLength(2)
+      w.correlator.flush()
+      expect(w.out).toEqual([])
     })
   })
 })

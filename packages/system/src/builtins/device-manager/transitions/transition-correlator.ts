@@ -28,12 +28,15 @@ export const COMMAND_MATCH_WINDOW_MS = 30_000
 /** Pending commands kept per (device, cap); the oldest is expired when a ninth arrives. */
 export const PENDING_RING_MAX = 8
 /**
- * A device-origin change of one field is written at most once per this window; changes inside it
- * are coalesced into one row (first `from` to last `to`) released by the next sweep. A chatty
- * field (a flapping contact, a bouncing state) would otherwise write a row per poll. Commands are
- * never bounded: each is a decision somebody made.
+ * A cap's audited fields are SETTLED before they are written: changes are held as one burst per
+ * (device, cap) and written, one row per field, when the burst ends. It ends when a pending
+ * command is matched by its effect (written at once, credited to the command), or when the cap
+ * has been quiet for this long. A cover that reports `open`, `position 6`, `opening`, then `open`
+ * and `position 100` is one change per field (`closed -> open`, `0 -> 100`), not five.
  */
-export const DEVICE_ROW_WINDOW_MS = 10_000
+export const SETTLE_QUIET_MS = 5_000
+/** A burst that never goes quiet (a flapping sensor) is written anyway after this long. */
+export const SETTLE_MAX_HOLD_MS = 60_000
 /** Longest error text a row keeps. */
 const ERROR_MAX_CHARS = 300
 /** The field of a row whose command named none (a toggle that changed nothing we saw). */
@@ -56,14 +59,21 @@ export interface CorrelatorDeps {
   ) => Record<string, unknown>
 }
 
-interface DeviceRowWindow {
+interface HeldField {
+  /** The value before the first change of the burst. */
+  readonly before: unknown
+  /** The latest value. */
+  readonly after: unknown
+  /** The mirror had never held the field before the burst. */
+  readonly neverHeld: boolean
+}
+
+interface HeldBurst {
   readonly deviceId: number
   readonly capName: string
-  readonly field: string
-  /** When the last row of this field was written. */
-  lastEmitAt: number
-  /** Changes seen since then, not yet written. */
-  held?: { readonly from: TransitionValue; to: TransitionValue; at: number }
+  readonly fields: Map<string, HeldField>
+  readonly firstAt: number
+  lastAt: number
 }
 
 interface Pending {
@@ -98,7 +108,7 @@ export function toTransitionValue(value: unknown): TransitionValue {
 export class TransitionCorrelator {
   private readonly pending = new Map<string, Pending[]>()
   private seq = 0
-  private readonly deviceRows = new Map<string, DeviceRowWindow>()
+  private readonly held = new Map<string, HeldBurst>()
 
   constructor(private readonly deps: CorrelatorDeps) {}
 
@@ -170,20 +180,87 @@ export class TransitionCorrelator {
       if (sameValue(before, after)) continue
       changes.push({ field, before, after, neverHeld: !hadBefore })
     }
-    // The command one write belongs to is decided first, from every changed field, so the order
-    // the audited fields are visited in never decides who a sibling field is credited to.
-    let claimed: Pending | undefined = this.commandMatchedBy(deviceId, capName, changes, now)
+    if (changes.length === 0) return
+    const key = this.keyOf(deviceId, capName)
+    const burst = this.held.get(key) ?? {
+      deviceId,
+      capName,
+      fields: new Map<string, HeldField>(),
+      firstAt: now,
+      lastAt: now,
+    }
+    burst.lastAt = now
+    const claimable = this.hasLiveCommand(deviceId, capName, now)
     for (const change of changes) {
+      const earlier = burst.fields.get(change.field)
+      // A field the mirror never held (the first slice of a cap, or one that arrives in steps
+      // after a boot or restore) is the device being learned, not changing: only a pending
+      // command can claim it, and it is never folded into a burst as a `from`.
+      if (change.neverHeld && earlier === undefined && !claimable) continue
+      burst.fields.set(change.field, {
+        before: earlier !== undefined ? earlier.before : change.before,
+        after: change.after,
+        neverHeld: earlier !== undefined ? earlier.neverHeld : change.neverHeld,
+      })
+    }
+    if (burst.fields.size === 0) return
+    this.held.set(key, burst)
+    // A command fulfilled by the burst's net result ends it at once.
+    if (this.commandMatchedBy(deviceId, capName, this.netChanges(burst), now) !== undefined) {
+      this.flushBurst(key, burst)
+    }
+  }
+
+  private hasLiveCommand(deviceId: number, capName: string, now: number): boolean {
+    return (this.pending.get(this.keyOf(deviceId, capName)) ?? []).some(
+      (e) => !e.settled && e.expiresAt > now,
+    )
+  }
+
+  /** Write every held burst now (shutdown): a held change must not be lost (D49). */
+  flush(): void {
+    for (const [key, burst] of [...this.held]) this.flushBurst(key, burst)
+  }
+
+  /** The fields of a burst that ended somewhere other than where they started. */
+  private netChanges(
+    burst: HeldBurst,
+  ): { field: string; before: unknown; after: unknown; neverHeld: boolean }[] {
+    return [...burst.fields]
+      .filter(([, f]) => !sameValue(f.before, f.after))
+      .map(([field, f]) => ({ field, ...f }))
+  }
+
+  private flushBurst(key: string, burst: HeldBurst): void {
+    this.held.delete(key)
+    const net = this.netChanges(burst)
+    // The command one burst belongs to is decided first, from every changed field, so the order
+    // the audited fields are visited in never decides who a sibling field is credited to.
+    let claimed: Pending | undefined = this.commandMatchedBy(
+      burst.deviceId,
+      burst.capName,
+      net,
+      burst.lastAt,
+    )
+    for (const change of net) {
       claimed = this.attribute(
-        deviceId,
-        capName,
+        burst.deviceId,
+        burst.capName,
         change.field,
         toTransitionValue(change.before),
         toTransitionValue(change.after),
-        now,
+        burst.lastAt,
         claimed,
         change.neverHeld,
       )
+    }
+  }
+
+  private flushDue(now: number): void {
+    for (const [key, burst] of [...this.held]) {
+      if (now - burst.lastAt >= SETTLE_QUIET_MS || now - burst.firstAt >= SETTLE_MAX_HOLD_MS) {
+        this.flushBurst(key, burst)
+      }
     }
   }
 
@@ -214,7 +291,7 @@ export class TransitionCorrelator {
   /** Expire every pending command past its window. Driven by the sender's tick. */
   sweep(): void {
     const now = this.deps.now()
-    this.releaseDeviceRows(now)
+    this.flushDue(now)
     for (const [key, ring] of this.pending) {
       const live: Pending[] = []
       for (const entry of ring) {
@@ -237,8 +314,8 @@ export class TransitionCorrelator {
   /** Forget a removed device's pending commands. */
   forgetDevice(deviceId: number): void {
     const prefix = `${deviceId}|`
-    for (const key of [...this.deviceRows.keys()]) {
-      if (key.startsWith(prefix)) this.deviceRows.delete(key)
+    for (const key of [...this.held.keys()]) {
+      if (key.startsWith(prefix)) this.held.delete(key)
     }
     for (const key of [...this.pending.keys()]) {
       if (key.startsWith(prefix)) this.pending.delete(key)
@@ -268,7 +345,7 @@ export class TransitionCorrelator {
       // after a boot or restore) is the device being learned, not changing: with no command to
       // claim it, no row.
       if (neverHeld) return undefined
-      this.emitDevice(deviceId, capName, field, from, to, now)
+      this.writeDevice(deviceId, capName, field, from, to, now)
       return undefined
     }
     matched.settled = true
@@ -328,30 +405,7 @@ export class TransitionCorrelator {
     })
   }
 
-  /** A change nobody asked for, bounded per field (see {@link DEVICE_ROW_WINDOW_MS}). */
-  private emitDevice(
-    deviceId: number,
-    capName: string,
-    field: string,
-    from: TransitionValue,
-    to: TransitionValue,
-    at: number,
-  ): void {
-    const key = `${deviceId}|${capName}|${field}`
-    const window = this.deviceRows.get(key)
-    if (window === undefined || at - window.lastEmitAt >= DEVICE_ROW_WINDOW_MS) {
-      // A change held since the last window closes before this one is written: the sweep may not
-      // have run yet, and overwriting the window would lose it.
-      if (window?.held !== undefined && !sameValue(window.held.from, window.held.to)) {
-        this.writeDevice(deviceId, capName, field, window.held.from, window.held.to, window.held.at)
-      }
-      this.writeDevice(deviceId, capName, field, from, to, at)
-      this.deviceRows.set(key, { deviceId, capName, field, lastEmitAt: at })
-      return
-    }
-    window.held = { from: window.held?.from ?? from, to, at }
-  }
-
+  /** A change nobody asked for. */
   private writeDevice(
     deviceId: number,
     capName: string,
@@ -371,18 +425,6 @@ export class TransitionCorrelator {
       outcome: 'device',
       actor: { kind: 'device' },
     })
-  }
-
-  /** Release coalesced device rows whose window has closed; forget windows nothing is held in. */
-  private releaseDeviceRows(now: number): void {
-    for (const [key, window] of this.deviceRows) {
-      if (now - window.lastEmitAt < DEVICE_ROW_WINDOW_MS) continue
-      const held = window.held
-      this.deviceRows.delete(key)
-      if (held === undefined || sameValue(held.from, held.to)) continue
-      this.writeDevice(window.deviceId, window.capName, window.field, held.from, held.to, held.at)
-      this.deviceRows.set(key, { ...window, held: undefined, lastEmitAt: now })
-    }
   }
 
   private keyOf(deviceId: number, capName: string): string {
