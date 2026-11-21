@@ -14,6 +14,7 @@
  *    prefix.
  *  - A 401 mid-flight refreshes once and retries once ({@link refreshOnUnauthorized}).
  */
+import * as fs from 'node:fs'
 import {
   credentialTier,
   jwtClaims,
@@ -31,7 +32,14 @@ import {
   type HubTransport,
 } from './hub-client.js'
 import { resolveHubTls, type HubTlsConfig } from './hub-tls.js'
-import { defaultSessionDir, loadSession, saveSession, type SessionFile } from './session-store.js'
+import { withFileLock } from './session-lock.js'
+import {
+  defaultSessionDir,
+  loadSession,
+  saveSession,
+  sessionFileForServer,
+  type SessionFile,
+} from './session-store.js'
 
 /** Renew when the access token has less than this left. */
 export const REFRESH_SKEW_MS = 60_000
@@ -74,8 +82,32 @@ function tlsFor(opts: RefreshOptions, dir: string): HubTlsConfig {
   return opts.tls ?? resolveHubTls(opts.server, process.env, dir)
 }
 
+/**
+ * Renew under the cross-process session lock. Under the lock the file is read
+ * AGAIN: when another process already rotated it (a different refresh token, or
+ * for an expiry-driven renewal an access token that is fresh again) that
+ * session is used and the hub is not called, so one rotation is never replayed.
+ */
+async function renew(
+  session: SessionFile,
+  opts: RefreshOptions,
+  stillFresh?: (s: SessionFile) => boolean,
+): Promise<SessionFile> {
+  const dir = opts.dir ?? defaultSessionDir()
+  const lockFile = `${sessionFileForServer(session.server, dir)}.lock`
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
+  return withFileLock(lockFile, async () => {
+    const latest = loadSession(session.server, dir)
+    if (latest !== null) {
+      const rotated = latest.refreshToken !== session.refreshToken
+      if (rotated || (stillFresh?.(latest) ?? false)) return latest
+    }
+    return exchange(latest ?? session, opts)
+  })
+}
+
 /** Exchange the saved refresh token, persist the rotation, return the new session. */
-async function renew(session: SessionFile, opts: RefreshOptions): Promise<SessionFile> {
+async function exchange(session: SessionFile, opts: RefreshOptions): Promise<SessionFile> {
   const dir = opts.dir ?? defaultSessionDir()
   const refreshToken = session.refreshToken
   if (refreshToken === undefined || refreshToken === '') {
@@ -175,22 +207,31 @@ export async function resolveFreshCredentials(
     const dir = inputs.dir ?? defaultSessionDir()
     const stored = loadSession(creds.server, dir)
     if (stored !== null && stored.token === creds.token && needsRefresh(stored, now)) {
-      const next = await renew(stored, {
-        server: stored.server,
-        dir,
-        now,
-        ...(inputs.transport ? { transport: inputs.transport } : {}),
-        ...(inputs.tls ? { tls: inputs.tls } : {}),
-      })
+      const next = await renew(
+        stored,
+        {
+          server: stored.server,
+          dir,
+          now,
+          ...(inputs.transport ? { transport: inputs.transport } : {}),
+          ...(inputs.tls ? { tls: inputs.tls } : {}),
+        },
+        (s) => !needsRefresh(s, now),
+      )
       creds = {
         ...creds,
         token: next.token,
-        tier: credentialTier(next.token, { sessionIsAdmin: next.isAdmin === true }),
+        tier: credentialTier(next.token, {
+          sessionIsAdmin: next.isAdmin === true,
+        }),
       }
     }
   }
   if (creds.tier === 'protected' && jwtClaims(creds.token) === null && creds.server !== undefined) {
-    return { ...creds, tier: await tierFromHub(creds.server, creds.token, inputs) }
+    return {
+      ...creds,
+      tier: await tierFromHub(creds.server, creds.token, inputs),
+    }
   }
   return creds
 }

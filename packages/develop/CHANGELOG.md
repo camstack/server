@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Concurrent tools (hub.mjs, deploy, the ops MCP) no longer revoke the shared login session: a session refresh now takes a cross-process lock and reuses a rotation another process already made
+
 ## [0.1.55] - 2026-11-19
 
 ### Changed
