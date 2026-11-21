@@ -391,6 +391,7 @@ import {
   ZOOM_SET_ATTEMPTS,
   ZOOM_SET_RETRY_MS,
 } from './ptz-zoom.js'
+import { cameraServesFlv } from './flv-eligibility.js'
 import {
   isConnectivityFailure,
   type ReachabilityOfflineInfo,
@@ -7946,7 +7947,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // secondary (`autoEligible: false`), like RTSP/RTMP. Skipped entirely
     // when the host isn't resolvable from local config (e.g. hub children,
     // which borrow the parent's socket and hold no own host/creds).
-    for (const s of streamOptions.nativeStreams) {
+    const flvServed = cameraServesFlv({
+      isBattery: this.isBattery,
+      netPortSnapshot: this.config.get('deviceCache')?.netPortSnapshot,
+    })
+    for (const s of flvServed ? streamOptions.nativeStreams : []) {
       const channel = s.channel ?? (isChild ? ownChannel : DEFAULT_CHANNEL)
       const id = buildCamStreamId('flv', channel, s.profile, channelCount)
       if (desired.has(id)) continue
