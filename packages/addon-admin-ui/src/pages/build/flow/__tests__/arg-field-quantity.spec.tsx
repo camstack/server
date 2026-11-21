@@ -26,7 +26,7 @@ describe('ArgField on a quantity arg', () => {
       />,
     )
     expect((screen.getByLabelText('Portion') as HTMLInputElement).value).toBe('2')
-    expect(screen.getByText(/0\.1411 to 7\.055 oz/)).toBeTruthy()
+    expect(screen.getByText(/0\.14 to 7\.05 oz/)).toBeTruthy()
   })
 
   it('emits the stored number and the picked unit', () => {

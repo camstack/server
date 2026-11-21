@@ -242,10 +242,10 @@ describe('SensorValueAtom', () => {
     })
   })
 
-  describe('typed numeric sensor — temperature with precision from slice', () => {
-    it('renders precision-formatted value when slice carries precision field', () => {
-      // temperature-sensor slice now carries precision populated by the HA provider.
-      // SensorValueAtom reads slice['precision'] and passes it to formatNumeric.
+  describe('typed numeric sensor — temperature display rule', () => {
+    it('shows at most two decimals when the device sets no precision (the shared rule)', () => {
+      // The slice's own `precision` field is not read by the atom; only the
+      // device's Customize precision (display.precision) wins, covered above.
       mockSlice = { temperature: 24.567, precision: 1, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
@@ -253,13 +253,13 @@ describe('SensorValueAtom', () => {
       }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
-      // 24.567 formatted to 1 decimal → "24.6"
-      expect(badge.textContent).toContain('24.6')
+      // 24.567 → two decimals, not the old one-decimal rounding.
+      expect(badge.textContent).toContain('24.57')
       expect(badge.textContent).toContain('°C')
     })
 
     it('renders auto-formatted value when precision is absent from the slice', () => {
-      // No precision → auto-formatting: non-integer uses toFixed(1).
+      // No precision → auto-formatting: at most two decimals, trimmed.
       mockSlice = { temperature: 21.5, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
