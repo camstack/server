@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.927 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.928 | the update itself | — |
 
 ## Framework (4)
 
@@ -25,7 +25,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | `@camstack/develop` | `packages/develop` | 0.1.56 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.159 | `@camstack/server` closure | — |
 | `@camstack/types` | `packages/types` | 1.2.617 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
-| `@camstack/ui-library` | `packages/ui-library` | 1.2.487 | `@camstack/server` closure | — |
+| `@camstack/ui-library` | `packages/ui-library` | 1.2.488 | `@camstack/server` closure | — |
 
 ## Addons (51)
 
@@ -33,7 +33,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.725 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.726 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
 | `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.425 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.183 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.182 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
@@ -68,7 +68,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.162 | addons dir | ONVIF camera device provider addon for CamStack |
 | `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.172 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
 | `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.168 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
-| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.256 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
+| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.257 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
 | `@camstack/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 1.2.159 | addons dir | Generic RTSP camera device provider addon for CamStack |
 | `@camstack/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.2.163 | addons dir | Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
 | `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.173 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
