@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.491] - 2026-11-21
+
 ### Changed
 
 - Energy card: a grid with no answered power reading shows a dash instead of 0 W, a dead or storage-blind counter leaves the day balance unknown, and today's household is derived when the house day total is missing

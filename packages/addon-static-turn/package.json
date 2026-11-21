@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-static-turn",
-  "version": "1.2.148",
+  "version": "1.2.149",
   "description": "Static / self-hosted (coturn) TURN provider for CamStack",
   "keywords": [
     "camstack",
@@ -56,7 +56,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.911"
+      "server": ">=1.2.931"
     }
   },
   "files": [
