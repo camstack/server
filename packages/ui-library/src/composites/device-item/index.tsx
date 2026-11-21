@@ -18,6 +18,7 @@ import {
   COLUMN_BREAKPOINT_CLASS,
   NAME_COLUMN_PIN_CLASS,
   NAME_COLUMN_WIDTH_CLASS,
+  PREVIEW_CELL_CLASS,
 } from '../device-list/columns'
 import { HardwareCell } from '../device-list/hardware-cell'
 import { DeviceItemActions } from './actions'
@@ -642,15 +643,13 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           // a sane fixed width, and `overflow-hidden` + `min-w-0` let the name
           // span truncate with an ellipsis instead of forcing the column wider.
           //
-          // BELOW `md` the width cap is OFF, so the full device name sizes the
-          // column and the table grows past the viewport — the wrapper's
-          // `overflow-x-auto` is what the operator then scrolls. See
-          // `NAME_COLUMN_TRUNCATE_BREAKPOINT`. `min-w-0 overflow-hidden` stays
-          // unconditional: it is inert while the column is uncapped, and it is
-          // what keeps an unexpected squeeze CLIPPING instead of overlapping
-          // the Preview column.
+          // BELOW `md` the column is the flexible one (`w-full max-w-0`): it
+          // takes what the controls cell leaves and the name ellipsises on the
+          // right. See `NAME_COLUMN_TRUNCATE_BREAKPOINT`. `overflow-hidden`
+          // keeps an unexpected squeeze CLIPPING instead of overlapping the
+          // controls cell.
           NAME_COLUMN_WIDTH_CLASS,
-          'min-w-0 overflow-hidden',
+          'overflow-hidden',
           INDENT_CLASS[indentLevel],
         )}
       >
@@ -678,9 +677,6 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             expanded={expanded}
             onToggleExpand={onToggleExpand}
             onNavigateToParent={onNavigate}
-            // The table is the one layout with somewhere to scroll TO, so it is
-            // the one layout where the name never has to be cut.
-            nameOverflow="scroll"
             below={<TagChipList tags={device.tags} entries={tagEntries} className="mt-1" />}
           />
         </div>
@@ -751,7 +747,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           control (climate stepper + mode select, cover triad + %) lays out in
           sequence with the trailing affordances instead of overflowing a fixed
           box; `justify-end` flushes the cluster right. */}
-      <td className="px-2 py-1.5 align-middle text-right whitespace-nowrap">
+      <td className={cn(PREVIEW_CELL_CLASS, 'px-2 py-1.5 align-middle text-right')}>
         {pending ? (
           <span
             role="status"
@@ -761,7 +757,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             {t('uiLibrary.deviceItem.removing', 'Removing…')}
           </span>
         ) : (
-          <span className="inline-flex items-center justify-end gap-1.5">
+          <span className="inline-flex flex-wrap items-center justify-end gap-1.5 md:flex-nowrap">
             {failure !== null && (
               <span
                 role="alert"

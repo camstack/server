@@ -1,18 +1,15 @@
 // @vitest-environment jsdom
 /**
- * The NAME column must never ellipsise a device name on a narrow viewport.
+ * The NAME column fills what the controls leave and ellipsises on the RIGHT.
  *
- * The reported defect: on a phone every row read "Camera ve…" /
- * "Camera co…" — the cameras were indistinguishable, and the operator's
- * chosen trade was explicit: show the ENTIRE name, at the cost of scrolling
- * the table sideways.
+ * The reported defect: on a phone the table was wider than the viewport, the
+ * wrapper scrolled sideways and the name was clipped on the LEFT while the
+ * header showed only "PREVIEW". The column is now the flexible one at every
+ * width (`w-full max-w-0`, a readable `min-w`), the name truncates with an
+ * ellipsis and the controls cell wraps below `md`.
  *
- * These assert the responsive DECISION (`truncate` is behind a breakpoint, the
- * width cap is behind a breakpoint) rather than a `className` literal — see
- * `docs/ui/conventions.md`, "Frozen-string tests have an expiry date". The
- * layout consequence itself (the name box growing to the full text width and
- * the wrapper becoming scrollable) was measured in a real engine; jsdom has no
- * layout, so what a unit test can guard is the class decision that produces it.
+ * jsdom has no layout, so these assert the class decisions that produce it
+ * (see `docs/ui/conventions.md`, "Frozen-string tests have an expiry date").
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import { render } from '@testing-library/react'
@@ -21,7 +18,7 @@ import type { ReactNode } from 'react'
 import { DeviceList } from '../index'
 import { DeviceItem } from '../../device-item'
 import { NAME_COLUMN_TRUNCATE_BREAKPOINT } from '../columns'
-import { classTokens, hasUnconditionalClass, hasVariantClass } from '../../../lib/tailwind-variants'
+import { hasUnconditionalClass, hasVariantClass } from '../../../lib/tailwind-variants'
 import type { DeviceItemDevice } from '../../device-item/helpers'
 import type { UseDeviceProxyTrpc } from '../../../hooks/use-device-proxy'
 
@@ -89,15 +86,8 @@ function nameHeader(container: HTMLElement): HTMLElement {
   return th
 }
 
-/** Width utilities applied at EVERY width — the ones that cap the column. */
-function unconditionalWidthTokens(className: string): readonly string[] {
-  return classTokens(className).filter(
-    (token) => !token.includes(':') && /^(?:w|max-w)-/.test(token),
-  )
-}
-
-describe('device table — the NAME is never cut', () => {
-  it('renders the name in full, and exposes it as the accessible title too', () => {
+describe('device table — the NAME column', () => {
+  it('keeps the full name in the DOM and in the accessible title', () => {
     const container = renderList()
     const name = el(container, '[data-testid="device-name"]')
     // The DOM has always carried the full string; the defect was purely that
@@ -106,27 +96,30 @@ describe('device table — the NAME is never cut', () => {
     expect(name.getAttribute('title')).toBe(LONG_NAME)
   })
 
-  it('the name text does not truncate at every width — only from the breakpoint up', () => {
+  it('the name text truncates at every width, on one line', () => {
     const container = renderList()
     const cls = el(container, '[data-testid="device-name"]').className
-    // The defect, stated as an invariant: `truncate` (overflow-hidden +
-    // text-ellipsis + nowrap) applied unconditionally is what produced
-    // "Camera ve…" on a phone.
-    expect(hasUnconditionalClass(cls, 'truncate')).toBe(false)
-    expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'truncate')).toBe(true)
-    // One line at every width: below the breakpoint the row scrolls sideways
-    // rather than the name wrapping into a two-line cell.
-    expect(hasUnconditionalClass(cls, 'whitespace-nowrap')).toBe(true)
+    expect(hasUnconditionalClass(cls, 'truncate')).toBe(true)
   })
 
-  it('the NAME column carries no width cap below the breakpoint', () => {
+  it('the NAME column is the flexible one below the breakpoint, fixed from it up', () => {
     const container = renderList()
-    // A cap on the <td>/<th> is the OTHER half: with `w-44 max-w-[11rem]` the
-    // column could not grow to the name however the text was styled.
     for (const cls of [nameHeader(container).className, el(container, 'tbody tr td').className]) {
-      expect(unconditionalWidthTokens(cls)).toEqual([])
+      // `w-full max-w-0` = take the remaining width and let the text ellipsise;
+      // the min width keeps two rows of one device kind tellable apart.
+      expect(hasUnconditionalClass(cls, 'w-full')).toBe(true)
+      expect(hasUnconditionalClass(cls, 'max-w-0')).toBe(true)
+      expect(hasUnconditionalClass(cls, 'min-w-[8rem]')).toBe(true)
       expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'w-64')).toBe(true)
     }
+  })
+
+  it('the controls cell wraps below the breakpoint and stays on one line from it up', () => {
+    const container = renderList()
+    const cells = [...container.querySelectorAll('tbody tr td')]
+    const cls = cells[cells.length - 1]?.className
+    expect(hasUnconditionalClass(cls, 'whitespace-normal')).toBe(true)
+    expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'whitespace-nowrap')).toBe(true)
   })
 
   it('ONE scroll context carries the overflow: the table wrapper, not each row', () => {
@@ -141,7 +134,7 @@ describe('device table — the NAME is never cut', () => {
     }
   })
 
-  it('the controls column stays LAST and unhidden, so scrolling right reaches it', () => {
+  it('the controls column stays LAST and unhidden', () => {
     const container = renderList()
     const cells = [...container.querySelectorAll('tbody tr td')]
     const last = cells[cells.length - 1]
@@ -152,7 +145,7 @@ describe('device table — the NAME is never cut', () => {
     expect(last?.querySelector('[data-status="online"]')).not.toBeNull()
   })
 
-  it('the secondary lines in the cell follow the same policy as the name', () => {
+  it('the secondary lines in the cell truncate with the name', () => {
     const { container } = render(
       withQuery(
         <table>
@@ -169,19 +162,15 @@ describe('device table — the NAME is never cut', () => {
         </table>,
       ),
     )
-    // A full name over an ellipsised "Under: …" / stableId reads as broken.
     const parentBadge = [...container.querySelectorAll('span')].find((s) =>
       s.textContent?.startsWith('Under:'),
     )
     expect(parentBadge).toBeDefined()
-    expect(hasUnconditionalClass(parentBadge?.className, 'truncate')).toBe(false)
-    expect(
-      hasVariantClass(parentBadge?.className, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'truncate'),
-    ).toBe(true)
+    expect(hasUnconditionalClass(parentBadge?.className, 'truncate')).toBe(true)
   })
 })
 
-describe('the card layouts are untouched — they have nowhere to scroll to', () => {
+describe('the card layouts are untouched', () => {
   it('a minimal in-panel row still truncates at every width', () => {
     const { container } = render(
       withQuery(<DeviceItem trpc={mockTrpc} device={dev(1)} variant="minimal" />),

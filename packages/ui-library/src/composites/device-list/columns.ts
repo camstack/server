@@ -134,45 +134,29 @@ export const NAME_COLUMN_PIN_BREAKPOINT = 'md' as const
 export const NAME_COLUMN_PIN_CLASS = 'md:sticky md:left-0 md:z-[1]' as const
 
 /**
- * ── The NAME never truncates below the pin breakpoint ─────────────────────
+ * ── The NAME column fills what the controls leave, at every width ─────────
  *
- * Fitting NAME + Preview inside a phone viewport was the wrong trade: every
- * camera collapsed to "Camera ve…" / "Camera co…", which is not a
- * shortened name, it is NO name — the rows became indistinguishable and the
- * one thing the operator opened the page to read was the part that got cut.
+ * Below `md` the table is NAME + the merged controls cell. NAME is the
+ * flexible column (`w-full max-w-0`: it takes the remaining width and its text
+ * ellipsises on the RIGHT, never clipped on the left), bounded below by
+ * `min-w-[8rem]` so a name never collapses to "Ca…" — instead the controls cell
+ * wraps (`PREVIEW_CELL_CLASS`) and gives the name its room. The table never
+ * scrolls sideways on a phone; the wrapper's `overflow-x-auto` stays only as a
+ * safety net for an unbreakable control.
  *
- * So below `md` the name is rendered in FULL on one line and the table is
- * allowed to grow past the viewport; the wrapper's existing `overflow-x-auto`
- * (ONE scroll context for the whole body, so every column stays aligned with
- * its header) carries the overflow. From `md` up nothing changes: the width
- * cap, the ellipsis and the pin all return, because names already fit there.
- *
- * Same breakpoint as the pin, deliberately — the pin exists only where other
- * columns still fit beside NAME, which is exactly the width at which NAME no
- * longer needs the whole viewport.
+ * From `md` up the fixed `w-64` width and the pin return, as before.
  */
 export const NAME_COLUMN_TRUNCATE_BREAKPOINT = 'md' as const
 
 /**
- * NAME column width — a desktop concession, never unconditional ([D43]).
- * Below `md` the column carries no width at all, so it sizes to the name and
- * widens the table; the roomier capped desktop width returns with the pin.
+ * NAME column width: flexible below `md` (see above), a fixed capped width from
+ * `md` up ([D43]). One constant for the `<th>` and the `<td>`, so they cannot drift.
  */
-export const NAME_COLUMN_WIDTH_CLASS = 'md:w-64 md:max-w-[16rem]' as const
+export const NAME_COLUMN_WIDTH_CLASS =
+  'w-full max-w-0 min-w-[8rem] md:w-64 md:max-w-[16rem]' as const
 
 /**
- * The name TEXT inside a table row. `whitespace-nowrap` keeps it on one line
- * at every width; `md:truncate` adds the overflow-hidden + ellipsis pair from
- * `md` up. Below `md` there is no ellipsis and no clip — the full string is
- * laid out, and it is the name that sizes the column.
- *
- * Measured (Chromium, 390px viewport, a 288px name in a 388px table): the two
- * things that were cutting it are exactly this `truncate` and the width cap
- * above. The `min-w-0` / `overflow-hidden` on the cell and on the header's
- * flex chain are INERT below `md` — an uncapped table cell sizes to its
- * content's min-content width regardless — so they are deliberately left
- * unconditional: they cost nothing here and they keep clipping (rather than
- * overlapping the Preview column) as the failure mode if anything ever does
- * force this column narrow.
+ * The controls cell: below `md` it may wrap its cluster onto a second line so
+ * the NAME column keeps its room; from `md` up it is one nowrap line.
  */
-export const NAME_TEXT_CLASS = 'whitespace-nowrap md:truncate' as const
+export const PREVIEW_CELL_CLASS = 'whitespace-normal md:whitespace-nowrap' as const

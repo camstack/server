@@ -59,12 +59,12 @@ export function TimedRunRowControl({
   if (armed && activeUntil !== null) {
     const left = timedRunRemaining(activeUntil, now, unit)
     return (
-      <span className="inline-flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button size="sm" variant="outline" disabled={!online} onClick={() => void cap.cancel({})}>
-          <Square className="h-3.5 w-3.5" aria-hidden />
+      <span className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <Button size="xs" variant="outline" disabled={!online} onClick={() => void cap.cancel({})}>
+          <Square className="h-3 w-3" aria-hidden />
           {t('uiLibrary.timedRun.stop', 'Stop')}
         </Button>
-        <span className="text-sm tabular-nums text-foreground">
+        <span className="whitespace-nowrap text-xs tabular-nums text-foreground">
           {t('uiLibrary.timedRun.remaining', '{{time}} left', {
             time: `${left} ${unitLabel}`,
           })}
@@ -76,12 +76,12 @@ export function TimedRunRowControl({
   return (
     <span onClick={(e) => e.stopPropagation()}>
       <Button
-        size="sm"
+        size="xs"
         variant="outline"
         disabled={!online}
         onClick={() => void cap.runFor({ duration, unit })}
       >
-        <Timer className="h-3.5 w-3.5" aria-hidden />
+        <Timer className="h-3 w-3" aria-hidden />
         {t('uiLibrary.timedRun.quickRun', 'Run {{duration}} {{unit}}', {
           duration,
           unit: unitLabel,

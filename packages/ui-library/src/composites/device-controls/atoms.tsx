@@ -32,7 +32,13 @@ export function ControlColumn({
 }: ControlColumnProps): ReactNode {
   if (align === FIT) {
     return (
-      <div {...rest} className={cn('inline-flex items-center', className)}>
+      <div
+        {...rest}
+        className={cn(
+          'inline-flex flex-wrap items-center justify-end gap-1.5 md:flex-nowrap',
+          className,
+        )}
+      >
         {children}
       </div>
     )

@@ -12,13 +12,6 @@
  *     collapsing into "Camera vera…". Typography is larger /
  *     heavier so the name dominates the secondary metadata that sits
  *     below it.
- *
- * …plus one orthogonal switch, `nameOverflow`. `'truncate'` (default) is the
- * behaviour above — a card is a width-bounded box with nowhere to scroll to.
- * `'scroll'` is passed by the TABLE row: below `md` the name loses its
- * ellipsis, sizes its own (uncapped) column, and the table's
- * `overflow-x-auto` wrapper carries the overflow. See
- * `NAME_COLUMN_TRUNCATE_BREAKPOINT` in device-list/columns.
  */
 import { type ReactNode } from 'react'
 import { ChevronDown, ChevronRight, Network } from 'lucide-react'
@@ -26,7 +19,6 @@ import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { useDeviceState } from '../../hooks/use-device-proxy'
-import { NAME_TEXT_CLASS } from '../device-list/columns'
 import { DeviceName, useDeviceLabelById } from '../device-name'
 import type { DeviceNameForm } from '../device-name'
 import { RunningBadge } from '../running-badge'
@@ -66,7 +58,6 @@ const CHEVRON_SLOT_CLASS: Readonly<Record<'horizontal' | 'stacked', string>> = {
  *   - `scroll`   — one line, FULL text below `md`; the enclosing column is
  *                  uncapped there, so the name widens it and the table scrolls.
  */
-export type DeviceNameOverflow = 'truncate' | 'scroll'
 
 export interface DeviceItemHeaderProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -86,12 +77,6 @@ export interface DeviceItemHeaderProps {
    * the name as a small lead-line so the name's full width is name-only.
    */
   readonly stacked?: boolean
-  /**
-   * Overflow policy for the name (and the two secondary lines under it).
-   * Defaults to `'truncate'` — the card layouts are width-bounded boxes and
-   * have nowhere to scroll to. The table row passes `'scroll'`.
-   */
-  readonly nameOverflow?: DeviceNameOverflow
   /**
    * `nested` when this row is already drawn under its parent. Otherwise
    * `compact`: a child shown on its own names the container.
@@ -113,7 +98,6 @@ export function DeviceItemHeader({
   onToggleExpand,
   onNavigateToParent,
   stacked = false,
-  nameOverflow = 'truncate',
   nameForm = 'compact',
   below,
 }: DeviceItemHeaderProps): ReactNode {
@@ -136,7 +120,7 @@ export function DeviceItemHeader({
   // The name text + the two secondary lines below it (`#id · stableId`,
   // "Under: <parent>"). They live in the same cell and are governed by the
   // same policy — a full name over an ellipsised parent badge reads as broken.
-  const lineClass = nameOverflow === 'scroll' ? NAME_TEXT_CLASS : 'truncate'
+  const lineClass = 'truncate'
   const nameParent =
     nameForm === 'nested' && parent !== null
       ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
@@ -230,13 +214,7 @@ export function DeviceItemHeader({
               e.stopPropagation()
               onNavigateToParent(parent.id)
             }}
-            className={cn(
-              'mt-0.5 inline-flex items-center gap-1 text-[9px] text-foreground-subtle hover:text-primary transition-colors',
-              // A `max-w-full` here caps the badge at the cell width, so a full
-              // parent name would overflow it invisibly instead of widening the
-              // column. Desktop keeps the cap (it pairs with the ellipsis).
-              nameOverflow === 'scroll' ? 'md:max-w-full' : 'max-w-full',
-            )}
+            className="mt-0.5 inline-flex max-w-full items-center gap-1 text-[9px] text-foreground-subtle hover:text-primary transition-colors"
             title={t('uiLibrary.deviceItemHeader.openParent', 'Open parent: {{name}} (#{{id}})', {
               name: parentLabel,
               id: parent.id,

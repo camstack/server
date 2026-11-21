@@ -185,39 +185,25 @@ NAME holds its width against nothing and pushes the remaining column off-screen.
 A sticky first column earns its keep only where the other columns still fit
 beside it.
 
-**Making a name FIT is not the same as making it readable.** The first pass at
-that pin also narrowed the NAME column below `md` (`w-44 max-w-[11rem]`) so NAME
-+ Preview would fit a phone with no horizontal scroll at all. The result was
-every camera rendering as "Camera ve…" / "Camera co…" — not a
-shortened name, no name, and rows that could not be told apart. The operator's
-call was explicit: show the whole name, and pay for it in sideways scroll.
+**The name column is the flexible one.** An earlier pass let the name size
+its own column below `md` and carried the overflow in a sideways scroll. On a
+phone that clipped the name on the LEFT and left the header showing only
+"PREVIEW". Now, at every width (`NAME_COLUMN_WIDTH_CLASS`), the name cell takes
+the width the controls leave (`w-full max-w-0`), the name is one line that
+ellipsises on the right (`truncate`; the full text stays in `title`), and
+`min-w-[8rem]` keeps two rows tellable apart. The trailing controls cell wraps
+its cluster below `md` (`PREVIEW_CELL_CLASS`) instead of widening the table, so
+the page never scrolls sideways on a phone. From `md` up the fixed `w-64` width
+and the pin apply.
 
-So `md` is now the breakpoint for the *truncation* too
-(`NAME_COLUMN_TRUNCATE_BREAKPOINT`). Below it the column carries no width cap
-and the name carries `whitespace-nowrap` with no ellipsis
-(`NAME_TEXT_CLASS = 'whitespace-nowrap md:truncate'`), so the name sizes its own
-column, the table exceeds the viewport, and `TableLayout`'s existing
-`overflow-x-auto` wrapper — **one** scroll context for the whole body, never one
-per row, so every column stays under its header — carries it. From `md` up
-nothing changed.
+**Row controls use the row's type size.** Inline state labels, readouts and
+buttons in a table row are `text-xs`; a row button is `Button size="xs"`
+(`h-6`). `text-sm` and `font-semibold` belong to cards and panels, not rows.
 
-Two things learned measuring this in a real engine, both counter-intuitive
-enough to be worth writing down:
-
-- The only two utilities that were cutting the name are `truncate` and the
-  width cap. `min-w-0` and `overflow-hidden` on the cell and on the header's
-  flex chain are **inert** once the column is uncapped — an auto-layout table
-  cell sizes to its content's min-content width regardless — so they stay
-  unconditional, and they keep clipping (rather than overlapping the Preview
-  column) as the failure mode if anything ever squeezes the column again.
-- The secondary lines in the same cell (`#id · stableId`, "Under: <parent>",
-  and the badge's own `max-w-full`) follow the same policy via `nameOverflow`.
-  A full name sitting above an ellipsised parent badge reads as a rendering
-  bug, not as a deliberate hierarchy.
-
-`nameOverflow` is a prop on `DeviceItemHeader` and defaults to `'truncate'`:
-the card layouts are width-bounded boxes with nowhere to scroll to, and the
-stacked card already answers a long name by wrapping to two lines.
+The secondary lines in the same cell (`#id · stableId`, "Under: <parent>") are
+`truncate` too: a full name above an ellipsised parent badge reads as a rendering
+bug. `overflow-hidden` on the cell keeps a squeeze clipping instead
+of overlapping the controls cell.
 
 Test the DECISION, not the class string. `lib/tailwind-variants.ts` gives
 `hasUnconditionalClass` / `hasVariantClass`, so an assertion reads "the name

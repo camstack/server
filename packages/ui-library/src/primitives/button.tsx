@@ -22,6 +22,8 @@ const buttonVariants = cva(
         outline: 'border border-border bg-transparent text-foreground hover:bg-surface-hover',
       },
       size: {
+        // Inside a table row: the row's own height and type size.
+        xs: 'h-6 px-2 text-xs gap-1',
         sm: 'h-7 px-2.5 text-xs gap-1.5',
         md: 'h-8 px-3 text-sm gap-2',
         lg: 'h-9 px-4 text-sm gap-2',
@@ -42,7 +44,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * page. A control that should LOOK like a button uses another variant.
    */
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'unstyled'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 export const Button: ForwardRefExoticComponent<ButtonProps & RefAttributes<HTMLButtonElement>> =

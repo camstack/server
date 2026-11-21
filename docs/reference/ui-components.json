@@ -2247,7 +2247,7 @@
         },
         {
           "name": "size",
-          "type": "'sm' | 'md' | 'lg'",
+          "type": "'xs' | 'sm' | 'md' | 'lg'",
           "optional": true,
           "doc": ""
         }

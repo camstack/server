@@ -129,13 +129,11 @@ describe('TableLayout — internal x-scroll + the NAME pin', () => {
     expect(nameTh?.className).toContain('bg-surface')
   })
 
-  it('NAME column is width-capped from the pin breakpoint up, and NOT below it', () => {
+  it('NAME column is width-capped from the pin breakpoint up, and flexible below it', () => {
     const { container } = render(withQuery(<DeviceList devices={[dev(1)]} trpc={mockTrpc} />))
     const nameTd = container.querySelector('tbody tr td')
-    // A max-width cap stops the merged name column from claiming the whole
-    // table — but only where there is room for the ellipsis to be a choice
-    // rather than data loss. Below the breakpoint the column is uncapped and
-    // the table scrolls; see `name-never-truncates.test.tsx`.
+    // The cap only applies where the fixed width fits; below it the cell takes
+    // the remaining width (`w-full max-w-0`) and the name ellipsises.
     expect(hasVariantClass(nameTd?.className, NAME_COLUMN_PIN_BREAKPOINT, 'max-w-[16rem]')).toBe(
       true,
     )

@@ -57,7 +57,6 @@ export type RowValueDevice = Pick<
   'id' | 'role' | 'display' | 'sourceInfo' | 'type'
 >
 
-
 export interface RowMeasurementProps {
   readonly measurement: HeroMeasurement
   readonly lang: HeroLang
@@ -70,7 +69,7 @@ export function RowMeasurement({ measurement, lang, subject }: RowMeasurementPro
   return (
     <span
       data-testid="row-measurement"
-      className="inline-flex min-w-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-semibold tabular-nums"
+      className="inline-flex min-w-0 items-baseline gap-0.5 whitespace-nowrap text-xs font-medium tabular-nums"
     >
       <span className={cn('min-w-0 truncate', TONE_CLASS[measurement.tone])}>{text.value}</span>
       {text.unit === null ? null : (
@@ -149,7 +148,7 @@ function RowControl({
       const { action } = control
       return (
         <Button
-          size="sm"
+          size="xs"
           variant={action.emphasis === 'primary' ? 'primary' : 'outline'}
           disabled={action.confirm !== null && !canConfirm}
           onClick={(e) => {
@@ -249,7 +248,15 @@ function RowControl({
  * device card's host uses (`deviceHero.model.confirm.*`), so row and card ask the same thing.
  */
 const CONFIRM_COPY: Readonly<
-  Record<HeroConfirm, { readonly key: string; readonly title: string; readonly message: string; readonly confirm: string }>
+  Record<
+    HeroConfirm,
+    {
+      readonly key: string
+      readonly title: string
+      readonly message: string
+      readonly confirm: string
+    }
+  >
 > = {
   'off-while-running': {
     key: 'deviceHero.model.confirmOff',
@@ -374,10 +381,7 @@ export function ModelRowControl({ device }: ModelRowControlProps): ReactNode {
     const head = statusLine[0]
     if (head === undefined || !READOUT_TYPES.has(device.type)) return null
     return (
-      <span
-        data-testid="row-readout"
-        className="min-w-0 truncate text-xs text-foreground-muted"
-      >
+      <span data-testid="row-readout" className="min-w-0 truncate text-xs text-foreground-muted">
         {readoutText(device, pickText(head, lang))}
       </span>
     )
