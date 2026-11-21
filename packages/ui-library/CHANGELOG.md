@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.494] - 2026-11-21
+
 ### Changed
 
 - Every number follows one rule: the precision you set wins, otherwise at most two decimals with trailing zeros trimmed; cards, charts and the energy card honour the device's Precision from Customize
