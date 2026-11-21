@@ -729,7 +729,7 @@ export function StreamPanel({
                 data-testid="stream-profile-select"
                 value={effectiveStreamId}
                 onChange={(e) => handleStreamChange(e.target.value)}
-                className="appearance-none cursor-pointer rounded-md border border-border bg-surface-hover hover:bg-surface text-foreground text-[11px] font-medium pl-2 pr-6 py-1 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                className="h-auto cursor-pointer bg-surface-hover hover:bg-surface text-[11px] font-medium py-1"
               >
                 {visibleStreams.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -737,19 +737,6 @@ export function StreamPanel({
                   </option>
                 ))}
               </Select>
-              <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-foreground-subtle">
-                <svg
-                  className="h-2.5 w-2.5"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 4.5 6 7.5 9 4.5" />
-                </svg>
-              </span>
             </div>
           )}
           {isVod && vodQuality.length > 1 && (
@@ -758,7 +745,7 @@ export function StreamPanel({
                 data-testid="vod-quality-select"
                 value={vodLevel}
                 onChange={(e) => setVodLevel(Number(e.target.value))}
-                className="appearance-none cursor-pointer rounded-md border border-border bg-surface-hover hover:bg-surface text-foreground text-[11px] font-medium pl-2 pr-6 py-1 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                className="h-auto cursor-pointer bg-surface-hover hover:bg-surface text-[11px] font-medium py-1"
               >
                 {vodQuality.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -766,19 +753,6 @@ export function StreamPanel({
                   </option>
                 ))}
               </Select>
-              <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-foreground-subtle">
-                <svg
-                  className="h-2.5 w-2.5"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 4.5 6 7.5 9 4.5" />
-                </svg>
-              </span>
             </div>
           )}
         </div>

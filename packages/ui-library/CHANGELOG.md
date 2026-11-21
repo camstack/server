@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The stream selector in the camera player toolbar shows a single dropdown arrow instead of two.
+
 ## [1.2.487] - 2026-11-21
 
 ### Changed
