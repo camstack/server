@@ -4,12 +4,12 @@
 
 # Guards
 
-257 repository guards: 252 in `scripts/`,
+258 repository guards: 253 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (245)
+## Enforced by CI checks (246)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -182,6 +182,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-npm-orphan-packages.ts` | A published package whose source left the workspace must be DEPRECATED, not merely forgotten. |
 | `scripts/check-object-media-scope-required.ts` | an `object` media read MUST require NcEventMediaScope. |
 | `scripts/check-onboard-motion-emitters.ts` | GUARD: only the camera-sensors bridge, the device-activity source and the runner's analyzer emit `MotionOnMotionChanged` (D673), and only the orchestrator writes a camera's `motion` runtime slice (D696). The rules live in `onboard-motion… |
+| `scripts/check-onboarding-manifest.ts` | Onboarding-manifest guard (D1077). |
 | `scripts/check-one-instance-create-door.ts` | One create door for an instance (planning#440, D1013 rule 1). |
 | `scripts/check-one-instances-list.ts` | One list of configured things (planning#440 step 6, D1013). |
 | `scripts/check-one-row-switch.ts` | One switch per instance (planning#440 step 3, D996, D1007, D1066). |

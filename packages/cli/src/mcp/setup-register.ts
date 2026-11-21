@@ -4,6 +4,11 @@
  * a one-shot `confirm_token` bound to the exact arguments applies — D836).
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import {
+  LOCATION_CREATE_TOOL,
+  LocationCreateArgsShape,
+  locationCreateApply,
+} from './setup-location-create.js'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
 import { clientLogs, VIEWER_LEVELS } from './client-logs.js'
@@ -152,6 +157,13 @@ export function registerSetupApplyTools(server: McpServer, ctx: McpContext): voi
     },
     async ({ changes, confirm_token }): Promise<ToolTextResult> =>
       text(await setupLocationsApply(ctx, { changes }, confirm_token)),
+  )
+  server.tool(
+    LOCATION_CREATE_TOOL,
+    `Add a storage location on a LOCAL path of a node (a second disk, a mounted share). Refuses an undeclared type, a second location of a single-location type, and a path equal to, inside or around a location of the same type on the same node; the node checks the path is writable before anything is created. A location that needs a password or key (SMB, SFTP, S3, WebDAV) is created by the person in the admin UI, never here. ${TWO_STEP}`,
+    { ...LocationCreateArgsShape, confirm_token: z.string().optional() },
+    async ({ confirm_token, ...args }): Promise<ToolTextResult> =>
+      text(await locationCreateApply(ctx, args, confirm_token)),
   )
   server.tool(
     SETUP_RECORDING_TOOL,

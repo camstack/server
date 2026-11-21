@@ -1,6 +1,6 @@
 ---
 title: Assisted setup and troubleshooting with the public MCP (user guide)
-last-verified: 2026-11-04
+last-verified: 2026-11-21
 applies-to:
   - packages/cli/src/mcp/setup-register.ts
   - packages/cli/src/mcp/debug-report.ts
@@ -10,6 +10,8 @@ applies-to:
   - packages/cli/src/mcp/report-recipes.ts
 covers:
   - packages/cli/src/mcp/setup-*.ts
+  - packages/cli/src/mcp/get-started-prompt.ts
+  - packages/cli/src/onboarding/**
   - packages/cli/src/host-check/**
   - packages/cli/src/commands/host-check.ts
   - packages/cli/src/mcp/debug-*.ts
@@ -45,19 +47,37 @@ never `0` or an empty list (D393).
 | Tool | What it does | Ask the assistant |
 | --- | --- | --- |
 | `setup_about` | CLI and server versions, supported hosts | "Which CamStack version is current?" |
-| `setup_host_check` | Inspects the machine the MCP runs on (same report as `camstack host-check`): GPUs by vendor, NPU, Coral, NVIDIA (not supported yet), container or LXC; the image tag and the device flags for docker run, Compose, Unraid and a Proxmox LXC. Read-only, nothing sent | "Which devices should I pass to CamStack on this machine?" |
+| `setup_host_check` | Inspects the machine the MCP runs on (same report as `camstack host-check`): GPUs by vendor (NVIDIA through the `nvidia` / `nvidia-legacy` images), NPU, Coral, container or LXC; the image tag and the device flags for docker run, Compose, Unraid and a Proxmox LXC. Read-only, nothing sent | "Which devices should I pass to CamStack on this machine?" |
 | `setup_install_guide` | Interview, then the official template for docker-compose / docker / unraid / proxmox-lxc / macos-desktop | "Help me install CamStack on Unraid." |
 | `setup_discover_hubs` | Hubs on the local network | "Is there a CamStack hub here?" |
 | `setup_connect` | Does the hub answer, is its CA pinned, is there a session | "Connect to my hub." |
 | `setup_add_node` | Guide to add an agent; the operator types the six pairing digits on both screens, the tool never confirms one | "Add my Mac mini as a node." |
 | `setup_login`, `setup_login_wait` | Sign in by browser approval, no password | "Log me in." |
-| `setup_wizard` | First-run checklist, eight steps, each done / missing / unknown / suggested | "What is left to set up?" |
+| `setup_feasibility` | Before any install: the host-check facts plus a PROVISIONAL sizing for a camera count, from the sizing constants of the docs. Says hub-only, hub plus agents, or not a hub; invents no figure for hardware nobody measured, and offers the hardware-report link there | "Can this machine run 8 cameras?" |
+| `setup_core_addons` | The core addon groups of the docs, each configured / installed / missing / failed / suggested / not-needed / unknown, with the exact next action. TURN and the tunnel are judged without reading a credential | "Which addons do I still need?" |
+| `setup_wizard` | START HERE. The steps of the get-started page, in its order, each done / missing / suggested / not-needed / unknown, and the next step with its actions (the tool to call, or the manual instruction when no tool is served). Works with no hub: the next step is then feasibility or install. Shows the measured capacity verdict once the node benchmark ran | "What is left to set up?" |
+
+### Where the steps come from
+
+The steps, their actions in both renderings, the core addon groups and the
+sizing constants are NOT in the CLI: they are frontmatter of the public
+get-started pages, published as `/onboarding/v1/manifest.json` (D1077). The MCP
+reads that document live (3 s timeout, cached an hour) and falls back to the
+snapshot bundled in the package (`packages/cli/src/onboarding/manifest.snapshot.json`,
+refreshed with `npm run onboarding:sync`); the higher `revision` wins and the
+answer says which one it used. `camstack mcp --no-docs-fetch` never leaves the
+machine for it. What stays code is how a step is judged
+(`packages/cli/src/onboarding/evaluators.ts`): a step the docs added after this
+CLI was built is `unknown` with "update the CLI", never guessed.
+
+The server also sends `instructions` and a `get-started` prompt that both say
+one thing: call `setup_wizard` first, and again after each step.
 
 ### Reading and applying a setup area (`ops` reads, `configure` applies)
 
 | Read | Apply | What it covers |
 | --- | --- | --- |
-| `setup_locations` | `configure_setup_locations` | Storage locations by class, mode, occupancy, drain. Refuses a change that leaves a class with no writer. |
+| `setup_locations` | `configure_setup_locations`, `configure_setup_location_create` | Storage locations by class, mode, occupancy, drain. Refuses a change that leaves a class with no writer. The create refuses an undeclared type, a second location of a single-location type and a root equal to or nested in another root of that type on that node, then probes the path before creating. |
 | `setup_recording` | `configure_setup_recording` | Per-camera recording config, derived mode and retention, a proposal for cameras that record nothing. |
 | `setup_streams` | `configure_setup_streams` | Native and derived streams, high/low slots, live fps / bitrate / IDR. A slot change restarts that camera's detection. |
 | `setup_benchmark` | `support_benchmark_run` | Benchmark status, accelerators, devices without a measured latency. The run loads the node. |

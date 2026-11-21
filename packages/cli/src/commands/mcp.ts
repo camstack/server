@@ -22,6 +22,8 @@ export function mcpHelp(): string {
     `                        (default: ${DEFAULT_TOOLSETS.join(',')})`,
     '  -s, --server <host>   Hub to use instead of the cached login session',
     '      --token-file <p>  Read an explicit token from a file',
+    '      --no-docs-fetch   Use the setup steps bundled in this CLI; never read them',
+    '                        from the docs site (an offline or filtered network)',
     '',
     'Diagnose: `camstack mcp doctor` checks, read-only, Node >= 24, the hub, its pinned CA,',
     'the session or token file, the token scope (admin or not) and the CLI version, each',
@@ -54,6 +56,7 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
       toolsets: { type: 'string' },
       server: { type: 'string', short: 's' },
       'token-file': { type: 'string' },
+      'no-docs-fetch': { type: 'boolean' },
     },
     allowPositionals: false,
     strict: true,
@@ -71,6 +74,7 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
     toolsets: selection.toolsets,
     ...(parsed.values.server ? { server: parsed.values.server } : {}),
     ...(parsed.values['token-file'] ? { tokenFile: parsed.values['token-file'] } : {}),
+    ...(parsed.values['no-docs-fetch'] === true ? { noDocsFetch: true } : {}),
   })
 }
 

@@ -159,6 +159,7 @@ describe('camstack mcp — toolset selection', () => {
         'configure_remote_access',
         'configure_remote_access_set',
         'configure_rename_device',
+        'configure_setup_location_create',
         'configure_setup_locations',
         'configure_setup_pipeline',
         'configure_setup_recording',
@@ -169,7 +170,9 @@ describe('camstack mcp — toolset selection', () => {
         'setup_about',
         'setup_add_node',
         'setup_connect',
+        'setup_core_addons',
         'setup_discover_hubs',
+        'setup_feasibility',
         'setup_host_check',
         'setup_install_guide',
         'setup_login',
@@ -215,7 +218,10 @@ describe('camstack mcp — hub-less and session behaviour', () => {
 
   it('setup_host_check needs no hub: it inspects this machine and names an image or the native app', async () => {
     const client = await connect(['setup'], context(NO_SESSION))
-    const res = await client.callTool({ name: 'setup_host_check', arguments: {} })
+    const res = await client.callTool({
+      name: 'setup_host_check',
+      arguments: {},
+    })
     expect(res.isError).not.toBe(true)
     const body = firstText(res)
     expect(body).toContain('"passthrough"')

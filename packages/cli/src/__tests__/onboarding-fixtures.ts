@@ -1,11 +1,14 @@
 /** Fake machines and an MCP client for the onboarding specs. */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+import { MutationGate, type HubClient } from '@camstack/develop'
 import { hostCheck, type HostCheckReport } from '../host-check/host-check.js'
 import type { HostFs } from '../host-check/probe.js'
 import type { HostFacts } from '../host-check/sizing.js'
 import type { HostProbe, McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
+import { bundledOnly } from '../onboarding/manifest.js'
+import { memoryStateStore } from '../onboarding/state-file.js'
 
 export function fakeFs(files: Readonly<Record<string, string>>): HostFs {
   const paths = Object.keys(files)
@@ -86,4 +89,61 @@ export async function callJson(
   }
   if (typeof first.text !== 'string') throw new Error(`${name}: text is not a string`)
   return JSON.parse(first.text)
+}
+
+export type HubAnswers = {
+  readonly [path: string]: unknown | ((input: unknown) => unknown)
+}
+
+export interface FakeHub {
+  readonly ctx: McpContext
+  readonly calls: {
+    readonly method: string
+    readonly path: string
+    readonly input: unknown
+  }[]
+}
+
+export interface FakeHubOptions {
+  readonly failing?: readonly string[]
+  readonly tier?: 'admin' | 'protected'
+  readonly extra?: Partial<McpContext>
+}
+
+/** A hub that answers each tRPC path from a table; a path in `failing` throws. */
+export function fakeHub(answers: HubAnswers, options: FakeHubOptions = {}): FakeHub {
+  const calls: FakeHub['calls'] = []
+  const tier = options.tier ?? 'admin'
+  const client: HubClient = {
+    async call(method, path, input) {
+      calls.push({ method, path, input })
+      if (options.failing?.includes(path) === true) throw new Error(`${path} exploded`)
+      const answer = answers[path]
+      return typeof answer === 'function' ? answer(input) : (answer ?? null)
+    },
+  }
+  return {
+    calls,
+    ctx: {
+      cliVersion: '9.9.9',
+      hub: async () => ({
+        ok: true,
+        connection: {
+          server: 'https://hub.example.test',
+          token: 'tok-should-never-appear-in-output',
+          tier,
+          source: 'session',
+          tls: {},
+          client,
+          adminHint: tier === 'admin' ? null : 'log in as admin',
+          loginCommand: 'camstack login',
+        },
+      }),
+      gate: new MutationGate({ allowMutations: true, audit: () => {} }),
+      fetch: async () => new Response(JSON.stringify({ version: '9.9.9' })),
+      manifest: bundledOnly,
+      onboardingState: memoryStateStore(),
+      ...options.extra,
+    },
+  }
 }

@@ -244,7 +244,12 @@ describe('setup_install_guide — routes', () => {
     expect(nv.edits.join('\n')).toContain('--runtime=nvidia')
     const compose = ready(
       await installGuide(
-        { hostKind: 'docker-compose', role: 'hub', accelerator: 'nvidia', paths: PATHS },
+        {
+          hostKind: 'docker-compose',
+          role: 'hub',
+          accelerator: 'nvidia',
+          paths: PATHS,
+        },
         fakeFetch,
       ),
     )
@@ -258,7 +263,12 @@ describe('setup_install_guide — routes', () => {
   it('nvidia-legacy says it is unverified on hardware', async () => {
     const g = ready(
       await installGuide(
-        { hostKind: 'docker-compose', role: 'hub', accelerator: 'nvidia-legacy', paths: PATHS },
+        {
+          hostKind: 'docker-compose',
+          role: 'hub',
+          accelerator: 'nvidia-legacy',
+          paths: PATHS,
+        },
         fakeFetch,
       ),
     )
@@ -512,6 +522,7 @@ describe('registration through MCP', () => {
       'setup_about',
       'setup_add_node',
       'setup_connect',
+      'setup_core_addons',
       'setup_discover_hubs',
       'setup_feasibility',
       'setup_host_check',

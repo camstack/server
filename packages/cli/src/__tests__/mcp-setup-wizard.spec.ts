@@ -1,27 +1,135 @@
 import { describe, expect, it } from 'vitest'
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import {
-  MutationGate,
-  isSecretBearing,
-  type ConnectOutcome,
-  type HubClient,
-  type HubHttpMethod,
-} from '@camstack/develop'
+import { MutationGate, isSecretBearing } from '@camstack/develop'
+import { z } from 'zod'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
+import { STEP_EVALUATORS } from '../onboarding/evaluators.js'
+import { bundledManifest, bundledOnly, type ManifestProvider } from '../onboarding/manifest.js'
+import { memoryStateStore, type RememberedFeasibility } from '../onboarding/state-file.js'
 import { notificationTargetAnswers } from './configure-fixtures.js'
+import {
+  N100,
+  UNMEASURED_CPU,
+  callJson,
+  connectPublic,
+  fakeHost,
+  fakeHub,
+  linuxHost,
+  type HubAnswers,
+} from './onboarding-fixtures.js'
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 
-interface Call {
-  readonly method: HubHttpMethod
-  readonly path: string
-}
+const Action = z.object({
+  id: z.string(),
+  tool: z.string().optional(),
+  args: z.record(z.string(), z.unknown()).optional(),
+  note: z.string().optional(),
+  manual: z
+    .object({
+      text: z.string(),
+      ui: z.object({ route: z.string() }).optional(),
+    })
+    .optional(),
+})
+const Detail = z.object({
+  id: z.string(),
+  page: z.string(),
+  status: z.string(),
+  startWith: z.string().nullable(),
+  actions: z.array(Action),
+})
+const Answer = z.object({
+  status: z.literal('ok'),
+  manifest: z.object({
+    source: z.string(),
+    revision: z.number(),
+    note: z.string().nullable(),
+  }),
+  state: z.object({
+    phase: z.string(),
+    hub: z.string().nullable(),
+    tier: z.string().nullable(),
+    verdict: z
+      .object({
+        kind: z.string(),
+        answer: z.string().nullable(),
+        cameras: z.number().nullable(),
+        hubCapacity: z.number().optional(),
+        limitedBy: z.string().nullable().optional(),
+      })
+      .nullable(),
+  }),
+  steps: z.array(
+    z.object({
+      id: z.string(),
+      phase: z.string(),
+      status: z.string(),
+      detail: z.string(),
+      reason: z.string().optional(),
+    }),
+  ),
+  nextStep: Detail.nullable(),
+  requestedStep: Detail.optional(),
+  hardwareReport: z.object({ url: z.string() }).nullable(),
+  notices: z.array(z.string()),
+  unavailable: z.record(z.string(), z.string()),
+})
+type Answer = z.infer<typeof Answer>
 
-type Answers = { readonly [path: string]: unknown }
+const MANIFEST = bundledManifest()
+const SEEDED = MANIFEST.coreAddons.filter((g) => g.need === 'seeded').flatMap((g) => g.addons)
 
-const HEALTHY: Answers = {
+const location = (id: string, extra: { [k: string]: unknown } = {}): { [k: string]: unknown } => ({
+  id,
+  type: id.split(':')[0],
+  displayName: id,
+  providerId: 'filesystem-storage',
+  config: { basePath: `/data/${id}` },
+  nodeId: 'hub',
+  isSystem: false,
+  enabled: true,
+  mode: 'active',
+  createdAt: 1,
+  updatedAt: 2,
+  ...extra,
+})
+
+const node = (nodeId: string, decode: number, detection: number): { [k: string]: unknown } => ({
+  nodeId,
+  detection: { maxSessions: detection, measuredAtMs: 5, cells: [] },
+  decode: {
+    maxStreams: decode,
+    measuredAtMs: 5,
+    profile: { width: 3840, height: 2160, fps: 15, codec: 'h265' },
+    hardware: true,
+    decoder: 'vaapi',
+  },
+  capacity: Math.min(decode, detection),
+  limitedBy: decode <= detection ? 'decode' : 'detection',
+  complete: true,
+})
+
+const TARGETS = notificationTargetAnswers([
+  {
+    id: 't1',
+    name: 'Phone',
+    kind: 'push',
+    enabled: true,
+    config: { token: 'SECRET-TARGET-TOKEN' },
+  },
+])
+
+/** A hub with everything set up, one agent, and both planes measured. */
+const HEALTHY: HubAnswers = {
   'userManagement.listUsers': [
-    { id: 'u1', username: 'root', isAdmin: true, totpEnabled: true, passwordHash: 'SECRET-HASH' },
+    {
+      id: 'u1',
+      username: 'root',
+      isAdmin: true,
+      totpEnabled: true,
+      passwordHash: 'SECRET-HASH',
+    },
   ],
   'userPasskeys.listPasskeys': [],
   'userManagement.getAdminBootstrapStatus': { defaultPasswordInUse: false },
@@ -30,22 +138,24 @@ const HEALTHY: Answers = {
   },
   'networkAccess.getStatus': { connected: true, endpoint: { stable: true } },
   'backup.listDestinations': [
-    { id: 'a:b', enabled: true, cron: '0 3 * * *', lastSuccessAt: 1_700_000_000_000 },
+    {
+      id: 'a:b',
+      enabled: true,
+      cron: '0 3 * * *',
+      lastSuccessAt: 1_700_000_000_000,
+    },
   ],
   'deviceManager.listAll': [{ id: 7, name: 'Door' }],
   'nodes.topology': [
     { id: 'hub', isHub: true, isOnline: true },
     { id: 'agent1', isHub: false, isOnline: true },
   ],
-  ...notificationTargetAnswers([
-    {
-      id: 't1',
-      name: 'Phone',
-      kind: 'push',
-      enabled: true,
-      config: { token: 'SECRET-TARGET-TOKEN' },
-    },
-  ]),
+  ...TARGETS,
+  'integrationInstances.listInstances': (input: unknown) => {
+    const { addonId } = z.object({ addonId: z.string() }).parse(input)
+    if (addonId === 'notifiers') return TARGETS['integrationInstances.listInstances']
+    return [{ id: `${addonId}-1`, enabled: true, status: { state: 'ok' } }]
+  },
   'notificationRules.listRules': {
     rules: [
       {
@@ -56,214 +166,492 @@ const HEALTHY: Answers = {
       { enabled: true, delivery: 'immediate', conditions: { devices: [7] } },
     ],
   },
+  'storage.listLocations': [location('recordings:disk2')],
+  'addons.list': [...SEEDED.map((a) => a.id), 'provider-onvif', 'cloudflare-turn'].map((id) => ({
+    manifest: { id, packageName: 'x', packageVersion: '1.0.0' },
+  })),
+  'pipelineOrchestrator.getNodeCapacityVerdict': [node('hub', 6, 9), node('agent1', 4, 4)],
+  'serverManagement.getServerPackageStatus': {
+    runningVersion: '1.0.0',
+    latestVersion: '1.0.0',
+  },
+  'addons.listUpdates': [],
 }
 
-function harness(
-  answers: Answers,
-  failing: readonly string[] = [],
-  tier: 'admin' | 'protected' = 'admin',
-  session = true,
-): { ctx: McpContext; calls: Call[] } {
-  const calls: Call[] = []
-  const client: HubClient = {
-    async call(method, path) {
-      calls.push({ method, path })
-      if (failing.includes(path)) throw new Error(`${path} exploded`)
-      return answers[path] ?? null
-    },
-  }
-  const outcome: ConnectOutcome = session
-    ? {
-        ok: true,
-        connection: {
-          server: 'https://hub.example.test',
-          token: 'tok-should-never-appear-in-output',
-          tier,
-          source: 'session',
-          tls: {},
-          client,
-          adminHint: tier === 'admin' ? null : 'log in as admin',
-          loginCommand: 'camstack login',
-        },
-      }
-    : {
-        ok: false,
-        reason: 'no-session',
-        message: 'no usable hub session',
-        action: 'run `camstack login`',
-      }
+const REMEMBERED: RememberedFeasibility = {
+  atMs: 1,
+  verdict: 'hub-plus-agents',
+  cameras: 8,
+  hardwareClass: 'intel-n-series',
+  measured: true,
+  cpuModel: N100,
+  accelerators: ['intel-gpu'],
+  reasons: ['CPU alone was never measured'],
+}
+
+function noHub(extra: Partial<McpContext> = {}): McpContext {
   return {
-    calls,
-    ctx: {
-      cliVersion: '9.9.9',
-      hub: async () => outcome,
-      gate: new MutationGate({ allowMutations: true, audit: () => {} }),
-      fetch: async () => new Response(JSON.stringify({ version: '9.9.9' })),
-    },
+    cliVersion: '9.9.9',
+    hub: async () => ({
+      ok: false,
+      reason: 'no-session',
+      message: 'no usable hub session: no hub address',
+      action: 'run `camstack login <host>` in a terminal',
+    }),
+    gate: new MutationGate({ allowMutations: true, audit: () => {} }),
+    fetch: async () => new Response(JSON.stringify({ version: '9.9.9' })),
+    manifest: bundledOnly,
+    onboardingState: memoryStateStore(),
+    host: fakeHost(linuxHost(N100, true)),
+    ...extra,
   }
 }
 
-async function connect(ctx: McpContext): Promise<Client> {
-  const server = createPublicServer({
-    toolsets: ['setup', 'ops', 'configure', 'support'],
-    context: ctx,
-    versionPreflight: false,
-  })
-  const [a, b] = InMemoryTransport.createLinkedPair()
-  await server.connect(a)
-  const client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(b)
-  return client
+async function wizard(ctx: McpContext, args: Record<string, unknown> = {}): Promise<Answer> {
+  return Answer.parse(await callJson(await connectPublic(ctx), 'setup_wizard', args))
 }
 
-interface Step {
-  id: string
-  status: string
-  reason?: string
-  detail: string
-  next: { tool?: string; ui?: string } | null
-}
-interface Wizard {
-  status: string
-  steps: Step[]
-  nextStep: { id: string } | null
-  unavailable: Record<string, string>
+const step = (answer: Answer, id: string): Answer['steps'][number] => {
+  const hit = answer.steps.find((s) => s.id === id)
+  if (hit === undefined) throw new Error(`no step ${id}`)
+  return hit
 }
 
-async function run(ctx: McpContext): Promise<{ raw: string; isError: boolean; body: Wizard }> {
-  const client = await connect(ctx)
-  const res = await client.callTool({ name: 'setup_wizard', arguments: {} })
-  const content = Array.isArray(res.content) ? res.content : []
-  const first = content[0]
-  const raw = first && first.type === 'text' ? first.text : ''
-  return { raw, isError: res.isError === true, body: JSON.parse(raw) }
-}
+const healthy = (overrides: HubAnswers = {}, failing: readonly string[] = []): McpContext =>
+  fakeHub({ ...HEALTHY, ...overrides }, { failing }).ctx
 
-function step(w: Wizard, id: string): Step {
-  const s = w.steps.find((x) => x.id === id)
-  if (!s) throw new Error(`no step ${id}`)
-  return s
-}
+describe('setup_wizard: the steps are the manifest', () => {
+  it('answers the steps of the docs, in their order, with their pages', async () => {
+    const answer = await wizard(noHub())
 
-describe('setup_wizard', () => {
-  it('is listed', async () => {
-    const client = await connect(harness(HEALTHY).ctx)
-    expect((await client.listTools()).tools.map((t) => t.name)).toContain('setup_wizard')
+    expect(answer.steps.map((s) => s.id)).toEqual(MANIFEST.steps.map((s) => s.id))
+    expect(answer.manifest).toMatchObject({
+      source: 'bundled',
+      revision: MANIFEST.revision,
+    })
   })
 
-  it('judges a healthy hub: the first seven done, calibration suggested', async () => {
-    const { body } = await run(harness(HEALTHY).ctx)
-    expect(body.steps.map((s) => s.status)).toEqual([
-      'done',
-      'done',
-      'done',
-      'done',
-      'done',
-      'done',
-      'done',
-      'suggested',
-    ])
-    expect(body.nextStep?.id).toBe('calibration-and-updates')
+  it('every step of the bundled manifest has an evaluator, and no evaluator is orphaned', () => {
+    expect(Object.keys(STEP_EVALUATORS).toSorted()).toEqual(
+      MANIFEST.steps.map((s) => s.id).toSorted(),
+    )
+  })
+
+  it('a step the docs added after this CLI was built is unknown with an update hint, never missing', async () => {
+    const first = MANIFEST.steps[0]
+    if (first === undefined) throw new Error('empty manifest')
+    const newer: ManifestProvider = async () => ({
+      manifest: {
+        ...MANIFEST,
+        steps: [{ ...first, id: 'brand-new' }, ...MANIFEST.steps],
+      },
+      source: 'live',
+      note: null,
+    })
+
+    const answer = await wizard(noHub({ manifest: newer }))
+
+    expect(step(answer, 'brand-new').status).toBe('unknown')
+    expect(step(answer, 'brand-new').reason).toMatch(/update/)
+    expect(answer.nextStep?.id).toBe('feasibility')
+  })
+
+  it('says so when the steps come from the bundled copy because the docs site did not answer', async () => {
+    const offline: ManifestProvider = async () => ({
+      manifest: MANIFEST,
+      source: 'bundled',
+      note: 'the docs site did not answer (timeout)',
+    })
+
+    const answer = await wizard(noHub({ manifest: offline }))
+
+    expect(answer.notices.join(' ')).toContain('did not answer')
+  })
+})
+
+describe('setup_wizard: before a hub exists', () => {
+  it('nothing installed, nothing checked: the next step is feasibility, starting from the host check', async () => {
+    const answer = await wizard(noHub())
+
+    expect(answer.state).toMatchObject({
+      phase: 'before-install',
+      hub: null,
+      verdict: null,
+    })
+    expect(answer.nextStep).toMatchObject({
+      id: 'feasibility',
+      startWith: 'host-check',
+    })
+    expect(answer.nextStep?.actions.map((a) => a.tool)).toContain('setup_feasibility')
+    expect(answer.nextStep?.page).toBe(
+      'https://camstack-docs.zentik.app/docs/get-started#feasibility',
+    )
+  })
+
+  it('what needs a hub is unknown with the reason, not missing', async () => {
+    const answer = await wizard(noHub())
+
+    for (const id of ['storage', 'cameras', 'backups']) {
+      expect(step(answer, id).status, id).toBe('unknown')
+      expect(answer.unavailable[id], id).toContain('no usable hub session')
+    }
+  })
+
+  it('once the machine was checked the next step is the install, and the verdict is provisional', async () => {
+    const answer = await wizard(
+      noHub({ onboardingState: memoryStateStore({ feasibility: REMEMBERED }) }),
+    )
+
+    expect(step(answer, 'feasibility').status).toBe('done')
+    expect(answer.nextStep).toMatchObject({
+      id: 'install',
+      startWith: 'install-guide',
+    })
+    expect(answer.state.verdict).toMatchObject({
+      kind: 'provisional',
+      answer: 'hub-plus-agents',
+    })
+    expect(answer.notices.join(' ')).toMatch(/estimate/)
+  })
+
+  it('a hub that is configured but does not answer is the install step with the reason, not a crash', async () => {
+    const answer = await wizard(
+      noHub({
+        hub: async () => {
+          throw new Error('self-signed certificate')
+        },
+      }),
+    )
+
+    expect(answer.nextStep?.id).toBe('feasibility')
+    expect(step(answer, 'install').detail).toContain('self-signed certificate')
+  })
+})
+
+describe('setup_wizard: against a hub', () => {
+  it('a session that is not an administrator stops at the first sign-in', async () => {
+    const { ctx } = fakeHub(HEALTHY, { tier: 'protected' })
+
+    const answer = await wizard(ctx)
+
+    expect(answer.nextStep).toMatchObject({
+      id: 'first-login',
+      startWith: 'sign-in',
+    })
+    expect(step(answer, 'backups').status).toBe('unknown')
+  })
+
+  it('a hub with everything set up has nothing left', async () => {
+    const answer = await wizard(healthy())
+
+    expect(answer.steps.filter((s) => !['done', 'not-needed'].includes(s.status))).toEqual([])
+    expect(answer.nextStep).toBeNull()
+    expect(answer.state.phase).toBe('complete')
   })
 
   it.each([
-    ['admin-account', 'userManagement.listUsers'],
-    ['admin-account', 'userManagement.getAdminBootstrapStatus'],
-    ['hub-address-remote-access', 'localNetwork.getAddresses', 'networkAccess.getStatus'],
+    ['first-login', 'userManagement.listUsers'],
+    ['first-login', 'userManagement.getAdminBootstrapStatus'],
+    ['agents', 'nodes.topology'],
+    ['storage', 'storage.listLocations'],
+    ['core-addons', 'addons.list'],
+    ['cameras', 'deviceManager.listAll'],
+    ['detection', 'pipelineOrchestrator.getNodeCapacityVerdict'],
+    ['notifications', 'notificationRules.listRules'],
     ['backups', 'backup.listDestinations'],
-    ['cameras-and-agents', 'deviceManager.listAll'],
-    ['notifiers', 'integrationInstances.listInstances'],
-    ['admin-alert-rules', 'notificationRules.listRules'],
-    ['household-rules', 'notificationRules.listRules'],
-  ])('%s: a failing read is unknown with a reason, never missing', async (id, ...paths) => {
-    const { body } = await run(harness(HEALTHY, paths).ctx)
-    const s = step(body, id)
-    expect(s.status).toBe('unknown')
-    expect(s.reason).toContain('exploded')
-    expect(body.unavailable[id]).toBe(s.reason)
-  })
+    ['keep-current', 'addons.listUpdates'],
+  ])('%s: a read that failed is unknown with its reason, never missing', async (id, path) => {
+    const answer = await wizard(healthy({}, [path]))
 
-  it('an unreadable topology keeps the camera count and reports agents as unknown, not 0', async () => {
-    const { body } = await run(harness(HEALTHY, ['nodes.topology']).ctx)
-    const s = step(body, 'cameras-and-agents')
-    expect(s.status).toBe('done')
-    expect(s.detail).toContain('agents unknown')
-    expect(s.detail).not.toContain('0 agent')
-  })
-
-  it('an empty answer IS missing (the read succeeded)', async () => {
-    const { body } = await run(
-      harness({ ...HEALTHY, 'deviceManager.listAll': [], 'integrationInstances.listInstances': [] })
-        .ctx,
-    )
-    expect(step(body, 'cameras-and-agents').status).toBe('missing')
-    expect(step(body, 'notifiers').status).toBe('missing')
-    expect(body.nextStep?.id).toBe('cameras-and-agents')
-  })
-
-  it('a non-admin session never marks an admin step done, and says why', async () => {
-    const h = harness(HEALTHY, [], 'protected')
-    const { body } = await run(h.ctx)
-    const calls = h.calls
-    for (const id of ['admin-account', 'backups', 'admin-alert-rules', 'household-rules']) {
-      const s = step(body, id)
-      expect(s.status).toBe('unknown')
-      expect(s.reason).toContain('not admin-scoped')
-    }
-    const adminPaths = [
-      'userManagement.listUsers',
-      'userPasskeys.listPasskeys',
-      'userManagement.getAdminBootstrapStatus',
-      'backup.listDestinations',
-      'notificationRules.listRules',
-      'nodes.topology',
-    ]
-    expect(calls.filter((c) => adminPaths.includes(c.path))).toEqual([])
+    expect(step(answer, id).status).toBe('unknown')
+    expect(answer.unavailable[id]).toContain('exploded')
   })
 
   it('an admin that still has the default password is missing, even with 2FA', async () => {
-    const { body } = await run(
-      harness({
-        ...HEALTHY,
-        'userManagement.getAdminBootstrapStatus': { defaultPasswordInUse: true },
-      }).ctx,
+    const answer = await wizard(
+      healthy({
+        'userManagement.getAdminBootstrapStatus': {
+          defaultPasswordInUse: true,
+        },
+      }),
     )
-    const s = step(body, 'admin-account')
-    expect(s.status).toBe('missing')
-    expect(s.detail).toContain('default password')
-    expect(body.nextStep?.id).toBe('admin-account')
+
+    expect(answer.nextStep).toMatchObject({
+      id: 'first-login',
+      startWith: 'secure-admin',
+    })
+    const secure = answer.nextStep?.actions.find((a) => a.id === 'secure-admin')
+    expect(secure?.tool).toBeUndefined()
+    expect(secure?.manual?.ui?.route).toBe('/system/identity')
   })
 
-  it('an unreadable default-password probe is unknown, never done, never missing', async () => {
-    const { body } = await run(harness(HEALTHY, ['userManagement.getAdminBootstrapStatus']).ctx)
-    const s = step(body, 'admin-account')
-    expect(s.status).toBe('unknown')
-    expect(s.reason).toContain('exploded')
+  it('no recordings location is missing; only the default one is suggested', async () => {
+    const none = await wizard(healthy({ 'storage.listLocations': [location('logs:default')] }))
+    expect(none.nextStep).toMatchObject({
+      id: 'storage',
+      startWith: 'add-location',
+    })
+
+    const system = await wizard(
+      healthy({
+        'storage.listLocations': [location('recordings:default', { isSystem: true })],
+      }),
+    )
+    expect(step(system, 'storage').status).toBe('suggested')
   })
 
-  it('reports an admin without 2FA as missing and lists uncovered cameras', async () => {
-    const { body } = await run(
-      harness({
-        ...HEALTHY,
-        'userManagement.listUsers': [
-          { id: 'u1', username: 'root', isAdmin: true, totpEnabled: false },
-        ],
+  it('a hub with no camera integration set up stops at core addons with the exact next action', async () => {
+    const answer = await wizard(
+      healthy({
+        'addons.list': SEEDED.map((a) => ({
+          manifest: { id: a.id, packageName: a.package, packageVersion: '1' },
+        })),
+      }),
+    )
+
+    expect(answer.nextStep?.id).toBe('core-addons')
+    expect(step(answer, 'core-addons').detail).toContain('@camstack/addon-provider-onvif')
+  })
+
+  it('a hub reachable on the LAN only: remote access is suggested, not missing', async () => {
+    const lan: HubAnswers = {
+      'localNetwork.getAddresses': { roles: {} },
+      'networkAccess.getStatus': { connected: false, endpoint: null },
+    }
+
+    const unasked = await wizard(healthy(lan))
+    expect(step(unasked, 'remote-access').status).toBe('suggested')
+
+    const atHome = await wizard(healthy(lan), { remoteAccess: false })
+    expect(step(atHome, 'remote-access').status).toBe('not-needed')
+
+    const away = await wizard(healthy(lan), { remoteAccess: true })
+    expect(step(away, 'remote-access').status).toBe('missing')
+  })
+
+  it('lists the cameras no detection rule covers', async () => {
+    const answer = await wizard(
+      healthy({
         'deviceManager.listAll': [
           { id: 7, name: 'Door' },
           { id: 8, name: 'Yard' },
         ],
-      }).ctx,
+      }),
     )
-    expect(step(body, 'admin-account').status).toBe('missing')
-    const house = step(body, 'household-rules')
-    expect(house.status).toBe('missing')
-    expect(house.detail).toContain('Yard (8)')
-    expect(house.detail).not.toContain('Door (7)')
+
+    expect(step(answer, 'notifications').status).toBe('missing')
+    expect(step(answer, 'notifications').detail).toContain('Yard (8)')
+  })
+})
+
+describe('setup_wizard: the capacity verdict', () => {
+  const alone: HubAnswers = {
+    'nodes.topology': [{ id: 'hub', isHub: true, isOnline: true }],
+    'deviceManager.listAll': [1, 2, 3, 4, 5, 6].map((id) => ({
+      id,
+      name: `cam${id}`,
+    })),
+    'notificationRules.listRules': {
+      rules: [
+        {
+          enabled: true,
+          delivery: 'system-event',
+          conditions: { systemEvent: { kinds: ['node-offline'] } },
+        },
+        { enabled: true, delivery: 'immediate', conditions: {} },
+      ],
+    },
+  }
+
+  it('measured replaces provisional: the limit is the smaller plane and it is named', async () => {
+    const { ctx } = fakeHub(
+      {
+        ...HEALTHY,
+        ...alone,
+        'pipelineOrchestrator.getNodeCapacityVerdict': [node('hub', 4, 9)],
+      },
+      {
+        extra: {
+          onboardingState: memoryStateStore({ feasibility: REMEMBERED }),
+        },
+      },
+    )
+
+    const answer = await wizard(ctx)
+
+    expect(answer.state.verdict).toEqual({
+      kind: 'measured',
+      hubCapacity: 4,
+      limitedBy: 'decode',
+      cameras: 6,
+      answer: 'hub-plus-agents',
+    })
+    expect(step(answer, 'agents').status).toBe('missing')
+    expect(step(answer, 'agents').detail).toMatch(/limited by decode/)
+    expect(answer.nextStep?.id).toBe('agents')
+  })
+
+  it('a hub measured above its cameras needs no agent, whatever the estimate said', async () => {
+    const { ctx } = fakeHub(
+      {
+        ...HEALTHY,
+        ...alone,
+        'pipelineOrchestrator.getNodeCapacityVerdict': [node('hub', 12, 9)],
+      },
+      {
+        extra: {
+          onboardingState: memoryStateStore({ feasibility: REMEMBERED }),
+        },
+      },
+    )
+
+    const answer = await wizard(ctx)
+
+    expect(answer.state.verdict).toMatchObject({
+      kind: 'measured',
+      answer: 'hub-only',
+      limitedBy: 'detection',
+    })
+    expect(step(answer, 'agents').status).toBe('not-needed')
+  })
+
+  it('a benchmark that measured only one plane is not a verdict: the step is missing and the estimate stands', async () => {
+    const half = {
+      ...node('hub', 4, 9),
+      decode: null,
+      capacity: null,
+      limitedBy: null,
+      complete: false,
+    }
+    const { ctx } = fakeHub(
+      {
+        ...HEALTHY,
+        ...alone,
+        'pipelineOrchestrator.getNodeCapacityVerdict': [half],
+      },
+      {
+        extra: {
+          onboardingState: memoryStateStore({ feasibility: REMEMBERED }),
+        },
+      },
+    )
+
+    const answer = await wizard(ctx)
+
+    expect(answer.state.verdict?.kind).toBe('provisional')
+    expect(answer.nextStep).toMatchObject({
+      id: 'detection',
+      startWith: 'read-benchmark',
+    })
+    expect(step(answer, 'agents').status).toBe('suggested')
+  })
+
+  it('a hub too old to report a measured capacity leaves the verdict provisional and says why', async () => {
+    const { ctx } = fakeHub(
+      { ...HEALTHY, ...alone },
+      {
+        failing: ['pipelineOrchestrator.getNodeCapacityVerdict'],
+        extra: {
+          onboardingState: memoryStateStore({ feasibility: REMEMBERED }),
+        },
+      },
+    )
+
+    const answer = await wizard(ctx)
+
+    expect(answer.state.verdict?.kind).toBe('provisional')
+    expect(step(answer, 'detection').status).toBe('unknown')
+  })
+})
+
+describe('setup_wizard: hardware outside the measured tables', () => {
+  const unmeasured: RememberedFeasibility = {
+    ...REMEMBERED,
+    measured: false,
+    hardwareClass: 'unknown',
+    cpuModel: UNMEASURED_CPU,
+  }
+
+  it('offers the report link, and puts the benchmark in it once it ran — with no node id', async () => {
+    const { ctx } = fakeHub(
+      {
+        ...HEALTHY,
+        'pipelineOrchestrator.getNodeCapacityVerdict': [node('hub-secret-name', 6, 9)],
+      },
+      {
+        extra: {
+          onboardingState: memoryStateStore({ feasibility: unmeasured }),
+          host: fakeHost(linuxHost(UNMEASURED_CPU, true)),
+        },
+      },
+    )
+
+    const answer = await wizard(ctx)
+
+    const url = new URL(answer.hardwareReport?.url ?? '')
+    expect(url.searchParams.get('host-check')).toContain('i5-8500')
+    expect(url.searchParams.get('benchmark')).toContain('decodes 6 stream(s) at 3840x2160@15 h265')
+    expect(url.toString()).not.toContain('hub-secret-name')
+    expect(url.toString()).not.toContain('hub.example.test')
+    expect(answer.notices.join(' ')).toMatch(/submit it themselves/)
+  })
+
+  it('measured hardware gets no link', async () => {
+    const { ctx } = fakeHub(HEALTHY, {
+      extra: { onboardingState: memoryStateStore({ feasibility: REMEMBERED }) },
+    })
+    expect((await wizard(ctx)).hardwareReport).toBeNull()
+  })
+})
+
+describe('setup_wizard: actions', () => {
+  it('step returns that step whatever its status; an id that is not a step is said', async () => {
+    const answer = await wizard(healthy(), { step: 'storage' })
+    expect(answer.requestedStep?.id).toBe('storage')
+    expect(answer.requestedStep?.actions.map((a) => a.tool)).toContain(
+      'configure_setup_location_create',
+    )
+
+    const wrong = await wizard(healthy(), { step: 'nope' })
+    expect(wrong.requestedStep).toBeUndefined()
+    expect(wrong.notices.join(' ')).toContain("'nope' is not a step")
+  })
+
+  it('an action whose tool this server does not serve falls back to the manual rendering', async () => {
+    const server = createPublicServer({
+      toolsets: ['setup'],
+      context: healthy(),
+      versionPreflight: false,
+    })
+    const [a, b] = InMemoryTransport.createLinkedPair()
+    await server.connect(a)
+    const client = new Client({ name: 'test', version: '0.0.0' })
+    await client.connect(b)
+
+    const answer = Answer.parse(await callJson(client, 'setup_wizard', { step: 'storage' }))
+
+    const create = answer.requestedStep?.actions.find((x) => x.id === 'add-location')
+    expect(create?.tool).toBeUndefined()
+    expect(create?.note).toContain('not served')
+    expect(create?.manual?.ui?.route).toBe('/system/storage')
+  })
+
+  it('every tool an answer names is a tool this server lists', async () => {
+    const client = await connectPublic(healthy())
+    const listed = new Set((await client.listTools()).tools.map((t) => t.name))
+    for (const s of MANIFEST.steps) {
+      const answer = Answer.parse(await callJson(client, 'setup_wizard', { step: s.id }))
+      for (const action of answer.requestedStep?.actions ?? []) {
+        if (action.tool !== undefined) expect(listed, `${s.id}/${action.id}`).toContain(action.tool)
+      }
+    }
   })
 
   it('only reads, never touches a secret-bearing path, and leaks no token or config', async () => {
-    const { ctx, calls } = harness(HEALTHY)
-    const { raw } = await run(ctx)
+    const { ctx, calls } = fakeHub(HEALTHY)
+    const client = await connectPublic(ctx)
+    const raw = JSON.stringify(await callJson(client, 'setup_wizard'))
+
     expect(calls.length).toBeGreaterThan(0)
     expect(calls.every((c) => c.method === 'GET')).toBe(true)
     expect(calls.filter((c) => isSecretBearing(c.path))).toEqual([])
@@ -277,33 +665,16 @@ describe('setup_wizard', () => {
       expect(raw).not.toContain(leak)
     }
   })
+})
 
-  it('nextStep is the first step that is not done', async () => {
-    const { body } = await run(harness(HEALTHY, ['backup.listDestinations']).ctx)
-    expect(body.nextStep?.id).toBe('backups')
-  })
+describe('what an assistant is told first', () => {
+  it('the server instructions and the get-started prompt both start from setup_wizard', async () => {
+    const client = await connectPublic(noHub())
 
-  it('answers no-session as an error result', async () => {
-    const { body, isError } = await run(harness({}, [], 'admin', false).ctx)
-    expect(isError).toBe(true)
-    expect(body.status).toBe('no-session')
-  })
-
-  it('every next.tool names a registered tool', async () => {
-    const healthy = await run(harness(HEALTHY).ctx)
-    const empty = await run(
-      harness({
-        ...HEALTHY,
-        'deviceManager.listAll': [],
-        'notificationRules.listRules': { rules: [] },
-      }).ctx,
-    )
-    const client = await connect(harness(HEALTHY).ctx)
-    const registered = new Set((await client.listTools()).tools.map((t) => t.name))
-    const named = [...healthy.body.steps, ...empty.body.steps]
-      .map((s) => s.next?.tool)
-      .filter((t): t is string => t !== undefined)
-    expect(named.length).toBeGreaterThan(5)
-    for (const tool of named) expect(registered.has(tool), tool).toBe(true)
+    expect(client.getInstructions()).toContain('setup_wizard')
+    const prompt = await client.getPrompt({ name: 'get-started' })
+    const text = JSON.stringify(prompt.messages)
+    expect(text).toContain('setup_wizard')
+    for (const s of MANIFEST.steps) expect(text).toContain(s.title)
   })
 })

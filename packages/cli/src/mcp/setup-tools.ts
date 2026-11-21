@@ -10,7 +10,8 @@ import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './se
 import { installGuide } from './setup-install.js'
 import { hostOf } from '../onboarding/context.js'
 import { FEASIBILITY_TOOL, FeasibilityArgsShape, setupFeasibility } from './setup-feasibility.js'
-import { setupWizard } from './setup-wizard.js'
+import { CORE_ADDONS_TOOL, CoreAddonsArgsShape, setupCoreAddons } from './setup-core-addons.js'
+import { WIZARD_TOOL, WizardArgsShape, setupWizard } from './setup-wizard.js'
 import { loginTool, loginWaitTool } from './setup-login.js'
 import {
   AcceleratorSchema,
@@ -126,10 +127,16 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
     async (input): Promise<ToolTextResult> => text(await addNodeTool(input, ctx)),
   )
   server.tool(
-    'setup_wizard',
-    'Read-only first-run checklist for a hub, to call after setup_connect: eight steps (admin account and 2FA, hub address and remote access, backups, cameras and agents, notification targets, admin alert rules, detection rules per camera, calibration and updates), each done, missing, unknown or suggested, with the existing tool or UI page that comes next. An unreadable part is unknown with its reason, never missing. Needs a login session; an admin session judges every step.',
-    {},
-    async (): Promise<ToolTextResult> => text(await setupWizard(ctx)),
+    WIZARD_TOOL,
+    'START HERE. The one entrypoint of the CamStack setup, from any state: nothing installed, a hub nobody signed in to, or a hub half set up. Read-only. It answers the ordered steps of the get-started guide (feasibility, install, first sign-in, agents, storage, core addons, cameras, detection and its benchmark, remote access, notifications, backups, keeping current), each done, missing, suggested, not-needed or unknown with its reason, and nextStep: the next thing to do with the exact tool calls and the same action by hand in the admin UI. Call it again after every step. The steps are read from the public docs, so they match the manual guide; a step that could not be read is unknown, never missing. state.verdict says what the install carries: an estimate before install, the measured figure (and whether decoding or detection is the limit) once the node benchmark ran. Pass remoteAccess once the person said whether they open CamStack away from home.',
+    WizardArgsShape,
+    async (args): Promise<ToolTextResult> => text(await setupWizard(ctx, args)),
+  )
+  server.tool(
+    CORE_ADDONS_TOOL,
+    'Read-only. The addons a working install needs, judged against this hub: what ships with it, a camera integration, a TURN relay and a way in from outside (Cloudflare tunnel, Tailscale), off-box storage. Each group is configured, installed (present, nothing set up), missing, failed, suggested, not-needed or unknown with its reason, and the answer names the ONE next action: the package to install, or the admin page where the person types the account token. Pass remoteAccess once the person said whether they open CamStack away from home: a relay is required only then. Never reads a credential.',
+    CoreAddonsArgsShape,
+    async (args): Promise<ToolTextResult> => text(await setupCoreAddons(ctx, args)),
   )
   server.tool(
     'setup_login',

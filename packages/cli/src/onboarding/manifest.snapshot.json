@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "revision": 1,
-  "contentHash": "10b2d5c6c70b4e01",
+  "contentHash": "35dceb3f7afd537d",
   "docsBaseUrl": "https://camstack-docs.zentik.app",
   "steps": [
     {
@@ -769,9 +769,18 @@
       "need": "seeded",
       "why": "The admin UI, and signing in with a passkey or an identity provider.",
       "addons": [
-        "admin-ui",
-        "auth-webauthn",
-        "auth-oidc"
+        {
+          "id": "admin-ui",
+          "package": "@camstack/addon-admin-ui"
+        },
+        {
+          "id": "auth-webauthn",
+          "package": "@camstack/addon-auth"
+        },
+        {
+          "id": "auth-oidc",
+          "package": "@camstack/addon-auth"
+        }
       ],
       "page": "/docs/get-started/admin-first-run"
     },
@@ -781,13 +790,34 @@
       "need": "seeded",
       "why": "Holds every camera stream, records it, decodes it and runs motion and object detection on it.",
       "addons": [
-        "stream-broker",
-        "recorder",
-        "decoder-nodeav",
-        "detection-pipeline",
-        "pipeline-runner",
-        "motion-wasm",
-        "pipeline-orchestrator"
+        {
+          "id": "stream-broker",
+          "package": "@camstack/addon-pipeline"
+        },
+        {
+          "id": "recorder",
+          "package": "@camstack/addon-pipeline"
+        },
+        {
+          "id": "decoder-nodeav",
+          "package": "@camstack/addon-decoder-nodeav"
+        },
+        {
+          "id": "detection-pipeline",
+          "package": "@camstack/addon-pipeline"
+        },
+        {
+          "id": "pipeline-runner",
+          "package": "@camstack/addon-pipeline"
+        },
+        {
+          "id": "motion-wasm",
+          "package": "@camstack/addon-pipeline"
+        },
+        {
+          "id": "pipeline-orchestrator",
+          "package": "@camstack/addon-pipeline-orchestrator"
+        }
       ],
       "page": "/docs/detection"
     },
@@ -797,8 +827,14 @@
       "need": "seeded",
       "why": "Turns detections into events, tracks and the searchable library.",
       "addons": [
-        "pipeline-analytics",
-        "embedding-encoder"
+        {
+          "id": "pipeline-analytics",
+          "package": "@camstack/addon-post-analysis"
+        },
+        {
+          "id": "embedding-encoder",
+          "package": "@camstack/addon-post-analysis"
+        }
       ],
       "page": "/docs/detection/tracking"
     },
@@ -808,7 +844,10 @@
       "need": "seeded",
       "why": "Sends notifications to the targets you add.",
       "addons": [
-        "notifiers"
+        {
+          "id": "notifiers",
+          "package": "@camstack/addon-notifiers"
+        }
       ],
       "page": "/docs/notifications"
     },
@@ -818,7 +857,10 @@
       "need": "seeded",
       "why": "Measures what each node can carry, so the plan rests on your hardware and not on a table.",
       "addons": [
-        "benchmark"
+        {
+          "id": "benchmark",
+          "package": "@camstack/addon-benchmark"
+        }
       ],
       "page": "/docs/tools/benchmark"
     },
@@ -828,12 +870,30 @@
       "need": "required",
       "why": "Nothing is recorded or detected until one integration brings a camera in. ONVIF and RTSP cover most cameras; the brand ones add what the brand offers.",
       "addons": [
-        "provider-onvif",
-        "provider-rtsp",
-        "provider-reolink",
-        "provider-hikvision",
-        "provider-amcrest",
-        "provider-wyze"
+        {
+          "id": "provider-onvif",
+          "package": "@camstack/addon-provider-onvif"
+        },
+        {
+          "id": "provider-rtsp",
+          "package": "@camstack/addon-provider-rtsp"
+        },
+        {
+          "id": "provider-reolink",
+          "package": "@camstack/addon-provider-reolink"
+        },
+        {
+          "id": "provider-hikvision",
+          "package": "@camstack/addon-provider-hikvision"
+        },
+        {
+          "id": "provider-amcrest",
+          "package": "@camstack/addon-provider-amcrest"
+        },
+        {
+          "id": "provider-wyze",
+          "package": "@camstack/addon-provider-wyze"
+        }
       ],
       "page": "/docs/get-started/add-a-camera",
       "ui": {
@@ -849,8 +909,14 @@
       "need": "remote",
       "why": "Live video away from home travels through a relay when the phone and the hub cannot reach each other directly, which is the case on most mobile networks. Without one, remote live view fails on those networks.",
       "addons": [
-        "cloudflare-turn",
-        "static-turn"
+        {
+          "id": "cloudflare-turn",
+          "package": "@camstack/addon-cloudflare"
+        },
+        {
+          "id": "static-turn",
+          "package": "@camstack/addon-static-turn"
+        }
       ],
       "page": "/docs/network/turn",
       "ui": {
@@ -867,9 +933,18 @@
       "need": "suggested",
       "why": "A tunnel or a private network gives the hub an address that works away from home, with no port opened on your router.",
       "addons": [
-        "cloudflare-tunnel",
-        "tailscale-client",
-        "tailscale-ingress"
+        {
+          "id": "cloudflare-tunnel",
+          "package": "@camstack/addon-cloudflare"
+        },
+        {
+          "id": "tailscale-client",
+          "package": "@camstack/addon-tailscale"
+        },
+        {
+          "id": "tailscale-ingress",
+          "package": "@camstack/addon-tailscale"
+        }
       ],
       "page": "/docs/network/remote-access",
       "ui": {
@@ -886,10 +961,22 @@
       "need": "suggested",
       "why": "Recordings or backups on a NAS or in a bucket survive the loss of the hub.",
       "addons": [
-        "smb-storage",
-        "sftp-storage",
-        "s3-storage",
-        "webdav-storage"
+        {
+          "id": "smb-storage",
+          "package": "@camstack/addon-remote-storage"
+        },
+        {
+          "id": "sftp-storage",
+          "package": "@camstack/addon-remote-storage"
+        },
+        {
+          "id": "s3-storage",
+          "package": "@camstack/addon-remote-storage"
+        },
+        {
+          "id": "webdav-storage",
+          "package": "@camstack/addon-remote-storage"
+        }
       ],
       "page": "/docs/recording/storage",
       "ui": {

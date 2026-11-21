@@ -74,6 +74,13 @@ export const CORE_ADDON_NEEDS = ['seeded', 'required', 'remote', 'suggested'] as
 export const CoreAddonNeedSchema = z.enum(CORE_ADDON_NEEDS)
 export type CoreAddonNeed = z.infer<typeof CoreAddonNeedSchema>
 
+/** An addon by id, with the package that ships it (several ids can share one). */
+export const CoreAddonRefSchema = z.object({
+  id: z.string().min(1),
+  package: z.string().startsWith('@camstack/'),
+})
+export type CoreAddonRef = z.infer<typeof CoreAddonRefSchema>
+
 /**
  * One function a working install needs, and the addons that provide it.
  * `seeded`: ships with the hub, only its health is judged. `required`: nothing
@@ -85,8 +92,8 @@ export const CoreAddonGroupSchema = z.object({
   title: z.string().min(1),
   need: CoreAddonNeedSchema,
   why: z.string().min(1),
-  /** Addon ids; for a `seeded` group all of them, otherwise any one satisfies it. */
-  addons: z.array(z.string().min(1)).min(1),
+  /** For a `seeded` group all of them are needed, otherwise any one satisfies it. */
+  addons: z.array(CoreAddonRefSchema).min(1),
   page: z.string().startsWith('/docs/'),
   /** Where the instance of the addon is created, when it needs one. */
   ui: UiLocationSchema.optional(),

@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "npx nx run-many -t build",
+    "onboarding:sync": "tsx scripts/sync-onboarding-manifest.ts",
     "codegen": "tsx scripts/codegen.ts",
     "icons:catalog": "tsx scripts/generate-icon-catalog.ts",
     "codegen:check": "tsx scripts/codegen.ts --check",

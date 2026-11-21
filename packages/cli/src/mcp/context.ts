@@ -43,5 +43,5 @@ export interface McpContext {
   /** Absent means `~/.camstack/onboarding.json`. */
   readonly onboardingState?: OnboardingStateStore
   /** The names of the tools this server registered; absent means not known. */
-  readonly registeredTools?: () => ReadonlySet<string>
+  readonly registeredTools?: () => Promise<ReadonlySet<string>>
 }

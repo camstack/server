@@ -203,8 +203,9 @@ export class PreflightMcpServer extends McpServer {
   constructor(
     info: ConstructorParameters<typeof McpServer>[0],
     readonly preflight: VersionPreflight,
+    options?: ConstructorParameters<typeof McpServer>[1],
   ) {
-    super(info)
+    super(info, options)
   }
 
   override connect(transport: Transport): Promise<void> {

@@ -1,416 +1,328 @@
 /**
- * `setup_wizard`: what a freshly installed hub still lacks, in the order an
- * operator should do it. Read-only; each step carries its own status, the
- * reason when it could not be judged, and the existing tool or UI page that
- * comes next.
+ * `setup_wizard`: the one entrypoint of the onboarding flow. From ANY state —
+ * nothing installed, a hub nobody signed in to, a hub half set up — it answers
+ * where the install stands and the next step to take.
  *
- * A read that failed is `unknown` with its reason and a `null` count, never
- * `missing` or `0` (D315, D393). Nothing secret is read or returned.
+ * The steps are not written here. Their order, titles, pages and actions come
+ * from the onboarding manifest, which is generated from the public docs: the
+ * manual path a person reads and the path an assistant walks are the same
+ * steps in the same order because they are the same data. This file composes
+ * that data with the judgement of each step (`onboarding/evaluators.ts`).
+ *
+ * Read-only. A step that could not be judged is `unknown` with its reason and
+ * never `missing` (D315); nothing secret is read or returned. The next step is
+ * the first one that is missing, else the first one suggested, else none.
  */
-import type { HubConnection } from '@camstack/develop'
-import { ruleKindOf, type NcRuleKind } from '@camstack/types'
-import type { McpContext } from './context.js'
-import { readCameras, type CameraRef } from './configure-common.js'
-import { readTargets, type TargetRef } from './configure-hub-reads.js'
-import { ADMIN_ONLY_NOTE, readQuery, withHub, type NoSessionResult, type Read } from './ops-hub.js'
-import { TopologySchema } from './ops-status.js'
+import { z } from 'zod'
+import { hostOf, manifestOf } from '../onboarding/context.js'
 import {
-  readBackupDestinations,
-  readDefaultPasswordInUse,
-  readPasskeyCount,
-  readPublicEndpoint,
-  readRemoteAccessStatus,
-  readRules,
-  readUsers,
-  type BackupFact,
-  type RemoteAccessFact,
-  type RuleFact,
-  type UserFact,
-} from './setup-wizard-reads.js'
-import { probeVersions, type VersionProbe } from './version-probe.js'
+  STEP_EVALUATORS,
+  benchmarkLines,
+  hubCapacity,
+  type StepJudgement,
+  type StepStatus,
+} from '../onboarding/evaluators.js'
+import { gatherFacts, type OnboardingFacts } from '../onboarding/facts.js'
+import { hardwareReportLink, type HardwareReportLink } from '../onboarding/hardware-report.js'
+import {
+  isManualText,
+  isToolRendering,
+  type OnboardingAction,
+  type OnboardingManifest,
+  type OnboardingPhase,
+  type OnboardingStep,
+  type UiLocation,
+} from '../onboarding/manifest-schema.js'
+import type { ManifestSource } from '../onboarding/manifest.js'
+import type { McpContext } from './context.js'
 
-export type StepStatus = 'done' | 'missing' | 'unknown' | 'suggested'
+export const WIZARD_TOOL = 'setup_wizard'
 
-export type WizardNext =
-  | { readonly tool: string; readonly args?: { readonly [key: string]: unknown } }
-  | { readonly ui: string }
-  | null
+export const WizardArgsShape = {
+  step: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .optional()
+    .describe('A step id from a previous answer: also return that step with all its actions.'),
+  remoteAccess: z
+    .boolean()
+    .optional()
+    .describe(
+      'Whether CamStack will be opened away from home. Ask the person; leave it out until they answered.',
+    ),
+} as const
 
-export interface WizardStep {
+export interface WizardArgs {
+  readonly step?: string
+  readonly remoteAccess?: boolean
+}
+
+export interface WizardStepView {
   readonly id: string
   readonly title: string
+  readonly phase: OnboardingPhase
+  /** The docs page that explains the step, as a full URL. */
+  readonly page: string
   readonly status: StepStatus
   readonly detail: string
   readonly reason?: string
-  readonly next: WizardNext
 }
 
-export const PASSKEY_ADMIN_LIMIT = 10
-const UNCOVERED_LIMIT = 10
-const ADMIN_ALERT_KINDS: readonly NcRuleKind[] = ['system', 'device-events', 'alarm', 'mixed']
-
-/** Everything the steps are judged from. `null` counts live inside a failed `Read`. */
-export interface WizardReads {
-  readonly users: Read<readonly UserFact[]>
-  /** Passkey count per admin id; an admin whose read failed is absent. */
-  readonly passkeys: ReadonlyMap<string, number>
-  readonly passkeysFailed: number
-  readonly passkeysSkipped: number
-  /** Whether an admin still has the first-boot password (D728, D797). */
-  readonly defaultPassword: Read<boolean>
-  readonly publicEndpoint: Read<boolean>
-  readonly remoteAccess: Read<RemoteAccessFact>
-  readonly backups: Read<readonly BackupFact[]>
-  readonly cameras: Read<readonly CameraRef[]>
-  readonly agents: Read<number>
-  readonly targets: Read<readonly TargetRef[]>
-  readonly rules: Read<readonly RuleFact[]>
-  readonly versions: VersionProbe | null
-}
-
-function failed<T>(read: Read<T>): string | null {
-  return read.ok ? null : read.reason
-}
-
-function unknownStep(id: string, title: string, reason: string, next: WizardNext): WizardStep {
-  return { id, title, status: 'unknown', detail: 'could not be read', reason, next }
-}
-
-function adminStep(reads: WizardReads): WizardStep {
-  const id = 'admin-account'
-  const title = 'Admin account and two-factor sign-in'
-  const next: WizardNext = { ui: 'System → Users' }
-  if (!reads.users.ok) return unknownStep(id, title, reads.users.reason, next)
-  const admins = reads.users.value.filter((u) => u.isAdmin)
-  const protectedAdmins = admins.filter((u) => u.totpEnabled || (reads.passkeys.get(u.id) ?? 0) > 0)
-  if (admins.length === 0) {
-    return { id, title, status: 'missing', detail: 'no admin account exists', next }
+export interface WizardActionView {
+  readonly id: string
+  readonly title: string
+  /** The tool to call; absent when the action has none or this server does not serve it. */
+  readonly tool?: string
+  readonly args?: { readonly [key: string]: unknown }
+  /** What to do with the tool's answer, or why there is no tool. */
+  readonly note?: string
+  /** The same action done by hand. */
+  readonly manual?: {
+    readonly text: string
+    readonly ui?: UiLocation
+    readonly command?: string
+    readonly page?: string
   }
-  if (reads.defaultPassword.ok && reads.defaultPassword.value) {
-    return {
-      id,
-      title,
-      status: 'missing',
-      detail: 'an admin account still has the default password (admin / changeme)',
-      next,
+}
+
+export interface WizardStepDetail {
+  readonly id: string
+  readonly title: string
+  readonly page: string
+  readonly summary: string
+  readonly status: StepStatus
+  readonly detail: string
+  /** The action to start from; the others are the rest of the step, in order. */
+  readonly startWith: string | null
+  readonly actions: readonly WizardActionView[]
+}
+
+export type CapacityVerdict =
+  | {
+      readonly kind: 'measured'
+      /** Cameras the hub itself carries. */
+      readonly hubCapacity: number
+      readonly limitedBy: 'decode' | 'detection' | null
+      readonly cameras: number | null
+      readonly answer: 'hub-only' | 'hub-plus-agents' | null
     }
-  }
-  if (protectedAdmins.length > 0) {
-    if (!reads.defaultPassword.ok) {
-      return unknownStep(id, title, reads.defaultPassword.reason, next)
+  | {
+      readonly kind: 'provisional'
+      readonly answer: 'hub-only' | 'hub-plus-agents' | 'not-a-hub'
+      readonly cameras: number
+      readonly reasons: readonly string[]
     }
-    return {
-      id,
-      title,
-      status: 'done',
-      detail: `${protectedAdmins.length} of ${admins.length} admin(s) sign in with 2FA or a passkey; the default password was replaced`,
-      next,
-    }
-  }
-  if (reads.passkeysFailed > 0) {
-    return unknownStep(id, title, `${reads.passkeysFailed} passkey read(s) failed`, next)
-  }
-  const skipped =
-    reads.passkeysSkipped > 0 ? ` (${reads.passkeysSkipped} admin(s) not checked for passkeys)` : ''
-  return {
-    id,
-    title,
-    status: 'missing',
-    detail: `no admin has 2FA or a passkey${skipped}`,
-    next,
-  }
-}
-
-function addressStep(reads: WizardReads): WizardStep {
-  const id = 'hub-address-remote-access'
-  const title = 'Hub address and remote access'
-  const next: WizardNext = { tool: 'configure_remote_access' }
-  const endpoint = reads.publicEndpoint
-  const access = reads.remoteAccess
-  if ((endpoint.ok && endpoint.value) || (access.ok && access.value.hasEndpoint)) {
-    return {
-      id,
-      title,
-      status: 'done',
-      detail:
-        access.ok && access.value.connected
-          ? 'a public endpoint is set and connected'
-          : 'a public endpoint is set',
-      next,
-    }
-  }
-  if (!endpoint.ok || !access.ok) {
-    return unknownStep(
-      id,
-      title,
-      [failed(endpoint), failed(access)].filter(Boolean).join('; '),
-      next,
-    )
-  }
-  return {
-    id,
-    title,
-    status: 'missing',
-    detail: 'no public endpoint and no remote access configured',
-    next,
-  }
-}
-
-function backupStep(reads: WizardReads): WizardStep {
-  const id = 'backups'
-  const title = 'Backups'
-  const next: WizardNext = { ui: 'Data → Backup' }
-  if (!reads.backups.ok) return unknownStep(id, title, reads.backups.reason, next)
-  const active = reads.backups.value.filter((d) => d.enabled && d.scheduled)
-  if (active.length === 0) {
-    return { id, title, status: 'missing', detail: 'no enabled destination with a schedule', next }
-  }
-  const last = Math.max(0, ...active.map((d) => d.lastSuccessAt ?? 0))
-  const lastText =
-    last > 0 ? `last success ${new Date(last).toISOString()}` : 'no successful backup yet'
-  return {
-    id,
-    title,
-    status: 'done',
-    detail: `${active.length} scheduled destination(s); ${lastText}`,
-    next,
-  }
-}
-
-function camerasStep(reads: WizardReads): WizardStep {
-  const id = 'cameras-and-agents'
-  const title = 'Cameras and agents'
-  const providersNext: WizardNext = { tool: 'configure_camera_providers' }
-  if (!reads.cameras.ok) return unknownStep(id, title, reads.cameras.reason, providersNext)
-  const agents = reads.agents.ok
-    ? `${reads.agents.value} agent node(s)`
-    : `agents unknown (${reads.agents.reason})`
-  const count = reads.cameras.value.length
-  if (count === 0) {
-    return { id, title, status: 'missing', detail: `no camera yet; ${agents}`, next: providersNext }
-  }
-  return {
-    id,
-    title,
-    status: 'done',
-    detail: `${count} camera(s); ${agents}`,
-    next: { tool: 'configure_camera_discover' },
-  }
-}
-
-function notifiersStep(reads: WizardReads): WizardStep {
-  const id = 'notifiers'
-  const title = 'Notification targets'
-  const next: WizardNext = { tool: 'configure_notification_targets' }
-  if (!reads.targets.ok) return unknownStep(id, title, reads.targets.reason, next)
-  const enabled = reads.targets.value.filter((t) => t.enabled).length
-  if (enabled === 0)
-    return { id, title, status: 'missing', detail: 'no enabled notification target', next }
-  return { id, title, status: 'done', detail: `${enabled} enabled target(s)`, next }
-}
-
-function ruleKind(rule: RuleFact): NcRuleKind {
-  return ruleKindOf({ delivery: rule.delivery, conditions: rule.conditions })
-}
-
-function adminAlertStep(reads: WizardReads): WizardStep {
-  const id = 'admin-alert-rules'
-  const title = 'Alerts for the administrator'
-  const next: WizardNext = {
-    tool: 'configure_notification_rule_questionnaire',
-    args: { kind: 'system' },
-  }
-  if (!reads.rules.ok) return unknownStep(id, title, reads.rules.reason, next)
-  const count = reads.rules.value.filter(
-    (r) => r.enabled && ADMIN_ALERT_KINDS.includes(ruleKind(r)),
-  ).length
-  if (count === 0)
-    return { id, title, status: 'missing', detail: 'no enabled system or alarm rule', next }
-  return { id, title, status: 'done', detail: `${count} enabled rule(s)`, next }
-}
-
-function householdStep(reads: WizardReads): WizardStep {
-  const id = 'household-rules'
-  const title = 'Detection rules per camera'
-  const next: WizardNext = {
-    tool: 'configure_notification_rule_questionnaire',
-    args: { kind: 'detection' },
-  }
-  if (!reads.rules.ok) return unknownStep(id, title, reads.rules.reason, next)
-  if (!reads.cameras.ok) return unknownStep(id, title, reads.cameras.reason, next)
-  const cameras = reads.cameras.value
-  if (cameras.length === 0) {
-    return {
-      id,
-      title,
-      status: 'missing',
-      detail: 'no camera to cover yet',
-      next: { tool: 'configure_camera_providers' },
-    }
-  }
-  const detection = reads.rules.value.filter((r) => r.enabled && ruleKind(r) === 'detection')
-  const coversAll = detection.some((r) => r.devices === null)
-  const covered = new Set(detection.flatMap((r) => r.devices ?? []))
-  const uncovered = coversAll ? [] : cameras.filter((c) => !covered.has(c.id))
-  if (uncovered.length === 0) {
-    return {
-      id,
-      title,
-      status: 'done',
-      detail: `all ${cameras.length} camera(s) are covered`,
-      next,
-    }
-  }
-  const shown = uncovered.slice(0, UNCOVERED_LIMIT).map((c) => `${c.name} (${c.id})`)
-  const more = uncovered.length > shown.length ? ` and ${uncovered.length - shown.length} more` : ''
-  return {
-    id,
-    title,
-    status: 'missing',
-    detail: `${uncovered.length} camera(s) without a detection rule: ${shown.join(', ')}${more}`,
-    next,
-  }
-}
-
-function updatesLine(probe: VersionProbe): string {
-  const parts = [
-    `server ${probe.server.state}`,
-    probe.addons.state === 'behind' && 'count' in probe.addons
-      ? `${probe.addons.count} addon update(s)`
-      : `addons ${probe.addons.state}`,
-    `cli ${probe.cli.state}`,
-  ]
-  return parts.join('; ')
-}
-
-function calibrationStep(reads: WizardReads): WizardStep {
-  const detail = reads.versions
-    ? `calibrate each camera once; versions: ${updatesLine(reads.versions)}`
-    : 'calibrate each camera once, and check for updates; versions could not be probed'
-  return {
-    id: 'calibration-and-updates',
-    title: 'Calibration and updates',
-    status: 'suggested',
-    detail,
-    next: { tool: 'configure_calibrate_camera' },
-  }
-}
-
-/** The pure part: reads in, ordered steps out. */
-export function evaluateSteps(reads: WizardReads): readonly WizardStep[] {
-  return [
-    adminStep(reads),
-    addressStep(reads),
-    backupStep(reads),
-    camerasStep(reads),
-    notifiersStep(reads),
-    adminAlertStep(reads),
-    householdStep(reads),
-    calibrationStep(reads),
-  ]
-}
 
 export interface WizardResult {
   readonly status: 'ok'
-  readonly hub: string
-  readonly tier: string
-  readonly steps: readonly WizardStep[]
-  readonly nextStep: {
-    readonly id: string
-    readonly title: string
-    readonly next: WizardNext
-  } | null
+  readonly manifest: {
+    readonly source: ManifestSource
+    readonly revision: number
+    readonly note: string | null
+  }
+  readonly state: {
+    /** The phase of the next step; `complete` when nothing is left. */
+    readonly phase: OnboardingPhase | 'complete'
+    readonly hub: string | null
+    readonly tier: string | null
+    /** What this install carries: measured once the node benchmark ran, provisional before. */
+    readonly verdict: CapacityVerdict | null
+  }
+  readonly steps: readonly WizardStepView[]
+  readonly nextStep: WizardStepDetail | null
+  /** The step asked for with `step`; absent when none was asked or the id is not a step. */
+  readonly requestedStep?: WizardStepDetail
+  /** Set when this hardware is not in the measured tables: the link to share its results. */
+  readonly hardwareReport: HardwareReportLink | null
+  readonly notices: readonly string[]
   readonly unavailable: { readonly [stepId: string]: string }
 }
 
-async function gatherReads(connection: HubConnection, ctx: McpContext): Promise<WizardReads> {
-  const { client } = connection
-  const admin = connection.tier === 'admin'
-  const refused = <T>(path: string): Read<T> => ({
-    ok: false,
-    reason: ADMIN_ONLY_NOTE(path, connection.adminHint),
-  })
-  const [
-    users,
-    backups,
-    rules,
-    topology,
-    publicEndpoint,
-    remoteAccess,
-    cameras,
-    targets,
-    versions,
-    defaultPassword,
-  ] = await Promise.all([
-    admin
-      ? readUsers(client)
-      : Promise.resolve(refused<readonly UserFact[]>('userManagement.listUsers')),
-    admin
-      ? readBackupDestinations(client)
-      : Promise.resolve(refused<readonly BackupFact[]>('backup.listDestinations')),
-    admin
-      ? readRules(client)
-      : Promise.resolve(refused<readonly RuleFact[]>('notificationRules.listRules')),
-    admin
-      ? readQuery(client, 'nodes.topology', undefined, TopologySchema)
-      : Promise.resolve(refused<never>('nodes.topology')),
-    readPublicEndpoint(client),
-    readRemoteAccessStatus(client),
-    readCameras(client),
-    readTargets(client),
-    probeVersions(ctx).catch(() => null),
-    admin
-      ? readDefaultPasswordInUse(client)
-      : Promise.resolve(refused<boolean>('userManagement.getAdminBootstrapStatus')),
-  ])
-  const passkeys = new Map<string, number>()
-  let passkeysFailed = 0
-  let passkeysSkipped = 0
-  if (users.ok) {
-    const admins = users.value.filter((u) => u.isAdmin && !u.totpEnabled)
-    const checked = admins.slice(0, PASSKEY_ADMIN_LIMIT)
-    passkeysSkipped = admins.length - checked.length
-    const counts = await Promise.all(checked.map((u) => readPasskeyCount(client, u.id)))
-    counts.forEach((c, i) => {
-      const u = checked[i]
-      if (u === undefined) return
-      if (c.ok) passkeys.set(u.id, c.value)
-      else passkeysFailed += 1
-    })
+const UNKNOWN_STEP = (id: string): StepJudgement => ({
+  status: 'unknown',
+  detail: 'this step is newer than this CLI',
+  reason: `the docs describe a step '${id}' this camstack CLI cannot judge yet; update it (npm i -g camstack@latest)`,
+})
+
+function judge(step: OnboardingStep, facts: OnboardingFacts): StepJudgement {
+  const evaluator = STEP_EVALUATORS[step.id]
+  return evaluator === undefined ? UNKNOWN_STEP(step.id) : evaluator(facts)
+}
+
+function actionView(
+  action: OnboardingAction,
+  docs: string,
+  served: ReadonlySet<string> | null,
+): WizardActionView {
+  const manual = isManualText(action.manual)
+    ? {
+        manual: {
+          text: action.manual.text,
+          ...(action.manual.ui === undefined ? {} : { ui: action.manual.ui }),
+          ...(action.manual.command === undefined ? {} : { command: action.manual.command }),
+          ...(action.manual.page === undefined ? {} : { page: `${docs}${action.manual.page}` }),
+        },
+      }
+    : {}
+  const base = { id: action.id, title: action.title }
+  if (!isToolRendering(action.agent)) return { ...base, note: action.agent.none, ...manual }
+  if (served !== null && !served.has(action.agent.tool)) {
+    return {
+      ...base,
+      note: `${action.agent.tool} is not served by this server (its toolset is switched off, or this CLI is older than the docs): the person does this by hand.`,
+      ...manual,
+    }
   }
-  const agents: Read<number> = topology.ok
-    ? { ok: true, value: topology.value.filter((n) => n.isHub !== true).length }
-    : topology
   return {
-    users,
-    passkeys,
-    passkeysFailed,
-    passkeysSkipped,
-    defaultPassword,
-    publicEndpoint,
-    remoteAccess,
-    backups,
-    cameras,
-    agents,
-    targets,
-    rules,
-    versions,
+    ...base,
+    tool: action.agent.tool,
+    ...(action.agent.args === undefined ? {} : { args: action.agent.args }),
+    ...(action.agent.next === undefined ? {} : { note: action.agent.next }),
+    ...manual,
   }
 }
 
-export async function setupWizard(ctx: McpContext): Promise<WizardResult | NoSessionResult> {
-  return withHub(ctx, async (connection) => {
-    const steps = evaluateSteps(await gatherReads(connection, ctx))
-    const unavailable: { [stepId: string]: string } = {}
-    for (const s of steps) if (s.status === 'unknown' && s.reason) unavailable[s.id] = s.reason
-    const first = steps.find((s) => s.status !== 'done')
-    return {
-      status: 'ok' as const,
-      hub: connection.server,
-      tier: connection.tier,
-      steps,
-      nextStep: first ? { id: first.id, title: first.title, next: first.next } : null,
-      unavailable,
+function stepDetail(
+  step: OnboardingStep,
+  judgement: StepJudgement,
+  docs: string,
+  served: ReadonlySet<string> | null,
+): WizardStepDetail {
+  const focus = judgement.focusAction
+  return {
+    id: step.id,
+    title: step.title,
+    page: `${docs}${step.page}`,
+    summary: step.summary,
+    status: judgement.status,
+    detail: judgement.detail,
+    startWith: step.actions.some((a) => a.id === focus) ? (focus ?? null) : null,
+    actions: step.actions.map((a) => actionView(a, docs, served)),
+  }
+}
+
+function verdictOf(facts: OnboardingFacts): CapacityVerdict | null {
+  if (facts.session.ok) {
+    const hub = facts.session.hub
+    const measured = hubCapacity(hub)
+    if (measured !== null && measured.capacity !== null) {
+      const cameras = hub.cameras.ok ? hub.cameras.value.length : null
+      return {
+        kind: 'measured',
+        hubCapacity: measured.capacity,
+        limitedBy: measured.limitedBy,
+        cameras,
+        answer:
+          cameras === null ? null : cameras > measured.capacity ? 'hub-plus-agents' : 'hub-only',
+      }
     }
+  }
+  const r = facts.remembered
+  return r === null
+    ? null
+    : {
+        kind: 'provisional',
+        answer: r.verdict,
+        cameras: r.cameras,
+        reasons: r.reasons,
+      }
+}
+
+/** The share link, for a machine the feasibility check found outside the measured tables. */
+function reportOf(
+  ctx: McpContext,
+  manifest: OnboardingManifest,
+  facts: OnboardingFacts,
+): HardwareReportLink | null {
+  if (facts.remembered === null || facts.remembered.measured) return null
+  const host = hostOf(ctx)
+  const check = host.check()
+  const machine = host.facts(null)
+  const benchmark =
+    facts.session.ok && facts.session.hub.capacity.ok
+      ? benchmarkLines(facts.session.hub.capacity.value)
+      : []
+  return hardwareReportLink(manifest.hardwareReport, {
+    check: {
+      ...check,
+      cpu: { ...check.cpu, model: facts.remembered.cpuModel },
+    },
+    ramGb: machine.ramGb,
+    cores: machine.cores,
+    ...(benchmark.length > 0 ? { benchmark } : {}),
   })
+}
+
+export async function setupWizard(ctx: McpContext, args: WizardArgs = {}): Promise<WizardResult> {
+  const { manifest, source, note } = await manifestOf(ctx)()
+  const facts = await gatherFacts(ctx, manifest, args.remoteAccess ?? null)
+  const served = ctx.registeredTools === undefined ? null : await ctx.registeredTools()
+  const docs = manifest.docsBaseUrl
+  const judged = manifest.steps.map((step) => ({
+    step,
+    judgement: judge(step, facts),
+  }))
+
+  const next =
+    judged.find((j) => j.judgement.status === 'missing') ??
+    judged.find((j) => j.judgement.status === 'suggested') ??
+    null
+  const requested =
+    args.step === undefined ? undefined : judged.find((j) => j.step.id === args.step)
+  const unavailable: { [stepId: string]: string } = {}
+  for (const { step, judgement } of judged) {
+    if (judgement.status === 'unknown' && judgement.reason !== undefined) {
+      unavailable[step.id] = judgement.reason
+    }
+  }
+  const hardwareReport = reportOf(ctx, manifest, facts)
+  const verdict = verdictOf(facts)
+  const notices = [
+    ...(note === null ? [] : [`Steps come from the copy bundled in this CLI: ${note}.`]),
+    ...(args.step !== undefined && requested === undefined
+      ? [
+          `'${args.step}' is not a step; the step ids are: ${manifest.steps.map((s) => s.id).join(', ')}.`,
+        ]
+      : []),
+    ...(verdict?.kind === 'provisional'
+      ? [
+          'The capacity verdict is an estimate from before the install. The node benchmark (detection step) measures decoding and detection on the machine and replaces it.',
+        ]
+      : []),
+    ...(hardwareReport === null
+      ? []
+      : [
+          `${hardwareReport.text} Offer the person this link; they read it and submit it themselves.`,
+        ]),
+  ]
+  return {
+    status: 'ok',
+    manifest: { source, revision: manifest.revision, note },
+    state: {
+      phase: next === null ? 'complete' : next.step.phase,
+      hub: facts.session.ok ? facts.session.hub.server : null,
+      tier: facts.session.ok ? facts.session.hub.tier : null,
+      verdict,
+    },
+    steps: judged.map(
+      ({ step, judgement }): WizardStepView => ({
+        id: step.id,
+        title: step.title,
+        phase: step.phase,
+        page: `${docs}${step.page}`,
+        status: judgement.status,
+        detail: judgement.detail,
+        ...(judgement.reason === undefined ? {} : { reason: judgement.reason }),
+      }),
+    ),
+    nextStep: next === null ? null : stepDetail(next.step, next.judgement, docs, served),
+    ...(requested === undefined
+      ? {}
+      : {
+          requestedStep: stepDetail(requested.step, requested.judgement, docs, served),
+        }),
+    hardwareReport,
+    notices,
+    unavailable,
+  }
 }

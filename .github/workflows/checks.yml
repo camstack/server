@@ -459,6 +459,9 @@ jobs:
           npx tsx scripts/check-tree-private-data.ts
           npx tsx scripts/check-no-third-party-products.ts
 
+      - name: Onboarding manifest names things that exist here (D1077)
+        run: npx tsx scripts/check-onboarding-manifest.ts
+
       - name: Check docs are in sync (no drift)
         run: |
           npx tsx scripts/docs-generate.ts --check

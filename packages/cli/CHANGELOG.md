@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - host-check --cameras and the setup_feasibility assistant tool answer whether a machine can be the hub, with a provisional verdict and a link to share results from hardware that was never measured.
+- setup_wizard is the one entrypoint of the assisted setup: it follows the get-started page of the docs step by step (read live, bundled copy offline, --no-docs-fetch), works before a hub exists, and shows the measured capacity once the node benchmark ran
+- New MCP tools: setup_core_addons (which core addons are missing or unconfigured, TURN and tunnel included, with the next action) and configure_setup_location_create (add a storage location, same checks as the admin UI)
 
 ## [1.2.236] - 2026-11-19
 
