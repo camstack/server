@@ -13,5 +13,10 @@
     "maxGrowthMb": 64,
     "reason": "Measured +60.0 MB over the bare runner on 2026-11-20 (two verify:push runs: one at 59.9x passed, one at 60.0x failed) after the D1066 registry-row switch (1cdc457de) added the integrations instance read to the broker; it sits on the default 60 MB line and flips with measurement noise. Follow-up: check whether the D1066 path pulls a barrel value import into the broker bundle and move it to '@camstack/types/addon'; until then this budget stops further growth.",
     "expires": "2026-12-28"
+  },
+  "addon-post-analysis:embedding-encoder": {
+    "maxGrowthMb": 64,
+    "reason": "Measured +60.0 MB over the bare runner on 2026-11-21 in four runs (one full verify:push failed at 60.0x, three isolated runs passed at 60.0x): it sits on the default 60 MB line and flips with measurement noise under load. Not caused by an embedding-encoder change (git diff showed no change under packages/addon-post-analysis); the growth is the shared inlined types schemas. Follow-up: move its barrel value reads to '@camstack/types/addon'; until then this budget stops further growth.",
+    "expires": "2026-12-28"
   }
 }
