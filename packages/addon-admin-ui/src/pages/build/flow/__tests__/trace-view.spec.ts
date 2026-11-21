@@ -520,6 +520,28 @@ describe('a step guard keeps what it read', () => {
   })
 })
 
+describe('a probe or an http-request step keeps its attempts', () => {
+  it('exposes the attempt count and what the last attempt saw', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'probe',
+          outcome: 'error',
+          message: 'probe: wanted reachable',
+          attempts: 3,
+          lastAttempt: 'unreachable (ETIMEDOUT)',
+        },
+        { path: 'actions.1', kind: 'wait', outcome: 'ok' },
+      ],
+    }
+    const [probe, wait] = traceDetails(trace).steps
+    expect(probe?.attemptNote).toBe('3 attempts: unreachable (ETIMEDOUT)')
+    expect(wait?.attemptNote).toBeUndefined()
+  })
+})
+
 describe('traceDetails step failure', () => {
   const base = (steps: AutomationRunTrace['steps']): AutomationRunTrace => ({
     ...BASE,

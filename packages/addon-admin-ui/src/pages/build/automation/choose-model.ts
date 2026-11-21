@@ -20,6 +20,8 @@ export const BRANCH_KINDS: readonly ActionKind[] = [
   'command',
   'action',
   'notify',
+  'probe',
+  'http-request',
   'wait',
   'set',
   'stop',

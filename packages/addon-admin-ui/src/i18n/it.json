@@ -6492,7 +6492,9 @@
       "pickKindTitle": "Aggiungi un passo",
       "kindNotify": "Invia notifica",
       "stepEnabled": "Passo attivo",
-      "stepDisabledHint": "Disattivato: saltato quando l'automazione parte"
+      "stepDisabledHint": "Disattivato: saltato quando l'automazione parte",
+      "kindProbe": "Ping / raggiungibilità",
+      "kindHttp": "Richiesta HTTP"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6907,6 +6909,36 @@
       "catalogFailed": "Non è stato possibile leggere i guasti che questo dispositivo può segnalare: scrivi il codice a mano.",
       "codesEmpty": "Questo dispositivo non dichiara codici di guasto: scrivine uno, o lascia vuoto per qualsiasi guasto.",
       "codePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)"
+    },
+    "reach": {
+      "host": "Host o indirizzo",
+      "port": "Porta TCP",
+      "timeout": "Timeout (s)",
+      "probeExpect": "Il passo riesce quando l'host è",
+      "reachable": "Raggiungibile",
+      "unreachable": "Non raggiungibile",
+      "retry": "Riprova per (s)",
+      "retryOnce": "una volta",
+      "saveAs": "Salva il risultato come",
+      "probeHint": "Prova ad aprire una connessione TCP. Con un tempo di tentativi, riprova ogni {{every}} s finché l'host è come atteso; se non lo diventa mai, il passo fallisce.",
+      "method": "Metodo",
+      "url": "Indirizzo (URL)",
+      "headers": "Intestazioni",
+      "headerName": "Nome intestazione",
+      "headerValue": "Valore intestazione",
+      "removeHeader": "Rimuovi questa intestazione",
+      "addHeader": "Aggiungi un'intestazione",
+      "headersPlain": "I valori delle intestazioni sono salvati come scritti, in chiaro, e visibili a chi può aprire questa automazione. Non vengono mai scritti nel registro delle esecuzioni.",
+      "body": "Corpo",
+      "expectOn": "Controlla la risposta",
+      "expectDefault": "Senza controllo, il passo riesce con una risposta 2xx.",
+      "expectOf": "Il passo riesce quando",
+      "ofStatus": "il codice di stato",
+      "ofJson": "un campo JSON",
+      "fieldPath": "Campo",
+      "compare": "È",
+      "expectValue": "Valore",
+      "httpHint": "Con un tempo di tentativi, la richiesta viene ripetuta ogni {{every}} s finché la risposta è quella attesa; se non lo diventa mai, il passo fallisce. Indirizzo, intestazioni e corpo possono usare {{slot}}."
     }
   },
   "accessDenied": {

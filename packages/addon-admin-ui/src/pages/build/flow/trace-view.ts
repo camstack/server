@@ -176,6 +176,8 @@ export interface StepDetailView {
   readonly condition?: 'true' | 'false' | 'unknown'
   /** Why the guard read what it read, with the values compared. */
   readonly conditionReason?: string
+  /** A probe or an HTTP request: its attempt count and what the last attempt saw. */
+  readonly attemptNote?: string
 }
 
 export type ChoseView =
@@ -252,6 +254,13 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
       kind: step.kind,
       tone: stepTone(step.outcome),
       message: nonEmpty(step.message),
+      ...(step.attempts === undefined
+        ? {}
+        : {
+            attemptNote: `${String(step.attempts)} attempt${step.attempts === 1 ? '' : 's'}${
+              step.lastAttempt === undefined ? '' : `: ${step.lastAttempt}`
+            }`,
+          }),
       failure: failureOf(step),
       args: Object.entries(step.args ?? {}).map(([name, value]) => ({
         name,

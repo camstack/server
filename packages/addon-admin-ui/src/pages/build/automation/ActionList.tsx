@@ -32,6 +32,8 @@ import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
 import { NotifyFields } from './NotifyFields'
+import { ProbeFields } from './ProbeFields'
+import { HttpRequestFields } from './HttpRequestFields'
 import { RunActionFields } from './RunActionFields'
 import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
@@ -49,6 +51,8 @@ export const ACTION_KINDS: readonly { readonly value: ActionKind; readonly label
   { value: 'command', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'notify', labelKey: 'automation.actionList.kindNotify' },
+  { value: 'probe', labelKey: 'automation.actionList.kindProbe' },
+  { value: 'http-request', labelKey: 'automation.actionList.kindHttp' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
   { value: 'wait-until', labelKey: 'automation.actionList.kindWaitUntil' },
   { value: 'set', labelKey: 'automation.actionList.kindSet' },
@@ -126,6 +130,8 @@ export function ActionList({
   const pickOrder: readonly StepChoice[] = [
     'command',
     'notify',
+    'probe',
+    'http-request',
     'wait',
     'wait-until',
     'set',
@@ -403,6 +409,22 @@ export function ActionList({
             />
           )}
 
+          {action.kind === 'probe' && (
+            <ProbeFields
+              index={index}
+              step={action}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {action.kind === 'http-request' && (
+            <HttpRequestFields
+              index={index}
+              step={action}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
           {action.kind === 'action' && (
             <RunActionFields
               step={action}
@@ -419,7 +441,11 @@ export function ActionList({
           )}
 
           {flowControl &&
-            (action.kind === 'command' || action.kind === 'action' || action.kind === 'notify') && (
+            (action.kind === 'command' ||
+              action.kind === 'action' ||
+              action.kind === 'notify' ||
+              action.kind === 'probe' ||
+              action.kind === 'http-request') && (
               <Switch
                 data-testid={`continue-on-error-${String(index)}`}
                 checked={action.continueOnError === true}

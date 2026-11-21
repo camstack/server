@@ -24,6 +24,7 @@ import type { z } from 'zod'
 import i18n from '../../../i18n/index'
 import { CODE_STEP_TEMPLATE } from '../../../components/code/automation-code-step'
 import { newRepeat } from './repeat-model'
+import { newHttpRequest, newProbe } from './reach-step-model'
 import { newWaitUntil } from './wait-until-model'
 
 type WireableFieldsOutput = z.infer<typeof deviceManagerCapability.methods.getWireableFields.output>
@@ -151,6 +152,10 @@ export function newAction(kind: ActionKind): AutomationAction {
       return { kind, actionId: '' }
     case 'notify':
       return { kind, targetId: '', body: '' }
+    case 'probe':
+      return newProbe()
+    case 'http-request':
+      return newHttpRequest()
     case 'stop':
       return { kind, reason: '', outcome: 'ok' }
     case 'set':

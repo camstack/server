@@ -6417,7 +6417,9 @@
       "pickKindTitle": "Add a step",
       "kindNotify": "Send notification",
       "stepEnabled": "Step enabled",
-      "stepDisabledHint": "Disabled: skipped when the automation runs"
+      "stepDisabledHint": "Disabled: skipped when the automation runs",
+      "kindProbe": "Ping / reachability",
+      "kindHttp": "HTTP request"
     },
     "automationEditor": {
       "name": "Name",
@@ -6832,6 +6834,36 @@
       "catalogFailed": "The faults this device can report could not be read — type the code by hand.",
       "codesEmpty": "This device declares no fault codes — type one, or leave empty for any fault.",
       "codePlaceholder": "Fault code… (empty = any fault)"
+    },
+    "reach": {
+      "host": "Host or address",
+      "port": "TCP port",
+      "timeout": "Timeout (s)",
+      "probeExpect": "The step passes when the host is",
+      "reachable": "Reachable",
+      "unreachable": "Unreachable",
+      "retry": "Keep trying for (s)",
+      "retryOnce": "once",
+      "saveAs": "Save result as",
+      "probeHint": "Tries to open a TCP connection. With a time to keep trying, it tries again every {{every}} s until the host is as expected; if it never is, the step fails.",
+      "method": "Method",
+      "url": "Address (URL)",
+      "headers": "Headers",
+      "headerName": "Header name",
+      "headerValue": "Header value",
+      "removeHeader": "Remove this header",
+      "addHeader": "Add a header",
+      "headersPlain": "Header values are saved as typed, in plain text, and are visible to anyone who can open this automation. They are never written to the run log.",
+      "body": "Body",
+      "expectOn": "Check the answer",
+      "expectDefault": "Without a check, the step passes on a 2xx answer.",
+      "expectOf": "The step passes when",
+      "ofStatus": "the status code",
+      "ofJson": "a JSON field",
+      "fieldPath": "Field",
+      "compare": "Is",
+      "expectValue": "Value",
+      "httpHint": "With a time to keep trying, the request is repeated every {{every}} s until the answer is as expected; if it never is, the step fails. The address, headers and body may use {{slot}}."
     }
   },
   "accessDenied": {

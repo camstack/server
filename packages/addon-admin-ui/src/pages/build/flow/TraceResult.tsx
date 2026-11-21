@@ -161,6 +161,11 @@ export function StepResult({ step, deviceName }: StepResultProps) {
       {step.failure !== null && (
         <ErrorBox message={step.failure} title={t('flow.runs.stepFailed', 'This step failed')} />
       )}
+      {step.attemptNote !== undefined && (
+        <div className="text-[11px] text-foreground-subtle" data-testid="step-attempts">
+          {step.attemptNote}
+        </div>
+      )}
       {step.conditionReason !== undefined && (
         <div className="text-[11px] text-foreground-subtle" data-testid="step-guard">
           {t('flow.runs.stepGuard', 'Condition')}: {step.conditionReason}

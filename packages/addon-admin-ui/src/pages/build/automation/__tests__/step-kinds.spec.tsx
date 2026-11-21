@@ -52,6 +52,13 @@ const VALID: Readonly<Record<ActionKind, AutomationAction>> = {
   command: { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'switch.on' },
   action: { kind: 'action', actionId: 'internal:abc' },
   notify: { kind: 'notify', targetId: 'zentik-admin', body: 'hello' },
+  probe: { kind: 'probe', host: '192.168.20.158', port: 80, timeoutSeconds: 5 },
+  'http-request': {
+    kind: 'http-request',
+    method: 'GET',
+    url: 'http://192.168.20.158/sysinfo.json',
+    timeoutSeconds: 10,
+  },
   code: { kind: 'code', code: 'ctx.log.info("x")' },
   stop: { kind: 'stop', reason: 'done', outcome: 'ok' },
   set: { kind: 'set', vars: { room: 'kitchen' } },
@@ -104,8 +111,8 @@ function draw(action: AutomationAction, withResult: boolean): void {
 }
 
 describe('every Then step kind', () => {
-  it('reads ten kinds from the schema, and this spec holds a sample for each', () => {
-    expect(KINDS.length).toBeGreaterThanOrEqual(10)
+  it('reads every kind from the schema, and this spec holds a sample for each', () => {
+    expect(KINDS.length).toBeGreaterThanOrEqual(13)
     expect([...KINDS].sort()).toEqual(Object.keys(VALID).sort())
   })
 
