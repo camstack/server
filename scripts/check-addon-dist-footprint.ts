@@ -66,7 +66,7 @@ export const FORBIDDEN_IDENTIFIER = 'ALL_CAPABILITY_DEFINITIONS'
 /**
  * The literal of the schema `TreeshakeCanarySchema` (packages/types/src/treeshake-canary.ts)
  * holds. Nothing reads that schema, so it must not appear in any addon dist: when it does, the
- * types package is no longer tree-shaken and every unreachable schema comes along (D1073).
+ * types package is no longer tree-shaken and every unreachable schema comes along (D1074).
  */
 export const CANARY_LITERAL = 'camstack-types-treeshake-canary-7c1e'
 

@@ -324,7 +324,7 @@ ${localStateFieldDecls}
  * getter looks the name up here to construct a slice proxy lazily on first
  * access; the proxy reads only \`cap.name\`. Names, not definitions, so this file
  * pulls no schema into a bundle (guard \`check-device-local-state-schema-free\`,
- * D1073). Generated alongside the type so type and registry can never drift apart.
+ * D1074). Generated alongside the type so type and registry can never drift apart.
  */
 export const DEVICE_LOCAL_STATE_CAP_NAMES: Readonly<Record<keyof DeviceLocalState, string>> = {
 ${localStateRegistry}

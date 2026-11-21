@@ -6,7 +6,7 @@
 #
 #   source  no bare '@camstack/types' VALUE import reachable from the
 #           addon-runner / addon-utils, and the generated device-local-state
-#           cap-name table imports no schema (D1073) (pure source scans, ~1 s)
+#           cap-name table imports no schema (D1074) (pure source scans, ~1 s)
 #   dist    the BUILT addon-runner and addon-utils carry no schema barrel
 #           (reads packages/system/dist: build it first, ~2 s)
 #   all     both (CI)
@@ -19,7 +19,7 @@ RC=0
 if [[ "$MODE" == "source" || "$MODE" == "all" ]]; then
   echo "guards: runner and addon sources are barrel-free (D28)"
   npx tsx scripts/check-runner-barrel-free.ts || RC=1
-  echo "guards: the generated device-local-state table is schema-free (D1073)"
+  echo "guards: the generated device-local-state table is schema-free (D1074)"
   npx tsx scripts/check-device-local-state-schema-free.ts || RC=1
 fi
 if [[ "$MODE" == "dist" || "$MODE" == "all" ]]; then

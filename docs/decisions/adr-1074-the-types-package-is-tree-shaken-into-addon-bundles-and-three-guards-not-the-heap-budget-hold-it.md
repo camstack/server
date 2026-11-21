@@ -1,5 +1,5 @@
 ---
-id: D1073
+id: D1074
 title: The types package is tree-shaken into addon bundles, and three guards, not the heap budget, hold it
 status: accepted
 date: 2026-11-21

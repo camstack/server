@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * Tree-shaking canary (D1073). Nothing reads it. It holds a literal that
+ * Tree-shaking canary (D1074). Nothing reads it. It holds a literal that
  * `scripts/check-addon-dist-footprint.ts` searches for in every BUILT addon dist: an addon
  * bundle inlines `@camstack/types`, so when the literal shows up there a top-level
  * initializer of the types package is being kept although no addon code reaches it, and

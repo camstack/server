@@ -35,7 +35,7 @@ const preset = buildLibPreset({
 })
 
 /**
- * Tree-shakable for the addon bundles that inline this package (D15, D1073):
+ * Tree-shakable for the addon bundles that inline this package (D15, D1074):
  *
  *  - `dist/esm/` keeps one ESM file per source module (`preserveModules`) and the `module`
  *    export condition points there, so a consumer BUNDLER (the addon builds, vite) can drop

@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * The generated device-local-state table is schema-free (D1073, amends D28).
+ * The generated device-local-state table is schema-free (D1074, amends D28).
  *
  * `BaseDevice.state` builds a slice proxy per cap, and the proxy reads only the
  * cap NAME. The table it looks them up in used to hold the cap DEFINITIONS, so
@@ -48,7 +48,7 @@ function main(): void {
   if (found.length > 0) {
     // eslint-disable-next-line no-console
     console.error(
-      `✗ device-local-state schema-free guard (D1073): the cap-name table must not pull a cap definition.\n` +
+      `✗ device-local-state schema-free guard (D1074): the cap-name table must not pull a cap definition.\n` +
         `  BaseDevice.state needs cap NAMES only; a value import of a *.cap module puts every device-native\n` +
         `  schema (~400 KB) into each device provider. Generate names, not definitions (scripts/generate-device-proxy.ts).`,
     )

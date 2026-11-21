@@ -201,7 +201,7 @@ describe('addon discovery', () => {
   })
 })
 
-describe('types tree-shaking guards (D1073)', () => {
+describe('types tree-shaking guards (D1074)', () => {
   it('names a dist file that still carries the canary literal', () => {
     const dir = tmp({
       'clean.js': 'const a = 1',

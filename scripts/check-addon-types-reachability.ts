@@ -1,5 +1,5 @@
 /**
- * Types-reachability guard on the BUILT addon dists (D1073, amends D28).
+ * Types-reachability guard on the BUILT addon dists (D1074, amends D28).
  *
  * An addon bundle inlines `@camstack/types` (D15). The bundler keeps a top-level
  * initializer (`const X = z.object(...)`) it cannot prove pure, so a types
@@ -22,7 +22,7 @@
 import * as fs from 'node:fs'
 import { parseAst } from 'vite'
 
-/** Dead types code one addon closure may carry. Measured 3 to 32 KB in the addons that use the types package; before D1073 it was 1,500+ KB. */
+/** Dead types code one addon closure may carry. Measured 3 to 32 KB in the addons that use the types package; before D1074 it was 1,500+ KB. */
 export const MAX_UNREACHABLE_TYPES_KB = 40
 
 interface AstNode {

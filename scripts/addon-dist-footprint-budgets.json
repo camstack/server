@@ -1,7 +1,7 @@
 {
   "addon-post-analysis:pipeline-analytics": {
     "maxGrowthMb": 70,
-    "reason": "Measured +62.9 MB over the bare runner on 2026-11-21 after the types package became tree-shakable (D1073; it was +89.6 MB). What remains is this addon's own code and the types schemas its notification center, rules and zone analytics really reach, plus the shared clip-model-registry chunk. The 70 MB line is the measured value plus a margin; the types-tree-shaking guards (canary, reachability) are what catch the types growth that earlier entries here recorded.",
+    "reason": "Measured +62.9 MB over the bare runner on 2026-11-21 after the types package became tree-shakable (D1074; it was +89.6 MB). What remains is this addon's own code and the types schemas its notification center, rules and zone analytics really reach, plus the shared clip-model-registry chunk. The 70 MB line is the measured value plus a margin; the types-tree-shaking guards (canary, reachability) are what catch the types growth that earlier entries here recorded.",
     "expires": "2027-02-21"
   }
 }

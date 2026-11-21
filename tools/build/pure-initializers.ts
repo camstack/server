@@ -1,5 +1,5 @@
 /**
- * `/* @__PURE__ *\/` on every top-level INITIALIZER call of a module (D1073).
+ * `/* @__PURE__ *\/` on every top-level INITIALIZER call of a module (D1074).
  *
  * `@camstack/types` is inlined into each addon bundle (D15). Its modules are full of
  * `const X = z.object(...)`, `const M = method(...)`, `const T = Object.freeze({...})`

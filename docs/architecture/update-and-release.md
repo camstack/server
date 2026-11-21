@@ -280,7 +280,7 @@ removes them from the installed `package.json` so the installer runs **no**
 per-addon `npm install`. `RUNTIME_NATIVE_KEEP` is empty: a self-contained dist
 requires nothing from a local `node_modules`.
 
-**The inlined `@camstack/types` is tree-shaken** ([D1073](../decisions/adr-1073-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md),
+**The inlined `@camstack/types` is tree-shaken** ([D1074](../decisions/adr-1074-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md),
 amends [D15](../decisions/adr-0015.md) and [D28](../decisions/adr-0028.md)). `packages/types`
 also emits `dist/esm/` (one file per module, reached through the `module` export
 condition by a bundler; Node and vitest keep the bundled files), declares `"sideEffects": false`, and a

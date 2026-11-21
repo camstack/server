@@ -282,9 +282,9 @@ rule that matters, wiring it into `checks.yml` is a one-line change.
 
 | Guard | Refuses |
 | --- | --- |
-| `scripts/check-addon-types-reachability.ts` | Types-reachability guard on the BUILT addon dists (D1073, amends D28). |
+| `scripts/check-addon-types-reachability.ts` | Types-reachability guard on the BUILT addon dists (D1074, amends D28). |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
-| `scripts/check-device-local-state-schema-free.ts` | The generated device-local-state table is schema-free (D1073, amends D28). |
+| `scripts/check-device-local-state-schema-free.ts` | The generated device-local-state table is schema-free (D1074, amends D28). |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |
 | `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
