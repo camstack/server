@@ -31,8 +31,9 @@ export function energyFlowsOf(status: EnergySystemStatus): EnergyFlows {
   const storageW = status.storage?.powerW ?? null
   return {
     solarW: status.solar?.powerW ?? null,
-    // A grid that exists but reports no power is idle (0 W), not absent.
-    gridW: status.grid === null ? null : (status.grid.powerW ?? 0),
+    gridW: status.grid?.powerW ?? null,
+    // A grid that exists but has not answered its power keeps its node (as unknown, D393).
+    gridPowerUnknown: status.grid !== null && status.grid.powerW === null,
     batteryW: storageW === null ? null : -storageW,
     batteryPct: status.storage?.stateOfChargePct ?? null,
     houseW: status.house?.powerW ?? null,
@@ -69,6 +70,7 @@ function todayBalanceInput(status: EnergySystemStatus): EnergyBalanceInput {
     chargedKwh: status.storage?.chargedTodayKwh ?? null,
     dischargedKwh: status.storage?.dischargedTodayKwh ?? null,
     heatPumpKwh: status.heatPump?.todayKwh ?? null,
+    hasStorage: status.storage !== null,
   }
 }
 
@@ -135,6 +137,8 @@ export interface EnergyBalanceInput {
   readonly chargedKwh: number | null
   readonly dischargedKwh: number | null
   readonly heatPumpKwh: number | null
+  /** The system has a battery: its two counters must be known, a missing pair is not 0. */
+  readonly hasStorage: boolean
 }
 
 export interface EnergyBalance {
@@ -149,12 +153,13 @@ export interface EnergyBalance {
 
 /**
  * produced + imported − exported + discharged − charged. The storage counters
- * are both absent for a system without storage (no contribution); only one of
- * them known is an unknown balance (D393).
+ * are both absent only for a system without storage (no contribution); a system
+ * with storage needs both, and one known alone is an unknown balance (D393).
  */
 export function balanceConsumptionKwh(input: EnergyBalanceInput): number | null {
   const { producedKwh: p, importedKwh: i, exportedKwh: x, chargedKwh: c, dischargedKwh: d } = input
   if (p === null || i === null || x === null || (c === null) !== (d === null)) return null
+  if (input.hasStorage && c === null) return null
   return p + i - x + (d ?? 0) - (c ?? 0)
 }
 
@@ -217,6 +222,7 @@ export function energyDailyFacts(status: EnergySystemStatus): EnergyDailyFacts {
 /** Today's totals, to a tenth of a kWh; null when the system reports none of them. */
 export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
   const facts = energyDailyFacts(status)
+  const balance = energyBalance(todayBalanceInput(status), status.heatPump !== null)
   const today: EnergyToday = {
     producedKwh: facts.producedKwh,
     selfConsumptionPct: selfConsumptionPct(
@@ -228,8 +234,8 @@ export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
     netGridKwh: facts.netGridKwh,
     heatPumpKwh: tenth(status.heatPump?.todayKwh ?? null),
     houseKwh: facts.houseKwh,
-    householdKwh: tenth(status.house?.todayKwh ?? null),
-    sources: energyBalance(todayBalanceInput(status), status.heatPump !== null).sources,
+    householdKwh: tenth(status.house?.todayKwh ?? null) ?? balance.householdKwh,
+    sources: balance.sources,
     selfSufficiencyPct: facts.selfSufficiencyPct,
     autonomyHours: facts.autonomyHours,
     chargedTodayKwh: facts.chargedTodayKwh,

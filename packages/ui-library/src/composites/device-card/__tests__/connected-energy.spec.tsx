@@ -248,6 +248,31 @@ describe('the energy system card', () => {
     expect(today?.selfConsumptionPct).toBeCloseTo(((18.44 - 7.3) / 18.44) * 100, 5)
   })
 
+  it('without a house day total the household is the balance minus the heat pump', () => {
+    const withPump = { ...FULL, heatPump: { powerW: 600, energyKwh: 1500, todayKwh: 3 } }
+    // 18.44 + 2.1 − 7.3 + 4.2 − 6.1 = 11.34; minus the pump's 3 = 8.34.
+    expect(energyTodayOf(withPump)?.householdKwh).toBe(8.3)
+    expect(energyTodayOf(withPump)?.houseKwh).toBe(11.3)
+    // The house's own day total wins when it is reported.
+    const reported = { ...withPump, house: { powerW: 300, energyKwh: 6500, todayKwh: 5 } }
+    expect(energyTodayOf(reported)?.householdKwh).toBe(5)
+    // A heat pump with no day total leaves the household unknown, not the whole balance.
+    expect(energyTodayOf(FULL)?.householdKwh).toBeNull()
+  })
+
+  it('a storage system whose day counters are unknown has no consumption balance', () => {
+    const blind = {
+      ...FULL,
+      storage: FULL.storage && {
+        ...FULL.storage,
+        chargedTodayKwh: null,
+        dischargedTodayKwh: null,
+      },
+    }
+    expect(energyTodayOf(blind)?.houseKwh).toBeNull()
+    expect(energyTodayOf(blind)?.sources).toBeNull()
+  })
+
   it('renders the scene with the storage from the model and no battery corner', () => {
     hub.slice = FULL
     render(<ConnectedEnergyCard deviceId={1} />)

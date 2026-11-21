@@ -19,6 +19,8 @@ export interface EnergyFlows {
   readonly batteryPct: number | null
   readonly houseW: number | null
   readonly heatPumpW: number | null
+  /** The grid exists but has not answered its power: its node shows "—", still. */
+  readonly gridPowerUnknown?: boolean
 }
 
 /**

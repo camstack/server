@@ -103,12 +103,13 @@ function pointsOf(
 function totalsOf(
   list: readonly DeviceHistorySeriesInfo[],
   read: (field: string) => DeviceHistoryQueryManyEntry | undefined,
+  windowFrom: number,
 ): EnergyDayTotals {
   const total = (field: string): number | null => {
     const entry = read(field)
     return infoOf(list, field) === undefined || entry === undefined || !entry.ok
       ? null
-      : counterDayTotal(entry.result)
+      : counterDayTotal(entry.result, windowFrom)
   }
   return {
     producedKwh: total('solar.energyKwh'),
@@ -184,8 +185,9 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
         ]
       : []
     const today = energyTodayOfDay(
-      totalsOf(series, entryOf),
+      totalsOf(series, entryOf, window.from),
       infoOf(series, 'heatPump.energyKwh') !== undefined,
+      series.some((info) => info.key.startsWith(keyOf('storage.'))),
     )
     const status: EnergyDayStatus =
       powerSeries.length === 0 && socSeries.length === 0 && today === null ? 'empty' : 'ready'

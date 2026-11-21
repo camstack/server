@@ -60,6 +60,15 @@ export function energyNodes(flows: EnergyFlows, t: UiTextFn): readonly EnergyNod
   }
   add('solar', flows.solarW, () => t('uiLibrary.deviceCard.energy.solar', 'Solar'))
   add('grid', flows.gridW, (w) => gridLabel(w, t))
+  if (flows.gridW === null && flows.gridPowerUnknown === true) {
+    out.push({
+      id: 'grid',
+      watts: 0,
+      label: t('uiLibrary.deviceCard.energy.grid', 'Grid'),
+      value: '—',
+      still: true,
+    })
+  }
   add('battery', flows.batteryW, (w) => batteryLabel(w, flows.batteryPct, t))
   // The house and the heat pump only consume: drawn leaving the bus.
   add('house', flows.houseW === null ? null : -Math.abs(flows.houseW), () =>

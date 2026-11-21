@@ -1772,7 +1772,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
-      "summary": "produced + imported − exported + discharged − charged. The storage counters are both absent for a system without storage (no contribution); only one of them known is an unknown balance (D393)."
+      "summary": "produced + imported − exported + discharged − charged. The storage counters are both absent only for a system without storage (no contribution); a system with storage needs both, and one known alone is an unknown bala…"
     },
     {
       "name": "BarSeries",

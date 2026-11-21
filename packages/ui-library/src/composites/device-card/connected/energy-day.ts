@@ -27,19 +27,28 @@ export function energyDayWindow(now: number, offsetDays: number): EnergyDayWindo
   }
 }
 
+/** A flat counter counts as 0 only when it was read within this long before the window. */
+const FLAT_COUNTER_MAX_AGE_MS = 24 * 3_600_000
+
 /**
  * The kWh a recorded counter grew by over a read: the sum of its points'
  * `delta`. A counter that was read but did not move (no point carries a delta,
  * and the value held before the window is known) grew by 0. Null when nothing
  * was read at all: no series, a day with no recording, a failed read (D393).
  */
-export function counterDayTotal(result: DeviceHistoryQueryResult | undefined): number | null {
+export function counterDayTotal(
+  result: DeviceHistoryQueryResult | undefined,
+  windowFrom: number,
+): number | null {
   const series = result?.series[0]
   if (series === undefined) return null
   let total: number | null = null
   for (const p of series.points) if (p.delta !== null) total = (total ?? 0) + p.delta
   if (total !== null) return total
-  return series.before !== null && series.before.value !== null ? 0 : null
+  const before = series.before
+  if (before === null || before.value === null) return null
+  // A counter last read long before the window is a dead sensor, not a still one.
+  return windowFrom - before.t <= FLAT_COUNTER_MAX_AGE_MS ? 0 : null
 }
 
 /** What the day's counters said, kWh; each null when that counter has no reading. */
@@ -59,6 +68,7 @@ const tenth = (v: number | null): number | null => (v === null ? null : Math.rou
 export function energyTodayOfDay(
   totals: EnergyDayTotals,
   hasHeatPump: boolean,
+  hasStorage: boolean,
 ): EnergyToday | null {
   const balance = energyBalance(
     {
@@ -68,6 +78,7 @@ export function energyTodayOfDay(
       chargedKwh: totals.chargedKwh,
       dischargedKwh: totals.dischargedKwh,
       heatPumpKwh: totals.heatPumpKwh,
+      hasStorage,
     },
     hasHeatPump,
   )
