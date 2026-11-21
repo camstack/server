@@ -239,7 +239,7 @@ export class TransitionCorrelator {
     this.held.delete(key)
     const net = this.netChanges(burst)
     const { deviceId, capName } = burst
-    for (const [field, f] of burst.fields) {
+    for (const field of burst.fields.keys()) {
       if (net.some((c) => c.field === field)) continue
       this.deps.logger?.debug(
         `device-transitions: ${capName}.${field} went and came back inside one burst; no row`,
