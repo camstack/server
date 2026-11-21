@@ -104,12 +104,14 @@ function DeviceQuickDetailModal({
   // Told by the card once it settled: false = the hero model covers nothing (a
   // camera, a device with no card), which the viewer shows as an empty card.
   const [drawn, setDrawn] = useState<boolean | null>(null)
-  const detailEmpty = drawn === false
+  // The card stays mounted (hidden) so `drawn` is learned at open; Detail is
+  // offered only once the card reported something to show.
+  const detailOffered = drawn === true
   const series = useDeviceSeriesList(deviceId)
   const hasHistory = historyTabVisible(series.presence, series.list)
   const hasActions = useCapabilityPresence('device-transitions') === 'present'
   const tab: QuickTabId =
-    (pickedTab === 'detail' && detailEmpty) ||
+    (pickedTab === 'detail' && !detailOffered) ||
     (pickedTab === 'history' && !hasHistory) ||
     (pickedTab === 'actions' && !hasActions)
       ? 'info'
@@ -124,9 +126,9 @@ function DeviceQuickDetailModal({
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
-    ...(detailEmpty
-      ? []
-      : [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]),
+    ...(detailOffered
+      ? [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]
+      : []),
     ...(hasHistory
       ? [['history', t('deviceQuickDetail.tabHistory', { defaultValue: 'History' })] as const]
       : []),
@@ -178,12 +180,10 @@ function DeviceQuickDetailModal({
           <DialogBody className="mt-3">
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
-              {tab === 'detail' ? (
-                // Mounted only while shown, and never a stream: a camera has no card here.
-                <div className="h-full">
-                  <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
-                </div>
-              ) : null}
+              {/* Never a stream: a camera has no card here. */}
+              <div className={tab === 'detail' ? 'h-full' : 'hidden'}>
+                <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
+              </div>
               {tab === 'history' ? <DeviceHistoryView deviceId={deviceId} /> : null}
               {tab === 'actions' ? <ActuationHistory deviceId={deviceId} /> : null}
               <div className={tab === 'info' ? 'flex flex-col gap-3' : 'hidden'}>

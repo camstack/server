@@ -100,6 +100,8 @@ describe('the unit every label of a chart follows', () => {
     expect(formatChartValue(0.001, 'kW')).toBe('0.001 kW')
     expect(formatChartValue(0.0187, 'kW')).toBe('0.019 kW')
     expect(formatChartValue(0.0004, 'kW')).toBe('<0.001 kW')
+    expect(formatChartValue(2.7e-12, 'kW')).toBe('0 kW')
+    expect(formatChartValue(-4e-13, 'kW')).toBe('0 kW')
     expect(formatChartValue(0, 'kW')).toBe('0 kW')
     expect(formatChartValue(12.34, 'kW')).toBe('12.3 kW')
   })

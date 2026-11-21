@@ -8,7 +8,7 @@
 import { ConfirmDialogProvider, useDeviceQuickDetailOpen } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
@@ -20,6 +20,8 @@ interface HeroMockProps {
 
 const hero = vi.hoisted(() => ({
   props: null as (HeroMockProps & Record<string, unknown>) | null,
+  // What the card reports when it settles; null = not yet.
+  drawn: true as boolean | null,
 }))
 
 const presence = vi.hoisted(() => ({
@@ -71,6 +73,10 @@ vi.mock('../overview-adapters/DeviceInfoAdapter', async () => {
 vi.mock('../hero/DeviceHeroCard', () => ({
   DeviceHeroCard: (props: HeroMockProps & Record<string, unknown>) => {
     hero.props = props
+    // biome-ignore lint/correctness/useExhaustiveDependencies: report once on mount
+    useEffect(() => {
+      if (hero.drawn !== null) props.onDrawn?.(hero.drawn)
+    }, [])
     return (
       <div data-testid="hero-card">
         <button type="button" onClick={() => props.onNavigate?.('/devices/9')}>
@@ -133,6 +139,7 @@ describe('DeviceQuickDetail modal', () => {
   beforeEach(() => {
     presence.series = { presence: 'pending', list: { status: 'pending' } }
     presence.transitions = 'pending'
+    hero.drawn = true
   })
 
   it('shows the History tab only once listSeries answered with series', () => {
@@ -193,7 +200,7 @@ describe('DeviceQuickDetail modal', () => {
     openModal()
     const labels = screen.getAllByRole('tab').map((b) => b.textContent)
     expect(labels.indexOf('Device info')).toBeLessThan(labels.indexOf('Detail'))
-    expect(screen.queryByTestId('hero-card')).toBeNull()
+    expect(screen.getByTestId('hero-card').closest('.hidden')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
     openDetailTab()
     expect(screen.getByTestId('hero-card')).toBeTruthy()
@@ -258,14 +265,19 @@ describe('DeviceQuickDetail modal', () => {
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull()
   })
 
-  it('opens on Device info, with no Detail tab, when the hero model covers nothing', () => {
+  it('never offers Detail when the hero model covers nothing, without any click on it', () => {
+    hero.drawn = false
     renderModal()
     openModal()
-    openDetailTab()
-    fireEvent.click(screen.getByRole('button', { name: 'hero-settled-empty' }))
     expect(screen.queryByRole('tab', { name: 'Detail' })).toBeNull()
-    expect(screen.queryByTestId('hero-card')).toBeNull()
     expect(screen.getByRole('tab', { name: 'Device info' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
+  })
+
+  it('does not offer Detail while the card has not reported yet', () => {
+    hero.drawn = null
+    renderModal()
+    openModal()
+    expect(screen.queryByRole('tab', { name: 'Detail' })).toBeNull()
   })
 })
