@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-dreo",
-  "version": "0.2.169",
+  "version": "0.2.170",
   "description": "Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker",
   "keywords": [
     "camstack",
@@ -69,7 +69,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.924"
+      "server": ">=1.2.927"
     }
   },
   "files": [

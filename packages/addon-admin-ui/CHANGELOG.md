@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.725] - 2026-11-21
+
 ### Added
 
 - The automation editor offers Ping / reachability and HTTP request steps, and the run trace shows how many attempts a step took.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.927] - 2026-11-21
+
 ### Changed
 
 - The public tunnel address is re-read from the tunnel provider, so the hub's public endpoint no longer falls back to the LAN address when the tunnel's start event was missed

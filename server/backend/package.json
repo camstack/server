@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.926",
+  "version": "1.2.927",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,16 +66,14 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.724",
-        "@camstack/addon-agent-ui": ">=1.2.424",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.712",
-        "@camstack/addon-provider-amcrest": ">=0.2.176",
-        "@camstack/addon-provider-hikvision": ">=1.2.193",
-        "@camstack/addon-provider-homematic": ">=1.2.210",
-        "@camstack/addon-provider-onvif": ">=1.2.162",
-        "@camstack/addon-provider-rtsp": ">=1.2.159",
-        "@camstack/addon-provider-velux": ">=0.2.174",
-        "@camstack/addon-provider-wyze": ">=0.2.176"
+        "@camstack/addon-admin-ui": ">=1.2.725",
+        "@camstack/addon-agent-ui": ">=1.2.425",
+        "@camstack/addon-export-alexa": ">=1.2.204",
+        "@camstack/addon-pipeline": ">=1.2.678",
+        "@camstack/addon-provider-dreo": ">=0.2.170",
+        "@camstack/addon-provider-homematic": ">=1.2.211",
+        "@camstack/addon-provider-reolink": ">=1.2.256",
+        "@camstack/addon-provider-velux": ">=0.2.175"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

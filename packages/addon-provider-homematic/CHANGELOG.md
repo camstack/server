@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.211] - 2026-11-21
+
 ### Changed
 
 - Homematic gateway raises faults when several HmIP devices go unreachable together and when the radio stays silent, and shows them in the Active faults view; WatchDog variables are also read with the SV prefix.

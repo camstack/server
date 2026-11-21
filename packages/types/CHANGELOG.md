@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.617] - 2026-11-21
+
 ### Added
 
 - Automations get two new steps, Ping / reachability (TCP probe) and HTTP request, each with an optional expectation and a bounded retry window; runs keep the attempt count and last result.

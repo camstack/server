@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.256] - 2026-11-21
+
 ### Fixed
 
 - The hourly battery refresh no longer retries every 10 minutes when only the snapshot was stale; the window is stamped and the stale snapshot logged

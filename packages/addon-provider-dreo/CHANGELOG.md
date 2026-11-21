@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.170] - 2026-11-21
+
 ### Changed
 
 - Dreo now runs on the maintained Python Dreo library (pydreo-community) through a bundled worker: state comes from the cloud push, a reconnect triggers a re-read, and a commanded value is held until the device confirms it

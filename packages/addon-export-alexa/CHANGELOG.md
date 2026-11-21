@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.204] - 2026-11-21
+
 ### Changed
 
 - The Alexa settings explain that the public skill is a beta: request access in the GitHub discussion, then enable it from the beta invitation link

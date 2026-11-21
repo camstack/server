@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.678] - 2026-11-21
+
 ### Fixed
 
 - A battery camera that does not answer is no longer logged in to every 30 seconds: the broker gives up its dial after a bounded effort and retries only on the camera waking
