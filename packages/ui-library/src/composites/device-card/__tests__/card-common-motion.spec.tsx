@@ -16,7 +16,10 @@ const fake = vi.hoisted(() => ({
   setMotionTrigger: vi.fn(),
 }))
 
-vi.mock('../../../contexts/system-context', () => ({ useTrpcClient: () => ({}) }))
+vi.mock('../../../contexts/system-context', () => ({
+  useTrpcClient: () => ({}),
+  useOptionalSystem: () => null,
+}))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
     ...(fake.bound ? { motionTrigger: { setMotionTrigger: fake.setMotionTrigger } } : {}),

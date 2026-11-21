@@ -6,7 +6,8 @@
  * not declare.
  */
 import { useMemo } from 'react'
-import { useTrpcClient } from '../../../contexts/system-context'
+import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
+import { formatNumeric } from '../../../lib/format-numeric'
 import { useUiText } from '../../../contexts/ui-text'
 import {
   useConsumablesReset,
@@ -97,7 +98,7 @@ const reading = (
   label: string,
   value: number | null | undefined,
   unit: string,
-  digits: number,
+  precision: number | undefined,
   group = false,
 ): CardPowerDetail[] =>
   typeof value === 'number'
@@ -105,7 +106,10 @@ const reading = (
         {
           id,
           label,
-          value: `${value.toFixed(digits)} ${unit}`,
+          value:
+            unit === ''
+              ? formatNumeric(value, precision)
+              : `${formatNumeric(value, precision)} ${unit}`,
           ...(group ? { group } : {}),
         },
       ]
@@ -120,6 +124,8 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const device = useDeviceManagerGetDevice({ deviceId })
   const bindings = useDeviceManagerGetBindings({ deviceId })
   const labels = useDeviceProviderLabelsWith(client, true)
+  // The Precision set in Customize on this device; none = the default number rule.
+  const precision = useOptionalSystem()?.getDeviceInfo(deviceId)?.display?.precision
   const status = useDeviceStateSlice(dev?.state.deviceStatus)
   const meter = useDeviceStateSlice(
     dev?.powerMeter === undefined ? undefined : dev.state.powerMeter,
@@ -168,39 +174,39 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
           t('uiLibrary.deviceCard.power.voltage', 'Voltage'),
           meter.voltage,
           'V',
-          0,
+          precision,
         ),
         ...reading(
           'current',
           t('uiLibrary.deviceCard.power.current', 'Current'),
           meter.current,
           'A',
-          1,
+          precision,
         ),
         ...reading(
           'powerFactor',
           t('uiLibrary.deviceCard.power.factor', 'Power factor'),
           meter.powerFactor,
           '',
-          2,
+          precision,
         ),
         ...reading(
           'energy',
           t('uiLibrary.deviceCard.power.energy', 'Total energy'),
           meter.energy,
           'kWh',
-          1,
+          precision,
           true,
         ),
       ],
     }
-  }, [meter, t])
+  }, [meter, t, precision])
 
   const consumablesBound = dev?.consumables !== undefined
   const items = useMemo((): readonly CardConsumable[] | null => {
     if (!consumablesBound || consumables === undefined) return null
-    return consumables.items.map((item) => toCardConsumable(item, canActuate, t))
-  }, [consumablesBound, consumables, canActuate, t])
+    return consumables.items.map((item) => toCardConsumable(item, canActuate, t, precision))
+  }, [consumablesBound, consumables, canActuate, t, precision])
 
   const seriesReady =
     series.presence === 'present' &&
@@ -209,6 +215,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const actuationsOffered = transitionsPresence !== 'absent'
   const offlineDuration = sinceText(offlineSince, Date.now(), t)
   const common: CardCommon = {
+    ...(precision === undefined ? {} : { precision }),
     name: device.data?.name ?? '',
     integration: labels.get(deviceId) ?? null,
     online,

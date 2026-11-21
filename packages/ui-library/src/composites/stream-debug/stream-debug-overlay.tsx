@@ -6,6 +6,7 @@ import {
   type FreezeVerdictKind,
   type WebrtcDebugStats,
 } from './webrtc-debug-stats.js'
+import { formatNumeric } from '../../lib/format-numeric'
 
 // i18n-ignore-start: the overlay prints WebRTC statistics, whose field names (rtt, jitter, ice, dtls, ...) are protocol vocabulary shown verbatim
 
@@ -80,7 +81,7 @@ function age(at: number | null, now: number, t: UiTextFn): string {
   if (ms < 1_000) return t('uiLibrary.streamDebugOverlay.msAgo', '{{value}}ms ago', { value: ms })
   if (ms < 60_000) {
     return t('uiLibrary.streamDebugOverlay.sAgo', '{{value}}s ago', {
-      value: (ms / 1000).toFixed(1),
+      value: formatNumeric(ms / 1000, undefined),
     })
   }
   return t('uiLibrary.streamDebugOverlay.msAgoLong', '{{minutes}}m{{seconds}}s ago', {

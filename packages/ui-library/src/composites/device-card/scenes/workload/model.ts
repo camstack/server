@@ -5,6 +5,7 @@
  * action has no button. A value the provider did not report is `null` and is
  * not drawn (D393); `state: null` is unknown, never stopped (D315).
  */
+import { formatNumeric } from '../../../../lib/format-numeric'
 import {
   DeviceRole,
   type WorkloadAction,
@@ -261,7 +262,7 @@ export function workloadUptime(since: number | null, now: number, t: UiTextFn): 
 }
 
 export function formatKbps(kbps: number): string {
-  if (kbps >= 1000) return `${(kbps / 1000).toFixed(kbps >= 100_000 ? 0 : 1)} Mbit/s`
+  if (kbps >= 1000) return `${formatNumeric(kbps / 1000, undefined)} Mbit/s`
   return `${Math.round(kbps)} kbit/s`
 }
 
@@ -335,7 +336,9 @@ export function workloadResourceStats(
       r.temperature,
       (v) => `${Math.round(v)} °C`,
     ),
-    stat('load', t('uiLibrary.deviceCard.workload.load', 'Load'), r.load1, (v) => v.toFixed(2)),
+    stat('load', t('uiLibrary.deviceCard.workload.load', 'Load'), r.load1, (v) =>
+      formatNumeric(v, undefined),
+    ),
     stat('vcpus', t('uiLibrary.deviceCard.workload.vcpus', 'vCPUs'), r.vcpus, String),
     stat('net-rx', t('uiLibrary.deviceCard.workload.netRx', 'Received'), r.netRxKbps, formatKbps),
     stat('net-tx', t('uiLibrary.deviceCard.workload.netTx', 'Sent'), r.netTxKbps, formatKbps),

@@ -17,6 +17,7 @@ import {
 } from '@camstack/ui-library'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface NodeLiveTabProps {
   readonly nodeId: string
@@ -97,7 +98,9 @@ export function NodeLiveTab({ nodeId, refreshToken: _refreshToken }: NodeLiveTab
                     {getPhaseVisual(cam.phase, uiText).label}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-right text-foreground">{cam.actualFps.toFixed(1)}</td>
+                <td className="px-3 py-2 text-right text-foreground">
+                  {formatNumeric(cam.actualFps, undefined)}
+                </td>
                 <td className="px-3 py-2 text-right text-foreground">{cam.queueDepth ?? 0}</td>
                 <td className="px-3 py-2 text-right text-foreground">
                   {cam.avgInferenceTimeMs.toFixed(0)}

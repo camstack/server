@@ -6,6 +6,7 @@
  */
 import type { HeatPumpCircuit, HeatPumpOptionSetting, HeatPumpStatus } from '@camstack/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
+import { formatNumeric } from '../../../lib/format-numeric'
 import {
   HEAT_PUMP_SYSTEM_MODES,
   type HeatPumpActivity,
@@ -72,16 +73,20 @@ export function heatPumpCircuitPicker(
   return { kind: 'mode', value: mode.value, options: options(mode.allowed, t) }
 }
 
-const degrees = (value: number | null, digits: number): string | null =>
-  value === null ? null : `${value.toFixed(digits)}°`
+const degrees = (value: number | null, precision: number | undefined): string | null =>
+  value === null ? null : `${formatNumeric(value, precision)}°`
 
-export function heatPumpCircuitView(circuit: HeatPumpCircuit, t: UiTextFn): HeatPumpCircuitView {
+export function heatPumpCircuitView(
+  circuit: HeatPumpCircuit,
+  t: UiTextFn,
+  precision?: number,
+): HeatPumpCircuitView {
   const picker = heatPumpCircuitPicker(circuit, t)
   const chosen =
     picker === null || picker.value === null ? null : heatPumpValueLabel(picker.value, t)
   if (circuit.kind === 'dhw') {
-    const target = degrees(circuit.targetTemp, 0)
-    const current = degrees(circuit.currentTemp, 1)
+    const target = degrees(circuit.targetTemp, precision)
+    const current = degrees(circuit.currentTemp, precision)
     return {
       id: circuit.id,
       label: circuit.label,
@@ -104,7 +109,7 @@ export function heatPumpCircuitView(circuit: HeatPumpCircuit, t: UiTextFn): Heat
     id: circuit.id,
     label: circuit.label,
     status: circuit.active === true ? working : (chosen ?? '—'),
-    detail: degrees(circuit.targetTemp, 0),
+    detail: degrees(circuit.targetTemp, precision),
     picker,
   }
 }

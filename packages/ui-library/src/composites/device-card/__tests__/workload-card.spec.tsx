@@ -221,7 +221,7 @@ describe('workload model', () => {
     expect(stats.map((s) => s.id)).toEqual(['cpu', 'memory', 'net-rx'])
     expect(stats[0]?.value).toBe('23%')
     expect(stats[1]?.value).toBe('25%')
-    expect(stats[2]?.value).toBe('1.8 Mbit/s')
+    expect(stats[2]?.value).toBe('1.84 Mbit/s')
   })
 
   it('prefers a reported memory percent, and falls back to the bytes used without a total', () => {

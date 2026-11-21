@@ -1,3 +1,4 @@
+import { formatNumeric } from '../../../../lib/format-numeric'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 /** A number, in the unit the operator reads (converted by the connected card). */
@@ -60,7 +61,5 @@ export function steppedValue(control: NumericControlValue, direction: 1 | -1): n
 }
 
 export function numericText(control: NumericControlValue): string {
-  return control.precision === null
-    ? String(control.value)
-    : control.value.toFixed(control.precision)
+  return formatNumeric(control.value, control.precision ?? undefined)
 }

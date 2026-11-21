@@ -2,6 +2,7 @@
  * Rendering helpers for the WebRTC diagnostics: an unmeasured value is the
  * word "unknown", never a dash that reads as zero and never a 0 (D393).
  */
+import { formatNumeric } from '../../lib/format-numeric'
 
 export const UNKNOWN_TEXT = 'unknown'
 
@@ -24,6 +25,7 @@ export const fmtBytes = (v: number | null): string =>
     // i18n-ignore-end
   })
 
-export const fmtPercent = (v: number | null): string => formatMaybe(v, (n) => `${n.toFixed(1)} %`)
+export const fmtPercent = (v: number | null): string =>
+  formatMaybe(v, (n) => `${formatNumeric(n, undefined)} %`)
 
 export const fmtText = (v: string | null): string => formatMaybe(v, (s) => s)

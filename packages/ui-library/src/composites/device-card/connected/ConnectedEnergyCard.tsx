@@ -1,6 +1,6 @@
 import type { EnergySystemStatus } from '@camstack/types'
 import { type ReactElement, useState } from 'react'
-import { useTrpcClient } from '../../../contexts/system-context'
+import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { EnergyCard, energySince } from '../scenes/energy/EnergyCard'
@@ -27,6 +27,8 @@ export function ConnectedEnergyCard({
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
+  // The Precision set in Customize on THIS device wins; none = the default number rule.
+  const precision = useOptionalSystem()?.getDeviceInfo(deviceId)?.display?.precision
   const card = useCardCommon({ deviceId, canActuate })
   const slice: EnergySystemStatus | undefined = useDeviceStateSlice(
     dev?.energySystem === undefined ? undefined : dev.state.energySystem,
@@ -59,8 +61,9 @@ export function ConnectedEnergyCard({
       model={{
         common: { ...card.common, battery: null, power: null },
         activity: energyActivityOf(flows),
-        since: energySince(flows, t),
+        since: energySince(flows, t, precision),
         flows,
+        ...(precision === undefined ? {} : { precision }),
         // Today reads the system's own day totals; another day reads its recorded counters.
         today: isToday ? energyTodayOf(slice) : day.today,
       }}

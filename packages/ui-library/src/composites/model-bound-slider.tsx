@@ -17,6 +17,7 @@
  * The rule itself is `resolveModelBoundSetting` in `@camstack/types` — the same
  * one the runner applies — never re-derived here.
  */
+import { formatNumeric } from '../lib/format-numeric'
 import { Slider } from '../primitives/slider'
 import type { ConfigField, ConfigNumberField, ConfigSliderField } from '@camstack/types'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
@@ -66,7 +67,7 @@ function sourceLabel(source: ModelBoundSource, t: UiTextFn): string {
 
 function formatNumber(value: number, scale: number | undefined): string {
   const display = scale !== undefined ? value / scale : value
-  return display.toFixed(2).replace(/\.?0+$/, '')
+  return formatNumeric(display, undefined)
 }
 
 export function ModelBoundSlider({

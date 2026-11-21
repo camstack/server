@@ -48,6 +48,7 @@ import {
 import { formatBytes } from '../../../lib/format-size'
 import { PROCESS_CLASS_RANK, type ProcessClassification } from './process-class-rank'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface ProcessesTabProps {
   readonly nodeId: string
@@ -170,7 +171,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         header: t('cluster.processesTab.cpu', 'CPU%'),
         align: 'right',
         sortValue: (r) => r.cpuPercent,
-        render: (r) => r.cpuPercent.toFixed(1),
+        render: (r) => formatNumeric(r.cpuPercent, undefined),
       },
       {
         key: 'memoryRssBytes',

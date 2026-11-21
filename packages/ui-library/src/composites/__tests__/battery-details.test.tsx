@@ -39,7 +39,7 @@ describe('batteryDetailRows', () => {
       { kind: 'phrase', phrase: 'solar' },
       { kind: 'number', text: '3.92 V' },
       { kind: 'number', text: '120 mA' },
-      { kind: 'number', text: '24.3 °C' },
+      { kind: 'number', text: '24.26 °C' },
       { kind: 'phrase', phrase: 'awake' },
     ])
   })
@@ -64,7 +64,7 @@ describe('BatteryBadge full variant', () => {
     fireEvent.click(screen.getByLabelText('Battery details'))
     expect(screen.getByText('Mains')).not.toBeNull()
     expect(screen.getByText('Full')).not.toBeNull()
-    expect(screen.getByText('21.0 °C')).not.toBeNull()
+    expect(screen.getByText('21 °C')).not.toBeNull()
     expect(screen.getByText('Asleep')).not.toBeNull()
     expect(screen.queryByText('Voltage')).toBeNull()
   })

@@ -1,3 +1,4 @@
+import { formatNumeric } from '../../../../lib/format-numeric'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 /** `sun` while the panels produce, otherwise `idle`. */
@@ -66,6 +67,8 @@ export interface EnergyCardModel {
   readonly since: string | null
   readonly flows: EnergyFlows
   readonly today: EnergyToday | null
+  /** Display precision resolved for the system device (Customize → Display); absent = the default rule. */
+  readonly precision?: number
 }
 
 export type EnergyCardActions = CardCommonActions
@@ -82,6 +85,11 @@ export function energyActivityOf(flows: EnergyFlows): EnergyActivity {
 }
 
 /** "4.2 kW" — the magnitude only; the arrow says the direction. */
-export function formatKw(watts: number): string {
-  return `${(Math.abs(watts) / 1000).toFixed(1)} kW`
+export function formatKw(watts: number, precision?: number): string {
+  return `${formatNumeric(Math.abs(watts) / 1000, precision)} kW`
+}
+
+/** "4.2 kWh" — the magnitude only. */
+export function formatKwh(kwh: number, precision?: number): string {
+  return `${formatNumeric(Math.abs(kwh), precision)} kWh`
 }

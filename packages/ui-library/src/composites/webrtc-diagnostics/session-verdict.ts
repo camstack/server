@@ -9,6 +9,7 @@
  */
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { HubReachabilityFlag } from './ice-candidates'
+import { formatNumeric } from '../../lib/format-numeric'
 
 export type SessionVerdictLayer =
   | 'transport'
@@ -171,7 +172,7 @@ function mediaVerdict(input: VerdictInput, t: UiTextFn): SessionVerdict {
     {
       pli: signalValue(pli, t),
       freezes: signalValue(freezes, t),
-      loss: loss === null ? signalValue(null, t) : `${loss.toFixed(1)}%`,
+      loss: loss === null ? signalValue(null, t) : `${formatNumeric(loss, undefined)}%`,
     },
   )
   if (storm) {

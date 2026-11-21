@@ -3,6 +3,7 @@
  * back to when no layer stores it. Pure, so the provenance line and its tests
  * agree on one spelling.
  */
+import { formatNumeric } from '../../lib/format-numeric'
 import { type ConfigField, isModelScopedStepSettingKey } from '@camstack/types'
 
 /** A field that stores a value (not a separator, an info block or a group). */
@@ -54,7 +55,7 @@ export function defaultOfField(
 }
 
 function trimNumber(n: number): string {
-  return n.toFixed(2).replace(/\.?0+$/, '')
+  return formatNumeric(n, undefined)
 }
 
 /** One stored value as the operator reads it (`0.65`, `on`, `Person, Vehicle`, `—`). */

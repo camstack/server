@@ -84,6 +84,7 @@ import { TimezoneSelector } from './timezone-selector'
 import { OptionSelect, type OptionSelectOption } from './option-select'
 import { ConfigInstanceSelectControl } from './config-instance-select-field'
 import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
+import { formatNumeric } from '../lib/format-numeric'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
 export interface ProbeState {
@@ -2515,7 +2516,7 @@ function formatReadonlyValue(value: unknown, unit?: string): string {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'boolean') return value ? 'yes' : 'no'
   if (typeof value === 'number') {
-    const formatted = Number.isInteger(value) ? String(value) : value.toFixed(2)
+    const formatted = formatNumeric(value, undefined)
     return unit ? `${formatted} ${unit}` : formatted
   }
   if (typeof value === 'string') return value

@@ -17,6 +17,7 @@ import { netPowerOf, type PowerMeterStatus } from '@camstack/types'
 import { useSystem } from '../../contexts/system-context'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { cn } from '../../lib/cn'
+import { formatNumeric } from '../../lib/format-numeric'
 import type { CapSettingsComponentProps } from './index'
 
 /** A finite number, or null: the one gate between a slice field and the screen. */
@@ -24,32 +25,45 @@ function known(value: number | undefined | null): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
-/** Whole watts below a kilowatt, one decimal above. */
-export function formatPowerWatts(watts: number): {
+/** Whole watts below a kilowatt, the shared number rule above; the device's Precision wins everywhere. */
+export function formatPowerWatts(
+  watts: number,
+  precision?: number,
+): {
   readonly value: string
   readonly unit: string
 } {
-  return Math.abs(watts) >= 1000
-    ? { value: (watts / 1000).toFixed(1), unit: 'kW' }
-    : { value: String(Math.round(watts)), unit: 'W' }
+  if (Math.abs(watts) >= 1000) return { value: formatNumeric(watts / 1000, precision), unit: 'kW' }
+  return {
+    value: precision === undefined ? String(Math.round(watts)) : formatNumeric(watts, precision),
+    unit: 'W',
+  }
 }
 
-/** Delivered power is small (PoE): one decimal under 10 W, otherwise as `formatPowerWatts`. */
-function formatDeliveredWatts(watts: number): {
+/** Delivered power is small (PoE): the shared number rule under 10 W, otherwise as `formatPowerWatts`. */
+function formatDeliveredWatts(
+  watts: number,
+  precision?: number,
+): {
   readonly value: string
   readonly unit: string
 } {
-  return Math.abs(watts) < 10 ? { value: watts.toFixed(1), unit: 'W' } : formatPowerWatts(watts)
+  return Math.abs(watts) < 10
+    ? { value: formatNumeric(watts, precision), unit: 'W' }
+    : formatPowerWatts(watts, precision)
 }
 
-/** Two decimals under 100 kWh, whole kWh above. */
-export function formatEnergyKwh(kwh: number): string {
-  return Math.abs(kwh) >= 100 ? String(Math.round(kwh)) : kwh.toFixed(2)
+/** The shared number rule under 100 kWh, whole kWh above (unless the device sets a Precision). */
+export function formatEnergyKwh(kwh: number, precision?: number): string {
+  return precision === undefined && Math.abs(kwh) >= 100
+    ? String(Math.round(kwh))
+    : formatNumeric(kwh, precision)
 }
 
 export function PowerMeterLine({ deviceId }: CapSettingsComponentProps): JSX.Element | null {
   const t = useUiText()
   const system = useSystem()
+  const precision = system.getDeviceInfo(deviceId)?.display?.precision
   const { slice } = useDeviceCapability<object, PowerMeterStatus>({
     trpc: system.trpcClient,
     deviceId,
@@ -61,12 +75,12 @@ export function PowerMeterLine({ deviceId }: CapSettingsComponentProps): JSX.Ele
   const delivered = known(slice?.deliveredPower)
   if (power === null && energy === null && delivered === null) return null
   const drawing = (power ?? delivered ?? 0) > 0
-  const shown = power === null ? null : formatPowerWatts(power)
-  const shownDelivered = delivered === null ? null : formatDeliveredWatts(delivered)
+  const shown = power === null ? null : formatPowerWatts(power, precision)
+  const shownDelivered = delivered === null ? null : formatDeliveredWatts(delivered, precision)
   // The device's own draw is only worth a figure when something is passed on downstream.
   const netRaw = slice === undefined || delivered === null ? undefined : netPowerOf(slice)
   const net = known(netRaw)
-  const shownNet = net === null ? null : formatDeliveredWatts(net)
+  const shownNet = net === null ? null : formatDeliveredWatts(net, precision)
   const deliveredLabel = t('uiLibrary.powerMeterLine.delivered', 'Delivered')
   const netLabel = t('uiLibrary.powerMeterLine.net', 'Net')
 
@@ -127,7 +141,9 @@ export function PowerMeterLine({ deviceId }: CapSettingsComponentProps): JSX.Ele
           className="ml-auto flex items-baseline gap-1 tabular-nums"
           title={t('uiLibrary.powerMeterLine.energy', 'Energy')}
         >
-          <span className="text-sm text-foreground-muted">{formatEnergyKwh(energy)}</span>
+          <span className="text-sm text-foreground-muted">
+            {formatEnergyKwh(energy, precision)}
+          </span>
           <span className="text-xs text-foreground-subtle">kWh</span>
         </span>
       )}

@@ -13,6 +13,7 @@ import { HelperGroupStatus } from '../HelperGroupStatus'
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
 import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
 import { ResyncButton } from '../ResyncButton'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface OverviewTabProps {
   device: Record<string, unknown>
@@ -22,7 +23,7 @@ function formatBitrate(kbps: number): string {
   // i18n-ignore: unit symbols
   if (kbps < 1000) return `${kbps.toFixed(0)} kbps`
   // i18n-ignore: unit symbols
-  return `${(kbps / 1000).toFixed(1)} Mbps`
+  return `${formatNumeric(kbps / 1000, undefined)} Mbps`
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +183,7 @@ export function OverviewTab({ device }: OverviewTabProps) {
                   />
                   <MiniStat
                     label={t('device.overviewTab.packetLoss', 'Packet Loss')}
-                    value={`${(stats.packetLossPercent ?? 0).toFixed(2)}%`}
+                    value={`${formatNumeric(stats.packetLossPercent ?? 0, undefined)}%`}
                     warning={(stats.packetLossPercent ?? 0) > 1}
                   />
                 </div>

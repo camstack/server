@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device capability, or a slot of it, can be served by another device as one whole-capability link; core-blocks reads and migrates them (getCapLinks, migrateCapLinks).
+- Default reading format is at most two decimals with trailing zeros trimmed
 
 ## [1.2.619] - 2026-11-21
 

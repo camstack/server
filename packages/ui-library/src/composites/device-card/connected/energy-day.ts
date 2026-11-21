@@ -62,7 +62,9 @@ export interface EnergyDayTotals {
   readonly dischargedKwh: number | null
 }
 
-const tenth = (v: number | null): number | null => (v === null ? null : Math.round(v * 10) / 10)
+/** Kills float residue (11.299999) without costing a decimal the operator may have asked for. */
+const settle = (v: number | null): number | null =>
+  v === null ? null : Math.round(v * 1000) / 1000
 
 /** The card's day facts of a past day, from its counters. Null when nothing was recorded at all. */
 export function energyTodayOfDay(
@@ -83,19 +85,19 @@ export function energyTodayOfDay(
     hasHeatPump,
   )
   const day: EnergyToday = {
-    producedKwh: tenth(totals.producedKwh),
+    producedKwh: settle(totals.producedKwh),
     selfConsumptionPct: selfConsumptionPct(totals.producedKwh, totals.exportedKwh),
-    importedKwh: tenth(totals.importedKwh),
-    exportedKwh: tenth(totals.exportedKwh),
+    importedKwh: settle(totals.importedKwh),
+    exportedKwh: settle(totals.exportedKwh),
     netGridKwh: netGridKwh(totals.importedKwh, totals.exportedKwh),
-    heatPumpKwh: tenth(totals.heatPumpKwh),
+    heatPumpKwh: settle(totals.heatPumpKwh),
     houseKwh: balance.consumptionKwh,
     householdKwh: balance.householdKwh,
     sources: balance.sources,
     selfSufficiencyPct: balance.selfSufficiencyPct,
     autonomyHours: null,
-    chargedTodayKwh: tenth(totals.chargedKwh),
-    dischargedTodayKwh: tenth(totals.dischargedKwh),
+    chargedTodayKwh: settle(totals.chargedKwh),
+    dischargedTodayKwh: settle(totals.dischargedKwh),
     socPct: null,
     healthPct: null,
     heatPumpShareNowPct: null,

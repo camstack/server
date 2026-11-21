@@ -1,5 +1,6 @@
 import { useUiText } from '../contexts/ui-text'
 import { useRef, useEffect, useCallback, type JSX } from 'react'
+import { formatNumeric } from '../lib/format-numeric'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,7 +122,7 @@ export function AudioWaveform({
   }, [draw])
 
   const durationMs = samples && sampleRate ? Math.round((samples.length / sampleRate) * 1000) : 0
-  const durationSec = (durationMs / 1000).toFixed(1)
+  const durationSec = formatNumeric(durationMs / 1000, undefined)
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>

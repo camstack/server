@@ -5,6 +5,7 @@
  * device-detail hero is the device card (`EnergyCardHero` in panel-controls.tsx).
  */
 import type { ReactNode } from 'react'
+import { useOptionalSystem } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { ValueChip } from '../device-card/parts/ValueChip'
@@ -23,6 +24,7 @@ interface EnergyReading {
  */
 export function EnergySystemInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
+  const precision = useOptionalSystem()?.getDeviceInfo(deviceId)?.display?.precision
   const { cap, slice } = useDeviceCapability({
     trpc,
     deviceId,
@@ -36,7 +38,7 @@ export function EnergySystemInlineControl({ trpc, deviceId }: DeviceControlProps
   if (solarW !== null) {
     readings.push({
       id: 'solar',
-      text: `${t('uiLibrary.deviceCard.energy.solar', 'Solar')} ${formatKw(solarW)}`,
+      text: `${t('uiLibrary.deviceCard.energy.solar', 'Solar')} ${formatKw(solarW, precision)}`,
     })
   }
   if (pct !== null) {

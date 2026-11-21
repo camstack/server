@@ -49,6 +49,7 @@ import { agoLabel, sameShape, scheduleLabel, targetsFromIds } from './notificati
 import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
 import { type TagsWire, tagsForCreate, tagsForPatch } from './rule-tags-wire'
+import { formatNumeric } from '@camstack/ui-library'
 
 // ── The bridge ───────────────────────────────────────────────────────
 
@@ -499,7 +500,7 @@ export function timelapseFormWarnings(form: TimelapseFormState): readonly string
     const shortest = shortestPassForDwellSec(form.minDwellSec, form.framerate)
     if (shortest > 3) {
       warnings.push(
-        `A passage shorter than ${shortest.toFixed(1)}s can never reach this stay, even at the finest sampling — it is rendered with every frame that exists and no more.`,
+        `A passage shorter than ${formatNumeric(shortest, undefined)}s can never reach this stay, even at the finest sampling — it is rendered with every frame that exists and no more.`,
       )
     }
   }

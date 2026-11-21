@@ -21,6 +21,7 @@ import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { CameraPicker, FieldLabel, ZonePicker } from '../flow/scene-pickers'
 import type { AutomationDevice } from './automation-data'
 import { SubjectPicker } from './SubjectPicker'
+import { formatNumeric } from '@camstack/ui-library'
 
 type IntervalLeaf = Extract<AutomationLeaf, { kind: 'interval' }>
 type Phase = StationaryLeaf['phase']
@@ -69,7 +70,7 @@ export function DetectionFields({ leaf: trigger, devices, onChange }: DetectionF
           {percent === 0
             ? t('flow.scene.minScoreAny', 'Minimum score: any')
             : t('flow.scene.minScore', 'Minimum score: {{value}}', {
-                value: (percent / PERCENT).toFixed(2),
+                value: formatNumeric(percent / PERCENT, undefined),
               })}
         </FieldLabel>
         <Slider

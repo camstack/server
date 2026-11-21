@@ -38,10 +38,17 @@ const FULL: EnergySystemStatus = {
   lastFetchedAt: 0,
 }
 
-const hub = vi.hoisted(() => ({ slice: null as EnergySystemStatus | null }))
+const hub = vi.hoisted(() => ({
+  slice: null as EnergySystemStatus | null,
+  /** The composite device's resolved display (Customize → Display). */
+  display: undefined as { precision?: number } | undefined,
+}))
 
 vi.mock('../../../contexts/system-context', () => ({
   useTrpcClient: () => ({}),
+  useOptionalSystem: () => ({
+    getDeviceInfo: () => (hub.display === undefined ? null : { display: hub.display }),
+  }),
 }))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
@@ -107,6 +114,7 @@ vi.mock('../connected/use-card-common', () => ({
 
 beforeEach(() => {
   hub.slice = null
+  hub.display = undefined
 })
 afterEach(cleanup)
 
@@ -114,8 +122,8 @@ describe('energyDailyFacts', () => {
   it('derives each fact from the slice', () => {
     const facts = energyDailyFacts(FULL)
     expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.34) * 100, 5)
-    expect(facts.producedKwh).toBe(18.4)
-    expect(facts.houseKwh).toBe(11.3)
+    expect(facts.producedKwh).toBe(18.44)
+    expect(facts.houseKwh).toBe(11.34)
     expect(facts.importedKwh).toBe(2.1)
     expect(facts.exportedKwh).toBe(7.3)
     expect(facts.autonomyHours).toBeCloseTo(7.4 / 0.9, 5)
@@ -150,7 +158,7 @@ describe('energyDailyFacts', () => {
       house: { powerW: 900, energyKwh: 8000, todayKwh: null },
     })
     // 18.44 + 2.1 − 7.3 = 13.24
-    expect(facts.houseKwh).toBe(11.3)
+    expect(facts.houseKwh).toBe(11.34)
     expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.34) * 100, 5)
   })
 
@@ -241,9 +249,9 @@ describe('the energy system card', () => {
     ).toBeNull()
   })
 
-  it('today’s totals round to a tenth and derive the self-use', () => {
+  it('today’s totals keep their reported decimals and derive the self-use', () => {
     const today = energyTodayOf(FULL)
-    expect(today?.producedKwh).toBe(18.4)
+    expect(today?.producedKwh).toBe(18.44)
     expect(today?.heatPumpKwh).toBeNull()
     expect(today?.selfConsumptionPct).toBeCloseTo(((18.44 - 7.3) / 18.44) * 100, 5)
   })
@@ -251,8 +259,8 @@ describe('the energy system card', () => {
   it('without a house day total the household is the balance minus the heat pump', () => {
     const withPump = { ...FULL, heatPump: { powerW: 600, energyKwh: 1500, todayKwh: 3 } }
     // 18.44 + 2.1 − 7.3 + 4.2 − 6.1 = 11.34; minus the pump's 3 = 8.34.
-    expect(energyTodayOf(withPump)?.householdKwh).toBe(8.3)
-    expect(energyTodayOf(withPump)?.houseKwh).toBe(11.3)
+    expect(energyTodayOf(withPump)?.householdKwh).toBe(8.34)
+    expect(energyTodayOf(withPump)?.houseKwh).toBe(11.34)
     // The house's own day total wins when it is reported.
     const reported = { ...withPump, house: { powerW: 300, energyKwh: 6500, todayKwh: 5 } }
     expect(energyTodayOf(reported)?.householdKwh).toBe(5)
@@ -277,7 +285,7 @@ describe('the energy system card', () => {
     hub.slice = FULL
     render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.getByText('Charging · 74%')).toBeTruthy()
-    expect(screen.getAllByTestId('dc-energy-today')[0]?.textContent).toContain('18.4 kWh')
+    expect(screen.getAllByTestId('dc-energy-today')[0]?.textContent).toContain('18.44 kWh')
     // The corner's 19% is not drawn (a "19%" source share may sit in the totals).
     expect(
       screen
@@ -291,8 +299,8 @@ describe('the energy system card', () => {
     render(<ConnectedEnergyCard deviceId={1} />)
     const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toEqual([
-      'Produced18.4 kWh',
-      'Consumed11.3 kWh',
+      'Produced18.44 kWh',
+      'Consumed11.34 kWh',
       'Imported2.1 kWh',
       'Exported7.3 kWh',
       'Solar44%',
@@ -300,10 +308,29 @@ describe('the energy system card', () => {
       'Grid19%',
       'Now67%',
       'Health96%',
-      'Autonomy≈ 8.2 h',
+      'Autonomy≈ 8.22 h',
       'Charged6.1 kWh',
       'Discharged4.2 kWh',
     ])
+  })
+
+  it('honours the Precision set on the composite device for every kWh and kW it shows', () => {
+    hub.slice = FULL
+    hub.display = { precision: 0 }
+    render(<ConnectedEnergyCard deviceId={1} />)
+    const chips = screen.getAllByTestId('dc-energy-today-chip').map((chip) => chip.textContent)
+    expect(chips).toContain('Produced18 kWh')
+    expect(chips).toContain('Autonomy≈ 8 h')
+    expect(centreOf('produced')).toContain('18kWh')
+    expect(screen.getByTestId('dc-energy-node-solar').textContent).toContain('4 kW')
+  })
+
+  it('keeps the trailing zeros of an explicit Precision', () => {
+    hub.slice = FULL
+    hub.display = { precision: 3 }
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(centreOf('imported')).toContain('2.100kWh')
+    expect(screen.getByTestId('dc-energy-node-solar').textContent).toContain('4.200 kW')
   })
 
   it('the centre circle shows self-sufficiency, imported, exported and produced together', () => {
@@ -312,7 +339,7 @@ describe('the energy system card', () => {
     expect(centreOf('sufficiency')).toContain('81%')
     expect(centreOf('imported')).toContain('2.1kWh')
     expect(centreOf('exported')).toContain('7.3kWh')
-    expect(centreOf('produced')).toContain('18.4kWh')
+    expect(centreOf('produced')).toContain('18.44kWh')
     expect(screen.getByTestId('dc-energy-centre').getAttribute('role')).toBe('group')
   })
 
@@ -335,9 +362,9 @@ describe('the energy system card', () => {
     // The scene's nodes read that day's kWh, with no live marker or live state.
     expect(screen.queryByText('Live now')).toBeNull()
     expect(screen.queryByText('Producing')).toBeNull()
-    expect(screen.getByTestId('dc-energy-node-solar').textContent).toContain('10.0 kWh')
+    expect(screen.getByTestId('dc-energy-node-solar').textContent).toContain('10 kWh')
     expect(screen.getByTestId('dc-energy-branch-grid').getAttribute('data-direction')).toBe('in')
-    expect(centreOf('imported')).toContain('4.0kWh')
+    expect(centreOf('imported')).toContain('4kWh')
     expect(centreOf('exported')).toContain('2.5kWh')
     expect((screen.getByLabelText('Next day') as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(screen.getByText('Today'))

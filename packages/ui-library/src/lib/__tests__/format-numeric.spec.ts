@@ -15,9 +15,23 @@ describe('formatNumeric', () => {
     expect(formatNumeric(1200, undefined)).toBe('1200')
   })
 
-  it('returns toFixed(1) when precision is undefined and value is not integer', () => {
+  it('keeps at most two decimals, trailing zeros trimmed, when precision is undefined', () => {
     expect(formatNumeric(21.5, undefined)).toBe('21.5')
-    expect(formatNumeric(24.567, undefined)).toBe('24.6')
+    expect(formatNumeric(21.47, undefined)).toBe('21.47')
+    expect(formatNumeric(24.567, undefined)).toBe('24.57')
+    expect(formatNumeric(1.2, undefined)).toBe('1.2')
+    expect(formatNumeric(1.2000001, undefined)).toBe('1.2')
     expect(formatNumeric(0.1, undefined)).toBe('0.1')
+    expect(formatNumeric(-3.456, undefined)).toBe('-3.46')
+  })
+
+  it('reads a non-zero value that rounds to nothing as below the last decimal', () => {
+    expect(formatNumeric(0.001, undefined)).toBe('<0.01')
+    expect(formatNumeric(-0.001, undefined)).toBe('-<0.01')
+  })
+
+  it('lets the operator precision win over the default', () => {
+    expect(formatNumeric(21.4712, 3)).toBe('21.471')
+    expect(formatNumeric(1.2, 2)).toBe('1.20')
   })
 })

@@ -52,6 +52,7 @@ import {
 } from './load-card-filter'
 import { useNodeLoadSeries } from './use-node-load-series'
 import { CameraLoadPanel } from './CameraLoadPanel'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface LoadTabProps {
   readonly nodeId: string
@@ -247,7 +248,7 @@ export function LoadTab({ nodeId, isHub }: LoadTabProps) {
                 emptyMessage={t(
                   'clusterLoad.cpuUnavailable',
                   'No thread split on this node. Lifetime average: {{avg}}%',
-                  { avg: (s.points.at(-1)?.cpuLifetimePercent ?? 0).toFixed(1) },
+                  { avg: formatNumeric(s.points.at(-1)?.cpuLifetimePercent ?? 0, undefined) },
                 )}
               />
               <SingleLineChart

@@ -16,6 +16,7 @@ import { CollapsibleCard } from '../primitives/collapsible-card'
 import { EventKindGlyph } from './event-kind-visuals'
 import { ModelPicker } from './model-picker'
 import { ModelBoundSlider } from './model-bound-slider'
+import { formatNumeric } from '../lib/format-numeric'
 
 // ---------------------------------------------------------------------------
 // Public interfaces
@@ -453,7 +454,7 @@ function ConfigSchemaFieldControl({
           </span>
           {showValue && (
             <span className="text-xs font-medium text-foreground tabular-nums">
-              {typeof display === 'number' ? display.toFixed(2).replace(/\.?0+$/, '') : display}
+              {typeof display === 'number' ? formatNumeric(display, undefined) : display}
               {unit ? ` ${unit}` : ''}
             </span>
           )}

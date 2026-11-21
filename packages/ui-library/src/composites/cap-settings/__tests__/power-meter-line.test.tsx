@@ -6,16 +6,21 @@ import { PowerMeterLine, formatEnergyKwh, formatPowerWatts } from '../PowerMeter
 import { HOST_WIDGETS } from '../../../widgets/host-widgets'
 
 let slice: PowerMeterStatus | undefined
+let precision: number | undefined
 
 vi.mock('../../../hooks/use-device-capability', () => ({
   useDeviceCapability: () => ({ cap: undefined, slice, available: true }),
 }))
 vi.mock('../../../contexts/system-context', () => ({
-  useSystem: () => ({ trpcClient: {} }),
+  useSystem: () => ({
+    trpcClient: {},
+    getDeviceInfo: () => (precision === undefined ? null : { display: { precision } }),
+  }),
 }))
 
 beforeEach(() => {
   slice = undefined
+  precision = undefined
 })
 afterEach(cleanup)
 
@@ -32,6 +37,14 @@ describe('PowerMeterLine', () => {
     expect(screen.getByTestId('power-meter-pulse')).toBeTruthy()
   })
 
+  it("honours the device's Precision on power and energy", () => {
+    slice = { power: 412.4, energy: 3.456, lastFetchedAt: 1 }
+    precision = 1
+    render(<PowerMeterLine deviceId={1} />)
+    expect(screen.getByTestId('power-meter-power').textContent).toBe('412.4W')
+    expect(screen.getByTestId('power-meter-energy').textContent).toBe('3.5kWh')
+  })
+
   it('a real 0 W is drawn as 0, without the pulse', () => {
     slice = { power: 0, lastFetchedAt: 1 }
     render(<PowerMeterLine deviceId={1} />)
@@ -44,7 +57,7 @@ describe('PowerMeterLine', () => {
     slice = { energy: 12, lastFetchedAt: 1 }
     render(<PowerMeterLine deviceId={1} />)
     expect(screen.queryByTestId('power-meter-power')).toBeNull()
-    expect(screen.getByTestId('power-meter-energy').textContent).toBe('12.00kWh')
+    expect(screen.getByTestId('power-meter-energy').textContent).toBe('12kWh')
   })
 
   it('renders nothing before a slice lands or when no reading is numeric', () => {

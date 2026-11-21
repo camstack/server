@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from 'react'
+import { formatNumeric } from '../../../../lib/format-numeric'
 import { cn } from '../../../../lib/cn'
 import { useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'
@@ -49,9 +50,11 @@ const TONE: Readonly<Record<ClimateActivity, Exclude<CardTone, 'success' | 'dang
   window: 'warning',
 }
 
-const degrees = (value: number, digits: number): string => `${value.toFixed(digits)}°`
-/** A setpoint in a band readout: no trailing zero, so the pair fits one line. */
-const bare = (value: number): string => String(Number(value.toFixed(1)))
+const degrees = (value: number, precision: number | undefined): string =>
+  `${formatNumeric(value, precision)}°`
+/** A setpoint in a band readout: no trailing zero unless the operator set a precision, so the pair fits one line. */
+const bare = (value: number, precision: number | undefined): string =>
+  formatNumeric(value, precision)
 
 /**
  * Climate, every role: the dial sets the target, the left column steps it, the
@@ -71,6 +74,7 @@ export function ClimateCard({
   const [draft, setDraft] = useState<number | null>(null)
   const [bandDraft, setBandDraft] = useState<DialRange | null>(null)
   const { target, range, valve, activity } = model
+  const precision = model.common.precision
   const band = range === null ? null : (bandDraft ?? { low: range.low, high: range.high })
   /** A valve that only reports: its opening is the number of the card. */
   const valveOnly = valve !== null && target === null && range === null && model.current === null
@@ -120,7 +124,7 @@ export function ClimateCard({
     model.flow !== null ? (
       <>
         <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">
-          {degrees(model.flow, 0)}
+          {degrees(model.flow, precision)}
         </span>
         <span className="text-xs text-foreground-muted">
           {t('uiLibrary.deviceCard.climate.flow', 'flow')}
@@ -132,7 +136,7 @@ export function ClimateCard({
           className="text-xl font-semibold tabular-nums @[10rem]:text-4xl"
           data-testid="dc-climate-centre-target"
         >
-          {degrees(shown, 1)}
+          {degrees(shown, precision)}
         </span>
         {model.current === null ? null : (
           <span
@@ -140,14 +144,14 @@ export function ClimateCard({
             data-testid="dc-climate-current"
           >
             {t('uiLibrary.deviceCard.climate.current', 'Current {{value}}', {
-              value: degrees(model.current, 1),
+              value: degrees(model.current, precision),
             })}
           </span>
         )}
       </>
     ) : model.current !== null ? (
       <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">
-        {degrees(model.current, 1)}
+        {degrees(model.current, precision)}
       </span>
     ) : valveOnly ? (
       <>
@@ -238,7 +242,7 @@ export function ClimateCard({
     range !== null && band !== null
       ? [
           columnValue('range', {
-            value: `${bare(band.low)}–${bare(band.high)}°`,
+            value: `${bare(band.low, precision)}–${bare(band.high, precision)}°`,
             caption: t('uiLibrary.deviceCard.climate.rangeShort', 'range'),
             tone: model.on ? 'primary' : 'muted',
             testId: 'dc-climate-range',
@@ -254,7 +258,7 @@ export function ClimateCard({
               onPress: () => stepBy(1),
             }),
             columnValue('target', {
-              value: degrees(shown, 1),
+              value: degrees(shown, precision),
               caption: target.label ?? t('uiLibrary.deviceCard.climate.targetShort', 'target'),
               tone: model.on ? 'primary' : 'muted',
               testId: 'dc-climate-target',

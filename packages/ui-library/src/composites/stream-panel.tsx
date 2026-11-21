@@ -28,6 +28,7 @@ import type { StationaryOverlayBox } from '@camstack/types'
 import { usePlayerToolbarButtons } from '../contexts/player-overlays'
 import { useUiText } from '../contexts/ui-text'
 import { useRecordedPlayback } from '../contexts/recorded-playback'
+import { formatNumeric } from '../lib/format-numeric'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -917,7 +918,7 @@ export function StreamPanel({
                         <span>{t('uiLibrary.streamPanel.input', 'Input')}</span>
                         <span className="tabular-nums text-foreground">
                           {/* i18n-ignore: unit */}
-                          {streamStats.inputFps.toFixed(1)} fps
+                          {formatNumeric(streamStats.inputFps, undefined)} fps
                         </span>
                       </div>
                       <div className="flex justify-between gap-3">
@@ -934,7 +935,7 @@ export function StreamPanel({
                         <span>{t('uiLibrary.streamPanel.input', 'Input')}</span>
                         <span className="tabular-nums text-foreground">
                           {/* i18n-ignore: unit */}
-                          {choiceStats.inputFps.toFixed(1)} fps
+                          {formatNumeric(choiceStats.inputFps, undefined)} fps
                         </span>
                       </div>
                       {choiceStats.bitrateKbps > 0 && (
@@ -968,7 +969,7 @@ export function StreamPanel({
                         <div className="flex justify-between gap-3">
                           <span>{t('uiLibrary.streamPanel.detection', 'Detection')}</span>
                           <span className="tabular-nums text-foreground">
-                            {pipelineMetrics.detectionFps.toFixed(1)} det/s
+                            {formatNumeric(pipelineMetrics.detectionFps, undefined)} det/s
                           </span>
                         </div>
                       )}

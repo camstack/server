@@ -17,6 +17,7 @@ import {
   type MediaProvenance,
 } from '../components/detection-intelligence/media-provenance.js'
 import { hubPath } from '../lib/mount'
+import { formatNumeric } from '@camstack/ui-library'
 
 /** The addonId for `addons.custom` is the MANIFEST id, never the npm package. */
 export const DEBUG_ADDON_ID = 'pipeline-analytics'
@@ -305,7 +306,7 @@ export function debugExportUrl(deviceIds: readonly number[]): string {
 
 /** `1.5s`, `42s`, `3m 07s` — a duration read at a glance. */
 export function formatDuration(ms: number): string {
-  if (ms < 10_000) return `${(ms / 1_000).toFixed(1)}s`
+  if (ms < 10_000) return `${formatNumeric(ms / 1_000, undefined)}s`
   const seconds = Math.round(ms / 1_000)
   if (seconds < 60) return `${String(seconds)}s`
   const minutes = Math.floor(seconds / 60)

@@ -16,6 +16,7 @@ import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { useState, type JSX } from 'react'
 import type { ObjectDetection, ScoredLabel } from '@camstack/types'
 import { useClassPainter } from './display-palette-context'
+import { formatNumeric } from '../lib/format-numeric'
 
 export interface DetectionResultTreeProps {
   readonly detections: readonly ObjectDetection[]
@@ -303,7 +304,7 @@ function AlternateLabelsSection({
                       }}
                     >
                       {l.label}
-                      <span className="opacity-60">{(l.score * 100).toFixed(1)}%</span>
+                      <span className="opacity-60">{formatNumeric(l.score * 100, undefined)}%</span>
                     </span>
                   ))}
                 </div>
@@ -326,7 +327,7 @@ function ConfidenceBadge({ confidence }: { confidence: number }) {
 
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${level}`}>
-      {(confidence * 100).toFixed(1)}%
+      {formatNumeric(confidence * 100, undefined)}%
     </span>
   )
 }

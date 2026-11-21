@@ -4,6 +4,7 @@
  * hole shading. Every colour is a FUNCTION so a theme switch is a redraw.
  */
 import type uPlot from 'uplot'
+import { formatNumeric } from '../../lib/format-numeric'
 import { bandToken, type ChartBand } from './chart-bands'
 import { formatTimeLabel, type GapSpan } from './chart-data'
 import { resolveChartColor, withAlpha } from './chart-palette'
@@ -243,23 +244,15 @@ export function formatChartBytes(bytes: number): string {
   return `${Math.abs(value) < 100 ? value.toFixed(1) : value.toFixed(0)} ${unit}`
 }
 
-/** A number at a precision its magnitude justifies. */
+/** A number at a precision its magnitude justifies: integers from 100 up, else the shared two-decimal rule. */
 export function formatChartNumber(v: number): string {
   if (!Number.isFinite(v)) return '—'
   const abs = Math.abs(v)
   if (abs >= 1000) return Math.round(v).toLocaleString()
   if (abs >= 100) return v.toFixed(0)
-  if (abs >= 10) return trimZeros(v.toFixed(1))
-  if (abs >= 1) return trimZeros(v.toFixed(2))
   // Float residue on a zero-crossing axis is zero, not a small value.
   if (abs < 1e-9) return '0'
-  // Never more than three decimals: a smaller value reads as below the last one, not as 0.
-  if (abs < 0.0005) return `${v < 0 ? '-' : ''}<0.001`
-  return trimZeros(v.toFixed(3))
-}
-
-function trimZeros(s: string): string {
-  return s.includes('.') ? s.replace(/\.?0+$/, '') : s
+  return formatNumeric(v, undefined)
 }
 
 /** The default value formatter: bytes binary, `%` glued, any other unit after a space. */

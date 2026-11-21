@@ -1,6 +1,7 @@
 import { useClusterTopology } from '@camstack/ui-library'
 import { formatBytes } from '../../lib/format-size'
 import { Trans, useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface ProcessEntry {
   id: string
@@ -108,7 +109,7 @@ export function ProcessResources() {
             <span className="text-xs text-foreground-subtle">
               {t('metrics.processResources.cpu', 'CPU:')}{' '}
               <span className="text-foreground font-semibold tabular-nums">
-                {totalCpu.toFixed(1)}%
+                {formatNumeric(totalCpu, undefined)}%
               </span>
             </span>
             <span className="text-xs text-foreground-subtle">
@@ -140,7 +141,7 @@ export function ProcessResources() {
                   <span className="text-foreground truncate">{p.label ?? p.id}</span>
                 </div>
                 <span className="tabular-nums text-foreground-subtle text-right">
-                  {p.stats?.cpu != null ? `${p.stats.cpu.toFixed(1)}%` : '—'}
+                  {p.stats?.cpu != null ? `${formatNumeric(p.stats.cpu, undefined)}%` : '—'}
                 </span>
                 <span className="tabular-nums text-foreground-subtle text-right">
                   {formatMemoryOptional(p.stats?.memory)}

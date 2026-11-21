@@ -102,6 +102,7 @@ import {
   timelapseRuleToForm,
 } from './notification-timelapse.helpers'
 import { Trans, useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 /** The passage length the dense-cadence hint is written against. */
 const EXAMPLE_PASS_SEC = 7
@@ -400,7 +401,7 @@ export function NotificationTimelapseEditor({
                       seconds: dense.seconds,
                       fps: form.framerate,
                       passage: EXAMPLE_PASS_SEC,
-                      onScreen: passSeconds.toFixed(2),
+                      onScreen: formatNumeric(passSeconds, undefined),
                     })}{' '}
                     {dense.derived
                       ? t('system.notificationTimelapseEditor.denseDerived')

@@ -17,7 +17,10 @@ const fake = vi.hoisted(() => ({
   slice: undefined as ConsumablesStatus | undefined,
 }))
 
-vi.mock('../../../contexts/system-context', () => ({ useTrpcClient: () => ({}) }))
+vi.mock('../../../contexts/system-context', () => ({
+  useTrpcClient: () => ({}),
+  useOptionalSystem: () => null,
+}))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
     consumables: fake.bound ? {} : undefined,

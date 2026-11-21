@@ -25,6 +25,7 @@ import { CardBlock, Chip, KVRow, StageInactive } from './card-primitives'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
 import { Select } from '@camstack/ui-library'
+import { formatNumeric } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Placement
@@ -269,7 +270,7 @@ export function StreamsMotionBlock({
           >
             {formatFpsSetting(settings.motionFps)}
             {motionFpsLive !== null &&
-              ` · ${t('cameras.configBlocks.liveFps', { fps: motionFpsLive.toFixed(1) })}`}
+              ` · ${t('cameras.configBlocks.liveFps', { fps: formatNumeric(motionFpsLive, undefined) })}`}
           </KVRow>
         </>
       )}

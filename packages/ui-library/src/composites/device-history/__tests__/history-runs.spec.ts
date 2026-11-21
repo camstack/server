@@ -58,7 +58,7 @@ describe('runBands', () => {
       tone: 'success',
       title: 'Run',
     })
-    expect(band?.label).toBe('10m 0s · 1.50 kWh')
+    expect(band?.label).toBe('10m 0s · 1.5 kWh')
   })
 
   it('extends an open run to now and says it is running', () => {
@@ -71,7 +71,7 @@ describe('runBands', () => {
     const [band] = runBands([run({}, null)], NOW, window, defaultUiText)
     expect(band?.label).toBe('10m 0s · —')
     expect(formatKwh(null)).toBe('—')
-    expect(formatKwh(0)).toBe('0.00 kWh')
+    expect(formatKwh(0)).toBe('0 kWh')
   })
 
   it('drops a run outside the window and tones the outcomes', () => {

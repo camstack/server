@@ -96,14 +96,20 @@ describe('the unit every label of a chart follows', () => {
     expect(formatChartValue(points[0]?.v ?? 0, shown)).toBe('5 kW')
   })
 
-  it('reads three significant digits with at most three decimals, never scientific', () => {
-    expect(formatChartValue(0.001, 'kW')).toBe('0.001 kW')
-    expect(formatChartValue(0.0187, 'kW')).toBe('0.019 kW')
-    expect(formatChartValue(0.0004, 'kW')).toBe('<0.001 kW')
+  it('reads at most two decimals, trimmed, never scientific', () => {
+    expect(formatChartValue(0.0187, 'kW')).toBe('0.02 kW')
+    expect(formatChartValue(0.005, 'kW')).toBe('0.01 kW')
+    expect(formatChartValue(0.001, 'kW')).toBe('<0.01 kW')
+    expect(formatChartValue(0.0004, 'kW')).toBe('<0.01 kW')
+    expect(formatChartValue(-0.0004, 'kW')).toBe('-<0.01 kW')
     expect(formatChartValue(2.7e-12, 'kW')).toBe('0 kW')
     expect(formatChartValue(-4e-13, 'kW')).toBe('0 kW')
     expect(formatChartValue(0, 'kW')).toBe('0 kW')
-    expect(formatChartValue(12.34, 'kW')).toBe('12.3 kW')
+    expect(formatChartValue(12.34, 'kW')).toBe('12.34 kW')
+    expect(formatChartValue(12.3, 'kW')).toBe('12.3 kW')
+    expect(formatChartValue(99.999, 'kW')).toBe('100 kW')
+    expect(formatChartValue(123.4, 'kW')).toBe('123 kW')
+    expect(formatChartValue(1234.5, 'W')).toMatch(/^1,?235 W$/)
   })
 
   it('names a chart after its unit in the shown unit', () => {

@@ -46,6 +46,7 @@ import { type NodeScope } from './contribution-origin'
 import { useCameraLoadSeries } from './use-camera-load-series'
 import { cameraNamesById } from './camera-names'
 import type { CameraLoadBucket } from './camera-load-fold'
+import { formatNumeric } from '@camstack/ui-library'
 
 /** 25% of one core — below it a camera's CPU line is noise, not a trend. */
 const CPU_AXIS_FLOOR_PERCENT = 25
@@ -120,7 +121,7 @@ export function CameraLoadPanel({ scope, cadenceMs }: CameraLoadPanelProps) {
               <SingleLineChart
                 title={t('cameraLoad.cpuTitle', 'CPU % of one core (delta)')}
                 points={camera.points.map((p) => ({ atMs: p.atMs, value: p.cpuPercent }))}
-                formatValue={(v) => `${v.toFixed(1)}%`}
+                formatValue={(v) => `${formatNumeric(v, undefined)}%`}
                 axisFloor={CPU_AXIS_FLOOR_PERCENT}
                 gapMs={gapMs}
                 emptyMessage={t('cameraLoad.cpuUnavailable', 'No measurable window yet.')}

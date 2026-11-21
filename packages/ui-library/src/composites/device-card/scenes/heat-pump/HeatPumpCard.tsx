@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { formatNumeric } from '../../../../lib/format-numeric'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import type { CardGlyph } from '../../icons'
 import { AmbientFx } from '../../illustrations/AmbientFx'
@@ -71,10 +72,10 @@ function systemModeLabel(id: HeatPumpSystemModeId, t: UiTextFn): string {
   }
 }
 
-const degrees = (value: number | null): string | null =>
-  value === null ? null : `${value.toFixed(1)}°`
-const kilowatts = (watts: number | null): string | null =>
-  watts === null ? null : `${(watts / 1000).toFixed(1)} kW`
+const degrees = (value: number | null, precision: number | undefined): string | null =>
+  value === null ? null : `${formatNumeric(value, precision)}°`
+const kilowatts = (watts: number | null, precision: number | undefined): string | null =>
+  watts === null ? null : `${formatNumeric(watts / 1000, precision)} kW`
 
 /** A reading the gateway may not report: a dash, never a zero. */
 function reading(id: string, label: string, value: string | null): ColumnItem {
@@ -245,17 +246,17 @@ export function HeatPumpCard({
             reading(
               'outdoor',
               t('uiLibrary.deviceCard.heatPump.outdoor', 'Outdoor'),
-              degrees(model.temperatures.outdoor),
+              degrees(model.temperatures.outdoor, model.common.precision),
             ),
             reading(
               'supply',
               t('uiLibrary.deviceCard.heatPump.supply', 'Flow'),
-              degrees(model.temperatures.supply),
+              degrees(model.temperatures.supply, model.common.precision),
             ),
             reading(
               'return',
               t('uiLibrary.deviceCard.heatPump.return', 'Return'),
-              degrees(model.temperatures.return),
+              degrees(model.temperatures.return, model.common.precision),
             ),
             reading(
               'pressure',
@@ -267,17 +268,17 @@ export function HeatPumpCard({
             reading(
               'thermal',
               t('uiLibrary.deviceCard.heatPump.thermal', 'Thermal'),
-              kilowatts(model.thermalW),
+              kilowatts(model.thermalW, model.common.precision),
             ),
             reading(
               'electrical',
               t('uiLibrary.deviceCard.heatPump.electrical', 'Electrical'),
-              kilowatts(model.electricalW),
+              kilowatts(model.electricalW, model.common.precision),
             ),
             reading(
               'cop',
               t('uiLibrary.deviceCard.heatPump.cop', 'COP'),
-              model.cop === null ? null : model.cop.toFixed(1),
+              model.cop === null ? null : formatNumeric(model.cop, model.common.precision),
             ),
           ],
         },

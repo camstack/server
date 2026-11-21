@@ -54,7 +54,7 @@ export function ConnectedHeatPumpCard({
   })
   const has = (method: string): boolean => card.implements('heat-pump-control', method)
   const circuits = display.circuits.map((c) => {
-    const view = heatPumpCircuitView(c, t)
+    const view = heatPumpCircuitView(c, t, card.common.precision)
     if (view.picker === null) return view
     const method =
       view.picker.kind === 'level'

@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { formatNumeric } from '../../../../lib/format-numeric'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'
 import { TankIllustration } from '../../illustrations/TankIllustration'
@@ -172,7 +173,9 @@ export function WaterHeaterCard({
               className="absolute inset-x-0 top-1/2 grid -translate-y-1/2 justify-items-center"
             >
               <b className="text-xl font-semibold tabular-nums text-foreground @[10rem]:text-3xl">
-                {model.currentTemp === null ? '—' : `${model.currentTemp.toFixed(1)}°`}
+                {model.currentTemp === null
+                  ? '—'
+                  : `${formatNumeric(model.currentTemp, model.common.precision)}°`}
               </b>
               <small className="text-xs text-foreground-muted @[10rem]:text-sm">
                 {t('uiLibrary.deviceCard.waterHeater.current', 'now')}

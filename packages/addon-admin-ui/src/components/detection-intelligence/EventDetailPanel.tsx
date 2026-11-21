@@ -87,6 +87,7 @@ import type { TrackFlagsResult } from './use-track-flags.js'
 import { ZoomableImage } from './ZoomableImage.js'
 import { hubOrigin } from '../../lib/mount'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 /** Padding around the event window when searching for a covering clip. */
 const CLIP_PAD_MS = 15_000
@@ -623,7 +624,7 @@ export function EventDetailPanel({
           .map((a) => `${a.label} ×${String(a.count)} (${String(Math.round(a.peakScore * 100))}%)`)
           .join(' · ')
       : '—'
-  const distanceValue = track ? track.totalDistance.toFixed(2) : '—'
+  const distanceValue = track ? formatNumeric(track.totalDistance, undefined) : '—'
   // D276, straight off the track the panel already fetched for the trajectory —
   // no extra read, and no cap change: `previewMissReason` is on `TrackSchema`,
   // not on `KeyEventSchema`, which is why the GRID cannot show it and this

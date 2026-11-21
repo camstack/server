@@ -6,6 +6,7 @@
  * A fact that is absent, `null` or `'unknown'` yields NO row — never a `0`
  * or an "idle" (D315 / D393). `sleeping` is a boolean, so it is always known.
  */
+import { formatNumeric } from '../lib/format-numeric'
 import type { BatteryStatusLike } from './battery-badge'
 
 export type BatteryDetailId =
@@ -42,8 +43,8 @@ function isKnownNumber(value: number | null | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function formatNumber(value: number, digits: number, unit: string): BatteryDetailValue {
-  return { kind: 'number', text: `${value.toFixed(digits)} ${unit}` }
+function formatNumber(value: number, unit: string): BatteryDetailValue {
+  return { kind: 'number', text: `${formatNumeric(value, undefined)} ${unit}` }
 }
 
 export function batteryAge(
@@ -78,11 +79,11 @@ export function batteryDetailRows(
     rows.push({ id: 'cell', value: { kind: 'phrase', phrase: 'notCharging' } })
 
   if (isKnownNumber(status.voltage))
-    rows.push({ id: 'voltage', value: formatNumber(status.voltage, 2, 'V') })
+    rows.push({ id: 'voltage', value: formatNumber(status.voltage, 'V') })
   if (isKnownNumber(status.currentMa))
-    rows.push({ id: 'current', value: formatNumber(status.currentMa, 0, 'mA') })
+    rows.push({ id: 'current', value: formatNumber(status.currentMa, 'mA') })
   if (isKnownNumber(status.temperatureC))
-    rows.push({ id: 'temperature', value: formatNumber(status.temperatureC, 1, '°C') })
+    rows.push({ id: 'temperature', value: formatNumber(status.temperatureC, '°C') })
 
   rows.push({
     id: 'sleep',

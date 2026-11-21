@@ -8236,7 +8236,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
-      "summary": "Today's totals, to a tenth of a kWh; null when the system reports none of them."
+      "summary": "Today's totals, as the system reports them; null when the system reports none of them."
     },
     {
       "name": "ensureMfHostInit",
@@ -9130,7 +9130,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-uplot.ts",
-      "summary": "A number at a precision its magnitude justifies."
+      "summary": "A number at a precision its magnitude justifies: integers from 100 up, else the shared two-decimal rule."
     },
     {
       "name": "formatChartValue",
@@ -9175,6 +9175,13 @@
       "summary": "\"4.2 kW\" — the magnitude only; the arrow says the direction."
     },
     {
+      "name": "formatKwh",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/model.ts",
+      "summary": "\"4.2 kWh\" — the magnitude only."
+    },
+    {
       "name": "formatLastSeen",
       "kind": "function",
       "area": "lib",
@@ -9186,7 +9193,7 @@
       "kind": "function",
       "area": "lib",
       "file": "packages/ui-library/src/lib/format-numeric.ts",
-      "summary": "Format a numeric sensor / control value with optional display precision."
+      "summary": "THE number formatter of the UI. One rule for every reading and measurement: the precision the operator configured wins; with none, at most two decimals with trailing zeros trimmed (21.5 stays 21.5, 21.47 stays 21.47, …"
     },
     {
       "name": "formatSettingValue",

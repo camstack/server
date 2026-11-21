@@ -41,7 +41,9 @@ export function energyFlowsOf(status: EnergySystemStatus): EnergyFlows {
   }
 }
 
-const tenth = (v: number | null): number | null => (v === null ? null : Math.round(v * 10) / 10)
+/** Kills float residue (11.299999) without costing a decimal the operator may have asked for. */
+const settle = (v: number | null): number | null =>
+  v === null ? null : Math.round(v * 1000) / 1000
 
 /**
  * House consumption today, kWh. The slice's own day total when the system
@@ -97,7 +99,7 @@ export function selfConsumptionPct(
 /** Net grid, kWh: imported − exported (+ drew, − fed). Null unless both are known. */
 export function netGridKwh(importedKwh: number | null, exportedKwh: number | null): number | null {
   if (importedKwh === null || exportedKwh === null) return null
-  return tenth(importedKwh - exportedKwh)
+  return settle(importedKwh - exportedKwh)
 }
 
 /**
@@ -190,8 +192,8 @@ export function energyBalance(input: EnergyBalanceInput, hasHeatPump: boolean): 
           gridPct: share(i, consumption),
         }
   return {
-    consumptionKwh: tenth(consumption),
-    householdKwh: tenth(household),
+    consumptionKwh: settle(consumption),
+    householdKwh: settle(household),
     selfSufficiencyPct: selfSufficiencyPct(consumption, i),
     sources,
   }
@@ -202,24 +204,24 @@ export function energyDailyFacts(status: EnergySystemStatus): EnergyDailyFacts {
   const house = houseConsumptionTodayKwh(status)
   return {
     selfSufficiencyPct: selfSufficiencyPct(house, status.grid?.importTodayKwh ?? null),
-    producedKwh: tenth(status.solar?.todayKwh ?? null),
-    houseKwh: tenth(house),
-    importedKwh: tenth(status.grid?.importTodayKwh ?? null),
-    exportedKwh: tenth(status.grid?.exportTodayKwh ?? null),
+    producedKwh: settle(status.solar?.todayKwh ?? null),
+    houseKwh: settle(house),
+    importedKwh: settle(status.grid?.importTodayKwh ?? null),
+    exportedKwh: settle(status.grid?.exportTodayKwh ?? null),
     netGridKwh: netGridKwh(
       status.grid?.importTodayKwh ?? null,
       status.grid?.exportTodayKwh ?? null,
     ),
     autonomyHours: autonomyHours(status),
-    chargedTodayKwh: tenth(status.storage?.chargedTodayKwh ?? null),
-    dischargedTodayKwh: tenth(status.storage?.dischargedTodayKwh ?? null),
+    chargedTodayKwh: settle(status.storage?.chargedTodayKwh ?? null),
+    dischargedTodayKwh: settle(status.storage?.dischargedTodayKwh ?? null),
     socPct: status.storage?.stateOfChargePct ?? null,
     healthPct: status.storage?.healthPct ?? null,
     heatPumpShareNowPct: heatPumpShareNowPct(status),
   }
 }
 
-/** Today's totals, to a tenth of a kWh; null when the system reports none of them. */
+/** Today's totals, as the system reports them; null when the system reports none of them. */
 export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
   const facts = energyDailyFacts(status)
   const balance = energyBalance(todayBalanceInput(status), status.heatPump !== null)
@@ -232,9 +234,9 @@ export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
     importedKwh: facts.importedKwh,
     exportedKwh: facts.exportedKwh,
     netGridKwh: facts.netGridKwh,
-    heatPumpKwh: tenth(status.heatPump?.todayKwh ?? null),
+    heatPumpKwh: settle(status.heatPump?.todayKwh ?? null),
     houseKwh: facts.houseKwh,
-    householdKwh: tenth(status.house?.todayKwh ?? null) ?? balance.householdKwh,
+    householdKwh: settle(status.house?.todayKwh ?? null) ?? balance.householdKwh,
     sources: balance.sources,
     selfSufficiencyPct: facts.selfSufficiencyPct,
     autonomyHours: facts.autonomyHours,

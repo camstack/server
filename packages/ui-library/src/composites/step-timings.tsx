@@ -1,5 +1,6 @@
 import { type JSX } from 'react'
 import { useUiText } from '../contexts/ui-text'
+import { formatNumeric } from '../lib/format-numeric'
 /**
  * StepTimings — displays pipeline execution timings per step.
  */
@@ -24,13 +25,13 @@ export function StepTimings({ timings, totalMs, className }: StepTimingsProps): 
         {entries.map(([step, ms]) => (
           <div key={step} className="flex justify-between">
             <span className="text-foreground-subtle">{step}</span>
-            <span className="font-mono text-foreground">{ms.toFixed(1)}ms</span>
+            <span className="font-mono text-foreground">{formatNumeric(ms, undefined)}ms</span>
           </div>
         ))}
         {totalMs !== undefined && (
           <div className="flex justify-between pt-1 border-t border-border font-medium text-foreground">
             <span>{t('uiLibrary.stepTimings.total', 'Total')}</span>
-            <span className="font-mono">{totalMs.toFixed(1)}ms</span>
+            <span className="font-mono">{formatNumeric(totalMs, undefined)}ms</span>
           </div>
         )}
       </div>

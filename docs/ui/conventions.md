@@ -131,6 +131,16 @@ automation editor's move arrows, `pages/build/automation/MoveButtons.tsx`) puts
 the reason on a wrapping `<span title>` and keeps both directions drawn, so the
 controls never jump and an edge never looks like a missing feature.
 
+**One number rule.** A reading or measurement goes through `formatNumeric(value,
+precision)` (`@camstack/ui-library`): the precision the operator set in Customize
+wins (`toFixed(precision)`, zeros kept), with none it shows at most two decimals,
+trailing zeros trimmed, and a tiny non-zero value reads `<0.01`. A value that
+belongs to a device passes that device's resolved precision (a card reads
+`CardCommon.precision`). A hand-written `toFixed(` or `maximumFractionDigits` in
+ui-library / admin-ui runtime code is refused by
+`scripts/check-no-adhoc-number-format.ts`; its allowlist names the non-readings
+(byte sizes, geometry, whole-number ms/fps/percent, coordinates) with a reason each.
+
 ## Narrow viewports
 
 [D43](../decisions/adr-0043.md): a concession that only holds at desktop width is

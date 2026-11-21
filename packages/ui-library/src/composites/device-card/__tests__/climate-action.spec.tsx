@@ -148,6 +148,18 @@ describe('climateGauge — the marker and the band', () => {
 describe('ClimateCard — the dial', () => {
   it('shows the target big in the centre and "Current" under it', () => {
     render(<ClimateCard model={cardOf('heating')} actions={actions} />)
+    expect(screen.getByTestId('dc-climate-centre-target').textContent).toBe('21°')
+    expect(screen.getByTestId('dc-climate-current').textContent).toBe('Current 19°')
+  })
+
+  it('honours the Precision set on the device, zeros kept', () => {
+    const model = cardOf('heating')
+    render(
+      <ClimateCard
+        model={{ ...model, common: { ...model.common, precision: 1 } }}
+        actions={actions}
+      />,
+    )
     expect(screen.getByTestId('dc-climate-centre-target').textContent).toBe('21.0°')
     expect(screen.getByTestId('dc-climate-current').textContent).toBe('Current 19.0°')
   })

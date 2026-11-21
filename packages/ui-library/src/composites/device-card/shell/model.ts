@@ -124,6 +124,8 @@ export function cardFaultsOf(
 }
 
 export interface CardCommon {
+  /** Display precision the operator set for this device (Customize → Display); absent = the default number rule. */
+  readonly precision?: number
   /** Set on a live device so the history view can read its actuations. */
   readonly deviceId?: number
   readonly name: string

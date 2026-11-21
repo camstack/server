@@ -24,6 +24,7 @@ import type { LiveDetectionMetrics } from './use-cameras-overview'
 import { CardBlock, Chip, KVRow, StageInactive } from './card-primitives'
 import type { ChipTone } from './card-primitives'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Detection
@@ -98,7 +99,9 @@ export function DetectionBlock({
         {detectionMode ?? '—'}
       </KVRow>
       <KVRow label="FPS">
-        <span className={blackHole ? 'text-danger font-semibold' : ''}>{actualFps.toFixed(1)}</span>
+        <span className={blackHole ? 'text-danger font-semibold' : ''}>
+          {formatNumeric(actualFps, undefined)}
+        </span>
         <span className="ml-1 text-foreground-subtle">
           {t('cameras.runtimeBlocks.configuredFps', { fps: configuredFps.toFixed(0) })}
         </span>

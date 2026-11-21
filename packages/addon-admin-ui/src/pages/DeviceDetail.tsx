@@ -116,6 +116,7 @@ import { authedDownload } from '../lib/authed-media.js'
 import { CUSTOMIZE_TAB_ID } from '../lib/customization-routes'
 import { integrationDetailUrl } from '../lib/integration-instance-selection'
 import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
+import { formatNumeric } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Tab definitions
@@ -1594,7 +1595,9 @@ function DetectionStatsBar({
       <div className="h-3 w-px bg-border" />
       <div className="flex items-center gap-1 text-[10px] text-foreground-subtle">
         <Activity className="h-3 w-3" />
-        <span className="text-foreground tabular-nums">{(metrics.actualFps ?? 0).toFixed(1)}</span>
+        <span className="text-foreground tabular-nums">
+          {formatNumeric(metrics.actualFps ?? 0, undefined)}
+        </span>
         <span>{t('common.fpsWord')}</span>
       </div>
       <div className="flex items-center gap-1 text-[10px] text-foreground-subtle">

@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
+import { formatNumeric } from '../../../../lib/format-numeric'
 import {
   type EnergyCentreFigure,
   EnergyFlowIllustration,
@@ -16,6 +17,7 @@ import {
   type EnergyToday,
   energyIsStill,
   formatKw,
+  formatKwh,
 } from './model'
 
 export interface EnergyCardProps {
@@ -46,7 +48,11 @@ function batteryLabel(watts: number, pct: number | null, t: UiTextFn): string {
 }
 
 /** The nodes the system has, in drawing order; a null power draws no node. */
-export function energyNodes(flows: EnergyFlows, t: UiTextFn): readonly EnergyNodeView[] {
+export function energyNodes(
+  flows: EnergyFlows,
+  t: UiTextFn,
+  precision?: number,
+): readonly EnergyNodeView[] {
   const out: EnergyNodeView[] = []
   const add = (id: EnergyNodeId, watts: number | null, label: (w: number) => string): void => {
     if (watts === null) return
@@ -54,7 +60,7 @@ export function energyNodes(flows: EnergyFlows, t: UiTextFn): readonly EnergyNod
       id,
       watts,
       label: label(watts),
-      value: formatKw(watts),
+      value: formatKw(watts, precision),
       still: energyIsStill(watts),
     })
   }
@@ -80,25 +86,28 @@ export function energyNodes(flows: EnergyFlows, t: UiTextFn): readonly EnergyNod
   return out
 }
 
-const kwhValue = (v: number): string => `${Math.abs(v).toFixed(1)} kWh`
-
 /**
  * The nodes of a past day, from its kWh totals: solar produced, the grid's net
  * import or export, the battery's net charge or discharge, the household and
  * the heat pump. The arrow follows the sign of the day's net flow; a node
  * whose net rounds to 0.0 kWh is still. A total that is unknown draws no node.
  */
-export function energyDayNodes(today: EnergyToday | null, t: UiTextFn): readonly EnergyNodeView[] {
+export function energyDayNodes(
+  today: EnergyToday | null,
+  t: UiTextFn,
+  precision?: number,
+): readonly EnergyNodeView[] {
   if (today === null) return []
   const out: EnergyNodeView[] = []
   const add = (id: EnergyNodeId, kwhSigned: number | null, label: (k: number) => string): void => {
     if (kwhSigned === null) return
-    const k = Math.round(kwhSigned * 10) / 10
+    const factor = 10 ** (precision ?? DAY_NODE_DECIMALS)
+    const k = Math.round(kwhSigned * factor) / factor
     out.push({
       id,
       watts: k,
       label: label(k),
-      value: kwhValue(k),
+      value: formatKwh(k, precision),
       still: k === 0,
       animate: false,
     })
@@ -125,9 +134,13 @@ export function energyDayNodes(today: EnergyToday | null, t: UiTextFn): readonly
   return out
 }
 
+/** Day totals settle at the default rule's two decimals before the arrow is judged. */
+const DAY_NODE_DECIMALS = 2
+
 /** "· 4.2 kW" while producing; otherwise where the house draws from. */
-export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
-  if (!energyIsStill(flows.solarW) && flows.solarW !== null) return formatKw(flows.solarW)
+export function energySince(flows: EnergyFlows, t: UiTextFn, precision?: number): string | null {
+  if (!energyIsStill(flows.solarW) && flows.solarW !== null)
+    return formatKw(flows.solarW, precision)
   if (flows.batteryW !== null && !energyIsStill(flows.batteryW) && flows.batteryW > 0)
     return t('uiLibrary.deviceCard.energy.fromBattery', 'from the battery')
   if (flows.gridW !== null && !energyIsStill(flows.gridW) && flows.gridW > 0)
@@ -138,10 +151,10 @@ export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
 const NO_VALUE = '—'
 
 /** "+2.1 kWh" drew from the grid, "−2.9 kWh" fed it; the sign is always spelled. */
-export function signedKwh(v: number | null): string {
+export function signedKwh(v: number | null, precision?: number): string {
   if (v === null) return NO_VALUE
   const sign = v > 0 ? '+' : v < 0 ? '−' : ''
-  return `${sign}${Math.abs(v)} kWh`
+  return `${sign}${formatKwh(v, precision)}`
 }
 
 /**
@@ -151,11 +164,14 @@ export function signedKwh(v: number | null): string {
 export function energyCentreFigures(
   today: EnergyToday | null,
   t: UiTextFn,
+  precision?: number,
 ): readonly EnergyCentreFigure[] {
   const e = (key: string, fallback: string): string =>
     t(`uiLibrary.deviceCard.energy.${key}`, fallback)
   const energy = (v: number | null | undefined): Pick<EnergyCentreFigure, 'value' | 'unit'> =>
-    v === null || v === undefined ? { value: NO_VALUE } : { value: v.toFixed(1), unit: 'kWh' }
+    v === null || v === undefined
+      ? { value: NO_VALUE }
+      : { value: formatNumeric(v, precision), unit: 'kWh' }
   const sufficiency = today?.selfSufficiencyPct
   return [
     {
@@ -184,9 +200,11 @@ export function energyCentreFigures(
   ]
 }
 
-const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
+const kwh = (v: number | null, precision?: number): string | null =>
+  v === null ? null : formatKwh(v, precision)
 const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
-const hours = (v: number | null): string | null => (v === null ? null : `≈ ${v.toFixed(1)} h`)
+const hours = (v: number | null, precision?: number): string | null =>
+  v === null ? null : `≈ ${formatNumeric(v, precision)} h`
 
 /** The scene label already says "Charging · 74%", so the Charge pill would repeat it. */
 function sceneShowsBatteryCharge(flows: EnergyFlows): boolean {
@@ -203,7 +221,12 @@ interface TodayRowSpec {
  * Today's totals gathered by what they answer, at most four to a row: where the
  * energy went, how much of it stayed home, the battery, and what it cycled.
  */
-function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly TodayRowSpec[] {
+function todayRows(
+  today: EnergyToday,
+  t: UiTextFn,
+  omitCharge: boolean,
+  precision?: number,
+): readonly TodayRowSpec[] {
   const e = (key: string, fallback: string): string =>
     t(`uiLibrary.deviceCard.energy.${key}`, fallback)
   return [
@@ -211,11 +234,11 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
       id: 'flows',
       label: e('rowFlows', 'Energy'),
       cells: [
-        ['produced', e('produced', 'Produced'), kwh(today.producedKwh)],
-        ['consumed', e('consumedToday', 'Consumed'), kwh(today.houseKwh)],
-        ['house', e('houseToday', 'Household'), kwh(today.householdKwh)],
-        ['imported', e('imported', 'Imported'), kwh(today.importedKwh)],
-        ['exported', e('exported', 'Exported'), kwh(today.exportedKwh)],
+        ['produced', e('produced', 'Produced'), kwh(today.producedKwh, precision)],
+        ['consumed', e('consumedToday', 'Consumed'), kwh(today.houseKwh, precision)],
+        ['house', e('houseToday', 'Household'), kwh(today.householdKwh, precision)],
+        ['imported', e('imported', 'Imported'), kwh(today.importedKwh, precision)],
+        ['exported', e('exported', 'Exported'), kwh(today.exportedKwh, precision)],
       ],
     },
     {
@@ -231,7 +254,7 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
       id: 'heatPump',
       label: e('rowHeatPump', 'Heat pump'),
       cells: [
-        ['heatPump', e('hpToday', 'Today'), kwh(today.heatPumpKwh)],
+        ['heatPump', e('hpToday', 'Today'), kwh(today.heatPumpKwh, precision)],
         ['heatPumpNow', e('hpNow', 'Now'), pct(today.heatPumpShareNowPct)],
       ],
     },
@@ -241,9 +264,13 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
       cells: [
         ...(omitCharge ? [] : [['soc', e('soc', 'Charge'), pct(today.socPct)] as const]),
         ['health', e('health', 'Health'), pct(today.healthPct)],
-        ['autonomy', e('autonomy', 'Autonomy'), hours(today.autonomyHours)],
-        ['charged', e('chargedToday', 'Charged'), kwh(today.chargedTodayKwh)],
-        ['discharged', e('dischargedToday', 'Discharged'), kwh(today.dischargedTodayKwh)],
+        ['autonomy', e('autonomy', 'Autonomy'), hours(today.autonomyHours, precision)],
+        ['charged', e('chargedToday', 'Charged'), kwh(today.chargedTodayKwh, precision)],
+        [
+          'discharged',
+          e('dischargedToday', 'Discharged'),
+          kwh(today.dischargedTodayKwh, precision),
+        ],
       ],
     },
   ]
@@ -259,8 +286,13 @@ function evenChunks<T>(items: readonly T[]): readonly (readonly T[])[] {
 }
 
 /** One `rowStats` per group (more when a group holds over four); a missing input is omitted, never 0. */
-function todayBottom(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly BottomRow[] {
-  return todayRows(today, t, omitCharge).flatMap((row) => {
+function todayBottom(
+  today: EnergyToday,
+  t: UiTextFn,
+  omitCharge: boolean,
+  precision?: number,
+): readonly BottomRow[] {
+  return todayRows(today, t, omitCharge, precision).flatMap((row) => {
     const stats = row.cells.flatMap(([id, name, value]) =>
       value === null ? [] : [{ id, name, value }],
     )
@@ -313,8 +345,12 @@ export function EnergyCard({
         columns: {},
         image: (
           <EnergyFlowIllustration
-            nodes={nodesLive ? energyNodes(model.flows, t) : energyDayNodes(model.today, t)}
-            centre={energyCentreFigures(model.today, t)}
+            nodes={
+              nodesLive
+                ? energyNodes(model.flows, t, model.precision)
+                : energyDayNodes(model.today, t, model.precision)
+            }
+            centre={energyCentreFigures(model.today, t, model.precision)}
             ariaLabel={t('uiLibrary.deviceCard.energy.flows', 'Energy flows')}
             className="h-auto w-full max-w-96"
           />
@@ -322,7 +358,12 @@ export function EnergyCard({
         bottom: [
           ...(model.today === null
             ? []
-            : todayBottom(model.today, t, !nodesLive || sceneShowsBatteryCharge(model.flows))),
+            : todayBottom(
+                model.today,
+                t,
+                !nodesLive || sceneShowsBatteryCharge(model.flows),
+                model.precision,
+              )),
           ...(trend === undefined ? [] : [rowTrend('trend', { trend })]),
         ],
       }}

@@ -34,12 +34,13 @@ import { type MediaProvenance, provenanceBadge } from './media-provenance.js'
 import type { TrackSubject } from './track-subject.js'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@camstack/ui-library'
+import { formatNumeric } from '@camstack/ui-library'
 
 /** windowMs → compact "3.2s" / "1m 05s" duration label; '' when unknown. */
 function formatDuration(windowMs: number | undefined): string {
   if (windowMs === undefined || !Number.isFinite(windowMs) || windowMs <= 0) return ''
   const totalSec = windowMs / 1000
-  if (totalSec < 60) return `${totalSec.toFixed(1)}s`
+  if (totalSec < 60) return `${formatNumeric(totalSec, undefined)}s`
   const mins = Math.floor(totalSec / 60)
   const secs = Math.round(totalSec % 60)
   return `${String(mins)}m ${String(secs).padStart(2, '0')}s`

@@ -4,12 +4,12 @@
 
 # Guards
 
-256 repository guards: 251 in `scripts/`,
+257 repository guards: 252 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (244)
+## Enforced by CI checks (245)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -135,6 +135,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-nc-system-filter-scope.ts` | System-event filter-scope guard — the ENGINE narrows exactly what the EDITOR says it narrows. |
 | `scripts/check-nc-text-catalog.ts` | Notification-Center text-catalog guard — the shipped locales must agree. |
 | `scripts/check-no-addon-level-settings.ts` | No addon-level settings (planning#440 step 8 / M5, D986). |
+| `scripts/check-no-adhoc-number-format.ts` | One number rule for the UI: a reading or measurement is formatted by `formatNumeric` (`@camstack/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two decimals, trailing zeros trimmed. A hand-written… |
 | `scripts/check-no-array-event-subscribe.ts` | Event-subscribe guard — no ARRAY category filter in a `.subscribe(...)` call. |
 | `scripts/check-no-bare-ffmpeg.ts` | No bare `ffmpeg` / `ffprobe` in runtime source — the enforcement D540 lacked. |
 | `scripts/check-no-camera-model-layer.ts` | A model is chosen by the accelerator that runs it; a camera only turns steps on or off (D927). |

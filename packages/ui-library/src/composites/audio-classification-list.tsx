@@ -1,5 +1,6 @@
 import { useUiText } from '../contexts/ui-text'
 import { type JSX } from 'react'
+import { formatNumeric } from '../lib/format-numeric'
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -94,7 +95,7 @@ export function AudioClassificationList({
             </span>
           )}
           {inferenceMs !== undefined && (
-            <span className="font-mono">{inferenceMs.toFixed(1)}ms</span>
+            <span className="font-mono">{formatNumeric(inferenceMs, undefined)}ms</span>
           )}
         </div>
       </div>
@@ -121,7 +122,7 @@ export function AudioClassificationList({
               <span
                 className={`text-xs font-mono font-semibold w-14 text-right ${scoreTextColor(item.score)}`}
               >
-                {(item.score * 100).toFixed(1)}%
+                {formatNumeric(item.score * 100, undefined)}%
               </span>
             </div>
           )

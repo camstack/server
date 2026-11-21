@@ -6,6 +6,7 @@
 import { PhaseIcon, getPhaseVisual, useUiText } from '@camstack/ui-library'
 import type { CameraMetricsSnapshot } from './use-camera-metrics'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 export function AssignmentStatusCell({
   snap,
@@ -35,7 +36,7 @@ export function AssignmentStatusCell({
       <span className={`inline-flex min-w-0 items-center gap-1 ${visual.textColor}`}>
         <PhaseIcon phase={phase} className="h-2.5 w-2.5 shrink-0" />
         <span className="truncate font-semibold uppercase tracking-wider">{visual.label}</span>
-        <span className="text-foreground">{actualFps.toFixed(1)}</span>
+        <span className="text-foreground">{formatNumeric(actualFps, undefined)}</span>
         <span className="text-foreground-subtle">
           {t('pipeline.assignmentStatusCell.configuredFps', { fps: configuredFps.toFixed(0) })}
         </span>

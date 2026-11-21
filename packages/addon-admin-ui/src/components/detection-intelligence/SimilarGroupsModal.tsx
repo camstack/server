@@ -41,6 +41,7 @@ import {
 import type { FaceInfo, Identity } from './types.js'
 import { ZoomableImage } from './ZoomableImage.js'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 const FACE_GALLERY_KEY = [['faceGallery']]
 const CLUSTER_LIMIT = 20
@@ -365,7 +366,7 @@ export function SimilarGroupsModal({
                 className="h-1.5 w-28 cursor-pointer accent-primary"
               />
               <span className="w-8 shrink-0 text-right font-mono text-[11px] tabular-nums text-foreground">
-                {threshold.toFixed(2)}
+                {formatNumeric(threshold, undefined)}
               </span>
             </label>
 

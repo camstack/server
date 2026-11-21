@@ -10,6 +10,7 @@ import type { UiTextFn } from '../../contexts/ui-text'
 import { formatDurationMs } from '../../lib/format-duration'
 import type { ChartBand, ChartBandTone } from '../charts/chart-bands'
 import type { HistoryWindow } from './history-window'
+import { formatNumeric } from '../../lib/format-numeric'
 
 /** The context kept on each side of a run when a row opens it. */
 export const RUN_WINDOW_MARGIN_MS: number = 15 * 60_000
@@ -37,7 +38,7 @@ export function runDurationMs(run: DeviceRun, now: number): number | null {
 }
 
 export function formatKwh(kwh: number | null): string {
-  return kwh === null ? NO_VALUE : `${kwh.toFixed(2)} kWh`
+  return kwh === null ? NO_VALUE : `${formatNumeric(kwh, undefined)} kWh`
 }
 
 export function formatWatts(w: number | null): string {

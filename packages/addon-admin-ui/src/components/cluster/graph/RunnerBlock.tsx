@@ -4,6 +4,7 @@ import { FloatingLogStream, useNodesRestartAddon, Button } from '@camstack/ui-li
 import { formatBytes } from '../../../lib/format-size'
 import type { RunnerBlock as RunnerBlockData } from './build-cluster-graph'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 export interface RunnerBlockProps {
   readonly runner: RunnerBlockData
@@ -46,7 +47,9 @@ export function RunnerBlock({ runner, nodeId, expanded, pid, onToggleCaps }: Run
           aria-label={`status: ${runner.state}`}
         />
         <span className="font-medium truncate flex-1 min-w-0">{runner.name}</span>
-        <span className="shrink-0 text-muted-foreground">{runner.cpu.toFixed(1)}%</span>
+        <span className="shrink-0 text-muted-foreground">
+          {formatNumeric(runner.cpu, undefined)}%
+        </span>
         <span className="shrink-0 text-muted-foreground">{formatBytes(runner.mem)}</span>
         <Button
           variant="unstyled"

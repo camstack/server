@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { useNodesRenameNode, Button, Input } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface NodeInfoTabProps {
   readonly nodeId: string
@@ -154,7 +155,7 @@ export function NodeInfoTab(props: NodeInfoTabProps) {
       <span className="text-xs">
         {props.memoryMB > 0
           ? t('cluster.nodeInfoTab.gb', '{{value1}} GB', {
-              value1: (props.memoryMB / 1024).toFixed(1),
+              value1: formatNumeric(props.memoryMB / 1024, undefined),
             })
           : '—'}
       </span>,

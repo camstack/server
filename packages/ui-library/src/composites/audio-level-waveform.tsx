@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState, type JSX } from 'react'
 import { useUiText } from '../contexts/ui-text'
+import { formatNumeric } from '../lib/format-numeric'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,7 +162,7 @@ export function AudioLevelWaveform({
               one: '{{dbfs}} dBFS · {{count}} sample',
               other: '{{dbfs}} dBFS · {{count}} samples',
             },
-            { dbfs: latestDbfs.toFixed(1), count: samples.length },
+            { dbfs: formatNumeric(latestDbfs, undefined), count: samples.length },
           )}
         </div>
       )}

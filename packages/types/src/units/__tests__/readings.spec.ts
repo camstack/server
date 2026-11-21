@@ -93,6 +93,14 @@ describe('formatReading', () => {
     expect(formatted.text).toBe('32')
   })
 
+  it('keeps at most two decimals, trimmed, when no precision is set', () => {
+    expect(formatReading({ value: 21.47, quantity: 'temperature' }).text).toBe('21.47')
+    expect(formatReading({ value: 21.5, quantity: 'temperature' }).text).toBe('21.5')
+    expect(formatReading({ value: 21.4712, quantity: 'temperature', precision: 3 }).text).toBe(
+      '21.471',
+    )
+  })
+
   it('scales a duration in seconds up to days', () => {
     expect(formatReading({ value: 2 * 86400, quantity: 'duration', precision: 0 })).toEqual({
       text: '2',

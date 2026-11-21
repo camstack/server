@@ -15,7 +15,7 @@ import { consumableItemLevel, consumableLevelLabel } from '../../consumable-leve
 import type { CardConsumable } from '../shell/model'
 
 /** `value` null = unknown (D393) — an em-dash, never a fake `0`. */
-function formatRemaining(t: UiTextFn, r: ConsumableRemaining): string {
+function formatRemaining(t: UiTextFn, r: ConsumableRemaining, precision?: number): string {
   if (r.value === null) return '—'
   if (r.kind === 'count') {
     return t(
@@ -27,7 +27,7 @@ function formatRemaining(t: UiTextFn, r: ConsumableRemaining): string {
   const rendered = formatReading({
     value: r.value,
     quantity: 'duration',
-    precision: 0,
+    ...(precision === undefined ? {} : { precision }),
   })
   return rendered.unit.length === 0 ? rendered.text : `${rendered.text} ${rendered.unit}`
 }
@@ -59,9 +59,10 @@ export function toCardConsumable(
   item: ConsumableItem,
   canReset: boolean,
   t: UiTextFn,
+  precision?: number,
 ): CardConsumable {
   const parts: string[] = []
-  if (item.remaining) parts.push(formatRemaining(t, item.remaining))
+  if (item.remaining) parts.push(formatRemaining(t, item.remaining, precision))
   if (item.lastResetAt !== null) {
     parts.push(
       t('uiLibrary.consumablesPanel.replacedOn', 'Replaced {{date}}', {

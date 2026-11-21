@@ -22,6 +22,7 @@ import {
   useCameraMetricsSnapshots,
 } from './assignments/use-camera-metrics'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 interface CameraStatusStripProps {
   /**
@@ -94,7 +95,7 @@ export function CameraStatusStrip({ nodeId, title }: CameraStatusStripProps) {
                 {
                   name,
                   label: phaseCfg.label,
-                  value3: snap.metrics.actualFps.toFixed(1),
+                  value3: formatNumeric(snap.metrics.actualFps, undefined),
                   value4: snap.metrics.avgInferenceTimeMs.toFixed(0),
                   queueDepth: snap.metrics.queueDepth,
                 },
@@ -103,7 +104,9 @@ export function CameraStatusStrip({ nodeId, title }: CameraStatusStripProps) {
             >
               <PhaseIcon phase={snap.metrics.phase} className="h-2.5 w-2.5" />
               <span className="font-medium text-foreground/90 max-w-[220px] truncate">{name}</span>
-              <span className="font-mono tabular-nums">{snap.metrics.actualFps.toFixed(1)}</span>
+              <span className="font-mono tabular-nums">
+                {formatNumeric(snap.metrics.actualFps, undefined)}
+              </span>
               <span className="opacity-60">{t('common.fpsWord')}</span>
             </div>
           )

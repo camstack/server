@@ -18,6 +18,7 @@ import {
   usePipelineOrchestratorGetAudioNodeLoad,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 interface CameraSnapshot {
   readonly deviceId: number
   readonly nodeId: string
@@ -145,7 +146,7 @@ export function LiveLoadPanel({ refreshToken: _refreshToken, nodeId }: LiveLoadP
             below the viewport `md` breakpoint, so viewport-based
             classes flip to 5 columns prematurely. */}
         <div className="grid grid-cols-2 @md/liveload:grid-cols-3 @3xl/liveload:grid-cols-5 gap-2 mb-3">
-          <MetricCard label="FPS" value={stats ? stats.totalFps.toFixed(1) : '—'} />
+          <MetricCard label="FPS" value={stats ? formatNumeric(stats.totalFps, undefined) : '—'} />
           <MetricCard
             label={t('pipeline.liveLoadPanel.activeAttached', 'Active / Attached')}
             value={stats ? `${stats.activeCameras}/${stats.attachedCameras}` : '—'}
@@ -195,7 +196,7 @@ export function LiveLoadPanel({ refreshToken: _refreshToken, nodeId }: LiveLoadP
         />
         <MetricCard
           label={t('pipeline.liveLoadPanel.totalFps', 'Total FPS')}
-          value={clusterMetrics.totalFps.toFixed(1)}
+          value={formatNumeric(clusterMetrics.totalFps, undefined)}
         />
         <MetricCard
           label={t('pipeline.liveLoadPanel.avgInferenceMs', 'Avg inference ms')}
@@ -233,7 +234,9 @@ export function LiveLoadPanel({ refreshToken: _refreshToken, nodeId }: LiveLoadP
                 <td className="px-3 py-2 text-foreground font-medium">
                   {agentNameById.get(nid) ?? nid}
                 </td>
-                <td className="px-3 py-2 text-right text-foreground">{s.totalFps.toFixed(1)}</td>
+                <td className="px-3 py-2 text-right text-foreground">
+                  {formatNumeric(s.totalFps, undefined)}
+                </td>
                 <td className="px-3 py-2 text-right text-foreground">{s.attachedCameras}</td>
                 <td className="px-3 py-2 text-right text-foreground">
                   {s.attachedCameras > 0

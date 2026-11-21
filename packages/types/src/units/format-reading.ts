@@ -49,7 +49,9 @@ const INFO_STEPS: readonly { readonly factor: number; readonly unit: string }[] 
 function formatMagnitude(value: number, precision: number | undefined): string {
   if (!Number.isFinite(value)) return ''
   if (precision !== undefined) return value.toFixed(precision)
-  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+  if (Number.isInteger(value)) return String(value)
+  // Same default rule as the UI's formatNumeric: at most two decimals, trimmed.
+  return value.toFixed(2).replace(/\.?0+$/, '')
 }
 
 function scaleDuration(seconds: number): Scaled {

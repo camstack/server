@@ -12,6 +12,7 @@ import {
 import type { Track } from '@camstack/types'
 import { useDeviceProxy, useSystem, Button } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
+import { formatNumeric } from '@camstack/ui-library'
 
 /**
  * TracksTab — replaces the legacy TrackTrailTab. Reads from the
@@ -52,7 +53,7 @@ function formatTimestamp(ts: number): string {
 
 function formatDistance(distance: number): string {
   if (distance < 1) return `${(distance * 100).toFixed(0)}cm`
-  return `${distance.toFixed(1)}m`
+  return `${formatNumeric(distance, undefined)}m`
 }
 
 const CLASS_COLORS: Record<string, string> = {

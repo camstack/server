@@ -41,6 +41,7 @@ import type { SceneCheck, SceneMonitor, SceneUncoveredPolicy } from '@camstack/t
 import { useEffect, useState, type JSX } from 'react'
 import { UiTrans, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { TEXT_HINT } from '../../lib/responsive'
+import { formatNumeric } from '../../lib/format-numeric'
 
 /** The subset of `updateScene`'s patch this form can produce. */
 export interface SceneSettingsPatch {
@@ -286,7 +287,7 @@ export function SceneSettingsForm({
                   uiKey="uiLibrary.sceneSettingsForm.matchThreshold"
                   fallback="Match threshold — <0>{{value}}</0>"
                   components={[<span key="value" className="tabular-nums" />]}
-                  values={{ value: draft.threshold.toFixed(2) }}
+                  values={{ value: formatNumeric(draft.threshold, undefined) }}
                 />
               </span>
               <Slider
