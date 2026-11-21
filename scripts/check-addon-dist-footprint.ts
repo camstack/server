@@ -43,6 +43,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { closureReachability, MAX_UNREACHABLE_TYPES_KB } from './check-addon-types-reachability.js'
 import { distClosure, probeClosure } from './check-runner-dist-barrel-free.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -61,6 +62,18 @@ export const DEFAULT_MAX_GROWTH_MB = 60
 export const IN_HUB_PACKAGES: ReadonlySet<string> = new Set(['system'])
 
 export const FORBIDDEN_IDENTIFIER = 'ALL_CAPABILITY_DEFINITIONS'
+
+/**
+ * The literal of the schema `TreeshakeCanarySchema` (packages/types/src/treeshake-canary.ts)
+ * holds. Nothing reads that schema, so it must not appear in any addon dist: when it does, the
+ * types package is no longer tree-shaken and every unreachable schema comes along (D1073).
+ */
+export const CANARY_LITERAL = 'camstack-types-treeshake-canary-7c1e'
+
+/** Closure files that still carry the canary literal. */
+export function filesCarryingCanary(files: readonly string[]): readonly string[] {
+  return files.filter((f) => fs.readFileSync(f, 'utf-8').includes(CANARY_LITERAL))
+}
 
 export interface AddonEntry {
   readonly key: string
@@ -231,6 +244,20 @@ function main(): void {
         `${key}: ${path.relative(ROOT, f)} names ${FORBIDDEN_IDENTIFIER} (the whole cap schema graph)`,
       )
     }
+    for (const f of filesCarryingCanary(closure)) {
+      failures.push(
+        `${key}: ${path.relative(ROOT, f)} carries the types tree-shaking canary (an unused @camstack/types schema survived the bundle)`,
+      )
+    }
+    const reach = closureReachability(closure)
+    if (reach.deadKb > MAX_UNREACHABLE_TYPES_KB) {
+      failures.push(
+        `${key}: ${reach.deadKb.toFixed(0)} KB of @camstack/types is kept but no addon code reaches it (limit ${MAX_UNREACHABLE_TYPES_KB} KB)`,
+      )
+    }
+    notes.push(
+      `${key}: types ${reach.typesKb.toFixed(0)} KB, unreachable ${reach.deadKb.toFixed(0)} KB`,
+    )
     let growth: number
     try {
       growth = probeClosure(RUNNER, [entry]).heapUsedMb - baseline.heapUsedMb

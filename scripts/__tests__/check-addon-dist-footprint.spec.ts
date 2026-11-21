@@ -8,8 +8,11 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { probeClosure } from '../check-runner-dist-barrel-free.js'
+import { unreachableTypesBytes } from '../check-addon-types-reachability.js'
 import {
   allowedGrowthMb,
+  CANARY_LITERAL,
+  filesCarryingCanary,
   DEFAULT_MAX_GROWTH_MB,
   discoverAddonEntries,
   filesNamingForbidden,
@@ -195,5 +198,35 @@ describe('addon discovery', () => {
         entry: path.join(dir, 'packages/addon-x/dist/index.js'),
       },
     ])
+  })
+})
+
+describe('types tree-shaking guards (D1073)', () => {
+  it('names a dist file that still carries the canary literal', () => {
+    const dir = tmp({
+      'clean.js': 'const a = 1',
+      'dirty.js': `const s = object({ '${CANARY_LITERAL}': string() })`,
+    })
+    expect(filesCarryingCanary([path.join(dir, 'clean.js'), path.join(dir, 'dirty.js')])).toEqual([
+      path.join(dir, 'dirty.js'),
+    ])
+  })
+
+  it('counts a types statement no addon code references as unreachable', () => {
+    const code = [
+      '//#region ../../../../../packages/types/dist/x.mjs',
+      'const Used = object({ a: string() })',
+      'const Dead = object({ b: string() })',
+      'Object.freeze({ taxonomy: Dead })',
+      '//#endregion',
+      '//#region src/addon.ts',
+      'console.log(Used)',
+      '//#endregion',
+    ].join('\n')
+    const r = unreachableTypesBytes(code)
+    expect(r.deadBytes).toBe(
+      'const Dead = object({ b: string() })'.length + 'Object.freeze({ taxonomy: Dead })'.length,
+    )
+    expect(r.typesBytes).toBeGreaterThan(r.deadBytes)
   })
 })

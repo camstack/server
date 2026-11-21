@@ -3076,3 +3076,5 @@ export type {
   MemberDecision,
   MemberDecisionInput,
 } from './notification/notifier-group.js'
+
+export { TREESHAKE_CANARY_LITERAL, TreeshakeCanarySchema } from './treeshake-canary.js'
