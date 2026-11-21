@@ -146,6 +146,7 @@ export function HistoryOverlay({ part, window }: HistoryOverlayProps) {
           range={window}
           height={260}
           syncKey={SYNC_KEY}
+          reserveRightAxis
           pending={pending}
         />
       )}
@@ -164,6 +165,7 @@ export function HistoryOverlay({ part, window }: HistoryOverlayProps) {
           showTotal
           height={160}
           syncKey={SYNC_KEY}
+          reserveRightAxis
           pending={pending}
         />
       )}
@@ -177,6 +179,7 @@ export function HistoryOverlay({ part, window }: HistoryOverlayProps) {
           rows={stateRows}
           range={window}
           syncKey={SYNC_KEY}
+          reserveRightAxis
           pending={pending}
         />
       )}

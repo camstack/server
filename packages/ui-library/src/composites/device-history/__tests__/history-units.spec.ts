@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { chartUnitChoices, chartUnitState, convertPoints, defaultChartUnit } from '../history-units'
+import { formatChartValue } from '../../charts/chart-uplot'
+import { quantityFromUnit } from '../../charts/chart-tooltip-model'
+import {
+  autoScaledUnit,
+  chartUnitChoices,
+  chartUnitState,
+  convertPoints,
+  defaultChartUnit,
+} from '../history-units'
 
 describe('chart unit choices', () => {
   it('lists only units of the series dimension', () => {
@@ -54,5 +62,36 @@ describe('chartUnitState', () => {
   it('honours a pick inside the dimension only', () => {
     expect(chartUnitState('kWh', 'MWh', metric).unit).toBe('MWh')
     expect(chartUnitState('kWh', '°F', metric).unit).toBe('kWh')
+  })
+})
+
+describe('the unit every label of a chart follows', () => {
+  const metric = { system: 'metric', temperature: 'celsius' } as const
+
+  it('scales a power in the thousands to kW and keeps a small one in W', () => {
+    expect(autoScaledUnit('W', 5000)).toBe('kW')
+    expect(autoScaledUnit('W', 950)).toBe('W')
+    expect(autoScaledUnit('Wh', 2_500_000)).toBe('MWh')
+    expect(autoScaledUnit('°C', 5000)).toBe('°C')
+    expect(chartUnitState('W', null, metric, { peak: 5000 }).unit).toBe('kW')
+    expect(chartUnitState('W', null, metric, { peak: 800 }).unit).toBe('W')
+  })
+
+  it('lets the pick win over the data, and the device display unit win over the data', () => {
+    expect(chartUnitState('W', 'W', metric, { peak: 5000 }).unit).toBe('W')
+    const quantity = quantityFromUnit('W')
+    expect(quantity).toBe('power')
+    expect(
+      chartUnitState('W', null, metric, { peak: 80, quantity, display: { unit: 'kW' } }).unit,
+    ).toBe('kW')
+    expect(
+      chartUnitState('W', 'W', metric, { peak: 80, quantity, display: { unit: 'kW' } }).unit,
+    ).toBe('W')
+  })
+
+  it('prints the axis ticks, the tooltip number and the readout in the shown unit', () => {
+    const shown = chartUnitState('W', null, metric, { peak: 5000 }).unit
+    const points = convertPoints([{ t: 0, v: 5000 }], 'W', shown ?? 'W')
+    expect(formatChartValue(points[0]?.v ?? 0, shown)).toBe('5 kW')
   })
 })

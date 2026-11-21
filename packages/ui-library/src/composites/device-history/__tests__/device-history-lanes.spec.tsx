@@ -45,6 +45,9 @@ vi.mock('../use-device-history', () => ({
   }),
   useHistoryReads: () => ({ status: 'pending' }),
 }))
+vi.mock('../../../generated/system-hooks', () => ({
+  useDeviceManagerGetDevice: () => ({ data: null }),
+}))
 vi.mock('../use-device-runs', () => ({ useDeviceRuns: () => undefined }))
 vi.mock('../use-history-panels', () => ({
   useHistoryPanels: () => ({

@@ -15,7 +15,9 @@
 import { useCallback, useMemo, useState, type JSX } from 'react'
 import { EyeOff, History as HistoryIcon, LineChart } from 'lucide-react'
 import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryManyItem } from '@camstack/types'
+import { useDeviceManagerGetDevice } from '../../generated/system-hooks'
 import { useUiText } from '../../contexts/ui-text'
+import type { ReadingDisplaySubject } from '../hero-model/measurement-display'
 import { useUrlQueryParam } from '../../hooks/use-url-query'
 import { routerBasename } from '../../lib/hub-mount'
 import { STACK_GAP } from '../../lib/responsive'
@@ -89,6 +91,14 @@ export function DeviceHistoryView({
   const range = resolveHistoryWindow(windowId, now, custom)
 
   const runs = useDeviceRuns(deviceId)
+  const deviceRow = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
+  const subject = useMemo<ReadingDisplaySubject | null>(
+    () =>
+      deviceRow.data == null
+        ? null
+        : { role: deviceRow.data.role ?? null, display: deviceRow.data.display },
+    [deviceRow.data],
+  )
   const { presence, list } = useDeviceSeriesList(deviceId)
   const panels = useHistoryPanels()
   const hidden = useMemo(
@@ -314,6 +324,7 @@ export function DeviceHistoryView({
                     syncKey={syncKey}
                     runs={runs}
                     now={now}
+                    subject={subject}
                     actions={
                       <KebabMenu
                         title={t('uiLibrary.history.chartMenu', 'Chart actions')}

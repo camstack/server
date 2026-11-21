@@ -29,12 +29,16 @@ import {
   linePoints,
   occupancyFacets,
   occupancyLines,
+  parseCapKey,
   shiftPoints,
   stateRow,
   type HistoryChartSpec,
   type OccupancyFilter,
 } from './history-model'
-import { chartUnitState, convertPoints } from './history-units'
+import { chartUnitState, convertPoints, type ChartUnitContext } from './history-units'
+import { quantityFromUnit } from '../charts/chart-tooltip-model'
+import type { ReadingDisplaySubject } from '../hero-model/measurement-display'
+import { useRoleDisplayDefaults } from '../device-item/role-display-defaults-context'
 import type { HistoryReads } from './use-device-history'
 import type { HistoryWindow } from './history-window'
 
@@ -50,6 +54,8 @@ export interface HistoryChartProps {
   /** The device's runs, drawn as bands on its power chart; an open run extends to `now`. */
   readonly runs?: readonly DeviceRun[]
   readonly now?: number
+  /** The device's role and display override: its display unit drives the axis, tooltip and readout. */
+  readonly subject?: ReadingDisplaySubject | null
 }
 
 const ALL = '__all__'
@@ -95,6 +101,7 @@ export function HistoryChart({
   actions,
   runs,
   now,
+  subject = null,
 }: HistoryChartProps): JSX.Element {
   const t = useUiText()
   const pending = reads === null
@@ -141,6 +148,7 @@ export function HistoryChart({
         syncKey={syncKey}
         pending={pending}
         actions={actions}
+        subject={subject}
       />
     )
   }
@@ -169,6 +177,7 @@ export function HistoryChart({
       actions={actions}
       runs={spec.series.some((s) => s.key === RUN_BANDS_SERIES_KEY) ? runs : undefined}
       now={now}
+      subject={subject}
       labelOf={(s) => (spec.series.length > 1 || s.scope !== '' ? seriesLabel(s) : spec.title)}
     />
   )
@@ -197,15 +206,49 @@ function UnitSwitch({
   )
 }
 
-/** The unit a chart shows: the user's pick, else what their unit preferences say. */
-function useChartUnit(base: string | null): {
+/** The cap a series key belongs to: `cap:<cap>.<field>` → `<cap>`. */
+function capOf(key: string | undefined): string | undefined {
+  const parsed = key === undefined ? null : parseCapKey(key)
+  return parsed === null ? undefined : parsed.cap
+}
+
+/** The unit a chart shows: the user's pick, the device's display unit, the preferences, the magnitude. */
+function useChartUnit(
+  base: string | null,
+  subject: ReadingDisplaySubject | null,
+  seriesKey: string | undefined,
+  peak: number | null,
+): {
   readonly unit: string | null
   readonly choices: readonly string[]
   readonly pick: (unit: string) => void
 } {
   const preferences = useUnitPreferences()
+  const roleDefaults = useRoleDisplayDefaults()
   const [picked, setPicked] = useState<string | null>(null)
-  return { ...chartUnitState(base, picked, preferences), pick: setPicked }
+  const role = subject?.role ?? null
+  const quantity = base === null ? undefined : quantityFromUnit(base)
+  const capName = capOf(seriesKey)
+  const context: ChartUnitContext = {
+    ...(subject?.display === undefined ? {} : { display: subject.display }),
+    ...(role === null || roleDefaults[role] === undefined
+      ? {}
+      : { roleDefault: roleDefaults[role] }),
+    ...(capName === undefined ? {} : { capName }),
+    ...(quantity === undefined ? {} : { quantity }),
+    peak,
+  }
+  return { ...chartUnitState(base, picked, preferences, context), pick: setPicked }
+}
+
+/** The largest absolute value of a list, `null` when it has none. */
+function peakOf(values: Iterable<number | null | undefined>): number | null {
+  let peak: number | null = null
+  for (const v of values) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) continue
+    peak = peak === null ? Math.abs(v) : Math.max(peak, Math.abs(v))
+  }
+  return peak
 }
 
 function EnergyChart({
@@ -215,7 +258,9 @@ function EnergyChart({
   syncKey,
   pending,
   actions,
+  subject,
 }: {
+  readonly subject: ReadingDisplaySubject | null
   readonly spec: Extract<HistoryChartSpec, { type: 'energy' }>
   readonly result: DeviceHistoryQueryResult | undefined
   readonly window: HistoryWindow
@@ -224,8 +269,13 @@ function EnergyChart({
   readonly actions?: ReactNode
 }): JSX.Element {
   const base = spec.series.unit
-  const { unit, choices, pick } = useChartUnit(base)
   const { buckets, bucketMs } = energyBuckets(result)
+  const { unit, choices, pick } = useChartUnit(
+    base,
+    subject,
+    spec.series.key,
+    peakOf(buckets.flatMap((b) => b.values)),
+  )
   const converted =
     base === null || unit === null || unit === base
       ? buckets
@@ -271,6 +321,7 @@ interface LinesChartProps {
   readonly toolbar?: ReactNode
   readonly runs?: readonly DeviceRun[]
   readonly now?: number
+  readonly subject: ReadingDisplaySubject | null
   /** Slot per series (stable identity); default its index. */
   readonly colorOf?: (s: DeviceHistorySeriesInfo, index: number) => number
 }
@@ -289,16 +340,24 @@ function LinesChart({
   colorOf,
   runs,
   now,
+  subject,
 }: LinesChartProps): JSX.Element {
   const t = useUiText()
   const baseUnit = series[0]?.unit ?? null
-  const chartUnit = useChartUnit(baseUnit)
+  const heldUntil = Math.min(window.to, now ?? window.to)
+  const peak = peakOf(
+    series.flatMap((s) => {
+      const cur = entryFor(s.key, false)
+      const result = cur?.ok ? cur.result : undefined
+      return linePoints(s, result, window.from, heldUntil).points.map((p) => p.v)
+    }),
+  )
+  const chartUnit = useChartUnit(baseUnit, subject, series[0]?.key, peak)
   const errors = [
     ...new Set(
       series.map((s) => failure(entryFor(s.key, false))).filter((e): e is string => e !== null),
     ),
   ]
-  const heldUntil = Math.min(window.to, now ?? window.to)
   const defs = useMemo<readonly TimeSeriesDef[]>(() => {
     const out: TimeSeriesDef[] = []
     series.forEach((s, i) => {
@@ -474,6 +533,7 @@ function OccupancyChart({
       toolbar={toolbar}
       labelOf={labelOf}
       colorOf={colorOf}
+      subject={null}
     />
   )
 }

@@ -1854,6 +1854,12 @@
           "doc": ""
         },
         {
+          "name": "reserveRightAxis",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`)."
+        },
+        {
           "name": "pending",
           "type": "boolean",
           "optional": true,
@@ -10243,6 +10249,12 @@
           "type": "number",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "subject",
+          "type": "ReadingDisplaySubject | null",
+          "optional": true,
+          "doc": "The device's role and display override: its display unit drives the axis, tooltip and readout."
         }
       ]
     },
@@ -18187,6 +18199,12 @@
           "doc": ""
         },
         {
+          "name": "reserveRightAxis",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`)."
+        },
+        {
           "name": "pending",
           "type": "boolean",
           "optional": true,
@@ -19946,6 +19964,12 @@
           "type": "string",
           "optional": true,
           "doc": "Charts with the same key move one cursor together."
+        },
+        {
+          "name": "reserveRightAxis",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`)."
         },
         {
           "name": "formatValue",

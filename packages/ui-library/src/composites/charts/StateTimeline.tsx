@@ -56,6 +56,8 @@ export interface StateTimelineProps {
   readonly rows: readonly StateRowDef[]
   readonly range: ChartRange
   readonly syncKey?: string
+  /** Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`). */
+  readonly reserveRightAxis?: boolean
   readonly pending?: boolean
   readonly emptyMessage?: string
   readonly actions?: ReactNode
@@ -118,6 +120,7 @@ export function StateTimeline({
   rows,
   range,
   syncKey,
+  reserveRightAxis,
   pending = false,
   emptyMessage,
   actions,
@@ -133,7 +136,7 @@ export function StateTimeline({
   const empty = rows.every((r) => r.segments.length === 0)
   const labelOf = (row: StateRowDef, s: string): string => row.stateLabel?.(s) ?? s
 
-  const optionsKey = `${rows.map((r) => `${r.id}:${r.states.join('|')}`).join(',')}#${syncKey ?? ''}`
+  const optionsKey = `${rows.map((r) => `${r.id}:${r.states.join('|')}`).join(',')}#${syncKey ?? ''}#${reserveRightAxis === true ? 'R' : ''}`
   const data = useMemo<uPlot.AlignedData>(
     () => [
       [range.from, range.to],
@@ -151,6 +154,7 @@ export function StateTimeline({
         synced: syncKey !== undefined,
         leftAxis: false,
         rightAxis: false,
+        reserveRightAxis,
         top: 0,
       }),
       scales: {

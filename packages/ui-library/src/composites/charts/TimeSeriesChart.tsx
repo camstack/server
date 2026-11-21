@@ -71,6 +71,8 @@ export interface TimeSeriesChartProps<TId extends string = string> {
   readonly area?: boolean
   /** Charts with the same key move one cursor together. */
   readonly syncKey?: string
+  /** Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`). */
+  readonly reserveRightAxis?: boolean
   /** Value formatter per unit; default: bytes binary, `%` glued, unit after a space. */
   readonly formatValue?: (v: number, unit: string | null) => string
   /** Display preference for base-unit samples in the point tooltip. Default metric. */
@@ -147,6 +149,7 @@ export function TimeSeriesChart<TId extends string = string>({
   stacked = false,
   area = false,
   syncKey,
+  reserveRightAxis,
   formatValue,
   displayPreference,
   axisFor,
@@ -195,6 +198,7 @@ export function TimeSeriesChart<TId extends string = string>({
     stacked ? 'S' : '',
     area ? 'A' : '',
     syncKey ?? '',
+    reserveRightAxis === true ? 'G' : '',
     range ? 'R' : '',
   ].join('#')
 
@@ -314,6 +318,7 @@ export function TimeSeriesChart<TId extends string = string>({
           synced: syncKey !== undefined,
           leftAxis: true,
           rightAxis: axes.length > 2,
+          reserveRightAxis,
           top: 8,
         }),
         scales,

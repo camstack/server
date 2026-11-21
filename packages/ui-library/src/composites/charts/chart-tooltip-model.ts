@@ -358,7 +358,8 @@ export function reduceChartInteraction(
   }
 }
 
-function quantityFromUnit(unit: string | null | undefined): ReadingQuantity | undefined {
+/** The quantity whose BASE unit this is; `undefined` when none or several share it. */
+export function quantityFromUnit(unit: string | null | undefined): ReadingQuantity | undefined {
   if (unit === null || unit === undefined || unit.length === 0) return undefined
   let found: ReadingQuantity | undefined
   for (const key of Object.keys(QUANTITY_BASE)) {

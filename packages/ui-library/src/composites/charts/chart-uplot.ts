@@ -102,13 +102,20 @@ export interface PlotGutterInput {
   /** The chart draws a value axis on the left / on the right. */
   readonly leftAxis: boolean
   readonly rightAxis: boolean
+  /**
+   * Keep room for a right value axis even when this chart has none, so it lines up
+   * with a dual-axis chart of the same sync group. Off by default: a group whose
+   * charts each draw one unit (a device's History) must not leave that room empty.
+   */
+  readonly reserveRightAxis?: boolean
   readonly top: number
 }
 
 /**
  * uPlot padding `[top, right, bottom, left]`. In a synced view every chart ends
- * up with the same left and right gutter (axis or padding), so the plot areas
- * share their x extent and the crosshair lands on the same instant everywhere.
+ * up with the same left gutter, and the same right gutter when the group reserves
+ * a right axis (`reserveRightAxis`), so the plot areas share their x extent and
+ * the crosshair lands on the same instant everywhere.
  */
 export function plotPadding(g: PlotGutterInput): [number, number, number, number] {
   if (!g.synced) {
@@ -116,7 +123,7 @@ export function plotPadding(g: PlotGutterInput): [number, number, number, number
   }
   return [
     g.top,
-    PLOT_RIGHT_MARGIN + (g.rightAxis ? 0 : SYNCED_AXIS_SIZE),
+    PLOT_RIGHT_MARGIN + (g.rightAxis || g.reserveRightAxis !== true ? 0 : SYNCED_AXIS_SIZE),
     0,
     g.leftAxis ? 0 : SYNCED_AXIS_SIZE,
   ]

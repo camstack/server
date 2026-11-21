@@ -57,6 +57,8 @@ export interface BarSeriesProps<TId extends string = string> {
   /** Say the window total under the chart ("Total 12.4 kWh"). */
   readonly showTotal?: boolean
   readonly syncKey?: string
+  /** Keep the right axis gutter of a sync group that holds a dual-axis chart (see `plotPadding`). */
+  readonly reserveRightAxis?: boolean
   readonly pending?: boolean
   readonly emptyMessage?: string
   readonly actions?: ReactNode
@@ -88,6 +90,7 @@ export function BarSeries<TId extends string = string>({
   stacked,
   showTotal = false,
   syncKey,
+  reserveRightAxis,
   pending = false,
   emptyMessage,
   actions,
@@ -148,7 +151,7 @@ export function BarSeries<TId extends string = string>({
   const live = useRef({ buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt })
   live.current = { buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt }
 
-  const optionsKey = `${layers.map((l) => `${l.id}:${l.colorIndex}`).join(',')}#${compact ? 'C' : ''}#${isStacked ? 'S' : ''}#${syncKey ?? ''}#${String(bucketMs)}`
+  const optionsKey = `${layers.map((l) => `${l.id}:${l.colorIndex}`).join(',')}#${compact ? 'C' : ''}#${isStacked ? 'S' : ''}#${syncKey ?? ''}#${reserveRightAxis === true ? 'R' : ''}#${String(bucketMs)}`
 
   const data = useMemo<uPlot.AlignedData>(() => {
     const top = tops.at(-1) ?? []
@@ -173,6 +176,7 @@ export function BarSeries<TId extends string = string>({
               synced: syncKey !== undefined,
               leftAxis: true,
               rightAxis: false,
+              reserveRightAxis,
               top: 8,
             }),
         scales: {
