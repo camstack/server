@@ -19,6 +19,9 @@ import {
   DeviceCardFrameProvider,
   DeviceHistoryView,
   DeviceContextProvider,
+  Tabs,
+  TabsList,
+  TabsTrigger,
   DeviceQuickDetailProvider,
   Dialog,
   DialogBody,
@@ -158,23 +161,20 @@ function DeviceQuickDetailModal({
               <OpenDevicePageButton />
             </div>
           </DialogHeader>
-          <div className="mt-3 flex items-center gap-1 rounded-md bg-surface-hover p-0.5 w-fit">
-            {tabs.map(([id, label]) => (
-              // ui-check-ok: segmented tab strip, not an action button
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                  tab === id
-                    ? 'bg-surface text-foreground shadow-sm'
-                    : 'text-foreground-subtle hover:text-foreground'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            appearance="pills"
+            value={tab}
+            onValueChange={(id) => setTab(tabs.find(([known]) => known === id)?.[0] ?? tab)}
+            className="mt-3"
+          >
+            <TabsList>
+              {tabs.map(([id, label]) => (
+                <TabsTrigger key={id} value={id}>
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           <DialogBody className="mt-3">
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}

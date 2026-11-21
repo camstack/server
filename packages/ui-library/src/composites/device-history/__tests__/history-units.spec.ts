@@ -7,6 +7,7 @@ import {
   chartUnitState,
   convertPoints,
   defaultChartUnit,
+  titleInUnit,
 } from '../history-units'
 
 describe('chart unit choices', () => {
@@ -93,5 +94,19 @@ describe('the unit every label of a chart follows', () => {
     const shown = chartUnitState('W', null, metric, { peak: 5000 }).unit
     const points = convertPoints([{ t: 0, v: 5000 }], 'W', shown ?? 'W')
     expect(formatChartValue(points[0]?.v ?? 0, shown)).toBe('5 kW')
+  })
+
+  it('reads three significant digits with at most three decimals, never scientific', () => {
+    expect(formatChartValue(0.001, 'kW')).toBe('0.001 kW')
+    expect(formatChartValue(0.0187, 'kW')).toBe('0.019 kW')
+    expect(formatChartValue(0.0004, 'kW')).toBe('<0.001 kW')
+    expect(formatChartValue(0, 'kW')).toBe('0 kW')
+    expect(formatChartValue(12.34, 'kW')).toBe('12.3 kW')
+  })
+
+  it('names a chart after its unit in the shown unit', () => {
+    expect(titleInUnit('W', 'W', 'kW')).toBe('kW')
+    expect(titleInUnit('Power (W)', 'W', 'kW')).toBe('Power (kW)')
+    expect(titleInUnit('Power', 'W', 'kW')).toBe('Power')
   })
 })

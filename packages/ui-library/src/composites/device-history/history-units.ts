@@ -150,3 +150,11 @@ export function chartUnitState(
   if (preferred !== base) return { unit: preferred, choices }
   return { unit: autoScaledUnit(base, context.peak ?? null), choices }
 }
+
+/** A chart title that names its stored unit (`W`, `Power (W)`) names the shown one instead. */
+export function titleInUnit(title: string, base: string | null, shown: string | null): string {
+  if (base === null || shown === null || base === shown) return title
+  if (title === base) return shown
+  const suffix = `(${base})`
+  return title.endsWith(suffix) ? `${title.slice(0, -suffix.length)}(${shown})` : title
+}

@@ -9,6 +9,7 @@
  * Two or more: a legend is always present and every entry carries its value.
  */
 import { type JSX, type ReactNode } from 'react'
+import { unitDimension } from '@camstack/types'
 import { cn } from '../../lib/cn'
 import { swatchFillClass, swatchLineClass, type ChartSwatchToken } from './chart-palette'
 
@@ -60,7 +61,13 @@ export function ChartFrame({
   return (
     <figure className={cn('min-w-0 m-0', className)} data-chart-frame="">
       <div className="flex items-baseline justify-between gap-2 mb-1 min-w-0">
-        <figcaption className="text-[10px] uppercase tracking-wider text-foreground-subtle truncate min-w-0">
+        <figcaption
+          className={cn(
+            'text-[10px] tracking-wider text-foreground-subtle truncate min-w-0',
+            // A unit named as a title keeps its case: `kW` is not `KW`.
+            unitDimension(title) === undefined ? 'uppercase' : 'normal-case',
+          )}
+        >
           {title}
         </figcaption>
         <div className="flex items-center gap-2 shrink-0">

@@ -126,7 +126,7 @@ function openModal(): void {
 }
 
 function openDetailTab(): void {
-  fireEvent.click(screen.getByRole('button', { name: 'Detail' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Detail' }))
 }
 
 describe('DeviceQuickDetail modal', () => {
@@ -144,13 +144,13 @@ describe('DeviceQuickDetail modal', () => {
       presence.series = { presence: p, list }
       const view = renderModal()
       openModal()
-      expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
+      expect(screen.queryByRole('tab', { name: 'History' })).toBeNull()
       view.unmount()
     }
     presence.series = { presence: 'present', list: { status: 'ok', data: [{}] } }
     renderModal()
     openModal()
-    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
     expect(screen.getByTestId('history-pane')).toBeTruthy()
   })
 
@@ -158,12 +158,12 @@ describe('DeviceQuickDetail modal', () => {
     presence.transitions = 'absent'
     const view = renderModal()
     openModal()
-    expect(screen.queryByRole('button', { name: 'Actions' })).toBeNull()
+    expect(screen.queryByRole('tab', { name: 'Actions' })).toBeNull()
     view.unmount()
     presence.transitions = 'present'
     renderModal()
     openModal()
-    fireEvent.click(screen.getByRole('button', { name: 'Actions' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Actions' }))
     expect(screen.getByTestId('actions-pane')).toBeTruthy()
   })
 
@@ -173,8 +173,8 @@ describe('DeviceQuickDetail modal', () => {
     openDetailTab()
     expect(screen.getByTestId('hero-card')).toBeTruthy()
     expect(hero.props).toMatchObject({ deviceId: 7, legacyFallback: false })
-    expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
-    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(
+    expect(screen.queryByRole('tab', { name: 'History' })).toBeNull()
+    expect(screen.getAllByRole('tab').map((b) => b.textContent)).toEqual(
       expect.arrayContaining(['Detail', 'Device info', 'Export']),
     )
   })
@@ -191,7 +191,7 @@ describe('DeviceQuickDetail modal', () => {
   it('opens on Device info, the first tab, and Detail is one click away', () => {
     renderModal()
     openModal()
-    const labels = screen.getAllByRole('button').map((b) => b.textContent)
+    const labels = screen.getAllByRole('tab').map((b) => b.textContent)
     expect(labels.indexOf('Device info')).toBeLessThan(labels.indexOf('Detail'))
     expect(screen.queryByTestId('hero-card')).toBeNull()
     expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
@@ -263,9 +263,9 @@ describe('DeviceQuickDetail modal', () => {
     openModal()
     openDetailTab()
     fireEvent.click(screen.getByRole('button', { name: 'hero-settled-empty' }))
-    expect(screen.queryByRole('button', { name: 'Detail' })).toBeNull()
+    expect(screen.queryByRole('tab', { name: 'Detail' })).toBeNull()
     expect(screen.queryByTestId('hero-card')).toBeNull()
-    expect(screen.getByRole('button', { name: 'Device info' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Device info' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
   })
 })

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Energy card: a grid with no answered power reading shows a dash instead of 0 W, a dead or storage-blind counter leaves the day balance unknown, and today's household is derived when the house day total is missing
 - The energy card reads a past day from its energy balance (consumption, autarky, source split), shows imported / exported / produced and the autarky in the centre, draws the nodes and arrows from that day's kWh, and keeps a flat counter at 0 instead of a dash; live arrows now all carry arrowheads and the grid node stays when it reads 0 W
 - History charts use the full width of their card, and a power or energy chart follows the device display unit, the unit picker, or scales to kW / kWh / MWh in the thousands on the axis, tooltip and readout
+- A History chart titled by its unit follows the shown unit, and a value below 0.001 reads as below it instead of 0
 
 ## [1.2.490] - 2026-11-21
 

@@ -35,7 +35,7 @@ import {
   type HistoryChartSpec,
   type OccupancyFilter,
 } from './history-model'
-import { chartUnitState, convertPoints, type ChartUnitContext } from './history-units'
+import { chartUnitState, convertPoints, titleInUnit, type ChartUnitContext } from './history-units'
 import { quantityFromUnit } from '../charts/chart-tooltip-model'
 import type { ReadingDisplaySubject } from '../hero-model/measurement-display'
 import { useRoleDisplayDefaults } from '../device-item/role-display-defaults-context'
@@ -285,8 +285,8 @@ function EnergyChart({
         }))
   return (
     <BarSeries
-      title={spec.title}
-      layers={[{ id: 'kwh', label: spec.title, colorIndex: 4 }]}
+      title={titleInUnit(spec.title, base, unit)}
+      layers={[{ id: 'kwh', label: titleInUnit(spec.title, base, unit), colorIndex: 4 }]}
       buckets={converted}
       bucketMs={bucketMs}
       range={window}
@@ -431,7 +431,7 @@ function LinesChart({
     return <ReadFailed title={title} error={errors.join('; ')} actions={actions} />
   return (
     <TimeSeriesChart
-      title={title}
+      title={titleInUnit(title, baseUnit, chartUnit.unit)}
       series={defs}
       bands={bands}
       range={window}

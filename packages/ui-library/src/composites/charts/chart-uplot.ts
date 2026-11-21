@@ -252,6 +252,8 @@ export function formatChartNumber(v: number): string {
   if (abs >= 10) return trimZeros(v.toFixed(1))
   if (abs >= 1) return trimZeros(v.toFixed(2))
   if (abs === 0) return '0'
+  // Never more than three decimals: a smaller value reads as below the last one, not as 0.
+  if (abs < 0.0005) return `${v < 0 ? '-' : ''}<0.001`
   return trimZeros(v.toFixed(3))
 }
 
