@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Readings across the admin pages show at most two decimals, or the precision set in Customize
+- The device quick modal opens on one section with the device card and the details together, and lets you rename the device and set its room and role in place
 
 ## [1.2.731] - 2026-11-21
 

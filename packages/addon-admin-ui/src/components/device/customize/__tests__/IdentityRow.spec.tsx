@@ -128,4 +128,17 @@ describe('IdentityRow (spec U9)', () => {
       await i18n.changeLanguage('en')
     }
   })
+
+  it('basic mode keeps name, room and role only', () => {
+    render(wrap(<IdentityRow device={DEVICE} basic />))
+    for (const label of ['Name', 'Room', 'Role'])
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0)
+    for (const label of ['Type', 'Hidden', 'Tags']) expect(screen.queryByText(label)).toBeNull()
+  })
+
+  it('readOnly shows the values with no editor', () => {
+    render(wrap(<IdentityRow device={DEVICE} basic readOnly />))
+    expect(screen.queryByRole('combobox', { name: 'Role' })).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
+  })
 })

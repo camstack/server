@@ -9,8 +9,7 @@
  * Opens on the SAME device detail the viewer shows (`/embed/device/<id>`: the
  * `DeviceDetailModule` card in the bare frame — hero, consumables, and History
  * from the card's own History button), then the Overview device-info facts and
- * the Export form; name, room, role, tags and display are edited there and
- * saved together. The header's "Open device page" button is the one way to the
+ * the Export form; name, room and role are edited in the first section and saved together. The header's "Open device page" button is the one way to the
  * full page.
  */
 import {
@@ -36,6 +35,8 @@ import {
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeviceWebInterfaceCard } from './DeviceWebInterfaceCard'
+import { useAuth } from '../../contexts/auth-context'
+import { IdentityRow } from './customize/IdentityRow'
 import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { DeviceHeroCard, type DeviceHeroCardDevice } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
@@ -43,7 +44,7 @@ import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
 import { historyTabVisible } from './history-tab'
 import { isDeviceExportSection } from './tabs/device-export-tab'
 
-type QuickTabId = 'detail' | 'history' | 'actions' | 'info' | 'export'
+type QuickTabId = 'history' | 'actions' | 'info' | 'export'
 
 /**
  * The device card of the Detail tab. Every navigation the card starts (open
@@ -103,17 +104,15 @@ function DeviceQuickDetailModal({
   const [pickedTab, setTab] = useState<QuickTabId>('info')
   // Told by the card once it settled: false = the hero model covers nothing (a
   // camera, a device with no card), which the viewer shows as an empty card.
+  // The card stays mounted so `drawn` is learned at open; it takes room only
+  // once it reported something to show.
   const [drawn, setDrawn] = useState<boolean | null>(null)
-  // The card stays mounted (hidden) so `drawn` is learned at open; Detail is
-  // offered only once the card reported something to show.
-  const detailOffered = drawn === true
+  const { user } = useAuth()
   const series = useDeviceSeriesList(deviceId)
   const hasHistory = historyTabVisible(series.presence, series.list)
   const hasActions = useCapabilityPresence('device-transitions') === 'present'
   const tab: QuickTabId =
-    (pickedTab === 'detail' && !detailOffered) ||
-    (pickedTab === 'history' && !hasHistory) ||
-    (pickedTab === 'actions' && !hasActions)
+    (pickedTab === 'history' && !hasHistory) || (pickedTab === 'actions' && !hasActions)
       ? 'info'
       : pickedTab
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
@@ -126,9 +125,6 @@ function DeviceQuickDetailModal({
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
-    ...(detailOffered
-      ? [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]
-      : []),
     ...(hasHistory
       ? [['history', t('deviceQuickDetail.tabHistory', { defaultValue: 'History' })] as const]
       : []),
@@ -181,15 +177,18 @@ function DeviceQuickDetailModal({
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
               {/* Never a stream: a camera has no card here. */}
-              <div className={tab === 'detail' ? 'h-full' : 'hidden'}>
-                <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
-              </div>
-              {tab === 'history' ? <DeviceHistoryView deviceId={deviceId} /> : null}
-              {tab === 'actions' ? <ActuationHistory deviceId={deviceId} /> : null}
               <div className={tab === 'info' ? 'flex flex-col gap-3' : 'hidden'}>
+                <div className={drawn === true ? 'h-[26rem] min-h-0' : 'hidden'}>
+                  <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
+                </div>
+                {device != null ? (
+                  <IdentityRow device={device} basic readOnly={user?.isAdmin !== true} />
+                ) : null}
                 <DeviceWebInterfaceCard deviceId={deviceId} />
                 <DeviceInfoAdapter />
               </div>
+              {tab === 'history' ? <DeviceHistoryView deviceId={deviceId} /> : null}
+              {tab === 'actions' ? <ActuationHistory deviceId={deviceId} /> : null}
               <div className={tab === 'export' ? undefined : 'hidden'}>
                 <DeviceAggregateSection deviceId={deviceId} sectionFilter={isDeviceExportSection} />
               </div>

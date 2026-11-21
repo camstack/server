@@ -29,9 +29,17 @@ import { isKnownRole, roleOptions } from './identity-model'
 
 export interface IdentityRowProps {
   readonly device: DeviceInfo
+  /** Name, room and role only (the quick-detail modal): no tags, type, hidden or display fields. */
+  readonly basic?: boolean
+  /** Show the values without editors (a viewer who may not edit the device). */
+  readonly readOnly?: boolean
 }
 
-export function IdentityRow({ device }: IdentityRowProps): ReactNode {
+export function IdentityRow({
+  device,
+  basic = false,
+  readOnly = false,
+}: IdentityRowProps): ReactNode {
   const { t } = useTranslation()
   const uiText = useUiText()
   const save = useQuickDetailSave()
@@ -42,14 +50,20 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
   const role = draft?.role ?? device.role ?? null
   const tags = draft?.tags ?? device.tags ?? []
   const hidden = draft?.display.hidden ?? device.display?.hidden === true
-  const bound = save !== null && draft !== null
+  const bound = save !== null && draft !== null && !readOnly
 
   return (
     <section
       aria-label={t('customize.identity.title')}
       className={`${SECTION_CARD} ${SECTION_BODY}`}
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        className={
+          basic
+            ? 'grid grid-cols-1 gap-3 sm:grid-cols-3'
+            : 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'
+        }
+      >
         {bound ? (
           <EditableNameRow
             deviceId={device.id}
@@ -76,36 +90,40 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
             value={location === '' ? t('common.unset') : location}
           />
         )}
-        <InfoRow
-          label={t('common.tags', 'Tags')}
-          layout="stacked"
-          value={
-            bound ? (
-              <TagInput
-                value={tags}
-                onChange={save.setIdentityTags}
-                label={t('common.tags', 'Tags')}
-              />
-            ) : tags.length > 0 ? (
-              <TagChipList tags={tags} entries={tagRegistry.entries} />
-            ) : (
-              t('common.unset')
-            )
-          }
-        />
-        <InfoRow label={t('customize.identity.type')} layout="stacked" value={device.type} />
-        <InfoRow
-          label={t('customize.identity.hidden')}
-          layout="stacked"
-          value={
-            <Checkbox
-              aria-label={t('deviceDisplay.hideFromLists')}
-              checked={hidden}
-              disabled={!bound}
-              onChange={(e) => save?.setIdentityDisplay({ hidden: e.target.checked })}
+        {basic ? null : (
+          <>
+            <InfoRow
+              label={t('common.tags', 'Tags')}
+              layout="stacked"
+              value={
+                bound ? (
+                  <TagInput
+                    value={tags}
+                    onChange={save.setIdentityTags}
+                    label={t('common.tags', 'Tags')}
+                  />
+                ) : tags.length > 0 ? (
+                  <TagChipList tags={tags} entries={tagRegistry.entries} />
+                ) : (
+                  t('common.unset')
+                )
+              }
             />
-          }
-        />
+            <InfoRow label={t('customize.identity.type')} layout="stacked" value={device.type} />
+            <InfoRow
+              label={t('customize.identity.hidden')}
+              layout="stacked"
+              value={
+                <Checkbox
+                  aria-label={t('deviceDisplay.hideFromLists')}
+                  checked={hidden}
+                  disabled={!bound}
+                  onChange={(e) => save?.setIdentityDisplay({ hidden: e.target.checked })}
+                />
+              }
+            />
+          </>
+        )}
         <InfoRow
           label={t('customize.identity.role')}
           layout="stacked"
@@ -131,7 +149,7 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
           }
         />
       </div>
-      {draft !== null && save !== null && (
+      {!basic && !readOnly && draft !== null && save !== null && (
         <IdentityDisplayFields
           device={device}
           role={role}
