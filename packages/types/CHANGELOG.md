@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Addon bundles now carry only the part of the types package they reach: the types build is tree-shakable (one ESM file per module, pure-marked initializers), which cuts addon heap by 35-75 MB and BaseDevice.state reads a schema-free cap-name table
+
 ## [1.2.617] - 2026-11-21
 
 ### Added
@@ -17,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation rows "a device fault is raised" and "a device has a fault" match a device's whole fault list.
 - A fault condition in a draft must name an existing device that serves the error cap, and a fault trigger offers the fired code as a step variable
-- Addon bundles now carry only the part of the types package they reach: the types build is tree-shakable (one ESM file per module, pure-marked initializers), which cuts addon heap by 35-75 MB and BaseDevice.state reads a schema-free cap-name table
 
 ## [1.2.616] - 2026-11-21
 
