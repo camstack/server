@@ -20,42 +20,50 @@
   "bugs": {
     "url": "https://github.com/camstack/server/issues"
   },
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "module": "./dist/esm/index.mjs",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",
+      "module": "./dist/esm/node.mjs",
       "import": "./dist/node.mjs",
       "require": "./dist/node.js"
     },
     "./addon": {
       "types": "./dist/addon.d.ts",
+      "module": "./dist/esm/addon.mjs",
       "import": "./dist/addon.mjs",
       "require": "./dist/addon.js"
     },
     "./enums": {
       "types": "./dist/enums/index.d.ts",
+      "module": "./dist/esm/enums.mjs",
       "import": "./dist/enums.mjs",
       "require": "./dist/enums.js"
     },
     "./node-color": {
       "types": "./dist/node-color.d.ts",
+      "module": "./dist/esm/node-color.mjs",
       "import": "./dist/node-color.mjs",
       "require": "./dist/node-color.js"
     },
     "./units-lean": {
       "types": "./dist/units-lean.d.ts",
+      "module": "./dist/esm/units-lean.mjs",
       "import": "./dist/units-lean.mjs",
       "require": "./dist/units-lean.js"
     },
     "./device-template-catalogue": {
       "types": "./dist/device-template-catalogue.d.ts",
+      "module": "./dist/esm/device-template-catalogue.mjs",
       "import": "./dist/device-template-catalogue.mjs",
       "require": "./dist/device-template-catalogue.js"
     },
@@ -66,6 +74,7 @@
     },
     "./testing": {
       "types": "./dist/testing.d.ts",
+      "module": "./dist/esm/testing.mjs",
       "import": "./dist/testing.mjs",
       "require": "./dist/testing.js"
     },

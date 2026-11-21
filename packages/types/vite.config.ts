@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url'
+import { pureInitializers } from '../../tools/build/pure-initializers.ts'
 import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 
 /**
@@ -7,7 +9,7 @@ import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
  * massive AppRouter type. Same workaround applies under Vite —
  * vite-plugin-dts has the same TS compiler limits as tsup's DTS.
  */
-export default buildLibPreset({
+const preset = buildLibPreset({
   entries: {
     index: 'src/index.ts',
     node: 'src/node.ts',
@@ -31,3 +33,48 @@ export default buildLibPreset({
   },
   externals: 'framework',
 })
+
+/**
+ * Tree-shakable for the addon bundles that inline this package (D15, D1073):
+ *
+ *  - `dist/esm/` keeps one ESM file per source module (`preserveModules`) and the `module`
+ *    export condition points there, so a consumer BUNDLER (the addon builds, vite) can drop
+ *    every module and every initializer the addon does not reach (`"sideEffects": false` in
+ *    package.json, `/* @__PURE__ *\/` on initializer calls through the plugin below);
+ *  - `dist/*.mjs` and `dist/*.js` stay one bundled file per entry: Node (`import`, `require`)
+ *    and vitest load those. They are NOT replaced by `dist/esm/`: vitest crawls a package's
+ *    ESM module graph and ran out of memory on ~700 small files (`vitest related`).
+ */
+export default {
+  ...preset,
+  plugins: [
+    ...(preset.plugins ?? []),
+    pureInitializers(fileURLToPath(new URL('./src/', import.meta.url))),
+  ],
+  build: {
+    ...preset.build,
+    rollupOptions: {
+      ...preset.build?.rollupOptions,
+      output: [
+        {
+          format: 'cjs',
+          entryFileNames: '[name].js',
+          preserveModules: false,
+          manualChunks: () => null,
+        },
+        {
+          format: 'es',
+          entryFileNames: '[name].mjs',
+          preserveModules: false,
+          manualChunks: () => null,
+        },
+        {
+          format: 'es',
+          entryFileNames: 'esm/[name].mjs',
+          preserveModules: true,
+          preserveModulesRoot: 'src',
+        },
+      ],
+    },
+  },
+}

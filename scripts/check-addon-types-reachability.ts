@@ -22,8 +22,8 @@
 import * as fs from 'node:fs'
 import { parseAst } from 'vite'
 
-/** Dead types code one addon closure may carry. Healthy is ~0; before D1073 it was 1,500+ KB. */
-export const MAX_UNREACHABLE_TYPES_KB = 20
+/** Dead types code one addon closure may carry. Measured 3 to 32 KB in the addons that use the types package; before D1073 it was 1,500+ KB. */
+export const MAX_UNREACHABLE_TYPES_KB = 40
 
 interface AstNode {
   readonly type: string
@@ -59,11 +59,12 @@ export function isTypesRegion(region: string): boolean {
 }
 
 interface Stmt {
+  readonly head: string
   readonly names: readonly string[]
   readonly refs: ReadonlySet<string>
   readonly size: number
   readonly inTypes: boolean
-  /** An export list (`export { a, b }`): what it names is used by another file or by the host. */
+  /** An export list (`export { a, b }`, or `exports.a = a` in CommonJS): another file or the host uses what it names. */
   readonly exports: boolean
 }
 
@@ -102,7 +103,11 @@ function declaredNames(node: AstNode): string[] {
  * exactly the dead weight to find. The few bare statements that must run (the
  * event taxonomy) keep their own dependencies, a small residue the threshold covers.
  */
-export function unreachableTypesBytes(code: string): { typesBytes: number; deadBytes: number } {
+export function unreachableTypesBytes(code: string): {
+  typesBytes: number
+  deadBytes: number
+  dead: readonly { head: string; size: number }[]
+} {
   const regions: { at: number; types: boolean }[] = []
   for (const m of code.matchAll(/^\/\/#region (.*)$/gm)) {
     regions.push({ at: m.index ?? 0, types: isTypesRegion(m[1] ?? '') })
@@ -137,11 +142,16 @@ export function unreachableTypesBytes(code: string): { typesBytes: number; deadB
       if (!isMember) refs.add((n as unknown as { name: string }).name)
     })
     stmts.push({
+      head: code.slice(raw.start, raw.start + 80).replace(/\s+/g, ' '),
       names,
       refs,
       size: raw.end - raw.start,
       inTypes: inTypesAt(raw.start),
-      exports: raw.type === 'ExportNamedDeclaration' && names.length === 0,
+      exports:
+        (raw.type === 'ExportNamedDeclaration' && names.length === 0) ||
+        /^(module\.)?exports\b|^Object\.defineProperty\(exports\b/.test(
+          code.slice(raw.start, raw.start + 60),
+        ),
     })
   }
 
@@ -160,12 +170,16 @@ export function unreachableTypesBytes(code: string): { typesBytes: number; deadB
   }
   let typesBytes = 0
   let deadBytes = 0
+  const dead: { head: string; size: number }[] = []
   for (const s of stmts) {
     if (!s.inTypes) continue
     typesBytes += s.size
-    if (!live.has(s)) deadBytes += s.size
+    if (!live.has(s)) {
+      deadBytes += s.size
+      dead.push({ head: s.head, size: s.size })
+    }
   }
-  return { typesBytes, deadBytes }
+  return { typesBytes, deadBytes, dead: dead.toSorted((a, b) => b.size - a.size).slice(0, 5) }
 }
 
 export interface ReachabilityReport {
