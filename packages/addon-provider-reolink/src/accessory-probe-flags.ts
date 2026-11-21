@@ -182,8 +182,15 @@ export function effectiveProbeFlags<F extends Record<string, unknown>>(
  */
 export function accessoryChildrenAnswerFor(
   sliceProbed: boolean,
+  sliceFlags: ReolinkAccessoryProbeFlags,
   specs: readonly AccessoryChildSpec[],
 ): AccessoryChildrenAnswer {
-  if (sliceProbed) return { kind: 'complete', children: specs }
-  return accessoryChildrenUnknown('no probe completed this session', specs)
+  if (!sliceProbed) return accessoryChildrenUnknown('no probe completed this session', specs)
+  // `lastProbedAt` is stamped even when the capabilities read threw: a slice
+  // with no ability flag is not a list, and an empty one must never prune.
+  const carriesAbilities = ACCESSORY_FLAGS.some(([flag]) => typeof sliceFlags[flag] === 'boolean')
+  if (!carriesAbilities) {
+    return accessoryChildrenUnknown('probe carried no ability flags', specs)
+  }
+  return { kind: 'complete', children: specs }
 }

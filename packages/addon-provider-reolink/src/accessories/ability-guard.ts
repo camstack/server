@@ -26,7 +26,7 @@ export class AccessoryAbilityError extends Error {
 
 /**
  * Throws {@link AccessoryAbilityError} (after logging it) unless the host
- * reports the flag `true`. A host that cannot report abilities (older impls)
+ * does not report the flag `false`; an unknown flag passes with a warning. A host that cannot report abilities (older impls)
  * is allowed through, as before.
  */
 export function assertAccessoryAbility(
@@ -39,6 +39,13 @@ export function assertAccessoryAbility(
   if (host.probeAbility === undefined) return
   const reported = host.probeAbility(flag)
   if (reported === true) return
+  if (reported === undefined) {
+    logger.warn('accessory command allowed — the parent ability is unknown', {
+      tags: { deviceId },
+      meta: { flag, action },
+    })
+    return
+  }
   logger.warn('accessory command refused — the parent camera does not advertise the ability', {
     tags: { deviceId },
     meta: { flag, reported: reported ?? null, action },

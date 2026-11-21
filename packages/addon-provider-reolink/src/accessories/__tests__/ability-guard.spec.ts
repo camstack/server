@@ -58,8 +58,8 @@ function build(hasFloodlight: boolean | undefined) {
 }
 
 describe('Floodlight accessory on a camera without a floodlight', () => {
-  it.each([false, undefined])('refuses setState when the parent reports %s', async (flag) => {
-    const h = build(flag)
+  it('refuses setState when the parent reports false', async () => {
+    const h = build(false)
     await expect(h.providers.switch!.setState({ deviceId: 51, on: true })).rejects.toBeInstanceOf(
       AccessoryAbilityError,
     )
@@ -74,5 +74,15 @@ describe('Floodlight accessory on a camera without a floodlight', () => {
     const h = build(true)
     await h.providers.switch!.setState({ deviceId: 51, on: true })
     expect(h.setWhiteLedState).toHaveBeenCalledOnce()
+  })
+
+  it('lets a command through, with a warning, when the ability is unknown', async () => {
+    const h = build(undefined)
+    await h.providers.switch!.setState({ deviceId: 51, on: true })
+    expect(h.setWhiteLedState).toHaveBeenCalledOnce()
+    expect(h.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('unknown'),
+      expect.objectContaining({ tags: { deviceId: 51 } }),
+    )
   })
 })

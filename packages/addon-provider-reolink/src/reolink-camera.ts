@@ -203,6 +203,7 @@ import { createAccessoryDevice } from './accessories/index.js'
 import {
   accessoryChildrenAnswerFor,
   accessoryKindsFor,
+  resolveAccessoryProbeFlags,
   effectiveProbeFlags,
   withPersistedProbe,
 } from './accessory-probe-flags.js'
@@ -2262,7 +2263,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       push(AccessoryKind.PirSensor, DeviceType.Switch, ACCESSORY_LABEL[AccessoryKind.PirSensor])
     // Autotrack is NOT a child accessory — it's an extension of PTZ
     // exposed via the `ptz-autotrack` cap on the parent camera.
-    return accessoryChildrenAnswerFor(this.hasProbed(), out)
+    return accessoryChildrenAnswerFor(
+      this.hasProbed(),
+      super.getProbeFlags<ReolinkProbeFlags>(),
+      out,
+    )
   }
 
   /**
@@ -11687,7 +11692,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /** Implements `ReolinkAccessoryHost.probeAbility`: the effective probe flag
    *  (live slice, else the persisted probe); `undefined` = never probed. */
   probeAbility(flag: 'hasFloodlight' | 'hasSiren'): boolean | undefined {
-    const value = this.getProbeFlags<ReolinkProbeFlags>()[flag]
+    const live = super.getProbeFlags<ReolinkProbeFlags>()[flag]
+    const value =
+      typeof live === 'boolean'
+        ? live
+        : resolveAccessoryProbeFlags(false, {}, this.config.get('deviceCache'))[flag]
     return typeof value === 'boolean' ? value : undefined
   }
 
