@@ -14,10 +14,25 @@ export interface RobotFixture {
 const SUCTION = ['Silenziosa', 'Standard', 'Turbo', 'Max']
 
 const VACUUM_PARTS: readonly CardConsumable[] = [
-  { key: 'main', label: 'Spazzola principale', percent: 45, resetLabel: 'Sostituita' },
-  { key: 'side', label: 'Spazzola laterale', percent: 22, resetLabel: 'Sostituita' },
+  {
+    key: 'main',
+    label: 'Spazzola principale',
+    percent: 45,
+    resetLabel: 'Sostituita',
+  },
+  {
+    key: 'side',
+    label: 'Spazzola laterale',
+    percent: 22,
+    resetLabel: 'Sostituita',
+  },
   { key: 'filter', label: 'Filtro', percent: 60, resetLabel: 'Sostituito' },
-  { key: 'bag', label: 'Sacchetto base', percent: 80, resetLabel: 'Sostituito' },
+  {
+    key: 'bag',
+    label: 'Sacchetto base',
+    percent: 80,
+    resetLabel: 'Sostituito',
+  },
 ]
 
 interface RobotInput {
@@ -54,17 +69,23 @@ function robot(input: RobotInput): RobotFixture {
         remote: null,
         supply: input.mower ? null : { name: 'Presa base', state: 'on' },
         consumables: input.mower ? null : VACUUM_PARTS,
+        faults: input.error === undefined ? [] : [{ label: input.error, severity: 'error' }],
       },
       mower: input.mower,
       activity: input.activity,
-      errorLabel: input.error ?? null,
       since: input.since,
       suction:
         input.suction === undefined || input.suction === null
           ? null
           : { options: SUCTION, value: input.suction },
       progress: input.progress ?? null,
-      controls: { start: true, pause: true, dock: true, stop: false, locate: !input.mower },
+      controls: {
+        start: true,
+        pause: true,
+        dock: true,
+        stop: false,
+        locate: !input.mower,
+      },
       mapUrl: null,
     },
   }
@@ -153,7 +174,7 @@ export function robotFixtures(): readonly RobotFixture[] {
       battery: 38,
       since: 'da 4 min',
       progress: 62,
-      error: 'Sollevato',
+      error: 'Temperatura bassa',
     }),
     cleaning('horizontal'),
   ]

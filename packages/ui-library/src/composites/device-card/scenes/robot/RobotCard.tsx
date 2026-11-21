@@ -10,7 +10,7 @@ import {
   columnStep,
   columnValue,
 } from '../../shell/column-items'
-import { rowButtons, rowText } from '../../shell/bottom-rows'
+import { rowButtons } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -50,8 +50,9 @@ export function robotStateLabel(model: RobotCardModel, t: UiTextFn): string {
     case 'idle':
       return t('uiLibrary.deviceCard.robot.idle', 'Idle')
     case 'err':
-      return model.mower && model.errorLabel !== null
-        ? model.errorLabel
+      // The cause is the frame's fault row (the `error` cap); the pill is the summary.
+      return model.mower
+        ? t('uiLibrary.deviceCard.robot.error', 'Error')
         : t('uiLibrary.deviceCard.robot.stuck', 'Stuck')
   }
 }
@@ -180,8 +181,6 @@ export function RobotCard({
   const [showMap, setShowMap] = useState(false)
   const label = robotStateLabel(model, t)
   const mapShown = showMap && model.mapUrl !== null
-  const robotError =
-    model.activity === 'err' && !model.mower && model.errorLabel !== null ? model.errorLabel : null
   return (
     <DeviceCard
       kind={model.mower ? 'mower' : 'vacuum'}
@@ -212,16 +211,6 @@ export function RobotCard({
           />
         ),
         bottom: [
-          ...(robotError === null
-            ? []
-            : [
-                rowText('error', {
-                  text: robotError,
-                  tone: 'danger',
-                  glyph: 'warning',
-                  testId: 'dc-robot-error',
-                }),
-              ]),
           ...(model.mapUrl === null
             ? []
             : [

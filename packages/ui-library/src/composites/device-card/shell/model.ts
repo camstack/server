@@ -93,22 +93,34 @@ export interface CardFault {
 }
 
 /**
- * The fault to draw, or null. Only a slice that ANSWERED `active: true` draws
- * one: not-yet-read (`null`), clear (`false`) and a cap the device does not
- * have (no slice) are all no badge (D315).
+ * The faults to draw, empty when none. Only a slice that ANSWERED `active: true`
+ * draws: not-yet-read (`null`), clear (`false`) and a cap the device does not
+ * have (no slice) are all no row (D315). A device that raises several lists
+ * every one; otherwise the principal fault is the only entry.
  */
-export function cardFaultOf(
+export function cardFaultsOf(
   slice:
     | {
         readonly active: boolean | null
         readonly label: string | null
         readonly code: string | null
         readonly severity: 'warning' | 'error'
+        readonly faults?: readonly {
+          readonly label: string
+          readonly code: string
+          readonly severity: 'warning' | 'error'
+        }[]
       }
     | undefined,
-): CardFault | null {
-  if (slice === undefined || slice.active !== true) return null
-  return { label: slice.label ?? slice.code ?? '', severity: slice.severity }
+): readonly CardFault[] {
+  if (slice === undefined || slice.active !== true) return []
+  if (slice.faults !== undefined && slice.faults.length > 0) {
+    return slice.faults.map((f) => ({
+      label: f.label.length > 0 ? f.label : f.code,
+      severity: f.severity,
+    }))
+  }
+  return [{ label: slice.label ?? slice.code ?? '', severity: slice.severity }]
 }
 
 export interface CardCommon {
@@ -129,8 +141,8 @@ export interface CardCommon {
   /** `label` replaces the bare percent (a feeder's "Backup 40%"). */
   readonly battery: { readonly level: number; readonly label?: string } | null
   readonly supply: CardSupply | null
-  /** The device's reported fault; absent or null draws no badge. */
-  readonly fault?: CardFault | null
+  /** The device's active faults (the `error` cap); absent or empty draws no row. */
+  readonly faults?: readonly CardFault[]
   /**
    * `null` = the device is not bound to `consumables`; `[]` = bound and the
    * provider reported none (the card says so).

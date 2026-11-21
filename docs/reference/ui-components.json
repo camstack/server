@@ -2698,11 +2698,18 @@
       "summary": "The card button's classes, for the one trigger that must be its own element (a menu)."
     },
     {
-      "name": "cardFaultOf",
+      "name": "CardFaults",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "The device's current faults, one chip each, in the frame under the name and above the scene — never on the scene. Hidden while the query is unanswered and when the device is clear (the model passes `[]` in both cases)."
+    },
+    {
+      "name": "cardFaultsOf",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/model.ts",
-      "summary": "The fault to draw, or null. Only a slice that ANSWERED `active: true` draws one: not-yet-read (`null`), clear (`false`) and a cap the device does not have (no slice) are all no badge (D315)."
+      "summary": "The faults to draw, empty when none. Only a slice that ANSWERED `active: true` draws: not-yet-read (`null`), clear (`false`) and a cap the device does not have (no slice) are all no row (D315). A device that raises se…"
     },
     {
       "name": "CardGatingProvider",

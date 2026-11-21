@@ -1,22 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { mockupCommon } from '../__fixtures__/common'
-import { CardTop } from '../shell/DeviceCard'
-import { type CardCommon, cardFaultOf } from '../shell/model'
+import { CardFaults } from '../shell/DeviceCard'
+import { cardFaultsOf } from '../shell/model'
 
 afterEach(cleanup)
-
-const base: CardCommon = {
-  ...mockupCommon({
-    name: 'Robot',
-    integration: 'Dreame',
-    watts: 0,
-    supplyName: 'Socket',
-    consumables: [],
-    remote: [],
-  }),
-}
 
 const slice = (active: boolean | null) => ({
   active,
@@ -25,32 +13,58 @@ const slice = (active: boolean | null) => ({
   severity: 'error' as const,
 })
 
-describe('cardFaultOf — only an answered `active: true` is a fault', () => {
-  it('draws nothing for an absent cap, an unread slice and a clear one', () => {
-    expect(cardFaultOf(undefined)).toBeNull()
-    expect(cardFaultOf(slice(null))).toBeNull()
-    expect(cardFaultOf(slice(false))).toBeNull()
+describe('cardFaultsOf — only an answered `active: true` is a fault', () => {
+  it('lists nothing for an absent cap, an unread slice and a clear one', () => {
+    expect(cardFaultsOf(undefined)).toEqual([])
+    expect(cardFaultsOf(slice(null))).toEqual([])
+    expect(cardFaultsOf(slice(false))).toEqual([])
   })
 
-  it('returns the label and severity for an active fault', () => {
-    expect(cardFaultOf(slice(true))).toEqual({ label: 'Dust bin missing', severity: 'error' })
+  it('lists the principal fault of an active slice', () => {
+    expect(cardFaultsOf(slice(true))).toEqual([{ label: 'Dust bin missing', severity: 'error' }])
+  })
+
+  it('lists every fault of a device that raises several', () => {
+    const several = {
+      ...slice(true),
+      faults: [
+        { code: '38', label: 'Dust bin missing', severity: 'error' as const },
+        { code: '7', label: 'Low temp', severity: 'warning' as const },
+      ],
+    }
+    expect(cardFaultsOf(several)).toEqual([
+      { label: 'Dust bin missing', severity: 'error' },
+      { label: 'Low temp', severity: 'warning' },
+    ])
   })
 })
 
-describe('CardTop fault badge', () => {
-  it('renders the badge only when the device reports a fault', () => {
-    const { rerender } = render(<CardTop common={{ ...base, fault: null }} />)
-    expect(screen.queryByTestId('dc-fault')).toBeNull()
-
-    rerender(<CardTop common={{ ...base, fault: cardFaultOf(slice(false)) }} />)
-    expect(screen.queryByTestId('dc-fault')).toBeNull()
-
-    rerender(<CardTop common={{ ...base, fault: cardFaultOf(slice(true)) }} />)
-    expect(screen.getByTestId('dc-fault').textContent).toContain('Dust bin missing')
+describe('CardFaults row', () => {
+  it('is hidden while unanswered and when empty', () => {
+    const { rerender } = render(<CardFaults faults={cardFaultsOf(undefined)} />)
+    expect(screen.queryByTestId('dc-faults')).toBeNull()
+    rerender(<CardFaults faults={cardFaultsOf(slice(null))} />)
+    expect(screen.queryByTestId('dc-faults')).toBeNull()
+    rerender(<CardFaults faults={cardFaultsOf(slice(false))} />)
+    expect(screen.queryByTestId('dc-faults')).toBeNull()
   })
 
-  it('shows the badge on a card with no integration chip and a reachable device', () => {
-    render(<CardTop common={{ ...base, integration: null, fault: cardFaultOf(slice(true)) }} />)
-    expect(screen.getByTestId('dc-fault')).toBeTruthy()
+  it('lists each fault as a chip', () => {
+    render(
+      <CardFaults
+        faults={[
+          { label: 'Dust bin missing', severity: 'error' },
+          { label: 'Low temp', severity: 'warning' },
+        ]}
+      />,
+    )
+    const chips = screen.getAllByTestId('dc-fault')
+    expect(chips.map((c) => c.textContent)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Dust bin missing'),
+        expect.stringContaining('Low temp'),
+      ]),
+    )
+    expect(chips).toHaveLength(2)
   })
 })

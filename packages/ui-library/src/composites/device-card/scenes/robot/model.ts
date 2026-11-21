@@ -21,8 +21,6 @@ export interface RobotCardModel {
   readonly common: CardCommon
   readonly mower: boolean
   readonly activity: RobotActivity
-  /** What went wrong, in the device's words, when it is in error. */
-  readonly errorLabel: string | null
   /** The status line beside the state: a mower's current code, or how long. */
   readonly since: string | null
   /** A vacuum's suction levels; null when it declares none. */

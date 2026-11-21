@@ -34,7 +34,7 @@ import type {
   CardPowerDetail,
   CardSupplyAction,
 } from '../shell/model'
-import { cardFaultOf } from '../shell/model'
+import { cardFaultsOf } from '../shell/model'
 import { toCardConsumable } from './consumable-card-item'
 import { remoteLayoutPending, remotePanelOf } from './remote-panel'
 import { remoteKeyOf } from '../shell/remote-keys'
@@ -234,7 +234,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
                 : 'on',
           }
         : null,
-    fault: cardFaultOf(fault),
+    faults: cardFaultsOf(fault),
     consumables: items,
     consumablesLoading: consumablesBound && consumables === undefined,
     remote:

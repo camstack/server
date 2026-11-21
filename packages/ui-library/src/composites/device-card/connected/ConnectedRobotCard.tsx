@@ -50,7 +50,6 @@ export function ConnectedVacuumCard({
         common: withBattery(card.common, display.batteryLevel),
         mower: false,
         activity: vacuumActivityOf(display),
-        errorLabel: display.state === 'error' ? display.errorLabel : null,
         since: sinceText(display.lastChangedAt, Date.now(), t) ?? null,
         suction: speeds.length > 0 ? { options: speeds, value: display.fanSpeed } : null,
         progress: display.progress,
@@ -97,7 +96,6 @@ export function ConnectedMowerCard({
   const report = { fail: card.fail, succeed: card.succeed }
   const send = reportedCommand(runCommand, report)
   const call = reportedCall(report)
-  const code = display.currentCodeLabel
   const has = (method: string): boolean => card.implements('lawn-mower-control', method)
   return (
     <RobotCard
@@ -107,8 +105,7 @@ export function ConnectedMowerCard({
         common: withBattery(card.common, display.batteryLevel),
         mower: true,
         activity: mowerActivityOf(display),
-        errorLabel: display.activity === 'error' ? code : null,
-        since: code ?? sinceText(display.lastChangedAt, Date.now(), t) ?? null,
+        since: sinceText(display.lastChangedAt, Date.now(), t) ?? null,
         suction: null,
         progress: display.progress,
         // The mower cap has no stop and no locate: those two are never drawn.

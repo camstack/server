@@ -21,7 +21,7 @@ import {
   StateCorner,
 } from './Corner'
 import { type CardGating, CardGatingProvider } from './gating'
-import type { CardCommon, CardCommonActions, CardOrientation, CardState } from './model'
+import type { CardCommon, CardCommonActions, CardFault, CardOrientation, CardState } from './model'
 import { HistoryView, RemoteView } from './Overlays'
 import { OverlayBoxProvider } from './overlay-box'
 import { SceneGrid, type SceneZones } from './SceneGrid'
@@ -116,27 +116,45 @@ export function DeviceCardFrameProvider({
 }
 
 /**
+ * The device's current faults, one chip each, in the frame under the name and
+ * above the scene — never on the scene. Hidden while the query is unanswered
+ * and when the device is clear (the model passes `[]` in both cases).
+ */
+export function CardFaults({
+  faults,
+}: {
+  readonly faults: readonly CardFault[]
+}): ReactElement | null {
+  const t = useUiText()
+  if (faults.length === 0) return null
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" data-testid="dc-faults">
+      {faults.map((fault, i) => (
+        <ValueChip
+          key={`${i}-${fault.label}`}
+          glyph="warning"
+          tone={fault.severity === 'error' ? 'danger' : 'warning'}
+          data-testid="dc-fault"
+        >
+          {fault.label.length > 0 ? fault.label : t('uiLibrary.deviceCard.fault', 'Fault')}
+        </ValueChip>
+      ))}
+    </div>
+  )
+}
+
+/**
  * Integration on the left, reachability on the right. Reachable is the normal
  * state and says nothing (operator rule: the admin never prints "Online");
  * only offline, and a status not yet known, take the corner.
  */
 export function CardTop({ common }: { readonly common: CardCommon }): ReactElement | null {
   const t = useUiText()
-  const fault = common.fault ?? null
-  if (common.integration === null && common.online === true && fault === null) return null
+  if (common.integration === null && common.online === true) return null
   return (
     <div className="flex items-center justify-between gap-2" data-testid="dc-top">
       {common.integration === null ? <span /> : <ValueChip>{common.integration}</ValueChip>}
       <div className="flex items-center gap-2">
-        {fault !== null ? (
-          <ValueChip
-            glyph="warning"
-            tone={fault.severity === 'error' ? 'danger' : 'warning'}
-            data-testid="dc-fault"
-          >
-            {fault.label.length > 0 ? fault.label : t('uiLibrary.deviceCard.fault', 'Fault')}
-          </ValueChip>
-        ) : null}
         {common.online === null ? (
           <span className="text-xs text-foreground-subtle" data-testid="dc-reach-unknown">
             {t('uiLibrary.deviceCard.reachUnknown', 'Status unknown')}
@@ -275,6 +293,7 @@ export function DeviceCard({
             {common.name}
           </h3>
         ) : null}
+        <CardFaults faults={common.faults ?? []} />
         <OverlayBoxProvider value={{ fill, height: sceneHeight }}>
           {view === 'history' && history !== null && historyOffered ? (
             <HistoryView

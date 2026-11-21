@@ -206,7 +206,10 @@ describe('the media scene', () => {
     cleanup()
     render(
       <MediaPlayerCard
-        model={{ ...speaker.model, playback: { shuffle: false, repeat: 'all' } }}
+        model={{
+          ...speaker.model,
+          playback: { shuffle: false, repeat: 'all' },
+        }}
         actions={actions}
       />,
     )
@@ -252,7 +255,13 @@ describe('the media scene', () => {
       <MediaPlayerCard
         model={{
           ...speaker.model,
-          volume: { level: null, muted: true, mutable: true, muteReadback: true, bounds: null },
+          volume: {
+            level: null,
+            muted: true,
+            mutable: true,
+            muteReadback: true,
+            bounds: null,
+          },
         }}
         actions={mediaActions()}
       />,
@@ -268,7 +277,13 @@ describe('the media scene', () => {
       <MediaPlayerCard
         model={{
           ...speaker.model,
-          volume: { level: null, muted: false, mutable: true, muteReadback: false, bounds: null },
+          volume: {
+            level: null,
+            muted: false,
+            mutable: true,
+            muteReadback: false,
+            bounds: null,
+          },
         }}
         actions={actions}
       />,
@@ -288,7 +303,10 @@ describe('the robot scene', () => {
     const clean = fixture(robotFixtures(), 'vacuum-clean')
     render(
       <RobotCard
-        model={{ ...clean.model, controls: { ...clean.model.controls, stop: true } }}
+        model={{
+          ...clean.model,
+          controls: { ...clean.model.controls, stop: true },
+        }}
         actions={actions}
       />,
     )
@@ -319,10 +337,27 @@ describe('the robot scene', () => {
     expect(screen.queryByTestId('dc-robot-suction')).toBeNull()
   })
 
-  it('a vacuum in error names it', () => {
+  it('a vacuum in error keeps the short pill and names the cause in the frame fault row', () => {
     const err = fixture(robotFixtures(), 'vacuum-error')
     render(<RobotCard model={err.model} actions={robotActions()} />)
-    expect(screen.getByTestId('dc-robot-error').textContent).not.toBe('')
+    expect(screen.getByTestId('dc-state').textContent).toContain('Stuck')
+    expect(screen.getByTestId('dc-faults').textContent).not.toBe('')
+    expect(screen.queryByTestId('dc-robot-error')).toBeNull()
+  })
+
+  it('a mower in error shows its cause in the fault row, not in the state pill', () => {
+    const err = fixture(robotFixtures(), 'mower-error')
+    const model = {
+      ...err.model,
+      common: {
+        ...err.model.common,
+        faults: [{ label: 'low temp', severity: 'error' as const }],
+      },
+    }
+    render(<RobotCard model={model} actions={robotActions()} />)
+    expect(screen.getByTestId('dc-faults').textContent).toContain('low temp')
+    expect(screen.getByTestId('dc-state').textContent).toContain('Error')
+    expect(screen.getByTestId('dc-state').textContent).not.toContain('low temp')
   })
 
   it('the map toggle appears only when the device has a map', () => {
@@ -439,9 +474,11 @@ describe('appliance model', () => {
       [key, 'Economy wash'],
       [quick, 'Quick 65°'],
     ])
-    expect(programNamesFromOptions({ programs: [{ key, name: 'Eco 50°' }, { key: 1 }] })).toEqual([
-      { key, name: 'Eco 50°' },
-    ])
+    expect(
+      programNamesFromOptions({
+        programs: [{ key, name: 'Eco 50°' }, { key: 1 }],
+      }),
+    ).toEqual([{ key, name: 'Eco 50°' }])
     expect(programNamesFromOptions(null)).toEqual([])
   })
 })
@@ -489,7 +526,9 @@ describe('media model', () => {
     expect(reported?.level).toBe(40)
     expect(reported?.bounds).toBeNull()
     expect(
-      mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume], { absolute: true })?.bounds,
+      mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume], {
+        absolute: true,
+      })?.bounds,
     ).toEqual(DEFAULT_VOLUME_BOUNDS)
     const declared = { min: 0, max: 10, step: 2 }
     expect(
@@ -519,9 +558,12 @@ describe('media model', () => {
   it('artwork: tv for a source with nothing known, blank for nothing at all', () => {
     expect(mediaArtworkOf({ ...MEDIA_BASE, source: 'HDMI 1' })).toBe('tv')
     expect(mediaArtworkOf(MEDIA_BASE)).toBe('blank')
-    expect(mediaArtworkOf({ ...MEDIA_BASE, currentMedia: { type: 'music', title: 'x' } })).toBe(
-      'music',
-    )
+    expect(
+      mediaArtworkOf({
+        ...MEDIA_BASE,
+        currentMedia: { type: 'music', title: 'x' },
+      }),
+    ).toBe('music')
   })
 })
 
