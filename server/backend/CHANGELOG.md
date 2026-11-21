@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.933] - 2026-11-21
+
 ### Added
 
 - A light or a switch can now be linked to the relay that feeds it as its power source.
