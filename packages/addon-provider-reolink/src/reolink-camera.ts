@@ -207,7 +207,7 @@ import {
   effectiveProbeFlags,
   withPersistedProbe,
 } from './accessory-probe-flags.js'
-import { AccessoryReprobeWindow } from './accessory-reprobe-window.js'
+import { AccessoryReprobeWindow, isFirstHandWake } from './accessory-reprobe-window.js'
 import { populateReolinkMetadata } from './metadata-populator.js'
 import { isWirelessLabel, mapNetworkReadout } from './network-link-mapping.js'
 
@@ -8839,6 +8839,46 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private static readonly CONTACT_WRITE_QUANTUM_MS = 5 * 60_000
 
   /**
+   * A battery camera probes its abilities once, so an accessory the firmware
+   * never really had (a PIR switch on a camera without a PIR) could not be
+   * pruned: the kernel needs a second probe on a later `lastProbedAt`. A natural
+   * wake is the free moment — at most once per `ACCESSORY_REPROBE_WINDOW_MS`
+   * (measured from the last probe that ran), never overlapping.
+   *
+   * ONLY a first-hand awake observation may trigger it. The periodic hub sweep
+   * (`hub-reconcile`, `hub-summary`) also drives `onWakeTransition` but lags the
+   * real state by minutes, and `onProbe` is gated by that same lagging flag: a
+   * probe from there could log in and WAKE a camera that already went back to sleep.
+   */
+  private async reprobeAccessoriesIfStale(reason: SleepCommitSource): Promise<void> {
+    if (!this.isBattery || !isFirstHandWake(reason)) return
+    const lastProbedAt =
+      this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')?.lastProbedAt ?? 0
+    const now = Date.now()
+    if (!this.accessoryReprobeWindow.tryBegin(now, lastProbedAt)) return
+    this.ctx.logger.info(
+      'wake transition — accessory re-probe (last probe older than the window)',
+      {
+        tags: { deviceId: this.id },
+        meta: { reason, lastProbedAt, ageMs: lastProbedAt > 0 ? now - lastProbedAt : null },
+      },
+    )
+    try {
+      await this.reprobe()
+    } catch (err) {
+      this.ctx.logger.debug(
+        'onWakeTransition: accessory re-probe failed — a later first-hand wake retries',
+        {
+          tags: { deviceId: this.id },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
+    } finally {
+      this.accessoryReprobeWindow.end()
+    }
+  }
+
+  /**
    * Shared wake-transition handler invoked by both the simpleEvent
    * `awake` push (canonical fast path) and the sleep poll's
    * `sleeping → awake` flip (backstop). Fan out the refreshes that
@@ -8853,35 +8893,6 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * Both calls are best-effort; per-call failures land in their own
    * debug logs and never break the wake-transition flow.
    */
-  /**
-   * A battery camera probes its abilities once, so an accessory the firmware
-   * never really had (a PIR switch on a camera without a PIR) could not be
-   * pruned: the kernel needs a second complete probe on a later `lastProbedAt`.
-   * A natural wake is the free moment — at most once per
-   * `ACCESSORY_REPROBE_WINDOW_MS`, never overlapping, and never a wake of our own.
-   */
-  private async reprobeAccessoriesIfStale(): Promise<void> {
-    if (!this.isBattery) return
-    const lastProbedAt =
-      this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')?.lastProbedAt ?? 0
-    const now = Date.now()
-    if (!this.accessoryReprobeWindow.tryBegin(now, lastProbedAt)) return
-    this.ctx.logger.info('wake transition — accessory re-probe (last complete probe is stale)', {
-      tags: { deviceId: this.id },
-      meta: { lastProbedAt, ageMs: lastProbedAt > 0 ? now - lastProbedAt : null },
-    })
-    try {
-      await this.reprobe()
-    } catch (err) {
-      this.ctx.logger.debug('onWakeTransition: accessory re-probe failed — next window retries', {
-        tags: { deviceId: this.id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
-    } finally {
-      this.accessoryReprobeWindow.end()
-    }
-  }
-
   private async onWakeTransition(reason: SleepCommitSource): Promise<void> {
     this.ctx.logger.info('reolink wake transition — refreshing (serialized)', {
       tags: { deviceId: this.id },
@@ -8950,7 +8961,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         })
       }
     } else {
-      await this.reprobeAccessoriesIfStale()
+      await this.reprobeAccessoriesIfStale(reason)
     }
     // Cap caches next — these back the State panel and every derived
     // config form, and they are what the operator stares at while the

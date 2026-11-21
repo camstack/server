@@ -1,17 +1,38 @@
 import { describe, expect, it } from 'vitest'
 import { AccessoryShrinkGate } from '../../../system/src/kernel/moleculer/accessory-prune-gate.js'
-import { ACCESSORY_REPROBE_WINDOW_MS, AccessoryReprobeWindow } from '../accessory-reprobe-window.js'
+import {
+  ACCESSORY_REPROBE_RETRY_MS,
+  ACCESSORY_REPROBE_WINDOW_MS,
+  AccessoryReprobeWindow,
+  isFirstHandWake,
+} from '../accessory-reprobe-window.js'
 
 const H = 60 * 60_000
 
 describe('AccessoryReprobeWindow', () => {
-  it('probes on a wake after the window, and only once per window', () => {
+  it('a probe that ran (lastProbedAt advanced) consumes the window', () => {
     const w = new AccessoryReprobeWindow()
-    const probedAt = 1_000
-    expect(w.tryBegin(probedAt + ACCESSORY_REPROBE_WINDOW_MS + 1, probedAt)).toBe(true)
+    const t0 = 1_000 + ACCESSORY_REPROBE_WINDOW_MS + 1
+    expect(w.tryBegin(t0, 1_000)).toBe(true)
     w.end()
-    // the probe did not advance lastProbedAt: the attempt itself still counts
-    expect(w.tryBegin(probedAt + ACCESSORY_REPROBE_WINDOW_MS + 2 * H, probedAt)).toBe(false)
+    expect(w.tryBegin(t0 + 2 * H, t0)).toBe(false)
+  })
+
+  it('a skipped or failed attempt (lastProbedAt unchanged) retries, but not within the retry gap', () => {
+    const w = new AccessoryReprobeWindow()
+    const t0 = 1_000 + ACCESSORY_REPROBE_WINDOW_MS + 1
+    expect(w.tryBegin(t0, 1_000)).toBe(true)
+    w.end()
+    expect(w.tryBegin(t0 + ACCESSORY_REPROBE_RETRY_MS - 1, 1_000)).toBe(false)
+    expect(w.tryBegin(t0 + ACCESSORY_REPROBE_RETRY_MS, 1_000)).toBe(true)
+  })
+
+  it('only a first-hand wake counts', () => {
+    expect(isFirstHandWake('simple-event')).toBe(true)
+    expect(isFirstHandWake('sleep-poll')).toBe(true)
+    expect(isFirstHandWake('confirmed-wake')).toBe(true)
+    expect(isFirstHandWake('hub-reconcile')).toBe(false)
+    expect(isFirstHandWake('hub-summary')).toBe(false)
   })
 
   it('does not probe on a wake inside the window', () => {
