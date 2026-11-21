@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type HttpFetch,
   httpExpectationMet,
+  redactUrl,
   reachVars,
   runHttpStep,
   runProbeStep,
@@ -180,6 +181,44 @@ describe('runHttpStep', () => {
     )
     expect(out.result.text?.length).toBe(65_536)
     expect(out.result.json).toBeNull()
+  })
+
+  it('stops reading a streamed body at the cap and cancels it', async () => {
+    const c = clock()
+    let pulled = 0
+    let cancelled = false
+    const chunk = new Uint8Array(40_000).fill(120)
+    const streaming: HttpFetch = async () => ({
+      status: 200,
+      text: async () => {
+        throw new Error('the whole body must not be buffered')
+      },
+      body: {
+        getReader: () => ({
+          read: async () => {
+            pulled += 1
+            return pulled > 1_000 ? { done: true } : { done: false, value: chunk }
+          },
+          cancel: async () => {
+            cancelled = true
+          },
+        }),
+      },
+    })
+    const out = await runHttpStep({ fetch: streaming, ...c, isAborted: never }, base)
+    expect(out.result.text?.length).toBe(65_536)
+    expect(out.result.json).toBeNull()
+    expect(cancelled).toBe(true)
+    expect(pulled).toBe(2)
+  })
+
+  it('redacts the userinfo and the query values of a url, keeping the keys', () => {
+    const shown = redactUrl('http://user:hunter2@ccu/a?token=SECRET&x=1')
+    expect(shown).not.toContain('hunter2')
+    expect(shown).not.toContain('SECRET')
+    expect(shown).toContain('token=***')
+    expect(shown).toContain('x=***')
+    expect(redactUrl('not a url')).toBe('***')
   })
 
   it('a JSON expectation (field neq "") holds only when the field is there and different', async () => {

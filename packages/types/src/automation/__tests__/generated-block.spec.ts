@@ -2621,6 +2621,38 @@ describe('a probe step and an http-request step', () => {
     })
   })
 
+  it('a secret in the url query never reaches the logs or the trace', async () => {
+    connected = true
+    const h = await fire([
+      {
+        kind: 'http-request',
+        method: 'GET',
+        url: `http://127.0.0.1:${webPort}/sysinfo.json?token=QSECRET&d=1`,
+        timeoutSeconds: 3,
+      },
+    ])
+    expect(reqSeen[0]?.url).toBe('/sysinfo.json?token=QSECRET&d=1')
+    expect(h.traces()[0]?.steps[0]).toMatchObject({ outcome: 'ok' })
+    const everything = JSON.stringify([h.logs, h.traces()])
+    expect(everything).not.toContain('QSECRET')
+    expect(everything).toContain('token=***')
+  })
+
+  it('a password in the url userinfo never reaches the logs or the trace, even when the request fails', async () => {
+    const h = await fire([
+      {
+        kind: 'http-request',
+        method: 'GET',
+        url: `http://svc:PASSWD99@127.0.0.1:${webPort}/sysinfo.json`,
+        timeoutSeconds: 3,
+        continueOnError: true,
+      },
+    ])
+    const everything = JSON.stringify([h.logs, h.traces()])
+    expect(everything).not.toContain('PASSWD99')
+    expect(everything).toContain('http request finished')
+  })
+
   it('an unmet JSON expectation fails the step after the retry window, and the later steps do not run', async () => {
     const h = await fire([
       {

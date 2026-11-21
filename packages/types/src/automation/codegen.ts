@@ -464,7 +464,7 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
       return `        // an HTTP request: one measurement, an expectation, an optional retry window.
         // Header values and the body are never logged or traced.
         const httpUrl = String(substitute(${j(action.url)}, vars))
-        scope.setArgs({ method: ${j(action.method)}, url: httpUrl })
+        scope.setArgs({ method: ${j(action.method)}, url: redactUrl(httpUrl) })
         const startedHttp = Date.now()
         const requested = await runHttpStep(
           { fetch: globalThis.fetch, now: () => Date.now(), sleep, isAborted: () => token.aborted },
@@ -480,7 +480,7 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
         )
         ${action.saveAs === undefined ? '' : `Object.assign(vars, reachVars(${j(action.saveAs)}, requested.result))`}
         scope.setAttempts(requested.attempts, requested.message)
-        ctx.logger.info('http request finished', { method: ${j(action.method)}, url: httpUrl, status: requested.result.status, met: requested.met, attempts: requested.attempts, durationMs: Date.now() - startedHttp })
+        ctx.logger.info('http request finished', { method: ${j(action.method)}, url: redactUrl(httpUrl), status: requested.result.status, met: requested.met, attempts: requested.attempts, durationMs: Date.now() - startedHttp })
         if (!requested.met) throw new Error('http request: ' + requested.message)`
     case 'stop':
       return `        // end the run here, on purpose: the steps after it are not-run with this reason
@@ -797,6 +797,7 @@ import {
   runSteps,
   runProbeStep,
   runHttpStep,
+  redactUrl,
   reachVars,
   repeatCheck,
   waitUntil,

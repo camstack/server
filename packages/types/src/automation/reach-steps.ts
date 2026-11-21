@@ -35,7 +35,71 @@ export type TcpConnect = (host: string, port: number, timeoutMs: number) => Prom
 /** What a `fetch` answers, as far as this step reads it. */
 export interface HttpResponseLike {
   readonly status: number
+  /** The body as a stream: read up to the cap and cancelled, never buffered whole. */
+  readonly body?: { getReader(): BodyReaderLike } | null
   text(): Promise<string>
+}
+
+export interface BodyReaderLike {
+  read(): Promise<{ readonly done: boolean; readonly value?: Uint8Array }>
+  cancel(): Promise<void>
+}
+
+export interface CappedBody {
+  readonly text: string
+  readonly truncated: boolean
+}
+
+/** Read at most `cap` bytes of a body, then cancel the stream: a huge answer is never held. */
+export async function readCappedBody(response: HttpResponseLike, cap: number): Promise<CappedBody> {
+  if (response.body === undefined || response.body === null) {
+    const full = await response.text()
+    return full.length > cap
+      ? { text: full.slice(0, cap), truncated: true }
+      : { text: full, truncated: false }
+  }
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  let truncated = false
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (value === undefined) continue
+    const room = cap - total
+    if (value.length > room) {
+      chunks.push(value.subarray(0, room))
+      total += room
+      truncated = true
+      await reader.cancel()
+      break
+    }
+    chunks.push(value)
+    total += value.length
+  }
+  const bytes = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, at)
+    at += chunk.length
+  }
+  return { text: new TextDecoder().decode(bytes), truncated }
+}
+
+/**
+ * A URL as it may be logged or traced: the userinfo and every query value are
+ * replaced by `***` (the keys stay). Text that is not a URL is returned as `***`.
+ */
+export function redactUrl(raw: string): string {
+  try {
+    const u = new URL(raw)
+    if (u.username !== '') u.username = '***'
+    if (u.password !== '') u.password = '***'
+    for (const key of [...u.searchParams.keys()]) u.searchParams.set(key, '***')
+    return u.toString().replace(/%2A%2A%2A/g, '***')
+  } catch {
+    return '***'
+  }
 }
 
 export interface HttpRequestInit {
@@ -65,6 +129,14 @@ export interface ReachOutcome<R> {
 
 function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
+}
+
+/** A transport error names the URL it was given: show the redacted one, and no userinfo at all. */
+function scrubbedError(err: unknown, url: string): string {
+  return errorText(err)
+    .split(url)
+    .join(redactUrl(url))
+    .replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s/@]*@/gi, '$1***@')
 }
 
 // ── the retry loop ──────────────────────────────────────────────────────────
@@ -179,13 +251,12 @@ async function httpOnce(deps: HttpDeps, input: HttpInput): Promise<HttpResult> {
       ...(input.body === undefined ? {} : { body: input.body }),
       signal: controller.signal,
     })
-    const full = await response.text()
-    const truncated = full.length > HTTP_TEXT_CAP
+    const body = await readCappedBody(response, HTTP_TEXT_CAP)
     return {
       status: response.status,
       ok: response.status >= 200 && response.status < 300,
-      json: parseJson(full, truncated),
-      text: truncated ? full.slice(0, HTTP_TEXT_CAP) : full,
+      json: parseJson(body.text, body.truncated),
+      text: body.text,
       error: null,
     }
   } catch (err: unknown) {
@@ -195,7 +266,9 @@ async function httpOnce(deps: HttpDeps, input: HttpInput): Promise<HttpResult> {
       ok: false,
       json: null,
       text: null,
-      error: aborted ? `timed out after ${String(input.timeoutSeconds)} s` : errorText(err),
+      error: aborted
+        ? `timed out after ${String(input.timeoutSeconds)} s`
+        : scrubbedError(err, input.url),
     }
   } finally {
     clearTimeout(timer)
