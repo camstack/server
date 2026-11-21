@@ -247,6 +247,17 @@ describe('Scripts tab', () => {
     expect(screen.queryByText('Porch (composto)')).toBeNull()
   })
 
+  it('a row click opens the quick modal, not the editor; Open goes to the editor', async () => {
+    mockBlocks = [block({ id: 'script', name: 'My script', code: 'export default () => {}' })]
+    renderTab()
+    await waitFor(() => expect(screen.getByText('My script')).toBeTruthy())
+    fireEvent.click(screen.getByText('My script'))
+    expect(screen.getByTestId('build-quick-modal')).toBeTruthy()
+    expect(screen.queryByTestId('editor')).toBeNull()
+    fireEvent.click(screen.getByText('Open script'))
+    await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy())
+  })
+
   it('shows No scripts yet when the list only has compositions', async () => {
     mockBlocks = [
       block({ id: 'comp', name: 'customize:doorbell', code: '', source: COMPOSITION_SOURCE }),

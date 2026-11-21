@@ -39,6 +39,7 @@ import {
 } from '@camstack/ui-library'
 import { ScrollText, Workflow } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
 import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
@@ -118,9 +119,8 @@ export function AutomationEditor({
   const setRecipe = (next: AutomationRecipe): void => setRecipeState(ensureTriggerIds(next))
   const [showLogs, setShowLogs] = useState(false)
   // A quick-modal link arrives with `?run=`, so the editor opens on that run.
-  const [runId, setRunId] = useState<string | null>(() =>
-    new URLSearchParams(window.location.search).get('run'),
-  )
+  const [searchParams] = useSearchParams()
+  const [runId, setRunId] = useState<string | null>(() => searchParams.get('run'))
   const traces = useCoreBlocksGetTraces(
     { blockId: existing?.id ?? 'none' },
     { enabled: existing !== null, refetchInterval: TRACES_POLL_MS },

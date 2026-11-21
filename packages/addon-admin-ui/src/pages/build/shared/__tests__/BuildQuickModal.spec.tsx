@@ -44,6 +44,34 @@ describe('BuildQuickModal', () => {
     expect(name.value).toBe('Porch light')
   })
 
+  it('Enter then blur saves the name once', () => {
+    const props = shell()
+    render(<BuildQuickModal {...props} />)
+    const name = screen.getByTestId('quick-modal-name')
+    fireEvent.change(name, { target: { value: 'Porch lamp' } })
+    fireEvent.keyDown(name, { key: 'Enter' })
+    fireEvent.blur(name)
+    expect(props.onSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('a tag added right after a rename carries the new name, and the next rename the new tags', () => {
+    const props = shell()
+    render(<BuildQuickModal {...props} />)
+    const name = screen.getByTestId('quick-modal-name')
+    fireEvent.change(name, { target: { value: 'Porch lamp' } })
+    fireEvent.blur(name)
+    const input = screen.getByLabelText('Tags')
+    fireEvent.change(input, { target: { value: 'Night' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(props.onSave).toHaveBeenLastCalledWith({ name: 'Porch lamp', tags: ['Garden', 'Night'] })
+    fireEvent.change(name, { target: { value: 'Porch lantern' } })
+    fireEvent.blur(name)
+    expect(props.onSave).toHaveBeenLastCalledWith({
+      name: 'Porch lantern',
+      tags: ['Garden', 'Night'],
+    })
+  })
+
   it('a tag added saves the new list with the shown name', () => {
     const props = shell()
     render(<BuildQuickModal {...props} />)

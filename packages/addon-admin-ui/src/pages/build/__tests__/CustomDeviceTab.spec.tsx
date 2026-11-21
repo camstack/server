@@ -78,6 +78,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useCoreBlocksListCompositions: () => compositionsQuery,
+    useDeviceManagerGetDevice: () => ({ data: undefined }),
     useCoreBlocksSetEnabled: () => ({ mutate: vi.fn(), isPending: false, error: null }),
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerSetTags: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -113,6 +114,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
+vi.mock('../../../components/device/hero/DeviceHeroCard', () => ({
+  DeviceHeroCard: () => <div data-testid="hero-card" />,
+}))
+vi.mock('../../../components/device/tabs/DeviceAggregateSection', () => ({
+  DeviceAggregateSection: () => <div data-testid="export-section" />,
+}))
 vi.mock('../../../hooks/useDevice', () => ({
   useDeviceList: () => devicesQuery,
 }))
@@ -503,5 +510,14 @@ describe('CustomDeviceTab', () => {
     const composed = screen.getByRole('region', { name: 'Composed devices' })
     expect(composed.textContent).toContain('provider-homeassistant/gone-contact')
     expect(composed.textContent).not.toContain('missing')
+  })
+
+  it('a row click opens the quick modal, not the editor; Open goes to the editor', () => {
+    renderTab()
+    fireEvent.click(screen.getByRole('row', { name: /Porch \(composto\)/ }))
+    expect(screen.getByTestId('build-quick-modal')).toBeTruthy()
+    expect(screen.queryByTestId('composition-block-editor')).toBeNull()
+    fireEvent.click(screen.getByTestId('quick-modal-open'))
+    expect(screen.getByTestId('composition-block-editor')).toBeTruthy()
   })
 })

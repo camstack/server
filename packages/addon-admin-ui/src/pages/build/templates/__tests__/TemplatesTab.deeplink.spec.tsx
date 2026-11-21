@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -28,6 +28,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useTemplateList: () => ({ data: TEMPLATES, status: 'success', refetch: vi.fn() }),
+    useCoreBlocksList: () => ({ data: { blocks: [] }, error: null }),
     useTemplateCreate: () => idle,
     useTemplateUpdate: () => idle,
     useTemplateDelete: () => idle,
@@ -70,5 +71,16 @@ describe('Templates ?edit= deep link', () => {
     renderAt('/build?tab=templates&edit=gone')
     await waitFor(() => expect(screen.getByTestId('search').textContent).toBe('?tab=templates'))
     expect(screen.queryByTestId('editor-open')).toBeNull()
+  })
+})
+
+describe('Templates row click', () => {
+  it('opens the quick modal, not the editor; Open goes to the editor', async () => {
+    renderAt('/build?tab=templates')
+    fireEvent.click(screen.getByText('Alpha'))
+    expect(screen.getByTestId('build-quick-modal')).toBeTruthy()
+    expect(screen.queryByTestId('editor-open')).toBeNull()
+    fireEvent.click(screen.getByTestId('quick-modal-open'))
+    await waitFor(() => expect(screen.getByTestId('editor-open').textContent).toBe('Alpha'))
   })
 })

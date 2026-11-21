@@ -30,6 +30,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../automation/automation-data'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
@@ -104,9 +105,8 @@ export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: Schedu
   const [profileId, setProfileId] = useState<string>(() => draft.profiles[0]?.id ?? '')
   const [pointId, setPointId] = useState<string | null>(null)
   // A quick-modal link arrives with `?run=`, so the editor opens on that run.
-  const [runId, setRunId] = useState<string | null>(() =>
-    new URLSearchParams(window.location.search).get('run'),
-  )
+  const [searchParams] = useSearchParams()
+  const [runId, setRunId] = useState<string | null>(() => searchParams.get('run'))
 
   const refresh = (): void => {
     void queryClient.invalidateQueries({ queryKey: [['schedulers']] })

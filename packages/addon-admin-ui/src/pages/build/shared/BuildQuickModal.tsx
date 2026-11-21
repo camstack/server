@@ -22,7 +22,7 @@ import {
   Switch,
   TagInput,
 } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { QuickEditValues } from './QuickEditDialog'
 
@@ -82,18 +82,37 @@ function QuickModalContent({
   const { t } = useTranslation()
   const [draft, setDraft] = useState(name)
 
+  /** What the stored item holds, or what was last submitted: every save is built
+   *  from it, so a second edit landing before the first answer carries the first. */
+  const saved = useRef<QuickEditValues>({ name, tags })
+  const tagsKey = tags.join('\u0000')
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tagsKey stands for tags, whose identity changes on every parent render
+  useEffect(() => {
+    saved.current = { name, tags }
+  }, [name, tagsKey])
+
+  const submit = (next: QuickEditValues): void => {
+    const last = saved.current
+    const same =
+      next.name === last.name &&
+      next.tags.length === last.tags.length &&
+      next.tags.every((tag, i) => tag === last.tags[i])
+    if (same) return
+    saved.current = next
+    onSave(next)
+  }
   /** A name left blank is not saved: the field falls back to the stored one. */
   const commitName = (): void => {
     const next = draft.trim()
     if (next === '') {
-      setDraft(name)
+      setDraft(saved.current.name)
       return
     }
-    if (next !== name) onSave({ name: next, tags })
+    submit({ name: next, tags: saved.current.tags })
   }
   const commitTags = (next: readonly string[]): void => {
     const shown = draft.trim()
-    onSave({ name: shown === '' ? name : shown, tags: next })
+    submit({ name: shown === '' ? saved.current.name : shown, tags: next })
   }
 
   return (
