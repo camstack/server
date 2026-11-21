@@ -4765,6 +4765,14 @@ device rule's `deviceIds` / `deviceTypes` apply and the alert never notifies
 through two families. Template variables: `{{deviceName}}`, `{{title}}`,
 `{{message}}`, `{{actionUrl}}`, `{{category}}`.
 
+The DEFAULT text names the fault. An episode that carries faults (a device
+error, `metadata.faults`) renders `system.device-attention-*.title.faults` /
+`.body.faults`, built from `{{faultsDetail}}` (every active fault as
+`label (code)`, principal first): `Clima cameretta 2 — Device unreachable
+(UNREACH)`. The resolved edge names the fault(s) of the episode that cleared.
+An alert with no faults keeps `{{title}}` / `{{message}}`. Also available:
+`{{faultCode}}`, `{{faultLabel}}`, `{{faults}}`.
+
 ## A system alert's action is a link or a button that runs a custom action ([D961](../decisions/adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md), 2026-10-28)
 
 `Alert.action` is `{ label, href? , navigation?, invoke? }`. `href` goes

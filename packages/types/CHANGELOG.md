@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addon bundles now carry only the part of the types package they reach: the types build is tree-shakable (one ESM file per module, pure-marked initializers), which cuts addon heap by 35-75 MB and BaseDevice.state reads a schema-free cap-name table
 - Export panels report an Alexa link whose proactive updates are paused as linked, with a push status that can be unknown
+- New notification variable faultsDetail: every active device fault as label (code)
 
 ## [1.2.617] - 2026-11-21
 

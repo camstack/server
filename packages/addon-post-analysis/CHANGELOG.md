@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device attention notification names every active fault with its code and label in the default text, and the resolved one names what cleared
+
 ## [1.2.720] - 2026-11-20
 
 ### Changed

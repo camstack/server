@@ -1215,6 +1215,18 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: [...DEVICE_ATTENTION],
   },
   {
+    name: 'faultsDetail',
+    label: 'All active faults with codes',
+    example:
+      'HB-RF-ETH connection lost (hb-rf-eth-connection), CCU supply voltage low (low-voltage)',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    // Empty when the device named no fault.
+    systemEventKinds: [...DEVICE_ATTENTION],
+  },
+  {
     name: 'exportId',
     label: 'Export id',
     example: 'exp-20260924',

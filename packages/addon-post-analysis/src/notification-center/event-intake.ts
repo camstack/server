@@ -1688,11 +1688,14 @@ function raisedAlertAction(payload: AlertEpisodePayload): {
 /** `{{faultCode}}` / `{{faultLabel}}` (the principal) and `{{faults}}` (every label, joined). */
 function faultTextParams(faults: AlertEpisodePayload['faults']): Record<string, string> {
   const [principal] = faults ?? []
-  if (principal === undefined) return { faultCode: '', faultLabel: '', faults: '' }
+  if (principal === undefined || faults === undefined) {
+    return { faultCode: '', faultLabel: '', faults: '', faultsDetail: '' }
+  }
   return {
     faultCode: principal.code,
     faultLabel: principal.label,
     faults: (faults ?? []).map((f) => f.label).join(', '),
+    faultsDetail: faults.map((f) => `${f.label} (${f.code})`).join(', '),
   }
 }
 
@@ -1714,12 +1717,15 @@ function incomingFromDeviceAttention(
   const deviceId = Number(payload.sourceId)
   if (!Number.isInteger(deviceId)) return null
   const identity = lookup?.(deviceId)
+  const hasFaults = payload.faults !== undefined && payload.faults.length > 0
   return systemSubject({
     facts,
     kind,
     subject: `alert:${payload.episodeId}`,
-    titleKey: `system.${kind}.title`,
-    bodyKey: `system.${kind}.body`,
+    // A fault episode names every active fault, code and label, in its DEFAULT
+    // text; an alert that carries none keeps its own title and message.
+    titleKey: hasFaults ? `system.${kind}.title.faults` : `system.${kind}.title`,
+    bodyKey: hasFaults ? `system.${kind}.body.faults` : `system.${kind}.body`,
     textParams: {
       ...deviceTextParams(deviceId, identity),
       title: payload.title,
