@@ -242,6 +242,8 @@ export class LwaEventGateway {
   private readonly warnedNoToken = new Set<string>()
   /** The access token last force-refreshed per user: one forced refresh per rejected token. */
   private readonly forcedFor = new Map<string, string>()
+  /** Gateway-403 pauses lifted by a broker refresh; cleared when a push succeeds. */
+  private readonly probation = new Map<string, PausedPush>()
 
   constructor(private readonly deps: LwaEventGatewayDeps) {}
 
@@ -990,6 +992,7 @@ export class LwaEventGateway {
     // Gateway is an ACCEPTANCE of the envelope, not proof the endpoint could
     // act on it: an endpoint whose discovered capabilities lack the event's
     // interface is answered 202 and then silently dropped by the cloud.
+    this.probation.delete(userId)
     this.deps.logger.info(`alexa lwa-gateway: ${label} posted`, {
       meta: { userId, endpointId, status: response.status },
     })
@@ -1032,7 +1035,13 @@ export class LwaEventGateway {
    */
   private async pause(userId: string, reason: LwaPausedReason): Promise<void> {
     const prev = this.findToken(userId)?.push
-    const next = nextPausedState(prev, reason, Date.now())
+    // A broker refresh does not cure a gateway 403: a pause that follows a resume
+    // before any push succeeded continues the backoff instead of restarting it.
+    const next = nextPausedState(
+      isPaused(prev) ? prev : this.probation.get(userId),
+      reason,
+      Date.now(),
+    )
     if (!isPaused(prev) || prev.reason !== reason) {
       this.deps.logger.warn(
         `alexa lwa-gateway: proactive pushes PAUSED (${reason}) — the voice link is kept; re-link the skill in the Alexa app to resume now, otherwise re-checking in ${Math.round((next.nextCheckAt - Date.now()) / 60_000)} min`,
@@ -1050,6 +1059,7 @@ export class LwaEventGateway {
   private async recheckPaused(userId: string, before: PausedPush): Promise<void> {
     const token = await this.refreshAccessToken(userId, 'recheck')
     if (token) {
+      if (before.reason === 'gateway-forbidden') this.probation.set(userId, before)
       this.deps.logger.info('alexa lwa-gateway: proactive pushes RESUMED', { meta: { userId } })
       return
     }

@@ -273,11 +273,16 @@ async function currentAccessToken(deps, item, opts) {
     if (err instanceof BrokerError && err.code === 'grant_revoked') {
       // Never delete: the link stays, marked, so the hub keeps a truthful answer and a later
       // AcceptGrant (a new link the hub swaps in, revoking this one) replaces it.
+      // A lost version race or a store failure must not turn the 410 into a 5xx.
       if (item.status !== 'grant-revoked') {
-        await deps.store.replace(
-          { ...item, status: 'grant-revoked', version: item.version + 1 },
-          item.version,
-        )
+        await deps.store
+          .replace({ ...item, status: 'grant-revoked', version: item.version + 1 }, item.version)
+          .catch((storeErr) => {
+            deps.log.warn('broker: could not mark the link grant-revoked', {
+              link: shortId(item.linkId),
+              error: storeErr instanceof Error ? storeErr.message : String(storeErr),
+            })
+          })
       }
       deps.log.warn('broker: grant revoked by Amazon; link kept, marked grant-revoked', {
         link: shortId(item.linkId),
@@ -299,7 +304,11 @@ async function currentAccessToken(deps, item, opts) {
   // Someone refreshed concurrently. Their write carries the newest refresh
   // token; serve what they stored rather than overwrite it.
   const fresh = await deps.store.get(item.linkId)
-  if (fresh && fresh.status === 'active' && fresh.accessExpiresAt > now) return fresh
+  // A forced refresh exists because the cached token was rejected: never hand it back.
+  const rejectedAgain = force && fresh && fresh.accessToken === item.accessToken
+  if (fresh && fresh.status === 'active' && fresh.accessExpiresAt > now && !rejectedAgain) {
+    return fresh
+  }
   throw new BrokerError(503, 'conflict', 'concurrent refresh; retry')
 }
 

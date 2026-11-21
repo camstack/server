@@ -33,7 +33,10 @@ pushes (logged once per transition) and re-checks the broker on the existing
 60 s scan, honouring the persisted `nextCheckAt`: 1, 2, 5, 15, 30, then 60 minutes,
 reset by a 200 or by a new broker link; persisting it means a restart does not
 become a burst. A 200 stores the token, which clears the flag, and runs the full
-push. The broker follows the same rule: `invalid_grant` marks the row
+push. A gateway 403 is the exception: the broker refresh succeeding proves nothing
+about the gateway, so a `gateway-forbidden` pause lifted by a re-check keeps its
+attempt count until a push succeeds, and the next 403 climbs the backoff instead
+of restarting it at 1 minute. The broker follows the same rule: `invalid_grant` marks the row
 `grant-revoked` and keeps it (still authenticating, answering 410); a later
 AcceptGrant yields a new link and the hub retires the old row. `/broker/token`
 takes `{ reason: 'rejected' | 'recheck' }` to bypass its cache; the hub sends it

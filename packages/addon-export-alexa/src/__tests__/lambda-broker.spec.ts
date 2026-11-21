@@ -781,6 +781,39 @@ describe('/broker/token', () => {
     expect(bodyOf(res).accessToken).toBe('AT-winner')
   })
 
+  it('a forced refresh that loses the race never hands back the token the hub rejected', async () => {
+    const { handler, memory, delivered } = await linkedHub()
+    memory.replace = async (item) => {
+      const cur = memory.items.get(item.linkId)
+      if (cur) memory.items.set(item.linkId, { ...cur, version: cur.version + 1 })
+      return false
+    }
+    const res = await handler(
+      urlEvent('/broker/token', {
+        bearer: String(delivered.brokerCredential),
+        body: { reason: 'rejected' },
+      }),
+    )
+    expect(res.statusCode).toBe(503)
+    expect(bodyOf(res).accessToken).toBeUndefined()
+  })
+
+  it('a version conflict while marking grant-revoked still answers 410, not a 5xx', async () => {
+    let now = T0
+    const { handler, memory, delivered } = await linkedHub({ now: () => now })
+    const [item] = [...memory.items.values()]
+    if (!item) throw new Error('no item')
+    memory.items.set(item.linkId, { ...item, refreshToken: 'RT-revoked' })
+    memory.replace = async () => {
+      throw new Error('ConditionalCheckFailedException')
+    }
+    now = T0 + 4_000_000
+    const res = await handler(
+      urlEvent('/broker/token', { bearer: String(delivered.brokerCredential) }),
+    )
+    expect(res.statusCode).toBe(410)
+  })
+
   it('re-reads a rotated LWA secret on invalid_client and retries once', async () => {
     const ssm = ssmSecrets({ lwa: lwaJson(), skill: skillJson() })
     let now = T0

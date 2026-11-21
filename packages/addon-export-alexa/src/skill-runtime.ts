@@ -71,7 +71,7 @@ import {
   LwaEventGateway,
 } from './lwa-event-gateway.js'
 import type { PublicEndpointReader } from './public-endpoint.js'
-import { isPaused } from './push-state.js'
+import { isPaused, pushAfterResume, pushStatusOf } from './push-state.js'
 import { removeEndpointsFromAlexa } from './remove-endpoints.js'
 import { buildAlexaSetupBlock } from './setup-block.js'
 import {
@@ -1204,29 +1204,16 @@ export class SkillRuntime {
   private resumePushes(userId: string): void {
     const engine = this.syncEngine
     if (!engine) return
-    void engine
-      .pushAllToAccount(userId)
-      .then((r) => {
-        this.ctx.logger.info('export-alexa: pushed to account after proactive pushes resumed', {
-          meta: { ...r },
-        })
-        return this.refreshVisibility()
-      })
-      .catch((err: unknown) => {
-        this.ctx.logger.warn('export-alexa: push after resume failed', {
-          meta: { userId, error: errMsg(err) },
-        })
-      })
+    void pushAfterResume(userId, {
+      pushAllToAccount: (id) => engine.pushAllToAccount(id),
+      refreshVisibility: () => this.refreshVisibility(),
+      logger: this.ctx.logger,
+    })
   }
 
   /** `ok` only when every linked account can push; `paused` otherwise (no grant counts). */
   pushStatus(): 'ok' | 'paused' {
-    if (this.view.linkedAccounts.length === 0) return 'ok'
-    const live = this.view.linkedAccounts.every((a) => {
-      const t = this.view.tokens.find((x) => x.userId === a.userId)
-      return t !== undefined && !isPaused(t.push)
-    })
-    return live ? 'ok' : 'paused'
+    return pushStatusOf(this.view.linkedAccounts, this.view.tokens)
   }
 
   private async recordLinkedAccount(input: { userId: string; username: string }): Promise<void> {

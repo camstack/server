@@ -1,4 +1,6 @@
-import type { LwaPausedReason, LwaPushState } from './types.js'
+import { errMsg, type IScopedLogger } from '@camstack/types'
+import type { PushResult } from './sync-engine.js'
+import type { LwaPausedReason, LwaPushState, LwaTokenEntry } from './types.js'
 
 /** Wait before re-check N (0-based): 1, 2, 5, 15, 30 min, then 60 min for good. */
 const BACKOFF_MS: readonly number[] = [1, 2, 5, 15, 30, 60].map((m) => m * 60_000)
@@ -30,5 +32,39 @@ export function nextPausedState(
     since: isPaused(prev) ? prev.since : now,
     attempts,
     nextCheckAt: now + pushRecheckDelayMs(attempts),
+  }
+}
+
+/** `ok` only when every linked account can push; `paused` otherwise (no grant counts). */
+export function pushStatusOf(
+  linkedAccounts: readonly { readonly userId: string }[],
+  tokens: readonly LwaTokenEntry[],
+): 'ok' | 'paused' {
+  if (linkedAccounts.length === 0) return 'ok'
+  const live = linkedAccounts.every((a) => {
+    const t = tokens.find((x) => x.userId === a.userId)
+    return t !== undefined && !isPaused(t.push)
+  })
+  return live ? 'ok' : 'paused'
+}
+
+export interface ResumePushDeps {
+  readonly pushAllToAccount: (userId: string) => Promise<PushResult>
+  readonly refreshVisibility: () => Promise<unknown>
+  readonly logger: IScopedLogger
+}
+
+/** The full push the paused events never delivered, run once a pause is lifted. Never throws. */
+export async function pushAfterResume(userId: string, deps: ResumePushDeps): Promise<void> {
+  try {
+    const r = await deps.pushAllToAccount(userId)
+    deps.logger.info('export-alexa: pushed to account after proactive pushes resumed', {
+      meta: { ...r },
+    })
+    await deps.refreshVisibility()
+  } catch (err) {
+    deps.logger.warn('export-alexa: push after resume failed', {
+      meta: { userId, error: errMsg(err) },
+    })
   }
 }

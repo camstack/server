@@ -204,3 +204,38 @@ describe('re-check of a paused account', () => {
     expect(t.tokens()[0]?.accessToken).toBe('new')
   })
 })
+
+describe('a gateway 403 that the broker cannot cure does not flap', () => {
+  it('resume followed by a re-pause climbs the backoff instead of restarting at 1 minute', async () => {
+    const t = setup()
+    t.setGateway(403)
+    await t.gw.postReport('userA', () => ({}), 'x')
+    expect(t.pushStates.at(-1)).toMatchObject({ reason: 'gateway-forbidden', attempts: 0 })
+    t.gw.start()
+    // the broker answers 200 (Amazon token fine): the pause is lifted, the next push 403s again
+    await vi.advanceTimersByTimeAsync(61_000)
+    expect(t.tokens()[0]?.push).toBeUndefined()
+    await t.gw.postReport('userA', () => ({}), 'x')
+    const second = t.pushStates.at(-1)
+    expect(second).toMatchObject({ state: 'paused', reason: 'gateway-forbidden', attempts: 1 })
+    expect(second).toMatchObject({ nextCheckAt: Date.now() + 2 * MIN })
+    await vi.advanceTimersByTimeAsync(3 * MIN)
+    await t.gw.postReport('userA', () => ({}), 'x')
+    t.gw.stop()
+    expect(t.pushStates.at(-1)).toMatchObject({ attempts: 2 })
+  })
+
+  it('a push that succeeds ends the probation: the next 403 is a fresh 1 minute pause', async () => {
+    const t = setup()
+    t.setGateway(403)
+    await t.gw.postReport('userA', () => ({}), 'x')
+    t.gw.start()
+    await vi.advanceTimersByTimeAsync(61_000)
+    t.gw.stop()
+    t.setGateway(200)
+    expect(await t.gw.postReport('userA', () => ({}), 'x')).toBe(true)
+    t.setGateway(403)
+    await t.gw.postReport('userA', () => ({}), 'x')
+    expect(t.pushStates.at(-1)).toMatchObject({ attempts: 0 })
+  })
+})

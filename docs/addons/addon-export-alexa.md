@@ -52,7 +52,9 @@ Consequences worth stating out loud:
   latter before doing any work.
 - **Revoking the session does not touch half 2.** The LWA grant is Amazon's and
   survives; without clearing it the Event Gateway keeps pushing motion and
-  doorbell events at the unlinked account until Amazon happens to answer 403.
+  doorbell events at the unlinked account until Amazon refuses the push grant. A
+  refusal (a gateway 403, a broker 410) never unlinks: it PAUSES proactive pushes,
+  keeps the link, and re-checks on a 1/2/5/15/30/60 minute backoff (D1075).
   That is why "Unlink Amazon account" does both — it also deletes the link at the
   broker (`/broker/revoke`) so the refresh token dies there — and why revoking
   from Admin → System → Identity → Linked Sessions alone is _not_ an unlink.
