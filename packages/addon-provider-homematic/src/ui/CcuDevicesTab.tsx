@@ -141,10 +141,15 @@ function EventsBadge(props: {
     keyEventStatuses(
       row.keyChannels.map((channel) => channel.address),
       programs.data.programs,
+      programs.data.keyReferencesUnreadable === true,
     ),
   )
   if (state === null) return <span className="text-foreground-subtle">—</span>
-  return <Badge variant={state === 'ok' ? 'success' : 'warning'}>{t(EVENTS_LABEL[state])}</Badge>
+  return (
+    <Badge variant={state === 'ok' ? 'success' : state === 'unknown' ? 'info' : 'warning'}>
+      {t(EVENTS_LABEL[state])}
+    </Badge>
+  )
 }
 
 /** The CCU device list: identity, firmware and the health flags the WebUI buries in "Servicemeldungen". */

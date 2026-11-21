@@ -1,4 +1,4 @@
-import type { HmDevice, HmProgram } from 'nodehomematic'
+import type { HmDevice, HmKeyProgramReference, HmProgram } from 'nodehomematic'
 import type { z } from 'zod'
 import { hmKeyChannels } from '../devices/hm-key-vocabulary.js'
 import { hmName } from '../devices/hm-name.js'
@@ -159,6 +159,56 @@ async function conditionsOf(
   }
 }
 
+/**
+ * One ReGa scan of every program's conditions for the key channels: what a
+ * program written by hand on the CCU references. `null` when the read failed,
+ * which the caller reports as unknown, never as "no program".
+ */
+async function readKeyReferences(
+  deps: CcuActionDeps,
+  integrationId: string,
+  facade: CcuFacade,
+  keys: readonly ProgramKey[],
+  adopted: ReadonlyMap<string, number>,
+): Promise<ReadonlyMap<string, HmKeyProgramReference> | null> {
+  if (keys.length === 0) return new Map()
+  try {
+    const found = await facade.keyProgramReferences(keys.map((key) => key.address))
+    return new Map(found.map((reference) => [reference.id, reference]))
+  } catch (err: unknown) {
+    const meta = { integrationId, error: errorText(err) }
+    const deviceIds = deviceIdsOfKeys(keys, adopted)
+    if (deviceIds.length === 0) {
+      deps.logger.warn('Homematic key programs could not be read', { meta })
+    }
+    for (const deviceId of deviceIds) {
+      deps.logger.warn('Homematic key programs could not be read', {
+        tags: { deviceId },
+        meta,
+      })
+    }
+    return null
+  }
+}
+
+function deviceIdsOfKeys(
+  keys: readonly ProgramKey[],
+  adopted: ReadonlyMap<string, number>,
+): number[] {
+  return [
+    ...new Set(
+      keys.flatMap((key) => {
+        const deviceId = adopted.get(key.deviceAddress)
+        return deviceId === undefined ? [] : [deviceId]
+      }),
+    ),
+  ]
+}
+
+function isCamStackKeyEventProgram(program: HmProgram): boolean {
+  return isCamStackKeyEventProgramName(program.name)
+}
+
 function toRow(program: HmProgram, channels: readonly ProgramChannel[]): CcuProgram {
   return {
     id: program.id,
@@ -219,20 +269,31 @@ export function buildCcuProgramHandlers(deps: CcuActionDeps) {
         deps.adoptedAddresses(input.integrationId),
         deps.adoptedNames(input.integrationId),
       ])
+      const keys = keyRows(devices, adopted, adoptedNames)
+      const references = await readKeyReferences(deps, input.integrationId, facade, keys, adopted)
+      const names = channelNameLookup(devices)
       const programs: CcuProgram[] = []
       for (const program of facade.programs()) {
-        const channels = await conditionsOf(
-          deps,
-          input.integrationId,
-          facade,
-          program,
-          devices,
-          adopted,
-          adoptedNames,
-        )
+        const channels = isCamStackKeyEventProgram(program)
+          ? await conditionsOf(
+              deps,
+              input.integrationId,
+              facade,
+              program,
+              devices,
+              adopted,
+              adoptedNames,
+            )
+          : (references?.get(program.id)?.channels ?? []).map((address) =>
+              channelRow(address, names, adopted, adoptedNames),
+            )
         programs.push(toRow(program, channels))
       }
-      return { programs, keys: keyRows(devices, adopted, adoptedNames) }
+      return {
+        programs,
+        keys,
+        ...(references === null ? { keyReferencesUnreadable: true } : {}),
+      }
     },
 
     runCcuProgram: async (input: ProgramIdInput): Promise<OkResult> => {
@@ -303,7 +364,10 @@ export function buildCcuProgramHandlers(deps: CcuActionDeps) {
         refuse('unknown-channel', `Channel ${foreign} is not a key of this device`)
       }
       const name = keyEventProgramName(device)
-      const { programId } = await facade.ensureKeyEventProgram({ name, channelAddresses: wanted })
+      const { programId } = await facade.ensureKeyEventProgram({
+        name,
+        channelAddresses: wanted,
+      })
       const deviceId = (await deps.adoptedAddresses(input.integrationId)).get(device.address)
       logProgram(
         deps,

@@ -336,6 +336,7 @@ function ButtonEvents(props: {
         : keyEventStatuses(
             device.keyChannels.map((channel) => channel.address),
             programs.data.programs,
+            programs.data.keyReferencesUnreadable === true,
           ),
     [programs.data, device.keyChannels],
   )
@@ -448,14 +449,16 @@ function KeyRow(props: {
         </Badge>
         {status !== undefined && (
           <Badge
-            variant={status.state === 'ok' ? 'success' : 'warning'}
+            variant={
+              status.state === 'ok' ? 'success' : status.state === 'unknown' ? 'info' : 'warning'
+            }
             data-testid={`hm-key-event-${status.state}`}
           >
             {t(EVENTS_LABEL[status.state])}
           </Badge>
         )}
       </div>
-      {status !== undefined && (
+      {status !== undefined && status.state !== 'unknown' && (
         <span className="text-xs text-foreground-subtle">
           {status.state === 'missing'
             ? t('detail.programNone')

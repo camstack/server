@@ -416,6 +416,11 @@ export type ProgramKey = z.infer<typeof ProgramKeySchema>
 export const CcuProgramsResultSchema = z.object({
   programs: z.array(CcuProgramSchema),
   keys: z.array(ProgramKeySchema),
+  /**
+   * `true` when the CCU could not be asked which programs reference the keys:
+   * a key's event state is then unknown, never "no program" (D315).
+   */
+  keyReferencesUnreadable: z.boolean().optional(),
 })
 export type CcuProgramsResult = z.infer<typeof CcuProgramsResultSchema>
 

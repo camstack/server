@@ -60,3 +60,11 @@ describe('deviceKeyEventState', () => {
     expect(deviceKeyEventState([ok, inactive, missing])).toBe('missing')
   })
 })
+
+describe('an unreadable program scan', () => {
+  it('is unknown for every key, never missing', () => {
+    const statuses = keyEventStatuses(['D:1', 'D:2'], [], true)
+    expect(statuses.map((status) => status.state)).toEqual(['unknown', 'unknown'])
+    expect(deviceKeyEventState(statuses)).toBe('unknown')
+  })
+})

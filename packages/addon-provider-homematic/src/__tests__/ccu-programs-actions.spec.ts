@@ -46,6 +46,58 @@ const EPOCH: HmProgram = {
   lastExecuteTime: '0',
 }
 
+/** Recorded answer of `keyProgramReferences` for a dummy program an operator wrote by hand on the CCU. */
+const HAND_WRITTEN: HmProgram = {
+  id: '4711',
+  name: 'Klingel Dummy',
+  isActive: true,
+  isInternal: false,
+}
+const RECORDED_REFERENCES = [
+  { id: '4711', name: 'Klingel Dummy', active: true, channels: [`${KEY}:1`] },
+]
+
+describe('listCcuPrograms key references', () => {
+  it('reads a program written by hand on the CCU by the key channels its conditions reference', async () => {
+    const keyProgramReferences = vi.fn(async () => RECORDED_REFERENCES)
+    const { deps } = fakeDeps({
+      devices: () => [keyDevice()],
+      programs: () => [HAND_WRITTEN, NIGHT],
+      keyProgramReferences,
+    })
+    const out = await buildCcuProgramHandlers({
+      ...deps,
+      adoptedAddresses: async () => new Map([[KEY, 7]]),
+    }).listCcuPrograms({ integrationId: 'hm_1' })
+    expect(keyProgramReferences).toHaveBeenCalledTimes(1)
+    expect(keyProgramReferences).toHaveBeenCalledWith([`${KEY}:1`, `${KEY}:2`])
+    expect(out.keyReferencesUnreadable).toBeUndefined()
+    expect(out.programs[0]?.createdByCamstack).toBe(false)
+    expect(out.programs[0]?.channels).toEqual([
+      { address: `${KEY}:1`, channelName: 'Sinistra', deviceName: 'Pulsante bagno', deviceId: 7 },
+    ])
+    expect(out.programs[1]?.channels).toEqual([])
+  })
+
+  it('reports an unreadable scan as unknown and logs it with the device tag', async () => {
+    const { deps, logger } = fakeDeps({
+      devices: () => [keyDevice()],
+      programs: () => [HAND_WRITTEN],
+      keyProgramReferences: async () => {
+        throw new Error('rega down')
+      },
+    })
+    const out = await buildCcuProgramHandlers({
+      ...deps,
+      adoptedAddresses: async () => new Map([[KEY, 7]]),
+    }).listCcuPrograms({ integrationId: 'hm_1' })
+    expect(out.keyReferencesUnreadable).toBe(true)
+    expect(out.programs[0]?.channels).toEqual([])
+    const warn = logger.lines.find((entry) => entry.message.includes('key programs'))
+    expect(warn?.tags).toEqual({ deviceId: 7 })
+  })
+})
+
 describe('parseLastRun', () => {
   it('drops a missing run and epoch 0', () => {
     expect(parseLastRun(undefined)).toBeNull()
