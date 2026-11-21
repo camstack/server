@@ -19,7 +19,7 @@ Customize links a device to another one value by value: the dryer's `power-meter
 takes `power`, `energy`, `voltage` and `current` from a plug as four stored
 `from` fields (`sourceGroups` only gave the picker a "fill all" button; storage
 stayed N records that drift apart). The live audit of 2026-11-21 found three
-such sets (dryer, washer, dishwasher), one of them partial. The operator asked
+such sets (dryer, washer, dishwasher), one of them partial (it stays a per-field link until the operator decides). The operator asked
 for the whole capability to be passed, never single values. The energy card
 needs the same thing across caps: a heat pump device that feeds the `heatPump`
 branch of an `energy-system`.
@@ -45,10 +45,17 @@ host's existing customization — no second store (D676, D1063).
   and history through `core-blocks.getCapLinks` (non-admin; `not-loaded` until
   read, D315). The two meters are never mixed or copied (D224).
 
-`core-blocks.migrateCapLinks({ dryRun })` converts plain identity `from` groups
-from one source device and cap into one `capLink`, reports the mixed groups and
-leaves them untouched, skips stamped features (`contributedBy`) and is
-idempotent (D345).
+`core-blocks.migrateCapLinks({ dryRun })` converts a plain identity `from` group
+from one source device and cap into one `capLink` only when the link claims
+EXACTLY what the group claimed: a link serves every top-level field of the cap
+plus the clock as `now`, so a PARTIAL set (the dishwasher's `power` alone) would
+newly take the rest from the source and silently replace the device's own
+readings. It is reported as `mixed` (`partial-set: would also take ...`), as is a
+group whose `lastFetchedAt` reads the source (the link writes `now`), a group
+with an expression or another source, and a cap another enabled feature also
+writes (`overlap: ...`). Mixed groups are left untouched and the operator
+decides per device. Stamped (`contributedBy`) and disabled features are skipped
+and counted. The run is idempotent (D345).
 
 ## Consequences
 

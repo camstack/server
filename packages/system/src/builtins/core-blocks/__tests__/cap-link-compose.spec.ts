@@ -10,7 +10,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { storedPeers } from '../composition-peers.js'
-import { HOST_REF, METER_REF, block, fromMeter } from './cap-links-fixtures.js'
+import { HOST_REF, METER_REF, block, fullMeterFields } from './cap-links-fixtures.js'
 
 const lookupCap = buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS)
 const TARGET: CompositionTargetDescription = {
@@ -26,29 +26,14 @@ const LINK: Composition = {
 
 describe('a capLink composes like the per-field links it replaces (D1076)', () => {
   it('claims the same values the explicit per-field feature claimed', () => {
-    const hostFields = topLevelFieldsOf('power-meter', lookupCap) ?? []
     const explicit: Composition = {
       target: LINK.target,
-      features: [
-        {
-          kind: 'fields',
-          cap: 'power-meter',
-          fields: Object.fromEntries(
-            hostFields
-              .filter((path) => path !== 'lastFetchedAt')
-              .map((path) => [path, fromMeter(path)]),
-          ),
-        },
-      ],
+      features: [{ kind: 'fields', cap: 'power-meter', fields: fullMeterFields() }],
     }
     const linked = planComposition(LINK, lookupCap, TARGET)
     const old = planComposition(explicit, lookupCap, TARGET)
     expect(linked.problems).toEqual([])
-    const valuesOf = (plan: typeof linked) =>
-      plan.fields
-        .filter((f) => f.path !== 'lastFetchedAt')
-        .map((f) => [f.path, f.source])
-        .sort()
+    const valuesOf = (plan: typeof linked) => plan.fields.map((f) => [f.path, f.source]).sort()
     expect(valuesOf(linked)).toEqual(valuesOf(old))
   })
 

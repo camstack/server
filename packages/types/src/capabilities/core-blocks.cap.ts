@@ -566,8 +566,9 @@ export const coreBlocksCapability = {
     ),
     /**
      * The whole-capability links of one device (D1076), for the energy card
-     * and the Customize table. Not admin: the card runs in the viewer, and a
-     * link carries no stored value, only the pair it joins. `not-loaded`
+     * and the Customize table. Admin today, like `getCustomization` (the role
+     * baseline); a viewer role for the card is a later decision. A link
+     * carries no stored value, only the pair it joins. `not-loaded`
      * until the compositions have been read, never an empty list (D315).
      */
     getCapLinks: method(z.object({ deviceId: z.number().int() }), CapLinksReadSchema, {

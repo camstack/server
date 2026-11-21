@@ -1,4 +1,7 @@
 import {
+  ALL_CAPABILITY_DEFINITIONS,
+  buildCapabilityLookup,
+  topLevelFieldsOf,
   type Composition,
   type CompositionFieldSource,
   type CompositionSourceRef,
@@ -53,6 +56,18 @@ export function logger(): IScopedLogger {
   return l
 }
 
+const lookupCap = buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS)
+
+/** Every host field of power-meter read from the meter, the clock as `now`: what the link serves. */
+export function fullMeterFields(): Record<string, CompositionFieldSource> {
+  const out: Record<string, CompositionFieldSource> = {}
+  for (const path of topLevelFieldsOf('power-meter', lookupCap) ?? []) {
+    out[path] =
+      path === 'lastFetchedAt' ? { kind: 'expression', expr: 'now', bindings: {} } : fromMeter(path)
+  }
+  return out
+}
+
 export interface CapLinksWorld {
   readonly service: CapLinksService
   readonly log: IScopedLogger
@@ -60,6 +75,8 @@ export interface CapLinksWorld {
   /** Device identities that exist, by key. */
   readonly devices: Map<string, number>
   writes: number
+  /** When set, every rewrite is refused with this message (what the composition API does for a bad link). */
+  refuseWith: string | null
 }
 
 /** A service over an in-memory store: a rewrite replaces the block and bumps `updatedAt`. */
@@ -73,6 +90,7 @@ export function capLinksWorld(initial: CoreBlock[] | null): CapLinksWorld {
     blocks: initial,
     devices,
     writes: 0,
+    refuseWith: null,
     log,
     service: new CapLinksService(ports()),
   }
@@ -81,7 +99,9 @@ export function capLinksWorld(initial: CoreBlock[] | null): CapLinksWorld {
       blocks: () => world.blocks,
       refOfDevice: async (deviceId) => (deviceId === HOST_ID ? HOST_REF : null),
       deviceIdOf: async (ref) => devices.get(compositionSourceKey(ref)) ?? null,
+      hostFieldsOf: (cap) => topLevelFieldsOf(cap, lookupCap),
       rewrite: async (stored, composition) => {
+        if (world.refuseWith !== null) throw new Error(world.refuseWith)
         world.writes += 1
         const updated: CoreBlock = {
           ...stored,

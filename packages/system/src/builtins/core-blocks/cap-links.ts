@@ -22,6 +22,7 @@ import {
   type MigrateCapLinksReport,
   type MixedCapLink,
   compositionFeatureEnabled,
+  capLinkServedFields,
   compositionSourceKey,
   coreBlockComposition,
   declaredCapLink,
@@ -37,6 +38,8 @@ export interface CapLinksPorts {
   /** The numeric id of a device identity; null when no row carries it. */
   readonly deviceIdOf: (ref: CompositionSourceRef) => Promise<number | null>
   /** One composition write, judged by the composition API. */
+  /** The top-level state fields of a cap (what a project link serves); null for an unknown cap. */
+  readonly hostFieldsOf: (cap: string) => readonly string[] | null
   readonly rewrite: (block: CoreBlock, composition: Composition) => Promise<CoreBlock>
   readonly logger: IScopedLogger
 }
@@ -172,10 +175,18 @@ export class CapLinksService {
       report.skipped += plain.length - candidates.length
       if (candidates.length === 0) continue
       const verdict = identityGroup(candidates, link.sourceCap, link.map)
-      if ('reasons' in verdict) {
-        report.mixed.push({ deviceId, cap, reasons: verdict.reasons })
+      const hostFields = this.ports.hostFieldsOf(cap)
+      const reasons =
+        'reasons' in verdict
+          ? verdict.reasons
+          : hostFields === null
+            ? [`the capability ${cap} is unknown here`]
+            : widening(capLinkServedFields(link, hostFields), verdict.fields, next, candidates)
+      if ('reasons' in verdict || reasons.length > 0) {
+        report.mixed.push({ deviceId, cap, reasons })
         continue
       }
+      if ('reasons' in verdict) continue
       const feature: CompositionCapLinkFeature = {
         kind: 'capLink',
         cap,
@@ -210,6 +221,36 @@ export class CapLinksService {
   }
 }
 
+/**
+ * Why converting would change what the device claims. The link serves EVERY host
+ * field of the cap (and the clock as `now`): a set that covers fewer would newly
+ * take the rest from the source, and an enabled feature another writer left on
+ * the cap would overlap the link. The operator decides per device.
+ */
+function widening(
+  served: readonly string[],
+  carried: readonly string[],
+  next: Composition,
+  candidates: readonly CompositionFieldsFeature[],
+): string[] {
+  const reasons: string[] = []
+  const missing = served.filter((path) => !carried.includes(path))
+  if (missing.length > 0) reasons.push(`partial-set: would also take ${missing.join(', ')}`)
+  const taken = new Set<CompositionFeature>(candidates)
+  for (const other of next.features) {
+    if (other.kind !== 'fields' || taken.has(other) || !compositionFeatureEnabled(other)) continue
+    const clash = Object.keys(other.fields).filter((path) => served.includes(path))
+    if (clash.length > 0) {
+      const by =
+        other.contributedBy === undefined
+          ? 'another feature'
+          : `the device link ${other.contributedBy.linkId}`
+      reasons.push(`overlap: ${by} also writes ${clash.join(', ')}, which the link would serve`)
+    }
+  }
+  return reasons
+}
+
 function goneKey(deviceId: number, feature: CompositionCapLinkFeature): string {
   return `${deviceId}:${feature.cap}:${feature.linkId}`
 }
@@ -235,6 +276,10 @@ function identityGroup(
     for (const [path, value] of Object.entries(feature.fields)) {
       fields.push(path)
       if (value.kind === 'expression' && value.expr === 'now' && path === 'lastFetchedAt') continue
+      if (path === 'lastFetchedAt') {
+        reasons.push('lastFetchedAt: reads the source clock, the link writes now')
+        continue
+      }
       if (value.kind !== 'from') {
         reasons.push(`${path}: a ${value.kind} source`)
         continue

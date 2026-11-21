@@ -21,6 +21,7 @@ import {
   ALL_CAPABILITY_DEFINITIONS,
   BaseAddon,
   buildCapabilityLookup,
+  topLevelFieldsOf,
   type ConfigUISchema,
   COMPOSER_ADDON_ID,
   CORE_BLOCKS_ADDON_ID,
@@ -1118,6 +1119,7 @@ export class CoreBlocksAddon extends BaseAddon {
     }
     const store = this.requireStore()
     const compositions = this.sharedCompositionApi()
+    const lookupCap = buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS)
     return new CapLinksService({
       blocks: () => (store.isLoaded() ? store.list() : null),
       refOfDevice: async (deviceId) => {
@@ -1125,6 +1127,7 @@ export class CoreBlocksAddon extends BaseAddon {
         return found === null ? null : { addonId: found.addonId, stableId: found.stableId }
       },
       deviceIdOf: (ref) => this.deviceIdOfRef(ref),
+      hostFieldsOf: (cap) => topLevelFieldsOf(cap, lookupCap),
       rewrite: async (block, composition) => {
         const { block: updated } = await compositions.updateComposition({
           blockId: block.id,

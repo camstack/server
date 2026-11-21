@@ -835,7 +835,7 @@ A cap may declare `customize.links` (`CustomizeCapLink`): `{ id, sourceCap, mode
 - `project` (same cap, e.g. a dryer's `power-meter` from a plug's): `planComposition` expands the feature into the identity field claims of the cap (every top-level state field, `lastFetchedAt` as a clock) or the declared `map`, and the usual claim path serves the host's own slice.
 - `reference` (a slot of another cap, e.g. `energy-system.heatPump` from `heat-pump-status`): no claim, no copy. A consumer asks `core-blocks.getCapLinks({ deviceId })` (non-admin) and reads the linked device's own cap; the answer is `not-loaded` until the store has been read.
 
-The planner refuses by name: `link-undeclared`, `link-source-cap-missing`, `link-native` (a project link on a cap the host serves itself, D944) and `link-overlaps-fields`. `core-blocks.migrateCapLinks({ dryRun })` turns old per-field identity links into one `capLink` and reports what it left alone.
+The planner refuses by name: `link-undeclared`, `link-source-cap-missing`, `link-native` (a project link on a cap the host serves itself, D944) and `link-overlaps-fields`. `core-blocks.migrateCapLinks({ dryRun })` turns old per-field identity links into one `capLink` only when the claims stay identical, and reports what it left alone (a partial set, a source clock, an expression, an overlapping feature) with the reason.
 
 ### A fan's oscillation axes and preset, linked by hand (D1034)
 
