@@ -82,7 +82,16 @@ export function buildCcuFaultHandlers(deps: CcuActionDeps) {
         })
       }
       faults.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1))
-      return { faults, unreported }
+      const reported = deps.gatewayFaults?.(input.integrationId) ?? null
+      const gatewayFaults: CcuFault[] | null =
+        reported === null
+          ? null
+          : reported.map((fault) => ({
+              code: fault.code,
+              label: fault.label,
+              severity: fault.severity,
+            }))
+      return { faults, unreported, gatewayFaults }
     },
   }
 }

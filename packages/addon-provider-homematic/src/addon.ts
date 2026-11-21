@@ -300,6 +300,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       adoptedAddresses: (integrationId) => this.adoptedCcuAddresses(integrationId),
       adoptedNames: (integrationId) => this.adoptedCcuNames(integrationId),
       ccuChanged: (integrationId) => homematicFacades.emitSnapshot(integrationId),
+      gatewayFaults: (integrationId) => homematicFacades.gatewayFaults(integrationId),
     }
   }
 

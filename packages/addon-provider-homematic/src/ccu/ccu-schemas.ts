@@ -604,5 +604,7 @@ export const CcuFaultsResultSchema = z.object({
   faults: z.array(CcuFaultRowSchema),
   /** Devices whose service flags the CCU has not reported: unknown, never "no fault". */
   unreported: z.array(z.string()),
+  /** What the gateway (the CCU box and its radio) reports: WatchDog, mass unreachable, radio silence. `null` is unknown (never read, or no source answered), never "none". */
+  gatewayFaults: z.array(CcuFaultSchema).nullable().default(null),
 })
 export type CcuFaultsResult = z.infer<typeof CcuFaultsResultSchema>

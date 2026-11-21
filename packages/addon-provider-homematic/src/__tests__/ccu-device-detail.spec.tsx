@@ -286,7 +286,34 @@ describe('Active faults on the Overview', () => {
   })
 
   it('says "No active faults" only from an answer with none', async () => {
-    mountAt('', base)
+    mountAt('', {
+      ...base,
+      listCcuFaults: () => ({ faults: [], unreported: [], gatewayFaults: [] }),
+    })
     expect(await screen.findByText('No active faults')).toBeTruthy()
+  })
+
+  it('says the gateway status is unknown, never "No active faults", when it was never read', async () => {
+    mountAt('', {
+      ...base,
+      listCcuFaults: () => ({ faults: [], unreported: [], gatewayFaults: null }),
+    })
+    expect(await screen.findByText('The gateway status is not known yet.')).toBeTruthy()
+    expect(screen.queryByText('No active faults')).toBeNull()
+  })
+
+  it('lists a gateway fault beside the device table', async () => {
+    mountAt('', {
+      ...base,
+      listCcuFaults: () => ({
+        faults: [],
+        unreported: [],
+        gatewayFaults: [
+          { code: 'radio-silent', label: 'No radio events received', severity: 'error' },
+        ],
+      }),
+    })
+    expect(await screen.findByText('No radio events received')).toBeTruthy()
+    expect(screen.queryByText('No active faults')).toBeNull()
   })
 })

@@ -8,7 +8,7 @@ import {
   type AddonPageProps,
   type DataColumn,
 } from '@camstack/ui-library'
-import { CcuFaultsResultSchema, type CcuFaultRow } from '../ccu/ccu-schemas.js'
+import { CcuFaultsResultSchema, type CcuFault, type CcuFaultRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { deviceDetailPath } from './device-route.js'
@@ -101,11 +101,15 @@ export function ActiveFaults(props: {
         <Skeleton className="h-16 w-full" />
       ) : faults.data.faults.length === 0 ? (
         <>
-          <EmptyState title={t('overview.noFaults')} />
+          <GatewayFaultList faults={faults.data.gatewayFaults} />
+          {faults.data.gatewayFaults !== null && faults.data.gatewayFaults.length === 0 && (
+            <EmptyState title={t('overview.noFaults')} />
+          )}
           <Unreported count={faults.data.unreported.length} />
         </>
       ) : (
         <>
+          <GatewayFaultList faults={faults.data.gatewayFaults} />
           <DataTable
             columns={columns}
             rows={faults.data.faults}
@@ -117,6 +121,33 @@ export function ActiveFaults(props: {
         </>
       )}
     </TableBlock>
+  )
+}
+
+/**
+ * What the CCU box and its radio report (WatchDog, mass unreachable, radio
+ * silence): not tied to one device. `null` is unknown (never read, or no source
+ * answered) and is said so, never shown as healthy.
+ */
+function GatewayFaultList(props: { readonly faults: readonly CcuFault[] | null }): ReactNode {
+  const { t } = useT()
+  if (props.faults === null) {
+    return <p className="text-sm text-foreground-subtle">{t('overview.gatewayUnknown')}</p>
+  }
+  if (props.faults.length === 0) return null
+  return (
+    <ul aria-label={t('overview.gatewayFaults')} className="flex flex-col gap-1">
+      {props.faults.map((fault) => (
+        <li key={fault.code} className="flex flex-wrap items-center gap-2 text-sm">
+          <Badge variant={fault.severity === 'error' ? 'danger' : 'warning'}>
+            {t(fault.severity === 'error' ? 'overview.severityError' : 'overview.severityWarning')}
+          </Badge>
+          <span className="text-foreground">{t('overview.gatewayLabel')}</span>
+          <span className="text-foreground">{fault.label}</span>
+          <span className="text-xs text-foreground-subtle">{fault.code}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 

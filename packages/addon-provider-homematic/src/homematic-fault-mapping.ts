@@ -31,7 +31,7 @@ interface FaultWords {
 }
 
 /** One fault the mapping can raise. */
-interface FaultRule {
+export interface FaultRule {
   /** The code published on the cap. */
   readonly key: string
   readonly severity: DeviceErrorSeverity
@@ -81,8 +81,14 @@ function truthy(value: HmValue): boolean | null {
 
 // ── the CCU box: WatchDog system variables ─────────────────────────────
 
-/** The WatchDog add-on names its variables "SV WatchDog: <key>". */
-const WATCHDOG_PREFIX = /^sv\s*watchdog\s*:\s*/i
+/**
+ * WatchDog is part of RaspberryMatic / OpenCCU itself (since 3.59.6): it creates
+ * an alarm system variable named "WatchDog: <alarm>" the first time that alarm
+ * fires. The older "SV WatchDog: <alarm>" spelling is accepted too. The alarm
+ * keys in {@link WATCHDOG_FAULTS} are not verified against real names, so a
+ * WatchDog-prefixed variable that matches no rule is reported to the caller.
+ */
+const WATCHDOG_PREFIX = /^(?:sv\s*)?watchdog\s*:\s*/i
 
 export const WATCHDOG_FAULTS: readonly FaultRule[] = [
   {
@@ -128,12 +134,21 @@ function watchdogRuleOf(name: string): FaultRule | null {
  * with a value (no snapshot, no credentials, the add-on not installed) is
  * UNKNOWN, never "no fault".
  */
-export function watchdogFaultReading(vars: readonly HmSysVar[], now: number): ErrorStatus {
+export function watchdogFaultReading(
+  vars: readonly HmSysVar[],
+  now: number,
+  onUnmatched?: (name: string) => void,
+): ErrorStatus {
   const faults: DeviceFault[] = []
   let known = 0
   for (const variable of vars) {
     const rule = watchdogRuleOf(variable.name)
-    if (rule === null) continue
+    if (rule === null) {
+      if (onUnmatched !== undefined && WATCHDOG_PREFIX.test(variable.name.trim())) {
+        onUnmatched(variable.name)
+      }
+      continue
+    }
     const on = truthy(variable.value)
     if (on === null) continue
     known += 1
@@ -141,6 +156,48 @@ export function watchdogFaultReading(vars: readonly HmSysVar[], now: number): Er
   }
   if (known === 0) return unknown(now)
   return reading(faults, now)
+}
+
+// ── the gateway's own derived faults and the merge of every source ─────
+
+/** Several HmIP-RF devices went unreachable together (`homematic-radio-unreachable.ts`). */
+export const RADIO_UNREACHABLE_FAULT: FaultRule = {
+  key: 'radio-unreachable',
+  severity: 'error',
+  words: words(
+    'Several radio devices became unreachable',
+    'Più dispositivi radio non raggiungibili',
+  ),
+}
+
+/** No radio device event for too long (`homematic-radio-silent.ts`). */
+export const RADIO_SILENT_FAULT: FaultRule = {
+  key: 'radio-silent',
+  severity: 'error',
+  words: words('No radio events received', 'Nessun evento radio ricevuto'),
+}
+
+/** A reading for one rule: raised, fine, or unknown (`null`). */
+export function ruleReading(rule: FaultRule, active: boolean | null, now: number): ErrorStatus {
+  if (active === null) return unknown(now)
+  return reading(active ? [toFault(rule)] : [], now)
+}
+
+/**
+ * Merge the readings of several sources. A fault from any source is active
+ * (one entry per code); unknown from every source is unknown; a source that
+ * reads "fine" beside one that is unknown is fine.
+ */
+export function mergeFaultReadings(readings: readonly ErrorStatus[], now: number): ErrorStatus {
+  const byCode = new Map<string, DeviceFault>()
+  let known = 0
+  for (const item of readings) {
+    if (item.active === null) continue
+    known += 1
+    for (const fault of item.faults ?? []) byCode.set(fault.code, fault)
+  }
+  if (known === 0) return unknown(now)
+  return reading([...byCode.values()], now)
 }
 
 // ── a device: MAINTENANCE service flags ─────────────────────────────────
@@ -219,6 +276,11 @@ export function maintenanceFaultReading(
 /** The faults the CCU box can raise: its WatchDog variables. */
 export function watchdogFaultTypes(): DeviceFault[] {
   return WATCHDOG_FAULTS.map(toFault)
+}
+
+/** Every fault the gateway can raise: WatchDog's plus the two derived from radio behaviour. */
+export function gatewayFaultTypes(): DeviceFault[] {
+  return [...WATCHDOG_FAULTS, RADIO_UNREACHABLE_FAULT, RADIO_SILENT_FAULT].map(toFault)
 }
 
 /**

@@ -60,6 +60,9 @@
     "severityError": "Errore",
     "severityWarning": "Avviso",
     "faultsMore": "+{{count}} altri",
+    "gatewayLabel": "Gateway CCU",
+    "gatewayFaults": "Guasti del gateway",
+    "gatewayUnknown": "Lo stato del gateway non è ancora noto.",
     "openDevice": "Apri dispositivo",
     "faultsUnreported_one": "{{count}} dispositivo non ha ancora riportato i flag di servizio, quindi il suo stato è sconosciuto",
     "faultsUnreported_other": "{{count}} dispositivi non hanno ancora riportato i flag di servizio, quindi il loro stato è sconosciuto"

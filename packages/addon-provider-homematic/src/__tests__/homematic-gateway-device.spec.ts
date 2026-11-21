@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HomematicConfig } from '../config.js'
 import { HomematicGatewayDevice } from '../devices/homematic-gateway-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
+import { RadioActivityTracker } from '../homematic-radio-silent.js'
 import type { HmSessionInfo, HmSessionStatus } from '../homematic-integration-manager.js'
 import { RecordingLogger } from './recording-logger.js'
 
@@ -61,13 +62,7 @@ function rig(config: Record<string, unknown>): Rig {
     api: { deviceManager: { setMetadata: { mutate: setMetadata } } },
     logger,
   } as unknown as DeviceContext
-  return {
-    ctx,
-    providers,
-    logger,
-    setMetadata,
-    errorSlice: () => runtime?.getCapState('error'),
-  }
+  return { ctx, providers, logger, setMetadata, errorSlice: () => runtime?.getCapState('error') }
 }
 
 const gatewayConfig = { integrationId: INT, system: 'homematic', nativeId: `${INT}:gateway` }
@@ -358,12 +353,7 @@ describe('HomematicGatewayDevice state refresh (D1062)', () => {
       .mocked(r.ctx.registerNativeCap)
       .mock.calls.find(([cap]) => cap.name === 'device-state-refresh')
     expect(call?.[2]).toMatchObject({
-      stateRefresh: {
-        integrationId: INT,
-        minIntervalMs: 30_000,
-        push: 'none',
-        batch: false,
-      },
+      stateRefresh: { integrationId: INT, minIntervalMs: 30_000, push: 'none', batch: false },
     })
   })
 
@@ -371,39 +361,25 @@ describe('HomematicGatewayDevice state refresh (D1062)', () => {
     const r = rig(gatewayConfig)
     new HomematicGatewayDevice(r.ctx)
     publish({ host: '192.168.10.40', tls: false })
-    const hub: FakeHub = {
-      refreshes: 0,
-      failRefresh: false,
-      vars: [faultVar(true)],
-    }
+    const hub: FakeHub = { refreshes: 0, failRefresh: false, vars: [faultVar(true)] }
     publishHub(hub)
     await refresh(r.providers)
     expect(hub.refreshes).toBe(1)
-    expect(r.errorSlice()).toMatchObject({
-      active: true,
-      code: 'hb-rf-eth-connection',
-    })
+    expect(r.errorSlice()).toMatchObject({ active: true, code: 'hb-rf-eth-connection' })
   })
 
   it('a refresh the CCU cannot serve fails, so the core backs off; the previous reading stands', async () => {
     const r = rig(gatewayConfig)
     new HomematicGatewayDevice(r.ctx)
     const session = publish({ host: '192.168.10.40', tls: false })
-    const hub: FakeHub = {
-      refreshes: 0,
-      failRefresh: false,
-      vars: [faultVar(true)],
-    }
+    const hub: FakeHub = { refreshes: 0, failRefresh: false, vars: [faultVar(true)] }
     publishHub(hub)
     await refresh(r.providers)
     hub.failRefresh = true
     await expect(refresh(r.providers)).rejects.toThrow(/rega unreachable/)
     session.status = 'disconnected'
     await expect(refresh(r.providers)).rejects.toThrow(/not connected/)
-    expect(r.errorSlice()).toMatchObject({
-      active: true,
-      code: 'hb-rf-eth-connection',
-    })
+    expect(r.errorSlice()).toMatchObject({ active: true, code: 'hb-rf-eth-connection' })
   })
 
   it('a refresh and a snapshot-triggered read in flight together read the CCU once', async () => {
@@ -422,11 +398,7 @@ describe('HomematicGatewayDevice state refresh (D1062)', () => {
       const r = rig(gatewayConfig)
       const device = new HomematicGatewayDevice(r.ctx)
       publish({ host: '192.168.10.40', tls: false })
-      const hub: FakeHub = {
-        refreshes: 0,
-        failRefresh: false,
-        vars: [faultVar(false)],
-      }
+      const hub: FakeHub = { refreshes: 0, failRefresh: false, vars: [faultVar(false)] }
       publishHub(hub)
       await device.onActivate()
       const afterActivation = hub.refreshes
@@ -436,5 +408,82 @@ describe('HomematicGatewayDevice state refresh (D1062)', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+// ── the radio-side sources: mass unreachable, radio silence ─────
+
+describe('HomematicGatewayDevice radio sources', () => {
+  function publishRadioHub(ccuSerial: string, addresses: readonly string[]): void {
+    const stub = {
+      refreshHub: async (): Promise<void> => {},
+      systemVariables: (): HmSysVar[] => [],
+      ccuInfo: async () => ({ serial: ccuSerial }),
+      serviceMessages: async () => [],
+      devices: () =>
+        addresses.map((address) => ({
+          address,
+          channels: [{ dataPoints: [{ id: radioEventId(address) }] }],
+        })),
+    }
+    homematicFacades.set(INT, stub as unknown as Homematic)
+  }
+
+  /** The library's data-point id of a switch channel on the HmIP-RF interface. */
+  function radioEventId(address: string): string {
+    return `ccu-hmip-rf:${address}:1:values:state`.toLowerCase()
+  }
+
+  it('publishes unknown (not the stale answer) when no source answers any more', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const addresses = Array.from({ length: 6 }, (_, n) => `000A9D89A7AF${10 + n}`)
+    publishRadioHub('5A4993F711', addresses)
+    homematicFacades.setRadioActivity(INT, new RadioActivityTracker(Date.now() - 60 * 60_000))
+    await device.pollFaults()
+    expect(homematicFacades.gatewayFaults(INT)?.map((f) => f.code)).toEqual(['radio-silent'])
+    homematicFacades.setRadioActivity(INT, null)
+    const broken = {
+      refreshHub: async (): Promise<void> => {},
+      systemVariables: (): HmSysVar[] => [],
+      serviceMessages: async () => {
+        throw new Error('CCU busy')
+      },
+      devices: () => [],
+    }
+    homematicFacades.set(INT, broken as unknown as Homematic)
+    await device.pollFaults()
+    expect(homematicFacades.gatewayFaults(INT)).toBeNull()
+  })
+
+  it('raises radio-silent on silence and clears on the next radio event', async () => {
+    const r = rig(gatewayConfig)
+    const device = new HomematicGatewayDevice(r.ctx)
+    publish({ host: '192.168.10.40', tls: false })
+    const addresses = Array.from({ length: 6 }, (_, n) => `000A9D89A7AF${10 + n}`)
+    publishRadioHub('5A4993F711', addresses)
+    const tracker = new RadioActivityTracker(Date.now() - 60 * 60_000)
+    homematicFacades.setRadioActivity(INT, tracker)
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: true, code: 'radio-silent' })
+    tracker.record(radioEventId(addresses[0] ?? ''), Date.now())
+    await device.pollFaults()
+    expect(r.errorSlice()).toMatchObject({ active: false })
+  })
+
+  it('declares the derived faults through error.listFaultTypes', async () => {
+    const r = rig(gatewayConfig)
+    new HomematicGatewayDevice(r.ctx)
+    expect(await callCap(r.providers, 'error', 'listFaultTypes', { deviceId: 7 })).toMatchObject({
+      types: expect.arrayContaining([
+        {
+          code: 'radio-unreachable',
+          label: 'Several radio devices became unreachable',
+          severity: 'error',
+        },
+        { code: 'radio-silent', label: 'No radio events received', severity: 'error' },
+      ]),
+    })
   })
 })

@@ -1,6 +1,6 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { Homematic } from 'nodehomematic'
-import type { CcuListItem } from './ccu-schemas.js'
+import type { CcuFault, CcuListItem } from './ccu-schemas.js'
 
 /**
  * The slice of the nodehomematic facade the CCU management actions use. Real
@@ -70,6 +70,8 @@ export interface CcuActionDeps {
    * they show (a key's central link, a name).
    */
   readonly ccuChanged: (integrationId: string) => void
+  /** The faults the gateway device last published for this integration (its box and radio). */
+  readonly gatewayFaults?: (integrationId: string) => readonly CcuFault[] | null
 }
 
 export function errorText(err: unknown): string {

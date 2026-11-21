@@ -60,6 +60,9 @@
     "severityError": "Error",
     "severityWarning": "Warning",
     "faultsMore": "+{{count}} more",
+    "gatewayLabel": "CCU gateway",
+    "gatewayFaults": "Gateway faults",
+    "gatewayUnknown": "The gateway status is not known yet.",
     "openDevice": "Open device",
     "faultsUnreported_one": "{{count}} device has not reported its service flags yet, so its state is unknown",
     "faultsUnreported_other": "{{count}} devices have not reported their service flags yet, so their state is unknown"

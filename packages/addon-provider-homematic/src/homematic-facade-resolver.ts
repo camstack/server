@@ -1,4 +1,6 @@
+import type { DeviceFault } from '@camstack/types'
 import type { Homematic } from 'nodehomematic'
+import type { RadioActivityTracker } from './homematic-radio-silent.js'
 import { clearStoredKeyLinkStates } from './devices/hm-key-link-states.js'
 import { clearCcuCallLimiters } from './hm-ccu-call-limiter.js'
 import type { HmIntegrationManager } from './homematic-integration-manager.js'
@@ -26,10 +28,37 @@ export class HmFacadeResolver {
   /** Per-integration state-change fan-out (connect, disconnect, error). */
   readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
 
+  /** Per-integration stamps of the real radio events (`radio-silent`). */
+  readonly #radioActivity: Map<string, RadioActivityTracker> = new Map()
+  /** The faults the gateway device last published, for the CCU page's overview. */
+  readonly #gatewayFaults: Map<string, readonly DeviceFault[] | null> = new Map()
+
+  /** Publish the radio-event tracker of an integration (a fresh one per facade). */
+  setRadioActivity(integrationId: string, tracker: RadioActivityTracker | null): void {
+    if (tracker === null) this.#radioActivity.delete(integrationId)
+    else this.#radioActivity.set(integrationId, tracker)
+  }
+
+  radioActivity(integrationId: string): RadioActivityTracker | null {
+    return this.#radioActivity.get(integrationId) ?? null
+  }
+
+  /** The gateway device records what it published; read by the overview, never the other way. */
+  setGatewayFaults(integrationId: string, faults: readonly DeviceFault[] | null): void {
+    this.#gatewayFaults.set(integrationId, faults)
+  }
+
+  /** `null` is unknown: nothing was published yet, or the last reading had no answering source. */
+  gatewayFaults(integrationId: string): readonly DeviceFault[] | null {
+    return this.#gatewayFaults.get(integrationId) ?? null
+  }
+
   /** Publish or remove the facade for an integration id. `null` removes the entry. */
   set(integrationId: string, facade: Homematic | null): void {
     if (facade === null) {
       this.#facades.delete(integrationId)
+      this.#radioActivity.delete(integrationId)
+      this.#gatewayFaults.delete(integrationId)
       return
     }
     this.#facades.set(integrationId, facade)
@@ -88,6 +117,8 @@ export class HmFacadeResolver {
   clear(): void {
     clearCcuCallLimiters()
     this.#facades.clear()
+    this.#radioActivity.clear()
+    this.#gatewayFaults.clear()
     this.#sessions.clear()
     this.#snapshotSubs.clear()
     clearStoredKeyLinkStates()

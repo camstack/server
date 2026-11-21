@@ -8,6 +8,7 @@ import {
 import { sameConnection, toHomematicOptions, type HomematicConfig } from './config.js'
 import { homematicFacades } from './homematic-facade-resolver.js'
 import { disposeCcuCallLimiter } from './hm-ccu-call-limiter.js'
+import { attachRadioActivity, RadioActivityTracker } from './homematic-radio-silent.js'
 
 /**
  * Minimal surface the registry requires from each manager. Both the real
@@ -112,6 +113,10 @@ export class HmClientRegistry {
         const raw = new Homematic(toHomematicOptions(config))
         this.#facades.set(opts.id, raw)
         homematicFacades.set(opts.id, raw)
+        // Real device events only: a ping or interface-level event is not a `valueChanged`.
+        const tracker = new RadioActivityTracker(Date.now())
+        homematicFacades.setRadioActivity(opts.id, tracker)
+        attachRadioActivity(raw, tracker)
         return wrapFacade(raw)
       },
     })

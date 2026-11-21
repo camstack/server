@@ -6,11 +6,20 @@ import {
   DeviceType,
   deviceAdminLinkCapability,
   errMsg,
+  type ErrorStatus,
   type InferNativeProvider,
 } from '@camstack/types'
 import { homematicGatewayDeviceSchema } from '../config.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
-import { watchdogFaultReading, watchdogFaultTypes } from '../homematic-fault-mapping.js'
+import {
+  gatewayFaultTypes,
+  mergeFaultReadings,
+  RADIO_SILENT_FAULT,
+  RADIO_UNREACHABLE_FAULT,
+  ruleReading,
+  watchdogFaultReading,
+} from '../homematic-fault-mapping.js'
+import { radioUnreachableReading } from '../homematic-radio-unreachable.js'
 import { gatewayMetadataPatch } from '../homematic-gateway-metadata.js'
 import { registerHomematicStateRefresh } from '../homematic-state-refresh.js'
 
@@ -22,9 +31,10 @@ import { registerHomematicStateRefresh } from '../homematic-state-refresh.js'
  *
  * - `device-admin-link`, the CCU's own WebUI.
  *
- * - `error`, the faults the CCU WatchDog add-on raises as system variables
- *   (`homematic-fault-mapping.ts`), read by the core's `device-state-refresh` (D1062),
- *   because the CCU pushes no event for them.
+ * - `error`, the merge of every fault source (`homematic-fault-mapping.ts`): the
+ *   CCU's built-in WatchDog alarm variables, several HmIP-RF devices unreachable
+ *   together, and radio silence. Read by the core's `device-state-refresh` (D1062), because
+ *   the CCU pushes no event for them.
  *
  * There is no `reboot` and no `update`: nodehomematic has no call that restarts
  * the CCU, and its firmware call installs an update on a radio DEVICE by its
@@ -42,6 +52,8 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
   private lastMetadataKey = ''
   private polling = false
   private warnedReadFailure = false
+  private readonly warnedSources = new Set<string>()
+  private readonly seenUnmatchedWatchdog = new Set<string>()
 
   constructor(ctx: DeviceContext) {
     const cfg = homematicGatewayDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -49,7 +61,7 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     this.integrationId = cfg.integrationId
     this.online = this.sessionUp()
     this.registerAdminLinkCap()
-    this.declareFaultTypes(watchdogFaultTypes())
+    this.declareFaultTypes(gatewayFaultTypes())
     this.registerErrorCap()
     registerHomematicStateRefresh({
       ctx,
@@ -104,15 +116,76 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     facade: NonNullable<ReturnType<typeof homematicFacades.get>>,
   ): Promise<void> {
     await facade.refreshHub()
-    const reading = watchdogFaultReading(facade.systemVariables(), Date.now())
+    const now = Date.now()
+    const watchdog = watchdogFaultReading(facade.systemVariables(), now, (name) =>
+      this.noteUnmatchedWatchdog(name),
+    )
+    const unreachable = await this.readRadioUnreachable(facade, now)
+    const silent = this.readRadioSilent(facade, now)
+    const reading = mergeFaultReadings([watchdog, unreachable, silent], now)
     if (reading.active === null) {
       this.ctx.logger.debug(
-        'Homematic gateway: no WatchDog system variable readable on the CCU, faults stay unknown',
+        'Homematic gateway: no WatchDog system variable and no other fault source readable, faults stay unknown',
         { tags: { deviceId: this.id } },
       )
     }
+    // Unknown is published as unknown: the overview must not keep showing a stale answer.
+    homematicFacades.setGatewayFaults(
+      this.integrationId,
+      reading.active === null ? null : (reading.faults ?? []),
+    )
     this.warnedReadFailure = false
     await this.publishError(reading)
+  }
+
+  /** A WatchDog variable no rule knows: logged once per name so the real names get learned. */
+  private noteUnmatchedWatchdog(name: string): void {
+    if (this.seenUnmatchedWatchdog.has(name)) return
+    this.seenUnmatchedWatchdog.add(name)
+    this.ctx.logger.debug('Homematic gateway: WatchDog variable matches no fault rule', {
+      tags: { deviceId: this.id },
+      meta: { variable: name },
+    })
+  }
+
+  /** A source that cannot be read is unknown; the first failure is a warning, the repeats debug. */
+  private noteSourceFailure(source: string, error: string): void {
+    const log = this.warnedSources.has(source) ? this.ctx.logger.debug : this.ctx.logger.warn
+    this.warnedSources.add(source)
+    log.call(
+      this.ctx.logger,
+      `Homematic gateway: ${source} unreadable, that source stays unknown`,
+      { tags: { deviceId: this.id }, meta: { error } },
+    )
+  }
+
+  /** Several HmIP-RF devices unreachable together; needs the service messages for the start times. */
+  private async readRadioUnreachable(
+    facade: NonNullable<ReturnType<typeof homematicFacades.get>>,
+    now: number,
+  ): Promise<ErrorStatus> {
+    try {
+      const messages = await facade.serviceMessages()
+      return radioUnreachableReading(facade.devices(), messages, now)
+    } catch (err) {
+      this.noteSourceFailure('radio unreachable check', errMsg(err))
+      return ruleReading(RADIO_UNREACHABLE_FAULT, null, now)
+    }
+  }
+
+  /** No real radio event for too long, from the stamps the registry's event listener keeps. */
+  private readRadioSilent(
+    facade: NonNullable<ReturnType<typeof homematicFacades.get>>,
+    now: number,
+  ): ErrorStatus {
+    const tracker = homematicFacades.radioActivity(this.integrationId)
+    if (tracker === null) return ruleReading(RADIO_SILENT_FAULT, null, now)
+    try {
+      return tracker.reading(facade.devices(), now)
+    } catch (err) {
+      this.noteSourceFailure('radio silence check', errMsg(err))
+      return ruleReading(RADIO_SILENT_FAULT, null, now)
+    }
   }
 
   /**
