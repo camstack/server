@@ -195,7 +195,7 @@ export class CapLinksService {
       }
       const replaced = new Set<CompositionFeature>(candidates)
       const kept = next.features.filter((f) => !replaced.has(f))
-      const candidate: Composition = { ...next, features: [...kept, feature] }
+      const candidate: Composition = { ...next, features: kept.concat(feature) }
       const converted: MigratedCapLink = {
         deviceId,
         cap,

@@ -1038,7 +1038,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'switch',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Gateway, DeviceType.Camera, DeviceType.Sensor, DeviceType.MediaPlayer, DeviceType.Vacuum, DeviceType.Generic, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.PetFountain, DeviceType.Fan, DeviceType.Humidifier, DeviceType.Climate, DeviceType.WaterHeater],
+        deviceTypes: [DeviceType.Gateway, DeviceType.Camera, DeviceType.Sensor, DeviceType.MediaPlayer, DeviceType.Vacuum, DeviceType.Generic, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.PetFountain, DeviceType.Fan, DeviceType.Humidifier, DeviceType.Climate, DeviceType.WaterHeater, DeviceType.Light, DeviceType.Switch],
         apply: 'add',
         vocabularyCap: 'power-source',
         vocabularyStateField: 'switchOn',

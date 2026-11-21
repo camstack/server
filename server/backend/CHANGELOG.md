@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A light or a switch can now be linked to the relay that feeds it as its power source.
+
 ### Changed
 
 - Whole-capability links: the composer expands one link into the claims of every field, and core-blocks reads link state and converts per-field links on request.

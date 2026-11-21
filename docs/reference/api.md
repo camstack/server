@@ -4179,8 +4179,8 @@
 
 ### `power-source` → `powerSource.*`
 
-- **Source:** `packages/types/src/capabilities/power-source.cap.ts:181`
-- **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater`
+- **Source:** `packages/types/src/capabilities/power-source.cap.ts:183`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater, light, switch`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IPowerSourceProvider`
 - **runtimeState:** `PowerSourceStateSchema`

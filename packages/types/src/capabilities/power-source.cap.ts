@@ -141,6 +141,8 @@ const POWER_SOURCE_DEVICE_TYPES = [
   DeviceType.Humidifier,
   DeviceType.Climate,
   DeviceType.WaterHeater,
+  DeviceType.Light,
+  DeviceType.Switch,
 ] as const
 
 const powerSourceCustomize = {

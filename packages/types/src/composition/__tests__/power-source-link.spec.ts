@@ -78,6 +78,12 @@ describe('the power-source declaration', () => {
       expect(target?.deviceTypes).toContain(type)
     }
   })
+
+  it('lets a light or a switch fed by a relay host the link', () => {
+    const target = CAP_CUSTOMIZE_CATALOG['power-source']?.targets.find((t) => t.id === 'switch')
+    expect(target?.deviceTypes).toContain(DeviceType.Light)
+    expect(target?.deviceTypes).toContain(DeviceType.Switch)
+  })
 })
 
 describe('powerSourceLinkOfComposition', () => {
