@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Whole-capability links: the composer expands one link into the claims of every field, and core-blocks reads link state and converts per-field links on request.
+
 ## [1.2.932] - 2026-11-21
 
 ### Changed
@@ -20,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rebuilt against updated dependencies.
 ### Changed
 
-- Whole-capability links: the composer expands one link into the claims of every field, and core-blocks reads link state and converts per-field links on request.
 
 ## [1.2.930] - 2026-11-21
 

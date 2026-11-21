@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize knows the whole-capability link kind (no visible change yet).
+
 ## [1.2.730] - 2026-11-21
 
 ### Changed
@@ -18,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Energy card strings: centre figures and the day's source split (en, it)
-- Customize knows the whole-capability link kind (no visible change yet).
 
 ## [1.2.728] - 2026-11-21
 
