@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Energy card: a grid with no answered power reading shows a dash instead of 0 W, a dead or storage-blind counter leaves the day balance unknown, and today's household is derived when the house day total is missing
+- The energy card reads a past day from its energy balance (consumption, autarky, source split), shows imported / exported / produced and the autarky in the centre, draws the nodes and arrows from that day's kWh, and keeps a flat counter at 0 instead of a dash; live arrows now all carry arrowheads and the grid node stays when it reads 0 W
+
 ## [1.2.490] - 2026-11-21
 
 ### Changed
@@ -14,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device card footer trend now shows its scale: min and max with the unit, the time span (start to now) and the latest value
 ### Changed
 
-- The energy card reads a past day from its energy balance (consumption, autarky, source split), shows imported / exported / produced and the autarky in the centre, draws the nodes and arrows from that day's kWh, and keeps a flat counter at 0 instead of a dash; live arrows now all carry arrowheads and the grid node stays when it reads 0 W
-- Energy card: a grid with no answered power reading shows a dash instead of 0 W, a dead or storage-blind counter leaves the day balance unknown, and today's household is derived when the house day total is missing
 
 ## [1.2.489] - 2026-11-21
 
