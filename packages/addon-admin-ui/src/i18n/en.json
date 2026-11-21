@@ -10786,8 +10786,6 @@
         "hpToday": "Today",
         "hpNow": "Now",
         "centreSufficiency": "Self-sufficiency",
-        "centreSelfUse": "Self-consumption",
-        "centreNetGrid": "Net grid",
         "day": {
           "previous": "Previous day",
           "next": "Next day",
@@ -10805,8 +10803,7 @@
           "house": "House",
           "grid": "Grid",
           "battery": "Battery",
-          "heatPump": "Heat pump",
-          "live": "Live now"
+          "heatPump": "Heat pump"
         },
         "centreImported": "Imported",
         "centreExported": "Exported",

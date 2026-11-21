@@ -82,7 +82,7 @@ interface NodePlace {
   readonly y: number
   readonly lx: number
   readonly ly: number
-  readonly anchor: 'start' | 'middle'
+  readonly anchor: 'start' | 'middle' | 'end'
   readonly glyph: CardGlyph
 }
 
@@ -92,9 +92,9 @@ const PLACE: Readonly<Record<EnergyNodeId, NodePlace>> = {
   battery: {
     x: 232,
     y: 92,
-    lx: 232,
+    lx: 256,
     ly: 124,
-    anchor: 'middle',
+    anchor: 'end',
     glyph: 'battery',
   },
   house: {

@@ -10808,8 +10808,6 @@
         "hpToday": "Oggi",
         "hpNow": "Ora",
         "centreSufficiency": "Autosufficienza",
-        "centreSelfUse": "Autoconsumo",
-        "centreNetGrid": "Rete netta",
         "day": {
           "previous": "Giorno precedente",
           "next": "Giorno successivo",
@@ -10827,8 +10825,7 @@
           "house": "Casa",
           "grid": "Rete",
           "battery": "Batteria",
-          "heatPump": "Pompa di calore",
-          "live": "Ora"
+          "heatPump": "Pompa di calore"
         },
         "centreImported": "Importato",
         "centreExported": "Esportato",
