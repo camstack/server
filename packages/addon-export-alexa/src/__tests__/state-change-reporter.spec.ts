@@ -86,7 +86,7 @@ function setup(opts: { maySee?: (userId: string, deviceId: number) => boolean } 
         receivedAt: 0,
       })),
     upsertToken: async () => {},
-    removeLinkedAccount: async () => {},
+    setPushState: async () => {},
     getAdvertisedBrokerUrl: () => null,
     getRegion: () => 'EU',
     getExportedSignature: (id) => SIGNATURES[id] ?? null,

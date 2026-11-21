@@ -8,7 +8,8 @@
  *   linkId           random 128-bit id — the public half of the hub credential
  *   secretHash       sha256(hex) of the credential's secret half; the secret
  *                    itself is never stored
- *   status           'pending' (AcceptGrant in flight) | 'active'
+ *   status           'pending' (AcceptGrant in flight) | 'active' |
+ *                    'grant-revoked' (Amazon refused the refresh token; kept, never deleted)
  *   refreshToken     the user's LWA refresh token — NEVER leaves the Lambda
  *   accessToken      cached LWA access token (handed to the hub on request)
  *   accessExpiresAt  ms epoch

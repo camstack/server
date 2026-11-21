@@ -2389,7 +2389,7 @@
 
 ### `device-export` → `deviceExport.*`
 
-- **Source:** `packages/types/src/capabilities/device-export.cap.ts:218`
+- **Source:** `packages/types/src/capabilities/device-export.cap.ts:224`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `device-export`
 - **Archetypes:** status(poll) · exposesDeviceSettings
 - **Provider interface:** `IDeviceExportProvider`

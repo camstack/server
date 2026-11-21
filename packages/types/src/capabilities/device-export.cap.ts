@@ -119,6 +119,12 @@ const ExportSetupSchema = z.object({
 
 const DeviceExportStatusSchema = z.object({
   linkState: LinkStateSchema,
+  /**
+   * Whether PROACTIVE updates (push to the platform) work, separate from the link: a linked
+   * account whose push grant was refused stays `linked` and reads `paused`. Absent = the
+   * addon has no such notion (treat as ok).
+   */
+  push: z.enum(['ok', 'paused']).optional(),
   exposedDeviceCount: z.number(),
   error: z.string().optional(),
   /**

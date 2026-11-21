@@ -117,7 +117,7 @@ function gatewayHarness(opts: {
 }) {
   let tokens = [...opts.tokens]
   const upserts: UpsertLwaTokenInput[] = []
-  const removed: string[] = []
+  const paused: string[] = []
   const deps: LwaEventGatewayDeps = {
     ctx: {
       eventBus: { subscribe: () => () => {} },
@@ -134,9 +134,9 @@ function gatewayHarness(opts: {
         { ...input, receivedAt: Date.now() },
       ]
     },
-    removeLinkedAccount: async (userId) => {
-      removed.push(userId)
-      tokens = tokens.filter((t) => t.userId !== userId)
+    setPushState: async (userId, push) => {
+      if (push.state === 'paused') paused.push(userId)
+      tokens = tokens.map((t) => (t.userId === userId ? { ...t, push } : t))
     },
     getAdvertisedBrokerUrl: () => opts.advertised ?? null,
     getRegion: () => 'EU',
@@ -147,7 +147,7 @@ function gatewayHarness(opts: {
   return {
     gateway: new LwaEventGateway(deps),
     upserts,
-    removed,
+    paused,
     tokens: () => tokens,
   }
 }
@@ -202,7 +202,7 @@ describe('gateway renewal through the broker', () => {
     })
   })
 
-  it('drops the link when the broker no longer recognises the credential', async () => {
+  it('pauses pushes, keeping the link, when the broker no longer recognises the credential', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('', { status: 401 })),
@@ -212,7 +212,8 @@ describe('gateway renewal through the broker', () => {
       fetchImpl: async () => jsonResponse(401, { error: 'invalid_credential' }),
     })
     await h.gateway.postReport('u1', () => ({}), 'x')
-    expect(h.removed).toEqual(['u1'])
+    expect(h.paused).toEqual(['u1'])
+    expect(h.tokens()).toHaveLength(1)
   })
 
   it('keeps the link on a transient broker failure', async () => {
@@ -225,7 +226,7 @@ describe('gateway renewal through the broker', () => {
       fetchImpl: async () => jsonResponse(503, { error: 'lwa_unavailable' }),
     })
     await h.gateway.postReport('u1', () => ({}), 'x')
-    expect(h.removed).toEqual([])
+    expect(h.paused).toEqual([])
   })
 })
 
@@ -278,7 +279,7 @@ describe('legacy (pre-D753) grant migration', () => {
     })
   })
 
-  it('treats a refused migration (dead grant) as an unlink', async () => {
+  it('pauses pushes, keeping the entry, on a refused migration (dead grant)', async () => {
     const h = gatewayHarness({
       tokens: [legacy],
       advertised: BROKER,
@@ -287,7 +288,8 @@ describe('legacy (pre-D753) grant migration', () => {
     h.gateway.start()
     await vi.advanceTimersByTimeAsync(60_000)
     h.gateway.stop()
-    expect(h.removed).toEqual(['u1'])
+    expect(h.paused).toEqual(['u1'])
+    expect(h.tokens()).toHaveLength(1)
   })
 })
 

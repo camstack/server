@@ -122,13 +122,27 @@ async function call<T>(
   return parsed.data
 }
 
+/**
+ * Why the hub wants a token the broker would not otherwise renew yet: `rejected`
+ * (the Event Gateway refused the one it holds) or `recheck` (probing a paused
+ * link). Either makes the broker refresh with Amazon now, bypassing its cache.
+ */
+export type BrokerRefreshReason = 'rejected' | 'recheck'
+
 /** A fresh (or still-valid) Event Gateway access token for this link. */
 export function fetchBrokerAccessToken(
   fetchImpl: FetchLike,
   brokerUrl: string,
   credential: string,
+  reason?: BrokerRefreshReason,
 ): Promise<BrokerAccessToken> {
-  return call(fetchImpl, brokerUrl, '/broker/token', { bearer: credential }, AccessTokenSchema)
+  return call(
+    fetchImpl,
+    brokerUrl,
+    '/broker/token',
+    { bearer: credential, ...(reason ? { body: { reason } } : {}) },
+    AccessTokenSchema,
+  )
 }
 
 /**

@@ -8623,7 +8623,9 @@
       "instancesUnknown": "The export instances could not be read. Try again in a moment.",
       "instancesNone": "\"{{addon}}\" has no export instance.",
       "instanceDisabled": "Disabled",
-      "instanceDisabledHint": "This instance is switched off. Enable it to expose devices through it."
+      "instanceDisabledHint": "This instance is switched off. Enable it to expose devices through it.",
+      "linkedPushPaused": "Linked — proactive updates paused, re-link the skill in the Alexa app",
+      "statusUnknown": "Unknown"
     },
     "motionZones": {
       "title": "Motion Zones",

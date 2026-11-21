@@ -216,7 +216,7 @@ describe('LwaEventGateway doorbell press', () => {
         },
       ],
       upsertToken: async () => {},
-      removeLinkedAccount: async () => {},
+      setPushState: async () => {},
       getAdvertisedBrokerUrl: () => null,
       getRegion: () => 'NA',
       getExportedSignature: () => null,

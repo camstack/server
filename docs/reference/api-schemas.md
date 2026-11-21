@@ -1657,6 +1657,7 @@ Enum: `"warning" \| "error"`
 ### `DeviceExportStatusSchema`
 
 - `linkState`: `"unlinked" \| "linked" \| "error"`
+- `push?`: `"ok" \| "paused"`
 - `exposedDeviceCount`: `number`
 - `error?`: `string`
 - `setup?`: `ExportSetupSchema`

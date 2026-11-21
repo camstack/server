@@ -71,6 +71,7 @@ import {
   LwaEventGateway,
 } from './lwa-event-gateway.js'
 import type { PublicEndpointReader } from './public-endpoint.js'
+import { isPaused } from './push-state.js'
 import { removeEndpointsFromAlexa } from './remove-endpoints.js'
 import { buildAlexaSetupBlock } from './setup-block.js'
 import {
@@ -94,6 +95,7 @@ import {
   type ExposedDeviceEntry,
   isBrokerGrant,
   type LinkedAccount,
+  type LwaPushState,
   type LwaTokenEntry,
   type UpsertLwaTokenInput,
 } from './types.js'
@@ -408,7 +410,7 @@ export class SkillRuntime {
           const lookup = await this.accessGate.principal(userId)
           return lookup.kind === 'found' && lookup.principal.kind === 'admin'
         },
-        canPush: () => this.view.tokens.length > 0,
+        canPush: () => this.view.tokens.some((t) => !isPaused(t.push)),
         postAddOrUpdate: (userId, endpoints) =>
           this.requireGateway().postReport(
             userId,
@@ -451,7 +453,7 @@ export class SkillRuntime {
       listLinkedAccounts: () => this.view.linkedAccounts,
       listTokens: () => this.view.tokens,
       upsertToken: (input) => this.upsertToken(input),
-      removeLinkedAccount: (userId) => this.removeLinkedAccount(userId),
+      setPushState: (userId, push) => this.setPushState(userId, push),
       getAdvertisedBrokerUrl: () => this.view.advertisedBrokerUrl || null,
       getPublicEndpoint: this.publicEndpoint,
       getRegion: () => this.view.region,
@@ -1157,6 +1159,7 @@ export class SkillRuntime {
   }
 
   private async upsertToken(input: UpsertLwaTokenInput): Promise<void> {
+    const previous = this.view.tokens.find((t) => t.userId === input.userId)
     const entry: LwaTokenEntry = {
       userId: input.userId,
       accessToken: input.accessToken,
@@ -1165,20 +1168,65 @@ export class SkillRuntime {
       ...(input.refreshToken ? { refreshToken: input.refreshToken } : {}),
       ...(input.brokerUrl ? { brokerUrl: input.brokerUrl } : {}),
       ...(input.brokerCredential ? { brokerCredential: input.brokerCredential } : {}),
+      ...(input.push ? { push: input.push } : {}),
     }
     const next: LwaTokenEntry[] = this.view.tokens.filter((t) => t.userId !== input.userId)
     next.push(entry)
     await this.writeLedger({ tokens: next })
+    // A token that replaces a PAUSED entry is the way back (a re-check answered, or the
+    // operator re-linked): run the full push the paused events never delivered.
+    if (isPaused(previous?.push) && !isPaused(entry.push)) this.resumePushes(input.userId)
+    // A re-link mints a new broker link: retire the old row instead of leaving two.
+    if (
+      previous?.brokerUrl &&
+      previous.brokerCredential &&
+      previous.brokerCredential !== input.brokerCredential
+    ) {
+      void revokeBrokerCredential(
+        (url, init) => fetch(url, init),
+        previous.brokerUrl,
+        previous.brokerCredential,
+      ).catch((err: unknown) => {
+        this.ctx.logger.info('export-alexa: previous broker link was not retired', {
+          meta: { userId: input.userId, error: errMsg(err) },
+        })
+      })
+    }
   }
 
-  private async removeLinkedAccount(userId: string): Promise<void> {
+  /** The account's push flag; the link itself (token, broker credential, record) stays. */
+  private async setPushState(userId: string, push: LwaPushState): Promise<void> {
     await this.writeLedger({
-      tokens: this.view.tokens.filter((t) => t.userId !== userId),
-      linkedAccounts: this.view.linkedAccounts.filter((a) => a.userId !== userId),
+      tokens: this.view.tokens.map((t) => (t.userId === userId ? { ...t, push } : t)),
     })
-    this.ctx.logger.warn('export-alexa: unlinked revoked account', {
-      meta: { userId },
+  }
+
+  private resumePushes(userId: string): void {
+    const engine = this.syncEngine
+    if (!engine) return
+    void engine
+      .pushAllToAccount(userId)
+      .then((r) => {
+        this.ctx.logger.info('export-alexa: pushed to account after proactive pushes resumed', {
+          meta: { ...r },
+        })
+        return this.refreshVisibility()
+      })
+      .catch((err: unknown) => {
+        this.ctx.logger.warn('export-alexa: push after resume failed', {
+          meta: { userId, error: errMsg(err) },
+        })
+      })
+  }
+
+  /** `ok` only when every linked account can push; `paused` otherwise (no grant counts). */
+  pushStatus(): 'ok' | 'paused' {
+    if (this.view.linkedAccounts.length === 0) return 'ok'
+    const live = this.view.linkedAccounts.every((a) => {
+      const t = this.view.tokens.find((x) => x.userId === a.userId)
+      return t !== undefined && !isPaused(t.push)
     })
+    return live ? 'ok' : 'paused'
   }
 
   private async recordLinkedAccount(input: { userId: string; username: string }): Promise<void> {

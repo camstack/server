@@ -708,7 +708,7 @@ describe('/broker/token', () => {
     expect(a.body).toBe(b.body)
   })
 
-  it('removes the link and answers 410 when Amazon revoked the grant', async () => {
+  it('keeps the link, marks it grant-revoked and answers 410 when Amazon revoked the grant', async () => {
     let now = T0
     const { handler, memory, delivered } = await linkedHub({ now: () => now })
     const [item] = [...memory.items.values()]
@@ -720,7 +720,41 @@ describe('/broker/token', () => {
     )
     expect(res.statusCode).toBe(410)
     expect(bodyOf(res).error).toBe('grant_revoked')
-    expect(memory.items.size).toBe(0)
+    expect(memory.items.size).toBe(1)
+    expect([...memory.items.values()][0]?.status).toBe('grant-revoked')
+    // The credential still authenticates: the hub keeps hearing 410, not 401.
+    const again = await handler(
+      urlEvent('/broker/token', { bearer: String(delivered.brokerCredential) }),
+    )
+    expect(again.statusCode).toBe(410)
+  })
+
+  it('refreshes at once when the hub says the token was rejected, even with life left', async () => {
+    const { handler, w, delivered } = await linkedHub()
+    const before = w.calls.length
+    const res = await handler(
+      urlEvent('/broker/token', {
+        bearer: String(delivered.brokerCredential),
+        body: { reason: 'rejected' },
+      }),
+    )
+    expect(res.statusCode).toBe(200)
+    expect(bodyOf(res).accessToken).toBe('AT-refreshed-1')
+    expect(w.calls.length).toBe(before + 1)
+  })
+
+  it('surfaces invalid_grant in seconds on a forced refresh', async () => {
+    const { handler, memory, delivered } = await linkedHub()
+    const [item] = [...memory.items.values()]
+    if (!item) throw new Error('no item')
+    memory.items.set(item.linkId, { ...item, refreshToken: 'RT-revoked' })
+    const res = await handler(
+      urlEvent('/broker/token', {
+        bearer: String(delivered.brokerCredential),
+        body: { reason: 'rejected' },
+      }),
+    )
+    expect(res.statusCode).toBe(410)
   })
 
   it('serves the winner of a concurrent refresh instead of clobbering it', async () => {

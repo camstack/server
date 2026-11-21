@@ -65,7 +65,7 @@ function makeHarness(signature: string | null, maySee: boolean = true): Harness 
       },
     ],
     upsertToken: async () => {},
-    removeLinkedAccount: async () => {},
+    setPushState: async () => {},
     getAdvertisedBrokerUrl: () => null,
     getRegion: () => 'NA',
     getExportedSignature: () => signature,

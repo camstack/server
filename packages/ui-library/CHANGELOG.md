@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The stream selector in the camera player toolbar shows a single dropdown arrow instead of two.
+- Export panel: an Alexa link whose proactive updates are paused reads 'Linked — proactive updates paused', and a status that has not answered reads 'Unknown' instead of 'Unlinked'
 
 ## [1.2.487] - 2026-11-21
 

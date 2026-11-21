@@ -104,7 +104,7 @@ describe('the gateway applies the minimum', () => {
         },
       ],
       upsertToken: async () => {},
-      removeLinkedAccount: async () => {},
+      setPushState: async () => {},
       getAdvertisedBrokerUrl: () => null,
       getRegion: () => 'EU',
       getExportedSignature: () => null,

@@ -15,6 +15,7 @@ import type {
   ExportDeviceSettings,
   ExposedDeviceEntry,
   LinkedAccount,
+  LwaPushState,
   LwaTokenEntry,
 } from './types.js'
 
@@ -94,6 +95,17 @@ export const LinkedAccountSchema: z.ZodType<LinkedAccount> = z.object({
   linkedAt: z.number(),
 })
 
+const LwaPushStateSchema: z.ZodType<LwaPushState> = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('ok') }),
+  z.object({
+    state: z.literal('paused'),
+    reason: z.enum(['grant-revoked', 'unauthorized', 'gateway-forbidden']),
+    since: z.number(),
+    attempts: z.number(),
+    nextCheckAt: z.number(),
+  }),
+])
+
 export const LwaTokenEntrySchema: z.ZodType<LwaTokenEntry> = z.object({
   userId: z.string(),
   accessToken: z.string().meta({ secret: true }),
@@ -102,6 +114,7 @@ export const LwaTokenEntrySchema: z.ZodType<LwaTokenEntry> = z.object({
   refreshToken: z.string().optional().meta({ secret: true }),
   brokerUrl: z.string().optional(),
   brokerCredential: z.string().optional().meta({ secret: true }),
+  push: LwaPushStateSchema.optional(),
 })
 
 export const SkillLinksBodySchema: z.ZodType<SkillLinksBody> = z.object({

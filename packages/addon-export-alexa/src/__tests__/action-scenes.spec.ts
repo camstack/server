@@ -155,7 +155,11 @@ describe('handleActionSceneDirective', () => {
 })
 
 describe('ActionSceneExports', () => {
-  function build(initial: readonly ActionSceneEntry[], actions?: { id: string; name: string }[]) {
+  function build(
+    initial: readonly ActionSceneEntry[],
+    actions?: { id: string; name: string }[],
+    canPush: () => boolean = () => true,
+  ) {
     const lines: Line[] = []
     const added: Array<{ userId: string; ids: string[] }> = []
     const deleted: Array<{ userId: string; ids: string[] }> = []
@@ -165,7 +169,7 @@ describe('ActionSceneExports', () => {
       logger: makeLogger(lines),
       linkedUserIds: () => ['u-admin', 'u-viewer'],
       isAdminUser: async (userId) => userId === 'u-admin',
-      canPush: () => true,
+      canPush,
       postAddOrUpdate: async (userId, endpoints) => {
         added.push({ userId, ids: endpoints.map((e) => e.endpointId) })
         return true
@@ -190,6 +194,22 @@ describe('ActionSceneExports', () => {
     expect(h.exports.list()).toEqual([
       { entity: { kind: 'action', actionId: 'internal:a' }, exposedAs: 'Open gate' },
     ])
+  })
+
+  it('says so, once per transition, when pushes are paused — and pushes again after', async () => {
+    let allowed = false
+    const h = build([], undefined, () => allowed)
+    await h.exports.expose('internal:a')
+    await h.exports.unexpose('internal:a')
+    const skipped = h.lines.filter((l) => /NOT pushed/.test(l.message))
+    expect(skipped).toHaveLength(1)
+    expect(h.added).toEqual([])
+    allowed = true
+    await h.exports.expose('internal:a')
+    expect(h.added).toHaveLength(1)
+    allowed = false
+    await h.exports.unexpose('internal:a')
+    expect(h.lines.filter((l) => /NOT pushed/.test(l.message))).toHaveLength(2)
   })
 
   it('refuses to expose an action that does not exist', async () => {

@@ -86,6 +86,26 @@ export interface LinkedAccount {
  * migrated to the broker as soon as the broker's URL is known, and the refresh
  * token is then deleted.
  */
+/** Why proactive pushes to an account are paused. The voice link is untouched. */
+export type LwaPausedReason = 'grant-revoked' | 'unauthorized' | 'gateway-forbidden'
+
+/**
+ * Whether proactive pushes (Event Gateway) work for this account. Separate from
+ * the voice link: a refused grant pauses pushes and never removes the link. A
+ * paused account is re-checked on a persisted, incrementing backoff.
+ */
+export type LwaPushState =
+  | { readonly state: 'ok' }
+  | {
+      readonly state: 'paused'
+      readonly reason: LwaPausedReason
+      readonly since: number
+      /** Re-checks made since the pause began; indexes the backoff. */
+      readonly attempts: number
+      /** Epoch ms of the next re-check. Persisted so a restart does not burst. */
+      readonly nextCheckAt: number
+    }
+
 export interface LwaTokenEntry {
   readonly userId: string
   readonly accessToken: string
@@ -97,6 +117,8 @@ export interface LwaTokenEntry {
   readonly brokerUrl?: string
   /** Per-link broker credential (`csb1.<linkId>.<secret>`). Sensitive. */
   readonly brokerCredential?: string
+  /** Absent means `ok`. */
+  readonly push?: LwaPushState
 }
 
 /** What a writer supplies; `receivedAt` is stamped by the store. The entry is
@@ -108,6 +130,8 @@ export interface UpsertLwaTokenInput {
   readonly refreshToken?: string
   readonly brokerUrl?: string
   readonly brokerCredential?: string
+  /** Absent clears the pause: a fresh grant or a renewed token IS the resume. */
+  readonly push?: LwaPushState
 }
 
 /** A grant the hub can renew through the broker. */

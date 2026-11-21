@@ -245,28 +245,49 @@ async function authenticate(deps, event) {
   const item = await deps.store.get(parsed.linkId)
   // One answer for "no such link", "not active" and "wrong secret" — the
   // response must not tell a prober which linkIds exist.
-  if (!item || item.status !== 'active' || !secretMatches(parsed.secret, item.secretHash)) {
+  // A `grant-revoked` link is kept (Amazon refused the refresh token, the operator may
+  // re-link) and still authenticates, so the hub hears 410 rather than an ambiguous 401.
+  const live = item && (item.status === 'active' || item.status === 'grant-revoked')
+  if (!item || !live || !secretMatches(parsed.secret, item.secretHash)) {
     throw new BrokerError(401, 'invalid_credential', 'broker credential not recognised')
   }
   return item
 }
 
 /** A valid access token for the item, refreshing (and persisting) when needed. */
-async function currentAccessToken(deps, item) {
+async function currentAccessToken(deps, item, opts) {
   const now = deps.now()
-  if (item.accessToken && item.accessExpiresAt - now > ACCESS_TOKEN_MIN_LIFE_MS) return item
+  const force = Boolean(opts && opts.force)
+  if (
+    !force &&
+    item.status === 'active' &&
+    item.accessToken &&
+    item.accessExpiresAt - now > ACCESS_TOKEN_MIN_LIFE_MS
+  ) {
+    return item
+  }
   let tokens
   try {
     tokens = await refreshGrant(deps, item.refreshToken)
   } catch (err) {
     if (err instanceof BrokerError && err.code === 'grant_revoked') {
-      await deps.store.remove(item.linkId)
-      deps.log.warn('broker: grant revoked by Amazon; link removed', { link: shortId(item.linkId) })
+      // Never delete: the link stays, marked, so the hub keeps a truthful answer and a later
+      // AcceptGrant (a new link the hub swaps in, revoking this one) replaces it.
+      if (item.status !== 'grant-revoked') {
+        await deps.store.replace(
+          { ...item, status: 'grant-revoked', version: item.version + 1 },
+          item.version,
+        )
+      }
+      deps.log.warn('broker: grant revoked by Amazon; link kept, marked grant-revoked', {
+        link: shortId(item.linkId),
+      })
     }
     throw err
   }
   const next = {
     ...item,
+    status: 'active',
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     accessExpiresAt: now + tokens.expiresInSec * 1000,
@@ -320,7 +341,11 @@ async function handleBrokerRoute(event, deps) {
 
 async function routeToken(event, deps) {
   const item = await authenticate(deps, event)
-  const current = await currentAccessToken(deps, item)
+  // `reason` says the hub's last token was refused by the Event Gateway (or that it is
+  // re-checking a paused link): refresh now instead of serving the cached token.
+  const body = parseJsonBody(event)
+  const force = Boolean(body) && (body.reason === 'rejected' || body.reason === 'recheck')
+  const current = await currentAccessToken(deps, item, { force })
   return jsonResponse(200, { accessToken: current.accessToken, expiresAt: current.accessExpiresAt })
 }
 

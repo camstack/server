@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A refused Alexa push grant no longer unlinks the skill: proactive updates pause, the link is kept, and the hub re-checks the broker on a 1/2/5/15/30/60 minute backoff and resumes by itself; a rejected token now triggers an immediate broker refresh
+
 ## [1.2.204] - 2026-11-21
 
 ### Changed

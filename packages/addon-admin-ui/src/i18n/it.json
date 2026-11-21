@@ -8645,7 +8645,9 @@
       "instancesUnknown": "Impossibile leggere le istanze di esportazione. Riprova tra poco.",
       "instancesNone": "\"{{addon}}\" non ha istanze di esportazione.",
       "instanceDisabled": "Disattivata",
-      "instanceDisabledHint": "Questa istanza è disattivata. Attivala per esporre dispositivi tramite essa."
+      "instanceDisabledHint": "Questa istanza è disattivata. Attivala per esporre dispositivi tramite essa.",
+      "linkedPushPaused": "Collegato — aggiornamenti proattivi in pausa, ricollega la skill nell'app Alexa",
+      "statusUnknown": "Sconosciuto"
     },
     "motionZones": {
       "title": "Zone di movimento",

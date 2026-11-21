@@ -328,6 +328,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         const runtime = ownInstance(deviceExportStatusInstanceOf(input))
         return {
           linkState: runtime.ledgers().linkedAccounts.length > 0 ? 'linked' : 'unlinked',
+          push: runtime.pushStatus(),
           exposedDeviceCount: runtime.exposedDevices.length,
           setup: await runtime.buildSetupBlock(),
         }

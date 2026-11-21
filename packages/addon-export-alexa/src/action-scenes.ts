@@ -247,8 +247,27 @@ export class ActionSceneExports {
     await this.ports.persist(next)
   }
 
+  /** Whether the last push attempt was skipped; logged once per transition, not per scene. */
+  private skippedPush = false
+
+  /** True when pushes may go out; says so, once, when they may not (silence reads as "never happened"). */
+  private pushAllowed(what: string, count: number): boolean {
+    if (this.ports.canPush()) {
+      this.skippedPush = false
+      return true
+    }
+    if (!this.skippedPush) {
+      this.skippedPush = true
+      this.ports.logger.warn(
+        `export-alexa: action scene ${what} NOT pushed to Alexa — proactive pushes are paused (grant refused or missing); Alexa learns them on its next discovery`,
+        { meta: { scenes: count } },
+      )
+    }
+    return false
+  }
+
   private async pushToAdmins(endpoints: readonly AlexaEndpoint[]): Promise<void> {
-    if (endpoints.length === 0 || !this.ports.canPush()) return
+    if (endpoints.length === 0 || !this.pushAllowed('add/update', endpoints.length)) return
     for (const userId of this.ports.linkedUserIds()) {
       try {
         if (!(await this.ports.isAdminUser(userId))) continue
@@ -262,7 +281,7 @@ export class ActionSceneExports {
   }
 
   private async deleteFromAll(ids: readonly string[]): Promise<void> {
-    if (ids.length === 0 || !this.ports.canPush()) return
+    if (ids.length === 0 || !this.pushAllowed('delete', ids.length)) return
     for (const userId of this.ports.linkedUserIds()) {
       try {
         await this.ports.postDelete(userId, ids)

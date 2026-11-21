@@ -208,13 +208,30 @@ export interface DeviceExportPanelProps {
   readonly showSetup?: boolean
 }
 
-function statusVariant(state: DeviceExportStatus['linkState']): 'success' | 'warning' | 'danger' {
-  if (state === 'linked') return 'success'
+/** What the badge shows: the addon's link state, `unknown` while it has not answered (D315). */
+type LinkBadgeState = DeviceExportStatus['linkState'] | 'unknown'
+
+function statusVariant(
+  state: LinkBadgeState,
+  push: DeviceExportStatus['push'],
+): 'success' | 'warning' | 'danger' {
+  if (state === 'linked') return push === 'paused' ? 'warning' : 'success'
   if (state === 'error') return 'danger'
   return 'warning'
 }
 
-function capitaliseLinkState(t: UiTextFn, state: string): string {
+function capitaliseLinkState(
+  t: UiTextFn,
+  state: LinkBadgeState,
+  push: DeviceExportStatus['push'],
+): string {
+  if (state === 'linked' && push === 'paused') {
+    return t(
+      'uiLibrary.deviceExport.linkedPushPaused',
+      'Linked — proactive updates paused, re-link the skill in the Alexa app',
+    )
+  }
+  if (state === 'unknown') return t('uiLibrary.deviceExport.statusUnknown', 'Unknown')
   if (state === 'linked') return t('uiLibrary.deviceExport.linked', 'Linked')
   if (state === 'unlinked') return t('uiLibrary.deviceExport.unlinked', 'Unlinked')
   if (state === 'error') return t('uiLibrary.deviceExport.error', 'Error')
@@ -835,7 +852,8 @@ export function DeviceExportInstancePanel({
     return [...supportedTypeOptions, ...entityOptions]
   }, [supportedTypeOptions, entityKinds, t])
 
-  const linkState: DeviceExportStatus['linkState'] = status?.linkState ?? 'unlinked'
+  // No status (unanswered or malformed) is `unknown`, never `unlinked` (D315).
+  const linkState: LinkBadgeState = status?.linkState ?? 'unknown'
   const loading =
     statusQuery.isLoading ||
     exposedQuery.isLoading ||
@@ -1258,7 +1276,9 @@ export function DeviceExportInstancePanel({
           {named && (
             <span className="text-xs font-medium text-foreground truncate">{instance.name}</span>
           )}
-          <Badge variant={statusVariant(linkState)}>{capitaliseLinkState(t, linkState)}</Badge>
+          <Badge variant={statusVariant(linkState, status?.push)}>
+            {capitaliseLinkState(t, linkState, status?.push)}
+          </Badge>
           <span className="text-[11px] text-foreground-subtle">
             {t('uiLibrary.deviceExport.exposedCount', '{{count}} exposed', {
               count: exposedCount,

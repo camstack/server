@@ -32,12 +32,14 @@ import { type AddonContext, EventCategory, type IScopedLogger } from '@camstack/
 import { endpointAccessTarget } from './access/access-gate.js'
 import {
   BrokerError,
+  type BrokerRefreshReason,
   type FetchLike,
   fetchBrokerAccessToken,
   migrateLegacyGrant,
   normaliseBrokerUrl,
 } from './broker-client.js'
 import { readConnectivity } from './connectivity.js'
+import { isPaused, nextPausedState, type PausedPush } from './push-state.js'
 import type { PublicEndpointReader } from './public-endpoint.js'
 import { signatureEntries } from './endpoint-signature.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
@@ -53,6 +55,8 @@ import {
   type ExposedDeviceEntry,
   isBrokerGrant,
   type LinkedAccount,
+  type LwaPausedReason,
+  type LwaPushState,
   type LwaTokenEntry,
   type UpsertLwaTokenInput,
 } from './types.js'
@@ -106,8 +110,12 @@ export interface LwaEventGatewayDeps {
   readonly listLinkedAccounts: () => readonly LinkedAccount[]
   readonly listTokens: () => readonly LwaTokenEntry[]
   readonly upsertToken: (input: UpsertLwaTokenInput) => Promise<void>
-  /** Remove a revoked account's token + linked-account record (403 from gateway). */
-  readonly removeLinkedAccount: (userId: string) => Promise<void>
+  /**
+   * Persist the account's push state on its token entry. A refusal (gateway 403,
+   * broker 401/410, Amazon invalid_grant) PAUSES pushes here; it never removes the
+   * link — only the operator's explicit unlink does.
+   */
+  readonly setPushState: (userId: string, push: LwaPushState) => Promise<void>
   /**
    * The broker origin the skill's Lambda advertised on the last verified
    * directive (`x-camstack-broker`), or null. Used ONLY to migrate a pre-D753
@@ -232,6 +240,8 @@ export class LwaEventGateway {
    *  Cleared for a user the moment a grant is found again, so a re-link
    *  re-arms the warning instead of muting it for the process's lifetime. */
   private readonly warnedNoToken = new Set<string>()
+  /** The access token last force-refreshed per user: one forced refresh per rejected token. */
+  private readonly forcedFor = new Map<string, string>()
 
   constructor(private readonly deps: LwaEventGatewayDeps) {}
 
@@ -921,6 +931,8 @@ export class LwaEventGateway {
       return false
     }
     this.warnedNoToken.delete(userId)
+    // Paused: the transition was logged once; the re-check scan owns the way back.
+    if (isPaused(initial.push)) return false
     let response = await send(initial.accessToken).catch((err: unknown) => {
       this.deps.logger.warn('alexa lwa-gateway: fetch crashed', {
         meta: { error: err instanceof Error ? err.message : String(err) },
@@ -930,7 +942,15 @@ export class LwaEventGateway {
     if (!response) return false
 
     if (response.status === 401) {
-      const refreshed = await this.refreshAccessToken(userId).catch((err: unknown) => {
+      // The broker serves its cached token until it nears expiry, so a token Amazon
+      // already rejected would come straight back: say so, and refresh now. Once per
+      // rejected token, so a gateway that rejects fresh tokens too cannot loop us.
+      const force = this.forcedFor.get(userId) !== initial.accessToken
+      if (force) this.forcedFor.set(userId, initial.accessToken)
+      const refreshed = await (force
+        ? this.refreshAccessToken(userId, 'rejected')
+        : Promise.resolve(null)
+      ).catch((err: unknown) => {
         this.deps.logger.warn('alexa lwa-gateway: refresh failed', {
           meta: {
             userId,
@@ -948,7 +968,7 @@ export class LwaEventGateway {
       this.deps.logger.warn('alexa lwa-gateway: 403 from gateway — token likely revoked', {
         meta: { userId, endpointId },
       })
-      await this.deps.removeLinkedAccount(userId).catch(() => {})
+      await this.pause(userId, 'gateway-forbidden')
       return false
     }
     if (!response.ok) {
@@ -989,6 +1009,10 @@ export class LwaEventGateway {
     for (const token of tokens) {
       // A legacy grant is migrated as soon as possible, not at expiry: until it
       // is, this hub holds a refresh token it cannot use and should not keep.
+      if (isPaused(token.push)) {
+        if (token.push.nextCheckAt <= now) await this.recheckPaused(token.userId, token.push)
+        continue
+      }
       const due = !isBrokerGrant(token) || token.expiresAt - now <= REFRESH_PROACTIVE_WINDOW_MS
       if (!due) continue
       await this.refreshAccessToken(token.userId).catch((err: unknown) => {
@@ -1002,8 +1026,45 @@ export class LwaEventGateway {
     }
   }
 
+  /**
+   * Pause proactive pushes for an account. Logs on a transition only, not on every
+   * refused event or re-check; a repeat counts one more attempt on the backoff.
+   */
+  private async pause(userId: string, reason: LwaPausedReason): Promise<void> {
+    const prev = this.findToken(userId)?.push
+    const next = nextPausedState(prev, reason, Date.now())
+    if (!isPaused(prev) || prev.reason !== reason) {
+      this.deps.logger.warn(
+        `alexa lwa-gateway: proactive pushes PAUSED (${reason}) — the voice link is kept; re-link the skill in the Alexa app to resume now, otherwise re-checking in ${Math.round((next.nextCheckAt - Date.now()) / 60_000)} min`,
+        { meta: { userId, reason } },
+      )
+    }
+    await this.deps.setPushState(userId, next).catch((err: unknown) => {
+      this.deps.logger.warn('alexa lwa-gateway: could not persist the push state', {
+        meta: { userId, error: err instanceof Error ? err.message : String(err) },
+      })
+    })
+  }
+
+  /** Ask the broker again. Success is stored by `upsertToken`, which clears the pause. */
+  private async recheckPaused(userId: string, before: PausedPush): Promise<void> {
+    const token = await this.refreshAccessToken(userId, 'recheck')
+    if (token) {
+      this.deps.logger.info('alexa lwa-gateway: proactive pushes RESUMED', { meta: { userId } })
+      return
+    }
+    // A refusal already re-paused (and counted); an unreachable broker did not.
+    const now = this.findToken(userId)?.push
+    if (isPaused(now) && now.nextCheckAt === before.nextCheckAt) {
+      await this.pause(userId, before.reason)
+    }
+  }
+
   /** A fresh access token for `userId`, or null. Never throws for broker errors. */
-  private async refreshAccessToken(userId: string): Promise<string | null> {
+  private async refreshAccessToken(
+    userId: string,
+    reason?: BrokerRefreshReason,
+  ): Promise<string | null> {
     const existing = this.findToken(userId)
     if (!existing) return null
     if (!isBrokerGrant(existing)) return this.migrateLegacyGrant(existing)
@@ -1012,6 +1073,7 @@ export class LwaEventGateway {
         this.fetchImpl,
         existing.brokerUrl,
         existing.brokerCredential,
+        reason,
       )
       await this.deps.upsertToken({
         userId,
@@ -1023,11 +1085,7 @@ export class LwaEventGateway {
       return fresh.accessToken
     } catch (err) {
       if (err instanceof BrokerError && (err.kind === 'unauthorized' || err.kind === 'revoked')) {
-        this.deps.logger.warn(
-          'alexa lwa-gateway: the skill broker no longer recognises this link — proactive events stop; re-link the skill in the Alexa app',
-          { meta: { userId, kind: err.kind } },
-        )
-        await this.deps.removeLinkedAccount(userId).catch(() => {})
+        await this.pause(userId, err.kind === 'revoked' ? 'grant-revoked' : 'unauthorized')
         return null
       }
       this.deps.logger.warn('alexa lwa-gateway: broker renewal failed — will retry', {
@@ -1088,11 +1146,7 @@ export class LwaEventGateway {
       if (kind === 'rejected' && status === 400) {
         // The broker refreshed it with the skill's secret and Amazon said no:
         // the grant is dead. Same as a gateway 403.
-        this.deps.logger.warn(
-          'alexa lwa-gateway: Amazon no longer honours this push grant — re-link the skill in the Alexa app',
-          { meta: { userId } },
-        )
-        await this.deps.removeLinkedAccount(userId).catch(() => {})
+        await this.pause(userId, 'grant-revoked')
         return null
       }
       this.deps.logger.warn('alexa lwa-gateway: migrating the push grant to the broker failed', {
