@@ -125,6 +125,10 @@ function openModal(): void {
   fireEvent.click(screen.getByRole('button', { name: 'open-quick' }))
 }
 
+function openDetailTab(): void {
+  fireEvent.click(screen.getByRole('button', { name: 'Detail' }))
+}
+
 describe('DeviceQuickDetail modal', () => {
   beforeEach(() => {
     presence.series = { presence: 'pending', list: { status: 'pending' } }
@@ -166,6 +170,7 @@ describe('DeviceQuickDetail modal', () => {
   it('shows the viewer detail on Detail: the model card alone, in the bare frame, no History tab', () => {
     renderModal()
     openModal()
+    openDetailTab()
     expect(screen.getByTestId('hero-card')).toBeTruthy()
     expect(hero.props).toMatchObject({ deviceId: 7, legacyFallback: false })
     expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
@@ -183,9 +188,14 @@ describe('DeviceQuickDetail modal', () => {
     expect(screen.queryByRole('heading', { name: 'Driveway' })).toBeNull()
   })
 
-  it('opens on the device detail tab', () => {
+  it('opens on Device info, the first tab, and Detail is one click away', () => {
     renderModal()
     openModal()
+    const labels = screen.getAllByRole('button').map((b) => b.textContent)
+    expect(labels.indexOf('Device info')).toBeLessThan(labels.indexOf('Detail'))
+    expect(screen.queryByTestId('hero-card')).toBeNull()
+    expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
+    openDetailTab()
     expect(screen.getByTestId('hero-card')).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'Open device page' })).toHaveLength(1)
   })
@@ -217,6 +227,7 @@ describe('DeviceQuickDetail modal', () => {
   it('confirms a hero navigation over unsaved edits, and navigates nowhere on cancel', async () => {
     renderModal()
     openModal()
+    openDetailTab()
     fireEvent.click(screen.getByRole('button', { name: 'edit-name' }))
     fireEvent.click(screen.getByRole('button', { name: 'hero-open-other' }))
     const title = await screen.findByText('Discard unsaved changes?')
@@ -239,6 +250,7 @@ describe('DeviceQuickDetail modal', () => {
   it('navigates from the hero at once when nothing is dirty', async () => {
     renderModal()
     openModal()
+    openDetailTab()
     fireEvent.click(screen.getByRole('button', { name: 'hero-open-other' }))
     await waitFor(() => {
       expect(screen.getByTestId('loc').textContent).toBe('/devices/9')
@@ -249,7 +261,7 @@ describe('DeviceQuickDetail modal', () => {
   it('opens on Device info, with no Detail tab, when the hero model covers nothing', () => {
     renderModal()
     openModal()
-    expect(screen.getByRole('button', { name: 'Detail' })).toBeTruthy()
+    openDetailTab()
     fireEvent.click(screen.getByRole('button', { name: 'hero-settled-empty' }))
     expect(screen.queryByRole('button', { name: 'Detail' })).toBeNull()
     expect(screen.queryByTestId('hero-card')).toBeNull()

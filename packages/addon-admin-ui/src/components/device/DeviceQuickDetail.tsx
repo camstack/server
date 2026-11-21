@@ -97,7 +97,7 @@ function DeviceQuickDetailModal({
   readonly onClose: () => void
 }): ReactNode {
   const { t } = useTranslation()
-  const [pickedTab, setTab] = useState<QuickTabId>('detail')
+  const [pickedTab, setTab] = useState<QuickTabId>('info')
   // Told by the card once it settled: false = the hero model covers nothing (a
   // camera, a device with no card), which the viewer shows as an empty card.
   const [drawn, setDrawn] = useState<boolean | null>(null)
@@ -109,9 +109,7 @@ function DeviceQuickDetailModal({
     (pickedTab === 'detail' && detailEmpty) ||
     (pickedTab === 'history' && !hasHistory) ||
     (pickedTab === 'actions' && !hasActions)
-      ? detailEmpty
-        ? 'info'
-        : 'detail'
+      ? 'info'
       : pickedTab
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
   const deviceName = typeof device?.name === 'string' ? device.name : ''
@@ -122,6 +120,7 @@ function DeviceQuickDetailModal({
   )
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
+    ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
     ...(detailEmpty
       ? []
       : [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]),
@@ -131,7 +130,6 @@ function DeviceQuickDetailModal({
     ...(hasActions
       ? [['actions', t('deviceQuickDetail.tabActions', { defaultValue: 'Actions' })] as const]
       : []),
-    ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
     ['export', t('deviceQuickDetail.tabExport', { defaultValue: 'Export' })],
   ]
 
