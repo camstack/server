@@ -191,6 +191,75 @@ describe('normalizeActionUnits', () => {
   })
 })
 
+describe('normalizeActionUnits — nested steps', () => {
+  const entered = { grams: { value: 0.1, unit: 'kg' } }
+  const converted = feedStep({ grams: 100 }, { grams: 'kg' })
+
+  it('converts a command inside a choose branch and its else', () => {
+    const { value } = normalizeActionUnits(
+      [
+        {
+          kind: 'choose',
+          branches: [
+            {
+              if: {
+                kind: 'device-is',
+                deviceId: 7,
+                cap: 'pet-feeder',
+                fieldPath: 'x',
+                operator: 'eq',
+                value: true,
+              },
+              steps: [feedStep(entered)],
+            },
+          ],
+          else: [feedStep(entered)],
+        },
+      ],
+      resolver,
+    )
+    const [choose] = value
+    if (choose?.kind !== 'choose') throw new Error('expected a choose')
+    expect(choose.branches[0]?.steps).toEqual([converted])
+    expect(choose.else).toEqual([converted])
+  })
+
+  it('converts a command inside a parallel and a repeat body', () => {
+    const { value } = normalizeActionUnits(
+      [
+        { kind: 'parallel', steps: [feedStep(entered), { kind: 'wait', seconds: 1 }] },
+        { kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [feedStep(entered)] },
+      ],
+      resolver,
+    )
+    const [parallel, repeat] = value
+    if (parallel?.kind !== 'parallel' || repeat?.kind !== 'repeat') throw new Error('shape')
+    expect(parallel.steps[0]).toEqual(converted)
+    expect(repeat.steps).toEqual([converted])
+  })
+
+  it('reports a bare number nested at its path and refuses a wrong unit there', () => {
+    const { warnings } = normalizeActionUnits(
+      [{ kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [feedStep({ grams: 50 })] }],
+      resolver,
+    )
+    expect(warnings[0]?.path).toBe('steps.0.steps.0.args.grams')
+    expect(
+      codeOf(() =>
+        normalizeActionUnits(
+          [
+            {
+              kind: 'parallel',
+              steps: [feedStep({ grams: { value: 1, unit: 'L' } }), feedStep({})],
+            },
+          ],
+          resolver,
+        ),
+      ),
+    ).toBe('cross-dimension')
+  })
+})
+
 describe('normalizeActionUnits — a command step keeps its target and its marked arg', () => {
   it('keeps a multi-device target and an arg that is not a quantity untouched', () => {
     const step: AutomationCommandStep = {

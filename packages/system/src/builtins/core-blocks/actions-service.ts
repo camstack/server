@@ -150,9 +150,24 @@ class RunToken {
     })
   }
 
+  private readonly children = new Set<RunToken>()
+
+  /**
+   * An Action this run started from an `action` step ends with it: stopping the parent, or its
+   * time limit, stops the child. Returns the unlink to call once the child has ended.
+   */
+  link(child: RunToken): () => void {
+    this.children.add(child)
+    if (this.aborted) child.abort()
+    return () => {
+      this.children.delete(child)
+    }
+  }
+
   abort(): void {
     this.aborted = true
     for (const wake of [...this.wakers]) wake()
+    for (const child of [...this.children]) child.abort()
   }
 }
 
@@ -358,10 +373,15 @@ export class ActionsService implements IActionsProvider {
    * an Action from inside a run): an Action already in the chain, or a chain
    * past the depth bound, is refused — logged with the action id, never hung.
    */
-  private async runUnder(input: RunInput, chain: RunChain): Promise<ActionRunResult> {
+  private async runUnder(
+    input: RunInput,
+    chain: RunChain,
+    parent?: RunToken,
+  ): Promise<ActionRunResult> {
     const refusal = refuseRunUnder(chain, input.actionId)
     if (refusal !== null) {
       this.logger.warn(`action run refused — ${refusal}`, {
+        ...(input.deviceId === undefined ? {} : { tags: { deviceId: input.deviceId } }),
         meta: { actionId: input.actionId, chain: chain.ids },
       })
       throw new ActionError('cycle', refusal)
@@ -427,6 +447,7 @@ export class ActionsService implements IActionsProvider {
     this.lastStartedAt.set(entry.id, startedAt)
 
     const token = new RunToken()
+    const unlink = parent === undefined ? undefined : parent.link(token)
     this.running.set(entry.id, {
       runId,
       token,
@@ -451,6 +472,7 @@ export class ActionsService implements IActionsProvider {
       chainWith(chain, entry.id),
       input,
     )
+    if (unlink !== undefined) void done.finally(unlink)
     if (input.wait === true) return done
     void done
     return { runId, outcome: 'started' }
@@ -673,6 +695,7 @@ export class ActionsService implements IActionsProvider {
               ...(started.deviceId === undefined ? {} : { deviceId: started.deviceId }),
             },
             chain,
+            token,
           )
           return { outcome: result.outcome, message: result.message }
         },

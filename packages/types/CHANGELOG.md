@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An action can now hold every step an automation's Then can (notify, http request, probe, wait until, set, stop, choose, parallel, repeat and a call to another action), except a code step; a save that would make actions call each other in a circle is refused.
 
+### Changed
+
+- A unit entered on a command inside a choose branch, a parallel or repeat body or an else is converted on save like a top-level one
+
 ## [1.2.617] - 2026-11-21
 
 ### Added

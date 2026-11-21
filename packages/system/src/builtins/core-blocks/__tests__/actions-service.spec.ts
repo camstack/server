@@ -1147,6 +1147,7 @@ describe('actions — a row stored with a device type D1033 retired', () => {
 
 describe('actions — an action that runs actions never loops', () => {
   const CALL = (actionId: string): ActionStep => ({ kind: 'action', actionId })
+  const WAIT_STEPS = (seconds: number): ActionStep[] => [{ kind: 'wait', seconds }]
 
   it('refuses at save an update that closes a cycle, naming the path, and stores nothing', async () => {
     const w = await world()
@@ -1186,6 +1187,53 @@ describe('actions — an action that runs actions never loops', () => {
     expect(
       w.log.lines.some((l) => l.message.includes('cycle') && l.extras?.meta?.['actionId'] === a.id),
     ).toBe(true)
+  })
+
+  it('tags the refusal with the camera the run was for', async () => {
+    const w = await world()
+    const { action: b } = await w.service.create({ action: { name: 'B', steps: [STEP(1)] } })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    await w.putRaw(b.id.replace('internal:', ''), {
+      name: 'B',
+      steps: [CALL(a.id)],
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    await w.service.run({ actionId: a.id, wait: true, caller: ADMIN, deviceId: 5 })
+    const refusal = w.log.lines.find(
+      (l) => l.message.includes('refused') && l.message.includes('cycle'),
+    )
+    expect(refusal?.extras?.tags).toEqual({ deviceId: 5 })
+  })
+
+  it('stopping the parent stops the Action it is running, which does not outlive it', async () => {
+    const w = await world()
+    const b = await w.store.create({ name: 'B', steps: [STEP(1), ...WAIT_STEPS(30), STEP(2)] })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    const done = w.service.run({ actionId: a.id, wait: true, caller: ADMIN })
+    await vi.waitFor(() => expect(w.calls.map((c) => c.deviceId)).toEqual([1]))
+    await w.service.stop({ actionId: a.id })
+    const result = await Promise.race([
+      done,
+      new Promise<'hung'>((resolve) => setTimeout(() => resolve('hung'), 3000)),
+    ])
+    expect(result).not.toBe('hung')
+    expect(w.calls.map((c) => c.deviceId)).toEqual([1])
+    const { traces } = await w.service.getTraces({ actionId: b.id })
+    expect(traces[0]?.outcome).toBe('aborted')
+  })
+
+  it("the parent's time limit stops the Action it is running", async () => {
+    const w = await world({ maxRunMs: 80, stopGraceMs: 50 })
+    const b = await w.store.create({ name: 'B', steps: [STEP(1), ...WAIT_STEPS(30), STEP(2)] })
+    const { action: a } = await w.service.create({ action: { name: 'A', steps: [CALL(b.id)] } })
+    const result = await w.service.run({ actionId: a.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('timed-out')
+    await vi.waitFor(async () => {
+      const { traces } = await w.service.getTraces({ actionId: b.id })
+      expect(traces[0]?.outcome).toBe('aborted')
+    })
+    expect(w.calls.map((c) => c.deviceId)).toEqual([1])
   })
 
   it('runs an action that calls another and waits for it', async () => {

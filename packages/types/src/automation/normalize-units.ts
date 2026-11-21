@@ -40,6 +40,7 @@ import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.j
 import { z } from 'zod'
 import {
   type AutomationAction,
+  type AutomationBodyStep,
   type AutomationCommandStep,
   type AutomationRecipe,
 } from './recipe.js'
@@ -263,11 +264,64 @@ function normalizeCommandStepUnits(
   }
 }
 
+type UnitStep = AutomationAction | AutomationBodyStep
+
+/** One step's own units, then every step nested under it (a block's body, a branch, an `else`). */
+function normalizeStepUnits<A extends UnitStep>(
+  action: A,
+  resolver: UnitResolver,
+  path: string,
+): UnitsNormalized<A | AutomationCommandStep> {
+  const nested = (steps: readonly UnitStep[] | undefined, at: string) =>
+    normalizeActionUnits(steps ?? [], resolver, at)
+  switch (action.kind) {
+    case 'command': {
+      const own = normalizeCommandStepUnits(action, resolver, path)
+      if (!('else' in action) || action.else === undefined) return own
+      const inner = nested(action.else, `${path}.else`)
+      const { argUnits: _stale, ...kept } = action
+      return {
+        value: { ...kept, ...own.value, else: inner.value },
+        warnings: [...own.warnings, ...inner.warnings],
+      }
+    }
+    case 'wait': {
+      if (!('else' in action) || action.else === undefined) return { value: action, warnings: [] }
+      const inner = nested(action.else, `${path}.else`)
+      return { value: { ...action, else: inner.value }, warnings: inner.warnings }
+    }
+    case 'parallel':
+    case 'repeat': {
+      const inner = nested(action.steps, `${path}.steps`)
+      return { value: { ...action, steps: inner.value }, warnings: inner.warnings }
+    }
+    case 'choose': {
+      const branches = action.branches.map((branch, i) => ({
+        branch,
+        inner: nested(branch.steps, `${path}.branches.${i}.steps`),
+      }))
+      const other = action.else === undefined ? undefined : nested(action.else, `${path}.else`)
+      return {
+        value: {
+          ...action,
+          branches: branches.map(({ branch, inner }) => ({ ...branch, steps: inner.value })),
+          ...(other === undefined ? {} : { else: other.value }),
+        },
+        warnings: [...branches.flatMap(({ inner }) => inner.warnings), ...(other?.warnings ?? [])],
+      }
+    }
+    default:
+      return { value: action, warnings: [] }
+  }
+}
+
 /**
  * Normalise the command steps of an action list (an internal Action's steps, or a
- * recipe's actions). Other step kinds pass through. Throws {@link QuantityUnitError}.
+ * recipe's actions), at any depth: a `choose` branch, a `parallel` or `repeat` body and
+ * an `else` are walked like the top level. Other step kinds pass through. Throws
+ * {@link QuantityUnitError}.
  */
-export function normalizeActionUnits<A extends AutomationAction>(
+export function normalizeActionUnits<A extends UnitStep>(
   actions: readonly A[],
   resolver: UnitResolver,
   path = 'steps',
@@ -275,11 +329,7 @@ export function normalizeActionUnits<A extends AutomationAction>(
   const out: (A | AutomationCommandStep)[] = []
   const warnings: UnitWarning[] = []
   actions.forEach((action, i) => {
-    if (action.kind !== 'command') {
-      out.push(action)
-      return
-    }
-    const normalized = normalizeCommandStepUnits(action, resolver, `${path}.${i}`)
+    const normalized = normalizeStepUnits(action, resolver, `${path}.${i}`)
     out.push(normalized.value)
     warnings.push(...normalized.warnings)
   })
