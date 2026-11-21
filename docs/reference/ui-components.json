@@ -17192,6 +17192,12 @@
           "type": "HeroMeasurementReading",
           "optional": false,
           "doc": "The series is in this reading's base unit; the tooltip converts it like the value."
+        },
+        {
+          "name": "subject",
+          "type": "ReadingDisplaySubject | null",
+          "optional": false,
+          "doc": "The device, so the trend reads in the unit of the card's big value."
         }
       ]
     },

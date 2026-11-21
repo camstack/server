@@ -76,11 +76,23 @@ describe('the primary trend of a device card', () => {
   })
 
   it('a cap that is not enabled is never trended, and nothing answered is no trend', () => {
-    const only = reads({ 'cap:temperature-sensor.temperature': line([1, 2, 3]) })
+    const only = reads({
+      'cap:temperature-sensor.temperature': line([1, 2, 3]),
+    })
     expect(
-      pickPrimaryTrend({ deviceId: DEVICE, enabledCaps: ['weather-station'], reads: only }),
+      pickPrimaryTrend({
+        deviceId: DEVICE,
+        enabledCaps: ['weather-station'],
+        reads: only,
+      }),
     ).toBeNull()
-    expect(pickPrimaryTrend({ deviceId: DEVICE, enabledCaps: ['contact'], reads: only })).toBeNull()
+    expect(
+      pickPrimaryTrend({
+        deviceId: DEVICE,
+        enabledCaps: ['contact'],
+        reads: only,
+      }),
+    ).toBeNull()
   })
 
   it('carries the declared quantity so the tooltip converts like the value', () => {
@@ -90,5 +102,15 @@ describe('the primary trend of a device card', () => {
       reads: reads({ 'cap:weather-station.temperature': line([1, 2]) }),
     })
     expect(trend?.quantity).toBe('temperature')
+  })
+
+  it("carries the unit the cap's field declares, so nothing is hardcoded per device type", () => {
+    const trend = pickPrimaryTrend({
+      deviceId: DEVICE,
+      enabledCaps: ['power-meter'],
+      reads: reads({ 'cap:power-meter.power': line([100, 200]) }),
+    })
+    expect(trend?.unit).toBe('W')
+    expect(trend?.quantity).toBe('power')
   })
 })

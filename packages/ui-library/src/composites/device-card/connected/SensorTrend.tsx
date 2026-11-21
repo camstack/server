@@ -3,6 +3,7 @@ import { type ReactElement, useMemo } from 'react'
 import type { SparklinePoint } from '../../charts/Sparkline'
 import { HISTORY_WINDOW_MS } from '../../device-history/history-window'
 import { useHistoryReads } from '../../device-history/use-device-history'
+import type { ReadingDisplaySubject } from '../../hero-model/measurement-display'
 import { TrendReadoutView } from './TrendReadout'
 
 const MINUTE_MS = 60_000
@@ -17,6 +18,8 @@ export interface SensorTrendProps {
   readonly label: string
   /** The series is in this reading's base unit; the tooltip converts it like the value. */
   readonly reading: HeroMeasurementReading
+  /** The device, so the trend reads in the unit of the card's big value. */
+  readonly subject: ReadingDisplaySubject | null
 }
 
 /** The last day of a sensor's reading; nothing until the read answers with a line. */
@@ -25,6 +28,7 @@ export function SensorTrend({
   historyKey,
   label,
   reading,
+  subject,
 }: SensorTrendProps): ReactElement | null {
   const window = useMemo(() => {
     const to = Math.ceil(Date.now() / MINUTE_MS) * MINUTE_MS
@@ -46,6 +50,8 @@ export function SensorTrend({
       points={points}
       label={label}
       quantity={reading.quantity}
+      subject={subject}
+      currentAriaHidden
       windowMs={HISTORY_WINDOW_MS['24h']}
     />
   )

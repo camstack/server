@@ -129,6 +129,7 @@ function MeasuredSensorCard({
         historyKey={measurement.historyKey}
         label={text.value}
         reading={measurement.reading}
+        subject={subject}
       />
     )
   return (

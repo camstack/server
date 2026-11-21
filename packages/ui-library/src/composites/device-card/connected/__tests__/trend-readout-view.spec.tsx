@@ -49,4 +49,36 @@ describe('the device card trend readout', () => {
     )
     expect(empty.container.firstChild).toBeNull()
   })
+
+  it('reads in the unit of the card: a device display override of kW', () => {
+    render(
+      <TrendReadoutView
+        testId="t"
+        label="Power"
+        points={pts([1000, 1100])}
+        quantity="power"
+        subject={{ role: null, display: { unit: 'kW' } }}
+        windowMs={DAY_MS}
+      />,
+    )
+    expect(screen.getByTestId('dc-trend-current').textContent).toBe('1.1')
+    expect(screen.getByTestId('t').textContent).toContain('kW')
+    expect(screen.getByTestId('dc-trend-max').textContent).toBe('1.1')
+  })
+
+  it('hides the latest value from a screen reader when the card shows it as its big value', () => {
+    render(
+      <TrendReadoutView
+        testId="t"
+        label="Power"
+        points={pts([1, 2])}
+        unit="W"
+        currentAriaHidden
+        windowMs={DAY_MS}
+      />,
+    )
+    expect(screen.getByTestId('dc-trend-current').parentElement?.getAttribute('aria-hidden')).toBe(
+      'true',
+    )
+  })
 })

@@ -2,6 +2,7 @@ import { type ReactElement, useMemo } from 'react'
 import { useDeviceManagerGetBindings } from '../../../generated/system-hooks'
 import { HISTORY_WINDOW_MS } from '../../device-history/history-window'
 import { useHistoryReads } from '../../device-history/use-device-history'
+import { useCardDisplaySubject } from '../../hero-model/card-display-subject'
 import { pickPrimaryTrend, primaryTrendKeys } from './primary-trend'
 import { TrendReadoutView } from './TrendReadout'
 
@@ -17,6 +18,7 @@ export interface PrimaryTrendProps {
  * declares and that has data. Nothing until the bindings and the read answered with a line.
  */
 export function PrimaryTrend({ deviceId, label }: PrimaryTrendProps): ReactElement | null {
+  const subject = useCardDisplaySubject()
   const bindings = useDeviceManagerGetBindings({ deviceId }, { staleTime: 30_000 })
   const enabledCaps = useMemo(
     () => (bindings.data?.entries ?? []).map((entry) => entry.capName),
@@ -45,6 +47,7 @@ export function PrimaryTrend({ deviceId, label }: PrimaryTrendProps): ReactEleme
       label={label}
       quantity={trend.quantity}
       unit={trend.unit}
+      subject={subject}
       windowMs={HISTORY_WINDOW_MS['24h']}
     />
   )

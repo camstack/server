@@ -5,7 +5,12 @@ const pts = (values: readonly (number | null)[]) => values.map((v, i) => ({ x: i
 
 describe('the axis words of a device card trend', () => {
   it('names the min, the max, the latest sample and the unit of the quantity', () => {
-    expect(trendReadout({ points: pts([42, 48.4, 45, 47]), quantity: 'temperature' })).toEqual({
+    expect(
+      trendReadout({
+        points: pts([42, 48.4, 45, 47]),
+        quantity: 'temperature',
+      }),
+    ).toEqual({
       min: '42',
       max: '48.4',
       current: '47',
@@ -19,7 +24,12 @@ describe('the axis words of a device card trend', () => {
       quantity: 'temperature',
       preference: 'imperial',
     })
-    expect(readout).toMatchObject({ min: '32', max: '98.6', current: '98.6', unit: '°F' })
+    expect(readout).toMatchObject({
+      min: '32',
+      max: '98.6',
+      current: '98.6',
+      unit: '°F',
+    })
   })
 
   it('takes the declared unit as is when the cap names no known quantity', () => {
@@ -43,5 +53,19 @@ describe('the axis words of a device card trend', () => {
     expect(trendReadout({ points: [] })).toBeNull()
     expect(trendReadout({ points: pts([null, null, null]) })).toBeNull()
     expect(trendReadout({ points: pts([4, null]) })).toBeNull()
+  })
+
+  it("a card's own format (a kW override) wins over the quantity's default unit", () => {
+    const readout = trendReadout({
+      points: pts([1000, 1100, 1200]),
+      quantity: 'power',
+      format: (raw) => ({ text: String(raw / 1000), unit: 'kW' }),
+    })
+    expect(readout).toEqual({
+      min: '1',
+      max: '1.2',
+      current: '1.2',
+      unit: 'kW',
+    })
   })
 })

@@ -2,8 +2,11 @@ import type { ReadingQuantity } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
+import { resolveSensorDisplay } from '../../../lib/resolve-sensor-display'
 import { preferenceForQuantity } from '../../../lib/unit-preferences'
 import { Sparkline, type SparklinePoint } from '../../charts/Sparkline'
+import { useRoleDisplayDefaults } from '../../device-item/role-display-defaults-context'
+import type { ReadingDisplaySubject } from '../../hero-model/measurement-display'
 import { trendReadout } from './trend-readout'
 
 const HOUR_MS = 3_600_000
@@ -15,6 +18,10 @@ export interface TrendReadoutViewProps {
   readonly quantity?: ReadingQuantity | undefined
   /** The cap's declared unit when it names no known quantity. */
   readonly unit?: string | null | undefined
+  /** The device the card draws: its display override and role default shape the unit. */
+  readonly subject?: ReadingDisplaySubject | null | undefined
+  /** The card already shows this reading as its big value: hide the latest value from a screen reader. */
+  readonly currentAriaHidden?: boolean | undefined
   /** The span the points cover, ending now. */
   readonly windowMs: number
   readonly testId: string
@@ -30,24 +37,35 @@ export function TrendReadoutView({
   label,
   quantity,
   unit,
+  subject,
+  currentAriaHidden = false,
   windowMs,
   testId,
 }: TrendReadoutViewProps): ReactElement | null {
   const t = useUiText()
   const unitPreferences = useUnitPreferences()
-  const readout = trendReadout({
-    points,
-    quantity,
-    unit,
-    preference:
-      quantity === undefined ? undefined : preferenceForQuantity(unitPreferences, quantity),
-  })
+  const roleDefaults = useRoleDisplayDefaults()
+  const role = subject?.role ?? null
+  const roleDefault = role === null ? undefined : roleDefaults[role]
+  const format =
+    quantity === undefined
+      ? undefined
+      : resolveSensorDisplay({
+          ...(subject?.display === undefined ? {} : { display: subject.display }),
+          ...(roleDefault === undefined ? {} : { roleDefault }),
+          quantity,
+          unitPreferences,
+        }).format
+  const readout = trendReadout({ points, quantity, unit, format })
   if (readout === null) return null
   const hours = Math.round(windowMs / HOUR_MS)
   return (
     <span data-testid={testId} className="flex justify-center">
       <span className="inline-grid grid-cols-[auto_1fr] items-stretch gap-x-1 gap-y-0.5 text-xs tabular-nums text-foreground-muted">
-        <span className="col-start-2 text-right text-foreground">
+        <span
+          className="col-start-2 text-right text-foreground"
+          {...(currentAriaHidden ? { 'aria-hidden': true } : {})}
+        >
           <b data-testid="dc-trend-current" className="font-semibold">
             {readout.current}
           </b>
