@@ -50,6 +50,7 @@ repo path mentioned must resolve.
 | [architecture/update-and-release.md](architecture/update-and-release.md) | your change does not seem to be running |
 | [architecture/deploying.md](architecture/deploying.md) | you are running this on a machine — Compose or Unraid |
 | [architecture/unraid.md](architecture/unraid.md) | you are installing, updating or packaging for Unraid |
+| [architecture/network.md](architecture/network.md) | you are touching hub addresses, the public endpoint, tunnels, mesh or the Network page |
 | [architecture/ui.md](architecture/ui.md) | you need the Admin UI's architecture: mounting, data flow, where a settings schema lands |
 | [addons/](addons/) | you are changing one of the addons whose package notes outgrew its `AGENTS.md` (the `AGENTS.md` links here) |
 | [ui/](ui/README.md) | you are BUILDING UI in either client: components, tokens, page patterns, anti-patterns (the `camstack-ui` skill applies them) |

@@ -3435,20 +3435,14 @@ honest, where naming one of the nodes would not be.
 
 ### Which ADDRESS a tap opens, and which address every other link uses ([D709](../decisions/adr-0709-a-notification-tap-opens-the-address-flagged-on-the-network-page-and-the-default-is-the-camstack-app-link.md), [D734](../decisions/adr-0734-address-roles-are-named-for-what-they-serve-and-notification-links-follow-the-public-endpoint.md))
 
-A notification points at the hub through TWO roles of the admin **Network →
-Addresses** table, and they answer different questions:
-
-| link | role | automatic |
-| --- | --- | --- |
-| where tapping the notification opens (a camera at the event instant) | **Notification taps** (`notificationTaps`) | the CamStack app link |
-| action buttons, attachment / media links, the admin page a system event taps into | **Public endpoint** (`publicEndpoint`) | the tunnel (never a Quick tunnel's temporary address, D860), then the mesh, then the LAN |
-
-Before D734 the buttons and media followed the notifications address first,
-then the connected tunnel, then the LAN (`collectArtifactEndpoints`), so
-flagging a LAN address for taps quietly moved every button and attachment
-onto the LAN. Now `link-endpoints.ts` builds that ladder on the public
-endpoint and never reads the taps role; the ingress and LAN rungs remain only
-for when `local-network` cannot answer (a WARN line says so).
+A notification points at the hub through TWO roles of the Network page's
+**Addresses** table: **Notification taps** (where a tap opens; automatic is the
+CamStack app link) and **Public endpoint** (action buttons, attachment / media
+links, admin links). The roles, their automatic picks and why they are separate
+are in [network](network.md#3-the-four-roles). `link-endpoints.ts` builds the
+button and media ladder on the public endpoint and never reads the taps role;
+the ingress and LAN rungs remain only for when `local-network` cannot answer (a
+WARN line says so).
 
 The **Notification taps** flag is `local-network`'s notification endpoint
 (`getNotificationEndpoint`), and there is no second setting. The endpoint table lists the hub's own addresses (LAN,

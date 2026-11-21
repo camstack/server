@@ -167,61 +167,9 @@ the system zone; a zone the runtime cannot resolve reads as `UTC`.
 
 ## The hub's address
 
-There is no variable for it. The hub's address is what the `local-network`
-capability advertises — its interfaces, the port it really listens on, the
-operator's allowlist, the tunnel and the mesh — plus the custom addresses the
-operator adds, and the admin **Network** page's **Addresses** table is where
-the operator sees them and ticks what each is used for
-([D729](../decisions/adr-0729-the-hubs-address-comes-from-the-network-capability-never-from-an-environment-variable.md),
-[D732](../decisions/adr-0732-a-hub-address-is-a-row-with-role-flags-and-custom-addresses-are-rows-like-detected-ones.md),
-[D734](../decisions/adr-0734-address-roles-are-named-for-what-they-serve-and-notification-links-follow-the-public-endpoint.md)).
-Every reader takes one role's answer from `local-network.getAddresses().roles`,
-computed by that role's resolver in `packages/types/src/capabilities/hub-address.ts`:
-
-| Reader | Role | Automatic (no address ticked) |
-| --- | --- | --- |
-| addon deploy and back-fill to an agent, model distribution (`server/backend/src/api/hub-cluster-url.ts`) | `internal` (**Internal**) | a LAN IPv4 literal, then any plausible LAN address, then the mesh — never the tunnel, never loopback |
-| a Dreame robot camera's relay host, the Home Assistant media base | `internal` | the same |
-| OIDC, WebAuthn defaults (`addon-auth`), OAuth2 account linking | `publicEndpoint` (**Public endpoint**) | the tunnel, then the mesh, then the LAN |
-| the notification centre's action buttons, attachment / media links and admin links (`link-endpoints.ts`), the admin **Connect a phone** link | `publicEndpoint` | the same |
-| where tapping a notification opens (the notification centre) | `notificationTaps` (**Notification taps**) | the CamStack app link |
-| the apps' connection race (`getViewerEndpoints`) | `appConnections` (**App connections**) | every LAN IPv4 address, **over http and over https** (below), and the tunnel |
-
-**Every LAN address advertised over `http://<ip>:4480` also has an `https://<ip>:4443`
-row** (the TLS port, `withLanHttpsCounterparts` in
-`packages/system/src/builtins/local-network/address-book.ts`), straight after it,
-ticked for App connections by default and toggled on the Network page like any
-other row ([D859](../decisions/adr-0859-every-lan-address-the-hub-advertises-over-http-also-has-an-https-counterpart-on-by-default-in-the-same-palette.md)).
-Only the app-connection palette and the table carry it; `internal` and
-`publicEndpoint` resolve over the palette without it. A phone that trusts the
-hub's local CA reaches it, and when both addresses of a host answer the viewer
-prefers https; a phone that does not fails that candidate in the race it already
-runs (logged once per session as `tls-untrusted` or `unreachable`) and keeps
-using the http row or the tunnel. Plain http on the LAN carries the session
-token in clear, so a phone that should be protected at home needs the CA
-installed. An Android app additionally ignores user-installed CAs until its
-network security config allows them (open follow-up, D859).
-
-When the detected address is not the one the other side dials — Docker bridge
-networking (the hub only sees 172.17.x), NAT, a VPN, a reverse proxy — add it
-as a **custom address** and tick the role on it. A custom address is
-validated (http/https, no path, never loopback), serves only the roles ticked
-on it and never wins a role automatically. `notificationTaps`, `publicEndpoint`
-and `internal` are carried by one address each; ticking another moves it. A
-plain `http://` address takes Public endpoint only after the operator accepts
-http, and the CamStack app link can only be the notification-taps address.
-Changing the public endpoint changes the passkey relying party, so passkeys
-registered under the old one stop working.
-
-`CAMSTACK_HUB_PUBLIC_URL` and its older alias `CAMSTACK_PUBLIC_ORIGIN` are
-retired. A container that still sets one logs a WARN in the `public-url` scope
-on every boot ("ignored — the hub address comes from Network"), and the hub
-removes it from its environment before any addon runner is forked
-(`server/backend/src/boot/retired-public-url-env.ts`). The guard
-`scripts/check-no-hub-address-env.ts` refuses any runtime code that names
-either again. When the hub cannot name an address an agent can reach, an agent
-delivery fails with that reason — it never hands out `127.0.0.1`, which names
-the agent itself.
+There is no variable for it: the hub's address, the roles an address serves and
+the retired `CAMSTACK_HUB_PUBLIC_URL` are documented in
+[network](network.md#3-the-four-roles).
 
 ## Optional settings for TLS and port
 

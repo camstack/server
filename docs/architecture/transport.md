@@ -598,9 +598,8 @@ a secret. Nothing in the mesh uses UDP 4445 any more — close it in firewalls.
 
 D826 turned the mesh UDP announcement off on every hub, so `camstack login` and
 `camstack discover` no longer listen to it. The `local-network` builtin
-advertises one `_camstack._tcp` mDNS service for the hub's HTTPS endpoint
-(`@homebridge/ciao`; TXT `nodeId`, `version`, `role=hub`, `url`, `hubId`; the
-address is the `internal` role of the address book, never ranked again).
+advertises one `_camstack._tcp` mDNS service for the hub's HTTPS endpoint (what it
+carries and which address it names: [network](network.md#6-discovery-over-mdns-d838)).
 `hubId` is a public random id (`hub-<16 hex>`, `<dataDir>/tls/hub-identity.json`,
 next to the mesh CA a backup already keeps). Finding it grants nothing (D838):
 an agent adopts an announced address only after that hub's membership answer

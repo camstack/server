@@ -433,6 +433,8 @@ remove a user's links from Users → Sign-in links, and cannot create one.
 
 ## Where an SSO sign-in returns, and the popup
 
+Which hub address each flow uses: [network](network.md#3-the-four-roles).
+
 **Same origin (D791).** A sign-in returns to the origin it started at. `/start`
 reads the request's origin (`X-Forwarded-Host` over `Host`,
 `X-Forwarded-Proto`, the `X-Forwarded-Prefix` mount) and uses it only when the

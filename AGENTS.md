@@ -44,6 +44,7 @@ Read the page for what you are touching:
 | Frame → detection: engines, per-node devices, how a step reaches one | `docs/architecture/detection-execution.md` |
 | What happens AFTER the pipeline emits a frame; every tuning knob | `docs/architecture/post-analysis.md` |
 | Publishing, deploying, "why isn't my change running" | `docs/architecture/update-and-release.md` |
+| Hub addresses, the public endpoint, tunnels, mesh, the Network page | `docs/architecture/network.md` |
 | Admin UI architecture (mounting, data flow, where a schema lands) | `docs/architecture/ui.md` |
 | A password / token / key field, `secretStatePaths`, the keychain | `docs/architecture/secrets-keychain.md` |
 | Cloud training, the trainer, a training provider | `docs/architecture/cloud-training.md` |

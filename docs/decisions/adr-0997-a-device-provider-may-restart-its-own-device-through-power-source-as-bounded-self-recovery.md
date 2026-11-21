@@ -40,6 +40,6 @@ adds itself to this record. The recovery is a no-op without a linked switch.
 
 ## Enforcement
 
-Specs in `packages/addon-provider-velux/src/__tests__/velux-power-recovery.spec.ts`
+Specs in `packages/addon-provider-velux/src/__tests__/velux-power-recovery.spec.ts` <!-- drift-ok: deleted by D1072, which supersedes this record -->
 (threshold, cooldown across a respawn, live session, unlinked, refusal). Review
 only for other providers.
