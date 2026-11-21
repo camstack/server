@@ -812,6 +812,9 @@ export type {
   AutomationChooseStep,
   AutomationWaitUntilStep,
   AutomationNotifyStep,
+  AutomationProbeStep,
+  AutomationHttpRequestStep,
+  AutomationHttpExpect,
   AutomationParallelStep,
   AutomationRepeatLoop,
   AutomationRepeatStep,
@@ -868,6 +871,20 @@ export {
   AutomationChooseStepSchema,
   AutomationWaitUntilStepSchema,
   AutomationNotifyStepSchema,
+  AutomationProbeStepSchema,
+  AutomationHttpRequestStepSchema,
+  AutomationHttpExpectSchema,
+  HTTP_METHODS,
+  HTTP_TEXT_CAP,
+  HTTP_URL_MAX,
+  HTTP_BODY_MAX,
+  HTTP_HEADERS_MAX,
+  HTTP_HEADER_VALUE_MAX,
+  HTTP_TIMEOUT_MAX_S,
+  PROBE_TIMEOUT_MAX_S,
+  PROBE_HOST_MAX,
+  REACH_RETRY_MAX_S,
+  REACH_RETRY_INTERVAL_S,
   AutomationParallelStepSchema,
   AutomationRepeatLoopSchema,
   AutomationRepeatStepSchema,
@@ -1017,6 +1034,7 @@ export * from './automation/scheduler.js'
 export * from './automation/step-condition.js'
 export * from './automation/step-runner.js'
 export * from './automation/wait-until.js'
+export * from './automation/reach-steps.js'
 export * from './automation/export-entities.js'
 export * from './device/export-name.js'
 export * from './automation/draft/index.js'

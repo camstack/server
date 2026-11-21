@@ -144,6 +144,9 @@ const StepTraceBaseSchema = z.object({
    * (D1021): why a sentence says "—" where a number was expected. Bounded.
    */
   templates: z.array(z.string()).max(MAX_STEP_TEMPLATE_NOTES).optional(),
+  /** A probe or an HTTP request: how many tries it made, and what the last one saw (no header, no body). */
+  attempts: z.number().int().optional(),
+  lastAttempt: z.string().optional(),
   /**
    * What the step's own `if` read when the step was reached (#472): `true` the
    * step ran, `false` its `else` ran (or nothing did), `unknown` a state leaf

@@ -4,6 +4,8 @@
  * codegen.spec.ts say what the source contains; these say what it DOES.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import http from 'node:http'
+import net from 'node:net'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -2499,5 +2501,147 @@ describe('a notify step and a disabled step', () => {
     const steps = h.traces()[0]?.steps.map((s) => [s.path, s.outcome, s.message])
     expect(steps?.[0]).toEqual(['actions.0', 'skipped', 'disabled'])
     expect(steps?.[2]).toEqual(['actions.2', 'ok', undefined])
+  })
+})
+
+describe('a probe step and an http-request step', () => {
+  let web: http.Server
+  let webPort = 0
+  let tcp: net.Server
+  let tcpPort = 0
+  let reqSeen: { method: string; url: string; auth: string | undefined; body: string }[] = []
+  /** What /sysinfo.json answers: an empty address until `connected` flips. */
+  let connected = false
+
+  beforeAll(async () => {
+    web = http.createServer((req, res) => {
+      let body = ''
+      req.on('data', (c: Buffer) => (body += c.toString()))
+      req.on('end', () => {
+        reqSeen.push({
+          method: req.method ?? '',
+          url: req.url ?? '',
+          auth: req.headers.authorization,
+          body,
+        })
+        res.setHeader('content-type', 'application/json')
+        res.end(
+          JSON.stringify({ sysInfo: { rawUartRemoteAddress: connected ? '192.168.1.9' : '' } }),
+        )
+      })
+    })
+    await new Promise<void>((r) => web.listen(0, '127.0.0.1', r))
+    const webAddress = web.address()
+    webPort = typeof webAddress === 'object' && webAddress !== null ? webAddress.port : 0
+    tcp = net.createServer((s) => s.end())
+    await new Promise<void>((r) => tcp.listen(0, '127.0.0.1', r))
+    const tcpAddress = tcp.address()
+    tcpPort = typeof tcpAddress === 'object' && tcpAddress !== null ? tcpAddress.port : 0
+  })
+  afterAll(async () => {
+    await new Promise((r) => web.close(r))
+    await new Promise((r) => tcp.close(r))
+  })
+  beforeEach(() => {
+    reqSeen = []
+    connected = false
+    // a real socket and a real fetch answer on the real clock
+    vi.useRealTimers()
+  })
+
+  const fire = async (steps: AutomationRecipe['actions']) => {
+    const h = start(await load({ when: MOTION, actions: steps }))
+    h.emit('motion.on-motion-changed', {}, 5)
+    await vi.waitFor(() => expect(h.traces()).toHaveLength(1), { timeout: 8_000, interval: 25 })
+    return h
+  }
+
+  it('a probe reaches an open port and the step is traced with its attempt', async () => {
+    const h = await fire([
+      { kind: 'probe', host: '127.0.0.1', port: tcpPort, timeoutSeconds: 2, saveAs: 'ccu' },
+    ])
+    const steps = h.traces()[0]?.steps
+    expect(steps?.[0]).toMatchObject({ kind: 'probe', outcome: 'ok', attempts: 1 })
+    expect(steps?.[0]?.lastAttempt).toContain('reachable')
+    expect(h.logs.some((l) => l.msg === 'probe finished')).toBe(true)
+  })
+
+  it('a probe of a closed port FAILS the step, honours continueOnError, and later steps run', async () => {
+    const closed = await new Promise<number>((resolve) => {
+      const s = net.createServer()
+      s.listen(0, '127.0.0.1', () => {
+        const address = s.address()
+        const port = typeof address === 'object' && address !== null ? address.port : 0
+        s.close(() => resolve(port))
+      })
+    })
+    const h = await fire([
+      { kind: 'probe', host: '127.0.0.1', port: closed, timeoutSeconds: 2, continueOnError: true },
+      SIREN,
+    ])
+    const steps = h.traces()[0]?.steps
+    expect(steps?.[0]?.outcome).toBe('failed-continued')
+    expect(steps?.[0]?.message).toContain('probe')
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('an http request sends method, header and body, and logs status and duration, never the secrets', async () => {
+    connected = true
+    const h = await fire([
+      {
+        kind: 'http-request',
+        method: 'POST',
+        url: `http://127.0.0.1:${webPort}/sysinfo.json?d={{vars.deviceId}}`,
+        headers: { Authorization: 'Bearer TOPSECRET' },
+        body: 'payload-{{vars.deviceId}}',
+        timeoutSeconds: 3,
+        expect: {
+          on: 'json',
+          fieldPath: 'sysInfo.rawUartRemoteAddress',
+          operator: 'ne',
+          value: '',
+        },
+        saveAs: 'sys',
+      },
+    ])
+    expect(reqSeen).toEqual([
+      { method: 'POST', url: '/sysinfo.json?d=5', auth: 'Bearer TOPSECRET', body: 'payload-5' },
+    ])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      kind: 'http-request',
+      outcome: 'ok',
+      attempts: 1,
+    })
+    const everything = JSON.stringify([h.logs, h.traces()])
+    expect(everything).not.toContain('TOPSECRET')
+    expect(everything).not.toContain('payload-5')
+    expect(h.logs.find((l) => l.msg === 'http request finished')?.meta).toMatchObject({
+      status: 200,
+      met: true,
+    })
+  })
+
+  it('an unmet JSON expectation fails the step after the retry window, and the later steps do not run', async () => {
+    const h = await fire([
+      {
+        kind: 'http-request',
+        method: 'GET',
+        url: `http://127.0.0.1:${webPort}/sysinfo.json`,
+        timeoutSeconds: 2,
+        retryUntilSeconds: 1,
+        expect: {
+          on: 'json',
+          fieldPath: 'sysInfo.rawUartRemoteAddress',
+          operator: 'ne',
+          value: '',
+        },
+      },
+      SIREN,
+    ])
+    const steps = h.traces()[0]?.steps
+    expect(steps?.[0]?.outcome).toBe('error')
+    expect(steps?.[0]?.attempts).toBeGreaterThanOrEqual(1)
+    expect(steps?.[1]?.outcome).toBe('not-run')
+    expect(h.mutate).not.toHaveBeenCalled()
   })
 })

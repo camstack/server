@@ -29,6 +29,7 @@ import { ActionTargetSchema, type ActionTarget } from './action-target.js'
 import { AutomationTemplateLinkSchema } from './template-link.js'
 import { LegacyConditionSchema, LegacyTriggerSchema, convertLegacyWhen } from './legacy-recipe.js'
 import {
+  AutomationConditionOperatorSchema,
   AutomationWhenSchema,
   MAX_WHEN_DEPTH,
   MAX_WHEN_LEAVES,
@@ -250,6 +251,131 @@ export const AutomationNotifyStepSchema = z.object({
 })
 export type AutomationNotifyStep = z.infer<typeof AutomationNotifyStepSchema>
 
+/** The longest a probe or an HTTP request may keep trying until its expectation holds: ten minutes. */
+export const REACH_RETRY_MAX_S = 600
+/** The pause between two tries of a retrying probe or request. A constant, so a window is bounded by two numbers. */
+export const REACH_RETRY_INTERVAL_S = 5
+export const PROBE_TIMEOUT_MAX_S = 30
+export const HTTP_TIMEOUT_MAX_S = 60
+export const HTTP_URL_MAX = 2000
+export const HTTP_BODY_MAX = 16_384
+export const HTTP_HEADERS_MAX = 20
+export const HTTP_HEADER_VALUE_MAX = 1000
+/** How much of a response body a run keeps, in bytes: the rest is cut. */
+export const HTTP_TEXT_CAP = 65_536
+export const PROBE_HOST_MAX = 253
+
+const saveAsSchema = z
+  .string()
+  .regex(
+    SET_VAR_NAME_RE,
+    'a variable name is letters, digits and _, not starting with a digit (max 40)',
+  )
+  .refine((name) => !RESERVED_RUN_VARS.includes(name), {
+    message: `the names ${RESERVED_RUN_VARS.join(', ')} belong to the run and cannot be used`,
+  })
+
+const retryUntilSecondsSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(REACH_RETRY_MAX_S, `a retry window is at most ${REACH_RETRY_MAX_S} s`)
+
+/**
+ * Whether a TCP port on a host answers. TCP only: an ICMP echo needs a raw
+ * socket or a `ping` binary with extra privileges, and the hub image ships
+ * neither for its non-root user, so it is not offered.
+ *
+ * Without `expect` the step wants the host REACHABLE. The result
+ * (`{ reachable, rttMs, error }`) goes to the run variable `saveAs`.
+ */
+export const AutomationProbeStepSchema = z
+  .object({
+    kind: z.literal('probe'),
+    ...stepEnabledShape,
+    /** A host name or an address; may carry `{{vars.x}}` slots. */
+    host: z
+      .string()
+      .min(1, 'a probe needs a host')
+      .max(PROBE_HOST_MAX)
+      .regex(/^[^\s/]+$/, 'a host has no spaces or slashes'),
+    port: z.number().int().min(1, 'a port is 1 to 65535').max(65_535, 'a port is 1 to 65535'),
+    timeoutSeconds: z.number().int().min(1).max(PROBE_TIMEOUT_MAX_S),
+    expect: z.enum(['reachable', 'unreachable']).optional(),
+    /** Keep probing every {@link REACH_RETRY_INTERVAL_S} s until the expectation holds, for this long. */
+    retryUntilSeconds: retryUntilSecondsSchema.optional(),
+    saveAs: saveAsSchema.optional(),
+    ...continueOnErrorShape,
+  })
+  .strict()
+export type AutomationProbeStep = z.infer<typeof AutomationProbeStepSchema>
+
+export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
+
+/**
+ * What an HTTP request must answer for the step to pass: its status, or a field
+ * of the parsed JSON body, compared the way a device field is.
+ */
+export const AutomationHttpExpectSchema = z
+  .object({
+    on: z.enum(['status', 'json']),
+    /** A dotted path into the JSON body (`sysInfo.rawUartRemoteAddress`); needed for `json`. */
+    fieldPath: z.string().min(1).max(200).optional(),
+    operator: AutomationConditionOperatorSchema,
+    value: z.union([z.string(), z.number(), z.boolean()]),
+  })
+  .strict()
+  .refine((expect) => expect.on !== 'json' || expect.fieldPath !== undefined, {
+    message: 'a JSON expectation names the field it reads',
+    path: ['fieldPath'],
+  })
+export type AutomationHttpExpect = z.infer<typeof AutomationHttpExpectSchema>
+
+function isHttpUrl(url: string): boolean {
+  if (url.includes('{{')) return /^https?:\/\/\S+$/i.test(url)
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * One HTTP request. Without `expect` the step wants a 2xx answer. The result
+ * (`{ status, ok, json, text, error }`) goes to the run variable `saveAs`.
+ * Header values are stored as typed, in plain text: they are in the recipe and
+ * in the generated source, so anyone who can open the automation can read a
+ * token put in one. Header values and bodies are never logged or traced.
+ */
+export const AutomationHttpRequestStepSchema = z
+  .object({
+    kind: z.literal('http-request'),
+    ...stepEnabledShape,
+    method: z.enum(HTTP_METHODS),
+    url: z
+      .string()
+      .max(HTTP_URL_MAX)
+      .refine(isHttpUrl, 'the address is an http:// or https:// URL'),
+    headers: z
+      .record(
+        z.string().regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, 'not a valid header name'),
+        z.string().max(HTTP_HEADER_VALUE_MAX),
+      )
+      .refine((headers) => Object.keys(headers).length <= HTTP_HEADERS_MAX, {
+        message: `at most ${HTTP_HEADERS_MAX} headers`,
+      })
+      .optional(),
+    body: z.string().max(HTTP_BODY_MAX).optional(),
+    timeoutSeconds: z.number().int().min(1).max(HTTP_TIMEOUT_MAX_S),
+    expect: AutomationHttpExpectSchema.optional(),
+    retryUntilSeconds: retryUntilSecondsSchema.optional(),
+    saveAs: saveAsSchema.optional(),
+    ...continueOnErrorShape,
+  })
+  .strict()
+export type AutomationHttpRequestStep = z.infer<typeof AutomationHttpRequestStepSchema>
+
 const AutomationRunActionStepSchema = z.object({
   kind: z.literal('action'),
   ...stepEnabledShape,
@@ -319,6 +445,8 @@ const plainStepSchemas = [
   AutomationSetStepSchema.omit({ if: true }).strict(),
   AutomationRunActionStepSchema.strict(),
   AutomationNotifyStepSchema.strict(),
+  AutomationProbeStepSchema,
+  AutomationHttpRequestStepSchema,
 ] as const
 
 /**
@@ -500,6 +628,8 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   AutomationRepeatStepSchema,
   AutomationRunActionStepSchema,
   AutomationNotifyStepSchema,
+  AutomationProbeStepSchema,
+  AutomationHttpRequestStepSchema,
   z.object({
     kind: z.literal('code'),
     ...stepEnabledShape,
@@ -602,6 +732,8 @@ export function stepGuardOf(action: AutomationAction): AutomationWhen | undefine
   switch (action.kind) {
     case 'action':
     case 'notify':
+    case 'probe':
+    case 'http-request':
     case 'code':
     case 'choose':
     case 'wait-until':

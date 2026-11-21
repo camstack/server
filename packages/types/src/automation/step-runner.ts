@@ -58,6 +58,8 @@ export interface StepScope {
   stop(reason: string, outcome: StepStopOutcome): void
   /** The step waited for something that did not come and the run goes on (#500): traced `timed-out`. */
   markTimedOut(reason: string): void
+  /** A step that tries more than once (a probe, an HTTP request): how many tries, and what the last one saw. */
+  setAttempts(count: number, last: string): void
 }
 
 /** How a `stop` step ends the run: as a success, or as a failure. */
@@ -544,6 +546,7 @@ export async function runSteps(
     let emptyReason: string | undefined
     let timedOutReason: string | undefined
     let templateNotes: readonly string[] = []
+    let attemptsSeen: { readonly count: number; readonly last: string } | undefined
     const scope: StepScope = {
       setDeviceId: (id) => {
         deviceId = id
@@ -566,7 +569,14 @@ export async function runSteps(
       markTimedOut: (reason) => {
         timedOutReason = reason
       },
+      setAttempts: (count, last) => {
+        attemptsSeen = { count, last }
+      },
     }
+    const attemptsTrace = (): { attempts?: number; lastAttempt?: string } =>
+      attemptsSeen === undefined
+        ? {}
+        : { attempts: attemptsSeen.count, lastAttempt: attemptsSeen.last.slice(0, 300) }
     const templatesTrace = (): { templates?: string[] } =>
       templateNotes.length === 0 ? {} : { templates: [...templateNotes] }
     const argsTrace = (): { args?: ReturnType<typeof buildStepArgsTrace> } =>
@@ -599,6 +609,7 @@ export async function runSteps(
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
         ...templatesTrace(),
+        ...attemptsTrace(),
         ...devicesTrace(),
         ...guardTrace,
         path,
@@ -626,6 +637,7 @@ export async function runSteps(
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
         ...templatesTrace(),
+        ...attemptsTrace(),
         ...devicesTrace(),
         ...guardTrace,
         path,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Automations get two new steps, Ping / reachability (TCP probe) and HTTP request, each with an optional expectation and a bounded retry window; runs keep the attempt count and last result.
+
 ### Changed
 
 - Automation rows "a device fault is raised" and "a device has a fault" match a device's whole fault list.

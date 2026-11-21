@@ -69,6 +69,10 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'action' }
     case 'notify':
       return { kind: 'notify' }
+    case 'probe':
+      return { kind: 'probe' }
+    case 'http-request':
+      return { kind: 'http-request' }
     case 'stop':
       return { kind: 'stop' }
     case 'wait-until':
@@ -440,6 +444,44 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
         })
         if (sent.status === 'refused') throw new Error('notification target ' + sent.reason)
         if (sent.status === 'failed') throw new Error('notification failed: ' + sent.message)`
+    case 'probe':
+      return `        // a TCP reachability probe: one measurement, an expectation, an optional retry window
+        const probed = await runProbeStep(
+          { connect: tcpConnect, now: () => Date.now(), sleep, isAborted: () => token.aborted },
+          {
+            host: String(substitute(${j(action.host)}, vars)),
+            port: ${j(action.port)},
+            timeoutSeconds: ${j(action.timeoutSeconds)},
+            ${action.expect === undefined ? '' : `expect: ${j(action.expect)},`}
+            ${action.retryUntilSeconds === undefined ? '' : `retryUntilSeconds: ${j(action.retryUntilSeconds)},`}
+          },
+        )
+        ${action.saveAs === undefined ? '' : `Object.assign(vars, reachVars(${j(action.saveAs)}, probed.result))`}
+        scope.setAttempts(probed.attempts, probed.message)
+        ctx.logger.info('probe finished', { host: String(substitute(${j(action.host)}, vars)), port: ${j(action.port)}, met: probed.met, attempts: probed.attempts, rttMs: probed.result.rttMs })
+        if (!probed.met) throw new Error('probe: ' + probed.message)`
+    case 'http-request':
+      return `        // an HTTP request: one measurement, an expectation, an optional retry window.
+        // Header values and the body are never logged or traced.
+        const httpUrl = String(substitute(${j(action.url)}, vars))
+        scope.setArgs({ method: ${j(action.method)}, url: httpUrl })
+        const startedHttp = Date.now()
+        const requested = await runHttpStep(
+          { fetch: globalThis.fetch, now: () => Date.now(), sleep, isAborted: () => token.aborted },
+          {
+            method: ${j(action.method)},
+            url: httpUrl,
+            timeoutSeconds: ${j(action.timeoutSeconds)},
+            ${action.headers === undefined ? '' : `headers: substituteStrings(${j(action.headers)}, vars),`}
+            ${action.body === undefined ? '' : `body: String(substitute(${j(action.body)}, vars)),`}
+            ${action.expect === undefined ? '' : `expect: ${j(action.expect)},`}
+            ${action.retryUntilSeconds === undefined ? '' : `retryUntilSeconds: ${j(action.retryUntilSeconds)},`}
+          },
+        )
+        ${action.saveAs === undefined ? '' : `Object.assign(vars, reachVars(${j(action.saveAs)}, requested.result))`}
+        scope.setAttempts(requested.attempts, requested.message)
+        ctx.logger.info('http request finished', { method: ${j(action.method)}, url: httpUrl, status: requested.result.status, met: requested.met, attempts: requested.attempts, durationMs: Date.now() - startedHttp })
+        if (!requested.met) throw new Error('http request: ' + requested.message)`
     case 'stop':
       return `        // end the run here, on purpose: the steps after it are not-run with this reason
         scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`
@@ -459,7 +501,11 @@ ${action.code
 
 function continues(action: AutomationAction): boolean {
   return (
-    (action.kind === 'command' || action.kind === 'action' || action.kind === 'notify') &&
+    (action.kind === 'command' ||
+      action.kind === 'action' ||
+      action.kind === 'notify' ||
+      action.kind === 'probe' ||
+      action.kind === 'http-request') &&
     action.continueOnError === true
   )
 }
@@ -749,6 +795,9 @@ import {
   vocabCall,
   evaluateStepCondition,
   runSteps,
+  runProbeStep,
+  runHttpStep,
+  reachVars,
   repeatCheck,
   waitUntil,
   waitTimedOutMessage,
@@ -1185,6 +1234,30 @@ ${
   /** Substitute {{vars.x}} slots and { $var } values. Substitution only — never evaluation. */
   function substitute(value: unknown, vars: Record<string, unknown>): unknown {
     return resolveStepArgs(value, vars, warnMissingVar)
+  }
+
+  /** Header values, substituted: the values are text, and are never logged. */
+  function substituteStrings(
+    raw: Record<string, string>,
+    vars: Record<string, unknown>,
+  ): Record<string, string> {
+    return Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, String(substitute(value, vars))]))
+  }
+
+  /** Open a TCP connection and close it again: resolves when the port answered. */
+  async function tcpConnect(host: string, port: number, timeoutMs: number): Promise<void> {
+    const net = await import('node:net')
+    await new Promise<void>((resolve, reject) => {
+      const socket = net.connect({ host, port })
+      const done = (err?: Error): void => {
+        socket.destroy()
+        if (err === undefined) resolve()
+        else reject(err)
+      }
+      socket.setTimeout(timeoutMs, () => done(new Error('timed out after ' + String(timeoutMs / 1000) + ' s')))
+      socket.once('connect', () => done())
+      socket.once('error', (err) => done(err))
+    })
   }
 
   /** The variables handed to an Action step, substituted and kept to primitives. */
