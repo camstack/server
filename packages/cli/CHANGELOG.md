@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- support_benchmark_status reports the stored decode results and no longer fails to read results when one is present.
+
 ## [1.2.237] - 2026-11-21
 
 ### Changed

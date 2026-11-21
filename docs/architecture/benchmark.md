@@ -1,6 +1,6 @@
 ---
 title: Benchmark
-last-verified: 2026-10-23
+last-verified: 2026-11-21
 applies-to:
   - packages/addon-benchmark/**
   - packages/addon-pipeline-orchestrator/src/node-benchmark/**
@@ -141,10 +141,25 @@ Every dispatch takes the next frame, so content and detail-plane work vary.
   `stepsFired` names the steps that ran; a cell missing a requested step is
   not stored.
 
+- **Decode** ([D1078](../decisions/adr-1078-the-node-benchmark-measures-decode-too-and-a-node-capacity-is-the-smaller-of-decode-and-detection.md))
+  — per stream profile (3840×2160 H.265 and 1920×1080 H.264, 15 fps),
+  concurrent streams 1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 32 through the
+  node's real decode path. The source is an encoded clip built on the node
+  by its ffmpeg (the bench clip scaled, else a moving test pattern; cached
+  under `<dataDir>/bench/`), paced in real time into a loopback-only RTSP
+  endpoint; each stream is one real decode worker with the node's hardware
+  offer, and the motion kernel runs on every stream at the plan's rate. A
+  step holds while every stream keeps ≥ 90 % of the profile rate, frame age
+  p95 ≤ 1000 ms, no error, no stall, CPU ≤ 85 % and free RAM ≥ 15 % (RAM is
+  also checked before each worker is forked). The cell stores `maxStreams`,
+  the profile, `limitedBy`, `hardware`, `decoder` and `motion`. A profile
+  the node cannot be offered stores no cell and is named on the run.
+
 Nothing is emitted: the executor is called directly, so no track, event,
 media or notification exists. Candidate models fetched for the run are
-deleted afterwards unless the plan keeps them. Not measured: session decode,
-motion, the hub tracker.
+deleted afterwards unless the plan keeps them. Not measured: the hub
+tracker, the broker's source reader, recording and egress, and decode and
+detection under load at the same time — the two planes are measured apart.
 
 ## Results and who reads them
 
@@ -170,11 +185,20 @@ today; an unanswered pool never makes a row stale.
   and says so. Writing or deleting a result recomputes the shares. Session
   caps stay advisory.
 
+- **Capacity verdict**: `getNodeCapacityVerdict` reads, per node, the
+  detection capacity (its devices at the cell for the model each runs now)
+  and the decode capacity (its fresh `decode` cell with the fewest
+  streams), and answers the smaller with the plane that limits. One plane
+  measured gives that number with `complete: false`; an unmeasured plane is
+  `null`, never zero. A `decode` cell is keyed by node × profile and goes
+  stale by age only; Auto tune and the shares do not read it.
+
 ## Cap surface
 
 `pipelineOrchestrator`: `getNodeBenchmarkPreflight`, `startNodeBenchmark`,
 `getNodeBenchmarkStatus`, `abortNodeBenchmark`, `getNodeBenchmarkCandidates`,
-`listNodeBenchmarkResults`, `deleteNodeBenchmarkResult`.
+`listNodeBenchmarkResults`, `deleteNodeBenchmarkResult`,
+`getNodeCapacityVerdict`.
 `pipelineRunner`: `startNodeBench`, `getNodeBenchStatus`, `abortNodeBench`.
 All admin.
 

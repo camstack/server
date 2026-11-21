@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The node benchmark has a decode measurement and a per-node capacity verdict: the smaller of decode and detection capacity, naming which one limits.
+
 ## [1.2.622] - 2026-11-21
 
 ### Changed
