@@ -53,6 +53,9 @@ import { templateEditPath } from '../../components/remote/EditTemplateButton'
 import { NewAutomationChooser } from './templates/NewAutomationChooser'
 import { QuickEditDialog, type QuickEditValues } from './shared/QuickEditDialog'
 import { automationQuickEditInput, quickEditValuesOf } from './shared/quick-edit-inputs'
+import { BuildQuickModal } from './shared/BuildQuickModal'
+import { runEditorPath } from './shared/quick-runs'
+import { AutomationQuickBody } from './shared/quick-bodies/AutomationQuickBody'
 import { TemplateInstancePanel } from './templates/TemplateInstancePanel'
 import { FROM_TEMPLATE_PARAM } from './templates/template-params'
 
@@ -90,6 +93,8 @@ export function AutomationsTab({
   const [logsFor, setLogsFor] = useState<string | null>(null)
   /** The automation whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  /** The automation whose quick modal (row click) is open. */
+  const [quickModalId, setQuickModalId] = useState<string | null>(null)
   const [chooserOpen, setChooserOpen] = useState(false)
   const [fromTemplate, setFromTemplate] = useState<string | null>(null)
   const [templateError, setTemplateError] = useState<string | null>(null)
@@ -167,6 +172,14 @@ export function AutomationsTab({
       setQuickEditId(null)
       refresh()
     },
+  })
+  const modalUpdate = useMutation({
+    mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
+      system.trpcClient.coreBlocks.update.mutate({
+        blockId: input.block.id,
+        block: automationQuickEditInput(input.block, input.values),
+      }),
+    onSuccess: refresh,
   })
   const update = useMutation({
     mutationFn: (input: { blockId: string; block: CoreBlockInput }) =>
@@ -307,7 +320,6 @@ export function AutomationsTab({
             <AutomationActions
               unreadable={recipe.ok ? null : recipe.reason}
               onEdit={() => openEdit(block.id)}
-              onQuickEdit={() => setQuickEditId(block.id)}
               onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
               onDelete={() => {
                 void confirm({
@@ -356,6 +368,40 @@ export function AutomationsTab({
           setQuickEditId(null)
         }}
       />
+    )
+
+  const quickModalBlock =
+    quickModalId === null ? null : ((all ?? []).find((b) => b.id === quickModalId) ?? null)
+  const quickModal =
+    quickModalBlock === null ? null : (
+      <BuildQuickModal
+        subjectKey={quickModalBlock.id}
+        name={quickModalBlock.name}
+        tags={quickModalBlock.tags ?? []}
+        enabled={quickModalBlock.enabled}
+        enabledBusy={setEnabled.isPending}
+        onEnabledChange={(enabled) => setEnabled.mutate({ blockId: quickModalBlock.id, enabled })}
+        saving={modalUpdate.isPending}
+        error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
+        onSave={(values) => modalUpdate.mutate({ block: quickModalBlock, values })}
+        openLabel={t('build.quickModal.openAutomation', 'Open automation')}
+        onOpen={() => {
+          setQuickModalId(null)
+          openEdit(quickModalBlock.id)
+        }}
+        onClose={() => {
+          modalUpdate.reset()
+          setQuickModalId(null)
+        }}
+      >
+        <AutomationQuickBody
+          block={quickModalBlock}
+          onOpenRun={(runId) => {
+            setQuickModalId(null)
+            void navigate(runEditorPath('automations', 'block', quickModalBlock.id, runId))
+          }}
+        />
+      </BuildQuickModal>
     )
 
   if (fromTemplate !== null && !editingOpen) {
@@ -481,7 +527,7 @@ export function AutomationsTab({
               ? t('build.automationsTab.loadingAutomations', 'Loading automations…')
               : t('build.automationsTab.noAutomationsYet', 'No automations yet.')
           }
-          onRowClick={(block) => openEdit(block.id)}
+          onRowClick={(block) => setQuickModalId(block.id)}
         />
       )}
 
@@ -497,6 +543,7 @@ export function AutomationsTab({
         onClose={() => setChooserOpen(false)}
       />
       {quickEditDialog}
+      {quickModal}
     </div>
   )
 }

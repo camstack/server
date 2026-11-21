@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The action editor offers the same steps as an automation's Then (except code), and a wait step takes one number plus a unit (ms, s, min, h).
+- Build sections: clicking a row of Automations, Actions, Schedulers, Code, Custom Device or Templates opens a quick modal with inline name and tags, the enable switch, recent runs and an Open button.
 
 ## [1.2.726] - 2026-11-21
 

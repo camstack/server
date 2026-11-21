@@ -117,7 +117,10 @@ export function AutomationEditor({
   // A row that asks which trigger fired names trigger rows by id: every edit leaves them all named.
   const setRecipe = (next: AutomationRecipe): void => setRecipeState(ensureTriggerIds(next))
   const [showLogs, setShowLogs] = useState(false)
-  const [runId, setRunId] = useState<string | null>(null)
+  // A quick-modal link arrives with `?run=`, so the editor opens on that run.
+  const [runId, setRunId] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('run'),
+  )
   const traces = useCoreBlocksGetTraces(
     { blockId: existing?.id ?? 'none' },
     { enabled: existing !== null, refetchInterval: TRACES_POLL_MS },

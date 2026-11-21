@@ -13,7 +13,6 @@ import {
   type BadgeVariant,
   Button,
   type DataColumn,
-  IconButton,
   EmptyState,
   ErrorBox,
   Skeleton,
@@ -26,13 +25,16 @@ import {
 } from '@camstack/ui-library'
 import { actionSearchText, actionTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
-import { ListChecks, Pencil, Play, Plus } from 'lucide-react'
+import { ListChecks, Play, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
 import { QuickEditDialog } from '../shared/QuickEditDialog'
 import { actionQuickEditInput, quickEditValuesOf } from '../shared/quick-edit-inputs'
+import { BuildQuickModal } from '../shared/BuildQuickModal'
+import { ActionExporters } from '../shared/quick-bodies/ActionExporters'
+import { ActionQuickBody } from '../shared/quick-bodies/ActionQuickBody'
 import { ActionEditor } from './ActionEditor'
 
 const POLL_MS = 5_000
@@ -88,6 +90,11 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
 
   /** The action whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  /** The action whose quick modal (row click) is open. */
+  const [quickModalId, setQuickModalId] = useState<string | null>(null)
+  const modalUpdate = useActionsUpdate({
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: [['actions']] }),
+  })
   const quickUpdate = useActionsUpdate({
     onSuccess: () => {
       setQuickEditId(null)
@@ -153,19 +160,6 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         align: 'right',
         render: (entry) => (
           <span className="inline-flex items-center justify-end gap-1">
-            {!entry.readOnly && (
-              <IconButton
-                icon={Pencil}
-                size="sm"
-                variant="ghost"
-                aria-label={t('build.quickEdit.action', 'Quick edit')}
-                data-testid={`action-quick-edit-${entry.id}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setQuickEditId(entry.id)
-                }}
-              />
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -210,6 +204,36 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
           setQuickEditId(null)
         }}
       />
+    )
+
+  const modalEntry =
+    quickModalId === null ? null : (entries.find((entry) => entry.id === quickModalId) ?? null)
+  const quickModal =
+    modalEntry === null ? null : (
+      <BuildQuickModal
+        subjectKey={modalEntry.id}
+        name={modalEntry.name}
+        tags={modalEntry.tags ?? []}
+        readOnly={modalEntry.readOnly}
+        saving={modalUpdate.isPending}
+        error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
+        onSave={(values) => {
+          const check = actionQuickEditInput(modalEntry, values)
+          if (check.ok) modalUpdate.mutate({ actionId: modalEntry.id, action: check.input })
+        }}
+        openLabel={t('build.quickModal.openAction', 'Open action')}
+        onOpen={() => {
+          setQuickModalId(null)
+          openEdit(modalEntry.id)
+        }}
+        onClose={() => {
+          modalUpdate.reset()
+          setQuickModalId(null)
+        }}
+        exporters={<ActionExporters actionId={modalEntry.id} />}
+      >
+        <ActionQuickBody entry={modalEntry} />
+      </BuildQuickModal>
     )
 
   if (state.mode !== 'closed') {
@@ -285,11 +309,12 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
             pageSize={25}
             maxBodyHeight={TABLE_SCROLL_MAX_H}
             emptyMessage={t('actions.list.emptyTitle', 'No actions yet')}
-            onRowClick={(entry) => openEdit(entry.id)}
+            onRowClick={(entry) => setQuickModalId(entry.id)}
           />
         </>
       )}
       {quickEditDialog}
+      {quickModal}
     </div>
   )
 }

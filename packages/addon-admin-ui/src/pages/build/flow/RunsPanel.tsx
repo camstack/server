@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
 import { type BlockView, runFailures, runSummary } from './trace-view'
 
-const OUTCOME_VARIANT: Readonly<Record<AutomationRunOutcome, BadgeVariant>> = {
+export const OUTCOME_VARIANT: Readonly<Record<AutomationRunOutcome, BadgeVariant>> = {
   ran: 'success',
   failed: 'danger',
   aborted: 'danger',
@@ -72,7 +72,7 @@ export function useOutcomeLabel(): (outcome: AutomationRunOutcome) => string {
   }
 }
 
-const SCHEDULER_VARIANT: Readonly<Record<SchedulerOutcome, BadgeVariant>> = {
+export const SCHEDULER_VARIANT: Readonly<Record<SchedulerOutcome, BadgeVariant>> = {
   done: 'success',
   missed: 'warning',
   inactive: 'neutral',

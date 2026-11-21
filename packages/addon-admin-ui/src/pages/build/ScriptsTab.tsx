@@ -35,7 +35,6 @@ import {
   Badge,
   Button,
   ErrorBox,
-  IconButton,
   formatLastSeen,
   LogStream,
   TABLE_SCROLL_MAX_H,
@@ -48,11 +47,13 @@ import {
 } from '@camstack/ui-library'
 import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Pencil, RotateCw, ScrollText, Trash2 } from 'lucide-react'
+import { RotateCw, ScrollText, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlockEditor, type BlockTypeLibs } from './BlockEditor'
 import { QuickEditDialog, type QuickEditValues } from './shared/QuickEditDialog'
 import { blockQuickEditInput, quickEditValuesOf } from './shared/quick-edit-inputs'
+import { BuildQuickModal } from './shared/BuildQuickModal'
+import { ScriptQuickBody } from './shared/quick-bodies/ScriptQuickBody'
 import { isPlainScript } from './automation/recipe-from-code'
 import {
   badgeVariantForTone,
@@ -180,6 +181,16 @@ export function ScriptsTab({
       // A new script is named and tagged straight away, in the shared modal.
       setQuickEditId(result.block.id)
     },
+  })
+  /** The script whose quick modal (row click) is open. */
+  const [quickModalId, setQuickModalId] = useState<string | null>(null)
+  const modalUpdate = useMutation({
+    mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
+      system.trpcClient.coreBlocks.update.mutate({
+        blockId: input.block.id,
+        block: blockQuickEditInput(input.block, input.values),
+      }),
+    onSuccess: refresh,
   })
   const quickUpdate = useMutation({
     mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
@@ -333,15 +344,6 @@ export function ScriptsTab({
               >
                 {t('common.edit', 'Edit')}
               </Button>
-              <IconButton
-                icon={Pencil}
-                variant="ghost"
-                aria-label={t('build.quickEdit.action', 'Quick edit')}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setQuickEditId(block.id)
-                }}
-              />
               <Button
                 variant="ghost"
                 onClick={(e) => {
@@ -456,6 +458,36 @@ export function ScriptsTab({
       />
     )
 
+  const modalBlock =
+    quickModalId === null ? null : (blocks.find((b) => b.id === quickModalId) ?? null)
+  const quickModal =
+    modalBlock === null ? null : (
+      <BuildQuickModal
+        subjectKey={modalBlock.id}
+        name={modalBlock.name}
+        tags={modalBlock.tags ?? []}
+        enabled={modalBlock.enabled}
+        enabledBusy={setEnabled.isPending}
+        onEnabledChange={(enabled) => setEnabled.mutate({ blockId: modalBlock.id, enabled })}
+        saving={modalUpdate.isPending}
+        error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
+        onSave={(values) => modalUpdate.mutate({ block: modalBlock, values })}
+        openLabel={t('build.quickModal.openScript', 'Open script')}
+        onOpen={() => {
+          setQuickModalId(null)
+          setSavedBlock(modalBlock)
+          openEdit(modalBlock.id)
+          onBlockIdChange?.(modalBlock.id)
+        }}
+        onClose={() => {
+          modalUpdate.reset()
+          setQuickModalId(null)
+        }}
+      >
+        <ScriptQuickBody block={modalBlock} />
+      </BuildQuickModal>
+    )
+
   if (editingOpen) {
     return (
       <>
@@ -522,14 +554,11 @@ export function ScriptsTab({
               ? t('build.scriptsTab.loadingScripts', 'Loading scripts…')
               : t('build.scriptsTab.noScriptsYet', 'No scripts yet.')
         }
-        onRowClick={(block) => {
-          setSavedBlock(block)
-          openEdit(block.id)
-          onBlockIdChange?.(block.id)
-        }}
+        onRowClick={(block) => setQuickModalId(block.id)}
       />
 
       {quickEditDialog}
+      {quickModal}
 
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
       {setEnabled.error != null && <ErrorBox message={errorMessage(setEnabled.error)} />}

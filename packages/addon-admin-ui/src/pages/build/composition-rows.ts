@@ -99,6 +99,8 @@ export function originOfComposition(composition: Composition): CompositionRowOri
 export interface CompositionRow {
   readonly blockId: string
   readonly kind: CompositionRowKind
+  /** The block's enable switch — the quick modal toggles it. */
+  readonly enabled: boolean
   /** The composed device's name, or the customized device's name. */
   readonly name: string
   /** Whether `name` came from a device row that exists (`missing` = target gone). */
@@ -314,6 +316,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
   if (target.kind === 'new') {
     return {
       blockId: view.block.id,
+      enabled: view.block.enabled,
       kind: 'composed',
       name: view.block.name,
       namePresence: 'present',
@@ -329,6 +332,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
   const namePresence = presenceOf(self)
   return {
     blockId: view.block.id,
+    enabled: view.block.enabled,
     kind: 'customization',
     name: self ? self.name : refLabel(target.device),
     namePresence,

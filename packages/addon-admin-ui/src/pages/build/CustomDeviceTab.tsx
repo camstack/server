@@ -13,19 +13,19 @@ import {
   Card,
   type DataColumn,
   ErrorBox,
-  IconButton,
   TABLE_SCROLL_MAX_H,
   TaggedDataTable,
   useConfirm,
   useCoreBlocksDelete,
   useCoreBlocksListCompositions,
+  useCoreBlocksSetEnabled,
   useDeviceLabelById,
   useDeviceManagerSetName,
   useDeviceManagerSetTags,
   useItemFormUrl,
 } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
-import { Boxes, Pencil, Trash2 } from 'lucide-react'
+import { Boxes, Trash2 } from 'lucide-react'
 import { CompositionBlockEditor } from '../../components/composition-editor/CompositionBlockEditor'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,6 +48,11 @@ import {
 import { badgeVariantForTone } from './core-block-status'
 import i18n from '../../i18n/index'
 import { QuickEditDialog, type QuickEditValues } from './shared/QuickEditDialog'
+import { BuildQuickModal } from './shared/BuildQuickModal'
+import {
+  CustomDeviceExporters,
+  CustomDeviceQuickBody,
+} from './shared/quick-bodies/CustomDeviceQuickBody'
 import { BuildEditorFrame } from './shared/BuildEditorFrame'
 
 const POLL_MS = 10_000
@@ -109,6 +114,9 @@ export function CustomDeviceTab({
   const remove = useCoreBlocksDelete()
   /** The composed device whose Quick edit modal is open. */
   const [quickEditBlock, setQuickEditBlock] = useState<string | null>(null)
+  /** The composed device whose quick modal (row click) is open. */
+  const [quickModalBlock, setQuickModalBlock] = useState<string | null>(null)
+  const setEnabled = useCoreBlocksSetEnabled()
   const setName = useDeviceManagerSetName()
   const setTags = useDeviceManagerSetTags()
 
@@ -129,7 +137,7 @@ export function CustomDeviceTab({
   const read = compositions.data
   const body = compositionBody(read, compositions.error, () => void compositions.refetch(), fleet, {
     onEditComposed: (blockId) => formUrl.openEdit(blockId),
-    onQuickEdit: (row) => setQuickEditBlock(row.blockId),
+    onOpenQuick: (row) => setQuickModalBlock(row.blockId),
     deleting: remove.isPending,
     onDelete: (row) => {
       void confirm({
@@ -187,6 +195,43 @@ export function CustomDeviceTab({
       />
     )
 
+  const modalRow =
+    quickModalBlock === null
+      ? null
+      : (composedRows.find((r) => r.blockId === quickModalBlock) ?? null)
+  const quickModal =
+    modalRow === null ? null : (
+      <BuildQuickModal
+        subjectKey={modalRow.blockId}
+        name={modalRow.name}
+        tags={modalRow.tags}
+        readOnly={modalRow.reportedDeviceId === null}
+        enabled={modalRow.enabled}
+        enabledBusy={setEnabled.isPending}
+        onEnabledChange={(enabled) =>
+          setEnabled.mutate(
+            { blockId: modalRow.blockId, enabled },
+            { onSuccess: () => void compositions.refetch() },
+          )
+        }
+        saving={setName.isPending || setTags.isPending}
+        error={quickError}
+        onSave={(values) => void quickSave(modalRow, values)}
+        openLabel={t('build.quickModal.openDevice', 'Open custom device')}
+        onOpen={() => {
+          setQuickModalBlock(null)
+          formUrl.openEdit(modalRow.blockId)
+        }}
+        onClose={() => {
+          setQuickError(null)
+          setQuickModalBlock(null)
+        }}
+        exporters={<CustomDeviceExporters row={modalRow} />}
+      >
+        <CustomDeviceQuickBody row={modalRow} />
+      </BuildQuickModal>
+    )
+
   if (isNew || editingId !== null) {
     const editingRow =
       editingId === null ? null : (composedRows.find((r) => r.blockId === editingId) ?? null)
@@ -223,6 +268,7 @@ export function CustomDeviceTab({
     <>
       {body}
       {quickEditDialog}
+      {quickModal}
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
     </>
   )
@@ -252,7 +298,7 @@ function notLoadedNote(reason: string): ReactNode {
 
 interface CompositionBodyHandlers {
   readonly onEditComposed: (blockId: string) => void
-  readonly onQuickEdit: (row: CompositionRow) => void
+  readonly onOpenQuick: (row: CompositionRow) => void
   readonly deleting: boolean
   readonly onDelete: (row: CompositionRow) => void
 }
@@ -385,7 +431,7 @@ function CompositionSection({
         pageSize={25}
         maxBodyHeight={TABLE_SCROLL_MAX_H}
         emptyMessage={emptyMessage}
-        onRowClick={kind === 'composed' ? (row) => handlers.onEditComposed(row.blockId) : undefined}
+        onRowClick={kind === 'composed' ? (row) => handlers.onOpenQuick(row) : undefined}
       />
     </section>
   )
@@ -470,18 +516,6 @@ function columnsFor(
       render: (row) => {
         return (
           <div className="flex justify-end gap-1">
-            {row.reportedDeviceId !== null && (
-              <IconButton
-                icon={Pencil}
-                variant="ghost"
-                aria-label={t('build.quickEdit.action', 'Quick edit')}
-                data-testid={`composed-quick-edit-${row.blockId}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handlers.onQuickEdit(row)
-                }}
-              />
-            )}
             <Button
               variant="ghost"
               title={t('common.edit', 'Edit')}

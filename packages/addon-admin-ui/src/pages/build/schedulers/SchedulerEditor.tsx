@@ -103,7 +103,10 @@ export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: Schedu
   }, [storedName, storedTags])
   const [profileId, setProfileId] = useState<string>(() => draft.profiles[0]?.id ?? '')
   const [pointId, setPointId] = useState<string | null>(null)
-  const [runId, setRunId] = useState<string | null>(null)
+  // A quick-modal link arrives with `?run=`, so the editor opens on that run.
+  const [runId, setRunId] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('run'),
+  )
 
   const refresh = (): void => {
     void queryClient.invalidateQueries({ queryKey: [['schedulers']] })

@@ -11,7 +11,6 @@ import {
   type DataColumn,
   EmptyState,
   ErrorBox,
-  IconButton,
   Skeleton,
   Switch,
   TABLE_SCROLL_MAX_H,
@@ -24,12 +23,16 @@ import {
 } from '@camstack/ui-library'
 import { schedulerSearchText, schedulerTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
-import { CalendarClock, Pencil, Plus } from 'lucide-react'
+import { CalendarClock, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
 import { QuickEditDialog } from '../shared/QuickEditDialog'
 import { quickEditValuesOf, schedulerQuickEditInput } from '../shared/quick-edit-inputs'
+import { BuildQuickModal } from '../shared/BuildQuickModal'
+import { runEditorPath } from '../shared/quick-runs'
+import { useNavigate } from 'react-router-dom'
+import { SchedulerQuickBody } from '../shared/quick-bodies/SchedulerQuickBody'
 import { SchedulerEditor } from './SchedulerEditor'
 
 const POLL_MS = 5_000
@@ -52,6 +55,7 @@ interface StatusView {
 export function SchedulersTab({ createRequested = false, onCreateConsumed }: SchedulersTabProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { state, openNew, openEdit, close } = useItemFormUrl({
     editKey: 'scheduler',
     newKey: 'new',
@@ -65,6 +69,11 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
 
   /** The scheduler whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  /** The scheduler whose quick modal (row click) is open. */
+  const [quickModalId, setQuickModalId] = useState<string | null>(null)
+  const modalUpdate = useSchedulersUpdate({
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: [['schedulers']] }),
+  })
   const quickUpdate = useSchedulersUpdate({
     onSuccess: () => {
       setQuickEditId(null)
@@ -156,24 +165,6 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
         render: (entry) => formatRelativeTime(entry.updatedAt),
         sortValue: (entry) => entry.updatedAt,
       },
-      {
-        key: 'quick-edit',
-        align: 'right',
-        render: (entry) => (
-          <IconButton
-            icon={Pencil}
-            size="sm"
-            variant="ghost"
-            aria-label={t('build.quickEdit.action', 'Quick edit')}
-            data-testid={`scheduler-quick-edit-${entry.id}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              setQuickEditId(entry.id)
-            }}
-          />
-        ),
-        notSortableReason: t('schedulers.list.actionNotSortable', 'A control'),
-      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [setEnabled, status.data, t],
@@ -200,6 +191,45 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
           setQuickEditId(null)
         }}
       />
+    )
+
+  const modalEntry =
+    quickModalId === null ? null : (entries.find((entry) => entry.id === quickModalId) ?? null)
+  const quickModal =
+    modalEntry === null ? null : (
+      <BuildQuickModal
+        subjectKey={modalEntry.id}
+        name={modalEntry.name}
+        tags={modalEntry.tags ?? []}
+        enabled={modalEntry.enabled}
+        enabledBusy={setEnabled.isPending}
+        onEnabledChange={(enabled) => setEnabled.mutate({ schedulerId: modalEntry.id, enabled })}
+        saving={modalUpdate.isPending}
+        error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
+        onSave={(values) =>
+          modalUpdate.mutate({
+            schedulerId: modalEntry.id,
+            scheduler: schedulerQuickEditInput(modalEntry, values),
+          })
+        }
+        openLabel={t('build.quickModal.openScheduler', 'Open scheduler')}
+        onOpen={() => {
+          setQuickModalId(null)
+          openEdit(modalEntry.id)
+        }}
+        onClose={() => {
+          modalUpdate.reset()
+          setQuickModalId(null)
+        }}
+      >
+        <SchedulerQuickBody
+          scheduler={modalEntry}
+          onOpenRun={(runId) => {
+            setQuickModalId(null)
+            void navigate(runEditorPath('schedulers', 'scheduler', modalEntry.id, runId))
+          }}
+        />
+      </BuildQuickModal>
     )
 
   if (state.mode !== 'closed') {
@@ -266,10 +296,11 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
           pageSize={25}
           maxBodyHeight={TABLE_SCROLL_MAX_H}
           emptyMessage={t('schedulers.list.emptyTitle', 'No schedulers yet')}
-          onRowClick={(entry) => openEdit(entry.id)}
+          onRowClick={(entry) => setQuickModalId(entry.id)}
         />
       )}
       {quickEditDialog}
+      {quickModal}
     </div>
   )
 }

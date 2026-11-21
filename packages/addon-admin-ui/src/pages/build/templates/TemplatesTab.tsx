@@ -35,7 +35,7 @@ import {
 } from '@camstack/ui-library'
 import { templateSearchText, templateTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
-import { Copy, LayoutTemplate, Pencil, Plus, Tag, Trash2, Workflow } from 'lucide-react'
+import { Copy, LayoutTemplate, Pencil, Plus, Trash2, Workflow } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -43,6 +43,8 @@ import { TEMPLATE_EDIT_PARAM } from '../../../components/remote/EditTemplateButt
 import type { TemplateDraft } from '../../../components/remote/TemplateEditorDialog'
 import { templateKindView } from '../../../components/remote/template-kinds'
 import { useTemplateSave } from '../../../components/remote/useTemplateSave'
+import { BuildQuickModal } from '../shared/BuildQuickModal'
+import { TemplateQuickBody } from '../shared/quick-bodies/TemplateQuickBody'
 import { QuickEditDialog, type QuickEditValues } from '../shared/QuickEditDialog'
 import { quickEditValuesOf, templateQuickEditDraft } from '../shared/quick-edit-inputs'
 import { FROM_TEMPLATE_PARAM } from './template-params'
@@ -102,6 +104,8 @@ export function TemplatesTab({
   const create = useTemplateCreate()
   /** The template whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  /** The template whose quick modal (row click) is open. */
+  const [quickModalId, setQuickModalId] = useState<string | null>(null)
   const saver = useTemplateSave({ onCreated: setQuickEditId })
   const remove = useTemplateDelete()
   const confirm = useConfirm()
@@ -302,19 +306,6 @@ export function TemplatesTab({
                 icon: Pencil,
                 onClick: () => open(r),
               },
-              ...(r.builtIn === true
-                ? []
-                : [
-                    {
-                      id: 'quick-edit',
-                      label: t('build.quickEdit.action', 'Quick edit'),
-                      icon: Tag,
-                      onClick: () => {
-                        saver.clearError()
-                        setQuickEditId(r.id)
-                      },
-                    },
-                  ]),
               {
                 id: 'duplicate',
                 label: t('remote.templates.duplicate'),
@@ -343,6 +334,31 @@ export function TemplatesTab({
   )
 
   const rows = list.data ?? []
+
+  const modalRow = quickModalId === null ? null : (rows.find((r) => r.id === quickModalId) ?? null)
+  const quickModal =
+    modalRow === null ? null : (
+      <BuildQuickModal
+        subjectKey={modalRow.id}
+        name={modalRow.name}
+        tags={modalRow.tags ?? []}
+        readOnly={modalRow.builtIn === true}
+        saving={saver.saving}
+        error={saver.error}
+        onSave={(values) => void quickSave(modalRow, values)}
+        openLabel={t('build.quickModal.openTemplate', 'Open template')}
+        onOpen={() => {
+          setQuickModalId(null)
+          open(modalRow)
+        }}
+        onClose={() => {
+          saver.clearError()
+          setQuickModalId(null)
+        }}
+      >
+        <TemplateQuickBody row={modalRow} />
+      </BuildQuickModal>
+    )
 
   const quickEditing =
     quickEditId === null ? null : (rows.find((r) => r.id === quickEditId) ?? null)
@@ -452,10 +468,14 @@ export function TemplatesTab({
           rowKey={(r) => r.id}
           maxBodyHeight={TABLE_SCROLL_MAX_H}
           defaultSort={{ columnKey: 'name', dir: 'asc' }}
-          onRowClick={open}
+          onRowClick={(row) => {
+            saver.clearError()
+            setQuickModalId(row.id)
+          }}
         />
       )}
       {quickEditDialog}
+      {quickModal}
       <Dialog open={choosing} onOpenChange={(next) => !next && setChoosing(false)}>
         <DialogContent width="md" placement="sheet-on-mobile">
           <DialogHeader>

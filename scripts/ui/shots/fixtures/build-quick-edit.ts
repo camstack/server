@@ -9,6 +9,7 @@ import { tagHandlers } from './_tags'
 import { NOW } from './_time'
 import build, { ACTIONS } from './build'
 import schedulers from './build-schedulers'
+import exporters from './exporters'
 import fountain from './build-fountain'
 import templates from './templates'
 
@@ -57,5 +58,14 @@ export default defineFixtures({
     'schedulers.list': schedulers.handlers['schedulers.list'],
     'schedulers.getStatus': schedulers.handlers['schedulers.getStatus'],
     'schedulers.getTraces': { traces: [], lastError: null },
+    'schedulers.preview': { points: [] },
+    // The action's exporter shortcuts: the instances of the export cap, and what each takes.
+    'addons.listCapabilityProviders': exporters.handlers['addons.listCapabilityProviders'],
+    'integrationInstances.describe': exporters.handlers['integrationInstances.describe'],
+    'integrationInstances.listInstances': exporters.handlers['integrationInstances.listInstances'],
+    'deviceExport.listSupportedEntityKinds': ['device', 'action'],
+    'deviceExport.listExposedEntities': [
+      { entity: { kind: 'action', actionId: 'internal:feed-dog' }, exposedAs: 'Feed the dog' },
+    ],
   },
 })
