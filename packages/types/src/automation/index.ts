@@ -204,6 +204,8 @@ export type {
   AutomationWhen,
   DetectionLeaf,
   DeviceBecomesLeaf,
+  DeviceFaultIsLeaf,
+  DeviceFaultRaisedLeaf,
   DeviceFiredLeaf,
   DeviceFiredMatch,
   DeviceIsLeaf,

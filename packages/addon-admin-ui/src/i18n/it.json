@@ -12970,7 +12970,9 @@
       "firedDeviceId": "il dispositivo che ha segnalato l'evento",
       "eventType": "l'evento, come lo chiama il dispositivo",
       "sourceId": "la parte del dispositivo che ha segnalato (un pulsante), vuoto se non ne indica",
-      "eventKind": "il tipo di pressione (press, long-press …), vuoto se il dispositivo non ne dichiara"
+      "eventKind": "il tipo di pressione (press, long-press …), vuoto se il dispositivo non ne dichiara",
+      "faultDeviceId": "il dispositivo che ha segnalato il guasto",
+      "faultCode": "il codice del guasto segnalato, vuoto se non ne ha uno"
     },
     "class": {
       "animal": "Animale",

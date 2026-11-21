@@ -794,6 +794,8 @@ export type {
   ExpressionLeaf,
   TimeIsLeaf,
   TriggeredByLeaf,
+  DeviceFaultIsLeaf,
+  DeviceFaultRaisedLeaf,
   DeviceFiredLeaf,
   DeviceFiredMatch,
   IdentifiedEventLeaf,

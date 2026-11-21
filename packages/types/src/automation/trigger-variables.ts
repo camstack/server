@@ -71,6 +71,15 @@ const BECOMES_VARIABLES: readonly TriggerVariable[] = describe(BECOMES_DESCRIPTI
   v.name === 'deviceId' ? { ...v, hintKey: 'becomesDeviceId' } : v,
 )
 
+/** What a fault row puts in the bag: the occurrence carries both (`codegen.ts`). */
+const FAULT_VARIABLES: readonly TriggerVariable[] = [
+  { name: 'deviceId', description: 'the device that raised the fault', hintKey: 'faultDeviceId' },
+  {
+    name: 'faultCode',
+    description: 'the code of the fault that was raised, empty when it names none',
+  },
+]
+
 /** A name two trigger kinds describe differently, said for both (a camera, or a device that changed). */
 const SHARED_VARIABLES: Readonly<Record<string, TriggerVariable>> = {
   deviceId: {
@@ -86,6 +95,7 @@ export function triggerLeafVariables(kind: string): readonly TriggerVariable[] {
   if (kind === 'stationary') return STATIONARY_VARIABLES
   if (kind === 'device-becomes') return BECOMES_VARIABLES
   if (kind === 'device-fired') return FIRED_VARIABLES
+  if (kind === 'device-fault-raised') return FAULT_VARIABLES
   return []
 }
 

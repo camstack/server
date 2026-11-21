@@ -236,6 +236,10 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
         read.slice !== null && typeof read.slice === 'object' ? Reflect.get(read.slice, name) : undefined
       const raised = watch.observe(readFault(field('active'), field('code'), field('faults')))
       if (raised === undefined) return
+      ctx.logger.info(
+        'device fault raised — ' + (raised.code === '' ? 'a fault' : 'fault ' + raised.code),
+        { tags: { deviceId: ${j(trigger.deviceId)} }, leaf: ${at} },
+      )
       void run(
         {
           kind: 'device-fault-raised',

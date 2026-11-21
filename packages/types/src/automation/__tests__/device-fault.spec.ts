@@ -71,6 +71,20 @@ describe('device-fault-is', () => {
     expect(cold.unknown).toBe(true)
   })
 
+  it('a read that failed or answered garbage stays unknown, never "no fault"', () => {
+    // A failed read applies nothing to the mirror, so it stays cold ...
+    expect(evaluate(isFault(['unreachable']), undefined)).toMatchObject({
+      pass: false,
+      unknown: true,
+    })
+    // ... and a slice without a boolean `active` is not an answer either.
+    for (const garbage of [null, 'x', {}, { active: 'yes' }, { code: 'unreachable' }]) {
+      const r = evaluate(isFault([]), garbage)
+      expect(r.unknown, JSON.stringify(garbage)).toBe(true)
+      expect(r.pass).toBe(false)
+    }
+  })
+
   it('a not-leaf over an unknown reading stays unknown, never passes', () => {
     const r = evaluate({ kind: 'not', child: isFault(['unreachable']) }, undefined)
     expect(r.unknown).toBe(true)

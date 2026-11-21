@@ -38,6 +38,8 @@ import type { DraftKind, DraftSite, DraftSiteDevice, DraftValidation } from './d
 
 const MAX_ISSUES = 8
 const CAMERA_TYPE = 'camera'
+/** The cap a fault row reads: a device without it can never raise one. */
+const FAULT_CAP = 'error'
 
 function zodIssues(error: z.ZodError): readonly string[] {
   return error.issues.map((i) => {
@@ -108,6 +110,17 @@ function leafIssues(site: DraftSite, when: AutomationWhen, root: string): readon
               `${at}: camera "${device.name}" has no zone ${bad.join(', ')} (zones: ${(device.zones ?? []).join(', ')})`,
             )
           }
+        }
+        return
+      }
+      if (leaf.kind === 'device-fault-raised' || leaf.kind === 'device-fault-is') {
+        const device = deviceOf(site, leaf.deviceId)
+        if (device === undefined) {
+          issues.push(`${at}: no device has id ${leaf.deviceId}`)
+          return
+        }
+        if (!device.caps.includes(FAULT_CAP)) {
+          issues.push(`${at}: ${describeDevice(device)} does not serve cap "${FAULT_CAP}"`)
         }
         return
       }

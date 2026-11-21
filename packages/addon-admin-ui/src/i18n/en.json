@@ -12948,7 +12948,9 @@
       "firedDeviceId": "the device that fired",
       "eventType": "the event, as the device names it",
       "sourceId": "the part of the device that fired (a button), empty when it names none",
-      "eventKind": "the kind of press (press, long-press …), empty when the device declares none"
+      "eventKind": "the kind of press (press, long-press …), empty when the device declares none",
+      "faultDeviceId": "the device that raised the fault",
+      "faultCode": "the code of the fault that was raised, empty when it names none"
     },
     "class": {
       "animal": "Animal",

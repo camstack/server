@@ -104,4 +104,35 @@ describe('triggerVariablesOf', () => {
       expect(source).not.toContain('...decision.vars')
     }
   })
+
+  it('a fault row offers its device and the fired code, and does not hide the other rows', () => {
+    const fault: AutomationWhen = { kind: 'device-fault-raised', deviceId: 9, codes: [] }
+    expect(names(fault)).toEqual(['deviceId', 'faultCode'])
+    // A tree offers the intersection by name: the other row keeps its own variables.
+    expect(names({ kind: 'any', children: [fault, detection] })).toEqual(['deviceId'])
+    expect(names({ kind: 'any', children: [detection, fault] })).toEqual(['deviceId'])
+    // A state row of the same kind adds no event row and takes nothing away.
+    expect(
+      names({
+        kind: 'all',
+        children: [fault, { kind: 'device-fault-is', deviceId: 9, codes: [] }],
+      }),
+    ).toEqual(['deviceId', 'faultCode'])
+  })
+
+  it('the generated fault block puts the fired code in the run bag and logs the raise with the device tag', () => {
+    const source = generateAutomationBlock({
+      name: 'x',
+      recipe: {
+        when: { kind: 'device-fault-raised', deviceId: 9, codes: ['unreachable'] },
+        actions: [
+          { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'button.press' },
+        ],
+      },
+    })
+    expect(source).toContain('faultCode: raised.code')
+    expect(source).toMatch(
+      /ctx\.logger\.info\(\s*'device fault raised[\s\S]*?tags: \{ deviceId: 9 \}/,
+    )
+  })
 })
