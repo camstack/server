@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { AccessoryShrinkGate } from '../../../system/src/kernel/moleculer/accessory-prune-gate.js'
 import {
   ACCESSORY_REPROBE_RETRY_MS,
   ACCESSORY_REPROBE_WINDOW_MS,
@@ -48,25 +47,27 @@ describe('AccessoryReprobeWindow', () => {
     expect(w.tryBegin(20 * H, 0)).toBe(true)
   })
 
-  it('two wakes past the window prune a vanished accessory through the shrink gate', () => {
+  it('every admitted re-probe lands on a strictly later lastProbedAt, which the kernel shrink gate (D49) needs to confirm a prune', () => {
     const w = new AccessoryReprobeWindow()
-    const gate = new AccessoryShrinkGate()
-    const ghost = 99
-    let probedAt = 1_000 // the adoption probe listed the ghost
+    let probedAt = 1_000 // the adoption probe
     let now = probedAt
+    const admitted: number[] = [probedAt]
 
-    const wake = (): readonly number[] | null => {
-      if (!w.tryBegin(now, probedAt)) return null
+    const wake = (): boolean => {
+      if (!w.tryBegin(now, probedAt)) return false
       probedAt = now // the re-probe completes: lastProbedAt advances
       w.end()
-      return gate.decide([ghost], probedAt).prune // the camera no longer reports it
+      admitted.push(probedAt)
+      return true
     }
 
     now += 7 * H
-    expect(wake()).toEqual([]) // first complete read lacking it: recorded only
+    expect(wake()).toBe(true)
     now += 1 * H
-    expect(wake()).toBeNull() // inside the window: no probe
+    expect(wake()).toBe(false) // inside the window: no probe
     now += 7 * H
-    expect(wake()).toEqual([ghost]) // second read on a later probe: pruned
+    expect(wake()).toBe(true)
+    expect(admitted.every((t, i) => i === 0 || t > admitted[i - 1]!)).toBe(true)
+    expect(admitted).toHaveLength(3)
   })
 })
