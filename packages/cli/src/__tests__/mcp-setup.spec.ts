@@ -489,7 +489,7 @@ describe('setup_add_node', () => {
 })
 
 describe('registration through MCP', () => {
-  it('the setup toolset serves the six tools', async () => {
+  it('the setup toolset serves its tools', async () => {
     const server = createPublicServer({
       toolsets: ['setup'],
       context: {
@@ -513,6 +513,7 @@ describe('registration through MCP', () => {
       'setup_add_node',
       'setup_connect',
       'setup_discover_hubs',
+      'setup_feasibility',
       'setup_host_check',
       'setup_install_guide',
       'setup_login',

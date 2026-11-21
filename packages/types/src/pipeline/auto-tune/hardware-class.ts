@@ -52,7 +52,16 @@ function parseAppleChip(cpuModel: string): AppleChip | null {
  * matters less than the column's own error.
  */
 export function classifyInferenceHardware(hw: HardwareInfo): HardwareClassification {
-  const cpuModel = hw.cpuModel
+  return classifyCpuModel(hw.cpuModel, hw.nvidia?.usable === true)
+}
+
+/**
+ * The same classification from the two facts it rests on. A caller that has no
+ * platform probe (the CLI's host check, run before anything is installed)
+ * classifies with this, so "is this hardware in the measured table" has one
+ * answer everywhere.
+ */
+export function classifyCpuModel(cpuModel: string, nvidiaUsable: boolean): HardwareClassification {
   const apple = parseAppleChip(cpuModel)
   if (apple !== null) {
     return {
@@ -65,7 +74,7 @@ export function classifyInferenceHardware(hw: HardwareInfo): HardwareClassificat
   if (INTEL_N_SERIES.test(cpuModel)) return { hardwareClass: 'intel-n-series', cpuModel }
   if (AMD_PHOENIX.test(cpuModel)) return { hardwareClass: 'amd-phoenix', cpuModel }
   // A usable NVIDIA card on a CPU with no measured class: the card is what the table knows.
-  if (hw.nvidia?.usable === true) return { hardwareClass: 'nvidia-gpu', cpuModel }
+  if (nvidiaUsable) return { hardwareClass: 'nvidia-gpu', cpuModel }
   return { hardwareClass: 'unknown', cpuModel }
 }
 

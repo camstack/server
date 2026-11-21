@@ -1,0 +1,44 @@
+name: Hardware report
+description: Share what CamStack found and measured on a machine that is not in the sizing tables.
+title: 'Hardware report: '
+labels: ['hardware-report']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. The sizing tables hold only machines that were measured, so a report from
+        a new one makes them true for the next person with the same hardware.
+
+        `camstack host-check --cameras <n>` and the assistant's `setup_wizard` open this form
+        already filled in. Read it before you submit: it should hold the CPU model, the
+        accelerators and the benchmark numbers, and no address, hostname or secret.
+  - type: textarea
+    id: host-check
+    attributes:
+      label: Host check
+      description: The output of `camstack host-check` on the machine CamStack runs on.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Node benchmark
+      description: >-
+        What the node benchmark measured (admin UI: Detection → Benchmark): streams decoded,
+        detection sessions, and which of the two was the limit. Write "Not run yet" if you
+        have not installed.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: cameras
+    attributes:
+      label: Cameras
+      description: How many cameras this machine runs, at which resolution and codec.
+      placeholder: 8 cameras, 4K H.265
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: What worked, what did not, how the machine behaves under load.

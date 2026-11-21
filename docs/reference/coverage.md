@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**254 units · 9118 source files · 246 units claimed by at least one document (9085 files).**
+**254 units · 9123 source files · 246 units claimed by at least one document (9087 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -36,7 +36,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator` | 85 | `pipeline-orchestration`, `zones` | `decisions/adr-1013-one-instance-model.md`, `architecture/inference-devices.md`, `decisions/adr-0650-a-detail-step-the-elected-device-cannot-run-is-delegated-within-the-node.md`, +56 more, 13 ADRs | 2026-11-02 |
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +43 more, 11 ADRs | 2026-11-02 |
 | `packages/addon-provider-reolink` | 73 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +23 more, 2 ADRs | 2026-11-08 |
-| `packages/cli/src/mcp` | 72 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +3 more | 2026-11-04 |
+| `packages/cli/src/mcp` | 73 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +3 more | 2026-11-04 |
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
 | `packages/types/src/composition` | 71 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +24 more | 2026-11-08 |
 | `packages/addon-admin-ui/src/lib` | 67 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
@@ -175,6 +175,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md` | 2026-11-08 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
+| `packages/cli/src/host-check` | 5 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_ | 2026-11-04 |
+| `packages/cli/src/onboarding` | 5 | `tooling` | — | — |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-11-12 |
 | `packages/types/src/schemas` | 5 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |
 | `packages/addon-admin-ui` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +4 more | 2026-11-11 |
@@ -185,7 +187,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-bosch` | 4 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-reolink/src/migrations` | 4 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-waste-collections/src/migrations` | 4 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md` | — |
-| `packages/cli/src/host-check` | 4 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_ | 2026-11-04 |
 | `packages/types/src/enums` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0387-a-new-disk-is-noticed-planned-onto-and-said-out-loud.md`, `decisions/adr-1068-a-category-is-catalogued-or-it-does-not-compile.md` | — |
 | `packages/types/src/helpers` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/logging` | 4 | `logging` | `decisions/adr-0248-channels-are-declared-by-addons-values-stay-in-one-document.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md` _(covers)_ | — |
@@ -221,7 +222,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homematic/src/migrations` | 2 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homematic/src/widgets` | 2 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
-| `packages/cli/src/onboarding` | 2 | `tooling` | — | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/i18n` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/notification` | 2 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |

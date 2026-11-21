@@ -8,8 +8,8 @@ import { z } from 'zod'
 import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './setup-hubs.js'
 import { installGuide } from './setup-install.js'
-import { hostCheck } from '../host-check/host-check.js'
-import { currentPlatform, nodeHostFs, readNvidiaSmi } from '../host-check/node-host.js'
+import { hostOf } from '../onboarding/context.js'
+import { FEASIBILITY_TOOL, FeasibilityArgsShape, setupFeasibility } from './setup-feasibility.js'
 import { setupWizard } from './setup-wizard.js'
 import { loginTool, loginWaitTool } from './setup-login.js'
 import {
@@ -80,18 +80,15 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
   )
   server.tool(
     'setup_host_check',
-    'Read-only, no hub, no login, nothing sent anywhere. Inspects THE MACHINE THIS MCP RUNS ON (run it where CamStack will run, before setup_install_guide): GPUs by vendor (Intel, AMD, NVIDIA), Intel / AMD NPU, Coral USB and PCIe, Hailo, whether it is inside a container or LXC. Returns which accelerators CamStack will use, the ones not supported yet (NVIDIA), the image tag, and ready-to-paste docker run flags, Compose devices, Unraid template fields and Proxmox LXC lines, plus hints (an Intel iGPU switched off in the BIOS, a device not passed into this container).',
+    'Read-only, no hub, no login, nothing sent anywhere. Inspects THE MACHINE THIS MCP RUNS ON (run it where CamStack will run, before setup_install_guide): GPUs by vendor (Intel, AMD, NVIDIA), Intel / AMD NPU, Coral USB and PCIe, Hailo, whether it is inside a container or LXC. Returns which accelerators CamStack will use and which it found but does not use, the image tag, and ready-to-paste docker run flags, Compose devices, Unraid template fields and Proxmox LXC lines, plus hints (an Intel iGPU switched off in the BIOS, a device not passed into this container). Follow it with setup_feasibility.',
     {},
-    async (): Promise<ToolTextResult> => {
-      const platform = currentPlatform()
-      return text(
-        hostCheck({
-          platform,
-          fs: nodeHostFs,
-          nvidiaSmi: platform === 'linux' ? readNvidiaSmi() : null,
-        }),
-      )
-    },
+    async (): Promise<ToolTextResult> => text(hostOf(ctx).check()),
+  )
+  server.tool(
+    FEASIBILITY_TOOL,
+    'Read-only, no hub, no login. Sizes THE MACHINE THIS MCP RUNS ON for the cameras the person plans: memory, CPU and disk from the figures the planning page measured, and one verdict — hub-only, hub-plus-agents or not-a-hub — with its reasons and what the figures do not cover. Ask the person for the camera count, main stream, codec, recording mode and retention first; never guess them. The verdict is provisional until the node benchmark runs after install. Hardware outside the measured tables also gets a prefilled link to share its results; offer it, never open it yourself.',
+    FeasibilityArgsShape,
+    async (args): Promise<ToolTextResult> => text(await setupFeasibility(ctx, args)),
   )
   server.tool(
     'setup_install_guide',
