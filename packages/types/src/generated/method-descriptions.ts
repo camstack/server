@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 852 of 1539 methods.
+ * Coverage: 853 of 1540 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -586,6 +586,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "pipelineOrchestrator.getNodeBenchmarkCandidates": "Node benchmark — root detector candidates per device (what Auto tune would pick first, then the family) and the detail steps the node's catalog offers, for the plan editor.",
   "pipelineOrchestrator.getNodeBenchmarkPreflight": "Node benchmark — what a run of this plan would do, without doing it: the cameras that leave the node, those that cannot (the node is their only frame source; they stay and flag the run), the estimated duration and every reason it may not start. The confirmation shows this.",
   "pipelineOrchestrator.getNodeBenchmarkStatus": "Node benchmark — the active run (or the last one) and the node in benchmark mode.",
+  "pipelineOrchestrator.getNodeCapacityVerdict": "Node capacity verdict — per node with any fresh measurement: the detection capacity (the node total over its devices, each at the cell for the model it runs now), the decode capacity, and the smaller of the two with the plane that limits. The decode capacity is for the HEAVIEST measured profile (the fewest streams), the one a node is sized for. A plane that was not measured is null, never zero; complete is true only when both are measured and fresh.",
   "pipelineOrchestrator.getNodeInferenceDevices": "DEVICE-AWARE merged view of ONE node's inference accelerators. Joins each physical device the node HAS — probed live via a node-pinned platformProbe.getCapabilities (the platform-probe singleton is targeted by the nodeId cap INPUT, since a nodePin context is ignored by a singleton mount) — with its stored opt-in (enabled/weight) and the object-detection defaultModelId the executor would run for that deviceKey. Disabled-but-configured keys still appear. An unreachable node returns reachable:false + best-effort stored-only devices (never throws). Read surface for the cluster/agent multi-device UI — hence a default (read-level) auth, matching the other getAgent* reads.",
   "pipelineOrchestrator.getPipelineAssignment": "Get one camera's assignment, or null if unassigned.",
   "pipelineOrchestrator.getPipelineAssignments": "Get the full camera-to-agent assignment map.",
