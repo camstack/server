@@ -184,6 +184,55 @@ describe('battery camera: the lazy materialize is not retried for ever', () => {
   })
 })
 
+describe('a camera known to be ASLEEP is not polled at 1 s while its source is built', () => {
+  let broker: StreamBroker
+  let logger: IScopedLogger
+  let requests: number
+
+  const setup = async (): Promise<void> => {
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+    })
+    logger = createMockLogger()
+    requests = 0
+    broker = new StreamBroker('5487/native:main', logger)
+    // The probe does not say battery: the committed sleep state alone is enough.
+    broker.setBatteryProbe(() => false)
+    broker.setDeviceAsleep(true)
+    broker.onEncodedData(() => {})
+    broker.setSourceProvider(() => lazySource())
+    broker.setRequestSourceRefresh(() => {
+      requests++
+    })
+    await broker.start(lazySource())
+  }
+
+  afterEach(async () => {
+    await broker.stop()
+    vi.useRealTimers()
+  })
+
+  it('asks the publisher once, says it stopped once, and stays quiet', async () => {
+    await setup()
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    expect(requests).toBeLessThanOrEqual(2)
+    const gaveUp = vi
+      .mocked(logger.info)
+      .mock.calls.filter(([msg]) => typeof msg === 'string' && msg.includes('gave up'))
+    expect(gaveUp).toHaveLength(1)
+    expect(gaveUp[0]?.[1]).toMatchObject({ tags: { deviceId: 5487 } })
+  })
+
+  it('a live viewer attaching afterwards still triggers an immediate attempt', async () => {
+    await setup()
+    await vi.advanceTimersByTimeAsync(60_000)
+    const before = requests
+    broker.onEncodedData(() => {})
+    await vi.advanceTimersByTimeAsync(100)
+    expect(requests).toBeGreaterThan(before)
+  })
+})
+
 describe('battery camera: the watchdog does not redial at the floor delay for ever', () => {
   let server: net.Server
   let port = 0

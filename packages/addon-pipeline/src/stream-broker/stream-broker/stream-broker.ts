@@ -4818,6 +4818,9 @@ export class StreamBroker implements IStreamBroker {
     // resolves the fresh source via `sourceProvider`.
     if (typeof source.url === 'string' && source.url.startsWith('lazy:rfc4571:')) {
       const nowMs = Date.now()
+      // A re-entry after the first request: the publisher has had its chance and
+      // no real source came back.
+      const retrying = this.materializeRequestedAt !== 0
       if (this.materializeRequestedAt === 0) this.materializeRequestedAt = nowMs
       const waitedMs = nowMs - this.materializeRequestedAt
       // A materialize is a source being BUILT, not one that is failing, and the
@@ -4826,6 +4829,15 @@ export class StreamBroker implements IStreamBroker {
       // Poll flat while the deadline holds; past it this is a failure and the
       // backoff is right again.
       const withinDeadline = waitedMs < StreamBroker.MATERIALIZE_WAIT_MS
+      // A camera whose committed state is ASLEEP cannot build a stream: the
+      // publisher's login is refused until it wakes (a battery doorbell behind a
+      // hub answers 400), so polling it at 1 s is a log flood and a wake cost for
+      // nothing. One request went out; stop, and let the wake edge or a new
+      // consumer (`checkDemand`) start the next episode.
+      if (retrying && this.deviceAsleep) {
+        this.giveUpDial('materialize', { waitedMs, asleep: true })
+        return
+      }
       // Past the deadline a battery camera is asleep or dead, and the backoff
       // below would ask the publisher to log in on it every 30 s for ever.
       if (!withinDeadline && this.isBattery()) {
