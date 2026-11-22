@@ -3050,13 +3050,10 @@
       "formulaOf": "Formula: {{formula}}",
       "fromLink": "Added by a device link",
       "linkActive": "Active",
-      "group": {
+      "capLink": {
         "sourceDevice": "Source device",
-        "hint": "Picking a device replaces the current mapping of every reading it provides, custom transforms included. Readings it does not provide stay as they are.",
-        "mixed": "Mixed sources",
-        "filled": "Filled: {{names}}.",
-        "skipped": "Not provided by this device, left as they were: {{names}}.",
-        "nothing": "This device provides none of these readings."
+        "projectHint": "The whole capability follows this device, not single values. Readings stored one by one below are refused.",
+        "referenceHint": "This device's own capability is read for the card; nothing is copied into this device."
       }
     },
     "followSwitch": {
@@ -10815,7 +10812,9 @@
         "srcBattery": "Battery",
         "srcGrid": "Grid",
         "dischargedDay": "Discharged",
-        "chargedDay": "Charged"
+        "chargedDay": "Charged",
+        "hpCop": "COP today",
+        "hpCopNow": "COP now"
       },
       "ir": {
         "canLearn": "Can learn",
@@ -11465,6 +11464,11 @@
         "system": "System",
         "metrics": "Metrics"
       }
+    },
+    "capLink": {
+      "sourceGone": "Source device removed",
+      "disabled": "Link switched off",
+      "hint": "The whole capability follows this device, not single values."
     }
   },
   "helpers": {

@@ -9,15 +9,16 @@
  * listed by name: a camera-sensors span (a composed device has no camera
  * bridge) and a `replace` (it rewrites a field of the device's OWN native cap).
  */
-import { fireEvent, render, screen } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
   CAP_CUSTOMIZE_CATALOG,
   type CustomizeCatalogTarget,
   type DeviceInfo,
 } from '@camstack/types'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../i18n'
 
 interface Read {
@@ -40,8 +41,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const pending = { status: 'pending', data: undefined, error: null }
   return {
     ...actual,
-    // The group's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    // The link row's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    CapLinkCell: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
     DeviceValuePicker: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
+    useCoreBlocksGetCapLinks: () => ({ status: 'pending', data: undefined, error: null }),
     useCoreBlocksGetComposition: () => compositionRead.current,
     useCoreBlocksUpdateComposition: mutation,
     useCoreBlocksListComposableCaps: () => composable.current,

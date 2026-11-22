@@ -5,8 +5,9 @@
  *
  * Hooks are stubbed at the ui-library boundary; the i18n is real (English).
  */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -171,8 +172,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   })
   return {
     ...actual,
-    // The group's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    // The link row's "Source device" picker searches the hub; a stand-in keeps its place in the table.
+    CapLinkCell: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
     DeviceValuePicker: (props: { readonly testId?: string }) => <span data-testid={props.testId} />,
+    useCoreBlocksGetCapLinks: () => ({ status: 'pending', data: undefined, error: null }),
     useDeviceManagerGetDevice: () => ({
       status: deviceRead.current.status,
       data: deviceRead.current.status === 'success' ? device.current : undefined,
@@ -795,8 +798,8 @@ describe('CustomizeTab — a composed IR media player', () => {
     fireEvent.click(screen.getByTestId('customize-table-add'))
     expect(screen.getByTestId('customize-table-add-running-state.running')).toBeTruthy()
     expect(screen.getByTestId('customize-table-add-power-meter.power')).toBeTruthy()
-    // The meter's "Source device" picker is there from the start: one pick fills the four readings.
-    expect(screen.getByTestId('source-group-picker-power-meter')).toBeTruthy()
+    // The meter's "Source device" link row is there from the start: one pick fills the four readings.
+    expect(screen.getByTestId('cap-link-power-meter-meter-device')).toBeTruthy()
   })
 })
 

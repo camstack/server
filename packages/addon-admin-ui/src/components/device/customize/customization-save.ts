@@ -15,8 +15,8 @@ import {
   mergeScalarTarget,
   removeScalarTarget,
 } from '@camstack/types'
-import type { CustomizationState } from './customization-read'
 import i18n from '../../../i18n/index'
+import type { CustomizationState } from './customization-read'
 
 export interface CustomizationCreatePlan {
   readonly kind: 'create'
@@ -53,7 +53,7 @@ export function withFeature(
   feature: CompositionFieldsFeature,
 ): Composition {
   const features = current?.features ?? []
-  const index = features.findIndex((f) => f.cap === feature.cap)
+  const index = features.findIndex((f) => f.cap === feature.cap && f.kind !== 'capLink')
   return {
     // A composed device keeps whatever else it carries (a helper spec): only the features change.
     ...current,
@@ -92,7 +92,7 @@ export function withoutScalarTarget(
   if (remaining === null) return withoutFeature(current, cap)
   return {
     ...current,
-    features: current.features.map((f) => (f.cap === cap ? remaining : f)),
+    features: current.features.map((f) => (f.cap === cap && f.kind !== 'capLink' ? remaining : f)),
   }
 }
 
@@ -102,7 +102,7 @@ export function withoutScalarTarget(
  * the block); a composed device is the device itself, so it stays, naked (D1004).
  */
 export function withoutFeature(current: Composition, cap: string): Composition | null {
-  const features = current.features.filter((f) => f.cap !== cap)
+  const features = current.features.filter((f) => !(f.cap === cap && f.kind !== 'capLink'))
   if (features.length === 0 && current.target.kind === 'existing') return null
   return { ...current, features }
 }
@@ -111,7 +111,7 @@ export function featureOf(
   current: Composition | null,
   cap: string,
 ): CompositionFieldsFeature | null {
-  const feature = current?.features.find((f) => f.cap === cap)
+  const feature = current?.features.find((f) => f.cap === cap && f.kind === 'fields')
   return feature !== undefined && feature.kind === 'fields' ? feature : null
 }
 

@@ -1,7 +1,7 @@
 /**
- * Customize tab of a dryer that can take the "Power and energy" extension: `power` is already
- * read from a metered plug (device 560), the plug also exposes energy and voltage but no current.
- * Shows the "Source device" row above the readings. Load alone (`--fixtures customize-meter-group`).
+ * Customize tab of a dryer that can take the "Power and energy" extension: the whole meter is
+ * linked to a metered plug (device 560) by one stored `capLink` (D1076).
+ * Shows the "Source device" link row above the readings. Load alone (`--fixtures customize-meter-group`).
  */
 import { defineFixtures } from './_define'
 import washerArea from './customize-washer'
@@ -9,8 +9,6 @@ import { NOW } from './_time'
 
 const washer = washerArea.handlers
 const HA = 'provider-homeassistant'
-
-const literal = (expr: string) => ({ kind: 'expression' as const, expr, bindings: {} })
 
 const VIEW = {
   block: {
@@ -30,17 +28,10 @@ const VIEW = {
         target: { kind: 'existing', device: { addonId: HA, stableId: 'appliance-505' } },
         features: [
           {
-            kind: 'fields',
+            kind: 'capLink',
             cap: 'power-meter',
-            fields: {
-              lastFetchedAt: literal('now'),
-              power: {
-                kind: 'from',
-                source: { addonId: HA, stableId: 'washer-plug' },
-                cap: 'power-meter',
-                fieldPath: 'power',
-              },
-            },
+            linkId: 'meter-device',
+            source: { addonId: HA, stableId: 'washer-plug' },
           },
         ],
       },
@@ -72,7 +63,7 @@ const answerOther = (input: { deviceId: number }): unknown =>
 
 export default defineFixtures({
   area: 'customize-meter-group',
-  description: 'Customize tab with the power-meter "Source device" group row',
+  description: 'Customize tab with the power-meter "Source device" whole-cap link row',
   handlers: {
     ...washer,
     'deviceManager.getBindings': bindingsWithoutMeter,
@@ -80,6 +71,19 @@ export default defineFixtures({
       i.stableId === 'appliance-505'
         ? { state: 'loaded', view: VIEW }
         : { state: 'loaded', view: null },
+    'coreBlocks.getCapLinks': {
+      status: 'ok',
+      links: [
+        {
+          linkId: 'meter-device',
+          cap: 'power-meter',
+          slot: null,
+          mode: 'project',
+          source: { deviceId: 560, cap: 'power-meter' },
+          state: 'linked',
+        },
+      ],
+    },
     'coreBlocks.listComposableCaps': { caps: [{ cap: 'running-state' }, { cap: 'power-meter' }] },
     'deviceManager.getWireableFields': (i: { deviceId: number }) =>
       i.deviceId === 560

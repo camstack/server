@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize shows one Source device row per whole-capability link; the old source group row is removed.
+
 ## [1.2.736] - 2026-11-22
 
 ### Changed

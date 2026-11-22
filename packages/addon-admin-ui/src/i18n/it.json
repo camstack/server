@@ -3125,13 +3125,10 @@
       "formulaOf": "Formula: {{formula}}",
       "fromLink": "Aggiunto da un collegamento tra dispositivi",
       "linkActive": "Attivo",
-      "group": {
+      "capLink": {
         "sourceDevice": "Dispositivo sorgente",
-        "hint": "Scegliere un dispositivo sostituisce la mappatura attuale di ogni lettura che fornisce, trasformazioni personalizzate incluse. Le letture che non fornisce restano invariate.",
-        "mixed": "Sorgenti diverse",
-        "filled": "Compilati: {{names}}.",
-        "skipped": "Non forniti da questo dispositivo, lasciati invariati: {{names}}.",
-        "nothing": "Questo dispositivo non fornisce nessuna di queste letture."
+        "projectHint": "Tutta la funzione segue questo dispositivo, non i singoli valori. Le letture salvate una per una qui sotto vengono rifiutate.",
+        "referenceHint": "La funzione di questo dispositivo viene letta dalla scheda; niente viene copiato in questo dispositivo."
       }
     },
     "followSwitch": {
@@ -10837,7 +10834,9 @@
         "srcBattery": "Batteria",
         "srcGrid": "Rete",
         "dischargedDay": "Scaricata",
-        "chargedDay": "Caricata"
+        "chargedDay": "Caricata",
+        "hpCop": "COP oggi",
+        "hpCopNow": "COP ora"
       },
       "ir": {
         "canLearn": "Può apprendere",
@@ -11487,6 +11486,11 @@
         "system": "Sistema",
         "metrics": "Metriche"
       }
+    },
+    "capLink": {
+      "sourceGone": "Dispositivo sorgente rimosso",
+      "disabled": "Collegamento disattivato",
+      "hint": "L'intera capability segue questo dispositivo, non i singoli valori."
     }
   },
   "helpers": {

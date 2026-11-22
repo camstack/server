@@ -9,14 +9,13 @@
 import {
   CAP_CUSTOMIZE_CATALOG,
   type CustomizeCatalog,
-  type CustomizeSourceGroup,
   type DeviceInfo,
   DeviceType,
 } from '@camstack/types'
 import {
-  DataTable,
-  type DataColumn,
   Button,
+  type DataColumn,
+  DataTable,
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -32,11 +31,25 @@ import type { AssignmentFacts } from '../assignment-availability'
 import { currentComposition } from '../customization-read'
 import { featureOf } from '../customization-save'
 import type { DefaultConsumable } from '../default-consumables'
+import {
+  isLinkedActionLine,
+  LinkedActionButtons,
+  LinkedActionItem,
+  LinkedActionSource,
+  type LinkedActionsState,
+  type LinkedActionTableLine,
+  LinkedActionValue,
+  linkedActionTableLines,
+  useLinkedActions,
+} from '../kinds/LinkedActionsCard'
 import type { Known } from '../known'
 import { followSwitchRowListed } from '../scalar/follow-switch'
-import { storedScalarFeature, scalarRowTitle } from '../scalar/use-scalar-row'
+import { scalarRowTitle, storedScalarFeature } from '../scalar/use-scalar-row'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import type { CustomizationHandle } from '../use-customization'
+import { CapLinkRow } from './CapLinkRow'
+import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
+import { capLinkOfferedOn, type OfferedCapLink } from './cap-link-edit'
 import {
   CUSTOMIZE_SECTIONS,
   type CustomizeRowPlan,
@@ -46,11 +59,7 @@ import {
   planRows,
   splitRows,
 } from './customize-rows'
-import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
 import { EventSourceCell, EventValueCell } from './EventRowCells'
-import { catalogCoveredCaps, offCatalogCards } from './extra-rows'
-import { FillFromDeviceDialog } from './FillFromDeviceDialog'
-import { SourceGroupCell } from './SourceGroupCell'
 import {
   CapActionsCell,
   capGroupTitle,
@@ -60,6 +69,8 @@ import {
   FieldValueCell,
   fieldRowTitle,
 } from './ExtraRowCells'
+import { catalogCoveredCaps, offCatalogCards } from './extra-rows'
+import { FillFromDeviceDialog } from './FillFromDeviceDialog'
 import {
   type FieldGroup,
   type FieldRow,
@@ -67,19 +78,7 @@ import {
   fieldRowState,
   itemFieldRows,
 } from './field-rows'
-import { useFieldSources } from './use-field-sources'
 import { KeyedValueCell } from './KeyedValueCell'
-import {
-  isLinkedActionLine,
-  LinkedActionButtons,
-  LinkedActionItem,
-  LinkedActionSource,
-  LinkedActionValue,
-  type LinkedActionsState,
-  type LinkedActionTableLine,
-  linkedActionTableLines,
-  useLinkedActions,
-} from '../kinds/LinkedActionsCard'
 import { ManagedRowDialog } from './ManagedRowDialog'
 import {
   ScalarActionsCell,
@@ -87,6 +86,7 @@ import {
   ScalarSourceCell,
   ScalarValueCell,
 } from './ScalarRowParts'
+import { useFieldSources } from './use-field-sources'
 
 export interface CustomizeTableProps {
   readonly device: DeviceInfo
@@ -101,11 +101,7 @@ type TableLine =
   | { readonly kind: 'section'; readonly section: CustomizeSection }
   | { readonly kind: 'row'; readonly plan: CustomizeRowPlan }
   | { readonly kind: 'capSection'; readonly cap: string }
-  | {
-      readonly kind: 'sourceGroup'
-      readonly cap: string
-      readonly group: CustomizeSourceGroup
-    }
+  | { readonly kind: 'capLink'; readonly offered: OfferedCapLink }
   | { readonly kind: 'field'; readonly row: FieldRow }
   | {
       readonly kind: 'advanced'
@@ -122,8 +118,8 @@ function lineKey(line: TableLine): string {
       return line.plan.spec.key
     case 'capSection':
       return `capSection:${line.cap}`
-    case 'sourceGroup':
-      return `sourceGroup:${line.cap}:${line.group.id}`
+    case 'capLink':
+      return `capLink:${line.offered.cap}:${line.offered.link.id}`
     case 'field':
       return `field:${line.row.key}`
     case 'advanced':
@@ -143,44 +139,50 @@ function lineKey(line: TableLine): string {
 
 const catalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
 
-/** A source group the table offers: one of its targets is listed or can be added. */
-interface OfferedGroup {
-  readonly cap: string
-  readonly group: CustomizeSourceGroup
+/** A whole-capability link the table offers (D1076), and the section it sits in. */
+interface OfferedLine {
+  readonly offered: OfferedCapLink
   readonly section: CustomizeSection
 }
 
-/** The groups the spec declares for the caps this device is offered, once each. */
-function offeredGroups(plans: readonly CustomizeRowPlan[]): readonly OfferedGroup[] {
-  const found = new Map<string, OfferedGroup>()
-  for (const plan of plans) {
-    if (plan.spec.kind !== 'scalar') continue
-    const declared = Object.entries(catalog).find(([name]) => name === plan.spec.cap)
-    for (const group of declared?.[1].sourceGroups ?? []) {
-      if (!group.targets.includes(plan.spec.target.id)) continue
-      found.set(`${plan.spec.cap}:${group.id}`, {
-        cap: plan.spec.cap,
-        group,
-        section: plan.spec.section,
+/**
+ * The links the catalog declares for the caps this device is offered, once each.
+ * A `project` link sits with the scalar rows of its cap (offered where one of
+ * them is); a `reference` link has no rows and is offered by the device types
+ * it names, in "extensions".
+ */
+function offeredLinks(
+  plans: readonly CustomizeRowPlan[],
+  deviceType: string,
+): readonly OfferedLine[] {
+  const found = new Map<string, OfferedLine>()
+  for (const [cap, entry] of Object.entries(catalog)) {
+    for (const link of entry.links ?? []) {
+      if (!capLinkOfferedOn(link, deviceType)) continue
+      const row = plans.find((plan) => plan.spec.kind === 'scalar' && plan.spec.cap === cap)
+      if (link.mode === 'project' && row === undefined) continue
+      found.set(`${cap}:${link.id}`, {
+        offered: { cap, link },
+        section: row === undefined ? 'extensions' : row.spec.section,
       })
     }
   }
   return [...found.values()]
 }
 
-function groupLine(offered: OfferedGroup): TableLine {
-  return { kind: 'sourceGroup', cap: offered.cap, group: offered.group }
+function linkLine(line: OfferedLine): TableLine {
+  return { kind: 'capLink', offered: line.offered }
 }
 
 function buildLines(
   active: readonly CustomizeRowPlan[],
-  offered: readonly OfferedGroup[],
+  offered: readonly OfferedLine[],
   groups: readonly FieldGroup[],
   advancedOpen: ReadonlySet<string>,
   itemLines: (cap: string) => readonly TableLine[],
   actions: readonly LinkedActionTableLine[],
 ): readonly TableLine[] {
-  // A group sits right above the first listed row of its cap; a cap with nothing listed yet
+  // A link sits right above the first listed row of its cap; a cap with nothing listed yet
   // (every reading still in "+ Add") gets it at the end of its section.
   const catalog = CUSTOMIZE_SECTIONS.filter(
     (section) =>
@@ -191,10 +193,14 @@ function buildLines(
     const placed = new Set<string>()
     const lines = inSection.flatMap((plan): TableLine[] => {
       const heads = offered
-        .filter((row) => row.cap === plan.spec.cap && !placed.has(`${row.cap}:${row.group.id}`))
+        .filter(
+          (row) =>
+            row.offered.cap === plan.spec.cap &&
+            !placed.has(`${row.offered.cap}:${row.offered.link.id}`),
+        )
         .map((row): TableLine => {
-          placed.add(`${row.cap}:${row.group.id}`)
-          return groupLine(row)
+          placed.add(`${row.offered.cap}:${row.offered.link.id}`)
+          return linkLine(row)
         })
       return [
         ...heads,
@@ -203,8 +209,11 @@ function buildLines(
       ]
     })
     const rest = offered
-      .filter((row) => row.section === section && !placed.has(`${row.cap}:${row.group.id}`))
-      .map(groupLine)
+      .filter(
+        (row) =>
+          row.section === section && !placed.has(`${row.offered.cap}:${row.offered.link.id}`),
+      )
+      .map(linkLine)
     return [{ kind: 'section' as const, section }, ...lines, ...rest]
   })
   const rest: TableLine[] = groups.flatMap((group): TableLine[] => [
@@ -285,8 +294,15 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       return next
     })
   const split = splitRows(planRows(specs, facts, isLinked))
+  const linkLines = offeredLinks([...split.active, ...split.addable], device.type)
   const actionLines = actions === null ? [] : linkedActionTableLines(actions)
-  if (specs.length === 0 && groups.length === 0 && actionLines.length === 0) return null
+  if (
+    specs.length === 0 &&
+    groups.length === 0 &&
+    actionLines.length === 0 &&
+    linkLines.length === 0
+  )
+    return null
   const titleOf = (spec: CustomizeRowSpec): string =>
     spec.kind === 'scalar'
       ? scalarRowTitle(t, i18n.language, spec.cap, spec.target)
@@ -294,7 +310,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
   const openPlan = [...split.active, ...split.addable].find((plan) => plan.spec.key === open)
   const lines = buildLines(
     split.active,
-    offeredGroups([...split.active, ...split.addable]),
+    linkLines,
     groups,
     advancedOpen,
     (cap) =>
@@ -331,10 +347,10 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             </span>
           )
         }
-        if (line.kind === 'sourceGroup') {
+        if (line.kind === 'capLink') {
           return (
             <span className="text-xs font-medium text-foreground">
-              {t('customize.table.group.sourceDevice')}
+              {t('customize.table.capLink.sourceDevice')}
             </span>
           )
         }
@@ -376,7 +392,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           line.kind === 'section' ||
           line.kind === 'capSection' ||
           line.kind === 'advanced' ||
-          line.kind === 'sourceGroup'
+          line.kind === 'capLink'
         )
           return null
         if (line.kind === 'field') {
@@ -412,10 +428,8 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionSource line={line} />
-        if (line.kind === 'sourceGroup') {
-          return (
-            <SourceGroupCell device={device} handle={handle} cap={line.cap} group={line.group} />
-          )
+        if (line.kind === 'capLink') {
+          return <CapLinkRow device={device} handle={handle} offered={line.offered} />
         }
         if (line.kind === 'section' || line.kind === 'capSection' || line.kind === 'advanced')
           return null
@@ -453,7 +467,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         if (isLinkedActionLine(line)) {
           return actions === null ? null : <LinkedActionButtons line={line} state={actions} />
         }
-        if (line.kind === 'section' || line.kind === 'advanced' || line.kind === 'sourceGroup') {
+        if (line.kind === 'section' || line.kind === 'advanced' || line.kind === 'capLink') {
           return null
         }
         if (line.kind === 'capSection') {
