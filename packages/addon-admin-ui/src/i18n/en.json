@@ -7378,7 +7378,8 @@
       "viewDeletedDevices": "Deleted devices",
       "recordsUnifiedIntro": "Every declared record kind on this hub. Entry kinds can be added, edited and deleted; the rest are read-only. Secret fields are redacted.",
       "secrets": "Secrets",
-      "migrations": "Migrations"
+      "migrations": "Migrations",
+      "retention": "Retention"
     },
     "notifications": {
       "settings": "Settings",
@@ -14225,6 +14226,30 @@
       "disarming": "Disarming",
       "pending": "Pending",
       "triggered": "Triggered"
+    }
+  },
+  "retention": {
+    "save": "Save",
+    "forever": "kept forever",
+    "deviceOverridable": "a device can override this",
+    "loading": "Loading retention…",
+    "errorTitle": "Could not read the retention settings",
+    "errorBody": "The hub did not answer. Try again in a moment.",
+    "emptyTitle": "No retention settings",
+    "emptyBody": "No addon lists how long it keeps data.",
+    "unit": {
+      "days": "days",
+      "hours": "hours",
+      "count": "items"
+    },
+    "group": {
+      "history": "Device history"
+    },
+    "invalid": {
+      "not-a-number": "Enter a number",
+      "not-whole": "Use a whole number",
+      "below-min": "Below the minimum",
+      "above-max": "Above the maximum"
     }
   }
 }

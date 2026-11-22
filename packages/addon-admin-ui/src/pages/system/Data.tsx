@@ -11,6 +11,7 @@ import { StoragePage } from './Storage'
 import { BackupPage } from './Backup'
 import { SecretsPage } from './Secrets'
 import { DataRecordsSection } from './DataRecordsSection'
+import { RetentionSection } from '../../components/retention/RetentionSection'
 import { MigrationsSection } from '../../components/system/migrations/MigrationsSection'
 
 /** Tabs that were merged into Records: `null` = the kinds view, else the `view` value. */
@@ -52,6 +53,11 @@ export function DataPage() {
           label: t('systemPage.data.records', 'Records'),
           content: <DataRecordsSection />,
           ownedParams: ['view', 'recordsOwner', 'recordsKind', 'entryNew', 'entryEdit'],
+        },
+        {
+          id: 'retention',
+          label: t('systemPage.data.retention', 'Retention'),
+          content: <RetentionSection />,
         },
         {
           id: 'backup',

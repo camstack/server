@@ -7453,7 +7453,8 @@
       "viewDeletedDevices": "Dispositivi eliminati",
       "recordsUnifiedIntro": "Ogni tipo di record dichiarato su questo hub. I tipi voce si possono aggiungere, modificare ed eliminare; gli altri sono in sola lettura. I campi segreti sono oscurati.",
       "secrets": "Segreti",
-      "migrations": "Migrazioni"
+      "migrations": "Migrazioni",
+      "retention": "Conservazione"
     },
     "notifications": {
       "settings": "Impostazioni",
@@ -14247,6 +14248,30 @@
       "disarming": "In disinserimento",
       "pending": "In attesa",
       "triggered": "Scattato"
+    }
+  },
+  "retention": {
+    "save": "Salva",
+    "forever": "conservato per sempre",
+    "deviceOverridable": "un dispositivo può sovrascriverlo",
+    "loading": "Caricamento conservazione…",
+    "errorTitle": "Impossibile leggere le impostazioni di conservazione",
+    "errorBody": "L hub non ha risposto. Riprova tra poco.",
+    "emptyTitle": "Nessuna impostazione di conservazione",
+    "emptyBody": "Nessun addon indica per quanto tempo conserva i dati.",
+    "unit": {
+      "days": "giorni",
+      "hours": "ore",
+      "count": "elementi"
+    },
+    "group": {
+      "history": "Storico dispositivi"
+    },
+    "invalid": {
+      "not-a-number": "Inserisci un numero",
+      "not-whole": "Usa un numero intero",
+      "below-min": "Sotto il minimo",
+      "above-max": "Sopra il massimo"
     }
   }
 }

@@ -64,7 +64,7 @@ describe('DataPage legacy tabs', () => {
 })
 
 describe('DataPage Secrets tab', () => {
-  it('is the fourth tab and deep-links by ?tab=secrets', () => {
+  it('is a tab and deep-links by ?tab=secrets', () => {
     render(
       <MemoryRouter initialEntries={['/system/data?tab=secrets&secretsView=audit']}>
         <DataPage />
@@ -72,7 +72,7 @@ describe('DataPage Secrets tab', () => {
     )
     expect(screen.getByText('secrets-content')).toBeTruthy()
     const names = screen.getAllByRole('tab').map((n) => n.textContent)
-    expect(names).toEqual(['Storage', 'Records', 'Backup', 'Secrets', 'Migrations'])
+    expect(names).toEqual(['Storage', 'Records', 'Retention', 'Backup', 'Secrets', 'Migrations'])
   })
 
   it("switching away clears secretsView but leaves Records' own view alone", () => {
