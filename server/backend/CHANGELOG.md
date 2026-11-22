@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The hub serves the new location capability
 - The hub serves the new vehicle capability
+- A group of lights, switches, fans or thermostats can carry triggers (a button press, an event, a detection or a value change) and may build no device at all: it then only commands its members.
 
 ## [1.2.941] - 2026-11-22
 

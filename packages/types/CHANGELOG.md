@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Vehicle device type, with a car icon, that can carry lock and climate accessories
 - A new location capability: the raw GPS fix (latitude, longitude, accuracy, heading, speed) any device can report, recorded in the device history
 - A new vehicle capability: odometer, range, doors, windows, tyre warnings and 12 V battery of a connected car, read-only, with an optional admin refresh
+- Group triggers: a group's spec can list triggers and an output of none; a trigger that would fire its own group, directly or through other groups, is refused at save.
 
 ## [1.2.625] - 2026-11-22
 

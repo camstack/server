@@ -20,6 +20,7 @@ import {
   type ComposerApplyResult,
   type ComposerUnreadableBlock,
   type CoreBlock,
+  compileHelper,
   ROOM_EXAMPLE_MOTION_SOURCES,
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
@@ -426,6 +427,37 @@ describe('composition blocks', () => {
     expect(host.spawned).toEqual([])
     expect(composer.applied[0]?.blocks.map((b) => b.id)).toEqual(['c1'])
     expect(store.get('c1')?.status).toBe('running')
+  })
+
+  it('a group with output none builds no device: the composer never hears of it', async () => {
+    const compiled = compileHelper({
+      kind: 'group',
+      templateId: 'light',
+      aggregate: 'any',
+      active: 'at-least-one',
+      output: 'none',
+      members: [{ source: { addonId: 'demo', stableId: 'lamp' }, cap: 'switch', fieldPath: 'on' }],
+      triggers: [
+        {
+          id: 't1',
+          source: { kind: 'fired', device: { addonId: 'demo', stableId: 'button' } },
+          action: { kind: 'on' },
+        },
+      ],
+    })
+    if (!compiled.ok) throw new Error('did not compile')
+    const composer = new FakeComposer()
+    store.setBlocks([
+      composition(),
+      composition({
+        id: 'g1',
+        source: { kind: 'composition', composition: compiled.composition },
+      }),
+    ])
+    await makeSupervisor({ composer }).converge()
+    expect(composer.applied[0]?.blocks.map((b) => b.id)).toEqual(['c1'])
+    expect(store.get('g1')?.status).toBe('running')
+    expect(host.spawned).toEqual([])
   })
 
   it('mirror the composer verdict, reason included', async () => {
