@@ -8,46 +8,45 @@
  *
  * Used inline (tabs, cards) and as a floating panel via FloatingLogStream.
  */
-
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type JSX } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import {
-  AlertCircle,
+  X,
+  Loader2,
   AlertTriangle,
-  ArrowDownToLine,
+  Info,
+  AlertCircle,
   Bug,
+  ArrowDownToLine,
   Check,
+  Copy,
+  Trash2,
   ChevronDown,
   ChevronRight,
   ChevronsDownUp,
   ChevronsUpDown,
   Columns3,
-  Copy,
   Download,
-  Info,
-  Loader2,
-  Trash2,
-  X,
 } from 'lucide-react'
-import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { trpc } from '../trpc-react'
+import { cn } from '../lib/cn'
 import { useUiText } from '../contexts/ui-text'
+import { useLiveBuffer, type LiveBuffer } from '../hooks/use-live-buffer'
 import { useDebouncedString } from '../hooks/use-debounced-string'
 import { useIsPhone } from '../hooks/use-is-mobile'
-import { type LiveBuffer, useLiveBuffer } from '../hooks/use-live-buffer'
-import { type LogHistoryLevel, useLogHistory } from '../hooks/use-log-history'
-import { useLogNames } from '../hooks/use-log-names'
-import { useLogStreamColumns } from '../hooks/use-log-stream-columns'
-import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
-import { cn } from '../lib/cn'
+import { useLogHistory, type LogHistoryLevel } from '../hooks/use-log-history'
 import { Button } from '../primitives/button'
 import { Checkbox } from '../primitives/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
 import { Select } from '../primitives/select'
-import { trpc } from '../trpc-react'
-import { logExportScopeOf } from './log-export'
+import { useLogNames } from '../hooks/use-log-names'
+import { useLogStreamColumns } from '../hooks/use-log-stream-columns'
 import { LogExportDialog, type LogExportFetch } from './log-export-dialog'
-import { type LogWireEntry, logEntryKey, mergeLogEntries } from './log-history-paging'
+import { logExportScopeOf } from './log-export'
 import type { LogColumnConfig, LogColumnId } from './log-stream-columns'
 import { entryAddonId, entryDeviceId, nameOrId } from './log-stream-names'
 import { isPinnedToBottom, PIN_THRESHOLD_PX } from './log-stream-scroll'
+import { logEntryKey, mergeLogEntries, type LogWireEntry } from './log-history-paging'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -893,17 +892,17 @@ export function LogStream({
                                 className="mt-0.5 flex max-h-5 items-start gap-1.5 overflow-hidden whitespace-nowrap text-[10px] text-foreground-subtle"
                               >
                                 {showScope && log.scope !== undefined && (
-                                  <span className="min-w-0 truncate">
+                                  <span className="min-w-0 max-w-full">
                                     {log.scope.replace(/^addon:/, '')}
                                   </span>
                                 )}
                                 {showIntegration && (
-                                  <span className="min-w-0 truncate empty:hidden">
+                                  <span className="min-w-0 max-w-full empty:hidden">
                                     <IntegrationCell entry={log} names={logNames.addons} />
                                   </span>
                                 )}
                                 {showDevice && (
-                                  <span className="min-w-0 truncate empty:hidden">
+                                  <span className="min-w-0 max-w-full empty:hidden">
                                     <DeviceCell entry={log} names={logNames.devices} />
                                   </span>
                                 )}

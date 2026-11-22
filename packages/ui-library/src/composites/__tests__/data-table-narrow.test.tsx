@@ -109,6 +109,25 @@ describe('DataTable — narrow-viewport rendering', () => {
       expect(screen.queryByText('2m')).toBeNull()
     })
 
+    it('never clips a control that a detail column carries', () => {
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        { mobile: 'primary', key: 'name', header: 'Name', render: (r) => r.name },
+        {
+          mobile: 'detail',
+          key: 'act',
+          header: 'Act',
+          render: () => <button type="button">Scopes</button>,
+        },
+      ]
+      const { container } = render(<DataTable columns={columns} rows={[...ROWS]} />)
+      const line = container.querySelector('[data-phone-detail]')
+      expect(line?.className).not.toMatch(/overflow-hidden|max-h-|whitespace-nowrap/)
+      expect(line?.className).toContain('flex-wrap')
+      const holder = line?.querySelector('[data-phone-detail-of="act"]')
+      expect(holder?.className).not.toContain('truncate')
+    })
+
     it('renders no detail line for a table with no detail column', () => {
       setViewport(true)
       const columns = WIDE.filter((col) => col.mobile !== 'detail')

@@ -452,13 +452,13 @@ export function DataTable<T>({
                             {detailColumns.length > 0 && (
                               <div
                                 data-phone-detail=""
-                                className="mt-0.5 flex max-h-5 items-start gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-normal text-foreground-subtle"
+                                className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-normal text-foreground-subtle"
                               >
                                 {detailColumns.map((detail) => (
                                   <span
                                     key={detail.key}
                                     data-phone-detail-of={detail.key}
-                                    className="min-w-0 shrink truncate empty:hidden"
+                                    className="min-w-0 max-w-full empty:hidden"
                                   >
                                     {detail.render(row, rowIndex)}
                                   </span>

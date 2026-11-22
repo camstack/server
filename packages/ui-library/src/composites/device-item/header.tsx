@@ -127,12 +127,7 @@ export function DeviceItemHeader({
   const lineClass = 'truncate'
   const nameParent =
     nameForm === 'nested' && parent !== null
-      ? {
-          id: parent.id,
-          name: parent.name,
-          type: parent.type ?? 'unknown',
-          stableId: '',
-        }
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
       : undefined
   const parentLabel = useDeviceLabelById(parent?.id ?? 0, 'compact', parent?.name)
   return (

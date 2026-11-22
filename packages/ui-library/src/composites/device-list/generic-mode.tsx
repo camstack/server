@@ -1,23 +1,23 @@
-import { type LucideIcon, Search } from 'lucide-react'
 import {
   Fragment,
-  type KeyboardEvent,
-  type ReactNode,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
+  type ReactNode,
 } from 'react'
-import { useUiText } from '../../contexts/ui-text'
-import { useDebouncedString } from '../../hooks/use-debounced-string'
-import { effectivePageSize, usePersistedPageSize } from '../../hooks/use-persisted-page-size'
+import { Search, type LucideIcon } from 'lucide-react'
 import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
-import { OptionSelect } from '../option-select/OptionSelect'
-import { fuzzyMatch } from './fuzzy-match'
+import { useUiText } from '../../contexts/ui-text'
 import { type MultiSelectOption } from './multi-select'
-import { PageSizeSelect } from './page-size-select'
-import { Pagination } from './pagination'
 import { ResponsiveTypeFilter } from './type-filter'
+import { OptionSelect } from '../option-select/OptionSelect'
+import { useDebouncedString } from '../../hooks/use-debounced-string'
+import { fuzzyMatch } from './fuzzy-match'
+import { Pagination } from './pagination'
+import { PageSizeSelect } from './page-size-select'
+import { effectivePageSize, usePersistedPageSize } from '../../hooks/use-persisted-page-size'
 
 /**
  * Generic-mode props — a paginated, searchable, render-prop list that reuses

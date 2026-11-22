@@ -83,7 +83,6 @@ export function RemoteAccessPage(): ReactElement {
   const stopMutation = useNetworkAccessStop({ onSuccess, onError })
 
   const tunnelColumn: DataColumn<PanelRow> = {
-    mobile: 'detail',
     key: 'tunnel',
     header: t('system.remoteAccess.colTunnel', 'Tunnel'),
     notSortableReason: t(

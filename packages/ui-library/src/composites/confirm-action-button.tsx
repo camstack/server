@@ -14,7 +14,7 @@
  * `ConfirmActionDialog` is the dialog half on its own, for a trigger that is
  * not a button of its own — a menu row (`PageActions` on a phone).
  */
-import { type ReactNode, useState, type ComponentType, type JSX } from 'react'
+import { type ReactNode, useEffect, useState, type ComponentType, type JSX } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import {
   Dialog,
@@ -97,6 +97,12 @@ export function ConfirmActionDialog<TResult>({
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // The dialog stays mounted (so it can animate out); a reopened one starts
+  // with no stale error from the previous attempt.
+  useEffect(() => {
+    if (open) setError(null)
+  }, [open])
+
   const handleConfirm = async () => {
     setError(null)
     setRunning(true)
@@ -116,7 +122,6 @@ export function ConfirmActionDialog<TResult>({
       open={open}
       onOpenChange={(next) => {
         if (running) return
-        if (next) setError(null)
         onOpenChange(next)
       }}
     >
@@ -187,8 +192,6 @@ export function ConfirmActionButton<TResult>({
   onSuccess,
 }: ConfirmActionButtonProps<TResult>): JSX.Element {
   const [open, setOpen] = useState(false)
-  // The dialog is mounted per opening, so a reopened one starts with no stale
-  // error from the previous attempt.
   return (
     <>
       <Button
@@ -202,19 +205,17 @@ export function ConfirmActionButton<TResult>({
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </Button>
-      {open && (
-        <ConfirmActionDialog
-          open
-          onOpenChange={setOpen}
-          title={title}
-          description={description}
-          confirmLabel={confirmLabel ?? label}
-          confirmVariant={confirmVariant}
-          size={size}
-          action={action}
-          onSuccess={onSuccess}
-        />
-      )}
+      <ConfirmActionDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={title}
+        description={description}
+        confirmLabel={confirmLabel ?? label}
+        confirmVariant={confirmVariant}
+        size={size}
+        action={action}
+        onSuccess={onSuccess}
+      />
     </>
   )
 }

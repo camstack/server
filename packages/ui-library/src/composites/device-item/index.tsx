@@ -52,10 +52,7 @@ import { useTagEntries } from '../tags/tag-entries-context'
 export type { ChildLayoutSection, GroupedChildren } from './child-layout'
 export { groupChildrenByLayout } from './child-layout'
 export { ChildSectionAccordion } from './child-section-accordion'
-export {
-  ContainerChildrenProvider,
-  useContainerChildren,
-} from './container-children-context'
+export { ContainerChildrenProvider, useContainerChildren } from './container-children-context'
 export {
   RoleDisplayDefaultsFromServer,
   RoleDisplayDefaultsProvider,
@@ -100,12 +97,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   const nameForm = props.nameForm ?? (props.isAccessoryRow ? 'nested' : 'compact')
   const nameParent =
     nameForm === 'nested' && parent
-      ? {
-          id: parent.id,
-          name: parent.name,
-          type: parent.type ?? 'unknown',
-          stableId: '',
-        }
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
       : undefined
   const rowLabel = useDeviceLabel(
     device,
@@ -560,12 +552,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
   const nameForm = isAccessoryRow ? 'nested' : 'compact'
   const nameParent =
     nameForm === 'nested' && parent
-      ? {
-          id: parent.id,
-          name: parent.name,
-          type: parent.type ?? 'unknown',
-          stableId: '',
-        }
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
       : undefined
   const rowLabel = useDeviceLabel(
     device,
@@ -582,7 +569,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
 
   return (
     <tr
-      {...swipe.rowProps}
+      {...(phone ? swipe.rowProps : {})}
       onClick={pending ? undefined : onRowClick}
       aria-busy={pending ? true : undefined}
       data-row-operation={operation?.kind}
@@ -592,7 +579,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             ...(rowSelects ? { 'aria-pressed': rowSelected } : {}),
             tabIndex: 0,
             onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
-              swipe.rowProps.onKeyDown(e)
+              if (phone) swipe.rowProps.onKeyDown(e)
               // Only the row itself activates: a key pressed on a control
               // inside it (a tray button, a switch) is that control's.
               if (e.target !== e.currentTarget) return
@@ -650,7 +637,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           // row fades, so the row reads as TWO distinct highlights during the
           // transition instead of one continuous one.
           NAME_COLUMN_PIN_CLASS,
-          SWIPE_CELL_CLASS,
+          phone && SWIPE_CELL_CLASS,
           'py-1.5 align-middle pr-2 transition-colors',
           // Mirror the row's selected/accessory/default background so the pinned
           // cell never paints a plain stripe OVER a highlighted (selected) or
@@ -777,7 +764,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
       <td
         className={cn(
           PREVIEW_CELL_CLASS,
-          SWIPE_CELL_CLASS,
+          phone && SWIPE_CELL_CLASS,
           'relative px-2 py-1.5 align-middle text-right',
         )}
       >
