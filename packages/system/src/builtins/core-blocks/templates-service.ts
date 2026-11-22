@@ -173,6 +173,9 @@ export class TemplatesService implements ITemplateProvider {
     for (const template of BUILTIN_AUTOMATION_TEMPLATES) {
       await this.deps.automations.reexpand(template.id, template.payload)
     }
+    await this.deps.automations.flagRetired(
+      BUILTIN_AUTOMATION_TEMPLATES.map((template) => template.id),
+    )
   }
 
   /** A changed automation template reaches every automation made from it. */

@@ -215,13 +215,33 @@ describe('built-in instances at boot', () => {
   })
 })
 
+describe('an instance of a built-in that was retired', () => {
+  const retired = 'builtin:buttons-to-devices'
+
+  it('keeps running exactly as it was and is flagged missing-template, once', async () => {
+    const own = instanceBlock('a', retired, { sensor: 7, lights: [3] })
+    const live = instanceBlock('b', 'builtin:motion-light', { sensor: 8, lights: [4] })
+    const { service, saved } = await world([own, live])
+    await service.reexpandBuiltinInstances()
+    const flagged = savedRecipe(saved.get('a'))
+    expect(flagged.template?.problems?.map((p) => p.code)).toEqual(['missing-template'])
+    const before = readRecipeLiteral(own.code)
+    expect(before.status === 'recipe' && flagged.actions).toEqual(
+      before.status === 'recipe' ? before.recipe.actions : null,
+    )
+    expect(savedRecipe(saved.get('b')).template?.problems ?? []).toEqual([])
+    const again = await world([{ ...own, code: saved.get('a') ?? '' }])
+    await again.service.reexpandBuiltinInstances()
+    expect(again.saved.size).toBe(0)
+  })
+})
+
 describe('built-in automation templates in the store', () => {
   it('are listed beside the operator templates, read-only', async () => {
     const { service } = await world([])
     const listed = await service.list({ kind: 'automation' })
-    expect(listed.some((t) => t.id === 'builtin:buttons-to-devices' && t.builtIn === true)).toBe(
-      true,
-    )
+    expect(listed.some((t) => t.id === 'builtin:motion-light' && t.builtIn === true)).toBe(true)
+    expect(listed.some((t) => t.id === 'builtin:buttons-to-devices')).toBe(false)
     expect(await service.list({ kind: 'remote' })).toEqual([])
     expect(await service.get({ id: 'builtin:motion-light' })).toMatchObject({ builtIn: true })
     expect(await service.update({ id: 'builtin:motion-light', name: 'x' })).toMatchObject({

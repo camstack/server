@@ -20,11 +20,7 @@ export interface BuiltinAutomationTemplate {
   readonly payload: AutomationTemplatePayload
 }
 
-/** One choose branch per row, so the rows a group takes are the branches a choose takes. */
-const BUTTON_ROWS_MAX = 6
-const ROW_ENTRIES_MAX = 10
-
-/** The optional limit both built-ins end with: no value, no limit. */
+/** The optional limit a built-in ends with: no value, no limit. */
 const ACTIVE_WINDOW_KEY = 'active'
 const activeWindowInput: TemplateScalarInput = {
   kind: 'time-window',
@@ -38,66 +34,6 @@ const activeWindowGate: TemplateGateBinding = {
   kind: 'gate',
   input: ACTIVE_WINDOW_KEY,
   path: ['when'],
-}
-
-const buttonsToDevices: BuiltinAutomationTemplate = {
-  id: `${BUILTIN_TEMPLATE_ID_PREFIX}buttons-to-devices`,
-  name: 'Buttons → devices',
-  payload: {
-    version: AUTOMATION_TEMPLATE_VERSION,
-    description: 'Each button: when it sends an event, run one or more actions.',
-    body: {
-      when: { kind: 'any', children: [] },
-      actions: [{ kind: 'choose', branches: [] }],
-      runMode: { mode: 'queued', max: 5 },
-    },
-    inputs: [
-      {
-        kind: 'group',
-        key: 'buttons',
-        label: 'Buttons',
-        rowLabel: 'button',
-        maxRows: BUTTON_ROWS_MAX,
-        inputs: [
-          {
-            kind: 'entries',
-            key: 'when',
-            label: 'When',
-            entry: 'trigger',
-            allow: ['device-fired'],
-            maxItems: ROW_ENTRIES_MAX,
-          },
-          {
-            kind: 'entries',
-            key: 'do',
-            label: 'Actions',
-            entry: 'step',
-            allow: ['command'],
-            maxItems: ROW_ENTRIES_MAX,
-          },
-        ],
-      },
-      activeWindowInput,
-    ],
-    bindings: [
-      // Every button's triggers, verbatim, are the automation's `any`.
-      { kind: 'entries', input: 'when', in: 'buttons', path: ['when', 'children'] },
-      {
-        kind: 'rows',
-        input: 'buttons',
-        path: ['actions', 0, 'branches'],
-        item: {
-          if: { kind: 'triggered-by', leafIds: [] },
-          steps: [],
-        },
-        bindings: [
-          { kind: 'row-ids', input: 'when', path: ['if', 'leafIds'] },
-          { kind: 'entries', input: 'do', path: ['steps'] },
-        ],
-      },
-      activeWindowGate,
-    ],
-  },
 }
 
 const motionLight: BuiltinAutomationTemplate = {
@@ -165,10 +101,7 @@ const motionLight: BuiltinAutomationTemplate = {
   },
 }
 
-export const BUILTIN_AUTOMATION_TEMPLATES: readonly BuiltinAutomationTemplate[] = [
-  buttonsToDevices,
-  motionLight,
-]
+export const BUILTIN_AUTOMATION_TEMPLATES: readonly BuiltinAutomationTemplate[] = [motionLight]
 
 export function isBuiltinTemplateId(id: string): boolean {
   return id.startsWith(BUILTIN_TEMPLATE_ID_PREFIX)

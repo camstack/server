@@ -7,8 +7,11 @@
  */
 
 import {
+  AUTOMATION_TEMPLATE_VERSION,
   type AutomationCommandStep,
-  BUILTIN_AUTOMATION_TEMPLATES,
+  type AutomationTemplatePayload,
+  type TemplateGateBinding,
+  type TemplateScalarInput,
   type DeviceFiredLeaf,
   DeviceType,
   type TemplateInputValues,
@@ -104,9 +107,81 @@ vi.mock('../TemplateActionPicker', () => ({
   ActionEditor: () => <div data-testid="action-editor" />,
 }))
 
-const BUTTONS = BUILTIN_AUTOMATION_TEMPLATES.find((t) => t.id === 'builtin:buttons-to-devices')
-if (BUTTONS === undefined) throw new Error('the buttons template is not built in')
-const PAYLOAD = BUTTONS.payload
+/** The group / entries / row-ids / time-window shape an operator template can use, as a local fixture. */
+const BUTTON_ROWS_MAX = 6
+const ROW_ENTRIES_MAX = 10
+
+/** The optional limit both built-ins end with: no value, no limit. */
+const ACTIVE_WINDOW_KEY = 'active'
+const activeWindowInput: TemplateScalarInput = {
+  kind: 'time-window',
+  key: ACTIVE_WINDOW_KEY,
+  label: 'Only when',
+  description: 'Limit the automation to a time of day, to some days, or both.',
+  optional: true,
+}
+/** Declared last: it moves the tree the other bindings write into one level down. */
+const activeWindowGate: TemplateGateBinding = {
+  kind: 'gate',
+  input: ACTIVE_WINDOW_KEY,
+  path: ['when'],
+}
+
+const PAYLOAD: AutomationTemplatePayload = {
+  version: AUTOMATION_TEMPLATE_VERSION,
+  description: 'Each button: when it sends an event, run one or more actions.',
+  body: {
+    when: { kind: 'any', children: [] },
+    actions: [{ kind: 'choose', branches: [] }],
+    runMode: { mode: 'queued', max: 5 },
+  },
+  inputs: [
+    {
+      kind: 'group',
+      key: 'buttons',
+      label: 'Buttons',
+      rowLabel: 'button',
+      maxRows: BUTTON_ROWS_MAX,
+      inputs: [
+        {
+          kind: 'entries',
+          key: 'when',
+          label: 'When',
+          entry: 'trigger',
+          allow: ['device-fired'],
+          maxItems: ROW_ENTRIES_MAX,
+        },
+        {
+          kind: 'entries',
+          key: 'do',
+          label: 'Actions',
+          entry: 'step',
+          allow: ['command'],
+          maxItems: ROW_ENTRIES_MAX,
+        },
+      ],
+    },
+    activeWindowInput,
+  ],
+  bindings: [
+    // Every button's triggers, verbatim, are the automation's `any`.
+    { kind: 'entries', input: 'when', in: 'buttons', path: ['when', 'children'] },
+    {
+      kind: 'rows',
+      input: 'buttons',
+      path: ['actions', 0, 'branches'],
+      item: {
+        if: { kind: 'triggered-by', leafIds: [] },
+        steps: [],
+      },
+      bindings: [
+        { kind: 'row-ids', input: 'when', path: ['if', 'leafIds'] },
+        { kind: 'entries', input: 'do', path: ['steps'] },
+      ],
+    },
+    activeWindowGate,
+  ],
+}
 
 interface HarnessProps {
   readonly start: TemplateInputValues
@@ -136,7 +211,9 @@ describe('the Buttons → devices form', () => {
     render(<Harness start={initialValues(PAYLOAD)} onValues={vi.fn()} />)
     expect(screen.getAllByTestId('template-group-buttons-row')).toHaveLength(1)
     expect(screen.getByTestId('template-group-buttons-summary').textContent).toBe('New button')
-    expect(screen.getByTestId('template-input-buttons.0.when').getAttribute('data-picks')).toBe('[]')
+    expect(screen.getByTestId('template-input-buttons.0.when').getAttribute('data-picks')).toBe(
+      '[]',
+    )
     expect(screen.getByTestId('template-input-buttons.0.do').getAttribute('data-picks')).toBe('[]')
     expect(screen.getByTestId('template-group-buttons-add').textContent).toContain('Add button')
   })
@@ -151,7 +228,11 @@ describe('the Buttons → devices form', () => {
   it('stores a command step verbatim, domain target included, beside the others', () => {
     const onValues = vi.fn()
     render(<Harness start={FILLED} onValues={onValues} />)
-    expect(JSON.parse(screen.getByTestId('template-input-buttons.0.do').getAttribute('data-picks') ?? '')).toEqual([TOGGLE])
+    expect(
+      JSON.parse(
+        screen.getByTestId('template-input-buttons.0.do').getAttribute('data-picks') ?? '',
+      ),
+    ).toEqual([TOGGLE])
     fireEvent.click(screen.getByTestId('fake-add-action'))
     expect(onValues).toHaveBeenLastCalledWith({
       buttons: [{ when: [FIRED], do: [TOGGLE, ROOM_OFF] }],
@@ -160,7 +241,12 @@ describe('the Buttons → devices form', () => {
 
   it('removes the entry asked for', () => {
     const onValues = vi.fn()
-    render(<Harness start={{ buttons: [{ when: [FIRED], do: [TOGGLE, ROOM_OFF] }] }} onValues={onValues} />)
+    render(
+      <Harness
+        start={{ buttons: [{ when: [FIRED], do: [TOGGLE, ROOM_OFF] }] }}
+        onValues={onValues}
+      />,
+    )
     fireEvent.click(screen.getByTestId('fake-remove-action'))
     expect(onValues).toHaveBeenLastCalledWith({ buttons: [{ when: [FIRED], do: [ROOM_OFF] }] })
   })
@@ -213,7 +299,8 @@ describe('the optional "Only when" window', () => {
       days: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
     })
     fireEvent.click(screen.getByTestId('template-input-active-limit'))
-    expect('active' in onValues.mock.lastCall?.[0]).toBe(false)
+    const last = onValues.mock.lastCall?.[0]
+    expect(last !== undefined && 'active' in last).toBe(false)
     expect(screen.queryByTestId('time-is-fields')).toBeNull()
   })
 })

@@ -14,6 +14,7 @@ import {
 } from '../../index.js'
 import { ConditionMirror, evaluateWhenTree } from '../../automation/condition-eval.js'
 import type { TimeSite } from '../../time/time-spec.js'
+import { BUTTONS_FIXTURE_ID, BUTTONS_FIXTURE_PAYLOAD } from './buttons-fixture.js'
 
 const FIRED = { kind: 'device-fired', deviceId: 5656, sourceIds: ['1'], eventIds: ['press_short'] }
 const STEP = { kind: 'command', actionId: 'switch.on', target: { kind: 'devices', ids: [50] } }
@@ -50,6 +51,7 @@ const BUTTONS_2: TemplateInputValues = {
 }
 
 function payloadOf(id: string) {
+  if (id === BUTTONS_FIXTURE_ID) return BUTTONS_FIXTURE_PAYLOAD
   const found = builtinAutomationTemplate(id)
   if (found === undefined) throw new Error(`no built-in ${id}`)
   return found.payload
@@ -64,7 +66,7 @@ describe('built-in automation templates', () => {
   })
 
   it('Buttons → devices: two buttons are one `any` and one branch each, steps verbatim', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), BUTTONS_2)
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), BUTTONS_2)
     expect(out.ok).toBe(true)
     if (!out.ok) return
     expect(out.recipe.when).toEqual({
@@ -93,8 +95,16 @@ describe('built-in automation templates', () => {
           {
             if: { kind: 'triggered-by', leafIds: ['buttons-0-when-0'] },
             steps: [
-              { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6001] } },
-              { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6002] } },
+              {
+                kind: 'command',
+                actionId: 'switch.toggle',
+                target: { kind: 'devices', ids: [6001] },
+              },
+              {
+                kind: 'command',
+                actionId: 'switch.toggle',
+                target: { kind: 'devices', ids: [6002] },
+              },
             ],
           },
           {
@@ -118,7 +128,7 @@ describe('built-in automation templates', () => {
       actionId: 'switch.off',
       target: { kind: 'domain', deviceType: 'switch', roomId: 'Bagno' },
     }
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       buttons: [{ when: [FIRED], do: [step] }],
     })
     expect(out.ok).toBe(true)
@@ -135,7 +145,7 @@ describe('built-in automation templates', () => {
       { when: [manual], do: [STEP], at: 'buttons.0.when' },
     ]
     for (const c of cases) {
-      const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+      const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
         buttons: [{ when: c.when, do: c.do }],
       })
       expect(out.ok).toBe(false)
@@ -147,14 +157,14 @@ describe('built-in automation templates', () => {
   })
 
   it('Buttons → devices: an entry that is not an automation element is refused', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       buttons: [{ when: [FIRED], do: [{ kind: 'command', actionId: 'no.such_action' }] }],
     })
     expect(out.ok).toBe(false)
   })
 
   it('Buttons → devices names a missing list by its address', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       buttons: [{ when: [FIRED], do: [] }],
     })
     expect(out.ok).toBe(false)
@@ -165,8 +175,8 @@ describe('built-in automation templates', () => {
   })
 
   it('Buttons → devices: a new instance keeps its link and re-expands to the same body', () => {
-    const payload = payloadOf('builtin:buttons-to-devices')
-    const made = instantiateAutomationTemplate('builtin:buttons-to-devices', payload, BUTTONS_2)
+    const payload = payloadOf('fixture:buttons')
+    const made = instantiateAutomationTemplate('fixture:buttons', payload, BUTTONS_2)
     expect(made.ok).toBe(true)
     if (!made.ok) return
     expect(AutomationTemplateLinkSchema.safeParse(made.recipe.template).success).toBe(true)
@@ -177,7 +187,7 @@ describe('built-in automation templates', () => {
 
   it('Buttons → devices refuses a seventh row (one choose branch per row)', () => {
     const row: TemplateGroupRow = { when: [FIRED], do: [STEP] }
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       buttons: Array.from({ length: 7 }, () => row),
     })
     expect(out.ok).toBe(false)
@@ -219,7 +229,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
 
   it('left empty, both built-ins expand to the very body they had without it', () => {
     const cases: readonly (readonly [string, TemplateInputValues])[] = [
-      ['builtin:buttons-to-devices', buttons],
+      ['fixture:buttons', buttons],
       ['builtin:motion-light', motion],
     ]
     for (const [id, values] of cases) {
@@ -233,7 +243,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
 
   it('filled, the tree is all[time-is, <the tree it had>] on both built-ins', () => {
     for (const [id, values] of [
-      ['builtin:buttons-to-devices', buttons],
+      ['fixture:buttons', buttons],
       ['builtin:motion-light', motion],
     ] as const) {
       const bare = expandAutomationTemplate(withoutWindow(id), values)
@@ -249,7 +259,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
   })
 
   it('a button press runs its branch inside the window and nothing outside it', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+    const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       ...buttons,
       active: nightWeekdays,
     })

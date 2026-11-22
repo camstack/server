@@ -15,6 +15,7 @@
  * literal is rewritten, to flag it `edited-by-hand`.
  */
 import {
+  isBuiltinTemplateId,
   ALL_CAPABILITY_DEFINITIONS,
   capUnitResolver,
   generateAutomationBlock,
@@ -36,6 +37,12 @@ export interface AutomationTemplateInstances {
   using(templateId: string): Promise<readonly TemplateAutomationUser[]>
   /** Re-expand every instance of the template against its new payload. */
   reexpand(templateId: string, payload: AutomationTemplatePayload): Promise<ReexpandReport>
+  /**
+   * An instance of a built-in this release no longer ships keeps running as it
+   * is; it is flagged `missing-template` so the editor says so. Never dropped,
+   * never regenerated. Returns how many were newly flagged.
+   */
+  flagRetired(shippedIds: readonly string[]): Promise<number>
 }
 
 /** An instance whose code came out unchanged is counted nowhere: nothing was saved. */
@@ -53,6 +60,9 @@ export interface AutomationTemplateInstancesDeps {
   /** The cap unit knowledge the editor stamps a recipe with before codegen. */
   readonly units?: UnitResolver
 }
+
+const RETIRED_DETAIL =
+  'the built-in template this automation was made from is no longer shipped; it keeps running as it is, edit it as a free automation'
 
 const EDITED_BY_HAND_DETAIL =
   'the code was edited by hand, so the template no longer updates it; convert it to a free automation or create it again from the template'
@@ -92,6 +102,41 @@ export function automationTemplateInstancesOver(
   return {
     using: async (templateId) =>
       instancesOf(templateId).map(({ block }) => ({ blockId: block.id, name: block.name })),
+
+    flagRetired: async (shippedIds) => {
+      let flagged = 0
+      for (const block of deps.blocks()) {
+        const read = readRecipeLiteral(block.code)
+        if (read.status !== 'recipe') continue
+        const link = read.recipe.template
+        if (link === undefined || !isBuiltinTemplateId(link.templateId)) continue
+        if (shippedIds.includes(link.templateId)) continue
+        if (link.problems?.some((p) => p.code === 'missing-template') === true) continue
+        const code = replaceRecipeLiteral(block.code, {
+          ...read.recipe,
+          template: {
+            ...link,
+            problems: [{ code: 'missing-template', detail: RETIRED_DETAIL }],
+          },
+        })
+        if (code === null) continue
+        try {
+          await deps.saveCode(block.id, code)
+          flagged += 1
+          deps.logger.warn(
+            'automation template: an instance of a retired built-in was flagged, it keeps running',
+            {
+              meta: { templateId: link.templateId, blockId: block.id },
+            },
+          )
+        } catch (error: unknown) {
+          deps.logger.warn('automation template: a retired instance could not be flagged', {
+            meta: { templateId: link.templateId, blockId: block.id, error: errorText(error) },
+          })
+        }
+      }
+      return flagged
+    },
 
     reexpand: async (templateId, payload) => {
       let updated = 0
