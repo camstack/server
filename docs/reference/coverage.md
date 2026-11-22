@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**255 units · 9163 source files · 248 units claimed by at least one document (9132 files).**
+**256 units · 9166 source files · 249 units claimed by at least one document (9135 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -198,6 +198,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | `decisions/adr-1013-one-instance-model.md`, 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, +1 more | 2026-08-30 |
+| `packages/addon-provider-kia` | 3 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-11-08 |
 | `packages/addon-training` | 3 | `cloud-training` | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/cli/src/http` | 3 | `tooling` | — | — |
 | `packages/system` | 3 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0417-a-diagnostic-more-than-one-bundle-needs-lives-in-system.md` | — |

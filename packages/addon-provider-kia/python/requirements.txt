@@ -1,0 +1,4 @@
+# Kia / Hyundai / Genesis connected-car cloud client (MIT), the one Home Assistant's kia_uvo
+# integration uses. Pinned exactly: 5.2.1 is the last release that supports Python 3.12, the
+# embedded interpreter; the worker reads its Vehicle attributes and VehicleManager methods.
+hyundai-kia-connect-api==5.2.1
