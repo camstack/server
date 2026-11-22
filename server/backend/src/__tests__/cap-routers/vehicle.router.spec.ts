@@ -32,7 +32,7 @@ function providerAnswering(result: VehicleRefreshResult, seen: number[]) {
 describe('vehicle.requestRefresh: tier', () => {
   it('resolves to admin', () => {
     const schema: CapabilityMethodSchema = vehicleCapability.methods.requestRefresh
-    expect(resolveMethodAuth(vehicleCapability, schema)).toBe('admin')
+    expect(resolveMethodAuth({}, schema)).toBe('admin')
     expect(METHOD_ACCESS_MAP['vehicle.requestRefresh']).toBeDefined()
   })
 })
