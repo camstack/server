@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1125 shared schemas.**
+**1127 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2882,6 +2882,16 @@ Enum: `"replace" \| "add"`
 ### `GroupCommandsSchema`
 
 - `results`: `GroupCommandResultSchema[]`
+
+### `GroupMemberOutcomeSchema`
+
+- `{ targetId: string; status: "sent" }`
+- `{ targetId: string; status: "skipped"; reason: GroupSkipReasonSchema }`
+- `{ targetId: string; status: "failed"; error: string }`
+
+### `GroupSkipReasonSchema`
+
+Enum: `"member-disabled" \| "below-min-priority" \| "schedule-inactive" \| "alarm-state" \| "alarm-unreadable" \| "throttled" \| "already-delivered" \| "nested-group" \| "unknown-target" \| "target-disabled"`
 
 ### `GroupStatusSchema`
 
@@ -6793,6 +6803,7 @@ Enum: `"matched" \| "diverged" \| "unknown"`
 - `success`: `boolean`
 - `error?`: `string`
 - `renderedAs?`: `RenderedAsSchema`
+- `members?`: `GroupMemberOutcomeSchema[]`
 
 ### `SensorEventSchema`
 
