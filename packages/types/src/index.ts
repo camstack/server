@@ -3089,3 +3089,12 @@ export type {
 } from './notification/notifier-group.js'
 
 export { TREESHAKE_CANARY_LITERAL, TreeshakeCanarySchema } from './treeshake-canary.js'
+
+export {
+  WOL_PORT_DEFAULT,
+  WOL_REPEAT_DEFAULT,
+  WOL_REPEAT_GAP_MS,
+  buildMagicPacket,
+  directedBroadcastOf,
+  parseMacAddress,
+} from './network/wake-on-lan.js'

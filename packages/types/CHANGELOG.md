@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A whole capability can be linked to another device's with one link; the per-device group mechanism is gone and getCapLinks is readable by viewers.
+- Wake-on-LAN helper: a pure magic-packet builder and a UDP sender for addons that wake a device from their own node
 
 ## [1.2.624] - 2026-11-22
 

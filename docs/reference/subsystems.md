@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9145 source files · 1286 file(s) in no subsystem.**
+**31 subsystems · 9146 source files · 1288 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -29,7 +29,7 @@ commits. A generated page may not.
 | Device model and the provider contract | 181 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +80 more, 6 ADRs | 2026-11-08 | ✅ |
 | Device providers (per vendor) | 980 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
-| Detection execution and inference | 145 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-10-24 | ✅ |
+| Detection execution and inference | 144 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 215 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +109 more, 27 ADRs | 2026-11-21 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 510 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-11-12 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-11-12 | ⚠️ |
@@ -117,7 +117,7 @@ Runs a model on a frame — the detection pipeline, the Python inference pool an
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline/src/detection-pipeline/**`, `packages/addon-pipeline/src/motion-wasm/**`, `packages/addon-pipeline/python/**`, `packages/addon-pipeline/wasm/**`, `packages/system/src/kernel/inference/**`, `packages/system/src/kernel/hwaccel/**`, `packages/system/src/python/**`, `packages/types/src/inference/**`
-- **Files**: 145 (90 claimed by some document)
+- **Files**: 144 (89 claimed by some document)
 - **Uncovered**: `packages/addon-pipeline/python/postprocessors` (28), `packages/addon-pipeline/python` (26), `packages/addon-pipeline/wasm/assembly` (1)
 
 ### ✅ Pipeline orchestration and placement
@@ -341,4 +341,4 @@ Everything that measures or builds CamStack rather than running it — the bench
 The taxonomy has a hole here. This list is the `--max-orphans` ratchet in
 `.github/workflows/ci.yml`; it only ever goes down.
 
-`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (16), `packages/addon-waste-collections/src` (15), `packages/types/src/migrations` (14), `packages/types/src/records` (13), +68 more directories
+`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (16), `packages/addon-waste-collections/src` (15), `packages/types/src/migrations` (14), `packages/types/src/records` (13), +69 more directories

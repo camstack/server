@@ -160,3 +160,16 @@ export {
   diffExportTargets,
   resolveExportFingerprint,
 } from './utils/export-reconciler.js'
+
+// Wake-on-LAN sender: a UDP socket, so node-only (the packet builder is in the root barrel).
+export type {
+  WakeOnLanDeps,
+  WakeOnLanInterface,
+  WakeOnLanInterfaces,
+  WakeOnLanRefusal,
+  WakeOnLanRequest,
+  WakeOnLanResult,
+  WakeOnLanSocket,
+  WakeOnLanTargetFailure,
+} from './network/wake-on-lan-node.js'
+export { WOL_REFUSAL_REASONS, sendWakeOnLan } from './network/wake-on-lan-node.js'
