@@ -1,7 +1,8 @@
 /**
- * The transition ledger as the device-history addon sees it (D1022): the
- * declared kind, the kernel-only writer, the paged reads, the retention sweep
- * and the device-removal hook body (D865).
+ * The transition ledger as the device-history addon sees it (D1022, D1084): the
+ * declared kind of stored COMMAND rows, the kernel-only writer, the paged reads, the
+ * retention sweep and the device-removal hook body (D865). A device read merges the
+ * stored commands with the device's own changes derived from its raw history series.
  *
  * Reads go to the store: an answered empty page is "no transitions". The
  * ledger is not a second copy of any device fact - the hub mirror stays the
@@ -22,6 +23,8 @@ import {
   type TransitionsStatus,
 } from '@camstack/types'
 import { DAY_MS } from '../time/bucket-time.js'
+import type { FieldChange } from './change-coalescing.js'
+import type { DerivedChanges } from './derived-changes.js'
 import { deviceTransitionsRecordKinds } from './device-transitions-record-kinds.js'
 
 /** The only caller `record` accepts: the hub kernel's device-manager states its own id. */
@@ -31,6 +34,8 @@ export interface TransitionsServiceDeps {
   readonly records: RecordsAccess
   readonly logger: IScopedLogger
   readonly clock: () => number
+  /** The device's own changes, read from device-history. */
+  readonly derived: Pick<DerivedChanges, 'read'>
   /** Gives the thread back between delete slices; a spec counts it. */
   readonly yieldNow?: () => Promise<void>
 }
@@ -63,7 +68,9 @@ export interface TransitionPage {
 
 const yieldToEventLoop = (): Promise<void> => new Promise((resolve) => setImmediate(resolve))
 
-function rangeOf(window: Window): { readonly at?: { gte?: number; lt?: number } } {
+function rangeOf(window: Window): {
+  readonly at?: { gte?: number; lt?: number }
+} {
   const range = {
     ...(window.atFrom !== undefined ? { gte: window.atFrom } : {}),
     ...(window.atTo !== undefined ? { lt: window.atTo } : {}),
@@ -85,6 +92,102 @@ function assertOneFilter(filters: Readonly<Record<string, unknown>>): void {
 
 function isRejectedRow(err: unknown): boolean {
   return err instanceof InvalidRecordError || err instanceof RecordTooLargeError
+}
+
+/** Where a row sits in the merged order: time, then source (a command before a change), then id. */
+interface SortKey {
+  readonly at: number
+  readonly source: 0 | 1
+  readonly id: string
+}
+
+interface Keyed {
+  readonly key: SortKey
+  readonly row: DeviceTransition
+}
+
+const SOURCE_CHANGE = 0
+const SOURCE_COMMAND = 1
+
+function compareKeys(a: SortKey, b: SortKey): number {
+  if (a.at !== b.at) return a.at - b.at
+  if (a.source !== b.source) return a.source - b.source
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+}
+
+function commandKey(row: DeviceTransition): Keyed {
+  return { key: { at: row.at, source: SOURCE_COMMAND, id: row.id }, row }
+}
+
+/** A derived change as a row: actor `device`, outcome `device`, an id that names what it is. */
+function changeKey(deviceId: number, change: FieldChange): Keyed {
+  const id = `chg:${deviceId}:${change.at}:${change.capName}.${change.field}`
+  return {
+    key: { at: change.at, source: SOURCE_CHANGE, id },
+    row: {
+      id,
+      deviceId,
+      at: change.at,
+      capName: change.capName,
+      field: change.field,
+      from: change.from,
+      to: change.to,
+      outcome: 'device',
+      actor: { kind: 'device' },
+    },
+  }
+}
+
+function cursorOf(item: Keyed): string {
+  return `${item.key.at}.${item.key.source}.${item.key.id}`
+}
+
+function parseCursor(cursor: string): SortKey {
+  const first = cursor.indexOf('.')
+  const second = cursor.indexOf('.', first + 1)
+  const at = Number(cursor.slice(0, first))
+  const source = cursor.slice(first + 1, second)
+  if (first < 0 || second < 0 || !Number.isFinite(at) || (source !== '0' && source !== '1')) {
+    throw new Error('invalid cursor')
+  }
+  return {
+    at,
+    source: source === '1' ? SOURCE_COMMAND : SOURCE_CHANGE,
+    id: cursor.slice(second + 1),
+  }
+}
+
+/** Take the first `count` rows of several newest-first sources, merged into one newest-first run. */
+async function takeMerged(
+  sources: readonly AsyncIterable<Keyed>[],
+  count: number,
+): Promise<Keyed[]> {
+  const iterators = sources.map((s) => s[Symbol.asyncIterator]())
+  const heads = await Promise.all(iterators.map((it) => it.next()))
+  const out: Keyed[] = []
+  try {
+    while (out.length < count) {
+      let best = -1
+      for (const [i, head] of heads.entries()) {
+        if (head.done === true) continue
+        const current = best < 0 ? undefined : heads[best]
+        if (
+          current === undefined ||
+          current.done === true ||
+          compareKeys(head.value.key, current.value.key) > 0
+        )
+          best = i
+      }
+      const winner = best < 0 ? undefined : heads[best]
+      if (winner === undefined || winner.done === true) break
+      out.push(winner.value)
+      const it = iterators[best]
+      if (it !== undefined) heads[best] = await it.next()
+    }
+  } finally {
+    await Promise.all(iterators.map((it) => it.return?.()))
+  }
+  return out
 }
 
 export class TransitionsService {
@@ -134,7 +237,12 @@ export class TransitionsService {
     }
     if (transitions.length === 0) return { written: 0, refused: [] }
     const handle = this.kind()
-    const puts = transitions.map((t) => ({ id: t.id, deviceId: t.deviceId, at: t.at, data: t }))
+    const puts = transitions.map((t) => ({
+      id: t.id,
+      deviceId: t.deviceId,
+      at: t.at,
+      data: t,
+    }))
     try {
       await handle.putMany(puts)
       this.lastWriteAt = this.deps.clock()
@@ -157,7 +265,10 @@ export class TransitionsService {
           'device-transitions: a transition was rejected by the ledger (invalid)',
           {
             tags: { deviceId: put.deviceId },
-            meta: { id: put.id, error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              id: put.id,
+              error: err instanceof Error ? err.message : String(err),
+            },
           },
         )
       }
@@ -166,42 +277,125 @@ export class TransitionsService {
     return { written, refused }
   }
 
+  /**
+   * One time-ordered page of a device's commands and its own changes, newest first. The cursor
+   * is the sort key of the last row returned (time, source, id), so a page boundary is the same
+   * whichever source the last row came from. `outcome` and every actor kind but `device` select
+   * commands; `actorKind: 'device'` selects the derived changes.
+   */
   async list(input: ListTransitionsInput): Promise<TransitionPage> {
-    assertOneFilter({ capName: input.capName, actorKind: input.actorKind, outcome: input.outcome })
-    const paging = {
-      desc: true,
-      limit: input.limit,
-      ...(input.cursor !== undefined ? { cursor: input.cursor } : {}),
+    assertOneFilter({
+      capName: input.capName,
+      actorKind: input.actorKind,
+      outcome: input.outcome,
+    })
+    const after = input.cursor === undefined ? null : parseCursor(input.cursor)
+    const wantCommands = input.actorKind !== 'device'
+    const wantChanges =
+      input.outcome === undefined && (input.actorKind === undefined || input.actorKind === 'device')
+    const sources: AsyncIterable<Keyed>[] = []
+    if (wantCommands) sources.push(this.commandRows(input, after))
+    if (wantChanges) sources.push(await this.changeRows(input, after))
+    const page = await takeMerged(sources, input.limit + 1)
+    const rows = page.slice(0, input.limit)
+    const last = rows[rows.length - 1]
+    return {
+      transitions: rows.map((r) => r.row),
+      nextCursor: page.length > input.limit && last !== undefined ? cursorOf(last) : null,
     }
-    const range = rangeOf(input)
-    const handle = this.kind()
-    const page =
-      input.capName !== undefined
-        ? await handle.query({
-            where: { deviceId: input.deviceId, capName: input.capName, ...range },
-            ...paging,
-          })
-        : input.actorKind !== undefined
-          ? await handle.query({
-              where: { deviceId: input.deviceId, 'actor.kind': input.actorKind, ...range },
-              ...paging,
-            })
-          : input.outcome !== undefined
-            ? await handle.query({
-                where: { deviceId: input.deviceId, outcome: input.outcome, ...range },
-                ...paging,
-              })
-            : await handle.query({
-                deviceId: input.deviceId,
-                ...(input.atFrom !== undefined ? { atFrom: input.atFrom } : {}),
-                ...(input.atTo !== undefined ? { atTo: input.atTo } : {}),
-                ...paging,
-              })
-    return { transitions: page.records.map((row) => row.data), nextCursor: page.nextCursor }
   }
 
+  /** Stored commands, newest first, strictly after the cursor. */
+  private async *commandRows(
+    input: ListTransitionsInput,
+    after: SortKey | null,
+  ): AsyncGenerator<Keyed> {
+    const handle = this.kind()
+    // The cursor's own millisecond is read again (`lt` is exclusive) and cut below.
+    const atTo = Math.min(
+      input.atTo ?? Number.POSITIVE_INFINITY,
+      after === null ? Infinity : after.at + 1,
+    )
+    const range = rangeOf({
+      atFrom: input.atFrom,
+      atTo: Number.isFinite(atTo) ? atTo : undefined,
+    })
+    let cursor: string | undefined
+    for (;;) {
+      const paging = {
+        desc: true,
+        limit: input.limit + 1,
+        ...(cursor !== undefined ? { cursor } : {}),
+      }
+      const page =
+        input.capName !== undefined
+          ? await handle.query({
+              where: {
+                deviceId: input.deviceId,
+                capName: input.capName,
+                ...range,
+              },
+              ...paging,
+            })
+          : input.actorKind !== undefined
+            ? await handle.query({
+                where: {
+                  deviceId: input.deviceId,
+                  'actor.kind': input.actorKind,
+                  ...range,
+                },
+                ...paging,
+              })
+            : input.outcome !== undefined
+              ? await handle.query({
+                  where: {
+                    deviceId: input.deviceId,
+                    outcome: input.outcome,
+                    ...range,
+                  },
+                  ...paging,
+                })
+              : await handle.query({
+                  deviceId: input.deviceId,
+                  ...(input.atFrom !== undefined ? { atFrom: input.atFrom } : {}),
+                  ...(atTo !== Infinity ? { atTo } : {}),
+                  ...paging,
+                })
+      for (const record of page.records) {
+        const keyed = commandKey(record.data)
+        if (after === null || compareKeys(keyed.key, after) < 0) yield keyed
+      }
+      if (page.nextCursor === null) return
+      cursor = page.nextCursor
+    }
+  }
+
+  /** The device's derived changes, newest first, strictly after the cursor. */
+  private async changeRows(
+    input: ListTransitionsInput,
+    after: SortKey | null,
+  ): Promise<AsyncIterable<Keyed>> {
+    const now = this.deps.clock()
+    const changes = await this.deps.derived.read(input.deviceId, {
+      from: input.atFrom ?? 0,
+      to: Math.min(input.atTo ?? now, now),
+      capName: input.capName,
+    })
+    const rows = changes
+      .filter((c) => input.atTo === undefined || c.at < input.atTo)
+      .filter((c) => input.atFrom === undefined || c.at >= input.atFrom)
+      .map((c) => changeKey(input.deviceId, c))
+      .toSorted((a, b) => compareKeys(b.key, a.key))
+      .filter((k) => after === null || compareKeys(k.key, after) < 0)
+    return (async function* () {
+      for (const row of rows) yield row
+    })()
+  }
+
+  /** The fleet page: stored commands only. A device's own changes are derived per device. */
   async listRecent(input: ListRecentInput): Promise<TransitionPage> {
     assertOneFilter({ actorKind: input.actorKind, outcome: input.outcome })
+    if (input.actorKind === 'device') return { transitions: [], nextCursor: null }
     const paging = {
       desc: true,
       limit: input.limit,
@@ -223,7 +417,10 @@ export class TransitionsService {
             ...(input.atTo !== undefined ? { atTo: input.atTo } : {}),
             ...paging,
           })
-    return { transitions: page.records.map((row) => row.data), nextCursor: page.nextCursor }
+    return {
+      transitions: page.records.map((row) => row.data),
+      nextCursor: page.nextCursor,
+    }
   }
 
   async get(input: {
@@ -243,7 +440,11 @@ export class TransitionsService {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
     }
-    return { rows, lastWriteAt: this.lastWriteAt, refused: Object.fromEntries(this.refused) }
+    return {
+      rows,
+      lastWriteAt: this.lastWriteAt,
+      refused: Object.fromEntries(this.refused),
+    }
   }
 
   /**
@@ -259,7 +460,9 @@ export class TransitionsService {
     const yieldNow = this.deps.yieldNow ?? yieldToEventLoop
     let deleted = 0
     for (let lo = first; lo < cutoff; lo += DAY_MS) {
-      deleted += await handle.deleteWhere({ atBefore: Math.min(lo + DAY_MS, cutoff) })
+      deleted += await handle.deleteWhere({
+        atBefore: Math.min(lo + DAY_MS, cutoff),
+      })
       await yieldNow()
     }
     return deleted
@@ -267,7 +470,9 @@ export class TransitionsService {
 
   /** The D865 hook body: how many transition rows the removal deleted. */
   async removeDevice(deviceId: number): Promise<number> {
-    const counts = await this.deps.records.deleteDevice(deviceId, { kinds: ['device-transitions'] })
+    const counts = await this.deps.records.deleteDevice(deviceId, {
+      kinds: ['device-transitions'],
+    })
     return counts['device-transitions'] ?? 0
   }
 

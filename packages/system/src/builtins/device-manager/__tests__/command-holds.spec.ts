@@ -1,7 +1,6 @@
 /**
  * The command hold (D1061): the spec's "Done when" list, end to end from a
- * command observation to the slice the mirror emits and the transition the
- * recorder is told of.
+ * command observation to the slice the mirror emits.
  */
 import type {
   CommandHoldOptions,
@@ -20,15 +19,8 @@ import { harness, type Harness } from './mirror-harness.js'
 
 const DEVICE = 7
 
-interface Told {
-  readonly capName: string
-  readonly prior: Readonly<Record<string, unknown>> | undefined
-  readonly slice: Readonly<Record<string, unknown>>
-}
-
 interface Rig {
   readonly h: Harness
-  readonly told: Told[]
   readonly stop: () => void
 }
 
@@ -50,16 +42,12 @@ function recordingLogger(h: Harness): IScopedLogger {
 
 function rig(options?: Record<string, CommandHoldOptions>): Rig {
   const h = harness()
-  const told: Told[] = []
-  h.mirror.setTransitionTap(
-    (_deviceId, capName, prior, slice) => void told.push({ capName, prior, slice }),
-  )
   const stop = startCommandHolds({
     mirror: h.mirror,
     logger: recordingLogger(h),
     optionsFor: (_deviceId, capName) => options?.[capName],
   })
-  return { h, told, stop }
+  return { h, stop }
 }
 
 function command(
@@ -118,10 +106,9 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
     stop()
   })
 
-  it('shows the commanded value through 10 s of stale polls; history sees one transition, at confirmation', () => {
-    const { h, told, stop } = rig()
+  it('shows the commanded value through 10 s of stale polls', () => {
+    const { h, stop } = rig()
     h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
-    told.length = 0
 
     command('switch', 'setState', { on: true })
     expect(lastSlice(h, 'switch')).toEqual({ on: true })
@@ -132,10 +119,8 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
       expect(h.mirror.capSlice(DEVICE, 'switch', 'confirmed')).toEqual({ on: false })
     }
     expect(lastSlice(h, 'switch')).toEqual({ on: true })
-    expect(told).toEqual([])
 
     h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: true })
-    expect(told).toEqual([{ capName: 'switch', prior: { on: false }, slice: { on: true } }])
     expect(h.mirror.capSlice(DEVICE, 'switch', 'confirmed')).toEqual({ on: true })
     vi.advanceTimersByTime(60_000)
     expect(h.mirror.capSlice(DEVICE, 'switch')).toEqual({ on: true })
@@ -300,8 +285,8 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
       stop()
     })
 
-    it('a bolt that bounces back is never shown or told as locked', () => {
-      const { h, told, stop } = rig()
+    it('a bolt that bounces back is never shown as locked', () => {
+      const { h, stop } = rig()
       h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
       command('lock-control', 'lock', {})
       // The lock reports its pre-command value again: the bolt did not throw.
@@ -309,10 +294,9 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
       expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locking' })
       vi.advanceTimersByTime(60_000)
       expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'unlocked' })
-      const states = [
-        ...h.events.filter((e) => e.capName === 'lock-control').map((e) => e.slice?.['state']),
-        ...told.filter((t) => t.capName === 'lock-control').map((t) => t.slice['state']),
-      ]
+      const states = h.events
+        .filter((e) => e.capName === 'lock-control')
+        .map((e) => e.slice?.['state'])
       expect(states).not.toContain('locked')
       stop()
     })

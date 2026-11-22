@@ -45,6 +45,8 @@ import type { SnapshotMap } from './capture/capture-engine.js'
 import { DEFAULT_RETENTION, type RetentionPolicy } from './retention/retention.js'
 import { HistoryRuntime } from './runtime/history-runtime.js'
 import { DeviceRunsService } from './runs/device-runs-service.js'
+import { DerivedChanges } from './transitions/derived-changes.js'
+import { HistoryChangePort } from './transitions/history-change-port.js'
 import { TransitionsService } from './transitions/transitions-service.js'
 import { energyKwhFromHistory } from './runs/energy-from-history.js'
 import { UNRAID_ADDON_ID, type LegacyScale, unraidInformationScale } from './store/series-scale.js'
@@ -299,7 +301,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     const runsOpened = await runs.open()
     this.runsProvider = runsOpened.provider
     this.runs = runs
-    const transitions = await this.openTransitions()
+    const transitions = await this.openTransitions(runtime)
     this.transitions = transitions
     runtime.retentionJob.attachTransitions(transitions)
     this.unsubscribe = this.ctx.eventBus.subscribe(
@@ -365,7 +367,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     })
   }
 
-  private async openTransitions(): Promise<TransitionsService> {
+  private async openTransitions(runtime: HistoryRuntime): Promise<TransitionsService> {
     const { ctx } = this
     const records = ctx.records
     if (records === undefined) {
@@ -375,6 +377,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       records,
       logger: ctx.logger,
       clock: () => Date.now(),
+      derived: new DerivedChanges(new HistoryChangePort(runtime), () => Date.now()),
     })
     await transitions.open()
     return transitions

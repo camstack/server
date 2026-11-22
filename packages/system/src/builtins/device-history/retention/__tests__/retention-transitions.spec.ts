@@ -26,8 +26,8 @@ function row(id: string, at: number): DeviceTransition {
     field: 'on',
     from: false,
     to: true,
-    outcome: 'device',
-    actor: { kind: 'device' },
+    outcome: 'ok',
+    actor: { kind: 'user', userId: 'u1', username: 'ada', credential: 'session' },
   }
 }
 
@@ -44,6 +44,7 @@ async function rig() {
     logger: silentLogger(),
     clock: () => h.now(),
     yieldNow: async () => {},
+    derived: { read: async () => [] },
   })
   await service.open()
   h.runtime.retentionJob.attachTransitions(service)

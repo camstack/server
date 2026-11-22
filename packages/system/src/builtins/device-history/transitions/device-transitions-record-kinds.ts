@@ -15,7 +15,7 @@ const _deviceTransitionsRecordKinds = defineRecordKinds({
     class: 'audit',
     database: 'events',
     writeTrigger:
-      'the hub kernel delivers a batch of correlated device transitions (commands matched to slice changes, or unmatched)',
+      'the hub kernel delivers a batch of completed device commands, one row per command with its actor and ok or failed outcome',
     device: 'required',
     at: 'required',
     indexes: [
