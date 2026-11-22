@@ -1,7 +1,7 @@
 ---
-id: DNNN
+id: D1087
 title: A switch toggle is one default method, installed where every native provider is registered
-status: proposed
+status: accepted
 date: 2026-11-13
 supersedes:
 applies-to:
