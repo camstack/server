@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Notification rules: device command messages and the outcome filter are ok or failed.
 
+### Fixed
+
+- Notification rules: a rule that filtered device commands by a retired outcome still loads, as the done outcome.
+
 ## [1.2.722] - 2026-11-22
 
 ### Changed

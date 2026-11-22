@@ -3,7 +3,7 @@
  * have a series, and their raw points. A field with no series (its cap has no `history` block)
  * has no derived row.
  */
-import { auditedFields, type DeviceHistoryKind } from '@camstack/types'
+import { auditedFields, type DeviceHistoryKind, type IScopedLogger } from '@camstack/types'
 import { CAP_KEY_PREFIX, capSeriesKey } from '../capture/capture-engine.js'
 import type { HistoryQuery } from '../query/history-query.js'
 import type { SeriesRegistry } from '../store/series-registry.js'
@@ -17,6 +17,7 @@ import {
 export interface HistoryChangePortDeps {
   readonly registry: Pick<SeriesRegistry, 'forSubject' | 'metric'>
   readonly query: Pick<HistoryQuery, 'query'>
+  readonly logger: IScopedLogger
 }
 
 /** `cap:<capName>.<field>` → its parts, or `null` for a key that is not a top-level cap field. */
@@ -59,6 +60,15 @@ export class HistoryChangePort implements ChangeSeriesPort {
       resolution: 'raw',
       maxPoints: DERIVED_POINTS_MAX,
     })
+    if (result.truncated) {
+      this.deps.logger.warn(
+        'derived device changes read cut at the raw point cap; the oldest points are left out',
+        {
+          tags: { deviceId },
+          meta: { field: `${series.capName}.${series.field}`, cap: DERIVED_POINTS_MAX },
+        },
+      )
+    }
     const first = result.series[0]
     if (first === undefined) return { before: null, points: [] }
     return {

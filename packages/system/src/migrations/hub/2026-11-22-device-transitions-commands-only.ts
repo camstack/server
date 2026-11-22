@@ -66,6 +66,9 @@ function kindIdOf(db: MigrationDatabase): number | null {
   return typeof id === 'number' ? id : null
 }
 
+/** Rows one statement touches; a big ledger is rewritten in bounded steps, never one huge statement. */
+export const MIGRATION_BATCH_ROWS = 5_000
+
 const OUTCOME = "json_extract(data, '$.outcome')"
 
 function commandsOnly(db: MigrationDatabase): MigrationNote {
@@ -84,11 +87,21 @@ function commandsOnly(db: MigrationDatabase): MigrationNote {
     kindId,
     ...RETIRED_COMMAND_OUTCOMES,
   )
-  db.prepare(`DELETE FROM records WHERE kind_id = ? AND ${OUTCOME} = 'device'`).run(kindId)
-  // A merge patch rewrites the outcome alone; every other field of the row stays as stored.
-  db.prepare(
-    `UPDATE records SET data = jsonb_patch(data, '{"outcome":"ok"}') WHERE kind_id = ? AND ${OUTCOME} IN (${marks})`,
-  ).run(kindId, ...RETIRED_COMMAND_OUTCOMES)
+  const deleteBatch = db.prepare(
+    `DELETE FROM records WHERE rid IN (SELECT rid FROM records WHERE kind_id = ? AND ${OUTCOME} = 'device' LIMIT ${MIGRATION_BATCH_ROWS})`,
+  )
+  while (Number(deleteBatch.run(kindId).changes) > 0) {
+    // each pass removes one batch; the loop ends when no device row is left
+  }
+  // A merge patch rewrites the outcome alone; every other field of the row stays as stored. `rev`
+  // and `updated_at` move as the engine's own patch does, so a reader of the revision sees a change.
+  const patchBatch = db.prepare(
+    `UPDATE records SET data = jsonb_patch(data, '{"outcome":"ok"}'), rev = rev + 1, updated_at = ? WHERE rid IN (SELECT rid FROM records WHERE kind_id = ? AND ${OUTCOME} IN (${marks}) LIMIT ${MIGRATION_BATCH_ROWS})`,
+  )
+  const stamp = Date.now()
+  while (Number(patchBatch.run(stamp, kindId, ...RETIRED_COMMAND_OUTCOMES).changes) > 0) {
+    // an updated row no longer matches, so the loop ends when none is left
+  }
   const after = scalar(db, 'SELECT COUNT(*) AS n FROM records WHERE kind_id = ?', kindId)
   const stray = scalar(
     db,

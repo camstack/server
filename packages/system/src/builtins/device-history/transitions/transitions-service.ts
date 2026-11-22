@@ -112,7 +112,26 @@ const SOURCE_COMMAND = 1
 function compareKeys(a: SortKey, b: SortKey): number {
   if (a.at !== b.at) return a.at - b.at
   if (a.source !== b.source) return a.source - b.source
-  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+  return compareIds(a.id, b.id)
+}
+
+/**
+ * Ids in the order the store yields one millisecond: insertion order, which for a command id
+ * `<deviceId>:<at>:c<seq>` is its sequence NUMBER, so `c9` precedes `c10`. A plain string compare
+ * puts `c10` first and a cursor on either side of that pair drops a row.
+ */
+function compareIds(a: string, b: string): number {
+  const left = a.match(/\d+|\D+/g) ?? []
+  const right = b.match(/\d+|\D+/g) ?? []
+  for (let i = 0; i < Math.min(left.length, right.length); i += 1) {
+    const x = left[i] ?? ''
+    const y = right[i] ?? ''
+    if (x === y) continue
+    const numeric = /^\d/.test(x) && /^\d/.test(y)
+    if (numeric) return Number(x) - Number(y)
+    return x < y ? -1 : 1
+  }
+  return left.length - right.length
 }
 
 function commandKey(row: DeviceTransition): Keyed {

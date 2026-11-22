@@ -61,6 +61,13 @@ filter shrink to `ok | failed`.
 - `commandOutcomes` values `confirmed`, `already` and `unconfirmed` in a stored
   notification rule no longer parse; no live rule used them.
 - `getTransition` and `listRecentTransitions` answer stored commands only.
+- A stored notification rule that names `confirmed`, `already` or `unconfirmed` in
+  `commandOutcomes` is read as `ok` (a read projection in the rule store; the stored row is
+  not rewritten).
+- Known limit: a page deep into a long history re-reads the derived changes of the window
+  (bounded by `DERIVED_POINTS_MAX` raw points per series, logged when it is hit) and skips
+  to the cursor in memory, so deep paging costs more than the first page. Accepted; the
+  Interactions view pages shallowly.
 
 ## Enforcement
 

@@ -93,6 +93,16 @@ describe('record', () => {
     expect((await service.status()).rows).toBe(1)
   })
 
+  it('refuses a derived-looking row (outcome device): only commands are stored', async () => {
+    const { service } = await makeRig()
+    const result = await service.record(KERNEL_CALLER, [
+      transition({ id: '1:d:0', outcome: 'device', actor: { kind: 'device' } }),
+      transition({ id: '1:k:0', at: T0 + 1 }),
+    ])
+    expect(result.written).toBe(1)
+    expect(result.refused).toEqual([{ id: '1:d:0', reason: 'invalid' }])
+  })
+
   it('refuses a row the engine rejects as invalid and still writes the others', async () => {
     const { service, logs } = await makeRig()
     const huge = transition({
@@ -231,6 +241,28 @@ describe('reads', () => {
     })
     expect([...idsOf(first), ...idsOf(second)]).toEqual(['1:9:0', `chg:1:${T0 + 9}:switch.on`])
     expect(second.nextCursor).toBeNull()
+  })
+
+  it('pages commands of one millisecond whose sequence crosses 9 to 10 without dropping or repeating one', async () => {
+    const rig = await makeRig()
+    const ids = ['8', '9', '10', '11'].map((n) => `1:${T0 + 5}:c${n}`)
+    await rig.service.record(
+      KERNEL_CALLER,
+      ids.map((id) => transition({ id, at: T0 + 5 })),
+    )
+    const seen: string[] = []
+    let cursor: string | undefined
+    for (let guard = 0; guard < 10; guard += 1) {
+      const page = await rig.service.list({
+        deviceId: 1,
+        limit: 1,
+        ...(cursor !== undefined ? { cursor } : {}),
+      })
+      seen.push(...idsOf(page))
+      if (page.nextCursor === null) break
+      cursor = page.nextCursor
+    }
+    expect(seen).toEqual(ids.toReversed())
   })
 
   it('answers an empty page for a device with none', async () => {

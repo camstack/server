@@ -338,3 +338,34 @@ describe('NcRuleStore.update — clearing a retired key strips the STORED row (D
     }
   })
 })
+
+describe('NcRuleStore — retired command outcomes are projected on read (D1084)', () => {
+  it('loads a stored rule with confirmed, already and unconfirmed as ok, and leaves the stored row alone', async () => {
+    const world = makeNcRecords()
+    seedRule(world, 'cmd-old', {
+      conditions: {
+        systemEvent: {
+          kinds: ['device-command'],
+          commandOutcomes: ['confirmed', 'already', 'unconfirmed'],
+        },
+      },
+    })
+    seedRule(world, 'cmd-mixed', {
+      conditions: {
+        systemEvent: { kinds: ['device-command'], commandOutcomes: ['failed', 'confirmed'] },
+      },
+    })
+    const { store, writes } = makeStore(world)
+    await store.load()
+    expect(store.get('cmd-old')?.conditions.systemEvent?.commandOutcomes).toEqual(['ok'])
+    expect(store.get('cmd-mixed')?.conditions.systemEvent?.commandOutcomes).toEqual([
+      'failed',
+      'ok',
+    ])
+    expect(writes()).toBe(0)
+    const stored = storedRule(world, 'cmd-old')['conditions'] as {
+      systemEvent: { commandOutcomes: string[] }
+    }
+    expect(stored.systemEvent.commandOutcomes).toEqual(['confirmed', 'already', 'unconfirmed'])
+  })
+})

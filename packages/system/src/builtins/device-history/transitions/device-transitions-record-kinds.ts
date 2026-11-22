@@ -9,9 +9,15 @@
 import type { z } from 'zod'
 import { defineRecordKinds, DeviceTransitionSchema, type DefinedRecordKind } from '@camstack/types'
 
+/** A stored row is a command: `ok` or `failed`. `device` is a derived row and never written (D1084). */
+const StoredDeviceTransitionSchema = DeviceTransitionSchema.refine(
+  (row) => row.outcome !== 'device',
+  { message: 'a derived device change is not stored', path: ['outcome'] },
+)
+
 const _deviceTransitionsRecordKinds = defineRecordKinds({
   'device-transitions': {
-    schema: DeviceTransitionSchema,
+    schema: StoredDeviceTransitionSchema,
     class: 'audit',
     database: 'events',
     writeTrigger:
@@ -36,7 +42,7 @@ const _deviceTransitionsRecordKinds = defineRecordKinds({
 
 export type DeviceTransitionsRecordKindsMap = {
   readonly 'device-transitions': DefinedRecordKind<
-    z.ZodType<z.infer<typeof DeviceTransitionSchema>>
+    z.ZodType<z.infer<typeof StoredDeviceTransitionSchema>>
   >
 }
 

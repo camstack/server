@@ -377,7 +377,14 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       records,
       logger: ctx.logger,
       clock: () => Date.now(),
-      derived: new DerivedChanges(new HistoryChangePort(runtime), () => Date.now()),
+      derived: new DerivedChanges(
+        new HistoryChangePort({
+          registry: runtime.registry,
+          query: runtime.query,
+          logger: ctx.logger,
+        }),
+        () => Date.now(),
+      ),
     })
     await transitions.open()
     return transitions

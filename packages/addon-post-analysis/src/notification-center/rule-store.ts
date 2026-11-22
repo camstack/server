@@ -60,6 +60,7 @@ import {
 } from './rule-retired-fields.js'
 import { storedTags } from './rule-tags.js'
 import { ncRecordKinds, type RuleBody } from './record-kinds.js'
+import { withCurrentCommandOutcomes } from './rule-command-outcomes.js'
 import { withoutLegacyActions } from './rule-legacy-actions.js'
 
 /**
@@ -112,7 +113,10 @@ function parseStoredRule(
   const { projection, groupingRepair } = projected
   const legacy = withoutLegacyActions(projected.candidate)
   if (legacy.dropped) onLegacyActions?.(id)
-  const parsed = NcRuleSchema.safeParse({ ...(legacy.candidate as object), id })
+  const parsed = NcRuleSchema.safeParse({
+    ...(withCurrentCommandOutcomes(legacy.candidate) as object),
+    id,
+  })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const reason =

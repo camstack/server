@@ -10,6 +10,7 @@ import {
   DEVICE_TRANSITIONS_COMMANDS_ONLY_MIGRATION,
   DEVICE_TRANSITIONS_KIND,
   DEVICE_TRANSITIONS_OWNER,
+  MIGRATION_BATCH_ROWS,
 } from '../../../migrations/hub/2026-11-22-device-transitions-commands-only.js'
 import { deviceTransitionsRecordKinds } from '../../device-history/transitions/device-transitions-record-kinds.js'
 import { declareKind, ensureRecordsSchema } from '../records/records-catalog.js'
@@ -96,6 +97,35 @@ describe('device-transitions commands-only migration (D1084)', () => {
       d: { outcome: 'failed', mark: 'mark-d' },
     })
     expect(note).toMatchObject({ before: 6, after: 4, deviceRowsDeleted: 2, mappedToOk: 3 })
+  })
+
+  it('bumps rev and updated_at of a re-outcomed row and leaves the others as they were', () => {
+    const { db, kindId } = seed(OLD)
+    DEVICE_TRANSITIONS_COMMANDS_ONLY_MIGRATION.run(db)
+    const meta = (id: string) =>
+      db
+        .prepare('SELECT rev, updated_at AS at FROM records WHERE kind_id = ? AND id = ?')
+        .get(kindId, id) as {
+        rev: number
+        at: number
+      }
+    expect(meta('a').rev).toBe(2)
+    expect(meta('a').at).toBeGreaterThan(100)
+    expect(meta('d')).toEqual({ rev: 1, at: 100 })
+  })
+
+  it('handles more rows than one batch, device rows and retired outcomes alike', () => {
+    const many: Row[] = []
+    for (let i = 0; i < MIGRATION_BATCH_ROWS * 2 + 7; i += 1) {
+      many.push({ id: `r${i}`, outcome: i % 2 === 0 ? 'device' : 'confirmed', mark: `m${i}` })
+    }
+    const { db, kindId } = seed(many)
+    const note = DEVICE_TRANSITIONS_COMMANDS_ONLY_MIGRATION.run(db)
+    const left = stored(db, kindId)
+    expect(Object.values(left).every((r) => r.outcome === 'ok')).toBe(true)
+    expect(left['r1']).toEqual({ outcome: 'ok', mark: 'm1' })
+    expect(left['r0']).toBeUndefined()
+    expect(note).toMatchObject({ before: many.length, after: Object.keys(left).length })
   })
 
   it('leaves another kind alone, even a row of it with a device outcome', () => {
