@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 /**
  * D1062 — the UDS parent holds a forked addon's device command until its
  * follow-up (the state refresh) ran; a call that is not a command is answered
@@ -14,7 +15,8 @@ import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 
-const PARENT_NODE = 'hub'
+/** Unique per run: the UDS path derives from the node id, and a shared one collides with a parallel run. */
+const PARENT_NODE = `hub-${randomUUID().slice(0, 8)}`
 const CALLER_ID = 'addon-export-alexa'
 
 interface MutateApi {

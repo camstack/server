@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 /**
  * D1022 hook B — the UDS parent reports a forked addon's device commands with
  * the addon the SOCKET belongs to as the actor.
@@ -17,7 +18,8 @@ import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 
-const PARENT_NODE = 'hub'
+/** Unique per run: the UDS path derives from the node id, and a shared one collides with a parallel run. */
+const PARENT_NODE = `hub-${randomUUID().slice(0, 8)}`
 const CALLER_ID = 'addon-export-alexa'
 
 interface MutateApi {
