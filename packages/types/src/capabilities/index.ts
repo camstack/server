@@ -2332,6 +2332,20 @@ export {
   IR_LEARN_TIMEOUT_MAX_MS,
 } from './ir-transmitter.cap.js'
 export type {
+  IRetentionSourceProvider,
+  RetentionKnob,
+  RetentionScope,
+  RetentionUnit,
+  RetentionWrite,
+} from './retention-source.cap.js'
+export {
+  RetentionKnobSchema,
+  RetentionScopeSchema,
+  RetentionUnitSchema,
+  RetentionWriteSchema,
+  retentionSourceCapability,
+} from './retention-source.cap.js'
+export type {
   CalendarEvent,
   CalendarInfo,
   CalendarListEventsInput,
@@ -3749,6 +3763,7 @@ import type { templateCapability } from './template.cap.js'
 import type { tagsCapability } from './tags.cap.js'
 import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
+import type { retentionSourceCapability } from './retention-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
 import type { cameraCredentialsCapability } from './camera-credentials.cap.js'
 import type { cameraGridLayoutCapability } from './camera-grid-layout.cap.js'
@@ -3986,6 +4001,7 @@ type AnyCapability =
   | typeof webrtcSessionCapability
   | typeof cameraStreamsCapability
   | typeof calendarSourceCapability
+  | typeof retentionSourceCapability
   | typeof calendarsCapability
   | typeof motionDetectionCapability
   | typeof pipelineExecutorCapability

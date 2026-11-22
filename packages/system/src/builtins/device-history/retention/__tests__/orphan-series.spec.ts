@@ -72,7 +72,14 @@ describe('listOrphans', () => {
     const missingAt = h.now()
     h.advance(HOUR_MS)
     await h.runtime.retentionJob.run(
-      { rawDays: 7, fiveMinuteDays: 30, hourDays: 365, dayDays: null, transitionDays: 365 },
+      {
+        rawDays: 7,
+        rawDiscreteDays: 30,
+        fiveMinuteDays: 30,
+        hourDays: 365,
+        dayDays: null,
+        transitionDays: 365,
+      },
       h.now(),
     )
     const { series } = await h.runtime.listOrphans()

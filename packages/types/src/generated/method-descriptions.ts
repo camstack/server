@@ -1208,6 +1208,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "remote.setConfig": "Save the remote-control button layout of a device.",
   "remoteLayoutComponents.listComponents": "List the components offered by the remote layout editor's palette.",
   "resync.resync": "Re-align a device with its upstream source.",
+  "retentionSource.listRetentionKnobs": "List the retention knobs this addon owns; with deviceId, the device-scoped ones for that device.",
   "runningState.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "sceneMonitor.captureReference": "Capture a reference image of the region for one of the monitor's states.",
   "sceneMonitor.createScene": "Create a scene monitor on a region of the camera frame.",

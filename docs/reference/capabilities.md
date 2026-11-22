@@ -4,7 +4,7 @@
 
 # Capabilities
 
-216 capability definitions in `packages/types/src/capabilities/`.
+217 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -138,7 +138,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (102)
+## System-scoped (103)
 
 Singleton or collection providers, addressed without a device.
 
@@ -222,6 +222,7 @@ Singleton or collection providers, addressed without a device.
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
 | `remote` | 6 | — | — | — | — | `core-blocks` |
 | `remote-layout-components` | 1 | — | — | — | — | `core-blocks` |
+| `retention-source` | 1 | — | — | — | ✓ | `device-history` |
 | `schedulers` | 10 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |

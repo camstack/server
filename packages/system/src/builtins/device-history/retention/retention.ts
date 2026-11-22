@@ -19,7 +19,7 @@
  * the device is perfectly alive. An OPTED-OUT device keeps its history until
  * retention ages it out: stopping capture is the switch; deleting history is not.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { DeviceHistoryKind, IScopedLogger } from '@camstack/types'
 import type { DepartureTracker } from './departure-tracker.js'
 import { DEPARTED_ABSENCE_MS } from './departure-tracker.js'
 import type { HistoryCounters } from '../status/counters.js'
@@ -28,7 +28,10 @@ import type { SeriesRegistry } from '../store/series-registry.js'
 import { DAY_MS, HOUR_MS } from '../time/bucket-time.js'
 
 export interface RetentionPolicy {
+  /** Raw points of a continuous series (`gauge`, `counter`). */
   readonly rawDays: number
+  /** Raw points of a discrete series (`boolean`, `enum`): the change points the Interactions view reads. */
+  readonly rawDiscreteDays: number
   readonly fiveMinuteDays: number
   readonly hourDays: number
   /** `null` (or 0) keeps the daily tier forever. */
@@ -39,10 +42,34 @@ export interface RetentionPolicy {
 
 export const DEFAULT_RETENTION: RetentionPolicy = {
   rawDays: 7,
+  rawDiscreteDays: 30,
   fiveMinuteDays: 30,
   hourDays: 365,
   dayDays: null,
   transitionDays: 365,
+}
+
+/** A device's own raw windows; a field left out inherits the cluster value. */
+export interface RawDeviceOverride {
+  readonly rawDays?: number
+  readonly rawDiscreteDays?: number
+}
+
+/** The overrides by device id, read once per retention pass. */
+export type DeviceOverrideReader = () => Promise<ReadonlyMap<number, RawDeviceOverride>>
+
+function isDiscrete(kind: DeviceHistoryKind | undefined): boolean {
+  return kind === 'boolean' || kind === 'enum'
+}
+
+/** Days one series keeps its raw points: its device's override, else the cluster value for its kind. */
+export function rawDaysFor(
+  kind: DeviceHistoryKind | undefined,
+  policy: RetentionPolicy,
+  override: RawDeviceOverride | undefined,
+): number {
+  if (isDiscrete(kind)) return override?.rawDiscreteDays ?? policy.rawDiscreteDays
+  return override?.rawDays ?? policy.rawDays
 }
 
 /** Rows of the transition ledger strictly older than this are deleted; the row AT it is kept. */
@@ -108,12 +135,18 @@ export class RetentionJob {
   private readonly appliedUpTo = new Map<string, number>()
   private running: Promise<void> | null = null
   private transitions: TransitionSweeper | null = null
+  private deviceOverrides: DeviceOverrideReader | null = null
 
   constructor(private readonly deps: RetentionDeps) {}
 
   /** The ledger opens after the history runtime does; the pass sweeps it from then on. */
   attachTransitions(sweeper: TransitionSweeper): void {
     this.transitions = sweeper
+  }
+
+  /** Per-device raw windows (the addon's per-device store); read once per pass. */
+  attachDeviceOverrides(reader: DeviceOverrideReader): void {
+    this.deviceOverrides = reader
   }
 
   run(policy: RetentionPolicy, now: number): Promise<void> {
@@ -129,12 +162,24 @@ export class RetentionJob {
     const { registry, counters, logger } = this.deps
     const cutoffs = retentionCutoffs(policy, now)
     try {
+      const overrides = await this.readOverrides()
       for (const tier of TIERS) {
-        const cutoff = cutoffs[tier]
-        if (cutoff === null) continue
+        if (tier === 'raw' && overrides === null) continue
         for (const series of registry.all()) {
+          const metric = registry.metric(series.key)
+          const cutoff =
+            tier === 'raw'
+              ? now -
+                rawDaysFor(
+                  metric?.kind,
+                  policy,
+                  series.deviceId === null ? undefined : overrides?.get(series.deviceId),
+                ) *
+                  DAY_MS
+              : cutoffs[tier]
+          if (cutoff === null) continue
           if (series.firstTs - DAY_MS >= cutoff) continue
-          if (tier === 'raw' && registry.metric(series.key)?.ingest === 'buckets') continue
+          if (tier === 'raw' && metric?.ingest === 'buckets') continue
           const marker = `${tier}:${series.id}`
           const applied = this.appliedUpTo.get(marker)
           if (applied !== undefined && cutoff - applied < RETENTION_STEP_MS[tier]) continue
@@ -156,6 +201,23 @@ export class RetentionJob {
       logger.warn('device-history: retention pass failed — retried at the next run', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
+    }
+  }
+
+  /**
+   * `null` when the read failed: a longer override must not be judged by the cluster
+   * window, so the raw tier waits for the next pass (D49) — it never deletes blind.
+   */
+  private async readOverrides(): Promise<ReadonlyMap<number, RawDeviceOverride> | null> {
+    if (this.deviceOverrides === null) return new Map()
+    try {
+      return await this.deviceOverrides()
+    } catch (err) {
+      this.deps.logger.warn(
+        'device-history: per-device raw windows unreadable — raw tier skipped this pass',
+        { meta: { error: err instanceof Error ? err.message : String(err) } },
+      )
+      return null
     }
   }
 
@@ -214,7 +276,12 @@ export class RetentionJob {
     series: { readonly id: number; readonly firstTs: number },
     now: number,
   ): Promise<Readonly<Record<StoredTier, number>>> {
-    const deleted: Record<StoredTier, number> = { raw: 0, '5m': 0, '1h': 0, '1d': 0 }
+    const deleted: Record<StoredTier, number> = {
+      raw: 0,
+      '5m': 0,
+      '1h': 0,
+      '1d': 0,
+    }
     for (const tier of TIERS) {
       const lo =
         tier === 'raw' || tier === '5m'

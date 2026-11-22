@@ -26,6 +26,7 @@ import {
   type DeviceType,
   deviceHistoryCapability,
   deviceRemovalHookCapability,
+  retentionSourceCapability,
   deviceRunsCapability,
   deviceTransitionsCapability,
   EventCategory,
@@ -37,6 +38,7 @@ import {
   type IDeviceTransitionsProvider,
   isReadingQuantity,
   type IDeviceRemovalHookProvider,
+  type IRetentionSourceProvider,
   type ProviderRegistration,
 } from '@camstack/types'
 import { randomUUID } from 'node:crypto'
@@ -48,11 +50,16 @@ import { DeviceRunsService } from './runs/device-runs-service.js'
 import { DerivedChanges } from './transitions/derived-changes.js'
 import { HistoryChangePort } from './transitions/history-change-port.js'
 import { TransitionsService } from './transitions/transitions-service.js'
+import { parseRawOverride, readRawOverrides } from './retention/device-raw-overrides.js'
+import { deviceHistoryKnobs } from './retention/retention-knobs.js'
 import { energyKwhFromHistory } from './runs/energy-from-history.js'
 import { UNRAID_ADDON_ID, type LegacyScale, unraidInformationScale } from './store/series-scale.js'
 
 export interface DeviceHistoryConfig extends Record<string, unknown> {
+  /** Raw points of a continuous series (`gauge`, `counter`). */
   rawDays: number
+  /** Raw points of a discrete series (`boolean`, `enum`). */
+  rawDiscreteDays: number
   fiveMinuteDays: number
   hourDays: number
   /** `0` keeps the daily tier forever. */
@@ -63,6 +70,7 @@ export interface DeviceHistoryConfig extends Record<string, unknown> {
 
 const DEFAULT_CONFIG: DeviceHistoryConfig = {
   rawDays: DEFAULT_RETENTION.rawDays,
+  rawDiscreteDays: DEFAULT_RETENTION.rawDiscreteDays,
   fiveMinuteDays: DEFAULT_RETENTION.fiveMinuteDays,
   hourDays: DEFAULT_RETENTION.hourDays,
   dayDays: 0,
@@ -126,7 +134,11 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
         })
       } catch (err: unknown) {
         ctx.logger.warn('device-history: readiness not emitted', {
-          meta: { capName, state, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            capName,
+            state,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
@@ -136,6 +148,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     const c = this.config
     return {
       rawDays: positiveOr(c.rawDays, DEFAULT_RETENTION.rawDays),
+      rawDiscreteDays: positiveOr(c.rawDiscreteDays, DEFAULT_RETENTION.rawDiscreteDays),
       fiveMinuteDays: positiveOr(c.fiveMinuteDays, DEFAULT_RETENTION.fiveMinuteDays),
       hourDays: positiveOr(c.hourDays, DEFAULT_RETENTION.hourDays),
       dayDays: positiveOr(c.dayDays, 0) > 0 ? c.dayDays : null,
@@ -181,17 +194,28 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const provider: IDeviceHistoryProvider = {
       listSeries: async (input) =>
-        this.requireRuntime().query.listSeries({ kind: 'device', deviceId: input.deviceId }),
+        this.requireRuntime().query.listSeries({
+          kind: 'device',
+          deviceId: input.deviceId,
+        }),
       listNodeSeries: async (input) =>
-        this.requireRuntime().query.listSeries({ kind: 'node', nodeId: input.forNodeId }),
+        this.requireRuntime().query.listSeries({
+          kind: 'node',
+          nodeId: input.forNodeId,
+        }),
       query: async ({ deviceId, ...window }) =>
-        this.requireRuntime().query.query({ ...window, subject: { kind: 'device', deviceId } }),
+        this.requireRuntime().query.query({
+          ...window,
+          subject: { kind: 'device', deviceId },
+        }),
       queryNode: async ({ forNodeId, ...window }) =>
         this.requireRuntime().query.query({
           ...window,
           subject: { kind: 'node', nodeId: forNodeId },
         }),
-      queryMany: async (input) => ({ results: await this.requireRuntime().query.queryMany(input) }),
+      queryMany: async (input) => ({
+        results: await this.requireRuntime().query.queryMany(input),
+      }),
       declareSeries: async (input) =>
         this.requireRuntime().ingest.declareSeries(callerOf(input), input),
       record: async (input) => this.requireRuntime().ingest.record(callerOf(input), input.points),
@@ -222,6 +246,18 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       record: async (input) => this.requireTransitions().record(callerOf(input), input.transitions),
       getStatus: async () => this.requireTransitions().status(),
     }
+    const retentionSource: IRetentionSourceProvider = {
+      listRetentionKnobs: async (input) => {
+        const deviceId = input.deviceId
+        const stored =
+          deviceId === undefined ? undefined : await this.ctx.settings?.readDeviceStore(deviceId)
+        return deviceHistoryKnobs(
+          this.retention(),
+          deviceId,
+          stored === undefined ? undefined : parseRawOverride(stored),
+        )
+      },
+    }
     this.emitStoreReadiness('starting')
     this.ctx.logger.info(
       'Initialized — device-history provider registered (store opens on hub link)',
@@ -234,7 +270,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
         if (series > 0 || deviceRuns > 0 || deviceTransitions > 0) {
           this.ctx.logger.info('device-history: removed the history of a deleted device', {
             tags: { deviceId: input.deviceId },
-            meta: { counts: { series, deviceRuns, deviceTransitions }, deletedAt: input.deletedAt },
+            meta: {
+              counts: { series, deviceRuns, deviceTransitions },
+              deletedAt: input.deletedAt,
+            },
           })
         }
         return { counts: { series, deviceRuns, deviceTransitions } }
@@ -263,6 +302,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       { capability: deviceRunsCapability, provider: runsFacade },
       { capability: deviceTransitionsCapability, provider: transitionsFacade },
       { capability: deviceRemovalHookCapability, provider: removalHook },
+      { capability: retentionSourceCapability, provider: retentionSource },
     ]
   }
 
@@ -274,8 +314,13 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       itemCatalog: HISTORY_ITEM_CATALOG,
       deviceSource: {
         listAll: async () => {
-          const devices = await api.deviceManager.listAll.query({ projection: 'slim' })
-          return devices.map((d): { id: number; type: DeviceType } => ({ id: d.id, type: d.type }))
+          const devices = await api.deviceManager.listAll.query({
+            projection: 'slim',
+          })
+          return devices.map((d): { id: number; type: DeviceType } => ({
+            id: d.id,
+            type: d.type,
+          }))
         },
         getDevice: async (deviceId) => {
           const d = await api.deviceManager.getDevice.query({ deviceId })
@@ -285,7 +330,11 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       readSnapshots: async (): Promise<SnapshotMap> =>
         api.deviceState.getAllSnapshots.query({ confirmed: true }),
       readCapSlice: (deviceId, capName) =>
-        api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
+        api.deviceState.getCapSlice.query({
+          deviceId,
+          capName,
+          confirmed: true,
+        }),
       readDeviceQuantity: async (deviceId) => {
         const device = await api.deviceManager.getDevice.query({ deviceId })
         const quantity = device?.sourceInfo?.quantity
@@ -304,6 +353,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     const transitions = await this.openTransitions(runtime)
     this.transitions = transitions
     runtime.retentionJob.attachTransitions(transitions)
+    const settings = this.ctx.settings
+    if (settings !== undefined) {
+      runtime.retentionJob.attachDeviceOverrides(() => readRawOverrides(settings))
+    }
     this.unsubscribe = this.ctx.eventBus.subscribe(
       { category: EventCategory.DeviceStateChanged },
       (event) => {
@@ -335,7 +388,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     }
     this.emitStoreReadiness('ready')
     this.ctx.logger.info('device-history: capturing', {
-      meta: { series: runtime.status().series, metrics: runtime.status().metrics },
+      meta: {
+        series: runtime.status().series,
+        metrics: runtime.status().metrics,
+      },
     })
   }
 
@@ -350,7 +406,11 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       readSnapshots: async (): Promise<SnapshotMap> =>
         ctx.api.deviceState.getAllSnapshots.query({ confirmed: true }),
       readCapSlice: (deviceId, capName) =>
-        ctx.api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
+        ctx.api.deviceState.getCapSlice.query({
+          deviceId,
+          capName,
+          confirmed: true,
+        }),
       deviceTypeOf: (deviceId) => runtime.directory.ensure(deviceId),
       energyFromHistory: (deviceId, from, to) =>
         energyKwhFromHistory((query) => runtime.query.query(query), deviceId, from, to),
@@ -410,6 +470,41 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     return ['device-history']
   }
 
+  /**
+   * D865: the two raw windows a device may override, in the standard per-device store. Unset
+   * means the device follows the cluster value (shown by the retention catalog).
+   */
+  protected override deviceSettingsSchema(): ConfigUISchema | null {
+    return this.schema({
+      sections: [
+        {
+          id: 'retention',
+          title: 'History retention',
+          description: 'Leave a field empty to follow the system-wide window (Data → Retention).',
+          columns: 2,
+          fields: [
+            {
+              type: 'number',
+              key: 'rawDays',
+              label: 'Raw points of measurements (days)',
+              min: 1,
+              max: 60,
+              step: 1,
+            },
+            {
+              type: 'number',
+              key: 'rawDiscreteDays',
+              label: 'Raw points of states (days)',
+              min: 1,
+              max: 365,
+              step: 1,
+            },
+          ],
+        },
+      ],
+    })
+  }
+
   protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
     if (cap !== 'device-history') return null
     return this.schema({
@@ -418,15 +513,26 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
           id: 'retention',
           title: 'Retention',
           description:
-            'How long each tier is kept. The raw points feed the 5-minute rollup; the 1-day tier is kept forever unless a number of days is set. Device transitions (who changed what) are kept for their own number of days.',
+            'How long each tier is kept. The raw points feed the 5-minute rollup, and a state series keeps them longer than a measurement; the 1-day tier is kept forever unless a number of days is set. Device transitions (who changed what) are kept for their own number of days.',
           columns: 2,
           fields: [
             {
               type: 'number',
               key: 'rawDays',
-              label: 'Raw points (days)',
+              label: 'Raw points of measurements (days)',
+              description: 'Gauges and counters: temperature, power, battery level.',
               min: 1,
               max: 60,
+              step: 1,
+            },
+            {
+              type: 'number',
+              key: 'rawDiscreteDays',
+              label: 'Raw points of states (days)',
+              description:
+                'Booleans and enums: on/off, open/closed, modes. These are the changes the Interactions view lists, so they are kept longer.',
+              min: 1,
+              max: 365,
               step: 1,
             },
             {

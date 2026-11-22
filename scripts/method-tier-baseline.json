@@ -1105,6 +1105,7 @@
   "remote.setConfig": "admin",
   "remoteLayoutComponents.listComponents": "protected",
   "resync.resync": "admin",
+  "retentionSource.listRetentionKnobs": "admin",
   "sceneMonitor.captureReference": "admin",
   "sceneMonitor.createScene": "admin",
   "sceneMonitor.deleteReference": "admin",

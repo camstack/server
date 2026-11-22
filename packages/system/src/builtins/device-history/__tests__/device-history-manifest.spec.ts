@@ -29,5 +29,6 @@ describe('device-history system manifest', () => {
     const capNames = (entry.capabilities ?? []).map((c) => c.name)
     expect(capNames).toContain('device-history')
     expect(capNames).toContain('device-removal-hook')
+    expect(capNames).toContain('retention-source')
   })
 })

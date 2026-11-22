@@ -262,6 +262,9 @@
           },
           {
             "name": "device-transitions"
+          },
+          {
+            "name": "retention-source"
           }
         ]
       },

@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 216 caps (114 device, 102 system).
+ * `*.cap.ts` (D1050): 217 caps (114 device, 103 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -6128,6 +6128,10 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   'remote-layout-components': {
     scope: 'system',
     notOperatorFacing: 'the palette of the remote template editor — read-only data, never actuated',
+  },
+  'retention-source': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
   },
   'schedulers': {
     scope: 'system',
