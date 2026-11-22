@@ -29,6 +29,7 @@ import {
   type EnergyDayTotals,
   type EnergyDayWindow,
   type EnergyFlowSpan,
+  energyChartRange,
   energyDayWindow,
   energyFlowSpans,
   energyTodayOfDay,
@@ -63,6 +64,8 @@ const COUNTER_FIELDS = [
 
 export interface EnergyDay {
   readonly window: EnergyDayWindow
+  /** The x domain the charts draw: the whole day, or for today up to the present. */
+  readonly chartRange: EnergyDayWindow
   readonly status: EnergyDayStatus
   readonly powerSeries: readonly TimeSeriesDef[]
   readonly socSeries: readonly TimeSeriesDef[]
@@ -152,6 +155,7 @@ export function useEnergyDay(
   return useMemo<EnergyDay>(() => {
     const empty = (status: EnergyDayStatus): EnergyDay => ({
       window,
+      chartRange: energyChartRange(window, dayOffset === 0, Date.now(), null),
       status,
       powerSeries: [],
       socSeries: [],
@@ -200,10 +204,15 @@ export function useEnergyDay(
       linkedHeatPumpKwh !== undefined || infoOf(series, 'heatPump.energyKwh') !== undefined,
       series.some((info) => info.key.startsWith(keyOf('storage.'))),
     )
+    const lastPointAt = [...powerSeries, ...socSeries].reduce<number | null>((latest, s) => {
+      const t = s.points[s.points.length - 1]?.t
+      return t === undefined ? latest : Math.max(latest ?? t, t)
+    }, null)
     const status: EnergyDayStatus =
       powerSeries.length === 0 && socSeries.length === 0 && today === null ? 'empty' : 'ready'
     return {
       window,
+      chartRange: energyChartRange(window, dayOffset === 0, Date.now(), lastPointAt),
       status,
       powerSeries,
       socSeries,
@@ -214,7 +223,7 @@ export function useEnergyDay(
       ),
       today,
     }
-  }, [presence, list, reads, items, series, window, deviceId, t, linkedHeatPumpKwh])
+  }, [presence, list, reads, items, series, window, dayOffset, deviceId, t, linkedHeatPumpKwh])
 }
 
 const NONE_SERIES: readonly DeviceHistorySeriesInfo[] = []

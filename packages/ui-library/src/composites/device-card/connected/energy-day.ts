@@ -27,6 +27,23 @@ export function energyDayWindow(now: number, offsetDays: number): EnergyDayWindo
   }
 }
 
+/**
+ * The x domain a day chart draws. A past day is the whole local day. Today ends
+ * at the present, or at the last recorded point when that is later, never past
+ * the day's own end — so the axis stops where the data does instead of
+ * stretching to a midnight that has not happened.
+ */
+export function energyChartRange(
+  window: EnergyDayWindow,
+  isToday: boolean,
+  now: number,
+  lastPointAt: number | null,
+): EnergyDayWindow {
+  if (!isToday) return window
+  const end = Math.max(now, lastPointAt ?? now)
+  return { from: window.from, to: Math.min(window.to, Math.max(window.from + 1, end)) }
+}
+
 /** A flat counter counts as 0 only when it was read within this long before the window. */
 const FLAT_COUNTER_MAX_AGE_MS = 24 * 3_600_000
 

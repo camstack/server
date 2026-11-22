@@ -67,7 +67,7 @@ export function ConnectedEnergyCard({
           powerSeries={day.powerSeries}
           socSeries={day.socSeries}
           flowSpans={day.flowSpans}
-          range={day.window}
+          range={day.chartRange}
         />
       }
       model={{

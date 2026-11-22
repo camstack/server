@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated hooks for the new vehicle capability
 - Device list: on a phone the name column keeps a readable minimum width and the table scrolls sideways instead of crushing it
 - Device History: the value axis no longer repeats the unit in every tick label and its column is narrower, so charts span more width
+- Energy card: today's day chart now ends at the current time instead of stopping short of it; past days stay full-day
 
 ## [1.2.498] - 2026-11-22
 
