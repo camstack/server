@@ -179,14 +179,14 @@ export const SOURCE_GATE_LOG_SAMPLE_EVERY = 50
 /** Where the source gate refused: on the pre-lock config, or on the re-read inside the lock. */
 export type SourceGateWhere = 'pre-lock' | 'in-lock'
 
+/** An unchanged recovery-refresh line is repeated at most this often per node. */
+const UNUSABLE_REFRESH_LOG_EVERY_MS = 60_000
+
 /**
  * Freshness window for the balancer inputs a session dispatch reads (see
  * {@link TtlMemo}). Re-exported from the shared default so a test can assert
  * against the same number the controller uses rather than a copy of it.
  */
-/** An unchanged recovery-refresh line is repeated at most this often per node. */
-const UNUSABLE_REFRESH_LOG_EVERY_MS = 60_000
-
 export const BALANCER_INPUT_TTL_MS = DEFAULT_BALANCER_INPUT_TTL_MS
 
 /**
@@ -641,7 +641,7 @@ export class SessionDispatchController {
     const result = outcome.ok
       ? 'settled-ok'
       : `failed: ${outcome.error instanceof Error ? outcome.error.message : String(outcome.error)}`
-    const line = `${joined === null ? 'own read' : `joined in-flight ${joined.mode}`} · ${result}`
+    const line = `${joined === null ? 'own read' : `joined in-flight ${joined.mode}`} · ${outcome.ok ? 'ok' : 'failed'}`
     const last = this.unusableRefreshLogged.get(nodeId)
     const at = Date.now()
     if (last !== undefined && last.line === line && at - last.at < UNUSABLE_REFRESH_LOG_EVERY_MS) {

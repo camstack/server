@@ -41,6 +41,19 @@ function fakeLogger(): IScopedLogger {
   return log as IScopedLogger
 }
 
+function loggerWithInfo(info: ((message: string) => void) | undefined): IScopedLogger {
+  const log = fakeLogger()
+  if (info === undefined) return log
+  const wrapped: Partial<IScopedLogger> = {
+    info: (message: string) => info(message),
+    warn: () => {},
+    error: () => {},
+    debug: () => {},
+  }
+  wrapped.withTags = () => wrapped as IScopedLogger
+  return wrapped as IScopedLogger
+}
+
 function fakeLoad(nodeId: string = NODE): RunnerLocalLoad {
   return {
     nodeId,
@@ -112,6 +125,9 @@ function makeHarness(
     readonly nodes?: readonly string[]
     /** Nodes whose UNBOUNDED (`await-catalog`) eligibility read never settles. */
     readonly hungCatalogNodes?: ReadonlySet<string>
+    /** Nodes whose one-round eligibility read fails with a different message each time. */
+    readonly failingRefreshNodes?: ReadonlySet<string>
+    readonly info?: (message: string) => void
   } = {},
 ): Harness {
   const unusable = opts.unusable ?? new Set<string>()
@@ -125,6 +141,9 @@ function makeHarness(
     buildNodeCaps: vi.fn(async () => ({})),
     buildNodeWeights: vi.fn(async () => ({})),
     getEligibleInferenceDevices: vi.fn(async (nodeId: string, read: string) => {
+      if (read === 'one-round' && opts.failingRefreshNodes?.has(nodeId)) {
+        throw new Error(`catalog not answered #${Math.random()}`)
+      }
       if (read === 'await-catalog' && opts.hungCatalogNodes?.has(nodeId)) {
         return new Promise<Record<string, number>>(() => {})
       }
@@ -180,7 +199,7 @@ function makeHarness(
     dropActiveDetection: () => {},
     listZones: async () => [],
     readPipelinePin: async () => null,
-    logger: fakeLogger(),
+    logger: loggerWithInfo(opts.info),
   }
   return { controller: new SessionDispatchController(deps), attached, readsAtAttach, counters }
 }
@@ -251,6 +270,21 @@ describe('session dispatch — cached balancer inputs', () => {
     nodes.splice(0, nodes.length, NODE)
     await vi.advanceTimersByTimeAsync(BALANCER_INPUT_TTL_MS + 10_000)
     expect(unusable.has('other')).toBe(false)
+  })
+
+  it('a failing recovery refresh with a different error each tick logs once per window', async () => {
+    const lines: string[] = []
+    const unusable = new Set<string>(['other'])
+    const h = makeHarness({
+      unusable,
+      nodes: [NODE, 'other'],
+      failingRefreshNodes: new Set(['other']),
+      info: (m) => lines.push(m),
+    })
+    await dispatch(h, 1)
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(unusable.has('other')).toBe(true)
+    expect(lines.filter((m) => m === 'unusable node eligibility refresh')).toHaveLength(1)
   })
 
   it('a dispatch inside the TTL performs NO balancer read', async () => {
