@@ -289,7 +289,7 @@ function buildRunColumns({
       ),
     },
     {
-      mobile: 'hidden',
+      mobile: 'detail',
       key: 'progress',
       header: t('backup.backupRunsPanel.progress', 'Progress'),
       nowrap: false,
@@ -303,7 +303,7 @@ function buildRunColumns({
       render: (run) => <DestinationsCell run={run} />,
     },
     {
-      mobile: 'hidden',
+      mobile: 'detail',
       key: 'timing',
       header: t('backup.backupRunsPanel.timing', 'Timing'),
       render: (run) => (

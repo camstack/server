@@ -119,7 +119,7 @@ function NodeCard({
             ),
           },
           {
-            mobile: 'hidden',
+            mobile: 'detail',
             key: 'capacity',
             header: t('pipeline.clusterAutoTuneTab.capacity', 'Capacity'),
             nowrap: false,
@@ -165,7 +165,7 @@ function NodeCard({
             },
           },
           {
-            mobile: 'hidden',
+            mobile: 'detail',
             key: 'why',
             header: t('pipeline.clusterAutoTuneTab.why', 'Why'),
             nowrap: false,

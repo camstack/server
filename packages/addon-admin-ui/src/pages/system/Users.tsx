@@ -281,6 +281,7 @@ export function UsersPage() {
             size="sm"
             variant="ghost"
             type="button"
+            className="max-sm:h-auto max-sm:whitespace-normal max-sm:px-0 max-sm:text-left"
             onClick={() => openRoleEditor(u)}
             disabled={isRowBusy(u)}
             title={t('admin.system.users.configureAccess', 'Configure access')}
@@ -327,7 +328,7 @@ export function UsersPage() {
               title={t('admin.system.users.editUser', 'Edit user')}
             >
               <Pencil className="h-3 w-3" />
-              {t('common.edit', 'Edit')}
+              <span className="max-sm:sr-only">{t('common.edit', 'Edit')}</span>
             </Button>
             {showTotp && (
               <Button
@@ -342,7 +343,9 @@ export function UsersPage() {
                 )}
               >
                 <Smartphone className="h-3 w-3" />
-                {t('admin.system.users.remove2fa', 'Remove 2FA')}
+                <span className="max-sm:sr-only">
+                  {t('admin.system.users.remove2fa', 'Remove 2FA')}
+                </span>
               </Button>
             )}
             <Button
@@ -354,7 +357,9 @@ export function UsersPage() {
               title={t('admin.system.users.linkedSignInAccounts', 'Linked sign-in accounts')}
             >
               <Link2 className="h-3 w-3" />
-              {t('admin.system.users.signInLinks', 'Sign-in links')}
+              <span className="max-sm:sr-only">
+                {t('admin.system.users.signInLinks', 'Sign-in links')}
+              </span>
             </Button>
             <Button
               size="sm"
@@ -365,7 +370,7 @@ export function UsersPage() {
               title={t('admin.system.users.activeSessions', 'Active sessions')}
             >
               <MonitorSmartphone className="h-3 w-3" />
-              {t('admin.system.users.sessions', 'Sessions')}
+              <span className="max-sm:sr-only">{t('admin.system.users.sessions', 'Sessions')}</span>
             </Button>
             <Button
               size="sm"
@@ -376,7 +381,9 @@ export function UsersPage() {
               title={t('admin.system.users.resetPassword', 'Reset password')}
             >
               <Key className="h-3 w-3" />
-              {t('admin.system.users.resetPassword', 'Reset password')}
+              <span className="max-sm:sr-only">
+                {t('admin.system.users.resetPassword', 'Reset password')}
+              </span>
             </Button>
             <Button
               size="sm"
@@ -388,7 +395,7 @@ export function UsersPage() {
               className="text-danger hover:bg-danger/10"
             >
               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-              {t('common.delete', 'Delete')}
+              <span className="max-sm:sr-only">{t('common.delete', 'Delete')}</span>
             </Button>
           </div>
         )

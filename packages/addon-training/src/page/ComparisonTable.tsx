@@ -1,6 +1,6 @@
 /** Baseline vs candidate (vs INT8) per class, and the per-camera recall changes. */
 import type { TrainingEvalClass, TrainingResult } from '@camstack/types'
-import { type DataColumn, DataTable } from '@camstack/ui-library'
+import { type DataColumn, DataTable, useIsPhone } from '@camstack/ui-library'
 import { useT } from '../i18n/index.js'
 import { type ComparisonRow, comparisonRows, formatPct, recallDeltaRows } from './view-model.js'
 
@@ -9,6 +9,23 @@ const TONE = {
   worse: 'text-danger',
   same: 'text-foreground-muted',
 } as const
+
+/** On a phone the header is gone, so a detail cell names its column itself. */
+function PhoneLabelled({
+  label,
+  c,
+}: {
+  readonly label: string
+  readonly c: TrainingEvalClass | null
+}) {
+  const phone = useIsPhone()
+  return (
+    <span className="block">
+      {phone && <span className="mr-1 font-medium text-foreground-muted">{label}</span>}
+      <CellContent c={c} />
+    </span>
+  )
+}
 
 function CellContent({ c }: { readonly c: TrainingEvalClass | null }) {
   const { t } = useT()
@@ -52,11 +69,11 @@ export function ComparisonTable({
   const int8Columns: readonly DataColumn<ComparisonRow>[] = hasInt8
     ? [
         {
-          mobile: 'hidden',
+          mobile: 'detail',
           key: 'int8',
           header: t('comparison.fineTunedInt8'),
           nowrap: false,
-          render: (r) => <CellContent c={r.int8} />,
+          render: (r) => <PhoneLabelled label={t('comparison.fineTunedInt8')} c={r.int8} />,
         },
       ]
     : []
@@ -79,18 +96,18 @@ export function ComparisonTable({
               ),
             },
             {
-              mobile: 'hidden',
+              mobile: 'detail',
               key: 'baseline',
               header: t('comparison.current'),
               nowrap: false,
-              render: (r) => <CellContent c={r.baseline} />,
+              render: (r) => <PhoneLabelled label={t('comparison.current')} c={r.baseline} />,
             },
             {
               mobile: 'detail',
               key: 'candidate',
               header: t('comparison.fineTuned'),
               nowrap: false,
-              render: (r) => <CellContent c={r.candidate} />,
+              render: (r) => <PhoneLabelled label={t('comparison.fineTuned')} c={r.candidate} />,
             },
             ...int8Columns,
           ]}

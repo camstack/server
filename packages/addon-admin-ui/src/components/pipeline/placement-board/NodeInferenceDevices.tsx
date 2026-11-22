@@ -316,7 +316,7 @@ export function NodeInferenceDevices({
       ),
     },
     {
-      mobile: 'hidden',
+      mobile: 'detail',
       key: 'share',
       header: t('placementBoard.nodeInferenceDevices.colShare', 'Share'),
       align: 'right',
@@ -324,7 +324,7 @@ export function NodeInferenceDevices({
       render: (row) => <ShareCell row={row} sourceLabel={sourceLabel} />,
     },
     {
-      mobile: 'hidden',
+      mobile: 'detail',
       key: 'sessions',
       header: t('placementBoard.nodeInferenceDevices.colSessions', 'Sessions'),
       align: 'right',
@@ -341,7 +341,7 @@ export function NodeInferenceDevices({
       ),
     },
     {
-      mobile: 'hidden',
+      mobile: 'detail',
       key: 'cap',
       header: t('placementBoard.nodeInferenceDevices.colCap', 'Max sessions'),
       notSortableReason: t(
@@ -355,6 +355,9 @@ export function NodeInferenceDevices({
         const label = acceleratorFace(row.device).label
         return (
           <div className="flex items-center justify-end gap-1">
+            <span className="text-[11px] text-foreground-subtle sm:hidden">
+              {t('placementBoard.nodeInferenceDevices.colCap', 'Max sessions')}
+            </span>
             <Input
               type="number"
               min={1}

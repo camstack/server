@@ -219,7 +219,7 @@ export function NodeEnginesTab({ nodeId, refreshToken: _refreshToken }: NodeEngi
             ),
           },
           {
-            mobile: 'hidden',
+            mobile: 'detail',
             key: 'models',
             header: t('pipeline.nodeEnginesTab.models', 'Models'),
             nowrap: false,

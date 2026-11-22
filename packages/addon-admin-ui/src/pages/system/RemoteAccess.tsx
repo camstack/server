@@ -87,6 +87,7 @@ export function RemoteAccessPage(): ReactElement {
     header: t('system.remoteAccess.colTunnel', 'Tunnel'),
     notSortableReason: t(
       'system.remoteAccess.tunnelNotSortable',
+    mobile: 'detail',
       'A live connection state is not a value to order by.',
     ),
     render: (row) => <TunnelStatusCell addonId={row.addonId} error={errorByAddon[row.addonId]} />,

@@ -90,6 +90,15 @@ describe('check-table-mobile-roles', () => {
     expect(findRoleViolations(`const columns = [{ mobile: phone, key: 'a' }]`)).toEqual([])
   })
 
+  it('reports a column list in which not one entry has a mobile role', () => {
+    const none = `const columns = [{ key: 'a', render: () => 1 }, { key: 'b', render: () => 2 }]`
+    expect(findRoleViolations(none).map((f) => f.message)).toEqual([
+      expect.stringContaining('no `mobile` role'),
+    ])
+    const some = `const columns = [{ mobile: 'primary', key: 'a', render: () => 1 }, { key: 'b', render: () => 2 }]`
+    expect(findRoleViolations(some)).toEqual([])
+  })
+
   it('flags a wrapping library cell and accepts a breakpoint-scoped one', () => {
     expect(
       findWrappingCells('const a = <td className="flex flex-wrap gap-1">x</td>').map((f) => f.rule),

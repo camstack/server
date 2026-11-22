@@ -19,8 +19,11 @@
  *                  whole as a literal must also HAVE its one primary; a fragment
  *                  (`extraColumns` handed to another table, a conditional piece) or a
  *                  list assembled from spreads cannot be counted whole, so
- *                  only its upper bounds are checked.
- *   3. WRAPPING    a cell (`<td>`/`<th>`) of a library table never carries
+ *                  only its upper bounds are checked. A list of column-shaped
+ *                  literals (`key` + `render`) in which NOT ONE entry has
+ *                  `mobile` is a table nobody migrated: it is reported too.
+ *   3. WRAPPING    (`packages/ui-library` only — a page cell is not scanned)
+ *                  a cell (`<td>`/`<th>`) of a library table never carries
  *                  `flex-wrap` or an unconditional `whitespace-normal`: that
  *                  is what lets a row grow.
  *
@@ -96,6 +99,19 @@ function literalRole(element: ts.Expression): string | null {
   return null
 }
 
+/** An object literal shaped like a `DataColumn`: a `key` and a `render`. */
+function looksLikeColumn(element: ts.Expression): boolean {
+  if (!ts.isObjectLiteralExpression(element)) return false
+  const names = new Set(
+    element.properties.flatMap((property) =>
+      ts.isPropertyAssignment(property) || ts.isMethodDeclaration(property)
+        ? [property.name.getText()]
+        : [],
+    ),
+  )
+  return names.has('key') && names.has('render')
+}
+
 function parse(source: string, fileName: string): ts.SourceFile {
   return ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 }
@@ -145,6 +161,14 @@ export function findRoleViolations(source: string, fileName = 'file.tsx'): Table
     if (ts.isArrayLiteralExpression(node)) {
       const roles = node.elements.map(literalRole)
       const known = roles.filter((role): role is string => role !== null)
+      if (known.length === 0 && node.elements.some(looksLikeColumn)) {
+        found.push({
+          rule: 'roles',
+          line: lineOf(file, node),
+          message:
+            'a column list with no `mobile` role on any entry — every column states what it becomes on a phone',
+        })
+      }
       if (known.length > 0) {
         const whole = known.length === roles.length && WHOLE_LIST_NAME.test(boundName(node) ?? '')
         const primary = known.filter((role) => role === 'primary').length
