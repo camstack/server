@@ -685,7 +685,9 @@ describe('UniFi devices on a stub device context', () => {
   }
 
   it('a PoE port declares its wired client as ATTACHED once, and not again on an unchanged tick (D1063)', async () => {
-    await harness([{ ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac })] }])
+    await harness([
+      { ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac, clientMacs: [PHONE.mac] })] },
+    ])
     const { ctx, mutate } = attachedRig()
     await new UnifiFeatureDevice(ctx).onActivate()
     await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
@@ -701,19 +703,48 @@ describe('UniFi devices on a stub device context', () => {
 
   it('a client that leaves the port keeps the retained MAC, declared UNREAD — never as a fresh read (D1063, D49)', async () => {
     const infra: UnifiInfraSnapshot[] = [
-      { ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac })] },
+      { ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac, clientMacs: [PHONE.mac] })] },
     ]
     await harness(infra)
     const { ctx, mutate } = attachedRig()
     await new UnifiFeatureDevice(ctx).onActivate()
     await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
-    infra[0] = { ...SWITCH, ports: [port({ idx: 1, clientMac: null })] }
+    infra[0] = { ...SWITCH, ports: [port({ idx: 1, clientMac: null, clientMacs: [] })] }
     await unifiControllers.getManager(INT)?.poll()
     unifiControllers.emitSnapshot(INT)
     await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(2))
     const retained = mutate.mock.calls[1]?.[0]
     expect(retained?.identifiers?.mac?.map((m) => m.value)).toEqual([PHONE.mac])
     expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
+  })
+
+  it('a port that draws 0 W declares nothing attached; a link-bearing declaration survives a 0 W tick', async () => {
+    const infra: UnifiInfraSnapshot[] = [
+      {
+        ...SWITCH,
+        ports: [port({ idx: 1, poePowerW: 0, clientMac: PHONE.mac, clientMacs: [PHONE.mac] })],
+      },
+    ]
+    await harness(infra)
+    const { ctx, mutate } = attachedRig()
+    await new UnifiFeatureDevice(ctx).onActivate()
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(mutate).not.toHaveBeenCalled()
+    infra[0] = {
+      ...SWITCH,
+      ports: [port({ idx: 1, poePowerW: 3, clientMac: PHONE.mac, clientMacs: [PHONE.mac] })],
+    }
+    await unifiControllers.getManager(INT)?.poll()
+    unifiControllers.emitSnapshot(INT)
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
+    infra[0] = {
+      ...SWITCH,
+      ports: [port({ idx: 1, poePowerW: 0, clientMac: PHONE.mac, clientMacs: [PHONE.mac] })],
+    }
+    await unifiControllers.getManager(INT)?.poll()
+    unifiControllers.emitSnapshot(INT)
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(mutate).toHaveBeenCalledTimes(1)
   })
 
   it('a PoE port that never saw a client declares nothing attached', async () => {

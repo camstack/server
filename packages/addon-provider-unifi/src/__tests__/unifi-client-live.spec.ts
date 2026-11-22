@@ -114,6 +114,7 @@ describe('UnifiLiveClient', () => {
       poeCurrentA: null,
       clientMac: null,
       clientName: null,
+      clientMacs: [],
     }
     expect(sw?.ports).toEqual([
       { idx: 1, poeCapable: true, poeOn: true, ...unread },

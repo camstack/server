@@ -965,46 +965,7 @@ export class CoreBlocksAddon extends BaseAddon {
           })
           throw new Error(linkRefusal)
         }
-        const composition = existing !== null && coreBlockComposition(existing) !== null
-        await this.requireStore().delete(blockId)
-        await this.requirePrefs().delete(blockId)
-        await this.requireActions().ledger.delete(automationOwner(blockId))
-        // A composition's claims must be gone before this returns: the next
-        // create for the same device would otherwise be refused for good.
-        // A code block's runner is stopped by the converge, which forks nothing
-        // the caller has to wait on.
-        if (composition && this.supervisor === null) {
-          this.ctx.logger.error('composition deleted but no supervisor can release its claims', {
-            meta: { blockId },
-          })
-          throw new Error(
-            `core-blocks: "${blockId}" was deleted but no supervisor runs here — its claims were not released`,
-          )
-        }
-        if (composition && this.supervisor !== null) {
-          const unreleased = await this.supervisor.retireComposition(blockId)
-          if (unreleased.length > 0) {
-            for (const claim of unreleased) {
-              this.ctx.logger.error('composition deleted but its claim was not released', {
-                tags: { deviceId: claim.deviceId },
-                meta: {
-                  blockId,
-                  cap: claim.capName,
-                  owner: claim.owner,
-                  error: claim.error,
-                },
-              })
-            }
-            const detail = unreleased
-              .map((claim) => `${claim.capName} on device ${claim.deviceId}: ${claim.error}`)
-              .join('; ')
-            throw new Error(
-              `core-blocks: "${blockId}" was deleted but its claims were not released — ${detail}`,
-            )
-          }
-        } else {
-          this.convergeSoon()
-        }
+        await this.removeBlock(blockId, existing)
         return { success: true }
       },
 
@@ -1166,6 +1127,54 @@ export class CoreBlocksAddon extends BaseAddon {
   }
 
   /**
+   * Delete a block's records and release a composition's claims. The caller has already
+   * judged whether the block may go (the operator's delete refuses a block that holds
+   * link contributions; the link reconciler removes one it has just emptied).
+   */
+  private async removeBlock(blockId: string, existing: CoreBlock | null): Promise<void> {
+    const composition = existing !== null && coreBlockComposition(existing) !== null
+    await this.requireStore().delete(blockId)
+    await this.requirePrefs().delete(blockId)
+    await this.requireActions().ledger.delete(automationOwner(blockId))
+    // A composition's claims must be gone before this returns: the next
+    // create for the same device would otherwise be refused for good.
+    // A code block's runner is stopped by the converge, which forks nothing
+    // the caller has to wait on.
+    if (composition && this.supervisor === null) {
+      this.ctx.logger.error('composition deleted but no supervisor can release its claims', {
+        meta: { blockId },
+      })
+      throw new Error(
+        `core-blocks: "${blockId}" was deleted but no supervisor runs here — its claims were not released`,
+      )
+    }
+    if (composition && this.supervisor !== null) {
+      const unreleased = await this.supervisor.retireComposition(blockId)
+      if (unreleased.length > 0) {
+        for (const claim of unreleased) {
+          this.ctx.logger.error('composition deleted but its claim was not released', {
+            tags: { deviceId: claim.deviceId },
+            meta: {
+              blockId,
+              cap: claim.capName,
+              owner: claim.owner,
+              error: claim.error,
+            },
+          })
+        }
+        const detail = unreleased
+          .map((claim) => `${claim.capName} on device ${claim.deviceId}: ${claim.error}`)
+          .join('; ')
+        throw new Error(
+          `core-blocks: "${blockId}" was deleted but its claims were not released — ${detail}`,
+        )
+      }
+    } else {
+      this.convergeSoon()
+    }
+  }
+
+  /**
    * The Customize features identity links contribute (D1063). A pass runs on
    * every `identity-link.created` / `.lost`, once now, and — until a pass has
    * read the links (device-manager answers only once it has booted) — on each
@@ -1208,6 +1217,9 @@ export class CoreBlocksAddon extends BaseAddon {
           block: { composition },
           caller,
         })
+      },
+      remove: async (block) => {
+        await this.removeBlock(block.id, block)
       },
       logger: this.ctx.logger.child('identity-links'),
     })

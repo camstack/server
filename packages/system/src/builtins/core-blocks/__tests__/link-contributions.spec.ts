@@ -15,7 +15,7 @@ import {
   type IScopedLogger,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { CompositionChangedError } from '../composition-api.js'
+import { CompositionChangedError, IDENTITY_LINKS_USER_ID } from '../composition-api.js'
 import { LinkContributionReconciler, MAX_HOST_ATTEMPTS } from '../link-contributions.js'
 
 const PORT = { addonId: 'provider-unifi', stableId: 'port-7', deviceId: 10 }
@@ -36,7 +36,7 @@ function link(state: IdentityLink['state'] = 'linked'): IdentityLink {
   }
 }
 
-function block(id: string, composition: Composition, updatedAt = 1): CoreBlock {
+function block(id: string, composition: Composition, updatedAt = 1, createdBy = 'u'): CoreBlock {
   return {
     id,
     name: `Custom ${id}`,
@@ -45,7 +45,7 @@ function block(id: string, composition: Composition, updatedAt = 1): CoreBlock {
     placement: 'hub',
     createdAt: 1,
     updatedAt,
-    createdBy: 'u',
+    createdBy,
     status: 'stopped',
     lastChangedAt: 1,
     source: { kind: 'composition', composition },
@@ -68,6 +68,7 @@ interface World {
   readonly reconciler: LinkContributionReconciler
   readonly blocks: CoreBlock[]
   readonly writes: () => number
+  readonly removed: readonly string[]
   readonly log: IScopedLogger
   setLinks(read: IdentityLinksRead): void
 }
@@ -85,6 +86,7 @@ function world(
   let links: IdentityLinksRead = { status: 'answered', links: [link()] }
   let writes = 0
   let nextId = 100
+  const removed: string[] = []
   const log = logger()
   const reconciler = new LinkContributionReconciler({
     listLinks: async () => links,
@@ -95,10 +97,15 @@ function world(
     create: async (host, features) => {
       writes += 1
       blocks.push(
-        block(`b${nextId++}`, {
-          target: { kind: 'existing', device: host },
-          features: [...features],
-        }),
+        block(
+          `b${nextId++}`,
+          {
+            target: { kind: 'existing', device: host },
+            features: [...features],
+          },
+          1,
+          IDENTITY_LINKS_USER_ID,
+        ),
       )
     },
     update: async (stored, composition) => {
@@ -113,7 +120,12 @@ function world(
         )
       }
       const i = blocks.findIndex((b) => b.id === stored.id)
-      blocks[i] = block(stored.id, composition, stored.updatedAt + 1)
+      blocks[i] = block(stored.id, composition, stored.updatedAt + 1, stored.createdBy)
+    },
+    remove: async (stored) => {
+      removed.push(stored.id)
+      const i = blocks.findIndex((b) => b.id === stored.id)
+      if (i >= 0) blocks.splice(i, 1)
     },
     logger: log,
   })
@@ -122,6 +134,7 @@ function world(
     log,
     blocks,
     writes: () => writes,
+    removed,
     setLinks: (read) => {
       links = read
     },
@@ -237,6 +250,49 @@ describe('LinkContributionReconciler', () => {
     w.setLinks({ status: 'answered', links: [] })
     await w.reconciler.pass()
     expect(hostFeatures(w.blocks)).toEqual([other])
+  })
+
+  it('withdrawing the last contribution deletes the block the reconciler created: no empty block, no stamp left', async () => {
+    const w = world()
+    await w.reconciler.pass()
+    expect(w.blocks).toHaveLength(1)
+    w.setLinks({ status: 'answered', links: [] })
+    await w.reconciler.pass()
+    expect(w.removed).toHaveLength(1)
+    expect(w.blocks).toEqual([])
+    expect(JSON.stringify(w.blocks)).not.toContain(LINK_ID)
+    await w.reconciler.pass()
+    expect(w.removed).toHaveLength(1)
+  })
+
+  it('a block the reconciler created that an operator edit left with their feature stays', async () => {
+    const other: CompositionFieldsFeature = { ...OPERATOR_FEATURE, cap: 'battery' }
+    const w = world()
+    await w.reconciler.pass()
+    const b = w.blocks[0]
+    const c = b === undefined ? null : coreBlockComposition(b)
+    if (b === undefined || c === null) throw new Error('expected a block')
+    w.blocks[0] = block(b.id, { ...c, features: [...c.features, other] }, 2, IDENTITY_LINKS_USER_ID)
+    w.setLinks({ status: 'answered', links: [] })
+    await w.reconciler.pass()
+    expect(w.removed).toEqual([])
+    expect(hostFeatures(w.blocks)).toEqual([other])
+  })
+
+  it('an empty block the reconciler left earlier is cleaned on the next pass', async () => {
+    const w = world({
+      blocks: [
+        block(
+          'stale',
+          { target: { kind: 'existing', device: CAMERA_REF }, features: [] },
+          1,
+          IDENTITY_LINKS_USER_ID,
+        ),
+      ],
+    })
+    w.setLinks({ status: 'answered', links: [] })
+    await w.reconciler.pass()
+    expect(w.removed).toEqual(['stale'])
   })
 
   it('links not yet read change nothing (D315)', async () => {

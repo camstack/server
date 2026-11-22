@@ -37,25 +37,62 @@ export function unifiInfraIdentifiers(
 }
 
 /**
- * What a PoE port declares ATTACHED to it (D1063): its wired client's MAC and
- * IP. A client the port sees NOW is a fresh read. A client that left keeps the
- * last MAC (one poll without a client is not a different client), but declared
- * `unread` together with the IP: the stored value is kept (D49) and marked
- * retained, so a port that freshly reads the same MAC takes the auto link from
- * this one. An IP the controller does not know right now is `unread` too. A
- * port that never saw a client declares nothing.
+ * The clients a PoE port answers for: every client it saw before and still has
+ * no reason to drop, plus the ones it sees now. A client missing for a poll (a
+ * camera that rebooted) stays; one the controller now shows on ANOTHER port has
+ * moved and goes. Order is sorted, so the declaration does not flap.
+ */
+export function portKnownClients(
+  known: readonly string[],
+  current: readonly string[],
+  elsewhere: ReadonlySet<string>,
+): readonly string[] {
+  const all = new Set([...known, ...current].map((m) => m.toLowerCase()))
+  return [...all].filter((m) => !elsewhere.has(m)).sort()
+}
+
+/**
+ * What a PoE port declares ATTACHED to it (D1063): its wired clients' MACs and,
+ * for a port with exactly one client, its IP. Clients the port sees NOW are a
+ * fresh read; a port with none now but a remembered set declares those MACs
+ * `unread` together with the IP: kept (D49) and marked retained, so a port that
+ * freshly reads the same MAC takes the link from this one. A client missing
+ * while others are present stays in the declared set (one poll without a client
+ * is not a different client). An IP the controller does not know is `unread`.
+ * A port that never saw a client declares nothing.
  */
 export function unifiPortAttachedIdentifiers(
-  lastClientMac: string | null,
-  currentClientMac: string | null,
+  knownMacs: readonly string[],
+  currentMacs: readonly string[],
   clientIp: string | null,
 ): UnifiIdentifierDeclaration | null {
-  if (currentClientMac !== null) {
+  if (currentMacs.length > 0) {
+    const single = knownMacs.length === 1
     return {
-      identifiers: { mac: currentClientMac, ip: clientIp },
-      unread: clientIp === null ? ['ip'] : [],
+      identifiers: { mac: knownMacs, ip: single ? clientIp : null },
+      unread: single && clientIp === null ? ['ip'] : [],
     }
   }
-  if (lastClientMac === null) return null
-  return { identifiers: { mac: lastClientMac, ip: null }, unread: ['mac', 'ip'] }
+  if (knownMacs.length === 0) return null
+  return { identifiers: { mac: knownMacs, ip: null }, unread: ['mac', 'ip'] }
+}
+
+/**
+ * A port below this draw (W) feeds nothing: PoE off, or an idle reading that a
+ * self-powered switch behind the port produces. A camera draws several watts.
+ */
+export const PORT_POWERING_MIN_W = 1
+
+/**
+ * Whether a port is delivering PoE, so its clients may be LINKED as powered by it
+ * (D1063). A link is created only while this holds; a link that exists is kept
+ * through a transient 0 W reading. A reading the controller did not give (null)
+ * is unknown, not zero (D393): it does not refuse.
+ */
+export function portIsPowering(port: {
+  readonly poeOn: boolean
+  readonly poePowerW: number | null
+}): boolean {
+  if (!port.poeOn) return false
+  return port.poePowerW === null || port.poePowerW > PORT_POWERING_MIN_W
 }

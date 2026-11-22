@@ -14,6 +14,7 @@ export function port(over: Partial<UnifiInfraPort> & Pick<UnifiInfraPort, 'idx'>
     poeCurrentA: null,
     clientMac: null,
     clientName: null,
+    clientMacs: [],
   }
   return { ...base, ...over }
 }

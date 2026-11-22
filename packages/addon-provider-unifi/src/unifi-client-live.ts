@@ -282,6 +282,7 @@ export class UnifiLiveClient implements UnifiControllerClient {
         poeCurrentA: null,
         clientMac: null,
         clientName: null,
+        clientMacs: [],
       }
     })
     return {

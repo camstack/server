@@ -51,7 +51,7 @@ import {
   type IdentityLinksRead,
   type IScopedLogger,
 } from '@camstack/types'
-import { CompositionChangedError } from './composition-api.js'
+import { CompositionChangedError, IDENTITY_LINKS_USER_ID } from './composition-api.js'
 
 /** Attempts per host per pass when the block keeps changing under the write. */
 export const MAX_HOST_ATTEMPTS = 3
@@ -70,6 +70,8 @@ export interface LinkContributionPorts {
     features: readonly CompositionFeature[],
   ) => Promise<void>
   readonly update: (block: CoreBlock, composition: Composition) => Promise<void>
+  /** Delete a block this reconciler emptied: its row, settings and claims. */
+  readonly remove: (block: CoreBlock) => Promise<void>
   readonly logger: IScopedLogger
 }
 
@@ -188,7 +190,10 @@ export class LinkContributionReconciler {
       )
       const host = composition.target.device
       const key = compositionSourceKey(host)
-      if (stamped && !plans.has(key)) {
+      // A block this reconciler created and left empty is visited too: it goes.
+      const leftEmpty =
+        block.createdBy === IDENTITY_LINKS_USER_ID && composition.features.length === 0
+      if ((stamped || leftEmpty) && !plans.has(key)) {
         plans.set(key, { host, hostDeviceId: await this.hostIdOf(host, read.links), owed: [] })
       }
     }
@@ -307,6 +312,16 @@ export class LinkContributionReconciler {
       if (JSON.stringify(refreshed) === JSON.stringify(current)) continue
       features = features.map((f, i) => (i === index ? refreshed : f))
       this.log('identity-link contribution refreshed', owed)
+    }
+    // A block this reconciler created, with nothing left in it, is not kept as an empty
+    // customization: the operator added nothing to it (any feature of theirs would remain).
+    if (block !== null && features.length === 0 && block.createdBy === IDENTITY_LINKS_USER_ID) {
+      await this.ports.remove(block)
+      this.ports.logger.info('identity-link customization removed — nothing is left in it', {
+        ...(plan.hostDeviceId === null ? {} : { tags: { deviceId: plan.hostDeviceId } }),
+        meta: { blockId: block.id, host: key },
+      })
+      return
     }
     if (JSON.stringify(features) === JSON.stringify(before)) return
     if (block === null || composition === null) {

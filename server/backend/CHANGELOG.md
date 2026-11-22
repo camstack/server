@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device history: the Interactions list stores one row per command and derives the device's own changes from device-history; old transition rows are migrated.
 - The hub remembers its public tunnel address, so a boot before the tunnel is up no longer hands the LAN address to sign-in links, Alexa and notification links
 - The hub lists the automations made from a template, optionally those about one device (listTemplateInstances)
+- Identity links: every client of a PoE port is linked automatically, removed links stay removed, and an empty customization left by a withdrawn link is deleted
 
 ## [1.2.941] - 2026-11-22
 

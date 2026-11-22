@@ -36,6 +36,8 @@ export interface UnifiInfraPort {
   readonly clientMac: string | null
   /** Name of that client, or null when unknown. */
   readonly clientName: string | null
+  /** MACs of EVERY wired client on this port (a PoE splitter feeds several), sorted; `clientMac` is the first. */
+  readonly clientMacs: readonly string[]
 }
 
 /** Controller-reported operational state of an infra device. */

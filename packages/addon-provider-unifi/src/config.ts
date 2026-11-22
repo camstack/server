@@ -148,6 +148,8 @@ export const unifiFeatureSchema = z.object({
   /** `kind: 'port'`: MAC of the last client seen on the port — kept for cross-integration
    *  linking (a camera restarted through its PoE port, planning#583). */
   clientMac: z.string().optional(),
+  /** `kind: 'port'`: every client the port answers for (a PoE splitter feeds several), sorted. */
+  clientMacs: z.array(z.string()).optional(),
   system: z.literal('unifi').optional(),
 })
 

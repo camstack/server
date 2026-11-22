@@ -132,23 +132,31 @@ def _client_label(raw: dict) -> str | None:
     return label if label else None
 
 
-def wired_index(clients: list[dict]) -> dict[str, dict]:
-    """The wired client on each `<switch mac>:<port>` (`sw_mac` + `sw_port`)."""
-    index: dict[str, dict] = {}
+def wired_index(clients: list[dict]) -> dict[str, list[dict]]:
+    """EVERY wired client on each `<switch mac>:<port>` (`sw_mac` + `sw_port`), sorted by mac.
+
+    A PoE splitter feeds several devices from one port; the controller's list order changes
+    between polls, so a stable order is part of the contract (the port label must not flap).
+    """
+    index: dict[str, list[dict]] = {}
     for c in clients:
         sw_mac, sw_port = c.get("sw_mac"), c.get("sw_port")
         if not sw_mac or sw_port is None or c.get("is_wired") is False:
             continue
-        index[f"{str(sw_mac).lower()}:{sw_port}"] = c
+        index.setdefault(f"{str(sw_mac).lower()}:{sw_port}", []).append(c)
+    for members in index.values():
+        members.sort(key=lambda m: str(m.get("mac", "")).lower())
     return index
 
 
-def normalize_port(device_mac: str, port: dict, wired: dict[str, dict]) -> dict:
+def normalize_port(device_mac: str, port: dict, wired: dict[str, list[dict]]) -> dict:
     idx = port.get("port_idx")
     up = port.get("up")
     link_up = bool(up) if up is not None else None
     speed = port.get("speed")
-    client = wired.get(f"{device_mac}:{idx}")
+    members = wired.get(f"{device_mac}:{idx}") or []
+    macs = [m for m in (str(c.get("mac", "")).lower() for c in members) if m]
+    client = members[0] if members else None
     m_a = _number(port.get("poe_current"))
     mode = port.get("poe_mode")
     return {
@@ -161,7 +169,8 @@ def normalize_port(device_mac: str, port: dict, wired: dict[str, dict]) -> dict:
         "poePowerW": _number(port.get("poe_power")),
         "poeVoltageV": _number(port.get("poe_voltage")),
         "poeCurrentA": None if m_a is None else m_a / 1000,
-        "clientMac": None if client is None else str(client.get("mac", "")).lower() or None,
+        "clientMac": macs[0] if macs else None,
+        "clientMacs": macs,
         "clientName": None if client is None else _client_label(client),
     }
 
@@ -175,7 +184,7 @@ def _cpu_temperature(raw: dict) -> float | None:
     return None
 
 
-def normalize_device(raw: dict, wired: dict[str, dict]) -> dict:
+def normalize_device(raw: dict, wired: dict[str, list[dict]]) -> dict:
     mac = str(raw.get("mac", "")).lower()
     stats = raw.get("system-stats") or {}
     return {

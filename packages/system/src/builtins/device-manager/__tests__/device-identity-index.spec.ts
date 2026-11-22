@@ -338,6 +338,55 @@ describe('DeviceIdentityIndex — what a device declares ATTACHED to it (D1063)'
     ])
   })
 
+  it('a splitter port reaching two cameras links both, auto, in a stable order whatever the declaration order', async () => {
+    const MAC2 = 'AA:BB:CC:00:11:33'
+    const world = (order: readonly string[]) =>
+      makeIndexed([
+        { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: order }) },
+        { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC }) },
+        { id: 3, addonId: 'hik', identifiers: ids({ mac: MAC2 }) },
+      ])
+    const first = await world([MAC, MAC2])
+    const second = await world([MAC2, MAC])
+    const expected = [
+      [1, 2, 'auto'],
+      [1, 3, 'auto'],
+    ]
+    expect(attached(first.index)).toEqual(expected)
+    expect(attached(second.index)).toEqual(expected)
+  })
+
+  it('a client the port retains while another is present keeps its candidate; one freshly on another port moves', async () => {
+    const MAC2 = 'AA:BB:CC:00:11:33'
+    const { index } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: [MAC, MAC2] }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC }) },
+      { id: 3, addonId: 'hik', identifiers: ids({ mac: MAC2 }) },
+    ])
+    expect(attached(index)).toHaveLength(2)
+    const moved = await makeIndexed([
+      {
+        id: 1,
+        addonId: 'unifi',
+        role: 'poe-port',
+        attachedIdentifiers: ids({ mac: [MAC, MAC2] }),
+        attachedRetained: ['mac'],
+      },
+      {
+        id: 4,
+        addonId: 'unifi',
+        role: 'poe-port',
+        attachedIdentifiers: ids({ mac: MAC2, ip: IP }),
+      },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC }) },
+      { id: 3, addonId: 'hik', identifiers: ids({ mac: MAC2, ip: IP }) },
+    ])
+    expect(attached(moved.index)).toEqual([
+      [1, 2, 'auto'],
+      [4, 3, 'auto'],
+    ])
+  })
+
   it('a port that FRESHLY reports the MAC another port only retains takes the camera; the retained pair is no candidate', async () => {
     const { index } = await makeIndexed([
       {

@@ -263,4 +263,54 @@ describe('IdentityLinkReconciler', () => {
     expect(r.passes()).toBe(1)
     expect(r.emitted).toHaveLength(1)
   })
+
+  it('an unlinked pair stays dismissed after a restart: the stored row is the memory', async () => {
+    const { records } = makeInMemoryRecords('device-manager')
+    await records.declare(deviceManagerRecordKinds)
+    const ids = new Map<string, number>([
+      [`${PORT.addonId}/${PORT.stableId}`, PORT.deviceId],
+      [`${CAMERA.addonId}/${CAMERA.stableId}`, CAMERA.deviceId],
+    ])
+    const build = async () => {
+      const store = IdentityLinksStore.of(records)
+      await store.load()
+      const emitted: Emitted[] = []
+      const reconciler = new IdentityLinkReconciler({
+        candidates: () => ({
+          status: 'answered',
+          candidates: [candidate('auto')],
+          deviceIdOf: (addonId, stableId) => ids.get(`${addonId}/${stableId}`) ?? null,
+        }),
+        store,
+        emit: (category, payload) => void emitted.push({ category, payload }),
+        logger: silentLogger(),
+        now: () => 1_000,
+      })
+      return { store, reconciler, emitted }
+    }
+    const before = await build()
+    await before.reconciler.pass()
+    const id = before.store.list()?.[0]?.id ?? ''
+    expect((await before.reconciler.unlink(id)).ok).toBe(true)
+    const after = await build()
+    await after.reconciler.pass()
+    await after.reconciler.pass()
+    expect(after.store.list()).toHaveLength(1)
+    expect(after.store.get(id)?.state).toBe('dismissed')
+    expect(after.emitted).toEqual([])
+  })
+
+  it('a client that drops off for a poll keeps its link; the link goes only when the evidence is replaced', async () => {
+    const r = await rig()
+    r.set([candidate('auto')])
+    await r.reconciler.pass()
+    const id = r.store.list()?.[0]?.id ?? ''
+    // The port still carries the client (retained): the candidate is still there.
+    await r.reconciler.pass()
+    expect(r.store.get(id)?.state).toBe('linked')
+    // Another port freshly reports the camera: the old candidate is gone, so the link is lost.
+    r.set([])
+    await r.reconciler.pass()
+    expect(r.store.get(id)).toBeNull()
+  })
 })

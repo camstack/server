@@ -163,3 +163,25 @@ own identity.
   `device-identifiers.spec.ts` (port 7 → 9: fresh beats retained), `unifi-identifiers.spec.ts` and
   `integration-gateway.spec.ts` (the port's declaration, deduped per tick),
   `IdentityLinksBlock.spec.tsx` (pending is not "none", decisions).
+
+## Amendment (splitters)
+
+A PoE splitter feeds several devices from one switch port, so a port reports ALL
+its wired clients (`clientMacs`, sorted by MAC; `clientMac` / `clientName` are the
+first, so the label does not flap with the controller's list order).
+
+1. A port reaching N devices links all N automatically (the controller named each
+   MAC on the port; there is no single IP to corroborate it). A device reached by
+   two ports stays a `proposal`.
+2. A client missing for a poll stays in the port's declared set and keeps its link;
+   it goes only when the controller shows it on another port (the fresh report wins
+   over the retained one), or a device side is removed.
+3. A link the operator removed is `dismissed`, a stored row: the next poll and a
+   restart never re-create it.
+4. When a link goes its `power-source` contribution goes with it, and a block the
+   reconciler created (`createdBy: identity-links`) that is left without features
+   is deleted. A block holding anything the operator added stays.
+5. A port creates links only while it delivers PoE (`poeOn` and more than
+   `PORT_POWERING_MIN_W`, 1 W); a port that does not feeds its clients through a
+   self-powered switch. An existing link is kept through a transient 0 W reading,
+   and an unknown reading is not zero.

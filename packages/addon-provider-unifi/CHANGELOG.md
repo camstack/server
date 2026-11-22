@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A PoE splitter port now links every camera it feeds, only while the port is delivering PoE; the port label and links no longer flip between cameras
+
 ## [0.2.174] - 2026-11-21
 
 ### Changed

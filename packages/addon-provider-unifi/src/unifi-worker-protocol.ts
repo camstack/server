@@ -57,6 +57,7 @@ export const workerPortSchema = z.object({
   poeCurrentA: nullableNumber,
   clientMac: z.string().nullable(),
   clientName: z.string().nullable(),
+  clientMacs: z.array(z.string()),
 })
 
 export const workerDeviceSchema = z.object({

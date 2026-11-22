@@ -283,8 +283,8 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
    * {@link candidates}, plus each device's attached identifiers paired with
    * another integration's device identifiers (`poe-power`).
    *
-   * One link per port: when a port's attached keys reach several devices, or a
-   * device is reached by several ports, every one of those attached pairs is
+   * A port reaching several devices (a PoE splitter) links every one of them. A
+   * device reached by several ports is ambiguous: each of those attached pairs is
    * graded a `proposal` at most — the operator picks.
    *
    * Freshness first: a pair whose shared keys the port only RETAINS (declared
@@ -331,8 +331,14 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
         const target = this.devices.get(id)
         if (target === undefined || id === port.deviceId || sameIntegration(port, target)) continue
         const keys = sharedKeys(port.attachedIdentifiers, target.identifiers)
-        const confidence = classifyIdentityMatch(keys)
-        if (confidence === null) continue
+        const graded = classifyIdentityMatch(keys)
+        if (graded === null) continue
+        // A port with several clients (a PoE splitter) has no single IP to corroborate the
+        // MAC, but the controller named that exact MAC on the port: that is the evidence.
+        const confidence =
+          (port.attachedIdentifiers.mac?.length ?? 0) > 1 && keys.some((k) => k.key === 'mac')
+            ? 'auto'
+            : graded
         const retained = new Set(port.attachedRetained)
         all.push({
           pair: {
@@ -351,16 +357,12 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     const pairs = all
       .filter((p) => p.fresh || !freshlyReached.has(p.pair.b.deviceId))
       .map((p) => p.pair)
-    const perPort = new Map<number, number>()
     const perTarget = new Map<number, number>()
     for (const p of pairs) {
-      perPort.set(p.a.deviceId, (perPort.get(p.a.deviceId) ?? 0) + 1)
       perTarget.set(p.b.deviceId, (perTarget.get(p.b.deviceId) ?? 0) + 1)
     }
     return pairs.map((p) =>
-      (perPort.get(p.a.deviceId) ?? 0) > 1 || (perTarget.get(p.b.deviceId) ?? 0) > 1
-        ? { ...p, confidence: 'proposal' }
-        : p,
+      (perTarget.get(p.b.deviceId) ?? 0) > 1 ? { ...p, confidence: 'proposal' } : p,
     )
   }
 

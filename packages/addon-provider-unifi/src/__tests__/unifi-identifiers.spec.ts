@@ -16,7 +16,12 @@ import { describe, expect, it } from 'vitest'
 import type { UnifiInfraSnapshot } from '../unifi-client-contract.js'
 import { workerDeviceToSnapshot } from '../unifi-client-aiounifi.js'
 import { UnifiLiveClient, type UnifiFetch } from '../unifi-client-live.js'
-import { unifiInfraIdentifiers, unifiPortAttachedIdentifiers } from '../unifi-identifiers.js'
+import {
+  portIsPowering,
+  portKnownClients,
+  unifiInfraIdentifiers,
+  unifiPortAttachedIdentifiers,
+} from '../unifi-identifiers.js'
 import { infraSnapshot } from './unifi-fixtures.js'
 
 const quiet: IScopedLogger = {
@@ -170,7 +175,11 @@ describe('unifiPortAttachedIdentifiers (D1063)', () => {
     ip: string | null,
     current: string | null = mac,
   ): Promise<void> {
-    const declaration = unifiPortAttachedIdentifiers(mac, current, ip)
+    const declaration = unifiPortAttachedIdentifiers(
+      mac === null ? [] : [mac.toLowerCase()],
+      current === null ? [] : [current.toLowerCase()],
+      ip,
+    )
     if (declaration === null) return
     const writer = {
       mutate: async (input: SetIdentifiersInput) => {
@@ -200,7 +209,7 @@ describe('unifiPortAttachedIdentifiers (D1063)', () => {
   })
 
   it('a port whose client left declares the retained MAC as unread, never as a read value', async () => {
-    expect(unifiPortAttachedIdentifiers('AA:BB:CC:00:11:22', null, null)?.unread).toEqual([
+    expect(unifiPortAttachedIdentifiers(['aa:bb:cc:00:11:22'], [], null)?.unread).toEqual([
       'mac',
       'ip',
     ])
@@ -223,5 +232,33 @@ describe('unifiPortAttachedIdentifiers (D1063)', () => {
     await attach(world, 'AA:BB:CC:00:11:99', '192.0.2.51')
     expect(world.stored?.mac?.map((m) => m.value)).toEqual(['aa:bb:cc:00:11:99'])
     expect(world.stored?.ip?.value).toBe('192.0.2.51')
+  })
+
+  it('a splitter port declares every client MAC, sorted, and no single IP', () => {
+    const known = portKnownClients([], ['AA:BB:CC:00:11:02', 'aa:bb:cc:00:11:01'], new Set())
+    expect(known).toEqual(['aa:bb:cc:00:11:01', 'aa:bb:cc:00:11:02'])
+    const declaration = unifiPortAttachedIdentifiers(known, known, '192.0.2.50')
+    expect(declaration?.identifiers).toEqual({ mac: known, ip: null })
+    expect(declaration?.unread).toEqual([])
+  })
+
+  it('a client missing for a poll stays; one seen on another port goes', () => {
+    const both = ['aa:bb:cc:00:11:01', 'aa:bb:cc:00:11:02']
+    expect(portKnownClients(both, [both[0] ?? ''], new Set())).toEqual(both)
+    expect(portKnownClients(both, [both[0] ?? ''], new Set([both[1] ?? '']))).toEqual([both[0]])
+  })
+
+  it('the declared order does not depend on the order of the poll', () => {
+    const a = portKnownClients([], ['aa:01', 'aa:02'], new Set())
+    const b = portKnownClients([], ['aa:02', 'aa:01'], new Set())
+    expect(a).toEqual(b)
+  })
+
+  it('a port powers its clients only while PoE is on and it draws more than the threshold', () => {
+    expect(portIsPowering({ poeOn: true, poePowerW: 3.2 })).toBe(true)
+    expect(portIsPowering({ poeOn: true, poePowerW: 0 })).toBe(false)
+    expect(portIsPowering({ poeOn: true, poePowerW: 1 })).toBe(false)
+    expect(portIsPowering({ poeOn: false, poePowerW: 5 })).toBe(false)
+    expect(portIsPowering({ poeOn: true, poePowerW: null })).toBe(true)
   })
 })

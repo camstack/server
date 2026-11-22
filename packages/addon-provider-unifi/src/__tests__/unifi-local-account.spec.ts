@@ -64,6 +64,7 @@ function switchDevice(port3LinkUp: boolean): UnifiWorkerDevice {
     poeCurrentA: 0.06,
     clientMac: idx === 1 ? 'aa:bb:cc:dd:ee:01' : null,
     clientName: idx === 1 ? 'marker-camera' : null,
+    clientMacs: idx === 1 ? ['aa:bb:cc:dd:ee:01'] : [],
   })
   return {
     id: 'dev1',

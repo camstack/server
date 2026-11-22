@@ -143,6 +143,19 @@ class PoePreservesOtherPorts(unittest.TestCase):
 
 
 class PortTable(unittest.TestCase):
+    def test_a_port_reports_every_wired_client_in_a_stable_order(self) -> None:
+        first = {**CAMERA, "mac": "11:22:33:44:55:01", "hostname": "cam-a"}
+        second = {**CAMERA, "mac": "11:22:33:44:55:02", "hostname": "cam-b"}
+        seen = []
+        for order in ([first, second], [second, first]):
+            console = FakeConsole([switch([], [port(3)])], order)
+            snapshot = asyncio.run(signed_in(console).list(True))
+            seen.append(snapshot["devices"][0]["ports"][0])
+        for reported in seen:
+            self.assertEqual(reported["clientMacs"], [first["mac"], second["mac"]])
+            self.assertEqual(reported["clientMac"], first["mac"])
+            self.assertEqual(reported["clientName"], "cam-a")
+
     def test_poe_mode_readings_link_and_the_wired_client_per_port(self) -> None:
         console = FakeConsole([switch([], [port(1), port(3, mode="off"), port(4, up=False)])], [CAMERA])
         session = signed_in(console)
@@ -156,6 +169,7 @@ class PortTable(unittest.TestCase):
         self.assertEqual(ports[3]["poeOn"], False)
         self.assertEqual(ports[3]["clientMac"], CAMERA["mac"])
         self.assertEqual(ports[3]["clientName"], "cam")
+        self.assertEqual(ports[3]["clientMacs"], [CAMERA["mac"]])
         self.assertEqual(ports[4]["linkUp"], False)
         self.assertIsNone(ports[4]["speedMbps"])
         self.assertEqual(snapshot["devices"][0]["id"], SWITCH_ID)

@@ -69,6 +69,7 @@ function toPort(p: UnifiWorkerDevice['ports'][number]): UnifiInfraPort {
     poeCurrentA: p.poeCurrentA,
     clientMac: p.clientMac,
     clientName: p.clientName,
+    clientMacs: p.clientMacs,
   }
 }
 

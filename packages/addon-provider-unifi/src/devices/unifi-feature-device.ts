@@ -33,7 +33,11 @@ import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../uni
 import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 import { registerUnifiStateRefresh } from './unifi-state-refresh.js'
-import { unifiPortAttachedIdentifiers } from '../unifi-identifiers.js'
+import {
+  portIsPowering,
+  portKnownClients,
+  unifiPortAttachedIdentifiers,
+} from '../unifi-identifiers.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
 const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
@@ -80,6 +84,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   private readonly switchable: boolean
   /** The last client MAC persisted / the last auto name decided, so a tick writes only on change. */
   private lastClientMac: string | undefined
+  /** Every client this port answers for, persisted so a restart keeps the set. */
+  private knownClients: readonly string[]
   private lastDesiredName: string | null = null
   /** The attached identifiers last declared (D1063), so a poll tick writes only on change. */
   private lastAttachedKey: string | null = null
@@ -100,6 +106,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     this.mac = cfg.mac
     this.switchable = cfg.switchable === true
     this.lastClientMac = cfg.clientMac
+    this.knownClients = cfg.clientMacs ?? (cfg.clientMac === undefined ? [] : [cfg.clientMac])
     this.online = false
     // Every construction, so a device adopted before the quantity existed picks it up on restore.
     const quantity = this.metric === undefined ? undefined : quantityForMetric(this.metric)
@@ -233,13 +240,18 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
    * port that freshly reads it wins the auto link); an IP the controller does not know right
    * now is unread (D49).
    */
-  private async declareAttached(currentClientMac: string | null): Promise<void> {
-    const mac = currentClientMac ?? this.lastClientMac ?? null
+  private async declareAttached(current: readonly string[]): Promise<void> {
+    const elsewhere = this.macsOnOtherPorts()
+    const known = portKnownClients(this.knownClients, current, elsewhere)
+    if (known.join() !== this.knownClients.join()) {
+      this.knownClients = known
+      await this.config.set('clientMacs', [...known])
+    }
     const ip =
-      currentClientMac === null
-        ? null
-        : (unifiControllers.getClient(this.integrationId, currentClientMac)?.ip ?? null)
-    const declaration = unifiPortAttachedIdentifiers(mac, currentClientMac, ip)
+      current.length === 1
+        ? (unifiControllers.getClient(this.integrationId, current[0] ?? '')?.ip ?? null)
+        : null
+    const declaration = unifiPortAttachedIdentifiers(known, current, ip)
     if (declaration === null) return
     const key = JSON.stringify(declaration)
     if (key === this.lastAttachedKey) return
@@ -248,6 +260,18 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
       unread: declaration.unread,
     })
     if (result.outcome !== 'declared') this.lastAttachedKey = null
+  }
+
+  /** Clients the controller shows NOW on any other port: they moved, this port lets them go. */
+  private macsOnOtherPorts(): ReadonlySet<string> {
+    const out = new Set<string>()
+    for (const infra of unifiControllers.getInfraList(this.integrationId)) {
+      for (const p of infra.ports) {
+        if (infra.id === this.infraNativeId && p.idx === this.portIdx) continue
+        for (const m of p.clientMacs) out.add(m.toLowerCase())
+      }
+    }
+    return out
   }
 
   /**
@@ -265,7 +289,9 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
           meta: { portIdx: port.idx, clientMac: port.clientMac },
         })
       }
-      await this.declareAttached(port.clientMac)
+      // A port that delivers no PoE powers none of its clients: it declares nothing new, and
+      // what it declared while it delivered stays (a transient 0 W never drops a link).
+      if (portIsPowering(port)) await this.declareAttached(port.clientMacs)
       if (port.clientName === null) return
       const desired = portLabel(port.idx, port.clientName)
       if (desired === this.lastDesiredName) return
