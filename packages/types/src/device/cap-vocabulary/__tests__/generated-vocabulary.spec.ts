@@ -80,6 +80,8 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   // D1079-D1082: a vehicle device and where a device is.
   'location',
   'vehicle',
+  // Retention P3: the retention-source catalog a data owner declares.
+  'retention-source',
 ]
 
 /**

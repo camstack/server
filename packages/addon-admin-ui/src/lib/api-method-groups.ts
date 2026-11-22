@@ -180,6 +180,7 @@ const ROUTERS_BY_GROUP: Readonly<Record<MappedGroupId, readonly string[]>> = {
     'recordingOnboard',
     'recordingSignal',
     'records',
+    'retentionSource',
     'storage',
     'storageAdmin',
     'storageEvictable',
