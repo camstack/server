@@ -7,17 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.498] - 2026-11-22
-
 ### Changed
 
-- Cap link cell for the Customize table, and the energy card reads the linked heat pump with its COP.
 - History charts stored in metres switch between km, mi and m by your unit preference; rain in mm is unchanged
 - Consumable rows show a distance remaining in km or miles by your unit preference
 - Device labels and icons for the vehicle lock, vehicle climate and TV roles
 - A vehicle device type label and a car and tv glyph in the fast icon table
 - Generated hooks for the new location capability
 - Generated hooks for the new vehicle capability
+
+## [1.2.498] - 2026-11-22
+
+### Changed
+
+- Cap link cell for the Customize table, and the energy card reads the linked heat pump with its COP.
 
 ## [1.2.497] - 2026-11-22
 

@@ -7,11 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.625] - 2026-11-22
-
 ### Changed
 
-- A whole capability can be linked to another device's with one link; the per-device group mechanism is gone and getCapLinks is readable by viewers.
 - Wake-on-LAN helper: a pure magic-packet builder and a UDP sender for addons that wake a device from their own node
 - History series can be recorded in metres (unit m), for distances such as an odometer
 - Consumables: a remaining life can be a distance (metres), e.g. kilometres to the next service
@@ -19,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Vehicle device type, with a car icon, that can carry lock and climate accessories
 - A new location capability: the raw GPS fix (latitude, longitude, accuracy, heading, speed) any device can report, recorded in the device history
 - A new vehicle capability: odometer, range, doors, windows, tyre warnings and 12 V battery of a connected car, read-only, with an optional admin refresh
+
+## [1.2.625] - 2026-11-22
+
+### Changed
+
+- A whole capability can be linked to another device's with one link; the per-device group mechanism is gone and getCapLinks is readable by viewers.
 
 ## [1.2.624] - 2026-11-22
 
@@ -217,8 +220,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
-
-### Fixed
 
 ## [1.2.597] - 2026-11-18
 
