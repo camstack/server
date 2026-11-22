@@ -24,7 +24,11 @@ import {
   type AlertSeverity,
   type AlertStatus,
 } from '../capabilities/alerts.cap.js'
-import { DeviceFaultSchema, type DeviceFault } from '../capabilities/error.cap.js'
+import {
+  DeviceFaultSchema,
+  type DeviceErrorSeverity,
+  type DeviceFault,
+} from '../capabilities/error.cap.js'
 import type { NcSystemEventKind } from '../capabilities/notification-rules.cap.js'
 
 export type AlertEpisodePhase = 'raised' | 'resolved'
@@ -71,9 +75,32 @@ export function isAlertEpisodeOpen(status: AlertStatus): boolean {
   return status !== 'completed' && status !== 'dismissed'
 }
 
-/** Only these severities are ever announced. */
+/** The severities every alert announces, whatever it is about. */
 export function isAlertEpisodeSeverity(severity: AlertSeverity): boolean {
   return severity === 'critical' || severity === 'error'
+}
+
+/** The category of the alert a device's `error` cap opens for its fault. */
+export const DEVICE_ERROR_ALERT_CATEGORY = 'device.error'
+
+/** What decides whether an alert's episode is announced. */
+export type AnnouncedAlertFacts = Pick<Alert, 'severity' | 'category'>
+
+/**
+ * How loud an episode is, `0` when it is not announced at all. A device FAULT
+ * is announced at every tier, its warning included: who is told about a fault
+ * is the operator's choice (a rule's severity filter, a notifier's minimum
+ * priority), never the system's. Any other alert is announced from `error` up.
+ */
+export function alertEpisodeRank(alert: AnnouncedAlertFacts): number {
+  if (alert.severity === 'critical') return 3
+  if (alert.severity === 'error') return 2
+  return alert.severity === 'warning' && alert.category === DEVICE_ERROR_ALERT_CATEGORY ? 1 : 0
+}
+
+/** Is an episode of this alert announced on the bus and reconciled from the store? */
+export function isAnnouncedAlertEpisode(alert: AnnouncedAlertFacts): boolean {
+  return alertEpisodeRank(alert) > 0
 }
 
 export function alertEpisodeId(alert: Pick<Alert, 'id' | 'createdAt' | 'metadata'>): string {
@@ -111,17 +138,42 @@ export function alertEpisodeKind(
 }
 
 /**
- * The kind of a CRITICAL episode edge about a DEVICE (D911): the alert's source
- * is `device`, so it is announced in the devices family as
+ * The tier a DEVICE episode is announced at, or `null` when it is not a
+ * device-attention episode: a critical alert is an `error`, and a device fault
+ * at its warning tier is a `warning`. A rule narrows on it (`faultSeverities`)
+ * and a delivery takes its priority from it.
+ */
+export function deviceAttentionSeverity(alert: AnnouncedAlertFacts): DeviceErrorSeverity | null {
+  if (alert.severity === 'critical') return 'error'
+  return alertEpisodeRank(alert) === 1 ? 'warning' : null
+}
+
+/**
+ * The kind of an episode edge about a DEVICE (D911): the alert's source is
+ * `device`, so it is announced in the devices family as
  * `device-attention-required` / `-resolved` INSTEAD of `alert-critical`. One
- * alert notifies once, through one family. `null` for any other severity.
+ * alert notifies once, through one family. `null` when the alert has no
+ * device-attention tier ({@link deviceAttentionSeverity}).
  */
 export function deviceAttentionKind(
-  severity: AlertSeverity,
+  alert: AnnouncedAlertFacts,
   phase: AlertEpisodePhase,
 ): NcSystemEventKind | null {
-  if (severity !== 'critical') return null
+  if (deviceAttentionSeverity(alert) === null) return null
   return phase === 'raised' ? 'device-attention-required' : 'device-attention-resolved'
+}
+
+/**
+ * The system-event kind one edge is sent as: the device-attention pair for a
+ * device source that has a tier, the generic alert kinds for everything else.
+ * `null` when the edge has nothing to send.
+ */
+export function alertEpisodeEdgeKind(
+  payload: Pick<AlertEpisodePayload, 'severity' | 'category' | 'sourceType' | 'phase'>,
+): NcSystemEventKind | null {
+  const attention =
+    payload.sourceType === 'device' ? deviceAttentionKind(payload, payload.phase) : null
+  return attention ?? alertEpisodeKind(payload.severity, payload.phase)
 }
 
 /** The faults a device-error alert carries in its metadata; none when absent or malformed. */

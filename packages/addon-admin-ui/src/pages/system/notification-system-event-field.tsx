@@ -44,9 +44,11 @@ import type { RuleDeviceOption } from './rule-device-filter'
 import { OptionListField } from './notification-rule-pickers'
 import {
   batteryKindsNarrowedByType,
+  faultSeveritiesOf,
   NC_CONSUMABLE_THRESHOLD_MAX,
   NC_CONSUMABLE_THRESHOLD_MIN,
   NC_DEVICE_TYPE_OPTIONS,
+  NC_FAULT_SEVERITIES,
   parseConsumableThreshold,
   patchSystemEventFilters,
   systemEventFilterVisibilityFor,
@@ -299,6 +301,34 @@ export function SystemEventField({
               'system.notificationSystemEventField.faultCodePlaceholder',
               'Fault code… (empty = any fault)',
             )}
+          />
+        </div>
+      )}
+
+      {visible.faultSeverities && (
+        <div data-testid="system-event-fault-severities">
+          <label className={LABEL_CLASS}>
+            {t('system.notificationSystemEventField.faultSeverities', 'Fault severity')}
+          </label>
+          <OptionListField
+            noFreeText
+            options={NC_FAULT_SEVERITIES.map((tier) => ({
+              value: tier,
+              label: t(`system.notificationSystemEventField.faultSeverity.${tier}`),
+            }))}
+            value={value?.faultSeverities ?? []}
+            onChange={(next) =>
+              onChange(
+                patchSystemEventFilters(value, {
+                  faultSeverities: faultSeveritiesOf(next),
+                }),
+              )
+            }
+            emptyHint={t(
+              'system.notificationSystemEventField.faultSeveritiesEmpty',
+              'No severity picked: the rule hears warnings and errors.',
+            )}
+            placeholder=""
           />
         </div>
       )}

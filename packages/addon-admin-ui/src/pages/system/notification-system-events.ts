@@ -25,11 +25,13 @@
  */
 
 import type {
+  DeviceErrorSeverity,
   NcSystemEventCondition,
   NcSystemEventFamily,
   NcSystemEventKind,
 } from '@camstack/types'
 import {
+  DeviceErrorSeveritySchema,
   DeviceType,
   NC_AUTHORABLE_SYSTEM_EVENT_KINDS,
   NC_LEGACY_SYSTEM_EVENT_KINDS,
@@ -155,6 +157,8 @@ export interface NcSystemEventFilterVisibility {
   readonly commandActorKinds: boolean
   /** The fault-code picker — only with a `device-attention-*` kind. */
   readonly faultCodes: boolean
+  /** The fault-tier picker (warning / error) — only with a `device-attention-*` kind. */
+  readonly faultSeverities: boolean
 }
 
 /**
@@ -184,6 +188,7 @@ export function systemEventFilterVisibility(
     commandOutcomes: systemEventFilterAppliesToAnyKind(kinds, 'commandOutcomes'),
     commandActorKinds: systemEventFilterAppliesToAnyKind(kinds, 'commandActorKinds'),
     faultCodes: systemEventFilterAppliesToAnyKind(kinds, 'faultCodes'),
+    faultSeverities: systemEventFilterAppliesToAnyKind(kinds, 'faultSeverities'),
   }
 }
 
@@ -218,7 +223,16 @@ export function systemEventFilterVisibilityFor(
     commandOutcomes: allowed.includes('commandOutcomes') && byKind.commandOutcomes,
     commandActorKinds: allowed.includes('commandActorKinds') && byKind.commandActorKinds,
     faultCodes: allowed.includes('faultCodes') && byKind.faultCodes,
+    faultSeverities: allowed.includes('faultSeverities') && byKind.faultSeverities,
   }
+}
+
+/** The fault tiers a `device-attention-*` rule can be narrowed to, quietest first. */
+export const NC_FAULT_SEVERITIES: readonly DeviceErrorSeverity[] = DeviceErrorSeveritySchema.options
+
+/** The tiers among a list of picked option values; anything else is dropped. */
+export function faultSeveritiesOf(values: readonly string[]): DeviceErrorSeverity[] {
+  return NC_FAULT_SEVERITIES.filter((tier) => values.includes(tier))
 }
 
 /**
@@ -375,6 +389,8 @@ export interface NcSystemEventFilterPatch {
   readonly packageNames?: readonly string[] | undefined
   /** `device-attention-*` only: the fault codes; empty = any fault. */
   readonly faultCodes?: readonly string[] | undefined
+  /** `device-attention-*` only: the fault tiers; empty = every tier. */
+  readonly faultSeverities?: readonly DeviceErrorSeverity[] | undefined
   /** The rule's consumable threshold (D642); `undefined` = the default. */
   readonly consumableLowPercent?: number | undefined
 }
@@ -402,6 +418,7 @@ export function patchSystemEventFilters(
   const nodeIds = pick(patch, 'nodeIds', value?.nodeIds)
   const packageNames = pick(patch, 'packageNames', value?.packageNames)
   const faultCodes = pick(patch, 'faultCodes', value?.faultCodes)
+  const faultSeverities = pick(patch, 'faultSeverities', value?.faultSeverities)
   const consumableLowPercent = Object.prototype.hasOwnProperty.call(patch, 'consumableLowPercent')
     ? patch.consumableLowPercent
     : value?.consumableLowPercent
@@ -413,6 +430,7 @@ export function patchSystemEventFilters(
     ...(nodeIds !== undefined ? { nodeIds: [...nodeIds] } : {}),
     ...(packageNames !== undefined ? { packageNames: [...packageNames] } : {}),
     ...(faultCodes !== undefined ? { faultCodes: [...faultCodes] } : {}),
+    ...(faultSeverities !== undefined ? { faultSeverities: [...faultSeverities] } : {}),
     ...(consumableLowPercent !== undefined ? { consumableLowPercent } : {}),
   }
 }
@@ -446,6 +464,7 @@ function withKinds(
   const nodeIds = visible.nodes ? value?.nodeIds : undefined
   const packageNames = visible.packages ? value?.packageNames : undefined
   const faultCodes = visible.faultCodes ? value?.faultCodes : undefined
+  const faultSeverities = visible.faultSeverities ? value?.faultSeverities : undefined
   const consumableLowPercent = visible.consumableThreshold ? value?.consumableLowPercent : undefined
   return {
     kinds: [...kinds],
@@ -457,6 +476,9 @@ function withKinds(
     ...(nodeIds && nodeIds.length > 0 ? { nodeIds: [...nodeIds] } : {}),
     ...(packageNames && packageNames.length > 0 ? { packageNames: [...packageNames] } : {}),
     ...(faultCodes && faultCodes.length > 0 ? { faultCodes: [...faultCodes] } : {}),
+    ...(faultSeverities && faultSeverities.length > 0
+      ? { faultSeverities: [...faultSeverities] }
+      : {}),
     ...(consumableLowPercent !== undefined ? { consumableLowPercent } : {}),
   }
 }

@@ -3,23 +3,26 @@
  *
  * The alert centre sends no notification. It stamps every alert it stores with
  * an `episodeId` (`metadata.episodeId`) and announces the opening and the
- * closing of critical and error episodes on the bus; Notification Center turns
- * those into notifications (`alert-critical`, `alert-error`,
- * `alert-critical-resolved`). The identity is what makes a notification
+ * closing of critical and error episodes, and of a device fault at any tier,
+ * on the bus; Notification Center turns those into notifications
+ * (`alert-critical`, `alert-error`, `alert-critical-resolved`,
+ * `device-attention-required` / `-resolved`). The identity is what makes a notification
  * once-per-episode: any number of re-emits of an open alert keep the id, a new
  * episode after completion gets a new one.
  */
 import {
   type AlertSeverity,
   type AlertStatus,
+  alertEpisodeRank,
   isAlertEpisodeOpen,
-  isAlertEpisodeSeverity,
 } from '@camstack/types'
 
 /** What the policy needs of a stored alert. */
 export interface EpisodeView {
   readonly status: AlertStatus
   readonly severity: AlertSeverity
+  /** The alert's category: a device fault is announced at its warning tier too. */
+  readonly category: string
   readonly episodeId: string
   /** The emitter's own episode marker (`metadata.episodeKey`), when it has one. */
   readonly episodeKey?: string
@@ -52,27 +55,18 @@ export type EpisodeEdge = 'raised' | 'resolved'
 /**
  * The edge to announce for a write that took `previous` to `next`, or `null`.
  * A re-emit that changes nothing about the episode announces nothing; an
- * escalation from `error` to `critical` inside one episode is announced again
- * (it is a different kind, and the operator opted into it separately).
+ * escalation inside one episode (`error` to `critical`, a fault's warning to
+ * its error) is announced again: it is a different kind or tier, and the
+ * operator opted into it separately. A de-escalation announces nothing.
  */
 export function episodeEdge(previous: EpisodeView | null, next: EpisodeView): EpisodeEdge | null {
   const nextOpen = isAlertEpisodeOpen(next.status)
-  const continues =
-    previous !== null &&
-    isAlertEpisodeOpen(previous.status) &&
-    previous.episodeId === next.episodeId
+  const previousOpen = previous !== null && isAlertEpisodeOpen(previous.status)
   if (nextOpen) {
-    if (!isAlertEpisodeSeverity(next.severity)) return null
-    if (!continues || previous === null) return 'raised'
-    if (!isAlertEpisodeSeverity(previous.severity)) return 'raised'
-    return previous.severity === 'error' && next.severity === 'critical' ? 'raised' : null
+    const rank = alertEpisodeRank(next)
+    if (rank === 0) return null
+    if (previous === null || !previousOpen || previous.episodeId !== next.episodeId) return 'raised'
+    return rank > alertEpisodeRank(previous) ? 'raised' : null
   }
-  if (
-    previous !== null &&
-    isAlertEpisodeOpen(previous.status) &&
-    isAlertEpisodeSeverity(previous.severity)
-  ) {
-    return 'resolved'
-  }
-  return null
+  return previous !== null && previousOpen && alertEpisodeRank(previous) > 0 ? 'resolved' : null
 }

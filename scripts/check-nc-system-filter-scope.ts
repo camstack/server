@@ -153,6 +153,7 @@ const VISIBILITY_KEY: Readonly<
   commandOutcomes: 'commandOutcomes',
   commandActorKinds: 'commandActorKinds',
   faultCodes: 'faultCodes',
+  faultSeverities: 'faultSeverities',
 }
 
 /** A filter's value in a probe rule: a list, or the threshold number. */
@@ -174,6 +175,8 @@ const UNSATISFIABLE: Readonly<Record<NcSystemEventFilterKey, ProbeFilterValue>> 
   commandOutcomes: ['failed'],
   commandActorKinds: ['node'],
   faultCodes: ['a-fault-no-device-raised'],
+  // The bare subject carries no tier at all.
+  faultSeverities: ['error'],
 }
 
 const BASE_RULE: NcRule = {
@@ -247,6 +250,8 @@ function probeCondition(
       return { kinds: [kind], commandActorKinds: ['user'] }
     case 'faultCodes':
       return { kinds: [kind], faultCodes: ['hb-rf-eth-connection'] }
+    case 'faultSeverities':
+      return { kinds: [kind], faultSeverities: ['error'] }
   }
 }
 
@@ -262,6 +267,7 @@ const FAMILY_BOXES = [
   'commandOutcomes',
   'commandActorKinds',
   'faultCodes',
+  'faultSeverities',
 ] as const satisfies readonly (keyof NcSystemEventFamilyFilterVisibility)[]
 
 const FAMILY_BOX_FILTER: Readonly<
@@ -277,6 +283,7 @@ const FAMILY_BOX_FILTER: Readonly<
   commandOutcomes: 'commandOutcomes',
   commandActorKinds: 'commandActorKinds',
   faultCodes: 'faultCodes',
+  faultSeverities: 'faultSeverities',
 }
 
 /** The viewer family editor's boxes, and the condition field each one writes. */

@@ -13,6 +13,7 @@
 
 import type {
   AudioEvent,
+  DeviceErrorSeverity,
   LabelAttribution,
   MediaFileKind,
   NcAudioCondition,
@@ -286,6 +287,12 @@ export interface NcSystemEventSubject {
   readonly commandActorKind?: string
   /** `device-attention-*` only: the codes of the episode's faults. A `faultCodes` filter matches any of them. */
   readonly faultCodes?: readonly string[]
+  /**
+   * `device-attention-*` only: the tier the episode is announced at. A
+   * `faultSeverities` filter fails CLOSED on a subject that lacks it, and a
+   * delivery takes its priority from it (`faultTierPriority`).
+   */
+  readonly faultSeverity?: DeviceErrorSeverity
   readonly data: Readonly<Record<string, unknown>>
 }
 
@@ -1561,6 +1568,13 @@ function systemEventExclusion(
   if (wantedFaults !== undefined && wantedFaults.length > 0 && applies('faultCodes')) {
     const codes = subject.faultCodes ?? []
     if (!codes.some((code) => wantedFaults.includes(code))) return 'faultCodes'
+  }
+  // A tier list narrows only when it names something: empty or absent is every
+  // tier, the warning included.
+  const wantedTiers = condition.faultSeverities
+  if (wantedTiers !== undefined && wantedTiers.length > 0 && applies('faultSeverities')) {
+    const tier = wantedTiers.find((t) => t === subject.faultSeverity)
+    if (tier === undefined) return 'faultSeverities'
   }
   // THE RULE'S CONSUMABLE THRESHOLD (D642). Unlike the lists above it is in
   // force even when the rule does not state it (the default, 15): a consumable

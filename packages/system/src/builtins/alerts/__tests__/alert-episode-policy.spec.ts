@@ -4,9 +4,14 @@ import { episodeEdge, nextEpisodeId, type EpisodeView } from '../alert-episode-p
 const view = (over: Partial<EpisodeView> = {}): EpisodeView => ({
   status: 'active',
   severity: 'critical',
+  category: 'addon.runner-failed',
   episodeId: 'a@1',
   ...over,
 })
+
+/** A device fault at its warning tier (the `error` cap's alert). */
+const faultWarning = (over: Partial<EpisodeView> = {}): EpisodeView =>
+  view({ severity: 'warning', category: 'device.error', ...over })
 
 describe('nextEpisodeId', () => {
   it('opens an episode for a new alert', () => {
@@ -83,6 +88,13 @@ describe('episodeEdge', () => {
         view({ severity: 'warning', status: 'completed' }),
       ),
     ).toBeNull()
+  })
+  it('announces a device fault at its warning tier: raised, escalated, resolved', () => {
+    expect(episodeEdge(null, faultWarning())).toBe('raised')
+    expect(episodeEdge(faultWarning(), faultWarning())).toBeNull()
+    expect(episodeEdge(faultWarning(), view({ category: 'device.error' }))).toBe('raised')
+    expect(episodeEdge(view({ category: 'device.error' }), faultWarning())).toBeNull()
+    expect(episodeEdge(faultWarning(), faultWarning({ status: 'completed' }))).toBe('resolved')
   })
   it('a new episode id on an open alert raises again (the old one was closed elsewhere)', () => {
     expect(episodeEdge(view(), view({ episodeId: 'a@2' }))).toBe('raised')

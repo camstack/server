@@ -1225,7 +1225,13 @@
       "hubOutdated": "This hub's server predates per-rule consumable thresholds and tank alerts: it drops a rule's threshold when the rule is saved (the rule then judges at {{percent}}%) and refuses tank events. Update the server (@camstack/server) on every node first.",
       "faultCodes": "Fault codes",
       "faultCodesEmpty": "No fault codes declared — type one, or leave empty for any fault.",
-      "faultCodePlaceholder": "Fault code… (empty = any fault)"
+      "faultCodePlaceholder": "Fault code… (empty = any fault)",
+      "faultSeverities": "Fault severity",
+      "faultSeverity": {
+        "warning": "Warning",
+        "error": "Error"
+      },
+      "faultSeveritiesEmpty": "No severity picked: the rule hears warnings and errors."
     },
     "scopePickers": {
       "theNodeHistoryCouldNot": "The node history could not be read — offline nodes may be missing from this list.",

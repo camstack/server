@@ -31,10 +31,12 @@ import {
   alertEpisodeKind,
   parseAlertEpisodePayload,
   deviceAttentionKind,
+  deviceAttentionSeverity,
   DeviceCommandSettledEventSchema,
   findVocabAction,
   type AlertEpisodeAction,
   type AlertEpisodePayload,
+  type DeviceErrorSeverity,
   type TransitionActor,
   type AudioEvent,
   type ConsumableForm,
@@ -782,6 +784,8 @@ function systemSubject(input: {
   readonly consumableLowPercent?: number
   /** Set only on `device-command` (D1022). */
   readonly faultCodes?: readonly string[]
+  /** Set only on `device-attention-*`: the tier the episode is announced at. */
+  readonly faultSeverity?: DeviceErrorSeverity
   readonly command?: {
     readonly action: string
     readonly outcome: string
@@ -824,6 +828,7 @@ function systemSubject(input: {
           ? { consumableLowPercent: input.consumableLowPercent }
           : {}),
         ...(input.faultCodes !== undefined ? { faultCodes: input.faultCodes } : {}),
+        ...(input.faultSeverity !== undefined ? { faultSeverity: input.faultSeverity } : {}),
         ...(input.command !== undefined
           ? {
               commandAction: input.command.action,
@@ -1700,11 +1705,13 @@ function faultTextParams(faults: AlertEpisodePayload['faults']): Record<string, 
 }
 
 /**
- * A CRITICAL alert whose source is a DEVICE (D911) is announced in the devices
- * family — `device-attention-required` / `-resolved`, carrying the device id so
- * a rule's device filters apply — and NOT as `alert-critical`, so one alert
- * never notifies twice through two families. A device source whose id is not a
- * device id falls through to the generic alert kinds.
+ * An alert whose source is a DEVICE (D911) and that has a device-attention tier
+ * — critical, or a device fault at any tier — is announced in the devices
+ * family: `device-attention-required` / `-resolved`, carrying the device id so
+ * a rule's device filters apply, and the tier so a rule or a notifier can
+ * narrow on it. NOT as `alert-critical`, so one alert never notifies twice
+ * through two families. A device source whose id is not a device id falls
+ * through to the generic alert kinds.
  */
 function incomingFromDeviceAttention(
   facts: NcSystemEventFacts,
@@ -1712,8 +1719,9 @@ function incomingFromDeviceAttention(
   lookup: NcDeviceLookup | undefined,
 ): NcIncomingEvent | null {
   if (payload.sourceType !== 'device' || payload.sourceId === undefined) return null
-  const kind = deviceAttentionKind(payload.severity, payload.phase)
-  if (kind === null) return null
+  const kind = deviceAttentionKind(payload, payload.phase)
+  const faultSeverity = deviceAttentionSeverity(payload)
+  if (kind === null || faultSeverity === null) return null
   const deviceId = Number(payload.sourceId)
   if (!Number.isInteger(deviceId)) return null
   const identity = lookup?.(deviceId)
@@ -1731,10 +1739,12 @@ function incomingFromDeviceAttention(
       title: payload.title,
       message: payload.message,
       category: payload.category,
+      severity: faultSeverity,
       actionUrl: payload.actionUrl ?? '',
       ...faultTextParams(payload.faults),
     },
     deviceId,
+    faultSeverity,
     ...(payload.faults !== undefined ? { faultCodes: payload.faults.map((f) => f.code) } : {}),
     ...(identity !== undefined ? { deviceType: identity.type } : {}),
     ...(payload.nodeId !== undefined ? { nodeId: payload.nodeId } : {}),

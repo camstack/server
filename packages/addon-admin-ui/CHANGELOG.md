@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding a Matter integration after creating the fabric no longer fails with 'This provider has several kinds: name one'
 - Device history: the outcome words follow the two stored outcomes.
 - System, Data has a Retention tab that lists how long each addon keeps data and lets you change it
+- A device-attention notification rule has a fault severity filter
 
 ### Fixed
 

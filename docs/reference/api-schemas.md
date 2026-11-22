@@ -4892,6 +4892,7 @@ Enum: `"rule" \| "section"`
 - `packageNames?`: `string[]`
 - `commandActions?`: `string[]`
 - `faultCodes?`: `string[]`
+- `faultSeverities?`: `DeviceErrorSeveritySchema[]`
 - `commandOutcomes?`: `("ok" \| "failed")[]`
 - `commandActorKinds?`: `("user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node")[]`
 - `consumableLowPercent?`: `number`

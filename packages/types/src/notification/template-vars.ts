@@ -1147,7 +1147,8 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: [...ALERT_EPISODE],
+    // On a device-attention episode it is the fault's tier: `warning` or `error`.
+    systemEventKinds: [...DEVICE_ATTENTION, ...ALERT_EPISODE],
   },
   {
     name: 'category',

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon that builds an instance helper after its migrations ran no longer re-declares a clashing switch migration: the catalogue keeps stable ids and seqs across declarations
 - A linked trigger is a built-in automation template: a device is commanded (on, off, toggle) when another device fires an event
 - A device fault opens an alert at its own tier (a warning fault is no longer a critical alert), and a failed alert write is retried on the next reading
+- A device fault at its warning tier is announced as a device-attention event; a notification rule can filter on fault severity
 
 ### Fixed
 

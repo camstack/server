@@ -18,6 +18,7 @@
  * reads exactly as it did.
  */
 import type {
+  DeviceErrorSeverity,
   NcRuleTarget,
   NcTargetAttachment,
   NcTargetOverride,
@@ -87,16 +88,37 @@ function settingsOf(override: NcTargetOverride | undefined): NcOutboxTargetSetti
 }
 
 /**
+ * The priority a fault's tier is delivered at, on the scale every notifier
+ * already filters on (1..5): an error is the rule's own priority, a warning is
+ * one level below it. A notifier whose minimum is the rule's priority therefore
+ * hears the errors and not the warnings, with nothing set on the rule.
+ */
+export function faultTierPriority(priority: number, tier: DeviceErrorSeverity | undefined): number {
+  return tier === 'warning' ? Math.max(1, priority - 1) : priority
+}
+
+/**
  * One target's values for a row: the override where it names a field, the
  * rule's own elsewhere. A priority override also outranks a legacy
- * `params.priority`, which the dispatcher would otherwise read first.
+ * `params.priority`, which the dispatcher would otherwise read first, and is
+ * the operator's exact choice for that target: a fault's tier moves only the
+ * rule's own priority ({@link faultTierPriority}).
  */
-export function targetDelivery(rule: TargetSettingsRule, target: NcRuleTarget): NcTargetDelivery {
+export function targetDelivery(
+  rule: TargetSettingsRule,
+  target: NcRuleTarget,
+  faultTier?: DeviceErrorSeverity,
+): NcTargetDelivery {
   const override = rule.targetOverrides?.[target.targetId]
   const texts = override?.template
   const settings = settingsOf(override)
   if (override?.priority === undefined) {
-    return { priority: rule.priority, params: target.params, texts, settings }
+    return {
+      priority: faultTierPriority(rule.priority, faultTier),
+      params: target.params,
+      texts,
+      settings,
+    }
   }
   const { priority: _legacy, ...params } = target.params ?? {}
   return {

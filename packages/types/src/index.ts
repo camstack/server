@@ -2419,16 +2419,22 @@ export {
   type NcSensorTransitionPhrase,
 } from './notification/sensor-transition-meanings.js'
 export {
+  alertEpisodeEdgeKind,
   alertEpisodeId,
   alertEpisodeKind,
   alertEpisodePayload,
+  alertEpisodeRank,
   alertNodeId,
+  DEVICE_ERROR_ALERT_CATEGORY,
   deviceAttentionKind,
+  deviceAttentionSeverity,
   isAlertEpisodeOpen,
   isAlertEpisodeSeverity,
+  isAnnouncedAlertEpisode,
   parseAlertEpisodePayload,
   AlertEpisodePayloadSchema,
   type AlertEpisodeAction,
+  type AnnouncedAlertFacts,
   type AlertEpisodePayload,
   type AlertEpisodePhase,
 } from './notification/alert-episode.js'

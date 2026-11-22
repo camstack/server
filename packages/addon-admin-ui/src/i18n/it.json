@@ -1225,7 +1225,13 @@
       "hubOutdated": "Il server di questo hub è precedente alle soglie dei consumabili per regola e agli avvisi dei serbatoi: scarta la soglia di una regola al salvataggio (la regola giudica poi al {{percent}}%) e rifiuta gli eventi dei serbatoi. Aggiorna prima il server (@camstack/server) su ogni nodo.",
       "faultCodes": "Codici di guasto",
       "faultCodesEmpty": "Nessun codice di guasto dichiarato: scrivine uno, o lascia vuoto per qualsiasi guasto.",
-      "faultCodePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)"
+      "faultCodePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)",
+      "faultSeverities": "Gravità del guasto",
+      "faultSeverity": {
+        "warning": "Avviso",
+        "error": "Errore"
+      },
+      "faultSeveritiesEmpty": "Nessuna gravità scelta: la regola riceve avvisi ed errori."
     },
     "scopePickers": {
       "theNodeHistoryCouldNot": "Impossibile leggere la cronologia dei nodi — i nodi offline potrebbero mancare da questo elenco.",

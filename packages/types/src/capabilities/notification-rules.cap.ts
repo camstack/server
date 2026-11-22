@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { NcTaxonomySchema } from '../catalogs/nc-taxonomy.js'
 import { type AlarmArmMode, AlarmArmModeSchema, AlarmStateSchema } from './alarm-panel.cap.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { DeviceErrorSeveritySchema } from './error.cap.js'
 import { MaskPolygonShapeSchema } from './mask-shape.js'
 import { NotificationActionIconSchema } from './notification-output.cap.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
@@ -498,6 +499,12 @@ export const NcSystemEventConditionSchema = z.object({
    * fault of the episode is in the list.
    */
   faultCodes: z.array(z.string().min(1)).optional(),
+  /**
+   * `device-attention-*` only: the fault TIERS this rule speaks about. Absent
+   * or empty = every tier, a warning included. A critical device alert that is
+   * not a fault counts as `error`.
+   */
+  faultSeverities: z.array(DeviceErrorSeveritySchema).optional(),
   /** `device-command` only: whether the call returned (`ok`) or threw (`failed`). A device's own change is not a command. */
   commandOutcomes: z.array(z.enum(NC_COMMAND_OUTCOMES)).min(1).optional(),
   /** `device-command` only: who asked (`user`, `addon`, `action`, `scheduler`, `composition`, `node`). */

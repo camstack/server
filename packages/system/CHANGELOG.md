@@ -137,6 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A composed valve offers set-position only while every member valve can be positioned
 - Core blocks lists template instances, the read behind a device's linked triggers
 - An addon running a dev build newer than the registry latest is never moved down to the older registry version
+- The alert centre announces a device fault at its warning tier
 
 ### Removed
 

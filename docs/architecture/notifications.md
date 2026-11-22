@@ -4774,9 +4774,24 @@ An alert with no faults keeps `{{title}}` / `{{message}}`. Also available:
 `{{faultCode}}`, `{{faultLabel}}`, `{{faults}}`.
 
 The alert's severity follows the fault's tier (`deviceErrorAlertSeverity`): an
-`error` fault is a critical alert and announces the two kinds above; a `warning`
-fault is a warning alert and announces nothing. A warning that becomes an error
-re-emits the same alert as critical, so the episode is announced at that moment.
+`error` fault is a critical alert, a `warning` fault is a warning alert. BOTH
+announce the two kinds above: a device fault (category `device.error`) is the
+one warning alert the alert centre announces (`alertEpisodeRank`), because who
+is told about a fault is the operator's choice and never the system's. The
+event carries the tier (`faultSeverity`, `{{severity}}`: `warning` or `error`;
+a critical device alert that is not a fault counts as `error`), and two
+existing controls narrow on it:
+
+- the rule's `faultSeverities` filter (absent or empty = every tier);
+- the delivery priority (`faultTierPriority`): an error is delivered at the
+  rule's own priority, a warning one level below it, so a notifier or a group
+  member whose minimum priority is the rule's hears the errors only. A target's
+  own priority override is used as written.
+
+A warning that becomes an error re-emits the same alert as critical and is
+announced again, inside the same episode (the ledger admits an edge louder than
+the one it notified). A fault that falls back to its warning announces nothing;
+the resolution is announced once, when the last fault clears.
 A failed alert write is tried again on the device's next reading, five times at
 most (`BaseDevice.publishError`).
 

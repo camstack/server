@@ -56,7 +56,21 @@ const NC_ALERT_EPISODES_COLUMNS = [
 /** Longer than the alert centre's maximum retention (365 days). */
 export const NC_ALERT_EPISODE_MAX_AGE_MS = 400 * 24 * 60 * 60 * 1000
 
-export type NcAlertEpisodeKind = 'alert-critical' | 'alert-error'
+export type NcAlertEpisodeKind = 'alert-critical' | 'alert-error' | 'device-warning'
+
+/** How loud a held episode was when it was notified (`alertEpisodeRank`). */
+const KIND_RANK: Readonly<Record<NcAlertEpisodeKind, number>> = {
+  'device-warning': 1,
+  'alert-error': 2,
+  'alert-critical': 3,
+}
+
+/** The row kind of a rank, `null` for a rank that announces nothing. */
+function kindOfRank(rank: number): NcAlertEpisodeKind | null {
+  if (rank >= 3) return 'alert-critical'
+  if (rank === 2) return 'alert-error'
+  return rank === 1 ? 'device-warning' : null
+}
 
 export interface NcAlertEpisodeRow {
   readonly episodeId: string
@@ -66,7 +80,7 @@ export interface NcAlertEpisodeRow {
 }
 
 function isEpisodeKind(value: unknown): value is NcAlertEpisodeKind {
-  return value === 'alert-critical' || value === 'alert-error'
+  return value === 'alert-critical' || value === 'alert-error' || value === 'device-warning'
 }
 
 const NC_ALERT_EPISODES_SPEC: DurableLedgerSpec<NcAlertEpisodeRow> = {
@@ -102,7 +116,9 @@ export type NcAlertEpisodeVerdict =
   | 'unknown-episode'
 
 export interface NcAlertEpisodeEdge {
-  /** The system-event kind the edge maps to, `null` when it announces nothing. */
+  /** How loud the alert is now (`alertEpisodeRank`); `0` announces nothing. */
+  readonly rank: number
+  /** The system-event kind the edge maps to, `null` when it has none to send. */
   readonly kind: NcSystemEventKind | null
   readonly phase: 'raised' | 'resolved'
   readonly episodeId: string
@@ -148,13 +164,13 @@ export class NcAlertEpisodeLedger {
   admit(edge: NcAlertEpisodeEdge, now: number): NcAlertEpisodeVerdict {
     const held = this.ledger.get(edge.episodeId)
     if (edge.phase === 'raised') {
-      if (edge.kind !== 'alert-critical' && edge.kind !== 'alert-error') return 'duplicate'
-      if (held !== undefined && (held.kind === 'alert-critical' || edge.kind === 'alert-error')) {
-        return 'duplicate'
-      }
+      const kind = kindOfRank(edge.rank)
+      if (kind === null || edge.kind === null) return 'duplicate'
+      // Louder than what was notified is a new announcement; the same or quieter is not.
+      if (held !== undefined && KIND_RANK[held.kind] >= edge.rank) return 'duplicate'
       void this.ledger.put({
         episodeId: edge.episodeId,
-        kind: edge.kind,
+        kind,
         alertId: edge.alertId,
         since: held?.since ?? now,
       })
@@ -162,9 +178,8 @@ export class NcAlertEpisodeLedger {
     }
     if (held === undefined) return 'unknown-episode'
     void this.ledger.forget(edge.episodeId)
-    return held.kind === 'alert-critical' && edge.kind === 'alert-critical-resolved'
-      ? 'notify'
-      : 'closed-silently'
+    // An `alert-error` episode announces its opening only.
+    return held.kind !== 'alert-error' && edge.kind !== null ? 'notify' : 'closed-silently'
   }
 
   /** Drop rows older than the alert centre could still hold the alert. */

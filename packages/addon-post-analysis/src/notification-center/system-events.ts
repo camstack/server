@@ -43,13 +43,14 @@ import { NcZoneOwnershipCache } from './zone-owner-cache.js'
 import type { Alert, AlertEpisodePhase, IScopedLogger, SystemEvent } from '@camstack/types'
 import {
   EventCategory,
+  alertEpisodeEdgeKind,
   alertEpisodeId,
-  alertEpisodeKind,
+  alertEpisodeRank,
   alertEpisodePayload,
   createEvent,
   errMsg,
   isAlertEpisodeOpen,
-  isAlertEpisodeSeverity,
+  isAnnouncedAlertEpisode,
   parseAlertEpisodePayload,
 } from '@camstack/types'
 import type { NotificationCenterDeps } from './index.js'
@@ -407,7 +408,8 @@ export function admitAlertEpisode(
   }
   const verdict = host.alertEpisodes.admit(
     {
-      kind: alertEpisodeKind(payload.severity, payload.phase),
+      rank: alertEpisodeRank(payload),
+      kind: alertEpisodeEdgeKind(payload),
       phase: payload.phase,
       episodeId: payload.episodeId,
       alertId: payload.alertId,
@@ -456,7 +458,7 @@ export async function reconcileAlertEpisodes(host: SystemEventsHost): Promise<vo
   for (const alert of alerts) {
     const episodeId = alertEpisodeId(alert)
     const open = isAlertEpisodeOpen(alert.status)
-    if (open && !isAlertEpisodeSeverity(alert.severity)) continue
+    if (open && !isAnnouncedAlertEpisode(alert)) continue
     if (!open && !host.alertEpisodes.has(episodeId)) continue
     const phase: AlertEpisodePhase = open ? 'raised' : 'resolved'
     const sent = host.admitAlertEpisode(

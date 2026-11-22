@@ -254,8 +254,9 @@ export function buildEntries(
     subject.deviceId,
   )
   return scheduled.map((target) => {
-    // #487: this target's own texts and priority over the rule's defaults.
-    const own = targetDelivery(rule, target)
+    // #487: this target's own texts and priority over the rule's defaults; a
+    // fault's warning tier is delivered one level below the rule's priority.
+    const own = targetDelivery(rule, target, subject.systemEvent?.faultSeverity)
     const base: NcOutboxPayload = {
       ruleName: rule.name,
       delivery: rule.delivery,

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification rules: device command messages and the outcome filter are ok or failed.
+- A warning fault of a device now reaches notification rules, carrying its severity; a rule can be limited to warnings or errors, and a warning is delivered one priority level lower
 
 ### Fixed
 

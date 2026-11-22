@@ -233,6 +233,7 @@ function episodeViewOf(alert: Alert): EpisodeView {
   return {
     status: alert.status,
     severity: alert.severity,
+    category: alert.category,
     episodeId: alertEpisodeId(alert),
     ...(key !== undefined ? { episodeKey: key } : {}),
   }

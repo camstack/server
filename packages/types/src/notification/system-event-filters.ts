@@ -58,6 +58,7 @@ export type NcSystemEventFilterKey =
   | 'commandOutcomes'
   | 'commandActorKinds'
   | 'faultCodes'
+  | 'faultSeverities'
 
 /**
  * Every filter, for the callers that must cover all of them (guards, tests).
@@ -78,6 +79,7 @@ export const NC_SYSTEM_EVENT_FILTER_KEYS: readonly NcSystemEventFilterKey[] = [
   'commandOutcomes',
   'commandActorKinds',
   'faultCodes',
+  'faultSeverities',
 ]
 
 /**
@@ -168,8 +170,9 @@ export function systemEventFilterApplies(
     case 'commandOutcomes':
     case 'commandActorKinds':
       return kind === 'device-command'
-    // A fault code speaks only about a device's attention episode.
+    // A fault code and a fault tier speak only about a device's attention episode.
     case 'faultCodes':
+    case 'faultSeverities':
       return kind === 'device-attention-required' || kind === 'device-attention-resolved'
   }
 }

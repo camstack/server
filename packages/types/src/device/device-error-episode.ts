@@ -1,15 +1,17 @@
 import type { Alert, AlertSeverity } from '../capabilities/alerts.cap.js'
 import type { DeviceErrorSeverity, DeviceFault, ErrorStatus } from '../capabilities/error.cap.js'
+import { DEVICE_ERROR_ALERT_CATEGORY } from '../notification/alert-episode.js'
 
 /**
  * The attention episode of a device fault.
  *
  * A fault that STARTS raises one alert whose source is the device, at the
  * severity of the fault's own tier (`deviceErrorAlertSeverity`). The
- * notification center announces a device-sourced CRITICAL alert as
- * `device-attention-required`, and its completion as `device-attention-resolved`
- * (D911); a `warning` fault opens a warning alert and announces nothing. No
- * default rule listens: it notifies only when the operator makes one.
+ * notification center announces it as `device-attention-required`, and its
+ * completion as `device-attention-resolved` (D911), at EVERY tier: the event
+ * carries the tier, and a rule's `faultSeverities` or a notifier's minimum
+ * priority decides who hears a warning. No default rule listens: it notifies
+ * only when the operator makes one.
  */
 export type DeviceErrorEdge = 'start' | 'resolve'
 
@@ -130,7 +132,7 @@ export function buildDeviceErrorAlert(
   const alertId = deviceErrorAlertId(deviceId)
   return {
     id: alertId,
-    category: 'device.error',
+    category: DEVICE_ERROR_ALERT_CATEGORY,
     severity: deviceErrorAlertSeverity(status.severity),
     title: `${deviceName}: ${label}`,
     message: `${deviceName} reports a fault: ${label}.`,

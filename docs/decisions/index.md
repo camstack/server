@@ -4,7 +4,7 @@
 
 # Decisions
 
-1053 architecture decision records. One file per decision, never
+1054 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1066,6 +1066,7 @@ that rots.
 | D1084 | [A device transition store holds only commands, ok or failed; the device's own changes are derived on read from device-history](adr-1084-device-transitions-store-commands-and-derive-device-changes.md) | ✅ accepted | 2026-11-22 |
 | D1085 | [The automatic public endpoint is sticky on the tunnel it once resolved to, until that integration is removed](adr-1085-the-automatic-public-endpoint-is-sticky-on-the-tunnel-it-once-resolved-to-until-that-integration-is-removed.md) | ✅ accepted | 2026-11-22 |
 | D1086 | [An operator-linked trigger is an automation template instance shown on the commanded device, and it never claims the device's state](adr-1086-an-operator-linked-trigger-is-an-automation-template-instance-on-the-target.md) | ✅ accepted (supersedes D1083) | 2026-11-22 |
+| D1088 | [Every device fault is announced with its tier, and the operator's filters decide who hears it](adr-1088-every-device-fault-is-announced-and-the-operator-decides-who-hears-it.md) | ✅ accepted | 2026-11-22 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 
