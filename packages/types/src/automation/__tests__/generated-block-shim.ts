@@ -29,6 +29,7 @@ export {
   runSetBody,
   runWaitUntilBody,
 } from '../step-bodies.js'
+export { groupMembersTrace, groupMembersUnread } from '../group-members.js'
 export { evaluateStepCondition } from '../step-condition.js'
 export { eventLeafIdAt } from '../when.js'
 export { vocabCall } from '../../device/cap-vocabulary/action-index.js'

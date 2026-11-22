@@ -2677,3 +2677,70 @@ describe('a probe step and an http-request step', () => {
     expect(h.mutate).not.toHaveBeenCalled()
   })
 })
+
+describe('an automation a group owns: what its command did on the members', () => {
+  const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const
+  const base = {
+    when: press,
+    actions: [
+      { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'button.press' },
+    ],
+  } satisfies LegacyAutomationRecipe | AutomationRecipe
+  const owned = { ...base, ownedBy: { kind: 'group', blockId: 'g1' } } as const
+  const rows = (): { results: object[] } => ({
+    results: [
+      { deviceId: 21, cap: 'button', method: 'press', ok: true, at: Date.now() + 1_000 },
+      {
+        deviceId: 22,
+        cap: 'button',
+        method: 'press',
+        ok: false,
+        error: 'offline',
+        at: Date.now() + 1_000,
+      },
+      // an older attempt of another command: not this step's
+      { deviceId: 23, cap: 'button', method: 'press', ok: true, at: 1 },
+    ],
+  })
+
+  it('names, per member, the result of THIS command, and logs the command once under the group', async () => {
+    const h = start(await load(owned), { slices: { '616|group-commands': rows() } })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    const [trace] = h.traces()
+    expect(trace?.steps?.[0]?.devices).toEqual([
+      {
+        deviceId: 616,
+        outcome: 'ok',
+        members: [
+          { deviceId: 21, ok: true },
+          { deviceId: 22, ok: false, error: 'offline' },
+        ],
+      },
+    ])
+    const line = h.logs.filter((l) => l.msg === 'group command sent by a trigger')
+    expect(line).toHaveLength(1)
+    expect(line[0]?.meta).toMatchObject({ tags: { deviceId: 616 }, trigger: 'press' })
+  })
+
+  it('a failed read of the results is members: null with the reason, never an empty list', async () => {
+    const h = start(await load(owned), { failSliceReads: true })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    const [device] = h.traces()[0]?.steps?.[0]?.devices ?? []
+    expect(device).toMatchObject({ deviceId: 616, outcome: 'ok', members: null })
+    expect(device?.membersNote).toContain('hub busy')
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('an ordinary automation reads nothing of the kind and adds no member list', async () => {
+    const h = start(await load(base), { slices: { '616|group-commands': rows() } })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    expect(h.traces()[0]?.steps?.[0]?.devices).toBeUndefined()
+    expect(h.sliceReads.count).toBe(0)
+  })
+})

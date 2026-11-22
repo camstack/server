@@ -109,11 +109,26 @@ export type AutomationRunVerdict = z.infer<typeof AutomationRunVerdictSchema>
 /** How many per-device outcomes one step trace keeps. */
 export const MAX_STEP_DEVICE_OUTCOMES = 200
 
+/** One member of a group a step commanded: did the call land on it. */
+export const StepMemberTraceSchema = z.object({
+  deviceId: z.number().int(),
+  ok: z.boolean(),
+  error: z.string().optional(),
+})
+export type StepMemberTrace = z.infer<typeof StepMemberTraceSchema>
+
 /** One device of a multi-device step: did the call land. */
 export const StepDeviceTraceSchema = z.object({
   deviceId: z.number().int(),
   outcome: z.enum(['ok', 'error']),
   message: z.string().optional(),
+  /**
+   * A group's command: the result of THIS command on each member, read back from
+   * the group. `null` when it could not be read (never `[]`, which would say no
+   * member was commanded); `membersNote` then says why (D393).
+   */
+  members: z.array(StepMemberTraceSchema).nullable().optional(),
+  membersNote: z.string().optional(),
 })
 export type StepDeviceTrace = z.infer<typeof StepDeviceTraceSchema>
 
