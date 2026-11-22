@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A dev closure deploy is versioned as a prerelease of the next patch, so addons requiring the current server are no longer held and no migration reads as newer
+
 ## [1.2.238] - 2026-11-22
 
 ### Added

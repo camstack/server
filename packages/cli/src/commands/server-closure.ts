@@ -39,8 +39,17 @@ export interface ServerClosure {
   readonly buildSet: readonly WorkspacePackage[]
 }
 
+/**
+ * A dev build is a prerelease of the NEXT patch: `1.2.941` → `1.2.942-dev.<epoch>`.
+ * A prerelease sorts below its own release, so `1.2.941-dev.N` read as OLDER than
+ * the 1.2.941 it was built on — every `requires server >= 1.2.941` held the addon
+ * and every migration row 1.2.941 wrote looked newer than the running node.
+ */
 export function computeDevVersion(base: string, epochSeconds: number): string {
-  return `${base}-dev.${epochSeconds}`
+  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(base)
+  if (match === null) throw new Error(`dev version: base "${base}" is not MAJOR.MINOR.PATCH`)
+  const [, major, minor, patch] = match
+  return `${major}.${minor}.${Number(patch) + 1}-dev.${epochSeconds}`
 }
 
 interface PackageManifest {

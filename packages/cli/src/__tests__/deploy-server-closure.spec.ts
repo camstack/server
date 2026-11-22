@@ -12,6 +12,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { compareVersions } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   computeDevVersion,
@@ -140,8 +141,14 @@ describe('discoverServerClosure', () => {
 })
 
 describe('computeDevVersion', () => {
-  it('produces <base>-dev.<epochSeconds>', () => {
-    expect(computeDevVersion('1.1.55', 1_783_970_000)).toBe('1.1.55-dev.1783970000')
+  it('is a prerelease of the next patch, so it sorts above the base it was built on', () => {
+    expect(computeDevVersion('1.1.55', 1_783_970_000)).toBe('1.1.56-dev.1783970000')
+    expect(compareVersions(computeDevVersion('1.2.941', 1), '1.2.941')).toBe(1)
+    expect(compareVersions(computeDevVersion('1.2.941', 1), '1.2.942')).toBe(-1)
+  })
+
+  it('refuses a base that is not MAJOR.MINOR.PATCH', () => {
+    expect(() => computeDevVersion('latest', 1)).toThrow(/not MAJOR.MINOR.PATCH/)
   })
 })
 
