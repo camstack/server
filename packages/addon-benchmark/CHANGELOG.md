@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.315] - 2026-11-22
+
 ### Added
 
 - The Node benchmark page can measure decode capacity and lists the decode results (stream, decoder, streams held).

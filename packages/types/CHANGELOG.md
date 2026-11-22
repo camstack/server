@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.623] - 2026-11-22
+
 ### Added
 
 - The node benchmark has a decode measurement and a per-node capacity verdict: the smaller of decode and detection capacity, naming which one limits.
+
 ### Changed
 
 - Capability methods carry a description (the cap's own JSDoc or an explicit option), served by the API catalog

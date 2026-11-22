@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.496] - 2026-11-22
+
 ### Changed
 
 - Device tables: the name column fills the width the controls leave and ellipsises on the right on a phone (no sideways scroll or left clip), and row state labels, readouts and the timed-run buttons use the row's own text size

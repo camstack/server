@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.680] - 2026-11-22
+
 ### Added
 
 - The node benchmark measures how many camera streams (4K H.265, 1080p H.264) the node decodes at full rate with motion, through its real decode workers, hardware decode where available.

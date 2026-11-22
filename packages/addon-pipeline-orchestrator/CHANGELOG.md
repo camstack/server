@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.715] - 2026-11-22
+
 ### Added
 
 - getNodeCapacityVerdict reports a node's capacity as the smaller of its measured decode and detection capacity; a benchmark run stores decode results and names a stream profile it could not measure.
