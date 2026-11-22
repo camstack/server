@@ -8,6 +8,7 @@
  * | `proposal` candidate, no row                | `proposed`, no event                           |
  * | `proposed` row, candidate now `auto`        | `linked` / `auto`, created                     |
  * | `dismissed` row                             | stays dismissed: nothing re-proposes it        |
+ * | `dismissed` row, operator Relink            | `linked` / `operator`, created (evidence must still hold) |
  * | `linked`/`auto` row, evidence gone          | row deleted, `identity-link.lost` evidence-gone |
  * | `linked`/`operator` row, evidence gone      | kept, flagged `evidenceGone`, `lost` evidence-gone |
  * | `linked`/`operator` flagged, evidence back  | flag cleared, `identity-link.created`          |
@@ -149,6 +150,36 @@ export class IdentityLinkReconciler {
     })
   }
 
+  /** Undo a dismissal: a `dismissed` link acts again, as the operator's decision.
+   *  Refused `evidence-gone` when the current candidates no longer declare the pair
+   *  (a relink of a pair nothing declares would only be flagged at the next pass). */
+  relink(linkId: string): Promise<IdentityLinkDecision> {
+    return this.decide(linkId, 'dismissed', async (link) => {
+      const answer = this.deps.candidates()
+      const holds =
+        answer.status === 'answered' &&
+        answer.candidates.some((c) => identityLinkId(c.kind, c.a, c.b) === link.id)
+      if (!holds) {
+        return {
+          ok: false,
+          reason: 'evidence-gone',
+          message: `identity link ${linkId} cannot be relinked: its devices no longer declare the identifiers that matched them`,
+        }
+      }
+      const { evidenceGone: _dropped, ...rest } = link
+      const next: IdentityLink = {
+        ...rest,
+        state: 'linked',
+        origin: 'operator',
+        decidedAt: this.now(),
+      }
+      await this.deps.store.put(next)
+      this.log('identity link relinked by the operator', next)
+      this.deps.emit(EventCategory.IdentityLinkCreated, payloadOf(next))
+      return { ok: true, link: next }
+    })
+  }
+
   /** The `identity-links` removal step (D864): every link naming the device goes. */
   removeDevice(deviceId: number): Promise<number> {
     return this.serialized(async () => {
@@ -278,7 +309,7 @@ export class IdentityLinkReconciler {
   private decide(
     linkId: string,
     from: IdentityLink['state'],
-    apply: (link: IdentityLink) => Promise<IdentityLink>,
+    apply: (link: IdentityLink) => Promise<IdentityLink | IdentityLinkDecision>,
   ): Promise<IdentityLinkDecision> {
     return this.serialized(async (): Promise<IdentityLinkDecision> => {
       if (!this.deps.store.isLoaded()) {
@@ -295,7 +326,8 @@ export class IdentityLinkReconciler {
           message: `identity link ${linkId} is ${link.state}, not ${from}`,
         }
       }
-      return { ok: true, link: await apply(link) }
+      const applied = await apply(link)
+      return 'ok' in applied ? applied : { ok: true, link: applied }
     })
   }
 

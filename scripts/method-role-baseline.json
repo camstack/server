@@ -369,6 +369,7 @@
   "deviceManager.providerCreationType": "admin",
   "deviceManager.providerDiscoveryParamsSchema": "admin",
   "deviceManager.registerDevice": "admin",
+  "deviceManager.relinkIdentity": "admin",
   "deviceManager.remove": "admin",
   "deviceManager.removeByIntegration": "admin",
   "deviceManager.removeDevice": "admin",

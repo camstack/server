@@ -1059,6 +1059,15 @@ export const deviceManagerCapability = {
       auth: 'admin',
     }),
 
+    /** Relink a `dismissed` link: it becomes `linked` by the operator and its
+     *  default contributions are added, exactly as on a confirm. Refused by name
+     *  when the link is unknown (`unknown-link`), not dismissed (`wrong-state`),
+     *  or its devices no longer declare the pair (`evidence-gone`). */
+    relinkIdentity: method(z.object({ linkId: z.string().min(1) }), IdentityLinkDecisionSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+
     /** Operator-curated location registry. Returns the union of:
      *  (1) labels persisted in the registry via `addLocation`, and
      *  (2) labels currently in use on at least one device's

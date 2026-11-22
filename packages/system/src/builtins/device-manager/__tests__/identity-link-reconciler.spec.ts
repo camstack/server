@@ -228,6 +228,37 @@ describe('IdentityLinkReconciler', () => {
     expect(r.store.get(id)?.state).toBe('dismissed')
   })
 
+  it('relink turns a dismissed row linked/operator, emits created, and the next pass keeps it', async () => {
+    const r = await rig()
+    r.set([candidate('auto')])
+    await r.reconciler.pass()
+    const id = r.store.list()?.[0]?.id ?? ''
+    await r.reconciler.unlink(id)
+    r.emitted.length = 0
+    const answer = await r.reconciler.relink(id)
+    expect(answer).toMatchObject({
+      ok: true,
+      link: { state: 'linked', origin: 'operator', decidedAt: 1_000 },
+    })
+    expect(r.emitted).toHaveLength(1)
+    expect(r.emitted[0]?.category).toBe(EventCategory.IdentityLinkCreated)
+    await r.reconciler.pass()
+    expect(r.store.get(id)?.state).toBe('linked')
+  })
+
+  it('relink is refused by name: unknown link, not dismissed, evidence gone', async () => {
+    const r = await rig()
+    r.set([candidate('auto')])
+    await r.reconciler.pass()
+    const id = r.store.list()?.[0]?.id ?? ''
+    expect(await r.reconciler.relink('nope')).toMatchObject({ ok: false, reason: 'unknown-link' })
+    expect(await r.reconciler.relink(id)).toMatchObject({ ok: false, reason: 'wrong-state' })
+    await r.reconciler.unlink(id)
+    r.set([])
+    expect(await r.reconciler.relink(id)).toMatchObject({ ok: false, reason: 'evidence-gone' })
+    expect(r.store.get(id)?.state).toBe('dismissed')
+  })
+
   it('a decision on the wrong state or an unknown link is refused by name', async () => {
     const r = await rig()
     r.set([candidate('auto')])

@@ -335,6 +335,7 @@
   "deviceManager.providerCreationType": "admin",
   "deviceManager.providerDiscoveryParamsSchema": "admin",
   "deviceManager.registerDevice": "protected",
+  "deviceManager.relinkIdentity": "admin",
   "deviceManager.remove": "admin",
   "deviceManager.removeByIntegration": "admin",
   "deviceManager.removeDevice": "protected",

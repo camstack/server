@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const confirmLink = vi.fn<(input: { linkId: string }) => Promise<IdentityLinkDecision>>()
 const dismissLink = vi.fn<(input: { linkId: string }) => Promise<IdentityLinkDecision>>()
+const relinkLink = vi.fn<(input: { linkId: string }) => Promise<IdentityLinkDecision>>()
 const unlinkLink = vi.fn<(input: { linkId: string }) => Promise<IdentityLinkDecision>>()
 let linksQuery: { data: unknown; error: unknown } = {
   data: undefined,
@@ -37,6 +38,10 @@ vi.mock('@camstack/ui-library', async () => {
     }),
     useDeviceManagerDismissIdentityLink: () => ({
       mutateAsync: dismissLink,
+      isPending: false,
+    }),
+    useDeviceManagerRelinkIdentity: () => ({
+      mutateAsync: relinkLink,
       isPending: false,
     }),
     useDeviceManagerUnlinkIdentity: () => ({
@@ -83,6 +88,7 @@ beforeEach(() => {
   confirmLink.mockReset()
   dismissLink.mockReset()
   unlinkLink.mockReset()
+  relinkLink.mockReset()
   linksQuery = { data: undefined, error: null }
 })
 
@@ -165,5 +171,14 @@ describe('IdentityLinksBlock', () => {
     renderBlock()
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(await screen.findByText('identity link is linked, not proposed')).toBeTruthy()
+  })
+
+  it('a dismissed link offers Relink, which calls relinkIdentity with the link id', () => {
+    const dismissed = link({ state: 'dismissed', origin: 'operator' })
+    linksQuery = { data: { status: 'answered', links: [dismissed] }, error: null }
+    relinkLink.mockResolvedValue({ ok: true, link: { ...dismissed, state: 'linked' } })
+    renderBlock()
+    fireEvent.click(screen.getByRole('button', { name: 'Relink' }))
+    expect(relinkLink).toHaveBeenCalledWith({ linkId: dismissed.id })
   })
 })

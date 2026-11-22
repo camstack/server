@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1545 of 1545 methods.
+ * Coverage: 1546 of 1546 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -379,6 +379,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.providerCreationType": "The device type a provider creates via manual add (Camera/Container/Hub), so the Add-Device dialog uses the right type instead of assuming Camera.",
   "deviceManager.providerDiscoveryParamsSchema": "A provider's extra per-scan param form (ConfigUISchema) for the per-integration scan, or null when it takes none.",
   "deviceManager.registerDevice": "Register a device in the DB + in-memory registry. Called by DeviceManagerApi.register().",
+  "deviceManager.relinkIdentity": "Relink a dismissed link: it becomes linked by the operator and its default contributions are added, exactly as on a confirm. Refused by name when the link is unknown (unknown-link), not dismissed (wrong-state), or its devices no longer declare the pair (evidence-gone).",
   "deviceManager.remove": "Remove a device and all children: calls device.removeDevice() then removes from registry + DB.",
   "deviceManager.removeByIntegration": "Cascade-delete every top-level device whose integrationId matches. Children cascade automatically via the per-parent remove path. Idempotent: a device whose integrationId was never set never matches. Returns the count of top-level parents actually removed.",
   "deviceManager.removeDevice": "Remove a device from the DB + in-memory registry. Called by DeviceManagerApi.remove().",

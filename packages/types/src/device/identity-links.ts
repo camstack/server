@@ -163,10 +163,11 @@ export const IdentityLinkDecisionRefusalSchema = z.enum([
   'not-loaded',
   'unknown-link',
   'wrong-state',
+  'evidence-gone',
 ])
 export type IdentityLinkDecisionRefusal = z.infer<typeof IdentityLinkDecisionRefusalSchema>
 
-/** The answer of `confirmIdentityLink` / `dismissIdentityLink` / `unlinkIdentity`. */
+/** The answer of `confirmIdentityLink` / `dismissIdentityLink` / `unlinkIdentity` / `relinkIdentity`. */
 export const IdentityLinkDecisionSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), link: IdentityLinkSchema }),
   z.object({

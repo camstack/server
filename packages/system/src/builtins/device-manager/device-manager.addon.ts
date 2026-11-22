@@ -1027,6 +1027,7 @@ export class DeviceManagerAddon extends BaseAddon {
       confirmIdentityLink: ({ linkId }) => identityLinks.confirm(linkId),
       dismissIdentityLink: ({ linkId }) => identityLinks.dismiss(linkId),
       unlinkIdentity: ({ linkId }) => identityLinks.unlink(linkId),
+      relinkIdentity: ({ linkId }) => identityLinks.relink(linkId),
       getRoleDisplayDefaults: (input) => metaActions.getRoleDisplayDefaults(pctx, input),
       setRoleDisplayDefaults: (input) => metaActions.setRoleDisplayDefaults(pctx, input),
       applyInitialMeta: (input) => metaActions.applyInitialMeta(pctx, input),

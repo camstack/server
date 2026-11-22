@@ -923,6 +923,9 @@ export const useDeviceManagerDismissIdentityLink: typeof trpc.deviceManager.dism
 /** Generated alias around `trpc.deviceManager.unlinkIdentity.useMutation`. */
 export const useDeviceManagerUnlinkIdentity: typeof trpc.deviceManager.unlinkIdentity.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.unlinkIdentity.useMutation)
 
+/** Generated alias around `trpc.deviceManager.relinkIdentity.useMutation`. */
+export const useDeviceManagerRelinkIdentity: typeof trpc.deviceManager.relinkIdentity.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.relinkIdentity.useMutation)
+
 /** Generated alias around `trpc.deviceManager.listLocations.useQuery`. */
 export const useDeviceManagerListLocations: typeof trpc.deviceManager.listLocations.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listLocations.useQuery)
 

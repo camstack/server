@@ -21,6 +21,7 @@ import {
   useDeviceManagerDismissIdentityLink,
   useDeviceManagerGetDevice,
   useDeviceManagerListIdentityLinks,
+  useDeviceManagerRelinkIdentity,
   useDeviceManagerUnlinkIdentity,
 } from '@camstack/ui-library'
 import { devicePath } from '../../../lib/customization-routes'
@@ -47,6 +48,11 @@ export function requireDecided(answer: IdentityLinkDecision): IdentityLink {
 /** The links worth showing: a dismissed one is the operator's "no", kept only so it is not re-proposed. */
 export function visibleLinks(links: readonly IdentityLink[]): readonly IdentityLink[] {
   return links.filter((l) => l.state !== 'dismissed')
+}
+
+/** The dismissed links: the operator's "no", offered back through Relink. */
+export function dismissedLinks(links: readonly IdentityLink[]): readonly IdentityLink[] {
+  return links.filter((l) => l.state === 'dismissed')
 }
 
 export function IdentityLinksBlock({ deviceId }: IdentityLinksBlockProps) {
@@ -91,6 +97,7 @@ export function IdentityLinksBlock({ deviceId }: IdentityLinksBlockProps) {
     )
   }
   const links = visibleLinks(query.data.links)
+  const dismissed = dismissedLinks(query.data.links)
   return (
     <>
       {header}
@@ -101,6 +108,13 @@ export function IdentityLinksBlock({ deviceId }: IdentityLinksBlockProps) {
       ) : (
         <div className="divide-y divide-border">
           {links.map((link) => (
+            <IdentityLinkRow key={link.id} link={link} deviceId={deviceId} />
+          ))}
+        </div>
+      )}
+      {dismissed.length > 0 && (
+        <div className="divide-y divide-border" data-testid="identity-links-dismissed">
+          {dismissed.map((link) => (
             <IdentityLinkRow key={link.id} link={link} deviceId={deviceId} />
           ))}
         </div>
@@ -128,6 +142,7 @@ function IdentityLinkRow({ link, deviceId }: IdentityLinkRowProps) {
   const confirm = useDeviceManagerConfirmIdentityLink(refresh)
   const dismiss = useDeviceManagerDismissIdentityLink(refresh)
   const unlink = useDeviceManagerUnlinkIdentity(refresh)
+  const relink = useDeviceManagerRelinkIdentity(refresh)
   const relationLabel: Record<LinkRelation, string> = {
     'same-device': t('overviewAdapters.identityLinks.sameDevice', 'Same device'),
     'powered-by': t('overviewAdapters.identityLinks.poweredBy', 'Powered by'),
@@ -142,6 +157,7 @@ function IdentityLinkRow({ link, deviceId }: IdentityLinkRowProps) {
   }
   const name = otherDevice?.name ?? `#${other.deviceId}`
   const proposed = link.state === 'proposed'
+  const dismissedLink = link.state === 'dismissed'
   return (
     <InfoRow
       label={relationLabel[linkRelation(link, deviceId)]}
@@ -160,8 +176,22 @@ function IdentityLinkRow({ link, deviceId }: IdentityLinkRowProps) {
               {t('overviewAdapters.identityLinks.evidenceGone', 'No longer matched')}
             </span>
           )}
+          {dismissedLink && (
+            <span className="text-[11px] text-foreground-subtle">
+              {t('overviewAdapters.identityLinks.dismissedState', 'Unlinked')}
+            </span>
+          )}
           <span className="ml-auto flex gap-1.5">
-            {proposed ? (
+            {dismissedLink ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={relink.isPending}
+                onClick={() => decide(relink.mutateAsync({ linkId: link.id }))}
+              >
+                {t('overviewAdapters.identityLinks.relink', 'Relink')}
+              </Button>
+            ) : proposed ? (
               <>
                 <Button
                   size="sm"

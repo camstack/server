@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A notifier group test is never skipped as already delivered, and the test panel lists every member's outcome (sent, skipped with the reason, failed with the error)
+- A dismissed identity link now shows on the device page with a Relink button
 
 ## [1.2.737] - 2026-11-22
 

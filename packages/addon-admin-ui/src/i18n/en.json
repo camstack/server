@@ -5036,7 +5036,9 @@
       "dismiss": "Dismiss",
       "unlink": "Unlink",
       "unlinkTitle": "Unlink these devices?",
-      "unlinkBody": "The link is removed and not suggested again. Anything it added in Customize is removed with it."
+      "unlinkBody": "The link is removed and not suggested again. Anything it added in Customize is removed with it.",
+      "relink": "Relink",
+      "dismissedState": "Unlinked"
     }
   },
   "shared": {

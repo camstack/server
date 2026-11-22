@@ -5111,7 +5111,9 @@
       "dismiss": "Ignora",
       "unlink": "Scollega",
       "unlinkTitle": "Scollegare questi dispositivi?",
-      "unlinkBody": "Il collegamento viene rimosso e non verrà più suggerito. Quanto aveva aggiunto in Personalizza viene rimosso con esso."
+      "unlinkBody": "Il collegamento viene rimosso e non verrà più suggerito. Quanto aveva aggiunto in Personalizza viene rimosso con esso.",
+      "relink": "Ricollega",
+      "dismissedState": "Scollegato"
     }
   },
   "shared": {
