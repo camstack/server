@@ -341,7 +341,7 @@ export function NodeInferenceDevices({
       ),
     },
     {
-      mobile: 'detail',
+      mobile: 'hidden',
       key: 'cap',
       header: t('placementBoard.nodeInferenceDevices.colCap', 'Max sessions'),
       notSortableReason: t(
@@ -605,10 +605,10 @@ function DeviceCell({ row, steps }: DeviceCellProps) {
             {row.device.format}
           </Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-foreground-subtle">
+        <div className="hidden flex-wrap items-center gap-x-1.5 text-xs text-foreground-subtle sm:flex">
           <span className="font-mono">{row.device.key}</span>
           {rootModelId !== null && (
-            <>
+            <span className="flex items-center gap-x-1.5">
               <span aria-hidden>·</span>
               <span>
                 <Trans
@@ -617,7 +617,7 @@ function DeviceCell({ row, steps }: DeviceCellProps) {
                   components={{ mono: <span className="font-mono text-foreground-muted" /> }}
                 />
               </span>
-            </>
+            </span>
           )}
         </div>
       </div>

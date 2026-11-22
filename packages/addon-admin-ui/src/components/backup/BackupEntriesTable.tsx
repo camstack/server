@@ -29,6 +29,7 @@ import {
   useBackupTrigger,
   useBackupUpsertSchedule,
   useConfirm,
+  useIsPhone,
   Checkbox,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
@@ -329,7 +330,7 @@ function EntryScheduleCell({ row }: { readonly row: EntryRow }): ReactNode {
   const { t } = useTranslation()
   const hasCron = row.cron.trim().length > 0
   return (
-    <span className="flex flex-col items-start gap-0.5">
+    <span className="flex flex-row items-center gap-1.5 sm:flex-col sm:items-start sm:gap-0.5">
       <span className="inline-flex items-center gap-1">
         <CalendarClock className="h-3 w-3 text-foreground-subtle" />
         <span className="font-mono text-[11px] text-foreground">
@@ -438,6 +439,7 @@ interface EntryRowActionsProps {
 
 function EntryRowActions({ row, onEdit }: EntryRowActionsProps) {
   const { t } = useTranslation()
+  const isPhone = useIsPhone()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
   const remove = useBackupDeleteSchedule({
@@ -496,7 +498,11 @@ function EntryRowActions({ row, onEdit }: EntryRowActionsProps) {
         ) : (
           <Play className="h-3 w-3" />
         )}
-        {t('backup.backupEntriesTable.runNow', 'Run now')}
+        {isPhone ? (
+          <span className="sr-only">{t('backup.backupEntriesTable.runNow', 'Run now')}</span>
+        ) : (
+          t('backup.backupEntriesTable.runNow', 'Run now')
+        )}
       </Button>
       <IconButton
         variant="ghost"

@@ -5,6 +5,8 @@
  * export `defineFixtures({ area, description, handlers })`. A handler key is
  * a tRPC path (`auth.listSessions`) for a query, or `mut:<path>` for a
  * mutation; the value is the answer, or a function of the call input. Return
+ * A key `event:<category>` is replayed once to each subscriber of that live-event category (its
+ * value, or each element of an array, is the event's `data`). Return
  * `{ __error: 'message' }` to make the call fail, `{ __hang: true }` to leave it
  * unanswered (an operation still in flight). Files starting with `_` are
  * helpers, not areas. `shell.ts` (the app frame: nav, topology, addons,

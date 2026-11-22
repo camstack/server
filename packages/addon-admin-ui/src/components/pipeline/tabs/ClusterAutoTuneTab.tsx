@@ -77,7 +77,7 @@ function NodeCard({
     <section className={SECTION_CARD} data-testid={`auto-tune-node-${node.nodeId}`}>
       <header className={`${SECTION_HEADER} flex flex-wrap items-center gap-2`}>
         <Cpu className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden />
-        <h3 className={`${TEXT_SECTION_LABEL} min-w-0 flex-1`}>{nodeName(node.nodeId)}</h3>
+        <h3 className={`${TEXT_SECTION_LABEL} min-w-0 flex-auto`}>{nodeName(node.nodeId)}</h3>
         <span className="text-[11px] text-foreground-subtle">
           {hardwareLabel(node.hardwareClass)}
           {node.cpuModel !== null ? ` · ${node.cpuModel}` : ''}

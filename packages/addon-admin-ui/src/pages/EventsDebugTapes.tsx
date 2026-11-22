@@ -33,7 +33,10 @@ import {
   ConfirmActionButton,
   DataTable,
   ErrorBox,
+  KebabMenu,
+  useConfirm,
   useDeviceManagerListAll,
+  useIsPhone,
   useSystem,
 } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
@@ -114,6 +117,156 @@ export function EventsDebugTapes(): JSX.Element {
     >
       <TapesBody />
     </CollapsibleCard>
+  )
+}
+
+interface TapeActionsProps {
+  readonly tape: TapeListItem
+  readonly onReview: () => void
+  readonly onDownload: () => void
+  readonly onRelease: () => Promise<void>
+  readonly onRemove: () => Promise<void>
+  readonly onError: (message: string) => void
+}
+
+/** Review stays a button; on a phone the other three fold into one menu so the row stays one line. */
+function TapeActions({
+  tape,
+  onReview,
+  onDownload,
+  onRelease,
+  onRemove,
+  onError,
+}: TapeActionsProps): JSX.Element {
+  const { t } = useTranslation()
+  const isPhone = useIsPhone()
+  const confirm = useConfirm()
+  const reviewLabel = t('eventsDebugTapes.review', 'Review {{scenario}}', {
+    scenario: tape.scenario,
+  })
+  if (isPhone) {
+    const run = async (
+      title: string,
+      message: string,
+      confirmLabel: string,
+      action: () => Promise<void>,
+    ): Promise<void> => {
+      if (!(await confirm({ title, message, confirmLabel, variant: 'warning' }))) return
+      try {
+        await action()
+      } catch (err: unknown) {
+        onError(errorText(err))
+      }
+    }
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="secondary" aria-label={reviewLabel} onClick={onReview}>
+          {t('eventsDebugTapes.review2', 'Review')}
+        </Button>
+        <KebabMenu
+          items={[
+            {
+              id: 'download',
+              label: t('eventsDebugTapes.download', 'Download {{scenario}}', {
+                scenario: tape.scenario,
+              }),
+              icon: Download,
+              onClick: onDownload,
+            },
+            {
+              id: 'release',
+              label: t('eventsDebugTapes.release', 'Release'),
+              icon: Unlock,
+              disabled: tape.released,
+              onClick: () =>
+                void run(
+                  t('eventsDebugTapes.release2', 'Release {{scenario}}?', {
+                    scenario: tape.scenario,
+                  }),
+                  t(
+                    'eventsDebugTapes.releasingReturnsThisTapeS',
+                    "Releasing returns this tape's pinned tracks to ordinary retention — they can be pruned from then on. The promoted bundle itself is kept until deleted.",
+                  ),
+                  t('eventsDebugTapes.release', 'Release'),
+                  onRelease,
+                ),
+            },
+            {
+              id: 'delete',
+              label: t('common.delete', 'Delete'),
+              icon: Trash2,
+              danger: true,
+              separatorBefore: true,
+              onClick: () =>
+                void run(
+                  t('eventsDebugTapes.delete', 'Delete {{scenario}}?', {
+                    scenario: tape.scenario,
+                  }),
+                  t(
+                    'eventsDebugTapes.deletingRemovesThePromotedBundle',
+                    "Deleting removes the promoted bundle and its index row for good. Its tracks' pins are released first — this cannot be undone.",
+                  ),
+                  t('common.delete', 'Delete'),
+                  onRemove,
+                ),
+            },
+          ]}
+        />
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        variant="secondary"
+        aria-label={t('eventsDebugTapes.review', 'Review {{scenario}}', {
+          scenario: tape.scenario,
+        })}
+        onClick={() => onReview()}
+      >
+        {t('eventsDebugTapes.review2', 'Review')}
+      </Button>
+      <Button
+        variant="ghost"
+        aria-label={t('eventsDebugTapes.download', 'Download {{scenario}}', {
+          scenario: tape.scenario,
+        })}
+        onClick={() => onDownload()}
+      >
+        <Download className="h-3.5 w-3.5" />
+      </Button>
+      <ConfirmActionButton
+        label={t('eventsDebugTapes.release', 'Release')}
+        icon={Unlock}
+        title={t('eventsDebugTapes.release2', 'Release {{scenario}}?', {
+          scenario: tape.scenario,
+        })}
+        description={t(
+          'eventsDebugTapes.releasingReturnsThisTapeS',
+          "Releasing returns this tape's pinned tracks to ordinary retention — they can be pruned from then on. The promoted bundle itself is kept until deleted.",
+        )}
+        confirmLabel={t('eventsDebugTapes.release', 'Release')}
+        triggerVariant="ghost"
+        confirmVariant="danger"
+        disabled={tape.released}
+        action={() => onRelease()}
+      />
+      <ConfirmActionButton
+        label={t('common.delete', 'Delete')}
+        icon={Trash2}
+        title={t('eventsDebugTapes.delete', 'Delete {{scenario}}?', {
+          scenario: tape.scenario,
+        })}
+        description={t(
+          'eventsDebugTapes.deletingRemovesThePromotedBundle',
+          "Deleting removes the promoted bundle and its index row for good. Its tracks' pins are released first — this cannot be undone.",
+        )}
+        confirmLabel={t('common.delete', 'Delete')}
+        triggerVariant="ghost"
+        confirmVariant="danger"
+        action={() => onRemove()}
+      />
+    </div>
   )
 }
 
@@ -318,57 +471,14 @@ function TapesBody(): JSX.Element {
             header: '',
             align: 'right',
             render: (tape) => (
-              <div className="flex items-center justify-end gap-1">
-                <Button
-                  variant="secondary"
-                  aria-label={t('eventsDebugTapes.review', 'Review {{scenario}}', {
-                    scenario: tape.scenario,
-                  })}
-                  onClick={() => setReviewing(tape.id)}
-                >
-                  {t('eventsDebugTapes.review2', 'Review')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  aria-label={t('eventsDebugTapes.download', 'Download {{scenario}}', {
-                    scenario: tape.scenario,
-                  })}
-                  onClick={() => void download(tape)}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-                <ConfirmActionButton
-                  label={t('eventsDebugTapes.release', 'Release')}
-                  icon={Unlock}
-                  title={t('eventsDebugTapes.release2', 'Release {{scenario}}?', {
-                    scenario: tape.scenario,
-                  })}
-                  description={t(
-                    'eventsDebugTapes.releasingReturnsThisTapeS',
-                    "Releasing returns this tape's pinned tracks to ordinary retention — they can be pruned from then on. The promoted bundle itself is kept until deleted.",
-                  )}
-                  confirmLabel={t('eventsDebugTapes.release', 'Release')}
-                  triggerVariant="ghost"
-                  confirmVariant="danger"
-                  disabled={tape.released}
-                  action={() => release(tape)}
-                />
-                <ConfirmActionButton
-                  label={t('common.delete', 'Delete')}
-                  icon={Trash2}
-                  title={t('eventsDebugTapes.delete', 'Delete {{scenario}}?', {
-                    scenario: tape.scenario,
-                  })}
-                  description={t(
-                    'eventsDebugTapes.deletingRemovesThePromotedBundle',
-                    "Deleting removes the promoted bundle and its index row for good. Its tracks' pins are released first — this cannot be undone.",
-                  )}
-                  confirmLabel={t('common.delete', 'Delete')}
-                  triggerVariant="ghost"
-                  confirmVariant="danger"
-                  action={() => remove(tape)}
-                />
-              </div>
+              <TapeActions
+                tape={tape}
+                onReview={() => setReviewing(tape.id)}
+                onDownload={() => void download(tape)}
+                onRelease={() => release(tape)}
+                onRemove={() => remove(tape)}
+                onError={setError}
+              />
             ),
           },
         ]}
