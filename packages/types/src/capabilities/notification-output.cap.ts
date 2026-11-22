@@ -412,10 +412,43 @@ export const RenderedAsSchema = z.object({
 })
 export type RenderedAs = z.infer<typeof RenderedAsSchema>
 
+/** Why a notifier-group member got nothing: logged per member (D391) and shown by the test panel. */
+export const GroupSkipReasonSchema = z.enum([
+  'member-disabled',
+  'below-min-priority',
+  'schedule-inactive',
+  'alarm-state',
+  'alarm-unreadable',
+  'throttled',
+  'already-delivered',
+  'nested-group',
+  'unknown-target',
+  'target-disabled',
+])
+export type GroupSkipReason = z.infer<typeof GroupSkipReasonSchema>
+
+/** What happened to one member of one group send: `reason` is set when skipped, `error` when failed. */
+export const GroupMemberOutcomeSchema = z.discriminatedUnion('status', [
+  z.object({ targetId: z.string(), status: z.literal('sent') }),
+  z.object({
+    targetId: z.string(),
+    status: z.literal('skipped'),
+    reason: GroupSkipReasonSchema,
+  }),
+  z.object({
+    targetId: z.string(),
+    status: z.literal('failed'),
+    error: z.string(),
+  }),
+])
+export type GroupMemberOutcome = z.infer<typeof GroupMemberOutcomeSchema>
+
 export const SendResultSchema = z.object({
   success: z.boolean(),
   error: z.string().optional(),
   renderedAs: RenderedAsSchema.optional(),
+  /** One entry per member of a notifier group; absent for any other provider. */
+  members: z.array(GroupMemberOutcomeSchema).optional(),
 })
 export type SendResult = z.infer<typeof SendResultSchema>
 

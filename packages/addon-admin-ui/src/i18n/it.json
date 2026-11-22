@@ -890,7 +890,22 @@
       "presetActions": "Con pulsanti",
       "presetCritical": "Critica",
       "presetOverflow": "Overflow (avanzato)",
-      "testFailed": "Test non riuscito"
+      "testFailed": "Test non riuscito",
+      "memberSent": "Inviato",
+      "memberSkipped": "Saltato",
+      "memberFailed": "Fallito",
+      "skipReason": {
+        "memberDisabled": "Disattivato nel gruppo",
+        "belowMinPriority": "Priorità sotto il suo minimo",
+        "scheduleInactive": "Fuori dalla sua fascia oraria",
+        "alarmState": "L'allarme non è in uno dei suoi stati",
+        "alarmUnreadable": "Non è stato possibile leggere lo stato dell'allarme",
+        "throttled": "Limitato: ne ha ricevuta una da poco",
+        "alreadyDelivered": "Ha già ricevuto questa notifica",
+        "nestedGroup": "Un gruppo non può contenere un gruppo",
+        "unknownTarget": "Il notificatore non esiste più",
+        "targetDisabled": "Il notificatore è disattivato"
+      }
     },
     "notificationTexts": {
       "englishFallback": "Fallback in inglese",

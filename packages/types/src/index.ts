@@ -3084,7 +3084,6 @@ export type {
   GroupMember,
   GroupMembersRead,
   GroupMemberWhen,
-  GroupSkipReason,
   MemberDecision,
   MemberDecisionInput,
 } from './notification/notifier-group.js'

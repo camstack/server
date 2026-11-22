@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { AlarmStateSchema } from '../capabilities/alarm-panel.cap.js'
 import type { Notification } from '../interfaces/notification.js'
 import {
+  type GroupSkipReason,
   type NotificationField,
   NotificationFieldSchema,
   type TargetKindCaps,
@@ -74,19 +75,6 @@ export function groupMembersOf(config: Readonly<Record<string, unknown>>): Group
   }
   return { members, invalid }
 }
-
-/** Why a member got nothing: logged per member (D391) and shown by the test panel. */
-export type GroupSkipReason =
-  | 'member-disabled'
-  | 'below-min-priority'
-  | 'schedule-inactive'
-  | 'alarm-state'
-  | 'alarm-unreadable'
-  | 'throttled'
-  | 'already-delivered'
-  | 'nested-group'
-  | 'unknown-target'
-  | 'target-disabled'
 
 export type MemberDecision =
   | { readonly send: true }

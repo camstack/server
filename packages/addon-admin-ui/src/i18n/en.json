@@ -890,7 +890,22 @@
       "presetActions": "With buttons",
       "presetCritical": "Critical",
       "presetOverflow": "Overflow (advanced)",
-      "testFailed": "Test failed"
+      "testFailed": "Test failed",
+      "memberSent": "Sent",
+      "memberSkipped": "Skipped",
+      "memberFailed": "Failed",
+      "skipReason": {
+        "memberDisabled": "Switched off in the group",
+        "belowMinPriority": "Priority below its minimum",
+        "scheduleInactive": "Outside its schedule",
+        "alarmState": "The alarm is not in one of its states",
+        "alarmUnreadable": "The alarm state could not be read",
+        "throttled": "Throttled: it received one too recently",
+        "alreadyDelivered": "Already received this notification",
+        "nestedGroup": "A group cannot contain a group",
+        "unknownTarget": "The notifier no longer exists",
+        "targetDisabled": "The notifier is disabled"
+      }
     },
     "notificationTexts": {
       "englishFallback": "English fallback",

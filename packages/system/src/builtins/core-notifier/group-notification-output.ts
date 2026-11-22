@@ -7,7 +7,8 @@
  *
  * Rules: fan-out goes through `ctx.api.notificationOutput.send` (the `sendToMember` port); a member
  * that is itself a group is refused (`nested-group`); every skip is logged with its reason and the
- * group's tags (D391); a retry re-sends only the members that failed (the ledger).
+ * group's tags (D391); a retry re-sends only the members that failed (the ledger); a test press bypasses that ledger.
+ * `SendResult.members` carries every member's outcome.
  */
 import {
   type AlarmState,
@@ -15,6 +16,7 @@ import {
   decideMember,
   errMsg,
   type GroupMember,
+  type GroupMemberOutcome,
   type GroupSkipReason,
   groupMembersOf,
   type INotificationOutputProvider,
@@ -38,19 +40,8 @@ export interface MemberKindCaps {
   readonly caps: TargetKindCaps
 }
 
-/** What happened to one member of one send. */
-export type MemberOutcome =
-  | { readonly targetId: string; readonly status: 'sent' }
-  | {
-      readonly targetId: string
-      readonly status: 'skipped'
-      readonly reason: GroupSkipReason
-    }
-  | {
-      readonly targetId: string
-      readonly status: 'failed'
-      readonly error: string
-    }
+/** What happened to one member of one send: the type of an entry of `SendResult.members`. */
+export type MemberOutcome = GroupMemberOutcome
 
 /** What a send to a group did, member by member. */
 export interface GroupDeliveryReport {
@@ -98,7 +89,11 @@ function summary(outcomes: readonly MemberOutcome[]): string {
 
 export function createGroupNotificationOutputProvider(deps: GroupNotificationOutputDeps): {
   readonly provider: INotificationOutputProvider
-  readonly deliver: (group: Target, notification: Notification) => Promise<GroupDeliveryReport>
+  readonly deliver: (
+    group: Target,
+    notification: Notification,
+    isTest?: boolean,
+  ) => Promise<GroupDeliveryReport>
 } {
   const { logger } = deps
   async function deliverMember(
@@ -109,6 +104,7 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     targets: ReadonlyMap<string, NotificationTargetRef>,
     unreadableHolders: readonly string[],
     byKind: ReadonlyMap<string, TargetKindCaps>,
+    isTest: boolean,
   ): Promise<MemberOutcome> {
     const tags = {
       groupId: group.id,
@@ -141,7 +137,8 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     }
     if (target.kind === NOTIFIER_GROUP_KIND) return skip('nested-group')
     if (!target.enabled) return skip('target-disabled')
-    if (deps.ledger.wasDelivered(group.id, notificationKey, member.targetId)) {
+    // A test press is not an outbox retry: it never consults nor writes the delivered-set.
+    if (!isTest && deps.ledger.wasDelivered(group.id, notificationKey, member.targetId)) {
       return skip('already-delivered')
     }
     const alarm =
@@ -172,7 +169,7 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
         })
         return { targetId: member.targetId, status: 'failed', error }
       }
-      deps.ledger.markDelivered(group.id, notificationKey, member.targetId)
+      if (!isTest) deps.ledger.markDelivered(group.id, notificationKey, member.targetId)
       deps.ledger.markSent(group.id, member.targetId)
       return { targetId: member.targetId, status: 'sent' }
     } catch (err) {
@@ -185,7 +182,11 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     }
   }
 
-  async function deliver(group: Target, notification: Notification): Promise<GroupDeliveryReport> {
+  async function deliver(
+    group: Target,
+    notification: Notification,
+    isTest = false,
+  ): Promise<GroupDeliveryReport> {
     const { members, invalid } = groupMembersOf(group.config)
     if (invalid > 0) {
       logger.warn('group has member rows that could not be read; they are not delivered to', {
@@ -210,7 +211,16 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     const outcomes: MemberOutcome[] = []
     for (const member of members) {
       outcomes.push(
-        await deliverMember(group, member, notification, key, targets, unreadableHolders, byKind),
+        await deliverMember(
+          group,
+          member,
+          notification,
+          key,
+          targets,
+          unreadableHolders,
+          byKind,
+          isTest,
+        ),
       )
     }
     return { groupId: group.id, outcomes }
@@ -220,11 +230,15 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     group: Target | null,
     id: string,
     notification: Notification,
+    isTest: boolean,
   ): Promise<SendResult> {
     if (group === null) return { success: false, error: `Unknown target '${id}'` }
-    const report = await deliver(group, notification)
-    const failed = report.outcomes.some((outcome) => outcome.status === 'failed')
-    return failed ? { success: false, error: summary(report.outcomes) } : { success: true }
+    const report = await deliver(group, notification, isTest)
+    const members = [...report.outcomes]
+    const failed = members.some((outcome) => outcome.status === 'failed')
+    return failed
+      ? { success: false, error: summary(report.outcomes), members }
+      : { success: true, members }
   }
 
   const provider: INotificationOutputProvider = {
@@ -238,10 +252,10 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     send: async ({ targetId, notification }) => {
       const group = await deps.store.getById(targetId)
       if (group !== null && !group.enabled) return { success: false, error: 'Target is disabled' }
-      return sendTo(group, targetId, notification)
+      return sendTo(group, targetId, notification, false)
     },
     testTarget: async ({ targetId, sample }) =>
-      sendTo(await deps.store.getById(targetId), targetId, sample ?? CANNED),
+      sendTo(await deps.store.getById(targetId), targetId, sample ?? CANNED, true),
   }
   return { provider, deliver }
 }

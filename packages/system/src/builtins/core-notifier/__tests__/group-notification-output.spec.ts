@@ -366,3 +366,83 @@ describe('group kind caps', () => {
     expect(line?.tags).toEqual({ groupId: 'g1' })
   })
 })
+
+describe('group per-member outcome and the test press', () => {
+  const targets = [ref('ok', 'x'), ref('bad', 'x'), ref('off', 'x', { enabled: false })]
+  const members = [{ targetId: 'ok' }, { targetId: 'bad' }, { targetId: 'off' }]
+
+  it('send returns one outcome per member: sent, failed and skipped with its reason', async () => {
+    const r = rig()
+    r.failing.add('bad')
+    const { provider } = r.build(targets, [group(members)])
+    const result = await provider.send({
+      targetId: 'g1',
+      notification: NOTIFICATION,
+    })
+    expect(result.success).toBe(false)
+    expect(result.members).toEqual([
+      { targetId: 'ok', status: 'sent' },
+      { targetId: 'bad', status: 'failed', error: 'boom' },
+      { targetId: 'off', status: 'skipped', reason: 'target-disabled' },
+    ])
+  })
+
+  it('testTarget returns the same breakdown, and an all-skipped send stays a success', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group([{ targetId: 'off' }])])
+    const tested = await provider.testTarget({ targetId: 'g1' })
+    expect(tested.members).toEqual([
+      { targetId: 'off', status: 'skipped', reason: 'target-disabled' },
+    ])
+    const sent = await provider.send({
+      targetId: 'g1',
+      notification: NOTIFICATION,
+    })
+    expect(sent.success).toBe(true)
+    expect(sent.members).toEqual([
+      { targetId: 'off', status: 'skipped', reason: 'target-disabled' },
+    ])
+  })
+
+  it('a second test press sends again: a test is not an outbox retry', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group([{ targetId: 'ok' }])])
+    await provider.testTarget({ targetId: 'g1' })
+    const second = await provider.testTarget({ targetId: 'g1' })
+    expect(r.sent).toHaveLength(2)
+    expect(second.members).toEqual([{ targetId: 'ok', status: 'sent' }])
+  })
+
+  it('a test press neither reads nor writes the delivered-set: a later send still delivers', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group([{ targetId: 'ok' }])])
+    await provider.testTarget({ targetId: 'g1', sample: NOTIFICATION })
+    const result = await provider.send({
+      targetId: 'g1',
+      notification: NOTIFICATION,
+    })
+    expect(result.members).toEqual([{ targetId: 'ok', status: 'sent' }])
+  })
+
+  it('a test press still honours the throttle and reports it', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group([{ targetId: 'ok', throttleSec: 60 }])])
+    await provider.testTarget({ targetId: 'g1' })
+    const second = await provider.testTarget({ targetId: 'g1' })
+    expect(second.members).toEqual([{ targetId: 'ok', status: 'skipped', reason: 'throttled' }])
+  })
+
+  it('send still dedups a retry of the same notification', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group([{ targetId: 'ok' }])])
+    await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    const retry = await provider.send({
+      targetId: 'g1',
+      notification: NOTIFICATION,
+    })
+    expect(r.sent).toHaveLength(1)
+    expect(retry.members).toEqual([
+      { targetId: 'ok', status: 'skipped', reason: 'already-delivered' },
+    ])
+  })
+})

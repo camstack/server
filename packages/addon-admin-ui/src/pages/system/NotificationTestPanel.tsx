@@ -47,6 +47,8 @@ import {
   visibleControls,
 } from './notification-test-composer'
 import { useTranslation } from 'react-i18next'
+import { NotificationGroupMemberOutcomes } from './NotificationGroupMemberOutcomes'
+import { useNotificationTargets } from './use-notification-targets'
 import i18n from '../../i18n/index'
 
 interface NotificationTestPanelProps {
@@ -459,6 +461,11 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
 function TestResultReport({ result }: { readonly result: TestResult }) {
   const { t } = useTranslation()
   const r = result.renderedAs
+  const targets = useNotificationTargets()
+  const targetNameById = useMemo(
+    () => new Map((targets.data ?? []).map((target) => [target.id, target.name])),
+    [targets.data],
+  )
   return (
     <div
       className={`rounded-md border px-3 py-2 text-xs ${
@@ -479,6 +486,12 @@ function TestResultReport({ result }: { readonly result: TestResult }) {
         </span>
       </div>
       {result.error && <p className="mt-1 text-danger">{result.error}</p>}
+      {result.members && (
+        <NotificationGroupMemberOutcomes
+          members={result.members}
+          targetName={(id) => targetNameById.get(id) ?? id}
+        />
+      )}
       {r && (
         <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-foreground-subtle">
           <dt>{t('system.notificationTestPanel.resolvedLevel', 'Resolved level')}</dt>
