@@ -112,7 +112,10 @@ async function code(id: string): Promise<string> {
 
 describe('core-blocks migration: generated automations read the confirmed view (D1061)', () => {
   it('the seed really reads the effective view (the spec would otherwise prove nothing)', () => {
-    expect(BEFORE).not.toContain('confirmed')
+    // Only the D1061 reads are undone; later generator code (the group
+    // trigger's member trace) reads the confirmed view on its own.
+    expect(BEFORE).not.toContain('capName: cap, confirmed: true')
+    expect(BEFORE).not.toContain("data['confirmed']")
     expect(BEFORE).toContain('getCapSlice.query({ deviceId, capName: cap })')
     expect(CURRENT).toContain('confirmed: true')
   })
