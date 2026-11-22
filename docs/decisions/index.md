@@ -4,7 +4,7 @@
 
 # Decisions
 
-1057 architecture decision records. One file per decision, never
+1058 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1033,7 +1033,7 @@ that rots.
 | D1051 | [A server shell is a separate trust level, off until the node opts in](adr-1051-a-server-shell-is-a-separate-trust-level.md) | ✅ accepted | 2026-11-14 |
 | D1052 | [A mesh certificate does not expire, an expired one is recovered by the hub, and revocation is the only kill switch](adr-1052-a-mesh-certificate-does-not-expire-an-expired-one-is-recovered-by-the-hub-and-revocation-is-the-only-kill-switch.md) | ✅ accepted | 2026-11-15 |
 | D1053 | [The Apple ANE default detector is yolov9m-640](adr-1053-the-apple-ane-default-detector-is-yolov9m-640.md) | ✅ accepted | 2026-11-15 |
-| D1054 | [A tag lives on the record it labels; only its style is registered](adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md) | ✅ accepted | 2026-11-15 |
+| D1054 | [A tag lives on the record it labels; only its style is registered](adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md) | ↩︎ superseded | 2026-11-15 |
 | D1055 | [A node shell lives only while its node's section is open](adr-1055-a-node-shell-lives-only-while-its-node-section-is-open.md) | ✅ accepted | 2026-11-16 |
 | D1056 | [A workload is one device type and one cap, and its role is the kind](adr-1056-a-workload-is-one-device-type-and-one-cap-and-its-role-is-the-kind.md) | ✅ accepted | 2026-11-16 |
 | D1057 | [A hosted camera row is the composer's; engines serve caps on it](adr-1057-a-hosted-camera-row-is-the-composers-engines-serve-caps-on-it.md) | ✅ accepted | 2026-11-16 |
@@ -1068,6 +1068,7 @@ that rots.
 | D1086 | [An operator-linked trigger is an automation template instance shown on the commanded device, and it never claims the device's state](adr-1086-an-operator-linked-trigger-is-an-automation-template-instance-on-the-target.md) | ✅ accepted (supersedes D1083) | 2026-11-22 |
 | D1087 | [A switch toggle is one default method, installed where every native provider is registered](adr-1087-a-switch-toggle-is-one-default-method.md) | ✅ accepted | 2026-11-13 |
 | D1088 | [Every device fault is announced with its tier, and the operator's filters decide who hears it](adr-1088-every-device-fault-is-announced-and-the-operator-decides-who-hears-it.md) | ✅ accepted | 2026-11-22 |
+| D1089 | [A room and a tag are records with an id; everything else references the id](adr-1089-a-room-and-a-tag-are-records-with-an-id-and-everything-else-references-the-id.md) | ✅ accepted (supersedes D1054) | 2026-11-22 |
 | D1091 | [On a phone a table folds by column role and never scrolls sideways](adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md) | ✅ accepted | 2026-11-22 |
 | D1092 | [On for a time" is a hold outside the run, and only what it turned on is turned off](adr-1092-on-for-a-time-is-a-hold-outside-the-run-and-only-what-it-turned-on-is-turned-off.md) | ✅ accepted | 2026-11-22 |
 | D1093 | [A migration keeps each number's secrets and location on that number](adr-1093-a-migration-keeps-secrets-and-location-on-their-own-number.md) | ✅ accepted | 2026-11-23 |
