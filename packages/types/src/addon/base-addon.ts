@@ -596,9 +596,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     declared: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
+    const priorIds = new Set([...this.declaredAll.keys(), ...this.switchDeclared.keys()])
     const added = this.registrySwitchBound()
     for (const m of added) this.switchDeclared.set(m.meta.id, m)
-    const priorIds = new Set(this.declaredAll.keys())
     for (const m of declared) this.declaredAll.set(m.meta.id, m)
     const migrations = [
       ...this.declaredAll.values(),
@@ -606,15 +606,15 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     ]
     // Ids an EARLIER call declared stay in the catalogue but are not this call's to run: an
     // unphased call after another runs its own ids (and the switch it just added), no more.
-    const carried = [...priorIds].some((id) => !declared.some((d) => d.meta.id === id))
-    const own =
-      options?.only === undefined && carried
-        ? {
+    const settledEarlier = [...priorIds].filter((id) => !declared.some((d) => d.meta.id === id))
+    const own: AddonMigrationRunOptions =
+      settledEarlier.length === 0
+        ? (options ?? {})
+        : {
             ...options,
-            only: declared.map((m) => m.meta.id),
-            settledEarlier: [...priorIds].filter((id) => !declared.some((d) => d.meta.id === id)),
+            ...(options?.only === undefined ? { only: declared.map((m) => m.meta.id) } : {}),
+            settledEarlier,
           }
-        : options
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
       own?.only === undefined || added.length === 0
