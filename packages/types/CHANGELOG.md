@@ -16,9 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Vehicle device type, with a car icon, that can carry lock and climate accessories
 - A new location capability: the raw GPS fix (latitude, longitude, accuracy, heading, speed) any device can report, recorded in the device history
 - A new vehicle capability: odometer, range, doors, windows, tyre warnings and 12 V battery of a connected car, read-only, with an optional admin refresh
-- Group triggers: a group's spec can list triggers and an output of none; a trigger that would fire its own group, directly or through other groups, is refused at save.
-- An automation a group owns traces, per member, what its command did, and logs each trigger-caused group command under the group
-- The Buttons → devices built-in automation template is retired: a button press that commands a device is now a trigger of an actuator group
+- The Buttons → devices built-in automation template is retired: a button press that commands a device becomes a linked trigger on that device
 - Device transitions: stored outcomes are ok or failed; the notification command outcome filter follows.
 - The automatic public endpoint keeps the public tunnel address it last resolved to while the tunnel row is absent (boot, a restarting tunnel); a role's source can now read auto-remembered
 - An addon that builds an instance helper after its migrations ran no longer re-declares a clashing switch migration: the catalogue keeps stable ids and seqs across declarations

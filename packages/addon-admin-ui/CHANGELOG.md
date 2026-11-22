@@ -11,10 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Customize: the consumable remaining unit can be a distance
 - Customize: the vehicle lock, vehicle climate and TV roles can be picked
-- A group's triggers and output setting now survive an edit of its members in the group editor
-- A light, switch, fan or climate group has a Triggers section: a button press or an event switches the group, with the backend's refusal shown by name
-- The group editor can build a group with no device of its own, and a command a group sent shows what it did on each member in the trace
-- An automation a group manages reads Managed by that group in the Automations list and opens the group
 - Adding a Matter integration after creating the fabric no longer fails with 'This provider has several kinds: name one'
 - Device history: the outcome words follow the two stored outcomes.
 

@@ -73,8 +73,8 @@ describe('StepResult', () => {
     failure: 'Feeder offline',
     args: [{ name: 'grams', value: { kind: 'value', text: '30' } }],
     devices: [
-      { deviceId: 1, tone: 'pass', message: null, members: null, membersNote: null },
-      { deviceId: 2, tone: 'fail', message: 'timeout', members: null, membersNote: null },
+      { deviceId: 1, tone: 'pass', message: null },
+      { deviceId: 2, tone: 'fail', message: 'timeout' },
     ],
     chose: null,
     nested: [],
@@ -170,35 +170,6 @@ describe('StepResult', () => {
     expect(devices.getByText('Feeder')).toBeTruthy()
     expect(devices.getByText('#2')).toBeTruthy()
     expect(devices.getByText('timeout')).toBeTruthy()
-  })
-
-  it('names what a group command did on each member, and why when it could not be read', () => {
-    const group: StepDetailView = {
-      ...STEP,
-      devices: [
-        {
-          deviceId: 9,
-          tone: 'pass',
-          message: null,
-          members: [
-            { deviceId: 21, tone: 'pass', message: null },
-            { deviceId: 22, tone: 'fail', message: 'offline' },
-          ],
-          membersNote: null,
-        },
-        {
-          deviceId: 10,
-          tone: 'pass',
-          message: null,
-          members: null,
-          membersNote: 'the member results could not be read: hub busy',
-        },
-      ],
-    }
-    render(<StepResult step={group} deviceName={(id) => `#${String(id)}`} />)
-    expect(screen.getByTestId('step-member-21')).toBeTruthy()
-    expect(within(screen.getByTestId('step-member-22')).getByText('offline')).toBeTruthy()
-    expect(screen.getByText(/could not be read: hub busy/)).toBeTruthy()
   })
 })
 

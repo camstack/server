@@ -154,16 +154,6 @@ export interface StepDeviceView {
   readonly deviceId: number
   readonly tone: BlockTone
   readonly message: string | null
-  /** A command sent to a GROUP: what it did on each member; null when the results could not be read (never an empty list). */
-  readonly members: readonly StepMemberView[] | null
-  /** Why `members` is null, when the step drove a group. */
-  readonly membersNote: string | null
-}
-
-export interface StepMemberView {
-  readonly deviceId: number
-  readonly tone: BlockTone
-  readonly message: string | null
 }
 
 export interface StepDetailView {
@@ -281,15 +271,6 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
         deviceId: d.deviceId,
         tone: d.outcome === 'ok' ? 'pass' : 'fail',
         message: nonEmpty(d.message),
-        members:
-          d.members === undefined || d.members === null
-            ? null
-            : d.members.map((m) => ({
-                deviceId: m.deviceId,
-                tone: m.ok ? 'pass' : 'fail',
-                message: nonEmpty(m.error),
-              })),
-        membersNote: nonEmpty(d.membersNote),
       })),
       chose: choseOf(step.branch),
       nested: (step.steps ?? []).map((inner) => ({

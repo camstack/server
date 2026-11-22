@@ -12,7 +12,6 @@ import {
   DEFAULT_HISTORY_RETENTION,
   composedDeviceRef,
   composedDeviceStableId,
-  compileHelper,
   DeviceType,
   ROOM_EXAMPLE_MOTION_SOURCES,
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
@@ -1331,86 +1330,3 @@ function coreBlockFeatures(blockId: string): readonly Composition['features'][nu
   const found = stored.find((b) => b.id === blockId)
   return found?.source?.kind === 'composition' ? found.source.composition.features : []
 }
-
-describe('group triggers', () => {
-  const lamp = (stableId: string): CompositionSourceRef => ({ addonId: HA, stableId })
-
-  function lightGroup(members: readonly string[], listensTo: string): Composition {
-    const compiled = compileHelper({
-      kind: 'group',
-      templateId: 'light',
-      aggregate: 'any',
-      active: 'at-least-one',
-      members: members.map((id) => ({ source: lamp(id), cap: 'switch', fieldPath: 'on' })),
-      triggers: [
-        {
-          id: 't1',
-          source: {
-            kind: 'becomes',
-            device: lamp(listensTo),
-            cap: 'switch',
-            fieldPath: 'on',
-            becomes: true,
-          },
-          action: { kind: 'switch' },
-        },
-      ],
-    })
-    if (!compiled.ok) throw new Error('did not compile')
-    return compiled.composition
-  }
-
-  beforeEach(() => {
-    rows.set(HA, [
-      ...(rows.get(HA) ?? []),
-      { id: 70, stableId: 'lamp-1', type: DeviceType.Light },
-      { id: 71, stableId: 'lamp-2', type: DeviceType.Light },
-      { id: 72, stableId: 'button-1', type: DeviceType.Sensor },
-    ])
-    for (const id of [70, 71, 72]) bindings.set(id, [{ capName: 'switch', nativeAddonId: HA }])
-  })
-
-  it('refuses a trigger on a member of its own group, and stores nothing', async () => {
-    await expect(
-      buildCompositionApi(deps()).createComposition({
-        block: { name: 'Lamps', enabled: true, composition: lightGroup(['lamp-1'], 'lamp-1') },
-        caller: CALLER,
-      }),
-    ).rejects.toThrow('would fire itself')
-    expect(stored).toEqual([])
-  })
-
-  it('refuses a cycle through a stored group', async () => {
-    stored = [compositionBlock('a', lightGroup(['lamp-1'], 'lamp-2'))]
-    await expect(
-      buildCompositionApi(deps()).createComposition({
-        block: { name: 'B', enabled: true, composition: lightGroup(['lamp-2'], 'lamp-1') },
-        caller: CALLER,
-      }),
-    ).rejects.toThrow('cycle')
-  })
-
-  it('tells the trigger sync after a create and an update; a failing sync does not undo the save', async () => {
-    const told: string[] = []
-    const api = buildCompositionApi(
-      deps({
-        groupTriggersChanged: async (blockId) => {
-          told.push(blockId)
-          throw new Error('compile gate said no')
-        },
-      }),
-    )
-    const { block } = await api.createComposition({
-      block: { name: 'Lamps', enabled: true, composition: lightGroup(['lamp-1'], 'button-1') },
-      caller: CALLER,
-    })
-    await api.updateComposition({
-      blockId: block.id,
-      expectedUpdatedAt: block.updatedAt,
-      block: { composition: lightGroup(['lamp-1', 'lamp-2'], 'button-1') },
-      caller: CALLER,
-    })
-    expect(told).toEqual([block.id, block.id])
-    expect(stored).toHaveLength(1)
-  })
-})

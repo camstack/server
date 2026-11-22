@@ -1,13 +1,11 @@
 ---
 id: D1083
 title: A group owns the one automation of its triggers, and may build no device
-status: accepted
+status: superseded
+superseded-by: D1086
 date: 2026-11-22
 supersedes:
 applies-to:
-  - packages/types/src/composition/helpers/group-triggers.ts
-  - packages/system/src/builtins/core-blocks/group-triggers.ts
-  - packages/types/src/automation/codegen.ts
 ---
 
 ## Context

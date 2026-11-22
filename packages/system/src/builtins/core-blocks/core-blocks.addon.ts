@@ -29,7 +29,6 @@ import {
   type CoreBlock,
   type CoreBlockCompileInput,
   type CoreBlockInput,
-  composedDeviceStableId,
   coreBlockComposition,
   coreBlocksCapability,
   resolveCoreBlockEntry,
@@ -98,13 +97,6 @@ import {
   seedRemoteSlices,
 } from './remote-wiring.js'
 import { automationTemplateInstancesOver } from './automation-template-instances.js'
-import {
-  type GroupTriggerSync,
-  groupTriggerSyncOver,
-  ownedGroupOf,
-  ownedRefusal,
-} from './group-triggers.js'
-import { setBlockEnabled } from './set-block-enabled.js'
 import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
@@ -179,7 +171,6 @@ export class CoreBlocksAddon extends BaseAddon {
   private compositionApi: CompositionApi | null = null
   /** The identity-link contributions (D1063); armed at boot. */
   private linkContributions: LinkContributionReconciler | null = null
-  private groupTriggers: GroupTriggerSync | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -301,7 +292,6 @@ export class CoreBlocksAddon extends BaseAddon {
     this.supervisor = this.buildSupervisor()
     this.supervisor?.start(CONVERGE_INTERVAL_MS)
     this.armLinkContributions()
-    this.armGroupTriggers()
 
     this.ctx.logger.info('core-blocks ready', {
       meta: {
@@ -925,7 +915,6 @@ export class CoreBlocksAddon extends BaseAddon {
       },
 
       update: async ({ blockId, block, caller }) => {
-        this.refuseIfOwned(blockId)
         // Only when the SOURCE changed: re-compiling on a rename would fail a
         // rename because of a pre-existing error, which is not the operator's
         // problem at that moment.
@@ -959,7 +948,6 @@ export class CoreBlocksAddon extends BaseAddon {
       },
 
       delete: async ({ blockId }) => {
-        this.refuseIfOwned(blockId)
         const existing = this.requireStore().get(blockId)
         const linkRefusal = linkContributionDeleteRefusal(existing)
         if (linkRefusal !== null) {
@@ -978,15 +966,6 @@ export class CoreBlocksAddon extends BaseAddon {
         await this.requireStore().delete(blockId)
         await this.requirePrefs().delete(blockId)
         await this.requireActions().ledger.delete(automationOwner(blockId))
-        // A group's own automation goes with it; a failure leaves an orphan the boot pass removes.
-        await this.groupTriggers?.remove(blockId).catch((error: unknown) =>
-          this.ctx.logger.warn(
-            'group triggers: the automation of a deleted group was not removed',
-            {
-              meta: { blockId, error: error instanceof Error ? error.message : String(error) },
-            },
-          ),
-        )
         // A composition's claims must be gone before this returns: the next
         // create for the same device would otherwise be refused for good.
         // A code block's runner is stopped by the converge, which forks nothing
@@ -1026,22 +1005,11 @@ export class CoreBlocksAddon extends BaseAddon {
         return { success: true }
       },
 
-      setEnabled: ({ blockId, enabled }) =>
-        setBlockEnabled(
-          {
-            refuseIfOwned: (id) => this.refuseIfOwned(id),
-            update: (id, patch) => this.requireStore().update(id, patch),
-            convergeSoon: () => this.convergeSoon(),
-            groupTriggers: () => this.groupTriggers,
-            deviceIdOf: (block) =>
-              this.deviceIdOfRef({
-                addonId: 'composer',
-                stableId: composedDeviceStableId(block.id),
-              }),
-            logger: this.ctx.logger.child('group-triggers'),
-          },
-          { blockId, enabled },
-        ),
+      setEnabled: async ({ blockId, enabled }) => {
+        const updated = await this.requireStore().update(blockId, { enabled })
+        this.convergeSoon()
+        return { block: updated }
+      },
 
       /**
        * Awaited, like a composition delete.
@@ -1191,91 +1159,6 @@ export class CoreBlocksAddon extends BaseAddon {
   }
 
   /**
-   * The automation a group's triggers become (`group-triggers.ts`). Boot is a
-   * pass over what is stored, retried on a device registration until the device
-   * list has answered once; a registration also writes the automation of a group
-   * saved before its own device existed. Events only wake the pass: it reads the
-   * device list itself, so a dropped event delays it and loses nothing (D8).
-   */
-  private armGroupTriggers(): void {
-    const store = this.requireStore()
-    const logger = this.ctx.logger.child('group-triggers')
-    const requireApi = (): AddonApi => {
-      const api = this.ctx.api
-      if (!api)
-        throw new Error(
-          'core-blocks: no ctx.api on this node — group triggers cannot resolve devices',
-        )
-      return api
-    }
-    const sync = groupTriggerSyncOver({
-      blocks: store,
-      writes: {
-        create: async (input) => {
-          await this.gate(input)
-          await store.create(input, 'group-triggers')
-          this.convergeSoon()
-        },
-        save: async (blockId, write) => {
-          await this.gate({ code: write.code })
-          await store.update(blockId, write)
-          this.convergeSoon()
-        },
-        remove: (blockId) => this.deleteBlockRecords(blockId),
-      },
-      deviceIds: async () => {
-        const rows = await requireApi().deviceManager.listAll.query({ projection: 'slim' })
-        return new Map(rows.map((row) => [`${row.addonId}/${row.stableId}`, row.id]))
-      },
-      logger,
-    })
-    this.groupTriggers = sync
-    let reconciled = false
-    let reconciling: Promise<void> | null = null
-    const reconcileOnce = (): Promise<void> => {
-      if (reconciled) return Promise.resolve()
-      if (reconciling !== null) return reconciling
-      const pass = sync
-        .reconcile()
-        .then((answered) => {
-          reconciled = answered
-        })
-        .finally(() => {
-          reconciling = null
-        })
-      reconciling = pass
-      return pass
-    }
-    const onError = (error: unknown): void =>
-      logger.warn('group triggers: a pass failed', {
-        meta: { error: error instanceof Error ? error.message : String(error) },
-      })
-    // ARMED, never awaited: the device list answers only after boot.
-    void reconcileOnce().catch(onError)
-    this.subscribe({ category: EventCategory.DeviceRegistered }, () => {
-      void reconcileOnce()
-        .then(() => sync.wake())
-        .catch(onError)
-    })
-  }
-
-  /** A block's own records: the row, its settings and its run ledger. A runner is stopped by the converge. */
-  private async deleteBlockRecords(blockId: string): Promise<void> {
-    await this.requireStore().delete(blockId)
-    await this.requirePrefs().delete(blockId)
-    await this.requireActions().ledger.delete(automationOwner(blockId))
-    this.convergeSoon()
-  }
-
-  /** An automation a group generates is changed from the group only. */
-  private refuseIfOwned(blockId: string): void {
-    const store = this.requireStore()
-    const block = store.get(blockId)
-    const owner = block === null ? null : ownedGroupOf(block)
-    if (owner !== null) throw new Error(ownedRefusal(owner, store.get(owner)))
-  }
-
-  /**
    * The Customize features identity links contribute (D1063). A pass runs on
    * every `identity-link.created` / `.lost`, once now, and — until a pass has
    * read the links (device-manager answers only once it has booted) — on each
@@ -1392,9 +1275,6 @@ export class CoreBlocksAddon extends BaseAddon {
       },
       // An operator write of a customization re-derives the link contributions (D1063).
       compositionWritten: () => this.linkContributions?.requestPass(),
-      groupTriggersChanged: async (blockId) => {
-        await this.groupTriggers?.sync(blockId, 'save')
-      },
       convergeForClaims: () => {
         if (this.supervisor === null) {
           return Promise.reject(

@@ -6186,8 +6186,7 @@
       "lastRun": "Last run",
       "lastRunNotSortable": "Read per automation",
       "enabled": "Enabled",
-      "search": "Search automations",
-      "managedBy": "Managed by {{group}}"
+      "search": "Search automations"
     },
     "blockEditor": {
       "loadExample": "Load example",
@@ -12906,10 +12905,7 @@
       "hint": "Drag the rectangle to move it, drag a corner to resize it.",
       "save": "Save crop",
       "saveFailed": "Could not change the crop"
-    },
-    "outputDevice": "A device",
-    "outputNone": "No device: triggers only",
-    "builds": "What it builds"
+    }
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",
@@ -14214,35 +14210,6 @@
       "disarming": "Disarming",
       "pending": "Pending",
       "triggered": "Triggered"
-    }
-  },
-  "groupTriggers": {
-    "title": "Triggers",
-    "hint": "When something happens, the group switches its members. A press can turn them on, off, or toggle them by their current state.",
-    "empty": "No trigger yet.",
-    "off": "off",
-    "keptAsIs": "kept as is",
-    "disable": "Disable",
-    "enable": "Enable",
-    "remove": "Remove",
-    "add": "Add a trigger",
-    "source": "What happens",
-    "sourceFired": "A button is pressed",
-    "sourceEvent": "An event",
-    "category": "Event",
-    "pickDevice": "Pick a device",
-    "pickConfirm": "Use this device",
-    "events": "Events",
-    "eventsPlaceholder": "Event ids, comma separated (empty: any)",
-    "action": "Then the group",
-    "mode": "Mode",
-    "apply": "Save trigger",
-    "cancel": "Cancel",
-    "actions": {
-      "on": "turns on",
-      "off": "turns off",
-      "switch": "toggles",
-      "climate": "sets the climate"
     }
   }
 }

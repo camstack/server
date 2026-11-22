@@ -740,8 +740,6 @@ import {
   siteFor,
   validateTimeSpecForSite,
   zoneOnlySite,
-  groupMembersTrace,
-  groupMembersUnread,
 } from '@camstack/types'
 
 /**
@@ -765,9 +763,6 @@ const KEEP_TRACES = ${recipe.keepTraces ?? DEFAULT_TRACE_KEEP}
 
 /** The ONE tree: event leaves (instants) and state leaves (durations). */
 const WHEN = AUTOMATION_RECIPE.when
-
-/** A group's own automation: its commands are traced with what they did on the members. */
-const GROUP_OWNED = ${recipe.ownedBy?.kind === 'group'}
 
 /** No event leaf: the automation fires when the tree goes false → true, never because it was already true. */
 const STATE_ONLY = ${!hasEventLeaves(recipe.when)}
@@ -1156,53 +1151,10 @@ ${
     const [only] = resolved.deviceIds
     if (resolved.deviceIds.length === 1 && only !== undefined) {
       scope.setDeviceId(only)
-      if (GROUP_OWNED) {
-        await actuateGroup(scope, only, cap, method, callArgs, vars)
-        return
-      }
       await actuate(scope, only, cap, method, callArgs, vars)
       return
     }
     await runForDevices(resolved.deviceIds, scope, (deviceId) => actuate(scope, deviceId, cap, method, callArgs, vars))
-  }
-
-  /** The group's command: logged under the group, and traced with its result on each member (D393: unread is null). */
-  async function actuateGroup(
-    scope: StepScope,
-    deviceId: number,
-    cap: string,
-    method: string,
-    args: Record<string, unknown>,
-    vars: Record<string, unknown>,
-  ): Promise<void> {
-    const startedAt = Date.now()
-    const firedLeaf = vars['leaf']
-    ctx.logger.info('group command sent by a trigger', {
-      tags: { deviceId },
-      trigger: typeof firedLeaf === 'string' ? eventLeafIdAt(WHEN, firedLeaf) : null,
-      cap,
-      method,
-    })
-    let failure: unknown
-    try {
-      await actuate(scope, deviceId, cap, method, args, vars)
-    } catch (err: unknown) {
-      failure = err
-    }
-    let members
-    try {
-      const slice: unknown = await ctx.api.deviceState.getCapSlice.query({ deviceId, capName: 'group-commands', confirmed: true })
-      members = groupMembersTrace(slice, startedAt)
-    } catch (err: unknown) {
-      members = groupMembersUnread(err)
-    }
-    scope.recordDevice({
-      deviceId,
-      outcome: failure === undefined ? 'ok' : 'error',
-      ...(failure === undefined ? {} : { message: failure instanceof Error ? failure.message : String(failure) }),
-      ...members,
-    })
-    if (failure !== undefined) throw failure
   }
 
   function warnMissingVar(name: string): void {

@@ -29,7 +29,6 @@ import {
   coreBlockComposition,
   coreBlockSourceKind,
   errMsg,
-  helperBuildsNoDevice,
   type IScopedLogger,
   resolveCoreBlockFiles,
   type UnreleasedClaim,
@@ -368,17 +367,6 @@ export class BlockSupervisor {
       const composition = coreBlockComposition(block)
       return composition !== null && this.isPlacedHere(block) ? [{ block, composition }] : []
     })
-    // A group that only carries triggers builds no device: the composer never hears of
-    // it (and so withdraws a row an earlier `device` output left), and it is judged here.
-    const deviceless = compositions.filter(({ composition }) =>
-      helperBuildsNoDevice(composition.helper),
-    )
-    const built = compositions.filter(
-      ({ composition }) => !helperBuildsNoDevice(composition.helper),
-    )
-    for (const { block } of deviceless) {
-      await this.report(block.id, 'running', undefined)
-    }
     // An unreadable composition is NOT absent: it is sent every pass, so its
     // device is held and its failure named (D49).
     const unreadable = this.deps.store.unreadableCompositions()
@@ -392,7 +380,7 @@ export class BlockSupervisor {
           unreleased: [],
         }
       }
-      for (const { block } of built) {
+      for (const { block } of compositions) {
         await this.report(
           block.id,
           'failed',
@@ -402,7 +390,7 @@ export class BlockSupervisor {
       return
     }
     if (runners.find((r) => r.name === COMPOSER_RUNNER_ID)?.state === 'failed') {
-      for (const { block } of built) {
+      for (const { block } of compositions) {
         await this.report(
           block.id,
           'failed',
@@ -418,7 +406,7 @@ export class BlockSupervisor {
       const result = await composer.apply({
         integrationId,
         storeLoaded,
-        blocks: built.map(({ block, composition }) => ({
+        blocks: compositions.map(({ block, composition }) => ({
           id: block.id,
           name: block.name,
           enabled: block.enabled,
@@ -442,7 +430,7 @@ export class BlockSupervisor {
         !nothingToSay || !result.acted ? 2 : Math.max(0, this.emptyAppliesOwed - 1)
       this.noteRelease(result)
       const verdicts = new Map(result.blocks.map((v) => [v.blockId, v]))
-      for (const { block } of built) {
+      for (const { block } of compositions) {
         const verdict = verdicts.get(block.id)
         if (verdict === undefined) {
           await this.report(block.id, 'starting', 'the composer did not answer for this block')

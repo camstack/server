@@ -1062,7 +1062,7 @@ that rots.
 | D1080 | [Coordinates are the location cap; presence stays the zone verdict](adr-1080-coordinates-are-the-location-cap-and-presence-stays-the-zone-verdict.md) | ✅ accepted | 2026-11-22 |
 | D1081 | [A consumable's remaining life may be a distance](adr-1081-a-consumables-remaining-life-may-be-a-distance.md) | ✅ accepted | 2026-11-22 |
 | D1082 | [Wake-on-LAN is a helper sent from the caller's own node, not a capability](adr-1082-wake-on-lan-is-a-helper-sent-from-the-callers-own-node-not-a-capability.md) | ✅ accepted | 2026-11-22 |
-| D1083 | [A group owns the one automation of its triggers, and may build no device](adr-1083-a-group-owns-the-automation-of-its-triggers-and-may-build-no-device.md) | ✅ accepted | 2026-11-22 |
+| D1083 | [A group owns the one automation of its triggers, and may build no device](adr-1083-a-group-owns-the-automation-of-its-triggers-and-may-build-no-device.md) | ↩︎ superseded | 2026-11-22 |
 | D1084 | [A device transition store holds only commands, ok or failed; the device's own changes are derived on read from device-history](adr-1084-device-transitions-store-commands-and-derive-device-changes.md) | ✅ accepted | 2026-11-22 |
 | D1085 | [The automatic public endpoint is sticky on the tunnel it once resolved to, until that integration is removed](adr-1085-the-automatic-public-endpoint-is-sticky-on-the-tunnel-it-once-resolved-to-until-that-integration-is-removed.md) | ✅ accepted | 2026-11-22 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |

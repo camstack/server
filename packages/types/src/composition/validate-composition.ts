@@ -51,7 +51,6 @@ import {
 } from './field-kinds.js'
 import { groupTemplate } from './helpers/catalog.js'
 import { helperSaveProblems, type HelperMemberFact } from './helpers/save.js'
-import { groupTriggerProblems } from './helpers/group-trigger-problems.js'
 import { type CompositionPlanResult, compositionFieldAt, problem, refused } from './plan-result.js'
 import {
   CompositionGraphError,
@@ -1074,11 +1073,6 @@ export function validateComposition(
     ...forwardSourceProblems(composition, ctx.sources),
     ...cycles,
     ...helperSaveProblems(composition, facts),
-    ...groupTriggerProblems(
-      composition.helper,
-      composition.helper?.kind === 'group' ? composition.helper.triggers : undefined,
-      ctx.lookupCap,
-    ),
     ...powerSourceActuatorConflicts(composition).map((c) =>
       problem(
         'power-source-is-actuator',

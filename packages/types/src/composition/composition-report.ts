@@ -71,12 +71,6 @@ export const CompositionProblemCodeSchema = z.enum([
    * back on the next link pass. Unlinking the device takes it away.
    */
   'link-contribution-removed',
-  /** A group trigger is refused by name: wrong group type, wrong action, a field that is not yes/no. */
-  'group-trigger',
-  /** A group trigger would command what it listens to, directly or through other groups. */
-  'group-trigger-loop',
-  /** A trigger names a device the hub cannot resolve; it is left out of the generated automation. */
-  'group-trigger-unresolved',
   /** A `capLink` names a link the cap does not declare (D1076). */
   'link-undeclared',
   /** The source device does not bind the link's `sourceCap` (D1076, judged through its bindings). */

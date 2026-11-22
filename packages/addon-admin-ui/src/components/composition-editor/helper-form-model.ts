@@ -23,8 +23,6 @@ import {
   type ExpressionOutput,
   GroupCommandsSchema,
   type GroupHelperSpec,
-  type GroupOutput,
-  type GroupTrigger,
   type GroupTemplate,
   type GroupTemplateId,
   groupTemplate,
@@ -75,10 +73,6 @@ export interface HelperFormDraft {
   readonly name: string
   readonly room: string
   readonly members: readonly HelperMember[]
-  /** What makes an actuator group act on its own; carried through the form untouched unless edited. */
-  readonly triggers?: readonly GroupTrigger[]
-  /** `none`: no device is built, the triggers command the members. Absent means `device`. */
-  readonly output?: GroupOutput
 }
 
 export interface StatisticFormDraft {
@@ -536,8 +530,6 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
     name,
     room,
     members: spec.members.map(copyMember),
-    ...(spec.triggers === undefined ? {} : { triggers: [...spec.triggers] }),
-    ...(spec.output === undefined ? {} : { output: spec.output }),
   }
 }
 
@@ -624,10 +616,6 @@ function groupSpec(draft: HelperFormDraft): GroupHelperSpec | null {
     aggregate: actuator && draft.active !== null ? reducerForActive(draft.active) : draft.aggregate,
     ...(actuator && draft.active !== null ? { active: draft.active } : {}),
     members: draft.members.map(copyMember),
-    ...(actuator && draft.triggers !== undefined && draft.triggers.length > 0
-      ? { triggers: [...draft.triggers] }
-      : {}),
-    ...(actuator && draft.output !== undefined ? { output: draft.output } : {}),
   }
 }
 

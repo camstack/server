@@ -622,9 +622,9 @@ the inputs; the expansion is one pure function, used by the editor and the hub.
   every row. Ids are `<group>-<i>` and `<group>-<i>-<nested>-<j>`; a problem is
   addressed `buttons.0.commands.1.targets`. The form draws a row as a card and
   a nested group as one-line entries (`TemplateInputsForm.tsx`). The former
-  "Buttons → devices" template is retired: a press that switches devices is a
-  trigger of the group, compiled into the one automation the group owns
-  ([D1083](../decisions/adr-1083-a-group-owns-the-automation-of-its-triggers-and-may-build-no-device.md)).
+  "Buttons → devices" template is retired: a press that switches a device is a
+  linked trigger shown on the commanded device's Customize tab
+  ([D1086](../decisions/adr-1086-an-operator-linked-trigger-is-an-automation-template-instance-on-the-target.md)).
 
 ## Composed devices: a device built from other devices' fields
 

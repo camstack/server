@@ -38,8 +38,6 @@ import {
   compositionSourceRefs,
   compositionUnionReads,
   helperMembers,
-  groupTriggerLoops,
-  type TriggerGroup,
   coreBlockComposition,
   describeComposableCaps,
   errMsg,
@@ -174,12 +172,6 @@ export interface CompositionApiDeps {
    * specs that predate it.
    */
   readonly compositionWritten?: (target: CompositionSourceRef, writer: CompositionWriter) => void
-  /**
-   * A composition block was created or changed: if it is an actuator group, its
-   * triggers are written as the automation it owns (`group-triggers.ts`). Absent
-   * in specs that predate it. A failure is logged by the sync; the save has landed.
-   */
-  readonly groupTriggersChanged?: (blockId: string) => Promise<void>
 }
 
 export type CompositionApi = Pick<
@@ -400,52 +392,8 @@ async function validateAgainstStore(
     unreadTargets: stored.unread,
   })
   return {
-    validation: withTriggerLoops(validation, composition, blocks, blockId),
+    validation,
     memberDeviceIds: helperMemberDeviceIds(composition, read.sources),
-  }
-}
-
-/** The candidate id a not-yet-stored group answers to in the loop walk. */
-const CANDIDATE_BLOCK_ID = '(this group)'
-
-/**
- * A trigger that listens to what its own group commands, or a cycle through
- * other groups' triggers, refused at save by name (the composition save is the
- * only writer of members and triggers).
- */
-function withTriggerLoops(
-  validation: CompositionValidation,
-  composition: Composition,
-  blocks: readonly CoreBlock[],
-  blockId: string | null,
-): CompositionValidation {
-  const helper = composition.helper
-  if (helper?.kind !== 'group' || (helper.triggers ?? []).length === 0) return validation
-  const focus = blockId ?? CANDIDATE_BLOCK_ID
-  const others = blocks.flatMap((block): readonly TriggerGroup[] => {
-    const stored = coreBlockComposition(block)?.helper
-    return stored?.kind === 'group' && block.id !== blockId
-      ? [{ blockId: block.id, name: block.name, helper: stored }]
-      : []
-  })
-  const own: TriggerGroup = {
-    blockId: focus,
-    name: blockId === null ? 'this group' : (blocks.find((b) => b.id === blockId)?.name ?? focus),
-    helper,
-  }
-  const loops = groupTriggerLoops([...others, own], focus)
-  if (loops.length === 0) return validation
-  return {
-    ...validation,
-    ok: false,
-    problems: [
-      ...validation.problems,
-      ...loops.map((loop) => ({
-        code: 'group-trigger-loop' as const,
-        path: loop.path,
-        message: loop.message,
-      })),
-    ],
   }
 }
 
@@ -693,16 +641,6 @@ function customizationOf(
  * reads A) would each be judged against a store without the other and BOTH
  * pass — a stored cycle nothing downstream catches.
  */
-/** The save has landed: a trigger sync that fails is logged by the sync and does not undo it. */
-async function syncGroupTriggers(deps: CompositionApiDeps, blockId: string): Promise<void> {
-  if (deps.groupTriggersChanged === undefined) return
-  try {
-    await deps.groupTriggersChanged(blockId)
-  } catch {
-    // Already logged with its cause by the sync; the boot pass repairs it.
-  }
-}
-
 export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
   const serialized = writeQueue()
   return {
@@ -721,7 +659,6 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
         })
         noteWritten(deps, block.composition, caller)
         deps.convergeSoon()
-        await syncGroupTriggers(deps, created.id)
         return { block: created }
       }),
 
@@ -777,7 +714,6 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
         } else {
           deps.convergeSoon()
         }
-        await syncGroupTriggers(deps, blockId)
         return { block: updated }
       }),
 

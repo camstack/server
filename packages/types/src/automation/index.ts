@@ -102,7 +102,6 @@ export type {
   NestedStepTrace,
   AutomationTriggerTrace,
   StepDeviceTrace,
-  StepMemberTrace,
   TraceNodeOutcome,
   TraceValue,
 } from './trace.js'
@@ -127,7 +126,6 @@ export {
   REDACTED_ARG,
   skipSignature,
   StepDeviceTraceSchema,
-  StepMemberTraceSchema,
   TraceNodeOutcomeSchema,
   TraceValueSchema,
 } from './trace.js'
@@ -207,8 +205,6 @@ export {
   WAIT_MAX_SECONDS,
   AutomationRecipeSchema,
   AutomationRunModeSchema,
-  AutomationOwnerSchema,
-  type AutomationOwner,
   CurrentAutomationRecipeSchema,
   convertLegacyRecipe,
   DEFAULT_TRACE_KEEP,
@@ -328,4 +324,3 @@ export {
 } from './leaf-catalog.js'
 export { recipeSiteIssues, stepGuardSiteIssues, whenSiteIssues } from './when-site.js'
 export type { GuardedStepLike, WhenSiteIssue } from './when-site.js'
-export { groupMembersTrace, groupMembersUnread, type GroupMembersTrace } from './group-members.js'
