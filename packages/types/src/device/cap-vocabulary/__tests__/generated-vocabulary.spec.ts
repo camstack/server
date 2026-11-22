@@ -77,6 +77,9 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'resync',
   // #599 (D1062): the server-driven state refresh a provider implements per device.
   'device-state-refresh',
+  // D1079-D1082: a vehicle device and where a device is.
+  'location',
+  'vehicle',
 ]
 
 /**
