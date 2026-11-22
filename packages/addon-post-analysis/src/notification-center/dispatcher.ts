@@ -84,6 +84,7 @@ import type {
   NcOutboxEntry,
   NcOutboxPayload,
 } from './outbox.js'
+import { contentMetadataOf } from './content-metadata.js'
 import { eventMediaScopeOf, type NcEventMediaScope } from './outbox-key.js'
 import type {
   NcRecordedClipRefusal,
@@ -316,6 +317,8 @@ export interface NcNotificationInput {
   readonly attachments?: ReadonlyArray<NcNotificationAttachment>
   /** Declared delivery parameters the rule set for THIS target (D938). */
   readonly delivery?: Readonly<Record<string, DeliveryParamValue>>
+  /** What the notification is about (rule, event kind, class) plus a system event's own data. */
+  readonly metadata?: Readonly<Record<string, unknown>>
 }
 
 /**
@@ -2425,15 +2428,16 @@ export class NcDispatcher {
           : {}
         : { deviceId: subject.deviceId }),
       ...(subject.eventId !== undefined ? { eventId: subject.eventId } : {}),
-      ...(systemEvent !== undefined
-        ? {
-            metadata: {
+      metadata: {
+        ...(systemEvent !== undefined
+          ? {
               systemEventKind: systemEvent.kind,
               subject: systemEvent.subject,
               ...systemEvent.data,
-            },
-          }
-        : {}),
+            }
+          : {}),
+        ...contentMetadataOf(entry),
+      },
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(actions.length > 0 ? { actions } : {}),
     }

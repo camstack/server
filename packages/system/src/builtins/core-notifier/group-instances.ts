@@ -37,6 +37,15 @@ export function validateGroupMembers(
     if (seen.has(targetId)) throw new Error(`The notifier ${targetId} is listed twice`)
     seen.add(targetId)
     if (groupIds.has(targetId)) throw new Error('A group cannot contain another group')
+    // A fallback is decided from the outcomes of the members BEFORE it: one that names a later
+    // member, or one that is not in the group, would be sent every time.
+    for (const primary of parsed.data.onlyIfUndelivered ?? []) {
+      if (primary === targetId || !seen.has(primary)) {
+        throw new Error(
+          `The notifier ${targetId} can only be a fallback for a member listed before it (${primary} is not)`,
+        )
+      }
+    }
     members.push(parsed.data)
   }
   return members

@@ -51,6 +51,14 @@ const SKIP_REASON_LABELS: Readonly<Record<GroupSkipReason, SkipReasonLabel>> = {
     key: 'system.notificationTestPanel.skipReason.targetDisabled',
     fallback: 'The notifier is disabled',
   },
+  'content-filter': {
+    key: 'system.notificationTestPanel.skipReason.contentFilter',
+    fallback: 'Its content filter does not include this event',
+  },
+  'escalation-not-needed': {
+    key: 'system.notificationTestPanel.skipReason.escalationNotNeeded',
+    fallback: 'Not needed: the member it backs up received it',
+  },
 }
 
 interface NotificationGroupMemberOutcomesProps {

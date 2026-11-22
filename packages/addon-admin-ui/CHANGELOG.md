@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Notifier group members get an escalation and an event filter; a rule with several notifiers can be converted to a group
+
 ### Changed
 
 - Customize: the consumable remaining unit can be a distance

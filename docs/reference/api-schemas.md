@@ -2891,7 +2891,7 @@ Enum: `"replace" \| "add"`
 
 ### `GroupSkipReasonSchema`
 
-Enum: `"member-disabled" \| "below-min-priority" \| "schedule-inactive" \| "alarm-state" \| "alarm-unreadable" \| "throttled" \| "already-delivered" \| "nested-group" \| "unknown-target" \| "target-disabled"`
+Enum: `"member-disabled" \| "below-min-priority" \| "schedule-inactive" \| "alarm-state" \| "alarm-unreadable" \| "throttled" \| "already-delivered" \| "nested-group" \| "unknown-target" \| "target-disabled" \| "content-filter" \| "escalation-not-needed"`
 
 ### `GroupStatusSchema`
 

@@ -24,6 +24,25 @@ describe('validateGroupMembers', () => {
   })
 })
 
+describe('a fallback member', () => {
+  const none = new Set<string>()
+  it('is accepted when it backs up a member listed before it', () => {
+    const members = [{ targetId: 'a' }, { targetId: 'b', onlyIfUndelivered: ['a'] }]
+    expect(validateGroupMembers({ members }, none)).toEqual(members)
+  })
+
+  it('is refused when it names a later member, itself, or a notifier outside the group', () => {
+    const later = [{ targetId: 'b', onlyIfUndelivered: ['a'] }, { targetId: 'a' }]
+    expect(() => validateGroupMembers({ members: later }, none)).toThrow(/listed before it/)
+    expect(() =>
+      validateGroupMembers({ members: [{ targetId: 'a', onlyIfUndelivered: ['a'] }] }, none),
+    ).toThrow(/listed before it/)
+    expect(() =>
+      validateGroupMembers({ members: [{ targetId: 'a', onlyIfUndelivered: ['gone'] }] }, none),
+    ).toThrow(/listed before it/)
+  })
+})
+
 describe('a group is a notification-output instance', () => {
   it('is listed by the reader both senders use, with the id and addon the send is addressed by', async () => {
     const records = await makeRecordsAccessForOwner('core-notifier')

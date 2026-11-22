@@ -7,14 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
-- The events maintenance log no longer fills with empty 'device deleted' rows from the periodic removal replay (one row per deleted device per node every 6 hours)
+- Notifications carry their rule, event type and detected class so a notifier group can filter per member
+
 ### Changed
+
 - Notification rules: device command messages and the outcome filter are ok or failed.
 
 ### Fixed
 
+- The events maintenance log no longer fills with empty 'device deleted' rows from the periodic removal replay (one row per deleted device per node every 6 hours)
 - Notification rules: a rule that filtered device commands by a retired outcome still loads, as the done outcome.
 
 ## [1.2.722] - 2026-11-22

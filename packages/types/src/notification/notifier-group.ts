@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { AlarmStateSchema } from '../capabilities/alarm-panel.cap.js'
 import type { Notification } from '../interfaces/notification.js'
 import {
+  type GroupMemberOutcome,
   type GroupSkipReason,
   type NotificationField,
   NotificationFieldSchema,
@@ -38,6 +39,41 @@ export const GroupMemberWhenSchema = z.discriminatedUnion('kind', [
 ])
 export type GroupMemberWhen = z.infer<typeof GroupMemberWhenSchema>
 
+/** The `metadata` key a sender stamps with the kind of event behind a notification. */
+export const NOTIFICATION_META_EVENT_KIND = 'eventKind'
+
+/** The `metadata` key a sender stamps with the detected class (person, car, ...) of a notification. */
+export const NOTIFICATION_META_CLASS_NAME = 'className'
+
+/** The `metadata` key a sender stamps with the rule that produced a notification. */
+export const NOTIFICATION_META_RULE_ID = 'ruleId'
+
+/** What kind of event a notification is about, as a member's content filter names it. */
+export const NotificationEventKindSchema = z.enum([
+  'detection',
+  'audio',
+  'device-event',
+  'occupancy',
+  'package',
+  'appliance',
+  'system-event',
+  'timelapse',
+  'summary',
+  'calendar',
+])
+export type NotificationEventKind = z.infer<typeof NotificationEventKindSchema>
+
+/**
+ * Which notifications a member receives by content. Each list that is set must match; a
+ * notification that does not carry the value (no event kind, no class) does not match it.
+ */
+export const GroupMemberFilterSchema = z.object({
+  eventKinds: z.array(NotificationEventKindSchema).min(1).optional(),
+  /** Detected classes, compared without case. */
+  classes: z.array(z.string().min(1)).min(1).optional(),
+})
+export type GroupMemberFilter = z.infer<typeof GroupMemberFilterSchema>
+
 /**
  * One member's policy. Every key but `targetId` is optional and means "no restriction" when absent
  * (never a Zod default: a default does not run on the addon cap path).
@@ -53,6 +89,13 @@ export const GroupMemberSchema = z.object({
   minPriority: z.number().int().min(1).max(5).optional(),
   /** At most one delivery per window; a burst becomes one. 0 or absent = no throttle. */
   throttleSec: z.number().int().nonnegative().optional(),
+  /** Receives only the notifications of these event kinds / classes. Absent = all of them. */
+  filter: GroupMemberFilterSchema.optional(),
+  /**
+   * Escalation: the target ids of other members of this group. This member is tried only when
+   * NONE of them was delivered in the same send (each failed or was skipped). Absent = always tried.
+   */
+  onlyIfUndelivered: z.array(z.string().min(1)).min(1).optional(),
 })
 export type GroupMember = z.infer<typeof GroupMemberSchema>
 
@@ -86,6 +129,49 @@ export interface MemberDecisionInput {
   readonly nowMs: number
   /** The alarm state read for an `alarm` member; `null` = the read failed. */
   readonly alarmState?: z.infer<typeof AlarmStateSchema> | null
+  /** A test press carries no event: the content filter is not applied to it. */
+  readonly ignoreFilter?: boolean
+}
+
+/** Whether a notification is one the filter names: every list that is set must match. */
+export function matchesMemberFilter(
+  filter: GroupMemberFilter,
+  notification: Notification,
+): boolean {
+  const kind = notification.metadata?.[NOTIFICATION_META_EVENT_KIND]
+  if (filter.eventKinds !== undefined) {
+    const parsed = NotificationEventKindSchema.safeParse(kind)
+    if (!parsed.success || !filter.eventKinds.includes(parsed.data)) return false
+  }
+  if (filter.classes !== undefined) {
+    const className = notification.metadata?.[NOTIFICATION_META_CLASS_NAME]
+    if (typeof className !== 'string') return false
+    const wanted = className.toLowerCase()
+    if (!filter.classes.some((name) => name.toLowerCase() === wanted)) return false
+  }
+  return true
+}
+
+/**
+ * Whether a fallback member is needed: none of the members it backs up was delivered. A member
+ * skipped as `already-delivered` got this notification on an earlier attempt, so it counts as
+ * delivered; one with no outcome yet (listed later, or not in the group) counts as not delivered.
+ */
+export function escalationNeeded(
+  member: GroupMember,
+  outcomes: readonly GroupMemberOutcome[],
+): boolean {
+  if (member.onlyIfUndelivered === undefined) return true
+  const delivered = new Set(
+    outcomes
+      .filter(
+        (outcome) =>
+          outcome.status === 'sent' ||
+          (outcome.status === 'skipped' && outcome.reason === 'already-delivered'),
+      )
+      .map((outcome) => outcome.targetId),
+  )
+  return !member.onlyIfUndelivered.some((targetId) => delivered.has(targetId))
 }
 
 /** The policy of one member that needs no state of the group: enabled, priority, schedule, alarm. */
@@ -94,6 +180,13 @@ export function decideMember(input: MemberDecisionInput): MemberDecision {
   if (member.enabled === false) return { send: false, reason: 'member-disabled' }
   if (member.minPriority !== undefined && notification.priority < member.minPriority) {
     return { send: false, reason: 'below-min-priority' }
+  }
+  if (
+    member.filter !== undefined &&
+    input.ignoreFilter !== true &&
+    !matchesMemberFilter(member.filter, notification)
+  ) {
+    return { send: false, reason: 'content-filter' }
   }
   const when = member.when
   if (when?.kind === 'schedule' && !isScheduleActive(when.schedule, nowMs)) {

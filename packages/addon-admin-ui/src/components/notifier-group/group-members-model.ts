@@ -6,10 +6,13 @@
 import {
   groupMembersOf,
   NOTIFIER_GROUP_KIND,
+  NotificationEventKindSchema,
   NotificationFieldSchema,
   shapeForMember,
   type GroupMember,
+  type GroupMemberFilter,
   type GroupMemberWhen,
+  type NotificationEventKind,
   type NotificationField,
   type Target,
   type TargetKind,
@@ -107,4 +110,77 @@ export function kindLabelOf(
 ): string {
   const match = kinds?.find((k) => k.kind === target.kind && k.addonId === target.addonId)
   return match?.label ?? target.kind
+}
+
+/** The event kinds a member's content filter can name, in the order the editor lists them. */
+export const MEMBER_EVENT_KINDS: readonly NotificationEventKind[] =
+  NotificationEventKindSchema.options
+
+/** The event kinds a member does NOT receive (none when it has no kind filter). */
+export function eventKindsOff(member: GroupMember): ReadonlySet<string> {
+  const kept = member.filter?.eventKinds
+  return new Set(kept === undefined ? [] : MEMBER_EVENT_KINDS.filter((k) => !kept.includes(k)))
+}
+
+function withFilter(member: GroupMember, filter: GroupMemberFilter): GroupMember {
+  return filter.eventKinds === undefined && filter.classes === undefined
+    ? withoutKey(member, 'filter')
+    : { ...member, filter }
+}
+
+/** The member receiving only `kept` kinds; every kind (or none) kept means no kind filter. */
+export function withEventKinds(
+  member: GroupMember,
+  kept: readonly NotificationEventKind[],
+): GroupMember {
+  const { eventKinds: _dropped, ...rest } = member.filter ?? {}
+  const all = kept.length === 0 || kept.length === MEMBER_EVENT_KINDS.length
+  return withFilter(member, all ? rest : { ...rest, eventKinds: [...kept] })
+}
+
+/** The class filter as the operator types it: names separated by commas. */
+export function classesText(member: GroupMember): string {
+  return (member.filter?.classes ?? []).join(', ')
+}
+
+/** The member receiving only the classes typed in `text`; an empty text means no class filter. */
+export function withClassesText(member: GroupMember, text: string): GroupMember {
+  const classes = text
+    .split(',')
+    .map((name) => name.trim())
+    .filter((name) => name !== '')
+  const { classes: _dropped, ...rest } = member.filter ?? {}
+  return withFilter(member, classes.length === 0 ? rest : { ...rest, classes })
+}
+
+/** The members a member can be a fallback for: the ones listed before it. */
+export function fallbackChoices(
+  members: readonly GroupMember[],
+  targetId: string,
+): readonly GroupMember[] {
+  const index = members.findIndex((m) => m.targetId === targetId)
+  return index <= 0 ? [] : members.slice(0, index)
+}
+
+/** The member as a fallback for `primaryId`, or always delivered when it is undefined. */
+export function withFallbackFor(member: GroupMember, primaryId: string | undefined): GroupMember {
+  return primaryId === undefined
+    ? withoutKey(member, 'onlyIfUndelivered')
+    : { ...member, onlyIfUndelivered: [primaryId] }
+}
+
+/** The list without a member, and without any fallback rule that named it. */
+export function withoutMember(
+  members: readonly GroupMember[],
+  targetId: string,
+): readonly GroupMember[] {
+  return members
+    .filter((m) => m.targetId !== targetId)
+    .map((m) => {
+      if (m.onlyIfUndelivered === undefined || !m.onlyIfUndelivered.includes(targetId)) return m
+      const rest = m.onlyIfUndelivered.filter((id) => id !== targetId)
+      return rest.length === 0
+        ? withoutKey(m, 'onlyIfUndelivered')
+        : { ...m, onlyIfUndelivered: rest }
+    })
 }

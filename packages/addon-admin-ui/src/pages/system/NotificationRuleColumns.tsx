@@ -25,6 +25,7 @@ import { NotificationRuleSnoozeSwitch } from './NotificationRuleSnoozeSwitch'
 import { NotificationRuleTestButton } from './NotificationRuleTestButton'
 import { NcListDeleteButton, NcListNameCell, NcListRowControls } from './notification-list-chrome'
 import type { RuleLastRunCell } from './notification-rule-last-run'
+import { NotificationRuleConvertToGroupButton } from './NotificationRuleConvertToGroupButton'
 import {
   cooldownLabel,
   formStepsForSnooze,
@@ -46,6 +47,8 @@ export interface RuleColumnsDeps {
   readonly deletePending: boolean
   readonly onToggle: (rule: NcRule, enabled: boolean) => void
   readonly onDuplicate: (rule: NcRule) => void
+  /** The rule list changed outside the editor (a rule was converted to a group). */
+  readonly onRulesChanged?: () => void
   /** Open the rule in the editor — the row's click, and the name's keyboard path. */
   readonly onOpen: (rule: NcRule) => void
   /** The page's translator — column headers are not components and cannot use the hook. */
@@ -240,6 +243,13 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
                 {i18n.t('system.notificationRuleColumns.duplicate', 'Duplicate')}
               </TooltipContent>
             </Tooltip>
+            {deps.onRulesChanged && (
+              <NotificationRuleConvertToGroupButton
+                rule={rule}
+                targetName={(id) => deps.targetNameById.get(id) ?? id}
+                onConverted={deps.onRulesChanged}
+              />
+            )}
             <RuleDeleteButton rule={rule} deps={deps} />
           </NcListRowControls>
         ) : (

@@ -4,6 +4,7 @@ import type { Notification } from '../../interfaces/notification.js'
 import {
   clampToCaps,
   decideMember,
+  escalationNeeded,
   groupMembersOf,
   renderMemberTemplate,
   shapeForMember,
@@ -189,5 +190,80 @@ describe('clampToCaps', () => {
     expect(
       clampToCaps(withLevel, caps({ levels: [{ id: 'critical', label: 'C', ordinal: 5 }] })).level,
     ).toBe('critical')
+  })
+})
+
+describe('member content filter', () => {
+  const person: Notification = {
+    ...BASE,
+    metadata: { eventKind: 'detection', className: 'Person' },
+  }
+  const decide = (filter: Record<string, unknown>, notification: Notification, test = false) =>
+    decideMember({
+      member: { targetId: 'a', filter },
+      notification,
+      nowMs: 0,
+      ...(test ? { ignoreFilter: true } : {}),
+    })
+
+  it('a member filtered on a kind gets that kind and is skipped, with the reason, for another', () => {
+    expect(decide({ eventKinds: ['detection'] }, person)).toEqual({ send: true })
+    expect(decide({ eventKinds: ['system-event'] }, person)).toEqual({
+      send: false,
+      reason: 'content-filter',
+    })
+  })
+
+  it('a class filter compares without case and refuses a notification that names no class', () => {
+    expect(decide({ classes: ['person', 'car'] }, person)).toEqual({ send: true })
+    expect(decide({ classes: ['car'] }, person)).toEqual({ send: false, reason: 'content-filter' })
+    expect(decide({ classes: ['person'] }, BASE)).toEqual({
+      send: false,
+      reason: 'content-filter',
+    })
+  })
+
+  it('both lists must match, and a notification with no event kind matches no kind filter', () => {
+    expect(decide({ eventKinds: ['detection'], classes: ['car'] }, person).send).toBe(false)
+    expect(decide({ eventKinds: ['detection'] }, BASE).send).toBe(false)
+  })
+
+  it('a test press ignores the filter: it carries no event', () => {
+    expect(decide({ eventKinds: ['detection'] }, BASE, true)).toEqual({ send: true })
+  })
+})
+
+describe('escalationNeeded', () => {
+  const fallback = { targetId: 'b', onlyIfUndelivered: ['a'] }
+
+  it('a member with no escalation rule is always needed', () => {
+    expect(escalationNeeded({ targetId: 'b' }, [{ targetId: 'a', status: 'sent' }])).toBe(true)
+  })
+
+  it('is not needed once the primary was delivered, now or on an earlier attempt', () => {
+    expect(escalationNeeded(fallback, [{ targetId: 'a', status: 'sent' }])).toBe(false)
+    expect(
+      escalationNeeded(fallback, [
+        { targetId: 'a', status: 'skipped', reason: 'already-delivered' },
+      ]),
+    ).toBe(false)
+  })
+
+  it('is needed when the primary failed, was skipped, or has no outcome', () => {
+    expect(escalationNeeded(fallback, [{ targetId: 'a', status: 'failed', error: 'x' }])).toBe(true)
+    expect(
+      escalationNeeded(fallback, [{ targetId: 'a', status: 'skipped', reason: 'throttled' }]),
+    ).toBe(true)
+    expect(escalationNeeded(fallback, [])).toBe(true)
+  })
+
+  it('with several primaries, one delivery is enough', () => {
+    const member = { targetId: 'c', onlyIfUndelivered: ['a', 'b'] }
+    expect(
+      escalationNeeded(member, [
+        { targetId: 'a', status: 'failed', error: 'x' },
+        { targetId: 'b', status: 'sent' },
+      ]),
+    ).toBe(false)
   })
 })

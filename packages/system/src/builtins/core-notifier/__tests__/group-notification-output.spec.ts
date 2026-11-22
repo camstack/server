@@ -446,3 +446,71 @@ describe('group per-member outcome and the test press', () => {
     ])
   })
 })
+
+describe('group escalation and content filter', () => {
+  const targets = [ref('a', 'x'), ref('b', 'x')]
+  const members = [{ targetId: 'a' }, { targetId: 'b', onlyIfUndelivered: ['a'] }]
+
+  it('the fallback member is not tried when the primary was delivered, and says why', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group(members)])
+    const result = await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    expect(r.sent.map((s) => s.targetId)).toEqual(['a'])
+    expect(result.members).toEqual([
+      { targetId: 'a', status: 'sent' },
+      { targetId: 'b', status: 'skipped', reason: 'escalation-not-needed' },
+    ])
+    const line = r.lines.find((l) => l.meta?.['reason'] === 'escalation-not-needed')
+    expect(line?.tags).toEqual({ groupId: 'g1' })
+  })
+
+  it('the fallback member is tried in the same send when the primary fails', async () => {
+    const r = rig()
+    r.failing.add('a')
+    const { provider } = r.build(targets, [group(members)])
+    const result = await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    expect(r.sent.map((s) => s.targetId)).toEqual(['a', 'b'])
+    expect(result.members?.[1]).toEqual({ targetId: 'b', status: 'sent' })
+  })
+
+  it('the fallback member is tried when the primary is skipped (disabled notifier)', async () => {
+    const r = rig()
+    const { provider } = r.build(
+      [ref('a', 'x', { enabled: false }), ref('b', 'x')],
+      [group(members)],
+    )
+    await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    expect(r.sent.map((s) => s.targetId)).toEqual(['b'])
+  })
+
+  it('a retry after the primary was delivered does not escalate', async () => {
+    const r = rig()
+    const { provider } = r.build(targets, [group(members)])
+    await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    r.sent.length = 0
+    await provider.send({ targetId: 'g1', notification: NOTIFICATION })
+    expect(r.sent).toEqual([])
+  })
+
+  it('a filtered member gets only its event kind and class; a test press reaches it anyway', async () => {
+    const r = rig()
+    const g = group([{ targetId: 'a', filter: { eventKinds: ['detection'], classes: ['person'] } }])
+    const { provider } = r.build(targets, [g])
+    const car = await provider.send({
+      targetId: 'g1',
+      notification: { ...NOTIFICATION, metadata: { eventKind: 'detection', className: 'car' } },
+    })
+    expect(car.members).toEqual([{ targetId: 'a', status: 'skipped', reason: 'content-filter' }])
+    const person = await provider.send({
+      targetId: 'g1',
+      notification: {
+        ...NOTIFICATION,
+        eventId: 'e-person',
+        metadata: { eventKind: 'detection', className: 'person' },
+      },
+    })
+    expect(person.members).toEqual([{ targetId: 'a', status: 'sent' }])
+    const tested = await provider.testTarget({ targetId: 'g1' })
+    expect(tested.members).toEqual([{ targetId: 'a', status: 'sent' }])
+  })
+})

@@ -424,6 +424,10 @@ export const GroupSkipReasonSchema = z.enum([
   'nested-group',
   'unknown-target',
   'target-disabled',
+  /** The member's content filter names event kinds or classes this notification is not. */
+  'content-filter',
+  /** A fallback member whose primary members were delivered in this send. */
+  'escalation-not-needed',
 ])
 export type GroupSkipReason = z.infer<typeof GroupSkipReasonSchema>
 

@@ -8,6 +8,13 @@ import {
   withMembers,
   withoutKey,
   kindLabelOf,
+  classesText,
+  eventKindsOff,
+  fallbackChoices,
+  withClassesText,
+  withEventKinds,
+  withFallbackFor,
+  withoutMember,
 } from '../group-members-model'
 
 const target = (id: string, kind: string, name = id): Target => ({
@@ -77,5 +84,41 @@ describe('kindLabelOf', () => {
   it('falls back to the kind id while the catalogue is unanswered or lacks the kind', () => {
     expect(kindLabelOf(undefined, { kind: 'alexa-echo', addonId: 'alexa' })).toBe('alexa-echo')
     expect(kindLabelOf(kinds, { kind: 'ntfy', addonId: 'alexa' })).toBe('ntfy')
+  })
+})
+
+describe('member content filter and fallback model', () => {
+  it('keeping every kind, or none, removes the kind filter instead of writing an empty list', () => {
+    const filtered = withEventKinds({ targetId: 'a' }, ['detection', 'audio'])
+    expect(filtered.filter).toEqual({ eventKinds: ['detection', 'audio'] })
+    expect(eventKindsOff(filtered).has('system-event')).toBe(true)
+    expect(eventKindsOff(filtered).has('detection')).toBe(false)
+    expect('filter' in withEventKinds(filtered, [])).toBe(false)
+  })
+
+  it('reads typed classes, trims them, and keeps the kind filter beside them', () => {
+    const member = withClassesText(
+      withEventKinds({ targetId: 'a' }, ['detection']),
+      ' person, car ,',
+    )
+    expect(member.filter).toEqual({ eventKinds: ['detection'], classes: ['person', 'car'] })
+    expect(classesText(member)).toBe('person, car')
+    expect(withClassesText(member, '').filter).toEqual({ eventKinds: ['detection'] })
+  })
+
+  it('offers only the members listed before as fallback primaries', () => {
+    const members: GroupMember[] = [{ targetId: 'a' }, { targetId: 'b' }, { targetId: 'c' }]
+    expect(fallbackChoices(members, 'a')).toEqual([])
+    expect(fallbackChoices(members, 'c').map((m) => m.targetId)).toEqual(['a', 'b'])
+    expect(withFallbackFor({ targetId: 'b' }, 'a').onlyIfUndelivered).toEqual(['a'])
+    expect(
+      'onlyIfUndelivered' in
+        withFallbackFor({ targetId: 'b', onlyIfUndelivered: ['a'] }, undefined),
+    ).toBe(false)
+  })
+
+  it('removing a member removes the fallback rules that named it', () => {
+    const members: GroupMember[] = [{ targetId: 'a' }, { targetId: 'b', onlyIfUndelivered: ['a'] }]
+    expect(withoutMember(members, 'a')).toEqual([{ targetId: 'b' }])
   })
 })

@@ -7,7 +7,9 @@
  *
  * Rules: fan-out goes through `ctx.api.notificationOutput.send` (the `sendToMember` port); a member
  * that is itself a group is refused (`nested-group`); every skip is logged with its reason and the
- * group's tags (D391); a retry re-sends only the members that failed (the ledger); a test press bypasses that ledger.
+ * group's tags (D391); a retry re-sends only the members that failed (the ledger); a test press bypasses that ledger
+ * and the content filter. A member with `onlyIfUndelivered` is a fallback: tried only when none of the
+ * members it names was delivered in the same send.
  * `SendResult.members` carries every member's outcome.
  */
 import {
@@ -15,6 +17,7 @@ import {
   clampToCaps,
   decideMember,
   errMsg,
+  escalationNeeded,
   type GroupMember,
   type GroupMemberOutcome,
   type GroupSkipReason,
@@ -105,6 +108,7 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
     unreadableHolders: readonly string[],
     byKind: ReadonlyMap<string, TargetKindCaps>,
     isTest: boolean,
+    earlier: readonly MemberOutcome[],
   ): Promise<MemberOutcome> {
     const tags = {
       groupId: group.id,
@@ -148,8 +152,10 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
       notification,
       nowMs: deps.now(),
       ...(alarm !== undefined ? { alarmState: alarm } : {}),
+      ...(isTest ? { ignoreFilter: true } : {}),
     })
     if (!decision.send) return skip(decision.reason)
+    if (!escalationNeeded(member, earlier)) return skip('escalation-not-needed')
     if (deps.ledger.isThrottled(group.id, member.targetId, member.throttleSec)) {
       return skip('throttled')
     }
@@ -220,6 +226,7 @@ export function createGroupNotificationOutputProvider(deps: GroupNotificationOut
           unreadableHolders,
           byKind,
           isTest,
+          outcomes,
         ),
       )
     }

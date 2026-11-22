@@ -12,11 +12,13 @@ import { useNotificationTargets } from '../../pages/system/use-notification-targ
 import type { KindWidgetProps } from '../instances/kind-widgets'
 import { GroupMemberCard } from './GroupMemberCard'
 import {
+  fallbackChoices,
   kindLabelOf,
   MEMBERS_KEY,
   pickCandidates,
   readMembers,
   withMembers,
+  withoutMember,
 } from './group-members-model'
 import { useTargetKinds } from './use-target-kinds'
 
@@ -80,6 +82,10 @@ export function GroupMembersWidget({ values, onValuesChange }: KindWidgetProps):
                 kindLabel={target === undefined ? '' : kindLabelOf(kinds.data, target)}
                 known={target !== undefined || targets.data === undefined}
                 defaultOpen={fresh.has(member.targetId)}
+                fallbackChoices={fallbackChoices(members, member.targetId).map((m) => ({
+                  targetId: m.targetId,
+                  name: byId.get(m.targetId)?.name ?? m.targetId,
+                }))}
                 onChange={(next) =>
                   onValuesChange(
                     withMembers(
@@ -89,12 +95,7 @@ export function GroupMembersWidget({ values, onValuesChange }: KindWidgetProps):
                   )
                 }
                 onRemove={() =>
-                  onValuesChange(
-                    withMembers(
-                      values,
-                      members.filter((m) => m.targetId !== member.targetId),
-                    ),
-                  )
+                  onValuesChange(withMembers(values, withoutMember(members, member.targetId)))
                 }
               />
             )

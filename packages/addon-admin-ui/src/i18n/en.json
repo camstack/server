@@ -904,7 +904,9 @@
         "alreadyDelivered": "Already received this notification",
         "nestedGroup": "A group cannot contain a group",
         "unknownTarget": "The notifier no longer exists",
-        "targetDisabled": "The notifier is disabled"
+        "targetDisabled": "The notifier is disabled",
+        "contentFilter": "Its content filter does not include this event",
+        "escalationNotNeeded": "Not needed: the member it backs up received it"
       }
     },
     "notificationTexts": {
@@ -3362,6 +3364,18 @@
     "groupWithin": {
       "seconds": "Group notifications within (s)",
       "hint": "0 sends each notification immediately. Two or more in the window become one summary."
+    },
+    "toGroup": {
+      "action": "Convert to group",
+      "failed": "The rule was not converted",
+      "message": "A notifier group named \"{{name}}\" is created with the {{count}} notifiers of this rule, and the rule delivers to that group.",
+      "lost": "These per-notifier settings are not kept:",
+      "notCarried": {
+        "template": "message template",
+        "priority": "priority",
+        "attachment-kind": "attachment type",
+        "params": "notifier parameters"
+      }
     }
   },
   "ruleScope": {
@@ -14228,6 +14242,25 @@
       "disarming": "Disarming",
       "pending": "Pending",
       "triggered": "Triggered"
+    },
+    "fallback": "Escalation",
+    "fallbackAlways": "Always delivered",
+    "fallbackFor": "Only if {{name}} did not receive it",
+    "eventKinds": "Only these events",
+    "allEvents": "All events",
+    "classes": "Only these detected classes",
+    "classesPlaceholder": "Any class (e.g. person, car)",
+    "eventKind": {
+      "detection": "Detection",
+      "audio": "Sound",
+      "device-event": "Device event",
+      "occupancy": "Occupancy",
+      "package": "Package",
+      "appliance": "Appliance cycle",
+      "system-event": "System event",
+      "timelapse": "Timelapse",
+      "summary": "Summary",
+      "calendar": "Calendar"
     }
   },
   "retention": {

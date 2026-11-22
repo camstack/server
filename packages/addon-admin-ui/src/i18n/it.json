@@ -904,7 +904,9 @@
         "alreadyDelivered": "Ha già ricevuto questa notifica",
         "nestedGroup": "Un gruppo non può contenere un gruppo",
         "unknownTarget": "Il notificatore non esiste più",
-        "targetDisabled": "Il notificatore è disattivato"
+        "targetDisabled": "Il notificatore è disattivato",
+        "contentFilter": "Il suo filtro sui contenuti non include questo evento",
+        "escalationNotNeeded": "Non necessario: il membro di cui è riserva l'ha ricevuta"
       }
     },
     "notificationTexts": {
@@ -3437,6 +3439,18 @@
     "groupWithin": {
       "seconds": "Raggruppa notifiche entro (s)",
       "hint": "0 invia ogni notifica subito. Due o più nella finestra diventano un riepilogo."
+    },
+    "toGroup": {
+      "action": "Converti in gruppo",
+      "failed": "La regola non è stata convertita",
+      "message": "Viene creato un gruppo di notificatori chiamato \"{{name}}\" con i {{count}} notificatori di questa regola, e la regola consegna a quel gruppo.",
+      "lost": "Queste impostazioni per notificatore non vengono mantenute:",
+      "notCarried": {
+        "template": "modello del messaggio",
+        "priority": "priorità",
+        "attachment-kind": "tipo di allegato",
+        "params": "parametri del notificatore"
+      }
     }
   },
   "ruleScope": {
@@ -14250,6 +14264,25 @@
       "disarming": "In disinserimento",
       "pending": "In attesa",
       "triggered": "Scattato"
+    },
+    "fallback": "Escalation",
+    "fallbackAlways": "Consegna sempre",
+    "fallbackFor": "Solo se {{name}} non l'ha ricevuta",
+    "eventKinds": "Solo questi eventi",
+    "allEvents": "Tutti gli eventi",
+    "classes": "Solo queste classi rilevate",
+    "classesPlaceholder": "Qualsiasi classe (es. person, car)",
+    "eventKind": {
+      "detection": "Rilevamento",
+      "audio": "Suono",
+      "device-event": "Evento dispositivo",
+      "occupancy": "Occupazione",
+      "package": "Pacco",
+      "appliance": "Ciclo elettrodomestico",
+      "system-event": "Evento di sistema",
+      "timelapse": "Timelapse",
+      "summary": "Riepilogo",
+      "calendar": "Calendario"
     }
   },
   "retention": {

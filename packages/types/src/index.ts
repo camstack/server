@@ -3072,20 +3072,29 @@ export type {
 export {
   clampToCaps,
   decideMember,
+  escalationNeeded,
+  GroupMemberFilterSchema,
   GroupMemberSchema,
   GroupMemberWhenSchema,
   groupMembersOf,
   NOTIFIER_GROUP_ADDON_ID,
   NOTIFIER_GROUP_KIND,
+  NOTIFICATION_META_CLASS_NAME,
+  NOTIFICATION_META_EVENT_KIND,
+  NOTIFICATION_META_RULE_ID,
+  NotificationEventKindSchema,
+  matchesMemberFilter,
   renderMemberTemplate,
   shapeForMember,
 } from './notification/notifier-group.js'
 export type {
   GroupMember,
+  GroupMemberFilter,
   GroupMembersRead,
   GroupMemberWhen,
   MemberDecision,
   MemberDecisionInput,
+  NotificationEventKind,
 } from './notification/notifier-group.js'
 
 export { TREESHAKE_CANARY_LITERAL, TreeshakeCanarySchema } from './treeshake-canary.js'

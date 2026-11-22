@@ -3736,7 +3736,7 @@
 
 ### `notification-output` → `notificationOutput.*`
 
-- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:474`
+- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:478`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `INotificationOutputProvider`

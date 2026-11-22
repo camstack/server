@@ -24,16 +24,29 @@ import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScheduleField } from '../../pages/system/notification-schedule-field'
 import {
+  classesText,
   DEFAULT_SCHEDULE,
+  eventKindsOff,
+  MEMBER_EVENT_KINDS,
   MEMBER_FIELDS,
   previewOf,
   PRIORITY_LEVELS,
+  withClassesText,
+  withEventKinds,
+  withFallbackFor,
   withoutKey,
 } from './group-members-model'
 
 const ALARM_STATES = AlarmStateSchema.options
 const WHEN_KINDS: readonly GroupMemberWhen['kind'][] = ['always', 'schedule', 'alarm']
 const NO_PRIORITY = ''
+const NO_FALLBACK = ''
+
+/** A member this one can be a fallback for: its target id and the name to show. */
+export interface FallbackChoice {
+  readonly targetId: string
+  readonly name: string
+}
 
 export interface GroupMemberCardProps {
   readonly member: GroupMember
@@ -43,6 +56,8 @@ export interface GroupMemberCardProps {
   /** False when the member names a target that no longer exists. */
   readonly known: boolean
   readonly defaultOpen: boolean
+  /** The members listed before this one: the ones it can be a fallback for. */
+  readonly fallbackChoices: readonly FallbackChoice[]
   readonly onChange: (next: GroupMember) => void
   readonly onRemove: () => void
 }
@@ -58,6 +73,7 @@ export function GroupMemberCard({
   kindLabel,
   known,
   defaultOpen,
+  fallbackChoices,
   onChange,
   onRemove,
 }: GroupMemberCardProps): ReactElement {
@@ -190,6 +206,63 @@ export function GroupMemberCard({
                 />
               </div>
             )}
+          </div>
+
+          {(fallbackChoices.length > 0 || member.onlyIfUndelivered !== undefined) && (
+            <div className="space-y-1">
+              <Label>{t('notifierGroup.fallback', 'Escalation')}</Label>
+              <Select
+                value={member.onlyIfUndelivered?.[0] ?? NO_FALLBACK}
+                aria-label={t('notifierGroup.fallback', 'Escalation')}
+                onChange={(e) =>
+                  onChange(
+                    withFallbackFor(
+                      member,
+                      e.target.value === NO_FALLBACK ? undefined : e.target.value,
+                    ),
+                  )
+                }
+                options={[
+                  {
+                    value: NO_FALLBACK,
+                    label: t('notifierGroup.fallbackAlways', 'Always delivered'),
+                  },
+                  ...fallbackChoices.map((choice) => ({
+                    value: choice.targetId,
+                    label: t('notifierGroup.fallbackFor', 'Only if {{name}} did not receive it', {
+                      name: choice.name,
+                    }),
+                  })),
+                ]}
+              />
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <Label>{t('notifierGroup.eventKinds', 'Only these events')}</Label>
+            <ToggleChipRow
+              chips={MEMBER_EVENT_KINDS.map((k) => ({
+                id: k,
+                label: t(`notifierGroup.eventKind.${k}`, k),
+              }))}
+              off={eventKindsOff(member)}
+              allLabel={t('notifierGroup.allEvents', 'All events')}
+              ariaLabel={t('notifierGroup.eventKinds', 'Only these events')}
+              onChange={(off) =>
+                onChange(
+                  withEventKinds(
+                    member,
+                    MEMBER_EVENT_KINDS.filter((k) => !off.has(k)),
+                  ),
+                )
+              }
+            />
+            <Input
+              value={classesText(member)}
+              placeholder={t('notifierGroup.classesPlaceholder', 'Any class (e.g. person, car)')}
+              aria-label={t('notifierGroup.classes', 'Only these detected classes')}
+              onChange={(e) => onChange(withClassesText(member, e.target.value))}
+            />
           </div>
 
           <div className="space-y-1">

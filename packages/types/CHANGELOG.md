@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Notifier group members can be a fallback for an earlier member and can filter by event type and detected class
+
 ### Changed
 
 - Wake-on-LAN helper: a pure magic-packet builder and a UDP sender for addons that wake a device from their own node
