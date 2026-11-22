@@ -88,6 +88,12 @@ Examples, with a hub at `192.168.1.9` and a stable tunnel `camstack.example.com`
   wins on the tunnel.
 - `publicEndpoint` automatic = `https://camstack.example.com`. With no tunnel and
   no mesh it falls to the LAN address, which no cloud can reach.
+  Once automatic has resolved to the tunnel it is **sticky** (D1085): the
+  local-network owner remembers the address and the addon that supplied it, and
+  keeps answering it (`source: 'auto-remembered'`) while the tunnel row is absent
+  (boot, a restarting tunnel) for as long as that addon has an integration, enabled
+  or not. Only removing the integration clears it; a failed read does not. A live
+  tunnel and an explicit flag both win over the memory.
 - `internal` automatic = `https://192.168.1.9:4443`. An agent never detours
   through the tunnel.
 - Flag a custom `https://203.0.113.5:8443` as `publicEndpoint` when the hub sits

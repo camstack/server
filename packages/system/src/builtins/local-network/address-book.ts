@@ -276,6 +276,8 @@ export interface AddressBookInputs {
   readonly appLinkHub: string | null
   /** Where the hub's listeners answer (see {@link buildListenerOrigins}). */
   readonly listenerOrigins: readonly string[]
+  /** The remembered tunnel address `publicEndpoint` falls back to (D1085), or `null`. */
+  readonly rememberedPublicEndpoint?: string | null
 }
 
 /** Every role's answer — the resolvers from `@camstack/types`, nothing else. */
@@ -283,11 +285,13 @@ export function resolveRoles(
   state: AddressBookState,
   appPalette: readonly ConnectionEndpoint[],
   httpsPalette: readonly ConnectionEndpoint[],
+  rememberedPublicEndpoint: string | null = null,
 ): HubAddressBook['roles'] {
   return resolveHubAddressRoles(
     withAppConnectionCustomEndpoints(appPalette, state),
     httpsPalette,
     state.flags,
+    rememberedPublicEndpoint,
   )
 }
 
@@ -310,7 +314,12 @@ export function buildAddressBook(
   state: AddressBookState,
   inputs: AddressBookInputs,
 ): HubAddressBook {
-  const roles = resolveRoles(state, inputs.rowsPalette, inputs.httpsPalette)
+  const roles = resolveRoles(
+    state,
+    inputs.rowsPalette,
+    inputs.httpsPalette,
+    inputs.rememberedPublicEndpoint ?? null,
+  )
   const customUrls = new Set(state.custom.map((c) => c.baseUrl))
   const detectedUrls = new Set(inputs.rowsPalette.map((e) => e.baseUrl))
   const row = (endpoint: ConnectionEndpoint, detected: boolean): HubAddressRow => ({

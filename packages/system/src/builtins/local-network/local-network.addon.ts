@@ -43,6 +43,7 @@ import {
   errMsg,
   isAppLinkBase,
   isDefaultAppConnectionEndpoint,
+  livePublicTunnelAddress,
   localNetworkCapability,
   NetworkTunnelStartedDataSchema,
   pickAppLinkHub,
@@ -222,6 +223,14 @@ interface LocalNetworkConfig {
    */
   readonly publicEndpointUrl: string
   /**
+   * The tunnel address automatic `publicEndpoint` last resolved to, and the
+   * addon whose integration supplied it (D1085). Kept while that integration
+   * exists, so a boot with the tunnel's row absent does not answer the LAN.
+   * Empty = nothing remembered.
+   */
+  readonly rememberedPublicEndpointUrl: string
+  readonly rememberedPublicEndpointAddon: string
+  /**
    * Advertise this hub over mDNS (`_camstack._tcp`, D838) so `camstack login`
    * finds it. On by default; needs UDP 5353 multicast to reach the LAN.
    */
@@ -245,6 +254,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   private publicHostname = ''
   /** False for a Quick tunnel: shown in the palette, never picked automatically (D860). */
   private publicHostnameStable = true
+  /** The addon whose `NetworkTunnelStarted` event named the hostname; empty = unknown (D1085). */
+  private publicHostnameAddon = ''
   /**
    * Mesh-reachable endpoint (Tailscale MagicDNS / 100.x), learned from
    * the `MeshNetworkChanged` event-tail and refreshed by a pull-reconcile
@@ -270,6 +281,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       localHostname: '',
       internalUrl: '',
       publicEndpointUrl: '',
+      rememberedPublicEndpointUrl: '',
+      rememberedPublicEndpointAddon: '',
       mdnsAdvertise: true,
       passiveDiscovery: true,
       scanSubnets: [],
@@ -306,6 +319,58 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     return normalizeAddressBook(this.config, new Set(detected.map((e) => e.baseUrl)))
   }
 
+  /**
+   * The sticky automatic `publicEndpoint` (D1085). Remembers the tunnel address
+   * automatic resolves to while one integration supplies it, and returns the
+   * remembered address while that integration still exists. Removal of the
+   * integration (an ANSWERED, empty read) clears it; a read that failed changes
+   * nothing — unknown means "still exists" (D49).
+   */
+  private async syncRememberedPublicEndpoint(
+    https: readonly ConnectionEndpoint[],
+  ): Promise<string | null> {
+    const storedUrl = this.config.rememberedPublicEndpointUrl
+    const storedAddon = this.config.rememberedPublicEndpointAddon
+    const live = livePublicTunnelAddress(https)
+    if (live !== null && this.publicHostnameAddon !== '') {
+      if (live === storedUrl && this.publicHostnameAddon === storedAddon) return null
+      if ((await this.integrationExists(this.publicHostnameAddon)) === true) {
+        await this.saveRemembered(live, this.publicHostnameAddon)
+      }
+      return null
+    }
+    if (storedUrl === '' || storedAddon === '') return null
+    if ((await this.integrationExists(storedAddon)) === false) {
+      await this.saveRemembered('', '')
+      return null
+    }
+    return storedUrl
+  }
+
+  /**
+   * Persist the sticky pick. Not through `saveStored`: that re-announces over mDNS, and the
+   * advert reads the address book — a read that is already inside that announcement.
+   */
+  private async saveRemembered(url: string, addonId: string): Promise<void> {
+    await this.state('rememberedPublicEndpointUrl', z.string(), '').set(url)
+    await this.state('rememberedPublicEndpointAddon', z.string(), '').set(addonId)
+    await this.resolveConfig()
+  }
+
+  /** Does the addon's integration exist (enabled or not)? `null` = the read did not answer. */
+  private async integrationExists(addonId: string): Promise<boolean | null> {
+    const integrations = this.ctx.api?.integrations
+    if (integrations === undefined) return null
+    try {
+      return (await integrations.listByAddon.query({ addonId })).length > 0
+    } catch (err: unknown) {
+      this.ctx.logger.debug('local-network: integration existence read skipped', {
+        meta: { addonId, error: err instanceof Error ? err.message : String(err) },
+      })
+      return null
+    }
+  }
+
   /** The role flags alone — they do not depend on what is detected. */
   private storedFlags(): HubAddressFlags {
     return normalizeAddressBook(this.config, new Set()).flags
@@ -316,7 +381,9 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     const { http, https, httpWithTwins, httpsWithTwins } = await this.palettes()
     const state = this.addressState([...httpWithTwins, ...httpsWithTwins])
     const httpsPort = (await this.resolveAdvertisedListenPort(null)).port
+    const rememberedPublicEndpoint = await this.syncRememberedPublicEndpoint(https)
     return buildAddressBook(state, {
+      rememberedPublicEndpoint,
       rowsPalette: scheme === 'http' ? httpWithTwins : httpsWithTwins,
       httpsPalette: https,
       appLink: appLinkEndpoint(),
@@ -392,7 +459,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     const legacy = (r: HubAddressRoleResolution): HubAddressSnapshot => ({
       override: r.flagged,
       resolved: r.resolved,
-      source: r.source === 'flagged' ? 'override' : r.source,
+      source: r.source === 'flagged' ? 'override' : r.source === 'none' ? 'none' : 'auto',
     })
     return { cluster: legacy(roles.internal), browser: legacy(roles.publicEndpoint) }
   }
@@ -724,7 +791,12 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     // can't import cross-package so the parsing stays defensive.
     this.ctx.eventBus?.subscribe({ category: EventCategory.NetworkTunnelStarted }, (event) => {
       const parsed = NetworkTunnelStartedDataSchema.safeParse(event.data ?? {})
-      if (parsed.success) this.adoptTunnelUrl(parsed.data.url, parsed.data.stable)
+      if (!parsed.success) return
+      const addonId =
+        event.source.type === 'addon' && typeof event.source.id === 'string'
+          ? event.source.id
+          : undefined
+      this.adoptTunnelUrl(parsed.data.url, parsed.data.stable, addonId)
     })
     this.ctx.eventBus?.subscribe({ category: EventCategory.NetworkTunnelStopped }, () =>
       this.setPublicHostname(''),
@@ -949,10 +1021,17 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
    * `onInitialize`. This setter exists for tests + future direct
    * callers; cleared by passing an empty string.
    */
-  setPublicHostname(hostname: string, stable = true): void {
-    if (this.publicHostname === hostname && this.publicHostnameStable === stable) return
+  setPublicHostname(hostname: string, stable = true, addonId?: string): void {
+    const addon = hostname === '' ? '' : (addonId ?? this.publicHostnameAddon)
+    if (
+      this.publicHostname === hostname &&
+      this.publicHostnameStable === stable &&
+      this.publicHostnameAddon === addon
+    )
+      return
     this.publicHostname = hostname
     this.publicHostnameStable = stable
+    this.publicHostnameAddon = addon
     this.ctx.logger.info('local-network: public hostname updated', {
       meta: { hostname: hostname || '(cleared)', stable },
     })
@@ -962,11 +1041,11 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
    * Adopt a tunnel URL as the public hostname. Ignores the pre-FQDN placeholders a tunnel
    * reports before its real name is known, and a malformed URL (cache left as-is).
    */
-  private adoptTunnelUrl(url: string, stable: boolean | undefined): void {
+  private adoptTunnelUrl(url: string, stable: boolean | undefined, addonId?: string): void {
     try {
       const hostname = new URL(url).hostname
       if (hostname && !hostname.endsWith('.placeholder') && !hostname.startsWith('pending.')) {
-        this.setPublicHostname(hostname, stable !== false)
+        this.setPublicHostname(hostname, stable !== false, addonId)
       }
     } catch {
       // Malformed URL — leave the cached hostname as-is.

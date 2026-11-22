@@ -261,7 +261,8 @@ const HubAddressRoleResolutionSchema = z.object({
   flagged: z.string().nullable(),
   /** The address in use, or null when nothing qualifies (never loopback). */
   resolved: z.string().nullable(),
-  source: RoleSourceSchema,
+  /** `auto-remembered`: automatic, kept from an earlier tunnel pick while its row is absent. */
+  source: z.enum(['flagged', 'auto', 'auto-remembered', 'none']),
 })
 
 const HubAppConnectionsResolutionSchema = z.object({

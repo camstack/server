@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An automation a group owns traces, per member, what its command did, and logs each trigger-caused group command under the group
 - The Buttons → devices built-in automation template is retired: a button press that commands a device is now a trigger of an actuator group
 - Device transitions: stored outcomes are ok or failed; the notification command outcome filter follows.
+- The automatic public endpoint keeps the public tunnel address it last resolved to while the tunnel row is absent (boot, a restarting tunnel); a role's source can now read auto-remembered
 
 ## [1.2.625] - 2026-11-22
 

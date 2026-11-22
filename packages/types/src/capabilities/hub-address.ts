@@ -24,6 +24,9 @@
  *   attachment / media links and admin links. Automatic: the public tunnel,
  *   then the mesh, then the LAN. Never the app link, and never an address
  *   that is re-issued on its own (`stable: false`, a Quick tunnel — D860).
+ *   Sticky (D1070): once automatic resolved to the tunnel, the owner remembers
+ *   it, and the role keeps answering that address (`auto-remembered`) while
+ *   the tunnel's row is not detected, until the integration is removed.
  * - `internal` (one) — what agents and LAN devices download from (addon
  *   bundles, models, a camera relay's broker host, Home Assistant media).
  *   Automatic: a LAN IPv4 literal, then any plausible LAN address, then the
@@ -228,12 +231,20 @@ export function checkRoleAddress(
 /** Where a role's address came from. */
 export type HubAddressSource = 'flagged' | 'auto' | 'none'
 
+/**
+ * Where a single-valued role's address came from. `auto-remembered` is the
+ * automatic answer kept from an earlier tunnel pick while the tunnel's row is
+ * not detected right now (D1070): still automatic, but not what a live pick
+ * would answer.
+ */
+export type HubAddressRoleSource = HubAddressSource | 'auto-remembered'
+
 export interface HubAddressRoleResolution {
   /** The address flagged for the role, or `null` for automatic. */
   readonly flagged: string | null
   /** The address in use, or `null` when nothing qualifies. */
   readonly resolved: string | null
-  readonly source: HubAddressSource
+  readonly source: HubAddressRoleSource
 }
 
 export interface HubAppConnectionsResolution {
@@ -252,28 +263,44 @@ function validFlag(role: HubAddressRole, flag: string | null): string | null {
   return check.ok ? check.baseUrl : null
 }
 
-function pickAuto(
+function pickAutoEndpoint(
   endpoints: readonly ConnectionEndpoint[],
   role: 'internal' | 'publicEndpoint',
-): string | null {
+): ConnectionEndpoint | null {
   const ranked = endpoints
     .flatMap((endpoint) => {
       const rank = autoRankFor(role, endpoint)
       return rank === null ? [] : [{ rank, priority: endpoint.priority, endpoint }]
     })
     .toSorted((a, b) => a.rank - b.rank || a.priority - b.priority)
-  const best = ranked[0]
-  return best === undefined ? null : trimSlash(best.endpoint.baseUrl)
+  return ranked[0]?.endpoint ?? null
+}
+
+/**
+ * The tunnel address AUTOMATIC `publicEndpoint` resolves to over `endpoints`
+ * right now, or `null` when it resolves to anything else (LAN, mesh, nothing).
+ * The one thing worth remembering across a boot (D1070).
+ */
+export function livePublicTunnelAddress(endpoints: readonly ConnectionEndpoint[]): string | null {
+  const best = pickAutoEndpoint(endpoints, 'publicEndpoint')
+  return best !== null && isTunnel(best) ? trimSlash(best.baseUrl) : null
 }
 
 function resolveHubRole(
   endpoints: readonly ConnectionEndpoint[],
   role: 'internal' | 'publicEndpoint',
   flag: string | null,
+  remembered: string | null = null,
 ): HubAddressRoleResolution {
   const flagged = validFlag(role, flag)
   if (flagged !== null) return { flagged, resolved: flagged, source: 'flagged' }
-  const auto = pickAuto(endpoints, role)
+  const best = pickAutoEndpoint(endpoints, role)
+  const auto = best === null ? null : trimSlash(best.baseUrl)
+  // A remembered tunnel outranks a LAN / mesh pick made while the tunnel's row
+  // is not detected (boot, a restarting tunnel); a live tunnel always wins.
+  if (role === 'publicEndpoint' && remembered !== null && (best === null || !isTunnel(best))) {
+    return { flagged: null, resolved: remembered, source: 'auto-remembered' }
+  }
   return { flagged: null, resolved: auto, source: auto === null ? 'none' : 'auto' }
 }
 
@@ -293,8 +320,9 @@ export function resolveInternalAddress(
 export function resolvePublicEndpoint(
   endpoints: readonly ConnectionEndpoint[],
   flags: HubAddressFlags,
+  remembered: string | null = null,
 ): HubAddressRoleResolution {
-  return resolveHubRole(endpoints, 'publicEndpoint', flags.publicEndpoint)
+  return resolveHubRole(endpoints, 'publicEndpoint', flags.publicEndpoint, remembered)
 }
 
 /** `notificationTaps`: the flagged address, else the CamStack app link (D709). */
@@ -363,12 +391,13 @@ export function resolveHubAddressRoles(
   appPalette: readonly ConnectionEndpoint[],
   hubPalette: readonly ConnectionEndpoint[],
   flags: HubAddressFlags,
+  rememberedPublicEndpoint: string | null = null,
 ): HubAddressRoles {
   return {
     appConnections: resolveAppConnections(appPalette, flags),
     notificationTaps: resolveNotificationTapAddress(flags),
     internal: resolveInternalAddress(hubPalette, flags),
-    publicEndpoint: resolvePublicEndpoint(hubPalette, flags),
+    publicEndpoint: resolvePublicEndpoint(hubPalette, flags, rememberedPublicEndpoint),
   }
 }
 
