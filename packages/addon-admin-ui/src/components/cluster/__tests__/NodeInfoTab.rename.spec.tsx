@@ -27,6 +27,7 @@ vi.mock('@camstack/ui-library', async () => {
     Checkbox: actual.Checkbox,
     Slider: actual.Slider,
     Radio: actual.Radio,
+    KeyValueList: actual.KeyValueList,
     useNodesRenameNode: (options: RenameOptions) => {
       renameOptions = options
       return { mutateAsync, isPending: false }

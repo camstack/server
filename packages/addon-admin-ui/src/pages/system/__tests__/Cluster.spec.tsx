@@ -98,6 +98,9 @@ vi.mock('@camstack/ui-library', async () => ({
   formatNumeric: (
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   ).formatNumeric,
+  KeyValueList: (
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  ).KeyValueList,
   useLiveEvent: () => {},
   useClusterTopology: () => ({ nodes: topology.nodes, isLoading: false, isError: false }),
   useNodesRestartAddon: () => ({ mutateAsync: async () => ({ success: true }) }),

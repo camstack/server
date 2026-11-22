@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { useNodesRenameNode, Button, Input } from '@camstack/ui-library'
+import { useNodesRenameNode, Button, Input, KeyValueList } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { formatNumeric } from '@camstack/ui-library'
 
@@ -217,18 +217,7 @@ export function NodeInfoTab(props: NodeInfoTabProps) {
 
   return (
     <div className="py-2">
-      <table className="w-full text-sm">
-        <tbody>
-          {rows.map(([label, value], i) => (
-            <tr key={label as string} className={i % 2 === 0 ? 'bg-muted/20' : ''}>
-              <td className="py-1.5 px-2 text-xs font-medium text-muted-foreground w-28 align-top whitespace-nowrap">
-                {label}
-              </td>
-              <td className="py-1.5 px-2">{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <KeyValueList items={rows.map(([key, value]) => ({ key, value }))} />
     </div>
   )
 }
