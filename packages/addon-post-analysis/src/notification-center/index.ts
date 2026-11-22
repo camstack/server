@@ -124,6 +124,7 @@ import {
   DeviceLivenessHoldoff,
   type LivenessTiming,
   NODE_LIVENESS_HOLDOFF_MS,
+  STREAM_LIVENESS_HOLDOFF_MS,
 } from './liveness-holdoff.js'
 import { isLinkedStillId, type NcLinkedStills, NcLinkedStillShelf } from './linked-stills.js'
 import { NcLivenessLedger } from './liveness-ledger.js'
@@ -757,6 +758,8 @@ export class NotificationCenter implements NcEventConsumer {
   private readonly livenessHoldoff: DeviceLivenessHoldoff
   /** Trailing 60 s hold-off for node liveness (reconnect storms). */
   private readonly nodeLivenessHoldoff: DeviceLivenessHoldoff
+  /** Trailing 5 min hold-off for stream drops, the same window as a device. */
+  private readonly streamLivenessHoldoff: DeviceLivenessHoldoff
   /**
    * Serialized evaluation chain. The persist hooks are fire-and-forget for
    * the frame path, but two concurrent evaluations of the same device
@@ -1066,6 +1069,10 @@ export class NotificationCenter implements NcEventConsumer {
         delayMs: deps.nodeLivenessHoldoffMs ?? (process.env.VITEST ? 0 : NODE_LIVENESS_HOLDOFF_MS),
       },
     )
+    this.streamLivenessHoldoff = new DeviceLivenessHoldoff((event) => this.consumeEvent(event), {
+      delayMs:
+        deps.streamLivenessHoldoffMs ?? (process.env.VITEST ? 0 : STREAM_LIVENESS_HOLDOFF_MS),
+    })
     this.plannedUpdateReturns = new NcPlannedUpdateReturn({
       now: () => this.now(),
       logger: this.logger,
@@ -2321,6 +2328,9 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get nodeLivenessHoldoff() {
         return self.nodeLivenessHoldoff
+      },
+      get streamLivenessHoldoff() {
+        return self.streamLivenessHoldoff
       },
       get plannedUpdateReturns() {
         return self.plannedUpdateReturns

@@ -27,11 +27,22 @@ import type { NcLivenessState } from './liveness-ledger.js'
 
 export const DEVICE_LIVENESS_HOLDOFF_MS = 5 * 60_000
 
+/**
+ * Stream offline / online ride the device window: a stream that drops and
+ * returns within it sends nothing. One source — the operator asked for "the
+ * same window" as a device.
+ */
+export const STREAM_LIVENESS_HOLDOFF_MS = DEVICE_LIVENESS_HOLDOFF_MS
+
 /** Grace before a node offline (or its recovery) is announced — see the docblock. */
 export const NODE_LIVENESS_HOLDOFF_MS = 60_000
 
 export function isNodeLivenessKind(kind: string): boolean {
   return kind === 'node-online' || kind === 'node-offline'
+}
+
+export function isStreamLivenessKind(kind: string): boolean {
+  return kind === 'stream-online' || kind === 'stream-offline'
 }
 
 /** When the state being announced began, and when the one it replaces began. */
@@ -106,6 +117,16 @@ export class DeviceLivenessHoldoff {
     this.timers.delete(subject)
     this.pending.delete(subject)
     this.departedAt.delete(subject)
+  }
+
+  /**
+   * A subject the ledger does not govern (streams) has no seeded state: its
+   * first observed edge is an offline, so the state before it was online. Take
+   * that as the baseline unless the subject is already known, so the bounce
+   * back is silent.
+   */
+  assumeOnline(subject: string): void {
+    if (!this.lastNotified.has(subject)) this.lastNotified.set(subject, 'online')
   }
 
   /**

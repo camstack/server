@@ -531,6 +531,11 @@ export interface NotificationCenterDeps {
    */
   readonly nodeLivenessHoldoffMs?: number
   /**
+   * Trailing hold-off for stream offline / online notifications — the same
+   * 5 min window as a device; 0 under Vitest unless set.
+   */
+  readonly streamLivenessHoldoffMs?: number
+  /**
    * `nodes.directory` — the state summary's D8 reconcile read for its node
    * sections (D647 review I2). Absent ⇒ those sections say "unavailable".
    */

@@ -24,6 +24,7 @@ import {
 import {
   DeviceLivenessHoldoff,
   isDeviceLivenessKind,
+  isStreamLivenessKind,
   isNodeLivenessKind,
 } from './liveness-holdoff.js'
 import { NcLivenessLedger, ledgeredLiveness, type NcLivenessRow } from './liveness-ledger.js'
@@ -109,6 +110,7 @@ export interface SystemEventsHost {
   readonly livenessHoldoff: DeviceLivenessHoldoff
   readonly logger: IScopedLogger
   readonly nodeLivenessHoldoff: DeviceLivenessHoldoff
+  readonly streamLivenessHoldoff: DeviceLivenessHoldoff
   noteInertGroupedRules(): void
   readonly now: () => number
   observeAlarmOpenings(): Promise<void>
@@ -300,8 +302,32 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     if (host.lastSystemLiveness.get(system.subject) === system.kind) return
     host.lastSystemLiveness.set(system.subject, system.kind)
     if (dropSwitchedOff(host, system)) return
+    if (isStreamLivenessKind(system.kind)) {
+      armStreamLiveness(host, system, incoming)
+      return
+    }
   }
   host.consumeEvent(incoming)
+}
+
+/**
+ * A stream drop is announced only once it has outlasted the device window; a
+ * return inside it cancels the pending offline and says nothing. Streams are
+ * not ledgered, so the holdoff's baseline is assumed online at the first
+ * offline.
+ */
+function armStreamLiveness(
+  host: SystemEventsHost,
+  system: NcSystemEventSubject,
+  incoming: NcIncomingEvent,
+): void {
+  const holdoff = host.streamLivenessHoldoff
+  if (system.kind === 'stream-offline') holdoff.assumeOnline(system.subject)
+  host.logger.debug('stream liveness held', {
+    tags: incoming.log().tags,
+    meta: { subject: system.subject, kind: system.kind },
+  })
+  holdoff.arm(system.subject, incoming)
 }
 
 /**
