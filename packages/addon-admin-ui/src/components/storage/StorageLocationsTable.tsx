@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { InstancesTable } from '../instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../instances/instances-model'
 import { StorageLocationLead } from './StorageLocationLead'
-import { storageColumns } from './StorageLocationCells'
+import { storageExtraColumns } from './StorageLocationCells'
 import { locationDeletable } from './location-deletable'
 import { useLocationDeleteRefusal } from './use-location-delete-refusal'
 import { useStorageLocationFacts } from './use-storage-location-facts'
@@ -46,7 +46,7 @@ export function StorageLocationsTable({ kinds }: StorageLocationsTableProps): Re
   }
   const columns = useMemo(
     () =>
-      storageColumns({
+      storageExtraColumns({
         capacity: t('system.storage.colCapacity', 'Capacity'),
         mode: t('system.storage.colMode', 'State'),
       }),

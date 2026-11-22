@@ -109,7 +109,7 @@ function buildResultColumns(t: UiTextFn): readonly DataColumn<EndpointTestRow>[]
     },
     { mobile: 'keep', key: 'rtt', header: 'RTT', align: 'right', render: (r) => fmtMs(r.rttMs) },
     {
-      mobile: 'primary',
+      mobile: 'detail',
       key: 'url',
       header: t('uiLibrary.endpointTest.colUrl', 'Event url'),
       nowrap: false,

@@ -366,6 +366,7 @@ jobs:
             scripts/check-no-hand-set-features.ts \
             scripts/check-device-type-declared.ts \
             scripts/check-no-native-form-controls.ts \
+            scripts/check-table-mobile-roles.ts \
             scripts/check-no-private-lan-scan.ts \
             scripts/check-addon-calls-super.ts \
             scripts/check-event-emitter-vocabulary.ts \

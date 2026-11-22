@@ -43,7 +43,7 @@ function ModeCell({ row }: { readonly row: PanelRow }): ReactElement | null {
   )
 }
 
-export function storageColumns(labels: {
+export function storageExtraColumns(labels: {
   readonly capacity: string
   readonly mode: string
 }): readonly DataColumn<PanelRow>[] {

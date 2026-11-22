@@ -370,7 +370,7 @@ describe('renderReport', () => {
     const md = renderReport(report([shot(), shot({ theme: 'dark', image: 'x-dark.png' })]))
     expect(md).toContain('# UI shots — after')
     expect(md).toContain(
-      '| /system/identity?tab=access | desktop 1440×900 | light | 0 | 0 | 0 | 1/1 | ok | ![](system-identity-tab-access--desktop-light.png) |',
+      '| /system/identity?tab=access | desktop 1440×900 | light | 0 | 0 | 0 | 1/1 | — | ok | ![](system-identity-tab-access--desktop-light.png) |',
     )
     expect(md).toContain('| dark |')
   })
@@ -385,6 +385,30 @@ describe('renderReport', () => {
 })
 
 describe('compareReports', () => {
+  it('flags a phone table whose row grew past the cap or that got wider than its box', () => {
+    const phone = { name: 'phone', width: 390, height: 844 }
+    const tables = { count: 1, tallestRowPx: 48, tallestRow: 'Kitchen', overflowPx: 0 }
+    const before = report([
+      shot({ viewport: phone, measurement: { ...shot().measurement, tables } }),
+    ])
+    const tall = report([
+      shot({
+        viewport: phone,
+        measurement: { ...shot().measurement, tables: { ...tables, tallestRowPx: 200 } },
+      }),
+    ])
+    expect(compareReports(before, tall).map((r) => r.what)).toEqual([
+      'table row 200 px tall (max 64): "Kitchen" (was row 48 px, overflow 0 px)',
+    ])
+    expect(renderReport(tall)).toContain('| **200** | **check** |')
+    // The same row on a desktop is not a finding, and an unchanged phone table is not a regression.
+    const desktop = report([
+      shot({ measurement: { ...shot().measurement, tables: { ...tables, tallestRowPx: 200 } } }),
+    ])
+    expect(compareReports(report([shot()]), desktop)).toEqual([])
+    expect(compareReports(tall, tall)).toEqual([])
+  })
+
   it('flags new overflow, new wide elements, lost pinning and new errors as regressions', () => {
     const before = report([shot()], 'before')
     const after = report([

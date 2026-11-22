@@ -3,7 +3,7 @@
  * `report.md` (the measurement table to paste into a done-gate).
  */
 import type { Theme, Viewport } from './args.js'
-import type { Measurement } from './measure.js'
+import { type Measurement, tableProblems } from './measure.js'
 
 export interface ShotRecord {
   readonly route: string
@@ -56,6 +56,14 @@ function stickyCell(m: Measurement): string {
   return `${m.sticky.pinned}/${m.sticky.total}`
 }
 
+/** Tallest data row in px, `!` when it breaks the phone cap; `—` without a table. */
+function rowCell(s: ShotRecord): string {
+  const tables = s.measurement.tables
+  if (tables === undefined || tables.count === 0) return '—'
+  const over = tableProblems(tables, s.viewport.width).length > 0
+  return over ? `**${tables.tallestRowPx}**` : String(tables.tallestRowPx)
+}
+
 function status(s: ShotRecord): string {
   const m = s.measurement
   const bad =
@@ -63,6 +71,7 @@ function status(s: ShotRecord): string {
     (m.overflowMain ?? 0) > 0 ||
     m.wide.length > 0 ||
     m.sticky.unpinned.length > 0 ||
+    tableProblems(m.tables, s.viewport.width).length > 0 ||
     s.pageErrors.length > 0
   return bad ? '**check**' : 'ok'
 }
@@ -75,6 +84,9 @@ function notes(shots: readonly ShotRecord[]): string[] {
       out.push(
         `- ${key}: past the viewport: ${w.selector} (left ${w.left}, right ${w.right}, width ${w.width})`,
       )
+    }
+    for (const problem of tableProblems(s.measurement.tables, s.viewport.width)) {
+      out.push(`- ${key}: ${problem}`)
     }
     for (const u of s.measurement.sticky.unpinned) out.push(`- ${key}: sticky not pinned: ${u}`)
     for (const f of s.missingFixtures) out.push(`- ${key}: missing fixture: ${f}`)
@@ -125,6 +137,21 @@ export function compareReports(before: ShotsReport, after: ShotsReport): Differe
         regression: true,
       })
     }
+    // A table that got worse on a phone: a taller row past the cap, or a wider table.
+    const tablesNow = tableProblems(ma.tables, a.viewport.width)
+    if (tablesNow.length > 0) {
+      const rowWas = mb.tables?.tallestRowPx ?? 0
+      const widthWas = mb.tables?.overflowPx ?? 0
+      const worse =
+        (ma.tables?.tallestRowPx ?? 0) > rowWas || (ma.tables?.overflowPx ?? 0) > widthWas
+      if (worse) {
+        out.push({
+          key,
+          what: `${tablesNow.join('; ')} (was row ${rowWas} px, overflow ${widthWas} px)`,
+          regression: true,
+        })
+      }
+    }
     const oldErrors = new Set(b.pageErrors)
     for (const e of a.pageErrors.filter((x) => !oldErrors.has(x))) {
       out.push({ key, what: `new page error: ${e}`, regression: true })
@@ -150,15 +177,15 @@ export function renderReport(report: ShotsReport, compare?: CompareInput): strin
     '',
     `Commit \`${report.commit}\` · ${report.createdAt} · fixtures: ${report.fixtures === 'all' ? 'all' : report.fixtures.join(', ')}`,
     '',
-    'Overflow = `scrollWidth - clientWidth` in px (0 = no horizontal scroll). Past viewport = outermost visible elements crossing the viewport edge, outside any scroll container. Sticky = sticky/fixed elements still on screen after scrolling a screen (n/a = nothing scrolls).',
+    'Overflow = `scrollWidth - clientWidth` in px (0 = no horizontal scroll). Past viewport = outermost visible elements crossing the viewport edge, outside any scroll container. Sticky = sticky/fixed elements still on screen after scrolling a screen (n/a = nothing scrolls). Tallest row = the tallest table data row in px; on a phone more than 64 px, or a table wider than its container, is flagged.',
     '',
-    '| Route | Viewport | Theme | Doc overflow | Main overflow | Past viewport | Sticky pinned | Status | Image |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Route | Viewport | Theme | Doc overflow | Main overflow | Past viewport | Sticky pinned | Tallest row | Status | Image |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
   ]
   for (const s of report.shots) {
     const m = s.measurement
     lines.push(
-      `| ${s.route} | ${s.viewport.name} ${s.viewport.width}×${s.viewport.height} | ${s.theme} | ${m.overflowDoc} | ${fmtMain(m.overflowMain)} | ${m.wide.length} | ${stickyCell(m)} | ${status(s)} | ![](${s.image}) |`,
+      `| ${s.route} | ${s.viewport.name} ${s.viewport.width}×${s.viewport.height} | ${s.theme} | ${m.overflowDoc} | ${fmtMain(m.overflowMain)} | ${m.wide.length} | ${stickyCell(m)} | ${rowCell(s)} | ${status(s)} | ![](${s.image}) |`,
     )
   }
   const n = notes(report.shots)
