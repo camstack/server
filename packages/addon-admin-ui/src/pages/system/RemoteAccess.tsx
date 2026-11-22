@@ -85,9 +85,9 @@ export function RemoteAccessPage(): ReactElement {
   const tunnelColumn: DataColumn<PanelRow> = {
     key: 'tunnel',
     header: t('system.remoteAccess.colTunnel', 'Tunnel'),
+    mobile: 'detail',
     notSortableReason: t(
       'system.remoteAccess.tunnelNotSortable',
-    mobile: 'detail',
       'A live connection state is not a value to order by.',
     ),
     render: (row) => <TunnelStatusCell addonId={row.addonId} error={errorByAddon[row.addonId]} />,
