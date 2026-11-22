@@ -8,44 +8,46 @@
  *
  * Used inline (tabs, cards) and as a floating panel via FloatingLogStream.
  */
-import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type JSX } from 'react'
-import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
+
 import {
-  X,
-  Loader2,
-  AlertTriangle,
-  Info,
   AlertCircle,
-  Bug,
+  AlertTriangle,
   ArrowDownToLine,
+  Bug,
   Check,
-  Copy,
-  Trash2,
   ChevronDown,
   ChevronRight,
   ChevronsDownUp,
   ChevronsUpDown,
   Columns3,
+  Copy,
   Download,
+  Info,
+  Loader2,
+  Trash2,
+  X,
 } from 'lucide-react'
-import { trpc } from '../trpc-react'
-import { cn } from '../lib/cn'
+import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useUiText } from '../contexts/ui-text'
-import { useLiveBuffer, type LiveBuffer } from '../hooks/use-live-buffer'
 import { useDebouncedString } from '../hooks/use-debounced-string'
-import { useLogHistory, type LogHistoryLevel } from '../hooks/use-log-history'
+import { useIsPhone } from '../hooks/use-is-mobile'
+import { type LiveBuffer, useLiveBuffer } from '../hooks/use-live-buffer'
+import { type LogHistoryLevel, useLogHistory } from '../hooks/use-log-history'
+import { useLogNames } from '../hooks/use-log-names'
+import { useLogStreamColumns } from '../hooks/use-log-stream-columns'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
+import { cn } from '../lib/cn'
 import { Button } from '../primitives/button'
 import { Checkbox } from '../primitives/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
 import { Select } from '../primitives/select'
-import { useLogNames } from '../hooks/use-log-names'
-import { useLogStreamColumns } from '../hooks/use-log-stream-columns'
-import { LogExportDialog, type LogExportFetch } from './log-export-dialog'
+import { trpc } from '../trpc-react'
 import { logExportScopeOf } from './log-export'
+import { LogExportDialog, type LogExportFetch } from './log-export-dialog'
+import { type LogWireEntry, logEntryKey, mergeLogEntries } from './log-history-paging'
 import type { LogColumnConfig, LogColumnId } from './log-stream-columns'
 import { entryAddonId, entryDeviceId, nameOrId } from './log-stream-names'
 import { isPinnedToBottom, PIN_THRESHOLD_PX } from './log-stream-scroll'
-import { logEntryKey, mergeLogEntries, type LogWireEntry } from './log-history-paging'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -319,6 +321,8 @@ export function LogStream({
   )
   const showIntegration = columnState.visible.includes('integration')
   const showDevice = columnState.visible.includes('device')
+  // On a phone the optional columns leave the row and read as one muted line under the message.
+  const phone = useIsPhone()
   const logNames = useLogNames({ integration: showIntegration, device: showDevice })
   const [exporting, setExporting] = useState(false)
   const historyQuery = useMemo(
@@ -843,7 +847,7 @@ export function LogStream({
                       <td className={cn('px-1 py-1 align-top w-5', style.color)}>
                         <Icon className="h-3 w-3" />
                       </td>
-                      {showScope && (
+                      {showScope && !phone && (
                         <td
                           className="px-2 py-1 text-foreground-subtle align-top truncate max-w-[120px]"
                           title={log.scope}
@@ -851,7 +855,7 @@ export function LogStream({
                           {log.scope?.replace(/^addon:/, '') ?? ''}
                         </td>
                       )}
-                      {showIntegration && (
+                      {showIntegration && !phone && (
                         <td
                           className="px-2 py-1 text-foreground-muted align-top truncate max-w-[120px] sm:max-w-[160px]"
                           data-testid="log-cell-integration"
@@ -859,7 +863,7 @@ export function LogStream({
                           <IntegrationCell entry={log} names={logNames.addons} />
                         </td>
                       )}
-                      {showDevice && (
+                      {showDevice && !phone && (
                         <td
                           className="px-2 py-1 text-foreground-muted align-top truncate max-w-[120px] sm:max-w-[160px]"
                           data-testid="log-cell-device"
@@ -883,6 +887,28 @@ export function LogStream({
                               />
                             )}
                             {log.message}
+                            {phone && (showScope || showIntegration || showDevice) && (
+                              <div
+                                data-phone-detail=""
+                                className="mt-0.5 flex max-h-5 items-start gap-1.5 overflow-hidden whitespace-nowrap text-[10px] text-foreground-subtle"
+                              >
+                                {showScope && log.scope !== undefined && (
+                                  <span className="min-w-0 truncate">
+                                    {log.scope.replace(/^addon:/, '')}
+                                  </span>
+                                )}
+                                {showIntegration && (
+                                  <span className="min-w-0 truncate empty:hidden">
+                                    <IntegrationCell entry={log} names={logNames.addons} />
+                                  </span>
+                                )}
+                                {showDevice && (
+                                  <span className="min-w-0 truncate empty:hidden">
+                                    <DeviceCell entry={log} names={logNames.devices} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             {expanded && hasContext && (
                               // key=value lines printed directly under the
                               // main line (no JSON block, no boxed card) so

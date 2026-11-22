@@ -3,17 +3,64 @@
  * track list and the debug tapes). Not an admin route: `ui:shots` mounts it for `/phone-tables-preview`; the data
  * comes from the `phone-tables` fixture area.
  */
-import { AdminUiTextProvider } from '@admin/i18n/AdminUiTextProvider'
-import i18n from '@admin/i18n'
+
 import { TracksTab } from '@admin/components/device/tabs/TracksTab'
-import { EventsDebugTapes } from '@admin/pages/EventsDebugTapes'
 import { NodeLiveTab } from '@admin/components/pipeline/tabs/NodeLiveTab'
-import { ConfirmDialogProvider, SystemProvider, ThemeProvider, trpc } from '@camstack/ui-library'
+import i18n from '@admin/i18n'
+import { AdminUiTextProvider } from '@admin/i18n/AdminUiTextProvider'
+import { EventsDebugTapes } from '@admin/pages/EventsDebugTapes'
+import type { ConfigObjectArrayField } from '@camstack/types'
+import {
+  ConfigFormField,
+  ConfirmDialogProvider,
+  SystemProvider,
+  ThemeProvider,
+  trpc,
+} from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactElement, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
+import { ComparisonTable } from '../../../../packages/addon-training/src/page/ComparisonTable'
+import {
+  RetrainCanvasToolbar,
+  useRetrainViewport,
+} from '../../../../packages/addon-training/src/page/frames/RetrainCanvasToolbar'
+import { COMPARISON_RESULT } from './phone-tables-training-result'
 import { getSystem } from './stubs/backend'
 import { fakeClient } from './stubs/transport'
+
+function TrainingParts(): ReactElement {
+  const view = useRetrainViewport()
+  return (
+    <div className="space-y-3">
+      <ComparisonTable result={COMPARISON_RESULT} cameraName={(id) => `Camera ${String(id)}`} />
+      <RetrainCanvasToolbar
+        view={view}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => undefined}
+        onRedo={() => undefined}
+      />
+    </div>
+  )
+}
+
+const SESSIONS_FIELD: ConfigObjectArrayField = {
+  type: 'object-array',
+  key: 'sessions',
+  label: 'Sessions',
+  columns: [
+    { key: 'id', label: 'Id', kind: 'monospace' },
+    { key: 'peer', label: 'Peer' },
+    { key: 'state', label: 'State', kind: 'status' },
+    { key: 'age', label: 'Age', kind: 'duration' },
+    { key: 'seen', label: 'Last seen', kind: 'timestamp' },
+  ],
+  value: [
+    { id: 'a1', peer: '192.0.2.4', state: 'ok', age: 4000, seen: 1_700_000_000_000 },
+    { id: 'b2', peer: '192.0.2.9', state: 'warn', age: 96000, seen: 1_700_000_060_000 },
+  ],
+}
 
 export function PhoneTablesPreview(): ReactElement {
   const [client] = useState(
@@ -32,6 +79,12 @@ export function PhoneTablesPreview(): ReactElement {
                     <NodeLiveTab nodeId="hub" refreshToken={0} />
                     <TracksTab deviceId={101} />
                     <EventsDebugTapes />
+                    <TrainingParts />
+                    <ConfigFormField
+                      field={SESSIONS_FIELD}
+                      values={{}}
+                      onChange={() => undefined}
+                    />
                   </main>
                 </ConfirmDialogProvider>
               </ThemeProvider>
