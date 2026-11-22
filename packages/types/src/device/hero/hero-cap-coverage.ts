@@ -75,6 +75,9 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
     none: 'a transport on a board: it sends raw timings for a remote and reports no state (D957); the appliance it drives shows its own state and the remote button',
   },
   'lawn-mower-control': 'contributes',
+  location: {
+    none: 'coordinates are drawn on a map, not in the hero',
+  },
   'lock-control': 'contributes',
   'media-player': 'contributes',
   meter: 'contributes',

@@ -652,6 +652,7 @@
   "localNetwork.setViewerEndpoints": "admin",
   "localNetwork.uploadCertificate": "admin",
   "localNetwork.useStoredUploadedCertificate": "admin",
+  "location.getStatus": "viewer",
   "lockControl.getStatus": "viewer",
   "lockControl.lock": "viewer",
   "lockControl.open": "viewer",

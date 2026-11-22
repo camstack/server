@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1118 shared schemas.**
+**1119 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3668,6 +3668,16 @@ Enum: `"guardrail" \| "model"`
 - `sizeBytes`: `number`
 - `fileCount`: `number`
 - `present`: `boolean`
+
+### `LocationStatusSchema`
+
+- `latitude`: `number \| null`
+- `longitude`: `number \| null`
+- `accuracy`: `number \| null`
+- `heading`: `number \| null`
+- `speed`: `number \| null`
+- `fixAt`: `number \| null`
+- `lastChangedAt`: `number`
 
 ### `LockControlStatusSchema`
 

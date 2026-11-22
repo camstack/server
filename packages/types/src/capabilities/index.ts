@@ -2431,6 +2431,15 @@ export {
   consumablesCapability,
   type IConsumablesProvider,
 } from './consumables.cap.js'
+export {
+  type ILocationProvider,
+  type LocationFixInput,
+  type LocationStatus,
+  LocationStatusSchema,
+  emptyLocationStatus,
+  locationCapability,
+  locationFix,
+} from './location.cap.js'
 // HA-targeted binary sensor cap family (Phase B1)
 export {
   type ContactStatus,
@@ -3727,6 +3736,7 @@ import type { colorCapability } from './color.cap.js'
 import type { composerCapability } from './composer.cap.js'
 import type { connectivityCapability } from './connectivity.cap.js'
 import type { consumablesCapability } from './consumables.cap.js'
+import type { locationCapability } from './location.cap.js'
 import type { contactCapability } from './contact.cap.js'
 import type { controlCapability } from './control.cap.js'
 import type { coreBlocksCapability } from './core-blocks.cap.js'
@@ -3984,6 +3994,7 @@ type AnyCapability =
   | typeof ptzAutotrackCapability
   | typeof navigationCapability
   | typeof consumablesCapability
+  | typeof locationCapability
   | typeof runningStateCapability
   | typeof rebootCapability
   | typeof lowPowerSleepCapability

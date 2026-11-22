@@ -65,6 +65,7 @@ import type { imageSettingsCapability } from '../capabilities/image-settings.cap
 import type { intercomCapability } from '../capabilities/intercom.cap.js'
 import type { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
+import type { locationCapability } from '../capabilities/location.cap.js'
 import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import type { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
 import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
@@ -190,6 +191,7 @@ export interface DeviceProxyState {
   readonly intercom: SliceHandle<InferRuntimeState<typeof intercomCapability>>
   readonly irTransmitter: SliceHandle<InferRuntimeState<typeof irTransmitterCapability>>
   readonly lawnMowerControl: SliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>
+  readonly location: SliceHandle<InferRuntimeState<typeof locationCapability>>
   readonly lockControl: SliceHandle<InferRuntimeState<typeof lockControlCapability>>
   readonly lowPowerSleep: SliceHandle<InferRuntimeState<typeof lowPowerSleepCapability>>
   readonly mediaPlayer: SliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>
@@ -312,6 +314,7 @@ export interface DeviceProxy {
   readonly intercom?: InferDeviceProxyCap<typeof intercomCapability>
   readonly irTransmitter?: InferDeviceProxyCap<typeof irTransmitterCapability>
   readonly lawnMowerControl?: InferDeviceProxyCap<typeof lawnMowerControlCapability>
+  readonly location?: InferDeviceProxyCap<typeof locationCapability>
   readonly lockControl?: InferDeviceProxyCap<typeof lockControlCapability>
   readonly lowPowerSleep?: InferDeviceProxyCap<typeof lowPowerSleepCapability>
   readonly mediaPlayer?: InferDeviceProxyCap<typeof mediaPlayerCapability>
@@ -801,6 +804,10 @@ export function createDeviceProxy(
     pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'pause', 'mutation', input, undefined, options),
     dock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'dock', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'getStatus', 'query', input, undefined, options),
+  }
+
+  const locationInterface = {
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('location', 'location', 'getStatus', 'query', input, undefined, options),
   }
 
   const lockControlInterface = {
@@ -1537,6 +1544,7 @@ export function createDeviceProxy(
       intercom: createSliceHandle<InferRuntimeState<typeof intercomCapability>>(stateSource, binding.deviceId, 'intercom'),
       irTransmitter: createSliceHandle<InferRuntimeState<typeof irTransmitterCapability>>(stateSource, binding.deviceId, 'ir-transmitter'),
       lawnMowerControl: createSliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>(stateSource, binding.deviceId, 'lawn-mower-control'),
+      location: createSliceHandle<InferRuntimeState<typeof locationCapability>>(stateSource, binding.deviceId, 'location'),
       lockControl: createSliceHandle<InferRuntimeState<typeof lockControlCapability>>(stateSource, binding.deviceId, 'lock-control'),
       lowPowerSleep: createSliceHandle<InferRuntimeState<typeof lowPowerSleepCapability>>(stateSource, binding.deviceId, 'low-power-sleep'),
       mediaPlayer: createSliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>(stateSource, binding.deviceId, 'media-player'),
@@ -1640,6 +1648,7 @@ export function createDeviceProxy(
     ...(bound('intercom') ? { intercom: intercomInterface } : {}),
     ...(bound('ir-transmitter') ? { irTransmitter: irTransmitterInterface } : {}),
     ...(bound('lawn-mower-control') ? { lawnMowerControl: lawnMowerControlInterface } : {}),
+    ...(bound('location') ? { location: locationInterface } : {}),
     ...(bound('lock-control') ? { lockControl: lockControlInterface } : {}),
     ...(bound('low-power-sleep') ? { lowPowerSleep: lowPowerSleepInterface } : {}),
     ...(bound('media-player') ? { mediaPlayer: mediaPlayerInterface } : {}),

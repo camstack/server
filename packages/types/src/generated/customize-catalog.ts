@@ -2026,6 +2026,13 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   'humidity-sensor': {
     humidity: '%',
   },
+  'location': {
+    latitude: '°',
+    longitude: '°',
+    accuracy: 'm',
+    heading: '°',
+    speed: 'm/s',
+  },
   'power-meter': {
     power: 'W',
     deliveredPower: 'W',

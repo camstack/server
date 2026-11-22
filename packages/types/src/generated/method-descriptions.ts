@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1540 of 1540 methods.
+ * Coverage: 1541 of 1541 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -662,6 +662,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "localNetwork.setViewerEndpoints": "Set the base URLs the viewer apps reach the hub on.",
   "localNetwork.uploadCertificate": "Replace the served material with operator-supplied PEMs. A certificate that does not lead to a public CA must come with its CA certificate, validated and kept for Download CA (D873).",
   "localNetwork.useStoredUploadedCertificate": "Serve the kept upload again after \"Revert to generated\" (D873). Refused when none is kept.",
+  "location.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "lockControl.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "lockControl.lock": "Lock the lock, with a PIN code when it needs one.",
   "lockControl.open": "Release the latch so the door can be opened.",

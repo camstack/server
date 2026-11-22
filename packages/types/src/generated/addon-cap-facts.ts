@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 89 caps with 480 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 90 caps with 486 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -128,6 +128,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "llm-runtime",
   "load-contribution",
   "local-network",
+  "location",
   "lock-control",
   "log-channels",
   "log-destination",
@@ -285,6 +286,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "intercom": [{"path":"talking","valueType":"boolean"}, {"path":"lastSessionAt","valueType":"number"}, {"path":"ability.sampleRate","valueType":"number"}, {"path":"ability.duplex","valueType":"enum","enumValues":["half","full"]}, {"path":"ability.maxBacklogMs","valueType":"number"}],
   "ir-transmitter": [{"path":"lastSend.at","valueType":"number"}, {"path":"lastSend.ok","valueType":"boolean"}, {"path":"lastSend.error","valueType":"string"}, {"path":"lastSend.medium","valueType":"enum","enumValues":["ir","rf"]}, {"path":"lastLearn.at","valueType":"number"}, {"path":"lastLearn.ok","valueType":"boolean"}, {"path":"lastLearn.error","valueType":"string"}],
   "lawn-mower-control": [{"path":"activity","valueType":"enum","enumValues":["idle","mowing","paused","docked","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"currentCode","valueType":"number"}, {"path":"currentCodeLabel","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["info","warning","error"]}],
+  "location": [{"path":"latitude","valueType":"number"}, {"path":"longitude","valueType":"number"}, {"path":"accuracy","valueType":"number"}, {"path":"heading","valueType":"number"}, {"path":"speed","valueType":"number"}, {"path":"fixAt","valueType":"number"}],
   "lock-control": [{"path":"state","valueType":"enum","enumValues":["locked","unlocked","locking","unlocking","jammed","door-open"]}, {"path":"codeRequired","valueType":"boolean"}],
   "low-power-sleep": [{"path":"sleeping","valueType":"boolean"}, {"path":"lastContactAt","valueType":"number"}, {"path":"lastUpdated","valueType":"number"}],
   "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"stateSource","valueType":"enum","enumValues":["reported","assumed"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"muteReadback","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}, {"path":"positionUpdatedAt","valueType":"number"}],
@@ -382,6 +384,7 @@ export const CAP_STATE_FIELD_PRESENCE: Readonly<
   "intercom": { "ability": "required", "lastSessionAt": "required", "talking": "required" },
   "ir-transmitter": { "lastFetchedAt": "required", "lastLearn": "required", "lastSend": "required" },
   "lawn-mower-control": { "activity": "required", "batteryLevel": "required", "currentCode": "required", "currentCodeLabel": "required", "lastChangedAt": "required", "progress": "required", "severity": "required" },
+  "location": { "accuracy": "required", "fixAt": "required", "heading": "required", "lastChangedAt": "required", "lastFetchedAt": "required", "latitude": "required", "longitude": "required", "speed": "required" },
   "lock-control": { "codeRequired": "optional", "lastChangedAt": "required", "state": "required" },
   "low-power-sleep": { "lastContactAt": "optional", "lastUpdated": "required", "sleeping": "required" },
   "media-player": { "assumedFields": "optional", "availableSources": "required", "currentMedia": "required", "declaredSources": "optional", "duration": "required", "isMuted": "required", "lastChangedAt": "required", "muteReadback": "optional", "position": "required", "positionUpdatedAt": "optional", "repeat": "required", "shuffle": "required", "source": "required", "state": "required", "stateSource": "optional", "volumeLevel": "required" },

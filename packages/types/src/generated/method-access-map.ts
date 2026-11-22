@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1540 method paths across 214 capabilities.
+ * Coverage: 1541 method paths across 215 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -675,6 +675,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'localNetwork.setViewerEndpoints': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.uploadCertificate': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.useStoredUploadedCertificate': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'location.getStatus': { capName: "location", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'lockControl.getStatus': { capName: "lock-control", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'lockControl.lock': { capName: "lock-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'lockControl.open': { capName: "lock-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -1671,6 +1672,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "llm-runtime",
   "load-contribution",
   "local-network",
+  "location",
   "lock-control",
   "log-channels",
   "log-destination",
@@ -1840,6 +1842,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "intercom",
   "ir-transmitter",
   "lawn-mower-control",
+  "location",
   "lock-control",
   "low-power-sleep",
   "media-player",

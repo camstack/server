@@ -2489,6 +2489,12 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'location',
+    reason:
+      'A fix maps to a device_tracker, which lands with the first provider that reports one; ' +
+      'until then nothing writes the slice, so an entity would never receive a value.',
+  },
+  {
     cap: 'low-power-sleep',
     reason:
       'Its sleep state is already exported through the battery entities of the same ' +

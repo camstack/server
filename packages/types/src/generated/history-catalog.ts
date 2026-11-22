@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 47 caps with series (132 series), 40 caps answered `'none'`.
+ * 48 caps with series (135 series), 40 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -125,6 +125,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   },
   'lawn-mower-control': {
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
+  },
+  'location': {
+    'latitude': { group: 'position', kind: 'gauge', unit: '°', deadband: 0.0002, displayName: 'Latitude' },
+    'longitude': { group: 'position', kind: 'gauge', unit: '°', deadband: 0.0002, displayName: 'Longitude' },
+    'speed': { kind: 'gauge', unit: 'm/s', deadband: 0.5, displayName: 'Speed' },
   },
   'lock-control': {
     'state': { kind: 'enum', values: ['locked', 'unlocked', 'locking', 'unlocking', 'jammed', 'door-open'] },

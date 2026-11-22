@@ -45,6 +45,7 @@ import type { imageSettingsCapability } from '../capabilities/image-settings.cap
 import type { intercomCapability } from '../capabilities/intercom.cap.js'
 import type { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
+import type { locationCapability } from '../capabilities/location.cap.js'
 import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import type { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
 import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
@@ -146,6 +147,7 @@ export interface DeviceLocalState {
   intercom: InferRuntimeState<typeof intercomCapability>
   irTransmitter: InferRuntimeState<typeof irTransmitterCapability>
   lawnMowerControl: InferRuntimeState<typeof lawnMowerControlCapability>
+  location: InferRuntimeState<typeof locationCapability>
   lockControl: InferRuntimeState<typeof lockControlCapability>
   lowPowerSleep: InferRuntimeState<typeof lowPowerSleepCapability>
   mediaPlayer: InferRuntimeState<typeof mediaPlayerCapability>
@@ -244,6 +246,7 @@ export const DEVICE_LOCAL_STATE_CAP_NAMES: Readonly<Record<keyof DeviceLocalStat
   intercom: 'intercom',
   irTransmitter: 'ir-transmitter',
   lawnMowerControl: 'lawn-mower-control',
+  location: 'location',
   lockControl: 'lock-control',
   lowPowerSleep: 'low-power-sleep',
   mediaPlayer: 'media-player',
@@ -348,6 +351,7 @@ export interface CapNameToRuntimeStateMap {
   'intercom': InferRuntimeState<typeof intercomCapability>
   'ir-transmitter': InferRuntimeState<typeof irTransmitterCapability>
   'lawn-mower-control': InferRuntimeState<typeof lawnMowerControlCapability>
+  'location': InferRuntimeState<typeof locationCapability>
   'lock-control': InferRuntimeState<typeof lockControlCapability>
   'low-power-sleep': InferRuntimeState<typeof lowPowerSleepCapability>
   'media-player': InferRuntimeState<typeof mediaPlayerCapability>

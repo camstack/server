@@ -47,6 +47,7 @@ import type { ImageStatusSchema } from '../capabilities/image.cap.js'
 import type { ImageSettingsStatusSchema } from '../capabilities/image-settings.cap.js'
 import type { IntercomStatusSchema } from '../capabilities/intercom.cap.js'
 import type { LawnMowerControlStatusSchema } from '../capabilities/lawn-mower-control.cap.js'
+import type { LocationStatusSchema } from '../capabilities/location.cap.js'
 import type { LockControlStatusSchema } from '../capabilities/lock-control.cap.js'
 import type { LowPowerSleepStatusSchema } from '../capabilities/low-power-sleep.cap.js'
 import type { MediaPlayerStatusSchema } from '../capabilities/media-player.cap.js'
@@ -143,6 +144,7 @@ export type CapStatusTypeMap = {
   readonly 'image-settings': z.infer<typeof ImageSettingsStatusSchema>
   readonly 'intercom': z.infer<typeof IntercomStatusSchema>
   readonly 'lawn-mower-control': z.infer<typeof LawnMowerControlStatusSchema>
+  readonly 'location': z.infer<typeof LocationStatusSchema>
   readonly 'lock-control': z.infer<typeof LockControlStatusSchema>
   readonly 'low-power-sleep': z.infer<typeof LowPowerSleepStatusSchema>
   readonly 'media-player': z.infer<typeof MediaPlayerStatusSchema>
@@ -243,6 +245,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'image-settings',
   'intercom',
   'lawn-mower-control',
+  'location',
   'lock-control',
   'low-power-sleep',
   'media-player',

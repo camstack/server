@@ -1787,6 +1787,9 @@ export const useLocalNetworkSetScanSubnets: typeof trpc.localNetwork.setScanSubn
 /** Generated alias around `trpc.localNetwork.revertToGeneratedCertificate.useMutation`. */
 export const useLocalNetworkRevertToGeneratedCertificate: typeof trpc.localNetwork.revertToGeneratedCertificate.useMutation = /*#__PURE__*/ alias(() => trpc.localNetwork.revertToGeneratedCertificate.useMutation)
 
+/** Generated alias around `trpc.location.getStatus.useQuery`. */
+export const useLocationGetStatus: typeof trpc.location.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.location.getStatus.useQuery)
+
 /** Generated alias around `trpc.lockControl.lock.useMutation`. */
 export const useLockControlLock: typeof trpc.lockControl.lock.useMutation = /*#__PURE__*/ alias(() => trpc.lockControl.lock.useMutation)
 

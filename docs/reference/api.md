@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1540 methods.**
+**215 capabilities · 1541 methods.**
 
 ## Method index
 
@@ -666,6 +666,7 @@
 | `localNetwork.getScanSubnets` | query | admin | local-network |
 | `localNetwork.setScanSubnets` | mutation | admin | local-network |
 | `localNetwork.revertToGeneratedCertificate` | mutation | admin | local-network |
+| `location.getStatus` | query | protected | location (auto) |
 | `lockControl.getStatus` | query | protected | lock-control (auto) |
 | `lockControl.lock` | mutation | protected | lock-control |
 | `lockControl.unlock` | mutation | protected | lock-control |
@@ -3315,6 +3316,18 @@
 | getScanSubnets | `localNetwork.getScanSubnets` | query | admin | `void` | `{ subnets: string[] }` |
 | setScanSubnets | `localNetwork.setScanSubnets` | mutation | admin | `{ subnets: string[] }` | `{ subnets: string[] }` |
 | revertToGeneratedCertificate | `localNetwork.revertToGeneratedCertificate` | mutation | admin | `void` | `{ mode: "generated" \| "uploaded" \| "disabled"; leafFingerprintSha256: string \| null; caFingerprintSha256: string \| null; validTo: string \| null; sans: string[]; caCertPem: string \| null; reissueError: string \| null; restartRequired: boolean; caMissing: boolean; localCaConstrained: boolean \| null; caReplacedAt: string \| null; storedUpload: { leafFingerprintSha256: string; validTo: string; hasCa: boolean } \| null }` |
+
+### `location` → `location.*`
+
+- **Source:** `packages/types/src/capabilities/location.cap.ts:119`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, weather-station, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump, vehicle, energy-system, workload`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `ILocationProvider`
+- **runtimeState:** `{ latitude: number \| null; longitude: number \| null; accuracy: number \| null; heading: number \| null; speed: number \| null; fixAt: number \| null; lastChangedAt: number; lastFetchedAt: number }`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `location.getStatus` | query | protected | `{ deviceId: number }` | `LocationStatusSchema` |
 
 ### `lock-control` → `lockControl.*`
 
