@@ -175,6 +175,26 @@ it with §4, not with a version number.
 - A version field is a claim about the closure, not about what a forked addon
   or a builtin actually executed.
 
+### Crash check after start — every node, every deploy
+
+A runner that dies at init can leave the node looking healthy: the version is right,
+the addon list says installed, and only a co-located group is gone. On 2026-11-22 a
+`motion.wasm` path moved by a shared bundle chunk killed the whole `detection` runner
+on all four nodes at every boot for ~8.5 h (no `pipeline-runner`, no detection, Alexa
+reads timing out), and nothing but this check would have shown it. After EVERY deploy
+(closure, addon, image), wait ~60 s, then on each node:
+
+- The runner boot check is complete: hub log `runner boot check` reads `N/N runners
+  running` — any `DEGRADED … failed: <runner>` is a failed deploy, not a warning.
+- The agents' own container stdout carries the real exit reason, the hub does not:
+  `ssh <host> 'docker logs --since 10m <container> 2>&1 | grep -E "Init failed|Process exited|Respawn|failed terminally"'`
+  (read-only). Empty is the only pass.
+- The caps the change touches are registered per node:
+  `capabilities.getCapability {"name":"<cap>"}` → `perNode` lists every node that
+  should serve it (for anything in the pipeline: `pipeline-runner`).
+
+Paste the result in the done-gate `crashes:` line.
+
 ## 5. CI rules
 
 - **Never dispatch the `Checks` workflow** (`gh workflow run Checks`), and say
@@ -203,6 +223,7 @@ build:      <npm run build -w … (types/system first) — result>; dts sweep: <
 guards:     <npx tsx scripts/check-… results | none relevant>
 shipped:    <not shipped | deploy-server <dev version> | published <VER> (run <id>)>
 applied:    <node → runningVersion, per node, from getServerPackageStatus | n/a>
+crashes:    <per node: boot check N/N + docker logs clean + perNode caps | "not deployed">
 verified:   <the behavioural check and its answer | "not deployed">
 docs:       camstack-docs gate — <files | none needed: reason>
 ```

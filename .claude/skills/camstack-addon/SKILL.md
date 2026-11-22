@@ -17,6 +17,10 @@ The canonical PUBLIC text of this skill is `packages/develop/skills/camstack-add
    `npm run changelog:add -- <package> "<operator-facing line>"`; a publish of a
    changed package without one is refused.
 4. Deploy and PROVE the new code runs (pack §7) — "running" in a list is not proof.
+   Then the crash check on EVERY node the addon reaches (`camstack-server-change`
+   §4 "Crash check after start"): runner boot check N/N, agent `docker logs` free of
+   `Init failed` / `Process exited`, caps in `perNode`. An init failure in one addon
+   kills every addon of its `execution.group`.
 5. Paste the repo done-gate below.
 
 ## Repo done-gate — paste it before "done"
@@ -27,6 +31,7 @@ placement:  <builtin | packages/addon-…>, manifest entries: <ids>
 wiring:     manifest + vite entries + index re-export (+ system index for a builtin); npx tsx scripts/check-addon-entries.ts — <ok>
 checks:     npm run typecheck:pkg -- <pkg> — <ok>; npm run test:related -- <files> — <result>; build emitted <dist path>
 deployed:   <hub | node ids> — fresh runner: <pid / boot line>; caps registered: <listCapabilities result>
+crashes:    <per node: boot check N/N, docker logs clean, perNode caps>
 proved:     <the call / log line / behaviour observed on the node>
 docs:       camstack-docs gate — <files | none needed: reason>
 ```
