@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { generateAutomationBlock, LINKED_TRIGGER_TEMPLATE_ID } from '@camstack/types'
 import type {
   ActionEntry,
   CompositionView,
@@ -78,5 +79,25 @@ describe('Build elements in global search', () => {
 
   it('encodes the id in an editor path', () => {
     expect(buildEditorPath('actions', 'action', 'a b')).toBe('/build?tab=actions&action=a%20b')
+  })
+})
+
+describe('a linked trigger in global search', () => {
+  it('is offered neither as an automation nor as a script: it is edited on its device', () => {
+    const linkedTrigger: CoreBlock = {
+      ...automation,
+      id: 'blk-linked',
+      name: 'Button to light',
+      code: generateAutomationBlock({
+        name: 'Button to light',
+        recipe: {
+          when: { kind: 'any', children: [{ kind: 'device-fired', deviceId: 12 }] },
+          actions: [{ kind: 'wait', seconds: 5 }],
+          template: { templateId: LINKED_TRIGGER_TEMPLATE_ID, values: { target: 5767 } },
+        },
+      }),
+    }
+    const items = buildBuildSearchItems({ blocks: [automation, linkedTrigger, script] })
+    expect(items.map((i) => i.key)).toEqual(['automation:blk-auto', 'script:blk-script'])
   })
 })

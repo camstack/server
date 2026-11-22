@@ -11,6 +11,7 @@ import {
   describeCompositionState,
   type FleetLookup,
   fleetLookupOf,
+  linkedTriggerTargets,
   originOfComposition,
 } from '../composition-rows'
 
@@ -295,5 +296,64 @@ describe('originOfComposition', () => {
       view.block.source?.kind === 'composition' ? view.block.source.composition : null
     if (composition === null) throw new Error('fixture')
     expect(originOfComposition(composition)).toEqual({ section: 'advanced', kind: null })
+  })
+})
+
+describe('linked triggers on the customization list', () => {
+  const trigger = (blockId: string, target: number, enabled = true) => ({
+    blockId,
+    name: blockId,
+    enabled,
+    templateId: 'builtin:linked-trigger',
+    values: { target, action: { actionId: 'switch.toggle' }, when: [] },
+  })
+
+  it('counts the triggers of each commanded device', () => {
+    expect(
+      linkedTriggerTargets([trigger('a', 1031), trigger('b', 1031, false), trigger('c', 101)]),
+    ).toEqual([
+      { deviceId: 1031, count: 2, enabled: 1 },
+      { deviceId: 101, count: 1, enabled: 1 },
+    ])
+  })
+
+  it('a device whose only customization is a linked trigger still has its row', () => {
+    const { customizations } = buildCompositionRows([], ANSWERED, [
+      { deviceId: 1031, count: 2, enabled: 2 },
+    ])
+    expect(customizations).toHaveLength(1)
+    const row = customizations[0]
+    expect(row?.kind).toBe('customization')
+    expect(row?.name).toBe('Bell')
+    expect(row?.type).toBe('switch')
+    expect(row?.reportedDeviceId).toBe(1031)
+    expect(row?.linkedTriggers).toBe(2)
+    expect(row?.features).toEqual([])
+    expect(row?.state.tone).toBe('ok')
+  })
+
+  it('a device with a customization and linked triggers stays ONE row, with the count', () => {
+    const { customizations } = buildCompositionRows([customization()], ANSWERED, [
+      { deviceId: 101, count: 1, enabled: 1 },
+    ])
+    expect(customizations).toHaveLength(1)
+    expect(customizations[0]?.blockId).toBe('c1')
+    expect(customizations[0]?.linkedTriggers).toBe(1)
+  })
+
+  it('a row without triggers says zero, and triggers that are all off read as idle', () => {
+    expect(
+      buildCompositionRows([customization()], ANSWERED).customizations[0]?.linkedTriggers,
+    ).toBe(0)
+    const off = buildCompositionRows([], ANSWERED, [{ deviceId: 1031, count: 1, enabled: 0 }])
+    expect(off.customizations[0]?.state.tone).toBe('idle')
+  })
+
+  it('names the device by its id while the device list has not answered', () => {
+    const row = buildCompositionRows([], UNANSWERED, [{ deviceId: 1031, count: 1, enabled: 1 }])
+      .customizations[0]
+    expect(row?.name).toBe('#1031')
+    expect(row?.namePresence).toBe('unknown')
+    expect(row?.reportedDeviceId).toBe(1031)
   })
 })

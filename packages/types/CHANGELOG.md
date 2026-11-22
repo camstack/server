@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notifier group members can be a fallback for an earlier member and can filter by event type and detected class
+- linkedTriggerParamsOf reads a linked trigger's stored values back into its typed parameters
 
 ### Changed
 

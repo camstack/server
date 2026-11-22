@@ -3155,6 +3155,37 @@
       "discardMessage": "La regola di funzionamento che hai scritto per questo dispositivo sarà rimossa e il dispositivo risulterà in funzione finché il suo switch è acceso.",
       "discardConfirm": "Segui lo switch",
       "default": "Predefinito: in funzione finché lo switch del dispositivo è acceso"
+    },
+    "triggers": {
+      "title": "Attivata da",
+      "add": "Aggiungi trigger",
+      "pickTitle": "Dispositivi i cui eventi comandano questo",
+      "source": "Sorgente",
+      "event": "Evento",
+      "action": "Azione",
+      "active": "Attivo",
+      "anyEvent": "Qualsiasi evento",
+      "anyPart": "Qualsiasi parte",
+      "events": "Eventi",
+      "parts": "Parti del dispositivo",
+      "partsNamed": "parti {{parts}}",
+      "customFilter": "Filtro personalizzato",
+      "editFilter": "Scegli gli eventi di {{name}}",
+      "filterTitle": "Eventi di {{name}}",
+      "actionFor": "Azione quando {{name}} scatta",
+      "activeFor": "Trigger da {{name}} attivo",
+      "actions": {
+        "on": "Accendi",
+        "off": "Spegni",
+        "toggle": "Inverti"
+      },
+      "removeWhat": "il trigger da {{name}}",
+      "flagged": "Il trigger salvato non è più valido; continua a funzionare com'era.",
+      "unreadable": "Questi trigger non possono essere mostrati qui: {{names}}",
+      "unreadableOne": "Questo trigger non è leggibile, quindi non è stato modificato.",
+      "notCommandable": "Questo dispositivo non ha nulla che un trigger possa comandare.",
+      "templateMissing": "I trigger collegati non sono disponibili su questo hub.",
+      "blockName": "{{source}} → {{target}}"
     }
   },
   "compositionEditor": {
@@ -6357,7 +6388,9 @@
       "deleteThisComposedDevice": "Eliminare questo dispositivo composto?",
       "deleteMessage": "{{name}} verrà eliminato. L'operazione non può essere annullata.",
       "builtAs": "Creato come",
-      "search": "Cerca in {{list}}"
+      "search": "Cerca in {{list}}",
+      "linkedTriggers_one": "{{count}} trigger collegato",
+      "linkedTriggers_other": "{{count}} trigger collegati"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Impossibile elencare i dispositivi:",
@@ -11758,7 +11791,9 @@
       "unreachable": "Non è stato possibile interrogare il composer: {{error}}",
       "notReported": "Non ancora riportato",
       "noRecord": "Il composer non ha ancora alcun record di questo blocco (stato memorizzato: {{stored}}).",
-      "featureOff": "{{cap}} (spento)"
+      "featureOff": "{{cap}} (spento)",
+      "triggersOn": "Trigger collegati",
+      "triggersOff": "Trigger collegati spenti"
     },
     "recipeOps": {
       "rowGone": "quella riga non esiste più",

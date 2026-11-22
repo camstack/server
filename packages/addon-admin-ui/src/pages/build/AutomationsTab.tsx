@@ -42,7 +42,7 @@ import {
 } from './automation/AutomationList'
 import {
   ejectRecipeFromCode,
-  looksLikeAutomation,
+  isListedAutomation,
   parseRecipeFromCode,
 } from './automation/recipe-from-code'
 import { EMPTY_RECIPE } from './automation/recipe-parts'
@@ -216,7 +216,7 @@ export function AutomationsTab({
   })
 
   const all = blocksQuery.data
-  const automations = sortBlocksForDisplay((all ?? []).filter((b) => looksLikeAutomation(b.code)))
+  const automations = sortBlocksForDisplay((all ?? []).filter((b) => isListedAutomation(b.code)))
   const knowsThereAreNone = all !== undefined && automations.length === 0
 
   const editing =

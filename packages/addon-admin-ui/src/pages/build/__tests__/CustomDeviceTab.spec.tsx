@@ -29,6 +29,29 @@ interface QueryState<T> {
 
 let compositionsQuery: QueryState<CompositionListRead>
 let devicesQuery: QueryState<readonly DeviceRow[]>
+let triggerInstances: readonly TriggerInstanceRow[] = []
+
+interface TriggerInstanceRow {
+  readonly blockId: string
+  readonly name: string
+  readonly enabled: boolean
+  readonly templateId: string
+  readonly values: Record<string, unknown>
+}
+
+function triggerOn(blockId: string, target: number): TriggerInstanceRow {
+  return {
+    blockId,
+    name: `trigger ${blockId}`,
+    enabled: true,
+    templateId: 'builtin:linked-trigger',
+    values: {
+      target,
+      action: { actionId: 'switch.toggle' },
+      when: [{ kind: 'fired', deviceId: 12, events: [], parts: [] }],
+    },
+  }
+}
 const deleteMutate = vi.fn()
 
 interface DeviceRow {
@@ -78,6 +101,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useCoreBlocksListCompositions: () => compositionsQuery,
+    useCoreBlocksListTemplateInstances: () => ({
+      data: { instances: triggerInstances },
+      error: null,
+      refetch: vi.fn(async () => undefined),
+    }),
     useDeviceManagerGetDevice: () => ({ data: undefined }),
     useCoreBlocksSetEnabled: () => ({ mutate: vi.fn(), isPending: false, error: null }),
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -344,6 +372,27 @@ describe('CustomDeviceTab', () => {
       views: [COMPOSED, CUSTOMIZATION],
     })
     devicesQuery = answered(FLEET)
+    triggerInstances = []
+  })
+
+  it('a device whose only customization is a linked trigger is a customization row linking to its Customize tab', () => {
+    triggerInstances = [triggerOn('t1', 1031), triggerOn('t2', 1031)]
+    renderTab()
+    const customizations = screen.getByRole('region', { name: 'Customizations' })
+    const links = screen
+      .getAllByRole('link', { name: 'Doorbell switch' })
+      .filter((link) => link.getAttribute('href') === '/devices/1031?tab=customize')
+    expect(links).toHaveLength(1)
+    expect(customizations.contains(links[0] ?? null)).toBe(true)
+    expect(customizations.textContent).toContain('2 linked triggers')
+  })
+
+  it('a device with a customization and a linked trigger stays one row, with the trigger count', () => {
+    triggerInstances = [triggerOn('t1', 101)]
+    renderTab()
+    expect(screen.getAllByRole('link', { name: 'Camera front door' })).toHaveLength(1)
+    const customizations = screen.getByRole('region', { name: 'Customizations' })
+    expect(customizations.textContent).toContain('1 linked trigger')
   })
 
   it('delete asks in a modal naming the device, calls the mutation once and re-reads the list', async () => {

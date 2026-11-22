@@ -3080,6 +3080,37 @@
       "discardMessage": "The running rule you wrote for this device will be removed and the device will count as running while its switch is on.",
       "discardConfirm": "Follow the switch",
       "default": "Default: running while the device's switch is on"
+    },
+    "triggers": {
+      "title": "Triggered by",
+      "add": "Add trigger",
+      "pickTitle": "Devices whose events command this one",
+      "source": "Source",
+      "event": "Event",
+      "action": "Action",
+      "active": "Active",
+      "anyEvent": "Any event",
+      "anyPart": "Any part",
+      "events": "Events",
+      "parts": "Parts of the device",
+      "partsNamed": "parts {{parts}}",
+      "customFilter": "Custom filter",
+      "editFilter": "Choose the events of {{name}}",
+      "filterTitle": "Events of {{name}}",
+      "actionFor": "Action when {{name}} fires",
+      "activeFor": "Trigger from {{name}} active",
+      "actions": {
+        "on": "Turn on",
+        "off": "Turn off",
+        "toggle": "Toggle"
+      },
+      "removeWhat": "the trigger from {{name}}",
+      "flagged": "The stored trigger no longer fits; it keeps running as it was.",
+      "unreadable": "These triggers cannot be shown here: {{names}}",
+      "unreadableOne": "This trigger cannot be read, so it was not changed.",
+      "notCommandable": "This device has nothing a trigger can switch.",
+      "templateMissing": "Linked triggers are not available on this hub.",
+      "blockName": "{{source}} → {{target}}"
     }
   },
   "compositionEditor": {
@@ -6282,7 +6313,9 @@
       "deleteThisComposedDevice": "Delete this composed device?",
       "deleteMessage": "{{name}} will be deleted. This cannot be undone.",
       "builtAs": "Built as",
-      "search": "Search {{list}}"
+      "search": "Search {{list}}",
+      "linkedTriggers_one": "{{count}} linked trigger",
+      "linkedTriggers_other": "{{count}} linked triggers"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Could not list devices:",
@@ -11736,7 +11769,9 @@
       "unreachable": "The composer could not be asked: {{error}}",
       "notReported": "Not reported yet",
       "noRecord": "The composer holds no record of this block yet (stored status: {{stored}}).",
-      "featureOff": "{{cap}} (off)"
+      "featureOff": "{{cap}} (off)",
+      "triggersOn": "Linked triggers",
+      "triggersOff": "Linked triggers off"
     },
     "recipeOps": {
       "rowGone": "that row is no longer there",

@@ -71,3 +71,27 @@ export function linkedTriggerValues(params: LinkedTriggerParams): TemplateInputV
     when: parsed.sources.map((source) => ({ ...source })),
   }
 }
+
+const ActionValueSchema = z.object({ actionId: z.string().min(1) })
+
+/**
+ * The parameters stored values describe, or null when they are not a linked
+ * trigger this release can read (an unknown action, a source kind it does not
+ * know). The Customize tab shows such an instance as unreadable; it never
+ * rewrites what it could not read.
+ */
+export function linkedTriggerParamsOf(
+  values: TemplateInputValues,
+): z.output<typeof LinkedTriggerParamsSchema> | null {
+  const action = ActionValueSchema.safeParse(values['action'])
+  if (!action.success) return null
+  const dot = action.data.actionId.lastIndexOf('.')
+  if (dot <= 0) return null
+  const parsed = LinkedTriggerParamsSchema.safeParse({
+    targetDeviceId: values[LINKED_TRIGGER_TARGET_INPUT],
+    capability: action.data.actionId.slice(0, dot),
+    action: action.data.actionId.slice(dot + 1),
+    sources: values['when'],
+  })
+  return parsed.success ? parsed.data : null
+}

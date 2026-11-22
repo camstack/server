@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { AdminSectionedPage } from '../components/AdminSectionedPage'
 import { navChromeForPath } from '../lib/nav-items'
-import { isPlainScript, looksLikeAutomation } from './build/automation/recipe-from-code'
+import { isListedAutomation, isPlainScript } from './build/automation/recipe-from-code'
 import { ActionsTab } from './build/actions/ActionsTab'
 import { AutomationsTab } from './build/AutomationsTab'
 import { SchedulersTab } from './build/schedulers/SchedulersTab'
@@ -53,7 +53,7 @@ function countScripts(blocks: readonly CoreBlock[]): number {
 }
 
 function countAutomations(blocks: readonly CoreBlock[]): number {
-  return blocks.filter((b) => looksLikeAutomation(b.code)).length
+  return blocks.filter((b) => isListedAutomation(b.code)).length
 }
 
 function withCount(label: string, count: number | null): string {

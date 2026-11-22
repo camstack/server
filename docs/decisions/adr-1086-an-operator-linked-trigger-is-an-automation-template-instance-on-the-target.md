@@ -47,10 +47,20 @@ instance of the retired "Buttons → devices" template keeps running (the engine
 runs the generated code, not the template) and is flagged `missing-template`.
 D1083 is superseded; group triggers are removed.
 
+Amended 2026-11-22: a linked trigger is a CUSTOMIZATION of the commanded
+device and has one surface. It is shown, created, changed and deleted only in
+the "Triggered by" section of that device's Customize tab, one row per source
+device, one automation per source device. Build → Automations, its count and
+the global search leave these automations out (`isListedAutomation`); Build →
+Custom Device shows the commanded device as a customization row that links to
+its Customize tab, sharing the row of a customization block when there is one.
+
 ## Enforcement
 
 Specs: the template expands and runs through the generated block for each
 action, a non-matching press does nothing, and the list read returns an
 instance for its target and never for a source (`generated-block.spec.ts`,
 `list-template-instances.spec.ts`). `check-no-device-links` keeps the third
-home closed.
+home closed. The single surface is held by `listed-automation.spec.ts`,
+`search-items-build.spec.ts`, `composition-rows.spec.ts` and
+`TriggeredByTable.spec.tsx`.

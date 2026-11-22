@@ -109,6 +109,11 @@ vi.mock('../../../fan-presets/FanPresetsExtensionCard', () => ({
   FanPresetsExtensionCard: () => <div data-testid="config-card-fan-presets" />,
 }))
 
+// The "Triggered by" section reads its own data and has its own spec.
+vi.mock('../triggers/TriggeredByTable', () => ({
+  TriggeredByTable: () => null,
+}))
+
 const { ComposedCustomizeBody } = await import('../ComposedCustomizeBody')
 
 function stubDialog(): void {

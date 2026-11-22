@@ -6,7 +6,7 @@
  * Customizations stay links to the device.
  */
 
-import type { CompositionListRead } from '@camstack/types'
+import { type CompositionListRead, LINKED_TRIGGER_TEMPLATE_ID } from '@camstack/types'
 import {
   Badge,
   Button,
@@ -18,6 +18,7 @@ import {
   useConfirm,
   useCoreBlocksDelete,
   useCoreBlocksListCompositions,
+  useCoreBlocksListTemplateInstances,
   useCoreBlocksSetEnabled,
   useDeviceLabelById,
   useDeviceManagerSetName,
@@ -38,6 +39,8 @@ import { useDeviceList } from '../../hooks/useDevice'
 import { customizePath, devicePath } from '../../lib/customization-routes'
 import {
   buildCompositionRows,
+  type LinkedTriggerTarget,
+  linkedTriggerTargets,
   type CompositionRow,
   type CompositionRowLists,
   type CompositionRowOrigin,
@@ -104,6 +107,12 @@ export function CustomDeviceTab({
   const [params, setParams] = useSearchParams()
   const compositions = useCoreBlocksListCompositions({}, { refetchInterval: POLL_MS })
   const fleet = useFleetLookup()
+  // Linked triggers are customizations of the device they command: they share its row.
+  const triggers = useCoreBlocksListTemplateInstances(
+    { templateId: LINKED_TRIGGER_TEMPLATE_ID },
+    { refetchInterval: POLL_MS },
+  )
+  const linkedTriggers = linkedTriggerTargets(triggers.data?.instances ?? [])
   const formUrl = useItemFormUrl({ editKey: 'block', newKey: 'new', push: true })
   const editingId = formUrl.state.mode === 'edit' ? formUrl.state.id : null
   const createMode = editingId === null ? createModeOf(params.get('new'), createRequested) : null
@@ -135,28 +144,38 @@ export function CustomDeviceTab({
   }
 
   const read = compositions.data
-  const body = compositionBody(read, compositions.error, () => void compositions.refetch(), fleet, {
-    onEditComposed: (blockId) => formUrl.openEdit(blockId),
-    onOpenQuick: (row) => setQuickModalBlock(row.blockId),
-    deleting: remove.isPending,
-    onDelete: (row) => {
-      void confirm({
-        title: t('build.customDeviceTab.deleteThisComposedDevice', 'Delete this composed device?'),
-        message: t(
-          'build.customDeviceTab.deleteMessage',
-          '{{name}} will be deleted. This cannot be undone.',
-          {
-            name: row.name,
-          },
-        ),
-        confirmLabel: t('common.delete', 'Delete'),
-        variant: 'danger',
-      }).then((accepted) => {
-        if (!accepted) return
-        remove.mutate({ blockId: row.blockId }, { onSuccess: () => void compositions.refetch() })
-      })
+  const body = compositionBody(
+    read,
+    compositions.error ?? triggers.error,
+    () => void compositions.refetch(),
+    fleet,
+    linkedTriggers,
+    {
+      onEditComposed: (blockId) => formUrl.openEdit(blockId),
+      onOpenQuick: (row) => setQuickModalBlock(row.blockId),
+      deleting: remove.isPending,
+      onDelete: (row) => {
+        void confirm({
+          title: t(
+            'build.customDeviceTab.deleteThisComposedDevice',
+            'Delete this composed device?',
+          ),
+          message: t(
+            'build.customDeviceTab.deleteMessage',
+            '{{name}} will be deleted. This cannot be undone.',
+            {
+              name: row.name,
+            },
+          ),
+          confirmLabel: t('common.delete', 'Delete'),
+          variant: 'danger',
+        }).then((accepted) => {
+          if (!accepted) return
+          remove.mutate({ blockId: row.blockId }, { onSuccess: () => void compositions.refetch() })
+        })
+      },
     },
-  })
+  )
 
   const composedRows =
     read === undefined || read.state === 'not-loaded'
@@ -308,6 +327,7 @@ function compositionBody(
   error: unknown,
   refetch: () => void,
   fleet: FleetLookup,
+  linkedTriggers: readonly LinkedTriggerTarget[],
   handlers: CompositionBodyHandlers,
 ): ReactNode {
   if (error != null && read === undefined) {
@@ -331,7 +351,7 @@ function compositionBody(
   }
   if (read.state === 'not-loaded') return notLoadedNote(read.reason)
   const refreshError = error != null ? errorMessage(error) : null
-  const lists = buildCompositionRows(read.views, fleet)
+  const lists = buildCompositionRows(read.views, fleet, linkedTriggers)
   return (
     <CompositionLists lists={lists} fleet={fleet} refreshError={refreshError} handlers={handlers} />
   )
@@ -568,7 +588,14 @@ function RowName({ row }: RowNameProps) {
           {t('build.customDeviceTab.deviceMissing', 'device missing')}
         </span>
       )}
-      <p className="text-[11px] text-foreground-subtle">{row.features.join(', ')}</p>
+      {row.features.length > 0 && (
+        <p className="text-[11px] text-foreground-subtle">{row.features.join(', ')}</p>
+      )}
+      {row.linkedTriggers > 0 && (
+        <Badge variant="default" data-testid="linked-triggers-badge">
+          {t('build.customDeviceTab.linkedTriggers', { count: row.linkedTriggers })}
+        </Badge>
+      )}
     </div>
   )
 }

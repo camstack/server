@@ -30,6 +30,8 @@ import {
   composedDeviceRef,
   compositionSourceKey,
   fieldReads,
+  LINKED_TRIGGER_TARGET_INPUT,
+  type TemplateInstance,
 } from '@camstack/types'
 import type { BlockTone } from './core-block-status'
 import i18n from '../../i18n/index'
@@ -127,6 +129,42 @@ export interface CompositionRow {
    * answered. A composed device is tagged like any device, from its page.
    */
   readonly tags: readonly string[]
+  /**
+   * How many linked triggers command the row's device (D1086). They are edited
+   * on the same Customize tab the row links to, so they share its row: a device
+   * with only linked triggers gets a row of its own, a device with a
+   * customization block keeps its one row.
+   */
+  readonly linkedTriggers: number
+}
+
+/** The linked triggers of one commanded device, counted. */
+export interface LinkedTriggerTarget {
+  readonly deviceId: number
+  readonly count: number
+  /** How many of them are switched on. */
+  readonly enabled: number
+}
+
+/** The row key of a device that has linked triggers and no customization block. */
+export const LINKED_TRIGGER_ROW_PREFIX = 'linked-trigger:'
+
+/** The commanded devices of the linked-trigger automations, in first-seen order. */
+export function linkedTriggerTargets(
+  instances: readonly TemplateInstance[],
+): readonly LinkedTriggerTarget[] {
+  const byDevice = new Map<number, LinkedTriggerTarget>()
+  for (const instance of instances) {
+    const target = instance.values[LINKED_TRIGGER_TARGET_INPUT]
+    if (typeof target !== 'number') continue
+    const seen = byDevice.get(target) ?? { deviceId: target, count: 0, enabled: 0 }
+    byDevice.set(target, {
+      deviceId: target,
+      count: seen.count + 1,
+      enabled: seen.enabled + (instance.enabled ? 1 : 0),
+    })
+  }
+  return [...byDevice.values()]
 }
 
 export interface CompositionRowLists {
@@ -327,6 +365,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
       sources,
       reportedDeviceId: reported,
       tags: self?.tags ?? [],
+      linkedTriggers: 0,
     }
   }
   const namePresence = presenceOf(self)
@@ -343,6 +382,49 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
     sources,
     reportedDeviceId: reported,
     tags: self?.tags ?? [],
+    linkedTriggers: 0,
+  }
+}
+
+function deviceById(fleet: FleetLookup, deviceId: number): FleetDevice | null | undefined {
+  if (fleet.state !== 'answered') return undefined
+  for (const device of fleet.byRef.values()) if (device.id === deviceId) return device
+  return null
+}
+
+/** The id of the device a customization targets, from the device list; null when it does not say. */
+function customizedDeviceId(view: CompositionView, fleet: FleetLookup): number | null {
+  const composition =
+    view.block.source?.kind === 'composition' ? view.block.source.composition : null
+  if (composition === null || composition.target.kind !== 'existing') return null
+  return lookup(fleet, composition.target.device)?.id ?? null
+}
+
+/** The row of a device that linked triggers command and no customization block describes. */
+function triggerOnlyRow(target: LinkedTriggerTarget, fleet: FleetLookup): CompositionRow {
+  const device = deviceById(fleet, target.deviceId)
+  const on = target.enabled > 0
+  return {
+    blockId: `${LINKED_TRIGGER_ROW_PREFIX}${String(target.deviceId)}`,
+    kind: 'customization',
+    enabled: on,
+    name: device ? device.name : `#${String(target.deviceId)}`,
+    namePresence: presenceOf(device),
+    type: device ? device.type : null,
+    origin: { section: 'advanced', kind: null },
+    features: [],
+    state: {
+      tone: on ? 'ok' : 'idle',
+      label: i18n.t(
+        on ? 'helpers.compositionRows.triggersOn' : 'helpers.compositionRows.triggersOff',
+      ),
+      reason: null,
+    },
+    sources: [],
+    // The id comes from the stored trigger itself, never resolved from a name.
+    reportedDeviceId: target.deviceId,
+    tags: device?.tags ?? [],
+    linkedTriggers: target.count,
   }
 }
 
@@ -361,11 +443,26 @@ function byAttention(a: CompositionRow, b: CompositionRow): number {
 export function buildCompositionRows(
   views: readonly CompositionView[],
   fleet: FleetLookup,
+  linkedTriggers: readonly LinkedTriggerTarget[] = [],
 ): CompositionRowLists {
-  const rows = views.flatMap((view) => {
+  const claimed = new Set<number>()
+  const withTriggers = views.flatMap((view) => {
     const row = toRow(view, fleet)
-    return row === null ? [] : [row]
+    if (row === null) return []
+    if (row.kind !== 'customization') return [row]
+    // The composer's answer names the device; before it answers, the device list does.
+    const deviceId = row.reportedDeviceId ?? customizedDeviceId(view, fleet)
+    const target = linkedTriggers.find((t) => t.deviceId === deviceId)
+    if (target === undefined) return [row]
+    claimed.add(target.deviceId)
+    return [{ ...row, linkedTriggers: target.count }]
   })
+  const rows = [
+    ...withTriggers,
+    ...linkedTriggers
+      .filter((target) => !claimed.has(target.deviceId))
+      .map((target) => triggerOnlyRow(target, fleet)),
+  ]
   return {
     composed: rows.filter((row) => row.kind === 'composed').toSorted(byAttention),
     customizations: rows.filter((row) => row.kind === 'customization').toSorted(byAttention),

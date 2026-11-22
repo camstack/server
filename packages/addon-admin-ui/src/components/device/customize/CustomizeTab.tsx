@@ -25,6 +25,7 @@ import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
 import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
+import { TriggeredByTable } from './triggers/TriggeredByTable'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
@@ -122,6 +123,7 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         defaults={defaultConsumables}
       />
       <ExtensionSlotSections device={device} />
+      <TriggeredByTable device={device} />
     </div>
   )
 }

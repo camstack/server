@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notifier group members get an escalation and an event filter; a rule with several notifiers can be converted to a group
+- A device's Customize tab has a "Triggered by" section for the devices whose events switch it; these linked triggers no longer appear under Build → Automations and show as a customization row under Build → Custom Device
 
 ### Changed
 

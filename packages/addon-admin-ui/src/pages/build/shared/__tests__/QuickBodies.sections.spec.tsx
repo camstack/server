@@ -134,6 +134,7 @@ const ROW: CompositionRow = {
   ],
   reportedDeviceId: 4603,
   tags: [],
+  linkedTriggers: 0,
 }
 
 describe('CustomDeviceQuickBody', () => {

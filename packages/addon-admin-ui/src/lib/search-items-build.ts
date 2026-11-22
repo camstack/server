@@ -17,7 +17,11 @@ import {
   type TemplateRecord,
 } from '@camstack/types'
 import { templateEditPath } from '../components/remote/EditTemplateButton'
-import { isPlainScript, looksLikeAutomation } from '../pages/build/automation/recipe-from-code'
+import {
+  isListedAutomation,
+  isPlainScript,
+  looksLikeAutomation,
+} from '../pages/build/automation/recipe-from-code'
 import type { SearchItem } from './global-search'
 import { compositionEditorPath } from './customization-routes'
 
@@ -43,6 +47,8 @@ export function buildBuildSearchItems(sources: BuildSearchSources): readonly Sea
   const items: SearchItem[] = []
   for (const block of sources.blocks ?? []) {
     if (looksLikeAutomation(block.code)) {
+      // A linked trigger is edited on its device's Customize tab, never from here.
+      if (!isListedAutomation(block.code)) continue
       items.push({
         key: `automation:${block.id}`,
         domain: 'automation',

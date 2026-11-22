@@ -27,7 +27,12 @@
  * the operator just took ownership of.
  */
 
-import { type AutomationRecipe, AutomationRecipeSchema } from '@camstack/types'
+import {
+  type AutomationRecipe,
+  AutomationRecipeSchema,
+  LINKED_TRIGGER_TEMPLATE_ID,
+  readRecipeLiteral,
+} from '@camstack/types'
 import i18n from '../../../i18n/index'
 
 /** The declaration the generator emits. Matched as a whole so a mention of
@@ -42,6 +47,21 @@ const EJECTED_NOTE = `// EJECTED from the visual automation editor — this file
 
 export function looksLikeAutomation(code: string): boolean {
   return code.includes(DECLARATION)
+}
+
+/**
+ * An automation the Automations list, its count and the global search offer.
+ * A linked trigger is left out: it is a customization of the device it
+ * commands and is shown, created, edited and deleted only on that device's
+ * Customize tab. An automation whose recipe cannot be read stays listed, so
+ * it can be repaired.
+ */
+export function isListedAutomation(code: string): boolean {
+  if (!looksLikeAutomation(code)) return false
+  const read = readRecipeLiteral(code)
+  return !(
+    read.status === 'recipe' && read.recipe.template?.templateId === LINKED_TRIGGER_TEMPLATE_ID
+  )
 }
 
 /**

@@ -290,6 +290,13 @@ vi.mock('../../../remote/RemoteConfigDialog', () => ({
   RemoteConfigDialog: () => <div data-testid="remote-editor" />,
 }))
 
+// The "Triggered by" section has its own spec; here it is only proved mounted.
+vi.mock('../triggers/TriggeredByTable', () => ({
+  TriggeredByTable: (p: { device: { id: number } }) => (
+    <div data-testid="triggered-by" data-device={p.device.id} />
+  ),
+}))
+
 const { CustomizeTab } = await import('../CustomizeTab')
 
 /** jsdom implements neither `<dialog>.showModal()` nor `.close()`. */
@@ -443,6 +450,12 @@ describe('CustomizeTab — what it may claim (D315)', () => {
     expect(screen.queryByText(/Reading this device's customization/)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Remove customization' })).toBeNull()
   })
+  it('carries the "Triggered by" section for the device it customizes', () => {
+    renderTab()
+    const id = device.current?.['id']
+    expect(screen.getByTestId('triggered-by').getAttribute('data-device')).toBe(String(id))
+  })
+
   it('a present customization shows its block status', () => {
     customization.current = PRESENT
     renderTab()
