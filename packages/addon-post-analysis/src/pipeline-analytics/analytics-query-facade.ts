@@ -612,6 +612,11 @@ export class AnalyticsQueryFacade {
     })
     const total = counts.motion + counts.object + counts.audio
     const byRemoval = input.reason !== undefined
+    // The removal reconcile replays every tombstone on every node at start and
+    // every 6 h; a replay that found nothing did nothing, and auditing it wrote
+    // one row per tombstone per node per pass (~16k rows/day). A manual delete
+    // is the operator's act and is audited even when empty.
+    if (byRemoval && total === 0) return counts
     await this.deps.opsLog()?.append({
       op: byRemoval ? 'prune' : 'manual-delete',
       reason: input.reason ?? 'manual',

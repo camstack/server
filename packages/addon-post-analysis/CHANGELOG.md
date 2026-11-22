@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The events maintenance log no longer fills with empty 'device deleted' rows from the periodic removal replay (one row per deleted device per node every 6 hours)
+
 ## [1.2.722] - 2026-11-22
 
 ### Changed
