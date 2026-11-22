@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.625] - 2026-11-22
+
 ### Changed
 
 - A whole capability can be linked to another device's with one link; the per-device group mechanism is gone and getCapLinks is readable by viewers.
