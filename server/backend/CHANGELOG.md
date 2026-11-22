@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Boot no longer spikes memory by several GB: the storage report scans on its own read-only connection with the map off, and the database map is re-sized only after the file fills 90% of it
 
+### Fixed
+
+- Fixed UniFi switch ports and sensors reading offline after a restart: a device already built by its parent is no longer constructed a second time
+
 ## [1.2.938] - 2026-11-22
 
 ### Changed

@@ -1300,6 +1300,19 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       initialMeta: import('@camstack/types').InitialDeviceMeta | undefined = undefined,
     ): Promise<T> => {
       const id = await deviceApi.allocateDeviceId(stableId)
+      // Idempotency guard (mirrors `spawnAccessoryChild`): a parent's
+      // `getAccessoryChildren` may already have built this device, and a
+      // restore pass that captured its live set earlier asks for it again.
+      // Constructing a second instance runs its constructor side effects
+      // (a device-status write) before `registry.register` refuses the
+      // duplicate, leaving the hub with the dropped instance's state.
+      const existing = registry.getById(id)
+      if (existing && existing.stableId === stableId && existing instanceof DeviceClass) {
+        opts.logger.debug('create: already registered, returning the live instance', {
+          tags: { stableId, deviceId: id },
+        })
+        return existing
+      }
       // Pre-persist operator-supplied meta (name / location) AND
       // config BEFORE constructing the device. Both surfaces are
       // pure read-from-DB inside `BaseDevice` — the constructor
