@@ -27,6 +27,7 @@ export const doNotDisturbCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.MediaPlayer],
   methods: {
+    /** Turn Do Not Disturb on or off for the device. */
     setEnabled: method(z.object({ deviceId: z.number().int(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
       // ACTUATION, like `switch.setState`: the caller's device grant governs it.

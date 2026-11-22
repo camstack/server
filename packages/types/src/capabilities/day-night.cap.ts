@@ -91,7 +91,9 @@ export const dayNightCapability = {
     ui: { kind: 'derived-form', builderId: 'day-night', tab: 'image' },
   },
   methods: {
+    /** The camera's day/night modes and current settings. */
     getOptions: method(z.object({ deviceId: z.number() }), DayNightOptionsSchema),
+    /** Change the camera's day/night mode, sensitivity or switch delay. */
     setSettings: method(
       z.object({ deviceId: z.number(), settings: DayNightSettingsPatchSchema }),
       z.void(),

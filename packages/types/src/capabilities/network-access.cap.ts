@@ -66,9 +66,13 @@ export const networkAccessCapability = {
   mode: 'collection',
   providerKind: 'ingress',
   methods: {
+    /** Start the network access (tunnel) and return its public endpoint. */
     start: method(z.void(), NetworkEndpointSchema, { kind: 'mutation' }),
+    /** Stop the network access. */
     stop: method(z.void(), z.void(), { kind: 'mutation' }),
+    /** The current public endpoint; null when not running. */
     getEndpoint: method(z.void(), NetworkEndpointSchema.nullable()),
+    /** The status of the network access. */
     getStatus: method(z.void(), NetworkAccessStatusSchema),
     /**
      * Enumerate every active ingress entry. Providers that expose only a

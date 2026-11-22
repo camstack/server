@@ -253,6 +253,7 @@ export const trainingProviderCapability = {
       { kind: 'mutation', auth: 'admin', timeoutMs: 30 * 60_000 },
     ),
 
+    /** The status of a training job on the cloud provider. */
     getJob: method(z.object(JobRef), ProviderJobStatusSchema, {
       auth: 'admin',
       timeoutMs: 60_000,

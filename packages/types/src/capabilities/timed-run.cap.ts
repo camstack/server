@@ -194,6 +194,7 @@ export const timedRunCapability = {
     ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },
   },
   methods: {
+    /** The timed-run options of a device. */
     getOptions: method(z.object({ deviceId: z.number().int() }), TimedRunOptionsSchema),
     /**
      * The one-tap run of this device. A duration above the type's maximum is

@@ -69,9 +69,11 @@ export const calendarSourceCapability = {
   internal: true,
   providerKind: 'calendar',
   methods: {
+    /** List the calendars this source provides. */
     listCalendars: method(z.void(), z.array(CalendarInfoSchema).readonly(), {
       auth: 'admin',
     }),
+    /** List events of this source's calendars in a time window. */
     listEvents: method(CalendarListEventsInputSchema, z.array(CalendarEventSchema).readonly(), {
       auth: 'admin',
     }),

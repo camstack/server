@@ -20,6 +20,7 @@ export const buttonCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Button],
   methods: {
+    /** Press the button to trigger its action. */
     press: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

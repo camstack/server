@@ -34,6 +34,7 @@ export const updateCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Update],
   methods: {
+    /** Install the available update. */
     installUpdate: method(z.void(), z.void(), {
       kind: 'mutation',
       auth: 'admin',

@@ -885,6 +885,7 @@ export const pipelineOrchestratorCapability = {
         auth: 'admin',
       },
     ),
+    /** Resume pipeline work that was paused for a storage migration. */
     resumeForStorageMigration: method(
       StorageMigrationLeaseInputSchema,
       z.object({ resumed: z.literal(true) }),
@@ -1598,6 +1599,8 @@ export const pipelineOrchestratorCapability = {
 
     // ── Per-camera function switches — DEPRECATED, compatibility only ──
     /**
+     * The per-camera function switches and whether each is on.
+     *
      * @deprecated The aggregate switch group is being withdrawn
      * ([D113](../../../../docs/decisions/adr-0113.md)). Build nothing new on
      * this pair; read the authority directly.
@@ -1630,6 +1633,8 @@ export const pipelineOrchestratorCapability = {
       role: 'viewer',
     }),
     /**
+     * Turn one of a camera's function switches on or off.
+     *
      * @deprecated See {@link getCameraSwitches}. Write the authority — the
      * wrapper binding, `RecordingConfig.enabled`, the notification mute — not
      * this ([D113](../../../../docs/decisions/adr-0113.md)).

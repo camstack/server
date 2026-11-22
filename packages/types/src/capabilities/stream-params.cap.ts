@@ -101,7 +101,9 @@ export const streamParamsCapability = {
     ui: { kind: 'derived-form', builderId: 'stream-params', tab: 'streaming' },
   },
   methods: {
+    /** The camera's stream profiles and their encoding options. */
     getOptions: method(z.object({ deviceId: z.number() }), StreamParamsOptionsSchema),
+    /** Change the encoding settings of one stream profile. */
     setProfile: method(
       z.object({
         deviceId: z.number(),

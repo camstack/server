@@ -42,6 +42,7 @@ export const motionDetectionCapability = {
     // slot / foreign handle yields a null read → empty result (the runner
     // ships `frame` as the fallback, queue-depth gated).
     // The pipeline's own frame analysis: never a viewer's call (D921).
+    /** Analyse a frame of a camera for motion and return the motion regions. */
     analyze: method(
       z.object({
         deviceId: z.number(),
@@ -56,11 +57,13 @@ export const motionDetectionCapability = {
           'the pipeline feeds it frames — an internal stage, never called by a person',
       },
     ),
+    /** Forget the motion state kept for a camera. */
     removeCamera: method(z.object({ deviceId: z.number() }), z.void(), {
       role: 'admin',
       kind: 'mutation',
       notOperatorFacing: 'pipeline housekeeping when a camera leaves',
     }),
+    /** Reset the motion detector's state for every camera. */
     reset: method(z.void(), z.void(), {
       role: 'admin',
       kind: 'mutation',

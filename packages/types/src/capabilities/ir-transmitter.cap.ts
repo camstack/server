@@ -145,6 +145,7 @@ export const irTransmitterCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Generic],
   methods: {
+    /** Transmit an infrared code, given as timings or a native code. */
     send: method(
       z
         .object({
@@ -164,6 +165,7 @@ export const irTransmitterCapability = {
           'a raw pulse train is not something an operator composes in an automation; the remote that owns the command table sends it',
       },
     ),
+    /** Listen for an infrared code from a remote and return it. */
     learn: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -182,6 +184,7 @@ export const irTransmitterCapability = {
           'an interactive capture the operator starts from the source dialog and answers by pressing a physical remote; no automation can supply the signal',
       },
     ),
+    /** What the infrared transmitter supports. */
     getInfo: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       IrTransmitterInfoSchema,

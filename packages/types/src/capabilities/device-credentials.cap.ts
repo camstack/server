@@ -94,6 +94,7 @@ export const deviceCredentialsCapability = {
     getDeviceCertificateSettings: method(z.object({}), DeviceCertificateSettingsSchema, {
       auth: 'admin',
     }),
+    /** Set the certificate settings used to reach devices and return the stored ones. */
     setDeviceCertificateSettings: method(
       DeviceCertificateSettingsSchema,
       DeviceCertificateSettingsSchema,

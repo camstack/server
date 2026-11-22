@@ -49,6 +49,7 @@ export const valveCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Valve],
   methods: {
+    /** Open the valve. */
     open: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -62,6 +63,7 @@ export const valveCapability = {
         },
       ],
     }),
+    /** Close the valve. */
     close: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -75,6 +77,7 @@ export const valveCapability = {
         },
       ],
     }),
+    /** Stop the valve where it is. */
     stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -87,6 +90,7 @@ export const valveCapability = {
         },
       ],
     }),
+    /** Set the valve opening from 0 to 100. */
     setPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

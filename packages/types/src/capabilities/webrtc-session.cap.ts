@@ -462,6 +462,7 @@ export const webrtcSessionCapability = {
         notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
       },
     ),
+    /** Pass the viewer's SDP answer to an open WebRTC session. */
     handleAnswer: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -519,6 +520,7 @@ export const webrtcSessionCapability = {
       }),
       { kind: 'query' },
     ),
+    /** Close a WebRTC session. */
     closeSession: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

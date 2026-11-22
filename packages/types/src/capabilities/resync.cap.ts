@@ -30,6 +30,7 @@ export const resyncCapability = {
   // (a workload), an Ecowitt console retyped as a weather station.
   deviceTypes: [DeviceType.Container, DeviceType.Workload, DeviceType.WeatherStation],
   methods: {
+    /** Re-align a device with its upstream source. */
     resync: method(ResyncDeviceInputSchema, ResyncResultSchema, {
       kind: 'mutation',
       auth: 'admin',

@@ -49,9 +49,11 @@ export const recordEntriesCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the kinds of user-created entries and the form schema of each. */
     listEntryKinds: method(z.object({}), z.object({ kinds: z.array(EntryKindInfoSchema) }), {
       auth: 'admin',
     }),
+    /** List the entries of one kind. */
     listEntries: method(
       z.object({ ...EntryAddress }),
       z.object({ entries: z.array(EntryViewSchema) }),
@@ -68,6 +70,7 @@ export const recordEntriesCapability = {
       z.object({ id: z.string(), rev: z.number().int() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete one entry of a kind. */
     deleteEntry: method(
       z.object({ ...EntryAddress, id: RecordIdSchema }),
       z.object({ deleted: z.boolean() }),

@@ -32,6 +32,7 @@ export const brightnessCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Light],
   methods: {
+    /** Set the light's brightness level from 0 to 100. */
     setBrightness: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

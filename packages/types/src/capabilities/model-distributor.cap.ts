@@ -42,6 +42,7 @@ export const modelDistributorCapability = {
   mode: 'singleton',
   internal: true,
   methods: {
+    /** Push a model already on the hub to an agent node and verify it. */
     distributeModel: method(ModelDistributeInputSchema, ModelDistributeResultSchema, {
       kind: 'mutation',
       auth: 'admin',

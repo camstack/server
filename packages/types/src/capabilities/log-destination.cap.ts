@@ -135,14 +135,17 @@ export const logDestinationCapability = {
   mode: 'collection',
   internal: true,
   methods: {
+    /** Write one log entry to this destination. */
     write: method(LogEntrySchema, z.void(), { kind: 'mutation' }),
     /** Absent ⇒ the destination cannot read back (same as `readable: false`). */
     describeRead: optionalMethod(LogInstanceSelectorSchema, LogReadCapabilitiesSchema, {
       auth: 'admin',
     }),
+    /** Read log entries back from this destination. */
     read: optionalMethod(LogReadQuerySchema, LogReadResultSchema, {
       auth: 'admin',
     }),
+    /** Cancel a running log read. */
     cancelRead: optionalMethod(
       z.object({ requestId: z.string().min(1).max(64) }),
       z.object({ cancelled: z.boolean() }),

@@ -361,6 +361,7 @@ export const deviceHistoryCapability = {
      * {@link DEVICE_HISTORY_ENERGY_KEY}, which is computed from rollups.
      */
     query: method(z.object({ deviceId: z.number().int(), ...QueryWindowShape }), QueryResultSchema),
+    /** Query the history stored on one node over a time window. */
     queryNode: method(
       z.object({ forNodeId: z.string().min(1), ...QueryWindowShape }),
       QueryResultSchema,
@@ -446,12 +447,14 @@ export const deviceHistoryCapability = {
       z.object({ deviceId: z.number().int() }),
       z.object({ enabled: z.boolean() }),
     ),
+    /** Turn history recording on or off for one device. */
     setDeviceEnabled: method(
       z.object({ deviceId: z.number().int(), enabled: z.boolean() }),
       z.object({ enabled: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
     ),
 
+    /** The status of history recording on this node. */
     getStatus: method(z.object({}), DeviceHistoryStatusSchema, {
       auth: 'admin',
     }),

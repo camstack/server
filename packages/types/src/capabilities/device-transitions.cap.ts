@@ -87,6 +87,7 @@ export const deviceTransitionsCapability = {
         nextCursor: z.string().nullable(),
       }),
     ),
+    /** Fetch one device transition (an in-progress change) by id; null when absent. */
     getTransition: method(
       z.object({ deviceId: z.number().int(), id: z.string() }),
       DeviceTransitionSchema.nullable(),
@@ -115,6 +116,7 @@ export const deviceTransitionsCapability = {
       TransitionRecordResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** The status of the device transitions tracker. */
     getStatus: systemMethod(z.object({}), TransitionsStatusSchema, {
       auth: 'admin',
     }),

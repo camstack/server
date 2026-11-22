@@ -37,6 +37,7 @@ export const toastCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Stream toast notifications from the hub to the admin UI. */
     onToast: method(z.void(), ToastSchema, { kind: 'subscription' }),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */

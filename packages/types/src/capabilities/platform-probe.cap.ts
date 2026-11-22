@@ -229,8 +229,11 @@ export const platformProbeCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** What this platform offers for inference and media acceleration. */
     getCapabilities: method(z.void(), PlatformCapabilitiesSchema),
+    /** The hardware of this node (CPU, memory, accelerators). */
     getHardware: method(z.void(), HardwareInfoSchema),
+    /** Pick the inference configuration that satisfies the given model requirements on this node. */
     resolveInferenceConfig: method(
       z.object({ requirements: z.array(ModelRequirementSchema).readonly() }),
       ResolvedInferenceConfigSchema,
@@ -240,6 +243,7 @@ export const platformProbeCapability = {
     // resolves the LOCAL `ctx.kernel.hwaccel`. A data nodeId could not be
     // honored inside the singleton without re-issuing a cross-node round-trip
     // (the retired `$hwaccel` Moleculer path), so it is intentionally absent.
+    /** Pick the hardware video-acceleration backend on this node, honouring a preference. */
     resolveHwAccel: method(
       z.object({ prefer: HwAccelBackendInputSchema }),
       HwAccelResolutionSchema,

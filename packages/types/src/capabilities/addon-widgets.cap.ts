@@ -30,6 +30,7 @@ export const addonWidgetsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the widgets addons contribute to the UI, with versioned bundle URLs. */
     listWidgets: method(z.void(), z.array(EnrichedWidgetMetadataSchema).readonly()),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },

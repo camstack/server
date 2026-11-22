@@ -39,6 +39,7 @@ export const automationControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Automation],
   methods: {
+    /** Enable the automation. */
     enable: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -52,6 +53,7 @@ export const automationControlCapability = {
         },
       ],
     }),
+    /** Disable the automation. */
     disable: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -65,6 +67,7 @@ export const automationControlCapability = {
         },
       ],
     }),
+    /** Fire the automation now, optionally bypassing its conditions. */
     trigger: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

@@ -142,9 +142,11 @@ export const fanPresetsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** The fan's saved presets. */
     getPresets: method(deviceInput, z.array(FanPresetSchema), {
       auth: 'protected',
     }),
+    /** Replace the fan's saved presets. */
     setPresets: method(
       deviceInput.extend({
         presets: z.array(FanPresetSchema).max(FAN_PRESETS_MAX),
@@ -152,6 +154,7 @@ export const fanPresetsCapability = {
       FanPresetsSetResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Apply a saved preset to the fan. */
     applyPreset: method(
       deviceInput.extend({ presetId: z.string().min(1) }),
       FanPresetApplyResultSchema,

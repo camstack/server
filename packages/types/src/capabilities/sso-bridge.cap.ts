@@ -139,6 +139,7 @@ export const ssoBridgeCapability = {
       z.object({ token: z.string() }),
       { auth: 'admin' },
     ),
+    /** Verify a signed SSO bridge token and return its claims; null when invalid. */
     verifyBridgeToken: method(z.object({ token: z.string() }), SsoBridgeClaimsSchema.nullable(), {
       auth: 'admin',
     }),

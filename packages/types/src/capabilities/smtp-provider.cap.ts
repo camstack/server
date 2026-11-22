@@ -81,11 +81,13 @@ export const smtpProviderCapability = {
   internal: true,
   providerKind: 'email',
   methods: {
+    /** Send an email through this relay. */
     sendEmail: method(SendEmailInputSchema, SendEmailResultSchema, {
       kind: 'mutation',
       auth: 'admin',
       access: 'create',
     }),
+    /** The status of one SMTP relay. */
     getStatus: method(RelayPinSchema, SmtpStatusSchema, { auth: 'admin' }),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },

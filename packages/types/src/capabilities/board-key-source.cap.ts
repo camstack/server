@@ -66,12 +66,15 @@ export const boardKeySourceCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
+    /** List the sources that can provide board keys. */
     listSources: method(z.void(), z.array(BoardKeySourceSchema).readonly(), {
       auth: 'admin',
     }),
+    /** List the boards one source knows. */
     listBoards: method(z.object({ sourceId: z.string().min(1) }), ListBoardsResultSchema, {
       auth: 'admin',
     }),
+    /** Read the key of a board configuration from a source. */
     getBoardKey: method(
       z.object({
         sourceId: z.string().min(1),

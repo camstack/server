@@ -42,6 +42,7 @@ export const addonPagesCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the pages addons contribute to the admin UI, with versioned bundle URLs. */
     listPages: method(z.void(), z.array(AddonPageInfoSchema).readonly()),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },

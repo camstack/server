@@ -186,9 +186,11 @@ export const powerSourceCapability = {
   mode: 'singleton',
   deviceTypes: POWER_SOURCE_DEVICE_TYPES,
   methods: {
+    /** The smart switch that powers the device and its current state. */
     getStatus: systemMethod(deviceInput, PowerSourceInfoSchema, {
       auth: 'protected',
     }),
+    /** Switch the device's power on. */
     powerOn: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',
@@ -202,6 +204,7 @@ export const powerSourceCapability = {
         },
       ],
     }),
+    /** Switch the device's power off. */
     powerOff: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',
@@ -215,6 +218,7 @@ export const powerSourceCapability = {
         },
       ],
     }),
+    /** Restart the device by switching its power off, waiting, and on again. */
     forceRestart: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',

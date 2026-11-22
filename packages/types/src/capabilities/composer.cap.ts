@@ -107,6 +107,7 @@ export const composerCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** The state of the given composition blocks. */
     getStates: method(
       z.object({ blockIds: z.array(z.string()) }),
       z.object({ states: z.array(CompositionBlockStateSchema) }),

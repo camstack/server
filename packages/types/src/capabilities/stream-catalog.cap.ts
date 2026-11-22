@@ -108,6 +108,7 @@ export const streamCatalogCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Camera],
   methods: {
+    /** List the streams a camera offers. */
     getCatalog: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       z.array(CamStreamDescriptorSchema).readonly(),

@@ -38,11 +38,13 @@ export const deviceStateRefreshCapability = {
   deviceNative: true,
   mode: 'singleton',
   methods: {
+    /** Re-read a device's state from the source now. */
     refresh: method(DeviceStateRefreshInputSchema, DeviceStateRefreshResultSchema, {
       kind: 'mutation',
       auth: 'admin',
       notOperatorFacing: NOT_OPERATOR_FACING,
     }),
+    /** Re-establish a device's live state subscription. */
     resubscribe: method(DeviceStateResubscribeInputSchema, DeviceStateRefreshResultSchema, {
       kind: 'mutation',
       auth: 'admin',

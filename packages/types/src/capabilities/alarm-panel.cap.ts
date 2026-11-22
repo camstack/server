@@ -92,6 +92,7 @@ export const alarmPanelCapability = {
         },
       ],
     }),
+    /** Disarm the alarm panel, with a PIN code when it needs one. */
     disarm: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -129,6 +130,7 @@ export const alarmPanelCapability = {
         ],
       },
     ),
+    /** Arm the alarm panel in the given mode, with a PIN code when it needs one. */
     arm: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

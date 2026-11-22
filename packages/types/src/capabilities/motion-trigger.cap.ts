@@ -54,6 +54,7 @@ export const motionTriggerCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Light, DeviceType.Siren, DeviceType.Switch],
   methods: {
+    /** Turn on or off activating the accessory when the camera detects motion. */
     setMotionTrigger: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

@@ -125,6 +125,7 @@ export const deviceRunsCapability = {
         nextCursor: z.string().nullable(),
       }),
     ),
+    /** Fetch one recorded run of a device by id; null when absent. */
     getRun: method(
       z.object({ deviceId: z.number().int(), runId: z.string() }),
       DeviceRunSchema.nullable(),

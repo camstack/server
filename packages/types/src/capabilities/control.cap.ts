@@ -108,6 +108,7 @@ export const controlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Control],
   methods: {
+    /** Set the value of the control (number, selection, text or date). */
     setValue: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

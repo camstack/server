@@ -49,8 +49,11 @@ export const networkQualityCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Latency, jitter and bandwidth measured for one device; null when unknown. */
     getDeviceStats: method(z.object({ deviceId: z.number() }), DeviceNetworkStatsSchema.nullable()),
+    /** Latency, jitter and bandwidth measured for every device. */
     getAllStats: method(z.void(), z.array(DeviceNetworkStatsSchema).readonly()),
+    /** Report a client's measured latency, jitter, bandwidth and packet loss for a device. */
     reportClientStats: method(
       z.object({
         deviceId: z.number(),

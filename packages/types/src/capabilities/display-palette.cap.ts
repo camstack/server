@@ -27,14 +27,17 @@ export const displayPaletteCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** The cluster's colour palette. */
     getPalette: method(z.void(), paletteResultSchema, {
       auth: 'protected',
       role: 'viewer',
     }),
+    /** List the built-in palette presets. */
     listPresets: method(z.void(), z.array(presetSummarySchema).readonly(), {
       auth: 'protected',
       role: 'viewer',
     }),
+    /** Save a colour palette; refused when it fails the contrast rules. */
     setPalette: method(setPaletteInputSchema, paletteReadySchema, {
       kind: 'mutation',
       auth: 'admin',

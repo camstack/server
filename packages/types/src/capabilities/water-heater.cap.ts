@@ -62,6 +62,7 @@ export const waterHeaterCapability = {
     lastField: 'lastActiveMode',
   },
   methods: {
+    /** Set the water heater operation mode. */
     setOperationMode: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -101,6 +102,7 @@ export const waterHeaterCapability = {
         ],
       },
     ),
+    /** Turn away mode on or off. */
     setAway: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -130,6 +132,7 @@ export const waterHeaterCapability = {
         ],
       },
     ),
+    /** Set the target water temperature. */
     setTargetTemp: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

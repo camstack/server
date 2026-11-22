@@ -61,6 +61,7 @@ export const switchCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Switch, DeviceType.Siren, DeviceType.Light, DeviceType.Fan],
   methods: {
+    /** Turn the switch on or off. */
     setState: method(z.object({ deviceId: z.number(), on: z.boolean() }), z.void(), {
       kind: 'mutation',
       // ACTUATION, not administration: governed by the caller's device
@@ -88,12 +89,14 @@ export const switchCapability = {
       ],
     }),
     // What the switch can do; absent = a plain on/off switch (SWITCH_DEFAULT_OPTIONS).
+    /** The options the switch supports. */
     getOptions: optionalMethod(z.object({ deviceId: z.number() }), SwitchOptionsSchema, {
       auth: 'protected',
     }),
     // A native power cycle, declared by `getOptions().supportsPowerCycle`. No action of its own (no
     // button): `power-source.forceRestart` on a device this switch powers calls it. Same tier
     // as `setState` — it is actuation of the same output.
+    /** Power-cycle the device the switch powers. */
     powerCycle: optionalMethod(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -104,6 +107,7 @@ export const switchCapability = {
     // native-cap registration (`withDefaultSwitchToggle`) for a driver
     // that does not write its own. No effect — the outcome is the inverse
     // of a state this action does not name, so a scheduler cannot hold it.
+    /** Flip the switch to the opposite state. */
     toggle: optionalMethod(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

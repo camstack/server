@@ -84,6 +84,7 @@ export const colorCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Light],
   methods: {
+    /** Set the light's color. */
     setColor: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

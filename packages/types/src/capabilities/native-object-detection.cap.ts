@@ -125,7 +125,9 @@ export const nativeObjectDetectionCapability = {
   // (what this firmware detects, and whether a detection carries geometry) for
   // the surface that does own the choice.
   methods: {
+    /** The object classes the camera's onboard detection supports and its current settings. */
     getOptions: method(z.object({ deviceId: z.number() }), NativeObjectDetectionOptionsSchema),
+    /** Change the camera's onboard object detection settings. */
     setSettings: method(
       z.object({
         deviceId: z.number(),
@@ -134,6 +136,7 @@ export const nativeObjectDetectionCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Turn the camera's onboard object detection on or off. */
     setEnabled: method(z.object({ deviceId: z.number(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

@@ -22,6 +22,7 @@ export const modelConvertCapability = {
   mode: 'singleton',
   internal: true,
   methods: {
+    /** Convert a model to another format; can take minutes. */
     convert: method(ModelConvertInputSchema, ConvertResultSchema, {
       kind: 'mutation',
       auth: 'admin',

@@ -38,6 +38,7 @@ export const scriptRunnerCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Script],
   methods: {
+    /** Run the script, optionally with variables. */
     run: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

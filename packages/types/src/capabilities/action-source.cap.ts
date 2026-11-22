@@ -28,9 +28,11 @@ export const actionSourceCapability = {
   // (an addon's `ctx.api` call is resolved to the provider directly). A viewer
   // reaches an action only through `actions`, which checks the camera link.
   methods: {
+    /** List the actions this source offers. */
     listActions: method(z.object({}), z.array(ActionEntrySchema), {
       auth: 'admin',
     }),
+    /** Run one of the source's actions, optionally with variables. */
     runAction: method(
       z.object({
         actionId: z.string().min(1),
@@ -39,6 +41,7 @@ export const actionSourceCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Stop a running action of the source. */
     stopAction: method(z.object({ actionId: z.string().min(1) }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

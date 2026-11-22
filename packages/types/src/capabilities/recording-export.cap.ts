@@ -576,6 +576,7 @@ export const recordingExportCapability = {
       z.array(ExportRecordSchema),
       { role: 'viewer', kind: 'query', auth: 'protected' },
     ),
+    /** Fetch one footage export and its state. */
     getExport: method(z.object({ exportId: z.string() }), ExportRecordSchema, {
       role: 'viewer',
       kind: 'query',
@@ -593,6 +594,7 @@ export const recordingExportCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
+    /** A download link for a finished export. */
     getDownloadUrl: method(z.object({ exportId: z.string() }), ExportDownloadSchema, {
       role: 'viewer',
       kind: 'query',

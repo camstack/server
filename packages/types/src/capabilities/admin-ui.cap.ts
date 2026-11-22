@@ -21,6 +21,7 @@ export const adminUiCapability = {
      * SPA assets are served as plain static files, unaffected by this gate.
      */
     getStaticDir: method(z.void(), StaticDirOutputSchema, { auth: 'admin' }),
+    /** The version of the admin UI build served by the hub. */
     getVersion: method(z.void(), VersionOutputSchema, { auth: 'admin' }),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },

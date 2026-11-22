@@ -482,13 +482,16 @@ export const serverManagementCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** The node's running and installed server version and its update state. */
     getServerPackageStatus: method(z.void(), ServerPackageStatusSchema, {
       auth: 'admin',
     }),
+    /** Check the registry for a newer server version for this node. */
     checkServerUpdate: method(z.void(), ServerUpdateCheckResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Install a server version (latest when none is given) on this node and restart it. */
     applyServerUpdate: method(
       z.object({
         /** Explicit target version; omitted = latest from the registry. */
@@ -535,6 +538,7 @@ export const serverManagementCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Return this node to its previously installed server version. */
     rollbackServerUpdate: method(z.void(), ServerUpdateActionResultSchema, {
       kind: 'mutation',
       auth: 'admin',

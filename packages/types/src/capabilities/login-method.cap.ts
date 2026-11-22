@@ -134,6 +134,7 @@ export const loginMethodCapability = {
   mode: 'collection',
   internal: true,
   methods: {
+    /** List the sign-in methods this provider offers on the login page. */
     getLoginMethods: method(z.void(), z.array(LoginMethodContributionSchema).readonly()),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */

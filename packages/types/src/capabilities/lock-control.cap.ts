@@ -96,6 +96,7 @@ export const lockControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Lock],
   methods: {
+    /** Lock the lock, with a PIN code when it needs one. */
     lock: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -131,6 +132,7 @@ export const lockControlCapability = {
         ],
       },
     ),
+    /** Unlock the lock, with a PIN code when it needs one. */
     unlock: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -175,6 +177,7 @@ export const lockControlCapability = {
         ],
       },
     ),
+    /** Release the latch so the door can be opened. */
     open: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

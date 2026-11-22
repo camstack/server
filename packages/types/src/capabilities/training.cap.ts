@@ -279,6 +279,7 @@ export const trainingCapability = {
   mount: { kind: 'hub-only' },
   methods: {
     // ── Targets and planning ─────────────────────────────────────────
+    /** List the base models a training job can start from. */
     listBaseModels: method(z.object({}), z.array(TrainingBaseModelSchema).readonly(), {
       auth: 'admin',
     }),
@@ -340,10 +341,13 @@ export const trainingCapability = {
       ]),
       { kind: 'mutation', auth: 'admin', timeoutMs: 120_000 },
     ),
+    /** List the training jobs. */
     listJobs: method(z.object({}), z.array(TrainingJobSchema).readonly(), {
       auth: 'admin',
     }),
+    /** Fetch one training job; null when unknown. */
     getJob: method(IdInput, TrainingJobSchema.nullable(), { auth: 'admin' }),
+    /** Cancel a training job. */
     cancelJob: method(IdInput, TrainingJobSchema, {
       kind: 'mutation',
       auth: 'admin',

@@ -71,6 +71,7 @@ export const snapshotCapability = {
   // them and persists per-device state through `ctx.settings.writeDeviceStore`.
   exposesDeviceSettings: true,
   methods: {
+    /** A current snapshot image of a camera, optionally bypassing the cache. */
     getSnapshot: method(
       z.object({
         deviceId: z.number(),
@@ -95,6 +96,7 @@ export const snapshotCapability = {
       }),
       SnapshotImageSchema.nullable(),
     ),
+    /** Drop a camera's cached snapshot. */
     invalidateCache: method(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

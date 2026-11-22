@@ -480,6 +480,8 @@ export const localNetworkCapability = {
     getNotificationEndpoint: method(z.void(), NotificationEndpointSchema),
 
     /**
+     * Set the base URL used in links inside notifications; null clears it.
+     *
      * @deprecated Use `setAddressRole({ role: 'notificationTaps', … })`. It
      * writes the same `notificationTaps` flag, with the same validation. `baseUrl: null` restores automatic; an
      * address that is not detected becomes a custom address.
@@ -500,6 +502,8 @@ export const localNetworkCapability = {
     getViewerEndpoints: method(z.void(), ViewerEndpointsSchema),
 
     /**
+     * Set the base URLs the viewer apps reach the hub on.
+     *
      * @deprecated Use `setAddressRole({ role: 'appConnections', … })`. It
      * replaces the same `appConnections` flags.
      * Empty `baseUrls` restores automatic.
@@ -565,6 +569,8 @@ export const localNetworkCapability = {
     ),
 
     /**
+     * The hub's cluster and browser addresses (deprecated; use getAddresses).
+     *
      * @deprecated Read `getAddresses().roles.internal` / `.publicEndpoint`.
      * Kept so an addon built against the D729 amendment keeps resolving:
      * `cluster` = the `internal` role, `browser` = the `publicEndpoint` role.

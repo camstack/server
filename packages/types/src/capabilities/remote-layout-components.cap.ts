@@ -18,6 +18,7 @@ export const remoteLayoutComponentsCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
+    /** List the components offered by the remote layout editor's palette. */
     listComponents: method(z.object({}), z.array(RemoteLayoutComponentSchema), {
       auth: 'protected',
     }),

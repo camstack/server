@@ -93,14 +93,17 @@ export const brokerCapability = {
     }),
 
     // ── Pub/sub primitives ───────────────────────────────────────────
+    /** Publish a message on the broker. */
     publish: method(PublishInputSchema, z.unknown(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Subscribe to a topic on the broker. */
     subscribe: method(SubscribeInputSchema, SubscribeResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Cancel a broker subscription. */
     unsubscribe: method(UnsubscribeInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

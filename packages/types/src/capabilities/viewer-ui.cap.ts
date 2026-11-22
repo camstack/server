@@ -34,6 +34,7 @@ export const viewerUiCapability = {
      * user from loading the app.
      */
     getStaticDir: method(z.void(), StaticDirOutputSchema, { auth: 'admin' }),
+    /** The version of the viewer web build served by the hub. */
     getVersion: method(z.void(), VersionOutputSchema, { auth: 'admin' }),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },

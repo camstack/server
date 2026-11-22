@@ -59,6 +59,7 @@ export const addonRoutesCapability = {
   mode: 'collection',
   internal: true,
   methods: {
+    /** List the HTTP routes addons expose. */
     getRoutes: method(z.void(), z.array(AddonHttpRouteSchema)),
     /**
      * Cross-process dispatch entry point. Forked addons implement this

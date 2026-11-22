@@ -53,6 +53,7 @@ export const humidifierCapability = {
   deviceTypes: [DeviceType.Humidifier],
   power: { kind: 'field', field: 'on', set: 'setOn' },
   methods: {
+    /** Turn the humidifier on or off. */
     setOn: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -82,6 +83,7 @@ export const humidifierCapability = {
         ],
       },
     ),
+    /** Set the target humidity from 0 to 100. */
     setTargetHumidity: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -112,6 +114,7 @@ export const humidifierCapability = {
         ],
       },
     ),
+    /** Set the humidifier mode. */
     setMode: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

@@ -370,7 +370,9 @@ export const recordingOnboardCapability = {
     },
   },
   methods: {
+    /** The camera's onboard recording options and current settings. */
     getOptions: method(z.object({ deviceId: z.number() }), RecordingOnboardOptionsSchema),
+    /** Change the camera's onboard recording settings. */
     setSettings: method(
       z.object({ deviceId: z.number(), settings: RecordingOnboardPatchSchema }),
       z.void(),

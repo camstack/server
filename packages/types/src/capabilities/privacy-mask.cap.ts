@@ -143,7 +143,9 @@ export const privacyMaskCapability = {
     },
   },
   methods: {
+    /** The camera's privacy mask options and current mask. */
     getOptions: method(z.object({ deviceId: z.number() }), PrivacyMaskOptionsSchema),
+    /** Change the camera's privacy mask. */
     setMask: method(z.object({ deviceId: z.number(), patch: PrivacyMaskPatchSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

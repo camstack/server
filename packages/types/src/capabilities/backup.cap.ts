@@ -419,6 +419,7 @@ export const backupCapability = {
       ArchiveManifestSchema.nullable(),
       { auth: 'admin' },
     ),
+    /** Restore a backup from a destination, fully or only the chosen locations. */
     restore: method(
       z.object({
         destinationId: z.string(),
@@ -486,6 +487,7 @@ export const backupCapability = {
       }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete a backup from a destination. */
     delete: method(z.object({ destinationId: z.string(), backupId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

@@ -216,10 +216,12 @@ export const cameraStreamsCapability = {
   defaultActive: true,
   deviceTypes: [DeviceType.Camera],
   methods: {
+    /** List the streams a camera publishes. */
     getCameraStreams: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       z.array(CameraStreamSchema).readonly(),
     ),
+    /** List the camera's profile slots and the streams assigned to them. */
     getBrokerStreams: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       z.array(ProfileSlotSchema).readonly(),

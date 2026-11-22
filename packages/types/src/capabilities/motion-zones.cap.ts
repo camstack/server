@@ -69,7 +69,9 @@ export const motionZonesCapability = {
     },
   },
   methods: {
+    /** The camera's onboard motion zone options and current zone. */
     getOptions: method(z.object({ deviceId: z.number() }), MotionZoneOptionsSchema),
+    /** Change the camera's onboard motion zone. */
     setZone: method(z.object({ deviceId: z.number(), patch: MotionZonePatchSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

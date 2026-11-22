@@ -818,6 +818,7 @@ export const videoclipsCapability = {
     },
   },
   methods: {
+    /** List a camera's clips in a time window, from every clip source. */
     listClips: method(
       z.object({
         deviceId: z.number(),
@@ -877,6 +878,7 @@ export const videoclipsCapability = {
       kind: 'query',
       auth: 'protected',
     }),
+    /** How to play one clip, at the requested quality. */
     getClipPlayback: method(
       z.object({
         deviceId: z.number(),

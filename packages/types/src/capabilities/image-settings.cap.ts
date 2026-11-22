@@ -147,7 +147,9 @@ export const imageSettingsCapability = {
     ui: { kind: 'derived-form', builderId: 'image-settings', tab: 'image' },
   },
   methods: {
+    /** The camera's picture-adjustment options and current values. */
     getOptions: method(z.object({ deviceId: z.number() }), ImageSettingsOptionsSchema),
+    /** Change the camera's picture settings (brightness, contrast, orientation, exposure, ...). */
     setSettings: method(
       z.object({ deviceId: z.number(), settings: ImageSettingsPatchSchema }),
       z.void(),

@@ -69,15 +69,19 @@ export const zonesCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Camera],
   methods: {
+    /** List the zones drawn on a camera. */
     listZones: method(z.object({ deviceId: z.number() }), z.array(ZoneSchema).readonly()),
+    /** Add a zone to a camera. */
     addZone: method(z.object({ deviceId: z.number(), zone: ZoneSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Remove a zone from a camera. */
     removeZone: method(z.object({ deviceId: z.number(), zoneId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Replace a zone's geometry and name. */
     updateZone: method(z.object({ deviceId: z.number(), zone: ZoneSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

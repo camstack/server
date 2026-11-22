@@ -53,6 +53,7 @@ export const lawnMowerControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.LawnMower],
   methods: {
+    /** Start mowing. */
     startMowing: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -65,6 +66,7 @@ export const lawnMowerControlCapability = {
         },
       ],
     }),
+    /** Pause mowing. */
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -77,6 +79,7 @@ export const lawnMowerControlCapability = {
         },
       ],
     }),
+    /** Send the mower back to its dock. */
     dock: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

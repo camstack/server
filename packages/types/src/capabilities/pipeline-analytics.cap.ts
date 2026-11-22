@@ -2974,6 +2974,8 @@ export const pipelineAnalyticsCapability = {
 
     // ── Maintenance ───────────────────────────────────────────
     /**
+     * Delete a camera's motion, object and audio events older than a cutoff and report how many were removed.
+     *
      * @deprecated Prefer `pruneTracksBefore` — the track is the ROOT of the
      * analytics model and retention must cascade from it (design §5.1). This
      * event-only prune leaves orphaned tracks/faces/plates/embeddings behind.

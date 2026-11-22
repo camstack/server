@@ -111,6 +111,7 @@ export const intercomCapability = {
         notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
       },
     ),
+    /** Pass the viewer's SDP answer to an open two-way audio session. */
     handleAnswer: method(
       z.object({
         deviceId: z.number(),

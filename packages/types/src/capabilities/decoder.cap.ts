@@ -65,6 +65,7 @@ export const decoderCapability = {
     // removed (D763): its only caller was the stream broker's frame-handle plane
     // (D762), and decoding runs in the pipeline runner's session-decode workers,
     // which use node-av directly. What is left answers per-node hwaccel.
+    /** The decoder's id, name and active hardware-acceleration state on this node. */
     getInfo: method(
       z.void(),
       z.object({

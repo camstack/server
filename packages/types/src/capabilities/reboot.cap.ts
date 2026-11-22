@@ -24,6 +24,7 @@ export const rebootCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Switch, DeviceType.Gateway],
   methods: {
+    /** Reboot the device. */
     reboot: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       z.object({ success: z.literal(true) }),

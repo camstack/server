@@ -113,6 +113,7 @@ export const notifierCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Notifier],
   methods: {
+    /** Send a notification through this notifier. */
     send: method(NotifierSendInputSchema, NotifierSendResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -152,6 +153,7 @@ export const notifierCapability = {
         },
       ],
     }),
+    /** Cancel a notification that was sent earlier. */
     cancel: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
