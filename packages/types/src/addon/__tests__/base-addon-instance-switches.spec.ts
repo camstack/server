@@ -85,10 +85,15 @@ function hubWith(rows: HubState['rows'], options: { readonly declareDown?: boole
 class Probe extends BaseAddon {
   /** What an instance reads while the addon is still initialising. */
   seenInInit: boolean | undefined
-  constructor(private readonly during?: () => void) {
+  constructor(
+    private readonly during?: () => void,
+    private readonly runOwnMigrations = false,
+  ) {
     super({})
   }
   protected async onInitialize() {
+    // An addon with migrations runs them first; a helper built after is a late kind.
+    if (this.runOwnMigrations) await this.runMigrations([])
     this.during?.()
     this.seenInInit = isInstanceOn('probe-instance')
     return []
@@ -221,6 +226,26 @@ describe('instance switches in BaseAddon', () => {
         }),
       ),
     ).rejects.toBeInstanceOf(AddonMigrationsBlockedError)
+  })
+
+  it('a late kind joins the catalogue WITH the early kind: the second declare still lists the first move (no false skipped-newer)', async () => {
+    const gadgets = defineEntryKind('gadgets', { title: 'Gadgets', schema: entryBody({}) })
+    registerServedInstanceKind(ADDON, served(widgets).entry)
+    const hub = hubWith([])
+    const addon = new Probe(() => registerServedInstanceKind(ADDON, served(gadgets).entry), true)
+    await addon.initialize(
+      fakeAddonContext({
+        id: ADDON,
+        migrationApi: stubMigrationApi(),
+        api: createTRPCClient<AppRouter>({ links: [hub.link] }),
+      }),
+    )
+    const early = bodySwitchToRegistryId(ADDON, '2026-11-19', 'widgets')
+    const late = bodySwitchToRegistryId(ADDON, '2026-11-19', 'gadgets')
+    const last = hub.declared[hub.declared.length - 1] ?? []
+    expect(hub.declared.length).toBeGreaterThan(1)
+    expect(last).toContain(early)
+    expect(last).toContain(late)
   })
 
   it('adopts the records of a served kind that have no registry row, with the state they held', async () => {

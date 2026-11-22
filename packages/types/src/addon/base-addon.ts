@@ -475,6 +475,12 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   /** The instance kinds whose switch move this process already ran (or tried), by record kind name. */
   private readonly switchMoved = new Set<string>()
   private lastDeclared: readonly BoundAddonMigration[] = []
+  /**
+   * Every switch migration this process added to a declaration so far. The engine replaces an
+   * owner's catalogue on each declare, so a later declare (a late kind, a second phase) carries
+   * them all: dropping an earlier id would read its applied ledger row as a newer database.
+   */
+  private readonly switchDeclared: BoundAddonMigration[] = []
 
   private registrySwitchBound(): readonly BoundAddonMigration[] {
     const api = this.ctx.migrationApi
@@ -570,7 +576,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   ): Promise<AddonMigrationRunReport> {
     this.lastDeclared = declared
     const added = this.registrySwitchBound()
-    const migrations = [...declared, ...added]
+    this.switchDeclared.push(...added)
+    const migrations = [
+      ...declared,
+      ...this.switchDeclared.filter((m) => !declared.some((d) => d.meta.id === m.meta.id)),
+    ]
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
       options?.only === undefined || added.length === 0
