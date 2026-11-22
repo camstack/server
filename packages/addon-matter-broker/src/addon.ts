@@ -201,7 +201,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
         instanceMode: 'multiple',
         kind: 'account',
         canTest: true,
-        allowRestoreId: true,
       },
     )
   }

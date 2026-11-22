@@ -43,7 +43,6 @@ export function buildMatterAccountInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: true,
-      allowRestoreId: true,
       kinds: [
         {
           id: MATTER_ACCOUNT_KIND,

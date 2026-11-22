@@ -13,6 +13,19 @@ Commissioning is on-network only. Paste the 11-digit or 21-digit manual
 code, or the `MT:` payload, from a device that is already sharing on the
 LAN. BLE commissioning is not wired.
 
+## Adding a brand-new device (an Aqara lock)
+
+CamStack cannot pair a device that is still in factory mode: there is no BLE
+commissioning and no Thread dataset step on the hub. The supported path is:
+
+1. Create the Matter fabric (Integrations, Matter fabric). There is no restore
+   id to give; a fabric is new and its devices go with it.
+2. Pair the lock in an ecosystem that can (the Aqara app or Home Assistant).
+3. In that ecosystem choose **Share device** (multi-admin) to get the code.
+4. In CamStack add a Matter integration on the fabric, open **Add Matter
+   device** and paste the code over IP. No Thread dataset is needed when the
+   lock is already on a Thread border router's mesh.
+
 ## Share a device from Home Assistant
 
 1. The device is already commissioned in Home Assistant (the Aqara Hub M3

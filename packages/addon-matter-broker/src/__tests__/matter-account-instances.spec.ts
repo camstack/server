@@ -56,7 +56,9 @@ describe('Matter fabrics as integration instances', () => {
     expect(one?.formValues['wifiSsid']).toBe('home-net')
     expect(one?.formValues['wifiPassword']).not.toBe('pw')
     const description = await instances.describe()
-    expect(description).toMatchObject({ allowRestoreId: true, mintsId: true })
+    expect(description).toMatchObject({ mintsId: true })
+    // A fabric has nothing to restore: removing it removes its devices (no old id to re-adopt).
+    expect(description.allowRestoreId).toBeUndefined()
   })
 
   it('an edit keeps both secrets and the integration link; create mints matter_NNN; restore keeps the old id', async () => {

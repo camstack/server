@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adding a Matter fabric or integration no longer asks for a restore id
+
 ## [0.2.173] - 2026-11-21
 
 ### Changed
