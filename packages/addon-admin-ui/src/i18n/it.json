@@ -2955,7 +2955,8 @@
         "low": "Basso",
         "empty": "Vuoto",
         "full": "Pieno",
-        "replace": "Da sostituire"
+        "replace": "Da sostituire",
+        "distance": "metri"
       },
       "badge": {
         "native": "Nativo",

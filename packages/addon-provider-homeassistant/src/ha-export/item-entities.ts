@@ -29,6 +29,7 @@ import {
   ConsumableItemSchema,
   ConsumableStatusSchema,
   type ConsumableKind,
+  type ConsumableRemainingKind,
   consumableFormOf,
   consumableKindOf,
 } from '@camstack/types'
@@ -90,6 +91,19 @@ const CONSUMABLE_PREFIX = 'consumable'
 
 /** Outside `ConsumableStatusSchema` on purpose: the component reads it as unknown. */
 const STATUS_UNKNOWN = 'unknown'
+
+interface RemainingSensor {
+  readonly unit?: string
+  readonly deviceClass?: string
+  readonly icon: string
+}
+
+/** How each `remaining.kind` reads in Home Assistant; a distance is metres (the length base, D944). */
+const REMAINING_SENSOR: Readonly<Record<ConsumableRemainingKind, RemainingSensor>> = {
+  duration: { unit: 's', deviceClass: 'duration', icon: 'mdi:timer-sand' },
+  count: { icon: 'mdi:counter' },
+  distance: { unit: 'm', deviceClass: 'distance', icon: 'mdi:map-marker-distance' },
+}
 
 function consumableEntity(key: string, facet: ItemFacet): string {
   return `${CONSUMABLE_PREFIX}_${toSlug(key)}_${facet}`
@@ -206,7 +220,8 @@ function consumableEntities(item: ExportConsumableItem): readonly ItemEntity[] {
     })
   }
   if (item.remaining !== undefined) {
-    const isDuration = item.remaining.kind === 'duration'
+    const remainingKind = item.remaining.kind
+    const remainingUnit = REMAINING_SENSOR[remainingKind]
     out.push({
       ...base,
       facet: 'remaining',
@@ -214,10 +229,12 @@ function consumableEntities(item: ExportConsumableItem): readonly ItemEntity[] {
       uniqueSuffix: unique('remaining'),
       platform: 'sensor',
       label: `${item.label} remaining`,
-      ...(isDuration ? { unit: 's' } : {}),
+      ...(remainingUnit.unit === undefined ? {} : { unit: remainingUnit.unit }),
       stateClass: 'measurement',
-      ...(isDuration ? { deviceClass: 'duration' } : {}),
-      icon: isDuration ? 'mdi:timer-sand' : 'mdi:counter',
+      ...(remainingUnit.deviceClass === undefined
+        ? {}
+        : { deviceClass: remainingUnit.deviceClass }),
+      icon: remainingUnit.icon,
       entityCategory: 'diagnostic',
     })
   }

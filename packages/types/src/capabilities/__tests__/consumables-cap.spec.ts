@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   ConsumableItemSchema,
+  ConsumableRemainingSchema,
   ConsumablesStatusSchema,
   consumablesCapability,
 } from '../consumables.cap.js'
@@ -43,5 +44,17 @@ describe('consumables cap — item-array wiring declaration', () => {
 
   it('itemArray.itemSchema is the ConsumableItemSchema', () => {
     expect(consumablesCapability.status.itemArray.itemSchema).toBe(ConsumableItemSchema)
+  })
+})
+
+describe('consumables cap — remaining kinds', () => {
+  it('accepts a distance remaining (metres) and refuses an unknown kind', () => {
+    expect(ConsumableRemainingSchema.safeParse({ kind: 'distance', value: 12000 }).success).toBe(
+      true,
+    )
+    expect(ConsumableRemainingSchema.safeParse({ kind: 'distance', value: null }).success).toBe(
+      true,
+    )
+    expect(ConsumableRemainingSchema.safeParse({ kind: 'weeks', value: 3 }).success).toBe(false)
   })
 })

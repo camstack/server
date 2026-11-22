@@ -186,6 +186,30 @@ describe('one entity set per consumable item', () => {
     expect(cycles.device_class).toBeUndefined()
   })
 
+  it('gives a distance remaining a distance sensor in metres', () => {
+    const slice: ConsumablesStatus = {
+      lastChangedAt: 1,
+      items: [
+        {
+          key: 'service-distance',
+          label: 'Service (distance)',
+          kind: 'wear',
+          level: null,
+          status: null,
+          lastResetAt: null,
+          resettable: false,
+          remaining: { value: 12000, kind: 'distance' },
+        },
+      ],
+    }
+    const car = buildDevicePlan(device(504, 'vacuum', slice))
+    expect(component(car, 'sensor', 'consumable_service_distance_remaining')).toMatchObject({
+      device_class: 'distance',
+      unit_of_measurement: 'm',
+      state_class: 'measurement',
+    })
+  })
+
   it('mints a reset button only for a resettable item', () => {
     expect(component(plan, 'button', 'consumable_main_brush_reset')).toMatchObject({
       unique_id: '503_consumable_main-brush_reset',

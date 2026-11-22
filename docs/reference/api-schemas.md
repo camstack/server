@@ -1322,7 +1322,7 @@ Enum: `"wear" \| "supply" \| "waste"`
 
 ### `ConsumableRemainingKindSchema`
 
-Enum: `"duration" \| "count"`
+Enum: `"duration" \| "count" \| "distance"`
 
 ### `ConsumableRemainingSchema`
 

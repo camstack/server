@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cap link cell for the Customize table, and the energy card reads the linked heat pump with its COP.
 - History charts stored in metres switch between km, mi and m by your unit preference; rain in mm is unchanged
+- Consumable rows show a distance remaining in km or miles by your unit preference
 
 ## [1.2.497] - 2026-11-22
 

@@ -2162,7 +2162,7 @@
 
 ### `consumables` → `consumables.*`
 
-- **Source:** `packages/types/src/capabilities/consumables.cap.ts:249`
+- **Source:** `packages/types/src/capabilities/consumables.cap.ts:250`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, weather-station, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump, energy-system, workload`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IConsumablesProvider`

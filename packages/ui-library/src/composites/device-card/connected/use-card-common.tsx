@@ -9,6 +9,7 @@ import { useMemo } from 'react'
 import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { formatNumeric } from '../../../lib/format-numeric'
 import { useUiText } from '../../../contexts/ui-text'
+import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import {
   useConsumablesReset,
   useDeviceManagerGetBindings,
@@ -126,6 +127,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const labels = useDeviceProviderLabelsWith(client, true)
   // The Precision set in Customize on this device; none = the default number rule.
   const precision = useOptionalSystem()?.getDeviceInfo(deviceId)?.display?.precision
+  const unitSystem = useUnitPreferences().system
   const status = useDeviceStateSlice(dev?.state.deviceStatus)
   const meter = useDeviceStateSlice(
     dev?.powerMeter === undefined ? undefined : dev.state.powerMeter,
@@ -201,8 +203,10 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const consumablesBound = dev?.consumables !== undefined
   const items = useMemo((): readonly CardConsumable[] | null => {
     if (!consumablesBound || consumables === undefined) return null
-    return consumables.items.map((item) => toCardConsumable(item, canActuate, t, precision))
-  }, [consumablesBound, consumables, canActuate, t, precision])
+    return consumables.items.map((item) =>
+      toCardConsumable(item, canActuate, t, precision, unitSystem),
+    )
+  }, [consumablesBound, consumables, canActuate, t, precision, unitSystem])
 
   const seriesReady =
     series.presence === 'present' &&

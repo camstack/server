@@ -6,6 +6,8 @@
  */
 import {
   consumableFormOf,
+  convertUnit,
+  type DisplayPreference,
   formatReading,
   type ConsumableItem,
   type ConsumableRemaining,
@@ -14,9 +16,35 @@ import type { UiTextFn } from '../../../contexts/ui-text'
 import { consumableItemLevel, consumableLevelLabel } from '../../consumable-level-badge'
 import type { CardConsumable } from '../shell/model'
 
+const METRES_PER_KM = 1000
+const MILES_MIN = 0.1
+
+/** A distance stored in metres, in the unit system the operator reads: km / m, or mi. */
+function formatDistance(metres: number, system: DisplayPreference, precision?: number): string {
+  const digits = (value: number): string =>
+    precision === undefined
+      ? Number.isInteger(value)
+        ? String(value)
+        : value.toFixed(2).replace(/\.?0+$/, '')
+      : value.toFixed(precision)
+  if (system === 'imperial') {
+    const miles = convertUnit(metres, 'm', 'mi')
+    return miles >= MILES_MIN
+      ? `${digits(miles)} mi`
+      : `${digits(convertUnit(metres, 'm', 'ft'))} ft`
+  }
+  return metres >= METRES_PER_KM ? `${digits(metres / METRES_PER_KM)} km` : `${digits(metres)} m`
+}
+
 /** `value` null = unknown (D393) — an em-dash, never a fake `0`. */
-function formatRemaining(t: UiTextFn, r: ConsumableRemaining, precision?: number): string {
+function formatRemaining(
+  t: UiTextFn,
+  r: ConsumableRemaining,
+  system: DisplayPreference,
+  precision?: number,
+): string {
   if (r.value === null) return '—'
+  if (r.kind === 'distance') return formatDistance(r.value, system, precision)
   if (r.kind === 'count') {
     return t(
       'uiLibrary.consumablesPanel.cycles',
@@ -60,9 +88,10 @@ export function toCardConsumable(
   canReset: boolean,
   t: UiTextFn,
   precision?: number,
+  system: DisplayPreference = 'metric',
 ): CardConsumable {
   const parts: string[] = []
-  if (item.remaining) parts.push(formatRemaining(t, item.remaining, precision))
+  if (item.remaining) parts.push(formatRemaining(t, item.remaining, system, precision))
   if (item.lastResetAt !== null) {
     parts.push(
       t('uiLibrary.consumablesPanel.replacedOn', 'Replaced {{date}}', {

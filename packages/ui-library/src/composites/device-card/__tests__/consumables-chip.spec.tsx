@@ -24,6 +24,30 @@ const item = (over: Partial<ConsumableItem>): ConsumableItem => ({
 const card = (over: Partial<ConsumableItem>, canReset = true): CardConsumable =>
   toCardConsumable(item(over), canReset, t)
 
+describe('toCardConsumable — a distance remaining', () => {
+  const distance = (value: number | null): Partial<ConsumableItem> => ({
+    kind: 'wear',
+    remaining: { kind: 'distance', value },
+  })
+
+  it('reads 12 000 m as 12 km under metric and in miles under imperial', () => {
+    expect(toCardConsumable(item(distance(12000)), false, t).detail).toBe('12 km')
+    expect(toCardConsumable(item(distance(12000)), false, t, undefined, 'imperial').detail).toBe(
+      '7.46 mi',
+    )
+  })
+
+  it('keeps short distances in metres and an unknown one as a dash (D393)', () => {
+    expect(toCardConsumable(item(distance(800)), false, t).detail).toBe('800 m')
+    expect(toCardConsumable(item(distance(null)), false, t).detail).toBe('—')
+  })
+
+  it('leaves a count untouched', () => {
+    const c = toCardConsumable(item({ remaining: { kind: 'count', value: 3 } }), false, t)
+    expect(c.detail).toBe('3 cycles')
+  })
+})
+
 describe('toCardConsumable', () => {
   it('a full dust bin is `full` (kind-aware), not ok', () => {
     const c = card({ kind: 'waste', level: 95 })

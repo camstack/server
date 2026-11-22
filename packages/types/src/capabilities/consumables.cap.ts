@@ -84,11 +84,12 @@ export function consumableFormOf(item: {
   return item.form ?? FORM_OF_KIND[consumableKindOf(item)]
 }
 
-/** Whether `remaining.value` is a duration in seconds or a dimensionless count. */
-export const ConsumableRemainingKindSchema = z.enum(['duration', 'count'])
+/** Whether `remaining.value` is a duration in seconds, a dimensionless count, or a
+ *  distance in metres (the length base, D944). */
+export const ConsumableRemainingKindSchema = z.enum(['duration', 'count', 'distance'])
 export type ConsumableRemainingKind = z.infer<typeof ConsumableRemainingKindSchema>
 
-/** Remaining life. `value` null = unknown (D393). Duration is seconds. */
+/** Remaining life. `value` null = unknown (D393). Duration is seconds, distance is metres. */
 export const ConsumableRemainingSchema = z.object({
   value: z.number().min(0).nullable().meta(readingMeta('device')),
   kind: ConsumableRemainingKindSchema,

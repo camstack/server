@@ -213,6 +213,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
                 values: [
                   'duration',
                   'count',
+                  'distance',
                 ],
               },
             ],
