@@ -42,7 +42,7 @@ const _deviceTransitionsRecordKinds = defineRecordKinds({
 
 export type DeviceTransitionsRecordKindsMap = {
   readonly 'device-transitions': DefinedRecordKind<
-    z.ZodType<z.infer<typeof StoredDeviceTransitionSchema>>
+    z.ZodType<z.infer<typeof DeviceTransitionSchema>>
   >
 }
 
