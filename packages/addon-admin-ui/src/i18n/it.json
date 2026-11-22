@@ -9847,7 +9847,8 @@
         "heatPump": "Pompa di calore",
         "energySystem": "Sistema energetico",
         "weatherStation": "Stazione meteo",
-        "workload": "Carico di lavoro"
+        "workload": "Carico di lavoro",
+        "vehicle": "Veicolo"
       },
       "role": {
         "siren": "Sirena",
@@ -9923,7 +9924,10 @@
         "app": "App",
         "host": "Host",
         "poePort": "Porta PoE",
-        "ups": "UPS"
+        "ups": "UPS",
+        "climateVehicle": "Clima auto",
+        "lockVehicle": "Chiusura auto",
+        "mediaPlayerTv": "Televisore"
       },
       "noun": {
         "role": {

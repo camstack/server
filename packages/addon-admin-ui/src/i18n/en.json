@@ -9825,7 +9825,8 @@
         "heatPump": "Heat pump",
         "energySystem": "Energy system",
         "weatherStation": "Weather station",
-        "workload": "Workload"
+        "workload": "Workload",
+        "vehicle": "Vehicle"
       },
       "role": {
         "siren": "Siren",
@@ -9901,7 +9902,10 @@
         "app": "App",
         "host": "Host",
         "poePort": "PoE port",
-        "ups": "UPS"
+        "ups": "UPS",
+        "climateVehicle": "Car climate",
+        "lockVehicle": "Car lock",
+        "mediaPlayerTv": "Television"
       },
       "noun": {
         "role": {
