@@ -123,7 +123,7 @@ export function ConfirmActionDialog<TResult>({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <AlertTriangle className="h-4 w-4 text-warning" />
             {title ?? t('uiLibrary.confirmActionButton.defaultTitle', 'Confirm action')}
           </DialogTitle>
           {typeof description === 'string' ? (
