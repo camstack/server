@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**255 units · 9149 source files · 248 units claimed by at least one document (9118 files).**
+**255 units · 9151 source files · 248 units claimed by at least one document (9120 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -37,8 +37,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli/src/mcp` | 76 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md`, +4 more | 2026-11-21 |
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +43 more, 11 ADRs | 2026-11-02 |
 | `packages/addon-provider-reolink` | 73 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +23 more, 2 ADRs | 2026-11-08 |
+| `packages/types/src/composition` | 73 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +24 more | 2026-11-08 |
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
-| `packages/types/src/composition` | 71 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +24 more | 2026-11-08 |
 | `packages/addon-admin-ui/src/lib` | 67 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-pipeline/src/pipeline-runner` | 65 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +46 more, 14 ADRs | 2026-11-21 |
 | `packages/addon-pipeline/src/detection-pipeline` | 63 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +53 more, 5 ADRs | 2026-10-24 |

@@ -13,6 +13,7 @@ import {
   StatisticWindowSchema,
 } from './history-window.js'
 import { type CompositionSourceRef, CompositionSourceRefSchema } from '../source-ref.js'
+import { GroupTriggersSchema } from './group-triggers.js'
 
 /** A group may name more members than an expression call (the 16-arg cap). */
 export const MAX_HELPER_MEMBERS: number = 64
@@ -56,6 +57,14 @@ export type ActiveCriterion = (typeof ACTIVE_CRITERIA)[number]
 export const AGGREGATE_REDUCERS = ['mean', 'median', 'min', 'max', 'sum', 'any', 'all'] as const
 export type AggregateReducer = (typeof AGGREGATE_REDUCERS)[number]
 
+/**
+ * Whether a group is a device. `device` (the default) builds one of the group's type;
+ * `none` builds nothing — the spec is only members and triggers, and the owned
+ * automation commands the members directly.
+ */
+export const GROUP_OUTPUTS = ['device', 'none'] as const
+export type GroupOutput = (typeof GROUP_OUTPUTS)[number]
+
 export const GroupTemplateIdSchema: z.ZodType<GroupTemplateId> = z.enum(GROUP_TEMPLATE_IDS)
 export const AggregateReducerSchema: z.ZodType<AggregateReducer> = z.enum(AGGREGATE_REDUCERS)
 export const ActiveCriterionSchema: z.ZodType<ActiveCriterion> = z.enum(ACTIVE_CRITERIA)
@@ -79,6 +88,8 @@ export const GroupHelperSpecSchema: z.ZodObject<{
   aggregate: typeof AggregateReducerSchema
   members: z.ZodArray<typeof HelperMemberSchema>
   active: z.ZodOptional<typeof ActiveCriterionSchema>
+  triggers: z.ZodOptional<typeof GroupTriggersSchema>
+  output: z.ZodOptional<z.ZodEnum<{ device: 'device'; none: 'none' }>>
 }> = z.object({
   kind: z.literal('group'),
   templateId: GroupTemplateIdSchema,
@@ -86,8 +97,17 @@ export const GroupHelperSpecSchema: z.ZodObject<{
   members: z.array(HelperMemberSchema).min(1).max(MAX_HELPER_MEMBERS),
   /** Actuator groups only. Readings leave this unset. */
   active: ActiveCriterionSchema.optional(),
+  /** Actuator groups only: what makes the group act on its own (core-blocks owns the generated automation). */
+  triggers: GroupTriggersSchema.optional(),
+  /** `none`: no device is built; the triggers act on the members. Absent means `device`. */
+  output: z.enum(GROUP_OUTPUTS).optional(),
 })
 export type GroupHelperSpec = z.infer<typeof GroupHelperSpecSchema>
+
+/** True when the helper builds no device: a group whose output is `none`. */
+export function helperBuildsNoDevice(spec: HelperSpec | undefined): boolean {
+  return spec !== undefined && spec.kind === 'group' && spec.output === 'none'
+}
 
 export type StatisticStat = (typeof STATISTIC_STATS)[number]
 

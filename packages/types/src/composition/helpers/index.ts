@@ -144,6 +144,7 @@ export {
   ActiveCriterionSchema,
   AggregateReducerSchema,
   BINARY_AGGREGATES,
+  GROUP_OUTPUTS,
   GROUP_TEMPLATE_IDS,
   ARITHMETIC_OPS,
   ArithmeticHelperSpecSchema,
@@ -160,6 +161,8 @@ export {
   IntegralHelperSpecSchema,
   MAX_HELPER_MEMBERS,
   helperMembers,
+  helperBuildsNoDevice,
+  type GroupOutput,
   helperDeviceRefs,
   isEngineHostedHelper,
   isHistoryHelper,
@@ -210,3 +213,17 @@ export {
   type StatisticHelperSpec,
   type StatisticStat,
 } from './spec.js'
+export {
+  GROUP_TRIGGER_ID_RE,
+  GroupTriggerActionSchema,
+  GroupTriggerSchema,
+  GroupTriggerSourceSchema,
+  GroupTriggersSchema,
+  MAX_GROUP_TRIGGERS,
+  type GroupTrigger,
+  type GroupTriggerAction,
+  type GroupTriggerSource,
+  triggerEnabled,
+  triggerSourceRefs,
+} from './group-triggers.js'
+export { groupTriggerProblems } from './group-trigger-problems.js'
