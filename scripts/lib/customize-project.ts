@@ -3,7 +3,6 @@
  * Throws when a path the guard should have rejected does not resolve.
  */
 import { z } from 'zod'
-import { DeviceType } from '../../packages/types/src/device/device-type.ts'
 import type {
   CustomizeCatalogEntry,
   CustomizeCatalogField,
@@ -27,6 +26,7 @@ import type {
   KeyedArrayTraitSpec,
   ScalarCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
+import { DeviceType } from '../../packages/types/src/device/device-type.ts'
 import type { CustomizeCapView } from './customize-declaration.ts'
 import { assertProjectedParameters } from './customize-parameters.ts'
 import { arrayElement, isValueLeaf, resolveCustomizePath } from './customize-path.ts'
@@ -59,9 +59,6 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
     ...(spec.overridable === undefined || spec.overridable.length === 0
       ? {}
       : { overridable: spec.overridable }),
-    ...(spec.sourceGroups === undefined || spec.sourceGroups.length === 0
-      ? {}
-      : { sourceGroups: spec.sourceGroups }),
     ...(spec.links === undefined || spec.links.length === 0 ? {} : { links: spec.links }),
   }
   assertProjectedParameters(view.capName, spec, entry)

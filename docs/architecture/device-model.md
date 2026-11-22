@@ -820,14 +820,6 @@ composer's claim and merged at the hub. `lock()` is refused at dispatch while th
 door is open (the D963 redirect, composed with the media-player one in
 core-blocks); `unlock()` never is.
 
-A cap may also list `customize.sourceGroups: [{ id, targets }]`: the targets one
-device usually provides together (`power-meter`: power, energy, voltage,
-current). The Customize table shows one "Source device" row above them; picking a
-device REPLACES the stored link of every target its same cap exposes (custom
-transforms included) with an identity link and leaves the others untouched. The
-row stores nothing of its own: the per-target rows stay the authority and can
-still override. Declared in the spec, so `check-customize-coverage` judges it.
-
 ### A whole capability, linked as one (D1076)
 
 A cap may declare `customize.links` (`CustomizeCapLink`): `{ id, sourceCap, mode, slot?, map?, apply: 'add' }`. The operator links a device once; the customization stores ONE `capLink` feature (`cap`, `linkId`, `source`), never a field per value.

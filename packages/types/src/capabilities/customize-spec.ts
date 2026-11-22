@@ -58,12 +58,6 @@ export interface CapabilityCustomizeSpec {
   /** Native fields an extension may replace; absent means none (D944 stays whole). */
   readonly overridable?: readonly CustomizeOverridable[]
   /**
-   * Scalar targets one source device may fill at once. The Customize table
-   * offers one "Source device" picker per group; storage stays per target, so a
-   * target keeps its own picker and overrides the group.
-   */
-  readonly sourceGroups?: readonly CustomizeSourceGroup[]
-  /**
    * Whole-capability links (D1076): one stored `capLink` feature per declared
    * link, projected into this cap's slice or referenced as a slot.
    */
@@ -92,13 +86,6 @@ export interface CustomizeCapLink {
   readonly deviceTypes?: readonly DeviceType[]
   /** A link is always an ADD: it never replaces a native cap (D944). */
   readonly apply: Extract<CustomizeApplyMode, 'add'>
-}
-
-/** A set of scalar targets of one cap that a single device can source together. */
-export interface CustomizeSourceGroup {
-  readonly id: string
-  /** Ids of this cap's scalar targets; at least two. */
-  readonly targets: readonly string[]
 }
 
 /**

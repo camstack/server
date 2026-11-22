@@ -2645,6 +2645,69 @@
       "summary": "The cap-named card of a device: the kind when it binds the cap, null when it is one of these types but lacks the cap, undefined when the type is not one of these (the caller keeps resolving)."
     },
     {
+      "name": "CapLinkCell",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/cap-link-cell.tsx",
+      "summary": "The cell that shows and edits ONE whole-capability link (D1076): the device a cap — or a slot of it — is served from. One picker over the devices that bind the source cap, a state badge when the stored link no longer …",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": "The device the link is declared on (its room is suggested first)."
+        },
+        {
+          "name": "sourceCap",
+          "type": "string",
+          "optional": false,
+          "doc": "The capability the source device must bind."
+        },
+        {
+          "name": "sourceDeviceId",
+          "type": "number | null",
+          "optional": false,
+          "doc": "The linked source device; null when none is stored or it is gone."
+        },
+        {
+          "name": "state",
+          "type": "CapLinkCellState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(sourceDeviceId: number | null) => void",
+          "optional": false,
+          "doc": "Pick (a device id) or clear (null)."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The customization is not read yet, or a save is running."
+        },
+        {
+          "name": "error",
+          "type": "string | null",
+          "optional": true,
+          "doc": "The refusal the last change got; shown, never swallowed."
+        },
+        {
+          "name": "hint",
+          "type": "string",
+          "optional": true,
+          "doc": "One line under the picker; absent = the default sentence."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "capZoneToCanvas",
       "kind": "function",
       "area": "composites",
@@ -11977,6 +12040,13 @@
       "summary": "Line points for a gauge or counter. A rolled-up answer carries its min/max (a band). A CAP series is change-only and held, so the window opens on the value in force (`before`) and its last known sample is carried forw…"
     },
     {
+      "name": "linkedHeatPumpOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "The linked heat pump's `heat-pump-status` slice and the day's counters as the card reads them. A slice that has not answered leaves everything null: the system's own heat pump branch is never mixed in (D224)."
+    },
+    {
       "name": "LIST_ROW",
       "kind": "constant",
       "area": "lib",
@@ -20836,7 +20906,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/use-device-history.ts",
-      "summary": "A device's series list, gated on device-history being present."
+      "summary": "A device's series list, gated on device-history being present; no device (null) reads nothing."
     },
     {
       "name": "useDeviceSnapshot",
@@ -22145,11 +22215,25 @@
       "summary": "The provider's error goes on the reason line, after a failed command's."
     },
     {
+      "name": "withHeatPumpCop",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "Today's facts with the heat pump's COP from the linked device; the COP of \"now\" is today's only."
+    },
+    {
       "name": "withHiddenChart",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-selection.ts",
       "summary": "A copy of `value` with chart `chartId` hidden (or shown again) on device `deviceId`."
+    },
+    {
+      "name": "withLinkedHeatPump",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "The system's slice with its heat pump branch served by the linked device instead."
     },
     {
       "name": "withoutModelScopedFields",

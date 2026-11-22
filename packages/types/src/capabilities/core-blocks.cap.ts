@@ -12,9 +12,11 @@ import {
   CompositionBlockStateSchema,
   CompositionValidationSchema,
 } from '../composition/composition-report.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 import { DeviceType } from '../device/device-type.js'
-import { RunningThresholdProposalSchema } from '../running-state/proposal-schema.js'
 import type { ConfigUISchema } from '../interfaces/config-ui.js'
+import { RunningThresholdProposalSchema } from '../running-state/proposal-schema.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 import {
   SettingsPatchSchema,
   SettingsSchemaWithValuesSchema,
@@ -25,8 +27,6 @@ import {
   RawSecretMigrationInputSchema,
   RawSecretMigrationReportSchema,
 } from './raw-secret-migration.js'
-import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
-import { TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * core-blocks — user-authored TypeScript, stored in the kernel and executed in
@@ -572,13 +572,17 @@ export const coreBlocksCapability = {
     ),
     /**
      * The whole-capability links of one device (D1076), for the energy card
-     * and the Customize table. Admin today, like `getCustomization` (the role
-     * baseline); a viewer role for the card is a later decision. A link
-     * carries no stored value, only the pair it joins. `not-loaded`
-     * until the compositions have been read, never an empty list (D315).
+     * (viewer-facing) and the Customize table. A viewer reads it: the card
+     * must resolve the linked heat pump, and the per-device scope check already
+     * covers `deviceId`. Unlike `getCustomization` it returns no composition,
+     * formula or stored value, only the pair a link joins and its state.
+     * `not-loaded` until the compositions have been read, never an empty list
+     * (D315).
      */
     getCapLinks: method(z.object({ deviceId: z.number().int() }), CapLinksReadSchema, {
+      role: 'viewer',
       auth: 'protected',
+      kind: 'query',
     }),
     /**
      * D1076: turn the plain per-field identity links of one cap, from one

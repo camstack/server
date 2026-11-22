@@ -2782,7 +2782,7 @@
 
 ### `energy-system` → `energySystem.*`
 
-- **Source:** `packages/types/src/capabilities/energy-system.cap.ts:129`
+- **Source:** `packages/types/src/capabilities/energy-system.cap.ts:130`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `energy-system`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEnergySystemProvider`
@@ -4169,7 +4169,7 @@
 
 ### `power-meter` → `powerMeter.*`
 
-- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:154`
+- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:152`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, switch, light, fan, climate, humidifier, water-heater, media-player, washer, dryer, dishwasher, vacuum, lawn-mower, pet-feeder, workload`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IPowerMeterProvider`

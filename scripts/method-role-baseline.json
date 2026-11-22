@@ -197,7 +197,7 @@
   "coreBlocks.get": "admin",
   "coreBlocks.getAutomationRunState": "admin",
   "coreBlocks.getBlockSettings": "admin",
-  "coreBlocks.getCapLinks": "admin",
+  "coreBlocks.getCapLinks": "viewer",
   "coreBlocks.getComposition": "admin",
   "coreBlocks.getCustomization": "admin",
   "coreBlocks.getTraces": "admin",

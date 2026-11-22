@@ -7,13 +7,12 @@ import type {
   CameraSensorCustomizeMode,
   CustomizeApplyAuthority,
   CustomizeApplyMode,
+  CustomizeCapLink,
   CustomizeCardinality,
   CustomizeCompanion,
   CustomizeEventEdge,
   CustomizeOverridable,
   CustomizeOverrideRule,
-  CustomizeCapLink,
-  CustomizeSourceGroup,
   CustomizeSourceReport,
   CustomizeTargetSection,
   CustomizeValueKind,
@@ -127,8 +126,6 @@ export interface CustomizeCatalogEntry {
   readonly targets: readonly CustomizeCatalogTarget[]
   /** Native fields an extension may replace (D984); absent means none. */
   readonly overridable?: readonly CustomizeOverridable[]
-  /** Scalar targets one device may source together; absent means none. */
-  readonly sourceGroups?: readonly CustomizeSourceGroup[]
   /** Whole-capability links the cap declares (D1076); absent means none. */
   readonly links?: readonly CustomizeCapLink[]
 }

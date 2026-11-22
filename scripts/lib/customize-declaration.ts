@@ -6,8 +6,6 @@ import { z } from 'zod'
 import type {
   CapabilityCustomizeSpec,
   CapabilityCustomizeTarget,
-} from '../../packages/types/src/capabilities/customize-spec.ts'
-import type {
   ConfigCustomizeTarget,
   CustomizeCompanion,
   CustomizeSourceReport,
@@ -20,18 +18,18 @@ import type {
   KeyedArrayLiteralSpec,
   ScalarCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
-import { judgeCustomizeLinks } from './customize-links.ts'
-import { CameraSensorModeSchema } from '../../packages/types/src/pipeline/camera-sensors.ts'
 import { CAP_VOCABULARY_BY_NAME } from '../../packages/types/src/device/cap-vocabulary/vocabulary.ts'
+import { CameraSensorModeSchema } from '../../packages/types/src/pipeline/camera-sensors.ts'
+import { judgeCustomizeLinks } from './customize-links.ts'
 import {
   arrayElement,
+  type CustomizePathHit,
+  type CustomizePathResult,
+  type CustomizeValueLeafKind,
   isOptionalSchema,
   isValueLeaf,
   objectShape,
   resolveCustomizePath,
-  type CustomizePathHit,
-  type CustomizePathResult,
-  type CustomizeValueLeafKind,
 } from './customize-path.ts'
 export type CustomizeViolationRule =
   | 'no-runtime-state'
@@ -68,7 +66,6 @@ export type CustomizeViolationRule =
   | 'unknown-config-method'
   | 'bad-config-method'
   | 'bad-override'
-  | 'bad-source-group'
   | 'duplicate-link'
   | 'unknown-link-source-cap'
   | 'bad-link-slot'
@@ -149,7 +146,6 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
     ...duplicateTargetIds(view, spec),
     ...spec.targets.flatMap((target) => judgeTarget(view, target, runtime)),
     ...eventClaimsScalar(view, spec),
-    ...judgeSourceGroups(view, spec),
     ...judgeCustomizeLinks(view),
   ]
 }
@@ -931,34 +927,6 @@ function fail(
     rule,
     message,
   }
-}
-
-/** A source group names at least two declared scalar targets, each once, under a unique id. */
-function judgeSourceGroups(
-  view: CustomizeCapView,
-  spec: CapabilityCustomizeSpec,
-): readonly CustomizeViolation[] {
-  const scalarIds = new Set(
-    spec.targets.filter((target) => target.cardinality === 'scalar').map((target) => target.id),
-  )
-  const seenGroups = new Set<string>()
-  const filed = new Set<string>()
-  return (spec.sourceGroups ?? []).flatMap((group) => {
-    const problems: string[] = []
-    if (seenGroups.has(group.id)) problems.push(`group \`${group.id}\` is declared twice`)
-    seenGroups.add(group.id)
-    if (group.targets.length < 2) {
-      problems.push(`group \`${group.id}\` names fewer than two targets`)
-    }
-    for (const id of group.targets) {
-      if (!scalarIds.has(id)) {
-        problems.push(`group \`${group.id}\` names \`${id}\`, not a scalar target`)
-      }
-      if (filed.has(id)) problems.push(`target \`${id}\` is in more than one group`)
-      filed.add(id)
-    }
-    return problems.map((message) => fail(view, undefined, 'bad-source-group', message))
-  })
 }
 
 export { loadCustomizeCaps, loadRuntimeFieldUnits } from './customize-load.ts'

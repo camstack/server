@@ -42,7 +42,7 @@ host's existing customization — no second store (D676, D1063).
   the host's own cap (D984).
 - `mode: 'reference'` (a slot of another cap): nothing is written into the host
   slice and the plan has no claims. A consumer reads the source device's own cap
-  and history through `core-blocks.getCapLinks` (non-admin; `not-loaded` until
+  and history through `core-blocks.getCapLinks` (role `viewer`, see below; `not-loaded` until
   read, D315). The two meters are never mixed or copied (D224).
 
 `core-blocks.migrateCapLinks({ dryRun })` converts a plain identity `from` group
@@ -57,10 +57,26 @@ writes (`overlap: ...`). Mixed groups are left untouched and the operator
 decides per device. Stamped (`contributedBy`) and disabled features are skipped
 and counted. The run is idempotent (D345).
 
+### The UI (phase 4) and the role of `getCapLinks`
+
+The admin Customize table shows one "Source device" row per declared link
+(`CapLinkCell` in ui-library, one stored `capLink` feature per pick, a planner
+refusal shown on the row). A link is offered on the device types its
+`customize.links` entry names. The retired `sourceGroups` mechanism and its
+row are deleted.
+
+`core-blocks` methods default to role `admin`, but `getCapLinks` is `viewer`:
+the energy card is viewer-facing and reads the linked heat pump (live slice and
+the day's COP) through it. It returns only link ids, caps, the source device id
+and a state, never a composition, formula or stored value, and the per-device
+scope check still covers `deviceId`. `getCustomization` and the composition
+writes stay `admin`. While the read is unanswered the card keeps the system's
+own heat pump branch (D315, D224: the two meters are never summed).
+
 ## Consequences
 
 `CUSTOMIZE_CARDINALITIES` gains `'link'`, so admin-ui needs a renderer. A cap
-change: force-publish `@camstack/server`. `sourceGroups` and the `power-meter`
+change: force-publish `@camstack/server`. `sourceGroups` is gone (phase 4); the `power-meter`
 scalar targets are removed in a later step, after the dry run shows no mixed
 group on any hub.
 

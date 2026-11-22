@@ -339,6 +339,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
         sourceCap: 'heat-pump-status',
         mode: 'reference',
         slot: 'heatPump',
+        deviceTypes: [DeviceType.EnergySystem],
         apply: 'add',
       },
     ],
@@ -1008,17 +1009,6 @@ export const CAP_CUSTOMIZE_CATALOG = {
             path: 'lastFetchedAt',
             when: 'always',
           },
-        ],
-      },
-    ],
-    sourceGroups: [
-      {
-        id: 'meter-device',
-        targets: [
-          'power',
-          'energy',
-          'voltage',
-          'current',
         ],
       },
     ],

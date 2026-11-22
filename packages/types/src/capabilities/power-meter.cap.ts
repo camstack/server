@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
-import { t } from '../device/cap-vocabulary/l10n.js'
+import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
 
 /**
  * Multi-metric electrical meter. One slice can carry any combination
@@ -137,8 +137,6 @@ const powerMeterCustomize = {
     powerTarget('voltage', 'V'),
     powerTarget('current', 'A'),
   ],
-  // One meter device may fill all four readings; each reading still keeps its own source.
-  sourceGroups: [{ id: 'meter-device', targets: ['power', 'energy', 'voltage', 'current'] }],
   // The whole meter from one device (D1076): one stored link, never a value per reading.
   links: [
     {

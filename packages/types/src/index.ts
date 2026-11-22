@@ -2022,11 +2022,12 @@ export {
 export type {
   CapabilityCustomizeSpec,
   CapabilityCustomizeTarget,
+  CustomizeCapLink,
+  CustomizeLinkMode,
   CustomizeApplyAuthorityKind,
   CustomizeCardinality,
   CustomizeEventShape,
   CustomizeEventEdge,
-  CustomizeSourceGroup,
   CustomizeTargetSection,
   EventCustomizeTarget,
   PulseEventCustomizeTarget,

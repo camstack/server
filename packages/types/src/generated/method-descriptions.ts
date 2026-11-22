@@ -207,7 +207,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "coreBlocks.get": "Fetch one core block by id; null when absent.",
   "coreBlocks.getAutomationRunState": "The cooldown stamp and trace ring a block reads ONCE, at start. Owner-only.",
   "coreBlocks.getBlockSettings": "Hydrated settings form for one block, or null until a settingsSchema is known (extracted from the compiled entry's named export, or set on the block). Values live in the block addon's addon-settings rows (D880); a password field answers as a \"set\" view, never the value.",
-  "coreBlocks.getCapLinks": "The whole-capability links of one device (D1076), for the energy card and the Customize table. Admin today, like getCustomization (the role baseline); a viewer role for the card is a later decision. A link carries no stored value, only the pair it joins. not-loaded until the compositions have been read, never an empty list (D315).",
+  "coreBlocks.getCapLinks": "The whole-capability links of one device (D1076), for the energy card (viewer-facing) and the Customize table. A viewer reads it: the card must resolve the linked heat pump, and the per-device scope check already covers deviceId. Unlike getCustomization it returns no composition, formula or stored value, only the pair a link joins and its state. not-loaded until the compositions have been read, never an empty list (D315).",
   "coreBlocks.getComposition": "One composition and the composer's state for it, or not-loaded (D315).",
   "coreBlocks.getCustomization": "The composition that customizes an existing device (D663), found by its TARGET — never by the block's derived name. One per device at most.",
   "coreBlocks.getTraces": "An automation's run traces, newest last. The operator's read.",

@@ -220,7 +220,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'coreBlocks.get': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getAutomationRunState': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getBlockSettings': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'coreBlocks.getCapLinks': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.getCapLinks': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'coreBlocks.getComposition': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getCustomization': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getTraces': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

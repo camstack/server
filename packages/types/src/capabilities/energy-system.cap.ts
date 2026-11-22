@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
-import { t } from '../device/cap-vocabulary/l10n.js'
+import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
 
 /**
  * Energy system (#513): the one READ-ONLY cap of a home energy installation —
@@ -121,6 +121,7 @@ const energySystemCustomize = {
       sourceCap: 'heat-pump-status',
       mode: 'reference',
       slot: 'heatPump',
+      deviceTypes: [DeviceType.EnergySystem],
       apply: 'add',
     },
   ],

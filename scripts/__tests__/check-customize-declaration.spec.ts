@@ -4,9 +4,8 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { CAP_CUSTOMIZE_CATALOG } from '../../packages/types/src/generated/customize-catalog.ts'
-import type { CapabilityCustomizeSpec } from '../../packages/types/src/capabilities/customize-spec.ts'
 import type {
+  CapabilityCustomizeSpec,
   ConfigCustomizeTarget,
   KeyedArrayCustomizeTarget,
   PulseEventCustomizeTarget,
@@ -14,12 +13,13 @@ import type {
   SpanEventCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
 import { DeviceType } from '../../packages/types/src/device/device-type.ts'
+import { CAP_CUSTOMIZE_CATALOG } from '../../packages/types/src/generated/customize-catalog.ts'
 import {
+  type CustomizeCapView,
+  type CustomizeViolation,
   judgeCustomize,
   loadCustomizeCaps,
   loadRuntimeFieldUnits,
-  type CustomizeCapView,
-  type CustomizeViolation,
 } from '../lib/customize-declaration.ts'
 import { projectCustomize } from '../lib/customize-project.ts'
 
@@ -391,49 +391,5 @@ describe('a config target (D963)', () => {
       writeMethod: 'setConfig',
       sources: [],
     })
-  })
-})
-
-describe('a source group (one device fills several targets)', () => {
-  const runtime = z.object({
-    a: z.number().nullable().optional(),
-    b: z.number().nullable().optional(),
-    lastFetchedAt: z.number(),
-  })
-  const target = (id: string): ScalarCustomizeTarget => ({
-    ...percentageTarget(),
-    id,
-    path: id,
-    companions: [{ kind: 'clock', path: 'lastFetchedAt', when: 'always' }],
-    vocabulary: { cap: 'demo', stateField: id },
-  })
-  const spec = (groups: CapabilityCustomizeSpec['sourceGroups']): CapabilityCustomizeSpec => ({
-    version: 1,
-    targets: [target('a'), target('b')],
-    sourceGroups: groups,
-  })
-
-  it('accepts a group over declared scalar targets and projects it', () => {
-    const declared = spec([{ id: 'device', targets: ['a', 'b'] }])
-    expect(judgeCustomize(view(runtime, declared))).toEqual([])
-    expect(projectCustomize(view(runtime, declared)).sourceGroups).toEqual([
-      { id: 'device', targets: ['a', 'b'] },
-    ])
-  })
-
-  it('rejects a group naming a target the cap does not declare', () => {
-    const found = judgeCustomize(view(runtime, spec([{ id: 'device', targets: ['a', 'zzz'] }])))
-    expect(rules(found)).toEqual(['bad-source-group'])
-  })
-
-  it('rejects a one-target group and a target filed in two groups', () => {
-    expect(rules(judgeCustomize(view(runtime, spec([{ id: 'g', targets: ['a'] }]))))).toEqual([
-      'bad-source-group',
-    ])
-    const twice = spec([
-      { id: 'g', targets: ['a', 'b'] },
-      { id: 'h', targets: ['a', 'b'] },
-    ])
-    expect(rules(judgeCustomize(view(runtime, twice)))).toContain('bad-source-group')
   })
 })
