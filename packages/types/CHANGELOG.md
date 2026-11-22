@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.624] - 2026-11-22
+
 ### Changed
 
 - Every capability method has a description in the API explorer
