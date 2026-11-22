@@ -1555,7 +1555,8 @@
     "parkedSince": "parcheggiato {{since}}",
     "motionWord": "movimento",
     "stale": "obsoleto",
-    "tags": "Tag"
+    "tags": "Tag",
+    "more": "Altro"
   },
   "connection": {
     "disconnected": "Server non raggiungibile — riconnessione in corso…",
@@ -9385,7 +9386,8 @@
       "previous": "Pagina precedente",
       "next": "Pagina successiva",
       "showing": "Visualizzati {{start}}–{{end}} di {{total}} {{noun}}",
-      "devices": "dispositivi"
+      "devices": "dispositivi",
+      "rangeShort": "{{start}}–{{end}} di {{total}}"
     },
     "deviceListEmptyState": {
       "clearFilters": "Cancella filtri",

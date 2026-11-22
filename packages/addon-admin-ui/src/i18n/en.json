@@ -1555,7 +1555,8 @@
     "parkedSince": "parked {{since}}",
     "motionWord": "motion",
     "stale": "stale",
-    "tags": "Tags"
+    "tags": "Tags",
+    "more": "More"
   },
   "connection": {
     "disconnected": "Server unreachable — reconnecting…",
@@ -9363,7 +9364,8 @@
       "previous": "Previous page",
       "next": "Next page",
       "showing": "Showing {{start}}–{{end}} of {{total}} {{noun}}",
-      "devices": "devices"
+      "devices": "devices",
+      "rangeShort": "{{start}}–{{end}} of {{total}}"
     },
     "deviceListEmptyState": {
       "clearFilters": "Clear filters",

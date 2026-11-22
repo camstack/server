@@ -129,13 +129,17 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { EventsDebugTapes } from '../EventsDebugTapes'
 
 function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <EventsDebugTapes />
+      {/* The app mounts every page inside the confirm provider; the row's Release / Delete ask through it. */}
+      <ConfirmDialogProvider>
+        <EventsDebugTapes />
+      </ConfirmDialogProvider>
     </QueryClientProvider>,
   )
 }
