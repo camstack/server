@@ -125,6 +125,8 @@ export interface WizardResult {
     readonly phase: OnboardingPhase | 'complete'
     readonly hub: string | null
     readonly tier: string | null
+    /** Which saved login this acts as ("using saved session <user>@<hub>, scope <x>"); null for a token file or no session. */
+    readonly actingAs: string | null
     /** What this install carries: measured once the node benchmark ran, provisional before. */
     readonly verdict: CapacityVerdict | null
   }
@@ -302,6 +304,7 @@ export async function setupWizard(ctx: McpContext, args: WizardArgs = {}): Promi
       phase: next === null ? 'complete' : next.step.phase,
       hub: facts.session.ok ? facts.session.hub.server : null,
       tier: facts.session.ok ? facts.session.hub.tier : null,
+      actingAs: facts.session.ok ? (facts.session.hub.actingAs ?? null) : null,
       verdict,
     },
     steps: judged.map(

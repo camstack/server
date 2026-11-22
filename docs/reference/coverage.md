@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**256 units · 9181 source files · 249 units claimed by at least one document (9150 files).**
+**256 units · 9183 source files · 249 units claimed by at least one document (9152 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -34,7 +34,7 @@ it never describes how the thing works, and it is never re-verified.
 | `server/backend/src/api` | 97 | `api-surface` | `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, `decisions/adr-0895-there-is-one-token-and-no-other-bearer-format-a-share-link-is-a-token-and-only-a-login-session-becomes-a-session.md`, +70 more, 10 ADRs | 2026-11-02 |
 | `packages/types/src/device` | 93 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md`, +42 more, 1 ADR | 2026-11-08 |
 | `packages/addon-pipeline-orchestrator` | 85 | `pipeline-orchestration`, `zones` | `decisions/adr-1013-one-instance-model.md`, `architecture/inference-devices.md`, `decisions/adr-0650-a-detail-step-the-elected-device-cannot-run-is-delegated-within-the-node.md`, +56 more, 13 ADRs | 2026-11-02 |
-| `packages/cli/src/mcp` | 76 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md`, +4 more | 2026-11-21 |
+| `packages/cli/src/mcp` | 77 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md`, +4 more | 2026-11-21 |
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +43 more, 11 ADRs | 2026-11-02 |
 | `packages/addon-provider-reolink` | 73 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +23 more, 2 ADRs | 2026-11-08 |
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
@@ -167,6 +167,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/node-benchmark` | 6 | — | `architecture/benchmark.md`, `decisions/adr-0791-the-node-benchmark-is-one-node-at-a-time-in-an-orchestrator-benchmark-mode-and-measured-on-the-node-beats-the-table.md`, `decisions/adr-1013-one-instance-model.md`, +2 more, 1 ADR | 2026-11-21 |
 | `packages/addon-pipeline/src/motion-wasm` | 6 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |
+| `packages/cli` | 6 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
 | `packages/types/src/vendor-login-proxy` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md` | — |
@@ -176,7 +177,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/state-reports` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0776-alexa-state-changes-are-reported-proactively-from-device-state-changed.md`, `decisions/adr-0869-the-alexa-export-maps-caps-through-one-adapter-registry-covers-first-and-shapes-its-reports.md`, +5 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md` | 2026-11-08 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | `decisions/adr-1013-one-instance-model.md` | — |
-| `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/cli/src/host-check` | 5 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md` | 2026-11-21 |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-11-12 |
 | `packages/types/src/schemas` | 5 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |

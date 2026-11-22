@@ -7,6 +7,7 @@
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { cap, readQuery, type Read } from './ops-hub.js'
+import { partitionAddonUpdates, type InstalledNewer } from './addon-update-partition.js'
 import { withAdminHub } from './configure-support.js'
 import {
   addonDrift,
@@ -75,9 +76,11 @@ export async function opsUpdateCheck(ctx: McpContext, deps: UpdateCheckDeps = {}
         framework: boolean
       }[]
       readonly truncated: number
+      readonly installedNewer: readonly InstalledNewer[]
     } | null = null
     if (updates.ok) {
-      const capped = cap(updates.value, ADDON_LIMIT)
+      const split = partitionAddonUpdates(updates.value)
+      const capped = cap(split.offer, ADDON_LIMIT)
       hubAddons = {
         items: capped.items.map((u) => ({
           name: u.name,
@@ -86,6 +89,7 @@ export async function opsUpdateCheck(ctx: McpContext, deps: UpdateCheckDeps = {}
           framework: u.isSystem || u.category === 'core',
         })),
         truncated: capped.truncated,
+        installedNewer: split.installedNewer,
       }
     } else unavailable['hubAddonUpdates'] = updates.reason
     return {

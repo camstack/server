@@ -135,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The registry switch move (body to registry) is a ledgered migration that backfills a row for every existing instance, services included
 - A composed valve offers set-position only while every member valve can be positioned
 - Core blocks lists template instances, the read behind a device's linked triggers
+- An addon running a dev build newer than the registry latest is never moved down to the older registry version
 
 ### Removed
 

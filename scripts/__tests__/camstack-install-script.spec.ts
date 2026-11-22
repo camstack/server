@@ -127,6 +127,22 @@ describe('camstack-install.sh', () => {
     expect(fs.statSync(path.join(home, '.local', 'bin', 'camstack')).mode & 0o111).not.toBe(0)
   })
 
+  it('warns and names another camstack binary already on PATH', () => {
+    buildMirror(false)
+    const other = path.join(bin, 'camstack')
+    write(other, '#!/bin/sh\necho other\n')
+    const { status, out } = runInstaller({})
+    expect(status).toBe(0)
+    expect(out).toContain('another camstack is already on your PATH')
+    expect(out).toContain(other)
+  })
+
+  it('stays quiet about PATH when no other camstack exists', () => {
+    buildMirror(false)
+    const { out } = runInstaller({})
+    expect(out).not.toContain('another camstack')
+  })
+
   it('refuses a runtime whose sha256 does not match, and installs nothing', () => {
     buildMirror(true)
     const { status, out } = runInstaller({})

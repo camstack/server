@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub connection states which saved session (user and hub) it acts as
+
 ## [0.1.56] - 2026-11-21
 
 ### Changed

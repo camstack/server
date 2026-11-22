@@ -21,6 +21,8 @@ export type AddonVersionReason =
 
 export type AddonVersionMove =
   | { readonly move: false }
+  /** The installed build is a prerelease (a dev closure) ahead of the registry target: never offered as an update. */
+  | { readonly move: false; readonly installedNewer: true }
   /** A move that would happen but for a requirement the target declares and the install does not meet (D989). */
   | { readonly move: false; readonly blockedBy: readonly UnmetRequirement[] }
   | {
@@ -30,6 +32,25 @@ export type AddonVersionMove =
       readonly reason: AddonVersionReason
     }
 
+const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/
+
+/**
+ * True when `installed` is a prerelease build (`1.2.942-dev.<epoch>`) whose
+ * base triple is strictly above `target`'s: a dev closure ahead of the
+ * registry tag. A release line that moved down (D942) is not this case.
+ */
+export function isPrereleaseAhead(installed: string, target: string): boolean {
+  const i = SEMVER_RE.exec(installed.trim())
+  const t = SEMVER_RE.exec(target.trim())
+  if (!i || !t || i[4] === undefined) return false
+  for (let k = 1; k <= 3; k += 1) {
+    const a = Number(i[k])
+    const b = Number(t[k])
+    if (a !== b) return a > b
+  }
+  return false
+}
+
 /**
  * Move when `installed` is not `target`. `target === null` (or empty) means
  * the authority could not be read — keep whatever is installed.
@@ -38,6 +59,7 @@ export type AddonVersionMove =
  * `unmet` is what the TARGET declares and this node does not meet (computed by
  * the caller from the target's `camstack.requires`). A move that would happen
  * is held and says why; a node that is already on the target has nothing to hold.
+ * A prerelease installed ahead of a registry target is never moved down.
  */
 export function decideAddonVersionMove(
   installed: string | null,
@@ -47,6 +69,13 @@ export function decideAddonVersionMove(
 ): AddonVersionMove {
   if (target === null || target.length === 0) return { move: false }
   if (installed !== null && installed === target) return { move: false }
+  if (
+    reason === ADDON_VERSION_REASON_REGISTRY_LATEST &&
+    installed !== null &&
+    isPrereleaseAhead(installed, target)
+  ) {
+    return { move: false, installedNewer: true }
+  }
   if (unmet.length > 0) return { move: false, blockedBy: unmet }
   return { move: true, from: installed ?? 'absent', to: target, reason }
 }

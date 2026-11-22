@@ -133,6 +133,9 @@ swap_link "$ROOT/current" "$STAGED"
 
 # --- 4. the launcher ----------------------------------------------------------
 LAUNCHER="$BIN_DIR/camstack"
+# Another `camstack` already on PATH (an npm -g install, a brew one) may win over
+# this launcher: name it instead of staying silent.
+OTHER="$(command -v camstack 2>/dev/null || true)"
 cat >"$LAUNCHER.tmp.$$" <<LAUNCH
 #!/bin/sh
 # Written by the CamStack installer. Uses the managed Node when there is one.
@@ -144,6 +147,10 @@ chmod 755 "$LAUNCHER.tmp.$$"
 mv -f "$LAUNCHER.tmp.$$" "$LAUNCHER"
 
 say "camstack $VERSION installed: $LAUNCHER"
+if [ -n "$OTHER" ] && [ "$OTHER" != "$LAUNCHER" ]; then
+  say "Warning: another camstack is already on your PATH: $OTHER"
+  say "  Depending on PATH order it may run instead of $LAUNCHER. Remove it (e.g. npm uninstall -g camstack) or put $BIN_DIR first."
+fi
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
   *) say "Add $BIN_DIR to your PATH, e.g.:  export PATH=\"$BIN_DIR:\$PATH\"" ;;

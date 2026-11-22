@@ -32,6 +32,7 @@ import { runDev } from './commands/dev.js'
 import { runWatch } from './commands/watch.js'
 import { developHelp, runDevelop } from './commands/develop.js'
 import { mcpHelp, runMcp } from './commands/mcp.js'
+import { HELP_FLAGS, resolveInvocation } from './help-routing.js'
 import { cliHubTransport } from './http/hub-transport.js'
 import { maybeNotifyUpdate } from './update-notifier.js'
 
@@ -71,8 +72,6 @@ interface CommandSpec {
   readonly run: (args: readonly string[]) => Promise<void> | void
   readonly help: () => string
 }
-
-const HELP_FLAGS = new Set(['-h', '--help'])
 
 function printGlobalHelp(commands: readonly CommandSpec[]): void {
   const lines: string[] = []
@@ -366,7 +365,7 @@ function buildCommands(): readonly CommandSpec[] {
     },
     {
       name: 'mcp',
-      summary: 'MCP server (stdio) — setup, ops, configure, develop toolsets',
+      summary: 'MCP server (stdio) — setup, ops, configure, support toolsets (develop is opt-in)',
       run: (args) => runMcp(args, pkgVersion),
       help: mcpHelp,
     },
@@ -752,30 +751,26 @@ async function main(): Promise<void> {
   const argv = process.argv.slice(2)
   const commands = buildCommands()
 
-  if (argv.length === 0 || (argv.length === 1 && HELP_FLAGS.has(argv[0] ?? ''))) {
-    printGlobalHelp(commands)
-    return
-  }
   if (argv[0] === '-v' || argv[0] === '--version') {
     console.log(pkgVersion)
     return
   }
 
-  const cmdName = argv[0] ?? ''
-  const cmd = commands.find((c) => c.name === cmdName || (c.aliases?.includes(cmdName) ?? false))
-  if (!cmd) {
-    console.error(`[camstack] Unknown command: ${cmdName}`)
+  const invocation = resolveInvocation(argv, commands)
+  if (invocation.kind === 'global-help') {
+    printGlobalHelp(commands)
+    return
+  }
+  if (invocation.kind === 'unknown') {
+    console.error(`[camstack] Unknown command: ${invocation.name}`)
     console.error('Run `camstack --help` for the list of commands.')
     process.exit(1)
   }
-
-  const subArgs = argv.slice(1)
-  // Intercept `<cmd> --help` here so sub-commands don't have to special-case
-  // it inside their parseArgs schemas (which would otherwise reject the flag).
-  if (subArgs.some((a) => HELP_FLAGS.has(a))) {
-    console.log(cmd.help())
+  if (invocation.kind === 'command-help') {
+    console.log(invocation.command.help())
     return
   }
+  const { command: cmd, args: subArgs } = invocation
 
   try {
     await cmd.run(subArgs)

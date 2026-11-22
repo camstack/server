@@ -53,6 +53,33 @@ export interface HubConnection {
   readonly client: HubClient
   readonly adminHint: string | null
   readonly loginCommand: string
+  /**
+   * Who this connection acts as, stated to the caller so a reused saved
+   * session is never silent: "using saved session <user>@<hub>, scope <x>".
+   * Absent or null for a token file (that source is already explicit).
+   */
+  readonly actingAs?: string | null
+}
+
+/** "using saved session <user>@<host>, scope <x>", or null when the credential is not a saved session. */
+export function describeSavedSession(
+  source: CredentialSource,
+  session: {
+    readonly username: string
+    readonly isAdmin?: boolean
+    readonly scopes: readonly { type: string; target: string }[]
+  } | null,
+  server: string,
+): string | null {
+  if (source !== 'session' || session === null) return null
+  const host = server.replace(/^https?:\/\//, '')
+  const scope =
+    session.isAdmin === true
+      ? 'admin'
+      : session.scopes.length > 0
+        ? session.scopes.map((x) => `${x.type}:${x.target}`).join(', ')
+        : 'none'
+  return `using saved session ${session.username}@${host}, scope ${scope}`
 }
 
 export async function connectHub(options: HubConnectOptions): Promise<HubConnection> {
@@ -108,6 +135,7 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
     client,
     adminHint,
     loginCommand,
+    actingAs: describeSavedSession(credentials.source, loadSession(hub.url, dir), hub.url),
   }
 }
 

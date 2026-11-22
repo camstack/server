@@ -186,7 +186,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
     id: 'session',
     label: 'Session or token file',
     status: 'ok',
-    detail: `usable credential from ${connection.source}`,
+    detail: `usable credential from ${connection.source}${connection.actingAs ? ` (${connection.actingAs})` : ''}`,
   })
   checks.push(
     connection.tier === 'admin'

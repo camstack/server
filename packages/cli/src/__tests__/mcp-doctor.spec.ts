@@ -54,6 +54,25 @@ const byId = (checks: readonly DoctorCheck[], id: DoctorCheck['id']): DoctorChec
 }
 
 describe('camstack mcp doctor', () => {
+  it('names the saved session it acts as', async () => {
+    const outcome = connected('admin')
+    if (!outcome.ok) throw new Error('fixture')
+    const checks = await runDoctorChecks(
+      deps({
+        connect: async () => ({
+          ok: true,
+          connection: {
+            ...outcome.connection,
+            actingAs: 'using saved session admin@hub.example.test:4443, scope admin',
+          },
+        }),
+      }),
+    )
+    expect(byId(checks, 'session').detail).toContain(
+      'using saved session admin@hub.example.test:4443',
+    )
+  })
+
   it('reports every check and passes when all is well', async () => {
     const checks = await runDoctorChecks(deps())
     expect(checks.map((c) => c.id)).toEqual(['node', 'hub', 'ca', 'session', 'scope', 'version'])

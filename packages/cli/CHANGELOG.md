@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An addon installed from a newer dev build is no longer offered an older registry version as an update; every command answers --help; the MCP status and doctor say which saved session it uses; the installer warns when another camstack is on PATH; help names the real toolsets
+
 ### Fixed
 
 - A dev closure deploy is versioned as a prerelease of the next patch, so addons requiring the current server are no longer held and no migration reads as newer

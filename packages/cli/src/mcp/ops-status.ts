@@ -7,6 +7,7 @@
 import type { HubConnection } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
+import { partitionAddonUpdates, type InstalledNewer } from './addon-update-partition.js'
 import {
   ADMIN_ONLY_NOTE,
   cap,
@@ -84,6 +85,8 @@ export interface OpsStatusResult {
   readonly status: 'ok'
   readonly hub: string
   readonly tier: string
+  /** Which saved login this acts as ("using saved session <user>@<hub>, scope <x>"); null for a token file. */
+  readonly actingAs: string | null
   /** `null` plus a reason in `unavailable` when the node list could not be read. */
   readonly nodes: readonly NodeSummary[] | null
   readonly nodesTruncated: number
@@ -95,6 +98,7 @@ export interface OpsStatusResult {
       readonly to: string
     }[]
     readonly truncated: number
+    readonly installedNewer: readonly InstalledNewer[]
   } | null
   /** What could not be read, by part, with the reason. Empty when everything answered. */
   readonly unavailable: { readonly [part: string]: string }
@@ -218,7 +222,8 @@ export async function opsStatus(ctx: McpContext): Promise<OpsStatusResult | NoSe
 
     let addonsNeedingUpdate: OpsStatusResult['addonsNeedingUpdate'] = null
     if (updatesRead.ok) {
-      const capped = cap(updatesRead.value, UPDATE_LIMIT)
+      const split = partitionAddonUpdates(updatesRead.value)
+      const capped = cap(split.offer, UPDATE_LIMIT)
       addonsNeedingUpdate = {
         items: capped.items.map((u) => ({
           name: u.name,
@@ -226,6 +231,7 @@ export async function opsStatus(ctx: McpContext): Promise<OpsStatusResult | NoSe
           to: u.latestVersion,
         })),
         truncated: capped.truncated,
+        installedNewer: split.installedNewer,
       }
     } else {
       unavailable['addonsNeedingUpdate'] = updatesRead.reason
@@ -235,6 +241,7 @@ export async function opsStatus(ctx: McpContext): Promise<OpsStatusResult | NoSe
       status: 'ok' as const,
       hub: connection.server,
       tier: connection.tier,
+      actingAs: connection.actingAs ?? null,
       nodes,
       nodesTruncated,
       alerts,

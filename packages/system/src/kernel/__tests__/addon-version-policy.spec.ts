@@ -46,6 +46,26 @@ describe('decideAddonVersionMove', () => {
   })
 })
 
+describe('decideAddonVersionMove with a dev build ahead of the registry', () => {
+  it('never offers an older registry latest over a newer prerelease build', () => {
+    const decision = decideAddonVersionMove(
+      '1.2.942-dev.1795359713',
+      '1.2.681',
+      ADDON_VERSION_REASON_REGISTRY_LATEST,
+    )
+    expect(decision).toEqual({ move: false, installedNewer: true })
+  })
+
+  it('still follows a registry latest that is newer than the dev build, and a release line that moved down', () => {
+    expect(
+      decideAddonVersionMove('1.2.942-dev.1', '1.2.943', ADDON_VERSION_REASON_REGISTRY_LATEST),
+    ).toMatchObject({ move: true, to: '1.2.943' })
+    expect(
+      decideAddonVersionMove('1.2.7', '1.2.6', ADDON_VERSION_REASON_REGISTRY_LATEST),
+    ).toMatchObject({ move: true, to: '1.2.6' })
+  })
+})
+
 describe('decideAddonVersionMove with unmet requirements (D989)', () => {
   const unmet = [{ kind: 'server-too-old', required: '1.3.0', running: '1.2.0' }] as const
 
