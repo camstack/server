@@ -205,6 +205,8 @@ export {
   WAIT_MAX_SECONDS,
   AutomationRecipeSchema,
   AutomationRunModeSchema,
+  AutomationOwnerSchema,
+  type AutomationOwner,
   CurrentAutomationRecipeSchema,
   convertLegacyRecipe,
   DEFAULT_TRACE_KEEP,

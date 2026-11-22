@@ -233,3 +233,10 @@ export {
   type GroupTriggerLoop,
   type TriggerGroup,
 } from './group-trigger-cycles.js'
+export {
+  groupTriggerRecipe,
+  type DeviceIdResolver,
+  type GroupTriggerLeftOut,
+  type GroupTriggerRecipe,
+  type GroupTriggerRecipeInput,
+} from './group-trigger-recipe.js'

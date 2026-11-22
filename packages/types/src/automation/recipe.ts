@@ -724,6 +724,13 @@ export type AutomationRunMode = z.infer<typeof AutomationRunModeSchema>
 export const DEFAULT_TRACE_KEEP = 20
 export const MAX_TRACE_KEEP = 100
 
+/** Who owns an automation that is not the operator's: the group block that generates it. */
+export const AutomationOwnerSchema = z.object({
+  kind: z.literal('group'),
+  blockId: z.string().min(1),
+})
+export type AutomationOwner = z.infer<typeof AutomationOwnerSchema>
+
 export const CurrentAutomationRecipeSchema = z.object({
   when: AutomationWhenSchema,
   actions: z.array(AutomationActionSchema),
@@ -736,6 +743,12 @@ export const CurrentAutomationRecipeSchema = z.object({
    * the template engine rewrites when the template changes.
    */
   template: AutomationTemplateLinkSchema.optional(),
+  /**
+   * Set when a composition block (an actuator group) wrote this automation: the
+   * group regenerates the whole recipe on every save and at boot, so an edit,
+   * a conversion or a delete from anywhere else is refused.
+   */
+  ownedBy: AutomationOwnerSchema.optional(),
 })
 /**
  * Declared as an interface so it is printed by NAME: a capability that embeds
