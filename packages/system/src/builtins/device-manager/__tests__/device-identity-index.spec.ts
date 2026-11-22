@@ -356,6 +356,20 @@ describe('DeviceIdentityIndex — what a device declares ATTACHED to it (D1063)'
     expect(attached(second.index)).toEqual(expected)
   })
 
+  it('a port with several MACs and one fresh client IP still needs the IP to corroborate (MAC-only auto is for a splitter)', async () => {
+    const MAC2 = 'AA:BB:CC:00:11:33'
+    const { index } = await makeIndexed([
+      {
+        id: 1,
+        addonId: 'unifi',
+        role: 'poe-port',
+        attachedIdentifiers: ids({ mac: [MAC, MAC2], ip: IP }),
+      },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC }) },
+    ])
+    expect(attached(index)).toEqual([[1, 2, 'proposal']])
+  })
+
   it('a client the port retains while another is present keeps its candidate; one freshly on another port moves', async () => {
     const MAC2 = 'AA:BB:CC:00:11:33'
     const { index } = await makeIndexed([

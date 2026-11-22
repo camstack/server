@@ -316,7 +316,17 @@ export class LinkContributionReconciler {
     // A block this reconciler created, with nothing left in it, is not kept as an empty
     // customization: the operator added nothing to it (any feature of theirs would remain).
     if (block !== null && features.length === 0 && block.createdBy === IDENTITY_LINKS_USER_ID) {
-      await this.ports.remove(block)
+      // The snapshot may be stale: the operator may have added a feature since it was read.
+      const current = this.ports.blocks()?.find((b) => b.id === block.id)
+      const now = current === undefined ? null : coreBlockComposition(current)
+      if (current === undefined || now === null) return
+      if (JSON.stringify(now.features) !== JSON.stringify(before)) {
+        this.ports.logger.info('identity-link customization kept — it gained content', {
+          meta: { blockId: block.id, host: key },
+        })
+        return
+      }
+      await this.ports.remove(current)
       this.ports.logger.info('identity-link customization removed — nothing is left in it', {
         ...(plan.hostDeviceId === null ? {} : { tags: { deviceId: plan.hostDeviceId } }),
         meta: { blockId: block.id, host: key },

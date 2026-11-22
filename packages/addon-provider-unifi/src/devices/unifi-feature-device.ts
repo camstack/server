@@ -242,16 +242,20 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
    */
   private async declareAttached(current: readonly string[]): Promise<void> {
     const elsewhere = this.macsOnOtherPorts()
-    const known = portKnownClients(this.knownClients, current, elsewhere)
-    if (known.join() !== this.knownClients.join()) {
+    const prior = this.knownClients
+    const known = portKnownClients(prior, current, elsewhere)
+    if (known.join() !== prior.join()) {
       this.knownClients = known
       await this.config.set('clientMacs', [...known])
     }
+    // With no client now, what the port declared before is re-declared as RETAINED even if a
+    // client of it moved to another port: that other port's fresh read then takes the link.
+    const retained = current.length === 0
     const ip =
       current.length === 1
         ? (unifiControllers.getClient(this.integrationId, current[0] ?? '')?.ip ?? null)
         : null
-    const declaration = unifiPortAttachedIdentifiers(known, current, ip)
+    const declaration = unifiPortAttachedIdentifiers(retained ? prior : known, current, ip)
     if (declaration === null) return
     const key = JSON.stringify(declaration)
     if (key === this.lastAttachedKey) return
@@ -289,9 +293,10 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
           meta: { portIdx: port.idx, clientMac: port.clientMac },
         })
       }
-      // A port that delivers no PoE powers none of its clients: it declares nothing new, and
-      // what it declared while it delivered stays (a transient 0 W never drops a link).
-      if (portIsPowering(port)) await this.declareAttached(port.clientMacs)
+      // A port that delivers no PoE powers no NEW client: it adds none, but it still prunes
+      // the clients seen elsewhere and re-declares its known ones as retained, so a camera that
+      // moved to a powering port takes the link and a transient 0 W never drops one.
+      await this.declareAttached(portIsPowering(port) ? port.clientMacs : [])
       if (port.clientName === null) return
       const desired = portLabel(port.idx, port.clientName)
       if (desired === this.lastDesiredName) return

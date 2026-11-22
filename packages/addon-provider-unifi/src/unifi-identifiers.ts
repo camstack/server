@@ -67,7 +67,7 @@ export function unifiPortAttachedIdentifiers(
   clientIp: string | null,
 ): UnifiIdentifierDeclaration | null {
   if (currentMacs.length > 0) {
-    const single = knownMacs.length === 1
+    const single = currentMacs.length === 1
     return {
       identifiers: { mac: knownMacs, ip: single ? clientIp : null },
       unread: single && clientIp === null ? ['ip'] : [],

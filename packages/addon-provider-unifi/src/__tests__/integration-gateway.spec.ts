@@ -718,7 +718,7 @@ describe('UniFi devices on a stub device context', () => {
     expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
   })
 
-  it('a port that draws 0 W declares nothing attached; a link-bearing declaration survives a 0 W tick', async () => {
+  it('a port that draws 0 W never ADDS a client; a known one is re-declared retained, never dropped', async () => {
     const infra: UnifiInfraSnapshot[] = [
       {
         ...SWITCH,
@@ -743,8 +743,39 @@ describe('UniFi devices on a stub device context', () => {
     }
     await unifiControllers.getManager(INT)?.poll()
     unifiControllers.emitSnapshot(INT)
-    await new Promise((resolve) => setImmediate(resolve))
-    expect(mutate).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(2))
+    const retained = mutate.mock.calls[1]?.[0]
+    expect(retained?.identifiers?.mac?.map((m) => m.value)).toEqual([PHONE.mac])
+    expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
+  })
+
+  it('a camera that moved to another powering port: the dark old port re-declares it RETAINED so the new port takes the link', async () => {
+    const infra: UnifiInfraSnapshot[] = [
+      {
+        ...SWITCH,
+        ports: [
+          port({ idx: 1, poePowerW: 3, clientMac: PHONE.mac, clientMacs: [PHONE.mac] }),
+          port({ idx: 2, poePowerW: 0 }),
+        ],
+      },
+    ]
+    await harness(infra)
+    const { ctx, mutate } = attachedRig()
+    await new UnifiFeatureDevice(ctx).onActivate()
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
+    infra[0] = {
+      ...SWITCH,
+      ports: [
+        port({ idx: 1, poePowerW: 0 }),
+        port({ idx: 2, poePowerW: 3, clientMac: PHONE.mac, clientMacs: [PHONE.mac] }),
+      ],
+    }
+    await unifiControllers.getManager(INT)?.poll()
+    unifiControllers.emitSnapshot(INT)
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(2))
+    const retained = mutate.mock.calls[1]?.[0]
+    expect(retained?.identifiers?.mac?.map((m) => m.value)).toEqual([PHONE.mac])
+    expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
   })
 
   it('a PoE port that never saw a client declares nothing attached', async () => {

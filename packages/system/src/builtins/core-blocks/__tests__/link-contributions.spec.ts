@@ -279,6 +279,23 @@ describe('LinkContributionReconciler', () => {
     expect(hostFeatures(w.blocks)).toEqual([other])
   })
 
+  it('a block the operator added a feature to after the snapshot was read is not deleted', async () => {
+    const other: CompositionFieldsFeature = { ...OPERATOR_FEATURE, cap: 'battery' }
+    const w = world()
+    await w.reconciler.pass()
+    w.setLinks({ status: 'answered', links: [] })
+    // The operator's write lands between the pass's read and its delete.
+    vi.mocked(w.log.info).mockImplementationOnce(() => {
+      const b = w.blocks[0]
+      const c = b === undefined ? null : coreBlockComposition(b)
+      if (b === undefined || c === null) return
+      w.blocks[0] = block(b.id, { ...c, features: [other] }, 9, IDENTITY_LINKS_USER_ID)
+    })
+    await w.reconciler.pass()
+    expect(w.removed).toEqual([])
+    expect(hostFeatures(w.blocks)).toEqual([other])
+  })
+
   it('an empty block the reconciler left earlier is cleaned on the next pass', async () => {
     const w = world({
       blocks: [

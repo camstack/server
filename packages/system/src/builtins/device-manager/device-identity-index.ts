@@ -335,8 +335,11 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
         if (graded === null) continue
         // A port with several clients (a PoE splitter) has no single IP to corroborate the
         // MAC, but the controller named that exact MAC on the port: that is the evidence.
+        // A port with one fresh client declares that client's IP, so it keeps needing it.
         const confidence =
-          (port.attachedIdentifiers.mac?.length ?? 0) > 1 && keys.some((k) => k.key === 'mac')
+          (port.attachedIdentifiers.mac?.length ?? 0) > 1 &&
+          port.attachedIdentifiers.ip === undefined &&
+          keys.some((k) => k.key === 'mac')
             ? 'auto'
             : graded
         const retained = new Set(port.attachedRetained)

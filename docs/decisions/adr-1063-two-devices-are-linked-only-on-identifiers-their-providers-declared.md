@@ -171,17 +171,22 @@ its wired clients (`clientMacs`, sorted by MAC; `clientMac` / `clientName` are t
 first, so the label does not flap with the controller's list order).
 
 1. A port reaching N devices links all N automatically (the controller named each
-   MAC on the port; there is no single IP to corroborate it). A device reached by
-   two ports stays a `proposal`.
+   MAC on the port; there is no single IP to corroborate it). A port with one
+   fresh client declares that client's IP and keeps needing it to corroborate the
+   MAC. A device reached by two ports stays a `proposal`.
 2. A client missing for a poll stays in the port's declared set and keeps its link;
-   it goes only when the controller shows it on another port (the fresh report wins
-   over the retained one), or a device side is removed.
+   it goes only when the controller shows it on another port, or a device side is
+   removed. A port with no client now (dark, 0 W, or its client moved) re-declares
+   its known clients as retained, so the other port's fresh read takes the link.
 3. A link the operator removed is `dismissed`, a stored row: the next poll and a
    restart never re-create it.
 4. When a link goes its `power-source` contribution goes with it, and a block the
    reconciler created (`createdBy: identity-links`) that is left without features
    is deleted. A block holding anything the operator added stays.
-5. A port creates links only while it delivers PoE (`poeOn` and more than
-   `PORT_POWERING_MIN_W`, 1 W); a port that does not feeds its clients through a
-   self-powered switch. An existing link is kept through a transient 0 W reading,
-   and an unknown reading is not zero.
+5. A port adds clients only while it delivers PoE (`poeOn` and more than
+   `PORT_POWERING_MIN_W`, 1 W); one that does not feeds its clients through a
+   self-powered switch. It still prunes clients seen elsewhere and keeps its known
+   ones as retained, so a link survives a transient 0 W reading. An unknown
+   reading is not zero.
+6. The reconciler re-reads a block right before deleting it and keeps it if the
+   operator changed it since the pass read it.
