@@ -49,8 +49,19 @@ interface MemoEntry<V> {
   readonly value: V
   /** When the underlying read that produced `value` resolved. */
   readonly readAt: number
+  /** When that read STARTED — the ordering a late-landing older read loses on. */
+  readonly startedAt: number
   /** When a caller last asked for this key — drives idle eviction. */
   readonly usedAt: number
+}
+
+/** How a {@link TtlMemo.refreshOutcome} ended. */
+export type RefreshOutcome = { readonly ok: true } | { readonly ok: false; readonly error: unknown }
+
+/** A read in flight: its promise and when it began. */
+interface InFlightRead<V> {
+  readonly promise: Promise<V>
+  readonly startedAt: number
 }
 
 /**
@@ -80,7 +91,16 @@ export interface TtlMemoOptions<K, V> {
  */
 export class TtlMemo<K, V> {
   private readonly entries = new Map<K, MemoEntry<V>>()
-  private readonly inFlight = new Map<K, Promise<V>>()
+  /**
+   * In-flight reads per (key, mode). A `refresh` never joins a `miss`: a miss
+   * may wait unboundedly on a departed node, and the refresher joining it
+   * would never land an observation. A `miss` may join a `refresh`, which is
+   * bounded.
+   */
+  private readonly inFlight: Record<MemoRead, Map<K, InFlightRead<V>>> = {
+    miss: new Map(),
+    refresh: new Map(),
+  }
   /**
    * Per-key invalidation counter. A read stores its result only if the key's
    * generation is still the one it started under, so a read already in flight
@@ -101,6 +121,15 @@ export class TtlMemo<K, V> {
   constructor(private readonly opts: TtlMemoOptions<K, V>) {
     this.ttlMs = opts.ttlMs ?? DEFAULT_BALANCER_INPUT_TTL_MS
     this.now = opts.now ?? Date.now
+  }
+
+  /** The in-flight read of `mode` for `key`, if any. Read-only diagnostic seam. */
+  inFlightInfo(
+    key: K,
+    mode: MemoRead,
+  ): { readonly mode: MemoRead; readonly startedAt: number } | null {
+    const read = this.inFlight[mode].get(key)
+    return read === undefined ? null : { mode, startedAt: read.startedAt }
   }
 
   /** Number of keys currently held. Test/diagnostic seam. */
@@ -169,7 +198,8 @@ export class TtlMemo<K, V> {
    */
   invalidate(key: K): void {
     this.entries.delete(key)
-    this.inFlight.delete(key)
+    this.inFlight.miss.delete(key)
+    this.inFlight.refresh.delete(key)
     this.generations.set(key, (this.generations.get(key) ?? 0) + 1)
   }
 
@@ -180,7 +210,17 @@ export class TtlMemo<K, V> {
    * is what re-warms a key immediately after {@link invalidate}.
    */
   async refresh(key: K): Promise<void> {
-    await this.read(key, 'refresh').catch(() => undefined)
+    await this.refreshOutcome(key)
+  }
+
+  /** {@link refresh}, reporting how the read ended. Never throws. */
+  async refreshOutcome(key: K): Promise<RefreshOutcome> {
+    try {
+      await this.read(key, 'refresh')
+      return { ok: true }
+    } catch (error: unknown) {
+      return { ok: false, error }
+    }
   }
 
   /**
@@ -204,41 +244,58 @@ export class TtlMemo<K, V> {
   /** Drop everything — used on shutdown so no stale state survives. */
   clear(): void {
     this.entries.clear()
-    this.inFlight.clear()
+    this.inFlight.miss.clear()
+    this.inFlight.refresh.clear()
     this.generations.clear()
     this.lastKnown.clear()
   }
 
   /**
-   * One shared in-flight read per key; stores the result on success. A
-   * refresh that finds a miss's read in flight joins it — the waiting caller
-   * chose to wait, and the refresher never awaits the promise it is handed.
+   * One shared in-flight read per (key, mode); stores the result on success. A
+   * miss joins a miss, else a refresh (bounded). A refresh joins only a
+   * refresh: the refresher exists to observe a node nobody is waiting on, so
+   * it must never inherit a dispatch's unbounded wait.
    */
   private read(key: K, mode: MemoRead): Promise<V> {
-    const existing = this.inFlight.get(key)
-    if (existing) return existing
+    const existing =
+      mode === 'miss'
+        ? (this.inFlight.miss.get(key) ?? this.inFlight.refresh.get(key))
+        : this.inFlight.refresh.get(key)
+    if (existing) return existing.promise
     const generation = this.generations.get(key) ?? 0
-    const pending = this.opts
+    const startedAt = this.now()
+    const slot = this.inFlight[mode]
+    const promise = this.opts
       .load(key, mode)
       .then((value) => {
         const at = this.now()
         const prior = this.entries.get(key)
-        const stored: MemoEntry<V> = { value, readAt: at, usedAt: prior?.usedAt ?? at }
-        // The last-known slot takes every read: a pre-change answer is still
-        // the newest one anybody has, and it is only ever served as `stale`.
-        this.lastKnown.set(key, stored)
+        const stored: MemoEntry<V> = {
+          value,
+          readAt: at,
+          startedAt,
+          usedAt: prior?.usedAt ?? at,
+        }
+        // An older read landing after a newer one must not overwrite it.
+        const lastKnown = this.lastKnown.get(key)
+        if (lastKnown === undefined || lastKnown.startedAt <= startedAt) {
+          // The last-known slot takes every read: a pre-change answer is still
+          // the newest one anybody has, and it is only ever served as `stale`.
+          this.lastKnown.set(key, stored)
+        }
         // Invalidated while this read was in flight ⇒ the value it returns
         // predates the change that invalidated it. Hand it to THIS caller (it
         // is no worse than what they would have read un-cached) but never store
         // it for the next one.
         if ((this.generations.get(key) ?? 0) !== generation) return value
+        if (prior !== undefined && prior.startedAt > startedAt) return value
         this.entries.set(key, stored)
         return value
       })
       .finally(() => {
-        if (this.inFlight.get(key) === pending) this.inFlight.delete(key)
+        if (slot.get(key)?.promise === promise) slot.delete(key)
       })
-    this.inFlight.set(key, pending)
-    return pending
+    slot.set(key, { promise, startedAt })
+    return promise
   }
 }

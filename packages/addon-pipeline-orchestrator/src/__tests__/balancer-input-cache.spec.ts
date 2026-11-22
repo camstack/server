@@ -203,6 +203,60 @@ describe('TtlMemo', () => {
  * old is a worse balancer input than a fresh one; a nine-second wait is a
  * worse dispatch than either.
  */
+describe('TtlMemo — a refresh never waits on a miss', () => {
+  it('a refresh while a never-settling miss is in flight runs its own load and stores the value', async () => {
+    const c = clock()
+    const load = vi.fn((key: string, read: 'miss' | 'refresh') =>
+      read === 'miss' ? new Promise<string>(() => {}) : Promise.resolve(`${key}:refreshed`),
+    )
+    const memo = new TtlMemo<string, string>({ load, now: c.now })
+
+    void memo.get('n').catch(() => undefined)
+    await memo.refresh('n')
+
+    expect(load).toHaveBeenCalledWith('n', 'refresh')
+    expect(await memo.get('n')).toBe('n:refreshed')
+  })
+
+  it('a miss still joins a refresh already in flight', async () => {
+    const c = clock()
+    let release: (v: string) => void = () => {}
+    const load = vi.fn(
+      (_key: string, _read: 'miss' | 'refresh') =>
+        new Promise<string>((resolve) => {
+          release = resolve
+        }),
+    )
+    const memo = new TtlMemo<string, string>({ load, now: c.now })
+    const refreshing = memo.refresh('n')
+    const getting = memo.get('n')
+    release('v')
+    await refreshing
+    expect(await getting).toBe('v')
+    expect(load).toHaveBeenCalledTimes(1)
+  })
+
+  it('an older read landing late never overwrites a newer stored entry', async () => {
+    const c = clock()
+    let releaseMiss: (v: string) => void = () => {}
+    const load = vi.fn((_key: string, read: 'miss' | 'refresh') =>
+      read === 'miss'
+        ? new Promise<string>((resolve) => {
+            releaseMiss = resolve
+          })
+        : Promise.resolve('new'),
+    )
+    const memo = new TtlMemo<string, string>({ load, now: c.now })
+    const missing = memo.get('n')
+    c.advance(10)
+    await memo.refresh('n')
+    c.advance(10)
+    releaseMiss('old')
+    await missing
+    expect(await memo.get('n')).toBe('new')
+  })
+})
+
 describe('TtlMemo.getWithin — a read past its budget yields to the last known answer', () => {
   beforeEach(() => {
     vi.useFakeTimers()

@@ -184,6 +184,9 @@ export type SourceGateWhere = 'pre-lock' | 'in-lock'
  * {@link TtlMemo}). Re-exported from the shared default so a test can assert
  * against the same number the controller uses rather than a copy of it.
  */
+/** An unchanged recovery-refresh line is repeated at most this often per node. */
+const UNUSABLE_REFRESH_LOG_EVERY_MS = 60_000
+
 export const BALANCER_INPUT_TTL_MS = DEFAULT_BALANCER_INPUT_TTL_MS
 
 /**
@@ -618,8 +621,41 @@ export class SessionDispatchController {
   private async refreshEligibleInferenceDevices(): Promise<void> {
     await Promise.all([
       this.eligibleInferenceDevices.refreshAll(),
-      ...this.deps.unusableInferenceNodeIds().map((n) => this.eligibleInferenceDevices.refresh(n)),
+      ...this.deps.unusableInferenceNodeIds().map((n) => this.refreshUnusableNodeEligibility(n)),
     ])
+  }
+
+  /** Per unusable node: the last recovery-refresh line logged and when. */
+  private readonly unusableRefreshLogged = new Map<string, { line: string; at: number }>()
+
+  /**
+   * One recovery refresh of an unusable node, logged on change and at most once
+   * a minute per node: whether it JOINED a refresh already in flight (and that
+   * read's age) and how it ended. Without this a node that never recovers
+   * leaves no trace of why.
+   */
+  private async refreshUnusableNodeEligibility(nodeId: string): Promise<void> {
+    const joined = this.eligibleInferenceDevices.inFlightInfo(nodeId, 'refresh')
+    const startedAt = Date.now()
+    const outcome = await this.eligibleInferenceDevices.refreshOutcome(nodeId)
+    const result = outcome.ok
+      ? 'settled-ok'
+      : `failed: ${outcome.error instanceof Error ? outcome.error.message : String(outcome.error)}`
+    const line = `${joined === null ? 'own read' : `joined in-flight ${joined.mode}`} · ${result}`
+    const last = this.unusableRefreshLogged.get(nodeId)
+    const at = Date.now()
+    if (last !== undefined && last.line === line && at - last.at < UNUSABLE_REFRESH_LOG_EVERY_MS) {
+      return
+    }
+    this.unusableRefreshLogged.set(nodeId, { line, at })
+    this.deps.logger.info('unusable node eligibility refresh', {
+      tags: { nodeId },
+      meta: {
+        joined: joined === null ? null : { mode: joined.mode, ageMs: startedAt - joined.startedAt },
+        outcome: result,
+        tookMs: at - startedAt,
+      },
+    })
   }
 
   /** Arm the periodic refresh once; a no-op afterwards and after shutdown. */

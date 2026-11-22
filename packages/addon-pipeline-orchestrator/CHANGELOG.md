@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A node excluded from detection placement while it restarted is placed again once its accelerators answer, instead of staying excluded until the orchestrator restarts.
+- A node that was excluded from inference placement while it restarted now recovers on the next background refresh instead of staying excluded behind a stuck dispatch read.
 
 ## [1.2.716] - 2026-11-22
 

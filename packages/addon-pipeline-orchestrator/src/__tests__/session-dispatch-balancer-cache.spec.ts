@@ -41,9 +41,9 @@ function fakeLogger(): IScopedLogger {
   return log as IScopedLogger
 }
 
-function fakeLoad(): RunnerLocalLoad {
+function fakeLoad(nodeId: string = NODE): RunnerLocalLoad {
   return {
-    nodeId: NODE,
+    nodeId,
     attachedCameras: 0,
     activeCameras: 0,
     avgInferenceFps: 0,
@@ -110,6 +110,8 @@ function makeHarness(
     /** Nodes the usability mirror holds unusable; the harness lets an eligibility read recover one. */
     readonly unusable?: Set<string>
     readonly nodes?: readonly string[]
+    /** Nodes whose UNBOUNDED (`await-catalog`) eligibility read never settles. */
+    readonly hungCatalogNodes?: ReadonlySet<string>
   } = {},
 ): Harness {
   const unusable = opts.unusable ?? new Set<string>()
@@ -118,11 +120,14 @@ function makeHarness(
   const counters: Counters = {
     collectAgentLoad: vi.fn(async () => {
       if (opts.loadThrows?.()) throw new Error('agent unreachable')
-      return [fakeLoad()]
+      return [fakeLoad(), ...[...(opts.hungCatalogNodes ?? [])].map((n) => fakeLoad(n))]
     }),
     buildNodeCaps: vi.fn(async () => ({})),
     buildNodeWeights: vi.fn(async () => ({})),
-    getEligibleInferenceDevices: vi.fn(async (nodeId: string) => {
+    getEligibleInferenceDevices: vi.fn(async (nodeId: string, read: string) => {
+      if (read === 'await-catalog' && opts.hungCatalogNodes?.has(nodeId)) {
+        return new Promise<Record<string, number>>(() => {})
+      }
       // The real read observes usability as a side effect; a healthy answer recovers the node.
       unusable.delete(nodeId)
       return {}
@@ -226,6 +231,25 @@ describe('session dispatch — cached balancer inputs', () => {
     await dispatch(h, 1)
     expect(h.attached).toHaveLength(1)
     expect(h.counters.getEligibleInferenceDevices).toHaveBeenCalledWith('other', 'one-round')
+    expect(unusable.has('other')).toBe(false)
+  })
+
+  it('an unusable node whose dispatch read hangs still recovers through the background refresh', async () => {
+    // A motion-start read of the node began while it was offline and waits on
+    // its catalog without bound. The refresher must not inherit that wait.
+    const unusable = new Set<string>()
+    const nodes: string[] = [NODE]
+    const h = makeHarness({ unusable, nodes, hungCatalogNodes: new Set(['other']) })
+    await dispatch(h, 1)
+    // The node the election can see changes to the one that is away: this
+    // dispatch's MISS for it starts the unbounded read that never settles.
+    nodes.splice(0, nodes.length, 'other')
+    void h.controller.handleSessionMotion(2, true, undefined, 'onboard', CAMERA_TRIGGER)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.counters.getEligibleInferenceDevices).toHaveBeenCalledWith('other', 'await-catalog')
+    unusable.add('other')
+    nodes.splice(0, nodes.length, NODE)
+    await vi.advanceTimersByTimeAsync(BALANCER_INPUT_TTL_MS + 10_000)
     expect(unusable.has('other')).toBe(false)
   })
 
