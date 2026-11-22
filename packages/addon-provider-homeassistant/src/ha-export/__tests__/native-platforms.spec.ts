@@ -383,6 +383,23 @@ describe('the two tables agree', () => {
     }
   })
 
+  it('declares a media player whose state is only assumed as assumed_state, and no other', () => {
+    const mapping = CAP_ENTITY_MAP['media-player']
+    if (mapping === undefined) throw new Error('media-player has no entity mapping')
+    const build = (slice: Readonly<Record<string, unknown>>) =>
+      buildNativeComponent({
+        deviceKey: 'camstack-tv1',
+        deviceId: 812,
+        capName: 'media-player',
+        label: 'TV',
+        slice,
+        mapping,
+      })?.component
+    expect(build({ state: 'on', assumedFields: ['state'] })?.assumed_state).toBe(true)
+    expect(build({ state: 'on', assumedFields: ['volumeLevel'] })?.assumed_state).toBeUndefined()
+    expect(build({ state: 'on' })?.assumed_state).toBeUndefined()
+  })
+
   it('leaves an unbound control BESIDE the native entity rather than losing it', () => {
     /**
      * Rule 3 in the other direction. A thermostat's vertical swing is a

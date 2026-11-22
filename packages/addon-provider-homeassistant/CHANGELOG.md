@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Home Assistant export: a consumable's distance remaining is a distance sensor in metres
+- The Home Assistant export no longer publishes a media player volume, mute or source its driver only assumes (a device with no feedback) as a reading: that entity reads unknown and still takes commands. An assumed on/off state is still published, and the media player is declared with an assumed state.
 
 ## [1.2.700] - 2026-11-21
 

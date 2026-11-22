@@ -75,6 +75,12 @@ export interface HaComponent {
   readonly state_class?: string
   readonly icon?: string
   /**
+   * The entity's state is the driver's own bookkeeping (a device with no
+   * feedback), Home Assistant's `assumed_state`. A component that predates the
+   * key ignores it and shows the state as a reading.
+   */
+  readonly assumed_state?: boolean
+  /**
    * Static entity attributes, announced with the structure — what an entity
    * IS (a consumable's form, kind and label), never a value that changes on
    * the push plane. A component that predates them ignores the key; one

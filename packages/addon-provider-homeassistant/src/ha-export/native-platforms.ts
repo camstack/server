@@ -47,6 +47,7 @@
  *    it is simply not absorbed.
  */
 
+import { assumedFieldsOf } from './assumed-fields.js'
 import { commandTopic, derivedEntityId, derivedExtraEntityId, stateTopic } from './topics.js'
 import type { HaComponent, HaNativeControl, HaPlatform } from './types.js'
 
@@ -524,6 +525,9 @@ function resolveBinding(
   }
 }
 
+/** The slice field a native entity's own state is read from. */
+const PRIMARY_STATE_FIELD = 'state'
+
 /**
  * Build one native component, or `null` when the capability has none.
  *
@@ -580,6 +584,9 @@ export function buildNativeComponent(input: NativeBuildInput): NativeComponentPl
     ...(Object.keys(controls).length > 0 ? { controls } : {}),
     ...native.constants,
     ...flags,
+    // The state is the driver's own bookkeeping (a device with no feedback): Home
+    // Assistant is told so, and offers both on and off instead of trusting it.
+    ...(assumedFieldsOf(input.slice).has(PRIMARY_STATE_FIELD) ? { assumed_state: true } : {}),
   }
   return { component, absorbed }
 }

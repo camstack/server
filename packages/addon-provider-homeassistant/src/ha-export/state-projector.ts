@@ -24,6 +24,7 @@ import {
   readCapField,
   ZONE_MACROS,
 } from './entity-catalog.js'
+import { assumedFieldsOf } from './assumed-fields.js'
 import { derivedEntityId, stateTopic, toSlug } from './topics.js'
 import type { StateValue } from './types.js'
 
@@ -213,9 +214,16 @@ export function projectCapSlice(
    * which is precisely the defect the descriptor table replaced.
    */
   const missingFields: string[] = []
+  const assumed = assumedFieldsOf(slice)
   for (const ref of capEntities(capName)) {
     // Write-only: the catalog gives a button no state topic.
     if (ref.descriptor.platform === 'button') continue
+    // The driver's own bookkeeping is not a reading (D393): an assumed volume,
+    // mute or source publishes nothing, so that entity reads `unknown` while its
+    // command still works. The PRIMARY state is published even when assumed (a
+    // player with no state cannot be used) and the native entity declares it
+    // `assumed_state` instead.
+    if (ref.entity !== entity && assumed.has(ref.descriptor.field)) continue
     const read = readCapField(slice, ref.descriptor.field)
     if (!read.present) {
       // The PRIMARY missing is the cap not being what the catalog says it
