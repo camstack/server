@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1124 shared schemas.**
+**1125 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -7390,6 +7390,15 @@ Enum: `"jwt-signing-key"`
 - `{ status: "not-found" }`
 - `{ status: "read-only" }`
 - `{ status: "in-use"; devices: TemplateUserSchema[]; automations: TemplateAutomationUserSchema[] }`
+
+### `TemplateInstanceSchema`
+
+- `blockId`: `string`
+- `name`: `string`
+- `enabled`: `boolean`
+- `templateId`: `string`
+- `values`: `Record<string, number \| string \| boolean \| number[] \| { eventIds?: string[]; sourceIds?: string[]; kinds?: EventVocabularyKindSchema[] } \| { actionId: string; args?: Record<string, unknown> } \| { between?: { from: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string }; to: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string } }; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[] } \| (Record<string, unknown>)[] \| (Record<string, number \| string \| boolean \| number[] \| { eventIds?: string[]; sourceIds?: string[]; kinds?: EventVocabularyKindSchema[] } \| { actionId: string; args?: Record<string, unknown> } \| { between?: { from: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string }; to: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string } }; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[] } \| (Record<string, unknown>)[] \| (Record<string, number \| string \| boolean \| number[] \| { eventIds?: string[]; sourceIds?: string[]; kinds?: EventVocabularyKindSchema[] } \| { actionId: string; args?: Record<string, unknown> } \| { between?: { from: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string }; to: { kind: "clock"; hh: number; mm: number } \| { kind: "sun"; event: "sunrise" \| "sunset" \| "dawn" \| "dusk"; offsetMin: number } \| { kind: "date"; local: string } }; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[] } \| (Record<string, unknown>)[]>)[]>)[]>`
+- `problems?`: `({ code: "missing-input" \| "invalid-input" \| "invalid-recipe" \| "missing-template" \| "edited-by-hand"; input?: string; detail: string })[]`
 
 ### `TemplateRecordSchema`
 

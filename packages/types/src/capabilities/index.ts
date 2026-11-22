@@ -287,6 +287,8 @@ export {
   normalizeCoreBlockWrite,
   resolveCoreBlockEntry,
   resolveCoreBlockFiles,
+  type TemplateInstance,
+  TemplateInstanceSchema,
 } from './core-blocks.cap.js'
 export * from './custom-actions.js'
 export type {
