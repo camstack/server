@@ -242,6 +242,23 @@ export function HelperWizard({
               />
             </label>
           )}
+          {template.family === 'actuator' && draft.active !== null && (
+            <label className="flex flex-col gap-1 text-[11px]">
+              {t('helper.builds')}
+              <Select
+                aria-label={t('helper.builds')}
+                data-testid="helper-output"
+                value={draft.output ?? 'device'}
+                onChange={(event) =>
+                  setDraft({ ...draft, output: event.target.value === 'none' ? 'none' : 'device' })
+                }
+                options={[
+                  { value: 'device', label: t('helper.outputDevice') },
+                  { value: 'none', label: t('helper.outputNone') },
+                ]}
+              />
+            </label>
+          )}
           <label className="flex flex-col gap-1 text-[11px]">
             {t('helper.name')}
             <Input

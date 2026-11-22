@@ -1,7 +1,13 @@
 /**
  * Shared card editor for a stored composition block (/build/compositions/:id).
  */
-import { coreBlockComposition, DeviceType, isEngineHostedHelper } from '@camstack/types'
+import {
+  type Composition,
+  coreBlockComposition,
+  DeviceType,
+  isEngineHostedHelper,
+} from '@camstack/types'
+import type { CustomizationSaveOutcome } from '../device/customize/use-customization'
 import {
   Badge,
   ErrorBox,
@@ -18,6 +24,7 @@ import { keyedArrayCardTargets } from '../device/customize/keyed/KeyedArrayCard'
 import { scalarCardTargets } from '../device/customize/scalar/scalar-targets'
 import { skeletonFillStatus } from './build-skeleton'
 import { CommandsSection } from './CommandsSection'
+import { GroupTriggersSection } from './GroupTriggersSection'
 import { EngineHostedBlockEditor } from './EngineHostedBlockEditor'
 import { HelperWizard } from './HelperWizard'
 import { draftFromHelper, isHelperComposition, writeHelper } from './helper-form-model'
@@ -84,40 +91,65 @@ export function CompositionBlockEditor({
       return <p role="alert">{t('helper.unreadable')}</p>
     }
     const deviceId = view.state.kind === 'answered' ? (view.state.state?.deviceId ?? null) : null
+    const saveComposition = async (next: Composition): Promise<CustomizationSaveOutcome> => {
+      try {
+        await update.mutateAsync({
+          blockId: view.block.id,
+          expectedUpdatedAt: view.block.updatedAt,
+          block: { composition: next },
+        })
+        await read.refetch()
+        return { kind: 'saved' }
+      } catch (err: unknown) {
+        return {
+          kind: 'refused',
+          reason: err instanceof Error ? err.message : String(err),
+        }
+      }
+    }
     return (
-      <HelperWizard
-        fillHeight={fillHeight}
-        purpose="edit"
-        initial={helperDraft}
-        start="parameters"
-        saving={update.isPending}
-        onSave={async (draft) => {
-          const lines = await writeHelper(draft, async (next, name) => {
-            await update.mutateAsync({
-              blockId: view.block.id,
-              expectedUpdatedAt: view.block.updatedAt,
-              block: {
-                composition: next,
-                ...(name === '' ? {} : { name }),
-              },
-            })
-            if (deviceId !== null && draft.room.trim() !== '') {
-              await setLocation.mutateAsync({
-                deviceId,
-                location: draft.room.trim(),
+      <div className="flex flex-col gap-3">
+        <HelperWizard
+          fillHeight={fillHeight}
+          purpose="edit"
+          initial={helperDraft}
+          start="parameters"
+          saving={update.isPending}
+          onSave={async (draft) => {
+            const lines = await writeHelper(draft, async (next, name) => {
+              await update.mutateAsync({
+                blockId: view.block.id,
+                expectedUpdatedAt: view.block.updatedAt,
+                block: {
+                  composition: next,
+                  ...(name === '' ? {} : { name }),
+                },
               })
-            }
-            await read.refetch()
-            // A rename writes the device's name: every list that shows it refreshes now, not on reload.
-            await Promise.all([
-              queryClient.invalidateQueries({ queryKey: [['coreBlocks']] }),
-              queryClient.invalidateQueries({ queryKey: [['deviceManager']] }),
-            ])
-          })
-          if (lines.length > 0) return { kind: 'refused', lines }
-          return { kind: 'saved', deviceId: deviceId ?? 0 }
-        }}
-      />
+              if (deviceId !== null && draft.room.trim() !== '') {
+                await setLocation.mutateAsync({
+                  deviceId,
+                  location: draft.room.trim(),
+                })
+              }
+              await read.refetch()
+              // A rename writes the device's name: every list that shows it refreshes now, not on reload.
+              await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [['coreBlocks']] }),
+                queryClient.invalidateQueries({
+                  queryKey: [['deviceManager']],
+                }),
+              ])
+            })
+            if (lines.length > 0) return { kind: 'refused', lines }
+            return { kind: 'saved', deviceId: deviceId ?? 0 }
+          }}
+        />
+        <GroupTriggersSection
+          composition={composition}
+          saving={update.isPending}
+          save={saveComposition}
+        />
+      </div>
     )
   }
 

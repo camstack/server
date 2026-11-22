@@ -30,7 +30,8 @@ import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { compositionEditorPath } from '../../lib/customization-routes'
 import { AutomationEditor } from './automation/AutomationEditor'
 import {
   AutomationActions,
@@ -316,6 +317,23 @@ export function AutomationsTab({
         notSortableReason: 'Row actions',
         render: (block) => {
           const recipe = parseRecipeFromCode(block.code)
+          const owner = recipe.ok ? recipe.recipe.ownedBy : undefined
+          if (owner !== undefined) {
+            // Written by a group's triggers: read-only here, edited on the group.
+            const group = (all ?? []).find((b) => b.id === owner.blockId)
+            return (
+              <Link
+                to={compositionEditorPath(owner.blockId)}
+                data-testid={`automation-managed-by-${block.id}`}
+                className="text-xs text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t('build.automationsTab.managedBy', 'Managed by {{group}}', {
+                  group: group?.name ?? owner.blockId,
+                })}
+              </Link>
+            )
+          }
           return (
             <AutomationActions
               unreadable={recipe.ok ? null : recipe.reason}
@@ -343,7 +361,7 @@ export function AutomationsTab({
         },
       },
     ],
-    [confirm, logsFor, openEdit, remove, setEnabled, t],
+    [all, confirm, logsFor, openEdit, remove, setEnabled, t],
   )
 
   const cancelInstance = (): void => {
@@ -527,7 +545,12 @@ export function AutomationsTab({
               ? t('build.automationsTab.loadingAutomations', 'Loading automations…')
               : t('build.automationsTab.noAutomationsYet', 'No automations yet.')
           }
-          onRowClick={(block) => setQuickModalId(block.id)}
+          onRowClick={(block) => {
+            const recipe = parseRecipeFromCode(block.code)
+            const owner = recipe.ok ? recipe.recipe.ownedBy : undefined
+            if (owner !== undefined) navigate(compositionEditorPath(owner.blockId))
+            else setQuickModalId(block.id)
+          }}
         />
       )}
 

@@ -6261,7 +6261,8 @@
       "lastRun": "Ultima esecuzione",
       "lastRunNotSortable": "Letto per automazione",
       "enabled": "Attiva",
-      "search": "Cerca automazioni"
+      "search": "Cerca automazioni",
+      "managedBy": "Gestita da {{group}}"
     },
     "blockEditor": {
       "loadExample": "Carica esempio",
@@ -12929,7 +12930,10 @@
       "hint": "Trascina il rettangolo per spostarlo, trascina un angolo per ridimensionarlo.",
       "save": "Salva ritaglio",
       "saveFailed": "Impossibile modificare il ritaglio"
-    }
+    },
+    "outputDevice": "Un dispositivo",
+    "outputNone": "Nessun dispositivo: solo trigger",
+    "builds": "Cosa crea"
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",
@@ -14234,6 +14238,35 @@
       "disarming": "In disinserimento",
       "pending": "In attesa",
       "triggered": "Scattato"
+    }
+  },
+  "groupTriggers": {
+    "title": "Trigger",
+    "hint": "Quando succede qualcosa, il gruppo comanda i suoi membri. Una pressione può accenderli, spegnerli o commutarli in base allo stato attuale.",
+    "empty": "Nessun trigger.",
+    "off": "spento",
+    "keptAsIs": "invariato",
+    "disable": "Disattiva",
+    "enable": "Attiva",
+    "remove": "Rimuovi",
+    "add": "Aggiungi un trigger",
+    "source": "Cosa succede",
+    "sourceFired": "Si preme un pulsante",
+    "sourceEvent": "Un evento",
+    "category": "Evento",
+    "pickDevice": "Scegli un dispositivo",
+    "pickConfirm": "Usa questo dispositivo",
+    "events": "Eventi",
+    "eventsPlaceholder": "Id evento, separati da virgola (vuoto: qualsiasi)",
+    "action": "Allora il gruppo",
+    "mode": "Modalità",
+    "apply": "Salva trigger",
+    "cancel": "Annulla",
+    "actions": {
+      "on": "si accende",
+      "off": "si spegne",
+      "switch": "commuta",
+      "climate": "imposta il clima"
     }
   }
 }

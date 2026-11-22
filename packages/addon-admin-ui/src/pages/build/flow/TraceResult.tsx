@@ -249,6 +249,21 @@ export function StepResult({ step, deviceName }: StepResultProps) {
               {d.message !== null && (
                 <span className="min-w-0 break-words text-foreground-subtle">{d.message}</span>
               )}
+              {d.members?.map((m) => (
+                <span
+                  key={m.deviceId}
+                  data-testid={`step-member-${String(m.deviceId)}`}
+                  className="flex items-center gap-1"
+                >
+                  <Badge variant={TONE_VARIANT[m.tone]}>{deviceName(m.deviceId)}</Badge>
+                  {m.message !== null && (
+                    <span className="min-w-0 break-words text-foreground-subtle">{m.message}</span>
+                  )}
+                </span>
+              ))}
+              {d.members === null && d.membersNote !== null && (
+                <span className="min-w-0 break-words text-foreground-subtle">{d.membersNote}</span>
+              )}
             </li>
           ))}
         </ul>

@@ -445,8 +445,45 @@ describe('traceDetails steps', () => {
       ],
     })
     expect(details.steps[0]?.devices).toEqual([
-      { deviceId: 1, tone: 'pass', message: null },
-      { deviceId: 2, tone: 'fail', message: 'offline' },
+      { deviceId: 1, tone: 'pass', message: null, members: null, membersNote: null },
+      { deviceId: 2, tone: 'fail', message: 'offline', members: null, membersNote: null },
+    ])
+  })
+
+  it('carries what a group command did on each member, and why when it is unknown', () => {
+    const details = traceDetails({
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'cap',
+          outcome: 'ok',
+          devices: [
+            {
+              deviceId: 9,
+              outcome: 'ok',
+              members: [
+                { deviceId: 21, ok: true },
+                { deviceId: 22, ok: false, error: 'offline' },
+              ],
+            },
+            { deviceId: 10, outcome: 'ok', members: null, membersNote: 'hub busy' },
+          ],
+        },
+      ],
+    })
+    expect(details.steps[0]?.devices).toEqual([
+      {
+        deviceId: 9,
+        tone: 'pass',
+        message: null,
+        members: [
+          { deviceId: 21, tone: 'pass', message: null },
+          { deviceId: 22, tone: 'fail', message: 'offline' },
+        ],
+        membersNote: null,
+      },
+      { deviceId: 10, tone: 'pass', message: null, members: null, membersNote: 'hub busy' },
     ])
   })
 })

@@ -117,6 +117,29 @@ describe('helper template groups', () => {
     expect(temperature.active).toBeUndefined()
   })
 
+  it('keeps the triggers and the output of a group through the form: editing the members never drops them', () => {
+    const stored: GroupHelperSpec = {
+      kind: 'group',
+      templateId: 'switch',
+      aggregate: 'any',
+      active: 'at-least-one',
+      output: 'none',
+      members: [{ source: { addonId: 'demo', stableId: 'lamp' }, cap: 'switch', fieldPath: 'on' }],
+      triggers: [
+        {
+          id: 't-ch1',
+          source: { kind: 'fired', device: { addonId: 'demo', stableId: 'remote' } },
+          action: { kind: 'switch' },
+        },
+      ],
+    }
+    const draft = draftFromHelper(stored, 'Bath', '')
+    if (draft === null) throw new Error('expected a draft')
+    const renamed = withDraftMembers(draft, draftMembers(draft))
+    const back = specFromDraft(renamed)
+    expect(back).toMatchObject({ output: 'none', triggers: stored.triggers })
+  })
+
   it('does not treat an unanswered member as a light with no shared controls', () => {
     expect(
       sharedCapsView([
