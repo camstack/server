@@ -1,4 +1,5 @@
 /** The one burst rule of the derived device changes (D1084). */
+import type { TransitionValue } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   coalesceChanges,
@@ -25,7 +26,7 @@ const pt = (
 
 describe('coalesceChanges', () => {
   it('nets a cover opening to one change per field, stamped with the last point of the burst', () => {
-    const before = new Map([
+    const before = new Map<string, TransitionValue>([
       [fieldKey('cover', 'state'), 'closed'],
       [fieldKey('cover', 'position'), 0],
     ])
@@ -100,7 +101,7 @@ describe('coalesceChanges', () => {
 
   it('keeps two capabilities apart', () => {
     const changes = coalesceChanges({
-      before: new Map([
+      before: new Map<string, TransitionValue>([
         [fieldKey('switch', 'on'), false],
         [fieldKey('lock', 'state'), 'locked'],
       ]),

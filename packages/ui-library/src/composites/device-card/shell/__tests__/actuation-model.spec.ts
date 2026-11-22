@@ -289,7 +289,6 @@ describe('actuation clock and details', () => {
           method: 'setTarget',
           args: { value: 22 },
           requestedAt: at,
-          matchedAfterMs: 120,
         },
       }),
       noon,
