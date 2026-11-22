@@ -248,6 +248,23 @@ with `allowOffline` and `alwaysShow`, and mounts one `NodeCard` below
   `NodePicker` hides itself when there is only one node; Nodes passes
   `alwaysShow` so the strip stays a layout anchor. Addons keeps the default.
 
+## Tables on a phone ([D1091](../decisions/adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md))
+
+Under 640 px a `DataTable` folds by the `mobile` role each `DataColumn` declares:
+`primary` (the identity, always shown), `keep` (shown beside it: one control or
+status), `detail` (a muted second line under the primary cell, one line) and
+`hidden`. No sideways scroll, no cards, rows at most 64 px. The fold runs in
+markup (`useIsPhone()`): a CSS-hidden duplicate cell stays mounted and breaks
+every query that finds a cell by text. A header that cannot fit becomes an icon
+with an `aria-label` (the Network addresses table). A device row's actions sit
+in a `SwipeActions` tray, most important first; a page header's secondary
+actions are one `PageActions` "More" menu. Generic `DeviceList` lists give their
+first column the leftover width on a phone, and their footer is two lines at
+most (size selector, then a short range with the pager). Exceptions: a table in
+a form field that owns its scroller, and a wrapping log line.
+`scripts/check-table-mobile-roles.ts` enforces the roles; `ui:shots` measures
+the tallest row.
+
 ## Table conventions
 
 **A list of manageable items is a REAL table that scrolls INSIDE its own

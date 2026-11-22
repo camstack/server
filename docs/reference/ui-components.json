@@ -412,6 +412,18 @@
       "notes": "Rows list every `node · device` placement; Select-all-roots = cluster root detectors only"
     },
     {
+      "need": "Secondary header actions of a page",
+      "admin": "`PageActions` (one \"More\" menu on a phone)",
+      "viewer": "a row of `Button`s that wraps",
+      "notes": "Primary action stays visible; the rest fold into the menu under 640 px (D1091)"
+    },
+    {
+      "need": "The actions of a table row on a phone",
+      "admin": "`SwipeActions` tray (most important first, then Open, Delete)",
+      "viewer": "an inline button row",
+      "notes": "Device rows only carry the title, one control and the status (D1091)"
+    },
+    {
       "need": "A list of manageable items (rules, tokens, sessions, targets)",
       "admin": "`DataTable` with `maxBodyHeight={TABLE_SCROLL_MAX_H}`",
       "viewer": "`Section` + `Row` list",
