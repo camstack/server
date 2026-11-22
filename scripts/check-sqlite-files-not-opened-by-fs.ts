@@ -62,12 +62,14 @@ const SCAN_ROOTS: readonly string[] = ['packages', 'server']
  * The only files allowed a SQLite driver value import: they construct the
  * connections of the process that owns the database (the settings backend on
  * the runner's main thread, the checkpoint worker thread beside it, and the
- * snapshot worker thread that writes the owner's backup copy — D693).
+ * snapshot worker thread that writes the owner's backup copy — D693, and the
+ * storage-report thread that scans `dbstat` with the map off).
  */
 export const SQLITE_CONNECTION_FILES: readonly string[] = [
   'packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts',
   'packages/system/src/builtins/sqlite-storage/wal-checkpoint-worker.ts',
   'packages/system/src/builtins/sqlite-storage/sqlite-snapshot-worker.ts',
+  'packages/system/src/builtins/sqlite-storage/storage-report-worker.ts',
 ]
 
 export type SqliteGuardRule = 'fs-on-sqlite-file' | 'sqlite-connection-outside-owner'

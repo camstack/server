@@ -95,6 +95,10 @@ const base = buildLibPreset({
     // `<package root>/dist/sqlite-snapshot-worker.js`. It imports
     // `better-sqlite3` and the pure protocol module, nothing from the kernel.
     'sqlite-snapshot-worker': 'src/builtins/sqlite-storage/sqlite-snapshot-worker.ts',
+    // Worker-thread entry for the boot `dbstat` report: its own read-only
+    // connection, map off. `storage-report-runner.ts` resolves it as
+    // `<package root>/dist/storage-report-worker.js`.
+    'storage-report-worker': 'src/builtins/sqlite-storage/storage-report-worker.ts',
     // Worker-thread entry that serves one non-settings database file
     // (`events.db`, `history.db` — D851). Top-level for the same reason;
     // `file-host-client.ts` resolves it as `<package root>/dist/file-host-worker.js`.

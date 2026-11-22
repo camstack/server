@@ -48,6 +48,7 @@ import {
   sqliteOccupancy,
   sqlitePageCacheKibFor,
 } from './sqlite-pragmas.js'
+import { readStorageRowsInWorker, type StorageRowsReader } from './storage-report-runner.js'
 import {
   STORAGE_REPORT_DELAY_MS,
   STORAGE_REPORT_TOP_N,
@@ -107,6 +108,8 @@ export interface SqliteSettingsBackendOptions {
    * and a second copy of them in `events.db` would be a table nobody reads.
    */
   readonly canonicalKv?: boolean
+  /** Where the boot `dbstat` report is read. Default: a worker thread with its own read-only connection. */
+  readonly storageRows?: StorageRowsReader
 }
 
 /** Input for {@link SqliteSettingsBackend.insertMany}. */
@@ -419,7 +422,9 @@ export class SqliteSettingsBackend implements ISettingsBackend {
    */
   private readonly profiler: SqliteOpProfiler | undefined
 
-  private readonly options: Required<SqliteSettingsBackendOptions>
+  private readonly options: Required<Omit<SqliteSettingsBackendOptions, 'storageRows'>> & {
+    readonly storageRows: StorageRowsReader
+  }
 
   constructor(
     private readonly dbPath: string,
@@ -433,6 +438,7 @@ export class SqliteSettingsBackend implements ISettingsBackend {
       databaseId: options?.databaseId ?? 'settings',
       autoVacuum: options?.autoVacuum ?? 'none',
       canonicalKv: options?.canonicalKv ?? true,
+      storageRows: options?.storageRows ?? readStorageRowsInWorker(),
     }
     this.profiler =
       logger === undefined
@@ -1952,32 +1958,19 @@ export class SqliteSettingsBackend implements ISettingsBackend {
    */
   private scheduleStorageReport(totalBytes: number): void {
     const timer = setTimeout(() => {
-      this.logStorageReport(totalBytes)
+      void this.logStorageReport(totalBytes)
     }, STORAGE_REPORT_DELAY_MS)
     timer.unref()
   }
 
-  private logStorageReport(totalBytes: number): void {
-    const db = this.db
-    if (db === null) return
+  private async logStorageReport(totalBytes: number): Promise<void> {
+    if (this.db === null) return
     const startedAt = Date.now()
     try {
-      const raw = db
-        .prepare(
-          // dbstat groups by OBJECT, and an index is an object. The join adds
-          // what dbstat cannot know: whether the object is a table or an index,
-          // and which table an index belongs to — the only trustworthy
-          // ownership signal, since index names carry none.
-          `SELECT d.name AS name,
-                  COALESCE(m.tbl_name, d.name) AS tableName,
-                  SUM(d.pgsize) AS bytes,
-                  COUNT(*) AS pages,
-                  COALESCE(m.type, 'unknown') AS kind
-             FROM dbstat d
-             LEFT JOIN sqlite_master m ON m.name = d.name
-            GROUP BY d.name, m.tbl_name, m.type`,
-        )
-        .all()
+      // On a read-only connection with the map off, on its own thread: dbstat
+      // reads every page, and through the serving connection's map each one
+      // stayed resident (~3.5 GB RSS spike a minute after boot).
+      const raw = await this.options.storageRows(this.dbPath)
       const rows: TableSizeRow[] = []
       for (const entry of raw) {
         const row = toTableSizeRow(entry)

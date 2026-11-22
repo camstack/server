@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Boot no longer spikes memory by several GB: the storage report scans on its own read-only connection with the map off, and the database map is re-sized only after the file fills 90% of it
+
 ## [1.2.938] - 2026-11-22
 
 ### Changed

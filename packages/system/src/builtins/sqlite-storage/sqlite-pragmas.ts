@@ -283,6 +283,9 @@ export function sqliteOccupancy(counters: SqlitePageCounters): SqliteOccupancy {
  */
 export const MAP_GROWTH_CHECK_INTERVAL_MS: number = 5 * 60_000
 
+/** The file must pass this fraction of the current map before the map is re-sized. */
+export const MAP_REMAP_FILL_FRACTION = 0.9
+
 /**
  * The new `mmap_size` when the file has outgrown the current one, or `null`.
  *
@@ -299,6 +302,11 @@ export const MAP_GROWTH_CHECK_INTERVAL_MS: number = 5 * 60_000
  */
 export function resolveMapGrowth(currentMmapBytes: number, fileSizeBytes: number): number | null {
   if (fileSizeBytes <= 0) return null
+  // Hysteresis: the map is 1.25 x the file when set, so any growth used to
+  // re-map (history.db: every ~5 min, 23 times a day). Wait until the file
+  // has used up 90% of the map, then jump back to 1.25 x. (80% would be no
+  // hysteresis at all: right after a remap the file sits at exactly 1/1.25 = 80%.)
+  if (fileSizeBytes <= currentMmapBytes * MAP_REMAP_FILL_FRACTION) return null
   const wanted = sqliteMmapSizeFor(fileSizeBytes)
   return wanted > currentMmapBytes ? wanted : null
 }

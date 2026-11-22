@@ -16,6 +16,7 @@ import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   resolveMapGrowth,
+  SQLITE_MMAP_CEILING_BYTES,
   SQLITE_JOURNAL_SIZE_LIMIT_BYTES,
   SQLITE_MMAP_FLOOR_BYTES,
   SQLITE_PAGE_CACHE_FLOOR_KIB,
@@ -200,5 +201,22 @@ describe('resolveMapGrowth', () => {
 
   it('does nothing when the file size cannot be read', () => {
     expect(resolveMapGrowth(268_435_456, 0)).toBeNull()
+  })
+
+  it('does not re-map for small growth: waits until the file passes 90% of the map', () => {
+    const base = 1_000_000_000
+    const current = sqliteMmapSizeFor(base)
+    expect(resolveMapGrowth(current, Math.round(base * 1.05))).toBeNull()
+    expect(resolveMapGrowth(current, Math.round(current * 0.89))).toBeNull()
+  })
+
+  it('re-maps to 1.25 x once the file passes 90% of the map', () => {
+    const current = sqliteMmapSizeFor(1_000_000_000)
+    const file = Math.round(current * 0.91)
+    expect(resolveMapGrowth(current, file)).toBe(sqliteMmapSizeFor(file))
+  })
+
+  it('stays put at the ceiling', () => {
+    expect(resolveMapGrowth(SQLITE_MMAP_CEILING_BYTES, SQLITE_MMAP_CEILING_BYTES * 2)).toBeNull()
   })
 })
