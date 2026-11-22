@@ -121,6 +121,7 @@ function world(opts: {
     } as unknown as SessionDispatchControllerDeps['settingsStore'],
     getEligibleInferenceDevices: async () => ({ 'coreml:all': 1 }),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     readPipelineDevicePin: async () => opts.devicePin ?? null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),

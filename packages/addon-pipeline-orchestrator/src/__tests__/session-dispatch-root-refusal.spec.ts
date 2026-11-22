@@ -102,6 +102,7 @@ async function makeHarness(): Promise<Harness> {
     settingsStore: store,
     getEligibleInferenceDevices: async () => ({ [CORAL]: 1, [ANE]: 1 }),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     readPipelineDevicePin: async () => pin,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),

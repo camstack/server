@@ -115,6 +115,7 @@ function makeHarness(detectionSources: DetectionSources): {
     } as unknown as SessionDispatchControllerDeps['settingsStore'],
     getEligibleInferenceDevices: async () => ({}),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     readPipelineDevicePin: async () => null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),

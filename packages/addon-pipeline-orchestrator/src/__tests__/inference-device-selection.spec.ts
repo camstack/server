@@ -144,6 +144,7 @@ function makeHarness(options: HarnessOptions = {}): Harness {
     } as unknown as SessionDispatchControllerDeps['settingsStore'],
     getEligibleInferenceDevices: async () => ({ ...(options.eligible ?? HUB_DEVICES) }),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({ ...options.caps }),
     readPipelineDevicePin: async () => options.pin ?? null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),

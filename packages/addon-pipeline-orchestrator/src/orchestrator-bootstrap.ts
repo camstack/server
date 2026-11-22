@@ -193,6 +193,8 @@ export interface OrchestratorBootstrapDeps {
    */
   readonly noteShareTopologyChange: (trigger: string) => void
   readonly isNodeInferenceUsable: (nodeId: string) => boolean
+  /** See `SessionDispatchControllerDeps.unusableInferenceNodeIds`. */
+  readonly unusableInferenceNodeIds: () => readonly string[]
   /** See `PlacementServiceDeps.isDefaultPoolExcluded`. */
   readonly isDefaultPoolExcluded: (nodeId: string) => boolean
   readonly getInferenceDeviceCaps: (nodeId: string) => Promise<Record<string, number>>
@@ -714,6 +716,7 @@ export async function buildOrchestratorControllers(
     readPipelinePin: (deviceId) => deps.readPipelinePin(deviceId),
     getEligibleInferenceDevices: (nodeId, read) => deps.getEligibleInferenceDevices(nodeId, read),
     isNodeInferenceUsable: (nodeId) => deps.isNodeInferenceUsable(nodeId),
+    unusableInferenceNodeIds: () => deps.unusableInferenceNodeIds(),
     isDefaultPoolExcluded: (nodeId) => deps.isDefaultPoolExcluded(nodeId),
     getInferenceDeviceCaps: (nodeId) => deps.getInferenceDeviceCaps(nodeId),
     readPipelineDevicePin: (deviceId) => deps.readPipelineDevicePin(deviceId),

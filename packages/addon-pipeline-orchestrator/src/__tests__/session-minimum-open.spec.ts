@@ -100,6 +100,7 @@ function makeHarness(config: CameraDetectionConfig): Harness {
     readPipelinePin: async () => null,
     getEligibleInferenceDevices: async () => ({}),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     readPipelineDevicePin: async () => null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),

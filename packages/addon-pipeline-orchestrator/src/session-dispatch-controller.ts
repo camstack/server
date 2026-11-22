@@ -301,6 +301,10 @@ export interface SessionDispatchControllerDeps {
   /** Can this node still infer? See `PlacementServiceDeps.isNodeInferenceUsable`
    *  — same mirror, same fail-open contract. */
   readonly isNodeInferenceUsable: (nodeId: string) => boolean
+  /** Nodes the usability mirror currently holds unusable. Such a node is dropped
+   *  before election, so no dispatch reads its eligibility again: the
+   *  background refresher re-reads it (the read is the observation). */
+  readonly unusableInferenceNodeIds: () => readonly string[]
   /**
    * The node's election left no device AND an operator-disabled or non-functional
    * one was excluded (#610): a camera there is refused, never put on the runner's
@@ -600,9 +604,22 @@ export class SessionDispatchController {
       this.nodeWeights.refresh(CLUSTER_KEY),
       // Per-NODE, so only the nodes actually dispatched to are re-read; keys
       // nobody has used lately are dropped by `refreshAll` itself.
-      this.eligibleInferenceDevices.refreshAll(),
+      this.refreshEligibleInferenceDevices(),
       this.inferenceDeviceCaps.refreshAll(),
     ]).catch(() => undefined)
+  }
+
+  /**
+   * Re-read the eligibility of every node in use, plus every node the usability
+   * mirror holds unusable. The latter is dropped before election, so nothing
+   * `get`s its key and `refreshAll` would never touch it — it could never be
+   * re-observed, and so never recover. A failed read changes nothing (D49).
+   */
+  private async refreshEligibleInferenceDevices(): Promise<void> {
+    await Promise.all([
+      this.eligibleInferenceDevices.refreshAll(),
+      ...this.deps.unusableInferenceNodeIds().map((n) => this.eligibleInferenceDevices.refresh(n)),
+    ])
   }
 
   /** Arm the periodic refresh once; a no-op afterwards and after shutdown. */
@@ -613,7 +630,7 @@ export class SessionDispatchController {
         this.agentLoads.refreshAll(),
         this.nodeCaps.refreshAll(),
         this.nodeWeights.refreshAll(),
-        this.eligibleInferenceDevices.refreshAll(),
+        this.refreshEligibleInferenceDevices(),
         this.inferenceDeviceCaps.refreshAll(),
       ]).catch(() => undefined)
     }, BALANCER_REFRESH_INTERVAL_MS)

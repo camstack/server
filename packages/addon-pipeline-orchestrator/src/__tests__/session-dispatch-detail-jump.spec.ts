@@ -189,6 +189,7 @@ async function dispatchOnCoral(store: PipelineSettingsStore): Promise<AttachedVi
     settingsStore: store,
     getEligibleInferenceDevices: async () => ({ [CORAL]: 1, [GPU]: 1 }),
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     // The balancer put this camera on the Coral.
     readPipelineDevicePin: async () => CORAL,

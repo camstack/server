@@ -104,7 +104,15 @@ interface Harness {
   readonly counters: Counters
 }
 
-function makeHarness(opts: { readonly loadThrows?: () => boolean } = {}): Harness {
+function makeHarness(
+  opts: {
+    readonly loadThrows?: () => boolean
+    /** Nodes the usability mirror holds unusable; the harness lets an eligibility read recover one. */
+    readonly unusable?: Set<string>
+    readonly nodes?: readonly string[]
+  } = {},
+): Harness {
+  const unusable = opts.unusable ?? new Set<string>()
   const attached: RunnerCameraConfig[] = []
   const readsAtAttach: ReadCounts[] = []
   const counters: Counters = {
@@ -114,7 +122,11 @@ function makeHarness(opts: { readonly loadThrows?: () => boolean } = {}): Harnes
     }),
     buildNodeCaps: vi.fn(async () => ({})),
     buildNodeWeights: vi.fn(async () => ({})),
-    getEligibleInferenceDevices: vi.fn(async () => ({})),
+    getEligibleInferenceDevices: vi.fn(async (nodeId: string) => {
+      // The real read observes usability as a side effect; a healthy answer recovers the node.
+      unusable.delete(nodeId)
+      return {}
+    }),
     getInferenceDeviceCaps: vi.fn(async () => ({})),
   }
   const deps: SessionDispatchControllerDeps = {
@@ -124,7 +136,7 @@ function makeHarness(opts: { readonly loadThrows?: () => boolean } = {}): Harnes
       markDispatching: () => ({ dispose: () => {} }),
     } as unknown as SessionDispatchControllerDeps['ledger'],
     topology: {
-      detectionEligibleNodes: () => [NODE],
+      detectionEligibleNodes: () => opts.nodes ?? [NODE],
     } as unknown as SessionDispatchControllerDeps['topology'],
     loadService: {
       collectAgentLoad: counters.collectAgentLoad,
@@ -140,7 +152,8 @@ function makeHarness(opts: { readonly loadThrows?: () => boolean } = {}): Harnes
       }),
     } as unknown as SessionDispatchControllerDeps['settingsStore'],
     getEligibleInferenceDevices: counters.getEligibleInferenceDevices,
-    isNodeInferenceUsable: () => true,
+    isNodeInferenceUsable: (nodeId) => !unusable.has(nodeId),
+    unusableInferenceNodeIds: () => [...unusable],
     getInferenceDeviceCaps: counters.getInferenceDeviceCaps,
     readPipelineDevicePin: async () => null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),
@@ -202,6 +215,18 @@ describe('session dispatch — cached balancer inputs', () => {
       [NODE, 'await-catalog'],
       [NODE, 'one-round'],
     ])
+  })
+
+  it('a node latched unusable and never elected is re-observed off the dispatch path and placed again', async () => {
+    // The unusable node is dropped before election, so nothing ever `get`s its
+    // eligibility key: only the refresher can re-observe it (it must not wait
+    // for a dispatch that will never name it).
+    const unusable = new Set<string>(['other'])
+    const h = makeHarness({ unusable, nodes: [NODE, 'other'] })
+    await dispatch(h, 1)
+    expect(h.attached).toHaveLength(1)
+    expect(h.counters.getEligibleInferenceDevices).toHaveBeenCalledWith('other', 'one-round')
+    expect(unusable.has('other')).toBe(false)
   })
 
   it('a dispatch inside the TTL performs NO balancer read', async () => {

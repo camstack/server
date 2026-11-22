@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A node excluded from detection placement while it restarted is placed again once its accelerators answer, instead of staying excluded until the orchestrator restarts.
+
 ## [1.2.716] - 2026-11-22
 
 ### Changed

@@ -685,6 +685,7 @@ export default class PipelineOrchestratorAddon
       forgetInferenceDeviceProbe: (nodeId) => this.forgetInferenceDeviceProbe(nodeId),
       noteShareTopologyChange: (trigger) => this.noteShareChange(trigger),
       isNodeInferenceUsable: (nodeId) => this.isNodeInferenceUsable(nodeId),
+      unusableInferenceNodeIds: () => this.nodeInferenceUsability.unusableNodeIds(),
       isDefaultPoolExcluded: (nodeId) => this.isDefaultPoolExcluded(nodeId),
       getInferenceDeviceCaps: (nodeId) => this.getInferenceDeviceCaps(nodeId),
       readPipelineDevicePin: (deviceId) => this.readPipelineDevicePin(deviceId),

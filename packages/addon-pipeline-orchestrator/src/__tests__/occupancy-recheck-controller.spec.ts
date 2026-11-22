@@ -637,6 +637,7 @@ describe('SessionDispatchController — a session close arms the recheck', () =>
       } as unknown as SessionDispatchControllerDeps['settingsStore'],
       getEligibleInferenceDevices: async () => ({}),
       isNodeInferenceUsable: () => true,
+      unusableInferenceNodeIds: () => [],
       getInferenceDeviceCaps: async () => ({}),
       readPipelineDevicePin: async () => null,
       inferenceRotation: new RoundRobinInferenceDeviceRotation(),

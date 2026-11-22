@@ -126,6 +126,7 @@ function makeHarness(
     // `inference-device-selection.spec.ts`.
     getEligibleInferenceDevices: async () => eligibleDevices,
     isNodeInferenceUsable: () => true,
+    unusableInferenceNodeIds: () => [],
     getInferenceDeviceCaps: async () => ({}),
     readPipelineDevicePin: async () => null,
     inferenceRotation: new RoundRobinInferenceDeviceRotation(),
