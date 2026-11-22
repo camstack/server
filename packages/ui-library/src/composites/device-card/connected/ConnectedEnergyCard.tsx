@@ -3,13 +3,15 @@ import { type ReactElement, useState } from 'react'
 import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { EnergyCard, energySince } from '../scenes/energy/EnergyCard'
-import { energyActivityOf } from '../scenes/energy/model'
-import type { ConnectedCardProps } from './ConnectedPlugCard'
-import { energyFlowsOf, energyTodayOf } from './energy-model'
 import { EnergyDayPanel } from '../parts/EnergyDayPanel'
-import { useEnergyDay } from './use-energy-day'
+import { EnergyCard, energySince } from '../scenes/energy/EnergyCard'
+import { type EnergyToday, energyActivityOf } from '../scenes/energy/model'
+import type { ConnectedCardProps } from './ConnectedPlugCard'
+import { energyDayWindow } from './energy-day'
+import { energyFlowsOf, energyTodayOf, withHeatPumpCop, withLinkedHeatPump } from './energy-model'
 import { useCardCommon } from './use-card-common'
+import { useEnergyDay } from './use-energy-day'
+import { useHeatPumpLink, useLinkedHeatPump } from './use-heat-pump-link'
 
 /**
  * An energy system (`energy-system`): solar, grid, storage, house and heat
@@ -34,10 +36,20 @@ export function ConnectedEnergyCard({
     dev?.energySystem === undefined ? undefined : dev.state.energySystem,
   )
   const [dayOffset, setDayOffset] = useState(0)
-  const day = useEnergyDay(deviceId, dayOffset, t)
+  // A linked heat pump (D1076) is read from its own device, never mixed with the system's branch;
+  // while the link read is pending, or when none holds, the system's own branch stands.
+  const link = useHeatPumpLink(deviceId)
+  const linked = useLinkedHeatPump(
+    link.status === 'linked' ? link.sourceDeviceId : null,
+    energyDayWindow(Date.now(), dayOffset),
+  )
+  const day = useEnergyDay(deviceId, dayOffset, t, linked === null ? undefined : linked.dayKwh)
   if (dev?.energySystem === undefined || slice === undefined) return null
-  const flows = energyFlowsOf(slice)
+  const effective = linked === null ? slice : withLinkedHeatPump(slice, linked)
+  const flows = energyFlowsOf(effective)
   const isToday = dayOffset === 0
+  const withLinked = (today: EnergyToday | null): EnergyToday | null =>
+    linked === null ? today : withHeatPumpCop(today, linked, isToday)
   return (
     <EnergyCard
       nodesLive={isToday}
@@ -65,7 +77,7 @@ export function ConnectedEnergyCard({
         flows,
         ...(precision === undefined ? {} : { precision }),
         // Today reads the system's own day totals; another day reads its recorded counters.
-        today: isToday ? energyTodayOf(slice) : day.today,
+        today: withLinked(isToday ? energyTodayOf(effective) : day.today),
       }}
       actions={card.actions}
     />

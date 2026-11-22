@@ -10,10 +10,10 @@ import type {
   DeviceHistorySeriesInfo,
 } from '@camstack/types'
 import { useMemo } from 'react'
+import type { UiTextFn } from '../../../contexts/ui-text'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
 import type { TimePoint } from '../../charts/chart-data'
 import type { TimeSeriesDef } from '../../charts/TimeSeriesChart'
-import { ENERGY_NODE_SLOT, type EnergyNodeId } from '../illustrations/EnergyFlowIllustration'
 import { linePoints } from '../../device-history/history-model'
 import {
   anchorNow,
@@ -21,9 +21,9 @@ import {
   useDeviceSeriesList,
   useHistoryReads,
 } from '../../device-history/use-device-history'
-import type { UiTextFn } from '../../../contexts/ui-text'
-import type { EnergyToday } from '../scenes/energy/model'
+import { ENERGY_NODE_SLOT, type EnergyNodeId } from '../illustrations/EnergyFlowIllustration'
 import type { EnergyDayStatus } from '../parts/EnergyDayPanel'
+import type { EnergyToday } from '../scenes/energy/model'
 import {
   counterDayTotal,
   type EnergyDayTotals,
@@ -121,7 +121,17 @@ function totalsOf(
   }
 }
 
-export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): EnergyDay {
+/**
+ * `linkedHeatPumpKwh`: the day's electrical kWh of the heat pump device the
+ * system is linked to (D1076), null while unread; `undefined` = no link, the
+ * system's own heat pump counter is read.
+ */
+export function useEnergyDay(
+  deviceId: number,
+  dayOffset: number,
+  t: UiTextFn,
+  linkedHeatPumpKwh?: number | null,
+): EnergyDay {
   const presence = useCapabilityPresence('device-history')
   const { list } = useDeviceSeriesList(deviceId)
   const now = anchorNow(Date.now(), 24 * 3_600_000)
@@ -184,9 +194,10 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
           },
         ]
       : []
+    const totals = totalsOf(series, entryOf, window.from)
     const today = energyTodayOfDay(
-      totalsOf(series, entryOf, window.from),
-      infoOf(series, 'heatPump.energyKwh') !== undefined,
+      linkedHeatPumpKwh === undefined ? totals : { ...totals, heatPumpKwh: linkedHeatPumpKwh },
+      linkedHeatPumpKwh !== undefined || infoOf(series, 'heatPump.energyKwh') !== undefined,
       series.some((info) => info.key.startsWith(keyOf('storage.'))),
     )
     const status: EnergyDayStatus =
@@ -203,7 +214,7 @@ export function useEnergyDay(deviceId: number, dayOffset: number, t: UiTextFn): 
       ),
       today,
     }
-  }, [presence, list, reads, items, series, window, deviceId, t])
+  }, [presence, list, reads, items, series, window, deviceId, t, linkedHeatPumpKwh])
 }
 
 const NONE_SERIES: readonly DeviceHistorySeriesInfo[] = []

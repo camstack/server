@@ -203,6 +203,8 @@ export function energyCentreFigures(
 const kwh = (v: number | null, precision?: number): string | null =>
   v === null ? null : formatKwh(v, precision)
 const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
+const cop = (v: number | null | undefined, precision?: number): string | null =>
+  v === null || v === undefined ? null : formatNumeric(v, precision)
 const hours = (v: number | null, precision?: number): string | null =>
   v === null ? null : `≈ ${formatNumeric(v, precision)} h`
 
@@ -256,6 +258,8 @@ function todayRows(
       cells: [
         ['heatPump', e('hpToday', 'Today'), kwh(today.heatPumpKwh, precision)],
         ['heatPumpNow', e('hpNow', 'Now'), pct(today.heatPumpShareNowPct)],
+        ['heatPumpCop', e('hpCop', 'COP today'), cop(today.heatPumpCop, precision)],
+        ['heatPumpCopNow', e('hpCopNow', 'COP now'), cop(today.heatPumpCopNow, precision)],
       ],
     },
     {

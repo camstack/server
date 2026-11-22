@@ -5,17 +5,18 @@
  * (D315): a pending list is never an empty one, a failed read is never a
  * flat line.
  */
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+
 import type {
   DeviceHistoryQueryManyEntry,
   DeviceHistoryQueryManyItem,
   DeviceHistorySeriesInfo,
 } from '@camstack/types'
+import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { useTrpcClient } from '../../contexts/system-context'
-import { useCapabilityPresence, type CapabilityPresence } from '../../hooks/use-capability-presence'
-import { readHistory, type HistoryReader } from './history-reads'
-import { HISTORY_WINDOW_MS, previousWindow, type HistoryWindow } from './history-window'
+import { type CapabilityPresence, useCapabilityPresence } from '../../hooks/use-capability-presence'
+import { type HistoryReader, readHistory } from './history-reads'
+import { HISTORY_WINDOW_MS, type HistoryWindow, previousWindow } from './history-window'
 
 /** How a stage of the view stands. */
 export type HistoryStage<T> =
@@ -53,8 +54,8 @@ export function useHistoryReader(): HistoryReader {
   )
 }
 
-/** A device's series list, gated on device-history being present. */
-export function useDeviceSeriesList(deviceId: number): {
+/** A device's series list, gated on device-history being present; no device (null) reads nothing. */
+export function useDeviceSeriesList(deviceId: number | null): {
   readonly presence: CapabilityPresence
   readonly list: HistoryStage<readonly DeviceHistorySeriesInfo[]>
 } {
@@ -62,8 +63,9 @@ export function useDeviceSeriesList(deviceId: number): {
   const client = useTrpcClient()
   const q = useQuery({
     queryKey: ['device-history', 'listSeries', deviceId],
-    queryFn: () => client.deviceHistory.listSeries.query({ deviceId }),
-    enabled: presence === 'present',
+    queryFn: () =>
+      deviceId === null ? Promise.resolve([]) : client.deviceHistory.listSeries.query({ deviceId }),
+    enabled: presence === 'present' && deviceId !== null,
     staleTime: 60_000,
   })
   const list: HistoryStage<readonly DeviceHistorySeriesInfo[]> =

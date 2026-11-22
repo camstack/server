@@ -52,6 +52,13 @@ export interface EnergyToday {
   readonly healthPct: number | null
   /** Heat pump power ÷ house power, right now. */
   readonly heatPumpShareNowPct: number | null
+  /**
+   * The heat pump's COP over the day and right now, from the linked heat pump
+   * device (D1076). Absent when the system has no link; null when a reading is
+   * missing — never a 0 or a division by it.
+   */
+  readonly heatPumpCop?: number | null
+  readonly heatPumpCopNow?: number | null
 }
 
 /** Shares of the consumption by origin, each 0..100. */

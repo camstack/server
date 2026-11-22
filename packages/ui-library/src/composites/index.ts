@@ -448,6 +448,7 @@ export { DoorbellRecentPanel } from './doorbell-recent-panel'
 export * from './empty-state'
 export * from './error-box'
 export * from './section-card'
+export * from './cap-link-cell'
 export type { EventKindGlyphProps } from './event-kind-visuals'
 export {
   EVENT_KIND_ICONS,

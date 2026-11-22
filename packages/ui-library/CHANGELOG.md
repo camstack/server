@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Cap link cell for the Customize table, and the energy card reads the linked heat pump with its COP.
+
 ## [1.2.497] - 2026-11-22
 
 ### Fixed

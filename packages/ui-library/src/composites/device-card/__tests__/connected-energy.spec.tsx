@@ -9,9 +9,16 @@ import { DeviceType, type EnergySystemStatus } from '@camstack/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
-import { ConnectedEnergyCard } from '../connected/ConnectedEnergyCard'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
-import { energyDailyFacts, energyFlowsOf, energyTodayOf } from '../connected/energy-model'
+import { ConnectedEnergyCard } from '../connected/ConnectedEnergyCard'
+import {
+  energyDailyFacts,
+  energyFlowsOf,
+  energyTodayOf,
+  type LinkedHeatPump,
+  type LinkedHeatPumpStatus,
+  linkedHeatPumpOf,
+} from '../connected/energy-model'
 
 const FULL: EnergySystemStatus = {
   solar: { powerW: 4200, energyKwh: 12000, todayKwh: 18.44 },
@@ -80,10 +87,23 @@ const PAST_DAY = {
 function centreOf(id: string): string {
   return screen.getByTestId(`dc-energy-centre-${id}`).textContent ?? ''
 }
-const dayCalls = vi.hoisted(() => ({ offsets: [] as number[], past: true }))
+const dayCalls = vi.hoisted(() => ({
+  offsets: [] as number[],
+  linkedKwh: [] as (number | null | undefined)[],
+  past: true,
+}))
+/** The heat pump link and the device it reads (D1076): `null` = no link holds. */
+const link = vi.hoisted(() => ({ linked: null as LinkedHeatPump | null }))
+vi.mock('../connected/use-heat-pump-link', () => ({
+  useHeatPumpLink: () =>
+    link.linked === null ? { status: 'none' } : { status: 'linked', sourceDeviceId: 77 },
+  useLinkedHeatPump: (sourceDeviceId: number | null) =>
+    sourceDeviceId === null ? null : link.linked,
+}))
 vi.mock('../connected/use-energy-day', () => ({
-  useEnergyDay: (_deviceId: number, offset: number) => {
+  useEnergyDay: (_deviceId: number, offset: number, _t: unknown, linkedKwh?: number | null) => {
     dayCalls.offsets.push(offset)
+    dayCalls.linkedKwh.push(linkedKwh)
     return {
       window: { from: 1_700_000_000_000, to: 1_700_086_400_000 },
       status: 'ready',
@@ -113,6 +133,8 @@ vi.mock('../connected/use-card-common', () => ({
 }))
 
 beforeEach(() => {
+  link.linked = null
+  dayCalls.linkedKwh.length = 0
   hub.slice = null
   hub.display = undefined
 })
@@ -430,5 +452,60 @@ describe('the energy system card', () => {
   it('draws nothing before the cap answers', () => {
     const { container } = render(<ConnectedEnergyCard deviceId={1} />)
     expect(container.innerHTML).toBe('')
+  })
+
+  it('a linked heat pump replaces the system branch: its power, its day kWh and its COP', () => {
+    // The system's own branch says 600 W; the linked device says 900 W and a 3.2 COP over the day.
+    hub.slice = FULL
+    link.linked = {
+      powerW: 900,
+      lifetimeKwh: 1500,
+      copNow: 3.5,
+      dayKwh: 5,
+      dayCop: 3.2,
+    }
+    dayCalls.past = false
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(dayCalls.linkedKwh.at(-1)).toBe(5)
+    const text = screen
+      .getAllByTestId('dc-energy-today')
+      .map((el) => el.textContent)
+      .join(' ')
+    expect(text).toContain('5 kWh')
+    expect(text).toContain('3.2')
+    expect(text).toContain('3.5')
+    expect(text).not.toContain('600')
+  })
+
+  it('without a link the system branch stands and no COP is shown', () => {
+    hub.slice = FULL
+    dayCalls.past = false
+    render(<ConnectedEnergyCard deviceId={1} />)
+    expect(dayCalls.linkedKwh.at(-1)).toBeUndefined()
+    expect(screen.queryByText('COP today')).toBeNull()
+  })
+})
+
+describe('linkedHeatPumpOf', () => {
+  const status: LinkedHeatPumpStatus = {
+    power: { electricalW: 800, thermalW: 2800, compressorPct: null },
+    energy: { electricalKwh: 1200, thermalKwh: 4000 },
+  }
+  it('is thermal over electrical, now and over the day', () => {
+    const hp = linkedHeatPumpOf(status, { thermalKwh: 12, electricalKwh: 4 })
+    expect(hp.copNow).toBeCloseTo(3.5, 5)
+    expect(hp.dayCop).toBe(3)
+    expect(hp.powerW).toBe(800)
+    expect(hp.dayKwh).toBe(4)
+  })
+  it('an unanswered slice or an unread counter is null, never 0', () => {
+    const hp = linkedHeatPumpOf(undefined, { thermalKwh: null, electricalKwh: null })
+    expect(hp).toEqual({
+      powerW: null,
+      lifetimeKwh: null,
+      copNow: null,
+      dayKwh: null,
+      dayCop: null,
+    })
   })
 })

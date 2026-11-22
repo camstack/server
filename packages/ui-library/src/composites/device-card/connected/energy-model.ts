@@ -3,7 +3,13 @@
  * these turn it into the scene's node powers and today's totals. The storage
  * is read from the model's `storage` part, never from the `battery` cap (#522).
  */
-import type { EnergySystemStatus } from '@camstack/types'
+import {
+  type EnergySystemStatus,
+  type HeatPumpEnergy,
+  type HeatPumpPower,
+  heatPumpInstantCop,
+  heatPumpPeriodCop,
+} from '@camstack/types'
 import type { EnergyFlows, EnergySourceSplit, EnergyToday } from '../scenes/energy/model'
 
 /** Derived daily facts. Null is a missing input, not a stand-in for zero. */
@@ -247,4 +253,67 @@ export function energyTodayOf(status: EnergySystemStatus): EnergyToday | null {
     heatPumpShareNowPct: facts.heatPumpShareNowPct,
   }
   return Object.values(today).some((v) => v !== null) ? today : null
+}
+
+/** What the linked heat pump device (D1076) reads, for one day; every field null while unknown. */
+export interface LinkedHeatPump {
+  /** Electrical power now, W: the heat pump node of the bus. */
+  readonly powerW: number | null
+  readonly lifetimeKwh: number | null
+  readonly copNow: number | null
+  /** Electrical energy of the day, kWh (a difference of the lifetime meter). */
+  readonly dayKwh: number | null
+  readonly dayCop: number | null
+}
+
+/** The parts of the `heat-pump-status` slice the card reads. */
+export interface LinkedHeatPumpStatus {
+  readonly power: HeatPumpPower
+  readonly energy: HeatPumpEnergy
+}
+
+/** The day's counter totals of the linked heat pump device, kWh; null = not read. */
+export interface LinkedHeatPumpDay {
+  readonly thermalKwh: number | null
+  readonly electricalKwh: number | null
+}
+
+/**
+ * The linked heat pump's `heat-pump-status` slice and the day's counters as the
+ * card reads them. A slice that has not answered leaves everything null: the
+ * system's own heat pump branch is never mixed in (D224).
+ */
+export function linkedHeatPumpOf(
+  status: LinkedHeatPumpStatus | undefined,
+  day: LinkedHeatPumpDay,
+): LinkedHeatPump {
+  return {
+    powerW: status?.power.electricalW ?? null,
+    lifetimeKwh: status?.energy.electricalKwh ?? null,
+    copNow: status === undefined ? null : heatPumpInstantCop(status.power),
+    dayKwh: day.electricalKwh,
+    dayCop: heatPumpPeriodCop(day.thermalKwh, day.electricalKwh),
+  }
+}
+
+/** The system's slice with its heat pump branch served by the linked device instead. */
+export function withLinkedHeatPump(
+  status: EnergySystemStatus,
+  linked: LinkedHeatPump,
+): EnergySystemStatus {
+  return {
+    ...status,
+    heatPump: { powerW: linked.powerW, energyKwh: linked.lifetimeKwh, todayKwh: linked.dayKwh },
+  }
+}
+
+/** Today's facts with the heat pump's COP from the linked device; the COP of "now" is today's only. */
+export function withHeatPumpCop(
+  today: EnergyToday | null,
+  linked: LinkedHeatPump,
+  isToday: boolean,
+): EnergyToday | null {
+  return today === null
+    ? null
+    : { ...today, heatPumpCop: linked.dayCop, heatPumpCopNow: isToday ? linked.copNow : null }
 }
