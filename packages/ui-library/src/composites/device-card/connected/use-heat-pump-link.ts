@@ -22,7 +22,7 @@ import { type LinkedHeatPump, linkedHeatPumpOf } from './energy-model'
 export const ENERGY_HEAT_PUMP_LINK = { cap: 'energy-system', linkId: 'heat-pump' } as const
 
 /**
- * `pending` until the read answered; `none` when no link holds (or the read was
+ * `pending` until the read answered with a loaded engine; `none` when no link holds (or the read was
  * refused: the system's own branch then stands); `linked` with the source device.
  */
 export type HeatPumpLink =
@@ -33,7 +33,9 @@ export type HeatPumpLink =
 export function useHeatPumpLink(deviceId: number): HeatPumpLink {
   const read = useCoreBlocksGetCapLinks({ deviceId })
   return useMemo((): HeatPumpLink => {
-    if (read.status === 'pending') return { status: 'pending' }
+    // The engine not loaded yet is unknown, not absent (D315): stay pending.
+    if (read.status === 'pending' || read.data?.status === 'not-loaded')
+      return { status: 'pending' }
     if (read.status === 'error' || read.data === undefined || read.data.status !== 'ok') {
       return { status: 'none' }
     }
