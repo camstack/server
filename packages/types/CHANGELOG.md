@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - History series can be recorded in metres (unit m), for distances such as an odometer
 - Consumables: a remaining life can be a distance (metres), e.g. kilometres to the next service
 - New device roles: lock-vehicle, climate-vehicle (a car's lock and cabin climate) and media-player-tv
+- A new Vehicle device type, with a car icon, that can carry lock and climate accessories
 
 ## [1.2.624] - 2026-11-22
 

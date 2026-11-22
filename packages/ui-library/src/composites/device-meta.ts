@@ -1,8 +1,18 @@
+import {
+  DEVICE_ROLE_ICON,
+  DEVICE_TYPE_ICON,
+  type DeviceIconKey,
+  DeviceRole,
+  DeviceType,
+  deviceIconKey,
+  type IconKey,
+} from '@camstack/types'
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
   AirVent,
   AlarmSmoke,
+  AppWindow,
   Bath,
   Battery,
   BatteryCharging,
@@ -12,23 +22,27 @@ import {
   Bot,
   Box,
   Camera,
+  Car,
+  CarFront,
   CircleDot,
   Clock,
   CloudRain,
   CloudSun,
+  Container,
   Crosshair,
   DoorClosed,
   DoorOpen,
   Droplet,
   Droplets,
+  EthernetPort,
   EyeOff,
   Fan,
   Flame,
   Flashlight,
   Footprints,
   Gauge,
-  Heater,
   Hash,
+  Heater,
   Image,
   Lightbulb,
   List,
@@ -37,6 +51,7 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  Monitor,
   MonitorPlay,
   Moon,
   Network,
@@ -44,13 +59,16 @@ import {
   Plug,
   Power,
   Radar,
-  Router,
+  RadioTower,
   RefreshCw,
+  Router,
   ScrollText,
+  Server,
   ShieldAlert,
   Siren,
   SlidersHorizontal,
   Smartphone,
+  SolarPanel,
   Sprout,
   Sun,
   SunMedium,
@@ -58,34 +76,19 @@ import {
   Thermometer,
   ToggleLeft,
   Tractor,
+  Tv,
   Type,
   Vibrate,
   Volume2,
   WashingMachine,
   Waves,
-  RadioTower,
-  SolarPanel,
-  Server,
-  Monitor,
-  Container,
-  AppWindow,
-  EthernetPort,
   Wifi,
   Wind,
   Workflow,
   Zap,
 } from 'lucide-react'
-import {
-  DEVICE_ROLE_ICON,
-  DEVICE_TYPE_ICON,
-  DeviceRole,
-  DeviceType,
-  deviceIconKey,
-  type DeviceIconKey,
-  type IconKey,
-} from '@camstack/types'
-import type { MultiSelectOption } from './device-list/multi-select'
 import { defaultUiText, type UiTextFn } from '../contexts/ui-text'
+import type { MultiSelectOption } from './device-list/multi-select'
 
 /**
  * How the admin renders a device TYPE or ROLE: its icon + label.
@@ -213,6 +216,9 @@ export const FAST_ICON_GLYPHS: Readonly<
   'app-window': AppWindow,
   'ethernet-port': EthernetPort,
   'battery-charging': BatteryCharging,
+  car: Car,
+  'car-front': CarFront,
+  tv: Tv,
 }
 
 /** The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`). */
@@ -248,6 +254,10 @@ const DEVICE_TYPE_LABELS: Record<DeviceType, DeviceMetaLabel> = {
   [DeviceType.HeatPump]: {
     labelKey: 'uiLibrary.deviceMeta.type.heatPump',
     labelFallback: 'Heat pump',
+  },
+  [DeviceType.Vehicle]: {
+    labelKey: 'uiLibrary.deviceMeta.type.vehicle',
+    labelFallback: 'Vehicle',
   },
   [DeviceType.EnergySystem]: {
     labelKey: 'uiLibrary.deviceMeta.type.energySystem',

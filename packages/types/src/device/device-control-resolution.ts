@@ -85,6 +85,8 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Humidifier]: 'humidifier',
   [DeviceType.WaterHeater]: 'water-heater',
   [DeviceType.HeatPump]: 'dummy',
+  // A real `vehicle` control kind arrives with the vehicle card.
+  [DeviceType.Vehicle]: 'dummy',
   [DeviceType.EnergySystem]: 'energy-system',
   // A VM, container, LXC, app or host: its state chip on the row, the workload
   // card (state, the controls `getOptions` declares, resources) as the hero.

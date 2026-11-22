@@ -117,6 +117,11 @@ export enum DeviceType {
    *  water, cooling, solar), its system modes and its power. One main read-only
    *  `heat-pump-status` cap carries all of it; `heat-pump-control` sets it (D1026). */
   HeatPump = 'heat-pump',
+  /** A road vehicle reached through its maker's connected-car account: odometer, range,
+   *  openings, tyre warnings and the 12 V battery in one read-only `vehicle` cap; where it
+   *  is in `location`; fuel, fluids and service in `consumables`. Its lock and its cabin
+   *  climate are accessory children (`lock-vehicle`, `climate-vehicle`). */
+  Vehicle = 'vehicle',
   /** A home energy installation (any vendor): solar, grid, house, a metered heat pump
    *  and the storage as branches of one bus. One read-only `energy-system` cap carries
    *  every value; the storage is a field of it, never the `battery` cap (#513, #522). */

@@ -74,6 +74,7 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.WaterHeater]: CLIMATE_LAYOUT,
   [DeviceType.HeatPump]: HEAT_PUMP_LAYOUT,
   [DeviceType.EnergySystem]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Vehicle]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Workload]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,

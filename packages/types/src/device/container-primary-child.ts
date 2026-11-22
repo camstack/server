@@ -57,6 +57,8 @@ export interface ContainerPrimaryChildRule {
  */
 export const CONTAINER_PRIMARY_CHILD_RULES: readonly ContainerPrimaryChildRule[] = [
   { deviceType: DeviceType.HeatPump, primary: 'self' },
+  // A car has a surface of its own; its lock and cabin climate are accessory children.
+  { deviceType: DeviceType.Vehicle, primary: 'self' },
 ]
 
 /**

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - History charts stored in metres switch between km, mi and m by your unit preference; rain in mm is unchanged
 - Consumable rows show a distance remaining in km or miles by your unit preference
 - Device labels and icons for the vehicle lock, vehicle climate and TV roles
+- A vehicle device type label and a car and tv glyph in the fast icon table
 
 ## [1.2.497] - 2026-11-22
 

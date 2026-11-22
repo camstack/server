@@ -96,6 +96,7 @@ export const HERO_SCENE_BY_TYPE = {
   [DeviceType.WaterHeater]: 'heater',
   [DeviceType.HeatPump]: 'heat-pump',
   [DeviceType.EnergySystem]: 'generic',
+  [DeviceType.Vehicle]: 'generic',
   [DeviceType.Workload]: 'generic',
   [DeviceType.Fan]: 'fan',
   [DeviceType.MediaPlayer]: 'tv',

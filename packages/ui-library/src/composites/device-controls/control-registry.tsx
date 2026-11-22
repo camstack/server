@@ -349,6 +349,7 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.HeatPump]: false,
   // Energy system inline = solar kW · storage % readout (natural width).
   [DeviceType.EnergySystem]: false,
+  [DeviceType.Vehicle]: false,
   // Workload inline = its state chip (natural width).
   [DeviceType.Workload]: false,
   [DeviceType.Sensor]: false,

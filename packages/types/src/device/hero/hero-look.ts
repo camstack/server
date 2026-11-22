@@ -457,6 +457,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.WaterHeater]: WATER_HEATER_LOOK,
   [DeviceType.HeatPump]: HEAT_PUMP_LOOK,
   [DeviceType.EnergySystem]: HERO_LOOK_DEFAULT,
+  [DeviceType.Vehicle]: HERO_LOOK_DEFAULT,
   [DeviceType.Workload]: HERO_LOOK_DEFAULT,
   [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,

@@ -57,6 +57,7 @@ export const accessoriesCapability = {
     DeviceType.MediaPlayer,
     DeviceType.AlarmPanel,
     DeviceType.Generic,
+    DeviceType.Vehicle,
   ],
   methods: {
     /**

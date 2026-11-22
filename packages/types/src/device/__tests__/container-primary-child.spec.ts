@@ -340,6 +340,20 @@ describe('a device type declares its primary child', () => {
     ).toBeNull()
   })
 
+  it('a vehicle stands for itself: its lock and climate children are never its hero', () => {
+    const accessories: readonly ContainerChildRef[] = [
+      child(1, 'lock', 'vehicle-lock'),
+      child(2, 'climate', 'vehicle-climate'),
+    ]
+    expect(
+      resolveContainerPrimaryChild(accessories, undefined, 'Car', DeviceType.Vehicle),
+    ).toBeNull()
+    // Without the declaration the type-rank heuristic would have picked the climate child.
+    expect(
+      resolveContainerPrimaryChild(accessories, undefined, 'Car', DeviceType.Container)?.type,
+    ).toBe('climate')
+  })
+
   it('keeps the heuristic for a type that declares nothing', () => {
     const picked = resolveContainerPrimaryChild(circuits, undefined, 'Box', DeviceType.Container)
     expect(picked?.type).toBe('climate')
@@ -430,7 +444,9 @@ describe('primaryChildPreferenceOf', () => {
       childKeys: ['pv'],
     })
     expect(primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: [] })).toBeUndefined()
-    expect(primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: null })).toBeUndefined()
+    expect(
+      primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: null }),
+    ).toBeUndefined()
     expect(primaryChildPreferenceOf({ primaryChildPreference: ['pv'] })).toBeUndefined()
   })
 })
