@@ -17,6 +17,8 @@ applies-to:
   - packages/types/src/audit/**
 ---
 
+> Amended by D1084: the correlator, the 30 s confirmation, the burst settling at write time and the five outcomes are gone; the store holds commands only (`ok | failed`) and a device's own changes are derived from device-history on read.
+
 ## Context
 
 An operator asked who turned a device on: a person, a rule, Alexa, a token,

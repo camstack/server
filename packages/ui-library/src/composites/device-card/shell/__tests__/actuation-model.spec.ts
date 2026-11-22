@@ -30,10 +30,8 @@ const PHRASES: ActuationPhrases = {
   scheduler: 'Schedule',
   composition: 'Composition',
   node: 'This node',
-  confirmed: 'Confirmed',
+  ok: 'Done',
   deviceOutcome: 'By the device',
-  already: 'Already set',
-  unconfirmed: 'Unconfirmed',
   failed: 'Failed',
 }
 
@@ -62,7 +60,7 @@ function row(patch: RowPatch): DeviceTransition {
     field: 'target',
     from: 28,
     to: 22,
-    outcome: 'confirmed',
+    outcome: 'ok',
     actor: user,
     ...patch,
   }
@@ -305,7 +303,7 @@ describe('actuation clock and details', () => {
       actorKind: 'User',
       actorName: 'Ada',
       command: 'setTarget({"value":22})',
-      outcome: 'Confirmed',
+      outcome: 'Done',
       rowId: '201:1:0',
     })
   })

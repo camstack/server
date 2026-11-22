@@ -674,7 +674,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
       fromBus('device.command-settled', {
         deviceId: 102,
         action: 'powerSource.forceRestart',
-        outcome: 'confirmed',
+        outcome: 'ok',
         actor: { kind: 'addon', addonId: 'provider-velux' },
         at: SYS_AT,
       }),

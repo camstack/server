@@ -7,7 +7,7 @@ import {
   CAP_VOCABULARY_BY_NAME,
   type DeviceTransition,
   type TransitionActor,
-  type TransitionOutcome,
+  type TransitionRowOutcome,
   type TransitionValue,
 } from '@camstack/types'
 
@@ -32,10 +32,8 @@ export interface ActuationPhrases {
   readonly scheduler: string
   readonly composition: string
   readonly node: string
-  readonly confirmed: string
+  readonly ok: string
   readonly deviceOutcome: string
-  readonly already: string
-  readonly unconfirmed: string
   readonly failed: string
 }
 
@@ -60,7 +58,7 @@ export interface ActuationRowView {
   readonly time: string
   /** The detail block (ⓘ): everything the ledger knows about this change. */
   readonly details: ActuationDetails
-  readonly outcome: TransitionOutcome
+  readonly outcome: TransitionRowOutcome
 }
 
 export interface ActuationDetails {
@@ -186,16 +184,12 @@ export function actuationActorLabel(
   }
 }
 
-function outcomeLabel(outcome: TransitionOutcome, phrases: ActuationPhrases): string {
+function outcomeLabel(outcome: TransitionRowOutcome, phrases: ActuationPhrases): string {
   switch (outcome) {
-    case 'confirmed':
-      return phrases.confirmed
+    case 'ok':
+      return phrases.ok
     case 'device':
       return phrases.deviceOutcome
-    case 'already':
-      return phrases.already
-    case 'unconfirmed':
-      return phrases.unconfirmed
     case 'failed':
       return phrases.failed
   }

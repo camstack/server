@@ -279,9 +279,9 @@ function systemEventKeys(kind: NcSystemEventKind): {
       bodyKey: 'system.device-consumable-low.body.tank',
     }
   }
-  // A settled command's body is per OUTCOME (D1022); `confirmed` is the usual one.
+  // A settled command's body is per OUTCOME (D1022, D1084); `ok` is the usual one.
   if (kind === 'device-command') {
-    return { titleKey: `system.${kind}.title`, bodyKey: 'system.device-command.body.confirmed' }
+    return { titleKey: `system.${kind}.title`, bodyKey: 'system.device-command.body.ok' }
   }
   // A broken rule's body is per REASON (D905); a deleted device stands in.
   if (kind === 'rule-broken') {

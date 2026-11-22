@@ -51,10 +51,8 @@ function phrasesOf(t: UiTextFn): ActuationPhrases {
     scheduler: t('uiLibrary.deviceCard.history.actorScheduler', 'Schedule'),
     composition: t('uiLibrary.deviceCard.history.actorComposition', 'Composition'),
     node: t('uiLibrary.deviceCard.history.actorNode', 'This node'),
-    confirmed: t('uiLibrary.deviceCard.history.outcome.confirmed', 'Confirmed'),
+    ok: t('uiLibrary.deviceCard.history.outcome.ok', 'Done'),
     deviceOutcome: t('uiLibrary.deviceCard.history.outcome.device', 'By the device'),
-    already: t('uiLibrary.deviceCard.history.outcome.already', 'Already set'),
-    unconfirmed: t('uiLibrary.deviceCard.history.outcome.unconfirmed', 'Unconfirmed'),
     failed: t('uiLibrary.deviceCard.history.outcome.failed', 'Failed'),
   }
 }

@@ -10462,11 +10462,9 @@
         "on": "On",
         "off": "Off",
         "outcome": {
-          "confirmed": "Confirmed",
           "device": "By the device",
-          "already": "Already set",
-          "unconfirmed": "Unconfirmed",
-          "failed": "Failed"
+          "failed": "Failed",
+          "ok": "Done"
         },
         "sectionSwitch": "History sections",
         "actorUser": "User",

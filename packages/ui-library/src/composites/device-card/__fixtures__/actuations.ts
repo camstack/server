@@ -43,12 +43,12 @@ function transition(
 
 const FIRST_PAGE: readonly DeviceTransition[] = [
   transition('fx-fail', 10 * MINUTE, 'climate-control', 'target', 22, 30, 'failed', user),
-  transition('fx-target', 2 * HOUR, 'climate-control', 'target', 28, 22, 'confirmed', user),
-  transition('fx-mode', 5 * HOUR, 'climate-control', 'mode', 'auto', 'heat', 'confirmed', user),
-  transition('fx-device', 20 * HOUR, 'climate-control', 'target', null, 21, 'unconfirmed', {
+  transition('fx-target', 2 * HOUR, 'climate-control', 'target', 28, 22, 'ok', user),
+  transition('fx-mode', 5 * HOUR, 'climate-control', 'mode', 'auto', 'heat', 'ok', user),
+  transition('fx-device', 20 * HOUR, 'climate-control', 'target', null, 21, 'device', {
     kind: 'device',
   }),
-  transition('fx-night', 26 * HOUR, 'switch', 'on', true, false, 'already', {
+  transition('fx-night', 26 * HOUR, 'switch', 'on', true, false, 'ok', {
     kind: 'action',
     addonId: 'core-blocks',
     actionId: 'act-night',

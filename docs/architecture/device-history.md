@@ -402,70 +402,71 @@ a `detail` branch so a mower or vacuum adds a branch, not a kind.
   the `power-meter.power` chart (an open run reaches now); a row opens the run
   plus 15 minutes either side. An unanswered or failed read shows neither.
 
-## Device transitions (D1022)
+## Device transitions (D1022, D1084)
 
-The builtin also provides `device-transitions`: one document per audited field
-change of a device, with who caused it. Record kind `device-transitions` (events
-DB, class `audit`, `deviceRemoval: 'delete'`), service in
-`device-history/transitions/`.
+The builtin also provides `device-transitions`: the audit of who commanded a
+device, and the device's own changes beside it. Two sources, one time-ordered
+list:
 
-A row is `{deviceId, capName, field, from, to, at, outcome, actor, command?}`.
-`outcome` is `confirmed` (a command and the device's own report matched),
-`already` (the target held when the command arrived), `unconfirmed` (nothing
-changed within 30 s; from = to), `failed` (the call threw; the message is
-scrubbed and cut) or `device` (nobody asked). `actor` is a user, an API token,
-an integration, a mesh node, an addon (with the caller's origin claim: action
-run, scheduler) or the device.
+- **Stored commands.** One row per command, written when the call completes.
+  Record kind `device-transitions` (events DB, class `audit`,
+  `deviceRemoval: 'delete'`; history.db never hosts records, D850), service in
+  `device-history/transitions/`. A row is
+  `{deviceId, capName, field, from, to, at, outcome, actor, command}`;
+  `outcome` is `ok` or `failed` (the call threw; the message is scrubbed and
+  cut). `actor` is a user, an API token, an integration, a mesh node or an addon
+  (with the caller's origin claim: action run, scheduler). `from`/`to` are the
+  effect the vocabulary names for the command, read from the hub mirror when the
+  call arrived; a command with no effect (stop) is stored with field `*`.
+- **Derived changes.** A device's own change is NOT stored. `listTransitions`
+  reads the raw series of the device's audited fields from device-history (the
+  fields a vocabulary effect names, `auditedFields`) and turns them into rows
+  with outcome `device` and actor `device`, ids `chg:<deviceId>:<at>:<cap>.<field>`.
+  A field whose cap has no `history` block has no series and no derived row; a
+  window older than the raw retention has none either.
 
 - **Observation.** The hub tRPC mount, the UDS parent and an in-process hub
   addon's own client report a vocabulary command through
   `kernel/command-observation.ts`. The observer set is empty on a node that
   audits nothing and costs one lookup per mutation.
-- **Correlation.** `device-manager/transitions/transition-correlator.ts`, fed
-  by `DeviceStateMirror.setTransitionTap` (a slice that actually changed, with
-  the previous one). Audited fields are those vocabulary effects name; a cap
-  with none costs one map lookup. A command with no effect (stop) is stored with
-  field `*` and takes the next change of its cap. The first slice a cap reports
-  is not a change. One write is attributed as a whole: the command any changed
-  field fulfils is found first, then every other audited field that changed in
-  the same write is credited to it, whatever order the fields are visited in.
-- **Delivery.** `transitions-sender.ts` flushes every 2 s in batches of at most
-  500 through `deviceTransitions.record` (only the kernel caller is accepted).
-  The queue holds 10 000; past it the oldest rows are dropped, logged with
-  counts and `tags: { deviceId }`.
+- **Recording.** `device-manager/transitions/command-recorder.ts`: no tap on the
+  mirror, no confirmation, no sweep. A call with a completion promise writes
+  when it settles (`ok`, or `failed`); a seam with none writes `ok` at departure.
+  `transitions-sender.ts` flushes every 2 s in batches of at most 500 through
+  `deviceTransitions.record` (only the kernel caller is accepted). The queue
+  holds 10 000; past it the oldest rows are dropped, logged with counts and
+  `tags: { deviceId }`.
 - **Args.** `command-args.ts`: routing keys dropped; secret paths (nested) and
   credential-named keys, at any depth, replaced by `***`; a bag over 1 KiB replaced
   by `{_truncated: true}`.
-- **Settling.** One real change is one row per audited field, not one row per
-  report. Changes of a cap are held as ONE burst per (device, cap); a held field
-  is written from its value before the first change to its last value, and a
-  field that ended where it began writes nothing. The burst is written when a
-  pending command's effect is met by the value that just arrived (at once,
-  credited to that command, `confirmed`; if the burst netted to nothing on that
-  field, e.g. `open` -> `opening` -> `open` after an `open` command, the command
-  still writes one `confirmed` row, from the burst's before to the target), when the cap has been quiet for 5 s
-  (`SETTLE_QUIET_MS`; a command still unmatched then expires `unconfirmed` on its
-  own and the burst is the device's), or after 60 s of continuous change
-  (`SETTLE_MAX_HOLD_MS`). A cover opening is `state closed->open` and
-  `position 0->100`, not `open`, `6`, `opening`, `open`, `100`. The vocabulary
-  marks no value as transient, so the quiet window is the same for every cap; a
-  slow transient state (`opening`) that outlasts it is written as its own row.
-  Rows are stamped with the burst's last change, not the flush. A there-and-back field and a burst dropped with its device are logged at debug with the device id. `stop()` writes every held burst before the last send (D49); memory is one
-  burst per (device, cap). Live state and runtime slices are not touched, only
-  the audit.
-- **Reads.** `listTransitions` (per device, paged), `getTransition`,
-  `listRecentTransitions` (admin), `getStatus` (`rows`, `lastWriteAt`,
-  `refused`).
+- **Burst rule.** One real change is one row per field, not one row per report.
+  `device-history/transitions/change-coalescing.ts` is the only place the rule
+  lives and it runs on read: the points of ONE capability are a burst until the
+  cap has been quiet for 5 s (`SETTLE_QUIET_MS`) or 60 s have passed
+  (`SETTLE_MAX_HOLD_MS`); a field is shown from its value before the first
+  change to its last, and a field that ended where it began shows nothing. A
+  burst still open is not shown, so two reads a moment apart agree. A field never
+  seen before is the device being learned, not a change. A cover opening is
+  `state closed->open` and `position 0->100`, not `open`, `6`, `opening`, `open`,
+  `100`. The row is stamped with the burst's last change.
+- **Reads.** `listTransitions` (per device, paged) merges both sources newest
+  first under one cursor `<at>.<source>.<id>`, so a page boundary is the same
+  whichever source the last row came from. One filter at a time: `capName`,
+  `actorKind` (`device` selects the derived changes) or `outcome` (commands only).
+  `getTransition` and `listRecentTransitions` (admin) answer stored commands only;
+  `getStatus` (`rows`, `lastWriteAt`, `refused`). `transitionDays` is the
+  retention of the stored commands.
 
-Blind spots, recorded as `device`: agent-originated calls through
-`$hub-cap-fwd`, co-located providers in a grouped runner, hub-main builtins on
-the shared broker client, composition-owned fields.
+Blind spots: a command from an agent through `$hub-cap-fwd`, a co-located
+provider in a grouped runner, a hub-main builtin on the shared broker client and
+composition-owned fields are not recorded as commands (their effect still shows
+as a derived device change when the field has a history series).
 
-A settled command is also announced on the event bus as
+A completed command is also announced on the event bus as
 `device.command-settled` (`DeviceCommandSettledEvent`: `deviceId`, vocabulary
-`action` id, `outcome`, `actor`, `at`; no args) by the device manager, once per
-settled command and never for a device-own change. The Notification Center maps
-it to the `device-command` kind (see `notifications.md`). The Velux gateway
+`action` id, `outcome` `ok | failed`, `actor`, `at`; no args) by the device
+manager, once per command. The Notification Center maps it to the
+`device-command` kind (see `notifications.md`). The Velux gateway
 self-recovery (D997) calls `power-source.forceRestart`, so its restarts arrive
 as actor `addon` `provider-velux`.
 

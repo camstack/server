@@ -10484,11 +10484,9 @@
         "on": "Acceso",
         "off": "Spento",
         "outcome": {
-          "confirmed": "Confermato",
           "device": "Dal dispositivo",
-          "already": "Già impostato",
-          "unconfirmed": "Non confermato",
-          "failed": "Non riuscito"
+          "failed": "Non riuscito",
+          "ok": "Eseguito"
         },
         "sectionSwitch": "Sezioni dello storico",
         "actorUser": "Utente",

@@ -166,7 +166,7 @@ describe('shipped copy names the event', () => {
       data: {
         deviceId: 5383,
         action: 'powerSource.forceRestart',
-        outcome: 'confirmed',
+        outcome: 'ok',
         actor: { kind: 'addon', addonId: 'provider-velux' },
         at: AT,
       },

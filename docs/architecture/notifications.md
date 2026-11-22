@@ -1078,7 +1078,7 @@ When the hub settles a vocabulary command (`device.command-settled`), the
 command is identified ONLY by its vocabulary action id (D983). Filters:
 `commandActions` (action ids; the hub refuses an id the action index does not
 know with `unknown-command-action`), `commandOutcomes`
-(`confirmed|already|unconfirmed|failed`) and `commandActorKinds`
+(`ok|failed`) and `commandActorKinds`
 (`user|addon|action|scheduler|composition|node`). Template variables
 `actionLabel`, `actorLabel`, `outcomeLabel`. The kind was held back from an old
 viewer until viewer 1.0.728 (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` is empty today).

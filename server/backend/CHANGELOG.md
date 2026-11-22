@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hub serves the new vehicle capability
 - A group of lights, switches, fans or thermostats can carry triggers (a button press, an event, a detection or a value change) and may build no device at all: it then only commands its members.
 - An automation made from a built-in template that is no longer shipped keeps running and is flagged as missing its template
+- Device history: the Interactions list stores one row per command and derives the device's own changes from device-history; old transition rows are migrated.
 
 ## [1.2.941] - 2026-11-22
 

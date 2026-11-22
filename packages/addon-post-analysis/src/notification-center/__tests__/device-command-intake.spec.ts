@@ -37,7 +37,7 @@ const settled = (over: Record<string, unknown> = {}): SystemEvent => ({
   data: {
     deviceId: 5383,
     action: 'powerSource.forceRestart',
-    outcome: 'confirmed',
+    outcome: 'ok',
     actor: { kind: 'addon', addonId: 'provider-velux' },
     at: 1_000,
     ...over,
@@ -66,10 +66,10 @@ describe('D1022 - device-command', () => {
       kind: 'device-command',
       deviceId: 5383,
       commandAction: 'powerSource.forceRestart',
-      commandOutcome: 'confirmed',
+      commandOutcome: 'ok',
       commandActorKind: 'addon',
       titleKey: 'system.device-command.title',
-      bodyKey: 'system.device-command.body.confirmed',
+      bodyKey: 'system.device-command.body.ok',
       textParams: expect.objectContaining({
         deviceName: 'Velux gateway',
         actionId: 'powerSource.forceRestart',

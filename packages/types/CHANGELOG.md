@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Group triggers: a group's spec can list triggers and an output of none; a trigger that would fire its own group, directly or through other groups, is refused at save.
 - An automation a group owns traces, per member, what its command did, and logs each trigger-caused group command under the group
 - The Buttons → devices built-in automation template is retired: a button press that commands a device is now a trigger of an actuator group
+- Device transitions: stored outcomes are ok or failed; the notification command outcome filter follows.
 
 ## [1.2.625] - 2026-11-22
 

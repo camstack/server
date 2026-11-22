@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The group editor can build a group with no device of its own, and a command a group sent shows what it did on each member in the trace
 - An automation a group manages reads Managed by that group in the Automations list and opens the group
 - Adding a Matter integration after creating the fabric no longer fails with 'This provider has several kinds: name one'
+- Device history: the outcome words follow the two stored outcomes.
 
 ## [1.2.737] - 2026-11-22
 
