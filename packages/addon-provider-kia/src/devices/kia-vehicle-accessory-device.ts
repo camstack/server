@@ -49,14 +49,10 @@ abstract class KiaAccessoryDevice extends BaseDevice<typeof kiaVehicleSchema> {
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCaps()
-    const handle = this.resolveHandle()
-    if (handle === null) {
-      this.ctx.logger.debug('Kia accessory: handle not present; no live listener yet', {
-        tags: { deviceId: this.id },
-      })
-      return
-    }
-    this.handleUnsub = handle.onChange(() => this.safeRecompute())
+    // The watch outlives any one handle: a late first sign-in or a reconnect rebinds it.
+    this.handleUnsub = kiaConnections.watchVehicle(this.integrationId, this.kiaVehicleId, () =>
+      this.safeRecompute(),
+    )
     this.safeRecompute()
   }
 

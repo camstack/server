@@ -54,6 +54,14 @@ export class KiaBudgetExhaustedError extends Error {
   }
 }
 
+/** A sign-in that finished after its account was stopped: the worker is closed, nothing is kept. */
+class KiaStoppedError extends Error {
+  readonly name = 'KiaStoppedError'
+  constructor() {
+    super('Kia: the account was stopped while signing in')
+  }
+}
+
 /** The least time between two forced refreshes of one account: waking a car drains its 12 V battery. */
 export const KIA_FORCE_MIN_GAP_MS = 10 * 60_000
 
@@ -109,6 +117,10 @@ export class KiaIntegrationManager {
   #lastCheckedAt: number | null = null
   #error: string | null = null
   #stopped = true
+  /** Bumped by every stop: a sign-in that began before it must not publish anything. */
+  #generation = 0
+  /** When the day's allowance is spent: a pause, not a fault. */
+  #budgetRetryAt: number | null = null
   /** A refused sign-in: no further sign-in until the credentials change. */
   #authError: KiaBridgeError | null = null
   #readInFlight: Promise<void> | null = null
@@ -149,6 +161,10 @@ export class KiaIntegrationManager {
         brand: this.#connection.brand,
         vehicleCount: this.#handles.size,
         callsToday: this.#budget.used(),
+        budgetRetryAt:
+          this.#budgetRetryAt !== null && this.#now() < this.#budgetRetryAt
+            ? this.#budgetRetryAt
+            : null,
       },
       lastCheckedAt: this.#lastCheckedAt,
       error: this.#error,
@@ -176,6 +192,7 @@ export class KiaIntegrationManager {
       await this.#connect()
       this.#markConnected()
     } catch (err: unknown) {
+      if (err instanceof KiaStoppedError) return
       this.#noteFailure(err)
       this.#surfaceSink.set(this.#id, this.#surface())
       this.#onDisconnected(this.#id)
@@ -186,6 +203,7 @@ export class KiaIntegrationManager {
   /** Close the worker, drop the surface and the handles, set disconnected. */
   async stop(): Promise<void> {
     this.#stopped = true
+    this.#generation += 1
     this.#closeBridge()
     this.#handles.clear()
     this.#infos = []
@@ -218,6 +236,7 @@ export class KiaIntegrationManager {
     const verdict = this.#budget.check('login')
     if (!verdict.ok) throw new KiaBudgetExhaustedError(verdict.retryAt)
     this.#budget.spend('login')
+    const generation = this.#generation
     const bridge = this.#makeBridge()
     let listed: readonly KiaBridgeVehicle[]
     try {
@@ -225,6 +244,10 @@ export class KiaIntegrationManager {
     } catch (err: unknown) {
       bridge.close()
       throw err
+    }
+    if (generation !== this.#generation) {
+      bridge.close()
+      throw new KiaStoppedError()
     }
     this.#bridge = bridge
     if (listed.length > 0) this.#infos = listed.map(describe)
@@ -413,6 +436,18 @@ export class KiaIntegrationManager {
    * sign-in blocks signing in again; the cloud's own rate refusal spends the whole day.
    */
   #noteFailure(err: unknown, bridge: KiaBridge | null = null): void {
+    if (err instanceof KiaStoppedError) return
+    if (err instanceof KiaBudgetExhaustedError) {
+      // The account is fine; it only has nothing left to spend today. Not a lost connection.
+      this.#budgetRetryAt = err.retryAt
+      if (this.#status === 'connecting') this.#status = 'disconnected'
+      this.#lastCheckedAt = this.#now()
+      this.#logger.info('KiaIntegrationManager: daily allowance spent — reads resume later', {
+        tags: { integrationId: this.#id },
+        meta: { retryAt: err.retryAt },
+      })
+      return
+    }
     if (err instanceof KiaBridgeError) {
       if (err.code === 'exited' || err.code === 'timeout' || err.code === 'protocol')
         this.#dropBridge(bridge)
@@ -428,9 +463,7 @@ export class KiaIntegrationManager {
         ? err.code === 'otp-required'
           ? 'the account asks for a one-time code, which this integration cannot answer'
           : 'authentication failed — check username, password, PIN and region'
-        : err instanceof KiaBudgetExhaustedError
-          ? 'the daily allowance of cloud calls is spent'
-          : errMsg(err)
+        : errMsg(err)
     this.#lastCheckedAt = this.#now()
     this.#session.failure(this.#id, err)
     this.#logger.warn('KiaIntegrationManager: cloud call failed — last state kept', {

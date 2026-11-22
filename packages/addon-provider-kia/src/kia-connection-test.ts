@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { kiaConfigSchema } from './config.js'
 import { KiaBridgeError } from './kia-bridge.js'
@@ -21,11 +22,24 @@ export interface KiaConnectionTestDeps {
   /** Factory seam — the real one spawns the Python worker; tests inject a fake. */
   readonly makeBridge: KiaBridgeFactory
   readonly logger: IScopedLogger
+  readonly now?: () => number
+}
+
+/** The least time between two test sign-ins of one account: each is a login the cloud counts. */
+export const KIA_TEST_MIN_GAP_MS = 60_000
+
+function fingerprint(values: readonly string[]): string {
+  return createHash('sha256').update(values.join('\u0000')).digest('hex')
 }
 
 /** Human description of what pressing Test actually does. */
 export function buildKiaConnectionTestProvider(deps: KiaConnectionTestDeps): IConnectionProbe {
   const { makeBridge, logger } = deps
+  const now = deps.now ?? Date.now
+  // Kept in memory only, as digests: the last test of each account, and the credential sets the
+  // cloud refused. A wrong password tried again is how an account gets locked.
+  const lastTestAt = new Map<string, number>()
+  const refused = new Set<string>()
 
   return {
     testSettings: async ({ settings }) => {
@@ -41,6 +55,25 @@ export function buildKiaConnectionTestProvider(deps: KiaConnectionTestDeps): ICo
         }
       }
 
+      const { username, password, pin, region, brand } = parsed.data
+      const account = fingerprint([username, region, brand])
+      const credentials = fingerprint([username, password, pin, region, brand])
+      if (refused.has(credentials)) {
+        return {
+          outcome: 'rejected',
+          error:
+            'Kia already refused exactly these credentials; change the username, password, PIN or region before testing again.',
+        }
+      }
+      const last = lastTestAt.get(account)
+      if (last !== undefined && now() - last < KIA_TEST_MIN_GAP_MS) {
+        const waitS = Math.ceil((KIA_TEST_MIN_GAP_MS - (now() - last)) / 1000)
+        return {
+          outcome: 'inconclusive',
+          error: `This account was tested moments ago; each test is a cloud sign-in. Try again in ${waitS} s.`,
+        }
+      }
+      lastTestAt.set(account, now())
       const startedAt = Date.now()
       let bridge: ReturnType<KiaBridgeFactory> | null = null
       try {
@@ -56,6 +89,7 @@ export function buildKiaConnectionTestProvider(deps: KiaConnectionTestDeps): ICo
           }
         }
         if (err instanceof KiaBridgeError && err.code === 'auth') {
+          refused.add(credentials)
           // OBSERVED refusal. Never echo the password back, and name the region
           // — a correct password against the wrong region fails exactly here.
           logger.warn('Kia connection test: credentials refused', {

@@ -15,6 +15,13 @@ export interface KiaConnectionSurface {
   readonly refresh: (reason: StateRefreshReason) => Promise<void>
 }
 
+interface VehicleWatcher {
+  readonly integrationId: string
+  readonly vehicleId: string
+  readonly listener: () => void
+  unbind: (() => void) | null
+}
+
 /**
  * Per-integration registry the device classes use to reach a live vehicle handle (and the
  * discovery rows) of a given Kia account. Keyed by `integrationId`; device classes pass the
@@ -23,14 +30,42 @@ export interface KiaConnectionSurface {
  */
 export class KiaConnectionResolver {
   readonly #surfaces: Map<string, KiaConnectionSurface> = new Map()
+  readonly #watchers = new Set<VehicleWatcher>()
 
   /** Publish or remove the connection surface for an integration id. `null` removes. */
   set(integrationId: string, surface: KiaConnectionSurface | null): void {
-    if (surface === null) {
-      this.#surfaces.delete(integrationId)
-      return
+    if (surface === null) this.#surfaces.delete(integrationId)
+    else this.#surfaces.set(integrationId, surface)
+    for (const watcher of [...this.#watchers]) {
+      if (watcher.integrationId !== integrationId) continue
+      this.#bind(watcher)
+      // A vehicle that now has a handle has a state its device has not folded in yet.
+      if (watcher.unbind !== null) watcher.listener()
     }
-    this.#surfaces.set(integrationId, surface)
+  }
+
+  /**
+   * Follow a vehicle for as long as the device lives. The manager builds new handles on every
+   * start, and a device is activated before the first sign-in may have succeeded, so a listener
+   * bound to one handle would be orphaned: this one rebinds whenever the surface changes and
+   * fires once when a handle appears, so the device folds the state in.
+   */
+  watchVehicle(integrationId: string, vehicleId: string, listener: () => void): () => void {
+    const watcher: VehicleWatcher = { integrationId, vehicleId, listener, unbind: null }
+    this.#watchers.add(watcher)
+    this.#bind(watcher)
+    return () => {
+      this.#watchers.delete(watcher)
+      watcher.unbind?.()
+      watcher.unbind = null
+    }
+  }
+
+  #bind(watcher: VehicleWatcher): void {
+    watcher.unbind?.()
+    watcher.unbind = null
+    const handle = this.getVehicle(watcher.integrationId, watcher.vehicleId)
+    if (handle !== null) watcher.unbind = handle.onChange(watcher.listener)
   }
 
   infos(integrationId: string): readonly KiaDiscoverable[] {

@@ -24,6 +24,7 @@ const GOOD = {
 type Mode = 'cloud' | 'unreachable' | 'otp' | 'no-python'
 
 function build(mode: Mode = 'cloud') {
+  const clock = { now: 1_795_000_000_000 }
   const bridges: FakeBridge[] = []
   const seen: KiaConfig[] = []
   const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -45,8 +46,9 @@ function build(mode: Mode = 'cloud') {
       return bridge
     },
     logger: logger as never,
+    now: () => clock.now,
   })
-  return { provider, bridges, seen, logger }
+  return { provider, bridges, seen, logger, clock }
 }
 
 describe('Kia connection-test: pre-creation credential validation', () => {
@@ -188,5 +190,29 @@ describe('Kia instance Test action', () => {
     expect(stored).not.toContain('5555')
     const read = await instances.readResolved('int_2')
     expect(read?.body).toMatchObject({ password: 'pw-secret-xyz', pin: '5555' })
+  })
+})
+
+describe('Kia connection-test: it must not hammer the account', () => {
+  it('refuses a second sign-in for the same account within a minute, and signs in again after', async () => {
+    const h = build()
+    await h.provider.testSettings({ settings: GOOD })
+    const again = await h.provider.testSettings({ settings: GOOD })
+    expect(again.outcome).toBe('inconclusive')
+    expect(h.seen).toHaveLength(1)
+    h.clock.now += 61_000
+    expect((await h.provider.testSettings({ settings: GOOD })).outcome).toBe('validated')
+    expect(h.seen).toHaveLength(2)
+  })
+
+  it('does not repeat a refused sign-in with the same credentials, but accepts changed ones', async () => {
+    const h = build()
+    const wrong = { ...GOOD, password: 'wrong-pw' }
+    expect((await h.provider.testSettings({ settings: wrong })).outcome).toBe('rejected')
+    h.clock.now += 61_000
+    const repeat = await h.provider.testSettings({ settings: wrong })
+    expect(repeat.outcome).toBe('rejected')
+    expect(h.seen).toHaveLength(1)
+    expect((await h.provider.testSettings({ settings: GOOD })).outcome).toBe('validated')
   })
 })

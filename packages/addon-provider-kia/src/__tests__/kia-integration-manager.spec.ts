@@ -259,6 +259,41 @@ describe('KiaIntegrationManager', () => {
     })
   })
 
+  it('closes a worker whose sign-in was still in flight when the account was stopped', async () => {
+    const { manager, bridges, prepare } = setup()
+    let release: () => void = () => undefined
+    prepare.push((bridge) => {
+      const login = bridge.login.bind(bridge)
+      bridge.login = async (config) => {
+        await new Promise<void>((resolve) => {
+          release = resolve
+        })
+        return login(config)
+      }
+    })
+    const starting = manager.start().catch(() => undefined)
+    await Promise.resolve()
+    await manager.stop()
+    release()
+    await starting
+    expect(bridges[0]?.closed).toBe(true)
+    expect(manager.getInfo().status).toBe('disconnected')
+  })
+
+  describe('the day being spent is not a lost connection', () => {
+    it('keeps the account connected, raises no session failure and names when it resumes', async () => {
+      const { manager, surface, calls, clock } = setup({ limit: 2 })
+      await manager.start()
+      await surface().refresh('schedule')
+      clock.now += 60_000
+      await expect(surface().refresh('schedule')).rejects.toBeInstanceOf(KiaBudgetExhaustedError)
+      expect(manager.getInfo().status).toBe('connected')
+      expect(manager.getInfo().error).toBeNull()
+      expect(manager.getInfo().info['budgetRetryAt']).toBe(Date.UTC(2026, 10, 23))
+      expect(calls.filter((c) => c.startsWith('failure:'))).toEqual([])
+    })
+  })
+
   it('stop closes the worker and removes the surface', async () => {
     const { manager, surfaces, bridges } = setup()
     await manager.start()

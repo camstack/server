@@ -90,15 +90,13 @@ export class KiaVehicleDevice extends BaseDevice<typeof kiaVehicleSchema> {
       integrationId: this.integrationId,
       readAccount: (reason) => kiaConnections.refresh(this.integrationId, reason),
     })
-    const handle = this.resolveHandle()
-    if (handle === null) {
-      this.ctx.logger.debug('KiaVehicleDevice: handle not present; no live listener yet', {
-        tags: { deviceId: this.id },
-      })
-      return
-    }
-    this.handleUnsubs.push(handle.onChange(() => this.safeRecompute()))
-    this.recomputeSlices()
+    // The watch outlives any one handle: a late first sign-in or a reconnect rebinds it.
+    this.handleUnsubs.push(
+      kiaConnections.watchVehicle(this.integrationId, this.kiaVehicleId, () =>
+        this.safeRecompute(),
+      ),
+    )
+    this.safeRecompute()
   }
 
   override async removeDevice(): Promise<void> {
