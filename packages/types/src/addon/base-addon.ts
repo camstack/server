@@ -475,6 +475,15 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   /** The instance kinds whose switch move this process already ran (or tried), by record kind name. */
   private readonly switchMoved = new Set<string>()
   private lastDeclared: readonly BoundAddonMigration[] = []
+  /**
+   * Every switch migration this process added to a declaration so far, by id. The engine replaces
+   * an owner's catalogue on each declare, so a later one (a late kind) carries them all: dropping
+   * an earlier id would read its applied ledger row as a newer database.
+   */
+  private readonly switchDeclared = new Map<string, BoundAddonMigration>()
+  /** The seq each kind's move got, fixed at its first declare so its id and seq never change. */
+  private readonly switchSeqs = new Map<string, number>()
+  private moveInDeclared = false
 
   private registrySwitchBound(): readonly BoundAddonMigration[] {
     const api = this.ctx.migrationApi
@@ -494,7 +503,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
     const date = '2026-11-06'
     const moveIn =
-      spec === null
+      spec === null || this.moveInDeclared
         ? []
         : migrationSet(
             [
@@ -512,14 +521,18 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
                 kind: spec.kind,
               }),
           ).bind(api)
-    const moveBack = kinds.flatMap(({ kind }, index) => {
+    if (spec !== null) this.moveInDeclared = true
+    const moveBack = kinds.flatMap(({ kind }) => {
       this.switchMoved.add(kind.name)
+      // First-declared kinds keep 1001 + position; a later kind continues the count.
+      const seq = 1001 + this.switchSeqs.size
+      this.switchSeqs.set(kind.name, seq)
       return migrationSet(
         [
           bodySwitchToRegistryMigration({
             addonId: this.ctx.id,
             date: '2026-11-19',
-            seq: 1001 + index,
+            seq,
             kindName: kind.name,
             ...(spec === null ? {} : { followsDate: date }),
           }),
@@ -530,7 +543,10 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
             kind,
             nameField: kind.declaration.entry?.nameField ?? 'name',
             adopt: (addonId, rows) =>
-              this.ctx.api.integrations.adoptInstanceRows.mutate({ addonId, rows: [...rows] }),
+              this.ctx.api.integrations.adoptInstanceRows.mutate({
+                addonId,
+                rows: [...rows],
+              }),
             warn: async (message) => {
               await a.log.warn({ message })
             },
@@ -570,12 +586,21 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   ): Promise<AddonMigrationRunReport> {
     this.lastDeclared = declared
     const added = this.registrySwitchBound()
-    const migrations = [...declared, ...added]
+    for (const m of added) this.switchDeclared.set(m.meta.id, m)
+    const migrations = [
+      ...declared,
+      ...[...this.switchDeclared.values()].filter(
+        (m) => !declared.some((d) => d.meta.id === m.meta.id),
+      ),
+    ]
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
       options?.only === undefined || added.length === 0
         ? options
-        : { ...options, only: [...new Set([...options.only, ...added.map((m) => m.meta.id)])] }
+        : {
+            ...options,
+            only: [...new Set([...options.only, ...added.map((m) => m.meta.id)])],
+          }
     const phased: AddonMigrationRunOptions =
       this.retiredMigrationIds.length === 0
         ? (widened ?? {})
@@ -611,7 +636,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   private async hydrateSwitches(): Promise<boolean> {
     beginHydration(this.ctx.id)
     try {
-      const rows = await this.ctx.api.integrations.listByAddon.query({ addonId: this.ctx.id })
+      const rows = await this.ctx.api.integrations.listByAddon.query({
+        addonId: this.ctx.id,
+      })
       hydrateInstanceSwitches(this.ctx.id, rows)
       this.switchesHydrated = true
       return true
@@ -636,7 +663,12 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         if (rows.length === 0) continue
         await this.ctx.api.integrations.adoptInstanceRows.mutate({
           addonId: this.ctx.id,
-          rows: rows.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, stated: false })),
+          rows: rows.map((r) => ({
+            id: r.id,
+            name: r.name,
+            enabled: r.enabled,
+            stated: false,
+          })),
         })
         for (const r of rows) recordRegistrySwitch(r.id, r.enabled)
       }
