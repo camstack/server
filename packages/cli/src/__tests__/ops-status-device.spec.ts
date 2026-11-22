@@ -69,7 +69,7 @@ describe('ops_status', () => {
     if (out.status !== 'ok') throw new Error('expected ok')
     expect(out.nodes).toBeNull()
     expect(out.alerts).toBeNull()
-    expect(out.addonsNeedingUpdate).toEqual({ items: [], truncated: 0 })
+    expect(out.addonsNeedingUpdate).toEqual({ items: [], truncated: 0, installedNewer: [] })
     expect(out.unavailable['nodes']).toContain('boom')
     expect(out.unavailable['alerts']).toContain('down')
   })

@@ -304,7 +304,7 @@ export async function setupWizard(ctx: McpContext, args: WizardArgs = {}): Promi
       phase: next === null ? 'complete' : next.step.phase,
       hub: facts.session.ok ? facts.session.hub.server : null,
       tier: facts.session.ok ? facts.session.hub.tier : null,
-      actingAs: facts.session.ok ? (facts.session.hub.actingAs ?? null) : null,
+      actingAs: facts.session.ok ? facts.session.hub.actingAs : null,
       verdict,
     },
     steps: judged.map(

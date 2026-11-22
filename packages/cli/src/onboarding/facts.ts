@@ -80,6 +80,8 @@ export interface HubFacts {
   readonly server: string
   readonly tier: string
   readonly adminHint: string | null
+  /** The saved session this hub is read as (`user@host, scope x`); absent for a token. */
+  readonly actingAs: string | null
   readonly users: Read<readonly UserFact[]>
   /** Passkey count per admin id; an admin whose read failed is absent. */
   readonly passkeys: ReadonlyMap<string, number>
@@ -209,6 +211,7 @@ async function gatherHub(
     server: connection.server,
     tier: connection.tier,
     adminHint: connection.adminHint,
+    actingAs: connection.actingAs ?? null,
     users,
     passkeys,
     passkeysFailed,
