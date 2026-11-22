@@ -200,6 +200,18 @@ describe('TriggeredByTable', () => {
     expect(update).not.toHaveBeenCalled()
   })
 
+  it('changing the action writes only the code, so the fields it does not own stay on the block', async () => {
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(screen.getByRole('combobox', { name: /Action when Pulsante studio fires/i }))
+    fireEvent.click(await screen.findByRole('option', { name: /off/i }))
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    const sent: unknown = update.mock.calls[0]?.[0]
+    expect(sent).toMatchObject({ blockId: '4864c0cc' })
+    const block: unknown = Reflect.get(Object(sent), 'block')
+    expect(Object.keys(Object(block))).toEqual(['code'])
+    expect(String(Reflect.get(Object(block), 'code'))).toContain('switch.off')
+  })
+
   it('a refused confirmation removes nothing', async () => {
     confirmAnswer.current = false
     render(wrap(<TriggeredByTable device={LIGHT} />))

@@ -64,6 +64,11 @@ export interface TriggeredByTableProps {
   readonly device: DeviceInfo
 }
 
+/** What an edit of a stored trigger writes: its code, nothing else. */
+interface TriggerCodePatch {
+  readonly code: string | undefined
+}
+
 interface TriggerTableRow extends TriggerRow {
   readonly name: string | null
   readonly type: string | null
@@ -195,12 +200,18 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     return block.input
   }
 
+  // An edit owns the recipe only: the update is partial, so the block's name, tags,
+  // integration and placement stay as stored.
+  const codeOf = (params: LinkedTriggerParams, instance: TemplateInstance): TriggerCodePatch => ({
+    code: blockOf(params, instance.name, instance.enabled).code,
+  })
+
   const save = (instance: TemplateInstance, params: LinkedTriggerParams | null): Promise<void> =>
     run(async () => {
       if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
       await update.mutateAsync({
         blockId: instance.blockId,
-        block: blockOf(params, instance.name, instance.enabled),
+        block: codeOf(params, instance),
       })
     })
 
@@ -229,7 +240,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       else {
         await update.mutateAsync({
           blockId: instance.blockId,
-          block: blockOf(removal.params, instance.name, instance.enabled),
+          block: codeOf(removal.params, instance),
         })
       }
     })
