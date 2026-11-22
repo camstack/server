@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon that builds an instance helper after its migrations ran no longer re-declares a clashing switch migration: the catalogue keeps stable ids and seqs across declarations
 - A linked trigger is a built-in automation template: a device is commanded (on, off, toggle) when another device fires an event
 
+### Fixed
+
+- A notifier group test is never skipped as already delivered, and the test panel lists every member's outcome (sent, skipped with the reason, failed with the error)
+
 ## [1.2.625] - 2026-11-22
 
 ### Changed

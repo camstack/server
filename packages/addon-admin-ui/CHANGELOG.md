@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding a Matter integration after creating the fabric no longer fails with 'This provider has several kinds: name one'
 - Device history: the outcome words follow the two stored outcomes.
 
+### Fixed
+
+- A notifier group test is never skipped as already delivered, and the test panel lists every member's outcome (sent, skipped with the reason, failed with the error)
+
 ## [1.2.737] - 2026-11-22
 
 ### Changed
