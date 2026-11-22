@@ -13,6 +13,7 @@ import type { ConfigObjectArrayField } from '@camstack/types'
 import {
   ConfigFormField,
   ConfirmDialogProvider,
+  DeviceList,
   SystemProvider,
   ThemeProvider,
   trpc,
@@ -62,6 +63,39 @@ const SESSIONS_FIELD: ConfigObjectArrayField = {
   ],
 }
 
+interface PagedRow {
+  readonly id: number
+  readonly name: string
+}
+
+const PAGED_ROWS: readonly PagedRow[] = Array.from({ length: 60 }, (_, i) => ({
+  id: i + 1,
+  name: `Example device number ${i + 1} with a long name`,
+}))
+
+/** A multi-page generic list, to shoot the footer (size selector + pager) on a phone. */
+function PagedList(): ReactElement {
+  return (
+    <DeviceList<PagedRow>
+      mode="generic"
+      items={PAGED_ROWS}
+      getKey={(r) => String(r.id)}
+      getSearchText={(r) => r.name}
+      columns={[
+        {
+          key: 'name',
+          header: 'Name',
+          cell: (r) => <span className="truncate text-xs">{r.name}</span>,
+        },
+        { key: 'id', header: 'Id', cell: (r) => r.id },
+      ]}
+      searchPlaceholder="Search"
+      emptyLabel="none"
+      pageSizeSelector={{ options: [10, 25], defaultSize: 10, storageKey: null }}
+    />
+  )
+}
+
 export function PhoneTablesPreview(): ReactElement {
   const [client] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
@@ -80,6 +114,7 @@ export function PhoneTablesPreview(): ReactElement {
                     <TracksTab deviceId={101} />
                     <EventsDebugTapes />
                     <TrainingParts />
+                    <PagedList />
                     <ConfigFormField
                       field={SESSIONS_FIELD}
                       values={{}}

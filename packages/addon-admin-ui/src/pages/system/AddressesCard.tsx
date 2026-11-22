@@ -8,8 +8,9 @@
 import type { HubAddressBook, HubAddressRow } from '@camstack/types'
 import { validateCustomAddress } from '@camstack/types'
 import { Button, Card, Checkbox, type DataColumn, DataTable, Input } from '@camstack/ui-library'
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { AlertTriangle, Bell, Globe, Home, Plus, Smartphone, Trash2 } from 'lucide-react'
+import { type ReactElement, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   isRoleChecked,
   ROLE_COLUMNS,
@@ -19,7 +20,6 @@ import {
   type SetAddressRoleInput,
   summarizeRoles,
 } from './address-table-model'
-import { useTranslation } from 'react-i18next'
 
 const KIND_BADGE: Record<string, { readonly labelKey: string; readonly className: string }> = {
   'lan-ipv4': {
@@ -62,6 +62,19 @@ export interface AddressesCardProps {
 interface PendingHttp {
   readonly input: SetAddressRoleInput
   readonly reason: string
+}
+
+/** The role column's phone header: an icon, named for assistive tech and the tooltip. */
+function RoleIcon({ role, label }: { role: string; label: string }): ReactElement {
+  const Icon =
+    role === 'appConnections'
+      ? Smartphone
+      : role === 'notificationTaps'
+        ? Bell
+        : role === 'publicEndpoint'
+          ? Globe
+          : Home
+  return <Icon className="mx-auto h-3.5 w-3.5" aria-label={label} />
 }
 
 export function AddressesCard({
@@ -171,10 +184,17 @@ export function AddressesCard({
       (column): DataColumn<HubAddressRow> => ({
         mobile: 'keep',
         key: column.role,
-        headerRender: () => <span title={column.help}>{column.title}</span>,
+        headerRender: () => (
+          <span title={column.help}>
+            <span className="sm:hidden">
+              <RoleIcon role={column.role} label={column.title} />
+            </span>
+            <span className="hidden sm:inline">{column.title}</span>
+          </span>
+        ),
         align: 'center',
         nowrap: true,
-        width: 'w-24',
+        width: 'w-11 sm:w-24',
         render: (row) => {
           const allowed = row.eligible.includes(column.role)
           const flagged = row.flags.includes(column.role)
@@ -204,7 +224,9 @@ export function AddressesCard({
                 aria-label={`${column.title}: ${row.baseUrl}`}
               />
               {checked && !flagged && allowed && (
-                <span className="text-[9px] text-foreground-subtle">{t('common.auto')}</span>
+                <span className="hidden text-[9px] text-foreground-subtle sm:inline">
+                  {t('common.auto')}
+                </span>
               )}
             </label>
           )

@@ -1,23 +1,23 @@
+import { type LucideIcon, Search } from 'lucide-react'
 import {
   Fragment,
+  type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
-  type ReactNode,
 } from 'react'
-import { Search, type LucideIcon } from 'lucide-react'
-import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { useUiText } from '../../contexts/ui-text'
-import { type MultiSelectOption } from './multi-select'
-import { ResponsiveTypeFilter } from './type-filter'
-import { OptionSelect } from '../option-select/OptionSelect'
 import { useDebouncedString } from '../../hooks/use-debounced-string'
-import { fuzzyMatch } from './fuzzy-match'
-import { Pagination } from './pagination'
-import { PageSizeSelect } from './page-size-select'
 import { effectivePageSize, usePersistedPageSize } from '../../hooks/use-persisted-page-size'
+import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
+import { OptionSelect } from '../option-select/OptionSelect'
+import { fuzzyMatch } from './fuzzy-match'
+import { type MultiSelectOption } from './multi-select'
+import { PageSizeSelect } from './page-size-select'
+import { Pagination } from './pagination'
+import { ResponsiveTypeFilter } from './type-filter'
 
 /**
  * Generic-mode props — a paginated, searchable, render-prop list that reuses
@@ -326,10 +326,13 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
                           }
                         : {})}
                     >
-                      {columns.map((col) => (
+                      {columns.map((col, colIndex) => (
                         <td
                           key={col.key}
-                          className={`px-2 py-2 align-middle ${col.cellClassName ?? ''}`}
+                          // On a phone the first column takes what the others leave and
+                          // shrinks below its text (`max-w-0`), so a long name truncates or
+                          // wraps instead of pushing the table past the viewport.
+                          className={`px-2 py-2 align-middle ${colIndex === 0 ? 'max-sm:w-full max-sm:max-w-0' : ''} ${col.cellClassName ?? ''}`}
                         >
                           {col.cell(it)}
                         </td>

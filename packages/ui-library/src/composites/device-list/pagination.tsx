@@ -5,9 +5,11 @@
  *
  * Returns `null` when totalItems <= pageSize (single page — no nav).
  */
-import { type ReactNode } from 'react'
+
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { type ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'
+import { useIsPhone } from '../../hooks/use-is-mobile'
 import { cn } from '../../lib/cn'
 
 export interface PaginationProps {
@@ -52,6 +54,7 @@ export function Pagination({
   itemNoun,
 }: PaginationProps): ReactNode {
   const t = useUiText()
+  const phone = useIsPhone()
   if (totalItems <= pageSize) return null
 
   const totalPages = Math.ceil(totalItems / pageSize)
@@ -60,16 +63,23 @@ export function Pagination({
   const buttons = computePageButtons(currentPage, totalPages)
 
   return (
-    <div className="flex items-center justify-between gap-4 flex-wrap pt-2 text-[11px] text-foreground-subtle">
-      <span>
-        {t('uiLibrary.pagination.showing', 'Showing {{start}}–{{end}} of {{total}} {{noun}}', {
-          start: startIdx,
-          end: endIdx,
-          total: totalItems,
-          noun: itemNoun ?? t('uiLibrary.pagination.devices', 'devices'),
-        })}
+    // One line on a phone: a short range on the left, the buttons on the right.
+    <div className="flex w-full items-center justify-between gap-2 pt-2 text-[11px] text-foreground-subtle sm:flex-wrap sm:gap-4">
+      <span className="min-w-0 truncate">
+        {phone
+          ? t('uiLibrary.pagination.rangeShort', '{{start}}–{{end}} of {{total}}', {
+              start: startIdx,
+              end: endIdx,
+              total: totalItems,
+            })
+          : t('uiLibrary.pagination.showing', 'Showing {{start}}–{{end}} of {{total}} {{noun}}', {
+              start: startIdx,
+              end: endIdx,
+              total: totalItems,
+              noun: itemNoun ?? t('uiLibrary.pagination.devices', 'devices'),
+            })}
       </span>
-      <span className="inline-flex items-center gap-1">
+      <span className="inline-flex shrink-0 items-center gap-1">
         <button
           type="button"
           aria-label={t('uiLibrary.pagination.previous', 'Previous page')}
