@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1543 of 1543 methods.
+ * Coverage: 1544 of 1544 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -215,6 +215,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "coreBlocks.list": "List the core blocks.",
   "coreBlocks.listComposableCaps": "The capabilities a composition may BUILD on a device of deviceType (a new device, or added to an existing one), with their fields — the editor's feature list and the presets' availability (G2, D676). Built from the validator's own blockers; a replace of a BOUND cap is not listed here (the device's bindings say what it has).",
   "coreBlocks.listCompositions": "List the compositions built from core blocks.",
+  "coreBlocks.listTemplateInstances": "The automations made from one template, optionally those about one device (D1086). Reads the stored automations; create, update and delete go through create, update and delete, with the template link in the recipe. Never an empty list for \"could not read\": that throws.",
   "coreBlocks.migrateCapLinks": "D1076: turn the plain per-field identity links of one cap, from one source device, into ONE capLink. Mixed groups are reported and left alone; a feature an identity link stamped (D1063) is skipped; a second run changes nothing. Bounded by the stored customizations; a dry run writes nothing.",
   "coreBlocks.migrateRawSecrets": "D880: move every plaintext password a block's settingsSchema declares into the keychain and delete the legacy core-blocks:settings copy. Dry run unless apply; idempotent; counts only. A secret is read back from the keychain before its row is rewritten.",
   "coreBlocks.proposeRunningThreshold": "Propose the running threshold and dwells of a SOURCE device's power field from its own history (planning#405). Read-only advice: nothing is stored, the operator applies it through the ordinary save. An answer with too little history says why, with the catalog defaults.",

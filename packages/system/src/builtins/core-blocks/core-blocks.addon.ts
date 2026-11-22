@@ -96,7 +96,10 @@ import {
   type RemoteRuntime,
   seedRemoteSlices,
 } from './remote-wiring.js'
-import { automationTemplateInstancesOver } from './automation-template-instances.js'
+import {
+  automationTemplateInstancesOver,
+  listTemplateInstances,
+} from './automation-template-instances.js'
 import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
@@ -1097,6 +1100,10 @@ export class CoreBlocksAddon extends BaseAddon {
       ...this.requireActions().runsApi,
 
       ...this.sharedCompositionApi(),
+
+      listTemplateInstances: async ({ templateId, deviceId }) => ({
+        instances: [...listTemplateInstances(this.requireStore().list(), templateId, deviceId)],
+      }),
 
       getCapLinks: async ({ deviceId }) => this.sharedCapLinks().read(deviceId),
       migrateCapLinks: async ({ dryRun }) => this.sharedCapLinks().migrate(dryRun),

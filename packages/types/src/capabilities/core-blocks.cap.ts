@@ -1,5 +1,9 @@
 import { z } from 'zod'
 import { AutomationRecipeSchema, MAX_TRACE_KEEP } from '../automation/recipe.js'
+import {
+  TemplateInputValuesSchema,
+  TemplateInstanceProblemSchema,
+} from '../automation/template-link.js'
 import { AutomationRunTraceSchema, AutomationStateDocSchema } from '../automation/trace.js'
 import {
   CapLinksReadSchema,
@@ -407,6 +411,32 @@ export const CoreBlockCompileInputSchema = z
   })
 export type CoreBlockCompileInput = z.infer<typeof CoreBlockCompileInputSchema>
 
+/** One automation made from a template, as the device's Customize tab reads it (D1086). */
+export const TemplateInstanceSchema = z.object({
+  blockId: z.string(),
+  name: z.string(),
+  enabled: z.boolean(),
+  templateId: z.string(),
+  /** What the operator filled in: input key to value. */
+  values: TemplateInputValuesSchema,
+  /** Why the last re-expansion refused the values; the automation keeps running its last good body. */
+  problems: z.array(TemplateInstanceProblemSchema).optional(),
+})
+export type TemplateInstance = z.infer<typeof TemplateInstanceSchema>
+
+export const ListTemplateInstancesInputSchema = z.object({
+  templateId: z.string().min(1),
+  /**
+   * Only the instances this device is the subject of: the device a built-in's
+   * `device` input names (for `builtin:linked-trigger` the COMMANDED device,
+   * never a source). Absent lists every instance of the template.
+   */
+  deviceId: z.number().int().nonnegative().optional(),
+})
+export const ListTemplateInstancesOutputSchema = z.object({
+  instances: z.array(TemplateInstanceSchema),
+})
+
 export const coreBlocksCapability = {
   name: 'core-blocks',
   scope: 'system',
@@ -557,6 +587,17 @@ export const coreBlocksCapability = {
     getComposition: method(z.object({ blockId: z.string() }), CompositionGetReadSchema, {
       auth: 'admin',
     }),
+    /**
+     * The automations made from one template, optionally those about one
+     * device (D1086). Reads the stored automations; create, update and delete
+     * go through `create`, `update` and `delete`, with the template link in
+     * the recipe. Never an empty list for "could not read": that throws.
+     */
+    listTemplateInstances: method(
+      ListTemplateInstancesInputSchema,
+      ListTemplateInstancesOutputSchema,
+      { auth: 'admin' },
+    ),
     /** List the compositions built from core blocks. */
     listCompositions: method(z.object({}), CompositionListReadSchema, {
       auth: 'admin',

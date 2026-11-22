@@ -3186,6 +3186,19 @@ export function createCapRouter_coreBlocks(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getComposition(methodInput as any)
       }),
+    listTemplateInstances: adminProcedure
+      .input(coreBlocksCapability.methods.listTemplateInstances.input.loose())
+      .output(coreBlocksCapability.methods.listTemplateInstances.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listTemplateInstances(methodInput as any)
+      }),
     listCompositions: adminProcedure
       .input(coreBlocksCapability.methods.listCompositions.input.loose())
       .output(coreBlocksCapability.methods.listCompositions.output)

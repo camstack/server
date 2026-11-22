@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1543 method paths across 216 capabilities.
+ * Coverage: 1544 method paths across 216 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -228,6 +228,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'coreBlocks.list': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listComposableCaps': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listCompositions': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.listTemplateInstances': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.migrateCapLinks': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.migrateRawSecrets': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.proposeRunningThreshold': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

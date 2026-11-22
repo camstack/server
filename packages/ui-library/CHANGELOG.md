@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device History: the value axis no longer repeats the unit in every tick label and its column is narrower, so charts span more width
 - Energy card: today's day chart now ends at the current time instead of stopping short of it; past days stay full-day
 - Device card history: outcomes read Done, Failed or By the device.
+- New generated hook for the template instances read (coreBlocks.listTemplateInstances)
 
 ## [1.2.498] - 2026-11-22
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An automation made from a built-in template that is no longer shipped keeps running and is flagged as missing its template
 - Device history: the Interactions list stores one row per command and derives the device's own changes from device-history; old transition rows are migrated.
 - The hub remembers its public tunnel address, so a boot before the tunnel is up no longer hands the LAN address to sign-in links, Alexa and notification links
+- The hub lists the automations made from a template, optionally those about one device (listTemplateInstances)
 
 ## [1.2.941] - 2026-11-22
 

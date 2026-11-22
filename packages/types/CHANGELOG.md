@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device transitions: stored outcomes are ok or failed; the notification command outcome filter follows.
 - The automatic public endpoint keeps the public tunnel address it last resolved to while the tunnel row is absent (boot, a restarting tunnel); a role's source can now read auto-remembered
 - An addon that builds an instance helper after its migrations ran no longer re-declares a clashing switch migration: the catalogue keeps stable ids and seqs across declarations
+- A linked trigger is a built-in automation template: a device is commanded (on, off, toggle) when another device fires an event
 
 ## [1.2.625] - 2026-11-22
 

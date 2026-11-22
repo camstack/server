@@ -134,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A host with an Intel iGPU and an NVIDIA card keeps OpenVINO on the iGPU; the NVIDIA card is reported present but not usable (no CUDA execution provider).
 - The registry switch move (body to registry) is a ledgered migration that backfills a row for every existing instance, services included
 - A composed valve offers set-position only while every member valve can be positioned
+- Core blocks lists template instances, the read behind a device's linked triggers
 
 ### Removed
 

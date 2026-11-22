@@ -41,9 +41,7 @@ read is `members: null` with the reason, never `[]` (D393).
 
 "Buttons → devices" is retired: it is no longer shipped, and an existing
 instance keeps running, flagged `missing-template`, until
-`scripts/hub/migrate-buttons-template-to-group-triggers.ts` converts it (preview
-by default, `--apply`, then `--finalize`; it builds the group with
-`output: 'none'`).
+a migration script converted it (removed with the feature, D1086).
 
 ## Consequences
 

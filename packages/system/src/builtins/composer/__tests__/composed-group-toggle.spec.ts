@@ -1,5 +1,5 @@
 /**
- * `switch.toggle` on a composed actuator group (group triggers, task 1): the kernel default is
+ * `switch.toggle` on a composed actuator group: the kernel default is
  * registered over the group's own `switch` slice — the aggregate — so a toggle fans out
  * `setState(!aggregate)` to every member through the one dispatcher, and an aggregate that was
  * never seeded refuses by name instead of guessing.

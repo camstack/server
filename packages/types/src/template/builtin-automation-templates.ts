@@ -11,6 +11,11 @@ import {
   type TemplateGateBinding,
   type TemplateScalarInput,
 } from './automation-template.js'
+import {
+  LINKED_TRIGGER_SOURCES_MAX,
+  LINKED_TRIGGER_TARGET_INPUT,
+  LINKED_TRIGGER_TEMPLATE_ID,
+} from './linked-trigger.js'
 
 export const BUILTIN_TEMPLATE_ID_PREFIX = 'builtin:'
 
@@ -101,7 +106,56 @@ const motionLight: BuiltinAutomationTemplate = {
   },
 }
 
-export const BUILTIN_AUTOMATION_TEMPLATES: readonly BuiltinAutomationTemplate[] = [motionLight]
+/**
+ * D1086: a device is commanded when other devices fire an event. Shown on the
+ * commanded device's Customize tab; see `linked-trigger.ts` for the typed
+ * parameters. Queued, so two quick presses are two toggles.
+ */
+const linkedTrigger: BuiltinAutomationTemplate = {
+  id: LINKED_TRIGGER_TEMPLATE_ID,
+  name: 'Linked trigger',
+  payload: {
+    version: AUTOMATION_TEMPLATE_VERSION,
+    description: 'Commands one device (on, off or toggle) when a device fires an event.',
+    body: {
+      when: { kind: 'any', children: [] },
+      actions: [{ kind: 'command' }],
+      runMode: { mode: 'queued', max: 5 },
+    },
+    inputs: [
+      { kind: 'device', key: LINKED_TRIGGER_TARGET_INPUT, label: 'Device to command' },
+      {
+        kind: 'action',
+        key: 'action',
+        label: 'Action',
+        deviceInput: LINKED_TRIGGER_TARGET_INPUT,
+      },
+      {
+        kind: 'entries',
+        key: 'when',
+        label: 'When',
+        entry: 'trigger',
+        allow: ['device-fired', 'device-event'],
+        maxItems: LINKED_TRIGGER_SOURCES_MAX,
+      },
+    ],
+    bindings: [
+      {
+        kind: 'value',
+        input: LINKED_TRIGGER_TARGET_INPUT,
+        path: ['actions', 0, 'target'],
+        as: 'target',
+      },
+      { kind: 'value', input: 'action', path: ['actions', 0] },
+      { kind: 'entries', input: 'when', path: ['when', 'children'] },
+    ],
+  },
+}
+
+export const BUILTIN_AUTOMATION_TEMPLATES: readonly BuiltinAutomationTemplate[] = [
+  motionLight,
+  linkedTrigger,
+]
 
 export function isBuiltinTemplateId(id: string): boolean {
   return id.startsWith(BUILTIN_TEMPLATE_ID_PREFIX)

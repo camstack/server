@@ -599,6 +599,9 @@ export const useCoreBlocksUpdateComposition: typeof trpc.coreBlocks.updateCompos
 /** Generated alias around `trpc.coreBlocks.getComposition.useQuery`. */
 export const useCoreBlocksGetComposition: typeof trpc.coreBlocks.getComposition.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.getComposition.useQuery)
 
+/** Generated alias around `trpc.coreBlocks.listTemplateInstances.useQuery`. */
+export const useCoreBlocksListTemplateInstances: typeof trpc.coreBlocks.listTemplateInstances.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.listTemplateInstances.useQuery)
+
 /** Generated alias around `trpc.coreBlocks.listCompositions.useQuery`. */
 export const useCoreBlocksListCompositions: typeof trpc.coreBlocks.listCompositions.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.listCompositions.useQuery)
 

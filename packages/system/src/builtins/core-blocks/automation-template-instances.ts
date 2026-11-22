@@ -15,7 +15,9 @@
  * literal is rewritten, to flag it `edited-by-hand`.
  */
 import {
+  builtinAutomationTemplate,
   isBuiltinTemplateId,
+  type TemplateInstance,
   ALL_CAPABILITY_DEFINITIONS,
   capUnitResolver,
   generateAutomationBlock,
@@ -86,6 +88,45 @@ function flaggedAsEdited(code: string, recipe: AutomationRecipe): string | null 
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * The automations made from `templateId`, optionally those about `deviceId`:
+ * the device one of the template's own `device` inputs names (the commanded
+ * device of a linked trigger, never an event source). A template this release
+ * does not ship has no declared device inputs, so a device filter matches none.
+ */
+export function listTemplateInstances(
+  blocks: readonly CoreBlock[],
+  templateId: string,
+  deviceId?: number,
+): readonly TemplateInstance[] {
+  const deviceKeys =
+    builtinAutomationTemplate(templateId)?.payload.inputs.flatMap((input) =>
+      input.kind === 'device' ? [input.key] : [],
+    ) ?? []
+  return blocks.flatMap((block) => {
+    const read = readRecipeLiteral(block.code)
+    const link = read.status === 'recipe' ? read.recipe.template : undefined
+    if (link === undefined || link.templateId !== templateId) return []
+    if (deviceId !== undefined) {
+      const about = deviceKeys.some((key) => {
+        const value = link.values[key]
+        return value === deviceId || (Array.isArray(value) && value.some((v) => v === deviceId))
+      })
+      if (!about) return []
+    }
+    return [
+      {
+        blockId: block.id,
+        name: block.name,
+        enabled: block.enabled,
+        templateId,
+        values: link.values,
+        ...(link.problems === undefined ? {} : { problems: link.problems }),
+      },
+    ]
+  })
 }
 
 export function automationTemplateInstancesOver(

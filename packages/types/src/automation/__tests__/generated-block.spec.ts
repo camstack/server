@@ -12,6 +12,13 @@ import { pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAutomationBlock } from '../codegen.js'
+import { builtinAutomationTemplate } from '../../template/builtin-automation-templates.js'
+import { expandAutomationTemplate } from '../../template/automation-template.js'
+import {
+  LINKED_TRIGGER_TEMPLATE_ID,
+  type LinkedTriggerParams,
+  linkedTriggerValues,
+} from '../../template/linked-trigger.js'
 import type { TimeSpec, WeekdayKey } from '../../time/time-spec.js'
 import { DeviceType } from '../../device/device-type.js'
 import type { Target } from '../../capabilities/notification-output.cap.js'
@@ -57,6 +64,8 @@ interface Harness {
   readonly notificationSends: Array<Record<string, unknown>>
   /** `unconfirmed`: reads that asked for the effective view instead of the device's (D1061). */
   readonly sliceReads: { count: number; unconfirmed: number }
+  /** Every `switch.setState` / `switch.toggle` the block sent, in order. */
+  readonly switchCalls: Array<{ method: string; input: Record<string, unknown> }>
   emit(category: string, data: Record<string, unknown>, deviceId?: number): void
   traces(): AutomationRunTrace[]
   stop(): void
@@ -152,6 +161,12 @@ function start(block: BlockFn, options: Options = {}): Harness {
   const notificationSends: Array<Record<string, unknown>> = []
   const sliceReads = { count: 0, unconfirmed: 0 }
   const mutate = vi.fn(async () => undefined)
+  const switchCalls: Array<{ method: string; input: Record<string, unknown> }> = []
+  const switchCall = (method: string) => ({
+    mutate: async (input: Record<string, unknown>) => {
+      switchCalls.push({ method, input })
+    },
+  })
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
     if (options.throwOnLog === msg) throw new Error('logger crashed')
     logs.push({ level, msg, meta })
@@ -255,6 +270,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
         },
       },
       button: { press: { mutate } },
+      switch: { setState: switchCall('setState'), toggle: switchCall('toggle') },
       cover: { open: { mutate } },
     },
   }
@@ -267,6 +283,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
     actionRuns,
     notificationSends,
     sliceReads,
+    switchCalls,
     emit: (category, data, deviceId) => {
       for (const h of [...handlers]) {
         if (h.category === category && (h.deviceId === undefined || h.deviceId === deviceId))
@@ -2675,5 +2692,123 @@ describe('a probe step and an http-request step', () => {
     expect(steps?.[0]?.attempts).toBeGreaterThanOrEqual(1)
     expect(steps?.[1]?.outcome).toBe('not-run')
     expect(h.mutate).not.toHaveBeenCalled()
+  })
+})
+
+describe('linked trigger template (D1086)', () => {
+  const FIRED = 'event-emitter.event'
+  const TARGET = 5767
+  const BUTTON = 5656
+  const VOCABULARY = [
+    {
+      id: 'PRESS_SHORT',
+      source: { id: '1', label: 'Button 1' },
+      label: 'Short',
+      kind: 'press',
+    },
+    {
+      id: 'PRESS_SHORT',
+      source: { id: '2', label: 'Button 2' },
+      label: 'Short',
+      kind: 'press',
+    },
+    {
+      id: 'PRESS_SHORT',
+      source: { id: '3', label: 'Button 3' },
+      label: 'Short',
+      kind: 'press',
+    },
+  ]
+  let n = 0
+  const press = (over: Record<string, unknown> = {}) => ({
+    deviceId: BUTTON,
+    eventType: 'PRESS_SHORT',
+    sourceId: '1',
+    data: { channel: '1' },
+    timestamp: Date.now() + (n += 1),
+    seq: n,
+    ...over,
+  })
+  const slices = {
+    [`${BUTTON}|event-emitter`]: {
+      eventTypes: ['PRESS_SHORT'],
+      vocabulary: VOCABULARY,
+      lastEvent: null,
+      eventCountSinceStart: 0,
+    },
+  }
+  /** The block the template expands to for these parameters, run for real. */
+  const run = async (params: LinkedTriggerParams) => {
+    const payload = builtinAutomationTemplate(LINKED_TRIGGER_TEMPLATE_ID)?.payload
+    if (payload === undefined) throw new Error('linked-trigger is not a shipped built-in')
+    const out = expandAutomationTemplate(payload, linkedTriggerValues(params))
+    if (!out.ok) throw new Error(JSON.stringify(out.problems))
+    return start(await load(out.recipe), { slices })
+  }
+  const buttonOne: LinkedTriggerParams = {
+    targetDeviceId: TARGET,
+    action: 'toggle',
+    sources: [
+      {
+        kind: 'device-fired',
+        deviceId: BUTTON,
+        sourceIds: ['1', '2'],
+        eventIds: ['PRESS_SHORT'],
+        match: [{ path: 'channel', equals: '1' }],
+      },
+    ],
+  }
+
+  it('a matching press commands the target once, with the configured action', async () => {
+    const h = await run(buttonOne)
+    await settle()
+    h.emit(FIRED, press(), BUTTON)
+    await settle()
+    expect(h.switchCalls).toEqual([{ method: 'toggle', input: { deviceId: TARGET } }])
+    expect(h.traces()[0]).toMatchObject({ outcome: 'ran' })
+  })
+
+  it.each([
+    ['on', { method: 'setState', input: { deviceId: TARGET, on: true } }],
+    ['off', { method: 'setState', input: { deviceId: TARGET, on: false } }],
+    ['toggle', { method: 'toggle', input: { deviceId: TARGET } }],
+  ] as const)('the %s action sends exactly that command', async (action, call) => {
+    const h = await run({ ...buttonOne, action })
+    await settle()
+    h.emit(FIRED, press(), BUTTON)
+    await settle()
+    expect(h.switchCalls).toEqual([call])
+  })
+
+  it('a press the sources do not name does nothing: other part, other payload, other device', async () => {
+    const h = await run(buttonOne)
+    await settle()
+    h.emit(FIRED, press({ sourceId: '3' }), BUTTON)
+    h.emit(FIRED, press({ data: { channel: '2' } }), BUTTON)
+    h.emit(FIRED, press({ deviceId: 9999 }), 9999)
+    await settle(1_000)
+    expect(h.switchCalls).toEqual([])
+    expect(h.traces()).toHaveLength(0)
+  })
+
+  it('a device-event source runs the command on an event of its category', async () => {
+    const h = await run({
+      targetDeviceId: TARGET,
+      action: 'on',
+      sources: [
+        {
+          kind: 'device-event',
+          deviceId: 77,
+          category: 'motion.on-motion-changed',
+        },
+      ],
+    })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 78)
+    await settle()
+    expect(h.switchCalls).toEqual([])
+    h.emit('motion.on-motion-changed', {}, 77)
+    await settle()
+    expect(h.switchCalls).toEqual([{ method: 'setState', input: { deviceId: TARGET, on: true } }])
   })
 })
