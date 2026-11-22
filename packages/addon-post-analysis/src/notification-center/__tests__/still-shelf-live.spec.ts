@@ -55,10 +55,17 @@ async function shelfWith(
 
 const awake = async (): Promise<{ reason: null }> => ({ reason: null })
 
+// Waits for the TERMINAL line of a capture: shipped, gave up, or timed out.
+// The intermediate "live capture failed — trying a recent cached frame" warn is
+// NOT terminal: stopping there raced the cached-frame path. The vitest timeout
+// bounds the wait, so there is no wall-clock deadline to lose under load.
+const isTerminal = (l: Line): boolean =>
+  l.msg.endsWith('still captured') ||
+  l.msg.includes('did not answer') ||
+  l.msg.includes('timed out')
+
 async function settled(lines: Line[]): Promise<void> {
-  const deadline = Date.now() + 2_000
-  while (!lines.some((l) => l.level === 'warn' || l.msg.endsWith('still captured'))) {
-    if (Date.now() > deadline) throw new Error('no outcome line')
+  while (!lines.some(isTerminal)) {
     await new Promise((r) => setTimeout(r, 5))
   }
 }
@@ -144,7 +151,6 @@ describe('NcStillShelf — the live still (D1070)', () => {
     )
     const owner = shelf.capture(7, Date.now(), 'occupancy', 'live')
     await settled(lines)
-    await new Promise((r) => setTimeout(r, 20))
     expect(shelf.get(owner)).toEqual([])
     const miss = lines.find((l) => l.msg.includes('did not answer'))
     expect(miss?.deviceId).toBe(7)
