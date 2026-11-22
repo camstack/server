@@ -38,7 +38,7 @@ wrote its own `toggle` keeps it.
 
 ## Consequences
 
-Every dispatcher (automation steps, the Buttons → devices template, remote
+Every dispatcher (automation steps, group triggers, remote
 bindings, the device command dialog) picks the action from the vocabulary and
 calls `switch.toggle`. No addon copies the invert. A driver that must toggle
 without trusting the slice can still implement the method. A composition
@@ -49,6 +49,6 @@ which is already the forward.
 
 Specs: the action is listed for a switch; the default flips on to off and off
 to on; an unknown slice refuses with the reason and does not call `setState`;
-a command step and a Buttons → devices instance using `switch.toggle` expand
+a command step and a group trigger using `switch.toggle` expand
 and validate. `scripts/check-cap-vocabulary.ts` accepts an action with no
 effect. Nothing else may install a second default.

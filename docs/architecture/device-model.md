@@ -620,10 +620,11 @@ the inputs; the expansion is one pure function, used by the editor and the hub.
   rows there (a branch that lists the trigger leaves of its row), and a
   top-level `rows` binding with `nested` writes one item per nested row of
   every row. Ids are `<group>-<i>` and `<group>-<i>-<nested>-<j>`; a problem is
-  addressed `buttons.0.commands.1.targets`. The shipped "Buttons → devices"
-  template is built from these alone: a row is `events[]` (each its own
-  `device-fired` leaf) driving `commands[]`. The form draws a row as a card and
-  a nested group as one-line entries (`TemplateInputsForm.tsx`).
+  addressed `buttons.0.commands.1.targets`. The form draws a row as a card and
+  a nested group as one-line entries (`TemplateInputsForm.tsx`). The former
+  "Buttons → devices" template is retired: a press that switches devices is a
+  trigger of the group, compiled into the one automation the group owns
+  ([D1083](../decisions/adr-1083-a-group-owns-the-automation-of-its-triggers-and-may-build-no-device.md)).
 
 ## Composed devices: a device built from other devices' fields
 
