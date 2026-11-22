@@ -4,7 +4,7 @@
 
 # Packages
 
-62 workspace packages. Roles are derived: `camstack.system: true` →
+63 workspace packages. Roles are derived: `camstack.system: true` →
 framework; a `camstack.addons[]` entry → addon; `server/*` → the root app;
 everything else → tooling.
 
@@ -27,7 +27,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | `@camstack/types` | `packages/types` | 1.2.625 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.498 | `@camstack/server` closure | — |
 
-## Addons (51)
+## Addons (52)
 
 Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
 
@@ -64,6 +64,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.194 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
 | `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.700 | addons dir | Home Assistant device provider addon for CamStack |
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.212 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
+| `@camstack/addon-provider-kia` | `packages/addon-provider-kia` | 0.1.0 | addons dir | Kia Connect (Kia UVO / Hyundai Bluelink) vehicle device-provider addon for CamStack: reads the car (odometer, range, fuel, locks, doors, tyre warnings, position) and locks, unlocks and pre-conditions it through the maker cloud, in a bundled Python worker |
 | `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.54 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.163 | addons dir | ONVIF camera device provider addon for CamStack |
 | `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.173 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |

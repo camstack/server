@@ -4,7 +4,7 @@
 
 # Addons
 
-95 addon manifests across 51 packages.
+96 addon manifests across 52 packages.
 
 One addon = one `addon-runner` process by default. A shared `execution.group`
 collapses its members into ONE process so their cap calls resolve in-process
@@ -80,6 +80,7 @@ this column exists to stop.
 | `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `board-key-source` `broker` `calendar-source` `device-adoption` `humidifier` `image` `integration-instances` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
 | `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `addon-widgets-source` `device-adoption` `device-provider` `integration-instances` |
+| `provider-kia` | `@camstack/addon-provider-kia` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-mqtt-ha` | `@camstack/addon-provider-mqtt-ha` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-onvif` | `@camstack/addon-provider-onvif` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
 | `provider-petkit` | `@camstack/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `integration-instances` `pet-feeder` |
@@ -121,5 +122,5 @@ this column exists to stop.
 - `messaging` — 6
 - `networking` — 5
 - `pipeline` — 8
-- `providers` — 26
+- `providers` — 27
 - `system` — 43

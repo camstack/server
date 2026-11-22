@@ -1,0 +1,9 @@
+{
+  "connection.s_credentials.title": "Kia Connect account",
+  "connection.s_credentials.username.label": "Username",
+  "connection.s_credentials.password.label": "Password",
+  "connection.s_credentials.pin.label": "Security PIN",
+  "connection.s_cloud.title": "Cloud",
+  "connection.s_cloud.region.label": "Region",
+  "connection.s_cloud.brand.label": "Brand"
+}

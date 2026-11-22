@@ -39,6 +39,7 @@ export const MIGRATED: readonly string[] = [
   'packages/addon-provider-reolink/src/reolink-state-refresh.ts',
   'packages/addon-provider-ecowitt',
   'packages/addon-provider-dreo',
+  'packages/addon-provider-kia',
   'packages/addon-provider-tuya',
   'packages/addon-provider-petkit',
   'packages/addon-provider-esphome',
