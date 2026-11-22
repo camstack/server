@@ -1161,6 +1161,7 @@ describe('a feature an identity link contributed (D1063)', () => {
           caller: LINKS_CALLER,
         })
       },
+      remove: async () => {},
       logger: log.logger,
     })
     await reconciler.pass()
@@ -1194,6 +1195,7 @@ describe('a feature an identity link contributed (D1063)', () => {
           caller: LINKS_CALLER,
         })
       },
+      remove: async () => {},
       logger: log.logger,
     })
     await reconciler.pass()
