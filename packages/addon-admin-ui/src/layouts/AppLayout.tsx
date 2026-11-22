@@ -603,33 +603,38 @@ export function AppLayout() {
             degraded cluster node slowing the hub). */}
           {connectionBanner !== null && (
             <div
-              className={`flex items-center justify-center gap-2 px-3 py-2 text-[12px] font-medium shrink-0 ${
-                connectionBanner.severity === 'danger'
-                  ? 'bg-danger/90 text-white'
-                  : 'bg-warning/15 text-warning border-b border-warning/30'
-              }`}
+              role="status"
+              className="pointer-events-none fixed inset-x-0 top-[env(safe-area-inset-top)] z-50 flex justify-center"
             >
-              {connectionBanner.severity === 'danger' ? (
-                <WifiOff className="h-3.5 w-3.5" />
-              ) : (
-                <Activity className="h-3.5 w-3.5" />
-              )}
-              <span>
-                {t(connectionBanner.i18nKey, {
-                  defaultValue: connectionBanner.message,
-                  ...connectionBanner.i18nParams,
-                })}
-              </span>
-              {connectionBanner.action === 'sign-in' && (
-                <Button
-                  variant="unstyled"
-                  onClick={() => logout()}
-                  className="ml-2 rounded border border-white/40 px-2 py-0.5 text-[11px] font-semibold hover:bg-white/10"
-                >
-                  {t('connection.signIn', 'Sign in')}
-                </Button>
-              )}
-              {connectionBanner.showSpinner && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              <div
+                className={`pointer-events-auto flex items-center justify-center gap-2 rounded-b-md px-3 py-2 text-[12px] font-medium shadow-lg ${
+                  connectionBanner.severity === 'danger'
+                    ? 'bg-danger text-white'
+                    : 'bg-surface text-warning border border-t-0 border-warning/30'
+                }`}
+              >
+                {connectionBanner.severity === 'danger' ? (
+                  <WifiOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Activity className="h-3.5 w-3.5" />
+                )}
+                <span>
+                  {t(connectionBanner.i18nKey, {
+                    defaultValue: connectionBanner.message,
+                    ...connectionBanner.i18nParams,
+                  })}
+                </span>
+                {connectionBanner.action === 'sign-in' && (
+                  <Button
+                    variant="unstyled"
+                    onClick={() => logout()}
+                    className="ml-2 rounded border border-white/40 px-2 py-0.5 text-[11px] font-semibold hover:bg-white/10"
+                  >
+                    {t('connection.signIn', 'Sign in')}
+                  </Button>
+                )}
+                {connectionBanner.showSpinner && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </div>
             </div>
           )}
 
