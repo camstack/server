@@ -14,9 +14,18 @@ import {
 } from '../../index.js'
 import { ConditionMirror, evaluateWhenTree } from '../../automation/condition-eval.js'
 import type { TimeSite } from '../../time/time-spec.js'
+import { linkedTriggerValues } from '../linked-trigger.js'
 import { BUTTONS_FIXTURE_ID, BUTTONS_FIXTURE_PAYLOAD } from './buttons-fixture.js'
 
 const FIRED = { kind: 'device-fired', deviceId: 5656, sourceIds: ['1'], eventIds: ['press_short'] }
+const LINKED_MOTION: TemplateInputValues = linkedTriggerValues({
+  targetDeviceId: 4,
+  action: 'on',
+  onForSeconds: 300,
+  sources: [
+    { kind: 'device-becomes', deviceId: 3, cap: 'motion', fieldPath: 'detected', becomes: true },
+  ],
+})
 const STEP = { kind: 'command', actionId: 'switch.on', target: { kind: 'devices', ids: [50] } }
 
 /** The operator's: Tasto 1 short press toggles two lights; a second button turns a room's switches off. */
@@ -193,18 +202,42 @@ describe('built-in automation templates', () => {
     expect(out.ok).toBe(false)
   })
 
-  it('Motion → light expands with the default delay', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:motion-light'), {
-      sensor: 3,
-      lights: [4, 5],
-    })
+  it('Linked trigger: motion turns the lights on for a time, with the off left to the hold', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), LINKED_MOTION)
     expect(out.ok).toBe(true)
     if (!out.ok) return
-    expect(out.recipe.actions[1]).toEqual({ kind: 'wait', seconds: 300 })
-    expect(out.recipe.actions[2]).toMatchObject({
-      actionId: 'switch.off',
-      target: { kind: 'devices', ids: [4, 5] },
+    expect(out.recipe.when).toEqual({
+      kind: 'any',
+      children: [
+        {
+          kind: 'device-becomes',
+          deviceId: 3,
+          cap: 'motion',
+          fieldPath: 'detected',
+          becomes: true,
+        },
+      ],
     })
+    expect(out.recipe.actions).toEqual([
+      {
+        kind: 'command',
+        actionId: 'switch.on',
+        target: { kind: 'devices', ids: [4] },
+        onFor: { seconds: 300 },
+      },
+    ])
+  })
+
+  it('Linked trigger: without a duration the step is a plain command', () => {
+    const { onFor: _dropped, ...plain } = LINKED_MOTION
+    const out = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), plain)
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    expect(out.recipe.actions[0]).not.toHaveProperty('onFor')
+  })
+
+  it('the motion-light built-in is retired: its instances are flagged, never re-expanded', () => {
+    expect(builtinAutomationTemplate('builtin:motion-light')).toBeUndefined()
   })
 })
 
@@ -215,7 +248,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
     days: ['mon', 'tue', 'wed', 'thu', 'fri'],
   }
   const buttons: TemplateInputValues = { buttons: [{ when: [FIRED], do: [STEP] }] }
-  const motion: TemplateInputValues = { sensor: 3, lights: [4, 5] }
+  const motion: TemplateInputValues = LINKED_MOTION
 
   /** The built-in as it was before the window existed: no input, no gate. */
   function withoutWindow(id: string) {
@@ -230,7 +263,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
   it('left empty, both built-ins expand to the very body they had without it', () => {
     const cases: readonly (readonly [string, TemplateInputValues])[] = [
       ['fixture:buttons', buttons],
-      ['builtin:motion-light', motion],
+      ['builtin:linked-trigger', motion],
     ]
     for (const [id, values] of cases) {
       const out = expandAutomationTemplate(payloadOf(id), values)
@@ -244,7 +277,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
   it('filled, the tree is all[time-is, <the tree it had>] on both built-ins', () => {
     for (const [id, values] of [
       ['fixture:buttons', buttons],
-      ['builtin:motion-light', motion],
+      ['builtin:linked-trigger', motion],
     ] as const) {
       const bare = expandAutomationTemplate(withoutWindow(id), values)
       const out = expandAutomationTemplate(payloadOf(id), { ...values, active: nightWeekdays })
@@ -286,7 +319,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
   })
 
   it('a window with neither a time nor a day is refused at its own address', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:motion-light'), {
+    const out = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), {
       ...motion,
       active: { days: [] },
     })

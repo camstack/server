@@ -33,6 +33,49 @@ describe('linkedTriggerParamsOf', () => {
     expect(linkedTriggerParamsOf(values)?.action).toBe('off')
   })
 
+  it('carries "on for a time", a state source, a detection source and the time window', () => {
+    const params = {
+      targetDeviceId: 4,
+      action: 'on' as const,
+      onForSeconds: 300,
+      activeWindow: { days: ['sat' as const, 'sun' as const] },
+      sources: [
+        {
+          kind: 'device-becomes' as const,
+          deviceId: 3,
+          cap: 'motion',
+          fieldPath: 'detected',
+          becomes: true,
+        },
+        { kind: 'detection' as const, deviceIds: [9], subjects: [{ macro: 'person' as const }] },
+      ],
+    }
+    const values = linkedTriggerValues(params)
+    expect(values['onFor']).toBe(300)
+    expect(values['active']).toEqual({ days: ['sat', 'sun'] })
+    expect(linkedTriggerParamsOf(values)).toEqual({ ...params, capability: 'switch' })
+  })
+
+  it('a plain trigger writes neither a duration nor a window', () => {
+    const values = linkedTriggerValues({
+      targetDeviceId: 4,
+      action: 'on',
+      sources: [{ kind: 'device-event', deviceId: 3, category: 'doorbell' }],
+    })
+    expect(Object.keys(values).sort()).toEqual(['action', 'target', 'when'])
+  })
+
+  it('refuses a duration on anything but "on"', () => {
+    expect(() =>
+      linkedTriggerValues({
+        targetDeviceId: 4,
+        action: 'toggle',
+        onForSeconds: 60,
+        sources: [{ kind: 'device-event', deviceId: 3, category: 'doorbell' }],
+      }),
+    ).toThrow(/can be held for a time/)
+  })
+
   it('answers null for values it cannot read rather than guessing', () => {
     expect(linkedTriggerParamsOf({})).toBeNull()
     expect(
@@ -42,7 +85,7 @@ describe('linkedTriggerParamsOf', () => {
       linkedTriggerParamsOf({
         target: 1,
         action: { actionId: 'switch.on' },
-        when: [{ kind: 'device-becomes', deviceId: 2 }],
+        when: [{ kind: 'stationary', deviceIds: [2], phase: 'appeared' }],
       }),
     ).toBeNull()
   })

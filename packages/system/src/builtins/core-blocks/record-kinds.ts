@@ -56,6 +56,8 @@ export type RunsRowBody = {
   readonly traces: z.infer<typeof AutomationStateDocSchema>['traces']
   readonly lastError: string | null
   readonly updatedAt: number
+  /** The devices an automation turned on and owes an off ("on for a time"). */
+  readonly onForHolds?: z.infer<typeof AutomationStateDocSchema>['onForHolds']
 }
 export const RunsRowBodySchema: z.ZodType<RunsRowBody> = AutomationStateDocSchema.extend({
   lastError: z.string().nullable(),

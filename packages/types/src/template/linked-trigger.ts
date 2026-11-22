@@ -5,16 +5,26 @@
  * traces and run modes apply; the template only fixes the shape. The operator
  * reads and writes it from the COMMANDED device's Customize tab.
  *
- * Sources are events only: a device that fired (`device-fired`, optionally one
- * part, event, shared kind and payload predicates) or a device event of a
- * category. The action is a plain on, off or toggle of one capability of the
- * target. A linked trigger commands the target; it never claims the target's
- * state (that belongs to the target's own provider, D663).
+ * A source is something that HAPPENS: a device that fired (`device-fired`,
+ * optionally one part, event, shared kind and payload predicates), a device
+ * event of a category, a device field taking a value (`device-becomes`: motion
+ * detected), or a camera detecting a class (`detection`). The action is a plain
+ * on, off or toggle of one capability of the target. "On" may be held for a
+ * time (`onForSeconds`): the engine turns the target on only if it is off and
+ * off again when the time is up, each new event restarting the time
+ * (`automation/on-for.ts`). An optional time window limits when it runs. A
+ * linked trigger commands the target; it never claims the target's state (that
+ * belongs to the target's own provider, D663).
  */
 import { z } from 'zod'
 import { EventVocabularyKindSchema } from '../capabilities/event-vocabulary.js'
+import { DetectionSubjectSchema } from '../automation/detection-subject.js'
+import { ON_FOR_MAX_SECONDS, onForActionOf } from '../automation/on-for.js'
+import {
+  TemplateTimeWindowValueSchema,
+  type TemplateInputValues,
+} from '../automation/template-link.js'
 import { DeviceFiredMatchSchema } from '../automation/when.js'
-import type { TemplateInputValues } from '../automation/template-link.js'
 
 export const LINKED_TRIGGER_TEMPLATE_ID = 'builtin:linked-trigger'
 /** The input key whose value is the commanded device: the read keys on it. */
@@ -43,9 +53,27 @@ export const LinkedTriggerEventSourceSchema = z.object({
   category: z.string().min(1),
 })
 
+/** A field of a device takes a value (a motion sensor's `detected` becomes true). */
+export const LinkedTriggerBecomesSourceSchema = z.object({
+  kind: z.literal('device-becomes'),
+  deviceId,
+  cap: z.string().min(1),
+  fieldPath: z.string().min(1),
+  becomes: z.union([z.string(), z.number(), z.boolean()]),
+})
+
+/** A camera detects one of the listed classes. */
+export const LinkedTriggerDetectionSourceSchema = z.object({
+  kind: z.literal('detection'),
+  deviceIds: z.array(deviceId).min(1),
+  subjects: z.array(DetectionSubjectSchema).min(1),
+})
+
 export const LinkedTriggerSourceSchema = z.discriminatedUnion('kind', [
   LinkedTriggerFiredSourceSchema,
   LinkedTriggerEventSourceSchema,
+  LinkedTriggerBecomesSourceSchema,
+  LinkedTriggerDetectionSourceSchema,
 ])
 export type LinkedTriggerSource = z.infer<typeof LinkedTriggerSourceSchema>
 
@@ -53,13 +81,32 @@ export const LINKED_TRIGGER_ACTIONS = ['on', 'off', 'toggle'] as const
 export const LinkedTriggerActionSchema = z.enum(LINKED_TRIGGER_ACTIONS)
 export type LinkedTriggerAction = z.infer<typeof LinkedTriggerActionSchema>
 
-export const LinkedTriggerParamsSchema = z.object({
-  targetDeviceId: deviceId,
-  action: LinkedTriggerActionSchema,
-  /** The capability the action is sent to (`switch.on`); a vocabulary action must exist for it. */
-  capability: z.string().min(1).default('switch'),
-  sources: z.array(LinkedTriggerSourceSchema).min(1).max(LINKED_TRIGGER_SOURCES_MAX),
-})
+/** The template input keys of the optional duration and time window. */
+export const LINKED_TRIGGER_ON_FOR_INPUT = 'onFor'
+export const LINKED_TRIGGER_WINDOW_INPUT = 'active'
+
+export const LinkedTriggerParamsSchema = z
+  .object({
+    targetDeviceId: deviceId,
+    action: LinkedTriggerActionSchema,
+    /** The capability the action is sent to (`switch.on`); a vocabulary action must exist for it. */
+    capability: z.string().min(1).default('switch'),
+    /** With `on`: on only if it is off, and off again after this long. */
+    onForSeconds: z.number().int().min(1).max(ON_FOR_MAX_SECONDS).optional(),
+    /** Only inside this time of day and these days. */
+    activeWindow: TemplateTimeWindowValueSchema.optional(),
+    sources: z.array(LinkedTriggerSourceSchema).min(1).max(LINKED_TRIGGER_SOURCES_MAX),
+  })
+  .superRefine((params, ctx) => {
+    if (params.onForSeconds === undefined) return
+    if (onForActionOf(`${params.capability}.${params.action}`) === null) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'only "on" can be held for a time',
+        path: ['onForSeconds'],
+      })
+    }
+  })
 export type LinkedTriggerParams = z.input<typeof LinkedTriggerParamsSchema>
 
 /** The template input values for the parameters; the template judges them again. */
@@ -69,6 +116,12 @@ export function linkedTriggerValues(params: LinkedTriggerParams): TemplateInputV
     [LINKED_TRIGGER_TARGET_INPUT]: parsed.targetDeviceId,
     action: { actionId: `${parsed.capability}.${parsed.action}` },
     when: parsed.sources.map((source) => ({ ...source })),
+    ...(parsed.onForSeconds === undefined
+      ? {}
+      : { [LINKED_TRIGGER_ON_FOR_INPUT]: parsed.onForSeconds }),
+    ...(parsed.activeWindow === undefined
+      ? {}
+      : { [LINKED_TRIGGER_WINDOW_INPUT]: parsed.activeWindow }),
   }
 }
 
@@ -92,6 +145,12 @@ export function linkedTriggerParamsOf(
     capability: action.data.actionId.slice(0, dot),
     action: action.data.actionId.slice(dot + 1),
     sources: values['when'],
+    ...(values[LINKED_TRIGGER_ON_FOR_INPUT] === undefined
+      ? {}
+      : { onForSeconds: values[LINKED_TRIGGER_ON_FOR_INPUT] }),
+    ...(values[LINKED_TRIGGER_WINDOW_INPUT] === undefined
+      ? {}
+      : { activeWindow: values[LINKED_TRIGGER_WINDOW_INPUT] }),
   })
   return parsed.success ? parsed.data : null
 }

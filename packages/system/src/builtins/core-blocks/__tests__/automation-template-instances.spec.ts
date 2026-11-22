@@ -4,6 +4,9 @@ import {
   createRecordsAccess,
   generateAutomationBlock,
   instantiateAutomationTemplate,
+  LINKED_TRIGGER_TEMPLATE_ID,
+  linkedTriggerValues,
+  type TemplateInputValues,
   readRecipeLiteral,
   type AutomationTemplatePayload,
   type CoreBlock,
@@ -51,10 +54,26 @@ function block(id: string, name: string, code: string): CoreBlock {
   }
 }
 
+/** Motion on 8 holds lamp 4 on for five minutes. */
+const LINKED: TemplateInputValues = linkedTriggerValues({
+  targetDeviceId: 4,
+  action: 'on',
+  onForSeconds: 300,
+  sources: [
+    { kind: 'device-becomes', deviceId: 8, cap: 'motion', fieldPath: 'detected', becomes: true },
+  ],
+})
+
+function linkedPayload(): AutomationTemplatePayload {
+  const builtin = builtinAutomationTemplate(LINKED_TRIGGER_TEMPLATE_ID)
+  if (builtin === undefined) throw new Error('setup: no linked-trigger built-in')
+  return builtin.payload
+}
+
 function instanceBlock(
   id: string,
   templateId: string,
-  values: Record<string, number | number[]>,
+  values: TemplateInputValues,
   payload: AutomationTemplatePayload = MOTION,
 ) {
   const made = instantiateAutomationTemplate(templateId, payload, values)
@@ -191,9 +210,9 @@ describe('an instance edited by hand', () => {
 })
 
 describe('built-in instances at boot', () => {
-  const builtin = builtinAutomationTemplate('builtin:motion-light')
-  if (builtin === undefined) throw new Error('setup: no motion-light built-in')
-  const values = { sensor: 7, lights: [3] }
+  const builtin = builtinAutomationTemplate(LINKED_TRIGGER_TEMPLATE_ID)
+  if (builtin === undefined) throw new Error('setup: no linked-trigger built-in')
+  const values = LINKED
 
   it('an instance made from an older built-in is rewritten with the shipped body', async () => {
     const older = AutomationTemplatePayloadSchema.parse({
@@ -216,11 +235,11 @@ describe('built-in instances at boot', () => {
 })
 
 describe('an instance of a built-in that was retired', () => {
-  const retired = 'builtin:buttons-to-devices'
+  const retired = 'builtin:motion-light'
 
   it('keeps running exactly as it was and is flagged missing-template, once', async () => {
     const own = instanceBlock('a', retired, { sensor: 7, lights: [3] })
-    const live = instanceBlock('b', 'builtin:motion-light', { sensor: 8, lights: [4] })
+    const live = instanceBlock('b', LINKED_TRIGGER_TEMPLATE_ID, LINKED, linkedPayload())
     const { service, saved } = await world([own, live])
     await service.reexpandBuiltinInstances()
     const flagged = savedRecipe(saved.get('a'))
@@ -229,7 +248,8 @@ describe('an instance of a built-in that was retired', () => {
     expect(before.status === 'recipe' && flagged.actions).toEqual(
       before.status === 'recipe' ? before.recipe.actions : null,
     )
-    expect(savedRecipe(saved.get('b')).template?.problems ?? []).toEqual([])
+    // the instance of a shipped built-in is left alone
+    expect(saved.has('b')).toBe(false)
     const again = await world([{ ...own, code: saved.get('a') ?? '' }])
     await again.service.reexpandBuiltinInstances()
     expect(again.saved.size).toBe(0)
@@ -240,15 +260,18 @@ describe('built-in automation templates in the store', () => {
   it('are listed beside the operator templates, read-only', async () => {
     const { service } = await world([])
     const listed = await service.list({ kind: 'automation' })
-    expect(listed.some((t) => t.id === 'builtin:motion-light' && t.builtIn === true)).toBe(true)
+    expect(listed.some((t) => t.id === LINKED_TRIGGER_TEMPLATE_ID && t.builtIn === true)).toBe(true)
     expect(listed.some((t) => t.id === 'builtin:buttons-to-devices')).toBe(false)
+    expect(listed.some((t) => t.id === 'builtin:motion-light')).toBe(false)
     expect(await service.list({ kind: 'remote' })).toEqual([])
-    expect(await service.get({ id: 'builtin:motion-light' })).toMatchObject({ builtIn: true })
-    expect(await service.update({ id: 'builtin:motion-light', name: 'x' })).toMatchObject({
+    expect(await service.get({ id: LINKED_TRIGGER_TEMPLATE_ID })).toMatchObject({ builtIn: true })
+    expect(await service.update({ id: LINKED_TRIGGER_TEMPLATE_ID, name: 'x' })).toMatchObject({
       status: 'refused',
       reason: 'read-only',
     })
-    expect(await service.delete({ id: 'builtin:motion-light' })).toEqual({ status: 'read-only' })
+    expect(await service.delete({ id: LINKED_TRIGGER_TEMPLATE_ID })).toEqual({
+      status: 'read-only',
+    })
   })
 
   it('an instance whose code comes out the same is not saved again', async () => {

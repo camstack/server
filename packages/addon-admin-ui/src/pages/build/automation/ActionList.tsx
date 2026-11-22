@@ -21,8 +21,16 @@
 
 import type { AutomationAction } from '@camstack/types'
 import { AutomationCodeEditor } from '../../../components/code/AutomationCodeEditor'
-import { Badge, Button, Input, Select, Switch, type DeviceListState } from '@camstack/ui-library'
-import { PARALLEL_STEPS_MAX, STOP_REASON_MAX } from '@camstack/types'
+import {
+  Badge,
+  Button,
+  DurationPartsInput,
+  Input,
+  Select,
+  Switch,
+  type DeviceListState,
+} from '@camstack/ui-library'
+import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
@@ -42,9 +50,9 @@ import { isParallelMember, PARALLEL_KINDS } from './choose-model'
 import { SetVarsFields } from './SetVarsFields'
 import { RepeatFields } from './RepeatFields'
 import { StepGuard, StepIf } from './StepGuard'
-import { DurationField } from './DurationField'
 import { WaitUntilFields } from './WaitUntilFields'
-import { isWaitUnit, joinWait, splitWait, WAIT_UNITS } from './wait-until-model'
+import { clampWait } from './wait-until-model'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { type StepChoice, type StepKindOption, StepKindPicker } from './StepKindPicker'
@@ -140,6 +148,7 @@ export function ActionList({
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const [picking, setPicking] = useState(false)
   const offered = offeredStepKinds(allowedKinds, flowControl)
   const kinds = ACTION_KINDS.filter((k) => offered.includes(k.value))
@@ -243,26 +252,20 @@ export function ActionList({
 
           {action.kind === 'wait' && (
             <div className="flex flex-wrap items-end gap-2">
-              <DurationField
-                label={t('automation.actionList.waitFor', 'Wait for')}
-                unitAriaLabel={t('automation.waitUntil.unit', 'Unit')}
-                value={splitWait(action.seconds).value}
-                unit={splitWait(action.seconds).unit}
-                units={WAIT_UNITS}
-                unitLabel={{
-                  ms: t('automation.waitUntil.unitMilliseconds', 'milliseconds'),
-                  s: t('automation.waitUntil.unitSeconds', 'seconds'),
-                  min: t('automation.waitUntil.unitMinutes', 'minutes'),
-                  h: t('automation.waitUntil.unitHours', 'hours'),
-                }}
-                isUnit={isWaitUnit}
-                min={0}
-                valueTestId={`wait-value-${String(index)}`}
-                unitTestId={`wait-unit-${String(index)}`}
-                onChange={(value, unit) =>
-                  onChange(replaceAt(actions, index, { ...action, seconds: joinWait(value, unit) }))
-                }
-              />
+              <div>
+                <PickerLabel>{t('automation.actionList.waitFor', 'Wait for')}</PickerLabel>
+                <DurationPartsInput
+                  aria-label={t('automation.actionList.waitFor', 'Wait for')}
+                  seconds={action.seconds}
+                  max={WAIT_MAX_SECONDS}
+                  fractionalSeconds
+                  labels={durationLabels}
+                  testIdPrefix={`wait-${String(index)}`}
+                  onChange={(seconds) =>
+                    onChange(replaceAt(actions, index, { ...action, seconds: clampWait(seconds) }))
+                  }
+                />
+              </div>
             </div>
           )}
 

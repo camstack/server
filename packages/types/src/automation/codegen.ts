@@ -417,6 +417,12 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
     case 'wait':
       return `        await sleep(${j(action.seconds * 1000)})`
     case 'command':
+      if (action.onFor !== undefined) {
+        // on only if it is off, off again when the time is up: the hold outlives the run
+        return `        await holdTargetOn(scope, ${j(action.target)}, ${j(action.actionId)}, ${j(
+          action.onFor.seconds * 1000,
+        )}, vars)`
+      }
       return `        await actuateTarget(scope, ${j(action.target)}, ${j(action.actionId)}, ${j(
         action.args ?? {},
       )}, vars)`
@@ -678,6 +684,9 @@ function renderAutomationBlock(input: GenerateAutomationBlockInput): string {
   const hasWaitUntil = recipe.actions.some(
     (a) => a.kind === 'wait-until' || nestedStepsOf(a).some((n) => n.kind === 'wait-until'),
   )
+  const hasOnFor = recipe.actions.some((a) =>
+    [a, ...nestedStepsOf(a)].some((n) => n.kind === 'command' && n.onFor !== undefined),
+  )
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
@@ -692,6 +701,7 @@ function renderAutomationBlock(input: GenerateAutomationBlockInput): string {
   AutomationWhen,
   AutomationStepTrace,
   BodyEnv,
+  OnForHold,
   RunnableStep,
   StepScope,
   TimeSite,
@@ -704,6 +714,7 @@ import {
   BecomesWatch,
   ConditionMirror,
   HoldTracker,
+  OnForHolds,
   DetectionTriggerFilter,
   DeviceFiredWatch,
   EventCategory,
@@ -784,6 +795,12 @@ const HAS_TIME = ${hasTime}
 
 /** Guards (a step's \`if\`) with a \`for\`: they keep their own mirror and clocks, fed the same way. */
 const GUARD_HOLD_TREES: ReadonlyArray<{ path: string; when: AutomationWhen }> = ${j(guardHoldTrees)}
+
+/** A command step holds its device on for a time: the block listens for that device's reports. */
+const HAS_ON_FOR = ${hasOnFor}
+
+/** Where each holdable cap says "on". */
+const ON_FOR_FIELDS: Readonly<Record<string, string>> = { switch: 'on' }
 
 /** setTimeout cannot arm past 2^31-1 ms; a longer wait re-arms on wake. */
 const MAX_TIMER_MS = 2_000_000_000
@@ -914,8 +931,10 @@ ${
     try {
       const doc = await ctx.api.coreBlocks.getAutomationRunState.query({ blockId: BLOCK_ID })
       lastRunStartedAt = doc.lastRunStartedAt
+      onFor.restore(doc.onForHolds ?? [])
     } catch (err: unknown) {
       stampUnknown = true
+      if (HAS_ON_FOR) retryOnForRestore(BLOCK_ID)
       ctx.logger.warn('could not read the stored cooldown stamp — the first run is let through', {
         blockId: BLOCK_ID,
         error: err instanceof Error ? err.message : String(err),
@@ -923,7 +942,21 @@ ${
     }
   }
 
-  function send(payload: { trace?: AutomationRunTrace; runStartedAt?: number }): Promise<void> {
+  /** The holds, written through the same ordered chain, but a failure REJECTS: the caller knows the hold is not durable. */
+  function persistOnFor(holds: readonly OnForHold[]): Promise<void> {
+    if (BLOCK_ID === null) return Promise.resolve()
+    const blockId = BLOCK_ID
+    const run = sendChain.then(() =>
+      ctx.api.coreBlocks.reportAutomationRun.mutate({ blockId, keepTraces: KEEP_TRACES, onForHolds: [...holds] }),
+    )
+    sendChain = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run.then(() => undefined)
+  }
+
+  function send(payload: { trace?: AutomationRunTrace; runStartedAt?: number; onForHolds?: OnForHold[] }): Promise<void> {
     if (BLOCK_ID === null) return Promise.resolve()
     const blockId = BLOCK_ID
     sendChain = sendChain.then(async () => {
@@ -1157,6 +1190,110 @@ ${
     await runForDevices(resolved.deviceIds, scope, (deviceId) => actuate(scope, deviceId, cap, method, callArgs, vars))
   }
 
+  /** "On for N" (on-for.ts): the devices this block turned on and owes an off. They outlive every run. */
+  const onFor = new OnForHolds<ReturnType<typeof setTimeout>>({
+    timers: {
+      set: (fn, ms) => setTimeout(fn, Math.min(ms, MAX_TIMER_MS)),
+      clear: (handle) => clearTimeout(handle),
+      now: () => Date.now(),
+    },
+    readOn: async (deviceId, action) => {
+      const read = await readField(deviceId, action.cap, action.fieldPath)
+      return read.ok && typeof read.value === 'boolean' ? read.value : null
+    },
+    send: async (deviceId, actionId) => {
+      const call = vocabCall(actionId, {})
+      await callCap(deviceId, call.cap, call.method, call.args)
+      ctx.logger.info('on-for: sent ' + actionId, { tags: { deviceId } })
+    },
+    persist: (holds) => persistOnFor(holds),
+    onError: (deviceId, what, err) => {
+      ctx.logger.error('on-for: ' + what, {
+        tags: { deviceId },
+        error: err instanceof Error ? err.message : String(err),
+      })
+    },
+    onDropped: (hold, reason) => {
+      ctx.logger.error('on-for: ' + reason + ' — the hold is given up, the device may still be on', {
+        tags: { deviceId: hold.deviceId },
+      })
+    },
+  })
+  disposers.push(() => onFor.dispose())
+  if (HAS_ON_FOR) {
+    // a held device that reports "off" was switched by someone else: the hold ends
+    disposers.push(
+      ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+        const deviceId = event.data['deviceId']
+        if (typeof deviceId !== 'number') return
+        const hold = onFor.list().find((h) => h.deviceId === deviceId)
+        if (hold === undefined) return
+        void readField(deviceId, hold.cap, ON_FOR_FIELDS[hold.cap] ?? 'on').then((read) => {
+          if (read.ok && typeof read.value === 'boolean') onFor.observe(deviceId, hold.cap, read.value)
+        })
+      }),
+    )
+  }
+
+  /** The stored holds could not be read at start: asked again until the hub answers. */
+  function retryOnForRestore(blockId: string): void {
+    const timer = setTimeout(() => {
+      if (stopped) return
+      ctx.api.coreBlocks.getAutomationRunState.query({ blockId }).then(
+        (doc) => onFor.restore(doc.onForHolds ?? []),
+        () => retryOnForRestore(blockId),
+      )
+    }, RECONCILE_MS)
+    disposers.push(() => clearTimeout(timer))
+  }
+
+  async function holdTargetOn(
+    scope: StepScope,
+    target: ActionTarget,
+    actionId: string,
+    ms: number,
+    vars: Record<string, unknown>,
+  ): Promise<void> {
+    const resolved = await targets.resolve(target, actionId, vars, {
+      actionId,
+      owner: BLOCK_ID ?? undefined,
+    })
+    if (resolved.deviceIds.length === 0) {
+      scope.markEmpty(resolved.emptyReason ?? 'the target matched no device')
+      return
+    }
+    const hold = async (deviceId: number): Promise<void> => {
+      const outcome = await onFor.trigger(deviceId, actionId, ms)
+      scope.setArgs({ onForMs: ms, outcome })
+      const tags = { tags: { deviceId } }
+      switch (outcome) {
+        case 'turned-on':
+          ctx.logger.info('on-for: turned on, off in ' + ms / 1000 + ' s', tags)
+          return
+        case 'extended':
+          ctx.logger.info('on-for: the time restarts, off in ' + ms / 1000 + ' s', tags)
+          return
+        case 'already-on':
+          ctx.logger.info('on-for: already on — nothing sent, and it will not be turned off', tags)
+          return
+        case 'unknown':
+          ctx.logger.warn('on-for: the state could not be read — nothing sent', tags)
+          throw new Error('the device state could not be read')
+        case 'failed':
+          throw new Error('the device could not be turned on')
+        case 'not-holdable':
+          throw new Error(actionId + ' cannot be held on for a time')
+      }
+    }
+    const [only] = resolved.deviceIds
+    if (resolved.deviceIds.length === 1 && only !== undefined) {
+      scope.setDeviceId(only)
+      await hold(only)
+      return
+    }
+    await runForDevices(resolved.deviceIds, scope, hold)
+  }
+
   function warnMissingVar(name: string): void {
     ctx.logger.warn('template referenced a var that was never set', { var: name })
   }
@@ -1202,6 +1339,16 @@ ${
     const resolved: Record<string, unknown> =
       substituted !== null && typeof substituted === 'object' ? { ...substituted } : {}
     scope.setArgs(resolved)
+    await callCap(deviceId, cap, method, resolved)
+  }
+
+  /** One device method call, through the cap's router. */
+  async function callCap(
+    deviceId: number,
+    cap: string,
+    method: string,
+    resolved: Record<string, unknown>,
+  ): Promise<void> {
     // Forked-addon ctx.api namespaces are tRPC Proxies over a noop function
     // (typeof === 'function'), not plain objects — reject only null/undefined.
     const client: unknown = Reflect.get(ctx.api, capToRouterKey(cap))

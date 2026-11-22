@@ -42,7 +42,7 @@ const MOTION_PAYLOAD = {
 
 const AUTOMATION_TEMPLATES = [
   {
-    id: 'builtin:motion-light',
+    id: 'tpl-motion-light',
     kind: 'automation',
     name: 'Motion → light',
     builtIn: true,
@@ -159,8 +159,8 @@ export default defineFixtures({
     'coreBlocks.list': {
       blocks: [
         FIRST,
-        instance('blk-hall', 'Hall light on motion', 'builtin:motion-light', false),
-        instance('blk-stairs', 'Stairs light on motion', 'builtin:motion-light', true),
+        instance('blk-hall', 'Hall light on motion', 'tpl-motion-light', false),
+        instance('blk-stairs', 'Stairs light on motion', 'tpl-motion-light', true),
       ],
     },
     'deviceManager.search': (input: { ids?: number[]; text?: string }) => {

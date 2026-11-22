@@ -648,6 +648,7 @@ export {
 export * from './device-picker/index.js'
 export * from './unit-picker/index.js'
 export * from './quantity-value-input/index.js'
+export * from './duration-parts-input/index.js'
 export * from './placeholder-field/index.js'
 export {
   type RetrainReviewBadgeKind,

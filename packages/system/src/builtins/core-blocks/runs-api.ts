@@ -12,6 +12,7 @@ import {
   type AutomationStateDoc,
   coreBlockAddonId,
   type IScopedLogger,
+  type OnForHold,
 } from '@camstack/types'
 import { automationOwner, type RunsLedger } from './runs-ledger.js'
 
@@ -20,6 +21,8 @@ export interface ReportAutomationRunInput {
   readonly trace?: AutomationRunTrace
   readonly runStartedAt?: number
   readonly keepTraces?: number
+  /** The devices the block holds on, whole: an empty list releases them all. */
+  readonly onForHolds?: readonly OnForHold[]
 }
 
 export interface RunsApi {
@@ -51,7 +54,11 @@ export function buildRunsApi(ledger: RunsLedger, logger: IScopedLogger): RunsApi
   return {
     async reportAutomationRun(input) {
       requireOwner(input, 'reportAutomationRun')
-      if (input.trace === undefined && input.runStartedAt === undefined) {
+      if (
+        input.trace === undefined &&
+        input.runStartedAt === undefined &&
+        input.onForHolds === undefined
+      ) {
         logger.warn('reportAutomationRun ignored — it carried neither a trace nor a stamp', {
           meta: { blockId: input.blockId },
         })
@@ -61,13 +68,19 @@ export function buildRunsApi(ledger: RunsLedger, logger: IScopedLogger): RunsApi
         ...(input.trace === undefined ? {} : { trace: input.trace }),
         ...(input.runStartedAt === undefined ? {} : { runStartedAt: input.runStartedAt }),
         ...(input.keepTraces === undefined ? {} : { keepTraces: input.keepTraces }),
+        ...(input.onForHolds === undefined ? {} : { onForHolds: input.onForHolds }),
       })
     },
 
     async getAutomationRunState(input) {
       requireOwner(input, 'getAutomationRunState')
       const view = await ledger.get(automationOwner(input.blockId))
-      return { version: 1, lastRunStartedAt: view.lastRunStartedAt, traces: [...view.traces] }
+      return {
+        version: 1,
+        lastRunStartedAt: view.lastRunStartedAt,
+        traces: [...view.traces],
+        ...(view.onForHolds === undefined ? {} : { onForHolds: [...view.onForHolds] }),
+      }
     },
 
     async getTraces(input) {

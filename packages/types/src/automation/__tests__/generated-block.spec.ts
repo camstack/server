@@ -196,10 +196,12 @@ function start(block: BlockFn, options: Options = {}): Harness {
             trace?: AutomationRunTrace
             runStartedAt?: number
             keepTraces?: number
+            onForHolds?: AutomationStateDoc['onForHolds']
           }) => {
             reports.push(input)
             ledger.doc = {
               ...ledger.doc,
+              ...(input.onForHolds === undefined ? {} : { onForHolds: input.onForHolds }),
               lastRunStartedAt: input.runStartedAt ?? ledger.doc.lastRunStartedAt,
               traces:
                 input.trace === undefined
@@ -2810,5 +2812,109 @@ describe('linked trigger template (D1086)', () => {
     h.emit('motion.on-motion-changed', {}, 77)
     await settle()
     expect(h.switchCalls).toEqual([{ method: 'setState', input: { deviceId: TARGET, on: true } }])
+  })
+})
+
+describe('on for a duration (command.onFor)', () => {
+  const LAMP = 30
+  const KEY = `${LAMP}|switch`
+  const MIN = 60_000
+  const recipe: RecipeInput = {
+    triggers: [MOTION],
+    actions: [
+      {
+        kind: 'command',
+        target: { kind: 'devices', ids: [LAMP] },
+        actionId: 'switch.on',
+        onFor: { seconds: 300 },
+      },
+    ],
+    runMode: { mode: 'queued', max: 5 },
+  }
+  const ON = { method: 'setState', input: { deviceId: LAMP, on: true } }
+  const OFF = { method: 'setState', input: { deviceId: LAMP, on: false } }
+  const fire = async (h: Harness): Promise<void> => {
+    h.emit('motion.on-motion-changed', {})
+    await settle()
+  }
+
+  it('off: on at the event, a new event restarts the timer, off when it runs out', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(recipe), { slices })
+    await settle()
+    await fire(h)
+    expect(h.switchCalls).toEqual([ON])
+    slices[KEY] = { on: true }
+    await settle(4 * MIN)
+    await fire(h)
+    await settle(4 * MIN)
+    expect(h.switchCalls).toEqual([ON])
+    await settle(MIN)
+    expect(h.switchCalls).toEqual([ON, OFF])
+    expect(h.ledger.doc.onForHolds).toEqual([])
+    // the step did not wait for the timer: each run ended at once
+    expect(h.traces().map((t) => t.outcome)).toEqual(['ran', 'ran'])
+  })
+
+  it('already on: nothing is sent, then or later', async () => {
+    const h = start(await load(recipe), { slices: { [KEY]: { on: true } } })
+    await settle()
+    await fire(h)
+    await settle(10 * MIN)
+    expect(h.switchCalls).toEqual([])
+    expect(h.logs.some((l) => l.msg.includes('already on') && l.meta?.['tags'] !== undefined)).toBe(
+      true,
+    )
+  })
+
+  it('switched off by hand: the hold ends with the report, and no off is sent later', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(recipe), { slices })
+    await settle()
+    await fire(h)
+    slices[KEY] = { on: true }
+    h.emit('device.state-changed', { deviceId: LAMP }, LAMP)
+    await settle()
+    slices[KEY] = { on: false }
+    h.emit('device.state-changed', { deviceId: LAMP }, LAMP)
+    await settle()
+    expect(h.ledger.doc.onForHolds).toEqual([])
+    await settle(10 * MIN)
+    expect(h.switchCalls).toEqual([ON])
+  })
+
+  it('survives a restart: the new block turns off at the stored deadline', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const block = await load(recipe)
+    const first = start(block, { slices })
+    await settle()
+    await fire(first)
+    slices[KEY] = { on: true }
+    expect(first.ledger.doc.onForHolds).toHaveLength(1)
+    await settle(2 * MIN)
+    first.stop()
+
+    const second = start(block, { slices, ledger: first.ledger })
+    await settle(3 * MIN - 1_000)
+    expect(second.switchCalls).toEqual([])
+    await settle(1_000)
+    expect(second.switchCalls).toEqual([OFF])
+    expect(second.ledger.doc.onForHolds).toEqual([])
+  })
+
+  it('a restart after the deadline turns off at once', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const block = await load(recipe)
+    const first = start(block, { slices })
+    await settle()
+    await fire(first)
+    slices[KEY] = { on: true }
+    first.stop()
+    await settle(20 * MIN)
+    expect(first.switchCalls).toEqual([ON])
+
+    const second = start(block, { slices, ledger: first.ledger })
+    await settle()
+    expect(second.switchCalls).toEqual([OFF])
   })
 })

@@ -5,6 +5,7 @@ import {
   TemplateInstanceProblemSchema,
 } from '../automation/template-link.js'
 import { AutomationRunTraceSchema, AutomationStateDocSchema } from '../automation/trace.js'
+import { OnForHoldsSchema } from '../automation/on-for.js'
 import {
   CapLinksReadSchema,
   MigrateCapLinksInputSchema,
@@ -680,7 +681,8 @@ export const coreBlocksCapability = {
      * An automation block reports one run (or one coalesced skip) to the hub's
      * `runs` ledger. Only the block itself may: the transport stamps
      * `callerAddonId`, and anything but `core-block-<blockId>` is refused.
-     * `keepTraces` bounds the ring; `runStartedAt` moves the cooldown stamp.
+     * `keepTraces` bounds the ring; `runStartedAt` moves the cooldown stamp;
+     * `onForHolds` replaces the devices the block holds on (`on-for.ts`).
      */
     reportAutomationRun: method(
       z.object({
@@ -688,6 +690,7 @@ export const coreBlocksCapability = {
         trace: AutomationRunTraceSchema.optional(),
         runStartedAt: z.number().optional(),
         keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
+        onForHolds: OnForHoldsSchema.optional(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },

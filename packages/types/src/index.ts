@@ -3120,3 +3120,20 @@ export {
   directedBroadcastOf,
   parseMacAddress,
 } from './network/wake-on-lan.js'
+export type {
+  OnForAction,
+  OnForDeps,
+  OnForHold,
+  OnForOutcome,
+  OnForSpec,
+  OnForTimers,
+} from './automation/index.js'
+export {
+  ON_FOR_HOLDS_MAX,
+  ON_FOR_MAX_SECONDS,
+  OnForHoldSchema,
+  OnForHolds,
+  OnForHoldsSchema,
+  OnForSpecSchema,
+  onForActionOf,
+} from './automation/index.js'

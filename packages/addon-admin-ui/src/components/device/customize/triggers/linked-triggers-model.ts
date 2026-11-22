@@ -9,13 +9,32 @@
  */
 import {
   findVocabAction,
+  type DetectionSubject,
   LINKED_TRIGGER_ACTIONS,
   type LinkedTriggerAction,
   type LinkedTriggerParams,
   type LinkedTriggerSource,
   linkedTriggerParamsOf,
+  onForActionOf,
   type TemplateInstance,
+  type TemplateTimeWindowValue,
 } from '@camstack/types'
+
+/** What the action column offers: the template's actions, plus "on" held for a time. */
+export const ON_FOR_CHOICE = 'on-for'
+export type TriggerActionChoice = LinkedTriggerAction | typeof ON_FOR_CHOICE
+
+/** The time a new "on for" starts with. */
+export const DEFAULT_ON_FOR_SECONDS = 300
+
+/** The classes a camera source may fire on, in the order they are offered. */
+export const DETECTION_CLASSES = ['person', 'vehicle', 'animal', 'package'] as const
+export type DetectionClass = (typeof DETECTION_CLASSES)[number]
+
+/** What kind of source a picked device is, from what it can report. */
+export type TriggerSourceKind = 'emitter' | 'motion' | 'camera'
+export const MOTION_CAP = 'motion'
+const MOTION_FIELD = 'detected'
 
 /** What a row fires on. Empty `events` / `parts` mean any. */
 export type TriggerFilter =
@@ -25,6 +44,10 @@ export type TriggerFilter =
       readonly parts: readonly string[]
     }
   | { readonly kind: 'category'; readonly categories: readonly string[] }
+  /** A motion sensor reporting motion. */
+  | { readonly kind: 'motion' }
+  /** A camera detecting one of these classes. */
+  | { readonly kind: 'detection'; readonly classes: readonly DetectionClass[] }
   /** Narrowed in a way one event-and-part pick cannot say; shown, never rewritten from here. */
   | { readonly kind: 'custom' }
 
@@ -35,6 +58,10 @@ export interface TriggerRow {
   readonly deviceId: number
   readonly action: LinkedTriggerAction
   readonly capability: string
+  /** With `on`: held on for this long, then turned off. Null: a plain action. */
+  readonly onForSeconds: number | null
+  /** The limit on when the trigger runs; null: always. It belongs to the whole automation. */
+  readonly activeWindow: TemplateTimeWindowValue | null
   readonly enabled: boolean
   /** The last re-expansion refused the stored values. */
   readonly flagged: boolean
@@ -68,7 +95,37 @@ function union(lists: readonly (readonly string[])[]): readonly string[] {
   return [...new Set(lists.flat())]
 }
 
+/** The devices a source watches. */
+export function sourceDeviceIds(source: LinkedTriggerSource): readonly number[] {
+  return source.kind === 'detection' ? source.deviceIds : [source.deviceId]
+}
+
+function classOf(subject: DetectionSubject): DetectionClass | null {
+  if ('label' in subject && subject.label !== undefined) return null
+  return DETECTION_CLASSES.find((c) => c === subject.macro) ?? null
+}
+
+function stateFilterOf(sources: readonly LinkedTriggerSource[]): TriggerFilter | null {
+  const [only] = sources
+  if (only === undefined || sources.length !== 1) return null
+  if (only.kind === 'device-becomes') {
+    const motion =
+      only.cap === MOTION_CAP && only.fieldPath === MOTION_FIELD && only.becomes === true
+    return motion ? { kind: 'motion' } : { kind: 'custom' }
+  }
+  if (only.kind === 'detection') {
+    const classes = only.subjects.map(classOf)
+    const plain = classes.flatMap((c) => (c === null ? [] : [c]))
+    return plain.length === classes.length
+      ? { kind: 'detection', classes: plain }
+      : { kind: 'custom' }
+  }
+  return null
+}
+
 function filterOf(sources: readonly LinkedTriggerSource[]): TriggerFilter {
+  const state = stateFilterOf(sources)
+  if (state !== null) return state
   const categories = sources.flatMap((s) => (s.kind === 'device-event' ? [s.category] : []))
   if (categories.length === sources.length) return { kind: 'category', categories }
   const fired = sources.flatMap((s) => (s.kind === 'device-fired' ? [s] : []))
@@ -97,7 +154,7 @@ export function triggerRows(instances: readonly TemplateInstance[]): TriggerRows
       unreadable.push({ blockId: instance.blockId, name: instance.name })
       continue
     }
-    const deviceIds = [...new Set(params.sources.map((s) => s.deviceId))]
+    const deviceIds = [...new Set(params.sources.flatMap(sourceDeviceIds))]
     for (const deviceId of deviceIds) {
       rows.push({
         key: `${instance.blockId}:${String(deviceId)}`,
@@ -105,22 +162,84 @@ export function triggerRows(instances: readonly TemplateInstance[]): TriggerRows
         deviceId,
         action: params.action,
         capability: params.capability,
+        onForSeconds: params.onForSeconds ?? null,
+        activeWindow: params.activeWindow ?? null,
         enabled: instance.enabled,
         flagged: instance.problems !== undefined && instance.problems.length > 0,
-        filter: filterOf(params.sources.filter((s) => s.deviceId === deviceId)),
+        filter: filterOf(params.sources.filter((s) => sourceDeviceIds(s).includes(deviceId))),
       })
     }
   }
   return { rows, unreadable }
 }
 
-/** The instance with another action; null when its values cannot be read. */
+/** What the action column shows for a row. */
+export function actionChoiceOf(
+  row: Pick<TriggerRow, 'action' | 'onForSeconds'>,
+): TriggerActionChoice {
+  return row.action === 'on' && row.onForSeconds !== null ? ON_FOR_CHOICE : row.action
+}
+
+/** The instance with another action; null when its values cannot be read. A plain action drops the time. */
 export function withRowAction(
   instance: TemplateInstance,
-  action: LinkedTriggerAction,
+  choice: TriggerActionChoice,
 ): LinkedTriggerParams | null {
   const params = linkedTriggerParamsOf(instance.values)
-  return params === null ? null : { ...params, action }
+  if (params === null) return null
+  const { onForSeconds, ...plain } = params
+  return choice === ON_FOR_CHOICE
+    ? { ...plain, action: 'on', onForSeconds: onForSeconds ?? DEFAULT_ON_FOR_SECONDS }
+    : { ...plain, action: choice }
+}
+
+/** The instance held on for another time. */
+export function withRowOnFor(
+  instance: TemplateInstance,
+  seconds: number,
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  return params === null ? null : { ...params, action: 'on', onForSeconds: seconds }
+}
+
+/** The instance limited to a time window, or with the limit removed. */
+export function withActiveWindow(
+  instance: TemplateInstance,
+  window: TemplateTimeWindowValue | null,
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  if (params === null) return null
+  const { activeWindow: _dropped, ...rest } = params
+  return window === null ? rest : { ...rest, activeWindow: window }
+}
+
+/** The instance with one camera's source firing on these classes. */
+export function withRowClasses(
+  instance: TemplateInstance,
+  deviceId: number,
+  classes: readonly DetectionClass[],
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  if (params === null || classes.length === 0) return null
+  const sources = params.sources.map(
+    (source): LinkedTriggerSource =>
+      source.kind === 'detection' && source.deviceIds.includes(deviceId)
+        ? { ...source, subjects: classes.map((macro) => ({ macro })) }
+        : source,
+  )
+  return { ...params, sources }
+}
+
+/** The sources without one device: a camera source keeps its other cameras. */
+function sourcesWithout(
+  sources: readonly LinkedTriggerSource[],
+  deviceId: number,
+): LinkedTriggerSource[] {
+  return sources.flatMap((source): LinkedTriggerSource[] => {
+    if (source.kind !== 'detection') return source.deviceId === deviceId ? [] : [source]
+    const deviceIds = source.deviceIds.filter((id) => id !== deviceId)
+    return deviceIds.length === 0 ? [] : [{ ...source, deviceIds }]
+  })
 }
 
 /** The instance with one device's sources replaced by a single event-and-part pick. */
@@ -137,8 +256,8 @@ export function withRowFilter(
     ...(pick.parts.length === 0 ? {} : { sourceIds: [...pick.parts] }),
     ...(pick.events.length === 0 ? {} : { eventIds: [...pick.events] }),
   }
-  const at = params.sources.findIndex((s) => s.deviceId === deviceId)
-  const others = params.sources.filter((s) => s.deviceId !== deviceId)
+  const at = params.sources.findIndex((s) => sourceDeviceIds(s).includes(deviceId))
+  const others = sourcesWithout(params.sources, deviceId)
   const sources =
     at < 0 ? [...others, source] : [...others.slice(0, at), source, ...others.slice(at)]
   return { ...params, sources }
@@ -148,10 +267,28 @@ export function withRowFilter(
 export function withoutRow(instance: TemplateInstance, deviceId: number): RowRemoval {
   const params = linkedTriggerParamsOf(instance.values)
   if (params === null) return { kind: 'delete' }
-  const sources = params.sources.filter((s) => s.deviceId !== deviceId)
+  const sources = sourcesWithout(params.sources, deviceId)
   return sources.length === 0
     ? { kind: 'delete' }
     : { kind: 'update', params: { ...params, sources } }
+}
+
+/** The action column's choices: the plain actions, and "on for" when the capability's on can be held. */
+export function offeredChoices(capability: string): readonly TriggerActionChoice[] {
+  const plain = offeredActions(capability)
+  return plain.includes('on') && onForActionOf(`${capability}.on`) !== null
+    ? [...plain, ON_FOR_CHOICE]
+    : plain
+}
+
+/** What a picked device is as a source: a camera detects, a motion sensor reports, the rest fire events. */
+export function sourceKindOf(
+  type: string | null,
+  caps: readonly string[],
+): TriggerSourceKind | null {
+  if (type === 'camera') return 'camera'
+  if (caps.includes(MOTION_CAP)) return 'motion'
+  return caps.length > 0 ? 'emitter' : null
 }
 
 /** The actions the capability's vocabulary declares, in the template's order. */
@@ -171,20 +308,47 @@ export function commandCapOf(caps: readonly string[]): string | null {
   return COMMAND_CAPS.find((cap) => caps.includes(cap)) ?? null
 }
 
-/** A new row: any event of the picked device; toggle when the capability can, else its first action. */
+/**
+ * A new row. A button toggles on any of its events. A motion sensor or a camera
+ * holds the device on for a time (when its on can be held): what follows
+ * motion is light for a while, not a light left on.
+ */
 export function newTriggerParams(
   targetDeviceId: number,
   sourceDeviceId: number,
   capability: string,
+  sourceKind: TriggerSourceKind = 'emitter',
 ): LinkedTriggerParams | null {
   const offered = offeredActions(capability)
-  const action = offered.includes('toggle') ? 'toggle' : offered[0]
-  if (action === undefined) return null
+  if (sourceKind === 'emitter') {
+    const action = offered.includes('toggle') ? 'toggle' : offered[0]
+    if (action === undefined) return null
+    return {
+      targetDeviceId,
+      action,
+      capability,
+      sources: [{ kind: 'device-fired', deviceId: sourceDeviceId }],
+    }
+  }
+  if (!offered.includes('on')) return null
+  const source: LinkedTriggerSource =
+    sourceKind === 'motion'
+      ? {
+          kind: 'device-becomes',
+          deviceId: sourceDeviceId,
+          cap: MOTION_CAP,
+          fieldPath: MOTION_FIELD,
+          becomes: true,
+        }
+      : { kind: 'detection', deviceIds: [sourceDeviceId], subjects: [{ macro: 'person' }] }
   return {
     targetDeviceId,
-    action,
+    action: 'on',
     capability,
-    sources: [{ kind: 'device-fired', deviceId: sourceDeviceId }],
+    ...(offeredChoices(capability).includes(ON_FOR_CHOICE)
+      ? { onForSeconds: DEFAULT_ON_FOR_SECONDS }
+      : {}),
+    sources: [source],
   }
 }
 
@@ -217,7 +381,9 @@ export interface FilterSummary {
 }
 
 export function filterSummary(filter: TriggerFilter): FilterSummary {
-  if (filter.kind === 'custom') return { events: [], parts: [], custom: true }
+  if (filter.kind === 'custom' || filter.kind === 'motion' || filter.kind === 'detection') {
+    return { events: [], parts: [], custom: filter.kind === 'custom' }
+  }
   if (filter.kind === 'category') return { events: filter.categories, parts: [], custom: false }
   return { events: filter.events, parts: filter.parts, custom: false }
 }

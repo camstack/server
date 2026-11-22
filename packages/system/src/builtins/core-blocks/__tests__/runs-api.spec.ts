@@ -112,6 +112,22 @@ describe('runs api — a block writes only its own row', () => {
     expect(state.lastRunStartedAt).toBe(900)
     expect(state.traces).toHaveLength(1)
   })
+
+  it('keeps the devices a block holds on across the reports that do not name them', async () => {
+    const w = await world()
+    const hold = { deviceId: 30, cap: 'switch', deadline: 5_000 }
+    await w.api.reportAutomationRun({ blockId: 'b1', onForHolds: [hold], ...asBlock('b1') })
+    // a run report says nothing about holds: the row keeps them
+    await w.api.reportAutomationRun({ blockId: 'b1', trace: trace('r1', 'ran'), ...asBlock('b1') })
+    const held = await w.api.getAutomationRunState({ blockId: 'b1', ...asBlock('b1') })
+    expect(held.onForHolds).toEqual([hold])
+    expect(held.traces).toHaveLength(1)
+    // an empty list is a statement: nothing is held any more
+    await w.api.reportAutomationRun({ blockId: 'b1', onForHolds: [], ...asBlock('b1') })
+    const released = await w.api.getAutomationRunState({ blockId: 'b1', ...asBlock('b1') })
+    expect(released.onForHolds).toEqual([])
+    expect(released.traces).toHaveLength(1)
+  })
 })
 
 describe('runs ledger sweep', () => {

@@ -127,26 +127,21 @@ describe('ActionList flow control', () => {
   })
 })
 
-describe('ActionList wait step: one number and a unit', () => {
-  it('shows 90000 ms stored as 90 s, and writes a typed value back as the same stored seconds', () => {
+describe('ActionList wait step: one field per unit', () => {
+  it('shows 90 s as one minute thirty, and a typed part writes the stored seconds', () => {
     render(<Harness flow initial={[{ kind: 'wait', seconds: 90 }]} />)
-    expect(screen.getByTestId('wait-value-0')).toHaveValue(90)
-    expect(screen.getByTestId('wait-unit-0')).toHaveTextContent('seconds')
-    fireEvent.change(screen.getByTestId('wait-value-0'), { target: { value: '1.5' } })
-    expect(latest).toEqual([{ kind: 'wait', seconds: 1.5 }])
+    expect(screen.getByTestId('wait-0-hours')).toHaveValue(0)
+    expect(screen.getByTestId('wait-0-minutes')).toHaveValue(1)
+    expect(screen.getByTestId('wait-0-seconds')).toHaveValue(30)
+    fireEvent.change(screen.getByTestId('wait-0-minutes'), { target: { value: '5' } })
+    expect(latest).toEqual([{ kind: 'wait', seconds: 330 }])
   })
 
-  it('shows a half second in milliseconds and a round number of minutes in minutes', () => {
+  it('keeps a half second in the seconds field', () => {
     render(<Harness flow initial={[{ kind: 'wait', seconds: 0.5 }]} />)
-    expect(screen.getByTestId('wait-value-0')).toHaveValue(500)
-    expect(screen.getByTestId('wait-unit-0')).toHaveTextContent('milliseconds')
-  })
-
-  it('switching the unit keeps the number: 5 seconds -> 5 minutes is 300 seconds', () => {
-    render(<Harness flow initial={[{ kind: 'wait', seconds: 5 }]} />)
-    fireEvent.click(screen.getByTestId('wait-unit-0'))
-    fireEvent.click(screen.getByRole('option', { name: 'minutes' }))
-    expect(latest).toEqual([{ kind: 'wait', seconds: 300 }])
+    expect(screen.getByTestId('wait-0-seconds')).toHaveValue(0.5)
+    fireEvent.change(screen.getByTestId('wait-0-seconds'), { target: { value: '1.5' } })
+    expect(latest).toEqual([{ kind: 'wait', seconds: 1.5 }])
   })
 })
 
@@ -247,14 +242,13 @@ describe('ActionList wait-until (#500)', () => {
     expect(screen.getAllByRole('option').map((o) => o.textContent)).not.toContain('Wait until')
   })
 
-  it('edits the timeout in its unit and what happens when it runs out', () => {
+  it('edits the timeout per unit and what happens when it runs out', () => {
     render(<Harness flow initial={[WAIT_UNTIL]} />)
-    const value = screen.getByTestId('wait-until-timeout-0')
-    expect(value).toHaveProperty('value', '10')
-    fireEvent.change(value, { target: { value: '30' } })
+    const minutes = screen.getByTestId('wait-until-timeout-0-minutes')
+    expect(minutes).toHaveProperty('value', '10')
+    fireEvent.change(minutes, { target: { value: '30' } })
     expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 1800 }])
-    fireEvent.click(screen.getByTestId('wait-until-unit-0'))
-    fireEvent.click(screen.getByRole('option', { name: 'hours' }))
+    fireEvent.change(screen.getByTestId('wait-until-timeout-0-hours'), { target: { value: '6' } })
     expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 21600 }])
     fireEvent.click(screen.getByTestId('wait-until-on-timeout-0'))
     fireEvent.click(screen.getByRole('option', { name: 'Stop the run as a failure' }))

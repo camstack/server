@@ -15,6 +15,7 @@
  * vocabulary so an Action run records the same step shape.
  */
 
+import { OnForHoldsSchema } from './on-for.js'
 import { z } from 'zod'
 import { isSecretMarkerLike } from '../keychain/secret-marker.js'
 import { HoldTraceSchema } from './hold.js'
@@ -231,6 +232,8 @@ export const AutomationStateDocSchema = z.object({
   version: z.literal(1),
   lastRunStartedAt: z.number().nullable(),
   traces: z.array(AutomationRunTraceSchema),
+  /** The devices the block turned on and still owes an off (`on-for.ts`). Absent = none. */
+  onForHolds: OnForHoldsSchema.optional(),
 })
 export type AutomationStateDoc = z.infer<typeof AutomationStateDocSchema>
 

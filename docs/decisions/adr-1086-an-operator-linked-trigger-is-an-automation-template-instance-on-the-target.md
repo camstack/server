@@ -55,6 +55,12 @@ the global search leave these automations out (`isListedAutomation`); Build →
 Custom Device shows the commanded device as a customization row that links to
 its Customize tab, sharing the row of a customization block when there is one.
 
+Amended 2026-11-22 (D1092): the action may also be "on for a time", a hold
+that turns off only what it turned on; the sources also cover a field becoming
+a value (motion) and a camera's detection by class, with an optional time
+window. "No detection source" above no longer holds. The trigger still
+commands and never claims the target's state.
+
 ## Enforcement
 
 Specs: the template expands and runs through the generated block for each

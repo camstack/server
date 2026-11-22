@@ -158,6 +158,7 @@ export {
   ACTION_STEP_KINDS,
   CODE_NOT_IN_ACTION,
   NarrowActionStepSchema,
+  ON_FOR_NEEDS_AUTOMATION,
   AutomationActionSchema,
   AutomationCommandStepBaseSchema,
   AutomationCommandStepSchema,
@@ -324,3 +325,20 @@ export {
 } from './leaf-catalog.js'
 export { recipeSiteIssues, stepGuardSiteIssues, whenSiteIssues } from './when-site.js'
 export type { GuardedStepLike, WhenSiteIssue } from './when-site.js'
+export type {
+  OnForAction,
+  OnForDeps,
+  OnForHold,
+  OnForOutcome,
+  OnForSpec,
+  OnForTimers,
+} from './on-for.js'
+export {
+  ON_FOR_HOLDS_MAX,
+  ON_FOR_MAX_SECONDS,
+  OnForHoldSchema,
+  OnForHolds,
+  OnForHoldsSchema,
+  OnForSpecSchema,
+  onForActionOf,
+} from './on-for.js'

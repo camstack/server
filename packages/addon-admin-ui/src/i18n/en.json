@@ -1556,7 +1556,10 @@
     "motionWord": "motion",
     "stale": "stale",
     "tags": "Tags",
-    "more": "More"
+    "more": "More",
+    "durationHours": "Hours",
+    "durationMinutes": "Minutes",
+    "durationSeconds": "Seconds"
   },
   "connection": {
     "disconnected": "Server unreachable — reconnecting…",
@@ -3109,7 +3112,8 @@
       "actions": {
         "on": "Turn on",
         "off": "Turn off",
-        "toggle": "Toggle"
+        "toggle": "Toggle",
+        "on-for": "On for"
       },
       "removeWhat": "the trigger from {{name}}",
       "flagged": "The stored trigger no longer fits; it keeps running as it was.",
@@ -3117,7 +3121,24 @@
       "unreadableOne": "This trigger cannot be read, so it was not changed.",
       "notCommandable": "This device has nothing a trigger can switch.",
       "templateMissing": "Linked triggers are not available on this hub.",
-      "blockName": "{{source}} → {{target}}"
+      "blockName": "{{source}} → {{target}}",
+      "onForFor": "How long it stays on when {{name}} fires",
+      "onForHint": "Turned on only if it is off, and off again when the time is up. A new event restarts the time.",
+      "motionDetected": "Motion detected",
+      "classes": {
+        "person": "Person",
+        "vehicle": "Vehicle",
+        "animal": "Animal",
+        "package": "Package"
+      },
+      "classesLabel": "Detected classes",
+      "editClasses": "Choose what {{name}} must detect",
+      "classesTitle": "What {{name}} must detect",
+      "windowSet": "Only at certain times",
+      "editWindow": "Choose when the trigger from {{name}} may run",
+      "windowTitle": "When the trigger from {{name}} may run",
+      "windowShared": "The limit applies to every source of this trigger.",
+      "anyClass": "Any class"
     }
   },
   "compositionEditor": {

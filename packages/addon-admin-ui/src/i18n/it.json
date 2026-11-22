@@ -1556,7 +1556,10 @@
     "motionWord": "movimento",
     "stale": "obsoleto",
     "tags": "Tag",
-    "more": "Altro"
+    "more": "Altro",
+    "durationHours": "Ore",
+    "durationMinutes": "Minuti",
+    "durationSeconds": "Secondi"
   },
   "connection": {
     "disconnected": "Server non raggiungibile — riconnessione in corso…",
@@ -3184,7 +3187,8 @@
       "actions": {
         "on": "Accendi",
         "off": "Spegni",
-        "toggle": "Inverti"
+        "toggle": "Inverti",
+        "on-for": "Accendi per"
       },
       "removeWhat": "il trigger da {{name}}",
       "flagged": "Il trigger salvato non è più valido; continua a funzionare com'era.",
@@ -3192,7 +3196,24 @@
       "unreadableOne": "Questo trigger non è leggibile, quindi non è stato modificato.",
       "notCommandable": "Questo dispositivo non ha nulla che un trigger possa comandare.",
       "templateMissing": "I trigger collegati non sono disponibili su questo hub.",
-      "blockName": "{{source}} → {{target}}"
+      "blockName": "{{source}} → {{target}}",
+      "onForFor": "Per quanto resta acceso quando {{name}} scatta",
+      "onForHint": "Acceso solo se è spento, e spento di nuovo allo scadere del tempo. Un nuovo evento fa ripartire il tempo.",
+      "motionDetected": "Movimento rilevato",
+      "classes": {
+        "person": "Persona",
+        "vehicle": "Veicolo",
+        "animal": "Animale",
+        "package": "Pacco"
+      },
+      "classesLabel": "Classi rilevate",
+      "editClasses": "Scegli cosa deve rilevare {{name}}",
+      "classesTitle": "Cosa deve rilevare {{name}}",
+      "windowSet": "Solo in certi orari",
+      "editWindow": "Scegli quando il trigger di {{name}} può scattare",
+      "windowTitle": "Quando il trigger di {{name}} può scattare",
+      "windowShared": "Il limite vale per tutte le sorgenti di questo trigger.",
+      "anyClass": "Qualsiasi classe"
     }
   },
   "compositionEditor": {

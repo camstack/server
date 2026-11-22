@@ -688,6 +688,12 @@
       "notes": "A bare `Input type=\"number\"` on a quantity field is the bug it exists to prevent"
     },
     {
+      "need": "Enter a length of time (a wait, a timeout, \"on for\")",
+      "admin": "`DurationPartsInput` (hours, minutes and seconds side by side; takes and emits seconds)",
+      "viewer": "—",
+      "notes": "A number with a unit select, or a bare seconds field, is what it replaced"
+    },
+    {
       "need": "Live camera video",
       "admin": "`CameraStreamPlayer`, `StreamPanel`",
       "viewer": "the embed player (`embed/`)",
@@ -5374,6 +5380,13 @@
       "summary": "Primary colour when nothing else matches — the first bundled fallback."
     },
     {
+      "name": "DEFAULT_DURATION_PART_LABELS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/DurationPartsInput.tsx",
+      "summary": "The accessible name of each field; pass translated ones."
+    },
+    {
       "name": "DEFAULT_LAYOUT_COLUMNS",
       "kind": "constant",
       "area": "composites",
@@ -8020,6 +8033,82 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/dummy-hero-card.tsx",
       "summary": "Inline placeholder: renders nothing (no-op row atom for types with no inline control)."
+    },
+    {
+      "name": "DURATION_PARTS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "A duration in seconds, as the three numbers a person reads: hours, minutes, seconds."
+    },
+    {
+      "name": "DurationPartsInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/DurationPartsInput.tsx",
+      "summary": "A duration as one number field per unit: hours, minutes, seconds, side by side. `seconds` is the stored duration; typing in one field keeps the other two and emits the new total. A field shows what was typed until it …",
+      "props": [
+        {
+          "name": "seconds",
+          "type": "number",
+          "optional": false,
+          "doc": "The duration, in seconds."
+        },
+        {
+          "name": "onChange",
+          "type": "(seconds: number) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": true,
+          "doc": "Bounds in seconds; outside them the fields are marked, the number is still emitted."
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fractionalSeconds",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The seconds field takes a fraction (a half-second wait)."
+        },
+        {
+          "name": "labels",
+          "type": "DurationPartLabels",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "'aria-label'",
+          "type": "string",
+          "optional": true,
+          "doc": "Names the three fields as one group."
+        },
+        {
+          "name": "testIdPrefix",
+          "type": "string",
+          "optional": true,
+          "doc": "`<prefix>-hours`, `<prefix>-minutes`, `<prefix>-seconds`."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "effectivePageSize",
@@ -11692,6 +11781,13 @@
           "doc": "The body is a flex column, so a child with `min-h-0 flex-1` takes the dialog's remaining height and scrolls inside it (a long picker); the d"
         }
       ]
+    },
+    {
+      "name": "joinDurationParts",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "A duration in seconds, as the three numbers a person reads: hours, minutes, seconds."
     },
     {
       "name": "KebabMenu",
@@ -18163,6 +18259,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/responsive.ts",
       "summary": "Sidebar narrow lane in a SPLIT_PANEL_OUTER layout."
+    },
+    {
+      "name": "splitDurationParts",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "A duration in seconds, as the three numbers a person reads: hours, minutes, seconds."
     },
     {
       "name": "splitSwitchTimerDuration",

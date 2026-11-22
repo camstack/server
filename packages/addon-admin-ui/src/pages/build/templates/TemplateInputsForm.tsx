@@ -690,7 +690,12 @@ function ScalarControl({
           value={
             stored === undefined
               ? undefined
-              : { kind: 'command', target, actionId: stored.actionId, ...(stored.args === undefined ? {} : { args: stored.args }) }
+              : {
+                  kind: 'command',
+                  target,
+                  actionId: stored.actionId,
+                  ...(stored.args === undefined ? {} : { args: stored.args }),
+                }
           }
           disabled={disabled}
           testId={`template-input-${address}`}
@@ -698,7 +703,10 @@ function ScalarControl({
             onChange(
               step === undefined
                 ? undefined
-                : { actionId: step.actionId, ...(step.args === undefined ? {} : { args: step.args }) },
+                : {
+                    actionId: step.actionId,
+                    ...(step.args === undefined ? {} : { args: step.args }),
+                  },
             )
           }
         />
@@ -783,7 +791,7 @@ function ScalarControl({
   }
 }
 
-interface TimeWindowControlProps {
+export interface TimeWindowControlProps {
   readonly testId: string
   readonly value: TemplateInputValue | undefined
   readonly disabled: boolean
@@ -796,7 +804,7 @@ interface TimeWindowControlProps {
  * list: releasing the last day does nothing, so a value is always one the
  * template accepts.
  */
-function TimeWindowControl({
+export function TimeWindowControl({
   testId,
   value,
   disabled,

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A data migration can now move instance records, re-key a device (keeping its id, settings and history) and tombstone a device in the same transaction as its other edits, so a failure rolls all of it back together.
 - Actions run the full step vocabulary through the shared step runner, and an action that calls another is stopped on a cycle at save and at run time (never deeper than 8).
 - Notifier group: a member can be delivered only when an earlier member was not, and can be limited to event types and classes
+- The hub keeps the devices an automation is holding on, so a hold that ran out during a restart is turned off at once.
 
 ### Changed
 

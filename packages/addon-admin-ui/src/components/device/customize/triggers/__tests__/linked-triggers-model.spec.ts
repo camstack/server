@@ -9,8 +9,14 @@ import {
   newTriggerParams,
   offeredActions,
   triggerRows,
+  actionChoiceOf,
+  offeredChoices,
+  sourceKindOf,
+  withActiveWindow,
   withRowAction,
+  withRowClasses,
   withRowFilter,
+  withRowOnFor,
   withoutRow,
 } from '../linked-triggers-model'
 
@@ -42,6 +48,8 @@ describe('triggerRows', () => {
         deviceId: 12,
         action: 'toggle',
         capability: 'switch',
+        onForSeconds: null,
+        activeWindow: null,
         enabled: true,
         flagged: false,
         filter: { kind: 'fired', events: ['PRESS_SHORT'], parts: ['1', '2'] },
@@ -199,5 +207,131 @@ describe('filterSummary', () => {
       custom: false,
     })
     expect(filterSummary({ kind: 'custom' })).toEqual({ events: [], parts: [], custom: true })
+  })
+})
+
+describe('on for a time, motion and cameras', () => {
+  const MOTION = {
+    kind: 'device-becomes',
+    deviceId: 8,
+    cap: 'motion',
+    fieldPath: 'detected',
+    becomes: true,
+  } as const
+  const held = instance(
+    'hall',
+    linkedTriggerValues({ targetDeviceId: 4, action: 'on', onForSeconds: 300, sources: [MOTION] }),
+  )
+  const camera = instance(
+    'porch',
+    linkedTriggerValues({
+      targetDeviceId: 4,
+      action: 'on',
+      onForSeconds: 120,
+      sources: [{ kind: 'detection', deviceIds: [9, 10], subjects: [{ macro: 'person' }] }],
+    }),
+  )
+
+  it('reads a motion source held on for a time as one row', () => {
+    const [row] = triggerRows([held]).rows
+    expect(row).toMatchObject({
+      deviceId: 8,
+      action: 'on',
+      onForSeconds: 300,
+      activeWindow: null,
+      filter: { kind: 'motion' },
+    })
+    expect(row === undefined ? null : actionChoiceOf(row)).toBe('on-for')
+  })
+
+  it('reads a camera source as one row per camera, with its classes', () => {
+    const rows = triggerRows([camera]).rows
+    expect(rows.map((r) => r.deviceId)).toEqual([9, 10])
+    expect(rows[0]?.filter).toEqual({ kind: 'detection', classes: ['person'] })
+  })
+
+  it('a camera source narrowed to a named person is shown, never rewritten', () => {
+    const named = instance(
+      'named',
+      linkedTriggerValues({
+        targetDeviceId: 4,
+        action: 'on',
+        sources: [
+          {
+            kind: 'detection',
+            deviceIds: [9],
+            subjects: [
+              { macro: 'person', label: { kind: 'identity', identityId: 'p1', name: 'Ada' } },
+            ],
+          },
+        ],
+      }),
+    )
+    expect(triggerRows([named]).rows[0]?.filter).toEqual({ kind: 'custom' })
+  })
+
+  it('choosing "on for" keeps the time it had, or starts at five minutes; a plain action drops it', () => {
+    expect(withRowAction(held, 'on-for')?.onForSeconds).toBe(300)
+    expect(withRowAction(live, 'on-for')).toMatchObject({ action: 'on', onForSeconds: 300 })
+    const plain = withRowAction(held, 'toggle')
+    expect(plain?.action).toBe('toggle')
+    expect(plain === null ? null : 'onForSeconds' in plain).toBe(false)
+    // the values the template takes agree: no duration is written for a toggle
+    expect(plain === null ? null : 'onFor' in linkedTriggerValues(plain)).toBe(false)
+  })
+
+  it('changes the time, the window and the classes of an instance', () => {
+    expect(withRowOnFor(held, 3_600)?.onForSeconds).toBe(3_600)
+    const window = { days: ['sat' as const, 'sun' as const] }
+    expect(withActiveWindow(held, window)?.activeWindow).toEqual(window)
+    const cleared = withActiveWindow(
+      instance(
+        'w',
+        linkedTriggerValues({
+          targetDeviceId: 4,
+          action: 'on',
+          activeWindow: window,
+          sources: [MOTION],
+        }),
+      ),
+      null,
+    )
+    expect(cleared === null ? null : 'activeWindow' in cleared).toBe(false)
+    expect(withRowClasses(camera, 9, ['person', 'vehicle'])?.sources).toEqual([
+      {
+        kind: 'detection',
+        deviceIds: [9, 10],
+        subjects: [{ macro: 'person' }, { macro: 'vehicle' }],
+      },
+    ])
+    expect(withRowClasses(camera, 9, [])).toBeNull()
+  })
+
+  it('removing one camera keeps the other; removing the last deletes the instance', () => {
+    const removal = withoutRow(camera, 9)
+    expect(removal).toMatchObject({ kind: 'update', params: { sources: [{ deviceIds: [10] }] } })
+    expect(withoutRow(held, 8)).toEqual({ kind: 'delete' })
+  })
+
+  it('a new motion or camera trigger is "on for five minutes"; a button still toggles', () => {
+    expect(newTriggerParams(4, 8, 'switch', 'motion')).toEqual({
+      targetDeviceId: 4,
+      action: 'on',
+      capability: 'switch',
+      onForSeconds: 300,
+      sources: [MOTION],
+    })
+    expect(newTriggerParams(4, 9, 'switch', 'camera')?.sources).toEqual([
+      { kind: 'detection', deviceIds: [9], subjects: [{ macro: 'person' }] },
+    ])
+    expect(newTriggerParams(4, 12, 'switch', 'emitter')?.action).toBe('toggle')
+  })
+
+  it('offers "on for" where on can be held, and knows what a picked device is', () => {
+    expect(offeredChoices('switch')).toEqual(['on', 'off', 'toggle', 'on-for'])
+    expect(sourceKindOf('camera', ['motion'])).toBe('camera')
+    expect(sourceKindOf('sensor', ['motion'])).toBe('motion')
+    expect(sourceKindOf('button', ['event-emitter'])).toBe('emitter')
+    expect(sourceKindOf('sensor', [])).toBeNull()
   })
 })

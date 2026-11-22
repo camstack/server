@@ -22,6 +22,7 @@
  * {@link AutomationRecipeSchema} (the parse-anywhere schema) converts it on parse. Nothing writes it.
  */
 
+import { type OnForSpec, OnForSpecSchema, onForActionOf } from './on-for.js'
 import { z } from 'zod'
 import { type QuantityValue } from '../units/quantity-input.js'
 import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
@@ -99,15 +100,31 @@ export const AutomationCommandStepBaseSchema = z.object({
    * arg may be a {@link QuantityValue}, which the save boundary converts.
    */
   argUnits: z.record(z.string(), z.string().min(1)).optional(),
+  /**
+   * "On for N": the device is turned on only if it is off, and taken back off
+   * after `seconds`; a new run restarts the time (`on-for.ts`). The step does
+   * not wait. Only an action `on-for.ts` knows how to undo carries it.
+   */
+  onFor: OnForSpecSchema.optional(),
 })
 
 /** The vocabulary check every command step passes: the action exists. */
-function refineKnownAction(step: { readonly actionId: string }, ctx: z.RefinementCtx): void {
+function refineKnownAction(
+  step: { readonly actionId: string; readonly onFor?: OnForSpec },
+  ctx: z.RefinementCtx,
+): void {
   if (findVocabAction(step.actionId) === undefined) {
     ctx.addIssue({
       code: 'custom',
       message: `"${step.actionId}" is not a vocabulary action id`,
       path: ['actionId'],
+    })
+  }
+  if (step.onFor !== undefined && onForActionOf(step.actionId) === null) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `"${step.actionId}" cannot be held on for a time: only a turn-on action can`,
+      path: ['onFor'],
     })
   }
 }
@@ -161,9 +178,16 @@ const GuardedCommandStepSchema = AutomationCommandStepBaseSchema.extend(stepGuar
  * no place to nest a block, so it is not offered the rest of an Action's steps.
  * It is a subset of {@link ActionStep}: a runner built for the wide step runs it.
  */
+/** Why "on for a time" is refused outside an automation: the off has to outlive the run that turned it on. */
+export const ON_FOR_NEEDS_AUTOMATION =
+  '"on for a time" is kept by an automation, which turns the device off later — a list that runs once has nothing left to do that'
+
 export const NarrowActionStepSchema = z
   .discriminatedUnion('kind', [GuardedWaitStepSchema, GuardedCommandStepSchema])
   .superRefine((step, ctx) => {
+    if (step.kind === 'command' && step.onFor !== undefined) {
+      ctx.addIssue({ code: 'custom', message: ON_FOR_NEEDS_AUTOMATION, path: ['onFor'] })
+    }
     if (step.if !== undefined && hasTriggeredByLeaves(step.if)) {
       ctx.addIssue({ code: 'custom', message: TRIGGERED_BY_NEEDS_AUTOMATION, path: ['if'] })
     }
@@ -665,6 +689,9 @@ export const ActionStepSchema: z.ZodType<ActionStep, ActionStepInput> =
   AutomationActionSchema.refine((step): step is ActionStep => step.kind !== 'code', {
     message: CODE_NOT_IN_ACTION,
   }).superRefine((step, ctx) => {
+    if ([step, ...nestedStepsOf(step)].some((s) => s.kind === 'command' && s.onFor !== undefined)) {
+      ctx.addIssue({ code: 'custom', message: ON_FOR_NEEDS_AUTOMATION, path: ['onFor'] })
+    }
     for (const condition of stepConditionsOf(step)) {
       if (hasTriggeredByLeaves(condition.when)) {
         ctx.addIssue({

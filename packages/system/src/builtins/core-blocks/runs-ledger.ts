@@ -24,6 +24,7 @@ import {
   type AutomationStateDoc,
   EMPTY_AUTOMATION_STATE,
   type IScopedLogger,
+  type OnForHold,
   MAX_TRACE_KEEP,
   type RecordKindHandle,
 } from '@camstack/types'
@@ -52,6 +53,8 @@ export interface RunsReport {
   readonly trace?: AutomationRunTrace
   readonly runStartedAt?: number
   readonly keepTraces?: number
+  /** Replaces the held devices; absent keeps what the row has. */
+  readonly onForHolds?: readonly OnForHold[]
 }
 
 export interface RunsLedgerView extends AutomationStateDoc {
@@ -93,6 +96,7 @@ export class RunsLedger {
       lastRunStartedAt: row.data.lastRunStartedAt,
       traces: row.data.traces,
       lastError: row.data.lastError,
+      ...(row.data.onForHolds === undefined ? {} : { onForHolds: row.data.onForHolds }),
     }
   }
 
@@ -107,6 +111,7 @@ export class RunsLedger {
         lastRunStartedAt: row.data.lastRunStartedAt,
         traces: row.data.traces,
         lastError: row.data.lastError,
+        ...(row.data.onForHolds === undefined ? {} : { onForHolds: row.data.onForHolds }),
       })
     }
     return out
@@ -134,6 +139,7 @@ export class RunsLedger {
     const failure = report.trace === undefined ? undefined : failureOf(report.trace)
     const lastError =
       report.trace === undefined || isSkip(report.trace) ? current.lastError : failure
+    const onForHolds = report.onForHolds ?? current.onForHolds
     await this.runs.put({
       id: owner,
       data: {
@@ -142,6 +148,7 @@ export class RunsLedger {
         traces,
         lastError: lastError ?? null,
         updatedAt: this.now(),
+        ...(onForHolds === undefined ? {} : { onForHolds: [...onForHolds] }),
       },
     })
   }

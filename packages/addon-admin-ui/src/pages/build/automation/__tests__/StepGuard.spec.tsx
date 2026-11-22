@@ -74,7 +74,7 @@ describe('a step guard in the action list', () => {
       />,
     )
     expect(screen.getAllByRole('switch', { name: 'Only if…' })).toHaveLength(1)
-    fireEvent.change(screen.getAllByRole('spinbutton')[0]!, { target: { value: '9' } })
+    fireEvent.change(screen.getAllByTestId('wait-0-seconds')[0]!, { target: { value: '9' } })
     expect(latest[0]).toMatchObject({ seconds: 9, if: { kind: 'all' }, else: [{ seconds: 1 }] })
   })
 

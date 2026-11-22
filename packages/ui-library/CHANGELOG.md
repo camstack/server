@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New DurationPartsInput: a length of time typed as hours, minutes and seconds side by side.
+
 ## [1.2.499] - 2026-11-22
 
 ### Changed

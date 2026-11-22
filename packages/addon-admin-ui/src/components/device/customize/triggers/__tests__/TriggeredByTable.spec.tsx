@@ -40,6 +40,22 @@ const LIVE = {
   }),
 }
 
+/** The thermometer's motion holds the light on for five minutes. */
+const MOTION_HOLD = {
+  blockId: 'hall',
+  name: 'Termometro → Luce studio',
+  enabled: true,
+  templateId: 'builtin:linked-trigger',
+  values: linkedTriggerValues({
+    targetDeviceId: 5767,
+    action: 'on',
+    onForSeconds: 300,
+    sources: [
+      { kind: 'device-becomes', deviceId: 14, cap: 'motion', fieldPath: 'detected', becomes: true },
+    ],
+  }),
+}
+
 interface InstancesAnswer {
   readonly status: string
   readonly data?: { readonly instances: readonly unknown[] }
@@ -210,6 +226,68 @@ describe('TriggeredByTable', () => {
     const block: unknown = Reflect.get(Object(sent), 'block')
     expect(Object.keys(Object(block))).toEqual(['code'])
     expect(String(Reflect.get(Object(block), 'code'))).toContain('switch.off')
+  })
+
+  it('choosing "On for" holds the device on for five minutes, written with the same partial update', async () => {
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(screen.getByRole('combobox', { name: /Action when Pulsante studio fires/i }))
+    fireEvent.click(await screen.findByRole('option', { name: 'On for' }))
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    const block = update.mock.calls[0]?.[0].block
+    expect(Object.keys(Object(block))).toEqual(['code'])
+    expect(paramsIn(block?.code ?? '')).toMatchObject({ action: 'on', onForSeconds: 300 })
+  })
+
+  it('a motion trigger shows its time one field per unit, and writes it once the fields are left', async () => {
+    instances.current = { status: 'success', data: { instances: [MOTION_HOLD] } }
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    expect(screen.getByText('Motion detected')).toBeTruthy()
+    const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
+    expect(minutes).toHaveProperty('value', '5')
+    fireEvent.change(minutes, { target: { value: '10' } })
+    expect(update).not.toHaveBeenCalled()
+    fireEvent.blur(minutes)
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    expect(paramsIn(update.mock.calls[0]?.[0].block.code ?? '')).toMatchObject({
+      action: 'on',
+      onForSeconds: 600,
+    })
+  })
+
+  it('a time outside one second to one day is not written', async () => {
+    instances.current = { status: 'success', data: { instances: [MOTION_HOLD] } }
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
+    fireEvent.change(minutes, { target: { value: '0' } })
+    fireEvent.blur(minutes)
+    await Promise.resolve()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('a picked motion sensor becomes "on for five minutes" on its motion', async () => {
+    capsOf.current = new Map([
+      [5767, ['switch']],
+      [13, ['motion']],
+    ])
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
+    fireEvent.click(screen.getByText('pick-13'))
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+    expect(paramsIn(create.mock.calls[0]?.[0].block.code ?? '')).toEqual({
+      targetDeviceId: 5767,
+      action: 'on',
+      capability: 'switch',
+      onForSeconds: 300,
+      sources: [
+        {
+          kind: 'device-becomes',
+          deviceId: 13,
+          cap: 'motion',
+          fieldPath: 'detected',
+          becomes: true,
+        },
+      ],
+    })
   })
 
   it('a refused confirmation removes nothing', async () => {

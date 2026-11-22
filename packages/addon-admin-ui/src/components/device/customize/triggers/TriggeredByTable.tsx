@@ -9,7 +9,6 @@ import {
   builtinAutomationTemplate,
   type DeviceInfo,
   LINKED_TRIGGER_TEMPLATE_ID,
-  type LinkedTriggerAction,
   type LinkedTriggerParams,
   linkedTriggerValues,
   type TemplateInstance,
@@ -28,7 +27,7 @@ import {
   useCoreBlocksUpdate,
   useUiText,
 } from '@camstack/ui-library'
-import { Pencil, X, Zap } from 'lucide-react'
+import { Clock, Pencil, X, Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EVENT_EMITTER_CAP } from '../../../../pages/build/automation/fired-model'
@@ -46,19 +45,29 @@ import type { Known } from '../known'
 import { LinkedNameCell } from '../kinds/LinkedNameCell'
 import { useConfirmRemove } from '../use-confirm-remove'
 import {
+  actionChoiceOf,
   commandCapOf,
+  type DetectionClass,
   type FiredPick,
   filterSummary,
   LINKED_TRIGGER_COMMAND_CAPS,
+  MOTION_CAP,
   newTriggerParams,
-  offeredActions,
+  offeredChoices,
+  sourceKindOf,
   type TriggerRow,
   triggerRows,
+  withActiveWindow,
   withoutRow,
   withRowAction,
+  withRowClasses,
   withRowFilter,
+  withRowOnFor,
 } from './linked-triggers-model'
+import { OnForField } from './OnForField'
+import { TriggerClassesDialog } from './TriggerClassesDialog'
 import { TriggerFilterDialog } from './TriggerFilterDialog'
+import { TriggerWindowDialog } from './TriggerWindowDialog'
 
 export interface TriggeredByTableProps {
   readonly device: DeviceInfo
@@ -75,7 +84,9 @@ interface TriggerTableRow extends TriggerRow {
   readonly detail: string | null
 }
 
-const EMITTER_CAPS: readonly string[] = [EVENT_EMITTER_CAP]
+/** What a source device may carry: events it fires, or motion it reports. A camera needs neither. */
+const SOURCE_CAPS: readonly string[] = [EVENT_EMITTER_CAP, MOTION_CAP]
+const CAMERA_TYPE = 'camera'
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -87,6 +98,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const confirmRemove = useConfirmRemove()
   const [picking, setPicking] = useState(false)
   const [editing, setEditing] = useState<TriggerTableRow | null>(null)
+  const [timing, setTiming] = useState<TriggerTableRow | null>(null)
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
   const instances = useCoreBlocksListTemplateInstances({
@@ -97,7 +109,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const read = instances.data === undefined ? null : triggerRows(instances.data.instances)
   const shown = read !== null && (read.rows.length > 0 || read.unreadable.length > 0)
   const fleet = useCandidateDevices(picking || shown)
-  const emitters = useCapIndex(EMITTER_CAPS, picking)
+  const sourceCaps = useCapIndex(SOURCE_CAPS, picking)
   const create = useCoreBlocksCreate()
   const update = useCoreBlocksUpdate()
   const remove = useCoreBlocksDelete()
@@ -151,19 +163,24 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const candidates: Known<readonly AssignmentCandidate[]> =
     fleet.kind !== 'known'
       ? fleet
-      : emitters.kind !== 'known'
-        ? emitters
+      : sourceCaps.kind !== 'known'
+        ? sourceCaps
         : {
             kind: 'known',
             value: fleet.value
-              .filter((d) => d.id !== device.id && !sourceIds.has(d.id) && emitters.value.has(d.id))
+              .filter(
+                (d) =>
+                  d.id !== device.id &&
+                  !sourceIds.has(d.id) &&
+                  sourceKindOf(d.type, sourceCaps.value.get(d.id) ?? []) !== null,
+              )
               .map((d) => ({
                 deviceId: d.id,
                 ref: { addonId: d.addonId, stableId: d.stableId },
                 name: d.name,
                 detail: candidateDetail(d.integration, d.location),
                 meta: deviceTypeMetaOf(d.type, uiText).label,
-                caps: EMITTER_CAPS,
+                caps: sourceCaps.value.get(d.id) ?? [],
                 value: null,
               })),
           }
@@ -219,7 +236,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     run(async () => {
       if (capability === null) throw new Error(t('customize.triggers.notCommandable'))
       for (const candidate of picked) {
-        const params = newTriggerParams(device.id, candidate.deviceId, capability)
+        const kind = sourceKindOf(fleetById.get(candidate.deviceId)?.type ?? null, candidate.caps)
+        const params =
+          kind === null ? null : newTriggerParams(device.id, candidate.deviceId, capability, kind)
         if (params === null) throw new Error(t('customize.triggers.notCommandable'))
         const name = t('customize.triggers.blockName', {
           source: candidate.name,
@@ -267,27 +286,43 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       cell: (r) => {
         const summary = filterSummary(r.filter)
         return (
-          <div className="flex items-center gap-1">
-            <span className="min-w-0 break-words">
-              {summary.custom
-                ? t('customize.triggers.customFilter')
-                : [
-                    summary.events.length === 0
-                      ? t('customize.triggers.anyEvent')
-                      : summary.events.join(', '),
-                    ...(summary.parts.length === 0
-                      ? []
-                      : [t('customize.triggers.partsNamed', { parts: summary.parts.join(', ') })]),
-                  ].join(' · ')}
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="break-words">
+              {r.filter.kind === 'motion'
+                ? t('customize.triggers.motionDetected')
+                : r.filter.kind === 'detection'
+                  ? r.filter.classes.map((c) => t(`customize.triggers.classes.${c}`)).join(', ')
+                  : summary.custom
+                    ? t('customize.triggers.customFilter')
+                    : [
+                        summary.events.length === 0
+                          ? t('customize.triggers.anyEvent')
+                          : summary.events.join(', '),
+                        ...(summary.parts.length === 0
+                          ? []
+                          : [
+                              t('customize.triggers.partsNamed', {
+                                parts: summary.parts.join(', '),
+                              }),
+                            ]),
+                      ].join(' · ')}
             </span>
-            {r.filter.kind === 'fired' && (
+            {r.activeWindow !== null && (
+              <span className="shrink-0 text-[11px] text-foreground-muted">
+                {t('customize.triggers.windowSet')}
+              </span>
+            )}
+            {(r.filter.kind === 'fired' || r.filter.kind === 'detection') && (
               <IconButton
                 icon={Pencil}
                 variant="ghost"
                 size="sm"
-                aria-label={t('customize.triggers.editFilter', {
-                  name: r.name ?? r.deviceId,
-                })}
+                aria-label={t(
+                  r.filter.kind === 'fired'
+                    ? 'customize.triggers.editFilter'
+                    : 'customize.triggers.editClasses',
+                  { name: r.name ?? r.deviceId },
+                )}
                 disabled={busy}
                 onClick={(e) => {
                   e.stopPropagation()
@@ -295,6 +330,17 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                 }}
               />
             )}
+            <IconButton
+              icon={Clock}
+              variant="ghost"
+              size="sm"
+              aria-label={t('customize.triggers.editWindow', { name: r.name ?? r.deviceId })}
+              disabled={busy}
+              onClick={(e) => {
+                e.stopPropagation()
+                setTiming(r)
+              }}
+            />
           </div>
         )
       },
@@ -302,24 +348,45 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     {
       key: 'action',
       header: t('customize.triggers.action'),
-      cell: (r) => (
-        <Select
-          aria-label={t('customize.triggers.actionFor', { name: r.name ?? r.deviceId })}
-          value={r.action}
-          disabled={busy}
-          options={offeredActions(r.capability).map((action) => ({
-            value: action,
-            label: t(`customize.triggers.actions.${action}`),
-          }))}
-          onChange={(e) => {
-            const instance = instanceOf(r.blockId)
-            const action = offeredActions(r.capability).find((a) => a === e.target.value)
-            if (instance !== undefined && action !== undefined && action !== r.action) {
-              void save(instance, withRowAction(instance, action))
-            }
-          }}
-        />
-      ),
+      cell: (r) => {
+        const choice = actionChoiceOf(r)
+        const choices = offeredChoices(r.capability)
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-28">
+              <Select
+                aria-label={t('customize.triggers.actionFor', { name: r.name ?? r.deviceId })}
+                value={choice}
+                disabled={busy}
+                options={choices.map((option) => ({
+                  value: option,
+                  label: t(`customize.triggers.actions.${option}`),
+                }))}
+                onChange={(e) => {
+                  const instance = instanceOf(r.blockId)
+                  const next = choices.find((option) => option === e.target.value)
+                  if (instance !== undefined && next !== undefined && next !== choice) {
+                    void save(instance, withRowAction(instance, next))
+                  }
+                }}
+              />
+            </div>
+            {r.onForSeconds !== null && choice === 'on-for' && (
+              <OnForField
+                seconds={r.onForSeconds}
+                label={t('customize.triggers.onForFor', { name: r.name ?? r.deviceId })}
+                hint={t('customize.triggers.onForHint')}
+                disabled={busy}
+                testId={`trigger-on-for-${r.key}`}
+                onCommit={(seconds) => {
+                  const instance = instanceOf(r.blockId)
+                  if (instance !== undefined) void save(instance, withRowOnFor(instance, seconds))
+                }}
+              />
+            )}
+          </div>
+        )
+      },
     },
     {
       key: 'enabled',
@@ -358,6 +425,12 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       ),
     },
   ]
+
+  const saveClasses = (row: TriggerTableRow, classes: readonly DetectionClass[]): void => {
+    const instance = instanceOf(row.blockId)
+    setEditing(null)
+    if (instance !== undefined) void save(instance, withRowClasses(instance, row.deviceId, classes))
+  }
 
   const saveFilter = (row: TriggerTableRow, pick: FiredPick): void => {
     const instance = instanceOf(row.blockId)
@@ -436,6 +509,28 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           busy={busy}
           onSave={(pick) => saveFilter(editing, pick)}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {editing !== null && editing.filter.kind === 'detection' && (
+        <TriggerClassesDialog
+          deviceName={editing.name ?? `#${String(editing.deviceId)}`}
+          classes={editing.filter.classes}
+          busy={busy}
+          onSave={(classes) => saveClasses(editing, classes)}
+          onClose={() => setEditing(null)}
+        />
+      )}
+      {timing !== null && (
+        <TriggerWindowDialog
+          deviceName={timing.name ?? `#${String(timing.deviceId)}`}
+          window={timing.activeWindow}
+          busy={busy}
+          onSave={(window) => {
+            const instance = instanceOf(timing.blockId)
+            setTiming(null)
+            if (instance !== undefined) void save(instance, withActiveWindow(instance, window))
+          }}
+          onClose={() => setTiming(null)}
         />
       )}
     </>

@@ -2,15 +2,19 @@
  * The fields of a `wait-until` step: the condition the run waits for, how
  * long at most, and what a wait that ran out does.
  */
-import type { AutomationRecipe, AutomationWaitUntilStep } from '@camstack/types'
-import { ErrorBox, Select } from '@camstack/ui-library'
+import {
+  type AutomationRecipe,
+  type AutomationWaitUntilStep,
+  WAIT_UNTIL_TIMEOUT_MAX_S,
+} from '@camstack/types'
+import { DurationPartsInput, ErrorBox, Select } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
-import { DurationField } from './DurationField'
 import { PickerLabel } from './FieldPicker'
 import { guardProblem } from './StepGuard'
 import { WhenTree } from './WhenTree'
-import { isTimeoutUnit, joinTimeout, splitTimeout, TIMEOUT_UNITS } from './wait-until-model'
+import { clampTimeout } from './wait-until-model'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 export interface WaitUntilFieldsProps {
   /** The step's position in its list, for the test ids. */
@@ -24,12 +28,7 @@ export function WaitUntilFields({ index, step, devices, onChange }: WaitUntilFie
   const { t } = useTranslation()
   const recipe: AutomationRecipe = { when: step.when, actions: [] }
   const problem = guardProblem(step.when)
-  const timeout = splitTimeout(step.timeoutS)
-  const unitLabel = {
-    s: t('automation.waitUntil.unitSeconds', 'seconds'),
-    min: t('automation.waitUntil.unitMinutes', 'minutes'),
-    h: t('automation.waitUntil.unitHours', 'hours'),
-  }
+  const durationLabels = useDurationLabels()
   return (
     <div className="space-y-2">
       <p className="text-xs text-foreground-subtle">
@@ -47,19 +46,18 @@ export function WaitUntilFields({ index, step, devices, onChange }: WaitUntilFie
       />
       {problem !== null && <ErrorBox variant="warning" message={problem} />}
       <div className="flex flex-wrap items-end gap-2">
-        <DurationField
-          label={t('automation.waitUntil.timeout', 'At most')}
-          unitAriaLabel={t('automation.waitUntil.unit', 'Unit')}
-          value={timeout.value}
-          unit={timeout.unit}
-          units={TIMEOUT_UNITS}
-          unitLabel={unitLabel}
-          isUnit={isTimeoutUnit}
-          min={1}
-          valueTestId={`wait-until-timeout-${String(index)}`}
-          unitTestId={`wait-until-unit-${String(index)}`}
-          onChange={(value, unit) => onChange({ ...step, timeoutS: joinTimeout(value, unit) })}
-        />
+        <div>
+          <PickerLabel>{t('automation.waitUntil.timeout', 'At most')}</PickerLabel>
+          <DurationPartsInput
+            aria-label={t('automation.waitUntil.timeout', 'At most')}
+            seconds={step.timeoutS}
+            min={1}
+            max={WAIT_UNTIL_TIMEOUT_MAX_S}
+            labels={durationLabels}
+            testIdPrefix={`wait-until-timeout-${String(index)}`}
+            onChange={(seconds) => onChange({ ...step, timeoutS: clampTimeout(seconds) })}
+          />
+        </div>
         <label className="min-w-56 flex-1">
           <PickerLabel>
             {t('automation.waitUntil.onTimeout', 'If it does not happen in time')}
