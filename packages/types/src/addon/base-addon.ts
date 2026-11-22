@@ -609,7 +609,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const carried = [...priorIds].some((id) => !declared.some((d) => d.meta.id === id))
     const own =
       options?.only === undefined && carried
-        ? { ...options, only: declared.map((m) => m.meta.id) }
+        ? {
+            ...options,
+            only: declared.map((m) => m.meta.id),
+            settledEarlier: [...priorIds].filter((id) => !declared.some((d) => d.meta.id === id)),
+          }
         : options
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
@@ -626,16 +630,29 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         : { ...widened, retired: this.retiredMigrationIds }
     const declare: AddonMigrationRunOptions = { ...phased, complete: !this.catalogueOpen }
     const api = this.ctx.api.migrations
-    const report = await runAddonMigrations(
-      {
-        declareOwner: (input) => api.declareOwner.mutate(input),
-        startMigration: (input) => api.startMigration.mutate(input),
-        finishMigration: (input) => api.finishMigration.mutate(input),
-      },
-      migrations,
-      this.ctx.logger,
-      declare,
-    )
+    const host = {
+      declareOwner: (input: Parameters<typeof api.declareOwner.mutate>[0]) =>
+        api.declareOwner.mutate(input),
+      startMigration: (input: Parameters<typeof api.startMigration.mutate>[0]) =>
+        api.startMigration.mutate(input),
+      finishMigration: (input: Parameters<typeof api.finishMigration.mutate>[0]) =>
+        api.finishMigration.mutate(input),
+    }
+    const report = await runAddonMigrations(host, migrations, this.ctx.logger, declare)
+    // A detached call that declared while the catalogue was open can land after the closing
+    // declare and leave the engine on a partial view: state the whole catalogue again, run nothing.
+    if (declare.complete === false && !this.catalogueOpen) {
+      await runAddonMigrations(
+        host,
+        [...new Map([...this.declaredAll, ...this.switchDeclared]).values()],
+        this.ctx.logger,
+        {
+          ...(this.retiredMigrationIds.length === 0 ? {} : { retired: this.retiredMigrationIds }),
+          only: [],
+          complete: true,
+        },
+      )
+    }
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)
     }

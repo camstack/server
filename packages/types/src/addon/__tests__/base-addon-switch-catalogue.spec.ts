@@ -299,3 +299,54 @@ describe('a catalogue declared in phases is complete only at the end of initiali
     expect(declared.completeFlags).toEqual([false, true])
   })
 })
+
+describe('a detached declare that lands after the closing one', () => {
+  it('ends on a complete declare, never a partial one', async () => {
+    const flags: (boolean | undefined)[] = []
+    const link: TRPCLink<AppRouter> =
+      () =>
+      ({ op }) =>
+        observable((observer) => {
+          const answer = (): void => {
+            if (op.path === 'migrations.declareOwner') {
+              const input = op.input as { metas: Meta[]; complete?: boolean }
+              flags.push(input.complete)
+              observer.next({
+                result: {
+                  data: { bootId: 'b', snapshot: 'none', steps: [] },
+                },
+              })
+            } else if (op.path === 'integrations.listByAddon') {
+              observer.next({ result: { data: [] } })
+            } else observer.next({ result: { data: undefined } })
+            observer.complete()
+          }
+          // The first declare (the detached call's) is slow; every later one is immediate.
+          if (op.path === 'migrations.declareOwner' && flags.length === 0 && !slowTaken) {
+            slowTaken = true
+            setTimeout(answer, 40)
+          } else answer()
+        })
+    let slowTaken = false
+    class Detached extends BaseAddon {
+      constructor() {
+        super({})
+      }
+      protected async onInitialize() {
+        void this.runMigrations([OWN('one', 1)], () => ({}))
+        return []
+      }
+    }
+    serve(kindOf('widgets'))
+    await new Detached().initialize(
+      fakeAddonContext({
+        id: ADDON,
+        migrationApi: stubMigrationApi(),
+        api: createTRPCClient<AppRouter>({ links: [link] }),
+      }),
+    )
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    expect(flags[flags.length - 1]).toBe(true)
+    expect(flags).toContain(false)
+  })
+})

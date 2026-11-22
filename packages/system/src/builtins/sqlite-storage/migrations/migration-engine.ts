@@ -91,9 +91,9 @@ export class MigrationEngine {
   /** Addon catalogues offered this boot, by owner (M3): the owner drives, the engine gates. */
   private readonly addonMetas = new Map<string, readonly MigrationMeta[]>()
   /** Ids each owner deliberately removed: an applied row of one is fine, not a newer database. */
+  private readonly addonRetired = new Map<string, ReadonlySet<string>>()
   /** Owners whose last declare was partial: their ledger rows are not judged against it. */
   private readonly addonIncomplete = new Set<string>()
-  private readonly addonRetired = new Map<string, ReadonlySet<string>>()
   /** Files whose pre-migration snapshot was refused: nothing runs on them, owner or hub. */
   private readonly snapshotRefused = new Map<DataStoreDatabase, string>()
   /** Ids whose `startMigration` said proceed and whose `finishMigration` has not landed yet. */

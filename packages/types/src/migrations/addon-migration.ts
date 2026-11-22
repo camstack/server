@@ -150,6 +150,12 @@ export interface AddonMigrationRunOptions {
    * declared later in this process): the engine then reports no id "newer". Omitted is complete.
    */
   readonly complete?: boolean
+  /**
+   * Ids an EARLIER call of this process already ran (and judged), declared again only so the
+   * catalogue stays whole. A step that depends on one of them that is not applied is BLOCKED, not
+   * deferred: its phase already passed, so nothing later will apply it in this call.
+   */
+  readonly settledEarlier?: readonly string[]
 }
 
 const NOT_RUN: AddonMigrationRunReport = {
@@ -216,11 +222,13 @@ export async function runAddonMigrations(
   // blocked: the predecessor's own phase carries the verdict. Blocking here deadlocked the
   // owner, because the later phase never runs once the addon is refused.
   const deferred = new Set<string>()
+  const settledEarlier = new Set(options.settledEarlier ?? [])
   const deferredBy = (reason: string | null): string | null => {
     if (selected === null || reason === null) return null
     const match = /^dependency-(?:pending|blocked):(.+)$/.exec(reason)
     const dep = match?.[1]
     if (dep === undefined || !byId.has(dep)) return null
+    if (settledEarlier.has(dep)) return null
     return !selected.has(dep) || deferred.has(dep) ? dep : null
   }
   for (const step of declaration.steps) {
