@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub serves the new location capability
+- The hub serves the new vehicle capability
+
 ## [1.2.941] - 2026-11-22
 
 ### Changed
@@ -28,10 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed UniFi switch ports and sensors reading offline after a restart: a device already built by its parent is no longer constructed a second time
-### Changed
-
-- The hub serves the new location capability
-- The hub serves the new vehicle capability
 
 ## [1.2.938] - 2026-11-22
 
