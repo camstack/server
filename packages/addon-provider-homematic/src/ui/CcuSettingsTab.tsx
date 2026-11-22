@@ -100,12 +100,14 @@ export function CcuSettingsTab(props: CcuSettingsTabProps) {
 
   const columns: readonly DataColumn<CcuRoom>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('rooms.colRoom'),
       render: (row) => row.name,
       sortValue: (row) => row.name,
     },
     {
+      mobile: 'detail',
       key: 'channels',
       header: t('rooms.colChannels'),
       nowrap: false,
@@ -114,6 +116,7 @@ export function CcuSettingsTab(props: CcuSettingsTabProps) {
       sortValue: (row) => row.channels.length,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

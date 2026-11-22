@@ -10,6 +10,9 @@
  * Generic on `TResult` so callers don't have to discard the return
  * value. Pass an `icon` to render it inside the trigger (e.g. RotateCw
  * for reboot, RefreshCw for restart).
+ *
+ * `ConfirmActionDialog` is the dialog half on its own, for a trigger that is
+ * not a button of its own — a menu row (`PageActions` on a phone).
  */
 import { type ReactNode, useState, type ComponentType, type JSX } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
@@ -62,6 +65,113 @@ export interface ConfirmActionButtonProps<TResult> {
   readonly onSuccess?: (result: TResult) => void
 }
 
+export interface ConfirmActionDialogProps<TResult> {
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  /** Dialog title. Defaults to "Confirm action". */
+  readonly title?: string
+  readonly description?: ReactNode
+  /** Label on the confirm button. */
+  readonly confirmLabel: string
+  /** Defaults to `danger`. */
+  readonly confirmVariant?: ButtonProps['variant']
+  readonly size?: ButtonProps['size']
+  /** Must throw on failure; the message is shown in the dialog. */
+  readonly action: () => Promise<TResult>
+  readonly onSuccess?: (result: TResult) => void
+}
+
+/** The confirm step of a destructive action, opened by the caller. */
+export function ConfirmActionDialog<TResult>({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  confirmVariant = 'danger',
+  size = 'sm',
+  action,
+  onSuccess,
+}: ConfirmActionDialogProps<TResult>): JSX.Element {
+  const t = useUiText()
+  const [running, setRunning] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleConfirm = async () => {
+    setError(null)
+    setRunning(true)
+    try {
+      const result = await action()
+      onSuccess?.(result)
+      onOpenChange(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (running) return
+        if (next) setError(null)
+        onOpenChange(next)
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            {title ?? t('uiLibrary.confirmActionButton.defaultTitle', 'Confirm action')}
+          </DialogTitle>
+          {typeof description === 'string' ? (
+            <DialogDescription>{description}</DialogDescription>
+          ) : (
+            description
+          )}
+        </DialogHeader>
+
+        {error && (
+          <div
+            className={cn(
+              'mt-2 px-3 py-2 rounded border border-danger/40 bg-danger/10',
+              'text-xs text-danger',
+            )}
+          >
+            {error}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            size={size}
+            disabled={running}
+            onClick={() => onOpenChange(false)}
+          >
+            {t('uiLibrary.confirmActionButton.cancel', 'Cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant={confirmVariant}
+            size={size}
+            disabled={running}
+            onClick={() => {
+              void handleConfirm()
+            }}
+          >
+            {running && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function ConfirmActionButton<TResult>({
   label,
   icon: Icon,
@@ -76,25 +186,9 @@ export function ConfirmActionButton<TResult>({
   action,
   onSuccess,
 }: ConfirmActionButtonProps<TResult>): JSX.Element {
-  const t = useUiText()
   const [open, setOpen] = useState(false)
-  const [running, setRunning] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleConfirm = async () => {
-    setError(null)
-    setRunning(true)
-    try {
-      const result = await action()
-      onSuccess?.(result)
-      setOpen(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setRunning(false)
-    }
-  }
-
+  // The dialog is mounted per opening, so a reopened one starts with no stale
+  // error from the previous attempt.
   return (
     <>
       <Button
@@ -102,66 +196,25 @@ export function ConfirmActionButton<TResult>({
         variant={triggerVariant}
         size={size}
         disabled={disabled}
-        onClick={() => {
-          setError(null)
-          setOpen(true)
-        }}
+        onClick={() => setOpen(true)}
         className={className}
       >
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </Button>
-
-      <Dialog open={open} onOpenChange={(next) => !running && setOpen(next)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400" />
-              {title ?? t('uiLibrary.confirmActionButton.defaultTitle', 'Confirm action')}
-            </DialogTitle>
-            {typeof description === 'string' ? (
-              <DialogDescription>{description}</DialogDescription>
-            ) : (
-              description
-            )}
-          </DialogHeader>
-
-          {error && (
-            <div
-              className={cn(
-                'mt-2 px-3 py-2 rounded border border-danger/40 bg-danger/10',
-                'text-xs text-danger',
-              )}
-            >
-              {error}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              size={size}
-              disabled={running}
-              onClick={() => setOpen(false)}
-            >
-              {t('uiLibrary.confirmActionButton.cancel', 'Cancel')}
-            </Button>
-            <Button
-              type="button"
-              variant={confirmVariant}
-              size={size}
-              disabled={running}
-              onClick={() => {
-                void handleConfirm()
-              }}
-            >
-              {running && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {confirmLabel ?? label}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {open && (
+        <ConfirmActionDialog
+          open
+          onOpenChange={setOpen}
+          title={title}
+          description={description}
+          confirmLabel={confirmLabel ?? label}
+          confirmVariant={confirmVariant}
+          size={size}
+          action={action}
+          onSuccess={onSuccess}
+        />
+      )}
     </>
   )
 }

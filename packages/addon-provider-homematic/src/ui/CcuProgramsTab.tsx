@@ -231,6 +231,7 @@ export function CcuProgramsTab(props: CcuProgramsTabProps) {
 
   const columns: readonly DataColumn<CcuProgram>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('programs.colName'),
       nowrap: false,
@@ -243,6 +244,7 @@ export function CcuProgramsTab(props: CcuProgramsTabProps) {
       sortValue: (row) => row.name,
     },
     {
+      mobile: 'keep',
       key: 'active',
       header: t('programs.colActive'),
       render: (row) => (
@@ -253,12 +255,14 @@ export function CcuProgramsTab(props: CcuProgramsTabProps) {
       sortValue: (row) => (row.active ? 1 : 0),
     },
     {
+      mobile: 'detail',
       key: 'lastRun',
       header: t('programs.colLastRun'),
       render: (row) => relativeRun(row.lastRunMs, now, timeText) ?? '—',
       sortValue: (row) => row.lastRunMs,
     },
     {
+      mobile: 'hidden',
       key: 'conditions',
       header: t('programs.colConditions'),
       nowrap: false,
@@ -273,6 +277,7 @@ export function CcuProgramsTab(props: CcuProgramsTabProps) {
       sortValue: (row) => row.channels.map(channelLabel).join(', '),
     },
     {
+      mobile: 'hidden',
       key: 'origin',
       header: t('programs.colOrigin'),
       render: (row) =>
@@ -280,6 +285,7 @@ export function CcuProgramsTab(props: CcuProgramsTabProps) {
       sortValue: (row) => (row.createdByCamstack ? 0 : 1),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

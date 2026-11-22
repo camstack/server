@@ -128,6 +128,7 @@ export function JobsTable({
   const columns: readonly DataColumn<TrainingJob>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('jobs.columns.name'),
         nowrap: false,
@@ -142,6 +143,7 @@ export function JobsTable({
         ),
       },
       {
+        mobile: 'detail',
         key: 'state',
         header: t('jobs.columns.state'),
         sortValue: (j) => j.state,
@@ -153,6 +155,7 @@ export function JobsTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'collections',
         header: t('jobs.columns.collections'),
         nowrap: false,
@@ -170,12 +173,14 @@ export function JobsTable({
         },
       },
       {
+        mobile: 'detail',
         key: 'progress',
         header: t('jobs.columns.progress'),
         sortValue: (j) => j.progress.epoch ?? -1,
         render: (j) => <ProgressCell job={j} />,
       },
       {
+        mobile: 'hidden',
         key: 'cost',
         header: t('jobs.columns.cost'),
         align: 'right',
@@ -187,6 +192,7 @@ export function JobsTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'created',
         header: t('jobs.columns.created'),
         sortValue: (j) => j.createdAt,
@@ -197,6 +203,7 @@ export function JobsTable({
         ),
       },
       {
+        mobile: 'keep',
         key: 'actions',
         align: 'right',
         render: (j) => <CancelCell job={j} trpc={trpc} onChanged={onChanged} />,

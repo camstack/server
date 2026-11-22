@@ -36,6 +36,7 @@ export function StorageRecordsPanel({ kind }: StorageRecordsPanelProps): JSX.Ele
   const columns = useMemo((): readonly DataColumn<RecordView>[] => {
     return [
       {
+        mobile: 'primary',
         key: 'id',
         header: t('uiLibrary.storageRecords.colId', 'Id'),
         render: (row) => (
@@ -51,6 +52,7 @@ export function StorageRecordsPanel({ kind }: StorageRecordsPanelProps): JSX.Ele
         ),
       },
       {
+        mobile: 'detail',
         key: 'deviceId',
         header: t('uiLibrary.storageRecords.colDevice', 'Device'),
         nowrap: true,
@@ -62,6 +64,7 @@ export function StorageRecordsPanel({ kind }: StorageRecordsPanelProps): JSX.Ele
           ),
       },
       {
+        mobile: 'detail',
         key: 'at',
         header: t('uiLibrary.storageRecords.colAt', 'At'),
         nowrap: true,
@@ -72,6 +75,7 @@ export function StorageRecordsPanel({ kind }: StorageRecordsPanelProps): JSX.Ele
         ),
       },
       {
+        mobile: 'hidden',
         key: 'updatedAt',
         header: t('uiLibrary.storageRecords.colUpdated', 'Updated'),
         nowrap: true,

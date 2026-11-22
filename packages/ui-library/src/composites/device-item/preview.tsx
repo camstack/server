@@ -90,7 +90,11 @@ export function DeviceItemPreview({
   return (
     <span className="inline-flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
       {wantPills && batteryStatus && <BatteryBadge status={batteryStatus} />}
-      {wantLinkPill && <NetworkLinkBadge status={linkStatus} />}
+      {wantLinkPill && (
+        <span className="hidden sm:contents">
+          <NetworkLinkBadge status={linkStatus} />
+        </span>
+      )}
       {enabled && (
         <HoverZoomImage
           src={offline ? null : snapshot.src}

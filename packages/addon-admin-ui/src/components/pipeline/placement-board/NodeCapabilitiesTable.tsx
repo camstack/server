@@ -23,6 +23,7 @@ export function NodeCapabilitiesTable({ nodes, actions }: NodeCapabilitiesTableP
   const { t } = useTranslation()
   const columns: readonly DataColumn<BoardNode>[] = [
     {
+      mobile: 'primary',
       key: 'node',
       header: t('placementBoard.nodeCapabilitiesTable.node', 'Node'),
       sortValue: (node) => node.name,
@@ -30,6 +31,7 @@ export function NodeCapabilitiesTable({ nodes, actions }: NodeCapabilitiesTableP
     },
     ...CAPABILITY_META.map(
       (meta): DataColumn<BoardNode> => ({
+        mobile: 'detail',
         key: meta.key,
         header: t(meta.labelKey),
         align: 'center',

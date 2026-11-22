@@ -43,12 +43,14 @@ export function ArchiveCameraTable({
   const columns = useMemo<readonly DataColumn<CameraRow>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'camera',
         header: t('archive.table.camera', 'Camera'),
         sortValue: (r) => r.name,
         render: (r) => <span className="font-medium text-foreground">{r.name}</span>,
       },
       {
+        mobile: 'detail',
         key: 'mode',
         header: t('archive.table.mode', 'Recording'),
         sortValue: (r) => r.mode ?? '',
@@ -59,6 +61,7 @@ export function ArchiveCameraTable({
         ),
       },
       {
+        mobile: 'detail',
         key: 'status',
         header: t('archive.table.status', 'Status'),
         sortValue: (r) => r.state,
@@ -74,6 +77,7 @@ export function ArchiveCameraTable({
         ),
       },
       {
+        mobile: 'keep',
         key: 'footage',
         header: t('archive.table.footage', 'Footage'),
         align: 'right',
@@ -86,6 +90,7 @@ export function ArchiveCameraTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'events',
         header: t('archive.table.events', 'Events'),
         align: 'right',
@@ -100,6 +105,7 @@ export function ArchiveCameraTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'oldest',
         header: t('archive.table.oldest', 'Oldest footage'),
         align: 'right',

@@ -84,16 +84,19 @@ function StateCell({ row }: { readonly row: PlacementRow }): ReactNode {
 
 const buildColumns = (t: ClusterT): readonly DataColumn<PlacementRow>[] => [
   {
+    mobile: 'primary',
     key: 'node',
     header: t('cluster.cols.node'),
     render: (r) => <span className="text-[11px]">{r.nodeId}</span>,
   },
   {
+    mobile: 'detail',
     key: 'runtime',
     header: t('cluster.cols.runtime'),
     render: (r) => <span className="font-mono text-[11px]">{r.entry?.format ?? '—'}</span>,
   },
   {
+    mobile: 'hidden',
     key: 'devices',
     header: t('cluster.cols.devices'),
     nowrap: false,
@@ -105,7 +108,12 @@ const buildColumns = (t: ClusterT): readonly DataColumn<PlacementRow>[] => [
       </span>
     ),
   },
-  { key: 'state', header: t('cluster.cols.state'), render: (r) => <StateCell row={r} /> },
+  {
+    mobile: 'detail',
+    key: 'state',
+    header: t('cluster.cols.state'),
+    render: (r) => <StateCell row={r} />,
+  },
 ]
 
 function placementRows(

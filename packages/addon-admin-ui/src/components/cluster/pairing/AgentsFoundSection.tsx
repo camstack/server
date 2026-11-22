@@ -151,36 +151,42 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
   const columns = useMemo<readonly DataColumn<DiscoveredAgent>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('pairing.agentsFoundSection.name', 'Name'),
         render: (a) => a.name ?? '—',
         sortValue: (a) => a.name,
       },
       {
+        mobile: 'hidden',
         key: 'node',
         header: t('pairing.agentsFoundSection.node', 'Node'),
         render: (a) => <span className="font-medium text-foreground">{a.nodeId}</span>,
         sortValue: (a) => a.nodeId,
       },
       {
+        mobile: 'detail',
         key: 'address',
         header: t('pairing.agentsFoundSection.address', 'Address'),
         render: (a) => <span className="font-mono text-xs">{formatEndpoint(a.host, a.port)}</span>,
         sortValue: (a) => a.host,
       },
       {
+        mobile: 'hidden',
         key: 'version',
         header: t('pairing.agentsFoundSection.version', 'Version'),
         render: (a) => a.version ?? '—',
         sortValue: (a) => a.version,
       },
       {
+        mobile: 'detail',
         key: 'state',
         header: t('pairing.agentsFoundSection.state', 'State'),
         render: (a) => <AgentStateBadge state={a.state} connected={a.connected} />,
         sortValue: (a) => STATE_RANK[a.state],
       },
       {
+        mobile: 'detail',
         key: 'fingerprint',
         header: t('pairing.agentsFoundSection.certificate', 'Certificate'),
         render: (a) =>
@@ -194,6 +200,7 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
         sortValue: (a) => a.fingerprint,
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

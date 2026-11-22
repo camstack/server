@@ -235,18 +235,21 @@ export function CcuDevicesTab(props: {
   const columns = useMemo<readonly DataColumn<CcuDeviceRow>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('devices.colDevice'),
         render: (row) => <DeviceName row={row} navigate={navigate} />,
         sortValue: (row) => row.name ?? row.address,
       },
       {
+        mobile: 'detail',
         key: 'type',
         header: t('devices.colType'),
         render: (row) => row.type,
         sortValue: (row) => row.type,
       },
       {
+        mobile: 'detail',
         key: 'place',
         header: t('devices.colPlace'),
         nowrap: false,
@@ -254,6 +257,7 @@ export function CcuDevicesTab(props: {
         sortValue: (row) => row.rooms.join(', '),
       },
       {
+        mobile: 'hidden',
         key: 'firmware',
         header: t('devices.colFirmware'),
         render: (row) => (
@@ -269,6 +273,7 @@ export function CcuDevicesTab(props: {
         sortValue: (row) => row.firmware,
       },
       {
+        mobile: 'hidden',
         key: 'signal',
         header: t('devices.colSignal'),
         align: 'right',
@@ -276,6 +281,7 @@ export function CcuDevicesTab(props: {
         sortValue: (row) => row.rssi,
       },
       {
+        mobile: 'hidden',
         key: 'duty',
         header: t('devices.colDutyCycle'),
         align: 'right',
@@ -288,6 +294,7 @@ export function CcuDevicesTab(props: {
         sortValue: (row) => row.dutyCycle,
       },
       {
+        mobile: 'keep',
         key: 'health',
         header: t('devices.colHealth'),
         nowrap: false,
@@ -316,6 +323,7 @@ export function CcuDevicesTab(props: {
         ),
       },
       {
+        mobile: 'hidden',
         key: 'events',
         header: t('devices.colEvents'),
         nowrap: false,
@@ -323,6 +331,7 @@ export function CcuDevicesTab(props: {
         render: (row) => <EventsBadge row={row} programs={programs} />,
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

@@ -238,6 +238,7 @@ export function ExportsSection() {
   const columns = useMemo<readonly DataColumn<ExportRecord>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'camera',
         header: t('recordings.exportsSection.camera', 'Camera'),
         render: (r: ExportRecord) => (
@@ -247,6 +248,7 @@ export function ExportsSection() {
         ),
       },
       {
+        mobile: 'detail',
         key: 'created',
         header: t('recordings.exportsSection.created', 'Created'),
         nowrap: true,
@@ -261,22 +263,26 @@ export function ExportsSection() {
         ),
       },
       {
+        mobile: 'detail',
         key: 'title',
         header: t('recordings.exportsSection.title', 'Title'),
         render: (r) => <span className="text-foreground">{r.options.title ?? '—'}</span>,
       },
       {
+        mobile: 'hidden',
         key: 'range',
         header: t('recordings.exportsSection.range', 'Range'),
         nowrap: true,
         render: (r) => <span className="tabular-nums">{formatRange(r.fromMs, r.toMs)}</span>,
       },
       {
+        mobile: 'hidden',
         key: 'variant',
         header: t('recordings.exportsSection.variant', 'Variant'),
         render: (r) => <span className="text-foreground-subtle">{describeVariant(r.options)}</span>,
       },
       {
+        mobile: 'detail',
         key: 'state',
         header: t('recordings.exportsSection.state', 'State'),
         render: (r) => {
@@ -298,6 +304,7 @@ export function ExportsSection() {
         },
       },
       {
+        mobile: 'hidden',
         key: 'expiry',
         header: t('recordings.exportsSection.expires', 'Expires'),
         nowrap: true,
@@ -311,6 +318,7 @@ export function ExportsSection() {
           ),
       },
       {
+        mobile: 'hidden',
         key: 'downloaded',
         header: t('recordings.exportsSection.downloaded', 'Downloaded'),
         nowrap: true,
@@ -321,6 +329,7 @@ export function ExportsSection() {
         ),
       },
       {
+        mobile: 'hidden',
         key: 'size',
         header: t('recordings.exportsSection.size', 'Size'),
         align: 'right',
@@ -332,6 +341,7 @@ export function ExportsSection() {
         ),
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

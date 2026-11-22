@@ -71,6 +71,7 @@ function withName(template: string, name: string): string {
 export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[] {
   return [
     {
+      mobile: 'primary',
       key: 'name',
       header: i18n.t('system.notificationRuleColumns.rule', 'Rule'),
       render: (rule) => (
@@ -82,6 +83,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       ),
     },
     {
+      mobile: 'detail',
       key: 'trigger',
       header: i18n.t('system.notificationRuleColumns.trigger', 'Trigger'),
       nowrap: true,
@@ -105,6 +107,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       ),
     },
     {
+      mobile: 'hidden',
       key: 'targets',
       header: i18n.t('system.notificationRuleColumns.targets', 'Targets'),
       render: (rule) => {
@@ -120,12 +123,14 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       },
     },
     {
+      mobile: 'hidden',
       key: 'lastRun',
       header: i18n.t('system.notificationRuleColumns.lastRun', 'Last run'),
       nowrap: true,
       render: (rule) => <RuleLastRunCellView cell={deps.lastRunOf(rule.id)} />,
     },
     {
+      mobile: 'hidden',
       key: 'priority',
       header: i18n.t('system.notificationRuleColumns.priority', 'Priority'),
       align: 'center',
@@ -133,6 +138,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       render: (rule) => <span className="text-[11px] text-foreground-subtle">{rule.priority}</span>,
     },
     {
+      mobile: 'hidden',
       // SNOOZE (R3): a switch on a rule a window can silence; an EMPTY cell on
       // one it cannot (it concerns or arms the alarm — derived, never stored,
       // D133). The cell says nothing more: no badge, no sentence.
@@ -163,6 +169,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       ),
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: i18n.t('system.notificationRuleColumns.on', 'On'),
       align: 'center',
@@ -180,6 +187,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',
@@ -330,6 +338,7 @@ export function systemRuleColumns(deps: RuleColumnsDeps): readonly DataColumn<Nc
   return [
     ...pick('name'),
     {
+      mobile: 'hidden',
       key: 'events',
       header: i18n.t('system.notificationRuleColumns.events', 'Events'),
       render: (rule) => (
@@ -339,6 +348,7 @@ export function systemRuleColumns(deps: RuleColumnsDeps): readonly DataColumn<Nc
       ),
     },
     {
+      mobile: 'hidden',
       key: 'scope',
       header: i18n.t('system.notificationRuleColumns.scope', 'Scope'),
       nowrap: true,
@@ -349,6 +359,7 @@ export function systemRuleColumns(deps: RuleColumnsDeps): readonly DataColumn<Nc
       ),
     },
     {
+      mobile: 'hidden',
       key: 'targets',
       header: i18n.t('system.notificationRuleColumns.targets', 'Targets'),
       render: (rule) => {
@@ -364,6 +375,7 @@ export function systemRuleColumns(deps: RuleColumnsDeps): readonly DataColumn<Nc
       },
     },
     {
+      mobile: 'hidden',
       key: 'cooldown',
       header: i18n.t('system.notificationRuleColumns.cooldown', 'Cooldown'),
       nowrap: true,

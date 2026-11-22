@@ -74,6 +74,7 @@ export function ArchiveActivity({
   const columns = useMemo<readonly DataColumn<ActivityItem>[]>(
     () => [
       {
+        mobile: 'detail',
         key: 'at',
         header: t('archive.activity.when', 'When'),
         nowrap: true,
@@ -85,6 +86,7 @@ export function ArchiveActivity({
         ),
       },
       {
+        mobile: 'detail',
         key: 'severity',
         header: t('archive.activity.severity', 'Severity'),
         nowrap: true,
@@ -96,6 +98,7 @@ export function ArchiveActivity({
         ),
       },
       {
+        mobile: 'detail',
         key: 'camera',
         header: t('archive.activity.camera', 'Camera'),
         sortValue: (r) =>
@@ -109,6 +112,7 @@ export function ArchiveActivity({
         ),
       },
       {
+        mobile: 'primary',
         key: 'what',
         header: t('archive.activity.what', 'What'),
         render: (r) => (

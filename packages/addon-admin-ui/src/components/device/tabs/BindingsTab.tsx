@@ -143,16 +143,19 @@ export function BindingsTab({ deviceId }: BindingsTabProps) {
 
   const columns: readonly DataColumn<BindingRow>[] = [
     {
+      mobile: 'primary',
       key: 'capability',
       header: t('device.bindingsTab.capability', 'Capability'),
       render: (row) => <span className="font-mono text-foreground">{row.capName}</span>,
     },
     {
+      mobile: 'hidden',
       key: 'kind',
       header: t('device.bindingsTab.kind', 'Kind'),
       render: (row) => <KindBadge kind={row.kind} />,
     },
     {
+      mobile: 'detail',
       key: 'provider',
       header: t('device.bindingsTab.activeProvider', 'Active Provider'),
       render: (row) => (
@@ -162,6 +165,7 @@ export function BindingsTab({ deviceId }: BindingsTabProps) {
       ),
     },
     {
+      mobile: 'detail',
       key: 'node',
       header: t('device.bindingsTab.node', 'Node'),
       render: (row) =>
@@ -172,6 +176,7 @@ export function BindingsTab({ deviceId }: BindingsTabProps) {
         ),
     },
     {
+      mobile: 'hidden',
       key: 'native',
       header: t('device.bindingsTab.kindNative', 'Native'),
       render: (row) => (
@@ -181,6 +186,7 @@ export function BindingsTab({ deviceId }: BindingsTabProps) {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'wrapper',
       header: t('device.bindingsTab.wrapper', 'Wrapper'),
       render: (row) => {

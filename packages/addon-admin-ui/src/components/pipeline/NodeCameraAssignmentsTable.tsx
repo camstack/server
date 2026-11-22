@@ -111,6 +111,7 @@ export function NodeCameraAssignmentsTable({ nodeId }: { readonly nodeId: string
 
   const columns: readonly DataColumn<NodeAssignmentRow>[] = [
     {
+      mobile: 'primary',
       key: 'camera',
       header: t('pipeline.nodeCameraAssignmentsTable.camera', 'Camera'),
       width: 'w-44',
@@ -126,6 +127,7 @@ export function NodeCameraAssignmentsTable({ nodeId }: { readonly nodeId: string
       ),
     },
     {
+      mobile: 'detail',
       key: 'roles',
       header: t('pipeline.nodeCameraAssignmentsTable.rolesHere', 'Roles here'),
       notSortableReason: 'A set of roles has no single order.',
@@ -141,6 +143,7 @@ export function NodeCameraAssignmentsTable({ nodeId }: { readonly nodeId: string
       ),
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('pipeline.nodeCameraAssignmentsTable.status', 'Status'),
       width: 'w-40',
@@ -148,6 +151,7 @@ export function NodeCameraAssignmentsTable({ nodeId }: { readonly nodeId: string
       render: (row) => <AssignmentStatusCell snap={snapshots.get(row.deviceId)} />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

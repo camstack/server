@@ -141,12 +141,14 @@ export function ScenesPage() {
 
   const columns: readonly DataColumn<SceneRow>[] = [
     {
+      mobile: 'primary',
       key: 'label',
       header: t('scenes.scene', 'Scene'),
       sortValue: (row) => row.monitor.label,
       render: (row) => <span className="font-medium">{row.monitor.label}</span>,
     },
     {
+      mobile: 'detail',
       key: 'camera',
       header: t('scenes.camera', 'Camera'),
       nowrap: true,
@@ -154,6 +156,7 @@ export function ScenesPage() {
       render: (row) => row.deviceName,
     },
     {
+      mobile: 'detail',
       key: 'state',
       header: t('scenes.state', 'State'),
       nowrap: true,
@@ -164,6 +167,7 @@ export function ScenesPage() {
       },
     },
     {
+      mobile: 'hidden',
       key: 'status',
       header: t('scenes.whatItSays', 'What it says'),
       notSortableReason: 'Status is a live sentence, not a comparable value',
@@ -172,6 +176,7 @@ export function ScenesPage() {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'coverage',
       header: t('scenes.variants', 'Variants'),
       notSortableReason: 'Coverage is a summary string',
@@ -180,6 +185,7 @@ export function ScenesPage() {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'transition',
       header: t('scenes.lastChange', 'Last change'),
       align: 'right',
@@ -192,6 +198,7 @@ export function ScenesPage() {
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

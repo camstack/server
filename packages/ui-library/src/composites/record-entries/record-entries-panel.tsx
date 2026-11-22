@@ -130,6 +130,7 @@ export function RecordEntriesPanel({
   const columns = useMemo((): readonly DataColumn<EntryView>[] => {
     return [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('uiLibrary.recordEntries.colName', 'Name'),
         render: (row) => (
@@ -147,6 +148,7 @@ export function RecordEntriesPanel({
       ...(showUpdated
         ? [
             {
+              mobile: 'detail' as const,
               key: 'updated',
               header: t('uiLibrary.recordEntries.colUpdated', 'Updated'),
               nowrap: true,
@@ -165,6 +167,7 @@ export function RecordEntriesPanel({
         : []),
       ...extraColumns,
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

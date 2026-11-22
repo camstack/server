@@ -161,12 +161,14 @@ function secretColumns({
 }: SecretsTableProps): DataColumn<KeychainAdminSecret>[] {
   return [
     {
+      mobile: 'primary',
       key: 'owner',
       header: i18n.t('secrets.secretsTable.owner', 'Owner'),
       render: (s) => <OwnerCell owner={s.owner} />,
       sortValue: (s) => s.owner,
     },
     {
+      mobile: 'hidden',
       key: 'scope',
       header: i18n.t('secrets.secretsTable.scope', 'Scope'),
       render: (s) => (
@@ -177,6 +179,7 @@ function secretColumns({
       sortValue: (s) => s.scope,
     },
     {
+      mobile: 'detail',
       key: 'field',
       header: i18n.t('secrets.secretsTable.field', 'Field'),
       render: (s) => (
@@ -190,18 +193,21 @@ function secretColumns({
       sortValue: (s) => s.fieldPath,
     },
     {
+      mobile: 'hidden',
       key: 'updated',
       header: i18n.t('secrets.secretsTable.updated', 'Updated'),
       render: (s) => formatWhen(s.updatedAt),
       sortValue: (s) => s.updatedAt,
     },
     {
+      mobile: 'hidden',
       key: 'last-read',
       header: i18n.t('secrets.secretsTable.lastRead', 'Last read'),
       render: (s) => formatWhen(s.lastReadAt),
       sortValue: (s) => s.lastReadAt,
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: i18n.t('secrets.secretsTable.status', 'Status'),
       render: (s) => (
@@ -212,6 +218,7 @@ function secretColumns({
       sortValue: (s) => USAGE[s.usage].rank,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

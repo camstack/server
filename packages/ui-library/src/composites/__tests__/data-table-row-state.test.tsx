@@ -15,7 +15,13 @@ const ROWS: readonly Row[] = [
 ]
 
 const COLUMNS: readonly DataColumn<Row>[] = [
-  { key: 'name', header: 'Name', sortValue: (r) => r.name, render: (r) => r.name },
+  {
+    mobile: 'primary',
+    key: 'name',
+    header: 'Name',
+    sortValue: (r) => r.name,
+    render: (r) => r.name,
+  },
 ]
 
 function renderTable(

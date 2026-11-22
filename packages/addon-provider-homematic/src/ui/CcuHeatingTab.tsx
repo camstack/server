@@ -86,18 +86,21 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
 
   const groupColumns: readonly DataColumn<HeatingGroup>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('heating.colGroup'),
       render: (row) => row.name,
       sortValue: (row) => row.name,
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: t('heating.colType'),
       render: (row) => textOrDash(row.typeLabel ?? row.type),
       sortValue: (row) => row.typeLabel ?? row.type,
     },
     {
+      mobile: 'detail',
       key: 'members',
       header: t('heating.colMembers'),
       nowrap: false,
@@ -105,6 +108,7 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
       sortValue: (row) => row.members.length,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',
@@ -132,12 +136,14 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
 
   const thermostatColumns: readonly DataColumn<Thermostat>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('heating.colThermostat'),
       render: (row) => row.name ?? row.device,
       sortValue: (row) => row.name ?? row.device,
     },
     {
+      mobile: 'keep',
       key: 'current',
       header: t('heating.colCurrent'),
       align: 'right',
@@ -145,6 +151,7 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
       sortValue: (row) => row.currentTemperature,
     },
     {
+      mobile: 'keep',
       key: 'target',
       header: t('heating.colTarget'),
       align: 'right',
@@ -152,12 +159,14 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
       sortValue: (row) => row.targetTemperature,
     },
     {
+      mobile: 'detail',
       key: 'mode',
       header: t('heating.colMode'),
       render: (row) => t(`heating.mode_${row.mode}`),
       sortValue: (row) => row.mode,
     },
     {
+      mobile: 'detail',
       key: 'activity',
       header: t('heating.colActivity'),
       render: (row) => (

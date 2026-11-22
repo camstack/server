@@ -247,6 +247,7 @@ export function TerminalDevices() {
     row.kind === 'instance' ? textOf(valuesById.get(row.id) ?? {}, key) : ''
   const extraColumns: readonly DataColumn<PanelRow>[] = [
     {
+      mobile: 'detail',
       key: 'node',
       header: t('terminalPage.colNode', 'Node'),
       sortValue: (row) => valueOf(row, 'nodeId'),
@@ -260,12 +261,14 @@ export function TerminalDevices() {
       },
     },
     {
+      mobile: 'hidden',
       key: 'profile',
       header: t('terminalPage.colProfile', 'Profile'),
       sortValue: (row) => valueOf(row, 'profileLabel').toLowerCase(),
       render: (row) => valueOf(row, 'profileLabel') || '—',
     },
     {
+      mobile: 'detail',
       key: 'camera',
       header: t('terminalPage.colCamera', 'Camera'),
       sortValue: (row) => cameraOf(row)?.name.toLowerCase() ?? '',

@@ -79,6 +79,7 @@ export function SourcesPanel({
 
   const columns: readonly DataColumn<RemoteSource>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('remote.sources.col.name'),
       nowrap: false,
@@ -92,6 +93,7 @@ export function SourcesPanel({
       ),
     },
     {
+      mobile: 'detail',
       key: 'detail',
       header: t('remote.sources.col.detail'),
       nowrap: false,
@@ -109,6 +111,7 @@ export function SourcesPanel({
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: t('remote.sources.col.actions'),
       align: 'right',

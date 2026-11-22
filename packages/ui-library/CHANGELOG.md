@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Energy card: today's day chart now ends at the current time instead of stopping short of it; past days stay full-day
 - Device card history: outcomes read Done, Failed or By the device.
 - New generated hook for the template instances read (coreBlocks.listTemplateInstances)
+- Tables on a phone: DataTable columns declare a required mobile role (primary, keep, detail, hidden) and fold instead of scrolling sideways; device rows stay one line tall with the full name, and their actions (the device's main action first, then Open and Delete) sit behind a swipe, reachable from the keyboard too; new SwipeActions primitive and PageActions composite; the Per page selector keeps its chevron and stays on one line.
 
 ## [1.2.498] - 2026-11-22
 

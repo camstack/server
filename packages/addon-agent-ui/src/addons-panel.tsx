@@ -189,6 +189,7 @@ interface ColumnHandlers {
 export function buildColumns(h: ColumnHandlers): readonly DataColumn<AddonRuntimeRow>[] {
   return [
     {
+      mobile: 'primary',
       key: 'addon',
       header: h.t('addons.columns.addon'),
       sortValue: (r) => r.addonId ?? r.runner?.name ?? r.key,
@@ -207,18 +208,21 @@ export function buildColumns(h: ColumnHandlers): readonly DataColumn<AddonRuntim
       ),
     },
     {
+      mobile: 'detail',
       key: 'version',
       header: h.t('addons.columns.version'),
       notSortableReason: h.t('addons.columns.versionNotSortable'),
       render: (r) => <VersionCell row={r} update={h.updateFor(r)} t={h.t} />,
     },
     {
+      mobile: 'hidden',
       key: 'runner',
       header: h.t('addons.columns.runner'),
       sortValue: (r) => r.runner?.groupId ?? null,
       render: (r) => <RunnerCell runner={r.runner} t={h.t} />,
     },
     {
+      mobile: 'hidden',
       key: 'cpu',
       header: h.t('addons.columns.cpu'),
       align: 'right',
@@ -226,6 +230,7 @@ export function buildColumns(h: ColumnHandlers): readonly DataColumn<AddonRuntim
       render: (r) => (r.runner === null ? '—' : `${r.runner.cpuPercent.toFixed(1)}%`),
     },
     {
+      mobile: 'hidden',
       key: 'memory',
       header: h.t('addons.columns.memory'),
       align: 'right',
@@ -233,12 +238,14 @@ export function buildColumns(h: ColumnHandlers): readonly DataColumn<AddonRuntim
       render: (r) => (r.runner === null ? '—' : formatBytes(r.runner.memoryRss)),
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: h.t('addons.columns.status'),
       sortValue: (r) => r.status,
       render: (r) => <StatusBadge status={statusBadge(r.status)} label={r.status} size="sm" />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

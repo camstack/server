@@ -72,11 +72,13 @@ export function DeletedDevicesData() {
 
   const columns: readonly DataColumn<OrphanRow>[] = [
     {
+      mobile: 'primary',
       key: 'device',
       header: t('systemPage.deletedDevices.device', 'Device'),
       render: (row) => `#${row.deviceId}`,
     },
     {
+      mobile: 'detail',
       key: 'stores',
       header: t('systemPage.deletedDevices.stores', 'Data held'),
       nowrap: false,

@@ -12,6 +12,7 @@ import { useUiText } from '../../contexts/ui-text'
 import { type KeyboardEvent, type ReactNode, useState } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
+import { useIsMobile } from '../../hooks/use-is-mobile'
 import type { RowOperationState } from '../../hooks/use-row-operations'
 import { cn } from '../../lib/cn'
 import {
@@ -28,6 +29,8 @@ import { DeviceDeleteAction } from './device-delete-action'
 import { DeviceItemFeatures } from './features'
 import { DeviceItemHeader } from './header'
 import { OpenPageQuickAction } from './open-page-quick-action'
+import { DeviceRowSwipeTray } from './row-swipe-tray'
+import { SWIPE_CELL_CLASS, useSwipeActions } from '../../primitives/swipe-actions'
 import { useDeviceQuickDetailOpen } from '../../contexts/device-quick-detail'
 import { useDeviceLabel } from '../device-name'
 import {
@@ -49,7 +52,10 @@ import { useTagEntries } from '../tags/tag-entries-context'
 export type { ChildLayoutSection, GroupedChildren } from './child-layout'
 export { groupChildrenByLayout } from './child-layout'
 export { ChildSectionAccordion } from './child-section-accordion'
-export { ContainerChildrenProvider, useContainerChildren } from './container-children-context'
+export {
+  ContainerChildrenProvider,
+  useContainerChildren,
+} from './container-children-context'
 export {
   RoleDisplayDefaultsFromServer,
   RoleDisplayDefaultsProvider,
@@ -94,7 +100,12 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   const nameForm = props.nameForm ?? (props.isAccessoryRow ? 'nested' : 'compact')
   const nameParent =
     nameForm === 'nested' && parent
-      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      ? {
+          id: parent.id,
+          name: parent.name,
+          type: parent.type ?? 'unknown',
+          stableId: '',
+        }
       : undefined
   const rowLabel = useDeviceLabel(
     device,
@@ -549,7 +560,12 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
   const nameForm = isAccessoryRow ? 'nested' : 'compact'
   const nameParent =
     nameForm === 'nested' && parent
-      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      ? {
+          id: parent.id,
+          name: parent.name,
+          type: parent.type ?? 'unknown',
+          stableId: '',
+        }
       : undefined
   const rowLabel = useDeviceLabel(
     device,
@@ -558,10 +574,15 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
   )
 
   const pending = operation?.kind === 'pending'
+  // Below `md` the row's secondary actions live in a swipe tray (see the
+  // trailing cell); the first row of a list to mount shows that once.
+  const phone = useIsMobile()
+  const swipe = useSwipeActions({ disabled: pending, hint: phone })
   const failure = operation?.kind === 'failed' ? operation.message : null
 
   return (
     <tr
+      {...swipe.rowProps}
       onClick={pending ? undefined : onRowClick}
       aria-busy={pending ? true : undefined}
       data-row-operation={operation?.kind}
@@ -571,6 +592,10 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             ...(rowSelects ? { 'aria-pressed': rowSelected } : {}),
             tabIndex: 0,
             onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
+              swipe.rowProps.onKeyDown(e)
+              // Only the row itself activates: a key pressed on a control
+              // inside it (a tray button, a switch) is that control's.
+              if (e.target !== e.currentTarget) return
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 onRowClick()
@@ -625,6 +650,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           // row fades, so the row reads as TWO distinct highlights during the
           // transition instead of one continuous one.
           NAME_COLUMN_PIN_CLASS,
+          SWIPE_CELL_CLASS,
           'py-1.5 align-middle pr-2 transition-colors',
           // Mirror the row's selected/accessory/default background so the pinned
           // cell never paints a plain stripe OVER a highlighted (selected) or
@@ -677,6 +703,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             expanded={expanded}
             onToggleExpand={onToggleExpand}
             onNavigateToParent={onNavigate}
+            fullNameBelowMd
             below={<TagChipList tags={device.tags} entries={tagEntries} className="mt-1" />}
           />
         </div>
@@ -747,7 +774,13 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           control (climate stepper + mode select, cover triad + %) lays out in
           sequence with the trailing affordances instead of overflowing a fixed
           box; `justify-end` flushes the cluster right. */}
-      <td className={cn(PREVIEW_CELL_CLASS, 'px-2 py-1.5 align-middle text-right')}>
+      <td
+        className={cn(
+          PREVIEW_CELL_CLASS,
+          SWIPE_CELL_CLASS,
+          'relative px-2 py-1.5 align-middle text-right',
+        )}
+      >
         {pending ? (
           <span
             role="status"
@@ -757,7 +790,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             {t('uiLibrary.deviceItem.removing', 'Removing…')}
           </span>
         ) : (
-          <span className="inline-flex flex-wrap items-center justify-end gap-1.5 md:flex-nowrap">
+          <span className="inline-flex flex-nowrap items-center justify-end gap-1.5">
             {failure !== null && (
               <span
                 role="alert"
@@ -772,8 +805,16 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
                 </span>
               </span>
             )}
-            <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="table" />
-            {canOpenPage && <OpenPageQuickAction deviceId={device.id} onOpenPage={onNavigate} />}
+            <DeviceItemActions
+              trpc={trpc}
+              device={device}
+              flags={flags}
+              controlPlacement="table"
+              part={phone ? 'main' : 'all'}
+            />
+            {!phone && canOpenPage && (
+              <OpenPageQuickAction deviceId={device.id} onOpenPage={onNavigate} />
+            )}
             <DeviceItemPreview
               trpc={trpc}
               device={device}
@@ -781,12 +822,31 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
               enabled={showSnapshot && isCamera}
               showStatusPills
             />
-            {renderRowAction && (
+            {!phone && renderRowAction && (
               <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
             )}
-            {onDelete && <DeviceDeleteAction device={device} onDelete={onDelete} />}
+            {!phone && onDelete && <DeviceDeleteAction device={device} onDelete={onDelete} />}
             <StatusDot status={displayStatus} />
           </span>
+        )}
+        {/* Below `md` the row keeps its name, its main control and its dot;
+            everything else it offers is in the swipe tray. Mounted only there,
+            so no action exists twice. */}
+        {phone && !pending && (
+          <DeviceRowSwipeTray
+            swipe={swipe}
+            device={device}
+            rowLabel={rowLabel}
+            onOpenPage={canOpenPage ? onNavigate : null}
+            onDelete={onDelete ?? null}
+            lead={
+              <>
+                <DeviceItemActions trpc={trpc} device={device} flags={flags} part="lead" />
+                {renderRowAction ? renderRowAction(device) : null}
+              </>
+            }
+            rest={<DeviceItemActions trpc={trpc} device={device} flags={flags} part="rest" />}
+          />
         )}
       </td>
     </tr>

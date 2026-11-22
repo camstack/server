@@ -24,9 +24,22 @@ const ROWS: readonly Row[] = [
 ]
 
 const COLUMNS: readonly DataColumn<Row>[] = [
-  { key: 'pid', header: 'PID', render: (r) => String(r.pid), sortValue: (r) => r.pid },
-  { key: 'cpu', header: 'CPU%', render: (r) => String(r.cpu), sortValue: (r) => r.cpu },
   {
+    mobile: 'keep',
+    key: 'pid',
+    header: 'PID',
+    render: (r) => String(r.pid),
+    sortValue: (r) => r.pid,
+  },
+  {
+    mobile: 'keep',
+    key: 'cpu',
+    header: 'CPU%',
+    render: (r) => String(r.cpu),
+    sortValue: (r) => r.cpu,
+  },
+  {
+    mobile: 'primary',
     key: 'command',
     header: 'Command',
     render: (r) => r.command,

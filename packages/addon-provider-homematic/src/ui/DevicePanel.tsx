@@ -171,18 +171,21 @@ export function DevicePanel(props: DevicePanelProps) {
 
   const columnsFor = (channel: ChannelValues): readonly DataColumn<ValueParam>[] => [
     {
+      mobile: 'primary',
       key: 'parameter',
       header: t('panel.colParameter'),
       render: (row) => <span className="font-mono text-xs text-foreground">{row.parameter}</span>,
       sortValue: (row) => row.parameter,
     },
     {
+      mobile: 'keep',
       key: 'value',
       header: t('panel.colValue'),
       render: valueCell,
       notSortableReason: 'Mixed value types',
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

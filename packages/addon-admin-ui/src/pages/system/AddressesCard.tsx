@@ -104,6 +104,7 @@ export function AddressesCard({
 
   const columns: readonly DataColumn<HubAddressRow>[] = [
     {
+      mobile: 'primary',
       key: 'url',
       header: t('system.addressesCard.address', 'Address'),
       render: (row) => (
@@ -153,6 +154,7 @@ export function AddressesCard({
       ),
     },
     {
+      mobile: 'detail',
       key: 'kind',
       header: t('system.addressesCard.kind', 'Kind'),
       nowrap: true,
@@ -167,6 +169,7 @@ export function AddressesCard({
     },
     ...ROLE_COLUMNS.map(
       (column): DataColumn<HubAddressRow> => ({
+        mobile: 'keep',
         key: column.role,
         headerRender: () => <span title={column.help}>{column.title}</span>,
         align: 'center',
@@ -209,6 +212,7 @@ export function AddressesCard({
       }),
     ),
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

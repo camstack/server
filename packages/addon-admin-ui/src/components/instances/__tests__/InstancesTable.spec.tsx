@@ -819,6 +819,7 @@ describe('InstancesTable extensions', () => {
     renderPanel('', {
       extraColumns: [
         {
+          mobile: 'detail',
           key: 'devices',
           header: 'Devices',
           notSortableReason: 'A button',

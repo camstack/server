@@ -14,7 +14,8 @@
  *   drops first.
  *
  *     name           (0) — never hidden; pinned left from `md` up (see
- *                          `NAME_COLUMN_PIN_CLASS`), scrolls below it
+ *                          `NAME_COLUMN_PIN_CLASS`), flexible and shown in
+ *                          full below it
  *     previewActions (1) — never hidden; carries the live control + status dot
  *     icon           (2) — integration badge; rendered INSIDE the name cell,
  *                          not a standalone column, so it has no breakpoint
@@ -117,16 +118,10 @@ export const COLUMN_BREAKPOINT_CLASS: Record<DeviceColumnId, string> = {
  * ── The NAME column pin ───────────────────────────────────────────────────
  *
  * A sticky first column earns its keep only where the remaining columns still
- * fit BESIDE it. Read the drop order above: below `md` every optional column
- * is already folded away, so the table is NAME + Preview and there is nothing
- * left to scroll under the pin — the pinned column simply holds its width
- * permanently and pushes Preview off the right edge. On a phone the viewport
- * is narrower than the pinned column alone, which is the reported defect:
- * "il nome alla sinistra è fixed, dovrebbe scorrere naturalmente." [the name on the left is fixed, it should scroll naturally.]
- *
- * So the pin starts at `md`, the same width at which `features` returns and a
- * column exists to scroll under it. Below `md` the name column scrolls with
- * everything else.
+ * fit BESIDE it. Below `md` every optional column is folded away, the table is
+ * NAME + the controls cell and it does not scroll sideways at all (see below),
+ * so there is nothing to pin against. The pin starts at `md`, the width at
+ * which `features` returns and a column exists to scroll under it.
  */
 export const NAME_COLUMN_PIN_BREAKPOINT = 'md' as const
 
@@ -134,18 +129,19 @@ export const NAME_COLUMN_PIN_BREAKPOINT = 'md' as const
 export const NAME_COLUMN_PIN_CLASS = 'md:sticky md:left-0 md:z-[1]' as const
 
 /**
- * ── The NAME column fills what the controls leave, at every width ─────────
+ * ── Below `md`: a row is its name, its main control and its dot ───────────
  *
- * Below `md` the table is NAME + the merged controls cell. NAME is the
- * flexible column (`w-full max-w-0`: it takes the remaining width and its text
- * ellipsises on the RIGHT, never clipped on the left), bounded below by
- * `min-w-[12rem]` so a name never collapses to "Ca…" — instead the controls cell
- * wraps (`PREVIEW_CELL_CLASS`) and gives the name its room. 12rem leaves the
- * name readable beside the lead icon and the integration badge; when an
- * unbreakable control still needs more room, the table wrapper's
- * `overflow-x-auto` scrolls sideways rather than crushing the name.
+ * On a phone the table is NAME + the controls cell and NEVER scrolls sideways.
+ * NAME is the flexible column (`w-full`): it takes what the controls leave and
+ * shows the device name in FULL, wrapping to a second line when it must — a
+ * name is never cut (`DeviceItemHeader fullNameBelowMd`). The controls cell is
+ * one nowrap line holding the row's ONE main control and the status dot; the
+ * row's other actions live in its swipe tray (`DeviceRowSwipeTray`), so the
+ * cell stays narrow enough for the name to keep a readable width
+ * (`min-w-[6.5rem]` is the floor).
  *
- * From `md` up the fixed `w-64` width and the pin return, as before.
+ * From `md` up the fixed `w-64` width, the one-line truncated name, the pin
+ * and the inline actions return.
  */
 export const NAME_COLUMN_TRUNCATE_BREAKPOINT = 'md' as const
 
@@ -153,11 +149,11 @@ export const NAME_COLUMN_TRUNCATE_BREAKPOINT = 'md' as const
  * NAME column width: flexible below `md` (see above), a fixed capped width from
  * `md` up ([D43]). One constant for the `<th>` and the `<td>`, so they cannot drift.
  */
-export const NAME_COLUMN_WIDTH_CLASS =
-  'w-full max-w-0 min-w-[12rem] md:w-64 md:max-w-[16rem]' as const
+export const NAME_COLUMN_WIDTH_CLASS = 'w-full min-w-[6.5rem] md:w-64 md:max-w-[16rem]' as const
 
 /**
- * The controls cell: below `md` it may wrap its cluster onto a second line so
- * the NAME column keeps its room; from `md` up it is one nowrap line.
+ * The controls cell is one line at every width. It must never wrap: a wrapping
+ * cluster stacks its controls one per line and the row grows to several times
+ * its height on a phone.
  */
-export const PREVIEW_CELL_CLASS = 'whitespace-normal md:whitespace-nowrap' as const
+export const PREVIEW_CELL_CLASS = 'whitespace-nowrap' as const

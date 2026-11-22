@@ -76,6 +76,7 @@ function ExportedDevicesCell({ row }: { readonly row: PanelRow }): ReactElement 
 /** The "Devices" column of an exporters table. */
 export function exportedDevicesColumn(t: TFunction): DataColumn<PanelRow> {
   return {
+    mobile: 'detail',
     key: 'devices',
     header: t('system.connectivity.devicesColumn', 'Devices'),
     notSortableReason: t(

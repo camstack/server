@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A notifier group test is never skipped as already delivered, and the test panel lists every member's outcome (sent, skipped with the reason, failed with the error)
 - A dismissed identity link now shows on the device page with a Relink button
+- On a phone every table folds its columns to fit the screen, and an integration page keeps its header on one line: Config, Logs, Restart and Delete move into one More menu.
 
 ## [1.2.737] - 2026-11-22
 

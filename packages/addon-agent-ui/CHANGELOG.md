@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Tables fold their columns on a phone instead of scrolling sideways: each column declares what it becomes under 640 px.
+
 ## [1.2.435] - 2026-11-22
 
 ### Changed

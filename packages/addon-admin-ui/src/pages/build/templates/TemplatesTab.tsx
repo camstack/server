@@ -241,6 +241,7 @@ export function TemplatesTab({
   const columns = useMemo(
     (): readonly DataColumn<TemplateRecord>[] => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('remote.templates.name'),
         sortValue: (r) => r.name.toLowerCase(),
@@ -254,12 +255,14 @@ export function TemplatesTab({
         ),
       },
       {
+        mobile: 'detail',
         key: 'kind',
         header: t('remote.templates.kind.label'),
         sortValue: (r) => r.kind,
         render: (r) => <Badge variant="neutral">{templateKindView(r.kind).label(t)}</Badge>,
       },
       {
+        mobile: 'detail',
         key: 'summary',
         header: t('remote.templates.summary'),
         notSortableReason: 'A sentence built from the payload.',
@@ -270,6 +273,7 @@ export function TemplatesTab({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'updated',
         header: t('remote.templates.updated'),
         sortValue: (r) => r.updatedAt,
@@ -280,6 +284,7 @@ export function TemplatesTab({
         ),
       },
       {
+        mobile: 'keep',
         key: 'actions',
         align: 'right',
         notSortableReason: 'Row actions.',

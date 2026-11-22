@@ -7184,7 +7184,8 @@
     "restart": "Restart",
     "restart2": "Restart \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.",
-    "instances": "Integration"
+    "instances": "Integration",
+    "more": "More"
   },
   "library": {
     "people": "People",
@@ -11543,6 +11544,10 @@
       "sourceGone": "Source device removed",
       "disabled": "Link switched off",
       "hint": "The whole capability follows this device, not single values."
+    },
+    "deviceRow": {
+      "open": "Open",
+      "actions": "Actions for {{name}}"
     }
   },
   "helpers": {

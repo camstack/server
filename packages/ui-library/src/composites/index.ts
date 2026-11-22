@@ -293,8 +293,13 @@ export {
   NodeMultiSelectField,
   NodeSelectField,
 } from './config-form-field'
-export type { ConfirmActionButtonProps } from './confirm-action-button'
-export { ConfirmActionButton } from './confirm-action-button'
+export type {
+  ConfirmActionButtonProps,
+  ConfirmActionDialogProps,
+} from './confirm-action-button'
+export { ConfirmActionButton, ConfirmActionDialog } from './confirm-action-button'
+export type { PageAction, PageActionConfirm, PageActionsProps } from './page-actions'
+export { PageActions } from './page-actions'
 export * from './confirm-dialog'
 export { ConfirmDialogProvider, useConfirm } from './confirm-dialog'
 export type { CopyButtonProps } from './copy-button'

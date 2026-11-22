@@ -164,12 +164,14 @@ export function ArchiveList({
 
   const columns: readonly DataColumn<ArchiveRow>[] = [
     {
+      mobile: 'primary',
       key: 'when',
       header: t('backup.archiveList.when', 'When'),
       sortValue: (a) => a.createdAt,
       render: (a) => <span className="tabular-nums">{formatTimestamp(a.createdAt)}</span>,
     },
     {
+      mobile: 'detail',
       key: 'label',
       header: t('backup.archiveList.label', 'Label'),
       sortValue: (a) => a.label ?? null,
@@ -190,6 +192,7 @@ export function ArchiveList({
       ),
     },
     {
+      mobile: 'hidden',
       key: 'databases',
       header: t('backup.archiveList.databases', 'Databases'),
       nowrap: false,
@@ -197,6 +200,7 @@ export function ArchiveList({
       render: (a) => <BackupDatabaseBadges databases={selectionOfRow(a.databases)} />,
     },
     {
+      mobile: 'hidden',
       key: 'includes',
       header: t('backup.archiveList.files', 'Files'),
       nowrap: false,
@@ -209,6 +213,7 @@ export function ArchiveList({
         ),
     },
     {
+      mobile: 'detail',
       key: 'size',
       header: t('backup.archiveList.size', 'Size'),
       align: 'right',
@@ -216,6 +221,7 @@ export function ArchiveList({
       render: (a) => <span className="tabular-nums">{formatBytes(a.sizeBytes)}</span>,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

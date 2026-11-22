@@ -145,6 +145,7 @@ function PeersTable({
   const columns: readonly DataColumn<PeerRow>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'hostname',
         header: t('system.meshNetworks.hostname', 'Hostname'),
         render: (row) => (
@@ -163,6 +164,7 @@ function PeersTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'magicDns',
         header: t('system.meshNetworks.magicdns', 'MagicDNS'),
         render: (row) =>
@@ -183,6 +185,7 @@ function PeersTable({
           ),
       },
       {
+        mobile: 'detail',
         key: 'addresses',
         header: 'IP',
         render: (row) => {
@@ -205,6 +208,7 @@ function PeersTable({
         },
       },
       {
+        mobile: 'detail',
         key: 'connection',
         header: t('system.meshNetworks.connection', 'Connection'),
         render: (row) => (
@@ -217,6 +221,7 @@ function PeersTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'routes',
         header: t('system.meshNetworks.routes', 'Routes'),
         render: (row) =>
@@ -229,6 +234,7 @@ function PeersTable({
           ),
       },
       {
+        mobile: 'hidden',
         key: 'tx',
         header: t('system.meshNetworks.txRx', 'TX / RX'),
         render: (row) => (
@@ -238,6 +244,7 @@ function PeersTable({
         ),
       },
       {
+        mobile: 'hidden',
         key: 'lastSeen',
         header: t('system.meshNetworks.lastSeen', 'Last seen'),
         render: (row) => (

@@ -4009,6 +4009,69 @@
       ]
     },
     {
+      "name": "ConfirmActionDialog",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/confirm-action-button.tsx",
+      "summary": "The confirm step of a destructive action, opened by the caller.",
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": true,
+          "doc": "Dialog title. Defaults to \"Confirm action\"."
+        },
+        {
+          "name": "description",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "confirmLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "Label on the confirm button."
+        },
+        {
+          "name": "confirmVariant",
+          "type": "ButtonProps['variant']",
+          "optional": true,
+          "doc": "Defaults to `danger`."
+        },
+        {
+          "name": "size",
+          "type": "ButtonProps['size']",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "action",
+          "type": "() => Promise<TResult>",
+          "optional": false,
+          "doc": "Must throw on failure; the message is shown in the dialog."
+        },
+        {
+          "name": "onSuccess",
+          "type": "(result: TResult) => void",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ConfirmDialogProvider",
       "kind": "component",
       "area": "composites",
@@ -11648,6 +11711,12 @@
           "type": "string",
           "optional": true,
           "doc": "Tooltip text on the trigger (defaults to \"More actions\")."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": true,
+          "doc": "A visible label on the trigger, beside the dots (\"More\"). For a menu that stands in for several labelled buttons — a page header on a phone "
         }
       ]
     },
@@ -13558,6 +13627,27 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-persisted-page-size.ts",
       "summary": "The \"All\" option — one page holding every row."
+    },
+    {
+      "name": "PageActions",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/page-actions.tsx",
+      "summary": "PageActions — a page header's SECONDARY actions, on one line at every width.",
+      "props": [
+        {
+          "name": "actions",
+          "type": "readonly PageAction[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "moreLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "The label of the phone menu's trigger (\"More\")."
+        }
+      ]
     },
     {
       "name": "PageHeader",
@@ -19260,6 +19350,58 @@
       "summary": "The utility that colours a dashed swatch's line with `token`."
     },
     {
+      "name": "SWIPE_CELL_CLASS",
+      "kind": "constant",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/swipe-actions.tsx",
+      "summary": "Every cell of a swipeable row carries this, so the row moves as one."
+    },
+    {
+      "name": "SwipeActionsTray",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/swipe-actions.tsx",
+      "summary": "The tray. It sits in the row's LAST cell (which must be `relative` and carry ), parked just past the row's right edge; the list's container must clip sideways (`overflow-x-clip`) so the parked tray never widens the page.",
+      "props": [
+        {
+          "name": "swipe",
+          "type": "SwipeActionsState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "readonly SwipeAction[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "Accessible name of the group, e.g. \"Actions for Kitchen window\"."
+        },
+        {
+          "name": "lead",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Existing controls shown BEFORE the actions (the row's leading action)."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Existing controls shown AFTER the actions."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": "Where the tray exists, e.g. `md:hidden`."
+        }
+      ]
+    },
+    {
       "name": "Switch",
       "kind": "component",
       "area": "primitives",
@@ -21278,6 +21420,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-grouping.ts",
       "summary": "The admin side of the device picker's \"Group by\" (Zone | Location | None): the remembered choice, and the site-zone read. What each mode DRAWS is `device-picker-model.ts` (shared with the viewer); this only supplies w…"
+    },
+    {
+      "name": "useSwipeActions",
+      "kind": "hook",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/swipe-actions.tsx",
+      "summary": "The swipe state of ONE row."
     },
     {
       "name": "useSwitchPower",

@@ -116,6 +116,7 @@ function ActionButton({
 export function credentialColumns(opts: CredentialColumnOptions): DataColumn<CredentialRow>[] {
   const columns: (DataColumn<CredentialRow> | null)[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: i18n.t('access.credentialColumns.name', 'Name'),
       sortValue: (r) => r.name.toLowerCase(),
@@ -135,12 +136,14 @@ export function credentialColumns(opts: CredentialColumnOptions): DataColumn<Cre
     opts.hideOwner
       ? null
       : {
+          mobile: 'detail',
           key: 'owner',
           header: i18n.t('access.credentialColumns.owner', 'Owner'),
           sortValue: (r) => r.ownerName.toLowerCase(),
           render: (r) => r.ownerName,
         },
     {
+      mobile: 'hidden',
       key: 'kind',
       header: i18n.t('access.credentialColumns.kindScope', 'Kind / scope'),
       sortValue: (r) => r.kind.toLowerCase(),
@@ -157,18 +160,21 @@ export function credentialColumns(opts: CredentialColumnOptions): DataColumn<Cre
       ),
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: i18n.t('access.credentialColumns.status', 'Status'),
       sortValue: (r) => STATUS_RANK[r.status],
       render: (r) => <CredentialStatusBadge status={r.status} />,
     },
     {
+      mobile: 'hidden',
       key: 'created',
       header: i18n.t('access.credentialColumns.created', 'Created'),
       sortValue: (r) => r.createdAt,
       render: (r) => <span className="text-foreground-subtle">{formatWhen(r.createdAt, '—')}</span>,
     },
     {
+      mobile: 'hidden',
       key: 'lastUsed',
       header: i18n.t('access.credentialColumns.lastUsed', 'Last used'),
       sortValue: (r) => r.lastUsedAt,
@@ -179,6 +185,7 @@ export function credentialColumns(opts: CredentialColumnOptions): DataColumn<Cre
       ),
     },
     {
+      mobile: 'hidden',
       key: 'expires',
       header: i18n.t('access.credentialColumns.expires', 'Expires'),
       sortValue: (r) => r.expiresAt,
@@ -189,6 +196,7 @@ export function credentialColumns(opts: CredentialColumnOptions): DataColumn<Cre
     opts.action === null
       ? null
       : {
+          mobile: 'keep',
           key: 'actions',
           header: '',
           align: 'right',

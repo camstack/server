@@ -54,6 +54,7 @@ const CORE_ADDON_ID = 'core-notifier'
 
 function sourceColumn(label: string, coreLabel: string): DataColumn<PanelRow> {
   return {
+    mobile: 'detail',
     key: 'source',
     header: label,
     nowrap: true,
@@ -67,6 +68,7 @@ function sourceColumn(label: string, coreLabel: string): DataColumn<PanelRow> {
 
 function ownerColumn(label: string): DataColumn<PanelRow> {
   return {
+    mobile: 'detail',
     key: 'owner',
     header: label,
     nowrap: true,

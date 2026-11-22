@@ -26,18 +26,26 @@ const LOUD: ReadonlySet<KeychainAuditAction> = new Set([
 
 function auditColumns(t: TFunction): DataColumn<KeychainAuditEntry>[] {
   return [
-    { key: 'at', header: t('system.keychainAuditTable.colWhen'), render: (a) => formatWhen(a.at) },
     {
+      mobile: 'detail',
+      key: 'at',
+      header: t('system.keychainAuditTable.colWhen'),
+      render: (a) => formatWhen(a.at),
+    },
+    {
+      mobile: 'primary',
       key: 'action',
       header: t('system.keychainAuditTable.colAction'),
       render: (a) => <Badge variant={LOUD.has(a.action) ? 'warning' : 'default'}>{a.action}</Badge>,
     },
     {
+      mobile: 'detail',
       key: 'actor',
       header: t('system.keychainAuditTable.colActor'),
       render: (a) => <span className="font-mono">{a.actor}</span>,
     },
     {
+      mobile: 'detail',
       key: 'ref',
       header: t('system.keychainAuditTable.colRef'),
       render: (a) =>
@@ -48,6 +56,7 @@ function auditColumns(t: TFunction): DataColumn<KeychainAuditEntry>[] {
         ),
     },
     {
+      mobile: 'hidden',
       key: 'detail',
       header: t('system.keychainAuditTable.colDetail'),
       render: (a) => <span className="text-foreground-muted">{a.detail ?? ''}</span>,

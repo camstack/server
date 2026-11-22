@@ -29,8 +29,8 @@ const ROWS: readonly Row[] = Array.from({ length: 7 }, (_, i) => ({
 }))
 
 const COLUMNS: readonly DataColumn<Row>[] = [
-  { key: 'id', header: 'Id', render: (r) => r.id, sortValue: (r) => r.id },
-  { key: 'n', header: 'N', render: (r) => String(r.n), sortValue: (r) => r.n },
+  { mobile: 'primary', key: 'id', header: 'Id', render: (r) => r.id, sortValue: (r) => r.id },
+  { mobile: 'keep', key: 'n', header: 'N', render: (r) => String(r.n), sortValue: (r) => r.n },
 ]
 
 const LABELS = {

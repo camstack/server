@@ -50,12 +50,14 @@ export function storageColumns(labels: {
   return [
     {
       key: 'capacity',
+      mobile: 'hidden',
       header: labels.capacity,
       notSortableReason: labels.capacity,
       render: (row) => <CapacityCell row={row} />,
     },
     {
       key: 'mode',
+      mobile: 'detail',
       header: labels.mode,
       nowrap: true,
       notSortableReason: labels.mode,

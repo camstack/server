@@ -72,6 +72,7 @@ function lift<R>(
 ): DataColumn<UnifiedRuleRow> {
   return {
     key: column.key,
+    mobile: column.mobile,
     ...(column.header !== undefined ? { header: column.header } : {}),
     ...(column.headerRender !== undefined ? { headerRender: column.headerRender } : {}),
     ...(column.align !== undefined ? { align: column.align } : {}),
@@ -109,6 +110,7 @@ function sharedColumn(
   return {
     key,
     header,
+    mobile: event?.mobile ?? 'hidden',
     ...(event?.align !== undefined ? { align: event.align } : {}),
     ...(event?.nowrap !== undefined ? { nowrap: event.nowrap } : {}),
     render: (row, index) => {
@@ -148,6 +150,7 @@ function producerWhenLabel(row: UnifiedRuleRow): string | null {
 function whenColumn(deps: UnifiedColumnsDeps): DataColumn<UnifiedRuleRow> {
   const trigger = columnOf(ruleColumns(deps.event), 'trigger')
   return {
+    mobile: 'detail',
     key: 'when',
     header: i18n.t('system.unifiedRulesColumns.when', 'When'),
     render: (row, index) => {
@@ -164,6 +167,7 @@ function allColumns(deps: UnifiedColumnsDeps): readonly DataColumn<UnifiedRuleRo
   return [
     sharedColumn('name', 'Name', deps),
     {
+      mobile: 'detail',
       key: 'type',
       header: i18n.t('system.unifiedRulesColumns.type', 'Type'),
       nowrap: true,

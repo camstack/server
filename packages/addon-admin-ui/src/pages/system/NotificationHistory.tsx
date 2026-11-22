@@ -418,6 +418,7 @@ function historyColumns(
 ): readonly DataColumn<NcHistoryEntry>[] {
   return [
     {
+      mobile: 'detail',
       key: 'when',
       header: i18n.t('system.notificationHistory.when', 'When'),
       nowrap: true,
@@ -428,11 +429,13 @@ function historyColumns(
       ),
     },
     {
+      mobile: 'primary',
       key: 'rule',
       header: i18n.t('system.notificationHistory.rule', 'Rule'),
       render: (e) => <span className="text-xs font-medium text-foreground">{e.ruleName}</span>,
     },
     {
+      mobile: 'detail',
       key: 'camera',
       header: i18n.t('system.notificationHistory.camera', 'Camera'),
       nowrap: true,
@@ -441,6 +444,7 @@ function historyColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'subject',
       header: i18n.t('system.notificationHistory.notification', 'Notification'),
       render: (e) => {
@@ -458,6 +462,7 @@ function historyColumns(
       },
     },
     {
+      mobile: 'keep',
       key: 'status',
       header: i18n.t('system.notificationHistory.status', 'Status'),
       nowrap: true,
@@ -471,6 +476,7 @@ function historyColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'error',
       header: i18n.t('system.notificationHistory.detail', 'Detail'),
       render: (e) =>

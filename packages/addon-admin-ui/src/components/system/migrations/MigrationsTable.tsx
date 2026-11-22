@@ -44,6 +44,7 @@ export function MigrationsTable({ rows, onOpen }: MigrationsTableProps): ReactNo
   const columns = useMemo<DataColumn<MigrationRow>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'id',
         header: t('migrations.col.id', 'Migration'),
         sortValue: (r) => r.id,
@@ -64,30 +65,35 @@ export function MigrationsTable({ rows, onOpen }: MigrationsTableProps): ReactNo
         ),
       },
       {
+        mobile: 'detail',
         key: 'owner',
         header: t('migrations.col.owner', 'Owner'),
         sortValue: (r) => r.owner,
         render: (r) => r.owner,
       },
       {
+        mobile: 'detail',
         key: 'status',
         header: t('migrations.col.status', 'Status'),
         sortValue: (r) => statusRank(r.status),
         render: (r) => <MigrationStatusBadge status={r.status} />,
       },
       {
+        mobile: 'hidden',
         key: 'level',
         header: t('migrations.col.level', 'Level'),
         sortValue: (r) => r.meta?.level ?? null,
         render: (r) => r.meta?.level ?? '—',
       },
       {
+        mobile: 'hidden',
         key: 'body',
         header: t('migrations.col.body', 'Body'),
         sortValue: (r) => r.meta?.bodyKind ?? null,
         render: (r) => r.meta?.bodyKind ?? '—',
       },
       {
+        mobile: 'hidden',
         key: 'applied',
         header: t('migrations.col.applied', 'Applied'),
         sortValue: (r) => r.appliedAt,

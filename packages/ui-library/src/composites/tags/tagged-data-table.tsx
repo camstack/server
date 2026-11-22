@@ -51,6 +51,7 @@ export function TaggedDataTable<T>({
 
   const tagsColumn: DataColumn<T> = {
     key: 'tags',
+    mobile: 'detail',
     header: uiText('uiLibrary.tags.column', 'Tags'),
     nowrap: false,
     render: (row) => <TagChipList tags={getTags(row)} entries={registry.entries} />,

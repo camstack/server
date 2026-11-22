@@ -30,10 +30,14 @@
  * `header` (e.g. for a sortable click affordance).
  *
  * ── Narrow viewports ──────────────────────────────────────────────────────
- * The table stays a table. The wrapper is `overflow-x-auto`, so a phone
- * scrolls the columns sideways INSIDE the table — the page body never moves
- * sideways, and the cells stay one line (`whitespace-nowrap`). That is the
- * only rendering — there is no card list and no per-table switch.
+ * The table stays a table — never a card list — and on a phone (below `sm`)
+ * it does NOT scroll sideways: every column declares what it does there with
+ * `mobile` (`primary`, `keep`, `detail`, `hidden`). The primary column takes
+ * the free width and shows its value in full (it may wrap); the kept columns
+ * stay beside it on one line; the detail columns are read in one muted,
+ * truncated line under the primary value; the hidden ones are not shown. From
+ * `sm` up nothing changes: one line per row, `minWidthPx`, and the wrapper's
+ * `overflow-x-auto` for a table wider than its container (D862, as amended).
  *
  * ── Scrolling the BODY, not the page ──────────────────────────────────────
  * `maxBodyHeight` caps the table and scrolls its rows INSIDE the container
@@ -47,6 +51,7 @@
  */
 import { Fragment, type JSX, type ReactNode, useMemo, useState } from 'react'
 import type { RowOperationState } from '../hooks/use-row-operations'
+import { useIsPhone } from '../hooks/use-is-mobile'
 import { DataTablePager } from './data-table-pager'
 import {
   type DataTablePaginationLabels,
@@ -102,7 +107,23 @@ export interface DataColumn<T> {
    * ordering that looks authoritative and is not.
    */
   readonly notSortableReason?: string
+  /**
+   * What this column does below `sm` (a phone). The table stays a table:
+   *   - `primary` — the row's identity; takes the free width and is shown in
+   *     full (it may wrap to a second line).
+   *     Exactly one per table.
+   *   - `keep`    — stays a column (a status, the row's main control, the
+   *     actions trigger). At most three.
+   *   - `detail`  — leaves the column strip and is read in the muted second
+   *     line under the primary value.
+   *   - `hidden`  — not shown on a phone; the row's page or expansion has it.
+   * Required: a column with no declared phone behaviour is how a table ends
+   * up wider than the screen (`scripts/check-table-mobile-roles.ts`).
+   */
+  readonly mobile: DataColumnMobileRole
 }
+
+export type DataColumnMobileRole = 'primary' | 'keep' | 'detail' | 'hidden'
 
 export interface DataTableProps<T> {
   readonly columns: readonly DataColumn<T>[]
@@ -199,6 +220,20 @@ export interface DataTableProps<T> {
  */
 export const TABLE_SCROLL_MAX_H = 'max-h-[60vh]' as const
 
+/**
+ * What a column's `<th>` and `<td>` do below `sm`, by role. `primary` is the
+ * flexible column (`w-full max-w-0`: it takes what the kept columns leave) and
+ * the only cell that may wrap, so a name is never cut; a floor keeps greedy
+ * neighbours from crushing it.
+ */
+const PHONE_CELL_CLASS: Record<DataColumnMobileRole, string> = {
+  primary:
+    'max-sm:w-full max-sm:max-w-0 max-sm:min-w-[7rem] max-sm:whitespace-normal max-sm:break-words',
+  keep: 'max-sm:whitespace-nowrap',
+  detail: '',
+  hidden: '',
+}
+
 const ALIGN_CLASS: Record<NonNullable<DataColumn<unknown>['align']>, string> = {
   left: 'text-left',
   right: 'text-right',
@@ -270,10 +305,21 @@ export function DataTable<T>({
       <DataTablePager page={paged} labels={paginationLabels} onPageChange={changePage} />
     ) : null
 
+  // ── The phone rendering (below `sm`) ──────────────────────────────────────
+  // Still a table. Each column's `mobile` role decides what it does there. The
+  // folded columns are left out of the markup rather than hidden by CSS: a
+  // detail column is read under the primary value, and mounting it twice would
+  // double its controls and its test ids.
+  const phone = useIsPhone()
+  const detailColumns = phone ? columns.filter((col) => col.mobile === 'detail') : []
+
   const keyOf = (row: T): string =>
     String(rowKey ? rowKey(row, rows.indexOf(row)) : rows.indexOf(row))
-  const shownColumns: readonly DataColumn<T>[] =
+  const allColumns: readonly DataColumn<T>[] =
     selection === undefined ? columns : [selectionColumn(selection, pageRows, keyOf), ...columns]
+  const shownColumns: readonly DataColumn<T>[] = phone
+    ? allColumns.filter((col) => col.mobile === 'primary' || col.mobile === 'keep')
+    : allColumns
 
   if (rows.length === 0 && emptyMessage) {
     return (
@@ -309,7 +355,7 @@ export function DataTable<T>({
         // bottom rule, and they abut) and belong to the cell, so the pinned
         // header keeps its underline. Left alone when nothing is pinned:
         // collapse is what every other table in the app already renders as.
-        className={`w-full text-xs ${scrolls ? 'border-separate border-spacing-0' : ''}`}
+        className={`w-full text-xs ${scrolls ? 'border-separate border-spacing-0' : ''} max-sm:!min-w-0`}
         style={{ minWidth: `${minWidthPx}px` }}
       >
         <thead className="bg-surface">
@@ -336,6 +382,7 @@ export function DataTable<T>({
                     ALIGN_CLASS[align],
                     nowrap ? 'whitespace-nowrap' : '',
                     col.width ?? '',
+                    PHONE_CELL_CLASS[col.mobile],
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -394,11 +441,34 @@ export function DataTable<T>({
                           'px-2 sm:px-3 py-2 text-foreground border-b border-border',
                           ALIGN_CLASS[align],
                           nowrap ? 'whitespace-nowrap' : '',
+                          PHONE_CELL_CLASS[col.mobile],
                         ]
                           .filter(Boolean)
                           .join(' ')}
                       >
-                        {col.render(row, rowIndex)}
+                        {col.mobile === 'primary' ? (
+                          <>
+                            {col.render(row, rowIndex)}
+                            {detailColumns.length > 0 && (
+                              <div
+                                data-phone-detail=""
+                                className="mt-0.5 flex max-h-5 items-start gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-normal text-foreground-subtle"
+                              >
+                                {detailColumns.map((detail) => (
+                                  <span
+                                    key={detail.key}
+                                    data-phone-detail-of={detail.key}
+                                    className="min-w-0 shrink truncate empty:hidden"
+                                  >
+                                    {detail.render(row, rowIndex)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          col.render(row, rowIndex)
+                        )}
                       </td>
                     )
                   })}

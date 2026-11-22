@@ -293,6 +293,7 @@ export function NodeInferenceDevices({
 
   const columns: readonly DataColumn<DeviceTableRow>[] = [
     {
+      mobile: 'primary',
       key: 'device',
       header: t('placementBoard.nodeInferenceDevices.colDevice', 'Device'),
       // The key and the root model wrap under the name rather than push the
@@ -302,6 +303,7 @@ export function NodeInferenceDevices({
       render: (row) => <DeviceCell row={row} steps={draft[row.device.key]?.steps} />,
     },
     {
+      mobile: 'detail',
       key: 'state',
       header: t('placementBoard.nodeInferenceDevices.colState', 'State'),
       sortValue: (row) => row.state,
@@ -314,6 +316,7 @@ export function NodeInferenceDevices({
       ),
     },
     {
+      mobile: 'hidden',
       key: 'share',
       header: t('placementBoard.nodeInferenceDevices.colShare', 'Share'),
       align: 'right',
@@ -321,6 +324,7 @@ export function NodeInferenceDevices({
       render: (row) => <ShareCell row={row} sourceLabel={sourceLabel} />,
     },
     {
+      mobile: 'hidden',
       key: 'sessions',
       header: t('placementBoard.nodeInferenceDevices.colSessions', 'Sessions'),
       align: 'right',
@@ -337,6 +341,7 @@ export function NodeInferenceDevices({
       ),
     },
     {
+      mobile: 'detail',
       key: 'cap',
       header: t('placementBoard.nodeInferenceDevices.colCap', 'Max sessions'),
       notSortableReason: t(
@@ -381,6 +386,7 @@ export function NodeInferenceDevices({
       },
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: t('placementBoard.nodeInferenceDevices.colEnabled', 'Enabled'),
       align: 'right',

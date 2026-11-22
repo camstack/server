@@ -29,10 +29,16 @@ export function PageSizeSelect({
 }: PageSizeSelectProps): ReactNode {
   const t = useUiText()
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <span aria-hidden="true">{t('uiLibrary.pageSizeSelect.perPage', 'Per page')}</span>
+    <div className="inline-flex shrink-0 items-center gap-1.5">
+      <span aria-hidden="true" className="whitespace-nowrap">
+        {t('uiLibrary.pageSizeSelect.perPage', 'Per page')}
+      </span>
       <Select
         aria-label={ariaLabel}
+        // A fixed width: the trigger is `w-full`, and inside this inline row it
+        // would otherwise either take the label's room (the label then broke
+        // onto two lines) or collapse and lose its chevron.
+        wrapperClassName="w-16"
         value={value}
         onChange={(e) => onChange(Number.parseInt(e.target.value, 10))}
         className="h-7 px-1.5 rounded-md border border-border bg-surface text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"

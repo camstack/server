@@ -266,6 +266,7 @@ export function AutomationsTab({
   const columns: DataColumn<CoreBlock>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('build.automationsTab.automation', 'Automation'),
         nowrap: false,
@@ -283,6 +284,7 @@ export function AutomationsTab({
         sortValue: (block) => block.name,
       },
       {
+        mobile: 'detail',
         key: 'trigger',
         header: t('build.automationsTab.trigger', 'Trigger'),
         render: (block) => {
@@ -292,12 +294,14 @@ export function AutomationsTab({
         notSortableReason: t('build.automationsTab.triggerNotSortable', 'Read from the recipe'),
       },
       {
+        mobile: 'hidden',
         key: 'lastRun',
         header: t('build.automationsTab.lastRun', 'Last run'),
         render: (block) => <AutomationLastRunCell blockId={block.id} />,
         notSortableReason: t('build.automationsTab.lastRunNotSortable', 'Read per automation'),
       },
       {
+        mobile: 'keep',
         key: 'enabled',
         header: t('build.automationsTab.enabled', 'Enabled'),
         render: (block) => (
@@ -310,6 +314,7 @@ export function AutomationsTab({
         sortValue: (block) => (block.enabled ? 1 : 0),
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

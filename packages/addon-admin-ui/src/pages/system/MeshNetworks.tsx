@@ -42,6 +42,7 @@ export function MeshNetworksPage(): ReactElement {
       install={{ capability: CAPABILITY, label: t('system.meshNetworks.addMesh', 'Add mesh') }}
       extraColumns={[
         {
+          mobile: 'detail',
           key: 'mesh-state',
           header: t('system.meshNetworks.connectionState', 'Mesh'),
           notSortableReason: t(

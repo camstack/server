@@ -84,6 +84,9 @@ export interface DeviceItemHeaderProps {
   readonly nameForm?: DeviceNameForm
   /** A last secondary line under the name (the table row's tag chips, D1054). */
   readonly below?: ReactNode
+  /** Below `md` the name is shown in FULL and may wrap; from `md` up it is one
+   *  truncated line. The table row sets it: a phone row never cuts a name. */
+  readonly fullNameBelowMd?: boolean
 }
 
 export function DeviceItemHeader({
@@ -100,6 +103,7 @@ export function DeviceItemHeader({
   stacked = false,
   nameForm = 'compact',
   below,
+  fullNameBelowMd = false,
 }: DeviceItemHeaderProps): ReactNode {
   const t = useUiText()
   // A Container shows its primary child's icon; resolve that child set from the
@@ -123,7 +127,12 @@ export function DeviceItemHeader({
   const lineClass = 'truncate'
   const nameParent =
     nameForm === 'nested' && parent !== null
-      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      ? {
+          id: parent.id,
+          name: parent.name,
+          type: parent.type ?? 'unknown',
+          stableId: '',
+        }
       : undefined
   const parentLabel = useDeviceLabelById(parent?.id ?? 0, 'compact', parent?.name)
   return (
@@ -181,7 +190,10 @@ export function DeviceItemHeader({
               'font-semibold text-foreground',
               stacked
                 ? 'text-[13px] leading-snug line-clamp-2 break-words'
-                : cn(lineClass, variant === 'minimal' ? 'text-[10.5px]' : 'text-[11px]'),
+                : cn(
+                    fullNameBelowMd ? 'max-md:break-words md:truncate' : lineClass,
+                    variant === 'minimal' ? 'text-[10.5px]' : 'text-[11px]',
+                  ),
             )}
           />
         </div>

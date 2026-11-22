@@ -34,10 +34,7 @@ export function ControlColumn({
     return (
       <div
         {...rest}
-        className={cn(
-          'inline-flex flex-wrap items-center justify-end gap-1.5 md:flex-nowrap',
-          className,
-        )}
+        className={cn('inline-flex flex-nowrap items-center justify-end gap-1.5', className)}
       >
         {children}
       </div>
@@ -291,7 +288,10 @@ export function GripTrack({ fraction, color, readOnly }: GripTrackProps): ReactN
     <div className="relative h-2 w-full rounded-full bg-border">
       <div
         className="absolute left-0 top-0 h-2 rounded-full"
-        style={{ width: `${fraction * 100}%`, background: color ?? 'var(--color-primary)' }}
+        style={{
+          width: `${fraction * 100}%`,
+          background: color ?? 'var(--color-primary)',
+        }}
       />
       {readOnly !== true && (
         <div

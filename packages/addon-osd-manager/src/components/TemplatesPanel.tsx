@@ -92,12 +92,14 @@ export function TemplatesPanel({
   const columns: DataColumn<OsdNamedTemplate>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('templates.colName'),
         render: (row) => <span className="font-medium text-foreground">{row.name}</span>,
         sortValue: (row) => row.name,
       },
       {
+        mobile: 'detail',
         key: 'text',
         header: t('templates.colText'),
         render: (row) => (
@@ -108,6 +110,7 @@ export function TemplatesPanel({
         sortValue: (row) => row.text,
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

@@ -388,6 +388,7 @@ export function timelapseColumns(
 ): readonly DataColumn<TimelapseRuleView>[] {
   return [
     {
+      mobile: 'primary',
       key: 'name',
       header: i18n.t('system.notificationTimelapses.timelapse', 'Timelapse'),
       render: (rule) => (
@@ -404,6 +405,7 @@ export function timelapseColumns(
       ),
     },
     {
+      mobile: 'detail',
       key: 'cameras',
       header: i18n.t('system.notificationTimelapses.cameras', 'Cameras'),
       render: (rule) => (
@@ -417,6 +419,7 @@ export function timelapseColumns(
       ),
     },
     {
+      mobile: 'detail',
       key: 'schedule',
       header: i18n.t('system.notificationTimelapses.window', 'Window'),
       render: (rule) => (
@@ -426,6 +429,7 @@ export function timelapseColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'sampling',
       header: i18n.t('system.notificationTimelapses.sampling', 'Sampling'),
       nowrap: true,
@@ -450,6 +454,7 @@ export function timelapseColumns(
       },
     },
     {
+      mobile: 'hidden',
       key: 'targets',
       header: i18n.t('system.notificationTimelapses.targets', 'Targets'),
       render: (rule) => {
@@ -465,6 +470,7 @@ export function timelapseColumns(
       },
     },
     {
+      mobile: 'hidden',
       key: 'lastRun',
       header: i18n.t('system.notificationTimelapses.lastRun', 'Last run'),
       nowrap: true,
@@ -478,6 +484,7 @@ export function timelapseColumns(
       ),
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: i18n.t('system.notificationTimelapses.on', 'On'),
       align: 'center',
@@ -496,6 +503,7 @@ export function timelapseColumns(
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

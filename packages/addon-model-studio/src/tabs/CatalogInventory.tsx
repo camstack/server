@@ -129,6 +129,7 @@ export function CatalogInventory({ trpc, refreshKey, provider, nodeId }: Catalog
   const columns: readonly DataColumn<InventoryRow>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'model',
         header: t('inventory.cols.model'),
         nowrap: false,
@@ -136,6 +137,7 @@ export function CatalogInventory({ trpc, refreshKey, provider, nodeId }: Catalog
         render: (r) => <ModelCell row={r} />,
       },
       {
+        mobile: 'detail',
         key: 'formats',
         header: t('inventory.cols.formats'),
         nowrap: false,
@@ -154,6 +156,7 @@ export function CatalogInventory({ trpc, refreshKey, provider, nodeId }: Catalog
         ),
       },
       {
+        mobile: 'detail',
         key: 'size',
         header: t('inventory.cols.size'),
         align: 'right',
@@ -161,6 +164,7 @@ export function CatalogInventory({ trpc, refreshKey, provider, nodeId }: Catalog
         render: (r) => <span className="font-mono text-[11px]">{formatMB(r.sizeMB)}</span>,
       },
       {
+        mobile: 'keep',
         key: 'actions',
         align: 'right',
         render: (r) => (

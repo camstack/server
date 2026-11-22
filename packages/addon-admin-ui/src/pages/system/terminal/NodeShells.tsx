@@ -301,6 +301,7 @@ export function NodeShells() {
 
   const columns: readonly DataColumn<NodeShellRow>[] = [
     {
+      mobile: 'primary',
       key: 'node',
       header: t('terminalPage.colNode', 'Node'),
       sortValue: (row) => row.name.toLowerCase(),
@@ -318,6 +319,7 @@ export function NodeShells() {
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       align: 'right',
       notSortableReason: t('terminalPage.actionsNotSortable', 'Actions'),

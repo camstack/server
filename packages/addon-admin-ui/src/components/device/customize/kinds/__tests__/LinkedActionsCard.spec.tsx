@@ -64,24 +64,28 @@ function Rows(): ReactElement {
   const state = useLinkedActions(CAMERA)
   const columns: readonly DataColumn<LinkedActionTableLine>[] = [
     {
+      mobile: 'primary',
       key: 'item',
       header: 'Item',
       notSortableReason: 'item',
       render: (line) => <LinkedActionItem line={line} />,
     },
     {
+      mobile: 'keep',
       key: 'value',
       header: 'Value',
       notSortableReason: 'value',
       render: (line) => <LinkedActionValue line={line} />,
     },
     {
+      mobile: 'hidden',
       key: 'source',
       header: 'Source',
       notSortableReason: 'source',
       render: (line) => <LinkedActionSource line={line} />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: 'Actions',
       notSortableReason: 'actions',

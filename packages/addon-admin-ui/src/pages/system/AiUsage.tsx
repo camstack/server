@@ -61,18 +61,21 @@ export function AiUsagePage() {
   const columns = useMemo(
     (): readonly DataColumn<LlmUsageRollup>[] => [
       {
+        mobile: 'detail',
         key: 'day',
         header: t('ai.colDay', 'Day'),
         nowrap: true,
         render: (r) => <span className="tabular-nums">{r.day}</span>,
       },
       {
+        mobile: 'primary',
         key: 'consumer',
         header: t('ai.colConsumer', 'Consumer'),
         nowrap: true,
         render: (r) => <span className="text-foreground">{r.consumer}</span>,
       },
       {
+        mobile: 'detail',
         key: 'profile',
         header: t('ai.colProfile', 'Profile'),
         render: (r) => (
@@ -80,6 +83,7 @@ export function AiUsagePage() {
         ),
       },
       {
+        mobile: 'keep',
         key: 'calls',
         header: t('ai.colCalls', 'Calls'),
         align: 'right',
@@ -87,6 +91,7 @@ export function AiUsagePage() {
         render: (r) => <span className="tabular-nums">{String(r.calls)}</span>,
       },
       {
+        mobile: 'hidden',
         key: 'okErr',
         header: t('ai.colOkErr', 'OK / err'),
         align: 'right',
@@ -98,6 +103,7 @@ export function AiUsagePage() {
         ),
       },
       {
+        mobile: 'keep',
         key: 'tokens',
         header: t('ai.colTokens', 'In / out tok'),
         align: 'right',
@@ -107,6 +113,7 @@ export function AiUsagePage() {
         ),
       },
       {
+        mobile: 'hidden',
         key: 'latency',
         header: t('ai.colAvgMs', 'Avg ms'),
         align: 'right',

@@ -332,6 +332,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
 
   const columns: readonly DataColumn<TableLine>[] = [
     {
+      mobile: 'primary',
       key: 'item',
       header: t('customize.table.col.item'),
       notSortableReason: t('customize.table.col.item'),
@@ -383,6 +384,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       },
     },
     {
+      mobile: 'keep',
       key: 'value',
       header: t('customize.table.col.value'),
       notSortableReason: t('customize.table.col.value'),
@@ -422,6 +424,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       },
     },
     {
+      mobile: 'detail',
       key: 'source',
       header: t('customize.table.col.source'),
       notSortableReason: t('customize.table.col.source'),
@@ -454,6 +457,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       },
     },
     {
+      mobile: 'keep',
       key: 'actions',
       // The pencil and the bin need no caption on a phone: the header would only push the
       // table past the viewport (D43 — the concession names its breakpoint).

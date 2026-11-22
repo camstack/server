@@ -139,6 +139,7 @@ interface VehiclesColumnsDeps {
 function vehiclesColumns(deps: VehiclesColumnsDeps): readonly DataColumn<Vehicle>[] {
   return [
     {
+      mobile: 'primary',
       key: 'vehicle',
       header: i18n.t('detectionIntelligence.vehiclesList.vehicle', 'Vehicle'),
       sortValue: (vehicle) => vehicle.name,
@@ -165,6 +166,7 @@ function vehiclesColumns(deps: VehiclesColumnsDeps): readonly DataColumn<Vehicle
       ),
     },
     {
+      mobile: 'detail',
       key: 'samples',
       header: i18n.t('detectionIntelligence.vehiclesList.plates', 'Plates'),
       align: 'center',
@@ -177,6 +179,7 @@ function vehiclesColumns(deps: VehiclesColumnsDeps): readonly DataColumn<Vehicle
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

@@ -389,6 +389,7 @@ export function InstancesTable({
     () => [
       {
         key: 'name',
+        mobile: 'primary',
         // A fixed row's description is prose: it wraps inside the cell instead of widening the table.
         nowrap: false,
         header: t('providerInstances.colName', 'Name'),
@@ -417,6 +418,7 @@ export function InstancesTable({
       },
       {
         key: 'provider',
+        mobile: 'hidden',
         header: t('providerInstances.colProvider', 'Provider'),
         sortValue: (row) => row.providerName,
         render: (row) => <span className="text-foreground-muted">{row.providerName}</span>,
@@ -425,6 +427,7 @@ export function InstancesTable({
         ? [
             {
               key: 'kind',
+              mobile: 'hidden' as const,
               header: t('providerInstances.colKind', 'Kind'),
               sortValue: (row: PanelRow) => kindLabelOf(row, defaultKindLabel),
               render: (row: PanelRow) => {
@@ -449,6 +452,7 @@ export function InstancesTable({
         : []),
       {
         key: 'state',
+        mobile: 'detail',
         header: t('instances.colStatus', 'Status'),
         notSortableReason: t(
           'providerInstances.stateNotSortable',
@@ -465,6 +469,7 @@ export function InstancesTable({
       },
       {
         key: 'on',
+        mobile: 'keep',
         header: t('providerInstances.colOn', 'On'),
         notSortableReason: t(
           'providerInstances.onNotSortable',
@@ -480,6 +485,7 @@ export function InstancesTable({
       ...(extraColumns ?? []),
       {
         key: 'actions',
+        mobile: 'keep',
         align: 'right',
         notSortableReason: t('providerInstances.actionsNotSortable', 'Row actions are not values.'),
         render: (row) => (

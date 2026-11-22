@@ -130,13 +130,12 @@ export function TableLayout({
     return m
   }, [devices])
   return (
-    // ONE horizontal scroll context for the whole table, not one per row: the
-    // columns must stay aligned with their headers, and an operator dragging a
-    // row sideways expects the header to come with it. Below `md` the NAME
-    // column is uncapped (full device names — see
-    // `NAME_COLUMN_TRUNCATE_BREAKPOINT`), so the table is routinely wider than
-    // the viewport there and this is the element that scrolls.
-    <div className="rounded-lg border border-border bg-surface overflow-x-auto">
+    // From `md` up: ONE horizontal scroll context for the whole table, not one
+    // per row, so the columns stay aligned with their headers. Below `md` the
+    // table does not scroll sideways at all (see `columns.ts`); the wrapper
+    // CLIPS there, because each row parks its swipe tray just past the right
+    // edge and that must not widen the page.
+    <div className="rounded-lg border border-border bg-surface overflow-x-clip md:overflow-x-auto">
       <table className="w-full border-collapse">
         <thead>
           {/* Secondary columns fold away as the viewport narrows so the table
@@ -239,7 +238,10 @@ export function TableLayout({
             const parentType =
               d.parentDeviceId !== null ? (parentTypeById.get(d.parentDeviceId) ?? null) : null
             const selection = selectable
-              ? { selected: activeSelected.has(d.id), onToggle: () => onToggleSelection(d.id) }
+              ? {
+                  selected: activeSelected.has(d.id),
+                  onToggle: () => onToggleSelection(d.id),
+                }
               : undefined
             return (
               <TableRowGroup

@@ -242,18 +242,21 @@ function LiveState(props: {
   )
   const columns: readonly DataColumn<(typeof rows)[number]>[] = [
     {
+      mobile: 'detail',
       key: 'channel',
       header: t('detail.colChannel'),
       render: (row) => channelLabel(row.channel),
       sortValue: (row) => row.channel.index,
     },
     {
+      mobile: 'primary',
       key: 'parameter',
       header: t('detail.colParameter'),
       render: (row) => row.param.parameter,
       sortValue: (row) => row.param.parameter,
     },
     {
+      mobile: 'keep',
       key: 'value',
       header: t('detail.colValue'),
       align: 'right',
@@ -551,6 +554,7 @@ function LinksBlock(props: {
   )
   const columns: readonly DataColumn<CcuLink>[] = [
     {
+      mobile: 'primary',
       key: 'sender',
       header: t('detail.colSender'),
       nowrap: false,
@@ -558,6 +562,7 @@ function LinksBlock(props: {
       sortValue: (row) => row.sender.address,
     },
     {
+      mobile: 'detail',
       key: 'receiver',
       header: t('detail.colReceiver'),
       nowrap: false,

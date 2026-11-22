@@ -65,18 +65,21 @@ export function CcuOverviewTab(props: {
 
   const interfaceColumns: readonly DataColumn<InterfaceRow>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('overview.colInterface'),
       render: (row) => row.name,
       sortValue: (row) => row.name,
     },
     {
+      mobile: 'detail',
       key: 'state',
       header: t('overview.colState'),
       render: (row) => <StatusBadge status={connectionStatus(row.connected)} />,
       sortValue: (row) => (row.connected === null ? null : row.connected ? 1 : 0),
     },
     {
+      mobile: 'keep',
       key: 'duty',
       header: t('overview.colDutyCycle'),
       align: 'right',
@@ -84,18 +87,21 @@ export function CcuOverviewTab(props: {
       sortValue: (row) => row.dutyCycle,
     },
     {
+      mobile: 'hidden',
       key: 'firmware',
       header: t('overview.colFirmware'),
       render: (row) => textOrDash(row.firmware),
       sortValue: (row) => row.firmware,
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: t('overview.colType'),
       render: (row) => textOrDash(row.type ?? row.info),
       sortValue: (row) => row.type ?? row.info,
     },
     {
+      mobile: 'hidden',
       key: 'gateways',
       header: t('overview.colGateways'),
       align: 'right',
@@ -106,24 +112,28 @@ export function CcuOverviewTab(props: {
 
   const messageColumns: readonly DataColumn<ServiceMessage>[] = [
     {
+      mobile: 'detail',
       key: 'time',
       header: t('overview.colWhen'),
       render: (row) => dateTimeOrDash(row.timestamp),
       sortValue: (row) => row.timestamp,
     },
     {
+      mobile: 'primary',
       key: 'type',
       header: t('overview.colMessage'),
       render: (row) => <Badge variant="warning">{textOrDash(row.type)}</Badge>,
       sortValue: (row) => row.type,
     },
     {
+      mobile: 'detail',
       key: 'device',
       header: t('overview.colDevice'),
       render: (row) => textOrDash(row.name ?? row.address),
       sortValue: (row) => row.name ?? row.address,
     },
     {
+      mobile: 'keep',
       key: 'ack',
       header: '',
       align: 'right',

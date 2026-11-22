@@ -115,12 +115,14 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
   const columns: DataColumn<ActionEntry>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('actions.list.name', 'Name'),
         render: (entry) => <span className="font-medium">{entry.name}</span>,
         sortValue: (entry) => entry.name,
       },
       {
+        mobile: 'detail',
         key: 'source',
         header: t('actions.list.source', 'Source'),
         render: (entry) =>
@@ -132,6 +134,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         sortValue: (entry) => entry.addonId,
       },
       {
+        mobile: 'hidden',
         key: 'lastRun',
         header: t('actions.list.lastRun', 'Last run'),
         render: (entry) =>
@@ -143,6 +146,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         sortValue: (entry) => entry.status.lastRunAt,
       },
       {
+        mobile: 'detail',
         key: 'status',
         header: t('actions.list.status', 'Status'),
         render: (entry) => {
@@ -156,6 +160,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         notSortableReason: t('actions.list.statusNotSortable', 'Derived from the latest run'),
       },
       {
+        mobile: 'keep',
         key: 'run',
         align: 'right',
         render: (entry) => (

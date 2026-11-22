@@ -134,6 +134,7 @@ export function CameraAssignmentsTable() {
 
   const columns: readonly DataColumn<ClusterAssignmentRow>[] = [
     {
+      mobile: 'primary',
       key: 'camera',
       header: t('pipeline.cameraAssignmentsTable.camera', 'Camera'),
       width: 'w-44',
@@ -152,6 +153,7 @@ export function CameraAssignmentsTable() {
       ),
     },
     {
+      mobile: 'keep',
       key: 'placement',
       header: t('pipeline.cameraAssignmentsTable.placement', 'Placement'),
       width: 'w-80',
@@ -172,6 +174,7 @@ export function CameraAssignmentsTable() {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'roles',
       header: t('pipeline.cameraAssignmentsTable.rolesHere', 'Roles here'),
       notSortableReason: 'A set of roles has no single order.',
@@ -186,6 +189,7 @@ export function CameraAssignmentsTable() {
       ),
     },
     {
+      mobile: 'detail',
       key: 'resolved',
       header: t('pipeline.cameraAssignmentsTable.runningOn', 'Running on'),
       width: 'w-40',
@@ -193,6 +197,7 @@ export function CameraAssignmentsTable() {
       render: (row) => <ResolvedPlacementCell state={row.pipeline} nameOf={nameOf} />,
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('pipeline.cameraAssignmentsTable.status', 'Status'),
       width: 'w-40',
@@ -200,6 +205,7 @@ export function CameraAssignmentsTable() {
       render: (row) => <AssignmentStatusCell snap={snapshots.get(row.deviceId)} />,
     },
     {
+      mobile: 'hidden',
       key: 'brokers',
       header: '',
       align: 'right',

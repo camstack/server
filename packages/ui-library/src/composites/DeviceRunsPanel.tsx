@@ -60,12 +60,14 @@ const formatStamp = (ms: number): string =>
 function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] {
   return [
     {
+      mobile: 'primary',
       key: 'start',
       header: t('uiLibrary.history.runs.start', 'Start'),
       render: (r) => formatStamp(r.startedAt),
       sortValue: (r) => r.startedAt,
     },
     {
+      mobile: 'hidden',
       key: 'end',
       header: t('uiLibrary.history.runs.end', 'End'),
       render: (r) =>
@@ -77,6 +79,7 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
       sortValue: (r) => r.endedAt,
     },
     {
+      mobile: 'keep',
       key: 'duration',
       header: t('uiLibrary.history.runs.duration', 'Duration'),
       align: 'right',
@@ -84,6 +87,7 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
       sortValue: (r) => runDurationMs(r, now),
     },
     {
+      mobile: 'keep',
       key: 'energy',
       header: t('uiLibrary.history.runs.energy', 'Energy'),
       align: 'right',
@@ -91,6 +95,7 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
       sortValue: (r) => r.detail.energyKwh,
     },
     {
+      mobile: 'hidden',
       key: 'peak',
       header: t('uiLibrary.history.runs.peak', 'Peak'),
       align: 'right',
@@ -98,6 +103,7 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
       sortValue: (r) => r.detail.peakW,
     },
     {
+      mobile: 'hidden',
       key: 'avg',
       header: t('uiLibrary.history.runs.avg', 'Average'),
       align: 'right',
@@ -105,6 +111,7 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
       sortValue: (r) => r.detail.avgW,
     },
     {
+      mobile: 'detail',
       key: 'outcome',
       header: t('uiLibrary.history.runs.outcome', 'Outcome'),
       render: (r) => {

@@ -38,6 +38,7 @@ export function ActiveFaults(props: {
 
   const columns: readonly DataColumn<CcuFaultRow>[] = [
     {
+      mobile: 'keep',
       key: 'severity',
       header: t('overview.colSeverity'),
       render: (row) => (
@@ -48,6 +49,7 @@ export function ActiveFaults(props: {
       sortValue: (row) => severityRank(row.severity),
     },
     {
+      mobile: 'primary',
       key: 'device',
       header: t('overview.colDevice'),
       render: (row) => (
@@ -65,6 +67,7 @@ export function ActiveFaults(props: {
       sortValue: (row) => row.name ?? row.address,
     },
     {
+      mobile: 'detail',
       key: 'fault',
       header: t('overview.colFault'),
       nowrap: false,
@@ -81,6 +84,7 @@ export function ActiveFaults(props: {
       sortValue: (row) => row.code,
     },
     {
+      mobile: 'detail',
       key: 'since',
       header: t('overview.colSince'),
       render: (row) => dateTimeOrDash(row.since),

@@ -7259,7 +7259,8 @@
     "restart": "Riavvia",
     "restart2": "Riavviare \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente.",
-    "instances": "Integrazione"
+    "instances": "Integrazione",
+    "more": "Altro"
   },
   "library": {
     "people": "Persone",
@@ -11565,6 +11566,10 @@
       "sourceGone": "Dispositivo sorgente rimosso",
       "disabled": "Collegamento disattivato",
       "hint": "L'intera capability segue questo dispositivo, non i singoli valori."
+    },
+    "deviceRow": {
+      "open": "Apri",
+      "actions": "Azioni per {{name}}"
     }
   },
   "helpers": {

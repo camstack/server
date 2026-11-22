@@ -38,6 +38,7 @@ function seriesColumn<T>(
   t: TFunction,
 ): DataColumn<T> {
   return {
+    mobile: 'primary',
     key: 'series',
     header: t('history.orphans.colSeries', 'Series'),
     render: (row) => {
@@ -76,6 +77,7 @@ export function orphanColumns(
   return [
     seriesColumn((s: DeviceHistoryOrphanSeries) => s, names, t),
     {
+      mobile: 'detail',
       key: 'reason',
       header: t('history.orphans.colReason', 'Reason'),
       render: (s) => (
@@ -98,6 +100,7 @@ export function orphanColumns(
       sortValue: (s) => s.reason,
     },
     {
+      mobile: 'hidden',
       key: 'span',
       header: t('history.orphans.colSpan', 'Recorded'),
       render: (s) => (
@@ -109,6 +112,7 @@ export function orphanColumns(
     },
     ...TIERS.map(
       (tier): DataColumn<DeviceHistoryOrphanSeries> => ({
+        mobile: 'hidden',
         key: `rows-${tier}`,
         header: tierHeader(tier, t),
         align: 'right',
@@ -158,6 +162,7 @@ export function outcomeColumns(
   return [
     seriesColumn((r: OrphanOutcomeRow) => r.series, names, t),
     {
+      mobile: 'detail',
       key: 'result',
       header: t('history.orphans.colResult', 'Result'),
       render: (r) => outcomeBadge(r.outcome, t),

@@ -159,6 +159,7 @@ interface PeopleColumnsDeps {
 function peopleColumns(deps: PeopleColumnsDeps): readonly DataColumn<Identity>[] {
   return [
     {
+      mobile: 'primary',
       key: 'person',
       header: i18n.t('detectionIntelligence.peopleList.person', 'Person'),
       sortValue: (identity) => identity.name,
@@ -186,6 +187,7 @@ function peopleColumns(deps: PeopleColumnsDeps): readonly DataColumn<Identity>[]
       ),
     },
     {
+      mobile: 'detail',
       key: 'samples',
       header: i18n.t('detectionIntelligence.peopleList.samples', 'Samples'),
       align: 'center',
@@ -198,6 +200,7 @@ function peopleColumns(deps: PeopleColumnsDeps): readonly DataColumn<Identity>[]
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

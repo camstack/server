@@ -56,6 +56,12 @@ export interface KebabMenuProps {
   readonly triggerClassName?: string
   /** Tooltip text on the trigger (defaults to "More actions"). */
   readonly title?: string
+  /**
+   * A visible label on the trigger, beside the dots ("More"). For a menu that
+   * stands in for several labelled buttons — a page header on a phone — where
+   * a bare icon would not say what it holds.
+   */
+  readonly label?: string
 }
 
 export function KebabMenu({
@@ -63,6 +69,7 @@ export function KebabMenu({
   header,
   triggerClassName,
   title = 'More actions',
+  label,
 }: KebabMenuProps): JSX.Element | null {
   const [open, setOpen] = useState(false)
   const visible = items.filter((i) => !i.hidden)
@@ -80,6 +87,7 @@ export function KebabMenu({
         )}
       >
         <MoreVertical className="h-4 w-4" />
+        {label !== undefined && <span className="pr-1 text-xs font-medium">{label}</span>}
       </PopoverTrigger>
       <PopoverContent align="end" className="min-w-[200px] p-1">
         {header && (

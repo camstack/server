@@ -68,6 +68,16 @@ const SENSOR_VALUE_TYPES: ReadonlySet<string> = new Set<string>([
   DeviceType.Presence,
 ])
 
+/**
+ * Which of a row's controls to draw. A wide row draws `all` of them inline. A
+ * phone row draws `main` inline — the one control or live value the row is
+ * about — and puts the others in its swipe tray: `lead` is the device's most
+ * important action after that (a timed run, a camera's PTZ), `rest` the
+ * remaining ones (motion-trigger toggle, reboot). Each is derived from the
+ * device's features and bound capabilities, as on the wide row.
+ */
+export type DeviceItemActionsPart = 'all' | 'main' | 'lead' | 'rest'
+
 export interface DeviceItemActionsProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly device: DeviceItemDevice
@@ -82,12 +92,15 @@ export interface DeviceItemActionsProps {
    * width under `'right'`/`'center'`; under `'table'` they take natural width.
    */
   readonly controlPlacement?: ControlPlacement
+  /** Default `all`. */
+  readonly part?: DeviceItemActionsPart
 }
 
 export function DeviceItemActions({
   trpc,
   device,
   controlPlacement,
+  part = 'all',
 }: DeviceItemActionsProps): ReactNode {
   // A Container renders AS its primary child; resolve the child set from the
   // list-level context rather than a threaded prop. Hooks must run before the
@@ -113,8 +126,10 @@ export function DeviceItemActions({
     )
     const primaryChild =
       primary === null ? undefined : containerChildren.find((c) => c.id === primary.id)
-    if (primaryChild === undefined) return null
-    return <ContainerPrimaryInline trpc={trpc} child={primaryChild} placement={placement} />
+    if (primaryChild === undefined || part === 'rest') return null
+    return (
+      <ContainerPrimaryInline trpc={trpc} child={primaryChild} placement={placement} part={part} />
+    )
   }
 
   // 1. Type-specific inline control — from DEVICE_TYPE_CONTROL registry.
@@ -140,12 +155,43 @@ export function DeviceItemActions({
   // PTZ quick-action: a floating popover with the movement d-pad +
   // presets (NO auto-track — that lives in the device-detail panel).
   const showPtz = (device.features ?? []).includes('pan-tilt-zoom')
+  const timedRun =
+    InlineControl !== null && !isModelRow ? (
+      <TimedRunRowControl
+        trpc={trpc}
+        deviceId={device.id}
+        deviceType={device.type}
+        deviceRole={device.role ?? null}
+      />
+    ) : null
+
+  if (part === 'lead') {
+    return (
+      <>
+        {timedRun}
+        {showPtz && <PtzQuickAction trpc={trpc} deviceId={device.id} />}
+      </>
+    )
+  }
+  if (part === 'rest') {
+    return (
+      <>
+        {showOnMotion && (
+          <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
+        )}
+        {showReboot && (
+          <RebootQuickAction trpc={trpc} deviceId={device.id} deviceName={deviceLabel} />
+        )}
+      </>
+    )
+  }
+  const inlineExtras = part === 'all'
 
   return (
     <>
       {isSensorRow && (
         <ControlColumn align={resolveControlAlign(device.type, placement)}>
-          {showOnMotion && (
+          {inlineExtras && showOnMotion && (
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
           <SensorRowValue trpc={trpc} device={device} />
@@ -158,7 +204,7 @@ export function DeviceItemActions({
         // against the switch/slider instead of stranded across the fixed-width
         // column's empty space.
         <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
-          {showOnMotion && (
+          {inlineExtras && showOnMotion && (
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
           {isModelRow ? (
@@ -167,22 +213,17 @@ export function DeviceItemActions({
             InlineControl !== null && (
               <>
                 <TypeInlineControl trpc={trpc} device={device} InlineControl={InlineControl} />
-                <TimedRunRowControl
-                  trpc={trpc}
-                  deviceId={device.id}
-                  deviceType={device.type}
-                  deviceRole={device.role ?? null}
-                />
+                {inlineExtras && timedRun}
               </>
             )
           )}
         </ControlColumn>
       )}
-      {!isSensorRow && !isModelRow && InlineControl === null && showOnMotion && (
+      {inlineExtras && !isSensorRow && !isModelRow && InlineControl === null && showOnMotion && (
         <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
       )}
-      {showPtz && <PtzQuickAction trpc={trpc} deviceId={device.id} />}
-      {showReboot && (
+      {inlineExtras && showPtz && <PtzQuickAction trpc={trpc} deviceId={device.id} />}
+      {inlineExtras && showReboot && (
         <RebootQuickAction trpc={trpc} deviceId={device.id} deviceName={deviceLabel} />
       )}
     </>
@@ -237,14 +278,29 @@ interface ContainerPrimaryInlineProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly child: DeviceItemDevice
   readonly placement: ControlPlacement
+  readonly part: Exclude<DeviceItemActionsPart, 'rest'>
 }
 
 function ContainerPrimaryInline({
   trpc,
   child,
   placement,
+  part,
 }: ContainerPrimaryInlineProps): ReactNode {
   const isSensorRow = SENSOR_VALUE_TYPES.has(child.type)
+  const isModelRow = MODEL_ROW_TYPES.has(child.type)
+  const childControl =
+    isSensorRow || isModelRow ? null : resolveDeviceControl(child.type, child.role)
+  const timedRun =
+    childControl?.InlineControl != null ? (
+      <TimedRunRowControl
+        trpc={trpc}
+        deviceId={child.id}
+        deviceType={child.type}
+        deviceRole={child.role ?? null}
+      />
+    ) : null
+  if (part === 'lead') return timedRun
   if (isSensorRow) {
     // Mirror the sensor-row path: SensorValueAtom needs the full child row
     // (role + sourceInfo) to resolve its descriptor + live slice.
@@ -268,12 +324,7 @@ function ContainerPrimaryInline({
   return (
     <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
       <TypeInlineControl trpc={trpc} device={child} InlineControl={InlineControl} />
-      <TimedRunRowControl
-        trpc={trpc}
-        deviceId={child.id}
-        deviceType={child.type}
-        deviceRole={child.role ?? null}
-      />
+      {part === 'all' && timedRun}
     </ControlColumn>
   )
 }

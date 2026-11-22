@@ -54,12 +54,14 @@ function yesNo(value: boolean | null, yes: string, no: string): ReactNode {
 function buildResultColumns(t: UiTextFn): readonly DataColumn<EndpointTestRow>[] {
   return [
     {
+      mobile: 'primary',
       key: 'endpoint',
       header: t('uiLibrary.endpointTest.colEndpoint', 'Endpoint'),
       nowrap: false,
       render: (r) => <span className="break-all font-mono text-[11px]">{r.url}</span>,
     },
     {
+      mobile: 'detail',
       key: 'srflx',
       header: t('uiLibrary.endpointTest.colMapped', 'Mapped (srflx)'),
       render: (r) => (
@@ -69,6 +71,7 @@ function buildResultColumns(t: UiTextFn): readonly DataColumn<EndpointTestRow>[]
       ),
     },
     {
+      mobile: 'detail',
       key: 'relay',
       header: t('uiLibrary.endpointTest.colRelay', 'Relay'),
       render: (r) =>
@@ -83,12 +86,14 @@ function buildResultColumns(t: UiTextFn): readonly DataColumn<EndpointTestRow>[]
         ),
     },
     {
+      mobile: 'hidden',
       key: 'proto',
       header: t('uiLibrary.endpointTest.colProto', 'Relay protocol'),
       render: (r) =>
         r.scheme === 'stun' ? t('uiLibrary.endpointTest.na', 'n/a') : fmtText(r.relayProtocol),
     },
     {
+      mobile: 'keep',
       key: 'connect',
       header: t('uiLibrary.endpointTest.colConnect', 'Relay connect'),
       render: (r) =>
@@ -102,14 +107,16 @@ function buildResultColumns(t: UiTextFn): readonly DataColumn<EndpointTestRow>[]
           )
         ),
     },
-    { key: 'rtt', header: 'RTT', align: 'right', render: (r) => fmtMs(r.rttMs) },
+    { mobile: 'keep', key: 'rtt', header: 'RTT', align: 'right', render: (r) => fmtMs(r.rttMs) },
     {
+      mobile: 'primary',
       key: 'url',
       header: t('uiLibrary.endpointTest.colUrl', 'Event url'),
       nowrap: false,
       render: (r) => <span className="break-all font-mono text-[10px]">{fmtText(r.eventUrl)}</span>,
     },
     {
+      mobile: 'detail',
       key: 'note',
       header: t('uiLibrary.endpointTest.colNote', 'Note'),
       nowrap: false,

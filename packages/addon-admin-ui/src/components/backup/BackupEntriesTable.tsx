@@ -182,6 +182,7 @@ interface EntryColumnsDeps {
 function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
   return [
     {
+      mobile: 'keep',
       key: 'expand',
       header: '',
       width: 'w-8',
@@ -209,6 +210,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       },
     },
     {
+      mobile: 'primary',
       key: 'entry',
       header: i18n.t('backup.backupEntriesTable.entry', 'Entry'),
       sortValue: (row) => row.label,
@@ -228,6 +230,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       ),
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: i18n.t('backup.backupEntriesTable.enabled', 'Enabled'),
       width: 'w-20',
@@ -240,6 +243,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'databases',
       header: i18n.t('backup.backupEntriesTable.backsUp', 'Backs up'),
       nowrap: false,
@@ -247,6 +251,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       render: (row) => <BackupDatabaseBadges databases={selectionOfRow(row.databases)} />,
     },
     {
+      mobile: 'hidden',
       key: 'locations',
       header: i18n.t('backup.backupEntriesTable.locations', 'Locations'),
       nowrap: false,
@@ -254,6 +259,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       render: (row) => <EntryLocationsCell row={row} destById={deps.destById} />,
     },
     {
+      mobile: 'hidden',
       key: 'retention',
       header: i18n.t('backup.backupEntriesTable.retention', 'Retention'),
       width: 'w-24',
@@ -266,6 +272,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       ),
     },
     {
+      mobile: 'detail',
       key: 'schedule',
       header: i18n.t('backup.backupEntriesTable.schedule', 'Schedule'),
       width: 'w-48',
@@ -274,6 +281,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       render: (row) => <EntryScheduleCell row={row} />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

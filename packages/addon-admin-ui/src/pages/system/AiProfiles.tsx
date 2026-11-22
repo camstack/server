@@ -140,6 +140,7 @@ function profileColumns(
   const nodeOf = (row: PanelRow): string => facts(row, byId, profileNode) ?? ''
   return [
     {
+      mobile: 'primary',
       key: 'model',
       header: t('ai.colModel', 'Model'),
       sortValue: modelOf,
@@ -148,6 +149,7 @@ function profileColumns(
       ),
     },
     {
+      mobile: 'detail',
       key: 'vision',
       header: t('ai.colVision', 'Vision'),
       sortValue: (row) => (visionOf(row) ? 1 : 0),
@@ -155,6 +157,7 @@ function profileColumns(
         visionOf(row) ? <Badge variant="info">{t('ai.vision', 'vision')}</Badge> : null,
     },
     {
+      mobile: 'detail',
       key: 'node',
       header: t('ai.colNode', 'Node'),
       sortValue: nodeOf,

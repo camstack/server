@@ -142,6 +142,7 @@ export function LocationCard({
 
   const columns: readonly DataColumn<LocationCardRow>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: t('locations.columns.device'),
       notSortableReason: t('locations.columns.noSort'),
@@ -153,12 +154,14 @@ export function LocationCard({
         ),
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: t('locations.columns.type'),
       notSortableReason: t('locations.columns.noSort'),
       render: (row) => <span className="text-xs text-foreground-muted">{row.device.type}</span>,
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('locations.columns.status'),
       notSortableReason: t('locations.columns.noSort'),

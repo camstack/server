@@ -62,6 +62,7 @@ describe('RecordEntriesPanel row extensions', () => {
       rowActions: (entry) => <button type="button">{`Sign in ${entry.id}`}</button>,
       extraColumns: [
         {
+          mobile: 'detail',
           key: 'status',
           header: 'Status',
           render: (entry) => <span>{`status-${entry.id}`}</span>,

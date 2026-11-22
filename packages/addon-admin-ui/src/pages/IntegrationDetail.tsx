@@ -1,7 +1,7 @@
 import { defaultAddDeviceMode } from '@camstack/types'
 import {
   Breadcrumb,
-  ConfirmActionButton,
+  PageActions,
   countableDevices,
   deviceIntegrationResolver,
   deviceItemParentIndex,
@@ -496,7 +496,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-nowrap items-center justify-end gap-2">
           {/* Add-device — same primary header button as the Integrations list
               page. Routes to the adopt surface by the addon's declared cap kind
               (see `integrationKind`); disabled until the kind resolves. */}
@@ -552,76 +552,86 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               )}
             </div>
           </div>
-          {/* Config/settings button — HIDDEN for `mode: standalone` (those
-              integrations have no integration-level config; connection lives
-              per-device). Shown for `account`/`broker` when the addon has a
-              settings schema or is a device-adoption (broker-backed) flow. */}
-          {integrationMode !== 'standalone' &&
-            (hasConfig || integrationKind === 'device-adoption') && (
-              <Button
-                variant="unstyled"
-                onClick={() => setShowConfig(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-              >
-                <Settings className="h-3 w-3" />
-                {t('integrations.config')}
-              </Button>
-            )}
-          {/* Logs — addon-scoped (every device under this integration
-              + addon-level chatter). When loggers carry an
-              `integrationId` tag the modal narrows further; today it
-              falls back to addonId because providers don't tag
-              integrations yet. */}
-          <Button
-            variant="unstyled"
-            onClick={() => setShowLogs(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-            title={t('integrations.logs', { defaultValue: 'View logs' })}
-          >
-            <ScrollText className="h-3 w-3" />
-            {t('integrations.logs', { defaultValue: 'Logs' })}
-          </Button>
-          {/* Restart addon — canonical surface for "bounce this
-              integration". Bounces every device backed by the addon, so
-              the confirm wording calls that out. */}
-          <ConfirmActionButton
-            label={t('integrationDetail.restart', 'Restart')}
-            icon={RefreshCw}
-            title={t('integrationDetail.restart2', 'Restart "{{name}}"?', {
-              name: integration.name,
-            })}
-            description={t(
-              'integrationDetail.restartingTheAddonWillBriefly',
-              'Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.',
-              { topLevelCountLabel },
-            )}
-            confirmLabel={t('integrationDetail.restart', 'Restart')}
-            triggerVariant="outline"
-            confirmVariant="danger"
-            disabled={restartAddonMutation.isPending}
-            action={() => restartAddonMutation.mutateAsync({ addonId: integration.addonId })}
+          {/* The secondary actions: labelled buttons from `sm` up, ONE "More"
+              menu on a phone, so the header never wraps onto a second line.
+
+              Config — HIDDEN for `mode: standalone` (those integrations have
+              no integration-level config; connection lives per-device). Shown
+              for `account`/`broker` when the addon has a settings schema or is
+              a device-adoption (broker-backed) flow.
+
+              Logs — addon-scoped (every device under this integration +
+              addon-level chatter). When loggers carry an `integrationId` tag
+              the modal narrows further; today it falls back to addonId because
+              providers don't tag integrations yet.
+
+              Restart — the canonical surface for "bounce this integration". It
+              bounces every device backed by the addon, so the confirm wording
+              calls that out. */}
+          <PageActions
+            moreLabel={t('integrationDetail.more', 'More')}
+            actions={[
+              {
+                id: 'config',
+                label: t('integrations.config'),
+                icon: Settings,
+                hidden: !(
+                  integrationMode !== 'standalone' &&
+                  (hasConfig || integrationKind === 'device-adoption')
+                ),
+                onClick: () => setShowConfig(true),
+              },
+              {
+                id: 'logs',
+                label: t('integrations.logs', { defaultValue: 'Logs' }),
+                icon: ScrollText,
+                title: t('integrations.logs', { defaultValue: 'View logs' }),
+                onClick: () => setShowLogs(true),
+              },
+              {
+                id: 'restart',
+                label: t('integrationDetail.restart', 'Restart'),
+                icon: RefreshCw,
+                disabled: restartAddonMutation.isPending,
+                confirm: {
+                  title: t('integrationDetail.restart2', 'Restart "{{name}}"?', {
+                    name: integration.name,
+                  }),
+                  description: t(
+                    'integrationDetail.restartingTheAddonWillBriefly',
+                    'Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.',
+                    { topLevelCountLabel },
+                  ),
+                  action: () => restartAddonMutation.mutateAsync({ addonId: integration.addonId }),
+                },
+              },
+              {
+                id: 'delete',
+                label: t('integrations.delete', { defaultValue: 'Delete' }),
+                icon: Trash2,
+                danger: true,
+                hidden: isFixed || !integrationId,
+                disabled: deleteMutation.isPending,
+                confirm: {
+                  title: t('integrations.deleteTitle', { defaultValue: 'Delete integration?' }),
+                  description: t('integrations.deleteWarning', {
+                    defaultValue:
+                      'This removes the integration "{{name}}" and its {{count}} device(s). The addon will restart. This cannot be undone.',
+                    name: integration.name,
+                    count: topLevelCountLabel,
+                  }),
+                  confirmLabel: t('integrations.confirmDelete', {
+                    defaultValue: 'Delete integration',
+                  }),
+                  // Hidden without an id (above), so this never runs without one.
+                  action: async () => {
+                    if (integrationId)
+                      await deleteMutation.mutateAsync({ addonId, id: integrationId })
+                  },
+                },
+              },
+            ]}
           />
-          {!isFixed && integrationId && (
-            <ConfirmActionButton
-              label={t('integrations.delete', { defaultValue: 'Delete' })}
-              icon={Trash2}
-              title={t('integrations.deleteTitle', { defaultValue: 'Delete integration?' })}
-              description={t('integrations.deleteWarning', {
-                defaultValue:
-                  'This removes the integration "{{name}}" and its {{count}} device(s). The addon will restart. This cannot be undone.',
-                name: integration.name,
-                count: topLevelCountLabel,
-              })}
-              confirmLabel={t('integrations.confirmDelete', {
-                defaultValue: 'Delete integration',
-              })}
-              triggerVariant="outline"
-              confirmVariant="danger"
-              className="border-danger bg-danger/10 text-danger hover:bg-danger hover:text-background"
-              disabled={deleteMutation.isPending}
-              action={() => deleteMutation.mutateAsync({ addonId, id: integrationId })}
-            />
-          )}
         </div>
       </div>
 

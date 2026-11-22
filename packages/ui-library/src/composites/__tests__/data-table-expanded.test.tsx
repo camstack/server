@@ -16,6 +16,7 @@ const ROWS: readonly Row[] = [
 
 const COLUMNS: readonly DataColumn<Row>[] = [
   {
+    mobile: 'primary',
     key: 'name',
     header: 'Name',
     sortValue: (r) => r.name,

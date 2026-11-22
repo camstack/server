@@ -116,12 +116,14 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
   const columns: DataColumn<Scheduler>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('schedulers.list.name', 'Name'),
         render: (entry) => <span className="font-medium">{entry.name}</span>,
         sortValue: (entry) => entry.name,
       },
       {
+        mobile: 'keep',
         key: 'enabled',
         header: t('schedulers.list.enabled', 'Enabled'),
         render: (entry) => (
@@ -139,18 +141,21 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
         sortValue: (entry) => Number(entry.enabled),
       },
       {
+        mobile: 'hidden',
         key: 'profiles',
         header: t('schedulers.list.profiles', 'Profiles'),
         render: (entry) => String(entry.profiles.length),
         sortValue: (entry) => entry.profiles.length,
       },
       {
+        mobile: 'hidden',
         key: 'priority',
         header: t('schedulers.list.priority', 'Priority'),
         render: (entry) => String(entry.priority),
         sortValue: (entry) => entry.priority,
       },
       {
+        mobile: 'detail',
         key: 'status',
         header: t('schedulers.list.status', 'Now'),
         render: (entry) => {
@@ -160,6 +165,7 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
         notSortableReason: t('schedulers.list.statusNotSortable', 'Derived from the live hold'),
       },
       {
+        mobile: 'hidden',
         key: 'updated',
         header: t('schedulers.list.updated', 'Updated'),
         render: (entry) => formatRelativeTime(entry.updatedAt),

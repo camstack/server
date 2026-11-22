@@ -128,6 +128,7 @@ export function UnassignedTable({
 
   const columns: readonly DataColumn<SiteDevice>[] = [
     {
+      mobile: 'keep',
       key: 'select',
       width: 'w-8',
       headerRender: () => (
@@ -155,6 +156,7 @@ export function UnassignedTable({
       ),
     },
     {
+      mobile: 'primary',
       key: 'name',
       header: t('locations.unassignedTable.device', 'Device'),
       sortValue: (device) => device.name.toLowerCase(),
@@ -181,18 +183,21 @@ export function UnassignedTable({
       },
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: t('locations.unassignedTable.type', 'Type'),
       sortValue: (device) => device.type,
       render: (device) => <span className="text-xs text-foreground-muted">{device.type}</span>,
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('locations.unassignedTable.status', 'Status'),
       sortValue: (device) => (device.online ? 1 : 0),
       render: (device) => <DeviceReachCell device={device} />,
     },
     {
+      mobile: 'hidden',
       key: 'followers',
       header: t('locations.unassignedTable.accessoriesInTowCount', 'Accessories in tow'),
       align: 'right',
@@ -204,6 +209,7 @@ export function UnassignedTable({
       ),
     },
     {
+      mobile: 'keep',
       key: 'assign',
       header: t('locations.unassignedTable.assignTo', 'Assign to'),
       align: 'right',

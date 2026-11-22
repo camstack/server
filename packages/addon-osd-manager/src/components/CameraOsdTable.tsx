@@ -97,12 +97,14 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
   const columns = useMemo(
     (): DataColumn<OsdCameraRow>[] => [
       {
+        mobile: 'primary',
         key: 'camera',
         header: t('table.camera'),
         sortValue: (camera) => camera.name,
         render: (camera) => <span className="font-medium text-foreground">{camera.name}</span>,
       },
       {
+        mobile: 'detail',
         key: 'status',
         header: t('table.status'),
         notSortableReason: t('table.liveProbe'),
@@ -115,6 +117,7 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
         ),
       },
       {
+        mobile: 'detail',
         key: 'sources',
         header: t('table.activeSources'),
         notSortableReason: t('table.liveProbe'),
@@ -128,6 +131,7 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
         ),
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

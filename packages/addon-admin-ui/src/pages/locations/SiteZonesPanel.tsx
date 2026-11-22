@@ -50,6 +50,7 @@ export function SiteZonesPanel({
 
   const columns: DataColumn<SiteZone>[] = [
     {
+      mobile: 'keep',
       key: 'icon',
       header: t('locations.siteZonesPanel.icon', 'Icon'),
       width: 'w-12',
@@ -64,6 +65,7 @@ export function SiteZonesPanel({
       ),
     },
     {
+      mobile: 'primary',
       key: 'name',
       header: t('locations.siteZonesPanel.zone', 'Zone'),
       sortValue: (zone) => zone.label.toLowerCase(),
@@ -100,6 +102,7 @@ export function SiteZonesPanel({
         ),
     },
     {
+      mobile: 'detail',
       key: 'rooms',
       header: t('locations.siteZonesPanel.rooms', 'Rooms'),
       align: 'right',
@@ -116,6 +119,7 @@ export function SiteZonesPanel({
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: t('locations.siteZonesPanel.actions', 'Actions'),
       align: 'right',

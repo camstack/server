@@ -88,6 +88,7 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
 
   const columns: readonly DataColumn<CapBindingRow>[] = [
     {
+      mobile: 'primary',
       key: 'capName',
       header: t('cluster.nodeDetailCapabilitiesTab.capability', 'Capability'),
       width: 'w-1/2',
@@ -95,6 +96,7 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
       render: (r) => <span className="font-medium">{r.capName}</span>,
     },
     {
+      mobile: 'detail',
       key: 'provider',
       header: t('cluster.nodeDetailCapabilitiesTab.boundProvider', 'Bound provider'),
       // Deliberately NOT sortable (no `sortValue`). The cell is a live

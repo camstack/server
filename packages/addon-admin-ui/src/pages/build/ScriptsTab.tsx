@@ -282,6 +282,7 @@ export function ScriptsTab({
   const columns: DataColumn<CoreBlock>[] = useMemo(
     () => [
       {
+        mobile: 'primary',
         key: 'name',
         header: t('build.scriptsTab.name', 'Name'),
         render: (block) => {
@@ -323,6 +324,7 @@ export function ScriptsTab({
         nowrap: false,
       },
       {
+        mobile: 'keep',
         key: 'actions',
         header: '',
         align: 'right',

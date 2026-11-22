@@ -88,6 +88,7 @@ export function selectionColumn<T>(
 
   return {
     key: SELECTION_COLUMN_KEY,
+    mobile: 'keep',
     width: 'w-8',
     headerRender: () => (
       <PageCheckbox

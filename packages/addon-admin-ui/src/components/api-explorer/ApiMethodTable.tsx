@@ -94,6 +94,7 @@ export function ApiMethodTable({
 
   const columns: readonly DataColumn<ApiCatalogMethod>[] = [
     {
+      mobile: 'primary',
       key: 'path',
       header: t('system.apiExplorer.column.method'),
       sortValue: (m) => m.path,
@@ -115,12 +116,14 @@ export function ApiMethodTable({
       ),
     },
     {
+      mobile: 'detail',
       key: 'tier',
       header: t('system.apiExplorer.column.tier'),
       sortValue: (m) => m.tier,
       render: (m) => <TierBadge tier={m.tier} />,
     },
     {
+      mobile: 'detail',
       key: 'scope',
       header: t('system.apiExplorer.column.scope'),
       sortValue: (m) => (m.scope === null ? null : `${m.scope.capName}:${m.scope.access}`),

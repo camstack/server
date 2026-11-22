@@ -384,6 +384,7 @@ export interface SummaryColumnsDeps {
 export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<SummaryRuleView>[] {
   return [
     {
+      mobile: 'primary',
       key: 'name',
       header: i18n.t('system.notificationSummaries.digest', 'Digest'),
       render: (rule) => (
@@ -411,6 +412,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'detail',
       key: 'cameras',
       header: i18n.t('system.notificationSummaries.cameras', 'Cameras'),
       align: 'center',
@@ -420,6 +422,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'detail',
       key: 'window',
       header: i18n.t('system.notificationSummaries.window', 'Window'),
       render: (rule) => (
@@ -429,6 +432,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'hidden',
       key: 'filters',
       header: i18n.t('system.notificationSummaries.keeps', 'Keeps'),
       render: (rule) => (
@@ -438,6 +442,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'hidden',
       key: 'mosaic',
       header: i18n.t('system.notificationSummaries.mosaic', 'Mosaic'),
       nowrap: true,
@@ -451,6 +456,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'hidden',
       key: 'targets',
       header: i18n.t('system.notificationSummaries.targets', 'Targets'),
       render: (rule) => {
@@ -466,6 +472,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       },
     },
     {
+      mobile: 'hidden',
       key: 'lastRun',
       header: i18n.t('system.notificationSummaries.lastRun', 'Last run'),
       nowrap: true,
@@ -479,6 +486,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: i18n.t('system.notificationSummaries.on', 'On'),
       align: 'center',
@@ -497,6 +505,7 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

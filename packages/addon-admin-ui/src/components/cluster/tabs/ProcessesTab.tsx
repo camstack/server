@@ -115,6 +115,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
   const columns: readonly DataColumn<ProcessRow>[] = useMemo(
     () => [
       {
+        mobile: 'detail',
         key: 'classification',
         header: t('cluster.processesTab.class', 'Class'),
         sortValue: (r) => PROCESS_CLASS_RANK[r.classification],
@@ -133,6 +134,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         ),
       },
       {
+        mobile: 'keep',
         key: 'pid',
         header: 'PID',
         align: 'right',
@@ -140,6 +142,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         render: (r) => <span className="font-mono">{r.pid}</span>,
       },
       {
+        mobile: 'hidden',
         key: 'ppid',
         header: 'PPID',
         align: 'right',
@@ -147,6 +150,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         render: (r) => <span className="font-mono text-foreground-subtle">{r.ppid}</span>,
       },
       {
+        mobile: 'detail',
         key: 'addonId',
         header: t('cluster.processesTab.addon', 'Addon'),
         // `null` for an unattributed process — it sorts last in both
@@ -157,6 +161,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         ),
       },
       {
+        mobile: 'primary',
         key: 'command',
         header: t('cluster.processesTab.command', 'Command'),
         nowrap: false,
@@ -167,6 +172,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         ),
       },
       {
+        mobile: 'keep',
         key: 'cpuPercent',
         header: t('cluster.processesTab.cpu', 'CPU%'),
         align: 'right',
@@ -174,6 +180,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         render: (r) => formatNumeric(r.cpuPercent, undefined),
       },
       {
+        mobile: 'keep',
         key: 'memoryRssBytes',
         header: 'RSS',
         align: 'right',
@@ -183,6 +190,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
         render: (r) => formatBytes(r.memoryRssBytes),
       },
       {
+        mobile: 'hidden',
         key: 'uptimeSec',
         header: t('cluster.processesTab.uptime', 'Uptime'),
         align: 'right',

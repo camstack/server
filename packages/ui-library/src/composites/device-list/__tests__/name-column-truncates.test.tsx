@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 /**
- * The NAME column fills what the controls leave and ellipsises on the RIGHT.
+ * The device table on a phone: NAME + the controls cell, no sideways scroll.
  *
- * The reported defect: on a phone the table was wider than the viewport, the
- * wrapper scrolled sideways and the name was clipped on the LEFT while the
- * header showed only "PREVIEW". The column is now the flexible one at every
- * width (`w-full max-w-0`, a readable `min-w`), the name truncates with an
- * ellipsis and the controls cell wraps below `md`.
+ * The reported defect: the controls cell wrapped its cluster one item per line
+ * and a row grew to ~200 px. Below `md` the name is now shown in full (it may
+ * take a second line), the controls cell is one nowrap line and the row's
+ * secondary actions sit in its swipe tray; from `md` up the name is one
+ * truncated line in a fixed column.
  *
  * jsdom has no layout, so these assert the class decisions that produce it
- * (see `docs/ui/conventions.md`, "Frozen-string tests have an expiry date").
+ * (see `docs/ui/conventions.md`, "Frozen-string tests have an expiry date");
+ * `ui:shots` measures the row height and the overflow at 390 px.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import { render } from '@testing-library/react'
@@ -96,38 +97,44 @@ describe('device table — the NAME column', () => {
     expect(name.getAttribute('title')).toBe(LONG_NAME)
   })
 
-  it('the name text truncates at every width, on one line', () => {
+  it('the name is shown in full below the breakpoint and truncates on one line from it up', () => {
     const container = renderList()
     const cls = el(container, '[data-testid="device-name"]').className
-    expect(hasUnconditionalClass(cls, 'truncate')).toBe(true)
+    expect(hasUnconditionalClass(cls, 'truncate')).toBe(false)
+    expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'truncate')).toBe(true)
+    expect(cls).toContain('max-md:break-words')
   })
 
   it('the NAME column is the flexible one below the breakpoint, fixed from it up', () => {
     const container = renderList()
     for (const cls of [nameHeader(container).className, el(container, 'tbody tr td').className]) {
-      // `w-full max-w-0` = take the remaining width and let the text ellipsise;
-      // the min width keeps two rows of one device kind tellable apart.
       expect(hasUnconditionalClass(cls, 'w-full')).toBe(true)
-      expect(hasUnconditionalClass(cls, 'max-w-0')).toBe(true)
-      expect(hasUnconditionalClass(cls, 'min-w-[12rem]')).toBe(true)
+      expect(hasUnconditionalClass(cls, 'min-w-[6.5rem]')).toBe(true)
       expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'w-64')).toBe(true)
     }
   })
 
-  it('the controls cell wraps below the breakpoint and stays on one line from it up', () => {
+  it('the controls cell never wraps — a wrapping cluster is what blew the row up', () => {
     const container = renderList()
     const cells = [...container.querySelectorAll('tbody tr td')]
-    const cls = cells[cells.length - 1]?.className
-    expect(hasUnconditionalClass(cls, 'whitespace-normal')).toBe(true)
-    expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'whitespace-nowrap')).toBe(true)
+    const last = cells[cells.length - 1]
+    expect(hasUnconditionalClass(last?.className, 'whitespace-nowrap')).toBe(true)
+    expect(last?.className).not.toContain('whitespace-normal')
+    for (const node of last?.querySelectorAll('*') ?? []) {
+      expect(String(node.getAttribute('class') ?? '')).not.toContain('flex-wrap')
+    }
   })
 
-  it('ONE scroll context carries the overflow: the table wrapper, not each row', () => {
+  it('ONE scroll context from the breakpoint up, and none below it', () => {
     const container = renderList()
     const wrapper = el(container, 'table').parentElement
-    expect(wrapper?.className).toContain('overflow-x-auto')
-    // Per-row scrollers would misalign every column from its header. No <tr>
-    // or NAME <td> may become its own horizontal scroller.
+    // Below `md` the wrapper clips (the parked swipe trays must not widen the
+    // page); from `md` up it is the one horizontal scroller.
+    expect(hasUnconditionalClass(wrapper?.className, 'overflow-x-clip')).toBe(true)
+    expect(
+      hasVariantClass(wrapper?.className, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'overflow-x-auto'),
+    ).toBe(true)
+    // Per-row scrollers would misalign every column from its header.
     for (const row of container.querySelectorAll('tbody tr, tbody tr td')) {
       expect(row.className).not.toContain('overflow-x-auto')
       expect(row.className).not.toContain('overflow-x-scroll')
@@ -139,8 +146,7 @@ describe('device table — the NAME column', () => {
     const cells = [...container.querySelectorAll('tbody tr td')]
     const last = cells[cells.length - 1]
     // The merged previewActions cell — snapshot / inline control / status dot.
-    // It is the rightmost thing on the row, so it is what the operator reaches
-    // at the end of the sideways scroll; it must not be a hidden column.
+    // It carries the row's main control and its status: never a hidden column.
     expect(last?.className).not.toContain('hidden')
     expect(last?.querySelector('[data-status="online"]')).not.toBeNull()
   })

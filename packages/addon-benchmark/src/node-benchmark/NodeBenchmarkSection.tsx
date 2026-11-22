@@ -205,23 +205,44 @@ const RESULT_COLUMNS = (
   t: TFn,
 ): readonly DataColumn<ResultRow>[] => [
   {
+    mobile: 'primary',
     key: 'device',
     header: t('results.device'),
     nowrap: true,
     render: (r) => <span className="font-mono">{r.deviceKey}</span>,
   },
   {
+    mobile: 'detail',
     key: 'model',
     header: t('results.model'),
     nowrap: true,
     render: (r) => <span className="font-mono">{r.modelId}</span>,
   },
-  { key: 'what', header: t('results.measurement'), render: (r) => r.what },
-  { key: 'capacity', header: t('results.capacity'), nowrap: true, render: (r) => r.capacity },
-  { key: 'latency', header: t('results.latency'), nowrap: true, render: (r) => r.latency },
-  { key: 'limit', header: t('results.limitedBy'), render: (r) => r.limitedBy },
-  { key: 'when', header: t('results.measured'), nowrap: true, render: (r) => r.measuredAt },
+  { mobile: 'detail', key: 'what', header: t('results.measurement'), render: (r) => r.what },
   {
+    mobile: 'keep',
+    key: 'capacity',
+    header: t('results.capacity'),
+    nowrap: true,
+    render: (r) => r.capacity,
+  },
+  {
+    mobile: 'hidden',
+    key: 'latency',
+    header: t('results.latency'),
+    nowrap: true,
+    render: (r) => r.latency,
+  },
+  { mobile: 'hidden', key: 'limit', header: t('results.limitedBy'), render: (r) => r.limitedBy },
+  {
+    mobile: 'hidden',
+    key: 'when',
+    header: t('results.measured'),
+    nowrap: true,
+    render: (r) => r.measuredAt,
+  },
+  {
+    mobile: 'detail',
     key: 'standing',
     header: t('results.standing'),
     render: (r) => (
@@ -232,6 +253,7 @@ const RESULT_COLUMNS = (
     ),
   },
   {
+    mobile: 'keep',
     key: 'actions',
     header: '',
     align: 'right',

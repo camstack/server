@@ -52,11 +52,13 @@ export function AiRuntimesPage() {
   const columns = useMemo(
     (): readonly DataColumn<LlmRuntimeNode>[] => [
       {
+        mobile: 'primary',
         key: 'node',
         header: t('ai.colNode', 'Node'),
         render: (n) => <span className="font-medium text-foreground">{n.nodeId}</span>,
       },
       {
+        mobile: 'detail',
         key: 'state',
         header: t('ai.colState', 'State'),
         nowrap: true,
@@ -70,11 +72,13 @@ export function AiRuntimesPage() {
         ),
       },
       {
+        mobile: 'detail',
         key: 'model',
         header: t('ai.colModel', 'Model'),
         render: (n) => <span className="text-foreground">{n.status?.modelId ?? '—'}</span>,
       },
       {
+        mobile: 'hidden',
         key: 'disk',
         header: t('ai.colDisk', 'On disk'),
         align: 'right',
@@ -86,6 +90,7 @@ export function AiRuntimesPage() {
         ),
       },
       {
+        mobile: 'hidden',
         key: 'features',
         header: t('ai.colFeature', 'Feature'),
         render: (n) => {
@@ -109,6 +114,7 @@ export function AiRuntimesPage() {
         },
       },
       {
+        mobile: 'detail',
         key: 'error',
         header: t('ai.colError', 'Error'),
         render: (n) =>

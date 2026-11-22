@@ -146,6 +146,7 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
 
   const columns: readonly DataColumn<NodeShellSessionRow>[] = [
     {
+      mobile: 'primary',
       key: 'openedBy',
       header: t('terminalPage.colOpenedBy', 'Opened by'),
       sortValue: (row) => row.openedBy ?? '',
@@ -157,6 +158,7 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
         ),
     },
     {
+      mobile: 'detail',
       key: 'started',
       header: t('terminalPage.colStarted', 'Started'),
       sortValue: (row) => row.startedAt,
@@ -173,6 +175,7 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       align: 'right',
       notSortableReason: t('terminalPage.actionsNotSortable', 'Actions'),

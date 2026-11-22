@@ -30,12 +30,20 @@ export interface DeviceDeleteActionProps {
   readonly onDelete: (device: DeviceItemDevice) => void
 }
 
-export function DeviceDeleteAction({ device, onDelete }: DeviceDeleteActionProps): ReactNode {
+/**
+ * The confirmed delete, shared by the trash button and the phone row's swipe
+ * tray: one question, one wording, wherever the delete is started from.
+ */
+export function useConfirmedDeviceDelete(
+  device: DeviceItemDevice,
+  onDelete: ((device: DeviceItemDevice) => void) | null,
+): () => void {
   const t = useUiText()
   const confirm = useConfirm()
   const deviceLabel = useDeviceLabel(device, 'full')
 
   const requestDelete = async (): Promise<void> => {
+    if (onDelete === null) return
     const label = deviceLabel.trim() !== '' ? deviceLabel : `#${String(device.id)}`
     const confirmed = await confirm({
       title: t('uiLibrary.deviceDeleteAction.title', 'Delete device?'),
@@ -49,20 +57,25 @@ export function DeviceDeleteAction({ device, onDelete }: DeviceDeleteActionProps
     })
     if (confirmed) onDelete(device)
   }
+  // Fire and forget: the dialog drives the rest.
+  return () => {
+    void requestDelete()
+  }
+}
+
+export function DeviceDeleteAction({ device, onDelete }: DeviceDeleteActionProps): ReactNode {
+  const t = useUiText()
+  const requestDelete = useConfirmedDeviceDelete(device, onDelete)
 
   // Wrap in a stopPropagation span so a click on the trash never bubbles to the
-  // row's navigate/select handler. The IconAction's own onClick fires the
-  // confirm flow; we intentionally do not await it inside the handler (fire and
-  // forget — the dialog drives the rest).
+  // row's navigate/select handler.
   return (
     <span onClick={(e) => e.stopPropagation()}>
       <IconAction
         icon={Trash2}
         label={t('uiLibrary.deviceDeleteAction.deleteDevice', 'Delete device')}
         danger
-        onClick={() => {
-          void requestDelete()
-        }}
+        onClick={requestDelete}
       />
     </span>
   )

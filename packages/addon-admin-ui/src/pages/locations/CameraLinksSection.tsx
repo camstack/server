@@ -139,6 +139,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
 
   const columns: readonly DataColumn<LinkedRow>[] = [
     {
+      mobile: 'primary',
       key: 'device',
       header: t('locations.columns.device'),
       notSortableReason: t('locations.columns.noSort'),
@@ -168,6 +169,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
       },
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: t('locations.columns.type'),
       notSortableReason: t('locations.columns.noSort'),
@@ -176,6 +178,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
       ),
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('locations.columns.status'),
       notSortableReason: t('locations.columns.noSort'),

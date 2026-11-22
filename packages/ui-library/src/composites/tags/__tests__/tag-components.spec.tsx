@@ -87,7 +87,13 @@ const ROWS: readonly Row[] = [
   { id: 'c', name: 'Sprinkler', tags: ['Garden'] },
 ]
 const COLUMNS: readonly DataColumn<Row>[] = [
-  { key: 'name', header: 'Name', render: (r) => r.name, sortValue: (r) => r.name },
+  {
+    mobile: 'primary',
+    key: 'name',
+    header: 'Name',
+    render: (r) => r.name,
+    sortValue: (r) => r.name,
+  },
 ]
 const rowTags = (r: Row): readonly string[] | undefined => r.tags
 const rowText = (r: Row): readonly string[] => [r.name]

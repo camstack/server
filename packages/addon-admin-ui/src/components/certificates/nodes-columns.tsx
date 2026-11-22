@@ -333,6 +333,7 @@ function Actions({
 export function nodeColumns(o: NodeColumnOptions): DataColumn<NodeCertificateRow>[] {
   return [
     {
+      mobile: 'primary',
       key: 'node',
       header: i18n.t('certificates.nodesColumns.node', 'Node'),
       sortValue: (r) => (r.isHub ? '' : r.nodeId.toLowerCase()),
@@ -353,36 +354,42 @@ export function nodeColumns(o: NodeColumnOptions): DataColumn<NodeCertificateRow
       ),
     },
     {
+      mobile: 'detail',
       key: 'https-state',
       header: 'HTTPS',
       notSortableReason: 'A state with a reason has no single order.',
       render: (r) => <HttpsState row={r} />,
     },
     {
+      mobile: 'hidden',
       key: 'https-expires',
       header: i18n.t('certificates.nodesColumns.httpsExpires', 'HTTPS expires'),
       sortValue: (r) => httpsExpiryMs(r),
       render: (r) => <Expiry ms={httpsExpiryMs(r)} now={o.now} />,
     },
     {
+      mobile: 'detail',
       key: 'identity',
       header: i18n.t('certificates.nodesColumns.identity', 'Identity'),
       sortValue: (r) => r.mesh?.current?.serial ?? null,
       render: (r) => <IdentityCell row={r} />,
     },
     {
+      mobile: 'hidden',
       key: 'identity-expires',
       header: i18n.t('certificates.nodesColumns.identityExpires', 'Identity expires'),
       sortValue: (r) => r.mesh?.current?.notAfter ?? null,
       render: (r) => <Expiry ms={r.mesh?.current?.notAfter ?? null} now={o.now} />,
     },
     {
+      mobile: 'hidden',
       key: 'presenting',
       header: i18n.t('certificates.nodesColumns.inUse', 'In use'),
       notSortableReason: 'Offline nodes have no answer to order by.',
       render: (r) => <Presenting row={r} />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: i18n.t('certificates.nodesColumns.actions', 'Actions'),
       align: 'right',

@@ -260,6 +260,7 @@ export function UsersPage() {
 
   const columns: DataColumn<SafeUser>[] = [
     {
+      mobile: 'primary',
       key: 'username',
       header: t('admin.system.users.username', 'Username'),
       sortValue: (u) => u.username,
@@ -270,6 +271,7 @@ export function UsersPage() {
       ),
     },
     {
+      mobile: 'detail',
       key: 'scopes',
       header: t('admin.system.users.access', 'Access'),
       sortValue: (u) => roleSortValue(u),
@@ -291,6 +293,7 @@ export function UsersPage() {
       ),
     },
     {
+      mobile: 'hidden',
       key: 'createdAt',
       header: t('admin.system.users.created', 'Created'),
       nowrap: true,
@@ -298,6 +301,7 @@ export function UsersPage() {
       render: (u) => <span className="text-foreground-subtle">{formatDate(u.createdAt)}</span>,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: t('admin.system.users.actions', 'Actions'),
       align: 'right',

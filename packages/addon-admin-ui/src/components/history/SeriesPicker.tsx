@@ -43,6 +43,7 @@ export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPic
   const columns = useMemo<DataColumn<SeriesCandidate>[]>(
     () => [
       {
+        mobile: 'primary',
         key: 'metric',
         header: t('history.picker.series', 'Series'),
         render: (c) => (
@@ -56,6 +57,7 @@ export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPic
         sortValue: (c) => `${c.subjectName} ${c.metric}`,
       },
       {
+        mobile: 'detail',
         key: 'unit',
         header: t('history.picker.unit', 'Unit'),
         render: (c) => <span className="text-foreground-muted">{c.info.unit ?? '—'}</span>,

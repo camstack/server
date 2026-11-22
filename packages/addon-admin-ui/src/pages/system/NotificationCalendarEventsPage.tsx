@@ -217,6 +217,7 @@ export function calendarEventsColumns(
 ): readonly DataColumn<CalendarEventsRuleView>[] {
   return [
     {
+      mobile: 'primary',
       key: 'name',
       header: i18n.t('system.notificationCalendarEventsPage.rule', 'Rule'),
       render: (rule) => (
@@ -232,6 +233,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'detail',
       key: 'schedule',
       header: i18n.t('system.notificationCalendarEventsPage.when', 'When'),
       render: (rule) => (
@@ -241,6 +243,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'horizon',
       header: i18n.t('system.notificationCalendarEventsPage.horizon', 'Horizon'),
       nowrap: true,
@@ -251,6 +254,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'calendars',
       header: i18n.t('system.notificationCalendarEventsPage.calendars', 'Calendars'),
       render: (rule) => (
@@ -258,6 +262,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'targets',
       header: i18n.t('system.notificationCalendarEventsPage.targets', 'Targets'),
       render: (rule) => {
@@ -273,6 +278,7 @@ export function calendarEventsColumns(
       },
     },
     {
+      mobile: 'hidden',
       key: 'lastRun',
       header: i18n.t('system.notificationCalendarEventsPage.lastRun', 'Last run'),
       nowrap: true,
@@ -286,6 +292,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'keep',
       key: 'enabled',
       header: i18n.t('system.notificationCalendarEventsPage.on', 'On'),
       align: 'center',
@@ -304,6 +311,7 @@ export function calendarEventsColumns(
       ),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

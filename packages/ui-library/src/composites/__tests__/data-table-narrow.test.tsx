@@ -16,11 +16,16 @@ const ROWS: readonly Row[] = [
 ]
 
 const WIDE: readonly DataColumn<Row>[] = [
-  { key: 'name', header: 'Name', render: (r) => r.name },
-  { key: 'node', header: 'Node', render: (r) => r.node },
-  { key: 'state', header: 'State', render: (r) => r.state },
-  { key: 'seen', header: 'Last seen', render: (r) => r.seen },
-  { key: 'actions', align: 'right', render: () => <button type="button">Remove</button> },
+  { mobile: 'primary', key: 'name', header: 'Name', render: (r) => r.name },
+  { mobile: 'detail', key: 'node', header: 'Node', render: (r) => r.node },
+  { mobile: 'keep', key: 'state', header: 'State', render: (r) => r.state },
+  { mobile: 'hidden', key: 'seen', header: 'Last seen', render: (r) => r.seen },
+  {
+    mobile: 'keep',
+    key: 'actions',
+    align: 'right',
+    render: () => <button type="button">Remove</button>,
+  },
 ]
 
 /** jsdom has no matchMedia; drive `useIsMobile` from this switch. */
@@ -28,7 +33,7 @@ function setViewport(narrow: boolean): void {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string) => ({
-      matches: narrow && query.includes('max-width: 767px'),
+      matches: narrow && query.includes('max-width: 639px'),
       media: query,
       onchange: null,
       addListener: () => {},
@@ -48,20 +53,74 @@ describe('DataTable — narrow-viewport rendering', () => {
     expect(container.querySelector('table')).not.toBeNull()
   })
 
-  it('scrolls INSIDE its own container, so the page body never moves sideways', () => {
+  it('scrolls INSIDE its own container from `sm` up, so the page body never moves sideways', () => {
     const { container } = render(<DataTable columns={[...WIDE]} rows={[...ROWS]} />)
     const wrapper = container.querySelector('table')?.parentElement
     expect(wrapper?.className).toContain('overflow-x-auto')
   })
 
-  it('stays a horizontally-scrolling table at phone width — never a card list', () => {
+  it('stays a table at phone width — never a card list', () => {
     setViewport(true)
     const { container } = render(<DataTable columns={[...WIDE]} rows={[...ROWS]} />)
     expect(container.querySelector('table')).not.toBeNull()
     expect(container.querySelector('[data-data-table-card]')).toBeNull()
     expect(container.querySelectorAll('tbody tr')).toHaveLength(ROWS.length)
-    const wrapper = container.querySelector('table')?.parentElement
-    expect(wrapper?.className).toContain('overflow-x-auto')
+  })
+
+  // Which columns exist is decided in markup (a folded column is not mounted
+  // twice); how the remaining ones share the width is CSS behind `sm`, which
+  // `ui:shots` measures at 390 px (row height, sideways overflow).
+  describe('below `sm`, by column role', () => {
+    const phone = (): HTMLElement => {
+      setViewport(true)
+      return render(<DataTable columns={[...WIDE]} rows={[...ROWS]} minWidthPx={900} />).container
+    }
+    const cellKeys = (container: HTMLElement): readonly (string | null)[] =>
+      Array.from(container.querySelectorAll('tbody tr:first-child td')).map((td) =>
+        td.getAttribute('data-cell'),
+      )
+
+    it('drops the minimum width, so the table cannot be wider than the phone', () => {
+      expect(phone().querySelector('table')?.className).toContain('max-sm:!min-w-0')
+    })
+
+    it('keeps only the primary and kept columns as columns, header included', () => {
+      const container = phone()
+      expect(cellKeys(container)).toEqual(['name', 'state', 'actions'])
+      expect(container.querySelectorAll('th')).toHaveLength(3)
+    })
+
+    it('gives the primary column the free width and lets it wrap, so a name is never cut', () => {
+      const primary = phone().querySelector('td[data-cell="name"]')
+      expect(primary?.className).toContain('max-sm:w-full')
+      expect(primary?.className).toContain('max-sm:whitespace-normal')
+    })
+
+    it('keeps a kept column on one line beside it', () => {
+      const state = phone().querySelector('td[data-cell="state"]')
+      expect(state?.className).toContain('max-sm:whitespace-nowrap')
+    })
+
+    it('reads a detail column under the primary value — once — and drops a hidden one', () => {
+      const container = phone()
+      const line = container.querySelector('td[data-cell="name"] [data-phone-detail]')
+      expect(line?.querySelector('[data-phone-detail-of="node"]')?.textContent).toBe('hub')
+      expect(screen.getAllByText('hub')).toHaveLength(1)
+      expect(screen.queryByText('2m')).toBeNull()
+    })
+
+    it('renders no detail line for a table with no detail column', () => {
+      setViewport(true)
+      const columns = WIDE.filter((col) => col.mobile !== 'detail')
+      const { container } = render(<DataTable columns={[...columns]} rows={[...ROWS]} />)
+      expect(container.querySelector('[data-phone-detail]')).toBeNull()
+    })
+
+    it('mounts every column, and no detail line, from `sm` up', () => {
+      const { container } = render(<DataTable columns={[...WIDE]} rows={[...ROWS]} />)
+      expect(cellKeys(container)).toEqual(['name', 'node', 'state', 'seen', 'actions'])
+      expect(container.querySelector('[data-phone-detail]')).toBeNull()
+    })
   })
 
   it('still shows the empty state on a narrow viewport', () => {
@@ -93,7 +152,7 @@ describe('DataTable — narrow-viewport rendering', () => {
     expect(container.querySelector('th')?.className).not.toContain('sticky')
   })
 
-  it('does not wrap cell text — the row stays one line and the table scrolls', () => {
+  it('does not wrap cell text from `sm` up — the row stays one line and the table scrolls', () => {
     const { container } = render(<DataTable columns={[...WIDE]} rows={[...ROWS]} />)
     const cell = container.querySelector('td')
     expect(cell?.className).toContain('whitespace-nowrap')

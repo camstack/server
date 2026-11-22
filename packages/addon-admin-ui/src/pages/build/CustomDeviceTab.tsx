@@ -473,12 +473,14 @@ function columnsFor(
 ): DataColumn<CompositionRow>[] {
   const cols: DataColumn<CompositionRow>[] = [
     {
+      mobile: 'primary',
       key: 'name',
       header: nameHeader,
       sortValue: (row) => row.name.toLowerCase(),
       render: (row) => <RowName row={row} />,
     },
     {
+      mobile: 'detail',
       key: 'type',
       header: i18n.t('build.customDeviceTab.type', 'Type'),
       sortValue: (row) => row.type,
@@ -491,6 +493,7 @@ function columnsFor(
     ...(kind === 'composed'
       ? [
           {
+            mobile: 'hidden',
             key: 'origin',
             header: i18n.t('build.customDeviceTab.builtAs', 'Built as'),
             sortValue: (row: CompositionRow) => originLabel(row.origin, t),
@@ -503,6 +506,7 @@ function columnsFor(
         ]
       : []),
     {
+      mobile: 'detail',
       key: 'state',
       header: i18n.t('build.customDeviceTab.state', 'State'),
       nowrap: false,
@@ -519,6 +523,7 @@ function columnsFor(
       ),
     },
     {
+      mobile: 'hidden',
       key: 'sources',
       header: i18n.t('build.customDeviceTab.sources', 'Sources'),
       nowrap: false,
@@ -528,6 +533,7 @@ function columnsFor(
   ]
   if (kind === 'composed') {
     cols.push({
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

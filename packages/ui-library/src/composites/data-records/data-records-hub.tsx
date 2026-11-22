@@ -150,6 +150,7 @@ export function DataRecordsHub(): JSX.Element {
   const columns = useMemo((): readonly DataColumn<DataRecordRow>[] => {
     return [
       {
+        mobile: 'primary',
         key: 'kind',
         header: t('uiLibrary.dataRecords.colKind', 'Kind'),
         render: (row) => (
@@ -163,6 +164,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => dataRecordKey(row.kind),
       },
       {
+        mobile: 'detail',
         key: 'type',
         header: t('uiLibrary.dataRecords.colType', 'Type'),
         nowrap: true,
@@ -175,6 +177,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => (row.kind.entry ? 'entry' : 'record'),
       },
       {
+        mobile: 'detail',
         key: 'database',
         header: t('uiLibrary.dataRecords.colDatabase', 'DB'),
         nowrap: true,
@@ -186,6 +189,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => row.kind.database,
       },
       {
+        mobile: 'hidden',
         key: 'class',
         header: t('uiLibrary.dataRecords.colClass', 'Class'),
         nowrap: true,
@@ -193,6 +197,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => row.kind.class,
       },
       {
+        mobile: 'detail',
         key: 'state',
         header: t('uiLibrary.dataRecords.colState', 'State'),
         nowrap: true,
@@ -204,6 +209,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => row.kind.state,
       },
       {
+        mobile: 'hidden',
         key: 'rows',
         header: t('uiLibrary.dataRecords.colRows', 'Rows'),
         align: 'right',
@@ -216,6 +222,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => row.kind.rows ?? -1,
       },
       {
+        mobile: 'keep',
         key: 'bytes',
         header: t('uiLibrary.dataRecords.colSize', 'Est. size'),
         align: 'right',
@@ -228,6 +235,7 @@ export function DataRecordsHub(): JSX.Element {
         sortValue: (row) => row.kind.bytesEstimate ?? -1,
       },
       {
+        mobile: 'keep',
         key: 'open',
         header: '',
         align: 'right',

@@ -174,6 +174,7 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
 
   const columns: readonly DataColumn<CcuLink>[] = [
     {
+      mobile: 'primary',
       key: 'sender',
       header: t('links.colSender'),
       nowrap: false,
@@ -181,6 +182,7 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
       sortValue: (row) => endpointLabel(row.sender),
     },
     {
+      mobile: 'detail',
       key: 'receiver',
       header: t('links.colReceiver'),
       nowrap: false,
@@ -188,12 +190,14 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
       sortValue: (row) => endpointLabel(row.receiver),
     },
     {
+      mobile: 'detail',
       key: 'name',
       header: t('links.colName'),
       render: (row) => row.name || '—',
       sortValue: (row) => row.name,
     },
     {
+      mobile: 'hidden',
       key: 'profile',
       header: t('links.colProfile'),
       nowrap: false,
@@ -201,6 +205,7 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
       sortValue: (row) => (row.profile === null ? '' : row.profile.kind),
     },
     {
+      mobile: 'keep',
       key: 'actions',
       header: '',
       align: 'right',

@@ -131,6 +131,7 @@ export function InstalledFilesTable({
 
   const columns: readonly DataColumn<InstalledFileRow>[] = [
     {
+      mobile: 'primary',
       key: 'model',
       header: t('filesTable.cols.model'),
       nowrap: false,
@@ -138,12 +139,14 @@ export function InstalledFilesTable({
       render: (r) => <ModelCell row={r} onRename={(name) => onRename(r, name)} onError={onError} />,
     },
     {
+      mobile: 'detail',
       key: 'format',
       header: t('filesTable.cols.format'),
       sortValue: (r) => r.format,
       render: (r) => <FormatCell row={r} />,
     },
     {
+      mobile: 'detail',
       key: 'size',
       header: t('filesTable.cols.size'),
       align: 'right',
@@ -151,6 +154,7 @@ export function InstalledFilesTable({
       render: (r) => <span className="font-mono text-[11px]">{formatMB(r.sizeMB)}</span>,
     },
     {
+      mobile: 'hidden',
       key: 'devices',
       header: t('filesTable.cols.devices'),
       nowrap: false,
@@ -168,12 +172,14 @@ export function InstalledFilesTable({
       ),
     },
     {
+      mobile: 'detail',
       key: 'status',
       header: t('filesTable.cols.status'),
       sortValue: (r) => r.usage,
       render: (r) => <UsageBadge usage={r.usage} />,
     },
     {
+      mobile: 'keep',
       key: 'actions',
       align: 'right',
       render: (r) => (
