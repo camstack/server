@@ -227,3 +227,9 @@ export {
   triggerSourceRefs,
 } from './group-triggers.js'
 export { groupTriggerProblems } from './group-trigger-problems.js'
+export {
+  groupTriggerLoops,
+  type DeviceNamer,
+  type GroupTriggerLoop,
+  type TriggerGroup,
+} from './group-trigger-cycles.js'
