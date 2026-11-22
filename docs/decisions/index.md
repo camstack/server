@@ -4,7 +4,7 @@
 
 # Decisions
 
-1045 architecture decision records. One file per decision, never
+1049 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1058,6 +1058,10 @@ that rots.
 | D1076 | [A device's capability, or a slot of it, is served by another device's capability as ONE link — projected when it is the same cap, referenced when it is a slot of another](adr-1076-a-device-cap-or-a-slot-of-it-is-served-by-another-device-cap-as-one-link.md) | ✅ accepted | 2026-11-21 |
 | D1077 | [The onboarding flow is written once, in the public docs, and the MCP reads it](adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md) | 💭 proposed | 2026-11-21 |
 | D1078 | [The node benchmark measures decode too, through the real decode worker, and a node's capacity is the smaller of its decode and detection capacity](adr-1078-the-node-benchmark-measures-decode-too-and-a-node-capacity-is-the-smaller-of-decode-and-detection.md) | ✅ accepted (supersedes D791 (only "Not measured: session decode, motion")) | 2026-11-21 |
+| D1079 | [A vehicle is one device with its lock and its climate as accessory children](adr-1079-a-vehicle-is-one-device-with-its-lock-and-its-climate-as-accessory-children.md) | ✅ accepted | 2026-11-22 |
+| D1080 | [Coordinates are the location cap; presence stays the zone verdict](adr-1080-coordinates-are-the-location-cap-and-presence-stays-the-zone-verdict.md) | ✅ accepted | 2026-11-22 |
+| D1081 | [A consumable's remaining life may be a distance](adr-1081-a-consumables-remaining-life-may-be-a-distance.md) | ✅ accepted | 2026-11-22 |
+| D1082 | [Wake-on-LAN is a helper sent from the caller's own node, not a capability](adr-1082-wake-on-lan-is-a-helper-sent-from-the-callers-own-node-not-a-capability.md) | ✅ accepted | 2026-11-22 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

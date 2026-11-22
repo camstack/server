@@ -1091,6 +1091,10 @@ for all providers. `instanceMode: unique` is refused by the backend (typed `CONF
 Velux keeps its Gateway (D976) and ESPHome keeps one integration with a board list (D978). A provider moves over
 with a boot migration that turns each Hub device into an integration and re-stamps its children.
 
+## A vehicle ([D1079](../decisions/adr-1079-a-vehicle-is-one-device-with-its-lock-and-its-climate-as-accessory-children.md))
+
+A connected car is one `Vehicle` device. It carries `vehicle` (odometer, range, doors, windows, trunk, hood, tyre warnings, the 12 V battery, read-only), `location` ([D1080](../decisions/adr-1080-coordinates-are-the-location-cap-and-presence-stays-the-zone-verdict.md), the raw GPS fix, any device type may carry it) and `consumables` (a service due by distance, [D1081](../decisions/adr-1081-a-consumables-remaining-life-may-be-a-distance.md)). Its lock and its cabin climate are `Lock` and `Climate` accessory children, told apart by the roles `lock-vehicle` and `climate-vehicle`; the vehicle stands for itself in a container (`self`). Every reading is `null` when the car does not report it. `vehicle.requestRefresh` wakes the car, is admin-only and answers a typed refusal when the maker's quota says no; the scheduled re-read stays the core's. The device card and the first provider are not built yet.
+
 ## Which child a container stands for
 
 A Container is shown by one of its children: its icon, its online state, the hero on its page, and the device a room suggests for a camera (D749). One function decides which, `resolveContainerPrimaryChild` in `packages/types/src/device/container-primary-child.ts`; the admin UI, the device rows, the device-name formatter, the room suggestions and the linked-device resolver all call it, and the viewer keeps a copy of the formatter. Its `preference` argument is required (`undefined` when the container declared none), so the compiler finds a caller that forgets it; each caller passes `primaryChildPreferenceOf(container)`. The order is fixed:

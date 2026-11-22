@@ -103,7 +103,7 @@ no string key (or one over 128 characters) is skipped and counted
 reading. `listSeries` names an item series `<item label> · <field name>` from
 the device's current slice, and falls back to the key when the item is gone.
 `consumables` records `level` (%), `status` (enum) and `remaining.value`
-(unit from the item's `remaining.unit`).
+(no stored unit: the value's meaning follows the item's `remaining.kind`, a duration, a count or a distance in metres).
 
 ## Producer door
 
