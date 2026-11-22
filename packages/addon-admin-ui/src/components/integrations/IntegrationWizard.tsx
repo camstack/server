@@ -78,6 +78,7 @@ type WizardStep = 'picker' | 'config' | 'discovery' | 'broker'
  * integration may already exist — close and refresh to check.
  */
 const CREATE_OVERDUE_MS = 20_000
+const DEVICE_PROVIDER_CAP = 'device-provider'
 
 interface IntegrationWizardProps {
   open: boolean
@@ -141,12 +142,18 @@ export function IntegrationWizard({
   // several testable kinds names none here, and the server answers with the kinds to choose from.
   const instancesDescription = useIntegrationInstancesDescribe(
     { addonId: selectedAddonId ?? '' },
-    { enabled: open && step === 'config' && selectedAddonId !== null },
+    { enabled: open && (step === 'config' || step === 'broker') && selectedAddonId !== null },
   )
   const testableKinds = (instancesDescription.data?.kinds ?? []).filter(
     (kind) => kind.canTest !== false,
   )
   const instanceKind = testableKinds.length === 1 ? testableKinds[0]?.id : undefined
+  // A provider that is also a broker (Matter: the fabric AND the integrations) has several kinds;
+  // the integration this wizard creates is the one whose function is the device provider.
+  const integrationKinds = (instancesDescription.data?.kinds ?? []).filter(
+    (kind) => kind.functionCap === DEVICE_PROVIDER_CAP,
+  )
+  const integrationKind = integrationKinds.length === 1 ? integrationKinds[0]?.id : undefined
   const canScan =
     selectedAddonId !== null &&
     (discoveryProviders.data?.providers ?? []).some((p) => p.addonId === selectedAddonId)
@@ -351,6 +358,7 @@ export function IntegrationWizard({
         addonId: selectedAddonId,
         name: pendingName,
         values: { brokerId },
+        ...(integrationKind !== undefined ? { kind: integrationKind } : {}),
       })
       // Store the created integration id so the adopt step (next task)
       // can drive device adoption against it.
