@@ -112,6 +112,7 @@ import type { timedRunCapability } from '../capabilities/timed-run.cap.js'
 import type { updateCapability } from '../capabilities/update.cap.js'
 import type { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
 import type { valveCapability } from '../capabilities/valve.cap.js'
+import type { vehicleCapability } from '../capabilities/vehicle.cap.js'
 import type { vibrationCapability } from '../capabilities/vibration.cap.js'
 import type { videoclipsCapability } from '../capabilities/videoclips.cap.js'
 import type { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
@@ -230,6 +231,7 @@ export interface DeviceProxyState {
   readonly update: SliceHandle<InferRuntimeState<typeof updateCapability>>
   readonly vacuumControl: SliceHandle<InferRuntimeState<typeof vacuumControlCapability>>
   readonly valve: SliceHandle<InferRuntimeState<typeof valveCapability>>
+  readonly vehicle: SliceHandle<InferRuntimeState<typeof vehicleCapability>>
   readonly vibration: SliceHandle<InferRuntimeState<typeof vibrationCapability>>
   readonly waterHeater: SliceHandle<InferRuntimeState<typeof waterHeaterCapability>>
   readonly weather: SliceHandle<InferRuntimeState<typeof weatherCapability>>
@@ -361,6 +363,7 @@ export interface DeviceProxy {
   readonly update?: InferDeviceProxyCap<typeof updateCapability>
   readonly vacuumControl?: InferDeviceProxyCap<typeof vacuumControlCapability>
   readonly valve?: InferDeviceProxyCap<typeof valveCapability>
+  readonly vehicle?: InferDeviceProxyCap<typeof vehicleCapability>
   readonly vibration?: InferDeviceProxyCap<typeof vibrationCapability>
   readonly videoclips?: InferDeviceProxyCap<typeof videoclipsCapability>
   readonly waterHeater?: InferDeviceProxyCap<typeof waterHeaterCapability>
@@ -1219,6 +1222,11 @@ export function createDeviceProxy(
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'getStatus', 'query', input, undefined, options),
   }
 
+  const vehicleInterface = {
+    requestRefresh: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vehicle', 'vehicle', 'requestRefresh', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vehicle', 'vehicle', 'getStatus', 'query', input, undefined, options),
+  }
+
   const vibrationInterface = {
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vibration', 'vibration', 'getStatus', 'query', input, undefined, options),
   }
@@ -1583,6 +1591,7 @@ export function createDeviceProxy(
       update: createSliceHandle<InferRuntimeState<typeof updateCapability>>(stateSource, binding.deviceId, 'update'),
       vacuumControl: createSliceHandle<InferRuntimeState<typeof vacuumControlCapability>>(stateSource, binding.deviceId, 'vacuum-control'),
       valve: createSliceHandle<InferRuntimeState<typeof valveCapability>>(stateSource, binding.deviceId, 'valve'),
+      vehicle: createSliceHandle<InferRuntimeState<typeof vehicleCapability>>(stateSource, binding.deviceId, 'vehicle'),
       vibration: createSliceHandle<InferRuntimeState<typeof vibrationCapability>>(stateSource, binding.deviceId, 'vibration'),
       waterHeater: createSliceHandle<InferRuntimeState<typeof waterHeaterCapability>>(stateSource, binding.deviceId, 'water-heater'),
       weather: createSliceHandle<InferRuntimeState<typeof weatherCapability>>(stateSource, binding.deviceId, 'weather'),
@@ -1695,6 +1704,7 @@ export function createDeviceProxy(
     ...(bound('update') ? { update: updateInterface } : {}),
     ...(bound('vacuum-control') ? { vacuumControl: vacuumControlInterface } : {}),
     ...(bound('valve') ? { valve: valveInterface } : {}),
+    ...(bound('vehicle') ? { vehicle: vehicleInterface } : {}),
     ...(bound('vibration') ? { vibration: vibrationInterface } : {}),
     ...(bound('videoclips') ? { videoclips: videoclipsInterface } : {}),
     ...(bound('water-heater') ? { waterHeater: waterHeaterInterface } : {}),

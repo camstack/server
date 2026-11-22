@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1541 method paths across 215 capabilities.
+ * Coverage: 1543 method paths across 216 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1517,6 +1517,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'vectorStore.scan': { capName: "vector-store", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'vectorStore.stats': { capName: "vector-store", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'vectorStore.upsert': { capName: "vector-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'vehicle.getStatus': { capName: "vehicle", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'vehicle.requestRefresh': { capName: "vehicle", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'vibration.getStatus': { capName: "vibration", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'videoclips.dialClipStream': { capName: "videoclips", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'videoclips.getClipPlayback': { capName: "videoclips", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1771,6 +1773,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "vacuum-control",
   "valve",
   "vector-store",
+  "vehicle",
   "vibration",
   "videoclips",
   "viewer-ui",
@@ -1889,6 +1892,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "update",
   "vacuum-control",
   "valve",
+  "vehicle",
   "vibration",
   "videoclips",
   "water-heater",

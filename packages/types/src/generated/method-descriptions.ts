@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1541 of 1541 methods.
+ * Coverage: 1543 of 1543 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -1504,6 +1504,8 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "vectorStore.scan": "One page of the whole index, unranked — see {@link VectorScanInputSchema}.",
   "vectorStore.stats": "Counts and size of a vector collection.",
   "vectorStore.upsert": "Insert or replace embedding vectors with their metadata.",
+  "vehicle.getStatus": "The device's current status as reported by this capability; null when unknown.",
+  "vehicle.requestRefresh": "Ask the car for fresh data. Admin-only: each call spends a scarce shared quota. A provider that cannot wake the car does not implement it.",
   "vibration.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "videoclips.dialClipStream": "Where this clip's STREAM can be dialled (D597) — the forward-only fMP4 the provider writes from the first muxed byte, for the broker to play through the same WebRTC session as recorded footage, with the first frame at the first fragment instead of after the last byte.",
   "videoclips.getClipPlayback": "How to play one clip, at the requested quality.",

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device labels and icons for the vehicle lock, vehicle climate and TV roles
 - A vehicle device type label and a car and tv glyph in the fast icon table
 - Generated hooks for the new location capability
+- Generated hooks for the new vehicle capability
 
 ## [1.2.497] - 2026-11-22
 

@@ -2440,6 +2440,22 @@ export {
   locationCapability,
   locationFix,
 } from './location.cap.js'
+export {
+  emptyVehicleStatus,
+  type IVehicleProvider,
+  VEHICLE_REFRESH_REFUSALS,
+  type VehicleRefreshRefusal,
+  VehicleRefreshRefusalSchema,
+  type VehicleRefreshResult,
+  VehicleRefreshResultSchema,
+  type VehicleStatus,
+  VehicleStatusSchema,
+  type VehicleTyreWarnings,
+  VehicleTyreWarningsSchema,
+  type VehicleWheelOpenings,
+  VehicleWheelOpeningsSchema,
+  vehicleCapability,
+} from './vehicle.cap.js'
 // HA-targeted binary sensor cap family (Phase B1)
 export {
   type ContactStatus,
@@ -3737,6 +3753,7 @@ import type { composerCapability } from './composer.cap.js'
 import type { connectivityCapability } from './connectivity.cap.js'
 import type { consumablesCapability } from './consumables.cap.js'
 import type { locationCapability } from './location.cap.js'
+import type { vehicleCapability } from './vehicle.cap.js'
 import type { contactCapability } from './contact.cap.js'
 import type { controlCapability } from './control.cap.js'
 import type { coreBlocksCapability } from './core-blocks.cap.js'
@@ -3995,6 +4012,7 @@ type AnyCapability =
   | typeof navigationCapability
   | typeof consumablesCapability
   | typeof locationCapability
+  | typeof vehicleCapability
   | typeof runningStateCapability
   | typeof rebootCapability
   | typeof lowPowerSleepCapability

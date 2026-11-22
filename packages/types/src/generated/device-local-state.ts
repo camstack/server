@@ -84,6 +84,7 @@ import type { timedRunCapability } from '../capabilities/timed-run.cap.js'
 import type { updateCapability } from '../capabilities/update.cap.js'
 import type { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
 import type { valveCapability } from '../capabilities/valve.cap.js'
+import type { vehicleCapability } from '../capabilities/vehicle.cap.js'
 import type { vibrationCapability } from '../capabilities/vibration.cap.js'
 import type { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
 import type { weatherCapability } from '../capabilities/weather.cap.js'
@@ -186,6 +187,7 @@ export interface DeviceLocalState {
   update: InferRuntimeState<typeof updateCapability>
   vacuumControl: InferRuntimeState<typeof vacuumControlCapability>
   valve: InferRuntimeState<typeof valveCapability>
+  vehicle: InferRuntimeState<typeof vehicleCapability>
   vibration: InferRuntimeState<typeof vibrationCapability>
   waterHeater: InferRuntimeState<typeof waterHeaterCapability>
   weather: InferRuntimeState<typeof weatherCapability>
@@ -285,6 +287,7 @@ export const DEVICE_LOCAL_STATE_CAP_NAMES: Readonly<Record<keyof DeviceLocalStat
   update: 'update',
   vacuumControl: 'vacuum-control',
   valve: 'valve',
+  vehicle: 'vehicle',
   vibration: 'vibration',
   waterHeater: 'water-heater',
   weather: 'weather',
@@ -390,6 +393,7 @@ export interface CapNameToRuntimeStateMap {
   'update': InferRuntimeState<typeof updateCapability>
   'vacuum-control': InferRuntimeState<typeof vacuumControlCapability>
   'valve': InferRuntimeState<typeof valveCapability>
+  'vehicle': InferRuntimeState<typeof vehicleCapability>
   'vibration': InferRuntimeState<typeof vibrationCapability>
   'water-heater': InferRuntimeState<typeof waterHeaterCapability>
   'weather': InferRuntimeState<typeof weatherCapability>

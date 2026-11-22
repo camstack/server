@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 90 caps with 486 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 91 caps with 507 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -227,6 +227,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "vacuum-control",
   "valve",
   "vector-store",
+  "vehicle",
   "vibration",
   "videoclips",
   "viewer-ui",
@@ -326,6 +327,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "update": [{"path":"currentVersion","valueType":"string"}, {"path":"availableVersion","valueType":"string"}, {"path":"updatable","valueType":"boolean"}, {"path":"state","valueType":"string"}, {"path":"inProgress","valueType":"boolean"}],
   "vacuum-control": [{"path":"state","valueType":"enum","enumValues":["idle","cleaning","paused","returning","docked","drying","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"fanSpeed","valueType":"string"}, {"path":"progress","valueType":"number"}, {"path":"errorCode","valueType":"number"}, {"path":"errorLabel","valueType":"string"}],
   "valve": [{"path":"state","valueType":"enum","enumValues":["open","opening","closing","closed","stopped"]}, {"path":"position","valueType":"number"}],
+  "vehicle": [{"path":"odometer","valueType":"number"}, {"path":"range","valueType":"number"}, {"path":"engineOn","valueType":"boolean"}, {"path":"doors.frontLeft","valueType":"boolean"}, {"path":"doors.frontRight","valueType":"boolean"}, {"path":"doors.rearLeft","valueType":"boolean"}, {"path":"doors.rearRight","valueType":"boolean"}, {"path":"windows.frontLeft","valueType":"boolean"}, {"path":"windows.frontRight","valueType":"boolean"}, {"path":"windows.rearLeft","valueType":"boolean"}, {"path":"windows.rearRight","valueType":"boolean"}, {"path":"trunkOpen","valueType":"boolean"}, {"path":"hoodOpen","valueType":"boolean"}, {"path":"sunroofOpen","valueType":"boolean"}, {"path":"tyreWarnings.frontLeft","valueType":"boolean"}, {"path":"tyreWarnings.frontRight","valueType":"boolean"}, {"path":"tyreWarnings.rearLeft","valueType":"boolean"}, {"path":"tyreWarnings.rearRight","valueType":"boolean"}, {"path":"auxBatteryLevel","valueType":"number"}, {"path":"auxBatteryVoltage","valueType":"number"}, {"path":"reportedAt","valueType":"number"}],
   "vibration": [{"path":"detected","valueType":"boolean"}],
   "water-heater": [{"path":"currentTemp","valueType":"number"}, {"path":"targetTemp","valueType":"number"}, {"path":"operationMode","valueType":"string"}, {"path":"away","valueType":"boolean"}, {"path":"minTemp","valueType":"number"}, {"path":"maxTemp","valueType":"number"}, {"path":"lastActiveMode","valueType":"string"}],
   "weather": [{"path":"condition","valueType":"string"}, {"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windBearing","valueType":"number"}],
@@ -423,6 +425,7 @@ export const CAP_STATE_FIELD_PRESENCE: Readonly<
   "update": { "availableVersion": "required", "currentVersion": "required", "inProgress": "required", "state": "required", "updatable": "required" },
   "vacuum-control": { "availableFanSpeeds": "required", "batteryLevel": "required", "errorCode": "required", "errorLabel": "required", "fanSpeed": "required", "lastChangedAt": "required", "progress": "required", "state": "required" },
   "valve": { "lastChangedAt": "required", "position": "required", "state": "required" },
+  "vehicle": { "auxBatteryLevel": "required", "auxBatteryVoltage": "required", "doors": "required", "engineOn": "required", "hoodOpen": "required", "lastChangedAt": "required", "lastFetchedAt": "required", "odometer": "required", "range": "required", "reportedAt": "required", "sunroofOpen": "required", "trunkOpen": "required", "tyreWarnings": "required", "windows": "required" },
   "vibration": { "detected": "required", "lastChangedAt": "required" },
   "water-heater": { "availableModes": "required", "away": "required", "currentTemp": "required", "lastActiveMode": "optional", "lastChangedAt": "required", "maxTemp": "required", "minTemp": "required", "operationMode": "required", "targetTemp": "required" },
   "weather": { "condition": "required", "humidity": "required", "lastFetchedAt": "required", "pressure": "required", "temperature": "required", "windBearing": "required", "windSpeed": "required" },

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**215 capabilities · 1541 methods.**
+**216 capabilities · 1543 methods.**
 
 ## Method index
 
@@ -1508,6 +1508,8 @@
 | `vectorStore.deleteByIds` | mutation | admin | vector-store |
 | `vectorStore.deleteByFilter` | mutation | admin | vector-store |
 | `vectorStore.stats` | query | admin | vector-store |
+| `vehicle.getStatus` | query | protected | vehicle (auto) |
+| `vehicle.requestRefresh` | mutation | admin | vehicle |
 | `vibration.getStatus` | query | protected | vibration (auto) |
 | `videoclips.listClips` | query | protected | videoclips |
 | `videoclips.listSources` | query | protected | videoclips |
@@ -5198,6 +5200,19 @@
 | deleteByIds | `vectorStore.deleteByIds` | mutation | admin | `VectorDeleteInputSchema` | `VectorDeleteResultSchema` |
 | deleteByFilter | `vectorStore.deleteByFilter` | mutation | admin | `VectorDeleteByFilterInputSchema` | `VectorDeleteResultSchema` |
 | stats | `vectorStore.stats` | query | admin | `VectorStatsInputSchema` | `VectorStatsResultSchema` |
+
+### `vehicle` → `vehicle.*`
+
+- **Source:** `packages/types/src/capabilities/vehicle.cap.ts:138`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `vehicle`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `IVehicleProvider`
+- **runtimeState:** `{ odometer: number \| null; range: number \| null; engineOn: boolean \| null; doors: VehicleWheelOpeningsSchema; windows: VehicleWheelOpeningsSchema; trunkOpen: boolean \| null; hoodOpen: boolean \| null; sunroofOpen: boolean \| null; tyreWarnings: VehicleTyreWarningsSchema; auxBatteryLevel: number \| null; auxBatteryVoltage: number \| null; reportedAt: number \| null; lastChangedAt: number; lastFetchedAt: number }`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `vehicle.getStatus` | query | protected | `{ deviceId: number }` | `VehicleStatusSchema` |
+| requestRefresh | `vehicle.requestRefresh` | mutation | admin | `{ deviceId: number }` | `VehicleRefreshResultSchema` |
 
 ### `vibration` → `vibration.*`
 

@@ -1494,6 +1494,8 @@
   "vectorStore.scan": "admin",
   "vectorStore.stats": "admin",
   "vectorStore.upsert": "admin",
+  "vehicle.getStatus": "viewer",
+  "vehicle.requestRefresh": "admin",
   "vibration.getStatus": "viewer",
   "videoclips.dialClipStream": "viewer",
   "videoclips.getClipPlayback": "viewer",

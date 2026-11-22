@@ -88,6 +88,7 @@ import type { TimedRunStatusSchema } from '../capabilities/timed-run.cap.js'
 import type { UpdateStatusSchema } from '../capabilities/update.cap.js'
 import type { VacuumControlStatusSchema } from '../capabilities/vacuum-control.cap.js'
 import type { ValveStatusSchema } from '../capabilities/valve.cap.js'
+import type { VehicleStatusSchema } from '../capabilities/vehicle.cap.js'
 import type { VibrationStatusSchema } from '../capabilities/vibration.cap.js'
 import type { WaterHeaterStatusSchema } from '../capabilities/water-heater.cap.js'
 import type { WeatherStatusSchema } from '../capabilities/weather.cap.js'
@@ -185,6 +186,7 @@ export type CapStatusTypeMap = {
   readonly 'update': z.infer<typeof UpdateStatusSchema>
   readonly 'vacuum-control': z.infer<typeof VacuumControlStatusSchema>
   readonly 'valve': z.infer<typeof ValveStatusSchema>
+  readonly 'vehicle': z.infer<typeof VehicleStatusSchema>
   readonly 'vibration': z.infer<typeof VibrationStatusSchema>
   readonly 'water-heater': z.infer<typeof WaterHeaterStatusSchema>
   readonly 'weather': z.infer<typeof WeatherStatusSchema>
@@ -286,6 +288,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'update',
   'vacuum-control',
   'valve',
+  'vehicle',
   'vibration',
   'water-heater',
   'weather',

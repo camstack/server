@@ -122,6 +122,9 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   update: 'contributes',
   'vacuum-control': 'contributes',
   valve: 'contributes',
+  vehicle: {
+    none: 'drawn by the vehicle device card, which arrives with the first vehicle provider',
+  },
   vibration: 'contributes',
   videoclips: { none: NOT_A_HERO_FACT },
   'water-heater': 'contributes',

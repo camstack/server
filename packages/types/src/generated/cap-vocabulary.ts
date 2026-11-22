@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 215 caps (113 device, 102 system).
+ * `*.cap.ts` (D1050): 216 caps (114 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -3453,6 +3453,76 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
     ],
   },
   'location': { scope: 'device', noun: { en: 'Location', it: 'Posizione' } },
+  'vehicle': {
+    scope: 'device',
+    noun: { en: 'Vehicle', it: 'Veicolo' },
+    actions: [
+      {
+        id: 'vehicle.requestRefresh',
+        method: 'requestRefresh',
+        label: { en: 'Refresh from the car', it: 'Aggiorna dall\'auto' },
+        phrase: { en: 'Ask {device} for fresh data', it: 'Chiedi dati aggiornati a {device}' },
+        icon: 'refresh-cw',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'engineOn',
+        label: { en: 'Engine on', it: 'Motore acceso' },
+        whenTrue: {
+          en: 'When {device}\'s engine starts',
+          it: 'Quando il motore di {device} si avvia',
+        },
+        whenFalse: {
+          en: 'When {device}\'s engine stops',
+          it: 'Quando il motore di {device} si spegne',
+        },
+        icon: 'car',
+      },
+      {
+        kind: 'boolean',
+        field: 'trunkOpen',
+        label: { en: 'Trunk open', it: 'Bagagliaio aperto' },
+        whenTrue: {
+          en: 'When {device}\'s trunk opens',
+          it: 'Quando il bagagliaio di {device} si apre',
+        },
+        whenFalse: {
+          en: 'When {device}\'s trunk closes',
+          it: 'Quando il bagagliaio di {device} si chiude',
+        },
+        icon: 'car',
+      },
+      {
+        kind: 'boolean',
+        field: 'hoodOpen',
+        label: { en: 'Hood open', it: 'Cofano aperto' },
+        whenTrue: { en: 'When {device}\'s hood opens', it: 'Quando il cofano di {device} si apre' },
+        whenFalse: {
+          en: 'When {device}\'s hood closes',
+          it: 'Quando il cofano di {device} si chiude',
+        },
+        icon: 'car',
+      },
+      {
+        kind: 'numeric',
+        field: 'range',
+        quantity: { en: 'the range', it: 'l\'autonomia' },
+        label: { en: 'Range', it: 'Autonomia' },
+        unit: 'm',
+        icon: 'gauge',
+      },
+      {
+        kind: 'numeric',
+        field: 'auxBatteryLevel',
+        quantity: { en: 'the 12 V battery level', it: 'il livello della batteria a 12 V' },
+        label: { en: '12 V battery', it: 'Batteria a 12 V' },
+        unit: '%',
+        icon: 'battery',
+      },
+    ],
+  },
   'workload': {
     scope: 'device',
     noun: { en: 'Workload', it: 'Carico di lavoro' },

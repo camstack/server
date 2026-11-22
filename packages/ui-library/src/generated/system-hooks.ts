@@ -3980,6 +3980,12 @@ export const useValveSetPosition: typeof trpc.valve.setPosition.useMutation = /*
 /** Generated alias around `trpc.valve.getStatus.useQuery`. */
 export const useValveGetStatus: typeof trpc.valve.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.valve.getStatus.useQuery)
 
+/** Generated alias around `trpc.vehicle.requestRefresh.useMutation`. */
+export const useVehicleRequestRefresh: typeof trpc.vehicle.requestRefresh.useMutation = /*#__PURE__*/ alias(() => trpc.vehicle.requestRefresh.useMutation)
+
+/** Generated alias around `trpc.vehicle.getStatus.useQuery`. */
+export const useVehicleGetStatus: typeof trpc.vehicle.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.vehicle.getStatus.useQuery)
+
 /** Generated alias around `trpc.vibration.getStatus.useQuery`. */
 export const useVibrationGetStatus: typeof trpc.vibration.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.vibration.getStatus.useQuery)
 

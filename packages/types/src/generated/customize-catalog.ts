@@ -2043,4 +2043,10 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   'temperature-sensor': {
     temperature: '°C',
   },
+  'vehicle': {
+    odometer: 'm',
+    range: 'm',
+    auxBatteryLevel: '%',
+    auxBatteryVoltage: 'V',
+  },
 }

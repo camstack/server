@@ -27,7 +27,7 @@ export interface RuntimeStatePolicy {
 
 /**
  * Per-cap runtime-state policy, projected from every `*.cap.ts` that declares
- * `runtimeState`. 89 caps: 45 `restored`, 44 `session`.
+ * `runtimeState`. 90 caps: 46 `restored`, 44 `session`.
  *
  * A cap absent from this map has no runtime-state slice at all. A cap PRESENT
  * with `durability: 'session'` has one and has decided not to keep it.
@@ -114,6 +114,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'update': { durability: 'session', volatileFields: [] },
   'vacuum-control': { durability: 'session', volatileFields: [] },
   'valve': { durability: 'session', volatileFields: [] },
+  'vehicle': { durability: 'restored', volatileFields: ['reportedAt', 'lastChangedAt', 'lastFetchedAt'] },
   'vibration': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'water-heater': { durability: 'restored', volatileFields: [], restoredFields: ['lastActiveMode'] },
   'weather': { durability: 'session', volatileFields: [] },
@@ -186,6 +187,7 @@ export const RESTORED_CAP_NAMES: readonly string[] = [
   'switch',
   'tamper',
   'temperature-sensor',
+  'vehicle',
   'vibration',
   'water-heater',
   'zone-rules',

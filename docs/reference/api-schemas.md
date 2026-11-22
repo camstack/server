@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1119 shared schemas.**
+**1124 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -8060,6 +8060,45 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 
 - `upserted`: `number`
 - `rejected`: `number`
+
+### `VehicleRefreshRefusalSchema`
+
+Enum: `"not-supported" \| "budget-exhausted" \| "in-progress" \| "too-soon" \| "vehicle-unreachable" \| "account-error"`
+
+### `VehicleRefreshResultSchema`
+
+- `{ ok: true; reportedAt: number \| null }`
+- `{ ok: false; reason: VehicleRefreshRefusalSchema; retryAt: number \| null }`
+
+### `VehicleStatusSchema`
+
+- `odometer`: `number \| null`
+- `range`: `number \| null`
+- `engineOn`: `boolean \| null`
+- `doors`: `VehicleWheelOpeningsSchema`
+- `windows`: `VehicleWheelOpeningsSchema`
+- `trunkOpen`: `boolean \| null`
+- `hoodOpen`: `boolean \| null`
+- `sunroofOpen`: `boolean \| null`
+- `tyreWarnings`: `VehicleTyreWarningsSchema`
+- `auxBatteryLevel`: `number \| null`
+- `auxBatteryVoltage`: `number \| null`
+- `reportedAt`: `number \| null`
+- `lastChangedAt`: `number`
+
+### `VehicleTyreWarningsSchema`
+
+- `frontLeft`: `boolean \| null`
+- `frontRight`: `boolean \| null`
+- `rearLeft`: `boolean \| null`
+- `rearRight`: `boolean \| null`
+
+### `VehicleWheelOpeningsSchema`
+
+- `frontLeft`: `boolean \| null`
+- `frontRight`: `boolean \| null`
+- `rearLeft`: `boolean \| null`
+- `rearRight`: `boolean \| null`
 
 ### `VibrationStatusSchema`
 

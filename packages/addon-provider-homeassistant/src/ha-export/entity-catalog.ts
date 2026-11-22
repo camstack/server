@@ -2489,6 +2489,12 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'vehicle',
+    reason:
+      'No vehicle provider exists yet; the mapping (a sensor and a binary_sensor per field) ' +
+      'lands with the first one, so an entity would never receive a value.',
+  },
+  {
     cap: 'location',
     reason:
       'A fix maps to a device_tracker, which lands with the first provider that reports one; ' +

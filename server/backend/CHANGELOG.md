@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The hub serves the new location capability
+- The hub serves the new vehicle capability
 
 ## [1.2.938] - 2026-11-22
 

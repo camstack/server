@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New device roles: lock-vehicle, climate-vehicle (a car's lock and cabin climate) and media-player-tv
 - A new Vehicle device type, with a car icon, that can carry lock and climate accessories
 - A new location capability: the raw GPS fix (latitude, longitude, accuracy, heading, speed) any device can report, recorded in the device history
+- A new vehicle capability: odometer, range, doors, windows, tyre warnings and 12 V battery of a connected car, read-only, with an optional admin refresh
 
 ## [1.2.624] - 2026-11-22
 

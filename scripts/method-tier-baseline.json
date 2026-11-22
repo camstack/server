@@ -1381,6 +1381,7 @@
   "vectorStore.scan": "admin",
   "vectorStore.stats": "admin",
   "vectorStore.upsert": "admin",
+  "vehicle.requestRefresh": "admin",
   "videoclips.dialClipStream": "protected",
   "videoclips.getClipPlayback": "protected",
   "videoclips.getPlaybackOptions": "protected",

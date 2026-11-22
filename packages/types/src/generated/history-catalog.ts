@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 48 caps with series (135 series), 40 caps answered `'none'`.
+ * 49 caps with series (150 series), 40 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -203,6 +203,23 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'valve': {
     'position': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
   },
+  'vehicle': {
+    'odometer': { kind: 'counter', unit: 'm', displayName: 'Distance driven' },
+    'range': { kind: 'gauge', unit: 'm', deadband: 1000, displayName: 'Range' },
+    'engineOn': { kind: 'boolean', displayName: 'Engine' },
+    'auxBatteryLevel': { kind: 'gauge', unit: '%', deadband: 1, displayName: '12 V battery' },
+    'auxBatteryVoltage': { kind: 'gauge', unit: 'V', deadband: 0.1, displayName: '12 V voltage' },
+    'doors.frontLeft': { kind: 'boolean', displayName: 'Front left door' },
+    'doors.frontRight': { kind: 'boolean', displayName: 'Front right door' },
+    'doors.rearLeft': { kind: 'boolean', displayName: 'Rear left door' },
+    'doors.rearRight': { kind: 'boolean', displayName: 'Rear right door' },
+    'tyreWarnings.frontLeft': { kind: 'boolean', displayName: 'Front left tyre warning' },
+    'tyreWarnings.frontRight': { kind: 'boolean', displayName: 'Front right tyre warning' },
+    'tyreWarnings.rearLeft': { kind: 'boolean', displayName: 'Rear left tyre warning' },
+    'tyreWarnings.rearRight': { kind: 'boolean', displayName: 'Rear right tyre warning' },
+    'trunkOpen': { kind: 'boolean', displayName: 'Trunk' },
+    'hoodOpen': { kind: 'boolean', displayName: 'Hood' },
+  },
   'vibration': {
     'detected': { kind: 'boolean' },
   },
@@ -278,7 +295,7 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
 
 /**
  * The series a device card trends, per cap (`history.primary` + `history.priority`):
- * 7 caps. The card shows the primary of the enabled cap with the highest priority.
+ * 8 caps. The card shows the primary of the enabled cap with the highest priority.
  */
 export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>> = {
   'climate-control': { field: 'currentTemp', priority: 70 },
@@ -286,6 +303,7 @@ export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>>
   'humidity-sensor': { field: 'humidity', priority: 90 },
   'power-meter': { field: 'power', priority: 80 },
   'temperature-sensor': { field: 'temperature', priority: 100 },
+  'vehicle': { field: 'range', priority: 30 },
   'weather-station': { field: 'temperature', priority: 60 },
   'workload': { field: 'resources.cpuPercent', priority: 40 },
 }
