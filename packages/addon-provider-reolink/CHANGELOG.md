@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A battery camera that answers with an all-zero placeholder no longer reports 0% and raises a false empty-battery alert
+
 ## [1.2.259] - 2026-11-21
 
 ### Changed

@@ -3072,7 +3072,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         ? Math.max(0, Math.min(100, Math.round(info.batteryPercent)))
         : undefined
     const measured =
-      reported !== undefined && isMeasuredCameraBatteryLevel(reported, { sleeping, charging })
+      reported !== undefined &&
+      isMeasuredCameraBatteryLevel(reported, {
+        sleeping,
+        charging,
+        voltage: info.voltage,
+      })
     if (reported === 0) {
       // Proof for the live camera: the raw read behind every 0 it reports.
       this.ctx.logger.info('battery read reporting 0', {

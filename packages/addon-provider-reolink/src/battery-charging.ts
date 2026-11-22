@@ -73,6 +73,11 @@ export interface CameraBatteryReadContext {
   readonly sleeping: boolean
   /** The power source after this read: what it reported, else the previous belief. */
   readonly charging: BatteryStatus['charging']
+  /**
+   * The cell voltage (mV) the same read carried, when it carried the field. A
+   * `0` here is "no physical reading" — see {@link isMeasuredCameraBatteryLevel}.
+   */
+  readonly voltage?: number | undefined
 }
 
 /**
@@ -81,8 +86,16 @@ export interface CameraBatteryReadContext {
  * sleep, or while on mains or a panel, reports `0` as a placeholder — device
  * 3628 sat at 100% on its adapter and raised a low-battery notification on
  * every hourly wake. Those zeros are UNMEASURED: the caller keeps the last real
- * level. A `0` from an awake camera running on its cell alone (or of unknown
- * source) is a genuine empty cell and passes, as does every non-zero level.
+ * level.
+ *
+ * The same placeholder also arrives with NO power source to blame (device 3628,
+ * its own Baichuan read): `batteryPercent: 0, chargeStatus: "none",
+ * adapterStatus: "none", voltage: 0, current: 0, temperature: 0`, awake — an
+ * all-zero payload that raised an empty-battery alert; the next read was 99.
+ * A `0` level with a present `voltage` of 0 carries no cell measurement at all,
+ * so it is UNMEASURED too. A `0` from an awake camera on its cell alone with a
+ * real voltage (or a payload without the field) is a genuine empty cell and
+ * passes, as does every non-zero level.
  */
 export function isMeasuredCameraBatteryLevel(
   level: number,
@@ -90,6 +103,7 @@ export function isMeasuredCameraBatteryLevel(
 ): boolean {
   if (level !== 0) return true
   if (context.sleeping) return false
+  if (context.voltage === 0) return false
   return context.charging !== 'dc' && context.charging !== 'solar'
 }
 

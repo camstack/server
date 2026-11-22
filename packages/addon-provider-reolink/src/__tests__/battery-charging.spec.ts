@@ -111,3 +111,45 @@ describe('isMeasuredCameraBatteryLevel', () => {
     expect(isMeasuredCameraBatteryLevel(7, { sleeping: false, charging: 'none' })).toBe(true)
   })
 })
+
+/**
+ * Device 3628, its own Baichuan read (Loki): an awake camera answered
+ * `batteryPercent: 0` with every physical field at 0 and every state "none" —
+ * a placeholder, not a reading. It was accepted as an empty battery and the
+ * next read was 99/100.
+ */
+describe('isMeasuredCameraBatteryLevel — the all-zero placeholder', () => {
+  const rawFrom3628 = {
+    batteryPercent: 0,
+    chargeStatus: 'none',
+    adapterStatus: 'none',
+    voltage: 0,
+    current: 0,
+    temperature: 0,
+    lowPower: 0,
+    batteryVersion: 2,
+  }
+  const charging = deriveChargingSource(rawFrom3628.adapterStatus, rawFrom3628.chargeStatus)
+
+  it('discards a 0 whose payload carries no cell voltage (the 3628 payload)', () => {
+    expect(
+      isMeasuredCameraBatteryLevel(rawFrom3628.batteryPercent, {
+        sleeping: false,
+        charging,
+        voltage: rawFrom3628.voltage,
+      }),
+    ).toBe(false)
+  })
+
+  it('keeps a genuine 0 that carries a real cell voltage', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging, voltage: 3100 })).toBe(true)
+  })
+
+  it('keeps a 0 whose payload says nothing about voltage (field absent)', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging })).toBe(true)
+  })
+
+  it('keeps a non-zero level even with a zero voltage', () => {
+    expect(isMeasuredCameraBatteryLevel(99, { sleeping: false, charging, voltage: 0 })).toBe(true)
+  })
+})
