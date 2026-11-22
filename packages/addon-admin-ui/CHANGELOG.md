@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Customize shows one Source device row per whole-capability link; the old source group row is removed.
 - Customize: the consumable remaining unit can be a distance
+- Customize: the vehicle lock, vehicle climate and TV roles can be picked
 
 ## [1.2.736] - 2026-11-22
 

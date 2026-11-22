@@ -489,6 +489,18 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
     labelKey: 'uiLibrary.deviceMeta.role.climateHeatPumpCircuit',
     labelFallback: 'Heat pump circuit',
   },
+  [DeviceRole.ClimateVehicle]: {
+    labelKey: 'uiLibrary.deviceMeta.role.climateVehicle',
+    labelFallback: 'Vehicle climate',
+  },
+  [DeviceRole.LockVehicle]: {
+    labelKey: 'uiLibrary.deviceMeta.role.lockVehicle',
+    labelFallback: 'Vehicle lock',
+  },
+  [DeviceRole.MediaPlayerTv]: {
+    labelKey: 'uiLibrary.deviceMeta.role.mediaPlayerTv',
+    labelFallback: 'TV',
+  },
   [DeviceRole.MotionSensor]: {
     labelKey: 'uiLibrary.deviceMeta.role.motionSensor',
     labelFallback: 'Motion sensor',

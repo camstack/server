@@ -5,6 +5,9 @@ import {
   capAppliesToDeviceKind,
   climateRoleOf,
   isAirConditioner,
+  isTv,
+  isVehicleClimate,
+  isVehicleLock,
   isOutlet,
   isSwitchFan,
   isSwitchHeater,
@@ -167,5 +170,33 @@ describe('device kind (D1033)', () => {
       expect(isAirConditioner(DeviceType.Climate, DeviceRole.ClimateHeatPumpCircuit)).toBe(false)
       expect(isAirConditioner(DeviceType.Switch, DeviceRole.ClimateAc)).toBe(false)
     })
+  })
+})
+
+// The vehicle and TV roles (phase 1): a role is told apart by type AND role.
+describe('vehicle and TV roles', () => {
+  it('a climate-vehicle is a climate role and not an air conditioner', () => {
+    expect(climateRoleOf(DeviceRole.ClimateVehicle)).toBe(DeviceRole.ClimateVehicle)
+    expect(isAirConditioner(DeviceType.Climate, DeviceRole.ClimateVehicle)).toBe(false)
+  })
+
+  it('isVehicleLock / isVehicleClimate / isTv hold only for the right type AND role', () => {
+    expect(isVehicleLock(DeviceType.Lock, DeviceRole.LockVehicle)).toBe(true)
+    expect(isVehicleLock(DeviceType.Switch, DeviceRole.LockVehicle)).toBe(false)
+    expect(isVehicleLock(DeviceType.Lock, null)).toBe(false)
+    expect(isVehicleClimate(DeviceType.Climate, DeviceRole.ClimateVehicle)).toBe(true)
+    expect(isVehicleClimate(DeviceType.Climate, DeviceRole.ClimateThermostat)).toBe(false)
+    expect(isVehicleClimate(DeviceType.Lock, DeviceRole.ClimateVehicle)).toBe(false)
+    expect(isTv(DeviceType.MediaPlayer, DeviceRole.MediaPlayerTv)).toBe(true)
+    expect(isTv(DeviceType.MediaPlayer, null)).toBe(false)
+    expect(isTv(DeviceType.Switch, DeviceRole.MediaPlayerTv)).toBe(false)
+  })
+
+  it('a TV keeps the tv scene and a vehicle lock the lock scene (the roles inherit the type)', () => {
+    expect(resolveHeroSceneId(DeviceRole.MediaPlayerTv, DeviceType.MediaPlayer)).toBe('tv')
+    expect(resolveHeroSceneId(DeviceRole.LockVehicle, DeviceType.Lock)).toBe('lock')
+    expect(resolveHeroSceneId(DeviceRole.ClimateVehicle, DeviceType.Climate)).toBe(
+      resolveHeroSceneId(DeviceRole.ClimateThermostat, DeviceType.Climate),
+    )
   })
 })

@@ -64,6 +64,7 @@ const CARD_ROLE: Readonly<Record<string, ClimateRole>> = {
   [DeviceRole.ClimateRadiator]: 'radiator',
   [DeviceRole.ClimateHeater]: 'heater',
   [DeviceRole.ClimateHeatPumpCircuit]: 'hpcircuit',
+  [DeviceRole.ClimateVehicle]: 'thermostat',
 }
 
 /**

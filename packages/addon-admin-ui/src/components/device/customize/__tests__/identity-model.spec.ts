@@ -50,8 +50,17 @@ describe('roleOptions — filtered by device type', () => {
       DeviceRole.ClimateRadiator,
       DeviceRole.ClimateHeater,
       DeviceRole.ClimateHeatPumpCircuit,
+      DeviceRole.ClimateVehicle,
     ])
     expect(roleOptions(null, DeviceType.Climate)).not.toContain(DeviceRole.SwitchHeater)
+  })
+
+  it('offers each vehicle / TV role on its own type only', () => {
+    expect(roleOptions(null, DeviceType.Lock)).toEqual([DeviceRole.LockVehicle])
+    expect(roleOptions(null, DeviceType.MediaPlayer)).toEqual([DeviceRole.MediaPlayerTv])
+    expect(roleOptions(null, DeviceType.Switch)).not.toContain(DeviceRole.LockVehicle)
+    expect(roleOptions(null, DeviceType.Switch)).not.toContain(DeviceRole.MediaPlayerTv)
+    expect(roleOptions(null, DeviceType.Lock)).not.toContain(DeviceRole.ClimateVehicle)
   })
 
   it('offers nothing on a Camera (role is an accessory fact)', () => {

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wake-on-LAN helper: a pure magic-packet builder and a UDP sender for addons that wake a device from their own node
 - History series can be recorded in metres (unit m), for distances such as an odometer
 - Consumables: a remaining life can be a distance (metres), e.g. kilometres to the next service
+- New device roles: lock-vehicle, climate-vehicle (a car's lock and cabin climate) and media-player-tv
 
 ## [1.2.624] - 2026-11-22
 

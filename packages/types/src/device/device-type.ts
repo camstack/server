@@ -417,6 +417,18 @@ export enum DeviceRole {
   /** One heating/cooling circuit of a heat pump: a water loop with comfort /
    *  eco setpoints and a heat/cool mode, no room sensor. */
   ClimateHeatPumpCircuit = 'climate-heat-pump-circuit',
+  /** A car's cabin: pre-conditioning (start / stop, target temperature) through the
+   *  maker's connected-car account. An accessory child of a vehicle. */
+  ClimateVehicle = 'climate-vehicle',
+
+  // ── Lock sub-roles (the KIND of a `lock` device) ─────────
+  /** A car's central locking, an accessory child of a vehicle. Slow, cloud-held
+   *  commands; exports decide by `isVehicleLock`. */
+  LockVehicle = 'lock-vehicle',
+
+  // ── Media-player sub-roles (the KIND of a `media-player` device) ─
+  /** A television: power, volume, channel, source and apps. */
+  MediaPlayerTv = 'media-player-tv',
 
   // ── Sensor sub-roles — binary_sensor family ──────────────
   /** Generic motion / occupancy / moving event source. Distinct from

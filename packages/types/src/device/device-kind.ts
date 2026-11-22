@@ -52,6 +52,7 @@ export const CLIMATE_ROLES: readonly DeviceRole[] = [
   DeviceRole.ClimateFloor,
   DeviceRole.ClimateHeater,
   DeviceRole.ClimateHeatPumpCircuit,
+  DeviceRole.ClimateVehicle,
 ]
 
 export type ClimateRole =
@@ -61,6 +62,7 @@ export type ClimateRole =
   | DeviceRole.ClimateFloor
   | DeviceRole.ClimateHeater
   | DeviceRole.ClimateHeatPumpCircuit
+  | DeviceRole.ClimateVehicle
 
 function isClimateRole(role: string): role is ClimateRole {
   return CLIMATE_ROLES.some((candidate) => candidate === role)
@@ -80,6 +82,24 @@ export function climateRoleOf(role: string | null | undefined): ClimateRole {
 /** An air conditioner: exports present it as an AC unit, not a thermostat. */
 export function isAirConditioner(type: string, role: string | null | undefined): boolean {
   return type === DeviceType.Climate && climateRoleOf(role) === DeviceRole.ClimateAc
+}
+
+/** The `media-player-*` roles, in the order the role picker lists them. */
+export const MEDIA_PLAYER_ROLES: readonly DeviceRole[] = [DeviceRole.MediaPlayerTv]
+
+/** A car's central locking (a `lock` with role `lock-vehicle`). Consumers ask this, never the role string. */
+export function isVehicleLock(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Lock && role === DeviceRole.LockVehicle
+}
+
+/** A car's cabin climate (a `climate` with role `climate-vehicle`). */
+export function isVehicleClimate(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Climate && role === DeviceRole.ClimateVehicle
+}
+
+/** A television (a `media-player` with role `media-player-tv`). */
+export function isTv(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.MediaPlayer && role === DeviceRole.MediaPlayerTv
 }
 
 /**

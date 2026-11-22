@@ -70,6 +70,11 @@ describe('climateRoleOf — the card reads the device ROLE', () => {
     expect(climateRoleOf(DeviceRole.ClimateRadiator, false)).toBe('radiator')
     expect(climateRoleOf(DeviceRole.ClimateHeater, false)).toBe('heater')
     expect(climateRoleOf(DeviceRole.ClimateHeatPumpCircuit, false)).toBe('hpcircuit')
+    // A car's cabin climate draws as the thermostat card until the vehicle card exists.
+    expect(climateRoleOf(DeviceRole.ClimateVehicle, false)).toBe('thermostat')
+    expect(
+      connectedCardKindOf(DeviceType.Climate, DeviceRole.ClimateVehicle, ['climate-control']),
+    ).toBe('climate')
   })
 
   it('a climate device with no role is a thermostat, and a bound valve makes it a radiator', () => {
