@@ -73,7 +73,9 @@ describe('Alexa skill form', () => {
 
   it('the first skill gates its custom-skill rows on skillMode; a later skill gates only the audience', () => {
     const first = fieldsOf(form({ id: 'export-alexa', legacy: true }))
-    const gatedFirst = first.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
+    const gatedFirst = first.flatMap((f) =>
+      'showWhen' in f && f.showWhen && !('key' in f && f.key === '__alexa-enable-skill') ? [f] : [],
+    )
     expect(gatedFirst.map((f) => ('key' in f ? f.key : ''))).toEqual([
       'expectedAudience',
       'enforceIngressToken',
@@ -84,8 +86,24 @@ describe('Alexa skill form', () => {
     for (const f of gatedFirst) expect('showWhen' in f ? f.showWhen : null).toEqual(CUSTOM_ONLY)
 
     const later = fieldsOf(form({ id: 'alexa-skill-1', legacy: false }))
-    const gatedLater = later.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
+    const gatedLater = later.flatMap((f) =>
+      'showWhen' in f && f.showWhen && !('key' in f && f.key === '__alexa-enable-skill') ? [f] : [],
+    )
     expect(gatedLater.map((f) => ('key' in f ? f.key : ''))).toEqual(['expectedAudience'])
+  })
+
+  it('the beta invitation is a clickable link shown for the public skill only', () => {
+    const link = fieldsOf(form({ id: 'export-alexa', legacy: true })).find(
+      (f) => 'key' in f && f.key === '__alexa-enable-skill',
+    )
+    expect(link).toMatchObject({
+      type: 'info',
+      format: 'html',
+      showWhen: { field: 'skillMode', equals: 'public' },
+    })
+    expect(link !== undefined && 'content' in link ? link.content : '').toContain(
+      '<a href="https://skills-store.amazon.com/deeplink/',
+    )
   })
 
   it('holds no external-address picker: the public origin is the Network page role', () => {

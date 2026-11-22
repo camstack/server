@@ -21,6 +21,12 @@ import type { LinkedAccount, LwaTokenEntry } from './types.js'
 
 const ADDON_ID = 'export-alexa'
 
+/** The rows that exist only for the public skill. */
+const PUBLIC_SKILL_ONLY: ConfigCondition = {
+  field: 'skillMode',
+  equals: 'public',
+}
+
 /** The rows that exist only for a custom skill. */
 const CUSTOM_SKILL_ONLY: ConfigCondition = {
   field: 'skillMode',
@@ -57,7 +63,7 @@ const ALEXA_BETA_INVITE_URL =
 
 const CONNECTION_DESCRIPTION = [
   'Public skill (default): enable the "CamStack" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
-  `The public skill is a beta: first request access in ${ALEXA_BETA_REQUEST_URL} with the e-mail of your Amazon account. Once you are invited, open ${ALEXA_BETA_INVITE_URL} on a device signed in to that account to enable the skill.`,
+  `The public skill is a beta: first request access in ${ALEXA_BETA_REQUEST_URL} with the e-mail of your Amazon account. Once you are invited, use the "Enable the skill" link below on a device signed in to that account.`,
   "Custom skill: enter your skill id and deploy the skill Lambda from this addon's lambda-template in your own AWS account.",
   "Either way the skill's Lambda keeps the Amazon credentials (in a custom skill, in your SSM Parameter Store); this hub holds none. It receives short-lived event tokens from the Lambda's token broker with a credential unique to this link.",
   'This hub must be reachable from the internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …). The skill calls back on the hub\'s "Public endpoint" address, set on the Network page.',
@@ -77,6 +83,17 @@ function connectionSection(input: AlexaInstanceFormInput): ConfigSection {
         { value: 'custom', label: 'Custom skill' },
       ],
       default: defaults.skillMode,
+    },
+    // The beta invitation as a real link: an `info` field in `html` format renders
+    // sanitised anchors that open in a new tab.
+    {
+      type: 'info',
+      key: '__alexa-enable-skill',
+      label: 'Enable the skill',
+      variant: 'info',
+      format: 'html',
+      content: `<a href="${ALEXA_BETA_INVITE_URL}">Enable the skill</a> in the Alexa app, signed in to the Amazon account you were invited with. Not invited yet? <a href="${ALEXA_BETA_REQUEST_URL}">Request access</a>.`,
+      showWhen: PUBLIC_SKILL_ONLY,
     },
     // Region drives the Event Gateway endpoint and is required in BOTH modes.
     // EVERY proactive post goes there — doorbell presses, motion,

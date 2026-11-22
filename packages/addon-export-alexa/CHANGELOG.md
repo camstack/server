@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A hub restart no longer unlinks the Alexa skill: a directive whose token names an address this hub still answers on is served, and a hub with no public address yet answers a temporary error.
+- Connection: the public skill's beta invitation is a clickable "Enable the skill" link instead of plain text
 
 ## [1.2.205] - 2026-11-21
 
