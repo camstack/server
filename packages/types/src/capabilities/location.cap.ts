@@ -138,7 +138,7 @@ export const locationCapability = {
    */
   durability: 'restored',
   /**
-   * History (D850): latitude and longitude are two change-only series; a reader
+   * History (D850): latitude, longitude and speed are change-only series; a reader
    * rebuilding a track step-holds each. 0.0002 degrees is about 22 m of latitude,
    * so a parked car's GPS jitter records nothing. `accuracy`, `heading` and
    * `fixAt` are not recorded, and there is no `primary` (a latitude trend on a
