@@ -116,7 +116,7 @@ describe('planComposition: capLink (D1076)', () => {
         features: [{ kind: 'capLink', cap: 'energy-system', linkId: 'heat-pump', source: METER }],
       },
       lookupCap,
-      target(DeviceType.Sensor),
+      target(DeviceType.EnergySystem),
     )
     expect(plan.problems).toEqual([])
     expect(plan.fields).toEqual([])
