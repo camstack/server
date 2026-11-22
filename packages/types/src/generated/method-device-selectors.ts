@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 654 methods carry a device reference, of which
- * 204 are on SYSTEM-scope caps.
+ * Coverage: 655 methods carry a device reference, of which
+ * 205 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher

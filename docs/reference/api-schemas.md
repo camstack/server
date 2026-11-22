@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1127 shared schemas.**
+**1131 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6161,6 +6161,39 @@ Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "
 
 - `deviceId`: `number`
 - `resetToSource?`: `boolean`
+
+### `RetentionKnobSchema`
+
+- `id`: `string`
+- `owner`: `string`
+- `key`: `string`
+- `labelKey`: `string`
+- `label`: `string`
+- `group`: `string`
+- `unit`: `RetentionUnitSchema`
+- `defaultValue`: `number \| null`
+- `value`: `number \| null`
+- `min?`: `number`
+- `max?`: `number`
+- `zeroMeansForever`: `boolean`
+- `scope`: `RetentionScopeSchema`
+- `deviceId?`: `number`
+- `inherited?`: `boolean`
+- `inheritedValue?`: `number \| null`
+- `write`: `RetentionWriteSchema`
+
+### `RetentionScopeSchema`
+
+Enum: `"cluster" \| "device"`
+
+### `RetentionUnitSchema`
+
+Enum: `"days" \| "hours" \| "count"`
+
+### `RetentionWriteSchema`
+
+- `{ method: "updateScopedSettings"; addonId: string; cap: string; scope: "cluster" \| "node"; key: string }`
+- `{ method: "updateDeviceSettings"; addonId: string; key: string }`
 
 ### `RetrainAnnotationDraftSchema`
 

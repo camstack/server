@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1544 method paths across 216 capabilities.
+ * Coverage: 1545 method paths across 217 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1221,6 +1221,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'remote.setConfig': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'remoteLayoutComponents.listComponents': { capName: "remote-layout-components", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'resync.resync': { capName: "resync", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'retentionSource.listRetentionKnobs': { capName: "retention-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'runningState.getStatus': { capName: "running-state", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'sceneMonitor.captureReference': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
   'sceneMonitor.createScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
@@ -1735,6 +1736,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "remote",
   "remote-layout-components",
   "resync",
+  "retention-source",
   "running-state",
   "scene-monitor",
   "schedulers",
@@ -1986,6 +1988,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "records",
   "remote",
   "remote-layout-components",
+  "retention-source",
   "schedulers",
   "server-management",
   "settings-store",

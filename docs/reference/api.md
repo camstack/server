@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**216 capabilities · 1544 methods.**
+**217 capabilities · 1545 methods.**
 
 ## Method index
 
@@ -1212,6 +1212,7 @@
 | `remote.sendMediaCommand` | mutation | protected | remote |
 | `remoteLayoutComponents.listComponents` | query | protected | remote-layout-components |
 | `resync.resync` | mutation | admin | resync |
+| `retentionSource.listRetentionKnobs` | query | admin | retention-source |
 | `runningState.getStatus` | query | protected | running-state (auto) |
 | `sceneMonitor.getStatus` | query | protected | scene-monitor (auto) |
 | `sceneMonitor.listScenes` | query | protected | scene-monitor |
@@ -4499,6 +4500,17 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | resync | `resync.resync` | mutation | admin | `ResyncDeviceInputSchema` | `{ changed: boolean; rebuiltChildren: number; removedChildren?: number }` |
+
+### `retention-source` → `retentionSource.*`
+
+- **Source:** `packages/types/src/capabilities/retention-source.cap.ts:79`
+- **Meta:** scope: `system` · mode: `collection` · mount: `collection`
+- **Archetypes:** internal
+- **Provider interface:** `IRetentionSourceProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listRetentionKnobs | `retentionSource.listRetentionKnobs` | query | admin | `{ deviceId?: number }` | `RetentionKnobSchema[]` |
 
 ### `running-state` → `runningState.*`
 
