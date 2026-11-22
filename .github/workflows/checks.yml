@@ -459,9 +459,6 @@ jobs:
           npx tsx scripts/check-tree-private-data.ts
           npx tsx scripts/check-no-third-party-products.ts
 
-      - name: Onboarding manifest names things that exist here (D1077)
-        run: npx tsx scripts/check-onboarding-manifest.ts
-
       - name: Check docs are in sync (no drift)
         run: |
           npx tsx scripts/docs-generate.ts --check
@@ -469,6 +466,21 @@ jobs:
           npx tsx scripts/check-docs-drift.ts --committed-only
           npx tsx scripts/check-subsystem-map.ts --committed-only
           npx tsx scripts/gen-model-licenses.ts --check
+
+      # The docs site is a private sibling repository; without its checkout the
+      # guard below compares nothing (`docsCheckout()` returns null). The token
+      # is the org PAT that can read private repositories (`SUBMODULE_PAT`).
+      - name: Checkout the docs site (the onboarding manifest it emits)
+        uses: actions/checkout@v4
+        with:
+          repository: camstack/docs
+          path: docs-site
+          token: ${{ secrets.SUBMODULE_PAT }}
+
+      - name: Onboarding manifest names things that exist here (D1077)
+        env:
+          CAMSTACK_DOCS_DIR: ${{ github.workspace }}/docs-site
+        run: npx tsx scripts/check-onboarding-manifest.ts
 
       # These specs walk the whole repo or build throwaway git repos; under load
       # they hit vitest's 10 s timeout (2026-10-13), so the per-push CI skips
