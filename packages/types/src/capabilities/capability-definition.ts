@@ -538,6 +538,7 @@ export type HistoryUnit =
   | 'kPa'
   | 'index'
   | 'mm'
+  | 'm'
   | 'mm/h'
   | 'W/m²'
   | '°'
@@ -570,6 +571,7 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   kPa: 'kPa',
   index: 'UV index',
   mm: 'mm',
+  m: 'm',
   'mm/h': 'mm/h',
   'W/m²': 'W/m²',
   '°': '°',

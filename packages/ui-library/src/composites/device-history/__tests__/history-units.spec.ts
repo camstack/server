@@ -34,6 +34,28 @@ describe('chart unit choices', () => {
   })
 })
 
+describe('a series stored in metres', () => {
+  const metric = { system: 'metric', temperature: 'celsius' } as const
+  const imperial = { system: 'imperial', temperature: 'fahrenheit' } as const
+
+  it('offers km / mi / m, while rain in mm still offers only mm / in', () => {
+    expect(chartUnitChoices('m')).toEqual(['km', 'mi', 'm'])
+    expect(chartUnitChoices('mm')).toEqual(['mm', 'in'])
+  })
+
+  it('opens in km for metric and mi for imperial; rain never opens in km', () => {
+    expect(defaultChartUnit('m', metric)).toBe('km')
+    expect(defaultChartUnit('m', imperial)).toBe('mi')
+    expect(defaultChartUnit('mm', metric)).toBe('mm')
+    expect(chartUnitState('m', null, metric).unit).toBe('km')
+    expect(chartUnitState('mm', 'km', metric).unit).toBe('mm')
+  })
+
+  it('converts the points', () => {
+    expect(convertPoints([{ t: 0, v: 12000 }], 'm', 'km')[0]?.v).toBe(12)
+  })
+})
+
 describe('convertPoints', () => {
   it('converts value and band, leaving holes', () => {
     const out = convertPoints(

@@ -23,13 +23,33 @@ const CHOICES: Readonly<Partial<Record<UnitDimension, readonly string[]>>> = {
   energy: ['Wh', 'kWh', 'MWh'],
   speed: ['m/s', 'km/h', 'mph'],
   pressure: ['hPa', 'inHg'],
-  length: ['mm', 'in'],
   'precipitation-rate': ['mm/h', 'in/h'],
+}
+
+/**
+ * A dimension with more than one stored base (length: `mm` for rain, `m` for a
+ * distance driven) is keyed by the STORED unit — rain must never offer km.
+ */
+const CHOICES_BY_STORED_UNIT: Readonly<Record<string, readonly string[]>> = {
+  mm: ['mm', 'in'],
+  m: ['km', 'mi', 'm'],
+}
+
+/** The unit a stored-unit-keyed series opens in, per unit system. */
+const STORED_UNIT_DEFAULTS: Readonly<
+  Record<string, { readonly metric: string; readonly imperial: string }>
+> = {
+  mm: { metric: 'mm', imperial: 'in' },
+  m: { metric: 'km', imperial: 'mi' },
 }
 
 /** The units a chart whose series is stored in `unit` can switch to; empty = no switch. */
 export function chartUnitChoices(unit: string | null): readonly string[] {
   if (unit === null) return []
+  const byStored = Object.hasOwn(CHOICES_BY_STORED_UNIT, unit)
+    ? CHOICES_BY_STORED_UNIT[unit]
+    : undefined
+  if (byStored !== undefined) return byStored
   const dimension = unitDimension(unit)
   const choices = dimension === undefined ? undefined : CHOICES[dimension]
   if (choices === undefined || !choices.includes(unit)) return []
@@ -39,7 +59,6 @@ export function chartUnitChoices(unit: string | null): readonly string[] {
 const IMPERIAL: Readonly<Partial<Record<UnitDimension, string>>> = {
   speed: 'mph',
   pressure: 'inHg',
-  length: 'in',
   'precipitation-rate': 'in/h',
 }
 
@@ -47,6 +66,9 @@ const IMPERIAL: Readonly<Partial<Record<UnitDimension, string>>> = {
 export function defaultChartUnit(unit: string, preferences: UnitPreferences): string {
   const choices = chartUnitChoices(unit)
   if (choices.length === 0) return unit
+  const stored = Object.hasOwn(STORED_UNIT_DEFAULTS, unit) ? STORED_UNIT_DEFAULTS[unit] : undefined
+  if (stored !== undefined)
+    return preferences.system === 'imperial' ? stored.imperial : stored.metric
   const dimension = unitDimension(unit)
   const wanted =
     dimension === 'temperature'
