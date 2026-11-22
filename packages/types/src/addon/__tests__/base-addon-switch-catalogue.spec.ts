@@ -8,6 +8,7 @@ import { observable } from '@trpc/server/observable'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { AppRouter } from '../../generated/addon-api.js'
 import type { MigrationApiV1 } from '../../migrations/api/migration-api.v1.js'
+import type { AddonMigration } from '../../migrations/addon-migration.js'
 import { bodySwitchToRegistryId } from '../../migrations/body-switch-to-registry.js'
 import { catalogueIssues, type MigrationOrderKey } from '../../migrations/migration.js'
 import { registrySwitchToBodyId } from '../../migrations/registry-switch-to-body.js'
@@ -28,16 +29,22 @@ interface Meta extends MigrationOrderKey {
   readonly [key: string]: unknown
 }
 
-function hub(): { link: TRPCLink<AppRouter>; declared: Meta[][] } {
+function hub(): {
+  link: TRPCLink<AppRouter>
+  declared: Meta[][]
+  completeFlags: (boolean | undefined)[]
+} {
   const declared: Meta[][] = []
+  const completeFlags: (boolean | undefined)[] = []
   const link: TRPCLink<AppRouter> =
     () =>
     ({ op }) =>
       observable((observer) => {
         if (op.path === 'integrations.listByAddon') observer.next({ result: { data: [] } })
         else if (op.path === 'migrations.declareOwner') {
-          const input = op.input as { metas: Meta[] }
+          const input = op.input as { metas: Meta[]; complete?: boolean }
           declared.push(input.metas)
+          completeFlags.push(input.complete)
           observer.next({
             result: {
               data: {
@@ -54,7 +61,7 @@ function hub(): { link: TRPCLink<AppRouter>; declared: Meta[][] } {
         } else observer.next({ result: { data: undefined } })
         observer.complete()
       })
-  return { link, declared }
+  return { link, declared, completeFlags }
 }
 
 function stubMigrationApi(): MigrationApiV1 {
@@ -212,5 +219,83 @@ describe('switch migrations across declarations', () => {
       const now = (declared[i] ?? []).map((m) => m.id)
       expect(now).toEqual(expect.arrayContaining(before))
     }
+  })
+})
+
+const OWN = (slug: string, seq: number): AddonMigration<Record<string, never>> => ({
+  meta: {
+    id: `${ADDON}/2026-11-01-${slug}`,
+    owner: ADDON,
+    level: 'addon-state',
+    seq,
+    dependsOn: [],
+    store: 'settings',
+    scope: 'cluster',
+    onFailure: 'tolerate',
+    bodyKind: 'plan',
+    description: slug,
+    fixtureMark: 'mark',
+  },
+  plan: async () => ({ edits: [] }),
+})
+
+class TwoCalls extends BaseAddon {
+  constructor() {
+    super({})
+  }
+  protected async onInitialize() {
+    await this.runMigrations([OWN('one', 1)], () => ({}))
+    await this.runMigrations([OWN('two', 2)], () => ({}))
+    serve(kindOf('gadgets'))
+    return []
+  }
+}
+
+async function runTwoCalls(): Promise<ReturnType<typeof hub>> {
+  serve(kindOf('widgets'))
+  const h = hub()
+  await new TwoCalls().initialize(
+    fakeAddonContext({
+      id: ADDON,
+      migrationApi: stubMigrationApi(),
+      api: createTRPCClient<AppRouter>({ links: [h.link] }),
+    }),
+  )
+  return h
+}
+
+describe('a catalogue declared in phases is complete only at the end of initialise', () => {
+  it('every declare inside onInitialize is partial, the closing one is complete and carries the union', async () => {
+    const h = await runTwoCalls()
+    expectCatalogue(h.declared)
+    expect(h.completeFlags.slice(0, -1).every((flag) => flag === false)).toBe(true)
+    expect(h.completeFlags[h.completeFlags.length - 1]).toBe(true)
+    const ids = (h.declared[h.declared.length - 1] ?? []).map((m) => m.id)
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        `${ADDON}/2026-11-01-one`,
+        `${ADDON}/2026-11-01-two`,
+        moveBack('widgets'),
+        moveBack('gadgets'),
+      ]),
+    )
+  })
+
+  it('the second call still declares the first call ids (a partial offer would read them newer)', async () => {
+    const h = await runTwoCalls()
+    expect((h.declared[1] ?? []).map((m) => m.id)).toContain(`${ADDON}/2026-11-01-one`)
+  })
+
+  it('an addon with no late kind still closes with a complete declare', async () => {
+    const declared = hub()
+    serve(kindOf('widgets'))
+    await new Probe({ early: [], late: [] }).initialize(
+      fakeAddonContext({
+        id: ADDON,
+        migrationApi: stubMigrationApi(),
+        api: createTRPCClient<AppRouter>({ links: [declared.link] }),
+      }),
+    )
+    expect(declared.completeFlags).toEqual([false, true])
   })
 })

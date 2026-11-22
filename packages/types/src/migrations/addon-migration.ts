@@ -145,6 +145,11 @@ export interface AddonMigrationRunOptions {
    * ledger row of one is reported `applied`, not `skipped-newer`, and raises no alert.
    */
   readonly retired?: readonly string[]
+  /**
+   * False while this declaration is a PARTIAL view of the owner's final catalogue (more ids are
+   * declared later in this process): the engine then reports no id "newer". Omitted is complete.
+   */
+  readonly complete?: boolean
 }
 
 const NOT_RUN: AddonMigrationRunReport = {
@@ -179,6 +184,7 @@ export async function runAddonMigrations(
       owner,
       metas: migrations.map((m) => m.meta),
       ...(options.retired === undefined ? {} : { retired: [...options.retired] }),
+      ...(options.complete === undefined ? {} : { complete: options.complete }),
     })
   } catch (err) {
     log.error('the migration engine refused or could not take this addon catalogue — none ran', {

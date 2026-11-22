@@ -480,6 +480,43 @@ describe('addon-owned catalogue', () => {
     await second.file.stop()
   }, 90_000)
 
+  it('a PARTIAL declare (complete: false) judges no applied id newer; the completing declare does, once', async () => {
+    const first = await boot()
+    await run(first.provider, [
+      planEntry('one', 1, { edits: [] }),
+      planEntry('two', 2, { edits: [] }),
+      planEntry('unknown', 3, { edits: [] }),
+    ])
+    await first.file.stop()
+    const second = await boot()
+    const offer = (slugs: readonly [string, number][], complete: boolean) =>
+      second.provider.declareOwner(
+        Object.assign(
+          {},
+          { owner: OWNER, metas: slugs.map(([slug, seq]) => meta(OWNER, slug, seq)), complete },
+          { callerAddonId: 'ecowitt' },
+        ),
+      )
+    await offer([['one', 1]], false)
+    const partial = await second.engine.listLedger()
+    expect(partial.map((e) => e.status)).toEqual(['applied', 'applied', 'applied'])
+    expect(h.lines.some((l) => l.message.includes('skipped-newer'))).toBe(false)
+    await offer(
+      [
+        ['one', 1],
+        ['two', 2],
+      ],
+      true,
+    )
+    const done = await second.engine.listLedger()
+    const statusOf = (slug: string) => done.find((e) => e.id.endsWith(`-${slug}`))?.status
+    expect(statusOf('two')).toBe('applied')
+    expect(statusOf('unknown')).toBe('skipped-newer')
+    const newer = h.lines.filter((l) => l.message.includes('skipped-newer'))
+    expect(newer.map((l) => JSON.stringify(l))).toEqual([expect.stringContaining('-unknown')])
+    await second.file.stop()
+  }, 90_000)
+
   it('two boot phases of ONE catalogue (a first step before the rest) never read an applied id as newer', async () => {
     const { file, provider, engine } = await boot()
     const whole = [planEntry('one', 1, { edits: [] }), planEntry('two', 2, { edits: [] })]

@@ -92,6 +92,12 @@ export const migrationsCapability = {
         metas: z.array(MigrationMetaSchema),
         /** Ids the owner deliberately removed: an applied row of one is fine, never "newer". */
         retired: z.array(z.string().min(1)).optional(),
+        /**
+         * False while the owner will still declare more ids in this process (an instance kind built
+         * after its first declare): the engine judges no ledger row "newer" against a partial
+         * catalogue. Omitted means complete.
+         */
+        complete: z.boolean().optional(),
       }),
       z.object({
         bootId: z.string(),

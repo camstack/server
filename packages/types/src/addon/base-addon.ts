@@ -372,6 +372,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
     await this.hydrateSwitches()
     const result = await this.onInitialize()
+    this.catalogueOpen = false
     await this.moveLateInstanceKinds()
     await this.adoptUnrowed()
     if (this.switchesHydrated) {
@@ -474,7 +475,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /** The instance kinds whose switch move this process already ran (or tried), by record kind name. */
   private readonly switchMoved = new Set<string>()
-  private lastDeclared: readonly BoundAddonMigration[] = []
+  /**
+   * Every migration any `runMigrations` call of this process declared, by id. The engine replaces
+   * an owner's catalogue on each declare, so each call carries the union, phased to its own ids.
+   */
+  private readonly declaredAll = new Map<string, BoundAddonMigration>()
+  /** True until `initialize` has run `onInitialize`: more kinds and calls may still declare. */
+  private catalogueOpen = true
+  private declaredIncomplete = false
   /**
    * Every switch migration this process added to a declaration so far, by id. The engine replaces
    * an owner's catalogue on each declare, so a later one (a late kind) carries them all: dropping
@@ -566,10 +574,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const late = servedInstanceKindsOf(this.ctx.id).filter(
       (k) => !this.switchMoved.has(k.kind.name),
     )
-    if (late.length === 0) return
+    if (late.length === 0) {
+      // Every declare so far was a partial view: state the final catalogue, running nothing.
+      if (this.declaredIncomplete) await this.runBound([], { only: [] })
+      return
+    }
     try {
       const only = late.map((k) => bodySwitchToRegistryId(this.ctx.id, '2026-11-19', k.kind.name))
-      await this.runBound(this.lastDeclared, { only })
+      await this.runBound([], { only })
     } catch (err: unknown) {
       // A blocked block-owner move fails the boot, exactly as for a kind built early: serving a
       // body whose switch never reached the registry would read a disabled instance as on.
@@ -584,27 +596,35 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     declared: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
-    this.lastDeclared = declared
     const added = this.registrySwitchBound()
     for (const m of added) this.switchDeclared.set(m.meta.id, m)
+    const priorIds = new Set(this.declaredAll.keys())
+    for (const m of declared) this.declaredAll.set(m.meta.id, m)
     const migrations = [
-      ...declared,
-      ...[...this.switchDeclared.values()].filter(
-        (m) => !declared.some((d) => d.meta.id === m.meta.id),
-      ),
+      ...this.declaredAll.values(),
+      ...[...this.switchDeclared.values()].filter((m) => !this.declaredAll.has(m.meta.id)),
     ]
+    // Ids an EARLIER call declared stay in the catalogue but are not this call's to run: an
+    // unphased call after another runs its own ids (and the switch it just added), no more.
+    const carried = [...priorIds].some((id) => !declared.some((d) => d.meta.id === id))
+    const own =
+      options?.only === undefined && carried
+        ? { ...options, only: declared.map((m) => m.meta.id) }
+        : options
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
     const widened =
-      options?.only === undefined || added.length === 0
-        ? options
+      own?.only === undefined || added.length === 0
+        ? own
         : {
-            ...options,
-            only: [...new Set([...options.only, ...added.map((m) => m.meta.id)])],
+            ...own,
+            only: [...new Set([...own.only, ...added.map((m) => m.meta.id)])],
           }
+    if (this.catalogueOpen) this.declaredIncomplete = true
     const phased: AddonMigrationRunOptions =
       this.retiredMigrationIds.length === 0
         ? (widened ?? {})
         : { ...widened, retired: this.retiredMigrationIds }
+    const declare: AddonMigrationRunOptions = { ...phased, complete: !this.catalogueOpen }
     const api = this.ctx.api.migrations
     const report = await runAddonMigrations(
       {
@@ -614,7 +634,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       },
       migrations,
       this.ctx.logger,
-      phased,
+      declare,
     )
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)
