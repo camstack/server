@@ -279,12 +279,14 @@ shipped eight tabs of lists, and it decides three things at once:
   and the New-… button stay where the operator left them. It also PINS the
   column header, because those are one decision: a capped table whose header
   scrolls away is a list of unlabelled cells.
-- No narrow-window switch: `DataTable` never becomes a card stack, it scrolls
-  sideways in its wrapper (supersedes the `auto` / `cards` modes of
-  [D43](../decisions/adr-0043.md)).
+- No card stack: `DataTable` never becomes a `div` card list (supersedes the
+  `auto` / `cards` modes of [D43](../decisions/adr-0043.md)). On a window under
+  640 px it stays a table and folds by each column's `mobile` role (see
+  "Tables on a phone", [D1091](../decisions/adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md));
+  above that it scrolls sideways inside its wrapper when the columns do not fit.
 
 The page NEVER scrolls sideways — `DataTable`'s wrapper is the horizontal
-scroller too, and `AdminPage` is `overflow-x-clip` above it.
+scroller on a wide window, and `AdminPage` is `overflow-x-clip` above it.
 
 ### A row that COLLAPSES has one implementation, not one per page
 

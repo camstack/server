@@ -1,7 +1,7 @@
 /**
  * AI → Usage. The `llm.getUsage` server-side rollup (never raw call rows).
  *
- * Was a hand-rolled `<table>` inside an `overflow-x-auto` div — the one thing
+ * Was a hand-rolled raw table inside an `overflow-x-auto` div — the one thing
  * on this page that already WAS a table, but not the shared one: no pinned
  * header, no internal scroll, no mobile rule. It is a `DataTable` now, so a
  * 90-day rollup scrolls its own rows with the column header pinned.
