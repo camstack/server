@@ -2,7 +2,10 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
 
-/** How loudly a fault wants the operator. Both tiers raise the attention event. */
+/**
+ * How loudly a fault wants the operator. An `error` raises the attention event;
+ * a `warning` is shown on the device and opens a warning alert, nothing more.
+ */
 export const DeviceErrorSeveritySchema = z.enum(['warning', 'error'])
 export type DeviceErrorSeverity = z.infer<typeof DeviceErrorSeveritySchema>
 

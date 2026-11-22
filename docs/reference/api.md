@@ -2814,7 +2814,7 @@
 
 ### `error` → `error.*`
 
-- **Source:** `packages/types/src/capabilities/error.cap.ts:67`
+- **Source:** `packages/types/src/capabilities/error.cap.ts:70`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IErrorProvider`

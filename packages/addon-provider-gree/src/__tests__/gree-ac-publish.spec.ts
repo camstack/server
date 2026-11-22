@@ -96,4 +96,29 @@ describe('Gree AC publishes only what the unit reported', () => {
     const slices = await activate(fakeAc({ Pow: 1, SetTem: 20 }))
     expect(slices).toHaveLength(2)
   })
+
+  describe('the unit fault on the error cap', () => {
+    afterEach(() => greeConnections.clear())
+
+    async function errorSlice(errorCode: number | null): Promise<unknown> {
+      vi.spyOn(greeConnections, 'getDevice').mockReturnValue(fakeAc({ Pow: 1, SetTem: 20 }))
+      const h = stubContext()
+      await new GreeAcDevice(h.ctx).onActivate()
+      greeConnections.setExtras('k1', 'aabbcc', { outdoorTemp: 6, defrost: false, errorCode })
+      await Promise.resolve()
+      return h.runtime()?.getCapState('error')
+    }
+
+    it('a non-zero AllErr is an active fault on the AC itself', async () => {
+      expect(await errorSlice(12)).toMatchObject({ active: true, code: 'E12', severity: 'error' })
+    })
+
+    it('AllErr 0 is a clean reading', async () => {
+      expect(await errorSlice(0)).toMatchObject({ active: false, code: null })
+    })
+
+    it('an unanswered column stays unknown', async () => {
+      expect(await errorSlice(null)).toMatchObject({ active: null })
+    })
+  })
 })

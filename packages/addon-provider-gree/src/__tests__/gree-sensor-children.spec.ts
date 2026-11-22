@@ -79,9 +79,9 @@ describe('Gree sensor children declaration', () => {
     expect(outdoor?.config).toMatchObject({ kind: 'outdoor', greeMac: MAC, connectionKey: KEY })
   })
 
-  it('declares no outdoor child when only the error column answered', () => {
-    greeConnections.setExtras(KEY, MAC, { outdoorTemp: null, defrost: null, errorCode: 0 })
-    expect(sensorSpecs(container()).map((s) => s.stableIdSuffix)).toEqual(['error'])
+  it('declares no child for the error column: the withdrawn "Errore" child is pruned', () => {
+    greeConnections.setExtras(KEY, MAC, { outdoorTemp: null, defrost: null, errorCode: 12 })
+    expect(sensorSpecs(container())).toEqual([])
   })
 })
 
@@ -102,12 +102,10 @@ describe('GreeSensorDevice', () => {
     expect(d.runtimeState.getCapState('temperature-sensor')).toMatchObject({ temperature: -2 })
   })
 
-  it('error carries the code and warns with the deviceId tag', async () => {
+  it('a retired error child still restores, and serves nothing, until it is pruned', async () => {
     const d = await sensor('error')
-    greeConnections.setExtras(KEY, MAC, { outdoorTemp: 6, defrost: false, errorCode: 0 })
-    expect(d.runtimeState.getCapState('enum-sensor')).toMatchObject({ value: 'ok' })
     greeConnections.setExtras(KEY, MAC, { outdoorTemp: 6, defrost: false, errorCode: 12 })
-    expect(d.runtimeState.getCapState('enum-sensor')).toMatchObject({ value: 'E12' })
+    expect(d.runtimeState.getCapState('enum-sensor')).toBeUndefined()
   })
 })
 

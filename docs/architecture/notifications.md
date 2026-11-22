@@ -4773,6 +4773,13 @@ error, `metadata.faults`) renders `system.device-attention-*.title.faults` /
 An alert with no faults keeps `{{title}}` / `{{message}}`. Also available:
 `{{faultCode}}`, `{{faultLabel}}`, `{{faults}}`.
 
+The alert's severity follows the fault's tier (`deviceErrorAlertSeverity`): an
+`error` fault is a critical alert and announces the two kinds above; a `warning`
+fault is a warning alert and announces nothing. A warning that becomes an error
+re-emits the same alert as critical, so the episode is announced at that moment.
+A failed alert write is tried again on the device's next reading, five times at
+most (`BaseDevice.publishError`).
+
 ## A system alert's action is a link or a button that runs a custom action ([D961](../decisions/adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md), 2026-10-28)
 
 `Alert.action` is `{ label, href? , navigation?, invoke? }`. `href` goes

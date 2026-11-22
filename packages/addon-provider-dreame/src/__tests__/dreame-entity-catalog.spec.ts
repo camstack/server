@@ -14,6 +14,16 @@ import {
 } from '../dreame-entity-catalog.js'
 
 describe('dreame entity catalog', () => {
+  it('declares no Error sensor child: the fault (2/2) is the error cap, so the old child is pruned', () => {
+    // The container spawns one child per catalog entry; an entry that is gone is
+    // a child the accessory reconcile removes. A second copy of the fault here
+    // would bring the withdrawn child back.
+    for (const catalog of [DREAME_ENUM_SENSORS, DREAME_MOWER_ENUM_SENSORS]) {
+      expect(catalog.map((s) => s.key)).not.toContain('error')
+    }
+    expect(DREAME_ENUM_SENSORS.map((s) => `${s.siid}/${s.piid}`)).not.toContain('2/2')
+  })
+
   it('numeric sensors have unique keys + coordinates + a section', () => {
     const keys = DREAME_NUMERIC_SENSORS.map((s) => s.key)
     const coords = DREAME_NUMERIC_SENSORS.map((s) => `${s.siid}/${s.piid}`)

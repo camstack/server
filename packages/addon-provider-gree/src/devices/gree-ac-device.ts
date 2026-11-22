@@ -41,7 +41,7 @@ import {
 } from '../gree-domain-mapping.js'
 import { greeConnections } from '../gree-gateway.js'
 import { registerGreeStateRefresh } from './gree-state-refresh.js'
-import { greeClimateAction } from '../gree-extras.js'
+import { greeClimateAction, greeErrorReading } from '../gree-extras.js'
 
 const CLIMATE_CAP = 'climate-control'
 const FAN_CAP = 'fan-control'
@@ -196,7 +196,12 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       this.recomputeSlices()
     })
     // A defrost read changes the climate action; recompute when extras land.
-    this.extrasUnsub = greeConnections.onExtras(this.connectionKey, () => this.recomputeSlices())
+    // The same read carries the unit's fault (`AllErr`), served by the `error` cap.
+    this.publishFault()
+    this.extrasUnsub = greeConnections.onExtras(this.connectionKey, () => {
+      this.recomputeSlices()
+      this.publishFault()
+    })
   }
 
   override async removeDevice(): Promise<void> {
@@ -314,6 +319,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
     }
     this.ctx.registerNativeCap(climateControlCapability, climateProvider)
     registerPowerSwitch(this, climateControlCapability, climateProvider)
+    this.registerErrorCap()
 
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
@@ -334,6 +340,13 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       },
     }
     this.ctx.registerNativeCap(fanControlCapability, fanProvider)
+  }
+
+  /** The unit's fault from the last extras read; no read yet publishes nothing. */
+  private publishFault(): void {
+    const extras = greeConnections.getExtras(this.connectionKey, this.greeMac)
+    if (extras === null) return
+    void this.publishError(greeErrorReading(extras.errorCode, Date.now()))
   }
 
   private recomputeSlices(): void {

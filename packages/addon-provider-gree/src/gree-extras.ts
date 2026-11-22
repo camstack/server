@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType, ERROR_STATUS_COLD, type ErrorStatus } from '@camstack/types'
 
 /**
  * Status columns the vendored library's `updateState` does not ask for. They are
@@ -45,12 +45,26 @@ export function greeClimateAction(input: {
   return null
 }
 
-/** Error sensor value: `ok` or `E<code>`. */
-export function greeErrorValue(code: number): string {
-  return code === 0 ? 'ok' : `E${code}`
+/**
+ * The `error` cap reading for a unit's `AllErr` column. A column the unit did
+ * not answer is UNKNOWN (`active: null`, never "no fault"); `0` is a clean
+ * reading. The unit gives a number and no words, so the code names the fault.
+ */
+export function greeErrorReading(code: number | null, now: number): ErrorStatus {
+  if (code === null) return { ...ERROR_STATUS_COLD, lastFetchedAt: now }
+  if (code === 0) return { ...ERROR_STATUS_COLD, active: false, lastFetchedAt: now }
+  return {
+    active: true,
+    code: `E${code}`,
+    label: `Error E${code}`,
+    severity: 'error',
+    since: null,
+    lastFetchedAt: now,
+  }
 }
 
-export type GreeSensorKind = 'outdoor' | 'error'
+/** The sensor children a unit can earn. Its fault is the AC's `error` cap, not a child. */
+export type GreeSensorKind = 'outdoor'
 
 export interface GreeSensorChildPlan {
   readonly kind: GreeSensorKind
@@ -71,15 +85,6 @@ export function planGreeSensorChildren(extras: GreeExtras | null): readonly Gree
       label: 'Temperatura esterna',
       type: DeviceType.Sensor,
       role: DeviceRole.TemperatureSensor,
-    })
-  }
-  if (extras.errorCode !== null) {
-    plan.push({
-      kind: 'error',
-      suffix: 'error',
-      label: 'Errore',
-      type: DeviceType.Sensor,
-      role: DeviceRole.EnumSensor,
     })
   }
   return plan

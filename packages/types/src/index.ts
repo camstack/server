@@ -1574,9 +1574,16 @@ export type {
 export { DeviceRuntimeState } from './device/device-runtime-state.js'
 export {
   buildDeviceErrorAlert,
+  DEVICE_ERROR_ALERT_IDLE,
+  DEVICE_ERROR_ALERT_MAX_ATTEMPTS,
+  type DeviceErrorAlertDelivery,
+  type DeviceErrorAlertPlan,
+  type DeviceErrorAlertWrite,
   type DeviceErrorEdge,
   deviceErrorAlertId,
+  deviceErrorAlertSeverity,
   deviceErrorEdge,
+  planDeviceErrorAlert,
 } from './device/device-error-episode.js'
 export type {
   SliceEventBus,

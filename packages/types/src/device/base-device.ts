@@ -44,8 +44,13 @@ import type { InferNativeProvider } from '../capabilities/capability-definition.
 import { errMsg } from '../utils/err-msg.js'
 import {
   buildDeviceErrorAlert,
+  DEVICE_ERROR_ALERT_IDLE,
+  DEVICE_ERROR_ALERT_MAX_ATTEMPTS,
+  type DeviceErrorAlertDelivery,
+  type DeviceErrorAlertWrite,
   deviceErrorAlertId,
   deviceErrorEdge,
+  planDeviceErrorAlert,
 } from './device-error-episode.js'
 import type { CustomActionSpec } from '../capabilities/custom-actions.js'
 
@@ -78,6 +83,8 @@ export abstract class BaseDevice<
   private readonly statusIsExternal: boolean
   /** The fault catalog the integration declared; `[]` until it does. */
   private faultTypes: readonly DeviceFaultType[] = []
+  /** What the alerts cap accepted for this device's fault, and the write still owed to it. */
+  private errorAlertDelivery: DeviceErrorAlertDelivery = DEVICE_ERROR_ALERT_IDLE
   readonly name: string
   readonly parentDeviceId: number | null
   readonly role?: DeviceRole
@@ -597,9 +604,15 @@ export abstract class BaseDevice<
   /**
    * Publish the device's fault. The slice is written; on an EDGE (a fault
    * starts, or one resolves) an attention episode opens or closes through the
-   * alerts cap, which the notification center announces as
-   * `device-attention-required` / `-resolved`. An unknown reading is never an
-   * edge. No rule exists by default: it notifies when the operator makes one.
+   * alerts cap, at the severity of the fault's tier: an `error` fault is a
+   * critical alert, which the notification center announces as
+   * `device-attention-required` / `-resolved`; a `warning` fault is a warning
+   * alert and announces nothing until it becomes an error. An unknown reading
+   * is never an edge. No rule exists by default: it notifies when the operator
+   * makes one.
+   *
+   * An alert write that fails is tried again on the next reading that still
+   * asks for it, `DEVICE_ERROR_ALERT_MAX_ATTEMPTS` times at most.
    */
   protected async publishError(reading: ErrorStatus): Promise<void> {
     const previous = this.getCapSlice(errorCapability)
@@ -608,36 +621,63 @@ export abstract class BaseDevice<
     if (reading.active === null && previous !== null && previous.active !== null) return
     const now = Date.now()
     const edge = deviceErrorEdge(previous, reading)
-    const next: ErrorStatus =
-      edge === 'start' && reading.since === null ? { ...reading, since: now } : reading
+    const next = this.withErrorSince(previous, reading, edge === 'start', now)
     this.setCapSlice(errorCapability, next)
-    if (edge === null) return
-    const alerts = this.ctx.api.alerts
-    if (alerts === undefined) {
-      this.ctx.logger.warn('device error: attention event skipped — alerts capability missing', {
-        tags: { deviceId: this.id },
-        meta: { edge },
-      })
-      return
-    }
+    const plan = planDeviceErrorAlert(this.errorAlertDelivery, edge, previous, next)
+    this.errorAlertDelivery = plan.delivery
+    if (plan.write === null) return
+    await this.writeErrorAlert(plan.write, next, now)
+  }
+
+  /** A fault keeps the start it was given: stamped on the start, carried while it lasts. */
+  private withErrorSince(
+    previous: ErrorStatus | null,
+    reading: ErrorStatus,
+    starts: boolean,
+    now: number,
+  ): ErrorStatus {
+    if (reading.active !== true || reading.since !== null) return reading
+    if (starts) return { ...reading, since: now }
+    return previous?.since == null ? reading : { ...reading, since: previous.since }
+  }
+
+  /** One attempt at the alert write the plan asked for; a failure stays owed, under the bound. */
+  private async writeErrorAlert(
+    write: DeviceErrorAlertWrite,
+    status: ErrorStatus,
+    now: number,
+  ): Promise<void> {
+    const attempt = this.errorAlertDelivery.attempts + 1
     try {
-      if (edge === 'start') {
-        await alerts.emit.mutate(buildDeviceErrorAlert(this.id, this.name, next, now))
+      const alerts = this.ctx.api.alerts
+      if (alerts === undefined) throw new Error('alerts capability missing')
+      if (write === 'open') {
+        await alerts.emit.mutate(buildDeviceErrorAlert(this.id, this.name, status, now))
+        this.errorAlertDelivery = DEVICE_ERROR_ALERT_IDLE
       } else {
         await alerts.update.mutate({
           alertId: deviceErrorAlertId(this.id),
           patch: { status: 'completed', read: true, updatedAt: now },
         })
+        this.errorAlertDelivery = DEVICE_ERROR_ALERT_IDLE
       }
-      this.ctx.logger.info(`device error: ${edge === 'start' ? 'raised' : 'resolved'}`, {
+      this.ctx.logger.info(`device error: ${write === 'open' ? 'raised' : 'resolved'}`, {
         tags: { deviceId: this.id },
-        meta: { code: next.code, label: next.label },
+        meta: { code: status.code, label: status.label, severity: status.severity, attempt },
       })
     } catch (err) {
-      this.ctx.logger.warn('device error: attention event failed', {
-        tags: { deviceId: this.id },
-        meta: { edge, error: errMsg(err) },
-      })
+      const givenUp = attempt >= DEVICE_ERROR_ALERT_MAX_ATTEMPTS
+      this.errorAlertDelivery = {
+        ...this.errorAlertDelivery,
+        pending: givenUp ? null : write,
+        attempts: givenUp ? 0 : attempt,
+      }
+      this.ctx.logger.warn(
+        givenUp
+          ? 'device error: attention event given up, the alert is not written'
+          : 'device error: attention event failed, retried on the next reading',
+        { tags: { deviceId: this.id }, meta: { write, attempt, error: errMsg(err) } },
+      )
     }
   }
 

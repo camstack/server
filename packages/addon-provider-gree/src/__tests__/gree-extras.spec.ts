@@ -4,7 +4,7 @@ import {
   GREE_EXTRA_COLUMNS,
   GREE_TEMP_OFFSET,
   greeClimateAction,
-  greeErrorValue,
+  greeErrorReading,
   parseGreeExtras,
   planGreeSensorChildren,
 } from '../gree-extras.js'
@@ -49,31 +49,44 @@ describe('greeClimateAction', () => {
   })
 })
 
-describe('greeErrorValue', () => {
-  it('0 is ok, anything else carries the code', () => {
-    expect(greeErrorValue(0)).toBe('ok')
-    expect(greeErrorValue(12)).toBe('E12')
+describe('greeErrorReading', () => {
+  it('a column the unit did not answer is unknown, never "no fault"', () => {
+    expect(greeErrorReading(null, 5)).toMatchObject({ active: null, code: null, lastFetchedAt: 5 })
+  })
+
+  it('0 is a clean reading', () => {
+    expect(greeErrorReading(0, 5)).toMatchObject({ active: false, code: null, label: null })
+  })
+
+  it('a non-zero AllErr is an active fault named by its code', () => {
+    expect(greeErrorReading(12, 5)).toEqual({
+      active: true,
+      code: 'E12',
+      label: 'Error E12',
+      severity: 'error',
+      since: null,
+      lastFetchedAt: 5,
+    })
   })
 })
 
 describe('planGreeSensorChildren', () => {
   it('a unit that answers no column gets no sensor child', () => {
     expect(planGreeSensorChildren(null)).toEqual([])
-    expect(
-      planGreeSensorChildren({ outdoorTemp: null, defrost: null, errorCode: null }),
-    ).toEqual([])
+    expect(planGreeSensorChildren({ outdoorTemp: null, defrost: null, errorCode: null })).toEqual(
+      [],
+    )
   })
 
-  it('declares the outdoor temperature sensor and the error sensor', () => {
-    const plan = planGreeSensorChildren({ outdoorTemp: 6, defrost: false, errorCode: 0 })
-    expect(plan.map((p) => p.kind)).toEqual(['outdoor', 'error'])
+  it('declares the outdoor temperature sensor; the fault is the error cap, not a child', () => {
+    const plan = planGreeSensorChildren({ outdoorTemp: 6, defrost: false, errorCode: 7 })
+    expect(plan.map((p) => p.kind)).toEqual(['outdoor'])
     expect(plan[0]).toMatchObject({
       suffix: 'outdoor',
       label: 'Temperatura esterna',
       type: DeviceType.Sensor,
       role: DeviceRole.TemperatureSensor,
     })
-    expect(plan[1]).toMatchObject({ suffix: 'error', type: DeviceType.Sensor })
   })
 
   it('declares only what answered', () => {
