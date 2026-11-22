@@ -10,7 +10,7 @@
  * bar is applied to the merged subject, relative to the motion view. D394.
  */
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { resolveMotionWasmPath } from './wasm-motion-path.js'
 import {
   groupMotionRegions,
   DEFAULT_MERGE_RADIUS_DIVISOR,
@@ -99,10 +99,9 @@ export class WasmMotionDetector {
 
   /** Load the WASM module. Call once before detect(). */
   async load(): Promise<void> {
-    // Phase D bundle merge: motion.wasm ships at the bundle's
-    // `wasm/motion.wasm` (one level above dist/). From this addon's
-    // compiled `dist/motion-wasm/index.{js,mjs}` that's `../../wasm`.
-    const wasmPath = join(__dirname, '..', '..', 'wasm', 'motion.wasm')
+    // The bundler may place this code in `dist/motion-wasm/` or in a shared
+    // chunk in `dist/`; the wasm is searched upward from wherever it landed.
+    const wasmPath = resolveMotionWasmPath(__dirname)
 
     const wasmBytes = readFileSync(wasmPath)
     const { instance } = await WebAssembly.instantiate(wasmBytes, {

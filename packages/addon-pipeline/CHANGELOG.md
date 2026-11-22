@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Detection runs again on every node: the motion detector finds its wasm file wherever the bundler places its code (a shared chunk had made every detection runner fail at boot).
+
 ## [1.2.680] - 2026-11-22
 
 ### Added
