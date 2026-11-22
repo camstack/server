@@ -3,6 +3,8 @@ import {
   DeviceTransitionSchema,
   TransitionActorKindSchema,
   TransitionActorSchema,
+  TransitionOutcomeSchema,
+  TransitionRowOutcomeSchema,
   type DeviceTransition,
 } from '../device-transition.js'
 
@@ -14,19 +16,18 @@ const base: DeviceTransition = {
   field: 'on',
   from: false,
   to: true,
-  outcome: 'confirmed',
+  outcome: 'ok',
   actor: { kind: 'user', userId: 'u1', username: 'ada', credential: 'session' },
   command: {
     commandId: 'c1',
     method: 'setState',
     args: { on: true },
     requestedAt: 1_699_999_999_000,
-    matchedAfterMs: 1000,
   },
 }
 
 describe('DeviceTransitionSchema', () => {
-  it('round-trips a command-attributed transition', () => {
+  it('round-trips a stored command row', () => {
     expect(DeviceTransitionSchema.parse(base)).toEqual(base)
   })
 
@@ -43,6 +44,18 @@ describe('DeviceTransitionSchema', () => {
       actor: { kind: 'device' },
     }
     expect(DeviceTransitionSchema.parse(device)).toEqual(device)
+  })
+
+  it('stores only ok | failed and refuses the retired confirmation outcomes', () => {
+    for (const outcome of ['ok', 'failed'] as const) {
+      expect(TransitionOutcomeSchema.safeParse(outcome).success).toBe(true)
+    }
+    for (const retired of ['confirmed', 'already', 'unconfirmed', 'device']) {
+      expect(TransitionOutcomeSchema.safeParse(retired).success).toBe(false)
+    }
+    // a row read back may also be a derived device change
+    expect(TransitionRowOutcomeSchema.safeParse('device').success).toBe(true)
+    expect(TransitionRowOutcomeSchema.safeParse('confirmed').success).toBe(false)
   })
 
   it('knows every actor kind and refuses an unknown one', () => {

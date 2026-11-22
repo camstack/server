@@ -4882,7 +4882,7 @@ Enum: `"rule" \| "section"`
 - `packageNames?`: `string[]`
 - `commandActions?`: `string[]`
 - `faultCodes?`: `string[]`
-- `commandOutcomes?`: `("confirmed" \| "already" \| "unconfirmed" \| "failed")[]`
+- `commandOutcomes?`: `("ok" \| "failed")[]`
 - `commandActorKinds?`: `("user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node")[]`
 - `consumableLowPercent?`: `number`
 

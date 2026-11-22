@@ -270,7 +270,6 @@ export class DeviceManagerAddon extends BaseAddon {
         this.stateMirror.holdDiskWrites(deviceIds, settings),
       mirrorOwnedCaps: (deviceId) => this.stateMirror.ownedCaps(deviceId),
       forgetMirrorDevice: (deviceId) => {
-        this.transitions?.forgetDevice(deviceId)
         return this.stateMirror.forgetDevice(deviceId)
       },
       resolveDeviceOnline: (deviceId, fallbackOnline) =>

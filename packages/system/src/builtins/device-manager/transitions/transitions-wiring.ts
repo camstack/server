@@ -1,8 +1,8 @@
 /**
- * Starts the hub's device-transition audit (D1022): command observations and
- * mirror slice changes meet in the correlator, its rows ride a bounded queue to
- * device-history. Everything here is best-effort telemetry (D8): a failure
- * costs rows, never a command or a mirror write.
+ * Starts the hub's device command audit (D1022, D1084): command observations meet
+ * the recorder, its rows ride a bounded queue to device-history. Everything here is
+ * best-effort telemetry (D8): a failure costs rows, never a command or a mirror
+ * write.
  */
 import {
   ALL_CAPABILITY_DEFINITIONS,
@@ -17,7 +17,7 @@ import type { z } from 'zod'
 import { getCommandObserverRegistry } from '../../../kernel/command-observation.js'
 import type { DeviceStateMirror } from '../device-state-mirror.js'
 import { createCommandArgsPreparer } from './command-args.js'
-import { TransitionCorrelator } from './transition-correlator.js'
+import { CommandRecorder } from './command-recorder.js'
 import { TransitionSender } from './transitions-sender.js'
 
 export const TRANSITIONS_FLUSH_INTERVAL_MS = 2_000
@@ -26,21 +26,20 @@ export const TRANSITIONS_FLUSH_INTERVAL_MS = 2_000
 export type TransitionTicker = (fn: () => void, ms: number) => () => void
 
 export interface DeviceTransitionsDeps {
+  /** Read for the value a command's effect field held when it was given. */
   readonly mirror: DeviceStateMirror
   readonly logger: IScopedLogger
   readonly record: (transitions: readonly DeviceTransition[]) => Promise<void>
   /**
-   * Told of each COMMAND the correlator settles (never a device's own change). Telemetry (D8):
-   * a throw is logged and costs the notification, never the row.
+   * Told of each command that completed. Telemetry (D8): a throw is logged and costs the
+   * notification, never the row.
    */
   readonly onCommandSettled?: (event: DeviceCommandSettledEvent) => void
-  readonly now?: () => number
   readonly ticker?: TransitionTicker
 }
 
 export interface DeviceTransitionsHandle {
-  forgetDevice(deviceId: number): void
-  /** Unsubscribe, stop the timers, send what is queued. */
+  /** Unsubscribe, stop the timer, send what is queued. */
   stop(): Promise<void>
 }
 
@@ -55,7 +54,6 @@ function inputFor(capName: string, method: string): z.ZodType | undefined {
 }
 
 export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTransitionsHandle {
-  const now = deps.now ?? Date.now
   const ticker = deps.ticker ?? realTicker
   const sender = new TransitionSender({
     send: (batch) => deps.record(batch),
@@ -84,13 +82,12 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
       })
     } catch (err) {
       deps.logger.warn(
-        `device-transitions: announcing a settled ${row.capName}.${row.command.method} failed: ${err instanceof Error ? err.message : String(err)}`,
+        `device-transitions: announcing a completed ${row.capName}.${row.command.method} failed: ${err instanceof Error ? err.message : String(err)}`,
         { tags: { deviceId: row.deviceId } },
       )
     }
   }
-  const correlator = new TransitionCorrelator({
-    now,
+  const recorder = new CommandRecorder({
     logger: deps.logger,
     currentSlice: (deviceId, capName) => deps.mirror.currentSlice(deviceId, capName),
     emit: (row) => {
@@ -99,20 +96,10 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
     },
     prepareArgs: createCommandArgsPreparer(inputFor),
   })
-  deps.mirror.setTransitionTap((deviceId, capName, prior, slice) => {
-    try {
-      correlator.onSliceChange(deviceId, capName, prior, slice)
-    } catch (err) {
-      deps.logger.error(
-        `device-transitions: correlating a ${capName} change failed: ${err instanceof Error ? err.message : String(err)}`,
-        { tags: { deviceId } },
-      )
-    }
-  })
   const unsubscribe = getCommandObserverRegistry().subscribe((obs) => {
     if (!isCommand(obs.capName, obs.method)) return
     try {
-      correlator.recordCommand(obs)
+      recorder.recordCommand(obs)
     } catch (err) {
       deps.logger.error(
         `device-transitions: recording a ${obs.capName}.${obs.method} command failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -121,16 +108,12 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
     }
   })
   const stopTicker = ticker(() => {
-    correlator.sweep()
     void sender.flush()
   }, TRANSITIONS_FLUSH_INTERVAL_MS)
   return {
-    forgetDevice: (deviceId) => correlator.forgetDevice(deviceId),
     stop: async () => {
       unsubscribe()
-      deps.mirror.setTransitionTap(null)
       stopTicker()
-      correlator.flush()
       await sender.flush()
       sender.abandon()
     },

@@ -14,18 +14,20 @@ import {
 import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
- * device-transitions - the audit of what changed on a device and who asked
- * for it (D1022).
+ * device-transitions - what was asked of a device and what it reported back
+ * (D1022, D1084).
  *
- * A transition is a FACT about one status field: it went from `from` to `to`
- * at `at`, and the actor is the user, token, addon, action or scheduler whose
- * command the hub mirror matched to the change, or `device` when nothing
- * asked. The hub kernel (device-manager) writes the rows by batch through
- * `record`; device-history owns the ledger, its retention and its removal
- * hook. Reads answer from disk: an answered empty page is "no transitions".
+ * Two sources, one time-ordered page. A STORED row is a command: the user,
+ * token, addon, action or scheduler that asked, the arguments, and whether the
+ * call returned (`ok`) or threw (`failed`). The hub kernel (device-manager)
+ * writes it by batch through `record` when the call completes; device-history
+ * owns the ledger, its retention and its removal hook. A DERIVED row (actor
+ * `device`) is a change of an audited field read back from the device-history
+ * raw series at read time and never stored: a field without a history block has
+ * none. Reads answer from disk: an answered empty page is "no transitions".
  *
- * `null` is "unknown", never `0` (D393): a `from` the mirror had not seen, a
- * `matchedAfterMs` of a command that produced no change, a count not taken.
+ * `null` is "unknown", never `0` (D393): a `from` that was not recorded, a
+ * count not taken.
  */
 
 export const DEVICE_TRANSITIONS_MAX_PAGE = 200
@@ -68,8 +70,10 @@ export const deviceTransitionsCapability = {
   deviceTypes: DEVICE_TRANSITIONS_DEVICE_TYPES,
   methods: {
     /**
-     * Transitions of a device, newest first. `limit` is bounded; page with `cursor`.
-     * At most ONE of `capName`, `actorKind`, `outcome` per call - each is served by its own index.
+     * Commands and derived device changes, newest first. `limit` is bounded; page with `cursor`
+     * (stable across both sources). At most ONE of `capName`, `actorKind`, `outcome` per call;
+     * `outcome` (`ok` | `failed`) and every actor kind but `device` select commands only,
+     * `actorKind: 'device'` selects derived changes only.
      */
     listTransitions: method(
       z.object({
@@ -87,12 +91,12 @@ export const deviceTransitionsCapability = {
         nextCursor: z.string().nullable(),
       }),
     ),
-    /** Fetch one device transition (an in-progress change) by id; null when absent. */
+    /** Fetch one stored command by id; null when absent (a derived change has no stored row). */
     getTransition: method(
       z.object({ deviceId: z.number().int(), id: z.string() }),
       DeviceTransitionSchema.nullable(),
     ),
-    /** The fleet page, newest first. At most ONE of `actorKind`, `outcome` per call. */
+    /** The fleet page of stored commands, newest first (derived device changes are per device only). At most ONE of `actorKind`, `outcome` per call. */
     listRecentTransitions: systemMethod(
       z.object({
         actorKind: TransitionActorKindSchema.optional(),

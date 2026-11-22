@@ -444,7 +444,7 @@ export const NC_CONSUMABLE_LOW_PERCENT_MAX = 95
  * selected kinds.
  */
 /** How a settled command can be filtered (D1022): a device's own change is not a command. */
-export const NC_COMMAND_OUTCOMES = ['confirmed', 'already', 'unconfirmed', 'failed'] as const
+export const NC_COMMAND_OUTCOMES = ['ok', 'failed'] as const
 /** Who gave a command, as the transition audit names the actor (D1022). */
 export const NC_COMMAND_ACTOR_KINDS = [
   'user',
@@ -498,7 +498,7 @@ export const NcSystemEventConditionSchema = z.object({
    * fault of the episode is in the list.
    */
   faultCodes: z.array(z.string().min(1)).optional(),
-  /** `device-command` only: how the command settled. A device's own change is not a command. */
+  /** `device-command` only: whether the call returned (`ok`) or threw (`failed`). A device's own change is not a command. */
   commandOutcomes: z.array(z.enum(NC_COMMAND_OUTCOMES)).min(1).optional(),
   /** `device-command` only: who asked (`user`, `addon`, `action`, `scheduler`, `composition`, `node`). */
   commandActorKinds: z.array(z.enum(NC_COMMAND_ACTOR_KINDS)).min(1).optional(),

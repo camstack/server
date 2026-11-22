@@ -500,9 +500,9 @@ export enum EventCategory {
    */
   DeviceStateChanged = 'device.state-changed',
   /**
-   * A device COMMAND (a vocabulary action, D920/D983) settled in the hub's
-   * transition audit (D1022): confirmed, already in place, unconfirmed or
-   * failed. Never a device's own change. Payload: `DeviceCommandSettledEvent`
+   * A device COMMAND (a vocabulary action, D920/D983) completed, as the hub's
+   * command audit saw it (D1022, D1084): the call returned (`ok`) or threw
+   * (`failed`). Never a device's own change, and never proof the device obeyed. Payload: `DeviceCommandSettledEvent`
    * (`{deviceId, action, outcome, actor, at}`, no arguments). It feeds
    * the Notification Center `device-command` kind. Telemetry (D8): losing one
    * costs a notification, never state; the audit row is the record.

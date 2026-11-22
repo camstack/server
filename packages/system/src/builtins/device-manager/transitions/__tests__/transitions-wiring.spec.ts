@@ -5,7 +5,6 @@ import type {
   DeviceTransition,
   IScopedLogger,
 } from '@camstack/types'
-import { COMMAND_MATCH_WINDOW_MS, SETTLE_QUIET_MS } from '../transition-correlator.js'
 import {
   __resetCommandObserverRegistryForTests,
   getCommandObserverRegistry,
@@ -27,7 +26,6 @@ function manualTicker() {
 }
 
 function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
-  const clock = { now: 1000 }
   const h = harness()
   const t = manualTicker()
   const recorded: DeviceTransition[][] = []
@@ -46,10 +44,9 @@ function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
     onCommandSettled: (e) => void settled.push(e),
     logger,
     record: record ?? (async (batch) => void recorded.push([...batch])),
-    now: () => clock.now,
     ticker: t.ticker,
   })
-  return { h, t, recorded, errors, handle, settled, clock }
+  return { h, t, recorded, errors, handle, settled }
 }
 
 const command = (over: Partial<DeviceCommandObservation> = {}): DeviceCommandObservation => ({
@@ -62,50 +59,79 @@ const command = (over: Partial<DeviceCommandObservation> = {}): DeviceCommandObs
   ...over,
 })
 
-describe('device transitions wiring (D1022)', () => {
-  it('a command followed by the device reporting it reaches device-history on the next tick', async () => {
+describe('device command audit wiring (D1022, D1084)', () => {
+  const flush = async (): Promise<void> => {
+    for (let i = 0; i < 4; i += 1) await Promise.resolve()
+  }
+
+  it('a command writes exactly ONE row, on the next tick, and nothing waits for the device', async () => {
     const w = setup()
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     getCommandObserverRegistry().observe(command())
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
-    expect(w.recorded).toEqual([])
     w.t.tick()
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(w.recorded).toHaveLength(1)
+    await flush()
+    expect(w.recorded.flat()).toHaveLength(1)
     expect(w.recorded[0]?.[0]).toMatchObject({
-      outcome: 'confirmed',
+      outcome: 'ok',
       field: 'on',
       from: false,
       to: true,
+      actor: { kind: 'user' },
     })
+    // the device reporting the change later adds no row: the change is read from history
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    w.t.tick()
+    await flush()
+    expect(w.recorded.flat()).toHaveLength(1)
+    await w.handle.stop()
+  })
+
+  it('a call still in flight writes nothing until it settles', async () => {
+    const w = setup()
+    let finish: () => void = () => undefined
+    const inflight = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    getCommandObserverRegistry().observe(command({ outcome: inflight }))
+    w.t.tick()
+    await flush()
+    expect(w.recorded.flat()).toEqual([])
+    finish()
+    await flush()
+    w.t.tick()
+    await flush()
+    expect(w.recorded.flat()).toEqual([expect.objectContaining({ outcome: 'ok' })])
     await w.handle.stop()
   })
 
   it('a call that is not a vocabulary command is not recorded', async () => {
     const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     getCommandObserverRegistry().observe(command({ method: 'notACommand' }))
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
-    w.clock.now += SETTLE_QUIET_MS
     w.t.tick()
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(w.recorded[0]?.[0]).toMatchObject({ outcome: 'device' })
+    await flush()
+    expect(w.recorded.flat()).toEqual([])
     await w.handle.stop()
   })
 
-  it('a command the device confirms is announced ONCE by its vocabulary action id, with actor and outcome, no args', async () => {
+  it('a device change nobody asked for writes no row at all (it is derived from history on read)', async () => {
     const w = setup()
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
-    getCommandObserverRegistry().observe(command())
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
     w.t.tick()
+    await flush()
+    await w.handle.stop()
+    expect(w.recorded.flat()).toEqual([])
+    expect(w.settled).toEqual([])
+  })
+
+  it('a completed command is announced ONCE by its vocabulary action id, with actor and outcome ok, no args', async () => {
+    const w = setup()
+    getCommandObserverRegistry().observe(command())
     expect(w.settled).toEqual([
       {
         deviceId: 7,
         action: 'switch.on',
-        outcome: 'confirmed',
+        outcome: 'ok',
         actor: { kind: 'user', userId: 'u', username: 'ada', credential: 'session' },
         at: 1000,
       },
@@ -113,64 +139,22 @@ describe('device transitions wiring (D1022)', () => {
     await w.handle.stop()
   })
 
-  it('announces a command whose target already held, with outcome already', async () => {
+  it('a call that threw writes failed, with its message scrubbed, and announces failed', async () => {
     const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
-    getCommandObserverRegistry().observe(command())
-    w.t.tick()
-    expect(w.settled).toEqual([
-      expect.objectContaining({ action: 'switch.on', outcome: 'already' }),
-    ])
-    await w.handle.stop()
-  })
-
-  it('announces a command that caused nothing inside its window, with outcome unconfirmed', async () => {
-    const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
-    getCommandObserverRegistry().observe(command())
-    w.t.tick()
-    expect(w.settled).toEqual([])
-    w.clock.now += COMMAND_MATCH_WINDOW_MS
-    w.t.tick()
-    expect(w.settled).toEqual([
-      expect.objectContaining({ action: 'switch.on', outcome: 'unconfirmed' }),
-    ])
-    await w.handle.stop()
-  })
-
-  it('announces a command whose call threw, with outcome failed', async () => {
-    const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     const failure = Promise.reject(new Error('device unreachable'))
     getCommandObserverRegistry().observe(command({ outcome: failure }))
     await failure.catch(() => undefined)
-    await Promise.resolve()
+    await flush()
     expect(w.settled).toEqual([expect.objectContaining({ action: 'switch.on', outcome: 'failed' })])
-    await w.handle.stop()
-  })
-
-  it("a change nobody asked for (the device's own) announces nothing", async () => {
-    const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
-    w.clock.now += SETTLE_QUIET_MS
     w.t.tick()
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(w.recorded.flat()).toHaveLength(1)
-    expect(w.settled).toEqual([])
-    await w.handle.stop()
-  })
-
-  it('stop writes a burst still held, without waiting for the quiet window', async () => {
-    const w = setup()
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
-    expect(w.recorded).toEqual([])
-    await w.handle.stop()
+    await flush()
     expect(w.recorded.flat()).toEqual([
-      expect.objectContaining({ field: 'on', from: false, to: true, outcome: 'device' }),
+      expect.objectContaining({
+        outcome: 'failed',
+        command: expect.objectContaining({ error: 'device unreachable' }),
+      }),
     ])
+    await w.handle.stop()
   })
 
   it('after stop nothing observes: no subscriber, the ticker is stopped', async () => {
@@ -185,8 +169,7 @@ describe('device transitions wiring (D1022)', () => {
     const w = setup(async () => {
       throw new Error('hub gone')
     })
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
-    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    getCommandObserverRegistry().observe(command())
     await w.handle.stop()
     expect(
       w.errors.some((e) => e.includes('abandoned at shutdown') && e.includes('1 transition')),

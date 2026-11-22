@@ -5,11 +5,13 @@ import { OnBehalfSchema } from './command-origin-claim.js'
  * One recorded device transition (D1022): a status field of a device went from
  * one value to another, with who or what asked for it.
  *
- * `from` is `null` when the hub mirror had not seen the field before (unknown,
- * never a made-up value - D393). `outcome` says how the actor was decided:
- * a command matched the change (`confirmed`), nothing asked so the device did it
- * (`device`), the command found the target already held (`already`), the command
- * produced no change in its window (`unconfirmed`) or threw (`failed`).
+ * Two kinds of row share this shape (D1084). A STORED row is a command: who asked
+ * for what, when, with which arguments, and whether the call threw (`outcome`
+ * `ok` | `failed`); `field`, `from` and `to` are what the command's vocabulary
+ * effect names (`*` and `null` when it names none). A DERIVED row (`outcome`
+ * `device`, actor `device`) is a change of an audited field read back from the
+ * device-history raw series; it is never stored. `from` is `null` when the
+ * previous value is unknown (never a made-up value - D393).
  */
 
 /** A status value as a transition carries it. */
@@ -65,14 +67,13 @@ export const TransitionActorKindSchema = z.enum([
 ])
 export type TransitionActorKind = z.infer<typeof TransitionActorKindSchema>
 
-export const TransitionOutcomeSchema = z.enum([
-  'confirmed',
-  'device',
-  'already',
-  'unconfirmed',
-  'failed',
-])
+/** How a command call ended: it returned (`ok`) or it threw (`failed`). Nothing says the device obeyed. */
+export const TransitionOutcomeSchema = z.enum(['ok', 'failed'])
 export type TransitionOutcome = z.infer<typeof TransitionOutcomeSchema>
+
+/** A row's outcome: a command's, or `device` for a change derived from history (never stored). */
+export const TransitionRowOutcomeSchema = z.union([TransitionOutcomeSchema, z.literal('device')])
+export type TransitionRowOutcome = z.infer<typeof TransitionRowOutcomeSchema>
 
 /** The command a transition is attributed to. `args` are redacted and capped before they get here. */
 export const TransitionCommandSchema = z.object({
@@ -80,8 +81,6 @@ export const TransitionCommandSchema = z.object({
   method: z.string(),
   args: z.record(z.string(), z.unknown()),
   requestedAt: z.number(),
-  /** Milliseconds from the command to the change it caused; `null` when no change was seen. */
-  matchedAfterMs: z.number().nullable(),
   error: z.string().optional(),
 })
 export type TransitionCommand = z.infer<typeof TransitionCommandSchema>
@@ -95,15 +94,15 @@ export const DeviceTransitionSchema = z.object({
   field: z.string(),
   from: TransitionValueSchema,
   to: TransitionValueSchema,
-  outcome: TransitionOutcomeSchema,
+  outcome: TransitionRowOutcomeSchema,
   actor: TransitionActorSchema,
   command: TransitionCommandSchema.optional(),
 })
 export type DeviceTransition = z.infer<typeof DeviceTransitionSchema>
 
 /**
- * The payload of `EventCategory.DeviceCommandSettled`: a command the audit
- * settled, without its arguments (they stay redacted in the row). A command is
+ * The payload of `EventCategory.DeviceCommandSettled`: a command call that
+ * completed, without its arguments (they stay redacted in the row). A command is
  * named ONLY by its vocabulary action id (`powerSource.forceRestart`, D983) -
  * the one dictionary the automation action blocks use; the cap is derived from
  * the action index, never carried.
