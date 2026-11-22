@@ -78,8 +78,10 @@ export interface GroupTriggerSync {
   sync(groupBlockId: string, mode: GroupSyncMode): Promise<GroupSyncOutcome>
   /** The group block was deleted: its owned block goes with it. */
   remove(groupBlockId: string): Promise<void>
-  /** Boot: every group with triggers, and every owned block whose group is gone. */
-  /** True once the pass could read the devices; false when it could not run (then it is tried again). */
+  /**
+   * Boot: every group with triggers, and every owned block whose group is gone.
+   * True once the pass could read the devices; false when it could not run (then it is tried again).
+   */
   reconcile(): Promise<boolean>
   /**
    * A device registered: a group that has enabled triggers and no owned block yet

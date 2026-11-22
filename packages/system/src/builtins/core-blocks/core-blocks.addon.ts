@@ -29,6 +29,7 @@ import {
   type CoreBlock,
   type CoreBlockCompileInput,
   type CoreBlockInput,
+  composedDeviceStableId,
   coreBlockComposition,
   coreBlocksCapability,
   resolveCoreBlockEntry,
@@ -103,6 +104,7 @@ import {
   ownedGroupOf,
   ownedRefusal,
 } from './group-triggers.js'
+import { setBlockEnabled } from './set-block-enabled.js'
 import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
@@ -1024,12 +1026,22 @@ export class CoreBlocksAddon extends BaseAddon {
         return { success: true }
       },
 
-      setEnabled: async ({ blockId, enabled }) => {
-        this.refuseIfOwned(blockId)
-        const updated = await this.requireStore().update(blockId, { enabled })
-        this.convergeSoon()
-        return { block: updated }
-      },
+      setEnabled: ({ blockId, enabled }) =>
+        setBlockEnabled(
+          {
+            refuseIfOwned: (id) => this.refuseIfOwned(id),
+            update: (id, patch) => this.requireStore().update(id, patch),
+            convergeSoon: () => this.convergeSoon(),
+            groupTriggers: () => this.groupTriggers,
+            deviceIdOf: (block) =>
+              this.deviceIdOfRef({
+                addonId: 'composer',
+                stableId: composedDeviceStableId(block.id),
+              }),
+            logger: this.ctx.logger.child('group-triggers'),
+          },
+          { blockId, enabled },
+        ),
 
       /**
        * Awaited, like a composition delete.
