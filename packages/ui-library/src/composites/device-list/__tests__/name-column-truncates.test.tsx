@@ -109,7 +109,7 @@ describe('device table — the NAME column', () => {
       // the min width keeps two rows of one device kind tellable apart.
       expect(hasUnconditionalClass(cls, 'w-full')).toBe(true)
       expect(hasUnconditionalClass(cls, 'max-w-0')).toBe(true)
-      expect(hasUnconditionalClass(cls, 'min-w-[8rem]')).toBe(true)
+      expect(hasUnconditionalClass(cls, 'min-w-[12rem]')).toBe(true)
       expect(hasVariantClass(cls, NAME_COLUMN_TRUNCATE_BREAKPOINT, 'w-64')).toBe(true)
     }
   })

@@ -139,10 +139,11 @@ export const NAME_COLUMN_PIN_CLASS = 'md:sticky md:left-0 md:z-[1]' as const
  * Below `md` the table is NAME + the merged controls cell. NAME is the
  * flexible column (`w-full max-w-0`: it takes the remaining width and its text
  * ellipsises on the RIGHT, never clipped on the left), bounded below by
- * `min-w-[8rem]` so a name never collapses to "Ca…" — instead the controls cell
- * wraps (`PREVIEW_CELL_CLASS`) and gives the name its room. The table never
- * scrolls sideways on a phone; the wrapper's `overflow-x-auto` stays only as a
- * safety net for an unbreakable control.
+ * `min-w-[12rem]` so a name never collapses to "Ca…" — instead the controls cell
+ * wraps (`PREVIEW_CELL_CLASS`) and gives the name its room. 12rem leaves the
+ * name readable beside the lead icon and the integration badge; when an
+ * unbreakable control still needs more room, the table wrapper's
+ * `overflow-x-auto` scrolls sideways rather than crushing the name.
  *
  * From `md` up the fixed `w-64` width and the pin return, as before.
  */
@@ -153,7 +154,7 @@ export const NAME_COLUMN_TRUNCATE_BREAKPOINT = 'md' as const
  * `md` up ([D43]). One constant for the `<th>` and the `<td>`, so they cannot drift.
  */
 export const NAME_COLUMN_WIDTH_CLASS =
-  'w-full max-w-0 min-w-[8rem] md:w-64 md:max-w-[16rem]' as const
+  'w-full max-w-0 min-w-[12rem] md:w-64 md:max-w-[16rem]' as const
 
 /**
  * The controls cell: below `md` it may wrap its cluster onto a second line so
