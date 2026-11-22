@@ -6,7 +6,11 @@
 import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { buildRoutes, BROKER_HEADER, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
-import { NO_PUBLIC_ENDPOINT_REASON, type PublicEndpointResult } from '../public-endpoint.js'
+import {
+  NO_PUBLIC_ENDPOINT_REASON,
+  type KnownOriginsResult,
+  type PublicEndpointResult,
+} from '../public-endpoint.js'
 
 const BROKER = 'https://broker.example.test'
 const VERIFIED = {
@@ -43,7 +47,11 @@ function recordingLogger(warns: LogLine[]): IScopedLogger {
   return value
 }
 
-async function post(token: string, endpoint: PublicEndpointResult) {
+async function post(
+  token: string,
+  endpoint: PublicEndpointResult,
+  known: KnownOriginsResult = { ok: true, origins: new Set<string>() },
+) {
   const warns: LogLine[] = []
   const advertised: string[] = []
   const deps: HttpRouteDeps = {
@@ -70,6 +78,7 @@ async function post(token: string, endpoint: PublicEndpointResult) {
     }),
     snapshotRoute: {} as never,
     publicEndpoint: async () => endpoint,
+    knownOrigins: async () => known,
   }
   const route = buildRoutes(deps).find((r) => r.path === '/directive')
   const sent: { status: number; body: unknown } = { status: 0, body: null }
@@ -112,13 +121,42 @@ describe('directive routing claim', () => {
     })
   })
 
-  it('names the typed reason when the role resolves to nothing', async () => {
-    const { sent, warns } = await post(jwt({ hubUrl: 'https://old.example.org' }), {
+  it('answers a retryable BRIDGE_UNREACHABLE, never an unlink, when the role resolves to nothing', async () => {
+    const { sent, warns, advertised } = await post(jwt({ hubUrl: 'https://old.example.org' }), {
       ok: false,
       reason: NO_PUBLIC_ENDPOINT_REASON,
     })
-    expect(JSON.stringify(sent.body)).toContain('INVALID_AUTHORIZATION_CREDENTIAL')
+    const body = JSON.stringify(sent.body)
+    expect(body).toContain('BRIDGE_UNREACHABLE')
+    expect(body).not.toContain('INVALID_AUTHORIZATION_CREDENTIAL')
+    expect(advertised).toEqual([])
     expect(warns[0]?.message).toContain('no-public-endpoint')
+  })
+
+  it('answers BRIDGE_UNREACHABLE when the palette cannot be read', async () => {
+    const { sent } = await post(jwt({ hubUrl: 'https://old.example.org' }), ROLE, { ok: false })
+    expect(JSON.stringify(sent.body)).toContain('BRIDGE_UNREACHABLE')
+  })
+
+  it('restart incident: claim = tunnel, role = LAN, palette knows the tunnel -> served once-warned', async () => {
+    const lan: PublicEndpointResult = { ok: true, origin: 'http://192.168.1.9:4480' }
+    const known: KnownOriginsResult = {
+      ok: true,
+      origins: new Set(['http://192.168.1.9:4480', 'https://hub.example.org']),
+    }
+    const { sent, warns, advertised } = await post(
+      jwt({ hubUrl: 'https://hub.example.org' }),
+      lan,
+      known,
+    )
+    expect(JSON.stringify(sent.body)).not.toContain('INVALID_AUTHORIZATION_CREDENTIAL')
+    expect(JSON.stringify(sent.body)).not.toContain('BRIDGE_UNREACHABLE')
+    expect(advertised).toEqual([BROKER])
+    expect(warns).toHaveLength(1)
+    expect(warns[0]?.meta).toMatchObject({
+      claim: 'https://hub.example.org',
+      current: 'http://192.168.1.9:4480',
+    })
   })
 
   it('accepts a token whose claim equals the role', async () => {

@@ -316,6 +316,7 @@ describe('wiring', () => {
       logger: quietLogger,
       resolveSkill: () => null,
       publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
+      knownOrigins: async () => ({ ok: true, origins: new Set<string>() }),
       snapshotRoute: snapshotsOff().route,
     })
     const route = routes.find((r) => r.path === '/snapshot/:file')

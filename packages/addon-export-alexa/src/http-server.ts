@@ -37,7 +37,7 @@ import {
   type LwaTokensCallbackDeps,
 } from './handlers/lwa-tokens-callback.js'
 import { readIngressHeader, verifyIngressToken } from './ingress-token.js'
-import type { PublicEndpointReader } from './public-endpoint.js'
+import type { KnownOriginsReader, PublicEndpointReader } from './public-endpoint.js'
 import { judgeRoutingClaim, readRoutingClaim } from './routing-claim.js'
 import { handleSnapshotFetch, type SnapshotRouteDeps } from './snapshots/snapshot-route.js'
 import type { AddonContext, IScopedLogger } from '@camstack/types'
@@ -83,12 +83,25 @@ export interface HttpRouteDeps {
   readonly resolveSkill: (lookup: SkillLookup) => RoutedSkill | null
   /** The hub's `publicEndpoint` role, read on every use. A directive token's routing claim is judged against it. */
   readonly publicEndpoint: PublicEndpointReader
+  /** Every origin this hub knows as its own; a directive claim naming one is never stale. */
+  readonly knownOrigins: KnownOriginsReader
   /** R2 (D773): where Alexa fetches a snapshot it was handed. */
   readonly snapshotRoute: SnapshotRouteDeps
 }
 
 /** Header the D753 Lambda sends its broker origin on. */
 export const BROKER_HEADER = 'x-camstack-broker'
+
+/** Claim/current pairs already warned about per route set, so a served mismatch logs once. */
+const warnedClaimPairsByDeps = new WeakMap<HttpRouteDeps, Set<string>>()
+
+function warnedPairsFor(deps: HttpRouteDeps): Set<string> {
+  const existing = warnedClaimPairsByDeps.get(deps)
+  if (existing !== undefined) return existing
+  const created = new Set<string>()
+  warnedClaimPairsByDeps.set(deps, created)
+  return created
+}
 
 export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
   const forSkill = (
@@ -363,31 +376,51 @@ async function handleDirective(
   }
   const verified = verifiedParse.data
 
-  // The token verified, so its `hubUrl` claim is ours. The skill Lambda routes on it: a claim
-  // that no longer names the hub's `publicEndpoint` role is refused with a logged reason
-  // (planning#378, option B - no transition; the operator re-links once).
-  const verdict = judgeRoutingClaim(readRoutingClaim(bearer), await deps.publicEndpoint())
-  if (verdict.kind === 'stale' || verdict.kind === 'no-endpoint') {
+  // The token verified, so its `hubUrl` claim is ours. A claim naming an origin this hub still
+  // answers on is served; only a claim matching no known origin (successful read) is refused,
+  // and an unavailable role/palette answers a retryable error, never an unlink (D49).
+  const verdict = judgeRoutingClaim(
+    readRoutingClaim(bearer),
+    await deps.publicEndpoint(),
+    await deps.knownOrigins(),
+  )
+  if (verdict.kind === 'known-elsewhere') {
+    const key = `${verdict.claim}|${verdict.current ?? ''}`
+    const warned = warnedPairsFor(deps)
+    if (!warned.has(key)) {
+      warned.add(key)
+      deps.logger.warn(
+        'alexa directive: served — the token claim names a known hub address that is not the resolved publicEndpoint role',
+        { meta: { claim: verdict.claim, current: verdict.current } },
+      )
+    }
+  }
+  if (verdict.kind === 'unavailable') {
     deps.logger.warn(
-      verdict.kind === 'stale'
-        ? 'alexa directive: refused — routing-claim-stale: the token was issued for another hub address; re-link the Alexa skill'
-        : `alexa directive: refused — ${verdict.reason.code}: the token carries a routing claim but the hub has no public endpoint to compare it with`,
-      {
-        meta: {
-          userId: verified.userId,
-          claim: verdict.claim,
-          ...(verdict.kind === 'stale' ? { current: verdict.current } : {}),
-        },
-      },
+      `alexa directive: temporary error — ${verdict.reason}: the hub cannot judge the token's routing claim right now`,
+      { meta: { userId: verified.userId, claim: verdict.claim } },
+    )
+    reply
+      .code(200)
+      .send(
+        preParseErrorEnvelope(
+          'BRIDGE_UNREACHABLE',
+          `hub address not available yet (${verdict.reason}); try again shortly`,
+        ),
+      )
+    return
+  }
+  if (verdict.kind === 'stale') {
+    deps.logger.warn(
+      'alexa directive: refused — routing-claim-stale: the token was issued for another hub address; re-link the Alexa skill',
+      { meta: { userId: verified.userId, claim: verdict.claim, current: verdict.current } },
     )
     reply
       .code(200)
       .send(
         preParseErrorEnvelope(
           'INVALID_AUTHORIZATION_CREDENTIAL',
-          verdict.kind === 'stale'
-            ? 'token was issued for another hub address; re-link the Alexa skill'
-            : `hub has no public endpoint (${verdict.reason.code}); set it on the Network page`,
+          'token was issued for another hub address; re-link the Alexa skill',
         ),
       )
     return

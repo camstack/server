@@ -69,7 +69,12 @@ import { pickSkill } from './instance-routing.js'
 import { ALEXA_NAME_RULE } from './endpoints/alexa-name.js'
 import { ADDON_MIGRATIONS, type AlexaCataloguePorts } from './migrations/index.js'
 import { type AlexaLinkableInstance, buildAlexaOauthIntegration } from './oauth-integration.js'
-import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
+import {
+  createKnownOriginsReader,
+  createPublicEndpointReader,
+  type KnownOriginsReader,
+  type PublicEndpointReader,
+} from './public-endpoint.js'
 import { buildAlexaInstanceSections } from './settings-schema.js'
 import {
   ALEXA_INSTANCE_ID,
@@ -155,6 +160,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
   private readonly snapshotStore = new SnapshotStore(() => this.config.snapshotSigningKey)
   private readonly publicEndpoint: PublicEndpointReader = createPublicEndpointReader(() =>
+    this.ctx.api.localNetwork.getAddresses.query(),
+  )
+  private readonly knownOrigins: KnownOriginsReader = createKnownOriginsReader(() =>
     this.ctx.api.localNetwork.getAddresses.query(),
   )
   private accessGateRef: AlexaAccessGate | null = null
@@ -418,6 +426,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         return skill === null ? null : skill.runtime.routed()
       },
       publicEndpoint: this.publicEndpoint,
+      knownOrigins: this.knownOrigins,
       snapshotRoute: {
         store: this.snapshotStore,
         // Snapshots are served while ANY skill has them on; the signed URL is the same for all.

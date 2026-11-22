@@ -105,6 +105,7 @@ function world(opts: {
       return skill
     },
     snapshotRoute: {} as never,
+    knownOrigins: async () => ({ ok: true, origins: new Set<string>() }),
     publicEndpoint: async () => ({
       ok: true,
       origin: 'https://hub.example.org',

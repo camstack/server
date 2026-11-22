@@ -73,6 +73,7 @@ function deps(resolve: HttpRouteDeps['resolveSkill']): HttpRouteDeps {
     logger: { warn() {}, info() {}, error() {}, debug() {} } as never,
     resolveSkill: resolve,
     publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
+    knownOrigins: async () => ({ ok: true, origins: new Set<string>() }),
     snapshotRoute: {} as never,
   }
 }

@@ -14,6 +14,10 @@ export interface PublicEndpointAnswer {
   readonly roles: {
     readonly publicEndpoint: { readonly resolved: string | null }
   }
+  /** The palette rows; only their `baseUrl` is read. */
+  readonly rows?: readonly { readonly baseUrl: string }[]
+  /** Every origin a browser can really reach this hub at. */
+  readonly listenerOrigins?: readonly string[]
 }
 
 /** The role resolves to no address. */
@@ -59,5 +63,32 @@ export const createPublicEndpointReader =
       return resolvePublicEndpoint(await read())
     } catch {
       return { ok: false, reason: PUBLIC_ENDPOINT_UNREADABLE_REASON }
+    }
+  }
+
+/** Every origin this hub currently knows as its own, or the palette could not be read. */
+export type KnownOriginsResult =
+  | { readonly ok: true; readonly origins: ReadonlySet<string> }
+  | { readonly ok: false }
+
+export type KnownOriginsReader = () => Promise<KnownOriginsResult>
+
+/** Palette rows' base URLs plus the listener origins, normalised. A failed read is `ok: false`. */
+export const createKnownOriginsReader =
+  (read: () => Promise<PublicEndpointAnswer>): KnownOriginsReader =>
+  async () => {
+    try {
+      const book = await read()
+      const raw = [
+        ...(book.rows ?? []).map((row) => row.baseUrl),
+        ...(book.listenerOrigins ?? []),
+        book.roles.publicEndpoint.resolved ?? '',
+      ]
+      return {
+        ok: true,
+        origins: new Set(raw.map(normaliseOrigin).filter((origin) => origin.length > 0)),
+      }
+    } catch {
+      return { ok: false }
     }
   }
