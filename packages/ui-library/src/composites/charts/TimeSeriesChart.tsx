@@ -22,6 +22,7 @@ import {
   bandShadeHook,
   chartCursor,
   defaultAxisSpec,
+  formatAxisTick,
   formatChartValue,
   gapShadeHook,
   timeAxis,
@@ -249,7 +250,10 @@ export function TimeSeriesChart<TId extends string = string>({
         const ax = valueAxis(
           key,
           ui % 2 === 0 ? 3 : 1,
-          (v) => fmt(v, unit),
+          (v) =>
+            syncKey !== undefined && formatValue === undefined
+              ? formatAxisTick(v, unit)
+              : fmt(v, unit),
           ui === 0,
           syncKey !== undefined,
         )

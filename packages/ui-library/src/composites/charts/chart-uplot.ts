@@ -84,8 +84,15 @@ export function valueSplits(range: readonly [number, number], spec: ValueAxisSpe
   return out
 }
 
-/** Width of a value axis in a synced view: fits the widest label the axis ever clips to. */
-export const SYNCED_AXIS_SIZE = 72
+/**
+ * Width of a value axis in a synced view: fits the widest bare tick label
+ * (`formatAxisTick`) the axis ever clips to. The unit lives in the chart title,
+ * the legend and the tooltip, so the axis column stays narrow and the plot gets
+ * the width.
+ */
+export const SYNCED_AXIS_SIZE = 48
+/** Widest value axis of a standalone chart, whose labels carry their unit. */
+const STANDALONE_AXIS_MAX = 72
 /** Space right of the plot that every chart keeps, so the last tick label is not cut. */
 const PLOT_RIGHT_MARGIN = 30
 /** Left gutter of a standalone chart that has no value axis (state bands). */
@@ -94,7 +101,7 @@ const STANDALONE_LEFT_GUTTER = 40
 /** The size of a value axis: sized to its labels, or the shared fixed width in a synced view. */
 export function valueAxisSize(longestLabel: number, synced: boolean): number {
   if (synced) return SYNCED_AXIS_SIZE
-  return Math.max(28, Math.min(SYNCED_AXIS_SIZE, longestLabel * 6 + 10))
+  return Math.max(28, Math.min(STANDALONE_AXIS_MAX, longestLabel * 6 + 10))
 }
 
 export interface PlotGutterInput {
@@ -253,6 +260,11 @@ export function formatChartNumber(v: number): string {
   // Float residue on a zero-crossing axis is zero, not a small value.
   if (abs < 1e-9) return '0'
   return formatNumeric(v, undefined)
+}
+
+/** A tick label of a value axis: the number alone (bytes keep their binary unit). */
+export function formatAxisTick(v: number, unit: string | null | undefined): string {
+  return isByteUnit(unit) ? formatChartBytes(v) : formatChartNumber(v)
 }
 
 /** The default value formatter: bytes binary, `%` glued, any other unit after a space. */

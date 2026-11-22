@@ -18,6 +18,7 @@ import { formatCursorTime, formatTimeLabel } from './chart-data'
 import { chartSeriesStyle, resolveChartColor } from './chart-palette'
 import {
   chartCursor,
+  formatAxisTick,
   formatChartValue,
   timeAxis,
   plotPadding,
@@ -148,8 +149,10 @@ export function BarSeries<TId extends string = string>({
     [buckets, bucketMs, range, layers, unit, displayPreference],
   )
 
-  const live = useRef({ buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt })
-  live.current = { buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt }
+  const axisFmt = (v: number): string =>
+    syncKey !== undefined && formatValue === undefined ? formatAxisTick(v, unit) : fmt(v)
+  const live = useRef({ buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt, axisFmt })
+  live.current = { buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt, axisFmt }
 
   const optionsKey = `${layers.map((l) => `${l.id}:${l.colorIndex}`).join(',')}#${compact ? 'C' : ''}#${isStacked ? 'S' : ''}#${syncKey ?? ''}#${reserveRightAxis === true ? 'R' : ''}#${String(bucketMs)}`
 
@@ -199,7 +202,7 @@ export function BarSeries<TId extends string = string>({
           : [
               timeAxis(() => live.current.range.to - live.current.range.from),
               {
-                ...valueAxis('y', 3, (v) => live.current.fmt(v), true, syncKey !== undefined),
+                ...valueAxis('y', 3, (v) => live.current.axisFmt(v), true, syncKey !== undefined),
                 splits: (_s, _i, min, max) => valueSplits([min, max], spec),
               },
             ],
