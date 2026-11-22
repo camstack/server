@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**255 units · 9148 source files · 248 units claimed by at least one document (9117 files).**
+**255 units · 9149 source files · 248 units claimed by at least one document (9118 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -164,6 +164,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/migrations` | 6 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-model-studio/src/ui` | 6 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +1 more | — |
 | `packages/addon-pipeline-orchestrator/src/node-benchmark` | 6 | — | `architecture/benchmark.md`, `decisions/adr-0791-the-node-benchmark-is-one-node-at-a-time-in-an-orchestrator-benchmark-mode-and-measured-on-the-node-beats-the-table.md`, `decisions/adr-1013-one-instance-model.md`, +2 more, 1 ADR | 2026-11-21 |
+| `packages/addon-pipeline/src/motion-wasm` | 6 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
@@ -172,7 +173,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/access` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0767-an-alexa-link-reaches-only-what-the-linking-user-may-reach.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/egress` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +3 more, 3 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/state-reports` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0776-alexa-state-changes-are-reported-proactively-from-device-state-changed.md`, `decisions/adr-0869-the-alexa-export-maps-caps-through-one-adapter-registry-covers-first-and-shapes-its-reports.md`, +5 more, 2 ADRs | 2026-08-26 |
-| `packages/addon-pipeline/src/motion-wasm` | 5 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md` | 2026-11-08 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
