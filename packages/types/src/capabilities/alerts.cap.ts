@@ -80,10 +80,13 @@ export const alertsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Raise a new alert. */
     emit: method(AlertSchema, z.void(), { kind: 'mutation' }),
+    /** Change fields of an existing alert. */
     update: method(z.object({ alertId: z.string(), patch: AlertSchema.partial() }), z.void(), {
       kind: 'mutation',
     }),
+    /** List alerts, optionally only unread ones. */
     list: method(
       z
         .object({
@@ -93,11 +96,15 @@ export const alertsCapability = {
         .optional(),
       z.array(AlertSchema).readonly(),
     ),
+    /** How many alerts are unread. */
     getUnreadCount: method(z.void(), z.number()),
+    /** Mark one alert as read. */
     markRead: method(z.object({ alertId: z.string() }), z.void(), {
       kind: 'mutation',
     }),
+    /** Mark every alert as read. */
     markAllRead: method(z.void(), z.void(), { kind: 'mutation' }),
+    /** Dismiss one alert. */
     dismiss: method(z.object({ alertId: z.string() }), z.void(), {
       kind: 'mutation',
     }),

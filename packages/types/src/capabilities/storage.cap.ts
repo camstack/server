@@ -47,6 +47,7 @@ export const storageCapability = {
     // ── Small-file primitives ────────────────────────────────────────
     // `location` is a ref (type or fully-qualified id). The orchestrator
     // resolves the ref to a concrete `StorageLocation` and dispatches.
+    /** Resolve a path inside a storage location to its absolute path on disk. */
     resolve: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -55,6 +56,7 @@ export const storageCapability = {
       z.string(),
       { auth: 'admin' },
     ),
+    /** Write a file at a relative path inside a storage location. */
     write: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -64,6 +66,7 @@ export const storageCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Read a file at a relative path inside a storage location. */
     read: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -72,6 +75,7 @@ export const storageCapability = {
       z.instanceof(Uint8Array),
       { auth: 'admin' },
     ),
+    /** Whether a file exists at a relative path inside a storage location. */
     exists: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -80,6 +84,7 @@ export const storageCapability = {
       z.boolean(),
       { auth: 'admin' },
     ),
+    /** List file paths in a storage location, optionally under a prefix. */
     list: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -88,6 +93,7 @@ export const storageCapability = {
       z.array(z.string()).readonly(),
       { auth: 'admin' },
     ),
+    /** Delete a file at a relative path inside a storage location. */
     delete: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -96,6 +102,7 @@ export const storageCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Free space of a storage location in bytes; null when unknown. */
     getAvailableSpace: method(
       z.object({ location: StorageLocationRefSchema }),
       z.number().nullable(),
@@ -105,6 +112,7 @@ export const storageCapability = {
     // Same protocol as `storage-provider` but on the consumer side.
     // Sessions are owned by the orchestrator: it forwards each chunk
     // to the provider that backs the resolved location.
+    /** Open a chunked upload to a path in a storage location and return its upload id. */
     beginUpload: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -114,6 +122,7 @@ export const storageCapability = {
       z.object({ uploadId: z.string() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Write one chunk at an offset into an open upload. */
     writeChunk: method(
       z.object({
         uploadId: z.string(),
@@ -123,14 +132,17 @@ export const storageCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Complete an open upload and make the file visible. */
     finalizeUpload: method(z.object({ uploadId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Cancel an open upload and discard what was written. */
     abortUpload: method(z.object({ uploadId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Open a chunked download of a file and return its id and size. */
     beginDownload: method(
       z.object({
         location: StorageLocationRefSchema,
@@ -139,6 +151,7 @@ export const storageCapability = {
       z.object({ downloadId: z.string(), sizeBytes: z.number() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Read one chunk at an offset from an open download. */
     readChunk: method(
       z.object({
         downloadId: z.string(),
@@ -148,6 +161,7 @@ export const storageCapability = {
       z.instanceof(Uint8Array),
       { auth: 'admin' },
     ),
+    /** Close an open download. */
     endDownload: method(z.object({ downloadId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -159,6 +173,7 @@ export const storageCapability = {
     // that cap, and the forced delete is the orchestrator's `forceDeleteLocation`
     // custom action (D49). What stays here are the reads the pages and the
     // consumers need.
+    /** List the configured storage locations, optionally of one type. */
     listLocations: method(
       z.object({ type: StorageLocationTypeSchema.optional() }),
       z.array(StorageLocationSchema).readonly(),
@@ -166,6 +181,7 @@ export const storageCapability = {
     // One entry per declared location kind (the instance kinds of this function).
     // Source: the kernel-aggregated `storageLocations` declarations injected
     // into the orchestrator via `setRegistry`. No closed type enum anywhere.
+    /** List the storage locations addons have declared they need. */
     listLocationDeclarations: method(
       z.void(),
       z.array(StorageLocationDeclarationSchema).readonly(),

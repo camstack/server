@@ -347,10 +347,12 @@ export const llmCapability = {
   /** `nodeId` inputs below are DATA (the hub provider pins itself), never routing. */
   nodeIdMode: 'data',
   methods: {
+    /** Run a text generation on a language model profile and return the result. */
     generate: method(LlmGenerateBaseInputSchema, LlmGenerateResultSchema, {
       kind: 'mutation',
       timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
     }),
+    /** Run a generation that includes images on a vision-capable model profile. */
     generateVision: method(GenerateVisionInputSchema, LlmGenerateResultSchema, {
       kind: 'mutation',
       timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
@@ -383,7 +385,9 @@ export const llmCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** The default model profile chosen for each LLM use. */
     getDefaults: method(z.object({}), z.array(LlmDefaultSchema)),
+    /** Choose the default model profile for one LLM use, or clear it with null. */
     setDefault: method(
       z.object({
         selector: LlmDefaultSelectorSchema,
@@ -392,6 +396,7 @@ export const llmCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Token usage rolled up per consumer and profile, optionally within a time window. */
     getUsage: method(
       z.object({
         since: z.number().optional(),
@@ -402,8 +407,11 @@ export const llmCapability = {
       z.array(LlmUsageRollupSchema),
     ),
     // managed runtime — operator surface (hub provider fans/pins to llm-runtime, spec §4)
+    /** List the models that can be installed on a runtime node. */
     listModelCatalog: method(z.object({}), z.array(ManagedModelCatalogEntrySchema)),
+    /** List the nodes that can host a local LLM runtime. */
     listRuntimeNodes: method(z.object({}), z.array(LlmRuntimeNodeSchema)),
+    /** List the model files installed on one node. */
     listNodeModels: method(z.object({ nodeId: z.string() }), z.array(LlmNodeModelSchema)),
     /**
      * One typed Hugging Face reference → a pinned, verified `ManagedModelRef`.
@@ -425,19 +433,24 @@ export const llmCapability = {
       HfModelResolutionSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Install a catalog model on a node. */
     installModel: method(z.object({ nodeId: z.string(), model: ManagedModelRefSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Delete an installed model file from a node. */
     deleteModel: method(z.object({ nodeId: z.string(), file: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Whether the local runtime behind a profile is running, and its state. */
     getRuntimeStatus: method(ProfileRefInputSchema, LlmRuntimeStatusSchema),
+    /** Start the local runtime behind a profile. */
     startRuntime: method(ProfileRefInputSchema, LlmRuntimeStatusSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Stop the local runtime behind a profile. */
     stopRuntime: method(ProfileRefInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

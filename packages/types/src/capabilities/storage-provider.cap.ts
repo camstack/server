@@ -153,11 +153,13 @@ export const storageProviderCapability = {
     // ── Small-file primitives ────────────────────────────────────────
     // The location is passed inline so the orchestrator dispatches
     // without provider-side location state.
+    /** Resolve a path inside a storage location to its absolute path on disk. */
     resolve: method(
       z.object({ location: StorageLocationSchema, relativePath: z.string() }),
       z.string(),
       { auth: 'admin' },
     ),
+    /** Write a file at a relative path inside a storage location. */
     write: method(
       z.object({
         location: StorageLocationSchema,
@@ -167,16 +169,19 @@ export const storageProviderCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Read a file at a relative path inside a storage location. */
     read: method(
       z.object({ location: StorageLocationSchema, relativePath: z.string() }),
       z.instanceof(Uint8Array),
       { auth: 'admin' },
     ),
+    /** Whether a file exists at a relative path inside a storage location. */
     exists: method(
       z.object({ location: StorageLocationSchema, relativePath: z.string() }),
       z.boolean(),
       { auth: 'admin' },
     ),
+    /** List file paths in a storage location, optionally under a prefix. */
     list: method(
       z.object({
         location: StorageLocationSchema,
@@ -185,11 +190,13 @@ export const storageProviderCapability = {
       z.array(z.string()).readonly(),
       { auth: 'admin' },
     ),
+    /** Delete a file at a relative path inside a storage location. */
     delete: method(
       z.object({ location: StorageLocationSchema, relativePath: z.string() }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Free space of a storage location in bytes; null when unknown. */
     getAvailableSpace: method(
       z.object({ location: StorageLocationSchema }),
       z.number().nullable(),
@@ -197,31 +204,38 @@ export const storageProviderCapability = {
     ),
 
     // ── Chunked upload ──────────────────────────────────────────────
+    /** Open a chunked upload to a path in a storage location and return its upload id. */
     beginUpload: method(BeginUploadInputSchema, BeginUploadResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Write one chunk at an offset into an open upload. */
     writeChunk: method(WriteChunkInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Complete an open upload and make the file visible. */
     finalizeUpload: method(FinalizeUploadInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Cancel an open upload and discard what was written. */
     abortUpload: method(AbortUploadInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
 
     // ── Chunked download ────────────────────────────────────────────
+    /** Open a chunked download of a file and return its id and size. */
     beginDownload: method(BeginDownloadInputSchema, BeginDownloadResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Read one chunk at an offset from an open download. */
     readChunk: method(ReadChunkInputSchema, z.instanceof(Uint8Array), {
       auth: 'admin',
     }),
+    /** Close an open download. */
     endDownload: method(EndDownloadInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

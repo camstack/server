@@ -314,6 +314,7 @@ export const workloadCapability = {
     off: 'stop',
   },
   methods: {
+    /** Start the workload (VM, container or app). */
     start: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -327,6 +328,7 @@ export const workloadCapability = {
         },
       ],
     }),
+    /** Stop the workload gracefully. */
     stop: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -341,6 +343,7 @@ export const workloadCapability = {
       ],
     }),
     // Same tier as start / stop and the switch they derive: a restart is a stop and a start.
+    /** Restart the workload. */
     restart: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -353,6 +356,7 @@ export const workloadCapability = {
         },
       ],
     }),
+    /** Pause the workload. */
     pause: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -366,6 +370,7 @@ export const workloadCapability = {
         },
       ],
     }),
+    /** Resume a paused workload. */
     resume: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -380,6 +385,7 @@ export const workloadCapability = {
       ],
     }),
     // Admin: a force stop skips the orderly shutdown and can lose data.
+    /** Stop the workload immediately without a graceful shutdown. */
     forceStop: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

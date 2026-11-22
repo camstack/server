@@ -168,9 +168,11 @@ export const recordsCapability = {
       z.object({ kinds: z.record(z.string(), DeclareKindResultSchema) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Fetch one record of the calling addon by kind and id; null when absent. */
     get: method(z.object({ ...KindShape, id: RecordIdSchema }), RecordViewSchema.nullable(), {
       auth: 'admin',
     }),
+    /** Fetch several records of one kind by id. */
     getMany: method(
       z.object({
         ...KindShape,
@@ -188,6 +190,7 @@ export const recordsCapability = {
       RecordSecretRefsSchema,
       { auth: 'admin' },
     ),
+    /** Create or replace a record, optionally only if its revision matches. */
     put: method(
       z.object({
         ...KindShape,
@@ -198,6 +201,7 @@ export const recordsCapability = {
       z.object({ rev: z.number().int(), releasedRefs: SecretRefsList }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Create or replace several records of one kind in one call. */
     putMany: method(
       z.object({
         ...KindShape,
@@ -219,11 +223,13 @@ export const recordsCapability = {
       z.object({ rev: z.number().int(), releasedRefs: SecretRefsList }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete one record by kind and id. */
     delete: method(
       z.object({ ...KindShape, id: RecordIdSchema }),
       z.object({ deleted: z.boolean(), secretRefs: SecretRefsList }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete several records of one kind by id. */
     deleteMany: method(
       z.object({
         ...KindShape,
@@ -232,9 +238,11 @@ export const recordsCapability = {
       z.object({ deleted: z.number().int(), secretRefs: SecretRefsList }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Query records of one kind with filters, ordering and paging. */
     query: method(RecordQueryInputSchema, RecordQueryResultSchema, {
       auth: 'admin',
     }),
+    /** Count the records of one kind matching a filter in a time window. */
     count: method(
       z.object({
         ...KindShape,
@@ -244,6 +252,7 @@ export const recordsCapability = {
       z.object({ count: z.number().int() }),
       { auth: 'admin' },
     ),
+    /** Count records of one kind per time bucket between two timestamps. */
     histogram: method(
       z.object({
         ...KindShape,

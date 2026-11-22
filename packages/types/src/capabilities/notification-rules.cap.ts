@@ -3412,29 +3412,35 @@ export const notificationRulesCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the notification rules. */
     listRules: method(z.object({}), z.object({ rules: z.array(NcRuleSchema) }), {
       auth: 'admin',
     }),
+    /** Fetch one notification rule by id; null when absent. */
     getRule: method(z.object({ ruleId: z.string() }), z.object({ rule: NcRuleSchema.nullable() }), {
       auth: 'admin',
     }),
     // First `caller: 'required'` adopters (D-1 / NC P0): the hub router
     // injects `{ userId, isAdmin }` from the authenticated session; the
     // provider stamps `createdBy` from it — never from client input.
+    /** Create a notification rule. */
     createRule: method(z.object({ rule: NcRuleInputSchema }), z.object({ rule: NcRuleSchema }), {
       kind: 'mutation',
       auth: 'admin',
       caller: 'required',
     }),
+    /** Update a notification rule; the full rule must be sent. */
     updateRule: method(NcRuleUpdateInputSchema, z.object({ rule: NcRuleSchema }), {
       kind: 'mutation',
       auth: 'admin',
       caller: 'required',
     }),
+    /** Delete a notification rule. */
     deleteRule: method(z.object({ ruleId: z.string() }), z.object({ success: z.literal(true) }), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Enable or disable a notification rule. */
     setRuleEnabled: method(
       z.object({ ruleId: z.string(), enabled: z.boolean() }),
       z.object({ success: z.literal(true) }),

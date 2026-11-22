@@ -161,6 +161,7 @@ export const mediaPlayerCapability = {
     off: 'turnOff',
   },
   methods: {
+    /** Power the media player on. */
     turnOn: optionalMethod(deviceOnly, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -173,6 +174,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Power the media player off. */
     turnOff: optionalMethod(deviceOnly, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -185,6 +187,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Raise the volume by one step or the given number of steps. */
     volumeUp: optionalMethod(stepInput, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -197,6 +200,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Lower the volume by one step or the given number of steps. */
     volumeDown: optionalMethod(stepInput, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -209,6 +213,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Switch to the next channel, or move up by the given number of steps. */
     channelUp: optionalMethod(stepInput, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -221,6 +226,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Switch to the previous channel, or move down by the given number of steps. */
     channelDown: optionalMethod(stepInput, z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -236,6 +242,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Start or resume playback. */
     play: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -249,6 +256,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Pause playback. */
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -262,6 +270,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Stop playback. */
     stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -274,6 +283,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Skip to the next track. */
     next: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -286,6 +296,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Go back to the previous track. */
     previous: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -301,6 +312,7 @@ export const mediaPlayerCapability = {
         },
       ],
     }),
+    /** Set the volume to a level from 0 to 100. */
     setVolume: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -331,6 +343,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Mute or unmute the player. */
     setMute: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -360,6 +373,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Turn shuffle on or off. */
     setShuffle: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -392,6 +406,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Set the repeat mode (off, one or all). */
     setRepeat: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -429,6 +444,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Switch the player to the named input source. */
     selectSource: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -460,6 +476,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Jump to a position in the current media, in seconds. */
     seek: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -486,6 +503,7 @@ export const mediaPlayerCapability = {
         ],
       },
     ),
+    /** Play the given media (by identifier or URL and kind) on the player. */
     playMedia: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

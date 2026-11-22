@@ -453,7 +453,9 @@ export const pipelineExecutorCapability = {
     // kept read-only so the benchmark + models-page can still show the
     // executor's bootstrap engine; its semantics degrade to "what the
     // executor would pick by default" in the stateless world.
+    /** List the inference engines this executor can run pipelines on. */
     getAvailableEngines: method(z.void(), z.array(PipelineEngineChoiceSchema)),
+    /** The inference engine currently selected for this executor. */
     getSelectedEngine: method(z.void(), PipelineEngineChoiceSchema),
     /**
      * Per-node detection-engine provisioning snapshot. Returns the live
@@ -471,6 +473,7 @@ export const pipelineExecutorCapability = {
     // `setAgentAddonDefaults` mutation. No `enabled` flag — the cap
     // binding system (wrapper caps + setWrapperActive) decides whether
     // a step runs.
+    /** The configured video pipeline steps, keyed by step, with their model and settings. */
     getVideoPipelineSteps: method(
       z.void(),
       z.record(
@@ -481,6 +484,7 @@ export const pipelineExecutorCapability = {
         }),
       ),
     ),
+    /** Replace the configured video pipeline steps (model and settings per step). */
     setVideoPipelineSteps: method(
       z.object({
         steps: z.record(
@@ -573,7 +577,9 @@ export const pipelineExecutorCapability = {
     // (D927): a model is chosen by the accelerator that runs it, and a frame
     // carries the `{modelId, deviceKey}` it ran with. The executor keeps a
     // private node-default tree for its own config-issue gate.
+    /** The schema describing the pipeline stages and what each can be configured with. */
     getSchema: method(z.void(), PipelineSchemaSchema),
+    /** The configuration form schema of the pipeline orchestrator. */
     getOrchestratorConfigSchema: method(z.void(), ConfigUISchemaBridge),
 
     /**
@@ -601,8 +607,11 @@ export const pipelineExecutorCapability = {
     ),
 
     // ── Inference / detection ────────────────────────────────────────
+    /** What this executor's inference hardware and runtimes can do. */
     getCapabilities: method(z.void(), InferenceCapabilitiesBridge),
+    /** List the models an addon offers and whether each is downloaded. */
     getAddonModels: method(z.object({ addonId: z.string() }), ModelAvailabilityListBridge),
+    /** Download a model in the given format for an addon. */
     downloadModel: method(
       z.object({
         addonId: z.string(),
@@ -612,6 +621,7 @@ export const pipelineExecutorCapability = {
       DownloadModelResultSchema,
       { kind: 'mutation' },
     ),
+    /** Delete a downloaded model in the given format from an addon. */
     deleteModel: method(
       z.object({
         addonId: z.string(),
@@ -914,17 +924,23 @@ export const pipelineExecutorCapability = {
     // delegates the actual pipeline execution back to this cap's runPipeline.
 
     // ── Reference media ──────────────────────────────────────────────
+    /** List the reference images available for pipeline tests. */
     listReferenceImages: method(z.void(), z.array(ReferenceImageEntrySchema).readonly()),
+    /** Fetch one reference image by filename; null when missing. */
     getReferenceImage: method(
       z.object({ filename: z.string() }),
       ReferenceImageBodySchema.nullable(),
     ),
+    /** List the reference audio files available for audio pipeline tests. */
     getReferenceAudioFiles: method(z.void(), z.array(ReferenceAudioEntrySchema).readonly()),
+    /** Fetch one reference audio file by filename; null when missing. */
     getReferenceAudio: method(
       z.object({ filename: z.string() }),
       ReferenceAudioBodySchema.nullable(),
     ),
+    /** What audio classification this executor supports. */
     getAudioCapabilities: method(z.void(), AudioCapabilitiesSchema),
+    /** Run an audio model on a reference audio file and return what it detected. */
     runAudioTest: method(
       z.object({
         addonId: z.string(),
@@ -940,6 +956,7 @@ export const pipelineExecutorCapability = {
     ),
 
     // ── Detection wiring / metrics (from detection-config) ───────────
+    /** The configuration form schema of the detection stage; null when none. */
     getDetectionConfigSchema: method(z.void(), ConfigUISchemaNullableBridge),
     // NOTE: orchestratorStatus / cameraDetectionStatus removed in the
     // pipeline page redesign — UI reads runner metrics directly via

@@ -91,7 +91,9 @@ export const actionsCapability = {
         timeoutMs: ACTION_RUN_TIMEOUT_MS,
       },
     ),
+    /** Stop a running action. */
     stop: method(ActionIdInput, z.void(), { kind: 'mutation', auth: 'admin' }),
+    /** The recent run traces of an action. */
     getTraces: method(ActionIdInput, z.object({ traces: z.array(AutomationRunTraceSchema) }), {
       auth: 'admin',
     }),
@@ -115,6 +117,7 @@ export const actionsCapability = {
         auth: 'admin',
       },
     ),
+    /** Change fields of an internal action. */
     update: method(
       z.object({
         actionId: z.string().min(1),
@@ -126,6 +129,7 @@ export const actionsCapability = {
       }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete an internal action. */
     delete: method(ActionIdInput, z.void(), {
       kind: 'mutation',
       auth: 'admin',

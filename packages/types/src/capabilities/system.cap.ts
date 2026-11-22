@@ -611,20 +611,27 @@ export const systemCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Basic information about the system (version, platform, uptime). */
     info: method(z.void(), SystemInfoSchema),
+    /** The overall health status of the system. */
     health: method(z.void(), HealthStatusSchema),
+    /** Which features are enabled in this installation. */
     featureFlags: method(z.void(), FeatureManifestSchema),
+    /** The network addresses of this hub's interfaces. */
     networkAddresses: method(z.void(), z.array(NetworkAddressSchema).readonly()),
     // Retention config is opaque on the wire — the analytics-suite owns the
     // schema. `getRetentionConfig` returns null when the analytics addon
     // is not loaded; `setRetentionConfig` accepts a partial patch.
+    /** The analytics data retention settings. */
     getRetentionConfig: method(z.void(), z.unknown().nullable(), {
       auth: 'admin',
     }),
+    /** Change the analytics data retention settings. */
     setRetentionConfig: method(z.record(z.string(), z.unknown()), z.null(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Run the retention cleanup now instead of waiting for the schedule. */
     forceRetentionCleanup: method(z.void(), z.void(), {
       kind: 'mutation',
       auth: 'admin',

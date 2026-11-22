@@ -187,6 +187,7 @@ export const heatPumpControlCapability = {
       ],
     }),
     // Per circuit.
+    /** Set the operation mode of a heating circuit. */
     setCircuitOperationMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -203,6 +204,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set a circuit to heating or cooling. */
     setCircuitHeatCoolMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -219,6 +221,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set a circuit's summer or winter mode. */
     setCircuitSummerWinter: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -235,6 +238,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set a circuit's comfort temperature. */
     setCircuitComfortSetpoint: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -251,6 +255,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set a circuit's eco temperature. */
     setCircuitEcoSetpoint: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -267,6 +272,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set a circuit's maximum flow temperature. */
     setCircuitMaxFlowTemp: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -284,6 +290,7 @@ export const heatPumpControlCapability = {
       ],
     }),
     // Hot water.
+    /** Set the operation mode of the domestic hot water circuit. */
     setDhwOperationMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -300,6 +307,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set the hot water temperature level of a circuit. */
     setDhwTemperatureLevel: method(z.object({ deviceId, circuitId, level: mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -316,6 +324,7 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set how many minutes a hot water charge runs. */
     setDhwChargeDuration: method(
       z.object({ deviceId, circuitId, minutes: z.number().int().positive() }),
       z.void(),

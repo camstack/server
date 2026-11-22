@@ -516,6 +516,7 @@ export const streamBrokerCapability = {
       // a lie to every caller that assumes a read is free.
       { kind: 'mutation' },
     ),
+    /** Register a camera stream (RTSP URL, codec, resolution) under a camera so profiles can be assigned to it. */
     publishCameraStream: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -547,6 +548,7 @@ export const streamBrokerCapability = {
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Remove a previously published camera stream from a camera. */
     retractCameraStream: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -555,6 +557,7 @@ export const streamBrokerCapability = {
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Assign a published camera stream to one of the camera's profile slots (for example high or low). */
     assignProfile: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -564,6 +567,7 @@ export const streamBrokerCapability = {
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Clear a camera's profile slot so it no longer points at a stream. */
     unassignProfile: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -742,8 +746,11 @@ export const streamBrokerCapability = {
         .nullable(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** List every camera stream published across all cameras. */
     listAllCameraStreams: method(z.void(), z.array(CameraStreamSchema).readonly()),
+    /** List every camera profile slot and the stream assigned to it. */
     listAllProfileSlots: method(z.void(), z.array(ProfileSlotSchema).readonly()),
+    /** Counters and health of one stream broker (clients, packets, bitrates). */
     getBrokerStats: method(z.object({ brokerId: z.string() }), BrokerStatsSchema),
     /**
      * The effective encode a derived-stream `profile` WOULD run with, computed
@@ -774,6 +781,7 @@ export const streamBrokerCapability = {
       z.object({ probed: z.boolean(), summary: z.string() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** List the clients currently attached to one stream broker, per channel. */
     listClients: method(z.object({ brokerId: z.string() }), BrokerClientsSchema),
     /**
      * People watching each camera LIVE right now, for every camera at once —
@@ -795,6 +803,7 @@ export const streamBrokerCapability = {
     getLiveViewerCounts: method(z.void(), z.array(LiveViewerCountSchema).readonly(), {
       role: 'viewer',
     }),
+    /** Disconnect one RTSP or audio client from a stream broker. */
     killClient: method(
       z.object({
         brokerId: z.string(),
@@ -804,6 +813,7 @@ export const streamBrokerCapability = {
       z.object({ killed: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Restart the broker pipeline behind one camera profile. */
     restartProfile: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -833,6 +843,7 @@ export const streamBrokerCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Release one reference to a codec-specific stream pipeline, stopping it when the last user leaves. */
     releaseStreamWithCodec: method(
       z.object({ pipelineKey: z.string() }),
       z.object({
@@ -899,6 +910,7 @@ export const streamBrokerCapability = {
       SubscribeAudioChunksResultSchema,
       { kind: 'mutation' },
     ),
+    /** Fetch up to maxCount decoded audio chunks queued for an audio subscription. */
     pullAudioChunks: method(
       z.object({
         subscriptionId: z.string(),
@@ -906,16 +918,19 @@ export const streamBrokerCapability = {
       }),
       z.array(DecodedAudioChunkSchema).readonly(),
     ),
+    /** End an audio-chunk subscription and release its resources. */
     unsubscribeAudioChunks: method(
       z.object({ subscriptionId: z.string() }),
       z.object({ released: z.boolean() }),
       { kind: 'mutation' },
     ),
+    /** Set how many seconds of recent packets a broker keeps for late-joining consumers. */
     setPreBufferDuration: method(
       z.object({ brokerId: z.string(), seconds: z.number().min(0).max(30) }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Report the configured pre-buffer length and what the broker currently holds. */
     getPreBufferInfo: method(
       z.object({ brokerId: z.string() }),
       z.object({
@@ -924,6 +939,7 @@ export const streamBrokerCapability = {
         packetCount: z.number(),
       }),
     ),
+    /** The port the broker's RTSP re-stream server listens on. */
     getRtspPort: method(z.void(), z.number()),
     /**
      * Enumeration surface — backs the admin RTSP-export picker and
@@ -943,14 +959,17 @@ export const streamBrokerCapability = {
       z.object({ brokerId: z.string(), hostname: z.string().optional() }),
       RtspRestreamEntrySchema.nullable(),
     ),
+    /** Issue a new access token for a broker's RTSP re-stream, invalidating the old one. */
     regenerateRtspToken: method(z.object({ brokerId: z.string() }), z.string().nullable(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Turn the RTSP re-stream of one broker on or off. */
     setRtspEnabled: method(z.object({ brokerId: z.string(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Whether the RTSP re-stream of one broker is enabled. */
     isRtspEnabled: method(z.object({ brokerId: z.string() }), z.boolean()),
     /**
      * ── Per-device audio-plane policy (D83) ───────────────────────────
@@ -982,6 +1001,7 @@ export const streamBrokerCapability = {
         appliedBrokers: z.number().int().nonnegative(),
       }),
     ),
+    /** Mute or unmute the audio of a camera on every broker serving it. */
     setDeviceAudioMute: method(
       z.object({ deviceId: z.number().int(), muted: z.boolean() }),
       z.object({

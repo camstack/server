@@ -223,6 +223,7 @@ export const nodesCapability = {
   mode: 'singleton',
   nodeIdMode: 'data',
   methods: {
+    /** List every node in the cluster with its state, resources and processes. */
     topology: method(z.void(), z.array(TopologyNodeSchema).readonly(), {
       auth: 'admin',
     }),
@@ -232,39 +233,48 @@ export const nodesCapability = {
      * history could not be read.
      */
     directory: method(z.void(), NodeDirectorySchema, { auth: 'admin' }),
+    /** Deploy an addon onto a node. */
     deployAddon: method(NodeAddonInputSchema, SuccessSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Remove an addon from a node. */
     undeployAddon: method(NodeAddonInputSchema, SuccessSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Restart one addon on a node. */
     restartAddon: method(NodeAddonInputSchema, SuccessSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Restart one named process on a node. */
     restartProcess: method(
       z.object({ nodeId: z.string(), processName: z.string() }),
       RestartProcessResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Restart a whole node. */
     restartNode: method(z.object({ nodeId: z.string() }), RestartNodeResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Shut a node down. */
     shutdownNode: method(z.object({ nodeId: z.string() }), SuccessSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Change a node's display name. */
     renameNode: method(
       z.object({ nodeId: z.string(), name: z.string().min(1).max(64) }),
       RenameNodeResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Per-addon status across the cluster. */
     clusterAddonStatus: method(z.void(), z.record(z.string(), ClusterAddonStatusEntrySchema), {
       auth: 'admin',
     }),
+    /** Which capabilities call which others over the last window, as a graph of edges. */
     getCapUsageGraph: method(
       z.object({
         windowSeconds: z.number().int().positive().max(300).default(60),
@@ -285,10 +295,12 @@ export const nodesCapability = {
       z.array(NodeAddonEntrySchema).readonly(),
       { auth: 'admin' },
     ),
+    /** Change the log level of a process on a node. */
     setProcessLogLevel: method(z.object({ nodeId: z.string(), level: z.string() }), SuccessSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Run a named query of an addon on a specific node and return its result. */
     executeQuery: method(
       z.object({
         nodeId: z.string(),

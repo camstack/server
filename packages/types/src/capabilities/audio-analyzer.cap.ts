@@ -147,6 +147,7 @@ export const audioAnalyzerCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Analyse one audio chunk (levels and detections) with the given settings; null when nothing to report. */
     analyseChunk: method(
       z.object({
         chunk: AudioChunkInputSchema,
@@ -158,6 +159,7 @@ export const audioAnalyzerCapability = {
     // ONNX / Apple SoundAnalysis inference can exceed the broker's default
     // 5s requestTimeout on first load or under CPU pressure. 30s covers
     // even the worst-case cold-start without hanging indefinitely.
+    /** Classify the sounds in one audio chunk. */
     classify: method(AudioChunkInputSchema, AudioClassificationResultSchema, {
       timeoutMs: 30_000,
     }),
@@ -182,7 +184,9 @@ export const audioAnalyzerCapability = {
       kind: 'mutation',
     }),
 
+    /** Whether the analyzer is loaded and ready. */
     isReady: method(z.void(), z.boolean()),
+    /** Release the analyzer's resources. */
     dispose: method(z.void(), z.void(), { kind: 'mutation' }),
 
     /**

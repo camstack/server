@@ -385,6 +385,7 @@ export const addonsCapability = {
     // Default auth (`protected`): authenticated users — including scoped
     // tokens with the right route-prefix scope. Reading logs isn't an
     // administrative action; install/restart/uninstall stay admin-only.
+    /** Recent log lines of one addon, optionally filtered by level. */
     getLogs: method(
       z.object({
         addonId: z.string(),
@@ -395,7 +396,9 @@ export const addonsCapability = {
     ),
 
     // ── Packages ────────────────────────────────────────────────────
+    /** List the installed addon packages with their versions. */
     listPackages: method(z.void(), z.array(InstalledPackageSchema).readonly()),
+    /** Install an addon package, optionally at a given version. */
     installPackage: method(
       z.object({ packageName: z.string(), version: z.string().optional() }),
       InstallPackageResultSchema,
@@ -431,6 +434,7 @@ export const addonsCapability = {
       PackageInstallationsSchema,
       { auth: 'admin' },
     ),
+    /** Rescan the installed packages and load what changed. */
     reloadPackages: method(z.void(), ReloadPackagesResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -439,6 +443,7 @@ export const addonsCapability = {
     // outer object. The cap codegen requires a stable input shape — we
     // make `query` optional inside a required object to preserve client
     // call shape (`{ query?: string }`).
+    /** Search the registry for installable addon packages, optionally by capability. */
     searchAvailable: method(
       z.object({
         query: z.string().optional(),
@@ -497,6 +502,7 @@ export const addonsCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Restart the server process; requires explicit confirmation. */
     restartServer: method(z.object({ confirm: z.literal(true) }), z.unknown(), {
       kind: 'mutation',
       auth: 'admin',
@@ -592,6 +598,7 @@ export const addonsCapability = {
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** List the published versions of a package. */
     getVersions: method(
       z.object({ name: z.string() }),
       z.array(PackageVersionInfoSchema).readonly(),
@@ -609,6 +616,7 @@ export const addonsCapability = {
       PackageDocsSchema,
       { auth: 'admin' },
     ),
+    /** Restart one addon's process. */
     restartAddon: method(z.object({ addonId: z.string() }), RestartAddonResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -627,9 +635,11 @@ export const addonsCapability = {
     ),
 
     // ── Auto-update ─────────────────────────────────────────────────
+    /** The global addon auto-update channel and check intervals. */
     getAutoUpdateSettings: method(z.void(), AutoUpdateSettingsSchema, {
       auth: 'admin',
     }),
+    /** Change the global addon auto-update channel and check intervals. */
     setAutoUpdateSettings: method(
       z.object({
         channel: ChannelSchema,
@@ -640,14 +650,17 @@ export const addonsCapability = {
       z.unknown(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** The auto-update channel of one addon (or inherit the global one). */
     getAddonAutoUpdate: method(z.object({ addonId: z.string() }), AddonAutoUpdateSchema, {
       auth: 'admin',
     }),
+    /** Set the auto-update channel of one addon. */
     setAddonAutoUpdate: method(
       z.object({ addonId: z.string(), channel: ChannelWithInheritSchema }),
       z.unknown(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Apply one auto-update channel to every addon. */
     applyAutoUpdateToAll: method(
       z.object({ channel: ChannelSchema }),
       z.object({ success: z.literal(true) }),
@@ -661,6 +674,7 @@ export const addonsCapability = {
     // gate their own actions to public/protected/admin/superAdmin.
     // Viewer baseline (D921): the viewer app's own notification rules and
     // snoozes ride this dispatcher; each action's own auth still applies.
+    /** Run an addon's custom action with the given input. */
     custom: method(CustomActionInputSchema, z.unknown(), {
       role: 'viewer',
       kind: 'mutation',
@@ -713,6 +727,7 @@ export const addonsCapability = {
     }),
 
     // ── Log streaming ───────────────────────────────────────────────
+    /** Stream live log lines of one addon, optionally filtered by level. */
     onAddonLogs: method(
       z.object({
         addonId: z.string(),

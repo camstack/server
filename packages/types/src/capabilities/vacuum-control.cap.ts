@@ -66,6 +66,7 @@ export const vacuumControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Vacuum],
   methods: {
+    /** Start a cleaning run. */
     start: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -78,6 +79,7 @@ export const vacuumControlCapability = {
         },
       ],
     }),
+    /** Pause the cleaning run. */
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -90,6 +92,7 @@ export const vacuumControlCapability = {
         },
       ],
     }),
+    /** Stop the cleaning run. */
     stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -102,6 +105,7 @@ export const vacuumControlCapability = {
         },
       ],
     }),
+    /** Send the vacuum back to its dock. */
     returnToBase: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -114,6 +118,7 @@ export const vacuumControlCapability = {
         },
       ],
     }),
+    /** Make the vacuum beep so it can be found. */
     locate: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -126,6 +131,7 @@ export const vacuumControlCapability = {
         },
       ],
     }),
+    /** Set the suction (fan speed) level. */
     setFanSpeed: method(
       z.object({
         deviceId: z.number().int().nonnegative(),

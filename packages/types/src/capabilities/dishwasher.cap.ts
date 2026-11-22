@@ -231,6 +231,7 @@ export const dishwasherCapability = {
         ],
       },
     ),
+    /** Pause the running dishwasher program. */
     pause: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -243,6 +244,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Resume a paused dishwasher program. */
     resume: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -255,6 +257,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Stop the running dishwasher program. */
     stop: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -301,6 +304,7 @@ export const dishwasherCapability = {
         ],
       },
     ),
+    /** Switch the dishwasher on or off. */
     setPower: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -321,6 +325,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the half-load option on or off. */
     setHalfLoad: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -341,6 +346,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the Hygiene Plus option on or off. */
     setHygienePlus: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -361,6 +367,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the extra-dry option on or off. */
     setExtraDry: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -381,6 +388,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the intensive-zone option on or off. */
     setIntensiveZone: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -407,6 +415,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the speed-boost (VarioSpeed Plus) option on or off. */
     setVarioSpeedPlus: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -430,6 +439,7 @@ export const dishwasherCapability = {
         },
       ],
     }),
+    /** Turn the child lock on or off. */
     setChildLock: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

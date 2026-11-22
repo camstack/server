@@ -521,6 +521,7 @@ export const recordingArchiveCapability = {
       z.array(RecordingDaysForDeviceSchema).readonly(),
       { role: 'viewer', kind: 'query', auth: 'protected' },
     ),
+    /** How much storage the recordings archive uses. */
     getStorageUsage: method(z.object({}), RecordingStorageUsageSchema, {
       kind: 'query',
       auth: 'admin',
@@ -604,6 +605,7 @@ export const recordingArchiveCapability = {
       ReadWindowBytesResultSchema,
       { kind: 'query', auth: 'admin' },
     ),
+    /** Set a camera's recording configuration and return the stored one. */
     setDeviceConfig: method(
       z.object({ deviceId: z.number(), config: RecordingConfigSchema }),
       RecordingConfigSchema,
@@ -713,6 +715,7 @@ export const recordingArchiveCapability = {
         auth: 'admin',
       },
     ),
+    /** Resume recording work that was paused for a storage migration. */
     resumeForStorageMigration: method(
       StorageMigrationLeaseInputSchema,
       z.object({ resumed: z.literal(true) }),
@@ -736,11 +739,13 @@ export const recordingArchiveCapability = {
         auth: 'admin',
       },
     ),
+    /** Progress of a recordings move job; null when the job is unknown. */
     getStorageMigrationMoveStatus: method(
       z.object({ jobId: z.string() }),
       RelocateJobSchema.nullable(),
       { auth: 'admin' },
     ),
+    /** Cancel a running recordings move job. */
     cancelStorageMigrationMove: method(
       z.object({ jobId: z.string() }),
       z.object({ cancelled: z.boolean() }),

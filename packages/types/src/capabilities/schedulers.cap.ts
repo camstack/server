@@ -27,10 +27,13 @@ export const schedulersCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the schedulers. */
     list: method(z.object({}), z.array(SchedulerSchema), { auth: 'admin' }),
+    /** Fetch one scheduler by id; null when absent. */
     get: method(SchedulerIdInput, z.object({ scheduler: SchedulerSchema.nullable() }), {
       auth: 'admin',
     }),
+    /** Create or replace a scheduler. */
     create: method(
       z.object({ scheduler: SchedulerInputSchema }),
       z.object({ scheduler: SchedulerSchema }),
@@ -48,6 +51,7 @@ export const schedulersCapability = {
       z.object({ scheduler: SchedulerSchema }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete a scheduler. */
     delete: method(SchedulerIdInput, z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -94,6 +98,7 @@ export const schedulersCapability = {
     getStatus: method(z.object({}), z.array(SchedulerStatusSchema), {
       auth: 'admin',
     }),
+    /** The recent run traces of a scheduler. */
     getTraces: method(SchedulerIdInput, z.object({ traces: z.array(AutomationRunTraceSchema) }), {
       auth: 'admin',
     }),

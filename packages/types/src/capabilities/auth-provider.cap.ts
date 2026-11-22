@@ -23,15 +23,19 @@ export const authProviderCapability = {
   mode: 'collection',
   internal: true,
   methods: {
+    /** Check a username and password with this provider; null when invalid. */
     validateCredentials: method(
       z.object({ username: z.string(), password: z.string() }),
       AuthResultSchema.nullable(),
       { kind: 'mutation' },
     ),
+    /** The provider's sign-in URL for an external login flow, carrying the given state. */
     getLoginUrl: method(z.object({ state: z.string() }), z.string()),
+    /** Complete an external login flow from the callback parameters. */
     handleCallback: method(z.record(z.string(), z.string()), AuthResultSchema, {
       kind: 'mutation',
     }),
+    /** Check a token with this provider; null when invalid. */
     validateToken: method(z.object({ token: z.string() }), AuthResultSchema.nullable()),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */

@@ -160,10 +160,13 @@ export const keychainAdminCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** The state of the keychain (locked, backend, key age). */
     status: method(z.object({}), KeychainStatusSchema, { auth: 'admin' }),
+    /** List the stored secrets without their values. */
     listSecrets: method(z.object({}), z.array(KeychainAdminSecretSchema).readonly(), {
       auth: 'admin',
     }),
+    /** List recent keychain audit entries. */
     listAudit: method(
       z.object({ limit: z.number().int().min(1).max(500).optional() }),
       z.array(KeychainAuditEntrySchema).readonly(),
@@ -227,6 +230,7 @@ export const keychainAdminCapability = {
       z.object({ fingerprint: z.string(), keySource: KeychainKeySourceSchema }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
+    /** Delete retired encryption keys and report how many were removed. */
     purgeRetiredKeys: method(z.object({}), z.object({ purged: z.number().int() }), {
       kind: 'mutation',
       auth: 'admin',

@@ -212,9 +212,13 @@ export const deviceProviderCapability = {
   mode: 'collection',
   methods: {
     // ── Lifecycle + introspection ─────────────────────────────────────
+    /** Start the provider so it begins serving its devices. */
     start: method(z.void(), z.void(), { kind: 'mutation' }),
+    /** Stop the provider. */
     stop: method(z.void(), z.void(), { kind: 'mutation' }),
+    /** The provider's current status. */
     getStatus: method(z.void(), ProviderStatusSchema),
+    /** List the devices the provider serves. */
     getDevices: method(
       z.void(),
       z.array(
@@ -257,6 +261,7 @@ export const deviceProviderCapability = {
     }),
 
     // ── Discovery + adoption (optional — see supportsDiscovery) ──────
+    /** Whether the provider can discover devices on the network. */
     supportsDiscovery: method(z.object({}), z.boolean()),
     /**
      * Run a network scan. `params` carries optional provider-specific scan
@@ -308,6 +313,7 @@ export const deviceProviderCapability = {
       }),
       z.object({ deviceType: z.enum(DeviceType).nullable() }),
     ),
+    /** Adopt a discovered candidate as a device, optionally into an integration instance. */
     adoptDiscoveredDevice: method(
       z.object({
         candidate: DiscoveryCandidateSchema,
@@ -319,6 +325,7 @@ export const deviceProviderCapability = {
     ),
 
     // ── Manual creation (optional — see supportsManualCreation) ──────
+    /** Whether devices can be created by hand through this provider. */
     supportsManualCreation: method(z.object({}), z.boolean()),
     /**
      * Fetch the creation form schema for a given DeviceType. Returns
@@ -334,6 +341,7 @@ export const deviceProviderCapability = {
       }),
       CreationSchemaOutputSchema,
     ),
+    /** Create a device of a given type with the given config. */
     createDevice: method(
       z.object({
         type: z.enum(DeviceType),

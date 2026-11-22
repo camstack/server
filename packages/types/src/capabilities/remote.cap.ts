@@ -151,7 +151,9 @@ export const remoteCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** The remote-control button layout bound to a device. */
     getConfig: method(deviceInput, RemoteConfigSchema, { auth: 'admin' }),
+    /** Save the remote-control button layout of a device. */
     setConfig: method(
       deviceInput.extend({ config: RemoteConfigSchema }),
       RemoteSetConfigResultSchema,
@@ -160,9 +162,11 @@ export const remoteCapability = {
         auth: 'admin',
       },
     ),
+    /** List the commands a device's remote can send. */
     listCommands: method(deviceInput, RemoteCommandListSchema, {
       auth: 'protected',
     }),
+    /** Send a remote button role to the device, optionally repeated. */
     sendCommand: method(
       deviceInput.extend({
         role: RemoteRoleSchema,
@@ -186,6 +190,7 @@ export const remoteCapability = {
     getAssumedStatus: method(deviceInput, MediaPlayerStatusSchema.nullable(), {
       auth: 'protected',
     }),
+    /** Send a media command (play, pause, volume, source, channel) to the device's remote. */
     sendMediaCommand: method(
       deviceInput.extend({
         command: RemoteMediaCommandSchema,

@@ -324,10 +324,12 @@ export const vectorStoreCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Insert or replace embedding vectors with their metadata. */
     upsert: method(VectorUpsertInputSchema, VectorUpsertResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Find the stored vectors nearest to a query vector. */
     query: method(VectorQueryInputSchema, VectorQueryResultSchema, {
       auth: 'admin',
     }),
@@ -343,14 +345,17 @@ export const vectorStoreCapability = {
     scan: method(VectorScanInputSchema, VectorScanResultSchema, {
       auth: 'admin',
     }),
+    /** Delete stored vectors by id. */
     deleteByIds: method(VectorDeleteInputSchema, VectorDeleteResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Delete stored vectors matching a metadata filter. */
     deleteByFilter: method(VectorDeleteByFilterInputSchema, VectorDeleteResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Counts and size of a vector collection. */
     stats: method(VectorStatsInputSchema, VectorStatsResultSchema, {
       auth: 'admin',
     }),

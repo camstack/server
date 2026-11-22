@@ -458,11 +458,13 @@ export const notificationOutputCapability = {
     //
     // Catalog + discovery (array output → auto concat fan-out across addons).
     // The targets themselves are instances of this cap (`integration-instances`).
+    /** List the kinds of notification target this provider can deliver to. */
     listTargetKinds: method(z.object({}), z.array(TargetKindSchema)),
     // `config` is a partial, unsaved connection the operator has typed but not
     // yet persisted — so credential-gated discovery (gotify/zentik/telegram/…)
     // can authenticate against the endpoint the user is about to add. Admin:
     // it makes the hub dial a caller-chosen host.
+    /** Discover the targets (chats, devices, channels) available for a kind with the given config. */
     discoverTargets: method(
       z.object({
         kind: z.string(),
@@ -479,6 +481,7 @@ export const notificationOutputCapability = {
     ),
     // Pre-save credential check against an unsaved config (e.g. Green API
     // getStateInstance). Routed to ONE provider by addonId — same as `discoverTargets`.
+    /** Check that a target configuration works before saving it. */
     probeTargetConfig: method(
       z.object({
         kind: z.string(),
@@ -490,11 +493,13 @@ export const notificationOutputCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     // Dispatch — routed to ONE provider by addonId in the call input.
+    /** Deliver a notification to one target. */
     send: method(
       z.object({ targetId: z.string(), notification: NotificationSchema }),
       SendResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Send a test notification to one target and report the outcome. */
     testTarget: method(
       z.object({ targetId: z.string(), sample: NotificationSchema.optional() }),
       TestResultSchema,

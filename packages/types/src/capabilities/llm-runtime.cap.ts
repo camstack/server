@@ -277,6 +277,7 @@ export const llmRuntimeCapability = {
       auth: 'admin',
       timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
     }),
+    /** Start the managed local model runtime on this node, loading the model, and report its status. */
     ensureStarted: method(
       z.object({ runtime: ManagedRuntimeConfigSchema }),
       LlmRuntimeStatusSchema,
@@ -287,21 +288,27 @@ export const llmRuntimeCapability = {
         timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
       },
     ),
+    /** Stop the local model runtime on this node. */
     stop: method(z.object({}), z.void(), { kind: 'mutation', auth: 'admin' }),
+    /** Whether the local model runtime on this node is running. */
     status: method(z.object({}), LlmRuntimeStatusSchema, { auth: 'admin' }),
+    /** Download a model file into this node's runtime. */
     installModel: method(z.object({ model: ManagedModelRefSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
       // A multi-gigabyte download. An hour is not generous, it is honest.
       timeoutMs: AI_MODEL_INSTALL_TIMEOUT_MS,
     }),
+    /** Delete an installed model file from this node. */
     deleteModel: method(z.object({ file: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** List the model files installed on this node. */
     listLocalModels: method(z.object({}), z.array(LlmNodeModelSchema), {
       auth: 'admin',
     }),
+    /** Disk space used by the models on this node. */
     getDiskUsage: method(z.object({}), LlmRuntimeDiskUsageSchema, {
       auth: 'admin',
     }),
@@ -323,6 +330,7 @@ export const llmRuntimeCapability = {
     appleAvailability: method(z.object({}), AppleFmAvailabilitySchema, {
       auth: 'admin',
     }),
+    /** Run a text completion on the on-device Apple model. */
     completeApple: method(LlmRuntimeAppleCompleteInputSchema, LlmGenerateResultSchema, {
       kind: 'mutation',
       auth: 'admin',

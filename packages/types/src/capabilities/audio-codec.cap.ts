@@ -108,18 +108,21 @@ export const audioCodecCapability = {
     ),
 
     // ── Session lifecycle ─────────────────────────────────────────────────
+    /** Open an audio decode session and return its id and node. */
     createDecodeSession: method(
       AudioDecodeSessionConfigSchema,
       z.object({ sessionId: z.string(), nodeId: z.string() }),
       { kind: 'mutation' },
     ),
 
+    /** Open an audio encode session and return its id and node. */
     createEncodeSession: method(
       AudioEncodeSessionConfigSchema,
       z.object({ sessionId: z.string(), nodeId: z.string() }),
       { kind: 'mutation' },
     ),
 
+    /** Close an audio codec session. */
     closeSession: method(
       z.object({ sessionId: z.string(), nodeId: z.string().optional() }),
       z.void(),
@@ -188,6 +191,7 @@ export const audioCodecCapability = {
     ),
 
     // ── Inventory ─────────────────────────────────────────────────────────
+    /** List the open audio codec sessions. */
     listActiveSessions: method(z.void(), z.array(SessionInventoryEntrySchema).readonly()),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },

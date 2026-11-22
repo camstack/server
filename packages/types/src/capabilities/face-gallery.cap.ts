@@ -222,6 +222,7 @@ export const faceGalleryCapability = {
   mode: 'singleton',
   methods: {
     // Names in events are shown to anyone who sees the event (D921): this read is viewer baseline.
+    /** List the known face identities in the gallery. */
     listIdentities: method(
       z
         .object({
@@ -250,18 +251,22 @@ export const faceGalleryCapability = {
       z.array(IdentitySchema).readonly(),
       { role: 'viewer' },
     ),
+    /** Create a named face identity. */
     createIdentity: method(z.object({ name: z.string().min(1) }), IdentitySchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Rename a face identity. */
     renameIdentity: method(z.object({ id: z.string(), name: z.string().min(1) }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Delete a face identity. */
     deleteIdentity: method(z.object({ id: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** List the face samples assigned to an identity. */
     listIdentitySamples: method(
       z.object({ identityId: z.string() }),
       z.array(IdentitySampleInfoSchema).readonly(),
@@ -283,6 +288,7 @@ export const faceGalleryCapability = {
       IdentitySampleAuditSchema,
       { auth: 'admin' },
     ),
+    /** Remove one face sample from an identity. */
     removeSample: method(z.object({ identityId: z.string(), sampleId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -297,6 +303,7 @@ export const faceGalleryCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** List recently detected faces, optionally for one or several cameras. */
     listRecentFaces: method(
       z
         .object({
@@ -373,16 +380,20 @@ export const faceGalleryCapability = {
       z.array(FaceInfoSchema).readonly(),
     ),
     // Names in events are shown to anyone who sees the event (D921): this read is viewer baseline.
+    /** The face captured for a camera's track; null when none. */
     getFaceByTrack: method(
       z.object({ deviceId: z.number().int(), trackId: z.string() }),
       FaceInfoSchema.nullable(),
       { role: 'viewer' },
     ),
+    /** The media files (crops, frames) stored for one face. */
     getFaceMedia: method(z.object({ faceId: z.string() }), z.array(MediaFileLiteSchema).readonly()),
+    /** Assign a detected face to an identity. */
     assignFace: method(z.object({ faceId: z.string(), identityId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Detach a detected face from its identity. */
     unassignFace: method(z.object({ faceId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

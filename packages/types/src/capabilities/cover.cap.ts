@@ -56,6 +56,7 @@ export const coverCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Cover],
   methods: {
+    /** Open the cover fully. */
     open: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -69,6 +70,7 @@ export const coverCapability = {
         },
       ],
     }),
+    /** Close the cover fully. */
     close: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -82,6 +84,7 @@ export const coverCapability = {
         },
       ],
     }),
+    /** Stop the cover where it is. */
     stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -94,6 +97,7 @@ export const coverCapability = {
         },
       ],
     }),
+    /** Move the cover to a position from 0 to 100. */
     setPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -124,6 +128,7 @@ export const coverCapability = {
         ],
       },
     ),
+    /** Set the cover's tilt from 0 to 100. */
     setTiltPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

@@ -294,29 +294,36 @@ export const deviceAdoptionCapability = {
   mode: 'collection',
   status: { schema: AdoptionStatusSchema, kind: 'poll' },
   methods: {
+    /** The filters an integration offers to narrow its discovered candidates. */
     listCandidateFilters: method(
       z.object({ integrationId: z.string() }),
       z.object({ filters: z.array(AdoptionFilterSchema) }),
       { auth: 'admin' },
     ),
+    /** List the devices an integration has discovered and that can be adopted. */
     listCandidates: method(ListCandidatesInputSchema, ListCandidatesOutputSchema, {
       auth: 'admin',
     }),
+    /** Fetch one discovered candidate; null when unknown. */
     getCandidate: method(GetCandidateInputSchema, DiscoveredChildDeviceSchema.nullable(), {
       auth: 'admin',
     }),
+    /** Rescan an integration for new candidates and report the adoption status. */
     refresh: method(z.object({ integrationId: z.string() }), AdoptionStatusSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Adopt a discovered candidate as a device. */
     adopt: method(AdoptInputSchema, AdoptResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Release an adopted device back to the candidate list. */
     release: method(ReleaseInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Re-read an adopted device from the integration and reconcile it. */
     resync: method(ResyncInputSchema, ResyncResultSchema, {
       kind: 'mutation',
       auth: 'admin',

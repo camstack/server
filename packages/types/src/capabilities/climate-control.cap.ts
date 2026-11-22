@@ -173,6 +173,7 @@ export const climateControlCapability = {
     lastField: 'lastActiveMode',
   },
   methods: {
+    /** Set the HVAC mode (off, heat, cool, auto, ...). */
     setMode: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -249,6 +250,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Set the target temperature. */
     setTarget: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -276,6 +278,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Set the low and high target temperatures for auto mode. */
     setTargetRange: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -313,6 +316,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Set the target humidity, 0 to 100. */
     setTargetHumidity: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -343,6 +347,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Set the fan mode. */
     setFanMode: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -377,6 +382,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Set the climate preset. */
     setPreset: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -408,6 +414,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Turn vertical swing on or off. */
     setSwingVertical: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -443,6 +450,7 @@ export const climateControlCapability = {
         ],
       },
     ),
+    /** Turn horizontal swing on or off. */
     setSwingHorizontal: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

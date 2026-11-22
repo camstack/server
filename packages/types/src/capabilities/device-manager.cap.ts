@@ -1668,10 +1668,12 @@ export const deviceManagerCapability = {
     // `writerAddonId` (or to its own device config store when `writerAddonId`
     // equals the device-manager addon id).
 
+    /** The combined settings form of a device, gathered from every capability that contributes to it. */
     getDeviceSettingsAggregate: method(
       z.object({ deviceId: z.number() }),
       SettingsSchemaWithValuesSchema.nullable(),
     ),
+    /** The combined live readouts of a device, gathered from every capability that contributes to it. */
     getDeviceLiveInfoAggregate: method(
       z.object({ deviceId: z.number() }),
       SettingsSchemaWithValuesSchema.nullable(),
@@ -1692,6 +1694,7 @@ export const deviceManagerCapability = {
         live: SettingsSchemaWithValuesSchema.nullable(),
       }),
     ),
+    /** Run a named action on a device with the given input. */
     runDeviceAction: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -1701,6 +1704,7 @@ export const deviceManagerCapability = {
       z.unknown(),
       { kind: 'mutation' },
     ),
+    /** Write one device field through the capability that owns it. */
     updateDeviceField: method(
       z.object({
         deviceId: z.number(),

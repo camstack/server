@@ -72,6 +72,7 @@ export const userPasskeysCapability = {
   mode: 'collection',
   internal: true,
   methods: {
+    /** Start enrolling a passkey for a user and return the WebAuthn creation options for the browser. */
     beginRegistration: method(
       z.object({ userId: z.string(), username: z.string() }),
       // PublicKeyCredentialCreationOptionsJSON — opaque JSON shape from
@@ -79,6 +80,7 @@ export const userPasskeysCapability = {
       z.object({ optionsJSON: z.record(z.string(), z.unknown()) }),
       { kind: 'mutation', auth: 'admin', access: 'create' },
     ),
+    /** Verify the browser's registration response and store the new passkey under a label. */
     finishRegistration: method(
       z.object({
         userId: z.string(),
@@ -116,6 +118,7 @@ export const userPasskeysCapability = {
       z.object({ optionsJSON: z.record(z.string(), z.unknown()) }),
       { kind: 'mutation', access: 'view', auth: 'admin' },
     ),
+    /** Verify a passkey sign-in assertion for a known user. */
     finishAuthentication: method(
       z.object({
         /** Required — the user the assertion belongs to (verified). */
@@ -126,6 +129,7 @@ export const userPasskeysCapability = {
       z.object({ verified: z.boolean() }),
       { kind: 'mutation', access: 'view', auth: 'admin' },
     ),
+    /** Start a passkey sign-in without naming the user and return the WebAuthn request options. */
     beginDiscoverableAuthentication: method(
       // No input — the challenge is deliberately NOT bound to a user.
       // The browser's discoverable-credential picker chooses the passkey;
@@ -135,6 +139,7 @@ export const userPasskeysCapability = {
       z.object({ optionsJSON: z.record(z.string(), z.unknown()) }),
       { kind: 'mutation', access: 'view', auth: 'admin' },
     ),
+    /** Verify a discoverable passkey assertion and identify the user who owns the credential. */
     finishDiscoverableAuthentication: method(
       z.object({
         /** AuthenticationResponseJSON from the browser. */
@@ -146,19 +151,23 @@ export const userPasskeysCapability = {
       z.object({ verified: z.boolean(), userId: z.string().nullable() }),
       { kind: 'mutation', access: 'view', auth: 'admin' },
     ),
+    /** List the passkeys enrolled by a user. */
     listPasskeys: method(z.object({ userId: z.string() }), z.array(PasskeySummarySchema), {
       auth: 'admin',
     }),
+    /** Remove one enrolled passkey from a user. */
     removePasskey: method(
       z.object({ userId: z.string(), credentialId: z.string() }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin', access: 'delete' },
     ),
+    /** Whether a user requires a second factor at sign-in. */
     getSecondFactorPreference: method(
       z.object({ userId: z.string() }),
       z.object({ enabled: z.boolean() }),
       { auth: 'admin' },
     ),
+    /** Turn the second-factor requirement on or off for a user. */
     setSecondFactorPreference: method(
       z.object({ userId: z.string(), enabled: z.boolean() }),
       z.object({ success: z.literal(true) }),

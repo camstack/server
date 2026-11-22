@@ -236,6 +236,7 @@ export const integrationInstancesCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
+    /** What kind of instances this addon's integration holds and how to configure them. */
     describe: method(z.void(), IntegrationInstanceDescriptionSchema, {
       auth: 'admin',
     }),
@@ -253,10 +254,12 @@ export const integrationInstancesCapability = {
       ConfigSchemaPassthrough,
       { auth: 'admin' },
     ),
+    /** List the integration's instances (accounts, relays, destinations). */
     listInstances: method(z.looseObject({}), z.array(IntegrationInstanceSchema).readonly(), {
       auth: 'protected',
       caller: 'scoped',
     }),
+    /** Fetch one integration instance by id; null when absent. */
     getInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       IntegrationInstanceSchema.nullable(),
@@ -297,6 +300,7 @@ export const integrationInstancesCapability = {
       z.object({ id: z.string() }),
       { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
+    /** Create or change an integration instance. */
     updateInstance: method(IntegrationInstancePatchSchema, z.object({ ok: z.literal(true) }), {
       kind: 'mutation',
       auth: 'protected',
@@ -322,6 +326,7 @@ export const integrationInstancesCapability = {
       z.object({ ok: z.literal(true) }),
       { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
+    /** Test an instance's connection with the given values before saving. */
     testInstance: optionalMethod(
       z.object({
         id: IntegrationInstanceIdSchema.nullable(),

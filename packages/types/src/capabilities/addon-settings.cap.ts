@@ -99,6 +99,7 @@ export const addonSettingsCapability = {
     // `getScopedSettings` — the hydrated form, the addon's overlay applied; `null` when the
     // capability declares nothing for the scope. `readScopedValues` — the effective values for
     // another addon or tool, a secret as its `set` view, never its value.
+    /** The settings form, with current values, of one capability scope of an addon. */
     getScopedSettings: method(
       z.object({
         addonId: z.string(),
@@ -111,10 +112,12 @@ export const addonSettingsCapability = {
     // `listScopedSettings` — what the addon actually serves, one entry per loaded (cap, scope)
     // with that schema's section ids. `[]`: it declares nothing. `null`: the addon is not found
     // or not running — unknown, never "none" (D315).
+    /** List the scoped settings an addon declares. */
     listScopedSettings: method(
       z.object({ addonId: z.string(), nodeId: z.string().optional() }),
       z.array(ScopedSettingsDeclarationSchema).nullable(),
     ),
+    /** Apply a settings patch to one capability scope of an addon. */
     updateScopedSettings: method(
       z.object({
         addonId: z.string(),
@@ -126,6 +129,7 @@ export const addonSettingsCapability = {
       SettingsUpdateResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** The raw stored values of one capability scope of an addon. */
     readScopedValues: method(
       z.object({
         addonId: z.string(),
@@ -139,11 +143,13 @@ export const addonSettingsCapability = {
     // ── Stale-data audit ──────────────────────────────────────────────
     // The addon answers in ITS OWN process which stored global-settings keys it
     // still declares; the hub keeps no copy. `null` ⇒ the addon did not answer.
+    /** The settings keys an addon declares. */
     getDeclaredSettingsKeys: method(
       z.object({ addonId: z.string(), nodeId: z.string().optional() }),
       z.object({ keys: z.array(z.string()) }).nullable(),
       { auth: 'admin' },
     ),
+    /** Remove stored settings keys of an addon, reporting which were removed and which refused. */
     unsetStoredSettingsKeys: method(
       z.object({
         addonId: z.string(),
@@ -159,6 +165,7 @@ export const addonSettingsCapability = {
     ),
 
     // ── Device-level settings ─────────────────────────────────────────
+    /** The settings form, with current values, an addon holds for one device. */
     getDeviceSettings: method(
       z.object({
         addonId: z.string(),
@@ -167,6 +174,7 @@ export const addonSettingsCapability = {
       }),
       SettingsSchemaWithValuesSchema.nullable(),
     ),
+    /** Apply a settings patch to one device through its addon. */
     updateDeviceSettings: method(
       z.object({
         addonId: z.string(),

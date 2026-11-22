@@ -76,12 +76,15 @@ export const templateCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
+    /** List the stored templates, optionally of one kind. */
     list: method(z.object({ kind: TemplateKindSchema.optional() }), z.array(TemplateRecordSchema), {
       auth: 'protected',
     }),
+    /** Fetch one template by id; null when absent. */
     get: method(z.object({ id: z.string().min(1) }), TemplateRecordSchema.nullable(), {
       auth: 'protected',
     }),
+    /** Create a template of a given kind with a name and payload. */
     create: method(
       z.object({
         kind: TemplateKindSchema,
@@ -92,6 +95,7 @@ export const templateCapability = {
       TemplateWriteResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Change a template's name, payload or tags. */
     update: method(
       z.object({
         id: z.string().min(1),
@@ -102,6 +106,7 @@ export const templateCapability = {
       TemplateWriteResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete a template. */
     delete: method(z.object({ id: z.string().min(1) }), TemplateDeleteResultSchema, {
       kind: 'mutation',
       auth: 'admin',

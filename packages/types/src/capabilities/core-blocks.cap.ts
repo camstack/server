@@ -412,9 +412,11 @@ export const coreBlocksCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the core blocks. */
     list: method(z.object({}), z.object({ blocks: z.array(CoreBlockSchema) }), {
       auth: 'admin',
     }),
+    /** Fetch one core block by id; null when absent. */
     get: method(
       z.object({ blockId: z.string() }),
       z.object({ block: CoreBlockSchema.nullable() }),
@@ -432,6 +434,7 @@ export const coreBlocksCapability = {
       z.object({ block: CoreBlockSchema }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
+    /** Change fields of a core block. */
     update: method(
       z.object({
         blockId: z.string(),
@@ -440,10 +443,12 @@ export const coreBlocksCapability = {
       z.object({ block: CoreBlockSchema }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
+    /** Delete a core block. */
     delete: method(z.object({ blockId: z.string() }), z.object({ success: z.literal(true) }), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Enable or disable a core block. */
     setEnabled: method(
       z.object({ blockId: z.string(), enabled: z.boolean() }),
       z.object({ block: CoreBlockSchema }),
@@ -552,6 +557,7 @@ export const coreBlocksCapability = {
     getComposition: method(z.object({ blockId: z.string() }), CompositionGetReadSchema, {
       auth: 'admin',
     }),
+    /** List the compositions built from core blocks. */
     listCompositions: method(z.object({}), CompositionListReadSchema, {
       auth: 'admin',
     }),

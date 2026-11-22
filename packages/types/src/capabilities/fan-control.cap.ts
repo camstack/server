@@ -281,6 +281,7 @@ export const fanControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Fan],
   methods: {
+    /** Set the fan speed from 0 to 100. */
     setPercentage: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -331,6 +332,7 @@ export const fanControlCapability = {
         ],
       },
     ),
+    /** Set the fan preset mode. */
     setPreset: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -362,6 +364,7 @@ export const fanControlCapability = {
         ],
       },
     ),
+    /** Set the fan rotation direction. */
     setDirection: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
@@ -391,6 +394,7 @@ export const fanControlCapability = {
         ],
       },
     ),
+    /** Turn oscillation on or off. */
     setOscillating: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),

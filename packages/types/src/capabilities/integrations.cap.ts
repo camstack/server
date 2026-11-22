@@ -157,7 +157,9 @@ export const integrationsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the integrations with their current state. */
     list: method(z.void(), z.array(IntegrationWithStateSchema)),
+    /** Fetch one integration with its state. */
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
     /** The devices-role row of an addon; a services instance row never answers for its addon. */
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
@@ -197,6 +199,7 @@ export const integrationsCapability = {
       }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Change an integration's settings. */
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -212,6 +215,7 @@ export const integrationsCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** List the integration types that can be added. */
     getAvailableTypes: method(z.void(), z.array(AvailableIntegrationTypeSchema), { auth: 'admin' }),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */

@@ -118,6 +118,7 @@ export const userManagementCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List every user account. */
     listUsers: method(z.void(), z.array(UserSummarySchema), { auth: 'admin' }),
     /**
      * Read-only: does an admin account still carry the first-boot password
@@ -127,31 +128,37 @@ export const userManagementCapability = {
     getAdminBootstrapStatus: method(z.void(), z.object({ defaultPasswordInUse: z.boolean() }), {
       auth: 'admin',
     }),
+    /** Create a user account. */
     createUser: method(CreateUserInputSchema, UserSummarySchema, {
       kind: 'mutation',
       auth: 'admin',
       access: 'create',
     }),
+    /** Update a user's admin flag, allowed providers and devices, or scopes. */
     updateUser: method(UpdateUserInputSchema, z.object({ success: z.literal(true) }), {
       kind: 'mutation',
       auth: 'admin',
       access: 'create',
     }),
+    /** Delete a user account. */
     deleteUser: method(z.object({ id: z.string() }), z.object({ success: z.literal(true) }), {
       kind: 'mutation',
       auth: 'admin',
       access: 'delete',
     }),
+    /** Set a new password for a user. */
     resetPassword: method(
       z.object({ id: z.string(), newPassword: z.string().min(6) }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin', access: 'create' },
     ),
+    /** Replace the camera and feature scopes a user is allowed to access. */
     setUserScopes: method(
       z.object({ userId: z.string(), scopes: z.array(UserScopeSchema) }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin', access: 'create' },
     ),
+    /** Check a username and password; returns the user when valid, otherwise null. */
     validateCredentials: method(
       z.object({ username: z.string(), password: z.string() }),
       UserSummarySchema.extend({ passwordHash: z.string() }).nullable(),
@@ -171,21 +178,25 @@ export const userManagementCapability = {
     // enrollment is a follow-up (needs the cap framework to expose the
     // caller's identity to the provider so the provider can enforce
     // self-or-admin).
+    /** Start two-factor setup for a user and return the secret and QR data to enrol. */
     setupTotp: method(z.object({ userId: z.string() }), TotpSetupResultSchema, {
       kind: 'mutation',
       auth: 'admin',
       access: 'create',
     }),
+    /** Confirm two-factor setup by checking the first code from the authenticator. */
     confirmTotp: method(
       z.object({ userId: z.string(), code: z.string() }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin', access: 'create' },
     ),
+    /** Turn off two-factor authentication for a user. */
     disableTotp: method(z.object({ userId: z.string() }), z.object({ success: z.literal(true) }), {
       kind: 'mutation',
       auth: 'admin',
       access: 'delete',
     }),
+    /** Whether two-factor authentication is enabled for a user. */
     getTotpStatus: method(z.object({ userId: z.string() }), TotpStatusSchema, {
       auth: 'admin',
     }),
@@ -202,6 +213,7 @@ export const userManagementCapability = {
     // Public (no `auth`) — used by the login flow's second-step
     // challenge endpoint. The userId comes from the password-validation
     // step (signed bridge token), so this method is not a free oracle.
+    /** Check a two-factor code for a user. */
     verifyTotp: method(
       z.object({ userId: z.string(), code: z.string() }),
       z.object({ valid: z.boolean() }),
@@ -214,6 +226,7 @@ export const userManagementCapability = {
     // JWTs (kinds oauth-code / oauth-access / oauth-refresh) and ALWAYS
     // carry isAdmin:false — the operator login proves hub control; the
     // issued token is minimal (device scope only).
+    /** Issue a one-time OAuth authorization code that links a user to an integration instance. */
     oauthIssueCode: method(
       z.object({
         integrationId: z.string(),
@@ -237,6 +250,7 @@ export const userManagementCapability = {
       z.object({ code: z.string() }),
       { kind: 'mutation', access: 'create' },
     ),
+    /** Exchange an OAuth authorization code (with PKCE verifier when required) for access and refresh tokens. */
     oauthExchangeCode: method(
       z.object({
         code: z.string(),
@@ -253,6 +267,7 @@ export const userManagementCapability = {
         .nullable(),
       { kind: 'mutation', access: 'view' },
     ),
+    /** Exchange a refresh token for a new access and refresh token pair; null when invalid. */
     oauthRefresh: method(
       z.object({ refreshToken: z.string() }),
       z
@@ -264,6 +279,7 @@ export const userManagementCapability = {
         .nullable(),
       { kind: 'mutation', access: 'view' },
     ),
+    /** Validate an OAuth access token and return its user, scopes and linked instance; null when invalid. */
     oauthVerifyAccessToken: method(
       z.object({ token: z.string() }),
       z
@@ -292,6 +308,7 @@ export const userManagementCapability = {
     // Self-service linking runs through the hub's `auth.*` procedures,
     // which bind the link to the signed-in session; these are the store
     // surface (admin on the wire, called in-process by the hub).
+    /** List the external identities (SSO accounts) linked to a user. */
     listExternalIdentities: method(
       z.object({ userId: z.string() }),
       z.array(ExternalIdentitySchema),
@@ -314,9 +331,11 @@ export const userManagementCapability = {
       { kind: 'mutation', auth: 'admin', access: 'delete' },
     ),
 
+    /** List the active OAuth sessions of all users. */
     listOauthSessions: method(z.void(), z.array(OauthSessionSummarySchema), {
       auth: 'admin',
     }),
+    /** Revoke one OAuth session so its tokens stop working. */
     revokeOauthSession: method(z.object({ id: z.string() }), z.object({ success: z.boolean() }), {
       kind: 'mutation',
       auth: 'admin',

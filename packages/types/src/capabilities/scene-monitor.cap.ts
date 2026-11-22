@@ -308,6 +308,7 @@ export const sceneMonitorCapability = {
   defaultActive: true,
   deviceTypes: [DeviceType.Camera],
   methods: {
+    /** List the camera's scene monitors with their current state. */
     listScenes: method(z.object({ deviceId: z.number() }), SceneMonitorStatusSchema),
     /**
      * The same answer, for a SET of cameras, in one round trip.
@@ -328,6 +329,7 @@ export const sceneMonitorCapability = {
       z.object({ deviceIds: z.array(z.number()).min(1).max(200) }),
       z.array(SceneMonitorStatusForDeviceSchema).readonly(),
     ),
+    /** Create a scene monitor on a region of the camera frame. */
     createScene: method(
       z.object({
         deviceId: z.number(),
@@ -340,6 +342,7 @@ export const sceneMonitorCapability = {
       SceneMonitorSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Change a scene monitor's label, region, trigger or enabled state. */
     updateScene: method(
       z.object({
         deviceId: z.number(),
@@ -364,10 +367,12 @@ export const sceneMonitorCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete a scene monitor. */
     deleteScene: method(z.object({ deviceId: z.number(), monitorId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Capture a reference image of the region for one of the monitor's states. */
     captureReference: method(
       z.object({
         deviceId: z.number(),
@@ -379,6 +384,7 @@ export const sceneMonitorCapability = {
       z.object({ stateId: z.string(), referenceCount: z.number() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Delete one reference image of a state. */
     deleteReference: method(
       z.object({
         deviceId: z.number(),
@@ -389,6 +395,7 @@ export const sceneMonitorCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Re-evaluate a scene monitor immediately. */
     recheckNow: method(z.object({ deviceId: z.number(), monitorId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',

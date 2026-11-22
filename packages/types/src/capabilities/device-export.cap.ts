@@ -237,22 +237,29 @@ export const deviceExportCapability = {
    */
   exposesDeviceSettings: true,
   methods: {
+    /** Status of one export instance (connected, errors, counts). */
     getStatus: method(InstancePinSchema, DeviceExportStatusSchema),
+    /** List the export instances this addon runs. */
     listInstances: method(z.void(), z.array(ExportInstanceSchema)),
+    /** List the device kinds an export instance can expose. */
     listSupportedDeviceKinds: method(InstancePinSchema, z.array(DeviceKindSchema)),
+    /** List the devices an export instance currently exposes. */
     listExposedDevices: method(InstancePinSchema, z.array(ExposedDeviceSchema)),
     // Publishing a camera to HomeKit / Alexa / Google hands it to another
     // ecosystem's users — an administrator's act, not an operator's (D634 r3).
     // The only UI caller is the admin export panel.
+    /** Expose a device through an export instance. */
     exposeDevice: method(ExposeInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Stop exposing a device through an export instance. */
     unexposeDevice: method(UnexposeInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
     // Renaming what another ecosystem's users see is the same administrator's act as exposing.
+    /** Set the name under which an exposed device appears in the external system. */
     setExposedName: method(SetExposedNameInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -260,12 +267,16 @@ export const deviceExportCapability = {
     // Entities beyond devices (D968). A provider that implements none of these
     // exports devices only; the UI treats an unanswered `listSupportedEntityKinds`
     // as "unknown", never as "devices only" (D315).
+    /** List the entity kinds this exporter can expose. */
     listSupportedEntityKinds: optionalMethod(z.void(), z.array(ExportEntityKindSchema)),
+    /** List the entities an export instance currently exposes. */
     listExposedEntities: optionalMethod(InstancePinSchema, z.array(ExposedEntitySchema)),
+    /** Expose an entity through an export instance. */
     exposeEntity: optionalMethod(ExposeEntityInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Stop exposing an entity through an export instance. */
     unexposeEntity: optionalMethod(UnexposeEntityInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

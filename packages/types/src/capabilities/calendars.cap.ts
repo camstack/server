@@ -73,16 +73,20 @@ export const calendarsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List the calendars from every calendar source. */
     listCalendars: method(z.void(), z.array(CalendarEntrySchema).readonly(), {
       auth: 'admin',
     }),
+    /** List calendar events in a time window. */
     listEvents: method(CalendarListEventsInputSchema, z.array(CalendarEventSchema).readonly(), {
       auth: 'admin',
     }),
+    /** The calling user's calendar preferences. */
     getPreferences: method(z.object({}), CalendarPreferencesSchema, {
       auth: 'admin',
       caller: 'required',
     }),
+    /** Change the calling user's preference for one calendar. */
     setCalendarPreference: method(CalendarSetPreferenceInputSchema, CalendarPreferencesSchema, {
       auth: 'admin',
       kind: 'mutation',

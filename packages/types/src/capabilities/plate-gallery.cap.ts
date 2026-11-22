@@ -126,6 +126,7 @@ export const plateGalleryCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** List recognised license plates, optionally for one camera, newest first. */
     listPlates: method(
       z
         .object({
@@ -154,11 +155,13 @@ export const plateGalleryCapability = {
       z.array(PlateInfoSchema).readonly(),
     ),
     // Names in events are shown to anyone who sees the event (D921): this read is viewer baseline.
+    /** The plate read for a camera's track; null when none. */
     getPlateByTrack: method(
       z.object({ deviceId: z.number().int(), trackId: z.string() }),
       PlateInfoSchema.nullable(),
       { role: 'viewer' },
     ),
+    /** The media files (crops, frames) stored for one plate. */
     getPlateMedia: method(
       z.object({ plateId: z.string() }),
       z.array(MediaFileLiteSchema).readonly(),
@@ -190,11 +193,13 @@ export const plateGalleryCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Delete one recognised plate and its media. */
     deletePlate: method(z.object({ plateId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
     // ── Vehicle identities (text-vicinity analogue of face identities) ──────
+    /** List the vehicles (named groups of plates) in the gallery. */
     listVehicles: method(
       z
         .object({
@@ -208,22 +213,27 @@ export const plateGalleryCapability = {
         .optional(),
       z.array(VehicleSchema).readonly(),
     ),
+    /** Create a named vehicle. */
     createVehicle: method(z.object({ name: z.string().min(1) }), VehicleSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Rename a vehicle. */
     renameVehicle: method(z.object({ id: z.string(), name: z.string().min(1) }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Delete a vehicle. */
     deleteVehicle: method(z.object({ id: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** List the plate samples assigned to a vehicle. */
     listVehicleSamples: method(
       z.object({ vehicleId: z.string() }),
       z.array(VehicleSampleInfoSchema).readonly(),
     ),
+    /** Remove one plate sample from a vehicle. */
     removeVehicleSample: method(
       z.object({ vehicleId: z.string(), sampleId: z.string() }),
       z.void(),
@@ -239,14 +249,17 @@ export const plateGalleryCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Assign a recognised plate to a vehicle. */
     assignPlate: method(z.object({ plateId: z.string(), vehicleId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Detach a recognised plate from its vehicle. */
     unassignPlate: method(z.object({ plateId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Assign several plates to a vehicle; reports how many succeeded and which failed. */
     assignPlates: method(
       z.object({ plateIds: z.array(z.string()).min(1), vehicleId: z.string() }),
       z.object({
@@ -255,6 +268,7 @@ export const plateGalleryCapability = {
       }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Detach several plates from their vehicles; reports how many succeeded and which failed. */
     unassignPlates: method(
       z.object({ plateIds: z.array(z.string()).min(1) }),
       z.object({

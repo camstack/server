@@ -2742,7 +2742,9 @@ export const pipelineAnalyticsCapability = {
   exposesDeviceSettings: true,
   methods: {
     // ── Tracks ────────────────────────────────────────────────
+    /** List the tracks currently active on a camera. */
     getActiveTracks: method(z.object({ deviceId: z.number() }), z.array(TrackSchema).readonly()),
+    /** Fetch one track of a camera by its id; null when unknown. */
     getTrack: method(
       z.object({ deviceId: z.number(), trackId: z.string() }),
       TrackSchema.nullable(),
@@ -2799,14 +2801,18 @@ export const pipelineAnalyticsCapability = {
      */
     listRecentTracks: method(RecentTracksQueryInput, RecentTracksPageSchema),
 
+    /** Drop every active track of a camera. */
     clearTracks: method(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
 
     // ── Events (per-kind, parallel-queryable) ─────────────────
+    /** Query a camera's recorded motion events in a time window. */
     getMotionEvents: method(DeviceEventQueryInput, z.array(MotionEventSchema).readonly()),
+    /** Query a camera's recorded object-detection events in a time window. */
     getObjectEvents: method(ObjectEventQueryInput, z.array(ObjectEventSchema).readonly()),
+    /** Query a camera's recorded audio events in a time window. */
     getAudioEvents: method(DeviceEventQueryInput, z.array(AudioEventSchema).readonly()),
 
     // ── Extensible per-device event kinds ─────────────────────
@@ -2927,6 +2933,7 @@ export const pipelineAnalyticsCapability = {
       z.array(LtsBucketSchema).readonly(),
     ),
 
+    /** Event counts per time bucket for a camera between two timestamps, for activity charts. */
     getEventDensity: method(
       z.object({
         deviceId: z.number(),
@@ -3266,6 +3273,7 @@ export const pipelineAnalyticsCapability = {
         auth: 'admin',
       },
     ),
+    /** Resume the analytics media work that was paused for a storage migration. */
     resumeForStorageMigration: method(
       StorageMigrationLeaseInputSchema,
       z.object({ resumed: z.literal(true) }),
@@ -3281,6 +3289,7 @@ export const pipelineAnalyticsCapability = {
       z.object({ refreshed: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Start moving analytics media to its new storage location and return the job id. */
     startStorageMigrationMove: method(
       StorageMigrationMediaMoveInputSchema,
       z.object({ jobId: z.string() }),
@@ -3289,11 +3298,13 @@ export const pipelineAnalyticsCapability = {
         auth: 'admin',
       },
     ),
+    /** Progress of an analytics media move job; null when the job is unknown. */
     getStorageMigrationMoveStatus: method(
       z.object({ jobId: z.string() }),
       RelocateJobSchema.nullable(),
       { auth: 'admin' },
     ),
+    /** Cancel a running analytics media move job. */
     cancelStorageMigrationMove: method(
       z.object({ jobId: z.string() }),
       z.object({ cancelled: z.boolean() }),
@@ -3376,6 +3387,7 @@ export const pipelineAnalyticsCapability = {
       z.object({ cancelled: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** List entries of the analytics operations log (what ran, when, with what outcome). */
     listOpsLog: method(OpsLogQueryInputSchema, z.array(OpsLogEntrySchema).readonly(), {
       kind: 'query',
       auth: 'admin',
@@ -3390,6 +3402,7 @@ export const pipelineAnalyticsCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Status of the media space-reclaim pass. */
     getMediaReclaimStatus: method(z.object({}), MediaReclaimStatusSchema, {
       kind: 'query',
       auth: 'admin',
@@ -3849,6 +3862,7 @@ export const pipelineAnalyticsCapability = {
       { kind: 'query', auth: 'admin', timeoutMs: 60_000 },
     ),
 
+    /** Rename a retrain collection. */
     renameRetrainCollection: method(
       z.object({ id: z.string(), name: z.string().max(120) }),
       RetrainCollectionRenameResultSchema,
@@ -4074,15 +4088,18 @@ export const pipelineAnalyticsCapability = {
     // `addons.custom` bridge, whose envelope always carries an `input` field.
     // A void input makes them resolve and then reject every call with
     // "expected void, received object" — verified on the live hub.
+    /** Delete every stored object embedding so the vector index can be rebuilt from scratch. */
     wipeObjectEmbeddings: method(z.object({}), WipeObjectEmbeddingsResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Start rebuilding the object embeddings from stored media. */
     rebuildObjectEmbeddings: method(
       RebuildObjectEmbeddingsInput,
       RebuildObjectEmbeddingsResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
+    /** Progress of the object-embedding rebuild. */
     getObjectEmbeddingRebuildStatus: method(z.object({}), RebuildStatusSchema),
   },
   events: {

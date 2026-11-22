@@ -131,26 +131,33 @@ export const mqttBrokerCapability = {
     // embedded-broker controls are an administrator's too. No UI calls any of
     // them; `listBrokers` and `getStatus` stay open (URL userinfo is masked at
     // the transport boundary for a non-admin).
+    /** List the configured MQTT brokers. */
     listBrokers: method(z.void(), z.array(BrokerInfoSchema)),
+    /** The connection details a client needs to connect to one broker. */
     getBrokerConfig: method(IdInputSchema, BrokerConnectionDetailsSchema, {
       auth: 'admin',
     }),
+    /** Register an external MQTT broker. */
     addBroker: method(AddBrokerInputSchema, AddBrokerResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Remove a configured MQTT broker. */
     removeBroker: method(IdInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Start the embedded MQTT broker. */
     startEmbeddedBroker: method(StartEmbeddedInputSchema, StartEmbeddedResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Stop the embedded MQTT broker. */
     stopEmbeddedBroker: method(IdInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** The status of the broker registry. */
     getStatus: method(z.void(), StatusSchema),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },

@@ -23,13 +23,16 @@ export const storageMigrationCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Compute what a storage migration would move, without doing it. */
     plan: method(StorageMigrationInputSchema, StorageMigrationPlanSchema, {
       auth: 'admin',
     }),
+    /** Start a storage migration and return its job id. */
     start: method(StorageMigrationInputSchema, z.object({ jobId: z.string() }), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Progress of a storage migration job; null when none. */
     status: method(
       z.object({ jobId: z.string().optional() }),
       StorageMigrationJobSchema.nullable(),
@@ -37,6 +40,7 @@ export const storageMigrationCapability = {
         auth: 'admin',
       },
     ),
+    /** Cancel a running storage migration job. */
     cancel: method(z.object({ jobId: z.string() }), z.object({ cancelled: z.boolean() }), {
       kind: 'mutation',
       auth: 'admin',
@@ -99,9 +103,11 @@ export const storageMigrationCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** Progress of the cleanup of the old location after a migration; null when none. */
     cleanupStatus: method(StorageCleanupStatusInputSchema, StorageCleanupJobSchema.nullable(), {
       auth: 'admin',
     }),
+    /** Cancel a running post-migration cleanup job. */
     cleanupCancel: method(z.object({ jobId: z.string() }), z.object({ cancelled: z.boolean() }), {
       kind: 'mutation',
       auth: 'admin',

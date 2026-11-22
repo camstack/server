@@ -210,10 +210,12 @@ export const ptzCapability = {
     },
   },
   methods: {
+    /** Nudge the camera by a relative pan, tilt or zoom step. */
     move: method(PtzMoveCommandSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       notOperatorFacing: 'a relative nudge from the live-view joystick; a fixed place is a preset',
     }),
+    /** Move the camera continuously until stopped. */
     continuousMove: method(PtzMoveCommandSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       notOperatorFacing: 'joystick motion held until released — continuous, not a discrete step',
@@ -237,7 +239,9 @@ export const ptzCapability = {
         },
       ],
     }),
+    /** List the camera's PTZ presets. */
     getPresets: method(z.object({ deviceId: z.number() }), z.array(PtzPresetSchema)),
+    /** Move the camera to a preset. */
     goToPreset: method(z.object({ deviceId: z.number(), presetId: z.string() }), z.void(), {
       kind: 'mutation',
       actions: [
@@ -262,6 +266,7 @@ export const ptzCapability = {
         },
       ],
     }),
+    /** Save the camera's current position as a named preset. */
     savePreset: method(
       z.object({
         deviceId: z.number(),
@@ -299,11 +304,14 @@ export const ptzCapability = {
         ],
       },
     ),
+    /** Delete a PTZ preset. */
     deletePreset: method(z.object({ deviceId: z.number(), presetId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /** What the camera's PTZ supports (axes, speeds, presets). */
     getOptions: method(z.object({ deviceId: z.number() }), PtzOptionsSchema),
+    /** Stop any PTZ movement. */
     stop: method(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       actions: [

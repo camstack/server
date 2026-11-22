@@ -1294,18 +1294,23 @@ export const DEVICE_SETTINGS_CONTRIBUTION_METHODS = {
     output: ContributionOutputSchema,
     kind: 'query',
     auth: 'protected',
+    description:
+      "The settings form this capability contributes to a device's Config tab, with current values; null when none.",
   },
   getDeviceLiveContribution: {
     input: z.object({ deviceId: z.number() }),
     output: ContributionOutputSchema,
     kind: 'query',
     auth: 'protected',
+    description:
+      "The live controls and readouts this capability contributes to a device's detail page; null when none.",
   },
   applyDeviceSettingsPatch: {
     input: z.object({ deviceId: z.number(), patch: z.record(z.string(), z.unknown()) }),
     output: z.object({ success: z.literal(true) }),
     kind: 'mutation',
     auth: 'admin',
+    description: "Apply a partial settings patch to one device through this capability's provider.",
   },
 } as const satisfies Record<string, CapabilityMethodSchema>
 
@@ -1323,6 +1328,7 @@ export const DEVICE_STATUS_METHOD = {
     output: z.unknown().nullable(),
     kind: 'query',
     auth: 'protected',
+    description: "The device's current status as reported by this capability; null when unknown.",
   },
 } as const satisfies Record<string, CapabilityMethodSchema>
 
