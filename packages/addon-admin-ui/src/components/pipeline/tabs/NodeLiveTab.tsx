@@ -10,6 +10,7 @@
  */
 
 import {
+  DataTable,
   getPhaseVisual,
   usePipelineRunnerGetAllCameraMetrics,
   usePipelineRunnerGetLocalMetrics,
@@ -72,57 +73,55 @@ export function NodeLiveTab({ nodeId, refreshToken: _refreshToken }: NodeLiveTab
       </div>
 
       {/* Per-camera table */}
-      <div className="rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-surface">
-            <tr className="text-foreground-subtle text-[10px] uppercase tracking-wider">
-              <th className="text-left px-3 py-2">{t('pipeline.nodeLiveTab.camera', 'Camera')}</th>
-              <th className="text-left px-3 py-2">{t('pipeline.nodeLiveTab.phase', 'Phase')}</th>
-              <th className="text-right px-3 py-2">
-                {t('pipeline.nodeLiveTab.actualFps', 'Actual FPS')}
-              </th>
-              <th className="text-right px-3 py-2">{t('pipeline.nodeLiveTab.queue', 'Queue')}</th>
-              <th className="text-right px-3 py-2">
-                {t('pipeline.nodeLiveTab.inferenceMs', 'Inference ms')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {(cameras ?? []).map((cam) => (
-              <tr key={cam.deviceId} className="border-t border-border">
-                <td className="px-3 py-2 text-foreground">{cam.deviceId}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${getPhaseVisual(cam.phase, uiText).badgeClass}`}
-                  >
-                    {getPhaseVisual(cam.phase, uiText).label}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right text-foreground">
-                  {formatNumeric(cam.actualFps, undefined)}
-                </td>
-                <td className="px-3 py-2 text-right text-foreground">{cam.queueDepth ?? 0}</td>
-                <td className="px-3 py-2 text-right text-foreground">
-                  {cam.avgInferenceTimeMs.toFixed(0)}
-                </td>
-              </tr>
-            ))}
-            {(cameras ?? []).length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-3 py-4 text-center text-foreground-subtle text-[11px]"
-                >
-                  {t(
-                    'pipeline.nodeLiveTab.noCamerasAttachedToThis',
-                    'No cameras attached to this runner',
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        rows={cameras ?? []}
+        rowKey={(cam) => cam.deviceId}
+        emptyMessage={t(
+          'pipeline.nodeLiveTab.noCamerasAttachedToThis',
+          'No cameras attached to this runner',
+        )}
+        columns={[
+          {
+            mobile: 'primary',
+            key: 'camera',
+            header: t('pipeline.nodeLiveTab.camera', 'Camera'),
+            render: (cam) => cam.deviceId,
+          },
+          {
+            mobile: 'keep',
+            key: 'phase',
+            header: t('pipeline.nodeLiveTab.phase', 'Phase'),
+            render: (cam) => (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${getPhaseVisual(cam.phase, uiText).badgeClass}`}
+              >
+                {getPhaseVisual(cam.phase, uiText).label}
+              </span>
+            ),
+          },
+          {
+            mobile: 'keep',
+            key: 'fps',
+            header: t('pipeline.nodeLiveTab.actualFps', 'Actual FPS'),
+            align: 'right',
+            render: (cam) => formatNumeric(cam.actualFps, undefined),
+          },
+          {
+            mobile: 'hidden',
+            key: 'queue',
+            header: t('pipeline.nodeLiveTab.queue', 'Queue'),
+            align: 'right',
+            render: (cam) => cam.queueDepth ?? 0,
+          },
+          {
+            mobile: 'hidden',
+            key: 'inference',
+            header: t('pipeline.nodeLiveTab.inferenceMs', 'Inference ms'),
+            align: 'right',
+            render: (cam) => cam.avgInferenceTimeMs.toFixed(0),
+          },
+        ]}
+      />
     </div>
   )
 }

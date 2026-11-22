@@ -23,6 +23,7 @@ import type { PipelineEngineChoice } from '@camstack/types'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import {
   Button,
+  DataTable,
   ErrorBox,
   useEventStreamLatest,
   useEventStreamMap,
@@ -170,146 +171,130 @@ export function NodeEnginesTab({ nodeId, refreshToken: _refreshToken }: NodeEngi
         </p>
       </div>
 
-      {/* Horizontal scroll fallback when 7 columns don't fit (e.g. cluster
-          tab has narrow viewport at sidebar-collapsed midwidth + nested
-          NodeDetail). `overflow-x-auto` keeps the rounded border + the
-          right edge isn't clipped. */}
-      <div className="rounded-lg border border-border overflow-x-auto">
-        <table className="w-full text-xs min-w-[640px]">
-          <thead className="bg-surface">
-            <tr className="text-foreground-subtle text-[10px] uppercase tracking-wider">
-              <th className="text-left px-3 py-2 whitespace-nowrap">
-                {t('pipeline.nodeEnginesTab.kind', 'Kind')}
-              </th>
-              <th className="text-left px-3 py-2 whitespace-nowrap">
-                {t('pipeline.nodeEnginesTab.runtimeBackendDevice', 'Runtime / Backend / Device')}
-              </th>
-              <th className="text-left px-3 py-2">
-                {t('pipeline.nodeEnginesTab.models', 'Models')}
-              </th>
-              <th className="text-right px-3 py-2 whitespace-nowrap">
-                {t('pipeline.nodeEnginesTab.poolPid', 'Pool PID')}
-              </th>
-              <th className="text-right px-3 py-2 whitespace-nowrap">
-                {t('pipeline.nodeEnginesTab.autoKill', 'Auto-kill')}
-              </th>
-              <th className="text-right px-3 py-2 whitespace-nowrap">
-                {t('pipeline.nodeEnginesTab.inUse', 'In use')}
-              </th>
-              <th className="w-20" />
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-3 py-4 text-center text-foreground-subtle text-[11px]"
+      <DataTable
+        minWidthPx={640}
+        rows={isLoading ? [] : (engines ?? [])}
+        rowKey={(e) => e.engineKey}
+        rowClassName={(e) => (e.kind === 'device-pool' ? 'bg-primary/[0.05]' : undefined)}
+        emptyMessage={
+          isLoading
+            ? t('common.loading', 'Loading…')
+            : t(
+                'pipeline.nodeEnginesTab.noEnginesResidentTheFactory',
+                'No engines resident — the factory spins up on the first pipeline run.',
+              )
+        }
+        columns={[
+          {
+            mobile: 'keep',
+            key: 'kind',
+            header: t('pipeline.nodeEnginesTab.kind', 'Kind'),
+            render: (e) => {
+              const isPool = e.kind === 'device-pool'
+              return (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                    isPool ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success'
+                  }`}
                 >
-                  {t('common.loading', 'Loading…')}
-                </td>
-              </tr>
-            )}
-            {!isLoading &&
-              (engines ?? []).map((e) => {
-                const isPool = e.kind === 'device-pool'
-                return (
-                  <tr
-                    key={e.engineKey}
-                    className={`border-t border-border ${isPool ? 'bg-primary/[0.05]' : ''}`}
-                  >
-                    <td className="px-3 py-2">
-                      <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                          isPool ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success'
-                        }`}
-                      >
-                        {isPool ? <Layers className="h-3 w-3" /> : <Cpu className="h-3 w-3" />}
-                        {isPool
-                          ? t('pipeline.nodeEnginesTab.pool')
-                          : t('pipeline.nodeEnginesTab.runtime')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-sky-400">
-                        <Zap className="h-3 w-3" />
-                        {e.engine.runtime}/{e.engine.backend}
-                        {e.engine.device ? `/${e.engine.device}` : ''}
-                        {e.engine.format ? ` · ${e.engine.format}` : ''}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      {e.modelsLoaded.length === 0 ? (
-                        <span className="text-foreground-subtle text-[11px]">—</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {e.modelsLoaded.map((m) => (
-                            <span
-                              key={m}
-                              className="inline-block rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-foreground-subtle"
-                            >
-                              {m}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right font-mono text-foreground">
-                      {e.poolPid ?? '—'}
-                    </td>
-                    <td className="px-3 py-2 text-right text-[11px]">
-                      {e.idleMs !== null && e.idleTtlMs !== null ? (
-                        <span className="text-foreground-subtle">
-                          {formatIdle(e.idleMs, e.idleTtlMs)}
-                        </span>
-                      ) : (
-                        <span className="text-foreground-subtle/50">{t('common.never')}</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right text-foreground">
-                      {(attachedCameras ?? []).length}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {isPool ? (
-                        // Device pools are reaper-managed (idle TTL) — not manually
-                        // killable via the default-engine kill path.
-                        <span className="text-[11px] text-foreground-subtle">
-                          {t('common.auto')}
-                        </span>
-                      ) : (
-                        // The app's destructive row action: a ghost Button in the
-                        // danger colour; the confirm (when cameras use it) is red.
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={killEngineMutation.isPending}
-                          onClick={() => handleKill(e.engine)}
-                          className="text-danger hover:bg-danger/10 hover:text-danger"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          {t('pipeline.nodeEnginesTab.kill', 'Kill')}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            {!isLoading && (engines ?? []).length === 0 && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-3 py-4 text-center text-foreground-subtle text-[11px]"
+                  {isPool ? <Layers className="h-3 w-3" /> : <Cpu className="h-3 w-3" />}
+                  {isPool
+                    ? t('pipeline.nodeEnginesTab.pool')
+                    : t('pipeline.nodeEnginesTab.runtime')}
+                </span>
+              )
+            },
+          },
+          {
+            mobile: 'primary',
+            key: 'engine',
+            header: t('pipeline.nodeEnginesTab.runtimeBackendDevice', 'Runtime / Backend / Device'),
+            render: (e) => (
+              <span className="inline-flex items-center gap-1 text-[11px] text-info">
+                <Zap className="h-3 w-3 shrink-0" />
+                {e.engine.runtime}/{e.engine.backend}
+                {e.engine.device ? `/${e.engine.device}` : ''}
+                {e.engine.format ? ` · ${e.engine.format}` : ''}
+              </span>
+            ),
+          },
+          {
+            mobile: 'hidden',
+            key: 'models',
+            header: t('pipeline.nodeEnginesTab.models', 'Models'),
+            nowrap: false,
+            render: (e) =>
+              e.modelsLoaded.length === 0 ? (
+                <span className="text-foreground-subtle text-[11px]">—</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {e.modelsLoaded.map((m) => (
+                    <span
+                      key={m}
+                      className="inline-block rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-foreground-subtle"
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              ),
+          },
+          {
+            mobile: 'detail',
+            key: 'poolPid',
+            header: t('pipeline.nodeEnginesTab.poolPid', 'Pool PID'),
+            align: 'right',
+            render: (e) => <span className="font-mono text-foreground">{e.poolPid ?? '—'}</span>,
+          },
+          {
+            mobile: 'hidden',
+            key: 'autoKill',
+            header: t('pipeline.nodeEnginesTab.autoKill', 'Auto-kill'),
+            align: 'right',
+            render: (e) =>
+              e.idleMs !== null && e.idleTtlMs !== null ? (
+                <span className="text-[11px] text-foreground-subtle">
+                  {formatIdle(e.idleMs, e.idleTtlMs)}
+                </span>
+              ) : (
+                <span className="text-[11px] text-foreground-subtle/50">{t('common.never')}</span>
+              ),
+          },
+          {
+            mobile: 'hidden',
+            key: 'inUse',
+            header: t('pipeline.nodeEnginesTab.inUse', 'In use'),
+            align: 'right',
+            render: () => <span className="text-foreground">{(attachedCameras ?? []).length}</span>,
+          },
+          {
+            mobile: 'keep',
+            key: 'actions',
+            header: '',
+            align: 'right',
+            width: 'w-20',
+            render: (e) =>
+              e.kind === 'device-pool' ? (
+                // Device pools are reaper-managed (idle TTL) — not manually
+                // killable via the default-engine kill path.
+                <span className="text-[11px] text-foreground-subtle">{t('common.auto')}</span>
+              ) : (
+                // The app's destructive row action: a ghost Button in the
+                // danger colour; the confirm (when cameras use it) is red.
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={killEngineMutation.isPending}
+                  onClick={() => handleKill(e.engine)}
+                  className="text-danger hover:bg-danger/10 hover:text-danger"
                 >
-                  {t(
-                    'pipeline.nodeEnginesTab.noEnginesResidentTheFactory',
-                    'No engines resident — the factory spins up on the first pipeline run.',
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t('pipeline.nodeEnginesTab.kill', 'Kill')}
+                </Button>
+              ),
+          },
+        ]}
+      />
 
       <div className="text-[10px] text-foreground-subtle leading-relaxed">
         <Trans

@@ -1,7 +1,8 @@
 /** Baseline vs candidate (vs INT8) per class, and the per-camera recall changes. */
 import type { TrainingEvalClass, TrainingResult } from '@camstack/types'
+import { type DataColumn, DataTable } from '@camstack/ui-library'
 import { useT } from '../i18n/index.js'
-import { comparisonRows, formatPct, recallDeltaRows } from './view-model.js'
+import { type ComparisonRow, comparisonRows, formatPct, recallDeltaRows } from './view-model.js'
 
 const TONE = {
   better: 'text-success',
@@ -9,29 +10,29 @@ const TONE = {
   same: 'text-foreground-muted',
 } as const
 
-function Cell({ c }: { readonly c: TrainingEvalClass | null }) {
+function CellContent({ c }: { readonly c: TrainingEvalClass | null }) {
   const { t } = useT()
-  if (c === null) return <td className="px-2 py-1 text-foreground-subtle">—</td>
+  if (c === null) return <span className="text-foreground-subtle">—</span>
   const night = c.recallByLight?.['night']
   const small =
     c.smallTotal !== undefined && c.smallTotal > 0
       ? ` · ${t('comparison.small', { found: c.smallFound ?? 0, total: c.smallTotal })}`
       : ''
   return (
-    <td className="px-2 py-1 text-foreground">
+    <span className="text-foreground">
       {t('comparison.metrics', {
         precision: formatPct(c.precision),
         recall: formatPct(c.recall),
         ap50: formatPct(c.ap50),
       })}
-      <span className="block text-xs text-foreground-subtle">
+      <span className="block text-xs text-foreground-subtle max-sm:ml-1 max-sm:inline">
         {t('comparison.floorNight', {
           floor: c.floor === null ? '—' : c.floor.toFixed(2),
           night: formatPct(night),
         })}
         {small}
       </span>
-    </td>
+    </span>
   )
 }
 
@@ -48,30 +49,53 @@ export function ComparisonTable({
   const hasInt8 = rows.some((r) => r.int8 !== null)
   if (rows.length === 0)
     return <p className="text-sm text-foreground-muted">{t('comparison.noEvaluation')}</p>
+  const int8Columns: readonly DataColumn<ComparisonRow>[] = hasInt8
+    ? [
+        {
+          mobile: 'hidden',
+          key: 'int8',
+          header: t('comparison.fineTunedInt8'),
+          nowrap: false,
+          render: (r) => <CellContent c={r.int8} />,
+        },
+      ]
+    : []
   return (
-    <div className="space-y-2 overflow-x-auto">
-      <table className="w-full text-left text-sm" data-testid="comparison-table">
-        <thead className="text-xs text-foreground-subtle">
-          <tr>
-            <th className="px-2 py-1">{t('comparison.classColumn')}</th>
-            <th className="px-2 py-1">{t('comparison.current')}</th>
-            <th className="px-2 py-1">{t('comparison.fineTuned')}</th>
-            {hasInt8 && <th className="px-2 py-1">{t('comparison.fineTunedInt8')}</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.cls} className="border-t border-border">
-              <td className="px-2 py-1 font-medium text-foreground">
-                {r.cls} ({r.candidate?.positives ?? r.baseline?.positives ?? 0})
-              </td>
-              <Cell c={r.baseline} />
-              <Cell c={r.candidate} />
-              {hasInt8 && <Cell c={r.int8} />}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-2">
+      <div data-testid="comparison-table">
+        <DataTable
+          rows={rows}
+          rowKey={(r) => r.cls}
+          minWidthPx={560}
+          columns={[
+            {
+              mobile: 'primary',
+              key: 'class',
+              header: t('comparison.classColumn'),
+              render: (r) => (
+                <span className="font-medium text-foreground">
+                  {r.cls} ({r.candidate?.positives ?? r.baseline?.positives ?? 0})
+                </span>
+              ),
+            },
+            {
+              mobile: 'hidden',
+              key: 'baseline',
+              header: t('comparison.current'),
+              nowrap: false,
+              render: (r) => <CellContent c={r.baseline} />,
+            },
+            {
+              mobile: 'detail',
+              key: 'candidate',
+              header: t('comparison.fineTuned'),
+              nowrap: false,
+              render: (r) => <CellContent c={r.candidate} />,
+            },
+            ...int8Columns,
+          ]}
+        />
+      </div>
       {deltas.length > 0 && (
         <ul
           className="flex flex-wrap gap-x-4 gap-y-1 text-xs"

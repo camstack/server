@@ -13,6 +13,7 @@
 import { useMemo, useState } from 'react'
 
 import {
+  DataTable,
   useClusterNodes,
   useLiveEvent,
   usePipelineOrchestratorGetAudioNodeLoad,
@@ -208,63 +209,61 @@ export function LiveLoadPanel({ refreshToken: _refreshToken, nodeId }: LiveLoadP
         />
       </div>
 
-      {/* Per-agent table — wrap in `overflow-x-auto` so narrow panels
-          scroll horizontally instead of clipping the right-most columns
-          (Audio / Queue) like the screenshot in the responsive bug
-          report. `min-w-[480px]` keeps each cell legible while scrolling. */}
-      <div className="rounded-lg border border-border overflow-x-auto">
-        <table className="w-full text-xs min-w-[480px]">
-          <thead className="bg-surface">
-            <tr className="text-foreground-subtle text-[10px] uppercase tracking-wider">
-              <th className="text-left px-3 py-2">{t('pipeline.liveLoadPanel.agent', 'Agent')}</th>
-              <th className="text-right px-3 py-2">FPS</th>
-              <th className="text-right px-3 py-2">
-                {t('pipeline.liveLoadPanel.cameras', 'Cameras')}
-              </th>
-              <th className="text-right px-3 py-2">
-                {t('pipeline.liveLoadPanel.inferenceMs', 'Inference ms')}
-              </th>
-              <th className="text-right px-3 py-2">{t('pipeline.liveLoadPanel.queue', 'Queue')}</th>
-              <th className="text-right px-3 py-2">{t('pipeline.liveLoadPanel.audio', 'Audio')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {agentRows.map(([nid, s]) => (
-              <tr key={nid} className="border-t border-border">
-                <td className="px-3 py-2 text-foreground font-medium">
-                  {agentNameById.get(nid) ?? nid}
-                </td>
-                <td className="px-3 py-2 text-right text-foreground">
-                  {formatNumeric(s.totalFps, undefined)}
-                </td>
-                <td className="px-3 py-2 text-right text-foreground">{s.attachedCameras}</td>
-                <td className="px-3 py-2 text-right text-foreground">
-                  {s.attachedCameras > 0
-                    ? (s.totalInferenceWeighted / s.attachedCameras).toFixed(0)
-                    : '—'}
-                </td>
-                <td className="px-3 py-2 text-right text-foreground">{s.queueDepth}</td>
-                <td className="px-3 py-2 text-right text-foreground">
-                  {audioDevicesByNode.get(nid) ?? '—'}
-                </td>
-              </tr>
-            ))}
-            {agentRows.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-3 py-4 text-center text-foreground-subtle text-[11px]"
-                >
-                  {t(
-                    'pipeline.liveLoadPanel.noCameraMetricsReceivedYet',
-                    'No camera metrics received yet',
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Per-agent table */}
+      <DataTable
+        rows={agentRows}
+        rowKey={([nid]) => nid}
+        emptyMessage={t(
+          'pipeline.liveLoadPanel.noCameraMetricsReceivedYet',
+          'No camera metrics received yet',
+        )}
+        columns={[
+          {
+            mobile: 'primary',
+            key: 'agent',
+            header: t('pipeline.liveLoadPanel.agent', 'Agent'),
+            render: ([nid]) => <span className="font-medium">{agentNameById.get(nid) ?? nid}</span>,
+          },
+          {
+            mobile: 'keep',
+            key: 'fps',
+            header: 'FPS',
+            align: 'right',
+            render: ([, s]) => formatNumeric(s.totalFps, undefined),
+          },
+          {
+            mobile: 'keep',
+            key: 'cameras',
+            header: t('pipeline.liveLoadPanel.cameras', 'Cameras'),
+            align: 'right',
+            render: ([, s]) => s.attachedCameras,
+          },
+          {
+            mobile: 'hidden',
+            key: 'inference',
+            header: t('pipeline.liveLoadPanel.inferenceMs', 'Inference ms'),
+            align: 'right',
+            render: ([, s]) =>
+              s.attachedCameras > 0
+                ? (s.totalInferenceWeighted / s.attachedCameras).toFixed(0)
+                : '—',
+          },
+          {
+            mobile: 'keep',
+            key: 'queue',
+            header: t('pipeline.liveLoadPanel.queue', 'Queue'),
+            align: 'right',
+            render: ([, s]) => s.queueDepth,
+          },
+          {
+            mobile: 'hidden',
+            key: 'audio',
+            header: t('pipeline.liveLoadPanel.audio', 'Audio'),
+            align: 'right',
+            render: ([nid]) => audioDevicesByNode.get(nid) ?? '—',
+          },
+        ]}
+      />
     </div>
   )
 }

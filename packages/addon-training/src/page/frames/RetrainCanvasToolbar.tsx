@@ -6,7 +6,7 @@
  * discovered. The zoom state lives in {@link useRetrainViewport} so the page,
  * the toolbar, the canvas and the keyboard all move one viewport.
  */
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@camstack/ui-library'
+import { Button, KeyValueList, Popover, PopoverContent, PopoverTrigger } from '@camstack/ui-library'
 import {
   ChevronLeft,
   ChevronRight,
@@ -169,18 +169,12 @@ export function RetrainCanvasToolbar({
           <h3 className="mb-2 text-xs font-semibold text-foreground">
             {t('toolbar.shortcutsTitle')}
           </h3>
-          <table className="w-full text-[11px]">
-            <tbody>
-              {RETRAIN_SHORTCUTS.map((id) => (
-                <tr key={id} className="align-top">
-                  <td className="py-0.5 pr-2 font-mono whitespace-nowrap text-foreground">
-                    {t(`shortcuts.${id}.keys`)}
-                  </td>
-                  <td className="py-0.5 text-foreground-subtle">{t(`shortcuts.${id}.does`)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <KeyValueList
+            items={RETRAIN_SHORTCUTS.map((id) => ({
+              key: t(`shortcuts.${id}.keys`),
+              value: t(`shortcuts.${id}.does`),
+            }))}
+          />
         </PopoverContent>
       </Popover>
     </div>

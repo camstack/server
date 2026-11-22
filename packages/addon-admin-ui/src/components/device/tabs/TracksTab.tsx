@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Footprints,
@@ -10,7 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { Track } from '@camstack/types'
-import { useDeviceProxy, useSystem, Button } from '@camstack/ui-library'
+import { useDeviceProxy, useSystem, Button, DataTable } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatNumeric } from '@camstack/ui-library'
 
@@ -131,6 +131,10 @@ function ActiveTrackCard({ track }: { readonly track: Track }) {
   )
 }
 
+function PositionCell({ children }: { readonly children: ReactNode }) {
+  return <span className="font-mono text-[10px] text-foreground-subtle">{children}</span>
+}
+
 function HistoricalTrackRow({ track }: { readonly track: Track }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -182,30 +186,38 @@ function HistoricalTrackRow({ track }: { readonly track: Track }) {
               ))}
             </div>
           )}
-          <div className="rounded border border-border bg-surface-hover/30 overflow-hidden max-h-48 overflow-y-auto">
-            <table className="w-full text-[10px] font-mono">
-              <thead>
-                <tr className="border-b border-border text-foreground-subtle">
-                  <th className="px-2 py-1 text-left font-medium">#</th>
-                  <th className="px-2 py-1 text-left font-medium">X</th>
-                  <th className="px-2 py-1 text-left font-medium">Y</th>
-                  <th className="px-2 py-1 text-left font-medium">
-                    {t('device.tracksTab.time', 'Time')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {track.positions.map((pos, idx) => (
-                  <tr key={idx} className="text-foreground-subtle">
-                    <td className="px-2 py-0.5">{idx + 1}</td>
-                    <td className="px-2 py-0.5">{pos.x.toFixed(3)}</td>
-                    <td className="px-2 py-0.5">{pos.y.toFixed(3)}</td>
-                    <td className="px-2 py-0.5">{formatTimestamp(pos.timestamp)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            rows={track.positions}
+            maxBodyHeight="max-h-48"
+            minWidthPx={320}
+            className="bg-surface-hover/30"
+            columns={[
+              {
+                mobile: 'hidden',
+                key: 'index',
+                header: '#',
+                render: (_pos, idx) => <PositionCell>{idx + 1}</PositionCell>,
+              },
+              {
+                mobile: 'keep',
+                key: 'x',
+                header: 'X',
+                render: (pos) => <PositionCell>{pos.x.toFixed(3)}</PositionCell>,
+              },
+              {
+                mobile: 'keep',
+                key: 'y',
+                header: 'Y',
+                render: (pos) => <PositionCell>{pos.y.toFixed(3)}</PositionCell>,
+              },
+              {
+                mobile: 'primary',
+                key: 'time',
+                header: t('device.tracksTab.time', 'Time'),
+                render: (pos) => <PositionCell>{formatTimestamp(pos.timestamp)}</PositionCell>,
+              },
+            ]}
+          />
         </div>
       )}
     </div>

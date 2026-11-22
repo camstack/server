@@ -24,7 +24,15 @@
  * distinguishes pending ("Checking…") from an answered-empty list.
  */
 import type { BackupRun } from '@camstack/types'
-import { useBackupCancel, useBackupListRuns, useConfirm, Button } from '@camstack/ui-library'
+import {
+  useBackupCancel,
+  useBackupListRuns,
+  useConfirm,
+  Button,
+  DataTable,
+  type DataColumn,
+} from '@camstack/ui-library'
+import type { TFunction } from 'i18next'
 import {
   Ban,
   CheckCircle2,
@@ -227,118 +235,120 @@ export function BackupRunsPanelView({
         </div>
       )}
       {queryState === 'ready' && runs.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[720px]">
-            <thead>
-              <tr className="text-foreground-subtle bg-background/30">
-                <th className="text-left px-3 py-1.5 font-medium">
-                  {t('backup.backupRunsPanel.run', 'Run')}
-                </th>
-                <th className="text-left px-3 py-1.5 font-medium">
-                  {t('backup.backupRunsPanel.state', 'State')}
-                </th>
-                <th className="text-left px-3 py-1.5 font-medium">
-                  {t('backup.backupRunsPanel.progress', 'Progress')}
-                </th>
-                <th className="text-left px-3 py-1.5 font-medium">
-                  {t('backup.backupRunsPanel.destinations', 'Destinations')}
-                </th>
-                <th className="text-left px-3 py-1.5 font-medium">
-                  {t('backup.backupRunsPanel.timing', 'Timing')}
-                </th>
-                <th className="text-right px-3 py-1.5 font-medium w-28">
-                  {t('backup.backupRunsPanel.actions', 'Actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordered.map((run) => (
-                <RunRow
-                  key={run.id}
-                  run={run}
-                  canceling={cancelingId === run.id}
-                  onCancelRequest={onCancelRequest}
-                  now={now}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          bordered={false}
+          minWidthPx={720}
+          rows={ordered}
+          rowKey={(run) => run.id}
+          columns={buildRunColumns({ cancelingId, onCancelRequest, now, t })}
+        />
       )}
     </section>
   )
 }
 
-interface RunRowProps {
-  readonly run: BackupRun
-  readonly canceling: boolean
+interface RunColumnsInput {
+  readonly cancelingId: string | null
   readonly onCancelRequest: (run: BackupRun) => void
   readonly now: number
+  readonly t: TFunction
 }
 
-function RunRow({ run, canceling, onCancelRequest, now }: RunRowProps) {
-  const { t } = useTranslation()
-  const active = isActiveRun(run)
-  return (
-    <tr className="border-t border-border hover:bg-primary/5 align-top">
-      <td className="px-3 py-2">
+function buildRunColumns({
+  cancelingId,
+  onCancelRequest,
+  now,
+  t,
+}: RunColumnsInput): readonly DataColumn<BackupRun>[] {
+  return [
+    {
+      mobile: 'primary',
+      key: 'run',
+      header: t('backup.backupRunsPanel.run', 'Run'),
+      render: (run) => (
         <div className="text-foreground" title={run.id}>
           {run.label ?? (
             <span className="text-foreground-subtle italic">{t('backup.runsPanel.manual')}</span>
           )}
         </div>
-      </td>
-      <td className="px-3 py-2">
-        <StateBadge run={run} />
-        {run.state === 'failed' && run.error !== undefined && (
-          <div className="mt-1 text-[10px] text-danger max-w-56 truncate" title={run.error}>
-            {run.error}
-          </div>
-        )}
-      </td>
-      <td className="px-3 py-2">
-        <ProgressCell run={run} />
-      </td>
-      <td className="px-3 py-2">
-        <DestinationsCell run={run} />
-      </td>
-      <td className="px-3 py-2 text-foreground-subtle tabular-nums">
-        <TimingCell run={run} now={now} />
-      </td>
-      <td className="px-3 py-2">
-        <div className="flex justify-end">
-          {active && (
-            <Button
-              variant="unstyled"
-              onClick={() => onCancelRequest(run)}
-              disabled={canceling}
-              className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
-              title={
-                run.state === 'queued'
-                  ? t(
-                      'backup.backupRunsPanel.removeThisRunFromThe',
-                      'Remove this run from the queue before it starts',
-                    )
-                  : t(
-                      'backup.backupRunsPanel.stopThisRunTheHalf',
-                      'Stop this run — the half-written archive is discarded',
-                    )
-              }
-            >
-              {canceling ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Ban className="h-3 w-3" />
-              )}
-              {run.state === 'queued'
-                ? t('common.cancel', 'Cancel')
-                : t('backup.backupRunsPanel.stop', 'Stop')}
-            </Button>
+      ),
+    },
+    {
+      mobile: 'keep',
+      key: 'state',
+      header: t('backup.backupRunsPanel.state', 'State'),
+      render: (run) => (
+        <>
+          <StateBadge run={run} />
+          {run.state === 'failed' && run.error !== undefined && (
+            <div className="mt-1 text-[10px] text-danger max-w-56 truncate" title={run.error}>
+              {run.error}
+            </div>
           )}
-        </div>
-      </td>
-    </tr>
-  )
+        </>
+      ),
+    },
+    {
+      mobile: 'hidden',
+      key: 'progress',
+      header: t('backup.backupRunsPanel.progress', 'Progress'),
+      nowrap: false,
+      render: (run) => <ProgressCell run={run} />,
+    },
+    {
+      mobile: 'hidden',
+      key: 'destinations',
+      header: t('backup.backupRunsPanel.destinations', 'Destinations'),
+      nowrap: false,
+      render: (run) => <DestinationsCell run={run} />,
+    },
+    {
+      mobile: 'hidden',
+      key: 'timing',
+      header: t('backup.backupRunsPanel.timing', 'Timing'),
+      render: (run) => (
+        <span className="text-foreground-subtle tabular-nums">
+          <TimingCell run={run} now={now} />
+        </span>
+      ),
+    },
+    {
+      mobile: 'keep',
+      key: 'actions',
+      header: t('backup.backupRunsPanel.actions', 'Actions'),
+      align: 'right',
+      width: 'w-28',
+      render: (run) =>
+        isActiveRun(run) ? (
+          <Button
+            variant="unstyled"
+            onClick={() => onCancelRequest(run)}
+            disabled={cancelingId === run.id}
+            className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
+            title={
+              run.state === 'queued'
+                ? t(
+                    'backup.backupRunsPanel.removeThisRunFromThe',
+                    'Remove this run from the queue before it starts',
+                  )
+                : t(
+                    'backup.backupRunsPanel.stopThisRunTheHalf',
+                    'Stop this run — the half-written archive is discarded',
+                  )
+            }
+          >
+            {cancelingId === run.id ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Ban className="h-3 w-3" />
+            )}
+            {run.state === 'queued'
+              ? t('common.cancel', 'Cancel')
+              : t('backup.backupRunsPanel.stop', 'Stop')}
+          </Button>
+        ) : null,
+    },
+  ]
 }
 
 function StateBadge({ run }: { readonly run: BackupRun }) {

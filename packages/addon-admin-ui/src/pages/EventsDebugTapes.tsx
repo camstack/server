@@ -31,6 +31,7 @@ import {
   Button,
   CollapsibleCard,
   ConfirmActionButton,
+  DataTable,
   ErrorBox,
   useDeviceManagerListAll,
   useSystem,
@@ -176,49 +177,72 @@ function TapesBody(): JSX.Element {
       )}
       {status.data === null && <ErrorBox message={UNREADABLE} />}
 
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-left text-foreground-subtle">
-            <th>{t('eventsDebugTapes.camera', 'Camera')}</th>
-            <th>{t('eventsDebugTapes.state', 'State')}</th>
-            <th>{t('eventsDebugTapes.framesMin', 'Frames/min')}</th>
-            <th>{t('eventsDebugTapes.lastHour', 'Last hour')}</th>
-            <th>{t('eventsDebugTapes.held', 'Held')}</th>
-            <th>{t('eventsDebugTapes.gaps', 'Gaps')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(status.data ?? []).map((row) => (
-            <tr key={row.deviceId}>
-              <td>{cameraName(row.deviceId)}</td>
-              <td>
-                <Badge
-                  variant={
-                    row.state === 'recording'
-                      ? 'success'
-                      : row.state === 'off'
-                        ? 'default'
-                        : row.state === 'unknown'
-                          ? 'warning'
-                          : 'danger'
-                  }
-                >
-                  {statusLabel(row)}
-                </Badge>
-              </td>
-              <td>{row.framesPerMin === undefined ? '—' : String(Math.round(row.framesPerMin))}</td>
-              <td title={row.shelfError}>{formatBytesOrUnknown(row.bytesLastHour)}</td>
-              <td title={row.shelfError}>
+      <DataTable
+        rows={status.data ?? []}
+        rowKey={(row) => row.deviceId}
+        columns={[
+          {
+            mobile: 'primary',
+            key: 'camera',
+            header: t('eventsDebugTapes.camera', 'Camera'),
+            render: (row) => cameraName(row.deviceId),
+          },
+          {
+            mobile: 'keep',
+            key: 'state',
+            header: t('eventsDebugTapes.state', 'State'),
+            render: (row) => (
+              <Badge
+                variant={
+                  row.state === 'recording'
+                    ? 'success'
+                    : row.state === 'off'
+                      ? 'default'
+                      : row.state === 'unknown'
+                        ? 'warning'
+                        : 'danger'
+                }
+              >
+                {statusLabel(row)}
+              </Badge>
+            ),
+          },
+          {
+            mobile: 'keep',
+            key: 'framesPerMin',
+            header: t('eventsDebugTapes.framesMin', 'Frames/min'),
+            render: (row) =>
+              row.framesPerMin === undefined ? '—' : String(Math.round(row.framesPerMin)),
+          },
+          {
+            mobile: 'hidden',
+            key: 'lastHour',
+            header: t('eventsDebugTapes.lastHour', 'Last hour'),
+            render: (row) => (
+              <span title={row.shelfError}>{formatBytesOrUnknown(row.bytesLastHour)}</span>
+            ),
+          },
+          {
+            mobile: 'detail',
+            key: 'held',
+            header: t('eventsDebugTapes.held', 'Held'),
+            render: (row) => (
+              <span title={row.shelfError}>
                 {t('eventsDebugTapes.segsHeld', {
                   count: countOrUnknown(row.segmentsHeld),
                   size: formatBytesOrUnknown(row.bytesHeld),
                 })}
-              </td>
-              <td>{String(row.gapsSinceArmed)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+            ),
+          },
+          {
+            mobile: 'hidden',
+            key: 'gaps',
+            header: t('eventsDebugTapes.gaps', 'Gaps'),
+            render: (row) => String(row.gapsSinceArmed),
+          },
+        ]}
+      />
 
       <PromoteForm
         cameras={promotableCameras(status.data ?? []).map((c) => ({
@@ -240,40 +264,61 @@ function TapesBody(): JSX.Element {
       )}
       {list.data === null && <ErrorBox message={UNREADABLE} />}
 
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-left text-foreground-subtle">
-            <th>{t('eventsDebugTapes.scenario', 'Scenario')}</th>
-            <th>{t('eventsDebugTapes.camera', 'Camera')}</th>
-            <th>{t('eventsDebugTapes.window', 'Window')}</th>
-            <th>{t('eventsDebugTapes.state', 'State')}</th>
-            <th>{t('eventsDebugTapes.tracks', 'Tracks')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {(list.data ?? []).map((tape) => (
-            <tr key={tape.id}>
-              <td>{tape.scenario}</td>
-              <td>{cameraName(tape.deviceId)}</td>
-              <td>
-                {new Date(tape.fromMs).toLocaleString()} · {formatDuration(tape.toMs - tape.fromMs)}{' '}
-                · {tape.lighting}
-              </td>
-              <td>
+      <DataTable
+        minWidthPx={720}
+        rows={list.data ?? []}
+        rowKey={(tape) => tape.id}
+        columns={[
+          {
+            mobile: 'primary',
+            key: 'scenario',
+            header: t('eventsDebugTapes.scenario', 'Scenario'),
+            render: (tape) => tape.scenario,
+          },
+          {
+            mobile: 'detail',
+            key: 'camera',
+            header: t('eventsDebugTapes.camera', 'Camera'),
+            render: (tape) => cameraName(tape.deviceId),
+          },
+          {
+            mobile: 'hidden',
+            key: 'window',
+            header: t('eventsDebugTapes.window', 'Window'),
+            render: (tape) =>
+              `${new Date(tape.fromMs).toLocaleString()} · ${formatDuration(tape.toMs - tape.fromMs)} · ${tape.lighting}`,
+          },
+          {
+            mobile: 'detail',
+            key: 'state',
+            header: t('eventsDebugTapes.state', 'State'),
+            render: (tape) => (
+              <>
                 <Badge variant={tape.state === 'complete' ? 'success' : 'warning'}>
                   {tape.state}
                 </Badge>{' '}
                 {tape.reviewed && <Badge variant="info">{t('eventsDebugTapes.reviewed')}</Badge>}{' '}
                 {tape.released && <Badge>{t('eventsDebugTapes.released')}</Badge>}
-              </td>
-              <td>
-                {t('eventsDebugTapes.storedOf', {
-                  stored: String(tape.tracksStillStored),
-                  total: String(tape.tracks.length),
-                })}
-              </td>
-              <td className="space-x-1 text-right">
+              </>
+            ),
+          },
+          {
+            mobile: 'hidden',
+            key: 'tracks',
+            header: t('eventsDebugTapes.tracks', 'Tracks'),
+            render: (tape) =>
+              t('eventsDebugTapes.storedOf', {
+                stored: String(tape.tracksStillStored),
+                total: String(tape.tracks.length),
+              }),
+          },
+          {
+            mobile: 'keep',
+            key: 'actions',
+            header: '',
+            align: 'right',
+            render: (tape) => (
+              <div className="flex items-center justify-end gap-1">
                 <Button
                   variant="secondary"
                   aria-label={t('eventsDebugTapes.review', 'Review {{scenario}}', {
@@ -323,11 +368,11 @@ function TapesBody(): JSX.Element {
                   confirmVariant="danger"
                   action={() => remove(tape)}
                 />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            ),
+          },
+        ]}
+      />
 
       {reviewing !== null && (
         <TapeReview

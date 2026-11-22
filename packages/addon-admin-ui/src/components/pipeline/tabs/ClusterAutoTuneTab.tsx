@@ -24,6 +24,7 @@ import {
 import {
   Badge,
   Button,
+  DataTable,
   Dialog,
   DialogBody,
   DialogContent,
@@ -98,78 +99,86 @@ function NodeCard({
           ))}
         </ul>
       )}
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-left text-[11px] text-foreground-subtle">
-              <th className="px-3 py-1.5 font-medium">
-                {t('pipeline.clusterAutoTuneTab.device', 'Device')}
-              </th>
-              <th className="px-3 py-1.5 font-medium">
-                {t('pipeline.clusterAutoTuneTab.capacity', 'Capacity')}
-              </th>
-              <th className="px-3 py-1.5 font-medium">
-                {t('pipeline.clusterAutoTuneTab.detector', 'Detector')}
-              </th>
-              <th className="px-3 py-1.5 font-medium">
-                {t('pipeline.clusterAutoTuneTab.why', 'Why')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {node.devices.map((d) => {
+      <DataTable
+        bordered={false}
+        rows={node.devices}
+        rowKey={(d) => d.deviceKey}
+        columns={[
+          {
+            mobile: 'primary',
+            key: 'device',
+            header: t('pipeline.clusterAutoTuneTab.device', 'Device'),
+            nowrap: false,
+            render: (d) => (
+              <>
+                <div className="font-mono text-foreground">{d.deviceKey}</div>
+                <div className="text-[11px] text-foreground-subtle">
+                  {acceleratorLabel(d.accelerator)}
+                </div>
+              </>
+            ),
+          },
+          {
+            mobile: 'hidden',
+            key: 'capacity',
+            header: t('pipeline.clusterAutoTuneTab.capacity', 'Capacity'),
+            nowrap: false,
+            render: (d) => (
+              <span className="text-foreground-muted">
+                {d.chosen === null
+                  ? '—'
+                  : t('pipeline.clusterAutoTuneTab.sessionsAtFps', {
+                      count: d.chosen.capacitySessions,
+                      fps: plan.cameraFps,
+                    })}
+                {d.chosen !== null && (
+                  <div className="text-[11px] text-foreground-subtle">
+                    {t('pipeline.clusterAutoTuneTab.fpsKeptFree', {
+                      fps: d.chosen.fps,
+                      percent: Math.round(plan.headroom * 100),
+                    })}
+                    <div>{latencySourceText(d.chosen.source)}</div>
+                  </div>
+                )}
+              </span>
+            ),
+          },
+          {
+            mobile: 'keep',
+            key: 'detector',
+            header: t('pipeline.clusterAutoTuneTab.detector', 'Detector'),
+            render: (d) => {
               const change = detectorChangeFor(plan, node.nodeId, d.deviceKey)
-              return (
-                <tr key={d.deviceKey} className="border-t border-border align-top">
-                  <td className="px-3 py-1.5">
-                    <div className="font-mono text-foreground">{d.deviceKey}</div>
-                    <div className="text-[11px] text-foreground-subtle">
-                      {acceleratorLabel(d.accelerator)}
-                    </div>
-                  </td>
-                  <td className="px-3 py-1.5 text-foreground-muted">
-                    {d.chosen === null
-                      ? '—'
-                      : t('pipeline.clusterAutoTuneTab.sessionsAtFps', {
-                          count: d.chosen.capacitySessions,
-                          fps: plan.cameraFps,
-                        })}
-                    {d.chosen !== null && (
-                      <div className="text-[11px] text-foreground-subtle">
-                        {t('pipeline.clusterAutoTuneTab.fpsKeptFree', {
-                          fps: d.chosen.fps,
-                          percent: Math.round(plan.headroom * 100),
-                        })}
-                        <div>{latencySourceText(d.chosen.source)}</div>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-1.5">
-                    {d.chosen === null ? (
-                      <span className="text-foreground-subtle">{t('common.unchanged')}</span>
-                    ) : change !== null && change.before !== change.after ? (
-                      <span>
-                        <span className="text-foreground-subtle">
-                          {change.before ?? t('common.defaultWord')}
-                        </span>
-                        {' → '}
-                        <span className="font-medium text-foreground">{change.after}</span>
-                      </span>
-                    ) : (
-                      <span className="text-foreground">{d.chosen.modelId}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-1.5 text-[11px] text-foreground-muted">
-                    {d.reasons.map((r, i) => (
-                      <div key={i}>{reasonText(r)}</div>
-                    ))}
-                  </td>
-                </tr>
+              return d.chosen === null ? (
+                <span className="text-foreground-subtle">{t('common.unchanged')}</span>
+              ) : change !== null && change.before !== change.after ? (
+                <span>
+                  <span className="text-foreground-subtle">
+                    {change.before ?? t('common.defaultWord')}
+                  </span>
+                  {' → '}
+                  <span className="font-medium text-foreground">{change.after}</span>
+                </span>
+              ) : (
+                <span className="text-foreground">{d.chosen.modelId}</span>
               )
-            })}
-          </tbody>
-        </table>
-      </div>
+            },
+          },
+          {
+            mobile: 'hidden',
+            key: 'why',
+            header: t('pipeline.clusterAutoTuneTab.why', 'Why'),
+            nowrap: false,
+            render: (d) => (
+              <span className="text-[11px] text-foreground-muted">
+                {d.reasons.map((r, i) => (
+                  <div key={i}>{reasonText(r)}</div>
+                ))}
+              </span>
+            ),
+          },
+        ]}
+      />
     </section>
   )
 }
