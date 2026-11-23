@@ -86,6 +86,54 @@ describe('prebuffer hold converges on the battery fact', () => {
     )
   })
 
+  it('a publish carrying only battery-operated (no sleeps) opens no default hold', async () => {
+    const logger = makeLogger()
+    const manager = new StreamBrokerManager(logger)
+    stubRtsp(manager)
+    const base = {
+      deviceId: 641,
+      camStreamId: 'native:main',
+      kind: 'pull-rtsp' as const,
+      url: 'rtsp://cam/main',
+      resolution: { width: 2560, height: 1440 },
+    }
+    await manager.publishCameraStream({ ...base, deviceFeatures: ['battery-operated'] })
+    await manager.assignProfile({ deviceId: 641, profile: 'high', camStreamId: 'native:main' })
+    await manager.restartProfile({ deviceId: 641, profile: 'high' })
+    const broker = await manager.getBroker({ brokerId: '641/native:main' })
+    expect(broker).not.toBeNull()
+    expect(broker!.getPreBufferDuration()).toBe(0)
+    expect(logger.info).not.toHaveBeenCalledWith('prebuffer hold opened', expect.anything())
+  })
+
+  it('a wired camera still gets its default hold', async () => {
+    const logger = makeLogger()
+    const manager = new StreamBrokerManager(logger)
+    stubRtsp(manager)
+    await manager.publishCameraStream({
+      deviceId: 642,
+      camStreamId: 'native:main',
+      kind: 'pull-rtsp' as const,
+      url: 'rtsp://cam/main',
+      resolution: { width: 2560, height: 1440 },
+      deviceFeatures: [],
+    })
+    await manager.assignProfile({ deviceId: 642, profile: 'high', camStreamId: 'native:main' })
+    await manager.restartProfile({ deviceId: 642, profile: 'high' })
+    const broker = await manager.getBroker({ brokerId: '642/native:main' })
+    expect(broker!.getPreBufferDuration()).toBeGreaterThan(0)
+  })
+
+  it('the hold-opened line carries the retention being applied, not the previous one', () => {
+    const logger = makeLogger()
+    const broker = new StreamBroker('640/native:main', logger)
+    broker.setPrebuffer({ enabled: true, seconds: 5 })
+    expect(logger.info).toHaveBeenCalledWith(
+      'prebuffer hold opened',
+      expect.objectContaining({ meta: expect.objectContaining({ retentionMs: 5000 }) }),
+    )
+  })
+
   it('never opens a hold for an enabled prebuffer of 0 seconds', () => {
     const logger = makeLogger()
     const broker = new StreamBroker('640/native:main', logger)

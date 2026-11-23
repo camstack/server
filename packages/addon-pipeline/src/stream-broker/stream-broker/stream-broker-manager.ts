@@ -7167,7 +7167,7 @@ export class StreamBrokerManager {
               clusterSeconds: this.defaultPreBufferSec,
               overrides: pb,
               defaultWarm: this.isDefaultWarm(deviceId, camStreamId),
-              batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.Sleeps),
+              batteryOperated: this.isLowPowerDevice(deviceId),
               terminalRelay:
                 this.cameraStreams.get(deviceId)?.get(camStreamId)?.kind === 'pull-http',
             }),
@@ -7623,6 +7623,20 @@ export class StreamBrokerManager {
   private toCameraStream(s: CameraStreamInternal): CameraStream {
     const { order: _order, deviceFeatures: _df, ...rest } = s
     return rest
+  }
+
+  /**
+   * A device that sleeps OR runs on a battery never gets a DEFAULT prebuffer
+   * hold. A publisher still carrying the pre-#459 list (battery-operated
+   * without sleeps) must not keep the camera awake: the hold is live intent and
+   * holds the upstream dialed forever. An explicit per-device override still
+   * wins in `resolvePrebuffer`.
+   */
+  private isLowPowerDevice(deviceId: number): boolean {
+    return (
+      this.deviceHasFeature(deviceId, DeviceFeature.Sleeps) ||
+      this.deviceHasFeature(deviceId, DeviceFeature.BatteryOperated)
+    )
   }
 
   private deviceHasFeature(deviceId: number, feature: string): boolean {
@@ -8919,7 +8933,7 @@ export class StreamBrokerManager {
       clusterSeconds: this.defaultPreBufferSec,
       overrides: this.deviceOverrides.get(deviceId)?.preBuffer,
       defaultWarm: this.isDefaultWarm(deviceId, camStreamId),
-      batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.Sleeps),
+      batteryOperated: this.isLowPowerDevice(deviceId),
       terminalRelay: this.cameraStreams.get(deviceId)?.get(camStreamId)?.kind === 'pull-http',
     })
   }

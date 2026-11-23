@@ -171,7 +171,7 @@ describe('applyPrebufferConfig — high-profile default warm', () => {
     expect(broker!.getPreBufferDuration()).toBe(0)
   })
 
-  it('a device that only REPORTS a battery is warmed like any other (#459, Q2)', async () => {
+  it('a device that only REPORTS a battery gets no DEFAULT hold (#666: a stale pre-#459 list must not keep it awake)', async () => {
     await manager.publishCameraStream({
       deviceId: 45,
       camStreamId: 'main',
@@ -186,7 +186,7 @@ describe('applyPrebufferConfig — high-profile default warm', () => {
 
     const broker = await manager.getBroker({ brokerId: '45/main' })
     expect(broker).not.toBeNull()
-    expect(broker!.getPreBufferDuration()).toBeGreaterThan(0)
+    expect(broker!.getPreBufferDuration()).toBe(0)
   })
 
   // ── Terminal-style (`pull-http`) sources are never default-warm ───────

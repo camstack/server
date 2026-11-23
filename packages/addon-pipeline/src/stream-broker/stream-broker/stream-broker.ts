@@ -2842,9 +2842,9 @@ export class StreamBroker implements IStreamBroker {
     // `applyPreRoll` used to write them from two call sites.
     // A hold with nothing to retain is a source kept dialed for no reason
     // (on a battery camera: kept awake). `enabled` with 0 seconds is OFF.
-    this.setPreBufferEnabled(config.enabled && config.seconds > 0)
     this.setPreBufferDuration(config.seconds)
     this.prebufferMs = next
+    this.setPreBufferEnabled(config.enabled && config.seconds > 0)
   }
 
   /**

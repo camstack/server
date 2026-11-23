@@ -1,3 +1,4 @@
+import { stampCurrentFeatures } from './stamp-current-features.js'
 import type { EncStreamPatch } from '@apocaliss92/nodelink-js'
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import {
@@ -7746,7 +7747,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // holds descriptors assembled from a real camera response — it is NOT an
     // error fallback (a transient failure still surfaces as a throw below).
     if (this.cachedStreamDescriptors?.length) {
-      return this.withLiveNativeSdp(this.cachedStreamDescriptors)
+      return this.withLiveNativeSdp(
+        stampCurrentFeatures(this.cachedStreamDescriptors, this.features),
+      )
     }
     // Cold RAM, warm ledger: rehydrate from the persisted `stream-catalog`
     // slice (D173). This is the difference between a restart being a pause and
@@ -8268,7 +8271,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         ...(entry.codec !== undefined ? { codec: entry.codec } : {}),
         ...(entry.metadata ? { metadata: entry.metadata } : {}),
         ...(entry.maxSessionMs !== undefined ? { maxSessionMs: entry.maxSessionMs } : {}),
-        deviceFeatures: entry.deviceFeatures ?? [...this.features],
+        // Always the CURRENT features: a list stored on a restored descriptor is stale.
+        deviceFeatures: [...this.features],
         autoEligible: entry.autoEligible ?? true,
       })
       this.publishedStreamIds.add(entry.camStreamId)
