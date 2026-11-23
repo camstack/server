@@ -18,6 +18,7 @@ function logger(): IScopedLogger {
     warn: vi.fn(),
     error: vi.fn(),
     child: () => fake,
+    withTags: () => fake,
   }
   return fake
 }
