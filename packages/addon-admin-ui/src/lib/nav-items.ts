@@ -95,12 +95,18 @@ function visibleTo(items: readonly NavItem[], isAdmin: boolean): readonly NavIte
 export interface BuildNavSectionsParams {
   readonly t: NavTranslate
   readonly isAdmin: boolean
+  /** Framed by the viewer app: its own Viewer entry would nest it in itself. */
+  readonly embeddedByViewer?: boolean
 }
 
 /** Builds the 4 built-in sidebar sections, gated by `isAdmin`. Pure — same
  *  inputs always produce the same sections, so it's safe to call from both
  *  the sidebar render and the search index build without a shared cache. */
-export function buildNavSections({ t, isAdmin }: BuildNavSectionsParams): readonly NavSection[] {
+export function buildNavSections({
+  t,
+  isAdmin,
+  embeddedByViewer = false,
+}: BuildNavSectionsParams): readonly NavSection[] {
   const top = visibleTo(
     [
       { label: t('nav.devices', 'Devices'), icon: Camera, path: '/devices' },
@@ -117,7 +123,9 @@ export function buildNavSections({ t, isAdmin }: BuildNavSectionsParams): readon
         path: '/locations',
         adminOnly: true,
       },
-      { label: t('nav.viewer', 'Viewer'), icon: Monitor, path: '/live' },
+      ...(embeddedByViewer
+        ? []
+        : [{ label: t('nav.viewer', 'Viewer'), icon: Monitor, path: '/live' }]),
     ],
     isAdmin,
   )

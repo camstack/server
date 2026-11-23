@@ -177,6 +177,22 @@ describe('auth — native link and browser handoff (D801)', () => {
     expect(deps.browserHandoffs.redeem(code)).toBeNull()
   })
 
+  it('createBrowserHandoff({ destination: admin }) names the destination, still no token in the URL', async () => {
+    const { path } = await caller().createBrowserHandoff({ destination: 'admin' })
+    const parsed = new URL(path, 'https://hub')
+    expect(parsed.pathname).toBe('/api/auth/browser-handoff')
+    expect(parsed.searchParams.get('destination')).toBe('admin')
+    expect([...parsed.searchParams.keys()].sort()).toEqual(['code', 'destination'])
+    expect(parsed.searchParams.get('code')).toMatch(/^chc_/)
+  })
+
+  it('the sessions a handoff opened are taken (once) by the session that asked', () => {
+    deps.browserHandoffs.adoptChildSession('parent', 'child-1')
+    deps.browserHandoffs.adoptChildSession('parent', 'child-2')
+    expect(deps.browserHandoffs.takeChildSessions('parent')).toEqual(['child-1', 'child-2'])
+    expect(deps.browserHandoffs.takeChildSessions('parent')).toEqual([])
+  })
+
   it('a hub without the native wiring says so', async () => {
     await expect(caller(makeUser(), null).completeExternalLink({ code: 'nlc_x' })).rejects.toThrow(
       /not available/,

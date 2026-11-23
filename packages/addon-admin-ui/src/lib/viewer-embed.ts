@@ -35,3 +35,25 @@ export function planViewerEmbed(basename: string = routerBasename()): ViewerEmbe
   if (basename === '') return { kind: 'frame', src: hubPath('/viewer/camstack/') }
   return { kind: 'unavailable-under-mount', mount: basename }
 }
+
+/**
+ * The global the viewer's native WebView sets before the page loads (a native
+ * frame is its own top window, so `window.top` cannot say it is framed).
+ */
+export const VIEWER_EMBED_FLAG = '__CAMSTACK_VIEWER_EMBED__'
+
+/**
+ * True when the viewer app is hosting this admin UI — a same-origin iframe on
+ * the web, or the flagged WebView on a phone. The viewer then offers the Admin
+ * app from its own drawer, so this UI hides its own entry to the viewer: the
+ * viewer must not nest in itself.
+ */
+export function isEmbeddedByViewer(win: Window = window): boolean {
+  if (Reflect.get(win, VIEWER_EMBED_FLAG) === true) return true
+  try {
+    return win.self !== win.top
+  } catch {
+    // A cross-origin top is a frame all the same.
+    return true
+  }
+}

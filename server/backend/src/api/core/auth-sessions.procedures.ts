@@ -8,6 +8,7 @@ import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { DEVICE_REFRESH_REFUSAL_PREFIX, type DeviceRefusalReason } from '@camstack/types'
+import type { HandoffCodeService } from '../../core/auth/handoff-code.service.js'
 import { userManagementInternal } from '../../auth/hub-sessions.js'
 import {
   type SessionMinter,
@@ -62,6 +63,8 @@ export interface SessionProcedureDeps {
   readonly minter: SessionMinter
   /** The credential-tier, per-client rate-limited public procedure. */
   readonly credentialProcedure: typeof publicProcedure
+  /** Ties a browser handoff's session to the one that asked for it; absent without the native wiring. */
+  readonly handoffs?: Pick<HandoffCodeService, 'takeChildSessions'>
 }
 
 function requireSessions(registry: CapabilityRegistry | null) {
@@ -175,6 +178,12 @@ export function createSessionProcedures(deps: SessionProcedureDeps) {
           return { success: true as const, revoked }
         }
         const sessionId = ctx.user.sessionId
+        // The Admin sessions this one opened through a browser handoff end with it.
+        if (sessionId !== undefined) {
+          for (const child of deps.handoffs?.takeChildSessions(sessionId) ?? []) {
+            await sessions.revoke(child, 'logout')
+          }
+        }
         const revoked = sessionId === undefined ? false : await sessions.revoke(sessionId, 'logout')
         return { success: true as const, revoked: revoked ? 1 : 0 }
       }),

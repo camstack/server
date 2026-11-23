@@ -17,7 +17,11 @@ import { parseForwardedPrefix } from '../api/static/spa-mount.js'
 import type { HandoffCodeService } from '../core/auth/handoff-code.service.js'
 import type { AuthNetworkPolicy } from './auth-network-policy.js'
 import { clientKeyFromRequest, type RateLimiter } from './auth-rate-limit.js'
-import { browserHandoffLocation, ssoReturnLocation } from './native-return.js'
+import {
+  browserHandoffLocation,
+  parseBrowserHandoffDestination,
+  ssoReturnLocation,
+} from './native-return.js'
 import type { MintedSession, SessionMinter } from './session-mint.js'
 import { finishSsoLogin } from './sso-finish.js'
 import { APP_CONFIRM_PARAM, APP_CONFIRM_PATH, appConfirmCookie } from './app-confirm-routes.js'
@@ -155,7 +159,7 @@ export function registerSsoRoutes(fastify: FastifyInstance, deps: SsoRoutesDeps)
   // A one-time code minted by `auth.createBrowserHandoff` opens the account
   // page signed in (D801): the session rides the URL FRAGMENT (never a server
   // log), and the only destination is the account page.
-  fastify.get<{ Querystring: { code?: string } }>(
+  fastify.get<{ Querystring: { code?: string; destination?: string } }>(
     '/api/auth/browser-handoff',
     async (request, reply) => {
       const mount = parseForwardedPrefix(request.headers['x-forwarded-prefix']) ?? ''
@@ -175,6 +179,10 @@ export function registerSsoRoutes(fastify: FastifyInstance, deps: SsoRoutesDeps)
             ...(ip !== null ? { ip } : {}),
             ...clientOf(request.headers['user-agent']),
           })
+          // The session this handoff opened ends with the one that asked for it.
+          if (grant.sessionId !== undefined && session.sessionId !== undefined) {
+            deps.browserHandoffCodes.adoptChildSession(grant.sessionId, session.sessionId)
+          }
         } catch (error: unknown) {
           deps.logger.warn('Browser handoff refused', {
             meta: { error: error instanceof Error ? error.message : String(error) },
@@ -183,7 +191,14 @@ export function registerSsoRoutes(fastify: FastifyInstance, deps: SsoRoutesDeps)
       }
       reply.code(302)
       reply.header('Referrer-Policy', 'no-referrer')
-      reply.header('Location', browserHandoffLocation(mount, session))
+      reply.header(
+        'Location',
+        browserHandoffLocation(
+          mount,
+          session,
+          parseBrowserHandoffDestination(request.query.destination),
+        ),
+      )
       return reply.send('')
     },
   )

@@ -3,7 +3,8 @@ import { sessionHarness } from '../../../auth/__tests__/session-test-harness.js'
 import { HandoffCodeService, pkceChallenge } from '../../../core/auth/handoff-code.service.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'
 import { createAuthLimiters } from '../auth-limits.js'
-import { createAuthRouter } from '../auth.router.js'
+import { createAuthRouter, type NativeLinkRouterDeps } from '../auth.router.js'
+import { NativeLinkCompletions } from '../../../auth/native-link-completions.js'
 
 /**
  * Server-side sessions (security plan §5.1): short access tokens refreshed by
@@ -17,11 +18,11 @@ function decodeExp(token: string): number {
   return payload.exp * 1000
 }
 
-function setup() {
+function setup(native: NativeLinkRouterDeps | null = null) {
   const users = [{ id: 'u-alice', username: 'alice', isAdmin: false, password: 'pw-alice-1' }]
   const h = sessionHarness(users)
   const handoffs = new HandoffCodeService()
-  const router = createAuthRouter(h.auth, h.registry as never, null, handoffs, undefined, null, {
+  const router = createAuthRouter(h.auth, h.registry as never, null, handoffs, undefined, native, {
     sessions: h.backing,
     limiters: createAuthLimiters(),
   })
@@ -89,6 +90,36 @@ describe('auth sessions', () => {
     await expect(
       anon.refreshSession({ refreshToken: login.refreshToken ?? '' }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
+  })
+
+  it('SECURITY: logout also ends the Admin session its browser handoff opened (D1094)', async () => {
+    const browserHandoffs = new HandoffCodeService()
+    const { anon, auth, as } = setup({
+      completions: new NativeLinkCompletions(),
+      browserHandoffs,
+      link: async () => 'linked' as const,
+    })
+    const viewer = await anon.login({
+      username: 'alice',
+      password: 'pw-alice-1',
+      refreshable: true,
+    })
+    const adminOne = await anon.login({
+      username: 'alice',
+      password: 'pw-alice-1',
+      refreshable: true,
+    })
+    const unrelated = await anon.login({
+      username: 'alice',
+      password: 'pw-alice-1',
+      refreshable: true,
+    })
+    browserHandoffs.adoptChildSession(viewer.sessionId ?? '', adminOne.sessionId ?? '')
+    await as(viewer.token).logout()
+    expect(() => auth.verifyToken(viewer.token)).toThrow(/no longer valid/)
+    expect(() => auth.verifyToken(adminOne.token)).toThrow(/no longer valid/)
+    // A session nobody tied to the viewer's is left alone.
+    expect(() => auth.verifyToken(unrelated.token)).not.toThrow()
   })
 
   it('SECURITY: a revoked session is rejected wherever a token is verified (every surface asks verifyToken)', async () => {

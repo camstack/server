@@ -93,6 +93,8 @@ function hashCode(code: string): string {
 export class HandoffCodeService {
   /** Keyed by SHA-256(raw code). */
   private readonly pending = new Map<string, PendingEntry>()
+  /** Parent login session id → the sessions its browser handoffs opened. */
+  private readonly childSessions = new Map<string, Set<string>>()
 
   constructor(
     private readonly now: () => number = Date.now,
@@ -167,6 +169,24 @@ export class HandoffCodeService {
     }
     const { expiresAt: _expiresAt, ...grant } = entry
     return { grant, reason: null }
+  }
+
+  /**
+   * Record that `childSessionId` was opened by a handoff code minted from
+   * `parentSessionId` (a browser handoff). In memory, like the codes: a hub
+   * restart forgets the tie and the child then lives out its own expiry.
+   */
+  adoptChildSession(parentSessionId: string, childSessionId: string): void {
+    const children = this.childSessions.get(parentSessionId) ?? new Set<string>()
+    children.add(childSessionId)
+    this.childSessions.set(parentSessionId, children)
+  }
+
+  /** The sessions opened from `parentSessionId`, forgotten once taken. */
+  takeChildSessions(parentSessionId: string): readonly string[] {
+    const children = this.childSessions.get(parentSessionId)
+    this.childSessions.delete(parentSessionId)
+    return children === undefined ? [] : [...children]
   }
 
   /** Number of not-yet-redeemed (possibly expired) codes. Test/diag aid. */

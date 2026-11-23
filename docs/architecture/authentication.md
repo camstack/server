@@ -423,8 +423,12 @@ return goes to the app, not to an origin.
 returns `/api/auth/browser-handoff?code=…` (one-time, 60 s). The route opens a
 new refreshing session for the code's user and 302s to `/login#token=…&next=/system/my-access`
 — the fragment admin-ui's auth boot consumes — so the native app can send the
-operator to the passkey enrolment in the system browser, signed in. The route
-takes no destination.
+operator to the passkey enrolment in the system browser, signed in. D1094
+amends this: the mint takes a destination, `account` (the default, the page
+above) or `admin` (the fragment carries no `next`, so the Admin UI opens at
+its root). The viewer app uses `admin` to show the Admin in a WebView. Each
+child session a code opens is tied, in memory, to the session that asked, and
+`auth.logout` of that session revokes them; a hub restart forgets the tie.
 
 One identity maps to one user (the row id is the identity); a user may link
 several providers; deleting the user deletes its links; a link whose provider

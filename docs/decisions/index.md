@@ -4,7 +4,7 @@
 
 # Decisions
 
-1058 architecture decision records. One file per decision, never
+1059 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1072,6 +1072,7 @@ that rots.
 | D1091 | [On a phone a table folds by column role and never scrolls sideways](adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md) | ✅ accepted | 2026-11-22 |
 | D1092 | [On for a time" is a hold outside the run, and only what it turned on is turned off](adr-1092-on-for-a-time-is-a-hold-outside-the-run-and-only-what-it-turned-on-is-turned-off.md) | ✅ accepted | 2026-11-22 |
 | D1093 | [A migration keeps each number's secrets and location on that number](adr-1093-a-migration-keeps-secrets-and-location-on-their-own-number.md) | ✅ accepted | 2026-11-23 |
+| D1094 | [A browser handoff names its landing page, and the session it opens ends with the one that asked](adr-1094-a-browser-handoff-names-its-landing-page-and-its-session-ends-with-the-one-that-asked.md) | ✅ accepted | 2026-11-23 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

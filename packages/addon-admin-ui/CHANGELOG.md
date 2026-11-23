@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Matter pairing panel no longer names another product in its help text
 - Add device on a Matter integration uses its own fabric, says when it is not running instead of offering to create one, and calls the adoption tab Paired nodes
 - The Build quick view of an automation, action or custom device now has Settings, Exporters and Last runs tabs; exporters and runs load only when their tab opens, and a run started by an automation names it instead of showing its id.
+- The Admin UI hides its own Live entry when it is shown inside the viewer app
 
 ### Fixed
 

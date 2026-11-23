@@ -1410,7 +1410,12 @@ export function createAuthRouter(
         })
       }),
 
-    ...createSessionProcedures({ registry, minter, credentialProcedure }),
+    ...createSessionProcedures({
+      registry,
+      minter,
+      credentialProcedure,
+      ...(nativeLink !== null ? { handoffs: nativeLink.browserHandoffs } : {}),
+    }),
     ...createCliLoginProcedures({
       cliApprovals: options.cliApprovals ?? cliApprovals,
       beginProcedure: credentialProcedure,
@@ -1543,13 +1548,14 @@ export function createAuthRouter(
     /**
      * A one-time code that opens the hub's account page signed in as the
      * caller, in a browser (D801) — for what only a browser can do at the
-     * hub's origin: a passkey's WebAuthn ceremony. Single-use, 60 s, and it
-     * lands on that page only: the route takes no destination.
+     * hub's origin: a passkey's WebAuthn ceremony. Single-use, 60 s. It lands
+     * on the account page, or — `destination: 'admin'`, the viewer's Admin
+     * app (D1094) — on the admin UI's root; no other destination exists.
      */
     createBrowserHandoff: selfCodeProcedure
-      .input(z.void())
+      .input(z.object({ destination: z.enum(['account', 'admin']).optional() }).optional())
       .output(z.object({ path: z.string(), expiresAt: z.number() }))
-      .mutation(({ ctx }) => {
+      .mutation(({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' })
         assertRealUserSession(ctx.user, 'Opening the account page in a browser')
         if (nativeLink === null) {
@@ -1559,11 +1565,17 @@ export function createAuthRouter(
           })
         }
         const parentCredential = credentialOfSession(ctx.user.sessionId)
+        const destination = input?.destination ?? 'account'
         const { code, expiresAt } = nativeLink.browserHandoffs.create(ctx.user.id, {
           purpose: 'new-session',
+          ...(ctx.user.sessionId !== undefined ? { sessionId: ctx.user.sessionId } : {}),
           ...(parentCredential !== undefined ? { credentialId: parentCredential } : {}),
         })
-        return { path: `${BROWSER_HANDOFF_PATH}?code=${encodeURIComponent(code)}`, expiresAt }
+        const query = new URLSearchParams({
+          code,
+          ...(destination === 'admin' ? { destination } : {}),
+        })
+        return { path: `${BROWSER_HANDOFF_PATH}?${query.toString()}`, expiresAt }
       }),
 
     /** The caller's linked identities; `available: false` when the provider instance is gone or off. */

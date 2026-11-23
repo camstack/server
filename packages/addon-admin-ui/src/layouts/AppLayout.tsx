@@ -44,6 +44,7 @@ import { describeConnectionHealth } from '../lib/connection-health'
 import { saveLastLocation } from '../lib/last-location'
 import { ReleaseIdentityFooter } from '../components/release-identity-footer'
 import { hubPath } from '../lib/mount'
+import { isEmbeddedByViewer } from '../lib/viewer-embed'
 import { buildNavSections, type NavItem, resolveAddonPageIcon } from '../lib/nav-items'
 import type { AddonPageInfo } from './AddonPageLoader'
 import { flattenPages } from './AddonPageLoader'
@@ -258,7 +259,11 @@ export function AppLayout() {
   // search "page" domain (GlobalSearch reruns the same builder) — see
   // lib/nav-items.ts. A page added here shows up in the sidebar AND is
   // searchable; there is no separate hand-written list to fall out of sync.
-  const navSections = useMemo(() => buildNavSections({ t, isAdmin }), [t, isAdmin])
+  const embeddedByViewer = useMemo(() => isEmbeddedByViewer(), [])
+  const navSections = useMemo(
+    () => buildNavSections({ t, isAdmin, embeddedByViewer }),
+    [t, isAdmin, embeddedByViewer],
+  )
   const TOP_ITEMS = navSections[0]?.items ?? []
   const DETECTION_ITEMS = navSections[1]?.items ?? []
   const CLUSTER_ITEMS = navSections[2]?.items ?? []

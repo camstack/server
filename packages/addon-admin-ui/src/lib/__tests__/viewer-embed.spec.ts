@@ -1,6 +1,7 @@
 import { resetHubMountForTests } from '@camstack/ui-library'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { planViewerEmbed } from '../viewer-embed'
+import { isEmbeddedByViewer, planViewerEmbed, VIEWER_EMBED_FLAG } from '../viewer-embed'
+import { buildNavSections } from '../nav-items'
 
 /**
  * The admin UI frames the viewer at the ROOT mount only. Under a path prefix
@@ -37,5 +38,31 @@ describe('planViewerEmbed', () => {
   it('is decided by the basename it is given, not by the document', () => {
     expect(planViewerEmbed('')).toEqual({ kind: 'frame', src: '/viewer/camstack/' })
     expect(planViewerEmbed('/x/g1')).toEqual({ kind: 'unavailable-under-mount', mount: '/x/g1' })
+  })
+})
+
+describe('embedded by the viewer app', () => {
+  it('a plain top window is not embedded', () => {
+    expect(isEmbeddedByViewer()).toBe(false)
+  })
+
+  it('the native WebView flag says embedded (its window is its own top)', () => {
+    const win = { self: {}, [VIEWER_EMBED_FLAG]: true } as unknown as Window
+    expect(isEmbeddedByViewer(win)).toBe(true)
+  })
+
+  it('a framed window says embedded', () => {
+    const win = { self: {}, top: {} } as unknown as Window
+    expect(isEmbeddedByViewer(win)).toBe(true)
+  })
+
+  it('hides the Viewer entry only when embedded', () => {
+    const t = (_key: string, fallback?: string): string => fallback ?? _key
+    const paths = (embeddedByViewer: boolean): readonly string[] =>
+      buildNavSections({ t, isAdmin: true, embeddedByViewer }).flatMap((s) =>
+        s.items.map((i) => i.path),
+      )
+    expect(paths(false)).toContain('/live')
+    expect(paths(true)).not.toContain('/live')
   })
 })
