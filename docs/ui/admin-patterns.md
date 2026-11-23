@@ -260,7 +260,12 @@ column order. Use it for the columns that hold an input (a switch, a select, a
 number); a column that renders an input is never `hidden`. From 640 px a `sheet`
 column is an ordinary column. On a phone the sheet takes the row tap from
 `onRowClick`; `sheetOpenLabel` adds an "open" button at the end of the sheet
-that calls it. No sideways scroll, no cards, rows at most 64 px. The fold runs in
+that calls it. The sheet is titled by `sheetTitle(row)`, else the primary text or
+header. A column can skip itself per row with `sheetVisible(row)` (the predicate
+its cell uses to render empty); a row with no visible entry falls back to
+`onRowClick`. Rows are focusable and open on Enter / Space. A tap on a native
+control never opens the sheet; a custom non-native clickable inside a cell must
+carry `data-no-row-sheet` (the selection cell does). No sideways scroll, no cards, rows at most 64 px. The fold runs in
 markup (`useIsPhone()`): a CSS-hidden duplicate cell stays mounted and breaks
 every query that finds a cell by text. A header that cannot fit becomes an icon
 with an `aria-label` (the Network addresses table). A device row's actions sit

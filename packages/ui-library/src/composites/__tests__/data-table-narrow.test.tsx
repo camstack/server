@@ -268,6 +268,139 @@ describe('DataTable — narrow-viewport rendering', () => {
       expect(screen.queryByRole('dialog')).toBeNull()
     })
 
+    it('names the sheet (primary text) and gives it a close button', () => {
+      setViewport(true)
+      const { container } = render(<DataTable columns={[...SHEETED]} rows={[...ROWS]} />)
+      fireEvent.click(container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toContain('Front door')
+      expect(dialog.querySelector('button')).not.toBeNull()
+      fireEvent.click(dialog.querySelector('button') as Element)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('titles the sheet with sheetTitle, or the primary header when the primary is rich', () => {
+      setViewport(true)
+      const rich: DataColumn<Row>[] = [
+        { ...SHEETED[0], render: (r) => <b>{r.name}</b> } as DataColumn<Row>,
+        ...SHEETED.slice(1),
+      ]
+      const first = render(<DataTable columns={rich} rows={[...ROWS]} />)
+      fireEvent.click(first.container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(screen.getByRole('dialog').textContent).toContain('Name')
+      first.unmount()
+      const second = render(
+        <DataTable columns={rich} rows={[...ROWS]} sheetTitle={(r) => `Edit ${r.node}`} />,
+      )
+      fireEvent.click(second.container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(screen.getByRole('dialog').textContent).toContain('Edit hub')
+    })
+
+    it('skips a sheet column per row with sheetVisible, and falls back to onRowClick when none is left', () => {
+      const onRowClick = vi.fn()
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        SHEETED[0] as DataColumn<Row>,
+        {
+          mobile: 'sheet',
+          key: 'enabled',
+          header: 'Enabled',
+          sheetVisible: (r) => r.name === 'Front door',
+          render: () => <input type="checkbox" aria-label="on" />,
+        },
+      ]
+      const { container } = render(
+        <DataTable columns={columns} rows={[...ROWS]} onRowClick={onRowClick} />,
+      )
+      const rows = container.querySelectorAll('tbody tr')
+      fireEvent.click(rows[0]?.querySelector('td[data-cell="name"]') as Element)
+      expect(screen.getByRole('dialog').textContent).toContain('Enabled')
+      fireEvent.click(screen.getByRole('dialog').querySelector('button') as Element)
+      fireEvent.click(rows[1]?.querySelector('td[data-cell="name"]') as Element)
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(onRowClick).toHaveBeenCalledWith(ROWS[1], 1)
+    })
+
+    it('does nothing on a row with no visible sheet entry and no onRowClick', () => {
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        SHEETED[0] as DataColumn<Row>,
+        { mobile: 'sheet', key: 'x', header: 'X', sheetVisible: () => false, render: () => 'x' },
+      ]
+      const { container } = render(<DataTable columns={columns} rows={[...ROWS]} />)
+      fireEvent.click(container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(container.querySelector('tbody tr')?.getAttribute('tabindex')).toBeNull()
+    })
+
+    it('opens from the keyboard: the row is focusable, Enter and Space on the row itself open it', () => {
+      setViewport(true)
+      const { container } = render(<DataTable columns={[...SHEETED]} rows={[...ROWS]} />)
+      const row = container.querySelector('tbody tr') as HTMLElement
+      expect(row.getAttribute('tabindex')).toBe('0')
+      fireEvent.keyDown(row, { key: 'Enter' })
+      expect(screen.getByRole('dialog')).not.toBeNull()
+      fireEvent.click(screen.getByRole('dialog').querySelector('button') as Element)
+      fireEvent.keyDown(row, { key: ' ' })
+      expect(screen.getByRole('dialog')).not.toBeNull()
+    })
+
+    it('ignores a key pressed inside a control of the row', () => {
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        ...SHEETED,
+        { mobile: 'keep', key: 'act', render: () => <button type="button">Remove</button> },
+      ]
+      render(<DataTable columns={columns} rows={[...ROWS]} />)
+      fireEvent.keyDown(screen.getAllByText('Remove')[0] as Element, { key: 'Enter' })
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('does not open the sheet for a tap in the selection cell', () => {
+      setViewport(true)
+      const { container } = render(
+        <DataTable
+          columns={[...SHEETED]}
+          rows={[...ROWS]}
+          rowKey={(r) => r.name}
+          selection={{
+            selected: new Set<string>(),
+            onChange: () => {},
+            rowLabel: (r) => `select ${r.name}`,
+            pageLabel: 'select all',
+          }}
+        />,
+      )
+      const cell = container.querySelector('tbody tr td[data-cell="__select"]') as Element
+      expect(cell.hasAttribute('data-no-row-sheet')).toBe(true)
+      fireEvent.click(cell)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('opens the sheet for a tap on a custom non-native component, unless it carries data-no-row-sheet', () => {
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        ...SHEETED,
+        {
+          mobile: 'keep',
+          key: 'chip',
+          render: (r) => (
+            <div>
+              <span data-testid={`plain-${r.name}`}>plain</span>
+              <span data-no-row-sheet="" data-testid={`own-${r.name}`}>
+                own
+              </span>
+            </div>
+          ),
+        },
+      ]
+      render(<DataTable columns={columns} rows={[...ROWS]} />)
+      fireEvent.click(screen.getByTestId('own-Front door'))
+      expect(screen.queryByRole('dialog')).toBeNull()
+      fireEvent.click(screen.getByTestId('plain-Front door'))
+      expect(screen.getByRole('dialog')).not.toBeNull()
+    })
+
     it('keeps onRowClick on a phone when the table has no sheet column', () => {
       const onRowClick = vi.fn()
       setViewport(true)

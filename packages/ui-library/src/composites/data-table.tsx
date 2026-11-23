@@ -51,7 +51,13 @@
  * row tap to the sheet and does NOT call `onRowClick` (one tap, one meaning; a
  * row that opens an editor keeps it reachable by passing `sheetOpenLabel`: the
  * sheet then ends with a button of that label that closes it and calls
- * `onRowClick`). Tables without
+ * `onRowClick`). A column can skip itself per row with `sheetVisible(row)`; a row
+ * with no visible sheet entry falls back to `onRowClick` (or does nothing). The
+ * sheet is titled by `sheetTitle(row)`, else the primary cell's text, else the
+ * primary header. A custom component that is not natively interactive (a div
+ * with an onClick) is NOT detected: a tap on it opens the sheet unless it, or an
+ * ancestor inside the cell, carries `data-no-row-sheet`. An interactive row has
+ * `tabIndex=0`; Enter / Space on the row itself activates it. Tables without
  * `sheet` columns, and every table from `sm` up, keep `onRowClick` unchanged.
  *
  * ── Scrolling the BODY, not the page ──────────────────────────────────────
@@ -75,7 +81,11 @@ import {
   DEFAULT_PAGINATION_LABELS,
   paginateRows,
 } from './data-table-pagination'
-import { type DataTableSelection, selectionColumn } from './data-table-selection'
+import {
+  type DataTableSelection,
+  SELECTION_COLUMN_KEY,
+  selectionColumn,
+} from './data-table-selection'
 import { SortHeaderButton } from './sort-header-button'
 import {
   ariaSortForColumn,
@@ -141,6 +151,14 @@ export interface DataColumn<T> {
    * up wider than the screen (`scripts/check-table-mobile-roles.ts`).
    */
   readonly mobile: DataColumnMobileRole
+  /**
+   * `sheet` columns only: false skips this column in the row's sheet (a cell the
+   * row deliberately leaves empty must not show a bare label). Use the same
+   * predicate `render` uses to decide it is empty. Absent = always listed. A row
+   * with no visible sheet entry does not open a sheet: its tap falls back to
+   * `onRowClick`, or does nothing.
+   */
+  readonly sheetVisible?: (row: T) => boolean
 }
 
 export type DataColumnMobileRole = 'primary' | 'keep' | 'detail' | 'sheet' | 'hidden'
@@ -159,6 +177,11 @@ export interface DataTableProps<T> {
    * Absent = the sheet has no such button.
    */
   readonly sheetOpenLabel?: string
+  /**
+   * The sheet's title (its accessible name). Default: the primary cell's text when
+   * it renders a string or number, else the primary column's header.
+   */
+  readonly sheetTitle?: (row: T) => string
   /** Min width in px for the inner table. Default: 480. */
   readonly minWidthPx?: number
   /** Empty-state message. Default: hides the table when rows=[]. */
@@ -278,6 +301,7 @@ export function DataTable<T>({
   rowKey,
   onRowClick,
   sheetOpenLabel,
+  sheetTitle,
   minWidthPx = 480,
   emptyMessage,
   className,
@@ -349,6 +373,8 @@ export function DataTable<T>({
 
   const sheetColumns = phone ? columns.filter((col) => col.mobile === 'sheet') : []
   const sheetEnabled = sheetColumns.length > 0
+  const sheetEntriesOf = (row: T): readonly DataColumn<T>[] =>
+    sheetColumns.filter((col) => col.sheetVisible?.(row) !== false)
 
   const keyOf = (row: T): string =>
     String(rowKey ? rowKey(row, rows.indexOf(row)) : rows.indexOf(row))
@@ -383,16 +409,28 @@ export function DataTable<T>({
   const sheetRow =
     sheetEnabled && sheetRowKey !== null ? rows.find((r) => keyOf(r) === sheetRowKey) : undefined
   const primaryColumn = columns.find((col) => col.mobile === 'primary')
+  const primaryCell =
+    sheetRow !== undefined && primaryColumn !== undefined
+      ? primaryColumn.render(sheetRow, rows.indexOf(sheetRow))
+      : null
+  const primaryText =
+    typeof primaryCell === 'string' || typeof primaryCell === 'number' ? String(primaryCell) : null
+  const sheetHeading =
+    sheetRow === undefined
+      ? undefined
+      : (sheetTitle?.(sheetRow) ?? primaryText ?? primaryColumn?.header)
   const sheet = sheetEnabled && (
-    <BottomSheet open={sheetRow !== undefined} onClose={() => setSheetRowKey(null)}>
+    <BottomSheet
+      open={sheetRow !== undefined}
+      onClose={() => setSheetRowKey(null)}
+      title={sheetHeading}
+    >
       {sheetRow !== undefined && (
         <div data-data-table-sheet="" className="flex flex-col gap-3">
-          {primaryColumn !== undefined && (
-            <div className="text-sm font-medium text-foreground">
-              {primaryColumn.render(sheetRow, rows.indexOf(sheetRow))}
-            </div>
+          {primaryCell !== null && primaryText === null && (
+            <div className="text-sm font-medium text-foreground">{primaryCell}</div>
           )}
-          {sheetColumns.map((col) => (
+          {sheetEntriesOf(sheetRow).map((col) => (
             <div key={col.key} className="flex items-center justify-between gap-3">
               <span data-sheet-label="" className="text-xs text-foreground-muted">
                 {col.headerRender ? col.headerRender() : col.header}
@@ -486,7 +524,12 @@ export function DataTable<T>({
               const extra = rowClassName?.(row, rowIndex) ?? ''
               const operation = rowState?.(row, rowIndex)
               const pending = operation?.kind === 'pending'
-              const interactive = (onRowClick !== undefined || sheetEnabled) && !pending
+              const opensSheet = sheetEnabled && sheetEntriesOf(row).length > 0
+              const interactive = (onRowClick !== undefined || opensSheet) && !pending
+              const activate = (): void => {
+                if (opensSheet) setSheetRowKey(keyOf(row))
+                else onRowClick?.(row, rowIndex)
+              }
               const detail =
                 renderExpanded !== undefined && isExpanded?.(row) === true
                   ? renderExpanded(row, rowIndex)
@@ -497,17 +540,27 @@ export function DataTable<T>({
                     onClick={
                       !interactive
                         ? undefined
-                        : sheetEnabled
-                          ? (event) => {
-                              if (
-                                event.target instanceof Element &&
-                                event.target.closest(INTERACTIVE_TARGET) !== null
-                              ) {
-                                return
-                              }
-                              setSheetRowKey(keyOf(row))
+                        : (event) => {
+                            if (
+                              opensSheet &&
+                              event.target instanceof Element &&
+                              event.target.closest(INTERACTIVE_TARGET) !== null
+                            ) {
+                              return
                             }
-                          : () => onRowClick?.(row, rowIndex)
+                            activate()
+                          }
+                    }
+                    tabIndex={interactive ? 0 : undefined}
+                    onKeyDown={
+                      interactive
+                        ? (event) => {
+                            if (event.target !== event.currentTarget) return
+                            if (event.key !== 'Enter' && event.key !== ' ') return
+                            event.preventDefault()
+                            activate()
+                          }
+                        : undefined
                     }
                     aria-busy={pending ? true : undefined}
                     title={operation?.kind === 'failed' ? operation.message : undefined}
@@ -527,6 +580,7 @@ export function DataTable<T>({
                         <td
                           key={col.key}
                           data-cell={col.key}
+                          data-no-row-sheet={col.key === SELECTION_COLUMN_KEY ? '' : undefined}
                           className={[
                             'px-2 sm:px-3 py-2 text-foreground border-b border-border',
                             ALIGN_CLASS[align],

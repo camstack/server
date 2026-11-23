@@ -67,6 +67,23 @@ function withName(template: string, name: string): string {
   return template.replaceAll('{{name}}', name)
 }
 
+/** True for a rule a snooze window cannot silence — its snooze cell is empty. */
+function snoozeExempt(rule: NcRule, deps: RuleColumnsDeps): boolean {
+  return isRuleSnoozeExempt(
+    rule.conditions,
+    formStepsForSnooze(
+      {
+        onActivation: rule.actions?.onActivation ?? [],
+        onDeactivation: rule.actions?.onDeactivation ?? [],
+        onTrigger: rule.actions?.onTrigger ?? [],
+        onTriggerOff: rule.actions?.onTriggerOff ?? [],
+        buttons: rule.actions?.buttons ?? [],
+      },
+      deps.actions,
+    ),
+  )
+}
+
 /** Columns for the rules table — one row per rule, actions in the last column. */
 export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[] {
   return [
@@ -146,24 +163,13 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       header: deps.t('notificationRules.columns.snooze', 'Snooze'),
       align: 'center',
       nowrap: true,
+      sheetVisible: (rule) => !snoozeExempt(rule, deps),
       render: (rule) => (
         <NcListRowControls>
           <NotificationRuleSnoozeSwitch
             rule={rule}
             snoozes={deps.snoozes}
-            exempt={isRuleSnoozeExempt(
-              rule.conditions,
-              formStepsForSnooze(
-                {
-                  onActivation: rule.actions?.onActivation ?? [],
-                  onDeactivation: rule.actions?.onDeactivation ?? [],
-                  onTrigger: rule.actions?.onTrigger ?? [],
-                  onTriggerOff: rule.actions?.onTriggerOff ?? [],
-                  buttons: rule.actions?.buttons ?? [],
-                },
-                deps.actions,
-              ),
-            )}
+            exempt={snoozeExempt(rule, deps)}
           />
         </NcListRowControls>
       ),

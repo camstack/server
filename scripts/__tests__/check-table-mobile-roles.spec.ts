@@ -132,6 +132,8 @@ describe('check-table-mobile-roles', () => {
         '<Select value={r.v} />',
         '<NumberInput value={r.n} />',
         '<Checkbox />',
+        '<Textarea value={r.v} />',
+        '<ThemeToggle on={r.on} />',
         '<input type="text" />',
         '<div><Slider /></div>',
       ]) {

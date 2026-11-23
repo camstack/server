@@ -5145,6 +5145,12 @@
           "doc": "With `sheet` columns AND `onRowClick`: on a phone the row tap opens the sheet instead of calling `onRowClick`; this label adds a button at t"
         },
         {
+          "name": "sheetTitle",
+          "type": "(row: T) => string",
+          "optional": true,
+          "doc": "The sheet's title (its accessible name). Default: the primary cell's text when it renders a string or number, else the primary column's head"
+        },
+        {
           "name": "minWidthPx",
           "type": "number",
           "optional": true,
