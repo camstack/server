@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Ecowitt weather station now offers an Illuminance (lux) sensor derived from its solar radiation reading (about 126.7 lux per W/m2), usable for day/night thresholds.
+
 ## [0.2.174] - 2026-11-21
 
 ### Changed

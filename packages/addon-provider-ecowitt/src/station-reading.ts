@@ -137,6 +137,11 @@ export function isStationReadingSensorId(sensorId: string): boolean {
   return Object.prototype.hasOwnProperty.call(BY_KEY, fieldKeyOf(sensorId))
 }
 
+/** True when the sensor id is the station's solar radiation reading. */
+export function isSolarRadiationSensorId(sensorId: string): boolean {
+  return BY_KEY[fieldKeyOf(sensorId)]?.field === 'solarRadiation'
+}
+
 function fieldFromName(sensor: StationSensorSample): { field: StationField; rank: number } | null {
   const name = (sensor.name ?? '').toLowerCase()
   if (name.includes('dew')) return { field: 'dewPoint', rank: 2 }

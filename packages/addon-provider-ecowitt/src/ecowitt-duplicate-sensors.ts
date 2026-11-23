@@ -78,6 +78,8 @@ export function findStationReadingChildren(rows: readonly DuplicateScanRow[]): r
     if (row.type !== DeviceType.Sensor || row.parentDeviceId === null) continue
     if (!stations.has(row.parentDeviceId)) continue
     const sensorId = str(row.config, 'sensorId')
+    // The derived illuminance child shares the solar sensor id and stays.
+    if (str(row.config, 'quantity') === 'illuminance') continue
     if (sensorId !== null && isStationReadingSensorId(sensorId)) ids.push(row.id)
   }
   return ids

@@ -21,6 +21,7 @@ import { ecowittFacades } from '../ecowitt-gateway.js'
 import {
   batteryModeForUnit,
   capForQuantity,
+  irradianceToLux,
   readingQuantityFor,
   type EcowittSensorCap,
   valueFieldForCap,
@@ -291,8 +292,26 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     return this.runtimeState.getCapState<T>(this.capName) ?? fallback
   }
 
+  /** The station's solar radiation in W/m2 (any unit it reports) to approximate lux. */
+  private luxFromIrradiance(value: number, unit: string): number | null {
+    const result = ingestReading({
+      value,
+      rawUnit: unit.length > 0 ? unit : undefined,
+      quantity: 'irradiance',
+    })
+    if (!result.ok) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'irradiance', unit, reason: result.reason },
+      })
+      return null
+    }
+    return irradianceToLux(result.value)
+  }
+
   /** Station number → the quantity's base. An unknown unit publishes null. */
   private toBase(value: number, unit: string): number | null {
+    if (this.ecowittQuantity === 'illuminance') return this.luxFromIrradiance(value, unit)
     const named = readingQuantityFor(this.ecowittQuantity)
     const fromUnit = unit.length === 0 ? undefined : quantityFromUnit(unit)
     const quantity: ReadingQuantity | null =

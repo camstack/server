@@ -13,7 +13,11 @@ import {
   resyncThroughAdoption,
 } from '@camstack/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
-import { childEntriesForGroup, entriesForGroup } from '../ecowitt-sensor-groups.js'
+import {
+  childEntriesForGroup,
+  entriesForGroup,
+  illuminanceEntriesForGroup,
+} from '../ecowitt-sensor-groups.js'
 import {
   capForQuantity,
   ecowittGroupDeviceType,
@@ -131,11 +135,12 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `sensors[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
-    const own = childEntriesForGroup(
-      this.config.values.sensors,
-      this.config.values.deviceGroup,
-      ecowittFacades.getSensors(this.gatewayId),
-    )
+    const live = ecowittFacades.getSensors(this.gatewayId)
+    const group = this.config.values.deviceGroup
+    const own = [
+      ...childEntriesForGroup(this.config.values.sensors, group, live),
+      ...illuminanceEntriesForGroup(this.config.values.sensors, group, live),
+    ]
     return own.map((sensor) => {
       const meta: AccessoryChildSpec['meta'] = {
         type: DeviceType.Sensor,
@@ -153,7 +158,8 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
         ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
       }
       return {
-        stableIdSuffix: sensor.sensorId,
+        stableIdSuffix:
+          sensor.quantity === 'illuminance' ? `${sensor.sensorId}:illuminance` : sensor.sensorId,
         meta,
         config,
         factory: (childCtx: DeviceContext): IDevice => new EcowittSensorDevice(childCtx),

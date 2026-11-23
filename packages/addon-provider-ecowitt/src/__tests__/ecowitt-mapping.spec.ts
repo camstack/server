@@ -7,6 +7,8 @@ import {
   sensorLabel,
   deviceGroupForSensor,
   ECOWITT_DEVICE_GROUPS,
+  LUX_PER_WM2,
+  irradianceToLux,
 } from '../ecowitt-mapping.js'
 import {
   buildEcowittGatewayCandidates,
@@ -410,5 +412,17 @@ describe('settingsToEcowittConfig', () => {
     if (cfg.transport === 'listener') {
       expect(cfg.listenPort).toBe(5000)
     }
+  })
+})
+
+describe('derived illuminance (solar radiation as lux)', () => {
+  it('maps the derived quantity to the ambient-light cap and role', () => {
+    expect(capForQuantity('illuminance')).toBe('ambient-light-sensor')
+    expect(roleForQuantity('illuminance')).toBe(DeviceRole.AmbientLightSensor)
+  })
+  it('converts W/m2 to lux at 126.7 lx per W/m2', () => {
+    expect(LUX_PER_WM2).toBe(126.7)
+    expect(irradianceToLux(0)).toBe(0)
+    expect(irradianceToLux(300)).toBeCloseTo(38010, 6)
   })
 })

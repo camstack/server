@@ -7,7 +7,11 @@ import {
   type DuplicateScanRow,
 } from '../ecowitt-duplicate-sensors.js'
 import type { Sensor } from '@apocaliss92/nodewitt'
-import { childEntriesForGroup, entriesForGroup } from '../ecowitt-sensor-groups.js'
+import {
+  childEntriesForGroup,
+  entriesForGroup,
+  illuminanceEntriesForGroup,
+} from '../ecowitt-sensor-groups.js'
 
 const GW = 'ecowitt:192-168-20-181'
 const container = (
@@ -177,5 +181,50 @@ describe('the gateways a restore brings back', () => {
         { config: {} },
       ]),
     ).toEqual([GW, 'ecowitt:10-0-0-2'])
+  })
+})
+
+describe('the derived illuminance child of the weather station', () => {
+  const entries = [
+    { sensorId: '8E:0x15', quantity: 'irradiance', name: 'Solar Radiation' },
+    { sensorId: '8E:0x02', quantity: 'temperature' },
+  ] as const
+  const live = (category: Sensor['category']): Sensor[] =>
+    entries.map((e) => ({
+      id: e.sensorId,
+      quantity: 'temperature',
+      value: 1,
+      unit: '',
+      raw: '1',
+      lastUpdated: 0,
+      category,
+    }))
+
+  it('the station spawns one illuminance child from its solar radiation reading', () => {
+    const out = illuminanceEntriesForGroup(entries, 'weather-station', live('weather-station'))
+    expect(out).toEqual([{ sensorId: '8E:0x15', quantity: 'illuminance', name: 'Illuminance' }])
+  })
+
+  it('another group spawns none', () => {
+    expect(illuminanceEntriesForGroup(entries, 'gateway', live('gateway'))).toEqual([])
+  })
+
+  it('the retire scan keeps the illuminance child of a solar sensor id', () => {
+    const rows = [
+      container(295, 'weather-station'),
+      {
+        id: 4000,
+        type: DeviceType.Sensor,
+        parentDeviceId: 295,
+        config: { sensorId: '8E:0x15', gatewayId: GW, quantity: 'illuminance' },
+      },
+      {
+        id: 4001,
+        type: DeviceType.Sensor,
+        parentDeviceId: 295,
+        config: { sensorId: '8E:0x15', gatewayId: GW, quantity: 'irradiance' },
+      },
+    ] satisfies DuplicateScanRow[]
+    expect(findStationReadingChildren(rows)).toEqual([4001])
   })
 })

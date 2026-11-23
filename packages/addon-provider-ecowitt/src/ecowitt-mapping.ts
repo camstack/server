@@ -33,6 +33,18 @@ export type EcowittSensorCap =
  * so a persisted config value flows through without a cast — any unrecognised
  * string falls to `numeric-sensor`, the same safe default the tail uses.
  */
+/**
+ * Lux per W/m2 of solar radiation. An approximation (daylight luminous efficacy ~ 126.7 lx per
+ * W/m2): the station measures irradiance, not photometric illuminance, so the derived value is
+ * good enough for a day/night threshold and nothing finer.
+ */
+export const LUX_PER_WM2 = 126.7
+
+/** Solar radiation in W/m2 to the approximate illuminance in lux. */
+export function irradianceToLux(wattsPerSquareMetre: number): number {
+  return wattsPerSquareMetre * LUX_PER_WM2
+}
+
 export function capForQuantity(quantity: Quantity | string): EcowittSensorCap {
   switch (quantity) {
     case 'temperature':
@@ -41,6 +53,9 @@ export function capForQuantity(quantity: Quantity | string): EcowittSensorCap {
       return 'humidity-sensor'
     case 'pressure':
       return 'pressure-sensor'
+    // The illuminance the station derives from its solar radiation reading.
+    case 'illuminance':
+      return 'ambient-light-sensor'
     // ── Everything else → generic numeric (unit/precision live in the slice);
     //    the typed DeviceRole supplies the icon/label/canonical unit. ──
     default:
@@ -103,6 +118,8 @@ export function roleForQuantity(quantity: Quantity | string): DeviceRole {
       return DeviceRole.RainSensor
     case 'uv':
       return DeviceRole.UvSensor
+    case 'illuminance':
+      return DeviceRole.AmbientLightSensor
     case 'irradiance':
       // Solar irradiance (W/m²) is a power-flux density, not photometric lux —
       // a solar-radiation role, distinct from ambient-light.

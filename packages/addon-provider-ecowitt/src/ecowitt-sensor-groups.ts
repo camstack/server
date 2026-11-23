@@ -4,7 +4,7 @@ import {
   ECOWITT_DEVICE_GROUPS,
   type EcowittDeviceGroup,
 } from './ecowitt-mapping.js'
-import { isStationReadingSensorId } from './station-reading.js'
+import { isSolarRadiationSensorId, isStationReadingSensorId } from './station-reading.js'
 import type { EcowittSensorEntry } from './devices/ecowitt-container-device.js'
 
 /** Resolve `deviceGroup` from a persisted container config (defaults to 'gateway'). */
@@ -110,4 +110,26 @@ export function childEntriesForGroup(
   return group === 'weather-station'
     ? own.filter((entry) => !isStationReadingSensorId(entry.sensorId))
     : own
+}
+
+/**
+ * The weather station's solar radiation reading, offered as an `illuminance` child (lux derived
+ * from W/m2): an operator threshold on "is it dark" needs an `ambient-light-sensor`, and the
+ * station slice carries irradiance only. Other groups spawn none.
+ */
+export function illuminanceEntriesForGroup(
+  entries: readonly EcowittSensorEntry[],
+  group: EcowittDeviceGroup,
+  live: readonly Sensor[],
+): readonly EcowittSensorEntry[] {
+  if (group !== 'weather-station') return []
+  return entriesForGroup(entries, group, live)
+    .filter((entry) => isSolarRadiationSensorId(entry.sensorId))
+    .slice(0, 1)
+    .map((entry) => ({
+      sensorId: entry.sensorId,
+      quantity: 'illuminance',
+      ...(entry.channel !== undefined ? { channel: entry.channel } : {}),
+      name: 'Illuminance',
+    }))
 }
