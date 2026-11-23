@@ -100,7 +100,14 @@ async function world() {
   return {
     w,
     kinds,
-    plan: (): Promise<MigrationPlan> => entry.plan(w.ncPorts),
+    plan: (): Promise<MigrationPlan> =>
+      entry.plan({
+        ...w.ncPorts,
+        listDeviceIds: async () => [],
+        readDeviceField: async () => new Map(),
+        readStored: async () => ({}),
+        announceRetired: async () => undefined,
+      }),
     apply: async (plan: MigrationPlan) => {
       boot += 1
       return target.applyPlan({
@@ -177,7 +184,8 @@ describe('rule tag ids (D1089)', () => {
           owner: 'pipeline-analytics',
           kind: ncRecordKinds.rules.name,
           recordKey: 'no-such-rule',
-          precondition: plan.edits[0]?.op === 'upsertRecord' ? plan.edits[0].precondition : null,
+          precondition:
+            plan.edits[0]?.op === 'upsertRecord' ? plan.edits[0].precondition : undefined,
         },
       ],
     }
