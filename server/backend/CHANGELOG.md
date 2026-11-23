@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Migrating a device now keeps each number's saved passwords and its room on that number; a pair swapped earlier can be repaired from the admin API.
+
 ### Fixed
 
 - Addons no longer raise a false 'Database is newer than this version' warning at boot for migrations they declare in a later phase

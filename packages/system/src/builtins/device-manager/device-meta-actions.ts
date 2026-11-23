@@ -69,6 +69,7 @@ import {
   assertNoFieldClaims,
   ClaimLandedDuringMigrationError,
   FieldClaimsBlockMigrationError,
+  repairCrossedSecretScopes,
   swapHardwareState,
 } from './migrate-hardware-state.js'
 import { reloadMigratedDevices } from './migrate-reload.js'
@@ -308,7 +309,13 @@ export async function migrateDevice(
             }
           },
           swapHardwareState: async (a, b) => {
-            const swapped = await swapHardwareState(pctx.settings, a, b)
+            const swapDeviceScopes = pctx.host.ctx.secrets?.swapDeviceScopes
+            const swapped = await swapHardwareState(
+              pctx.settings,
+              a,
+              b,
+              swapDeviceScopes === undefined ? undefined : { swapDeviceScopes },
+            )
             // Reseed the hub's runtime-state mirror so a read landing before the
             // respawn answers from the hardware now wearing each number, not the
             // one that left it. `replace`, not the boot path's fill-gaps: every
@@ -332,8 +339,10 @@ export async function migrateDevice(
                 hardwareKeysToTarget: swapped.hardwareKeysToTarget,
                 roleKeysKeptAtSource: swapped.roleKeysKeptAtSource,
                 roleKeysKeptAtTarget: swapped.roleKeysKeptAtTarget,
+                secretScopes: swapped.secretScopes,
               },
             })
+            return swapped.secretScopes
           },
           // Through the broker's own cap, not `setStreamProfileMap`: the device
           // config `_profileMap` key is the LEGACY spelling nobody reads any
@@ -2467,4 +2476,33 @@ export async function removeLocation(
       data: { deviceId, field: 'location', value: null },
     })
   }
+}
+
+/**
+ * `deviceManager.repairMigrationSecrets` — the live repair for a pair a
+ * migration left with crossed keychain scopes (see `repairCrossedSecretScopes`).
+ * Under the meta write lock the migration itself ran under: a config write
+ * racing it would read the half this repair is moving. The running devices
+ * keep their loaded config until the next reload.
+ */
+export async function repairMigrationSecrets(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['repairMigrationSecrets']>[0],
+): ReturnType<IDeviceManagerProvider['repairMigrationSecrets']> {
+  const { deviceA, deviceB, apply } = input
+  const ctx = pctx.host.ctx
+  const swapDeviceScopes = ctx.secrets?.swapDeviceScopes
+  if (swapDeviceScopes === undefined) {
+    throw new Error('[device-manager] repairMigrationSecrets: no keychain door on this node')
+  }
+  const report = await pctx.metaStore.withMetaWriteLock(() =>
+    repairCrossedSecretScopes(pctx.settings, { swapDeviceScopes }, deviceA, deviceB, apply),
+  )
+  for (const deviceId of [deviceA, deviceB]) {
+    ctx.logger.info('repairMigrationSecrets', {
+      tags: { deviceId },
+      meta: { deviceA, deviceB, apply, outcome: report.outcome },
+    })
+  }
+  return report
 }

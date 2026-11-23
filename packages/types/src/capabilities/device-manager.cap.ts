@@ -543,6 +543,23 @@ export const MigrateDeviceResultSchema = z.object({
    *  value meaning the replaced hardware is quiet. */
   sourceStillLive: z.array(CameraSwitchIdSchema).readonly(),
   swapped: z.boolean(),
+  /** The keychain half of the swap (D339): the secrets the swapped config's
+   *  markers name moved with it. Refs only, never values. */
+  secretScopes: z.object({
+    exchanged: z.boolean(),
+    markersRepointed: z.number().int(),
+    refsAtSource: z.array(z.string()).readonly(),
+    refsAtTarget: z.array(z.string()).readonly(),
+  }),
+})
+
+/** What `repairMigrationSecrets` found and did: counts and refs, never values. */
+export const MigrationSecretRepairSchema = z.object({
+  outcome: z.enum(['repaired', 'would-repair', 'nothing-to-repair', 'refused-one-sided']),
+  markersRepointedAtA: z.number().int(),
+  markersRepointedAtB: z.number().int(),
+  refsNowAtA: z.array(z.string()).readonly(),
+  refsNowAtB: z.array(z.string()).readonly(),
 })
 
 /** What happened to ONE switch on ONE device during a migration. */
@@ -625,6 +642,26 @@ export const deviceManagerCapability = {
          */
         timeoutMs: 12 * 60_000,
       },
+    ),
+
+    /**
+     * Repair a pair a migration left with CROSSED secrets (it ran before the
+     * keychain followed the config, D339): each device's config carries
+     * markers naming the OTHER device's keychain scope, so removing the
+     * leftover device would delete the migrated camera's password. Re-points
+     * each config's markers at its own number and exchanges the two keychain
+     * scopes, together. Idempotent; `apply: false` (the default) is a dry run
+     * that reports counts only. A pair crossed on one side only is refused.
+     * Refs only, never values.
+     */
+    repairMigrationSecrets: method(
+      z.object({
+        deviceA: z.number().int(),
+        deviceB: z.number().int(),
+        apply: z.boolean().default(false),
+      }),
+      MigrationSecretRepairSchema,
+      { kind: 'mutation', auth: 'admin' },
     ),
 
     /** Register a device in the DB + in-memory registry. Called by DeviceManagerApi.register(). */

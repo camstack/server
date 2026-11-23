@@ -18,6 +18,7 @@
  * empty one — and `unavailable` otherwise, never `missing`.
  */
 import type {
+  DeviceScopeSwap,
   KeychainResolveEntry,
   KeychainResolveResult,
   KeychainState,
@@ -43,6 +44,11 @@ export interface KeychainTransport {
   deleteDeviceScope?(input: {
     readonly deviceId: number
   }): Promise<{ readonly refs: readonly string[] }>
+  /** The migration's scope exchange (D339) — the device manager's transport only. */
+  swapDeviceScopes?(input: {
+    readonly deviceA: number
+    readonly deviceB: number
+  }): Promise<DeviceScopeSwap>
 }
 
 export interface SecretsAccess {
@@ -75,6 +81,13 @@ export interface SecretsAccess {
    * other caller; absent where the transport has no such door.
    */
   readonly deleteDeviceScope?: (deviceId: number) => Promise<readonly string[]>
+  /**
+   * The device manager only (D339): exchange every value scoped `device/<a>`
+   * with every value scoped `device/<b>` (a migration moved the config their
+   * markers sit in). The keychain refuses any other caller; absent where the
+   * transport has no such door.
+   */
+  readonly swapDeviceScopes?: (deviceA: number, deviceB: number) => Promise<DeviceScopeSwap>
 }
 
 interface CacheEntry {
@@ -212,6 +225,18 @@ export function createSecretsAccess(opts: SecretsAccessOptions): SecretsAccess {
             const { refs } = await purge.call(opts.transport, { deviceId })
             for (const ref of refs) drop(ref)
             return refs
+          },
+        }),
+
+    ...(opts.transport.swapDeviceScopes === undefined
+      ? {}
+      : {
+          swapDeviceScopes: async (deviceA: number, deviceB: number): Promise<DeviceScopeSwap> => {
+            const swap = opts.transport.swapDeviceScopes
+            if (swap === undefined) return { refsNowAtA: [], refsNowAtB: [] }
+            const swapped = await swap.call(opts.transport, { deviceA, deviceB })
+            for (const ref of [...swapped.refsNowAtA, ...swapped.refsNowAtB]) drop(ref)
+            return swapped
           },
         }),
 

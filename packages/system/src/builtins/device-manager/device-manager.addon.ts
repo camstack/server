@@ -985,6 +985,7 @@ export class DeviceManagerAddon extends BaseAddon {
       // the meta store + settings + host state they read/write.
       allocateDeviceId: (input) => metaActions.allocateDeviceId(pctx, input),
       migrateDevice: (input) => metaActions.migrateDevice(pctx, input),
+      repairMigrationSecrets: (input) => metaActions.repairMigrationSecrets(pctx, input),
       registerDevice: (input) => metaActions.registerDevice(pctx, input),
       removeDevice: (input) => metaActions.removeDevice(pctx, input),
       listDeletedSince: ({ sinceMs }) => tombstones.listSince(sinceMs),

@@ -827,6 +827,9 @@ export const useDeviceManagerAllocateDeviceId: typeof trpc.deviceManager.allocat
 /** Generated alias around `trpc.deviceManager.migrateDevice.useMutation`. */
 export const useDeviceManagerMigrateDevice: typeof trpc.deviceManager.migrateDevice.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.migrateDevice.useMutation)
 
+/** Generated alias around `trpc.deviceManager.repairMigrationSecrets.useMutation`. */
+export const useDeviceManagerRepairMigrationSecrets: typeof trpc.deviceManager.repairMigrationSecrets.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.repairMigrationSecrets.useMutation)
+
 /** Generated alias around `trpc.deviceManager.registerDevice.useMutation`. */
 export const useDeviceManagerRegisterDevice: typeof trpc.deviceManager.registerDevice.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.registerDevice.useMutation)
 

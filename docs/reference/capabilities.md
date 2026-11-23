@@ -174,7 +174,7 @@ Singleton or collection providers, addressed without a device.
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 14 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 14 | — | — | — | — | `device-history` |
-| `device-manager` | 110 | — | — | — | — | `device-manager` |
+| `device-manager` | 111 | — | — | — | — | `device-manager` |
 | `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
@@ -187,7 +187,7 @@ Singleton or collection providers, addressed without a device.
 | `hero-layout` | 3 | — | — | — | — | `core-blocks` |
 | `integration-instances` | 9 | — | — | — | — | `ai` `auth-oidc` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `pipeline-analytics` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `terminal` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` `core-notifier` `core-blocks` |
 | `integrations` | 8 | — | — | — | — | — |
-| `keychain` | 7 | — | — | — | ✓ | `keychain` |
+| `keychain` | 8 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
 | `llm` | 16 | — | — | — | — | `ai` |
 | `llm-runtime` | 11 | — | — | — | ✓ | `ai` |

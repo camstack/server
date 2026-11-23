@@ -322,8 +322,24 @@ export interface DeviceRow {
 interface SwapPlan {
   readonly rowA: DeviceRow
   readonly rowB: DeviceRow
-  readonly childrenOfA: readonly number[]
-  readonly childrenOfB: readonly number[]
+  readonly childrenOfA: readonly DeviceRow[]
+  readonly childrenOfB: readonly DeviceRow[]
+}
+
+/**
+ * The room patch for a child whose parent number changes hardware: a child
+ * whose room equals the room its old parent number carried inherited it (the
+ * `setLocation` cascade), so it takes the room of the number it now hangs
+ * off. A child with a different room keeps it.
+ */
+function inheritedRoomPatch(
+  child: DeviceRow,
+  oldParentRoom: string | null,
+  newParentRoom: string | null,
+): Pick<DeviceRowPatch, 'location'> {
+  if (child.meta.location !== oldParentRoom) return {}
+  if (oldParentRoom === newParentRoom) return {}
+  return { location: newParentRoom }
 }
 
 // ── Row decoding ──────────────────────────────────────────────────────────
@@ -971,16 +987,40 @@ export class DeviceRowStore {
     })
     const { rowA, rowB, childrenOfA, childrenOfB } = plan
 
+    // The room is ROLE state (D339): it stays on the NUMBER while the rest of
+    // the row follows the hardware. `moveRow` carries `meta.location` with the
+    // row, so each landing row is rewritten with the room its number had.
     await this.moveRow(rowA, tempId)
-    await this.moveRow(rowB, a)
-    await this.moveRow({ ...rowA, meta: { ...rowA.meta, id: tempId } }, b)
+    await this.moveRow({ ...rowB, meta: { ...rowB.meta, location: rowA.meta.location } }, a)
+    await this.moveRow(
+      { ...rowA, meta: { ...rowA.meta, id: tempId, location: rowB.meta.location } },
+      b,
+    )
 
-    for (const childId of childrenOfA) await this.patch(childId, { parentDeviceId: b })
-    for (const childId of childrenOfB) await this.patch(childId, { parentDeviceId: a })
+    // A child keeps its own id and follows its hardware parent. A room it
+    // INHERITED from that parent (equal to the old number's room) follows the
+    // number it now hangs off; an explicit different room is the operator's.
+    for (const child of childrenOfA) {
+      await this.patch(child.meta.id, {
+        parentDeviceId: b,
+        ...inheritedRoomPatch(child, rowA.meta.location, rowB.meta.location),
+      })
+    }
+    for (const child of childrenOfB) {
+      await this.patch(child.meta.id, {
+        parentDeviceId: a,
+        ...inheritedRoomPatch(child, rowB.meta.location, rowA.meta.location),
+      })
+    }
 
     this.logger.info('device ids swapped', {
       tags: { deviceId: a },
-      meta: { a, b, childrenOfA, childrenOfB },
+      meta: {
+        a,
+        b,
+        childrenOfA: childrenOfA.map((r) => r.meta.id),
+        childrenOfB: childrenOfB.map((r) => r.meta.id),
+      },
     })
   }
 
@@ -1009,8 +1049,8 @@ export class DeviceRowStore {
     // its parent changing number, so `listByParent` answers the same either
     // side of the moves — asserted by putting the resolve after them, which
     // stays green. The comment said otherwise until that disarm caught it.
-    const childrenOfA = (await this.listByParent(a)).map((r) => r.meta.id)
-    const childrenOfB = (await this.listByParent(b)).map((r) => r.meta.id)
+    const childrenOfA = await this.listByParent(a)
+    const childrenOfB = await this.listByParent(b)
     return { rowA, rowB, childrenOfA, childrenOfB }
   }
 

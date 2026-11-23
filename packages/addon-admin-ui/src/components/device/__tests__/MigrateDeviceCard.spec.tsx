@@ -154,6 +154,7 @@ describe('MigrateDeviceCard — the report', () => {
       sourceId: OLD,
       targetId: NEW,
       swapped: true,
+      secretScopes: { exchanged: false, markersRepointed: 0, refsAtSource: [], refsAtTarget: [] },
       switches: [
         {
           deviceId: OLD,
@@ -178,6 +179,7 @@ describe('MigrateDeviceCard — the report', () => {
       sourceId: OLD,
       targetId: NEW,
       swapped: true,
+      secretScopes: { exchanged: false, markersRepointed: 0, refsAtSource: [], refsAtTarget: [] },
       switches: [{ deviceId: OLD, switchId: 'recording', outcome: 'off' }],
       sourceStillLive: [],
     }
@@ -191,6 +193,7 @@ describe('MigrateDeviceCard — the report', () => {
       sourceId: OLD,
       targetId: NEW,
       swapped: true,
+      secretScopes: { exchanged: false, markersRepointed: 0, refsAtSource: [], refsAtTarget: [] },
       switches: [
         {
           deviceId: OLD,

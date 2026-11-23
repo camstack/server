@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**217 capabilities · 1546 methods.**
+**217 capabilities · 1548 methods.**
 
 ## Method index
 
@@ -317,6 +317,7 @@
 | `deviceHistory.deleteSeriesRange` | mutation | admin | device-history |
 | `deviceManager.allocateDeviceId` | mutation | protected | device-manager |
 | `deviceManager.migrateDevice` | mutation | admin | device-manager |
+| `deviceManager.repairMigrationSecrets` | mutation | admin | device-manager |
 | `deviceManager.registerDevice` | mutation | protected | device-manager |
 | `deviceManager.removeDevice` | mutation | protected | device-manager |
 | `deviceManager.persistConfig` | mutation | admin | device-manager |
@@ -596,6 +597,7 @@
 | `keychain.resolve` | query | admin | keychain |
 | `keychain.delete` | mutation | admin | keychain |
 | `keychain.deleteDeviceScope` | mutation | admin | keychain |
+| `keychain.swapDeviceScopes` | mutation | admin | keychain |
 | `keychain.releaseRecordRefs` | mutation | admin | keychain |
 | `keychain.listMeta` | query | admin | keychain |
 | `keychain.getState` | query | admin | keychain |
@@ -2463,7 +2465,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:558`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:575`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2472,6 +2474,7 @@
 |---|---|---|---|---|---|
 | allocateDeviceId | `deviceManager.allocateDeviceId` | mutation | protected | `{ addonId: string; stableId: string }` | `{ id: number }` |
 | migrateDevice | `deviceManager.migrateDevice` | mutation | admin | `{ sourceId: number; targetId: number }` | `MigrateDeviceResultSchema` |
+| repairMigrationSecrets | `deviceManager.repairMigrationSecrets` | mutation | admin | `{ deviceA: number; deviceB: number; apply?: boolean = false }` | `{ outcome: "repaired" \| "would-repair" \| "nothing-to-repair" \| "refused-one-sided"; markersRepointedAtA: number; markersRepointedAtB: number; refsNowAtA: string[]; refsNowAtB: string[] }` |
 | registerDevice | `deviceManager.registerDevice` | mutation | protected | `{ addonId: string; stableId: string; id: number; type: string; name: string; location?: string \| null; disabled?: boolean; parentDeviceId: number \| null; role?: string \| null; features?: string[]; config: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |
 | removeDevice | `deviceManager.removeDevice` | mutation | protected | `{ deviceId: number }` | `void` |
 | persistConfig | `deviceManager.persistConfig` | mutation | admin | `{ deviceId: number; data: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |
@@ -3179,7 +3182,7 @@
 
 ### `keychain` → `keychain.*`
 
-- **Source:** `packages/types/src/capabilities/keychain.cap.ts:98`
+- **Source:** `packages/types/src/capabilities/keychain.cap.ts:108`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IKeychainProvider`
@@ -3190,6 +3193,7 @@
 | resolve | `keychain.resolve` | query | admin | `{ refs: string[] }` | `KeychainResolveResultSchema` |
 | delete | `keychain.delete` | mutation | admin | `{ refs: string[] }` | `{ deleted: number }` |
 | deleteDeviceScope | `keychain.deleteDeviceScope` | mutation | admin | `{ deviceId: number }` | `{ refs: string[] }` |
+| swapDeviceScopes | `keychain.swapDeviceScopes` | mutation | admin | `{ deviceA: number; deviceB: number }` | `DeviceScopeSwapSchema` |
 | releaseRecordRefs | `keychain.releaseRecordRefs` | mutation | admin | `{ refs: string[]; onBehalfOf: string }` | `{ released: number }` |
 | listMeta | `keychain.listMeta` | query | admin | `{}` | `KeychainSecretMetaSchema[]` |
 | getState | `keychain.getState` | query | admin | `{}` | `KeychainStateSchema` |

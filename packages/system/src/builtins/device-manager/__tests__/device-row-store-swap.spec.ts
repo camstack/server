@@ -120,6 +120,59 @@ describe('DeviceRowStore.swapIds — the number moves, the work does not', () =>
     expect((await store.get(4301))?.meta.name).toBe('New Siren')
   })
 
+  /**
+   * D339: ROLE state stays with the number, hardware state moves with the
+   * hardware. The operator's placement of a camera ("Lavanderia") is role
+   * state: 3628 lost its room live because the whole row, location column
+   * included, moved with the hardware.
+   */
+  it('the location stays on the NUMBER, not on the hardware that moved', async () => {
+    const store = await makeStore()
+    await store.patch(3836, { location: 'Lavanderia' })
+
+    await store.swapIds(3836, 4300, TEMP_ID)
+
+    expect((await store.get(3836))?.meta.location).toBe('Lavanderia')
+    expect((await store.get(4300))?.meta.location).toBeNull()
+    // The hardware still moved: the identity columns follow it.
+    expect((await store.get(3836))?.meta.addonId).toBe('provider-onvif')
+  })
+
+  it('both numbers keep their own location when both have one', async () => {
+    const store = await makeStore()
+    await store.patch(3836, { location: 'Lavanderia' })
+    await store.patch(4300, { location: 'Garage' })
+
+    await store.swapIds(3836, 4300, TEMP_ID)
+
+    expect((await store.get(3836))?.meta.location).toBe('Lavanderia')
+    expect((await store.get(4300))?.meta.location).toBe('Garage')
+  })
+
+  it('a child that INHERITED its parent’s room follows the parent number’s room', async () => {
+    const store = await makeStore()
+    await store.patch(3836, { location: 'Lavanderia' })
+    await store.patch(3876, { location: 'Lavanderia' }) // cascaded from 3836
+    await store.patch(4301, { location: null }) // the other camera has no room
+
+    await store.swapIds(3836, 4300, TEMP_ID)
+
+    // 3876 now hangs off 4300 (no room): it no longer claims 3836's room.
+    expect((await store.get(3876))?.meta.location).toBeNull()
+    // 4301 now hangs off 3836 (Lavanderia).
+    expect((await store.get(4301))?.meta.location).toBe('Lavanderia')
+  })
+
+  it('a child with its OWN explicit room keeps it', async () => {
+    const store = await makeStore()
+    await store.patch(3836, { location: 'Lavanderia' })
+    await store.patch(3876, { location: 'Cantina' })
+
+    await store.swapIds(3836, 4300, TEMP_ID)
+
+    expect((await store.get(3876))?.meta.location).toBe('Cantina')
+  })
+
   it('touches nothing else', async () => {
     const store = await makeStore()
 

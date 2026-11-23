@@ -4,7 +4,7 @@
 
 # Decisions
 
-1056 architecture decision records. One file per decision, never
+1057 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1069,6 +1069,7 @@ that rots.
 | D1088 | [Every device fault is announced with its tier, and the operator's filters decide who hears it](adr-1088-every-device-fault-is-announced-and-the-operator-decides-who-hears-it.md) | ✅ accepted | 2026-11-22 |
 | D1091 | [On a phone a table folds by column role and never scrolls sideways](adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md) | ✅ accepted | 2026-11-22 |
 | D1092 | [On for a time" is a hold outside the run, and only what it turned on is turned off](adr-1092-on-for-a-time-is-a-hold-outside-the-run-and-only-what-it-turned-on-is-turned-off.md) | ✅ accepted | 2026-11-22 |
+| D1093 | [A migration keeps each number's secrets and location on that number](adr-1093-a-migration-keeps-secrets-and-location-on-their-own-number.md) | ✅ accepted | 2026-11-23 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

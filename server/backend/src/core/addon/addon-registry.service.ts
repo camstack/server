@@ -3944,6 +3944,10 @@ export class AddonRegistryService {
         const stated = { deviceId: input.deviceId, callerAddonId }
         return provider().deleteDeviceScope(stated)
       },
+      swapDeviceScopes: (input) => {
+        const stated = { deviceA: input.deviceA, deviceB: input.deviceB, callerAddonId }
+        return provider().swapDeviceScopes(stated)
+      },
     }
   }
 

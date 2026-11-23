@@ -18,7 +18,9 @@
  * key on the number and stay put. State that DESCRIBES the box — the driver
  * config (host/credentials/`deviceCache`), the runtime-state slices, the
  * broker's probed snapshots, profile assignment and derived streams — must
- * move with it or be re-derived from the hardware now wearing the number
+ * move with it (its keychain secrets exchange scopes so each number's markers
+ * keep pointing at its own, D1093; the room stays on the number) or be
+ * re-derived from the hardware now wearing the number
  * (`swapHardwareState`, `forgetStreamState`). Getting this wrong put two live
  * cameras in each other's identity on 2026-09-01: the new camera was dialled
  * at the old one's dead address forever, and a derived feeder defined against
@@ -77,6 +79,7 @@
  */
 import type { CameraSwitchId } from '@camstack/types'
 import { CAMERA_SWITCH_ORDER } from '@camstack/types'
+import type { SecretScopeReport } from './migrate-hardware-state.js'
 import { MigrationRefusedError } from './migration-refused.js'
 
 /**
@@ -116,6 +119,8 @@ export interface MigrateDeviceResult {
    */
   readonly sourceStillLive: readonly CameraSwitchId[]
   readonly swapped: boolean
+  /** The keychain half of the swap: which scopes were exchanged and which refs now sit under each number. */
+  readonly secretScopes: SecretScopeReport
 }
 
 /**
@@ -148,7 +153,7 @@ export interface MigrateDeviceDeps {
    * with configs unswapped is exactly that incident, and it must never be
    * reported as a success.
    */
-  readonly swapHardwareState: (sourceId: number, targetId: number) => Promise<void>
+  readonly swapHardwareState: (sourceId: number, targetId: number) => Promise<SecretScopeReport>
   /**
    * Refuse a migration over a device under customization
    * (`migrate-hardware-state.ts::assertNoFieldClaims`, D663): a field claim
@@ -433,8 +438,9 @@ export async function migrateDevice(
   // configs disagree is as small as the store allows. Never reported as a
   // success and never rolled back: rows swapped with configs unswapped is the
   // incident (two devices wearing each other's identity) — both stay off.
+  let secretScopes: SecretScopeReport
   try {
-    await deps.swapHardwareState(sourceId, targetId)
+    secretScopes = await deps.swapHardwareState(sourceId, targetId)
   } catch (err: unknown) {
     alarmPartialMigration(deps, ids, 'swapHardwareState', err)
     throw err
@@ -476,5 +482,12 @@ export async function migrateDevice(
     refusals: [...down, ...up].filter((r) => r.outcome === 'unreachable').length,
   })
 
-  return { sourceId, targetId, switches: [...down, ...up], sourceStillLive, swapped: true }
+  return {
+    sourceId,
+    targetId,
+    switches: [...down, ...up],
+    sourceStillLive,
+    swapped: true,
+    secretScopes,
+  }
 }

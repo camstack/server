@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1131 shared schemas.**
+**1132 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1810,6 +1810,11 @@ Enum: `"running-state" \| "activity" \| "reconcile"`
 ### `DeviceRunStateSchema`
 
 Enum: `"open" \| "closed"`
+
+### `DeviceScopeSwapSchema`
+
+- `refsNowAtA`: `string[]`
+- `refsNowAtB`: `string[]`
 
 ### `DeviceSearchFacetIntegrationSchema`
 
@@ -4048,6 +4053,7 @@ Enum: `"reported" \| "assumed"`
 - `switches`: `MigrateSwitchReportSchema[]`
 - `sourceStillLive`: `("stream-broker" \| "object-detection" \| "privacy-mask" \| "device-audio" \| "broker-audio" \| "audio-analysis" \| "event-saving" \| "recording" \| "notifications")[]`
 - `swapped`: `boolean`
+- `secretScopes`: `{ exchanged: boolean; markersRepointed: number; refsAtSource: string[]; refsAtTarget: string[] }`
 
 ### `MigrateSwitchOutcomeSchema`
 

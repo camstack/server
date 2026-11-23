@@ -39,6 +39,7 @@ function result(): MigrateDeviceResult {
     switches: [],
     sourceStillLive: [],
     swapped: true,
+    secretScopes: { exchanged: false, markersRepointed: 0, refsAtSource: [], refsAtTarget: [] },
   }
 }
 

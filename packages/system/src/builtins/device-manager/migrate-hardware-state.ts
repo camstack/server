@@ -30,6 +30,15 @@
  *    stream-profile assignment (the live authority is the stream broker's own
  *    map — see `StreamsTab.tsx`, which stopped writing it), and either copy
  *    names stream ids of the wrong hardware after a swap.
+ *  - A secret marker inside the swapped config names the keychain scope of ONE
+ *    number (`secret://<owner>/device/<id>/<field>`; the ref is the AAD of the
+ *    ciphertext). Swapping the marker alone left each number pointing at the
+ *    other's scope, so removing either device purged the secret the other still
+ *    used (D1093, live 2026-11-23). The two `device/<id>` scopes are exchanged
+ *    in the keychain FIRST, then each number's markers are re-pointed at its OWN
+ *    scope; a keychain failure fails the swap before any config moves.
+ *    `repairCrossedSecretScopes` mends a pair swapped by the old code.
+ *  - The location (room) is role state and stays on the number (`swapIds`).
  *  - The runtime-state blobs (`__device-state:<id>` — battery snapshot, sleep
  *    flag, feature probe) SWAP wholesale: every slice mirrors the box — never
  *    while either carries `$owned` (D663): the migration is refused first
@@ -46,6 +55,13 @@
  * state that reads as plausible and costs a day.
  */
 
+import {
+  buildSecretRef,
+  type DeviceScopeSwap,
+  isSecretMarker,
+  makeSecretMarker,
+  parseSecretRef,
+} from '@camstack/types'
 import { LINKED_DEVICES_RESERVED_KEYS } from './device-linked-devices.js'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { type OwnedCaps, splitRuntimeBlob } from './field-ownership.js'
@@ -85,6 +101,25 @@ export interface SwappedHardwareState {
   /** Role config keys that stayed on each number. */
   readonly roleKeysKeptAtSource: readonly string[]
   readonly roleKeysKeptAtTarget: readonly string[]
+  /** What happened to the keychain values the swapped config's markers name. */
+  readonly secretScopes: SecretScopeReport
+}
+
+/** The keychain half of a swap, reported with the rest of it (never swallowed). */
+export interface SecretScopeReport {
+  /** The keychain scopes `device/<source>` and `device/<target>` were exchanged. */
+  readonly exchanged: boolean
+  /** Markers in the swapped hardware config that were re-pointed at their new number. */
+  readonly markersRepointed: number
+  /** Refs now under `device/<sourceId>` (never values). */
+  readonly refsAtSource: readonly string[]
+  /** Refs now under `device/<targetId>` (never values). */
+  readonly refsAtTarget: readonly string[]
+}
+
+/** The keychain door the swap needs: `ctx.secrets.swapDeviceScopes`. */
+export interface DeviceScopeDoor {
+  readonly swapDeviceScopes: (deviceA: number, deviceB: number) => Promise<DeviceScopeSwap>
 }
 
 /** One claimed cap on a device that blocks its migration. */
@@ -217,18 +252,54 @@ export async function swapHardwareState(
   settings: HardwareStateStore,
   sourceId: number,
   targetId: number,
+  secrets: DeviceScopeDoor | undefined,
 ): Promise<SwappedHardwareState> {
   const sourceConfig = await settings.readDeviceStore(sourceId)
   const targetConfig = await settings.readDeviceStore(targetId)
   const source = splitConfig(sourceConfig)
   const target = splitConfig(targetConfig)
 
+  // The hardware config moves to the other number, and so do its markers: a
+  // marker names the keychain scope of a device NUMBER, so the half arriving
+  // at `sourceId` is re-pointed at `device/<sourceId>`, the other at
+  // `device/<targetId>`. The keychain then exchanges the two scopes so the
+  // value each marker names is under that number.
+  const toSource = repointDeviceMarkers(target.hardware, targetId, sourceId)
+  const toTarget = repointDeviceMarkers(source.hardware, sourceId, targetId)
+  const markersRepointed = toSource.repointed + toTarget.repointed
+
+  // The keychain goes FIRST: a failure here (locked, unreadable) throws before
+  // any config byte moved, so the state is the one the migration already
+  // reports as partial (rows swapped, state not) — never configs whose markers
+  // name values that are not there. The reverse crash (keychain swapped, config
+  // not) is loud too: the camera dials with the other box's password.
+  let secretScopes: SecretScopeReport = {
+    exchanged: false,
+    markersRepointed,
+    refsAtSource: [],
+    refsAtTarget: [],
+  }
+  if (secrets !== undefined) {
+    const swapped = await secrets.swapDeviceScopes(sourceId, targetId)
+    secretScopes = {
+      exchanged: true,
+      markersRepointed,
+      refsAtSource: swapped.refsNowAtA,
+      refsAtTarget: swapped.refsNowAtB,
+    }
+  } else if (markersRepointed > 0) {
+    throw new Error(
+      `keychain scope swap unavailable — devices ${sourceId} and ${targetId} hold keychain ` +
+        'secrets and the migration cannot move them; nothing was changed',
+    )
+  }
+
   // `writeDeviceStore` MERGES, so replace = clear + write. The clear also
   // drops `_profileMap`, which neither side carries forward.
   await settings.clearDeviceStore(sourceId)
-  await settings.writeDeviceStore(sourceId, { ...target.hardware, ...source.role })
+  await settings.writeDeviceStore(sourceId, { ...toSource.value, ...source.role })
   await settings.clearDeviceStore(targetId)
-  await settings.writeDeviceStore(targetId, { ...source.hardware, ...target.role })
+  await settings.writeDeviceStore(targetId, { ...toTarget.value, ...target.role })
 
   const sourceRuntimeState = await settings.readDeviceRuntimeState(sourceId)
   const targetRuntimeState = await settings.readDeviceRuntimeState(targetId)
@@ -243,5 +314,103 @@ export async function swapHardwareState(
     hardwareKeysToTarget: Object.keys(source.hardware).toSorted(),
     roleKeysKeptAtSource: Object.keys(source.role).toSorted(),
     roleKeysKeptAtTarget: Object.keys(target.role).toSorted(),
+    secretScopes,
   }
+}
+
+/** What {@link repairCrossedSecretScopes} found and did. Refs only, never values. */
+export interface SecretRepairReport {
+  readonly outcome: 'repaired' | 'would-repair' | 'nothing-to-repair' | 'refused-one-sided'
+  /** Markers in A's config naming B's scope (re-pointed at A when applied). */
+  readonly markersRepointedAtA: number
+  /** Markers in B's config naming A's scope (re-pointed at B when applied). */
+  readonly markersRepointedAtB: number
+  readonly refsNowAtA: readonly string[]
+  readonly refsNowAtB: readonly string[]
+}
+
+/**
+ * Repair a pair a migration left with CROSSED secrets (it ran before the
+ * secrets followed the config): A's config carries markers naming B's keychain
+ * scope and B's the reverse. Each config's markers are re-pointed at its own
+ * number and the two keychain scopes exchanged, so every marker keeps reading
+ * the value it always read.
+ *
+ * Idempotent: a pair with no crossed marker is left alone (no swap back). A
+ * pair crossed on one side only is refused — swapping the scopes would
+ * strand the other side's markers. `apply: false` is the dry run: counts only.
+ * The keychain goes first; its failure throws before any config byte is written.
+ */
+export async function repairCrossedSecretScopes(
+  settings: Pick<HardwareStateStore, 'readDeviceStore' | 'writeDeviceStore'>,
+  secrets: DeviceScopeDoor,
+  deviceA: number,
+  deviceB: number,
+  apply: boolean,
+): Promise<SecretRepairReport> {
+  const configA = await settings.readDeviceStore(deviceA)
+  const configB = await settings.readDeviceStore(deviceB)
+  const fixedA = repointDeviceMarkers(configA, deviceB, deviceA)
+  const fixedB = repointDeviceMarkers(configB, deviceA, deviceB)
+  const counts = { markersRepointedAtA: fixedA.repointed, markersRepointedAtB: fixedB.repointed }
+  if (fixedA.repointed === 0 && fixedB.repointed === 0) {
+    return { outcome: 'nothing-to-repair', ...counts, refsNowAtA: [], refsNowAtB: [] }
+  }
+  if (fixedA.repointed === 0 || fixedB.repointed === 0) {
+    return { outcome: 'refused-one-sided', ...counts, refsNowAtA: [], refsNowAtB: [] }
+  }
+  if (!apply) return { outcome: 'would-repair', ...counts, refsNowAtA: [], refsNowAtB: [] }
+  const swapped = await secrets.swapDeviceScopes(deviceA, deviceB)
+  await settings.writeDeviceStore(deviceA, fixedA.value)
+  await settings.writeDeviceStore(deviceB, fixedB.value)
+  return {
+    outcome: 'repaired',
+    ...counts,
+    refsNowAtA: swapped.refsNowAtA,
+    refsNowAtB: swapped.refsNowAtB,
+  }
+}
+
+/** A repointed tree and how many markers changed. */
+interface Repointed<T> {
+  readonly value: T
+  readonly repointed: number
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * Re-point every secret MARKER in `value` that names the device scope
+ * `device/<fromId>` at `device/<toId>`. Markers of any other scope (an
+ * integration's, a global one) and plain strings are untouched; the walk
+ * covers nested objects and arrays.
+ */
+function repointDeviceMarkers(
+  value: Record<string, unknown>,
+  fromId: number,
+  toId: number,
+): Repointed<Record<string, unknown>> {
+  let repointed = 0
+  const walk = (node: unknown): unknown => {
+    if (Array.isArray(node)) return node.map(walk)
+    if (isSecretMarker(node)) {
+      const parts = parseSecretRef(node.$secret)
+      if (parts !== null && parts.scope.kind === 'device' && parts.scope.deviceId === fromId) {
+        repointed += 1
+        return makeSecretMarker(
+          buildSecretRef({ ...parts, scope: { kind: 'device', deviceId: toId } }),
+        )
+      }
+      return node
+    }
+    if (isRecord(node)) {
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)]))
+    }
+    return node
+  }
+  const out: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) out[key] = walk(child)
+  return { value: out, repointed }
 }

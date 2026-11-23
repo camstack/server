@@ -19,6 +19,7 @@ import {
   migrateDevice,
   type SwitchStates,
 } from '../migrate-device.js'
+import type { SecretScopeReport } from '../migrate-hardware-state.js'
 import { MigrationRefusedError } from '../migration-refused.js'
 
 const SOURCE = 3836
@@ -36,6 +37,21 @@ interface Harness {
   readonly calls: string[]
   readonly logged: Array<{ message: string; meta: Record<string, unknown> }>
   readonly deviceLines: DeviceLine[]
+}
+
+const NO_SECRETS: SecretScopeReport = {
+  exchanged: false,
+  markersRepointed: 0,
+  refsAtSource: [],
+  refsAtTarget: [],
+}
+
+/** What the keychain half answered: marked, so the test can see it travel. */
+const REPORTED_SCOPES: SecretScopeReport = {
+  exchanged: true,
+  markersRepointed: 2,
+  refsAtSource: ['secret://provider-reolink/device/1/password'],
+  refsAtTarget: ['secret://provider-reolink/device/2/password'],
 }
 
 /** Every switch offered and ON, except those named off. */
@@ -61,6 +77,7 @@ function harness(deadOn: ReadonlyMap<number, readonly CameraSwitchId[]> = new Ma
     },
     swapHardwareState: async (a, b) => {
       calls.push(`swap-hw:${a}:${b}`)
+      return REPORTED_SCOPES
     },
     assertNoFieldClaims: async (a, b) => {
       calls.push(`assert-no-claims:${a}:${b}`)
@@ -139,7 +156,7 @@ describe('migrateDevice — the number moves and the report tells the truth', ()
           }
         },
         swapIds: async () => {},
-        swapHardwareState: async () => {},
+        swapHardwareState: async () => NO_SECRETS,
         assertNoFieldClaims: async () => {},
         forgetStreamState: async () => {},
         log: () => {},
@@ -155,6 +172,14 @@ describe('migrateDevice — the number moves and the report tells the truth', ()
     expect(
       res.switches.find((r) => r.deviceId === SOURCE && r.switchId === 'privacy-mask')?.outcome,
     ).toBe('not-offered')
+  })
+
+  it('reports the keychain half of the swap in the result', async () => {
+    const h = harness()
+
+    const res = await migrateDevice(h.deps, { sourceId: SOURCE, targetId: TARGET })
+
+    expect(res.secretScopes).toEqual(REPORTED_SCOPES)
   })
 
   it('a dead source does NOT refuse the migration — it is the case this exists for', async () => {

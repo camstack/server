@@ -17,6 +17,8 @@ import { randomUUID } from 'node:crypto'
 import { promises as fsp } from 'node:fs'
 import * as path from 'node:path'
 import {
+  buildSecretRef,
+  type DeviceScopeSwap,
   EventCategory,
   formatSecretScope,
   type KeychainAuditAction,
@@ -534,6 +536,95 @@ export class KeychainService {
       this.deps.events.emit({ ref: row.ref, owner: row.owner, version: null, change: 'delete' })
     }
     return refs
+  }
+
+  /**
+   * Exchange the keychain scopes of two devices (the migration's secret half,
+   * D339): every value under `device/<a>` ends up under `device/<b>` and the
+   * reverse, whatever its owner. A ciphertext is bound to its ref (the AAD), so
+   * each value is re-encrypted under its counterpart ref. Reserved to the
+   * device manager, like {@link deleteDeviceScope}.
+   */
+  async swapDeviceScopes(
+    caller: string | null,
+    deviceA: number,
+    deviceB: number,
+  ): Promise<DeviceScopeSwap> {
+    if (caller === null || normalizeSecretOwner(caller) !== DEVICE_SCOPE_PURGER) {
+      throw new KeychainForbiddenError(`device/${deviceA}`, caller)
+    }
+    return this.exchangeDeviceScopes(actorOfAddon(caller), deviceA, deviceB)
+  }
+
+  /**
+   * Read and decrypt EVERY value first (a locked keychain or a value that does
+   * not authenticate throws before anything is written), write the
+   * counterpart refs, then drop the refs no counterpart replaced. No
+   * transaction: a crash between the writes and the drops leaves a value
+   * readable under both refs, never lost.
+   */
+  private async exchangeDeviceScopes(
+    actor: string,
+    deviceA: number,
+    deviceB: number,
+  ): Promise<DeviceScopeSwap> {
+    if (deviceA === deviceB) {
+      throw new Error(`keychain: cannot swap device ${deviceA} scope with itself (same device)`)
+    }
+    const scopeA = formatSecretScope({ kind: 'device', deviceId: deviceA })
+    const scopeB = formatSecretScope({ kind: 'device', deviceId: deviceB })
+    const all = await this.deps.repo.listSecrets()
+    const moving = all.filter((row) => row.scope === scopeA || row.scope === scopeB)
+    if (moving.length === 0) return { refsNowAtA: [], refsNowAtB: [] }
+    const unlocked = this.requireReady()
+
+    const planned = moving.map((row) => {
+      const toDevice = row.scope === scopeA ? deviceB : deviceA
+      const ref = buildSecretRef({
+        owner: row.owner,
+        scope: { kind: 'device', deviceId: toDevice },
+        fieldPath: row.fieldPath,
+      })
+      const value = decryptValue(unlocked.dek, row.ref, row.ciphertext)
+      if (value === null) {
+        throw new Error(
+          `keychain: the value at ${row.ref} did not authenticate — scopes not swapped`,
+        )
+      }
+      return { row, toDevice, ref, value }
+    })
+    const byRef = new Map(all.map((row) => [row.ref, row]))
+    const t = this.now()
+    for (const { row, toDevice, ref, value } of planned) {
+      const replaced = byRef.get(ref)
+      const version = (replaced?.version ?? 0) + 1
+      await this.deps.repo.putSecret({
+        ref,
+        owner: row.owner,
+        scope: formatSecretScope({ kind: 'device', deviceId: toDevice }),
+        fieldPath: row.fieldPath,
+        ciphertext: encryptValue(unlocked.dek, unlocked.keyId, ref, value),
+        keyId: unlocked.keyId,
+        version,
+        createdAt: row.createdAt,
+        updatedAt: t,
+        updatedBy: actor,
+        lastReadAt: row.lastReadAt,
+      })
+      await this.audit('put', actor, ref, 'device-scope-swap')
+      this.deps.events.emit({ ref, owner: row.owner, version, change: 'put' })
+    }
+    const written = new Set(planned.map((p) => p.ref))
+    for (const { row } of planned) {
+      if (written.has(row.ref)) continue
+      await this.deps.repo.deleteSecrets([row.ref])
+      await this.audit('delete', actor, row.ref, 'device-scope-swap')
+      this.deps.events.emit({ ref: row.ref, owner: row.owner, version: null, change: 'delete' })
+    }
+    return {
+      refsNowAtA: planned.filter((p) => p.toDevice === deviceA).map((p) => p.ref),
+      refsNowAtB: planned.filter((p) => p.toDevice === deviceB).map((p) => p.ref),
+    }
   }
 
   async listMeta(caller: string | null): Promise<readonly KeychainSecretMeta[]> {

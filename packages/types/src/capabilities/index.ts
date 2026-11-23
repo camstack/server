@@ -378,6 +378,8 @@ export {
   recordEntriesCapability,
 } from './record-entries.cap.js'
 export {
+  type DeviceScopeSwap,
+  DeviceScopeSwapSchema,
   type IKeychainProvider,
   KEYCHAIN_MAX_REFS_PER_CALL,
   type KeychainResolveEntry,

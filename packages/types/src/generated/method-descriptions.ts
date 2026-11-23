@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1546 of 1546 methods.
+ * Coverage: 1548 of 1548 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -388,6 +388,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.renameLocation": "Rename a room: replace the label in the registry IN PLACE and move every device that carried it, as ONE server operation.",
   "deviceManager.renameSiteZone": "Rename a zone, carrying its icon AND its membership.",
   "deviceManager.renderDeviceTemplates": "Render device value templates (D1021). The ONE door every consumer uses: an action step, a scheduler point, a notification rule, a generated automation block. Admin-only (an in-process block carries the mesh principal): it reads device state by alias, so a non-admin never calls it directly. allowedDeviceIds is the set the END caller was proven to see; a template naming another device answers out-of-scope. Answers are index-aligned with templates.",
+  "deviceManager.repairMigrationSecrets": "Repair a pair a migration left with CROSSED secrets (it ran before the keychain followed the config, D339): each device's config carries markers naming the OTHER device's keychain scope, so removing the leftover device would delete the migrated camera's password. Re-points each config's markers at its own number and exchanges the two keychain scopes, together. Idempotent; apply: false (the default) is a dry run that reports counts only. A pair crossed on one side only is refused. Refs only, never values.",
   "deviceManager.reportDiscoveryObservations": "Raw passive sightings from local-network; classified by the matching providers.",
   "deviceManager.runDeviceAction": "Run a named action on a device with the given input.",
   "deviceManager.runDiscoverySweep": "Run the providers' discovery once and record what it found as proposals.",
@@ -595,6 +596,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "keychain.put": "Store (or replace) the caller's value at ref. Refused while locked.",
   "keychain.releaseRecordRefs": "Release the values rows of a DROPPED record kind held, whatever the kind's owner (stale-data audit). Reserved to sqlite-settings, the engine that just deleted the rows: only refs scoped row/records:<kind>/... are accepted, and the audit names the operator it acted for. Answers a count.",
   "keychain.resolve": "Resolve the caller's refs in one round-trip. A locked keychain answers unavailable per ref — never missing, never an empty value.",
+  "keychain.swapDeviceScopes": "Exchange every value scoped device/<a> with every value scoped device/<b>, whatever its owner (D339): a migration swaps the two devices' hardware config, and the secrets its markers point at must follow, or removing the leftover device deletes the migrated camera's password. Reserved to device-manager. Answers refs, never values.",
   "keychainAdmin.acknowledgeReset": "Dismiss the \"keychain was reset\" notice. Audited.",
   "keychainAdmin.deleteOrphans": "Delete refs no owner points at any more. Re-checked here; unknown is kept.",
   "keychainAdmin.downloadRecoveryKey": "The master key, base64. Audited; marks the recovery copy as taken.",

@@ -28,6 +28,16 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * Internal: addons reach it through `ctx.secrets`, never directly.
  */
 
+/**
+ * What a device-scope swap left in each scope: refs only, never values.
+ * `refsNowAtA` are the refs under the FIRST device's scope after the swap.
+ */
+export const DeviceScopeSwapSchema = z.object({
+  refsNowAtA: z.array(z.string()).readonly(),
+  refsNowAtB: z.array(z.string()).readonly(),
+})
+export type DeviceScopeSwap = z.infer<typeof DeviceScopeSwapSchema>
+
 /** Why a value cannot be served right now. Never folded into "missing". */
 export const KeychainUnavailableReasonSchema = z.enum([
   /** No master key could be loaded from any configured source. */
@@ -128,6 +138,18 @@ export const keychainCapability = {
     deleteDeviceScope: method(
       z.object({ deviceId: z.number().int() }),
       z.object({ refs: z.array(z.string()).readonly() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Exchange every value scoped `device/<a>` with every value scoped
+     * `device/<b>`, whatever its owner (D339): a migration swaps the two
+     * devices' hardware config, and the secrets its markers point at must
+     * follow, or removing the leftover device deletes the migrated camera's
+     * password. Reserved to `device-manager`. Answers refs, never values.
+     */
+    swapDeviceScopes: method(
+      z.object({ deviceA: z.number().int(), deviceB: z.number().int() }),
+      DeviceScopeSwapSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
     /**

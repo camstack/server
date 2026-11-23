@@ -82,7 +82,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
   it('after the swap, each number wears the OTHER hardware config', async () => {
     const f = fakeStore({ [SOURCE]: HIKVISION_CONFIG, [TARGET]: REOLINK_CONFIG })
 
-    await swapHardwareState(f.store, SOURCE, TARGET)
+    await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     expect(f.configs.get(SOURCE)).toEqual(REOLINK_CONFIG)
     expect(f.configs.get(TARGET)).toEqual(HIKVISION_CONFIG)
@@ -98,7 +98,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
       [TARGET]: REOLINK_CONFIG,
     })
 
-    await swapHardwareState(f.store, SOURCE, TARGET)
+    await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     // The driveway's linked sensors watch the driveway, whichever box films it.
     expect(f.configs.get(SOURCE)).toEqual({
@@ -117,7 +117,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
     }
     const f = fakeStore({ [SOURCE]: { ...HIKVISION_CONFIG, ...role }, [TARGET]: REOLINK_CONFIG })
 
-    await swapHardwareState(f.store, SOURCE, TARGET)
+    await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     // The driveway's opt-in is about the driveway, not about the box filming it.
     expect(f.configs.get(SOURCE)).toEqual({ ...REOLINK_CONFIG, ...role })
@@ -131,7 +131,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
       [TARGET]: { ...REOLINK_CONFIG, _profileMap: { high: 'native:main' } },
     })
 
-    await swapHardwareState(f.store, SOURCE, TARGET)
+    await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     expect(f.configs.get(SOURCE)).not.toHaveProperty('_profileMap')
     expect(f.configs.get(TARGET)).not.toHaveProperty('_profileMap')
@@ -145,7 +145,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
       { [SOURCE]: sourceState, [TARGET]: targetState },
     )
 
-    const swapped = await swapHardwareState(f.store, SOURCE, TARGET)
+    const swapped = await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     expect(f.runtime.get(SOURCE)).toEqual(targetState)
     expect(f.runtime.get(TARGET)).toEqual(sourceState)
@@ -159,7 +159,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
       [TARGET]: { host: 'b', port: 9000 },
     })
 
-    const swapped = await swapHardwareState(f.store, SOURCE, TARGET)
+    const swapped = await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     expect(swapped.hardwareKeysToSource).toEqual(['host', 'port'])
     expect(swapped.hardwareKeysToTarget).toEqual(['host'])
@@ -170,7 +170,7 @@ describe('swapHardwareState — the config describes the box and goes with it', 
   it('a device with an empty config swaps to empty — unknown is the truth, not an error', async () => {
     const f = fakeStore({ [SOURCE]: HIKVISION_CONFIG, [TARGET]: {} })
 
-    await swapHardwareState(f.store, SOURCE, TARGET)
+    await swapHardwareState(f.store, SOURCE, TARGET, undefined)
 
     expect(f.configs.get(SOURCE) ?? {}).toEqual({})
     expect(f.configs.get(TARGET)).toEqual(HIKVISION_CONFIG)
