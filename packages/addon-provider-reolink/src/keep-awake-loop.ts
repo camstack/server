@@ -23,6 +23,14 @@ export interface KeepAwakeLoopDeps<H> {
   readonly onFailure: (err: unknown, firstInStretch: boolean) => void
   /** One wake that succeeded. */
   readonly onSuccess?: () => void
+  /**
+   * True when the live session already keeps the camera awake (video arrived
+   * within one interval): the tick sends no wake, because the firmware pauses
+   * video while the control channel is busy. In-memory only — never a read.
+   */
+  readonly videoFlowing?: () => boolean
+  /** One tick skipped because {@link videoFlowing} answered true. */
+  readonly onSkip?: () => void
 }
 
 export interface KeepAwakeLoop {
@@ -38,6 +46,14 @@ export function createKeepAwakeLoop<H>(deps: KeepAwakeLoopDeps<H>): KeepAwakeLoo
   let failing = false
 
   const tick = (): void => {
+    if (deps.videoFlowing?.() === true) {
+      try {
+        deps.onSkip?.()
+      } catch {
+        /* a logger must never break the loop */
+      }
+      return
+    }
     deps
       .wake()
       .then(() => {

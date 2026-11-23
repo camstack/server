@@ -894,6 +894,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         meta: { activeStreams },
       }),
     onSuccess: () => this.noteKeepAwakeResult(true, null),
+    // Video is the proof the session is awake: a wake on top of it only keeps
+    // the control channel busy and pauses the video (3628: ~5 s of video, then
+    // 32-35 s of silence).
+    videoFlowing: () => Date.now() - this.lastVideoFlowAt < KEEP_AWAKE_INTERVAL_MS,
+    onSkip: () => this.noteKeepAwakeSkipped(),
     onFailure: (err, first) => {
       const error = err instanceof Error ? err.message : String(err)
       const log = first
@@ -913,8 +918,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     issued: 0,
     succeeded: 0,
     failed: 0,
+    skipped: 0,
   }
   private readonly keepAwakePacketCount = new Map<string, number>()
+
+  /** A tick skipped because video was flowing: counted, never logged per tick. */
+  private noteKeepAwakeSkipped(): void {
+    const stats = this.keepAwakeStats
+    if (stats.windowStartedAt === 0) stats.windowStartedAt = Date.now()
+    stats.skipped += 1
+    this.flushKeepAwakeSummary(Date.now())
+  }
 
   /**
    * Make the keep-awake loop observable: a sampled debug line for successes, an
@@ -938,24 +952,25 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         },
       })
     }
-    if (now - stats.windowStartedAt >= 60 * 60_000) {
-      this.ctx.logger.info('keep-awake: hourly summary', {
-        tags: { deviceId: this.id },
-        meta: {
-          issued: stats.issued,
-          succeeded: stats.succeeded,
-          failed: stats.failed,
-          windowMs: now - stats.windowStartedAt,
-        },
-      })
-      this.keepAwakeStats = {
-        windowStartedAt: now,
-        issued: 0,
-        succeeded: 0,
-        failed: 0,
-      }
-    }
+    this.flushKeepAwakeSummary(now)
     if (!ok) void this.logVideoFlowAfterWakeFailure(error ?? 'unknown')
+  }
+
+  /** The hourly info summary; resets the window. */
+  private flushKeepAwakeSummary(now: number): void {
+    const stats = this.keepAwakeStats
+    if (now - stats.windowStartedAt < 60 * 60_000) return
+    this.ctx.logger.info('keep-awake: hourly summary', {
+      tags: { deviceId: this.id },
+      meta: {
+        issued: stats.issued,
+        succeeded: stats.succeeded,
+        failed: stats.failed,
+        skippedVideoFlowing: stats.skipped,
+        windowMs: now - stats.windowStartedAt,
+      },
+    })
+    this.keepAwakeStats = { windowStartedAt: now, issued: 0, succeeded: 0, failed: 0, skipped: 0 }
   }
 
   private async logVideoFlowAfterWakeFailure(error: string): Promise<void> {

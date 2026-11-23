@@ -2832,7 +2832,9 @@ export class StreamBroker implements IStreamBroker {
     // broker that was told `enabled` but kept a stale duration (or the reverse)
     // is precisely the disagreement D381 retires — `applyPreBufferConfig` and
     // `applyPreRoll` used to write them from two call sites.
-    this.setPreBufferEnabled(config.enabled)
+    // A hold with nothing to retain is a source kept dialed for no reason
+    // (on a battery camera: kept awake). `enabled` with 0 seconds is OFF.
+    this.setPreBufferEnabled(config.enabled && config.seconds > 0)
     this.setPreBufferDuration(config.seconds)
     this.prebufferMs = next
   }

@@ -7,13 +7,16 @@ interface FakeTimer {
   cleared: boolean
 }
 
-function harness(opts: { battery?: boolean; wake?: () => Promise<void> } = {}) {
+function harness(
+  opts: { battery?: boolean; wake?: () => Promise<void>; videoFlowing?: () => boolean } = {},
+) {
   const timers: FakeTimer[] = []
   const wake = vi.fn(opts.wake ?? (async () => {}))
   const onStart = vi.fn()
   const onStop = vi.fn()
   const onFailure = vi.fn()
   const onSuccess = vi.fn()
+  const onSkip = vi.fn()
   const loop = createKeepAwakeLoop({
     intervalMs: 20_000,
     isBattery: () => opts.battery ?? true,
@@ -30,14 +33,30 @@ function harness(opts: { battery?: boolean; wake?: () => Promise<void> } = {}) {
     onStop,
     onFailure,
     onSuccess,
+    ...(opts.videoFlowing ? { videoFlowing: opts.videoFlowing, onSkip } : {}),
   })
   const live = (): FakeTimer[] => timers.filter((t) => !t.cleared)
-  return { loop, timers, live, wake, onStart, onStop, onFailure, onSuccess }
+  return { loop, timers, live, wake, onStart, onStop, onFailure, onSuccess, onSkip }
 }
 
 const flush = (): Promise<void> => new Promise((r) => setImmediate(r))
 
 describe('keep-awake loop', () => {
+  it('sends no wake while video is flowing, and wakes again once it goes stale', async () => {
+    let flowing = true
+    const h = harness({ videoFlowing: () => flowing })
+    h.loop.sync(1)
+    h.live()[0]?.fn()
+    await flush()
+    expect(h.wake).not.toHaveBeenCalled()
+    expect(h.onSkip).toHaveBeenCalledTimes(1)
+    flowing = false
+    h.live()[0]?.fn()
+    await flush()
+    expect(h.wake).toHaveBeenCalledTimes(1)
+    expect(h.onSkip).toHaveBeenCalledTimes(1)
+  })
+
   it('reports each successful wake so the camera can count and sample them', async () => {
     const h = harness()
     h.loop.sync(1)

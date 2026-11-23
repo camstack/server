@@ -155,6 +155,8 @@ describe('per-stream "Probed" readonly settings field', () => {
       // broker has to accept them — see D193.
       setDetectionPreRollMs: () => {},
       setRecordingPreRollMs: () => {},
+      // ... and the prebuffer decision, re-applied on the same re-publish.
+      setPrebuffer: () => {},
     }
     ;(manager as unknown as { brokers: Map<string, unknown> }).brokers.set(brokerId, fakeBroker)
 

@@ -8290,7 +8290,11 @@ export class StreamBrokerManager {
       // can happen post-creation, via a live probe), and the recording pre-roll
       // default reads that snapshot. Re-applying here is what keeps a camera
       // that turned out to be battery-operated from retaining 10 s of ring for
-      // the rest of the process's life.
+      // the rest of the process's life. It also RELEASES a prebuffer hold the
+      // first decision opened before the Sleeps fact was known — an orphan hold
+      // keeps a battery camera awake for hours. Idempotent: an unchanged
+      // decision is a no-op on the broker.
+      this.applyPrebufferConfig(live, deviceId, camStreamId)
       return
     }
 
