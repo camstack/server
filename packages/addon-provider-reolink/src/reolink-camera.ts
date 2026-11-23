@@ -11017,7 +11017,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // re-parses against the schema; no manual snapshot required.
     if (Object.keys(rest).length > 0) await this.config.setAll(rest)
     const typedPatch = patch as Partial<ReolinkCameraConfig>
-    if (typedPatch.host || typedPatch.port || typedPatch.username || typedPatch.password) {
+    // `transport`, `uid` and `udpDiscoveryMethod` pick HOW the dial happens; a cached client
+    // keeps the old path (e.g. the relay) until it is dropped.
+    if (
+      typedPatch.host ||
+      typedPatch.port ||
+      typedPatch.username ||
+      typedPatch.password ||
+      typedPatch.transport ||
+      typedPatch.uid ||
+      typedPatch.udpDiscoveryMethod
+    ) {
       await this.disconnectAll()
       return
     }

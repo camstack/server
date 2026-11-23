@@ -189,6 +189,29 @@ export function buildCreationFormSchema(): ConfigUISchema {
             descriptionKey: 'provider-reolink:creation.s_connection.uid.description',
             showWhen: { field: 'transport', notEquals: 'tcp' },
           },
+          {
+            type: 'select',
+            key: 'udpDiscoveryMethod',
+            label: 'UDP discovery',
+            labelKey: 'provider-reolink:creation.s_connection.udpDiscoveryMethod.label',
+            default: 'auto',
+            description:
+              'Auto races every method and may settle on the Reolink relay. "Local only" talks straight to the camera IP and never uses Reolink servers.',
+            descriptionKey: 'provider-reolink:creation.s_connection.udpDiscoveryMethod.description',
+            options: [
+              {
+                value: 'auto',
+                label: 'Auto (may use the Reolink relay)',
+                labelKey: 'provider-reolink:creation.s_connection.udpDiscoveryMethod.o_auto.label',
+              },
+              {
+                value: 'local-direct',
+                label: 'Local only (direct to the camera IP)',
+                labelKey: 'provider-reolink:creation.s_connection.udpDiscoveryMethod.o_local.label',
+              },
+            ],
+            showWhen: { field: 'transport', notEquals: 'tcp' },
+          },
         ],
       },
       {

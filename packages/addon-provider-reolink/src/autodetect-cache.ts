@@ -54,6 +54,7 @@ export class AutodetectCache {
     readonly password: string
     readonly uid?: string
     readonly transport: 'auto' | 'tcp' | 'udp'
+    readonly udpDiscoveryMethod?: string | undefined
   }): string {
     const passHash = createHash('sha256').update(input.password).digest('hex').slice(0, 16)
     return [
@@ -62,6 +63,7 @@ export class AutodetectCache {
       passHash,
       input.uid?.trim() ?? '',
       input.transport,
+      input.udpDiscoveryMethod ?? '',
     ].join(':')
   }
 

@@ -65,6 +65,7 @@ import { REOLINK_ADDON_ID, ReolinkCamera, reolinkCameraSchema } from './reolink-
 // "unused import": the channels vanish from the cluster if you do.
 import './log-channels.js'
 import { AutodetectCache } from './autodetect-cache.js'
+import { buildAutodetectInputs } from './autodetect-inputs.js'
 import {
   BAICHUAN_WEBHOOK_PREFIX,
   type BaichuanWebhookManagerSetupParams,
@@ -151,31 +152,6 @@ function getString(obj: Record<string, unknown>, key: string): string {
 function getNumber(obj: Record<string, unknown>, key: string, fallback: number): number {
   const v = obj[key]
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback
-}
-
-type TransportMode = 'auto' | 'tcp' | 'udp'
-
-function getTransportMode(obj: Record<string, unknown>): TransportMode {
-  const v = obj['transport']
-  return v === 'tcp' || v === 'udp' || v === 'auto' ? v : 'auto'
-}
-
-function buildAutodetectInputs(form: Record<string, unknown>): {
-  readonly host: string
-  readonly username: string
-  readonly password: string
-  readonly uid: string | undefined
-  readonly transport: TransportMode
-  readonly port: number
-} {
-  const host = getString(form, 'host').trim()
-  const username = (getString(form, 'username') || 'admin').trim()
-  const password = getString(form, 'password')
-  const rawUid = getString(form, 'uid').trim()
-  const uid = rawUid.length > 0 ? rawUid : undefined
-  const transport = getTransportMode(form)
-  const port = getNumber(form, 'port', 9000)
-  return { host, username, password, uid, transport, port }
 }
 
 function buildAutodetectLabels(result: AutoDetectResult): string[] {
@@ -1570,6 +1546,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         username: inputs.username,
         password: inputs.password,
         ...(inputs.uid ? { uid: inputs.uid } : {}),
+        ...(inputs.udpDiscoveryMethod ? { udpDiscoveryMethod: inputs.udpDiscoveryMethod } : {}),
         mode: inputs.transport,
       })
     } else {
@@ -1834,6 +1811,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         username: inputs.username,
         password: inputs.password,
         ...(inputs.uid ? { uid: inputs.uid } : {}),
+        ...(inputs.udpDiscoveryMethod ? { udpDiscoveryMethod: inputs.udpDiscoveryMethod } : {}),
         mode: inputs.transport,
         logger: buildAutodetectLibLogger(probeLogger),
       })

@@ -39,6 +39,15 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - IR + status LED: IR LED, IR brightness, Status LED, Doorbell LED
 - and 12 more sections
 
+## Fully local battery cameras
+
+A battery camera can run with no Reolink cloud: the control channel goes straight to the camera over UDP and motion arrives by mail to the hub, so the camera's internet access can be blocked.
+
+- Add it with **UDP discovery: Local only (direct to the camera IP)**. The default Auto races every method and settles on the Reolink relay when the direct one gets no answer; the connect log line names the path (`udpDiscoveryMethod=local-direct` or `relay`).
+- Direct discovery sends to the camera IP on UDP 2015 (the camera answers ICMP unreachable on 2018 and 9999, and refuses TCP on its Baichuan port). From another subnet the hub's request reaches the camera but no reply came back (`local discovery timeout ... replies=0`); either the camera ignores off-subnet sources or the reply is blocked. Allow UDP from the camera to the hub, not only return traffic, or share a subnet.
+- Motion: set **Preferred sleep-push path** to Email/SMTP only and allow the camera to reach the hub's SMTP port (2525 by default).
+- Changing the connection mode or UDP discovery method of an existing camera drops the cached client so the next dial uses it.
+
 ## Requirements
 
 - Placement: hub-only.
