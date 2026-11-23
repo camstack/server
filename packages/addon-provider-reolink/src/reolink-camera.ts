@@ -8317,9 +8317,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       }
       // The run in flight may be an ordinary one that will hand back the cached
       // server. A joiner that knows the source went silent must not lose that:
-      // it re-runs, with its reason, once the run in flight has settled.
+      // it re-runs, with its reason, once the run in flight has settled — even
+      // when that run failed, since a failed run is no reason to keep a dead server.
       if (opts.reason === 'source-silent' && this.materializeSilent.get(camStreamId) !== true) {
-        return inFlight.then(() => this.materializeStreamSocket(camStreamId, opts))
+        return inFlight.then(
+          () => this.materializeStreamSocket(camStreamId, opts),
+          () => this.materializeStreamSocket(camStreamId, opts),
+        )
       }
       return inFlight
     }
