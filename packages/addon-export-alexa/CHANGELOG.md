@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa no longer re-announces camera devices after every restart: a shape that loses endpoints is pushed only when a second read confirms it.
+
 ## [1.2.206] - 2026-11-22
 
 ### Changed

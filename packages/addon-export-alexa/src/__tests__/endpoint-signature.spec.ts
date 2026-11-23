@@ -5,7 +5,7 @@
  * cosmetic churn must be invisible, and a gained/lost interface must never be.
  */
 import { describe, it, expect } from 'vitest'
-import { endpointsSignature } from '../endpoint-signature.js'
+import { endpointsSignature, signatureLoss } from '../endpoint-signature.js'
 import type { AlexaCapability, AlexaEndpoint } from '../endpoints/types.js'
 
 const BASE: AlexaCapability = { type: 'AlexaInterface', interface: 'Alexa', version: '3' }
@@ -98,5 +98,26 @@ describe('endpointsSignature', () => {
     const a = endpointsSignature([endpoint()])
     const b = endpointsSignature([endpoint({ displayCategories: ['CAMERA', 'DOORBELL'] })])
     expect(b).not.toBe(a)
+  })
+})
+
+describe('signatureLoss', () => {
+  const full =
+    'cam|CAMERA,DOORBELL|Alexa,Alexa.DoorbellEventSource!p;cam__5|SWITCH|SWITCH|Alexa.PowerController'
+  it('is empty for equal and for growth-only shapes', () => {
+    expect(signatureLoss(full, full)).toEqual([])
+    expect(signatureLoss('cam|CAMERA|Alexa', full)).toEqual([])
+  })
+  it('names a dropped endpoint (id containing a pipe), category and interface', () => {
+    expect(signatureLoss(full, 'cam|CAMERA|Alexa')).toEqual([
+      'category:cam:DOORBELL',
+      'endpoint:cam__5|SWITCH',
+      'interface:cam:Alexa.DoorbellEventSource',
+    ])
+  })
+  it('ignores retirable endpoints and the proactive flag', () => {
+    expect(signatureLoss('a|X|I!p;b__det_1|Y|I', 'a|X|I', (id) => id.includes('__det_'))).toEqual(
+      [],
+    )
   })
 })

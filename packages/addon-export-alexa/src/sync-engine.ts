@@ -10,7 +10,7 @@
  * gone from the registry.
  */
 import type { IScopedLogger } from '@camstack/types'
-import { endpointsSignature } from './endpoint-signature.js'
+import { endpointsSignature, signatureLoss } from './endpoint-signature.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { withholdInvalidEndpoints } from './endpoints/validate-endpoint.js'
 import type { ExposedDeviceEntry, LinkedAccount } from './types.js'
@@ -62,6 +62,9 @@ export interface SyncEngineDeps {
    *  Amazon still believes the pre-binding shape. */
   readonly getExportedSignatures: () => Readonly<Record<number, string>>
   readonly setExportedSignatures: (next: Readonly<Record<number, string>>) => Promise<void>
+  /** How long a shape that LOSES endpoints / interfaces / categories waits
+   *  before a second build confirms it (default {@link SHRINK_CONFIRM_DELAY_MS}). */
+  readonly shrinkConfirmDelayMs?: number
 }
 
 export interface PushResult {
@@ -123,6 +126,15 @@ export interface ReconcileAllResult {
  */
 const RECONCILE_ALL_CONCURRENCY = 4
 
+/**
+ * A rebuilt shape that drops something Alexa already holds is pushed only when
+ * a second build, this long after the first, still drops it. At boot the
+ * child / binding reads answer partially; pushing that shrunk shape made the
+ * cloud forget the children and re-announce them as new devices (live hub,
+ * 2026-11-23, D49).
+ */
+export const SHRINK_CONFIRM_DELAY_MS = 90_000
+
 export class SyncEngine {
   /**
    * Serializes the `recordEndpoints` read-modify-write. The build/push half of
@@ -141,7 +153,24 @@ export class SyncEngine {
    */
   private readonly reconcileFlights = new Map<number, Promise<ReconcileResult>>()
 
+  /** One pending shrink confirmation per device (never stacked). */
+  private readonly shrinkTimers = new Map<number, ReturnType<typeof setTimeout>>()
+
   constructor(private readonly deps: SyncEngineDeps) {}
+
+  /** Cancel every pending shrink confirmation (runtime stop). */
+  dispose(): void {
+    for (const timer of this.shrinkTimers.values()) clearTimeout(timer)
+    this.shrinkTimers.clear()
+  }
+
+  private clearShrinkTimer(deviceId: number): boolean {
+    const timer = this.shrinkTimers.get(deviceId)
+    if (timer === undefined) return false
+    clearTimeout(timer)
+    this.shrinkTimers.delete(deviceId)
+    return true
+  }
 
   async pushDevice(deviceId: number): Promise<PushResult> {
     const accounts = this.deps.listLinkedAccounts()
@@ -311,6 +340,7 @@ export class SyncEngine {
   }
 
   async removeDevice(deviceId: number): Promise<RemoveResult> {
+    this.clearShrinkTimer(deviceId)
     const ids = this.deps.getExportedEndpoints()[deviceId] ?? []
     if (ids.length === 0) {
       // Nothing tracked for this device — the key isn't present, so a persist
@@ -413,7 +443,7 @@ export class SyncEngine {
     return flight
   }
 
-  private async reconcileDeviceNow(deviceId: number): Promise<ReconcileResult> {
+  private async reconcileDeviceNow(deviceId: number, confirming = false): Promise<ReconcileResult> {
     if (!this.deps.listExposed().some((e) => e.deviceId === deviceId)) {
       return { deviceId, pushed: false }
     }
@@ -430,8 +460,60 @@ export class SyncEngine {
     }
     const current = endpointsSignature(endpoints)
     const last = this.deps.getExportedSignatures()[deviceId]
-    if (last === current) return { deviceId, pushed: false }
+    if (last === current) {
+      if (this.clearShrinkTimer(deviceId) || confirming) {
+        this.deps.logger.info(
+          'alexa sync: a shrunk endpoint shape was transient — the full shape is back, nothing pushed',
+          { tags: { deviceId } },
+        )
+      }
+      return { deviceId, pushed: false }
+    }
 
+    if (last !== undefined) {
+      const lost = signatureLoss(last, current, this.deps.mayRetire)
+      if (lost.length > 0 && confirming) {
+        this.deps.logger.info('alexa sync: shrink confirmed by a second build — pushing', {
+          tags: { deviceId },
+          meta: { lost },
+        })
+      } else if (lost.length > 0) {
+        // D49: a read that would DESTROY work is confirmed by a second read.
+        // A growth-only (or loss-free) change falls through and pushes now.
+        this.scheduleShrinkConfirmation(deviceId, lost)
+        return { deviceId, pushed: false }
+      }
+    }
+    this.clearShrinkTimer(deviceId)
+    return this.pushDrifted(deviceId, last, current, endpoints)
+  }
+
+  private scheduleShrinkConfirmation(deviceId: number, lost: readonly string[]): void {
+    if (this.shrinkTimers.has(deviceId)) return
+    const delay = this.deps.shrinkConfirmDelayMs ?? SHRINK_CONFIRM_DELAY_MS
+    this.deps.logger.info(
+      'alexa sync: rebuilt endpoint shape LOSES endpoints/interfaces — not pushing yet, a second build will confirm',
+      { tags: { deviceId }, meta: { lost, confirmInMs: delay } },
+    )
+    const timer = setTimeout(() => {
+      this.shrinkTimers.delete(deviceId)
+      void this.reconcileDeviceNow(deviceId, true).catch((err: unknown) => {
+        this.deps.logger.warn('alexa sync: shrink confirmation failed', {
+          tags: { deviceId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      })
+    }, delay)
+    timer.unref?.()
+    this.shrinkTimers.set(deviceId, timer)
+  }
+
+  private async pushDrifted(
+    deviceId: number,
+    last: string | undefined,
+    current: string,
+    endpoints: readonly AlexaEndpoint[],
+  ): Promise<ReconcileResult> {
     this.deps.logger.info(
       'alexa sync: endpoint shape drifted — re-pushing AddOrUpdateReport so the cloud advertises the current interfaces',
       {

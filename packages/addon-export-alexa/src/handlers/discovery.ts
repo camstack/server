@@ -278,7 +278,7 @@ export async function buildEndpointsForExposedDevice(
     tags: { deviceId: parentInfo.id },
     meta: {
       name: parentInfo.name,
-      capNames: parentInfo.capNames,
+      capNames: [...new Set(parentInfo.capNames)],
       hasMotion,
       hasPtz,
       hasAutotrack,

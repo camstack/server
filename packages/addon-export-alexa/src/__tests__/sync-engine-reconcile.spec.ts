@@ -17,7 +17,7 @@
  * run on every bindings-change and at boot precisely because an unchanged
  * shape costs zero gateway calls.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { SyncEngine, type SyncEngineDeps } from '../sync-engine.js'
 import { endpointsSignature } from '../endpoint-signature.js'
 import type { AlexaCapability, AlexaEndpoint } from '../endpoints/types.js'
@@ -222,5 +222,78 @@ describe('SyncEngine push operations record the signature', () => {
     await h.deps.setExportedSignatures({ 101: 'whatever' })
     await new SyncEngine(h.deps).removeDevice(101)
     expect(h.signatures[101]).toBeUndefined()
+  })
+})
+
+describe('SyncEngine.reconcileDevice — a shrunk shape is confirmed before it is pushed (D49)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const FULL = [ep('7'), ep('7__1|SWITCH'), ep('7__2|LIGHT')]
+  const SHRUNK = [ep('7')]
+  const DELAY = 90_000
+
+  /** Harness whose builds answer from a script; the last answer repeats. */
+  function scripted(builds: ReadonlyArray<readonly AlexaEndpoint[]>) {
+    const h = makeHarness({ exposed: [7], accounts: ['userA'] })
+    let i = 0
+    const deps: SyncEngineDeps = {
+      ...h.deps,
+      shrinkConfirmDelayMs: DELAY,
+      buildEndpoints: async () => builds[Math.min(i++, builds.length - 1)] ?? [],
+    }
+    return { h, deps }
+  }
+
+  it('boot: a shrunk build then the full shape pushes NOTHING', async () => {
+    vi.useFakeTimers()
+    const { h, deps } = scripted([SHRUNK, FULL])
+    await h.deps.setExportedSignatures({ 7: endpointsSignature(FULL) })
+    const engine = new SyncEngine(deps)
+
+    expect((await engine.reconcileDevice(7)).pushed).toBe(false)
+    expect((await engine.reconcileDevice(7)).pushed).toBe(false)
+    await vi.advanceTimersByTimeAsync(DELAY * 2)
+
+    expect(h.addCalls).toEqual([])
+    expect(h.signatures[7]).toBe(endpointsSignature(FULL))
+  })
+
+  it('a genuine shrink is pushed once a second build confirms it, never stacked', async () => {
+    vi.useFakeTimers()
+    const { h, deps } = scripted([SHRUNK])
+    await h.deps.setExportedSignatures({ 7: endpointsSignature(FULL) })
+    const engine = new SyncEngine(deps)
+
+    await engine.reconcileDevice(7)
+    await engine.reconcileDevice(7)
+    expect(h.addCalls).toEqual([])
+    await vi.advanceTimersByTimeAsync(DELAY + 10)
+
+    expect(h.addCalls.length).toBe(1)
+    expect(h.addCalls[0]?.ids).toEqual(['7'])
+    expect(h.signatures[7]).toBe(endpointsSignature(SHRUNK))
+  })
+
+  it('growth pushes immediately', async () => {
+    const { h, deps } = scripted([FULL])
+    await h.deps.setExportedSignatures({ 7: endpointsSignature(SHRUNK) })
+
+    const r = await new SyncEngine(deps).reconcileDevice(7)
+
+    expect(r.pushed).toBe(true)
+    expect(h.addCalls.length).toBe(1)
+  })
+
+  it('dispose cancels a pending confirmation', async () => {
+    vi.useFakeTimers()
+    const { h, deps } = scripted([SHRUNK])
+    await h.deps.setExportedSignatures({ 7: endpointsSignature(FULL) })
+    const engine = new SyncEngine(deps)
+    await engine.reconcileDevice(7)
+    engine.dispose()
+    await vi.advanceTimersByTimeAsync(DELAY * 2)
+    expect(h.addCalls).toEqual([])
   })
 })

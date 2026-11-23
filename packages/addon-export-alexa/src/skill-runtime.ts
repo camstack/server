@@ -636,6 +636,7 @@ export class SkillRuntime {
       this.lwaGateway.stop()
       this.lwaGateway = null
     }
+    this.syncEngine?.dispose()
     this.syncEngine = null
     this.actionScenes = null
   }

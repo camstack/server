@@ -72,3 +72,62 @@ function endpointKey(endpoint: AlexaEndpoint): string {
 export function endpointsSignature(endpoints: readonly AlexaEndpoint[]): string {
   return endpoints.map(endpointKey).sort().join(';')
 }
+
+interface ParsedEndpointShape {
+  readonly categories: ReadonlySet<string>
+  readonly interfaces: ReadonlySet<string>
+}
+
+/** Split `id|CATEGORIES|interfaces` from the right: an endpoint id may itself
+ *  contain `|` (a linked child is `<parent>__<child>|SWITCH`). */
+function parseSignature(signature: string): ReadonlyMap<string, ParsedEndpointShape> {
+  const shapes = new Map<string, ParsedEndpointShape>()
+  if (signature.length === 0) return shapes
+  for (const entry of signature.split(';')) {
+    const last = entry.lastIndexOf('|')
+    const prev = last > 0 ? entry.lastIndexOf('|', last - 1) : -1
+    if (prev < 0) continue
+    const split = (text: string): ReadonlySet<string> =>
+      new Set(
+        text
+          .split(',')
+          .filter((v) => v.length > 0)
+          .map((v) => v.replace(/!p$/, '')),
+      )
+    shapes.set(entry.slice(0, prev), {
+      categories: split(entry.slice(prev + 1, last)),
+      interfaces: split(entry.slice(last + 1)),
+    })
+  }
+  return shapes
+}
+
+/**
+ * What a rebuilt shape DROPS relative to the shape last pushed: whole
+ * endpoints, display categories and interfaces (instance kept, the
+ * proactive-report flag ignored). Empty when `current` only grows or changes
+ * without losing anything. Each entry is a stable, human-readable token
+ * (`endpoint:<id>`, `category:<id>:<CAT>`, `interface:<id>:<iface>`), sorted.
+ * `mayRetire` names endpoints whose disappearance is a decided fact, not a
+ * partial read, so they never count as a loss.
+ */
+export function signatureLoss(
+  last: string,
+  current: string,
+  mayRetire: (endpointId: string) => boolean = () => false,
+): readonly string[] {
+  const before = parseSignature(last)
+  const after = parseSignature(current)
+  const lost: string[] = []
+  for (const [id, shape] of before) {
+    if (mayRetire(id)) continue
+    const now = after.get(id)
+    if (now === undefined) {
+      lost.push(`endpoint:${id}`)
+      continue
+    }
+    for (const c of shape.categories) if (!now.categories.has(c)) lost.push(`category:${id}:${c}`)
+    for (const i of shape.interfaces) if (!now.interfaces.has(i)) lost.push(`interface:${id}:${i}`)
+  }
+  return lost.sort()
+}
