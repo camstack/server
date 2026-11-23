@@ -140,6 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon running a dev build newer than the registry latest is never moved down to the older registry version
 - The alert centre announces a device fault at its warning tier
 - A migration refuses to re-key a device to another addon while its settings hold a keychain secret, instead of leaving the secret under the old addon
+- Rooms and tags are records with an id: renaming a room or a tag is one change and no longer rewrites every device, rule or block; existing rooms, icons, descriptions, zones and tag colours are migrated automatically.
 
 ### Removed
 
