@@ -19,6 +19,8 @@
  * alphabetically on a tie), else the folded key a map entry carries.
  */
 import {
+  canonicalIconKey,
+  LOCATION_DESCRIPTION_MAX,
   type MigrationEdit,
   type MigrationPlan,
   preconditionOf,
@@ -64,6 +66,81 @@ export interface RoomsMigrationPorts {
   /** The ids of the `rooms` and `zones` records that already exist. */
   readRoomIds(): Promise<ReadonlySet<string>>
   readZoneIds(): Promise<ReadonlySet<string>>
+  /** One info line on the record; the legacy keys are deleted in the same plan. */
+  report?(message: string, meta: Readonly<Record<string, unknown>>): void
+}
+
+/** What a legacy map held that the new records cannot carry. */
+export interface DroppedLegacyEntry {
+  readonly map: string
+  readonly key: string
+  readonly reason: string
+  readonly value: unknown
+}
+
+const isPlainMap = (raw: unknown): raw is Record<string, unknown> =>
+  raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+
+/** The entries the decode drops or shortens, raw, before the keys are deleted. */
+export function droppedLegacyEntries(
+  stored: Readonly<Record<string, unknown>>,
+): DroppedLegacyEntry[] {
+  const out: DroppedLegacyEntry[] = []
+  const icons = stored['locationIcons']
+  if (isPlainMap(icons)) {
+    for (const [key, value] of Object.entries(icons)) {
+      if (canonicalIconKey(value) === undefined) {
+        out.push({ map: 'locationIcons', key, reason: 'icon not in the catalogue', value })
+      }
+    }
+  }
+  const descriptions = stored['locationDescriptions']
+  if (isPlainMap(descriptions)) {
+    for (const [key, value] of Object.entries(descriptions)) {
+      if (typeof value !== 'string' || value.trim().length === 0) {
+        out.push({ map: 'locationDescriptions', key, reason: 'blank description', value })
+      } else if (value.trim().length > LOCATION_DESCRIPTION_MAX) {
+        out.push({ map: 'locationDescriptions', key, reason: 'description truncated', value })
+      }
+    }
+  }
+  const zones = stored['siteZones']
+  if (isPlainMap(zones)) {
+    for (const [key, value] of Object.entries(zones)) {
+      const label =
+        isPlainMap(value) && typeof value['label'] === 'string' ? value['label'].trim() : ''
+      if (label.length === 0) {
+        out.push({ map: 'siteZones', key, reason: 'zone without a label', value })
+      } else if (
+        isPlainMap(value) &&
+        value['icon'] !== undefined &&
+        canonicalIconKey(value['icon']) === undefined
+      ) {
+        out.push({ map: 'siteZones', key, reason: 'zone icon not in the catalogue', value })
+      }
+    }
+  }
+  const membership = stored['locationZones']
+  if (isPlainMap(membership)) {
+    for (const [key, value] of Object.entries(membership)) {
+      if (typeof value !== 'string' || value.trim().length === 0) {
+        out.push({ map: 'locationZones', key, reason: 'blank zone', value })
+      } else if (!isPlainMap(zones) || zones[value] === undefined) {
+        out.push({ map: 'locationZones', key, reason: 'zone not in the registry', value })
+      }
+    }
+  }
+  return out
+}
+
+/** A map keyed by the FOLDED room key: a legacy key that was never folded still matches. */
+function foldedBy<T>(map: Readonly<Record<string, T>> | undefined): Map<string, T> {
+  const out = new Map<string, T>()
+  for (const [key, value] of Object.entries(map ?? {})) {
+    const folded = locationIconKey(key)
+    if (folded.length > 0 && !out.has(folded)) out.set(folded, value)
+  }
+  return out
 }
 
 const settingsRowId = (key: string): string => `${DEVICE_MANAGER_ID}.${key}`
@@ -118,7 +195,15 @@ export async function planRoomsAsRecords(ports: RoomsMigrationPorts): Promise<Mi
   }
 
   const zones = store.siteZones ?? {}
-  const membership = store.locationZones ?? {}
+  const membership = foldedBy(store.locationZones)
+  const iconsByRoom = foldedBy(store.locationIcons)
+  const descriptionsByRoom = foldedBy(store.locationDescriptions)
+  const dropped = droppedLegacyEntries(stored)
+  if (dropped.length > 0) {
+    const counts: Record<string, number> = {}
+    for (const entry of dropped) counts[entry.map] = (counts[entry.map] ?? 0) + 1
+    ports.report?.('rooms migration: legacy entries not carried over', { counts, dropped })
+  }
   const edits: MigrationEdit[] = []
 
   for (const [zoneKey, zone] of Object.entries(zones)) {
@@ -142,9 +227,9 @@ export async function planRoomsAsRecords(ports: RoomsMigrationPorts): Promise<Mi
   for (const [key, name] of names) {
     const id = roomIdFromKey(key)
     if (existingRooms.has(id)) continue
-    const icon = store.locationIcons?.[key]
-    const description = store.locationDescriptions?.[key]
-    const zoneKey = membership[key]
+    const icon = iconsByRoom.get(key)
+    const description = descriptionsByRoom.get(key)
+    const zoneKey = membership.get(key)
     const zoneId =
       zoneKey !== undefined && zones[zoneKey] !== undefined ? zoneIdFromKey(zoneKey) : undefined
     const body: RoomBody = {

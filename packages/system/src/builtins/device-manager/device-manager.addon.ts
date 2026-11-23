@@ -736,6 +736,7 @@ export class DeviceManagerAddon extends BaseAddon {
           rows: deviceRows,
           rooms: records.kind(deviceManagerRecordKinds.rooms),
           zones: records.kind(deviceManagerRecordKinds.zones),
+          report: (message, meta) => this.ctx.logger.info(message, { meta }),
         }),
       ),
     )

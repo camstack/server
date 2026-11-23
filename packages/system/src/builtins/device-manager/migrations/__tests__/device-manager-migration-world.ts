@@ -38,6 +38,8 @@ export interface MigrationWorld {
   readonly records: RecordsAccess
   readonly target: MigrateTarget
   readonly ports: DeviceManagerMigrationPorts
+  /** Every info line the migration ports reported, in order. */
+  readonly reports: { readonly message: string; readonly meta: Readonly<Record<string, unknown>> }[]
   /** The addon store rows as stored, by key. */
   readonly store: () => Record<string, unknown>
   /** Write one addon store key (and the same key of a neighbour addon, which must survive). */
@@ -98,7 +100,11 @@ export async function makeMigrationWorld(devices: readonly SeedDevice[]): Promis
         .filter((row) => row.id.startsWith(`${OWNER}.`))
         .map((row) => [row.id.slice(OWNER.length + 1), JSON.parse(row.data).value]),
     )
+  const reports: { message: string; meta: Readonly<Record<string, unknown>> }[] = []
   const ports = deviceManagerMigrationPorts({
+    report: (message, meta) => {
+      reports.push({ message, meta })
+    },
     readStoredKey: async (key) => {
       const all = storeRows()
       return key in all ? { kind: 'present', value: all[key] } : { kind: 'absent' }
@@ -135,6 +141,7 @@ export async function makeMigrationWorld(devices: readonly SeedDevice[]): Promis
     records,
     target,
     ports,
+    reports,
     store: storeRows,
     setStore: (key, value) => {
       upsert.run(`${OWNER}.${key}`, JSON.stringify({ addonId: OWNER, key, value }))

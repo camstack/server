@@ -14,6 +14,8 @@ export interface DeviceManagerPortsSource {
   readonly rows: Pick<DeviceRowStore, 'readRawColumns'>
   readonly rooms: RecordKindHandle<RoomBody>
   readonly zones: RecordKindHandle<ZoneBody>
+  /** An info line on the record (the addon's logger). */
+  readonly report?: (message: string, meta: Readonly<Record<string, unknown>>) => void
 }
 
 const stringOrNull = (value: unknown): string | null => (typeof value === 'string' ? value : null)
@@ -69,5 +71,6 @@ export function deviceManagerMigrationPorts(
     },
     readRoomIds: async () => new Set((await readAllRows(source.rooms)).map((row) => row.id)),
     readZoneIds: async () => new Set((await readAllRows(source.zones)).map((row) => row.id)),
+    ...(source.report === undefined ? {} : { report: source.report }),
   }
 }

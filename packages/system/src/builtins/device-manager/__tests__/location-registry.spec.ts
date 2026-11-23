@@ -152,6 +152,29 @@ describe('removeLocation cascade', () => {
     expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen')
   })
 
+  it('without cascade the entry loses its icon and description, and stays while a device uses the room', async () => {
+    const { provider, store } = await setup()
+    const kitchen = await seedDevice(provider, 'cam-kitchen', 'Kitchen')
+    await provider.setLocationIcon({ location: 'Kitchen', icon: 'utensils' })
+    await provider.setLocationDescription({ location: 'Kitchen', description: 'Where we cook.' })
+
+    await provider.removeLocation({ name: 'Kitchen' })
+
+    expect(await provider.listLocationIcons()).toEqual([])
+    expect(await provider.listLocationDescriptions()).toEqual([])
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen')
+    expect(await provider.listLocations()).toEqual(['Kitchen'])
+  })
+
+  it('without cascade a room no device uses is removed', async () => {
+    const { provider } = await setup()
+    await provider.addLocation({ name: 'Attic' })
+
+    await provider.removeLocation({ name: 'Attic' })
+
+    expect(await provider.listLocations()).toEqual([])
+  })
+
   it('does not revert an operator setLocation that races it', async () => {
     const { provider, store } = await setup()
     const kitchen = await seedDevice(provider, 'cam-kitchen', 'Kitchen')

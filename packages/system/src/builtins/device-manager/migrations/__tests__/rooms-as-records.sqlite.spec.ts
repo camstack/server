@@ -80,6 +80,51 @@ describe('rooms-as-records on real SQLite', () => {
     expect(neighbour).toHaveLength(LEGACY_ROOM_KEYS.length)
   })
 
+  it('logs ONE line with counts and the raw values of every legacy entry it drops, before the keys go', async () => {
+    const w = await legacyHub()
+    w.setStore('locationDescriptions', {
+      kitchen: 'Where the stove is',
+      garage: '   ',
+      porch: 'x'.repeat(2000),
+    })
+    w.setStore('siteZones', {
+      upstairs: { label: 'Upstairs', icon: 'nope' },
+      blank: { label: ' ' },
+    })
+    await w.run(ROOMS_AS_RECORDS_ID)
+
+    expect(w.reports).toHaveLength(1)
+    const line = w.reports[0]
+    expect(line?.meta['counts']).toEqual({
+      locationIcons: 1,
+      locationDescriptions: 2,
+      siteZones: 2,
+      locationZones: 1,
+    })
+    expect(line?.meta['dropped']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ map: 'locationIcons', key: 'garage', value: 'not-an-icon' }),
+        expect.objectContaining({ map: 'locationDescriptions', key: 'garage', value: '   ' }),
+        expect.objectContaining({
+          map: 'locationDescriptions',
+          key: 'porch',
+          reason: 'description truncated',
+        }),
+        expect.objectContaining({ map: 'locationZones', key: 'garage', value: 'ghost-zone' }),
+      ]),
+    )
+  })
+
+  it('a legacy map key that was never folded still reaches its room', async () => {
+    const w = await legacyHub()
+    w.setStore('locationIcons', { ' Kitchen ': 'home' })
+    w.setStore('locationDescriptions', { GARAGE: 'Cars and tools' })
+    await w.run(ROOMS_AS_RECORDS_ID)
+    const rooms = await listRooms(w)
+    expect(rooms[KITCHEN]).toMatchObject({ icon: 'house' })
+    expect(rooms[GARAGE]).toMatchObject({ description: 'Cars and tools' })
+  })
+
   it('a rerun plans nothing and changes nothing', async () => {
     const w = await legacyHub()
     await w.run(ROOMS_AS_RECORDS_ID)

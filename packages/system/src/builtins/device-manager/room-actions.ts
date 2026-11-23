@@ -191,12 +191,21 @@ export async function removeLocation(
   if (room === null) return
   // `cascade` clears the devices' room (D1089: a delete always clears the
   // references). Without it the room is a suggestion list entry a device still
-  // uses, so it stays while any device carries it and goes only when none does.
+  // uses: it stays while any device carries it (its icon, description and zone cleared)
+  // and goes only when none does.
   if (input.cascade === true) {
     await deleteRoom(pctx, { id: room.id })
     return
   }
-  if ((await devicesInRoom(pctx, room.id)).length > 0) return
+  if ((await devicesInRoom(pctx, room.id)).length > 0) {
+    // Its devices still use the room, so the record stays; what a registry entry carried
+    // (icon, description, zone) goes, as it always did.
+    await updateRoom(pctx, {
+      id: room.id,
+      patch: { icon: null, description: null, zoneId: null },
+    })
+    return
+  }
   await pctx.rooms.rooms.delete(room.id)
 }
 
