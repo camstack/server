@@ -49,6 +49,10 @@ Hard rules:
   page-local look-alike.
 - Theme tokens only. No hex, `rgb()`, Tailwind palette classes or colour /
   spacing inline styles.
+- Edits save through Save / Discard (`FormSaveBar`): a local draft, one Save,
+  Discard restores the server state. Never a write from `onBlur` / `onChange`
+  / a per-row control on a settings surface; only live device controls and
+  one-shot buttons act immediately.
 - Viewer: any layout change (structure, grouping, navigation) is proposed to
   the operator and waits for an answer. Bug, token and string fixes do not.
 - Do not ship: no npm publish, no deploy, no viewer OTA or store build, no

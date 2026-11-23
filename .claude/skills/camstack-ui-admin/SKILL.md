@@ -53,6 +53,12 @@ right on its own dev server and broken in the hub.
   `pages/system/Access.tsx` (Identity → Tokens & sessions).
 - **Sections and settings:** `SectionCard` + `SettingRow`; a schema-driven
   form is `ConfigFormBuilder` / `AddonScopedSettingsForm`, never hand-built.
+- **Edits save through Save / Discard:** any editable form, editable table or
+  inline editor keeps a local draft and writes only on Save (`FormSaveBar`,
+  Discard restores the server state). Never a mutation from `onBlur` /
+  `onChange` / a per-row control; live device controls and one-shot buttons
+  are the only exceptions. `docs/ui/admin-patterns.md` § "Edits are saved
+  through Save / Discard".
 - **Managed lists:** `DataTable` (`columns: DataColumn[]`, `rows`, `rowKey`,
   `maxBodyHeight={TABLE_SCROLL_MAX_H}`,
   `emptyMessage`; per column `sortValue` returning the RAW value or

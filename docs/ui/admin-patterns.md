@@ -193,6 +193,29 @@ should survive a reload goes in the URL with `replace: true`.
 **One control per option set.** A control with a single option is not
 rendered (a one-node cluster shows no node chips).
 
+## Edits are saved through Save / Discard, never on blur
+
+Every editable surface — a settings form, a table whose rows hold inputs, an
+inline editor in a dialog or a Customize pane — keeps the edits in local
+state and writes only when the operator presses **Save**. **Discard** restores
+the server state without a write. The bar is the library's `FormSaveBar`
+(`pendingCount`, `onSave`, `onDiscard`, `saving`); it hides itself at zero
+pending changes and sticks to the scroll parent.
+
+- No mutation fires from `onBlur`, `onChange` or a per-row control on a
+  settings surface. A table of editable rows is ONE draft with ONE save, not a
+  save per row.
+- One save sends one patch for everything pending. A failed save keeps the
+  draft and names the error; it never half-applies silently.
+- Navigating away with pending edits asks before dropping them.
+- The exceptions are the ones that ARE the action: a live device control (a
+  switch that turns a light on, a slider that dims it), a one-shot button
+  (Run, Test, Delete through the destructive dialog), and a toggle documented
+  as instant on its row. Anything else that commits on its own is a bug.
+
+Operator rule, 2026-11-23 (the Customize trigger tables committed every edit
+on blur). Enforcement and the sweep: board #675.
+
 ## An addon page ships no CSS: its classes come from the host build ([D747](../decisions/adr-0747-every-addon-page-package-is-scanned-by-the-admin-ui-tailwind-build.md))
 
 `AddonPageLoader` loads an addon page's remote JavaScript and nothing else.
