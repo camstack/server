@@ -23,6 +23,7 @@ import {
 } from '../mcp/setup-core-addons.js'
 import {
   readBackupDestinations,
+  readCameraSetup,
   readDefaultPasswordInUse,
   readPasskeyCount,
   readPublicEndpoint,
@@ -30,6 +31,7 @@ import {
   readRules,
   readUsers,
   type BackupFact,
+  type CameraSetupFact,
   type RemoteAccessFact,
   type RuleFact,
   type UserFact,
@@ -93,6 +95,8 @@ export interface HubFacts {
   readonly remoteAccess: Read<RemoteAccessFact>
   readonly backups: Read<readonly BackupFact[]>
   readonly cameras: Read<readonly CameraRef[]>
+  /** Per enabled camera: recording on, main/sub assigned. */
+  readonly cameraSetup: Read<readonly CameraSetupFact[]>
   readonly nodes: Read<NodeCounts>
   readonly targets: Read<readonly TargetRef[]>
   readonly rules: Read<readonly RuleFact[]>
@@ -104,6 +108,8 @@ export interface HubFacts {
 
 export interface NoSessionFacts {
   readonly ok: false
+  /** `no-session`: nobody is signed in here; `unreachable`: a hub is configured and did not answer. */
+  readonly kind: 'no-session' | 'unreachable'
   readonly message: string
   readonly action: string
 }
@@ -142,6 +148,7 @@ async function gatherHub(
     publicEndpoint,
     remote,
     cameras,
+    cameraSetup,
     targets,
     versions,
     defaultPassword,
@@ -160,6 +167,7 @@ async function gatherHub(
     readPublicEndpoint(client),
     readRemoteAccessStatus(client),
     readCameras(client),
+    readCameraSetup(client),
     readTargets(client),
     probeVersions(ctx).catch(() => null),
     admin
@@ -221,6 +229,7 @@ async function gatherHub(
     remoteAccess: remote,
     backups,
     cameras,
+    cameraSetup,
     nodes,
     targets,
     rules,
@@ -248,6 +257,7 @@ export async function gatherFacts(
       remoteAccess,
       session: {
         ok: false,
+        kind: 'unreachable',
         message: `the hub this machine is logged in to did not answer: ${reasonOf(err)}`,
         action: 'check that the hub is running, then call setup_connect with its address',
       },
@@ -257,7 +267,12 @@ export async function gatherFacts(
     return {
       remembered,
       remoteAccess,
-      session: { ok: false, message: outcome.message, action: outcome.action },
+      session: {
+        ok: false,
+        kind: 'no-session',
+        message: outcome.message,
+        action: outcome.action,
+      },
     }
   }
   return {

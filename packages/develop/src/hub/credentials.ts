@@ -116,7 +116,7 @@ export class MissingCredentialsError extends Error {
       [
         reason ? `${reason} (${server ?? 'any hub'}).` : `Not logged in to ${server ?? 'any hub'}.`,
         `  Run \`camstack login ${server ?? '<host>'}\` once: every tool uses that session`,
-        '  (~/.camstack/<host>.json, refreshed automatically). --token-file is an explicit',
+        '  (the saved session renews itself). --token-file is an explicit',
         '  override only, for a token you were handed.',
       ].join('\n'),
     )

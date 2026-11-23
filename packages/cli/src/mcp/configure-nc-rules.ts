@@ -10,7 +10,16 @@
  * silently drop every key the interview did not author (labels, exclusions,
  * scene gates…).
  */
-import { MACRO_LABELS, NcRuleInputSchema, type NcRuleInput, type NcSchedule } from '@camstack/types'
+import {
+  MACRO_LABELS,
+  NcRuleInputSchema,
+  describeSystemEventFamilyProblem,
+  systemEventFamilyProblems,
+  systemEventKindsOfFamily,
+  type NcRuleInput,
+  type NcSchedule,
+  type NcSystemEventKind,
+} from '@camstack/types'
 import type { DryRunOutcome, GatedToolSpec, HubClient } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -46,6 +55,10 @@ export const QuietHoursAnswerSchema = z.object({
 export type QuietHoursAnswer = z.infer<typeof QuietHoursAnswerSchema>
 
 export const NcRuleAnswersSchema = z.object({
+  /** What the rule is about: a camera detection, or a system alert (a node offline, a disk full). */
+  type: z.enum(['detection', 'system']).optional(),
+  /** System rule only: the system event kinds to be told about. */
+  systemEvents: z.array(z.string().min(1)).optional(),
   name: z.string().min(1).max(200).optional(),
   delivery: z.enum(['immediate', 'track-end']).optional(),
   /** Camera ids; `[]` means every camera. */
@@ -72,6 +85,28 @@ export interface NcRuleReady {
 export type NcRuleInterview = NeedAnswers | Unavailable | NcRuleReady
 
 export const SAVE_RULE_TOOL = 'configure_notification_rule_save'
+
+const TYPE_CHOICES: readonly Choice[] = [
+  {
+    value: 'detection',
+    label: 'a detection: a person, vehicle or animal seen by a camera',
+  },
+  {
+    value: 'system',
+    label:
+      'a system alert: tells the administrator when something breaks (a node offline, a disk full)',
+  },
+]
+
+/** The alerts an administrator wants first; every one is in the `system` family. */
+const RECOMMENDED_SYSTEM_EVENTS: readonly NcSystemEventKind[] = [
+  'node-offline',
+  'storage-location-low',
+  'storage-location-critical',
+  'alert-critical',
+]
+
+const DETECTION_ONLY_ANSWERS = ['delivery', 'cameras', 'classes', 'zones', 'minConfidence'] as const
 
 const DELIVERY_CHOICES: readonly Choice[] = [
   { value: 'immediate', label: 'as soon as it is seen (the first good frame)' },
@@ -113,7 +148,139 @@ function matchByIdOrName<T extends { readonly id: string; readonly name: string 
   return { hits, unknown }
 }
 
+/** What the interview is about: the stated type, else detection when a detection-only answer came in, else not yet asked. */
+function ruleTypeOf(answers: NcRuleAnswers): 'detection' | 'system' | null {
+  if (answers.type !== undefined) return answers.type
+  return DETECTION_ONLY_ANSWERS.some((key) => answers[key] !== undefined) ? 'detection' : null
+}
+
 export async function interviewNcRule(
+  client: HubClient,
+  answers: NcRuleAnswers = {},
+): Promise<NcRuleInterview> {
+  const type = ruleTypeOf(answers)
+  if (type === null) {
+    return {
+      status: 'need-answers',
+      questions: [
+        {
+          field: 'type',
+          ask: 'What should the rule tell about? Send "detection" or "system".',
+          choices: TYPE_CHOICES,
+        },
+      ],
+      problems: [],
+    }
+  }
+  return type === 'system'
+    ? interviewSystemRule(client, answers)
+    : interviewDetectionRule(client, answers)
+}
+
+/** The targets a rule may name: the question when none was given, the problems when one is unknown. */
+async function resolveTargets(
+  client: HubClient,
+  answers: NcRuleAnswers,
+  questions: Question[],
+  problems: Problem[],
+): Promise<{ readonly refs: readonly TargetRef[] } | Unavailable> {
+  const targets = await readTargets(client)
+  if (!targets.ok) return { status: 'unavailable', reason: targets.reason }
+  if ((answers.targets ?? []).length === 0) {
+    questions.push({
+      field: 'targets',
+      ask:
+        targets.value.length > 0
+          ? 'Who is told? One or more targets.'
+          : 'No notification target exists yet — add one in the admin UI first (configure_notification_targets or Notifications), then answer here.',
+      choices: targets.value
+        .filter((t) => t.enabled)
+        .map((t) => ({ value: t.id, label: `${t.name} (${t.kind})` })),
+    })
+    return { refs: [] }
+  }
+  const matched = matchByIdOrName(answers.targets ?? [], targets.value)
+  for (const u of matched.unknown)
+    problems.push({
+      field: 'targets',
+      problem: `no notification target "${u}"`,
+    })
+  return { refs: matched.hits }
+}
+
+async function interviewSystemRule(
+  client: HubClient,
+  answers: NcRuleAnswers,
+): Promise<NcRuleInterview> {
+  const questions: Question[] = []
+  const problems: Problem[] = []
+  const offered = systemEventKindsOfFamily('system')
+  if ((answers.systemEvents ?? []).length === 0) {
+    questions.push({
+      field: 'systemEvents',
+      ask: `Which system events? One or more. Recommended for an administrator: ${RECOMMENDED_SYSTEM_EVENTS.join(', ')}.`,
+      choices: offered.map((kind) => ({ value: kind, label: kind })),
+    })
+  } else {
+    for (const kind of answers.systemEvents ?? []) {
+      if (!offered.some((o) => o === kind))
+        problems.push({
+          field: 'systemEvents',
+          problem: `"${kind}" is not a system event kind`,
+        })
+    }
+  }
+  const resolved = await resolveTargets(client, answers, questions, problems)
+  if ('status' in resolved) return resolved
+  if (answers.name === undefined)
+    questions.push({ field: 'name', ask: 'What should the rule be called?' })
+  if (questions.length > 0 || problems.length > 0) {
+    return { status: 'need-answers', questions, problems }
+  }
+  const kinds = offered.filter((o) => (answers.systemEvents ?? []).includes(o))
+  const draft = {
+    name: answers.name ?? '',
+    enabled: true,
+    delivery: 'system-event' as const,
+    conditions: { systemEvent: { kinds: [...kinds] } },
+    targets: resolved.refs.map((t) => ({ targetId: t.id })),
+    throttle: {
+      cooldownSec: answers.cooldownSeconds ?? 300,
+      scope: 'rule' as const,
+    },
+    priority: 3,
+  }
+  const parsed = NcRuleInputSchema.safeParse(draft)
+  const family = systemEventFamilyProblems(
+    parsed.success ? parsed.data.conditions.systemEvent : undefined,
+  )
+  if (!parsed.success || family.length > 0) {
+    const issue = parsed.success ? undefined : parsed.error.issues[0]
+    return {
+      status: 'need-answers',
+      questions: [],
+      problems: [
+        {
+          field: issue ? issue.path.join('.') : 'systemEvents',
+          problem:
+            issue?.message ?? family.map((p) => describeSystemEventFamilyProblem(p)).join('; '),
+        },
+      ],
+    }
+  }
+  return {
+    status: 'ready',
+    summary: [
+      `Tell the administrator about ${kinds.join(', ')}`,
+      `  to ${resolved.refs.map((t) => t.name).join(', ')}`,
+      `  at most once every ${parsed.data.throttle.cooldownSec}s`,
+    ],
+    rule: parsed.data,
+    next: `Call ${SAVE_RULE_TOOL} with { rule } for a preview, then again with the confirm_token to create it. Add ruleId to change an existing rule instead.`,
+  }
+}
+
+async function interviewDetectionRule(
   client: HubClient,
   answers: NcRuleAnswers,
 ): Promise<NcRuleInterview> {
@@ -195,29 +362,9 @@ export async function interviewNcRule(
     })
   }
 
-  const targets = await readTargets(client)
-  if (!targets.ok) return { status: 'unavailable', reason: targets.reason }
-  let targetRefs: readonly TargetRef[] = []
-  if ((answers.targets ?? []).length === 0) {
-    questions.push({
-      field: 'targets',
-      ask:
-        targets.value.length > 0
-          ? 'Who is told? One or more targets.'
-          : 'No notification target exists yet — add one in the admin UI first (configure_notification_targets or Notifications), then answer here.',
-      choices: targets.value
-        .filter((t) => t.enabled)
-        .map((t) => ({ value: t.id, label: `${t.name} (${t.kind})` })),
-    })
-  } else {
-    const matched = matchByIdOrName(answers.targets ?? [], targets.value)
-    for (const u of matched.unknown)
-      problems.push({
-        field: 'targets',
-        problem: `no notification target "${u}"`,
-      })
-    targetRefs = matched.hits
-  }
+  const resolved = await resolveTargets(client, answers, questions, problems)
+  if ('status' in resolved) return resolved
+  const targetRefs = resolved.refs
   if (answers.name === undefined)
     questions.push({ field: 'name', ask: 'What should the rule be called?' })
 
@@ -290,7 +437,7 @@ export async function interviewNcRule(
 
 export async function ncRuleQuestionnaire(
   ctx: McpContext,
-  answers: NcRuleAnswers,
+  answers: NcRuleAnswers = {},
 ): Promise<NcRuleInterview | NoSessionResult> {
   return withHub(ctx, ({ client }) => interviewNcRule(client, answers))
 }
@@ -317,6 +464,7 @@ const AUTHORED_CONDITION_KEYS: readonly string[] = [
   'zones',
   'minConfidence',
   'source',
+  'systemEvent',
 ]
 
 export interface UpdatePlan {
@@ -459,9 +607,10 @@ const GATE_HOW =
 export function registerNcRuleTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     'configure_notification_rule_questionnaire',
-    'Interview for a detection notification rule (cameras, classes, zones, quiet hours, targets). Stateless: send every answer so far in `answers`; it returns the questions still open, with choices read from the hub, or `ready` with a summary and the rule. Writes nothing.',
-    { answers: NcRuleAnswersSchema },
-    async ({ answers }): Promise<ToolTextResult> => text(await ncRuleQuestionnaire(ctx, answers)),
+    'Interview for a notification rule: a detection rule (cameras, classes, zones, quiet hours, targets) or a system-alert rule (a node offline, a disk full: the events, the targets). Start with no `answers`: the first question is which of the two. Stateless: send every answer so far in `answers`; it returns the questions still open, with choices read from the hub, or `ready` with a summary and the rule. Writes nothing.',
+    { answers: NcRuleAnswersSchema.optional() },
+    async ({ answers }): Promise<ToolTextResult> =>
+      text(await ncRuleQuestionnaire(ctx, answers ?? {})),
   )
   server.tool(
     SAVE_RULE_TOOL,

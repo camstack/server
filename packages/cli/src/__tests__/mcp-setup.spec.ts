@@ -58,6 +58,18 @@ describe('setup_install_guide — the interview', () => {
     expect(some.questions.map((q) => q.id)).toEqual(['accelerator', 'paths'])
   })
 
+  it('the paths question says how to answer and that a need-answers reply is normal', async () => {
+    const r = await installGuide(
+      { hostKind: 'docker-compose', role: 'hub', accelerator: 'intel' },
+      fakeFetch,
+    )
+    if (r.status !== 'need-answers') throw new Error('expected need-answers')
+    const paths = r.questions.find((q) => q.id === 'paths')
+    expect(paths?.format).toContain('recordings')
+    expect(paths?.example).toContain('"recordings"')
+    expect(r.next).toContain('not an error')
+  })
+
   it('a Mac needs no accelerator and no paths', async () => {
     const r = await installGuide({ hostKind: 'macos-desktop', role: 'hub' }, fakeFetch)
     expect(r.status).toBe('ready')

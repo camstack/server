@@ -3,6 +3,7 @@ import { MutationGate, isSecretBearing } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
+import { setupCoreAddons } from '../mcp/setup-core-addons.js'
 import { STEP_EVALUATORS } from '../onboarding/evaluators.js'
 import { bundledManifest, bundledOnly, type ManifestProvider } from '../onboarding/manifest.js'
 import { memoryStateStore, type RememberedFeasibility } from '../onboarding/state-file.js'
@@ -110,6 +111,30 @@ const node = (nodeId: string, decode: number, detection: number): { [k: string]:
   complete: true,
 })
 
+const EVENTS_EVERY_DAY = {
+  enabled: true,
+  bands: [{ days: [0, 1, 2, 3, 4, 5, 6], start: '00:00', end: '23:59', mode: 'events' }],
+}
+
+const nativeStream = (deviceId: number, id: string, width: number): { [k: string]: unknown } => ({
+  camStreamId: id,
+  deviceId,
+  kind: 'pull-rtsp',
+  resolution: { width, height: Math.round((width * 9) / 16) },
+})
+
+const slot = (
+  deviceId: number,
+  profile: 'high' | 'low',
+  source: string | null,
+): { [k: string]: unknown } => ({
+  deviceId,
+  profile,
+  brokerId: `${deviceId}/${profile}`,
+  sourceCamStreamId: source,
+  status: source === null ? 'unassigned' : 'streaming',
+})
+
 const TARGETS = notificationTargetAnswers([
   {
     id: 't1',
@@ -146,6 +171,9 @@ const HEALTHY: HubAnswers = {
     },
   ],
   'deviceManager.listAll': [{ id: 7, name: 'Door' }],
+  'recordingArchive.getDeviceConfig': EVENTS_EVERY_DAY,
+  'streamBroker.listAllCameraStreams': [nativeStream(7, 'main', 2560), nativeStream(7, 'sub', 640)],
+  'streamBroker.listAllProfileSlots': [slot(7, 'high', 'main'), slot(7, 'low', 'sub')],
   'nodes.topology': [
     { id: 'hub', isHub: true, isOnline: true },
     { id: 'agent1', isHub: false, isOnline: true },
@@ -441,6 +469,123 @@ describe('setup_wizard: against a hub', () => {
 
     expect(step(answer, 'notifications').status).toBe('missing')
     expect(step(answer, 'notifications').detail).toContain('Yard (8)')
+  })
+})
+
+describe('setup_wizard: onboarding audit fixes', () => {
+  const capacity = { totalBytes: 2_000_000_000_000, availableBytes: 1_000_000_000_000 }
+
+  it('storage: recordings on the same volume as the data default are not a dedicated disk', async () => {
+    const shared = await wizard(
+      healthy({
+        'storage.listLocations': [
+          location('data:default', { capacity }),
+          location('recordings:disk2', { capacity }),
+        ],
+      }),
+    )
+    expect(step(shared, 'storage').status).toBe('suggested')
+
+    const dedicated = await wizard(
+      healthy({
+        'storage.listLocations': [
+          location('data:default', { capacity }),
+          location('recordings:disk2', {
+            capacity: { totalBytes: 8_000_000_000_000, availableBytes: 7_000_000_000_000 },
+          }),
+        ],
+      }),
+    )
+    expect(step(dedicated, 'storage').status).toBe('done')
+  })
+
+  it('cameras: recording off and a missing sub stream are not done, and the cameras are named', async () => {
+    const answer = await wizard(
+      healthy({
+        'deviceManager.listAll': [
+          { id: 7, name: 'Door' },
+          { id: 8, name: 'Yard' },
+        ],
+        'recordingArchive.getDeviceConfig': (input: unknown) => {
+          const { deviceId } = z.object({ deviceId: z.number() }).parse(input)
+          return deviceId === 8 ? { enabled: false, bands: [] } : EVENTS_EVERY_DAY
+        },
+        'streamBroker.listAllCameraStreams': [
+          nativeStream(7, 'main', 2560),
+          nativeStream(7, 'sub', 640),
+          nativeStream(8, 'main', 2560),
+          nativeStream(8, 'sub', 640),
+        ],
+        'streamBroker.listAllProfileSlots': [
+          slot(7, 'high', 'main'),
+          slot(7, 'low', 'sub'),
+          slot(8, 'high', 'main'),
+        ],
+      }),
+    )
+
+    const cameras = step(answer, 'cameras')
+    expect(cameras.status).toBe('missing')
+    expect(cameras.detail).toContain('Yard (8)')
+    expect(cameras.detail).toContain('recording off')
+    expect(cameras.detail).toContain('sub')
+    expect(cameras.detail).not.toContain('Door')
+  })
+
+  it('cameras: a recording config that could not be read is unknown, not missing', async () => {
+    const answer = await wizard(healthy({}, ['recordingArchive.getDeviceConfig']))
+    expect(step(answer, 'cameras').status).toBe('unknown')
+  })
+
+  it.each([
+    ['a LAN address', 'https://192.168.1.50:3443'],
+    ['a loopback address', 'https://localhost:3443'],
+    ['the plain-http LAN port', 'http://hub.example.test:3000'],
+    ['a .local name', 'https://camstack.local'],
+  ])('remote access: %s is not a public endpoint', async (_name, resolved) => {
+    const answer = await wizard(
+      healthy({
+        'localNetwork.getAddresses': { roles: { publicEndpoint: { resolved } } },
+        'networkAccess.getStatus': { connected: false, endpoint: { stable: true } },
+      }),
+    )
+    expect(step(answer, 'remote-access').status).toBe('suggested')
+  })
+
+  it('remote access and the core addons remote group read one public-endpoint judgement', async () => {
+    const remoteGroup = async (resolved: string): Promise<string | undefined> => {
+      const hub = healthy({
+        'localNetwork.getAddresses': { roles: { publicEndpoint: { resolved } } },
+        'networkAccess.getStatus': { connected: false, endpoint: null },
+        'addons.list': SEEDED.map((a) => ({
+          manifest: { id: a.id, packageName: a.package, packageVersion: '1' },
+        })),
+      })
+      const out = await setupCoreAddons(hub, { remoteAccess: true })
+      if (out.status !== 'ok') throw new Error(out.status)
+      return out.groups.find((g) => g.id === 'remote-access')?.status
+    }
+    expect(await remoteGroup('http://10.0.0.5:3000')).toBe('suggested')
+    expect(await remoteGroup('https://hub.example.test')).toBe('configured')
+  })
+
+  it('install: a hub that is configured but does not answer is not a reason to reinstall', async () => {
+    const ctx = noHub({
+      hub: async () => {
+        throw new Error('connect ECONNREFUSED')
+      },
+    })
+    const answer = await wizard(ctx)
+    expect(step(answer, 'install').detail).toContain('did not answer')
+    expect(step(answer, 'install').detail).not.toContain('Not installed yet')
+  })
+
+  it('add-target names configure_notifiers', async () => {
+    const answer = await wizard(healthy({ 'notificationRules.listRules': { rules: [] } }), {
+      step: 'notifications',
+    })
+    const add = answer.requestedStep?.actions.find((a) => a.id === 'add-target')
+    expect(add?.note).toContain('configure_notifiers')
   })
 })
 

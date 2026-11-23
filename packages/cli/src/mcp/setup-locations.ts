@@ -36,7 +36,10 @@ export interface LocationView {
   readonly nodeId: string | null
   readonly mode: StorageLocationMode
   /** `null`: the hub could not read the volume (remote, unreachable) — unknown. */
-  readonly capacity: { readonly totalBytes: number; readonly availableBytes: number } | null
+  readonly capacity: {
+    readonly totalBytes: number
+    readonly availableBytes: number
+  } | null
   /** `null`: no provider reported for this location — unknown, never zero. */
   readonly ownedBytes: number | null
   readonly ownedMeasuredAtMs: number | null
@@ -100,6 +103,19 @@ export function viewOf(
   }
 }
 
+/**
+ * The key under which two locations are "the same volume": the same node and
+ * the same reported size. `null` when the hub could not read the volume. The
+ * one fact behind the "likely one disk" note and the storage step's dedicated
+ * disk check.
+ */
+export function volumeKey(
+  nodeId: string | null,
+  capacity: { readonly totalBytes: number } | null,
+): string | null {
+  return capacity === null ? null : `${nodeId ?? 'any'}|${String(capacity.totalBytes)}`
+}
+
 const gb = (bytes: number): string => `${(bytes / 1e9).toFixed(1)} GB`
 
 /** Pure: a proposal from the classes the hub reported. Conservative by construction. */
@@ -140,8 +156,8 @@ export function proposeLocations(classes: readonly LocationClassView[]): Locatio
   const volumes = new Map<string, string[]>()
   for (const cls of classes) {
     for (const l of cls.locations) {
-      if (l.capacity === null) continue
-      const key = `${l.nodeId ?? 'any'}|${String(l.capacity.totalBytes)}`
+      const key = volumeKey(l.nodeId, l.capacity)
+      if (key === null) continue
       volumes.set(key, [...(volumes.get(key) ?? []), l.id])
     }
   }
@@ -184,7 +200,11 @@ export async function setupLocations(
     // A failed read proposes nothing: no locations is not "no locations configured".
     const proposal: LocationsProposal = locations.ok
       ? proposeLocations(classes)
-      : { id: proposalId({ unknown: true }), changes: [], notes: ['locations could not be read'] }
+      : {
+          id: proposalId({ unknown: true }),
+          changes: [],
+          notes: ['locations could not be read'],
+        }
     return { status: 'ok', classes, proposal, unavailable }
   })
 }
@@ -234,7 +254,12 @@ export function setupLocationsSpec(client: HubClient): GatedToolSpec<SetupLocati
           problems.push(`${change.locationId}: already ${from}`)
           continue
         }
-        diff.push({ locationId: row.id, nodeId: row.nodeId ?? null, from, to: change.mode })
+        diff.push({
+          locationId: row.id,
+          nodeId: row.nodeId ?? null,
+          from,
+          to: change.mode,
+        })
       }
       const after = rows.map((r) => {
         const change = args.changes.find((c) => c.locationId === r.id)

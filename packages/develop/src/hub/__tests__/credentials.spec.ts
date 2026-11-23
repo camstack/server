@@ -9,6 +9,7 @@ import {
   resolveCredentials,
   withAuthHint,
 } from '../credentials.js'
+import { scrubSecrets } from '../../mcp/scrub.js'
 
 const SESSION = { server: 'https://hub.lan:4443', token: 'tok_session' }
 
@@ -139,6 +140,11 @@ describe('resolveCredentials', () => {
     expect(msg).toContain('https://hub.lan:4443')
     expect(msg).toContain('camstack login')
     expect(msg).toContain('--token-file')
+  })
+
+  it('its message survives the output scrubber: the wizard prints it to the person', () => {
+    const msg = new MissingCredentialsError('https://hub.lan:4443').message
+    expect(scrubSecrets(msg)).toBe(msg)
   })
 
   it('says "any hub" when no server is known', () => {

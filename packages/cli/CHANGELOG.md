@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The setup wizard judges storage, cameras and remote access more strictly (shared disks, recording off, LAN-only endpoints), the notification-rule questionnaire can draft system-alert rules, and the install guide explains its questions
+
 ## [1.2.239] - 2026-11-22
 
 ### Changed

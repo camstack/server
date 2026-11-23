@@ -26,7 +26,11 @@ import type { ManifestSource } from '../onboarding/manifest.js'
 import type { McpContext } from './context.js'
 import { readQuery, withHub, type NoSessionResult, type Read } from './ops-hub.js'
 import { READ_CONCURRENCY, mapLimit } from './setup-assist-common.js'
-import { readRemoteAccessStatus } from './setup-wizard-reads.js'
+import {
+  readPublicEndpoint,
+  readRemoteAccessStatus,
+  remoteReachable,
+} from './setup-wizard-reads.js'
 
 export const CORE_ADDONS_TOOL = 'setup_core_addons'
 const INSTALL_TOOL = 'configure_addon_install'
@@ -194,7 +198,7 @@ function judgeGroup(
   if (group.id === REMOTE_ACCESS_GROUP && remoteConnected) {
     return {
       status: 'configured',
-      reason: 'the hub reports a connected remote access',
+      reason: 'the hub reports a public endpoint or a connected remote access',
     }
   }
   if (has('failed')) {
@@ -268,7 +272,8 @@ export async function assessCoreAddons(
     }),
   )
   const remote = await readRemoteAccessStatus(client)
-  const remoteConnected = remote.ok && remote.value.connected
+  const publicEndpoint = await readPublicEndpoint(client)
+  const remoteConnected = remoteReachable(publicEndpoint, remote)
 
   const findings = groups.map((group): GroupFinding => {
     const addons = group.addons.map((ref): AddonFinding => {

@@ -34,6 +34,14 @@ export function scrubValue(value: unknown): unknown {
       if (k === 'confirm_token') {
         out[k] = v
       } else if (
+        (keyLower === 'secret' && typeof v === 'boolean') ||
+        (k === 'secretFields' && Array.isArray(v) && v.every((n) => typeof n === 'string'))
+      ) {
+        // A schema field's `secret: true` flag, and the list of field NAMES a form
+        // marks secret, say WHICH field is a secret; they are not one. A string
+        // under the same key is a value and stays scrubbed.
+        out[k] = v
+      } else if (
         keyLower.includes('token') ||
         keyLower.includes('password') ||
         keyLower.includes('secret') ||

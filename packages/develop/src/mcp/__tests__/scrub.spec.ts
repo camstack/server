@@ -16,4 +16,17 @@ describe('scrubSecrets', () => {
     const out = scrubValue({ token: 'secret-value-here', ok: true })
     expect(out).toEqual({ token: '[REDACTED]', ok: true })
   })
+
+  it('keeps the `secret` flag and the secretFields names of a schema, but still redacts a secret VALUE', () => {
+    const out = scrubValue({
+      fields: [{ key: 'topic', secret: true, required: true }],
+      secretFields: ['topic'],
+      secret: 'hunter2-the-real-secret',
+    })
+    expect(out).toEqual({
+      fields: [{ key: 'topic', secret: true, required: true }],
+      secretFields: ['topic'],
+      secret: '[REDACTED]',
+    })
+  })
 })

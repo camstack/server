@@ -84,6 +84,42 @@ describe('configure_remote_access', () => {
   })
 })
 
+describe('configure_remote_access: an addon that is not installed', () => {
+  it('reports not-installed, not no-settings, for the addons the hub does not have', async () => {
+    const { ctx } = fakeHub({
+      ...reads,
+      'addons.list': [{ manifest: { id: 'cloudflare-tunnel' } }],
+    })
+    const out = await readRemoteAccess(ctx)
+    expect(out).toMatchObject({
+      addons: [
+        { addonId: 'cloudflare-tunnel', state: 'read' },
+        { addonId: 'cloudflare-turn', state: 'not-installed' },
+        { addonId: 'static-turn', state: 'not-installed' },
+      ],
+    })
+  })
+
+  it('an installed TURN addon without settings stays no-settings', async () => {
+    const { ctx } = fakeHub({
+      ...reads,
+      'addons.list': [
+        { manifest: { id: 'cloudflare-tunnel' } },
+        { manifest: { id: 'static-turn' } },
+        { manifest: { id: 'cloudflare-turn' } },
+      ],
+    })
+    const out = await readRemoteAccess(ctx)
+    expect(out).toMatchObject({
+      addons: [
+        { addonId: 'cloudflare-tunnel', state: 'read' },
+        { addonId: 'cloudflare-turn', state: 'no-settings' },
+        { addonId: 'static-turn', state: 'no-settings' },
+      ],
+    })
+  })
+})
+
 describe('configure_remote_access_set', () => {
   it('changes a plain field after a preview', async () => {
     const { ctx, calls } = fakeHub(reads)

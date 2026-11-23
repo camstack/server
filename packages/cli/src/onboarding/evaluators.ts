@@ -13,7 +13,8 @@
  */
 import { mayWriteToLocation, ruleKindOf, type NcRuleKind } from '@camstack/types'
 import type { Read } from '../mcp/ops-hub.js'
-import type { RuleFact } from '../mcp/setup-wizard-reads.js'
+import { volumeKey } from '../mcp/setup-locations.js'
+import { remoteReachable, type CameraSetupFact, type RuleFact } from '../mcp/setup-wizard-reads.js'
 import type { VersionProbe } from '../mcp/version-probe.js'
 import type { HubFacts, NodeCapacity, OnboardingFacts } from './facts.js'
 
@@ -90,6 +91,13 @@ const install: StepEvaluator = (facts) => {
       focusAction: 'find-the-hub',
     }
   }
+  if (facts.session.kind === 'unreachable') {
+    return {
+      status: 'missing',
+      detail: `a hub is configured on this machine but it did not answer (${facts.session.message}). It is installed: do not reinstall, check that it is running and reachable, or connect to its current address.`,
+      focusAction: 'find-the-hub',
+    }
+  }
   return {
     status: 'missing',
     detail: `no hub answers from this machine (${facts.session.message}). Not installed yet: install it. Already installed: find it and connect.`,
@@ -99,6 +107,13 @@ const install: StepEvaluator = (facts) => {
 
 const firstLogin: StepEvaluator = (facts) => {
   if (!facts.session.ok) {
+    if (facts.session.kind === 'unreachable') {
+      return {
+        status: 'missing',
+        detail: `the hub this machine is signed in to did not answer, so nothing can be judged yet: ${facts.session.message}`,
+        focusAction: 'sign-in',
+      }
+    }
     return {
       status: 'missing',
       detail: `this machine is not signed in to a hub: ${facts.session.action}`,
@@ -204,11 +219,21 @@ const storage: StepEvaluator = onHub((hub) => {
       focusAction: 'set-modes',
     }
   }
-  if (recordings.every((l) => l.isSystem)) {
+  const sharedVolumes = new Set(
+    hub.locations.value
+      .filter((l) => l.type !== RECORDINGS_TYPE)
+      .map((l) => volumeKey(l.nodeId ?? null, l.capacity ?? null)),
+  )
+  const dedicated = recordings.filter((l) => {
+    if (l.isSystem) return false
+    const key = volumeKey(l.nodeId ?? null, l.capacity ?? null)
+    return key === null || !sharedVolumes.has(key)
+  })
+  if (dedicated.length === 0) {
     return {
       status: 'suggested',
       detail:
-        'recordings go to the default data folder of the install; add a location to put them on a dedicated disk',
+        'recordings go to the default data folder of the install, or to a volume the other locations already use; add a location to put them on a dedicated disk',
       focusAction: 'add-location',
     }
   }
@@ -244,13 +269,44 @@ const coreAddons: StepEvaluator = onHub((hub) => {
 const cameras: StepEvaluator = onHub((hub) => {
   if (!hub.cameras.ok) return unknown(hub.cameras.reason)
   const count = hub.cameras.value.length
-  return count === 0
-    ? {
-        status: 'missing',
-        detail: 'no camera yet',
-        focusAction: 'camera-providers',
-      }
-    : { status: 'done', detail: `${count} camera(s)` }
+  if (count === 0) {
+    return {
+      status: 'missing',
+      detail: 'no camera yet',
+      focusAction: 'camera-providers',
+    }
+  }
+  if (!hub.cameraSetup.ok) return unknown(hub.cameraSetup.reason)
+  const recordingOff = hub.cameraSetup.value.filter((c) => c.recordingMode === 'off')
+  const noStream = hub.cameraSetup.value.filter((c) => c.unassigned.length > 0)
+  const named = (list: readonly CameraSetupFact[]): string => {
+    const shown = list.slice(0, UNCOVERED_LIMIT).map((c) => `${c.name} (${c.id})`)
+    const more = list.length > shown.length ? ` and ${list.length - shown.length} more` : ''
+    return `${shown.join(', ')}${more}`
+  }
+  const gaps = [
+    ...(noStream.length > 0
+      ? [
+          `main/sub stream not picked on ${named(noStream)} (${[...new Set(noStream.flatMap((c) => c.unassigned.map((p) => (p === 'high' ? 'main' : 'sub'))))].join(' and ')})`,
+        ]
+      : []),
+    ...(recordingOff.length > 0 ? [`recording off on ${named(recordingOff)}`] : []),
+  ]
+  if (gaps.length > 0) {
+    return {
+      status: 'missing',
+      detail: `${count} camera(s), not set up yet: ${gaps.join('; ')}`,
+      focusAction: noStream.length > 0 ? 'set-streams' : 'set-recording',
+    }
+  }
+  const unread = hub.cameraSetup.value.filter((c) => c.recordingMode === null)
+  if (unread.length > 0) {
+    return unknown(`the recording config of ${named(unread)} could not be read`)
+  }
+  return {
+    status: 'done',
+    detail: `${count} camera(s), each with its streams picked and recording on`,
+  }
 })
 
 function capacityLine(node: NodeCapacity): string {
@@ -306,13 +362,13 @@ const detection: StepEvaluator = onHub((hub) => {
 const remoteAccess: StepEvaluator = onHub((hub, facts) => {
   const endpoint = hub.publicEndpoint
   const access = hub.remoteAccess
-  if ((endpoint.ok && endpoint.value) || (access.ok && access.value.hasEndpoint)) {
+  if (remoteReachable(endpoint, access)) {
     return {
       status: 'done',
       detail:
         access.ok && access.value.connected
           ? 'a public endpoint is set and connected'
-          : 'a public endpoint is set',
+          : 'a public https endpoint is set',
     }
   }
   if (!endpoint.ok || !access.ok) {
@@ -325,7 +381,7 @@ const remoteAccess: StepEvaluator = onHub((hub, facts) => {
   return {
     status: facts.remoteAccess === true ? 'missing' : 'suggested',
     detail:
-      'the hub is reachable on the local network only; no public endpoint and no remote access',
+      'the hub is reachable on the local network only; no public https endpoint (a LAN, private or plain-http address is not one) and no connected remote access',
     focusAction: 'read-remote-access',
   }
 })

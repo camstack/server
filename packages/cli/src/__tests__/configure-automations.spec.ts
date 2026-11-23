@@ -2,12 +2,14 @@
  * The two interviews and their gated saves. The fake hub answers the reads the
  * interview makes; the writes are asserted on the recorded calls.
  */
+import { ruleKindOf } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { automationQuestionnaire, saveAutomation } from '../mcp/configure-automations.js'
 import { ncRuleQuestionnaire, saveRule } from '../mcp/configure-nc-rules.js'
 import { notificationTargetAnswers } from './configure-fixtures.js'
 import { withWrites } from './configure-gate-ctx.js'
 import { fakeHub } from './ops-fake-hub.js'
+import { callJson, connectPublic, fakeHub as fakeOnboardingHub } from './onboarding-fixtures.js'
 
 const ZONE_ID = '11111111-1111-4111-8111-111111111111'
 
@@ -573,6 +575,60 @@ describe('configure_notification_rule_questionnaire', () => {
       windows: [{ startMinute: 1320, endMinute: 360 }],
     })
     expect(out.rule.targets).toEqual([{ targetId: 'tg-1' }])
+  })
+
+  it('answers is optional, and the first question is detections vs system alerts', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const out = await ncRuleQuestionnaire(ctx)
+    if (out.status !== 'need-answers') throw new Error('expected need-answers')
+    expect(out.questions.map((q) => q.field)).toEqual(['type'])
+    expect(out.questions[0]?.choices?.map((c) => c.value)).toEqual(['detection', 'system'])
+  })
+
+  it('the tool takes no arguments at all', async () => {
+    const { ctx } = fakeOnboardingHub(hubReads)
+    const out = await callJson(
+      await connectPublic(ctx),
+      'configure_notification_rule_questionnaire',
+      {},
+    )
+    expect(out).toMatchObject({ status: 'need-answers', questions: [{ field: 'type' }] })
+  })
+
+  it('drafts a SYSTEM-alert rule that the notifications step counts as an administrator alert', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const open = await ncRuleQuestionnaire(ctx, { type: 'system' })
+    if (open.status !== 'need-answers') throw new Error('expected need-answers')
+    expect(open.questions.map((q) => q.field)).toEqual(
+      expect.arrayContaining(['systemEvents', 'targets', 'name']),
+    )
+    expect(open.questions.map((q) => q.field)).not.toContain('cameras')
+
+    const out = await ncRuleQuestionnaire(ctx, {
+      type: 'system',
+      name: 'Node down',
+      systemEvents: ['node-offline', 'storage-location-low'],
+      targets: ['Phone'],
+    })
+    if (out.status !== 'ready') throw new Error(JSON.stringify(out))
+    expect(out.rule.delivery).toBe('system-event')
+    expect(out.rule.conditions.systemEvent?.kinds).toEqual(['node-offline', 'storage-location-low'])
+    expect(ruleKindOf({ delivery: out.rule.delivery, conditions: out.rule.conditions })).toBe(
+      'system',
+    )
+    expect(out.rule.targets).toEqual([{ targetId: 'tg-1' }])
+  })
+
+  it('refuses an event kind that is not a system event', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const out = await ncRuleQuestionnaire(ctx, {
+      type: 'system',
+      name: 'n',
+      systemEvents: ['alarm-triggered', 'no-such-kind'],
+      targets: ['tg-1'],
+    })
+    if (out.status !== 'need-answers') throw new Error('expected need-answers')
+    expect(out.problems.map((p) => p.field)).toEqual(['systemEvents', 'systemEvents'])
   })
 
   it('treats quietHours null as answered (none)', async () => {

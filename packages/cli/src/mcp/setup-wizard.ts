@@ -151,6 +151,23 @@ function judge(step: OnboardingStep, facts: OnboardingFacts): StepJudgement {
   return evaluator === undefined ? UNKNOWN_STEP(step.id) : evaluator(facts)
 }
 
+/**
+ * What this CLI adds to a manifest action's own `next`: the order of reads that
+ * only the tools know. `add-target` creates a target from a notifier's schema,
+ * and `configure_notifiers` is the read that lists the kinds, their fields and
+ * which fields are secrets.
+ */
+const CLI_NEXT: Readonly<Record<string, string>> = {
+  configure_notification_target_upsert:
+    'Read configure_notifiers first: it lists the notifier kinds, their fields and which are secret.',
+}
+
+function noteOf(tool: string, next: string | undefined): { readonly note?: string } {
+  const own = CLI_NEXT[tool]
+  const note = [next, own].filter((part): part is string => part !== undefined).join(' ')
+  return note === '' ? {} : { note }
+}
+
 function actionView(
   action: OnboardingAction,
   docs: string,
@@ -179,7 +196,7 @@ function actionView(
     ...base,
     tool: action.agent.tool,
     ...(action.agent.args === undefined ? {} : { args: action.agent.args }),
-    ...(action.agent.next === undefined ? {} : { note: action.agent.next }),
+    ...noteOf(action.agent.tool, action.agent.next),
     ...manual,
   }
 }

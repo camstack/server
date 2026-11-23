@@ -45,7 +45,10 @@ export interface StreamView {
   readonly camStreamId: string
   readonly kind: string
   readonly codec: string | null
-  readonly resolution: { readonly width: number; readonly height: number } | null
+  readonly resolution: {
+    readonly width: number
+    readonly height: number
+  } | null
   readonly fps: number | null
   readonly label: string | null
   /** `null`: the broker stats could not be read — unknown, never 0. */
@@ -56,7 +59,10 @@ export interface SlotView {
   readonly profile: CamProfile
   readonly status: string
   readonly sourceCamStreamId: string | null
-  readonly resolution: { readonly width: number; readonly height: number } | null
+  readonly resolution: {
+    readonly width: number
+    readonly height: number
+  } | null
   readonly codec: string | null
   readonly error: string | null
   readonly stats: StreamStats | null
@@ -201,6 +207,27 @@ export async function cameraStreamsView(
 }
 
 /** Pure: unassigned slots get the biggest (high) and smallest (low) native stream. */
+/**
+ * The profiles a camera has a stream for but no source assigned: `high` as soon
+ * as it has any native stream, `low` once it has a second. The one rule both
+ * `setup_streams` (what to propose) and the onboarding verdict (what is left)
+ * read.
+ */
+export function unassignedProfiles(
+  nativeCount: number,
+  slots: readonly {
+    readonly profile: CamProfile
+    readonly sourceCamStreamId: string | null
+  }[],
+): readonly CamProfile[] {
+  const sourced = (p: CamProfile): boolean =>
+    slots.some((s) => s.profile === p && s.sourceCamStreamId !== null)
+  return [
+    ...(nativeCount > 0 && !sourced('high') ? (['high'] as const) : []),
+    ...(nativeCount > 1 && !sourced('low') ? (['low'] as const) : []),
+  ]
+}
+
 export function proposeStreams(cameras: readonly CameraStreamsView[]): StreamsProposal {
   const changes: (SlotChange & { reason: string })[] = []
   const notes: string[] = []
@@ -208,8 +235,8 @@ export function proposeStreams(cameras: readonly CameraStreamsView[]): StreamsPr
     const natives = [...cam.native].toSorted((a, b) => pixels(b) - pixels(a))
     const first = natives[0]
     const last = natives.at(-1)
-    const slotOf = (p: CamProfile): SlotView | undefined => cam.slots.find((s) => s.profile === p)
-    if (first && (slotOf('high') === undefined || slotOf('high')?.sourceCamStreamId === null)) {
+    const gaps = unassignedProfiles(natives.length, cam.slots)
+    if (first && gaps.includes('high')) {
       changes.push({
         deviceId: cam.deviceId,
         profile: 'high',
@@ -217,11 +244,7 @@ export function proposeStreams(cameras: readonly CameraStreamsView[]): StreamsPr
         reason: `${cam.name}: high has no source; ${first.camStreamId} is the largest native stream`,
       })
     }
-    if (
-      last &&
-      last !== first &&
-      (slotOf('low') === undefined || slotOf('low')?.sourceCamStreamId === null)
-    ) {
+    if (last && last !== first && gaps.includes('low')) {
       changes.push({
         deviceId: cam.deviceId,
         profile: 'low',
@@ -285,7 +308,11 @@ export async function setupStreams(
         status: 'ok',
         cameras: [],
         camerasTruncated: 0,
-        proposal: { id: proposalId({ unknown: true }), changes: [], notes: ['streams unknown'] },
+        proposal: {
+          id: proposalId({ unknown: true }),
+          changes: [],
+          notes: ['streams unknown'],
+        },
         unavailable,
       }
     }
@@ -368,7 +395,12 @@ export function setupStreamsSpec(client: HubClient): GatedToolSpec<SetupStreamsA
           problems.push(`${String(c.deviceId)}/${c.profile}: already ${from ?? 'unassigned'}`)
           continue
         }
-        diff.push({ deviceId: c.deviceId, profile: c.profile, from, to: c.camStreamId })
+        diff.push({
+          deviceId: c.deviceId,
+          profile: c.profile,
+          from,
+          to: c.camStreamId,
+        })
       }
       return {
         confirmable: problems.length === 0 && diff.length > 0,

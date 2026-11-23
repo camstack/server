@@ -135,6 +135,16 @@ const AddressesSchema = z.looseObject({
     .optional(),
 })
 
+const InstalledAddonsSchema = z.array(
+  z.looseObject({ manifest: z.looseObject({ id: z.string() }) }),
+)
+
+/** The addon ids installed on the hub; a failed read is a reason, never "none installed". */
+async function readInstalledAddonIds(client: HubClient): Promise<Read<ReadonlySet<string>>> {
+  const read = await readQuery(client, 'addons.list', {}, InstalledAddonsSchema)
+  return read.ok ? { ok: true, value: new Set(read.value.map((a) => a.manifest.id)) } : read
+}
+
 async function readAddonForm(
   client: HubClient,
   addonId: RemoteAddon,
@@ -154,18 +164,27 @@ export async function readRemoteAccess(
 ): Promise<Record<string, unknown> | NoSessionResult> {
   return withHub(ctx, async ({ client }) => {
     const unavailable: Record<string, string> = {}
-    const [status, addresses, ...addons] = await Promise.all([
+    const [status, addresses, installed, ...addons] = await Promise.all([
       readQuery(client, 'networkAccess.getStatus', {}, AccessStatusSchema.nullable()),
       readQuery(client, 'localNetwork.getAddresses', {}, AddressesSchema),
+      readInstalledAddonIds(client),
       ...RemoteAddonSchema.options.map((addonId) => readAddonForm(client, addonId)),
     ])
     if (!status.ok) unavailable['access'] = status.reason
     if (!addresses.ok) unavailable['publicEndpoint'] = addresses.reason
+    if (!installed.ok) unavailable['installed'] = installed.reason
     const publicEndpoint = addresses.ok
       ? addresses.value.roles?.publicEndpoint?.resolved
       : undefined
     const settings = RemoteAddonSchema.options.map((addonId, i) => {
       const read = addons[i]
+      if (installed.ok && !installed.value.has(addonId)) {
+        return {
+          addonId,
+          state: 'not-installed' as const,
+          fields: [] as readonly PublicField[],
+        }
+      }
       if (read === undefined || !read.ok) {
         unavailable[addonId] = read === undefined ? 'not read' : read.reason
         return {
@@ -206,6 +225,13 @@ export function remoteAccessSetSpec(client: HubClient): GatedToolSpec<RemoteAcce
           confirmable: false,
           describe: { problem: 'the patch is empty' },
         }
+      const installed = await readInstalledAddonIds(client)
+      if (installed.ok && !installed.value.has(args.addonId)) {
+        return {
+          confirmable: false,
+          describe: { problem: `${args.addonId} is not installed on this hub` },
+        }
+      }
       const read = await readAddonForm(client, args.addonId)
       if (!read.ok) return { confirmable: false, describe: { problem: read.reason } }
       if (read.value === null) {

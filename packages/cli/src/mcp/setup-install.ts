@@ -35,6 +35,10 @@ export interface Question {
   readonly question: string
   /** Empty for a free-text answer. */
   readonly options: readonly string[]
+  /** How a free-text or structured answer is written; absent when `options` say it all. */
+  readonly format?: string
+  /** One concrete answer, to copy the shape from. */
+  readonly example?: string
 }
 
 export interface GuideFile {
@@ -47,6 +51,8 @@ export interface GuideFile {
 export interface NeedAnswers {
   readonly status: 'need-answers'
   readonly questions: readonly Question[]
+  /** A need-answers reply is the normal first reply of this interview, not an error. */
+  readonly next: string
 }
 
 export interface FetchFailed {
@@ -110,6 +116,16 @@ const Q_PATHS: Question = {
   question:
     'Host paths as {data, recordings} (optionally backups). Recordings is the one that grows: put it on a roomy disk.',
   options: [],
+  format:
+    'an object { data: <host path>, recordings: <host path>, backups?: <host path> }, absolute paths on the machine that will run CamStack',
+  example: '{ "data": "/srv/camstack/data", "recordings": "/mnt/disk2/camstack/recordings" }',
+}
+
+const NEED_ANSWERS_NEXT =
+  'This is the normal first reply, not an error: answer the questions, then call setup_install_guide again with the same arguments plus the answers (a question with options takes one of them; a question with a format takes that shape).'
+
+function needAnswers(questions: readonly Question[]): NeedAnswers {
+  return { status: 'need-answers', questions, next: NEED_ANSWERS_NEXT }
 }
 
 function missingQuestions(input: InstallGuideInput): readonly Question[] {
@@ -383,10 +399,10 @@ export async function installGuide(
   fetchFn: FetchFn,
 ): Promise<InstallGuideResult> {
   const questions = missingQuestions(input)
-  if (questions.length > 0) return { status: 'need-answers', questions }
+  if (questions.length > 0) return needAnswers(questions)
   const { hostKind, role } = input
   if (hostKind === undefined || role === undefined) {
-    return { status: 'need-answers', questions: missingQuestions({}) }
+    return needAnswers(missingQuestions({}))
   }
   const resolved: ResolvedInput = {
     hostKind,
