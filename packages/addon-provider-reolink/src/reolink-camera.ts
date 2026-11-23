@@ -203,8 +203,11 @@ import type {
 import { z } from 'zod'
 import { createAccessoryDevice } from './accessories/index.js'
 import {
+  type AbilityReadQuality,
+  abilityReadQuality,
   accessoryChildrenAnswerFor,
   accessoryKindsFor,
+  mergeAbilityRead,
   resolveAccessoryProbeFlags,
   effectiveProbeFlags,
   withPersistedProbe,
@@ -1118,6 +1121,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private batteryUpdateTimer: ReturnType<typeof setInterval> | null = null
   /** Set by `removeDevice`: nothing may re-arm a timer on a removed camera. */
   private removed = false
+  /**
+   * True once a FULL ability read (SupportInfo and AbilityInfo both answered)
+   * landed this session. Until then the accessory answer is `unknown` and can
+   * never prune a child: a rehydrated slice or a partial read is not a list
+   * (D49). Read defensively — the base constructor may ask before field init.
+   */
+  private fullAbilityReadThisSession = false
   /** Single-flight gate so two interval fires can't overlap. */
 
   /** Aux accessory references registered by spawned children
@@ -2417,6 +2427,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.hasProbed(),
       super.getProbeFlags<ReolinkProbeFlags>(),
       out,
+      this.fullAbilityReadThisSession === true,
     )
   }
 
@@ -12693,6 +12704,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     let hasPirSensor: boolean | undefined
     let hasAutotrack: boolean | undefined
     let capabilitiesRead = false
+    let readQuality: AbilityReadQuality = 'partial'
 
     try {
       channelCount = await api.getChannelCount()
@@ -12706,7 +12718,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // vs ability-table differences, dingDong vs doorbellVersion vs
     // doorbell, lightType >= 2 for floodlight, etc).
     try {
-      const { capabilities } = await api.getDeviceCapabilities(this.getChannel())
+      const { capabilities, debug } = await api.getDeviceCapabilities(this.getChannel())
+      readQuality = abilityReadQuality(debug)
       hasPtz = capabilities.hasPtz
       hasIntercom = capabilities.hasIntercom
       hasDoorbell = capabilities.isDoorbell
@@ -12752,14 +12765,30 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // does not survive a provider restart for a camera that is asleep at
     // boot (see `withPersistedProbe`).
     const prev = this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')
-    const prevFlags = (prev?.flags ?? {}) as ReolinkProbeFlags
+    // The flags already known, persisted fallback included: after a restart
+    // the slice can be empty while `deviceCache` still holds the last probe,
+    // and a partial read must not be folded into an empty bag as if it were
+    // the whole truth.
+    const prevFlags = this.getProbeFlags<ReolinkProbeFlags>()
     const persistedDeviceType = this.config.get('deviceCache')?.deviceType
     const inferredDeviceType: string | null =
       persistedDeviceType ?? (this.isBattery ? 'battery-cam' : null)
     const persistedModel = this.config.get('deviceCache')?.model ?? null
 
+    // A partial ability read (SupportInfo or AbilityInfo missing — a timeout
+    // on a lossy link) reports every flag of the missing source as `false`.
+    // It may add a flag it saw, never retract one (D49, `mergeAbilityRead`).
+    const readFlags: ReolinkProbeFlags = {
+      ...(hasPtz !== undefined ? { hasPtz } : {}),
+      ...(hasIntercom !== undefined ? { hasIntercom } : {}),
+      ...(hasDoorbell !== undefined ? { hasDoorbell } : {}),
+      ...(hasFloodlight !== undefined ? { hasFloodlight } : {}),
+      ...(hasSiren !== undefined ? { hasSiren } : {}),
+      ...(hasPirSensor !== undefined ? { hasPirSensor } : {}),
+      ...(hasAutotrack !== undefined ? { hasAutotrack } : {}),
+    }
     const flags: ReolinkProbeFlags = {
-      ...prevFlags,
+      ...mergeAbilityRead(prevFlags, readFlags, readQuality),
       // Battery is STICKY-TRUE. Any of the three sources saying "battery"
       // wins: the lib's ability probe, a previously-recorded flag, or
       // `this.isBattery` (standalone autodetect `deviceType==='battery-cam'`
@@ -12772,14 +12801,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // camera starts getting woken for thumbnails. Un-flagging a device
       // that really isn't battery-powered is a re-adoption, not a probe.
       hasBattery: hasBattery === true || prevFlags.hasBattery === true || this.isBattery,
-      ...(hasPtz !== undefined ? { hasPtz } : {}),
-      ...(hasIntercom !== undefined ? { hasIntercom } : {}),
-      ...(hasDoorbell !== undefined ? { hasDoorbell } : {}),
-      ...(hasFloodlight !== undefined ? { hasFloodlight } : {}),
-      ...(hasSiren !== undefined ? { hasSiren } : {}),
-      ...(hasPirSensor !== undefined ? { hasPirSensor } : {}),
-      ...(hasAutotrack !== undefined ? { hasAutotrack } : {}),
     }
+    const fullRead = capabilitiesRead && readQuality === 'full'
+    if (fullRead) this.fullAbilityReadThisSession = true
 
     const now = Date.now()
     const next: FeatureProbeStatus = {
@@ -12811,7 +12835,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         ...(channelCount !== undefined ? { channelCount } : {}),
       }
       await this.config.setAll({
-        deviceCache: capabilitiesRead ? withPersistedProbe(identity, flags, now) : identity,
+        // Only a full ability read stamps `probedAt`: a partial one is not a
+        // completed probe.
+        deviceCache: fullRead ? withPersistedProbe(identity, flags, now) : identity,
       })
     } catch (err) {
       this.ctx.logger.debug('deviceCache identity persist failed (non-fatal)', {
@@ -12850,7 +12876,15 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
     this.ctx.logger.info('Reolink features probed + persisted', {
       tags: { deviceId: this.id },
-      meta: { flags, channelCount, deviceType: inferredDeviceType },
+      meta: {
+        flags,
+        channelCount,
+        deviceType: inferredDeviceType,
+        // `partial`: SupportInfo or AbilityInfo did not answer; the `false`
+        // values of that read were not taken (D49).
+        abilityRead: capabilitiesRead ? readQuality : 'failed',
+        ...(capabilitiesRead && readQuality === 'partial' ? { partialRead: readFlags } : {}),
+      },
     })
   }
 

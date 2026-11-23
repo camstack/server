@@ -172,11 +172,52 @@ export function effectiveProbeFlags<F extends Record<string, unknown>>(
 }
 
 /**
- * The typed answer for `getAccessoryChildren()`. A probe that completed THIS
- * session is a definitive read (`complete`) even while the parent is asleep
- * or offline, so the kernel's reconcile can retire a child whose flag is now
- * false (it still needs a second agreeing probe, D49). Flags restored from
- * `deviceCache` alone, or no probe at all, are `unknown`: they spawn but
+ * How much of the camera's ability set one `getDeviceCapabilities` call saw.
+ * The lib reads SupportInfo and AbilityInfo with `Promise.allSettled` and
+ * computes the flags from whatever answered: with either source missing
+ * (a timeout on a lossy link, a half-awake camera) every flag that source
+ * carries comes back `false`. Only a read with BOTH sources is `full`.
+ */
+export type AbilityReadQuality = 'full' | 'partial'
+
+/** The two source-availability bits the lib reports in its `debug` block. */
+export interface AbilityReadSources {
+  readonly abilitiesAvailable?: boolean
+  readonly supportAvailable?: boolean
+}
+
+export function abilityReadQuality(debug: AbilityReadSources | undefined): AbilityReadQuality {
+  return debug?.abilitiesAvailable === true && debug.supportAvailable === true ? 'full' : 'partial'
+}
+
+/**
+ * Fold one ability read into the flags already known. A `full` read is
+ * authoritative, `false` included. A `partial` read is not evidence of
+ * absence (D49): it may add a flag it positively saw, never retract one —
+ * two degraded probes in a row on camera 3628 pruned its Siren child and the
+ * next full probe re-created it under a new id. Returns a new object.
+ */
+export function mergeAbilityRead<F extends ReolinkAccessoryProbeFlags>(
+  previous: F,
+  read: ReolinkAccessoryProbeFlags,
+  quality: AbilityReadQuality,
+): F {
+  const taken: ReolinkAccessoryProbeFlags = {}
+  for (const key of FLAG_KEYS) {
+    const value = read[key]
+    if (value === undefined) continue
+    if (quality === 'full' || value) taken[key] = value
+  }
+  return { ...previous, ...taken }
+}
+
+/**
+ * The typed answer for `getAccessoryChildren()`. A FULL ability read that
+ * landed THIS session is a definitive read (`complete`) even while the parent
+ * is asleep or offline, so the kernel's reconcile can retire a child whose
+ * flag is now false (it still needs a second agreeing probe, D49). Flags
+ * restored from `deviceCache` alone, a slice rehydrated from an earlier
+ * session, partial reads, or no probe at all, are `unknown`: they spawn but
  * never prune. A legacy bare array was `unknown` whenever the parent was
  * offline, which is how a ghost Floodlight outlived `hasFloodlight:false`.
  */
@@ -184,8 +225,12 @@ export function accessoryChildrenAnswerFor(
   sliceProbed: boolean,
   sliceFlags: ReolinkAccessoryProbeFlags,
   specs: readonly AccessoryChildSpec[],
+  fullReadThisSession: boolean,
 ): AccessoryChildrenAnswer {
   if (!sliceProbed) return accessoryChildrenUnknown('no probe completed this session', specs)
+  if (!fullReadThisSession) {
+    return accessoryChildrenUnknown('no full ability read this session', specs)
+  }
   // `lastProbedAt` is stamped even when the capabilities read threw: a slice
   // with no ability flag is not a list, and an empty one must never prune.
   const carriesAbilities = ACCESSORY_FLAGS.some(([flag]) => typeof sliceFlags[flag] === 'boolean')

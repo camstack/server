@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Battery keep-awake skips its wake while video is flowing, so it no longer pauses the stream
 - Reolink battery cameras: a login the camera abandons no longer blocks the camera, standalone battery sessions re-dial before the camera's 30 min cut, and a silent stream gets a fresh server.
 - A battery camera's stream catalog, including the first one served after a restart, now carries the camera's current features instead of the stored list, so the hub no longer keeps it awake.
+- A Reolink probe that only half-answers (a lossy link) no longer deletes and re-creates the camera's Siren, Floodlight or PIR devices under new ids.
 
 ### Fixed
 

@@ -19,20 +19,20 @@ const SPEC: AccessoryChildSpec = {
 
 describe('accessoryChildrenAnswerFor', () => {
   it('a probe completed this session is a definitive read', () => {
-    expect(accessoryChildrenAnswerFor(true, { hasSiren: true }, [SPEC])).toEqual({
+    expect(accessoryChildrenAnswerFor(true, { hasSiren: true }, [SPEC], true)).toEqual({
       kind: 'complete',
       children: [SPEC],
     })
   })
 
   it('a cache-only restore (or no probe) is unknown but still lists what may spawn', () => {
-    const answer = accessoryChildrenAnswerFor(false, { hasSiren: true }, [SPEC])
+    const answer = accessoryChildrenAnswerFor(false, { hasSiren: true }, [SPEC], true)
     expect(answer).toMatchObject({ kind: 'unknown', known: [SPEC] })
   })
 
   it('a probed slice WITHOUT ability flags (capabilities read failed) is unknown, never complete', () => {
-    expect(accessoryChildrenAnswerFor(true, {}, [])).toMatchObject({ kind: 'unknown' })
-    expect(accessoryChildrenAnswerFor(true, { hasPtz: true }, [])).toMatchObject({
+    expect(accessoryChildrenAnswerFor(true, {}, [], true)).toMatchObject({ kind: 'unknown' })
+    expect(accessoryChildrenAnswerFor(true, { hasPtz: true }, [], true)).toMatchObject({
       kind: 'unknown',
     })
   })
