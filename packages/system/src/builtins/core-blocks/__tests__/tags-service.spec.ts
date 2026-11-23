@@ -78,6 +78,30 @@ function fakeRules(rules: FakeRule[], unreachable = false): TagOwnerPort {
   }
 }
 
+/** Rules whose notification center ran its tag-ids step: the port stores ids and one write sets both. */
+function fakeIdRules(rules: FakeRule[], ids: Map<string, string[]>): TagOwnerPort {
+  return {
+    storage: 'ids',
+    list: async () => rules.map((r) => ({ id: r.id, tags: r.tags, tagIds: ids.get(r.id) ?? [] })),
+    setTagIds: async (id, tagIds) => {
+      ids.set(id, tagIds)
+    },
+    setTagsAndIds: async (id, tags, tagIds) => {
+      const rule = rules.find((r) => r.id === id)
+      if (rule === undefined) throw new Error('unknown rule')
+      rule.tags = tags
+      ids.set(id, tagIds)
+    },
+    setTags: async (id, tags) => {
+      const rule = rules.find((r) => r.id === id)
+      if (rule === undefined) throw new Error('unknown rule')
+      rule.tags = tags
+      // A names-only write: the ids no longer describe them.
+      ids.delete(id)
+    },
+  }
+}
+
 interface World {
   readonly tags: ReturnType<typeof buildTagsService>
   readonly blocks: CoreBlockStore
@@ -89,7 +113,11 @@ interface World {
   readonly styles: RecordKindHandle<TagBody>
 }
 
-async function world(failDevice?: number, rulesUnreachable = false): Promise<World> {
+async function world(
+  failDevice?: number,
+  rulesUnreachable = false,
+  rulesPort?: (rules: FakeRule[]) => TagOwnerPort,
+): Promise<World> {
   const { store, records } = await coreBlockRecordsHarness(logger, { newId: () => 'blk-1' })
   await store.load()
   const devices: FakeDevice[] = [
@@ -109,7 +137,8 @@ async function world(failDevice?: number, rulesUnreachable = false): Promise<Wor
     api: () => undefined,
     logger,
     devices: fakeDevices(devices, failDevice),
-    notificationRules: fakeRules(rules, rulesUnreachable),
+    notificationRules:
+      rulesPort === undefined ? fakeRules(rules, rulesUnreachable) : rulesPort(rules),
   })
   const schedulers = new SchedulersStore({
     schedulers: records.kind(coreBlocksRecordKinds.schedulers),
@@ -404,7 +433,35 @@ describe('tags are records with an id (D1089)', () => {
     expect(night.id).not.toBe(garden.id)
     expect(JSON.stringify(w.blocks.get('blk-1'))).toBe(blockBefore)
     expect(JSON.stringify(w.devices)).toBe(deviceBefore)
-    expect(JSON.stringify(w.rules)).toBe(rulesBefore)
+    // A rule still holding text only is the one owner that follows, or it would name a tag
+    // nothing carries any more.
+    expect(JSON.stringify(w.rules)).not.toBe(rulesBefore)
+    expect(w.rules.map((r) => r.tags)).toEqual([['Orchard', 'Night'], [], ['Orchard']])
+  })
+
+  it('a rule filing the tag by NAME still carries it after a rename (names-only rule)', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    await w.tags.updateTag({ id: garden.id, patch: { name: 'Yard' } })
+    const listed = (await w.tags.list({})).find((t) => t.name === 'Yard')
+    expect(listed?.counts.notificationRules).toBe(2)
+    // No stray unstyled "Garden" is left behind by the rule that still named it.
+    expect((await w.tags.list({})).map((t) => t.name)).not.toContain('Garden')
+  })
+
+  it('a migrated rule keeps its ids across a rename and is not rewritten', async () => {
+    const ids = new Map<string, string[]>()
+    const m = await world(undefined, false, (rules) => fakeIdRules(rules, ids))
+    const garden = await m.tags.ensureTag({ name: 'Garden' })
+    ids.set('event:rule-1', [garden.id])
+    const before = JSON.stringify(m.rules)
+    await m.tags.updateTag({ id: garden.id, patch: { name: 'Yard' } })
+    // rule-1 carries the id: untouched. summary:sum-1 has no ids yet: it follows by name.
+    expect(m.rules.find((r) => r.id === 'event:rule-1')?.tags).toEqual(['GARDEN', 'Night'])
+    expect(ids.get('event:rule-1')).toEqual([garden.id])
+    expect(m.rules.find((r) => r.id === 'summary:sum-1')?.tags).toEqual(['Yard'])
+    expect(JSON.stringify(m.rules)).not.toBe(before)
+    const listed = (await m.tags.list({})).find((t) => t.name === 'Yard')
+    expect(listed?.counts.notificationRules).toBe(2)
   })
 
   it('a rename needs no owner to be reachable', async () => {

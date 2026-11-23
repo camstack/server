@@ -43,6 +43,7 @@ import {
   NcRuleTargetSchema,
   NcScheduleSchema,
   NcTargetOverridesSchema,
+  TagIdsFieldSchema,
   TagsFieldSchema,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -270,6 +271,8 @@ export const NcSummaryRuleInputSchema = z.object({
   targetOverrides: NcTargetOverridesSchema.optional(),
   /** Operator labels (D1054) — optional and NEVER defaulted: an absent key leaves the stored tags alone; `[]` clears them. Admin-only. */
   tags: TagsFieldSchema.optional(),
+  /** The ids of those tags, index-aligned with `tags` (D1089). */
+  tagIds: TagIdsFieldSchema.optional(),
   ai: NcSummaryAiSchema.optional(),
 })
 export type NcSummaryRuleInput = z.infer<typeof NcSummaryRuleInputSchema>
@@ -304,6 +307,8 @@ export const NcSummaryRulePatchSchema = z.object({
   targetOverrides: NcTargetOverridesSchema.optional(),
   /** Absent = keep the stored tags; `[]` clears them (D1054). Never defaulted. */
   tags: TagsFieldSchema.optional(),
+  /** The ids of those tags, index-aligned with `tags` (D1089). */
+  tagIds: TagIdsFieldSchema.optional(),
   ai: NcSummaryAiSchema.nullable().optional(),
 })
 export type NcSummaryRulePatch = z.infer<typeof NcSummaryRulePatchSchema>

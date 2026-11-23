@@ -26,7 +26,7 @@ import {
   type NcSummaryTemplate,
 } from './summary-rule.js'
 import type { SummaryRuleClearableKey } from './summary-rule-clear.js'
-import { storedTags } from '../rule-tags.js'
+import { staleIdsDropped, storedTags } from '../rule-tags.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -203,6 +203,7 @@ export class NcSummaryStore {
     const merged: NcSummaryRule = {
       ...withoutCleared(existing, new Set(clear)),
       ...rest,
+      ...staleIdsDropped(patch),
       id: existing.id,
       ...(existing.ownerUserId !== undefined ? { ownerUserId: existing.ownerUserId } : {}),
       ...(existing.generatedAt !== undefined ? { generatedAt: existing.generatedAt } : {}),
@@ -216,8 +217,15 @@ export class NcSummaryStore {
   }
 
   /** Replace only the tags (the `tags` cap's rename/remove, D1054); `[]` clears them. */
-  async setTags(ruleId: string, tags: readonly string[]): Promise<NcSummaryRule> {
-    return this.update(ruleId, { tags: [...tags] })
+  async setTags(
+    ruleId: string,
+    tags: readonly string[],
+    tagIds?: readonly string[],
+  ): Promise<NcSummaryRule> {
+    return this.update(ruleId, {
+      tags: [...tags],
+      ...(tagIds === undefined ? {} : { tagIds: [...tagIds] }),
+    })
   }
 
   async setEnabled(ruleId: string, enabled: boolean): Promise<NcSummaryRule> {
@@ -250,8 +258,8 @@ export class NcSummaryStore {
   }
 
   private async write(candidate: NcSummaryRule): Promise<NcSummaryRule> {
-    const { tags, ...untagged } = candidate
-    const rule = NcSummaryRuleSchema.parse({ ...untagged, ...storedTags(tags) })
+    const { tags, tagIds, ...untagged } = candidate
+    const rule = NcSummaryRuleSchema.parse({ ...untagged, ...storedTags(tags, tagIds) })
     const { id, ...body } = rule
     await this.kind.put({ id, data: body })
     this.byId.set(id, rule)

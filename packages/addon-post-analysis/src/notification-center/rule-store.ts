@@ -58,7 +58,7 @@ import {
   projectRawStoredRule,
   stripStoredKeys,
 } from './rule-retired-fields.js'
-import { storedTags } from './rule-tags.js'
+import { staleIdsDropped, storedTags } from './rule-tags.js'
 import { ncRecordKinds, type RuleBody } from './record-kinds.js'
 import { withCurrentCommandOutcomes } from './rule-command-outcomes.js'
 import { withoutLegacyActions } from './rule-legacy-actions.js'
@@ -148,8 +148,8 @@ function normalizeStoredRule(rule: NcRule): NcRule {
  */
 function withNormalizedTags(rule: NcRule): NcRule {
   if (rule.tags === undefined) return rule
-  const { tags, ...rest } = rule
-  return { ...rest, ...storedTags(tags) }
+  const { tags, tagIds, ...rest } = rule
+  return { ...rest, ...storedTags(tags, tagIds) }
 }
 
 /** A stored row the load could not parse: which rule, and the first reason. */
@@ -589,6 +589,7 @@ export class NcRuleStore {
     const candidate = {
       ...kept,
       ...patch,
+      ...staleIdsDropped(patch),
       id: existing.id,
       createdBy: existing.createdBy,
       createdAt: existing.createdAt,
@@ -666,8 +667,15 @@ export class NcRuleStore {
    * Replace a rule's tags (D1054) — a patch naming ONLY `tags`, so every other
    * field keeps its stored value. `[]` clears them.
    */
-  async setTags(ruleId: string, tags: readonly string[]): Promise<NcRule> {
-    return this.update(ruleId, { tags: [...tags] })
+  async setTags(
+    ruleId: string,
+    tags: readonly string[],
+    tagIds?: readonly string[],
+  ): Promise<NcRule> {
+    return this.update(ruleId, {
+      tags: [...tags],
+      ...(tagIds === undefined ? {} : { tagIds: [...tagIds] }),
+    })
   }
 
   /**

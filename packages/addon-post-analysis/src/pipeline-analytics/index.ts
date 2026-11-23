@@ -4015,6 +4015,12 @@ export default class PipelineAnalyticsAddon
     return {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
+      tagRuleKinds: {
+        rules: records.kind(ncRecordKinds['rules']),
+        summaryRules: records.kind(ncRecordKinds['summary-rules']),
+        timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
+        calendarEventsRules: records.kind(ncRecordKinds['calendar-events-rules']),
+      },
       texts: records.kind(ncRecordKinds.texts),
       legacySequences: records.kind(ncRecordKinds.sequences),
       actions: this.migrationActions(),

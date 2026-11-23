@@ -20,7 +20,7 @@ import {
   NcCalendarEventsRuleSchema,
   type NcCalendarEventsTemplate,
 } from './calendar-events-rule.js'
-import { storedTags } from '../rule-tags.js'
+import { staleIdsDropped, storedTags } from '../rule-tags.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -153,6 +153,7 @@ export class NcCalendarEventsStore {
     const merged: NcCalendarEventsRule = {
       ...existing,
       ...rest,
+      ...staleIdsDropped(patch),
       id: existing.id,
       ...(existing.ownerUserId !== undefined ? { ownerUserId: existing.ownerUserId } : {}),
       ...(existing.generatedAt !== undefined ? { generatedAt: existing.generatedAt } : {}),
@@ -170,8 +171,15 @@ export class NcCalendarEventsStore {
   }
 
   /** Replace only the tags (the `tags` cap's rename/remove, D1054); `[]` clears them. */
-  async setTags(ruleId: string, tags: readonly string[]): Promise<NcCalendarEventsRule> {
-    return this.update(ruleId, { tags: [...tags] })
+  async setTags(
+    ruleId: string,
+    tags: readonly string[],
+    tagIds?: readonly string[],
+  ): Promise<NcCalendarEventsRule> {
+    return this.update(ruleId, {
+      tags: [...tags],
+      ...(tagIds === undefined ? {} : { tagIds: [...tagIds] }),
+    })
   }
 
   async setEnabled(ruleId: string, enabled: boolean): Promise<NcCalendarEventsRule> {
@@ -204,8 +212,8 @@ export class NcCalendarEventsStore {
   }
 
   private async write(rule: NcCalendarEventsRule): Promise<NcCalendarEventsRule> {
-    const { tags, ...untagged } = rule
-    const validated = NcCalendarEventsRuleSchema.parse({ ...untagged, ...storedTags(tags) })
+    const { tags, tagIds, ...untagged } = rule
+    const validated = NcCalendarEventsRuleSchema.parse({ ...untagged, ...storedTags(tags, tagIds) })
     const { id, ...body } = validated
     await this.kind.put({ id, data: body })
     this.byId.set(id, validated)

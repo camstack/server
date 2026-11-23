@@ -4703,6 +4703,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `askVerdict?`: `boolean`
 - `offerAlertAction?`: `boolean`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 
 ### `NcRuleKindSchema`
 
@@ -4753,6 +4754,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `askVerdict?`: `boolean`
 - `offerAlertAction?`: `boolean`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 - `disabledTargetIds?`: `string[]`
 
 ### `NcRuleSchema`
@@ -4780,6 +4782,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `askVerdict?`: `boolean`
 - `offerAlertAction?`: `boolean`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 - `id`: `string`
 - `createdBy`: `string`
 - `createdAt`: `number`
@@ -4791,6 +4794,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `kind`: `NcTaggedRuleKindSchema`
 - `ruleId`: `string`
 - `tags`: `string[]`
+- `tagIds`: `string[]`
 
 ### `NcRuleTargetSchema`
 

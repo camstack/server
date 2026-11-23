@@ -14,6 +14,7 @@ import {
   NcRuleTargetSchema,
   NcScheduleSchema,
   NcTargetOverridesSchema,
+  TagIdsFieldSchema,
   TagsFieldSchema,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -56,6 +57,8 @@ export const NcCalendarEventsRuleInputSchema = z.object({
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   /** Operator labels (D1054) — optional and NEVER defaulted: an absent key leaves the stored tags alone; `[]` clears them. Admin-only. */
   tags: TagsFieldSchema.optional(),
+  /** The ids of those tags, index-aligned with `tags` (D1089). */
+  tagIds: TagIdsFieldSchema.optional(),
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type NcCalendarEventsRuleInput = z.infer<typeof NcCalendarEventsRuleInputSchema>
@@ -74,6 +77,8 @@ export const NcCalendarEventsRulePatchSchema = z.object({
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   /** Absent = keep the stored tags; `[]` clears them (D1054). Never defaulted. */
   tags: TagsFieldSchema.optional(),
+  /** The ids of those tags, index-aligned with `tags` (D1089). */
+  tagIds: TagIdsFieldSchema.optional(),
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type NcCalendarEventsRulePatch = z.infer<typeof NcCalendarEventsRulePatchSchema>

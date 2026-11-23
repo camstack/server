@@ -144,22 +144,37 @@ export function parseRuleTagOwnerId(id: string): { kind: NcTaggedRuleKind; ruleI
 }
 
 export function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
+  const entries = async () =>
+    (await needApi(api).notificationRules.listRuleTags.query({})).rules.map((r) => ({
+      id: ruleTagOwnerId(r.kind, r.ruleId),
+      tags: r.tags,
+      tagIds: r.tagIds,
+    }))
+  const write = async (id: string, tags: string[], tagIds: string[] | undefined) => {
+    const { kind, ruleId } = parseRuleTagOwnerId(id)
+    await needApi(api).notificationRules.setRuleTags.mutate({
+      kind,
+      ruleId,
+      tags,
+      ...(tagIds === undefined ? {} : { tagIds }),
+    })
+  }
   return {
-    // A notification rule still carries text only (its migration is a later step of D1089).
-    storage: 'names',
+    // A rule carries the ids once the notification center's migration ran (D1089); until then
+    // `tagIds` reads `[]` and the service falls back to its names.
+    storage: 'ids',
     // Every rule KIND carries tags (D1054): one read covers all four stores.
-    list: async () => {
-      const { rules } = await needApi(api).notificationRules.listRuleTags.query({})
-      return rules.map((r) => ({ id: ruleTagOwnerId(r.kind, r.ruleId), tags: r.tags, tagIds: [] }))
+    list: entries,
+    // The ids alone: the names are re-sent as they stand, since a names-only write drops the ids.
+    setTagIds: async (id, tagIds) => {
+      const current = (await entries()).find((entry) => entry.id === id)
+      if (current === undefined) throw new Error(`[tags] notification rule not found: ${id}`)
+      await write(id, [...current.tags], tagIds)
     },
-    setTagIds: async () => {
-      throw new Error('[tags] a notification rule carries tag names only')
-    },
-    // Only the tags: never a whole-rule update, which a stale copy would clobber.
-    setTags: async (id, tags) => {
-      const { kind, ruleId } = parseRuleTagOwnerId(id)
-      await needApi(api).notificationRules.setRuleTags.mutate({ kind, ruleId, tags })
-    },
+    setTagsAndIds: (id, tags, tagIds) => write(id, tags, tagIds),
+    // Only the tags: never a whole-rule update, which a stale copy would clobber. The rule
+    // drops its ids, because the names no longer describe them.
+    setTags: (id, tags) => write(id, tags, undefined),
   }
 }
 

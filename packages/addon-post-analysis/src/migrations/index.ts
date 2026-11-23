@@ -16,6 +16,7 @@ import {
   type RetrainVerdictFramePorts,
 } from './retrain-verdict-frames.js'
 import { planRetireFaceKeys, type RetiredFaceKeysPorts } from './retired-face-keys.js'
+import { planRuleTagIds, RULE_TAG_IDS_MIGRATION_ID, type RuleTagIdsPorts } from './rule-tag-ids.js'
 import {
   type EnabledSplitPorts,
   PIPELINE_ANALYTICS_ID,
@@ -26,7 +27,13 @@ export type { NcTemplateMigrationPorts } from './device-template-var.js'
 export type { NcSystemEventDeliveryPorts } from './system-event-delivery-modes.js'
 export type { EnabledSplitPorts } from './split-enabled-key.js'
 export type { RetiredFaceKeysPorts } from './retired-face-keys.js'
-export type { MigratedAction, NcMigrationActionsPort, NcRuleActionsMigrationPorts } from './rule-actions-to-actions.js'
+export { RULE_TAG_IDS_MIGRATION_ID } from './rule-tag-ids.js'
+export type { RuleTagIdsPorts } from './rule-tag-ids.js'
+export type {
+  MigratedAction,
+  NcMigrationActionsPort,
+  NcRuleActionsMigrationPorts,
+} from './rule-actions-to-actions.js'
 export type { RetrainVerdictFramePorts, StagedRetrainTrack } from './retrain-verdict-frames.js'
 
 /** Everything the `pipeline-analytics` catalogue reads and writes. */
@@ -35,7 +42,8 @@ export type PipelineAnalyticsMigrationPorts = NcTemplateMigrationPorts &
   RetiredFaceKeysPorts &
   RetrainVerdictFramePorts &
   NcSystemEventDeliveryPorts &
-  NcRuleActionsMigrationPorts
+  NcRuleActionsMigrationPorts &
+  RuleTagIdsPorts
 
 export const SYSTEM_EVENT_DELIVERY_MODES_MIGRATION_ID =
   'pipeline-analytics/2026-11-07-system-event-delivery-modes'
@@ -156,5 +164,23 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<PipelineAnalyticsMigratio
       fixtureMark: 'the rule name and the button label the migration does not know',
     },
     procedure: migrateRuleActionsToActions,
+  },
+  {
+    meta: {
+      id: RULE_TAG_IDS_MIGRATION_ID,
+      owner: PIPELINE_ANALYTICS_ID,
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      // A rule left for the next boot keeps its names, which the tags service still reads.
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Add the ids of their tags beside the kept names on every notification rule, digest, timelapse and calendar-events rule, in one transaction',
+      fixtureMark: 'the rule name and a field the migration does not know',
+    },
+    plan: planRuleTagIds,
   },
 ]

@@ -226,6 +226,7 @@ describe('the catalogue', () => {
     expect(step?.meta.dependsOn).toEqual([
       CORE_BLOCKS_TAG_IDS_ID,
       'device-manager/2026-11-23-device-tag-ids',
+      'pipeline-analytics/2026-11-23-rule-tag-ids',
     ])
   })
 })

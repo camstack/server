@@ -14,6 +14,7 @@ import type {
   NcRuleActionsMigrationPorts,
   NcTemplateMigrationPorts,
   RetrainVerdictFramePorts,
+  RuleTagIdsPorts,
 } from '../../index.js'
 
 const OWNER = 'pipeline-analytics'
@@ -43,13 +44,19 @@ function engineTransport(engine: RecordsEngine): RecordsTransport {
 }
 
 export interface NcWorld {
+  readonly db: Database.Database
+  readonly engine: RecordsEngine
   readonly records: RecordsAccess
   /** The template kinds, plus a real verdict ledger and retrain ports that find nothing to do. */
-  readonly ncPorts: NcTemplateMigrationPorts & RetrainVerdictFramePorts & NcRuleActionsMigrationPorts
+  readonly ncPorts: NcTemplateMigrationPorts &
+    RetrainVerdictFramePorts &
+    NcRuleActionsMigrationPorts &
+    RuleTagIdsPorts
 }
 
 export async function makeNcWorld(): Promise<NcWorld> {
-  const engine = new RecordsEngine(new Database(':memory:'), {
+  const db = new Database(':memory:')
+  const engine = new RecordsEngine(db, {
     databaseId: 'settings',
     logger: makeSilentLogger(),
   })
@@ -61,10 +68,18 @@ export async function makeNcWorld(): Promise<NcWorld> {
   await records.declare(ncRecordKinds)
   await records.declare({ 'detection-verdicts': ncDurableRecordKinds['detection-verdicts'] })
   return {
+    db,
+    engine,
     records,
     ncPorts: {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
+      tagRuleKinds: {
+        rules: records.kind(ncRecordKinds['rules']),
+        summaryRules: records.kind(ncRecordKinds['summary-rules']),
+        timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
+        calendarEventsRules: records.kind(ncRecordKinds['calendar-events-rules']),
+      },
       texts: records.kind(ncRecordKinds.texts),
       legacySequences: records.kind(ncRecordKinds.sequences),
       // Specs that do not run the Actions migration never reach the Actions cap.

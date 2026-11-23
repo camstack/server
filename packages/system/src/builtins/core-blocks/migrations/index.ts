@@ -52,6 +52,7 @@ export {
 /** The `core-blocks` catalogue (D987): offered to the engine when the hub-resident addon initialises. */
 /** The device manager's step (a ledger id, not an import: addons never import each other). */
 const DEVICE_MANAGER_TAG_IDS_ID = 'device-manager/2026-11-23-device-tag-ids'
+const RULE_TAG_IDS_ID = 'pipeline-analytics/2026-11-23-rule-tag-ids'
 
 export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[] = [
   {
@@ -182,7 +183,7 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[]
       level: 'addon-state',
       seq: 8,
       // The owner steps that wrote `tagIds`: a tag record exists under the id they used.
-      dependsOn: [CORE_BLOCKS_TAG_IDS_ID, DEVICE_MANAGER_TAG_IDS_ID],
+      dependsOn: [CORE_BLOCKS_TAG_IDS_ID, DEVICE_MANAGER_TAG_IDS_ID, RULE_TAG_IDS_ID],
       store: 'settings',
       scope: 'cluster',
       onFailure: 'tolerate',

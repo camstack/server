@@ -3765,7 +3765,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3417`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3421`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`
@@ -3779,7 +3779,7 @@
 | deleteRule | `notificationRules.deleteRule` | mutation | admin | `{ ruleId: string }` | `{ success: true }` |
 | setRuleEnabled | `notificationRules.setRuleEnabled` | mutation | admin | `{ ruleId: string; enabled: boolean }` | `{ success: true }` |
 | listRuleTags | `notificationRules.listRuleTags` | query | admin | `{}` | `{ rules: NcRuleTagsEntrySchema[] }` |
-| setRuleTags | `notificationRules.setRuleTags` | mutation | admin | `{ kind: NcTaggedRuleKindSchema; ruleId: string; tags: string[] }` | `{ success: true }` |
+| setRuleTags | `notificationRules.setRuleTags` | mutation | admin | `{ kind: NcTaggedRuleKindSchema; ruleId: string; tags: string[]; tagIds?: string[] }` | `{ success: true }` |
 | getClipRetentionAsks | `notificationRules.getClipRetentionAsks` | query | admin | `{}` | `NcClipRetentionPlanSchema` |
 | listDeviceMutes | `notificationRules.listDeviceMutes` | query | admin | `{}` | `{ mutedDeviceIds: number[] }` |
 | setDeviceMuted | `notificationRules.setDeviceMuted` | mutation | admin | `{ deviceId: number; muted: boolean }` | `{ success: true }` |

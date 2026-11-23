@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9228 source files · 250 units claimed by at least one document (9197 files).**
+**257 units · 9229 source files · 250 units claimed by at least one document (9198 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -153,11 +153,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/logging` | 9 | `logging`, `secrets` | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +9 more | 2026-10-21 |
 | `packages/types/src/units` | 9 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md` | — |
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-11-02 |
+| `packages/addon-post-analysis/src/migrations` | 8 | — | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md`, `decisions/adr-1028-a-notification-rule-only-runs-existing-actions.md` | — |
 | `packages/types/src/auth` | 8 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0801-a-native-account-link-returns-to-the-app-and-is-claimed-with-the-apps-own-session.md`, `decisions/adr-0810-an-sso-login-bridge-is-single-use-and-bound-to-the-browser-that-started-the-sign-in.md`, +5 more, 1 ADR | — |
 | `packages/addon-export-hap/src/migrations` | 7 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +2 more, 1 ADR | 2026-09-29 |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +2 more | — |
-| `packages/addon-post-analysis/src/migrations` | 7 | — | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md`, `decisions/adr-1028-a-notification-rule-only-runs-existing-actions.md` | — |
 | `packages/addon-provider-bosch/src/shared` | 7 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-bosch-homecom.md` _(covers)_, +2 more | 2026-11-08 |
 | `packages/cli/src/onboarding` | 7 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md` | 2026-11-21 |
 | `server/backend/src/boot` | 7 | `kernel`, `secrets` | `decisions/adr-0171-the-hub-core-api-is-on-the-mesh-before-the-first-addon-boots.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, `decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md`, +4 more | — |

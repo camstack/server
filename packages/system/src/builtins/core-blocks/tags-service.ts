@@ -55,6 +55,11 @@ export interface TagOwnerPort {
   list(): Promise<readonly TagOwnerRecord[]>
   setTagIds(id: string, tagIds: string[]): Promise<void>
   setTags(id: string, tags: string[]): Promise<void>
+  /**
+   * Both in ONE write, for an owner whose names-only write would drop the ids (a notification
+   * rule). Absent: the service calls `setTagIds` then `setTags`.
+   */
+  setTagsAndIds?(id: string, tags: string[], tagIds: string[]): Promise<void>
 }
 
 export type TagOwnerKind = keyof TagUsageCounts
@@ -172,7 +177,12 @@ export class TagsService implements ITagsProvider {
   readonly updateTag: ITagsProvider['updateTag'] = async ({ id, patch }) => {
     await this.ready()
     try {
-      return await this.store.update(id, (current) => this.patched(current, patch))
+      const before = this.store.get(id)
+      const updated = await this.store.update(id, (current) => this.patched(current, patch))
+      if (before !== null && before.name !== updated.name) {
+        await this.followRenameOnNamesOnlyOwners(before.name, updated.name)
+      }
+      return updated
     } catch (err) {
       if (err instanceof EntityNotFoundError) {
         throw userError('system.tag-not-found', undefined, `[tags] tag not found: ${id}`)
@@ -388,7 +398,12 @@ export class TagsService implements ITagsProvider {
     const withoutTag = record.tagIds.filter((id) => id !== tag.id)
     const ids =
       into === null || withoutTag.includes(into.id) ? withoutTag : [...withoutTag, into.id]
-    await port.setTagIds(record.id, record.tagIds.length === 0 && into !== null ? [into.id] : ids)
+    const nextIds = record.tagIds.length === 0 && into !== null ? [into.id] : ids
+    if (port.setTagsAndIds !== undefined) {
+      await port.setTagsAndIds(record.id, [...(names ?? record.tags)], nextIds)
+      return
+    }
+    await port.setTagIds(record.id, nextIds)
     if (names !== null) await port.setTags(record.id, names)
   }
 
@@ -409,6 +424,31 @@ export class TagsService implements ITagsProvider {
       }
     }
     return counts
+  }
+
+  /**
+   * A safety net for a record that still holds text only (an owner, or a node whose
+   * notification center has not run its tag-ids step yet): the tag record was renamed once, so
+   * the names such a record keeps are moved here, or it would keep naming a tag nothing
+   * carries any more.
+   * An owner that cannot be read is logged and skipped, never the cause of a failed rename.
+   */
+  private async followRenameOnNamesOnlyOwners(from: string, to: string): Promise<void> {
+    for (const kind of OWNER_KINDS) {
+      const port = this.deps.owners[kind]
+      try {
+        for (const record of await port.list()) {
+          // A record that carries ids follows the record; one that holds text only does not.
+          if (port.storage === 'ids' && record.tagIds.length > 0) continue
+          const next = renameInTags(record.tags, from, to)
+          if (next !== null) await port.setTags(record.id, next)
+        }
+      } catch (err) {
+        this.deps.logger.warn('tag renamed, but a names-only owner could not follow', {
+          meta: { owner: kind, from, to, error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
   }
 
   /** Names-only tags: a name on owners that have no record for it (a pre-migration state). */

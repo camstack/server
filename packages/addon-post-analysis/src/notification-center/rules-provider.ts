@@ -215,8 +215,17 @@ export interface NcProducerRuleStores {
 function listRuleTagsOf(host: RulesProviderHost): NcRuleTagsEntry[] {
   const entry = (
     kind: NcTaggedRuleKind,
-    rule: { readonly id: string; readonly tags?: readonly string[] },
-  ): NcRuleTagsEntry => ({ kind, ruleId: rule.id, tags: [...(rule.tags ?? [])] })
+    rule: {
+      readonly id: string
+      readonly tags?: readonly string[]
+      readonly tagIds?: readonly string[]
+    },
+  ): NcRuleTagsEntry => ({
+    kind,
+    ruleId: rule.id,
+    tags: [...(rule.tags ?? [])],
+    tagIds: [...(rule.tagIds ?? [])],
+  })
   const p = host.producerRules
   return [
     ...host.rules.list().map((r) => entry('event', r)),
@@ -232,17 +241,18 @@ async function setRuleTagsOf(
   kind: NcTaggedRuleKind,
   ruleId: string,
   tags: readonly string[],
+  tagIds: readonly string[] | undefined,
 ): Promise<readonly string[]> {
   const p = host.producerRules
   switch (kind) {
     case 'event':
-      return (await host.rules.setTags(ruleId, tags)).tags ?? []
+      return (await host.rules.setTags(ruleId, tags, tagIds)).tags ?? []
     case 'summary':
-      return (await p.summaries.setTags(ruleId, tags)).tags ?? []
+      return (await p.summaries.setTags(ruleId, tags, tagIds)).tags ?? []
     case 'timelapse':
-      return (await p.timelapses.setTags(ruleId, tags)).tags ?? []
+      return (await p.timelapses.setTags(ruleId, tags, tagIds)).tags ?? []
     case 'calendar-events':
-      return (await p.calendarEvents.setTags(ruleId, tags)).tags ?? []
+      return (await p.calendarEvents.setTags(ruleId, tags, tagIds)).tags ?? []
   }
 }
 
@@ -373,8 +383,8 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
     // D1054: every rule kind carries tags; the `tags` cap reads and rewrites
     // them here, one store per kind.
     listRuleTags: async () => ({ rules: listRuleTagsOf(host) }),
-    setRuleTags: async ({ kind, ruleId, tags }) => {
-      const stored = await setRuleTagsOf(host, kind, ruleId, tags)
+    setRuleTags: async ({ kind, ruleId, tags, tagIds }) => {
+      const stored = await setRuleTagsOf(host, kind, ruleId, tags, tagIds)
       host.logger.info('notification rule tags set', { meta: { kind, ruleId, tags: stored } })
       return { success: true }
     },

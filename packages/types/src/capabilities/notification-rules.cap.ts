@@ -6,7 +6,7 @@ import { DeviceErrorSeveritySchema } from './error.cap.js'
 import { MaskPolygonShapeSchema } from './mask-shape.js'
 import { NotificationActionIconSchema } from './notification-output.cap.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
-import { TagsFieldSchema } from '../tags/tag.js'
+import { TagIdsFieldSchema, TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * notification-rules — the Notification Center rule surface (P1 core).
@@ -1692,6 +1692,8 @@ export const NcRuleInputSchema = z.object({
    * here with `setRuleTags`.
    */
   tags: TagsFieldSchema.optional(),
+  /** The ids of those tags, index-aligned with `tags` (D1089). Absent = names only; a `tags` write without ids drops them. */
+  tagIds: TagIdsFieldSchema.optional(),
 })
 export type NcRuleInput = z.infer<typeof NcRuleInputSchema>
 
@@ -1707,6 +1709,8 @@ export const NcRuleTagsEntrySchema = z.object({
   kind: NcTaggedRuleKindSchema,
   ruleId: z.string(),
   tags: z.array(z.string()),
+  /** The tag ids, index-aligned with `tags`; `[]` for a rule not migrated yet. */
+  tagIds: z.array(z.string()),
 })
 export type NcRuleTagsEntry = z.infer<typeof NcRuleTagsEntrySchema>
 
@@ -3469,7 +3473,12 @@ export const notificationRulesCapability = {
      * clears them.
      */
     setRuleTags: method(
-      z.object({ kind: NcTaggedRuleKindSchema, ruleId: z.string(), tags: TagsFieldSchema }),
+      z.object({
+        kind: NcTaggedRuleKindSchema,
+        ruleId: z.string(),
+        tags: TagsFieldSchema,
+        tagIds: TagIdsFieldSchema.optional(),
+      }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),

@@ -36,7 +36,7 @@ import { randomUUID } from 'node:crypto'
 import { ncRecordKinds, type TimelapseRuleBody } from '../record-kinds.js'
 import { type NcRereadResult, rereadRecordRow } from '../durable-reread.js'
 import type { TimelapseRuleClearableKey } from './timelapse-rule-clear.js'
-import { storedTags } from '../rule-tags.js'
+import { staleIdsDropped, storedTags } from '../rule-tags.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -243,6 +243,7 @@ export class TimelapseStore {
     const merged: TimelapseRule = {
       ...withoutCleared(existing, new Set(clear)),
       ...rest,
+      ...staleIdsDropped(patch),
       id: existing.id,
       ownerUserId: existing.ownerUserId,
       lastGeneratedAt: existing.lastGeneratedAt,
@@ -255,8 +256,15 @@ export class TimelapseStore {
   }
 
   /** Replace only the tags (the `tags` cap's rename/remove, D1054); `[]` clears them. */
-  async setTags(ruleId: string, tags: readonly string[]): Promise<TimelapseRule> {
-    return this.update(ruleId, { tags: [...tags] })
+  async setTags(
+    ruleId: string,
+    tags: readonly string[],
+    tagIds?: readonly string[],
+  ): Promise<TimelapseRule> {
+    return this.update(ruleId, {
+      tags: [...tags],
+      ...(tagIds === undefined ? {} : { tagIds: [...tagIds] }),
+    })
   }
 
   async setEnabled(ruleId: string, enabled: boolean): Promise<TimelapseRule> {
@@ -309,8 +317,8 @@ export class TimelapseStore {
   }
 
   private async write(candidate: TimelapseRule): Promise<TimelapseRule> {
-    const { tags, ...untagged } = candidate
-    const rule = TimelapseRuleSchema.parse({ ...untagged, ...storedTags(tags) })
+    const { tags, tagIds, ...untagged } = candidate
+    const rule = TimelapseRuleSchema.parse({ ...untagged, ...storedTags(tags, tagIds) })
     const { id, ...body } = rule
     await this.kind.put({ id, data: body })
     this.byId.set(id, rule)
