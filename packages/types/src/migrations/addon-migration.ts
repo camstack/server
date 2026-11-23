@@ -132,6 +132,48 @@ export interface AddonMigrationRunReport {
   readonly blockOwner: readonly string[]
 }
 
+/** A blocked step and the one predecessor whose application releases it. */
+export interface AwaitedDependency {
+  readonly id: string
+  readonly on: string
+}
+
+const WAITING_REASON = /^dependency-(?:pending|blocked):(.+)$/
+
+/**
+ * What an owner keeps between runs: the steps blocked only on a predecessor not yet applied.
+ * The engine announces every applied id (`migration.applied`); {@link releasedBy} says which
+ * waiting steps that frees, so the owner runs them again without a restart or a timer.
+ */
+export class MigrationDependencyWaits {
+  private readonly waiting = new Map<string, string>()
+
+  /** Replace what is waiting for the ids this run judged (a step that moved on stops waiting). */
+  record(report: Pick<AddonMigrationRunReport, 'awaiting'>, judged: readonly string[]): void {
+    for (const id of judged) this.waiting.delete(id)
+    for (const entry of report.awaiting) this.waiting.set(entry.id, entry.on)
+  }
+
+  /** Waiting steps whose predecessor is among `applied`; they stop waiting (the rerun re-records). */
+  releasedBy(applied: readonly string[]): readonly string[] {
+    const freed = [...this.waiting].filter(([, on]) => applied.includes(on)).map(([id]) => id)
+    for (const id of freed) this.waiting.delete(id)
+    return freed
+  }
+
+  get size(): number {
+    return this.waiting.size
+  }
+}
+
+/** The ids a `migration.applied` event carries; anything else yields none. */
+export function appliedIdsOf(data: unknown): readonly string[] {
+  if (typeof data !== 'object' || data === null || !('ids' in data) || !Array.isArray(data.ids)) {
+    return []
+  }
+  return data.ids.filter((id): id is string => typeof id === 'string')
+}
+
 export interface AddonMigrationRunOptions {
   /**
    * The ids this call runs. The WHOLE catalogue is still declared every time (the engine
@@ -164,6 +206,7 @@ const NOT_RUN: AddonMigrationRunReport = {
   applied: [],
   failed: [],
   blocked: [],
+  awaiting: [],
   skipped: [],
   blockOwner: [],
 }
@@ -208,6 +251,7 @@ export async function runAddonMigrations(
   const applied: string[] = []
   const failed: string[] = []
   const blocked: string[] = []
+  const awaiting: AwaitedDependency[] = []
   const skipped: string[] = []
   const settle = (id: string, status: MigrationStatus): void => {
     if (status === 'applied') applied.push(id)
@@ -253,6 +297,8 @@ export async function runAddonMigrations(
           continue
         }
         log.warn('migration not run', { tags, meta: { state: gate.state, reason: gate.reason } })
+        const on = WAITING_REASON.exec(gate.reason ?? '')?.[1]
+        if (on !== undefined) awaiting.push({ id: step.id, on })
         settle(step.id, gate.state === 'pending' ? 'blocked' : gate.state)
         continue
       }
@@ -281,6 +327,7 @@ export async function runAddonMigrations(
     applied,
     failed,
     blocked,
+    awaiting,
     skipped,
     blockOwner,
   }

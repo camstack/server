@@ -6,7 +6,7 @@
  */
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { AppRouter } from '../../generated/addon-api.js'
 import { type AddonMigration, defineAddonMigrations } from '../../migrations/addon-migration.js'
 import type { MigrationApiV1 } from '../../migrations/api/migration-api.v1.js'
@@ -151,6 +151,78 @@ describe('BaseAddon.runMigrations', () => {
     const addon = await probeWith('applied', calls)
     expect((await addon.migrate([])).declared).toBe(false)
     expect(calls.filter((c) => c !== 'integrations.listByAddon')).toEqual([])
+  })
+})
+
+describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
+  const DEP = 'other/2026-11-01-first'
+  const SELF = 'probe/2026-11-01-one'
+
+  /** The hub blocks the first start on DEP; later starts proceed. */
+  function blockingHub(calls: string[], reason: string): TRPCLink<AppRouter> {
+    let starts = 0
+    return () =>
+      ({ op }) =>
+        observable((observer) => {
+          calls.push(op.path)
+          const answer =
+            op.path === 'migrations.declareOwner'
+              ? {
+                  bootId: 'b1',
+                  snapshot: 'none',
+                  steps: [{ id: SELF, action: 'run', state: 'pending' }],
+                }
+              : op.path === 'migrations.startMigration'
+                ? ++starts === 1
+                  ? { proceed: false, state: 'blocked', reason }
+                  : { proceed: true, state: 'pending', reason: null }
+                : { status: 'applied', error: null, rowsChanged: 0 }
+          observer.next({ result: { data: answer } })
+          observer.complete()
+        })
+  }
+
+  async function bootProbe(reason: string) {
+    const calls: string[] = []
+    let handler: ((event: { data: unknown }) => void) | null = null
+    const base = fakeAddonContext({
+      api: createTRPCClient<AppRouter>({ links: [blockingHub(calls, reason)] }),
+    })
+    const ctx = {
+      ...base,
+      eventBus: {
+        ...base.eventBus,
+        subscribe: (_filter: unknown, h: (event: { data: unknown }) => void) => {
+          handler = h
+          return () => undefined
+        },
+      },
+    }
+    const addon = new Probe({})
+    await addon.initialize(ctx)
+    const report = await addon.migrate([entry('one', 'tolerate')])
+    return { calls, report, fire: (ids: string[]) => handler?.({ data: { ids } }) }
+  }
+  const finishes = (calls: string[]) => calls.filter((c) => c === 'migrations.finishMigration')
+
+  it('runs the step again when the engine announces its predecessor applied', async () => {
+    const { calls, report, fire } = await bootProbe(`dependency-pending:${DEP}`)
+    expect(report.blocked).toEqual([SELF])
+    expect(finishes(calls)).toHaveLength(0)
+    fire(['unrelated/2026-11-01-x'])
+    await vi.waitFor(() =>
+      expect(calls.filter((c) => c === 'migrations.startMigration')).toHaveLength(1),
+    )
+    fire([DEP])
+    await vi.waitFor(() => expect(finishes(calls)).toHaveLength(1))
+  })
+
+  it('never reruns a step whose predecessor FAILED', async () => {
+    const { calls, fire } = await bootProbe(`dependency-failed:${DEP}`)
+    fire([DEP])
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(finishes(calls)).toHaveLength(0)
+    expect(calls.filter((c) => c === 'migrations.startMigration')).toHaveLength(1)
   })
 })
 

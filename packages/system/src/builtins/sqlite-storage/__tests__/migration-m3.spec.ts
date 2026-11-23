@@ -14,6 +14,7 @@ import {
   type AddonMigrationRunReport,
   defineAddonMigrations,
   type MigrationMeta,
+  MigrationDependencyWaits,
   type MigrationPlan,
   preconditionOf,
   runAddonMigrations,
@@ -81,12 +82,17 @@ interface Booted {
 
 async function boot(
   catalogue: readonly HubMigration[] = [],
-  options: { statfsBavail?: number; runnerIdOf?: (addonId: string) => string } = {},
+  options: {
+    statfsBavail?: number
+    runnerIdOf?: (addonId: string) => string
+    announce?: (kind: 'failed' | 'applied', ids: readonly string[]) => void
+  } = {},
 ): Promise<Booted> {
   const engine = new MigrationEngine({
     logger: recordingLogger(h.lines, 'Migrations'),
     catalogue,
     codeVersion: '1.0.0',
+    ...(options.announce === undefined ? {} : { announce: options.announce }),
     ...(options.runnerIdOf === undefined ? {} : { runnerIdOf: options.runnerIdOf }),
     snapshotterFor: (livePath) =>
       new SqliteSnapshotter({
@@ -1008,4 +1014,81 @@ describe('review fixes: owner identity, finish re-checks, declare failure, preco
       await expect(engine.startMigration(A, OWNER)).rejects.toThrow(/was not declared/)
     }, 60_000)
   })
+})
+
+describe('a step blocked on another owner that has not applied yet', () => {
+  const A_ID = 'alpha/2026-11-01-first'
+  const B_ID = 'beta/2026-11-01-second'
+  const marks: string[] = []
+  const stepOf = (
+    owner: string,
+    slug: string,
+    dependsOn: string[],
+    mark: string,
+  ): AddonMigration<object> => ({
+    meta: meta(owner, slug, 1, { bodyKind: 'procedure', dependsOn }),
+    procedure: async () => {
+      marks.push(mark)
+      return { outcome: 'done', summary: {} }
+    },
+  })
+  /** What `BaseAddon` does, over the real engine: remember the waits, rerun on `applied`. */
+  function owner(provider: MigrationsProvider, who: string, entry: AddonMigration<object>) {
+    const waits = new MigrationDependencyWaits()
+    const run = async (only?: readonly string[]) => {
+      const report = await runAddonMigrations(
+        hostOf(provider, who),
+        defineAddonMigrations([entry], {}),
+        recordingLogger(h.lines, 'Addon'),
+        only === undefined ? {} : { only },
+      )
+      waits.record(report, [
+        ...report.applied,
+        ...report.failed,
+        ...report.blocked,
+        ...report.skipped,
+      ])
+      return report
+    }
+    return { run, waits }
+  }
+
+  it('runs once its dependency applies: no restart, no timer', async () => {
+    marks.length = 0
+    const announced: (readonly string[])[] = []
+    const { file, provider } = await boot([], { announce: (_k, ids) => announced.push(ids) })
+    const b = owner(provider, 'beta', stepOf('beta', 'second', [A_ID], 'b'))
+    const a = owner(provider, 'alpha', stepOf('alpha', 'first', [], 'a'))
+    expect((await b.run()).awaiting).toEqual([{ id: B_ID, on: A_ID }])
+    expect(statuses()).toEqual({ [B_ID]: 'blocked' })
+    await a.run()
+    expect(statuses()[A_ID]).toBe('applied')
+    for (const ids of announced) {
+      const freed = b.waits.releasedBy(ids)
+      if (freed.length > 0) await b.run(freed)
+    }
+    expect(statuses()).toEqual({ [A_ID]: 'applied', [B_ID]: 'applied' })
+    expect(marks).toEqual(['a', 'b'])
+    await file.stop()
+  }, 60_000)
+
+  it('a dependency that FAILED is not retried by the applied announcement', async () => {
+    marks.length = 0
+    const { file, provider } = await boot()
+    const failing: AddonMigration<object> = {
+      meta: meta('alpha', 'first', 1, { bodyKind: 'procedure' }),
+      procedure: async () => {
+        throw new Error('boom')
+      },
+    }
+    const a = owner(provider, 'alpha', failing)
+    const b = owner(provider, 'beta', stepOf('beta', 'second', [A_ID], 'b'))
+    await a.run()
+    const report = await b.run()
+    expect(report.awaiting).toEqual([])
+    expect(b.waits.releasedBy([A_ID])).toEqual([])
+    expect(statuses()).toEqual({ [A_ID]: 'failed', [B_ID]: 'blocked' })
+    expect(marks).toEqual([])
+    await file.stop()
+  }, 60_000)
 })

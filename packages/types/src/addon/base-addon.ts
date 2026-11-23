@@ -31,7 +31,9 @@ import {
   type AddonMigrationRunOptions,
   type AddonMigrationRunReport,
   type BoundAddonMigration,
+  appliedIdsOf,
   defineAddonMigrations,
+  MigrationDependencyWaits,
   runAddonMigrations,
 } from '../migrations/addon-migration.js'
 import type { MigrationApiV1 } from '../migrations/api/migration-api.v1.js'
@@ -602,10 +604,46 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
   }
 
+  /** Steps blocked only on another owner's step that has not applied yet (run again when it does). */
+  private readonly migrationWaits = new MigrationDependencyWaits()
+  private migrationWatch = false
+  private migrationRerunTail: Promise<void> = Promise.resolve()
+
+  /**
+   * The engine announces every applied step (`migration.applied`). Subscribed BEFORE the first
+   * declare, so a predecessor that lands between this owner's read and its subscription is not
+   * missed; a step the engine blocked on one runs when that predecessor applies, with no restart.
+   */
+  private watchAppliedMigrations(): void {
+    if (this.migrationWatch) return
+    this.migrationWatch = true
+    this.subscribe({ category: EventCategory.MigrationApplied }, (event) => {
+      const freed = this.migrationWaits.releasedBy(appliedIdsOf(event.data))
+      if (freed.length === 0) return
+      this.migrationRerunTail = this.migrationRerunTail
+        .catch(() => undefined)
+        .then(async () => {
+          this.ctx.logger.info('a migration predecessor applied — running the blocked steps', {
+            meta: { ids: freed },
+          })
+          await this.runBound([], { only: freed })
+        })
+        .then(
+          () => undefined,
+          (err: unknown) => {
+            this.ctx.logger.error('the blocked migration steps could not run again', {
+              meta: { ids: freed, error: errMsg(err) },
+            })
+          },
+        )
+    })
+  }
+
   private async runBound(
     declared: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
+    this.watchAppliedMigrations()
     const priorIds = new Set([...this.declaredAll.keys(), ...this.switchDeclared.keys()])
     const added = this.registrySwitchBound()
     for (const m of added) this.switchDeclared.set(m.meta.id, m)
@@ -663,6 +701,12 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         },
       )
     }
+    this.migrationWaits.record(report, [
+      ...report.applied,
+      ...report.failed,
+      ...report.blocked,
+      ...report.skipped,
+    ])
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)
     }
