@@ -195,12 +195,24 @@ describe('tags as records', () => {
     expect((await records.kind(coreBlocksRecordKinds['tag-styles']).query({})).records).toEqual([])
   })
 
-  it('an owner that cannot be read right now is skipped, and a styled tag is carried anyway', async () => {
+  it('an owner that cannot be read right now fails the step: no record, no style deleted, rerun later', async () => {
+    let reachable = false
     const { tagIds, asRecords } = portsOf(records, async () => {
-      throw new Error('provider not available: deviceManager')
+      if (!reachable) throw new Error('provider not available: deviceManager')
+      return ['Remote only']
     })
     await addTagIds(tagIds)
+    await expect(writeTagRecords(asRecords)).rejects.toThrow(/retrying next boot/)
+    expect(await tagRecords(records)).toEqual({})
+    expect(
+      (await records.kind(coreBlocksRecordKinds['tag-styles']).query({})).records,
+    ).toHaveLength(2)
+
+    reachable = true
     expect(await writeTagRecords(asRecords)).toMatchObject({ outcome: 'done' })
+    expect((await tagRecords(records))[tagIdFromKey('remote only')]).toMatchObject({
+      name: 'Remote only',
+    })
     expect((await tagRecords(records))[GARDEN]).toMatchObject({ name: 'Garden', colour: 'tag-c' })
   })
 

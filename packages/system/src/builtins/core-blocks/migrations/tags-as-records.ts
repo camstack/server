@@ -93,9 +93,15 @@ export async function writeTagRecords(
 ): Promise<MigrationProcedureResult> {
   const styles = await ports.listStyles()
   const external = await ports.externalNames()
-  if (external === null) ports.warn('tags migration: names of other owners not included', {})
+  if (external === null) {
+    // The devices and rules already carry ids derived from their names: without their names a
+    // record could be named from a partial count, and the styles are the only copy of the colours.
+    // Nothing is written and nothing is deleted; the step runs again on the next boot.
+    ports.warn('tags migration: another owner could not be read, will retry on the next boot', {})
+    throw new Error('tags migration: names of other owners could not be read, retrying next boot')
+  }
   const spellings = new Map<string, Map<string, number>>()
-  for (const name of [...(await ports.localNames()), ...(external ?? [])]) {
+  for (const name of [...(await ports.localNames()), ...external]) {
     const trimmed = name.trim()
     if (trimmed.length === 0) continue
     const counts = spellings.get(tagKey(trimmed)) ?? new Map<string, number>()

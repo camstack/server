@@ -89,13 +89,24 @@ export class NamedEntityStore<TBody extends NamedBody> {
     })
   }
 
-  /** Create the entity named `name`, or return the one that has it. */
-  async ensure(name: string, extra: Omit<TBody, 'name'>): Promise<Entity<TBody>> {
+  /**
+   * Create the entity named `name`, or return the one that has it. `preferredId` is the id a
+   * migration already wrote into referencing rows: it is adopted when no entity holds it (a record
+   * that arrives late never orphans a migrated id), else a fresh id is minted.
+   */
+  async ensure(
+    name: string,
+    extra: Omit<TBody, 'name'>,
+    preferredId?: string,
+  ): Promise<Entity<TBody>> {
     return this.lock(async () => {
       const existing = this.findByName(name)
       if (existing !== null) return existing
       const body = this.validate({ ...extra, name: name.trim() })
-      const id = newEntityId(this.entityKind)
+      const id =
+        preferredId !== undefined && !this.entities.has(preferredId)
+          ? preferredId
+          : newEntityId(this.entityKind)
       await this.kind.put({ id, data: body })
       const created: Entity<TBody> = { ...body, id }
       this.entities.set(id, created)

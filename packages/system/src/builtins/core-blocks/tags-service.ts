@@ -29,6 +29,7 @@ import {
   type TagPatch,
   type TagRecord,
   type TagUsageCounts,
+  tagIdFromKey,
   tagKey,
   userError,
 } from '@camstack/types'
@@ -166,7 +167,9 @@ export class TagsService implements ITagsProvider {
 
   readonly ensureTag: ITagsProvider['ensureTag'] = async ({ name }) => {
     await this.ready()
-    return this.store.ensure(requireName(name, 'a tag name'), {})
+    const clean = requireName(name, 'a tag name')
+    // The id the owners' migration derived from this name, so a late record never orphans it.
+    return this.store.ensure(clean, {}, tagIdFromKey(tagKey(clean)))
   }
 
   readonly listTags: ITagsProvider['listTags'] = async () => {

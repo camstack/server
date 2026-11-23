@@ -9,6 +9,7 @@ import {
   normalizeTags,
   type RecordKindHandle,
   type TagBody,
+  tagIdFromKey,
 } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ActionsStore } from '../actions-store.js'
@@ -411,6 +412,19 @@ describe('tags are records with an id (D1089)', () => {
     expect(b.id).toBe(a.id)
     expect(a.id).not.toBe('garden')
     expect((await w.tags.listTags({})).map((t) => t.name)).toEqual(['Garden'])
+  })
+
+  it('a late record adopts the id the owners migration derived from its name', async () => {
+    const garden = await w.tags.ensureTag({ name: ' Garden ' })
+    expect(garden.id).toBe(tagIdFromKey('garden'))
+  })
+
+  it('the derived id is not reused once a renamed tag holds it', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    await w.tags.updateTag({ id: garden.id, patch: { name: 'Yard' } })
+    const again = await w.tags.ensureTag({ name: 'Garden' })
+    expect(again.id).not.toBe(garden.id)
+    expect((await w.tags.listTags({})).map((t) => t.name).toSorted()).toEqual(['Garden', 'Yard'])
   })
 
   it('a rename writes exactly ONE record and touches no owner', async () => {
