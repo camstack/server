@@ -42,7 +42,7 @@ import {
 /** The slice of the `device-manager` singleton the delete cascade uses. */
 export interface DeviceCascadePort {
   readonly removeByIntegration?: (input: { integrationId: string }) => Promise<{ removed: number }>
-  readonly listAll?: (input: Record<string, never>) => Promise<
+  readonly listAll?: (input: { addonId: string; projection: 'slim' }) => Promise<
     readonly {
       id: number
       addonId: string
@@ -364,7 +364,10 @@ export async function deleteRegisteredInstance(
   // gone. While the row still exists, stamp the unambiguous ones.
   if (dm?.listAll && dm?.setIntegrationId) {
     try {
-      const [integrations, devices] = await Promise.all([reg.listIntegrations(), dm.listAll({})])
+      const [integrations, devices] = await Promise.all([
+        reg.listIntegrations(),
+        dm.listAll({ addonId: integration.addonId, projection: 'slim' }),
+      ])
       const stamps = planDeleteTimeStamps(
         id,
         integrations.map((i) => ({ id: i.id, addonId: i.addonId })),

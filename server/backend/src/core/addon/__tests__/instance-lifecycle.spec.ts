@@ -76,6 +76,10 @@ async function makeKit(
   mode: 'single' | 'multiple' = 'multiple',
   override: Partial<IntegrationInstanceDescription> = {},
   manifestRole: InstanceLifecycleDeps['manifestRole'] = () => undefined,
+  extraDeviceManager: Omit<
+    NonNullable<ReturnType<InstanceLifecycleDeps['deviceManager']>>,
+    'removeByIntegration'
+  > = {},
 ): Promise<Kit> {
   const world = makeRecordsWorld()
   await world.provider.init()
@@ -140,7 +144,7 @@ async function makeKit(
   const deps: InstanceLifecycleDeps = {
     logger: silentLogger(),
     integrations: () => registry,
-    deviceManager: () => ({ removeByIntegration }),
+    deviceManager: () => ({ ...extraDeviceManager, removeByIntegration }),
     eventBus: { emit },
     providerFor: () => provider,
     holders: () => holders,
@@ -328,6 +332,18 @@ describe('the connection test follows the kind that is created', () => {
     await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })
     expect(kit.testInstance).not.toHaveBeenCalled()
     expect(await kit.registry.listIntegrations()).toHaveLength(1)
+  })
+})
+
+describe('deleteInstance claims legacy devices with a read scoped to the integration', () => {
+  it('asks the device list for the integration’s own addon, slim — never the whole fleet', async () => {
+    const listAll = vi.fn(async () => [])
+    const setIntegrationId = vi.fn(async () => undefined)
+    const kit = await makeKit('multiple', {}, () => undefined, { listAll, setIntegrationId })
+    const id = (await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })).id
+    await kit.wrapped.deleteInstance({ id })
+    expect(listAll).toHaveBeenCalledTimes(1)
+    expect(listAll).toHaveBeenCalledWith({ addonId: ADDON, projection: 'slim' })
   })
 })
 
