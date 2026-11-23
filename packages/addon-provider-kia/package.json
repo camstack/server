@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-kia",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kia Connect (Kia UVO / Hyundai Bluelink) vehicle device-provider addon for CamStack: reads the car (odometer, range, fuel, locks, doors, tyre warnings, position) and locks, unlocks and pre-conditions it through the maker cloud, in a bundled Python worker",
   "keywords": [
     "camstack",
@@ -67,7 +67,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.931"
+      "server": ">=1.2.942"
     }
   },
   "files": [

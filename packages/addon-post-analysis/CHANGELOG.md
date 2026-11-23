@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.723] - 2026-11-22
+
 ### Added
 
 - Notifications carry their rule, event type and detected class so a notifier group can filter per member

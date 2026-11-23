@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-11-22
+
 ### Changed
 
 - The air conditioner's fault is reported on the device itself (error capability); the separate Errore sensor is removed

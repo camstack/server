@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.626] - 2026-11-22
+
 ### Added
 
 - Notifier group members can be a fallback for an earlier member and can filter by event type and detected class
