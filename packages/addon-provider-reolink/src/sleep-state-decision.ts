@@ -180,13 +180,22 @@ export function decideSleepCommit(input: SleepCommitInput): SleepCommitDecision 
   const { current, next, source, lastFirstHandCommitAt, nowMs, videoFlowing, wired } = input
   if (current === next) return { kind: 'unchanged' }
 
-  // Sleep truth: a second-hand "asleep" never beats what the wire shows, and a
-  // wired camera is never asleep.
+  // A wired camera is never asleep, whoever claims it — the addon's own
+  // `sleep-poll` included: its verdict is inferred from control-socket idle
+  // time, and on DC-powered 3629 it committed "asleep" 160 times in two hours
+  // (2026-11-23), each commit closing the live streams the recorder held.
+  if (next === true && wired) {
+    return {
+      kind: 'refused',
+      reason: 'wired',
+      windowMs: 0,
+      sinceLastChangeMs: nowMs - lastFirstHandCommitAt,
+    }
+  }
+
+  // Sleep truth: a second-hand "asleep" never beats what the wire shows.
   if (next === true && isSecondHand(source)) {
     const sinceMs = nowMs - lastFirstHandCommitAt
-    if (wired) {
-      return { kind: 'refused', reason: 'wired', windowMs: 0, sinceLastChangeMs: sinceMs }
-    }
     if (videoFlowing) {
       return {
         kind: 'refused',

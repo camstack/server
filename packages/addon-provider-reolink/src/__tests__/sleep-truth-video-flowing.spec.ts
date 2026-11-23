@@ -59,4 +59,19 @@ describe('wired gate: an adapter-powered camera takes no second-hand sleep flip'
   it('a battery-powered camera is unaffected', () => {
     expect(claim({ wired: false }).kind).toBe('commit')
   })
+
+  // 3629 on 2026-11-23, 16:39-18:39 UTC: the poll's socket-I/O inference said
+  // "sleeping" on a DC-powered camera 160 times, each commit closed the live
+  // streams, and the recorder lost two hours.
+  it("the addon's own sleep-poll is refused too: a wired camera is never asleep", () => {
+    const decision = claim({ source: 'sleep-poll', wired: true, videoFlowing: false })
+    expect(decision.kind).toBe('refused')
+    if (decision.kind === 'refused') expect(decision.reason).toBe('wired')
+  })
+
+  it('a wired camera still commits a wake from any source', () => {
+    expect(claim({ current: true, next: false, source: 'sleep-poll', wired: true }).kind).toBe(
+      'commit',
+    )
+  })
 })
