@@ -70,6 +70,7 @@ function packet(isPlaceholder: boolean, trailingStart = true): EncodedPacket {
     type: 'video',
     codec: 'h264',
     pts: 1000,
+    dts: 1000,
     keyframe: true,
     data: Buffer.concat(trailingStart ? [SPS, PPS, IDR, START] : [SPS, PPS, IDR]),
     ...(isPlaceholder ? { isPlaceholder: true } : {}),
