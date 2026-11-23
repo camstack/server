@@ -147,7 +147,7 @@ function makeLogger(prefix = 'test'): IScopedLogger {
 function makeEventBus(): IEventBus {
   return {
     emit: () => {},
-    subscribe: () => ({ unsubscribe: () => {} }),
+    subscribe: () => () => {},
     getRecent: () => [],
   } as unknown as IEventBus
 }
