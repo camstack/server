@@ -493,6 +493,20 @@ export async function repairCrossedSecretScopes(
     const stale = [m.staging, ...(m.staged || finalRefs.has(m.current) ? [] : [m.current])]
     await secrets.forOwner(m.owner).delete(stale)
   }
+  // A crash between the two step-4 writes strands the staging copy of the number
+  // that already names its end ref (it dropped out of the markers to move), so
+  // every field a final marker names has its staging ref under BOTH numbers
+  // dropped too, unless a config names it. Deleting a missing ref is a no-op.
+  for (const ref of finalRefs) {
+    const parts = parseSecretRef(ref)
+    if (parts === null || parts.scope.kind !== 'device') continue
+    const strays = [deviceA, deviceB]
+      .map((id) =>
+        refWithin(parts, id, `${parts.fieldPath.replace(/~repair$/, '')}${REPAIR_STAGING_SUFFIX}`),
+      )
+      .filter((stray) => !finalRefs.has(stray))
+    await secrets.forOwner(parts.owner).delete(strays)
+  }
   return {
     outcome: 'repaired',
     ...counts,

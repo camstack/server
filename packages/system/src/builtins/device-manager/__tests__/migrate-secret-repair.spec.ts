@@ -218,7 +218,17 @@ describe('repairCrossedSecretScopes', () => {
         )
 
         r.calls.failAt = null
-        await repairCrossedSecretScopes(r.store, r.door, 3628, 5920, true)
+        const rerun = await repairCrossedSecretScopes(r.store, r.door, 3628, 5920, true)
+
+        // A re-run that had work to do leaves no staging copy of either number
+        // behind, including the one a half-written step 4 stranded for the number
+        // that already named its end ref.
+        if (rerun.outcome === 'repaired') {
+          expect(
+            [...r.keychain.keys()].filter((ref) => ref.endsWith('~repair')),
+            `failAt ${failAt}`,
+          ).toEqual([])
+        }
 
         const own3628 = r.keychain.get(NVR)
         expect(own3628, `failAt ${failAt}`).toBe('X-camera')

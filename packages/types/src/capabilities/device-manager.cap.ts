@@ -648,11 +648,13 @@ export const deviceManagerCapability = {
      * Repair a pair a migration left with CROSSED secrets (it ran before the
      * keychain followed the config, D339): each device's config carries
      * markers naming the OTHER device's keychain scope, so removing the
-     * leftover device would delete the migrated camera's password. Re-points
-     * each config's markers at its own number and exchanges the two keychain
-     * scopes, together. Idempotent; `apply: false` (the default) is a dry run
-     * that reports counts only. A pair crossed on one side only is refused.
-     * Refs only, never values.
+     * leftover device would delete the migrated camera's password. Brings
+     * every such value under the number whose config holds it, through staged
+     * copies (stage, point both configs at the stage, write the end refs,
+     * point at them, delete the stage), so a crash at any step is re-run to the
+     * right end state. A pair crossed on one side only is repaired field by
+     * field. Idempotent; `apply: false` (the default) is a dry run that
+     * reports counts only. Refs only, never values.
      */
     repairMigrationSecrets: method(
       z.object({
