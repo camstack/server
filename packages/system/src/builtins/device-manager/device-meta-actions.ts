@@ -55,6 +55,7 @@ import { readBindingsStore, writeBindingsStore } from './device-bindings-store.j
 import {
   loadDeviceConfigWithSecrets,
   persistDeviceConfigWithSecrets,
+  secureRawDeclaredSecrets,
 } from './device-config-secrets.js'
 import type { DeviceMetaStore } from './device-meta-store.js'
 import type { PersistedDeviceMeta, SiteZoneRecord } from './device-meta-types.js'
@@ -661,6 +662,26 @@ export async function registerDevice(
           },
         },
       )
+    }
+  }
+
+  // The create write persisted the config before the declared secret paths
+  // were known; the first registration brings them — secure what landed raw.
+  const declaredSecretPaths = input.secretConfigPaths ?? []
+  if (isFirstRegistration && declaredSecretPaths.length > 0) {
+    const converted = await secureRawDeclaredSecrets(
+      {
+        ctx: pctx.host.ctx,
+        readStored: () => pctx.settings.readDeviceStore(id),
+        write: (patch) => pctx.settings.writeDeviceStore(id, patch),
+      },
+      { deviceId: id, ownerAddonId: addonId, secretPaths: declaredSecretPaths },
+    )
+    if (converted.length > 0) {
+      pctx.host.ctx.logger.info('registerDevice: secured raw secret fields from the create write', {
+        tags: { deviceId: id },
+        meta: { paths: [...converted] },
+      })
     }
   }
 

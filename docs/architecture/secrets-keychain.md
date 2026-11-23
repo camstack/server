@@ -218,6 +218,16 @@ streams keep being served. Until the
 migration's drop, the Secrets usage check also reads the old per-addon blobs, so do not delete
 "orphans" before `--verify` passes.
 
+## The create write is secured at first registration
+
+A device is created before its class exists: the create-time `persistConfig` carries no
+`secretConfigPaths`, so the door cannot tell the password from any other field and the blob
+lands raw. The FIRST `registerDevice` of a row brings the declared paths and moves every
+top-level declared secret still raw into the keychain (owner = the driver), logged by path
+name under `tags: { deviceId }`. A re-registration of an older row converts nothing: that is
+the "no silent migration" rule above, and the operator's re-save of the secret is what heals
+a row written before this.
+
 ## A removed device takes its secrets with it (D864)
 
 A device-scoped value (`secret://<driver>/device/<id>/<field>`) belongs to the

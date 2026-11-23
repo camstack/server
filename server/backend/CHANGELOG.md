@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A camera added with a password no longer keeps it in plain text in the device settings: the first registration moves it into the keychain
+
 ## [1.2.942] - 2026-11-22
 
 ### Changed

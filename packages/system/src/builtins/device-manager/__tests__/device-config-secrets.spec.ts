@@ -106,7 +106,10 @@ describe('device config keychain door', () => {
 
   it('a pre-keychain inline password written back unchanged stays inline (no silent migration)', async () => {
     const kc: Kc = { values: new Map(), locked: false, callers: [] }
-    let blob: Record<string, unknown> = { host: 'h', password: 'legacy-password' }
+    let blob: Record<string, unknown> = {
+      host: 'h',
+      password: 'legacy-password',
+    }
     await persistDeviceConfigWithSecrets(
       {
         ctx: ctxFor(kc),
@@ -127,9 +130,76 @@ describe('device config keychain door', () => {
     expect(kc.values.size).toBe(0)
   })
 
+  it('a whole-config save of the RESOLVED config (non-secret patch) keeps the marker and the keychain value', async () => {
+    const kc: Kc = {
+      values: new Map([[REF, { value: 'camera-password-1', version: 1 }]]),
+      locked: false,
+      callers: [],
+    }
+    let blob: Record<string, unknown> = {
+      host: 'h',
+      password: makeSecretMarker(REF),
+    }
+    await persistDeviceConfigWithSecrets(
+      {
+        ctx: ctxFor(kc),
+        readStored: async () => blob,
+        write: async (patch) => {
+          blob = { ...blob, ...patch }
+        },
+      },
+      {
+        deviceId: 101,
+        ownerAddonId: 'provider-onvif',
+        data: {
+          host: 'h',
+          password: 'camera-password-1',
+          udpDiscoveryMethod: 'local',
+        },
+        secretPaths: ['password'],
+        operatorWrite: false,
+      },
+    )
+    expect(blob['password']).toEqual(makeSecretMarker(REF))
+    expect(kc.values.get(REF)?.value).toBe('camera-password-1')
+  })
+
+  it('a changed secret is stored as marker + keychain value, never plaintext', async () => {
+    const kc: Kc = {
+      values: new Map([[REF, { value: 'old', version: 1 }]]),
+      locked: false,
+      callers: [],
+    }
+    let blob: Record<string, unknown> = {
+      host: 'h',
+      password: makeSecretMarker(REF),
+    }
+    await persistDeviceConfigWithSecrets(
+      {
+        ctx: ctxFor(kc),
+        readStored: async () => blob,
+        write: async (patch) => {
+          blob = { ...blob, ...patch }
+        },
+      },
+      {
+        deviceId: 101,
+        ownerAddonId: 'provider-onvif',
+        data: { host: 'h', password: 'new-pass' },
+        secretPaths: ['password'],
+        operatorWrite: false,
+      },
+    )
+    expect(blob['password']).toEqual(makeSecretMarker(REF))
+    expect(kc.values.get(REF)?.value).toBe('new-pass')
+  })
+
   it('the OPERATOR sending the same value stores it as sent — in the keychain', async () => {
     const kc: Kc = { values: new Map(), locked: false, callers: [] }
-    let blob: Record<string, unknown> = { host: 'h', password: 'legacy-password' }
+    let blob: Record<string, unknown> = {
+      host: 'h',
+      password: 'legacy-password',
+    }
     await persistDeviceConfigWithSecrets(
       {
         ctx: ctxFor(kc),

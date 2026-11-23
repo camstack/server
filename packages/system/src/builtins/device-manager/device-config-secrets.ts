@@ -89,3 +89,40 @@ export async function loadDeviceConfigWithSecrets(
   }
   return value
 }
+
+/**
+ * The CREATE write reaches the door before the device class exists, so the
+ * paths its schema declares secret are not known yet and the blob lands raw.
+ * The first registration brings those paths: move every declared TOP-LEVEL
+ * secret still raw (a non-empty string, not a marker) into the keychain.
+ * Only the first registration of a row — this completes the create write; a
+ * re-registration of an older row converts nothing (no silent migration).
+ * Returns the converted path names (never values).
+ */
+export async function secureRawDeclaredSecrets(
+  deps: DeviceConfigSecretDeps,
+  input: {
+    readonly deviceId: number
+    readonly ownerAddonId: string
+    readonly secretPaths: readonly string[]
+  },
+): Promise<readonly string[]> {
+  const secrets = ownerSecrets(deps.ctx, input.ownerAddonId)
+  if (secrets === null) return []
+  const stored = await deps.readStored()
+  const rawKeys = input.secretPaths.filter((path) => {
+    if (path.includes('.') || path.includes('[')) return false
+    const value = stored[path]
+    return typeof value === 'string' && value.length > 0
+  })
+  if (rawKeys.length === 0) return []
+  const patch = Object.fromEntries(rawKeys.map((key) => [key, stored[key]]))
+  await persistDeviceConfigWithSecrets(deps, {
+    deviceId: input.deviceId,
+    ownerAddonId: input.ownerAddonId,
+    data: patch,
+    secretPaths: rawKeys,
+    operatorWrite: true,
+  })
+  return rawKeys
+}
