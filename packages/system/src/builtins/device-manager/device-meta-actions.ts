@@ -66,10 +66,12 @@ import { resolveInheritedLocation } from './location-alignment.js'
 import { migrateDevice as runMigrateDevice } from './migrate-device.js'
 import {
   assertNoClaimLandedDuringMigration,
+  assertNoCrossedSecretScopes,
   assertNoFieldClaims,
   ClaimLandedDuringMigrationError,
   FieldClaimsBlockMigrationError,
   repairCrossedSecretScopes,
+  SecretScopesCrossedError,
   swapHardwareState,
 } from './migrate-hardware-state.js'
 import { reloadMigratedDevices } from './migrate-reload.js'
@@ -294,7 +296,19 @@ export async function migrateDevice(
           assertNoFieldClaims: async (a, b) => {
             try {
               await assertNoFieldClaims(pctx.settings, a, b)
+              // Same stage, same rule: a refusal before anything is disabled or
+              // moved. A pair an earlier migration left with crossed keychain
+              // scopes is repaired first, never swapped again (D1093).
+              await assertNoCrossedSecretScopes(pctx.settings, a, b)
             } catch (err: unknown) {
+              if (err instanceof SecretScopesCrossedError) {
+                for (const c of err.crossed) {
+                  ctx.logger.warn('migrateDevice refused: secret scopes crossed', {
+                    tags: { deviceId: c.deviceId },
+                    meta: { sourceId: a, targetId: b, markers: c.markers },
+                  })
+                }
+              }
               // One line per claimed device, tagged with ITS id (D391): the
               // operator asks "why won't 4362 migrate", not "why won't 618".
               if (err instanceof FieldClaimsBlockMigrationError) {
@@ -2491,12 +2505,15 @@ export async function repairMigrationSecrets(
 ): ReturnType<IDeviceManagerProvider['repairMigrationSecrets']> {
   const { deviceA, deviceB, apply } = input
   const ctx = pctx.host.ctx
-  const swapDeviceScopes = ctx.secrets?.swapDeviceScopes
-  if (swapDeviceScopes === undefined) {
-    throw new Error('[device-manager] repairMigrationSecrets: no keychain door on this node')
-  }
+  const forOwner = ctx.secrets?.forOwner ?? null
   const report = await pctx.metaStore.withMetaWriteLock(() =>
-    repairCrossedSecretScopes(pctx.settings, { swapDeviceScopes }, deviceA, deviceB, apply),
+    repairCrossedSecretScopes(
+      pctx.settings,
+      forOwner === null ? undefined : { forOwner },
+      deviceA,
+      deviceB,
+      apply,
+    ),
   )
   for (const deviceId of [deviceA, deviceB]) {
     ctx.logger.info('repairMigrationSecrets', {

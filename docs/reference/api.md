@@ -2474,7 +2474,7 @@
 |---|---|---|---|---|---|
 | allocateDeviceId | `deviceManager.allocateDeviceId` | mutation | protected | `{ addonId: string; stableId: string }` | `{ id: number }` |
 | migrateDevice | `deviceManager.migrateDevice` | mutation | admin | `{ sourceId: number; targetId: number }` | `MigrateDeviceResultSchema` |
-| repairMigrationSecrets | `deviceManager.repairMigrationSecrets` | mutation | admin | `{ deviceA: number; deviceB: number; apply?: boolean = false }` | `{ outcome: "repaired" \| "would-repair" \| "nothing-to-repair" \| "refused-one-sided"; markersRepointedAtA: number; markersRepointedAtB: number; refsNowAtA: string[]; refsNowAtB: string[] }` |
+| repairMigrationSecrets | `deviceManager.repairMigrationSecrets` | mutation | admin | `{ deviceA: number; deviceB: number; apply?: boolean = false }` | `{ outcome: "repaired" \| "would-repair" \| "nothing-to-repair"; markersRepointedAtA: number; markersRepointedAtB: number; refsNowAtA: string[]; refsNowAtB: string[] }` |
 | registerDevice | `deviceManager.registerDevice` | mutation | protected | `{ addonId: string; stableId: string; id: number; type: string; name: string; location?: string \| null; disabled?: boolean; parentDeviceId: number \| null; role?: string \| null; features?: string[]; config: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |
 | removeDevice | `deviceManager.removeDevice` | mutation | protected | `{ deviceId: number }` | `void` |
 | persistConfig | `deviceManager.persistConfig` | mutation | admin | `{ deviceId: number; data: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |

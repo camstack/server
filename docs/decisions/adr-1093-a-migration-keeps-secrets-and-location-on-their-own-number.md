@@ -37,10 +37,16 @@ idempotent, dry-run by default) through `scripts/hub/repair-migration-pair.ts`.
 
 ## Consequences
 
-There is no transaction across the keychain and the settings store; the order
-(keychain, then markers) makes a crash leave a state the repair recognises, and
-the repair is idempotent. The repair refuses a pair only one side of which is
-crossed. D339's "swap the markers" step is superseded by this record.
+There is no transaction across the keychain and the settings store. A migration
+REFUSES (`secret-scopes-crossed`, before anything is disabled) a pair whose
+configs already name each other's scope, so a second swap cannot mix the
+passwords. The repair keeps its state in the configs themselves (stage copy,
+point at it, write the end refs, point at them, delete the stage), so a crash at
+any step is re-run to the right end state; one-sided pairs work field by field.
+The migration swap's own keychain exchange (`swapDeviceScopes`) is NOT crash
+safe between its writes: a process death inside that millisecond window can
+lose a value, and the migration then reports a partial move the operator
+re-enters by hand. D339's "swap the markers" step is superseded by this record.
 
 ## Enforcement
 

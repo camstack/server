@@ -560,8 +560,10 @@ export class KeychainService {
    * Read and decrypt EVERY value first (a locked keychain or a value that does
    * not authenticate throws before anything is written), write the
    * counterpart refs, then drop the refs no counterpart replaced. No
-   * transaction: a crash between the writes and the drops leaves a value
-   * readable under both refs, never lost.
+   * transaction: a crash BETWEEN the writes can lose a value (a counterpart ref
+   * is overwritten before its own value is written back), and a crash after
+   * them leaves a value readable under both refs. A migration that dies here is
+   * a partial move the operator re-enters by hand.
    */
   private async exchangeDeviceScopes(
     actor: string,

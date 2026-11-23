@@ -107,9 +107,6 @@ export async function runRepair(hub: HubCall, args: RepairArgs): Promise<readonl
   })
   const outcome = outcomeOf(secrets)
   lines.push(`secrets: ${outcome}`)
-  if (outcome === 'refused-one-sided') {
-    throw new Error('secrets: refused, only one side of the pair is crossed; nothing was changed')
-  }
   const current = new Map<number, string | null>()
   for (const id of [args.a, args.b]) {
     current.set(id, locationOf(await hub.query('deviceManager.getDevice', { deviceId: id })))

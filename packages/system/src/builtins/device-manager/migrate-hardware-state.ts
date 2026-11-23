@@ -61,6 +61,8 @@ import {
   isSecretMarker,
   makeSecretMarker,
   parseSecretRef,
+  type SecretRefParts,
+  type SecretsAccess,
 } from '@camstack/types'
 import { LINKED_DEVICES_RESERVED_KEYS } from './device-linked-devices.js'
 import type { DeviceManagerSettings } from './device-meta-store.js'
@@ -256,6 +258,18 @@ export async function swapHardwareState(
 ): Promise<SwappedHardwareState> {
   const sourceConfig = await settings.readDeviceStore(sourceId)
   const targetConfig = await settings.readDeviceStore(targetId)
+  // Exchanging the scopes of a pair whose markers already name each other's
+  // scope would mix the passwords; the pre-check refuses it before any row
+  // moves, and this is the same refusal for a caller that skipped it.
+  const crossed = [
+    { deviceId: sourceId, markers: crossedIn(sourceConfig, targetId) },
+    { deviceId: targetId, markers: crossedIn(targetConfig, sourceId) },
+  ].filter((c) => c.markers > 0)
+  if (crossed.length > 0) {
+    // A plain Error, not the refusal class: the rows have already swapped here,
+    // so this is "failed while moving", never "nothing moved".
+    throw new Error(new SecretScopesCrossedError(sourceId, targetId, crossed).message)
+  }
   const source = splitConfig(sourceConfig)
   const target = splitConfig(targetConfig)
 
@@ -320,55 +334,237 @@ export async function swapHardwareState(
 
 /** What {@link repairCrossedSecretScopes} found and did. Refs only, never values. */
 export interface SecretRepairReport {
-  readonly outcome: 'repaired' | 'would-repair' | 'nothing-to-repair' | 'refused-one-sided'
-  /** Markers in A's config naming B's scope (re-pointed at A when applied). */
+  readonly outcome: 'repaired' | 'would-repair' | 'nothing-to-repair'
+  /** Markers in A's config that name another number's scope (moved under A when applied). */
   readonly markersRepointedAtA: number
-  /** Markers in B's config naming A's scope (re-pointed at B when applied). */
+  /** Markers in B's config that name another number's scope (moved under B when applied). */
   readonly markersRepointedAtB: number
   readonly refsNowAtA: readonly string[]
   readonly refsNowAtB: readonly string[]
 }
 
+/** The keychain door the repair needs: `ctx.secrets.forOwner`, the in-process delegate. */
+export interface RepairSecretsDoor {
+  readonly forOwner: (owner: string) => Pick<SecretsAccess, 'resolve' | 'put' | 'delete'>
+}
+
+/** The suffix of the staging copy a repair keeps while a value changes scope. */
+const REPAIR_STAGING_SUFFIX = '~repair'
+
+/** One secret marker the repair has to bring back under its own number. */
+interface RepairMarker {
+  /** The ref the config names now. */
+  readonly current: string
+  /** The staging copy (the ref itself when a crashed run already staged it). */
+  readonly staging: string
+  /** The ref under the number the marker sits in: the end state. */
+  readonly dest: string
+  readonly owner: string
+  /** True when `current` is already a staging copy of an earlier, interrupted run. */
+  readonly staged: boolean
+}
+
+function refWithin(parts: SecretRefParts, deviceId: number, fieldPath: string): string {
+  return buildSecretRef({ ...parts, scope: { kind: 'device', deviceId }, fieldPath })
+}
+
+/**
+ * The markers of `config` (the config of `ownId`) the repair must move: those
+ * naming `otherId`'s scope, and the staging copies of an interrupted run.
+ */
+function repairMarkers(
+  config: Record<string, unknown>,
+  ownId: number,
+  otherId: number,
+): readonly RepairMarker[] {
+  const found: RepairMarker[] = []
+  for (const current of collectMarkerRefs(config)) {
+    const parts = parseSecretRef(current)
+    if (parts === null || parts.scope.kind !== 'device') continue
+    const staged = parts.fieldPath.endsWith(REPAIR_STAGING_SUFFIX)
+    const crossed = parts.scope.deviceId === otherId
+    if (!(crossed || (staged && parts.scope.deviceId === ownId))) continue
+    const fieldPath = staged
+      ? parts.fieldPath.slice(0, -REPAIR_STAGING_SUFFIX.length)
+      : parts.fieldPath
+    found.push({
+      current,
+      staging: staged ? current : refWithin(parts, ownId, `${fieldPath}${REPAIR_STAGING_SUFFIX}`),
+      dest: refWithin(parts, ownId, fieldPath),
+      owner: parts.owner,
+      staged,
+    })
+  }
+  return found
+}
+
 /**
  * Repair a pair a migration left with CROSSED secrets (it ran before the
- * secrets followed the config): A's config carries markers naming B's keychain
- * scope and B's the reverse. Each config's markers are re-pointed at its own
- * number and the two keychain scopes exchanged, so every marker keeps reading
- * the value it always read.
+ * secrets followed the config): a number's config carries markers naming the
+ * OTHER number's keychain scope, so removing either device would purge the
+ * secret the other still reads. Each such marker's value is brought under the
+ * number whose config holds it.
  *
- * Idempotent: a pair with no crossed marker is left alone (no swap back). A
- * pair crossed on one side only is refused — swapping the scopes would
- * strand the other side's markers. `apply: false` is the dry run: counts only.
- * The keychain goes first; its failure throws before any config byte is written.
+ * The configs ARE the state machine, so a crash at any step is re-run to the
+ * right end state — never a double exchange, never a value lost:
+ *  1. stage: copy each value to a staging ref in its own number's scope
+ *     (idempotent puts; the originals are untouched);
+ *  2. point both configs at the staging refs — from here every marker reads a
+ *     value that is not about to be overwritten;
+ *  3. put each value at its end ref (idempotent: the source is the staging ref);
+ *  4. point both configs at the end refs;
+ *  5. delete the staging refs and any original no config names any more.
+ * A re-run reads each marker's CURRENT ref, so a marker already at a staging
+ * or end ref continues from there. One-sided pairs and a pair where only some
+ * fields are crossed work the same way, field by field.
+ *
+ * Idempotent: a pair with no marker to move is left alone. `apply: false` is
+ * the dry run: counts only. A missing keychain door with markers to move THROWS.
  */
 export async function repairCrossedSecretScopes(
   settings: Pick<HardwareStateStore, 'readDeviceStore' | 'writeDeviceStore'>,
-  secrets: DeviceScopeDoor,
+  secrets: RepairSecretsDoor | undefined,
   deviceA: number,
   deviceB: number,
   apply: boolean,
 ): Promise<SecretRepairReport> {
   const configA = await settings.readDeviceStore(deviceA)
   const configB = await settings.readDeviceStore(deviceB)
-  const fixedA = repointDeviceMarkers(configA, deviceB, deviceA)
-  const fixedB = repointDeviceMarkers(configB, deviceA, deviceB)
-  const counts = { markersRepointedAtA: fixedA.repointed, markersRepointedAtB: fixedB.repointed }
-  if (fixedA.repointed === 0 && fixedB.repointed === 0) {
+  const markersA = repairMarkers(configA, deviceA, deviceB)
+  const markersB = repairMarkers(configB, deviceB, deviceA)
+  const counts = { markersRepointedAtA: markersA.length, markersRepointedAtB: markersB.length }
+  if (markersA.length === 0 && markersB.length === 0) {
     return { outcome: 'nothing-to-repair', ...counts, refsNowAtA: [], refsNowAtB: [] }
   }
-  if (fixedA.repointed === 0 || fixedB.repointed === 0) {
-    return { outcome: 'refused-one-sided', ...counts, refsNowAtA: [], refsNowAtB: [] }
+  if (secrets === undefined) {
+    throw new Error(
+      `repairMigrationSecrets: no keychain door on this node — devices ${deviceA} and ${deviceB} ` +
+        'hold markers that must move; nothing was changed',
+    )
   }
   if (!apply) return { outcome: 'would-repair', ...counts, refsNowAtA: [], refsNowAtB: [] }
-  const swapped = await secrets.swapDeviceScopes(deviceA, deviceB)
-  await settings.writeDeviceStore(deviceA, fixedA.value)
-  await settings.writeDeviceStore(deviceB, fixedB.value)
+
+  const all = [...markersA, ...markersB]
+  const valueOf = async (owner: string, ref: string): Promise<string> => {
+    const answer = (await secrets.forOwner(owner).resolve([ref]))[ref]
+    if (answer?.kind === 'value') return answer.value
+    throw new Error(
+      `repairMigrationSecrets: ${ref} cannot be read (${answer?.kind ?? 'no answer'}); nothing was changed`,
+    )
+  }
+  // A marker is moved by the config it sits in: the same ref can be a crossed
+  // marker in one config and a legitimate own marker in the other.
+  const rewritten = (
+    pick: (m: RepairMarker) => string,
+  ): readonly [Record<string, unknown>, Record<string, unknown>] => {
+    const mapOf = (markers: readonly RepairMarker[]): ((ref: string) => string | undefined) => {
+      const byCurrent = new Map(markers.map((m) => [m.current, pick(m)]))
+      return (ref) => byCurrent.get(ref)
+    }
+    return [
+      rewriteMarkerRefs(configA, mapOf(markersA)),
+      rewriteMarkerRefs(configB, mapOf(markersB)),
+    ]
+  }
+  const writeBoth = async (pick: (m: RepairMarker) => string): Promise<void> => {
+    const [nextA, nextB] = rewritten(pick)
+    await settings.writeDeviceStore(deviceA, nextA)
+    await settings.writeDeviceStore(deviceB, nextB)
+  }
+
+  // 1. Every staging copy exists before any config or end ref moves.
+  for (const m of all) {
+    if (!m.staged) {
+      await secrets.forOwner(m.owner).put(m.staging, await valueOf(m.owner, m.current))
+    }
+  }
+  // 2. Both configs read staging copies: nothing names a cell about to be overwritten.
+  await writeBoth((m) => m.staging)
+  // 3. The end refs take the staged values.
+  for (const m of all) {
+    await secrets.forOwner(m.owner).put(m.dest, await valueOf(m.owner, m.staging))
+  }
+  // 4. Both configs name their own number's refs.
+  await writeBoth((m) => m.dest)
+  // 5. Staging copies and orphaned originals go; a failure here leaves only orphans.
+  const finalRefs = new Set(rewritten((m) => m.dest).flatMap(collectMarkerRefs))
+  for (const m of all) {
+    const stale = [m.staging, ...(m.staged || finalRefs.has(m.current) ? [] : [m.current])]
+    await secrets.forOwner(m.owner).delete(stale)
+  }
   return {
     outcome: 'repaired',
     ...counts,
-    refsNowAtA: swapped.refsNowAtA,
-    refsNowAtB: swapped.refsNowAtB,
+    refsNowAtA: markersA.map((m) => m.dest),
+    refsNowAtB: markersB.map((m) => m.dest),
   }
+}
+
+/**
+ * The refusal of a migration over a pair whose configs hold markers naming the
+ * OTHER number's keychain scope (an earlier migration crossed them): swapping
+ * again would mix the passwords. Nothing moved; run the repair first.
+ */
+export class SecretScopesCrossedError extends MigrationRefusedError {
+  constructor(
+    readonly sourceId: number,
+    readonly targetId: number,
+    readonly crossed: ReadonlyArray<{ readonly deviceId: number; readonly markers: number }>,
+  ) {
+    super(
+      `secret-scopes-crossed: migration ${sourceId} → ${targetId} refused: ` +
+        `${crossed.map((c) => `device ${c.deviceId} holds ${c.markers} secret marker(s) naming the other number's keychain scope`).join('; ')}` +
+        ' — run deviceManager.repairMigrationSecrets first (nothing moved)',
+    )
+    this.name = 'SecretScopesCrossedError'
+  }
+}
+
+function crossedIn(config: Record<string, unknown>, otherId: number): number {
+  return collectMarkerRefs(config).filter((ref) => {
+    const parts = parseSecretRef(ref)
+    return parts !== null && parts.scope.kind === 'device' && parts.scope.deviceId === otherId
+  }).length
+}
+
+/**
+ * Refuse a migration when either config already names the other number's
+ * keychain scope. Read from the stored configs (D49: an unreadable config
+ * throws, never reads as "not crossed").
+ */
+export async function assertNoCrossedSecretScopes(
+  settings: Pick<HardwareStateStore, 'readDeviceStore'>,
+  sourceId: number,
+  targetId: number,
+): Promise<void> {
+  const crossed = [
+    { deviceId: sourceId, markers: crossedIn(await settings.readDeviceStore(sourceId), targetId) },
+    { deviceId: targetId, markers: crossedIn(await settings.readDeviceStore(targetId), sourceId) },
+  ].filter((c) => c.markers > 0)
+  if (crossed.length > 0) throw new SecretScopesCrossedError(sourceId, targetId, crossed)
+}
+
+/** Every secret marker's ref in a config, at any depth. */
+function collectMarkerRefs(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(collectMarkerRefs)
+  if (isSecretMarker(value)) return [value.$secret]
+  if (isRecord(value)) return Object.values(value).flatMap(collectMarkerRefs)
+  return []
+}
+
+/** A copy of `value` whose markers name `map(ref)` where it answers (others untouched). */
+function rewriteMarkerRefs(
+  value: Record<string, unknown>,
+  map: (ref: string) => string | undefined,
+): Record<string, unknown> {
+  const walk = (node: unknown): unknown => {
+    if (Array.isArray(node)) return node.map(walk)
+    if (isSecretMarker(node)) return makeSecretMarker(map(node.$secret) ?? node.$secret)
+    if (isRecord(node))
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)]))
+    return node
+  }
+  return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v)]))
 }
 
 /** A repointed tree and how many markers changed. */

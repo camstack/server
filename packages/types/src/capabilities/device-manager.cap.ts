@@ -555,7 +555,7 @@ export const MigrateDeviceResultSchema = z.object({
 
 /** What `repairMigrationSecrets` found and did: counts and refs, never values. */
 export const MigrationSecretRepairSchema = z.object({
-  outcome: z.enum(['repaired', 'would-repair', 'nothing-to-repair', 'refused-one-sided']),
+  outcome: z.enum(['repaired', 'would-repair', 'nothing-to-repair']),
   markersRepointedAtA: z.number().int(),
   markersRepointedAtB: z.number().int(),
   refsNowAtA: z.array(z.string()).readonly(),

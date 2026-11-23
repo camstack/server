@@ -75,9 +75,4 @@ describe('repair-migration-pair', () => {
     expect(second.calls.some((c) => c.route === 'deviceManager.setLocation')).toBe(false)
     expect(lines).toContain('location: nothing to change')
   })
-
-  it('a one-sided pair is refused loudly', async () => {
-    const { hub } = fakeHub('refused-one-sided', {})
-    await expect(runRepair(hub, { ...ARGS, apply: true })).rejects.toThrow(/one side/)
-  })
 })

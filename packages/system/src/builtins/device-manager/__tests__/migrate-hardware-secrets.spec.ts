@@ -6,7 +6,13 @@
  * leftover 5920 deleted the password the migrated 3628 reads.
  */
 import { describe, expect, it } from 'vitest'
-import { type HardwareStateStore, swapHardwareState } from '../migrate-hardware-state.js'
+import {
+  assertNoCrossedSecretScopes,
+  type HardwareStateStore,
+  SecretScopesCrossedError,
+  swapHardwareState,
+} from '../migrate-hardware-state.js'
+import { MigrationRefusedError } from '../migration-refused.js'
 
 const NVR = 'secret://provider-reolink/device/3628/password'
 const OWN = 'secret://provider-reolink/device/5920/password'
@@ -60,6 +66,55 @@ function door(fail?: Error): Door {
 
 const NVR_LOGIN = { host: '192.0.2.9', username: 'admin', password: marker(NVR) }
 const CAMERA = { host: '192.0.2.50', username: 'cam', password: marker(OWN) }
+
+// What an earlier migration left: each config names the OTHER number's scope.
+const CROSSED_3628 = { ...CAMERA, password: marker(OWN) }
+const CROSSED_5920 = { ...NVR_LOGIN, password: marker(NVR) }
+
+describe('a pair an earlier migration left crossed is refused, never swapped again', () => {
+  it('the pre-check refuses with a typed reason, before anything moves', async () => {
+    const f = fakeStore({ 3628: CROSSED_3628, 5920: CROSSED_5920 })
+
+    const refusal = assertNoCrossedSecretScopes(f.store, 3628, 5920)
+
+    await expect(refusal).rejects.toBeInstanceOf(SecretScopesCrossedError)
+    await expect(refusal).rejects.toBeInstanceOf(MigrationRefusedError)
+    await expect(refusal).rejects.toThrow(/secret-scopes-crossed.*repairMigrationSecrets/)
+  })
+
+  it('refuses when only ONE side is crossed', async () => {
+    const f = fakeStore({ 3628: CROSSED_3628, 5920: { host: 'b' } })
+
+    await expect(assertNoCrossedSecretScopes(f.store, 3628, 5920)).rejects.toThrow(
+      /device 3628 holds 1 secret marker/,
+    )
+  })
+
+  it('passes a normal pair (each marker names its own scope)', async () => {
+    const f = fakeStore({ 3628: NVR_LOGIN, 5920: CAMERA })
+
+    await expect(assertNoCrossedSecretScopes(f.store, 3628, 5920)).resolves.toBeUndefined()
+  })
+
+  it('swapHardwareState itself refuses a crossed pair: no exchange, no config written', async () => {
+    const f = fakeStore({ 3628: CROSSED_3628, 5920: CROSSED_5920 })
+    const d = door()
+
+    await expect(swapHardwareState(f.store, 3628, 5920, d)).rejects.toThrow(/secret-scopes-crossed/)
+
+    expect(d.calls).toEqual([])
+    expect(f.configs.get(3628)).toEqual(CROSSED_3628)
+    expect(f.configs.get(5920)).toEqual(CROSSED_5920)
+  })
+
+  it('swapHardwareState refuses a crossed pair even without a keychain door', async () => {
+    const f = fakeStore({ 3628: CROSSED_3628, 5920: CROSSED_5920 })
+
+    await expect(swapHardwareState(f.store, 3628, 5920, undefined)).rejects.toThrow(
+      /secret-scopes-crossed/,
+    )
+  })
+})
 
 describe('swapHardwareState — the secrets follow the config (D339)', () => {
   it('each number ends up with markers that point at its OWN scope', async () => {
