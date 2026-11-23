@@ -72,6 +72,8 @@ export function patchInput(input: Scalar, patch: InputPatch): TemplateInput {
     }
     case 'time-window':
       return { kind: 'time-window', ...base, ...description }
+    case 'device-state':
+      return { kind: 'device-state', ...base, ...description }
     case 'entries':
       // Which elements it holds is fixed by the template; only the label and the bounds are edited.
       return {

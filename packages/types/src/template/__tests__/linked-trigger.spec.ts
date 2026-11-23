@@ -90,3 +90,28 @@ describe('linkedTriggerParamsOf', () => {
     ).toBeNull()
   })
 })
+
+describe('the device-state limit ("only while night")', () => {
+  const night = {
+    deviceId: 77,
+    cap: 'binary',
+    fieldPath: 'on',
+    operator: 'eq' as const,
+    value: false,
+  }
+  const base = {
+    targetDeviceId: 4,
+    action: 'on' as const,
+    sources: [{ kind: 'device-event' as const, deviceId: 3, category: 'doorbell' }],
+  }
+
+  it('round-trips as the activeWhen parameter and the activeWhen input', () => {
+    const values = linkedTriggerValues({ ...base, activeWhen: night })
+    expect(values['activeWhen']).toEqual(night)
+    expect(linkedTriggerParamsOf(values)?.activeWhen).toEqual(night)
+  })
+
+  it('a trigger without it writes no activeWhen input', () => {
+    expect(Object.keys(linkedTriggerValues(base))).not.toContain('activeWhen')
+  })
+})

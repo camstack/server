@@ -63,7 +63,7 @@ import {
   sourceKindOf,
   type TriggerRow,
   triggerRows,
-  withActiveWindow,
+  withActiveLimits,
   withoutRow,
   withRowAction,
   withRowClasses,
@@ -335,7 +335,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                             ]),
                       ].join(' · ')}
             </span>
-            {r.activeWindow !== null && (
+            {(r.activeWindow !== null || r.activeWhen !== null) && (
               <span className="shrink-0 text-[11px] text-foreground-muted">
                 {t('customize.triggers.windowSet')}
               </span>
@@ -567,11 +567,13 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         <TriggerWindowDialog
           deviceName={timing.name ?? `#${String(timing.deviceId)}`}
           window={timing.activeWindow}
+          state={timing.activeWhen}
           busy={busy}
-          onSave={(window) => {
+          onSave={(window, state) => {
             const instance = instanceOf(timing.blockId)
             setTiming(null)
-            if (instance !== undefined) void save(instance, withActiveWindow(instance, window))
+            if (instance !== undefined)
+              void save(instance, withActiveLimits(instance, window, state))
           }}
           onClose={() => setTiming(null)}
         />

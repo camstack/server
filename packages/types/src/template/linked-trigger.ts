@@ -21,6 +21,7 @@ import { EventVocabularyKindSchema } from '../capabilities/event-vocabulary.js'
 import { DetectionSubjectSchema } from '../automation/detection-subject.js'
 import { ON_FOR_MAX_SECONDS, onForActionOf } from '../automation/on-for.js'
 import {
+  TemplateDeviceStateValueSchema,
   TemplateTimeWindowValueSchema,
   type TemplateInputValues,
 } from '../automation/template-link.js'
@@ -84,6 +85,8 @@ export type LinkedTriggerAction = z.infer<typeof LinkedTriggerActionSchema>
 /** The template input keys of the optional duration and time window. */
 export const LINKED_TRIGGER_ON_FOR_INPUT = 'onFor'
 export const LINKED_TRIGGER_WINDOW_INPUT = 'active'
+/** The optional limit on the state of a device (a derived "is night"). */
+export const LINKED_TRIGGER_STATE_INPUT = 'activeWhen'
 
 export const LinkedTriggerParamsSchema = z
   .object({
@@ -95,6 +98,8 @@ export const LinkedTriggerParamsSchema = z
     onForSeconds: z.number().int().min(1).max(ON_FOR_MAX_SECONDS).optional(),
     /** Only inside this time of day and these days. */
     activeWindow: TemplateTimeWindowValueSchema.optional(),
+    /** Only while this device field holds this value (a derived "is night" reads on). */
+    activeWhen: TemplateDeviceStateValueSchema.optional(),
     sources: z.array(LinkedTriggerSourceSchema).min(1).max(LINKED_TRIGGER_SOURCES_MAX),
   })
   .superRefine((params, ctx) => {
@@ -122,6 +127,7 @@ export function linkedTriggerValues(params: LinkedTriggerParams): TemplateInputV
     ...(parsed.activeWindow === undefined
       ? {}
       : { [LINKED_TRIGGER_WINDOW_INPUT]: parsed.activeWindow }),
+    ...(parsed.activeWhen === undefined ? {} : { [LINKED_TRIGGER_STATE_INPUT]: parsed.activeWhen }),
   }
 }
 
@@ -151,6 +157,9 @@ export function linkedTriggerParamsOf(
     ...(values[LINKED_TRIGGER_WINDOW_INPUT] === undefined
       ? {}
       : { activeWindow: values[LINKED_TRIGGER_WINDOW_INPUT] }),
+    ...(values[LINKED_TRIGGER_STATE_INPUT] === undefined
+      ? {}
+      : { activeWhen: values[LINKED_TRIGGER_STATE_INPUT] }),
   })
   return parsed.success ? parsed.data : null
 }

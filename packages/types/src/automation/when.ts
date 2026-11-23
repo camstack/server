@@ -236,7 +236,7 @@ const DeviceFaultIsLeafSchema = z.object({
 })
 
 /** "is": one device field compared to one value, NOW. */
-const DeviceIsLeafSchema = z.object({
+export const DeviceIsLeafSchema = z.object({
   kind: z.literal('device-is'),
   deviceId: z.number().int().nonnegative(),
   cap: z.string().min(1),

@@ -6549,7 +6549,12 @@
         "limit": "Esegui solo in certi orari"
       },
       "actionLabel": "Azione",
-      "search": "Cerca modelli"
+      "search": "Cerca modelli",
+      "deviceState": {
+        "on": "è acceso",
+        "off": "è spento",
+        "only": "Solo mentre un dispositivo risulta"
+      }
     },
     "quickEdit": {
       "title": "Modifica rapida",

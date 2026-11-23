@@ -26,6 +26,7 @@ import {
   type TemplateNestedRow,
   type TemplateScalarInput,
   type TemplateScalarValue,
+  TemplateDeviceStateValueSchema,
   TemplateTimeWindowValueSchema,
 } from '@camstack/types'
 import {
@@ -779,6 +780,15 @@ function ScalarControl({
           label={input.label}
         />
       )
+    case 'device-state':
+      return (
+        <DeviceStateControl
+          testId={`template-input-${address}`}
+          value={value}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      )
     case 'time-window':
       return (
         <TimeWindowControl
@@ -789,6 +799,66 @@ function ScalarControl({
         />
       )
   }
+}
+
+export interface DeviceStateControlProps {
+  readonly testId: string
+  readonly value: TemplateInputValue | undefined
+  readonly disabled: boolean
+  readonly onChange: (next: TemplateScalarValue | undefined) => void
+}
+
+/** The cap and field a yes/no device (a derived "is night") reports its state on. */
+const STATE_CAP = 'binary'
+const STATE_FIELD = 'on'
+
+/**
+ * A `device-state` input: a yes/no device and the state the automation waits for ("only while
+ * <night> is on / off"). No device leaves it without a value (no limit).
+ */
+export function DeviceStateControl({
+  testId,
+  value,
+  disabled,
+  onChange,
+}: DeviceStateControlProps): ReactNode {
+  const { t } = useTranslation()
+  const parsed = TemplateDeviceStateValueSchema.safeParse(value)
+  const current = parsed.success ? parsed.data : null
+  const wanted = current?.value === false ? 'off' : 'on'
+  const write = (deviceId: number, state: 'on' | 'off'): void =>
+    onChange({
+      deviceId,
+      cap: STATE_CAP,
+      fieldPath: STATE_FIELD,
+      operator: 'eq',
+      value: state === 'on',
+    })
+  return (
+    <div className="flex flex-wrap items-center gap-2" data-testid={testId}>
+      <DeviceValuePicker
+        pick="device"
+        requires={{ caps: [STATE_CAP] }}
+        recentKey={`${testId}-device`}
+        testId={`${testId}-device`}
+        disabled={disabled}
+        value={current === null ? null : { deviceId: current.deviceId }}
+        onChange={(next) => (next === null ? onChange(undefined) : write(next.deviceId, wanted))}
+      />
+      {current === null ? null : (
+        <Select
+          data-testid={`${testId}-state`}
+          disabled={disabled}
+          value={wanted}
+          options={[
+            { value: 'on', label: t('build.templates.deviceState.on', 'is on') },
+            { value: 'off', label: t('build.templates.deviceState.off', 'is off') },
+          ]}
+          onChange={(e) => write(current.deviceId, e.target.value === 'off' ? 'off' : 'on')}
+        />
+      )}
+    </div>
+  )
 }
 
 export interface TimeWindowControlProps {

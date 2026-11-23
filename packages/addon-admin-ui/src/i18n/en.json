@@ -6474,7 +6474,12 @@
         "limit": "Only run at certain times"
       },
       "actionLabel": "Action",
-      "search": "Search templates"
+      "search": "Search templates",
+      "deviceState": {
+        "on": "is on",
+        "off": "is off",
+        "only": "Only while a device reads"
+      }
     },
     "quickEdit": {
       "title": "Quick edit",

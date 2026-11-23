@@ -291,6 +291,46 @@ describe('built-in automation templates: the optional "Only when" window', () =>
     }
   })
 
+  it('a device-state limit wraps the linked trigger tree as all[device-is, <the tree>]', () => {
+    const night = {
+      deviceId: 77,
+      cap: 'binary',
+      fieldPath: 'on',
+      operator: 'eq',
+      value: false,
+    } as const
+    const bare = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), motion)
+    const out = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), {
+      ...motion,
+      activeWhen: night,
+    })
+    expect(out.ok && bare.ok).toBe(true)
+    if (!out.ok || !bare.ok) return
+    expect(out.recipe.when).toEqual({
+      kind: 'all',
+      children: [{ kind: 'device-is', ...night }, bare.recipe.when],
+    })
+  })
+
+  it('both limits apply together', () => {
+    const night = {
+      deviceId: 77,
+      cap: 'binary',
+      fieldPath: 'on',
+      operator: 'eq',
+      value: false,
+    } as const
+    const out = expandAutomationTemplate(payloadOf('builtin:linked-trigger'), {
+      ...motion,
+      active: nightWeekdays,
+      activeWhen: night,
+    })
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    expect(JSON.stringify(out.recipe.when)).toContain('"device-is"')
+    expect(JSON.stringify(out.recipe.when)).toContain('"time-is"')
+  })
+
   it('a button press runs its branch inside the window and nothing outside it', () => {
     const out = expandAutomationTemplate(payloadOf('fixture:buttons'), {
       ...buttons,

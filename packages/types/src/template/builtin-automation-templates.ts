@@ -17,6 +17,7 @@ import {
   LINKED_TRIGGER_SOURCES_MAX,
   LINKED_TRIGGER_TARGET_INPUT,
   LINKED_TRIGGER_TEMPLATE_ID,
+  LINKED_TRIGGER_STATE_INPUT,
   LINKED_TRIGGER_WINDOW_INPUT,
 } from './linked-trigger.js'
 
@@ -41,6 +42,20 @@ const activeWindowInput: TemplateScalarInput = {
 const activeWindowGate: TemplateGateBinding = {
   kind: 'gate',
   input: ACTIVE_WINDOW_KEY,
+  path: ['when'],
+}
+
+const activeWhenInput: TemplateScalarInput = {
+  kind: 'device-state',
+  key: LINKED_TRIGGER_STATE_INPUT,
+  label: 'Only while',
+  description: 'Limit the automation to while a device reads a value, such as a derived night.',
+  optional: true,
+}
+/** Declared after the window gate, so the device state sits inside it. */
+const activeWhenGate: TemplateGateBinding = {
+  kind: 'gate',
+  input: LINKED_TRIGGER_STATE_INPUT,
   path: ['when'],
 }
 
@@ -93,6 +108,7 @@ const linkedTrigger: BuiltinAutomationTemplate = {
         optional: true,
       },
       activeWindowInput,
+      activeWhenInput,
     ],
     bindings: [
       {
@@ -109,6 +125,7 @@ const linkedTrigger: BuiltinAutomationTemplate = {
         path: ['actions', 0, 'onFor', 'seconds'],
       },
       activeWindowGate,
+      activeWhenGate,
     ],
   },
 }

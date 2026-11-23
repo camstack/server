@@ -50,6 +50,7 @@ import { AutomationWhenSchema, EVENT_LEAF_ID_RE } from '../automation/when.js'
 import {
   TemplateActionValueSchema,
   TemplateEntriesValueSchema,
+  TemplateDeviceStateValueSchema,
   TemplateEventValueSchema,
   TemplateTimeWindowValueSchema,
   type TemplateEntry,
@@ -140,6 +141,12 @@ const TimeWindowInputSchema = z.object({
   ...inputBase,
 })
 
+/** A limit on the state of a device (a derived "is night"); only a `gate` binding reads it. */
+const DeviceStateInputSchema = z.object({
+  kind: z.literal('device-state'),
+  ...inputBase,
+})
+
 export const TEMPLATE_ENTRIES_MAX = 20
 /**
  * A list of automation elements, verbatim: `trigger` entries are event leaves
@@ -166,6 +173,7 @@ export const TemplateScalarInputSchema = z.discriminatedUnion('kind', [
   SelectInputSchema,
   BooleanInputSchema,
   TimeWindowInputSchema,
+  DeviceStateInputSchema,
 ])
 export type TemplateScalarInput = z.infer<typeof TemplateScalarInputSchema>
 
@@ -292,10 +300,10 @@ export const TemplateRowsBindingSchema = z.object({
 })
 export type TemplateRowsBinding = z.infer<typeof TemplateRowsBindingSchema>
 
-/** Wraps the condition tree at `path` as `all[time-is, <tree>]` when the input has a value. */
+/** Wraps the condition tree at `path` as `all[time-is | device-is, <tree>]` when the input has a value. */
 export const TemplateGateBindingSchema = z.object({
   kind: z.literal('gate'),
-  /** A top-level `time-window` input. */
+  /** A top-level `time-window` or `device-state` input. */
   input: inputKey,
   path: TemplatePathSchema,
 })
@@ -339,7 +347,7 @@ function levelProblems(
       issues.push(...levelProblems(input.inputs, path, true))
       continue
     }
-    if (input.kind === 'time-window' && inRow) {
+    if ((input.kind === 'time-window' || input.kind === 'device-state') && inRow) {
       issues.push({
         message: `time window "${input.key}" limits the whole automation: it is not a row input`,
         path,
@@ -478,10 +486,13 @@ function bindingProblems(
         })
       }
     }
-    if ((binding.kind === 'gate') !== (input.kind === 'time-window')) {
+    if (
+      (binding.kind === 'gate') !==
+      (input.kind === 'time-window' || input.kind === 'device-state')
+    ) {
       ctx.addIssue({
         code: 'custom',
-        message: `a gate reads a time window and a time window is bound with a gate: "${input.key}" is ${input.kind}`,
+        message: `a gate reads a time window or a device state, and those are bound with a gate: "${input.key}" is ${input.kind}`,
         path: ['bindings', index],
       })
     }
@@ -560,6 +571,10 @@ function valueProblem(input: TemplateScalarInput, value: TemplateInputValue): st
     case 'time-window': {
       const parsed = TemplateTimeWindowValueSchema.safeParse(value)
       return parsed.success ? null : (parsed.error.issues[0]?.message ?? 'pick a time window')
+    }
+    case 'device-state': {
+      const parsed = TemplateDeviceStateValueSchema.safeParse(value)
+      return parsed.success ? null : (parsed.error.issues[0]?.message ?? 'pick a device state')
     }
     case 'entries':
       return entriesProblem(input, value)
@@ -800,12 +815,16 @@ function writeValue(
 function writeGate(
   root: unknown,
   binding: TemplateGateBinding,
+  inputKind: 'time-window' | 'device-state',
   value: TemplateScalarValue,
 ): unknown {
-  const window = TemplateTimeWindowValueSchema.parse(value)
+  const leaf =
+    inputKind === 'device-state'
+      ? ({ kind: 'device-is', ...TemplateDeviceStateValueSchema.parse(value) } as const)
+      : ({ kind: 'time-is', ...TemplateTimeWindowValueSchema.parse(value) } as const)
   return setAt(root, binding.path, {
     kind: 'all',
-    children: [{ kind: 'time-is', ...window }, getAt(root, binding.path)],
+    children: [leaf, getAt(root, binding.path)],
   })
 }
 
@@ -991,10 +1010,14 @@ export function expandAutomationTemplate(
         if (list.success) body = appendAt(body, binding.path, list.data, input.key)
         continue
       }
-      body =
-        binding.kind === 'gate'
-          ? writeGate(body, binding, value)
-          : writeValue(body, binding, input, value)
+      if (binding.kind === 'gate') {
+        // Validation guarantees a gate reads a time window or a device state.
+        if (input.kind === 'time-window' || input.kind === 'device-state') {
+          body = writeGate(body, binding, input.kind, value)
+        }
+        continue
+      }
+      body = writeValue(body, binding, input, value)
     }
   } catch (error: unknown) {
     if (!(error instanceof PathError)) throw error

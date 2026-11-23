@@ -17,6 +17,7 @@ import {
   linkedTriggerParamsOf,
   onForActionOf,
   type TemplateInstance,
+  type TemplateDeviceStateValue,
   type TemplateTimeWindowValue,
 } from '@camstack/types'
 
@@ -62,6 +63,8 @@ export interface TriggerRow {
   readonly onForSeconds: number | null
   /** The limit on when the trigger runs; null: always. It belongs to the whole automation. */
   readonly activeWindow: TemplateTimeWindowValue | null
+  /** Only while a device reads a value (a derived night); null: no such limit. */
+  readonly activeWhen: TemplateDeviceStateValue | null
   readonly enabled: boolean
   /** The last re-expansion refused the stored values. */
   readonly flagged: boolean
@@ -195,6 +198,7 @@ export function triggerRows(instances: readonly TemplateInstance[]): TriggerRows
         capability: params.capability,
         onForSeconds: params.onForSeconds ?? null,
         activeWindow: params.activeWindow ?? null,
+        activeWhen: params.activeWhen ?? null,
         enabled: instance.enabled,
         flagged: instance.problems !== undefined && instance.problems.length > 0,
         filter: filterOf(params.sources.filter((s) => sourceDeviceIds(s).includes(deviceId))),
@@ -246,6 +250,33 @@ export function withActiveWindow(
   if (params === null) return null
   const { activeWindow: _dropped, ...rest } = params
   return window === null ? rest : { ...rest, activeWindow: window }
+}
+
+/** The instance limited to while a device reads a value, or with that limit removed. */
+export function withActiveWhen(
+  instance: TemplateInstance,
+  state: TemplateDeviceStateValue | null,
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  if (params === null) return null
+  const { activeWhen: _dropped, ...rest } = params
+  return state === null ? rest : { ...rest, activeWhen: state }
+}
+
+/** The instance with both limits set at once: the time window and the device state (null drops one). */
+export function withActiveLimits(
+  instance: TemplateInstance,
+  window: TemplateTimeWindowValue | null,
+  state: TemplateDeviceStateValue | null,
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  if (params === null) return null
+  const { activeWindow: _w, activeWhen: _s, ...rest } = params
+  return {
+    ...rest,
+    ...(window === null ? {} : { activeWindow: window }),
+    ...(state === null ? {} : { activeWhen: state }),
+  }
 }
 
 /** The instance with one camera's source firing on these classes. */

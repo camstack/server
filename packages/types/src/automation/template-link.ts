@@ -13,7 +13,7 @@
  */
 import { z } from 'zod'
 import { EventVocabularyKindSchema } from '../capabilities/event-vocabulary.js'
-import { TimeIsWindowSchema } from './when.js'
+import { DeviceIsLeafSchema, TimeIsWindowSchema } from './when.js'
 
 /** An `event` input's value: the same three narrowing lists a `device-fired` row takes. */
 export const TemplateEventValueSchema = z
@@ -44,6 +44,13 @@ export const TemplateTimeWindowValueSchema = TimeIsWindowSchema
 export type TemplateTimeWindowValue = z.infer<typeof TemplateTimeWindowValueSchema>
 
 /**
+ * A `device-state` input's value: what a `device-is` leaf holds beside its kind (one device field
+ * compared to a value, now, optionally held). "No limit" is the input left without a value.
+ */
+export const TemplateDeviceStateValueSchema = DeviceIsLeafSchema.omit({ kind: true })
+export type TemplateDeviceStateValue = z.infer<typeof TemplateDeviceStateValueSchema>
+
+/**
  * An `entries` input's value: automation elements VERBATIM — event leaves of a
  * `when` tree, or steps of a branch. Judged with the automation's own schemas
  * (`valueProblem` in the template engine), so there is no second shape here.
@@ -61,6 +68,8 @@ export const TemplateScalarValueSchema = z.union([
   z.array(z.number().int().nonnegative()),
   TemplateEventValueSchema,
   TemplateActionValueSchema,
+  // Before the window: it names a device, which a window never does.
+  TemplateDeviceStateValueSchema,
   TemplateTimeWindowValueSchema,
   TemplateEntriesValueSchema,
 ])

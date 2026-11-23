@@ -12,6 +12,7 @@ import {
   actionChoiceOf,
   offeredChoices,
   sourceKindOf,
+  withActiveWhen,
   withActiveWindow,
   withRowAction,
   withRowClasses,
@@ -50,6 +51,7 @@ describe('triggerRows', () => {
         capability: 'switch',
         onForSeconds: null,
         activeWindow: null,
+        activeWhen: null,
         enabled: true,
         flagged: false,
         filter: { kind: 'fired', events: ['PRESS_SHORT'], parts: ['1', '2'] },
@@ -239,6 +241,7 @@ describe('on for a time, motion and cameras', () => {
       action: 'on',
       onForSeconds: 300,
       activeWindow: null,
+      activeWhen: null,
       filter: { kind: 'motion' },
     })
     expect(row === undefined ? null : actionChoiceOf(row)).toBe('on-for')
@@ -333,5 +336,53 @@ describe('on for a time, motion and cameras', () => {
     expect(sourceKindOf('sensor', ['motion'])).toBe('motion')
     expect(sourceKindOf('button', ['event-emitter'])).toBe('emitter')
     expect(sourceKindOf('sensor', [])).toBeNull()
+  })
+})
+
+describe('the device-state limit of a row', () => {
+  const MOTION = {
+    kind: 'device-becomes' as const,
+    deviceId: 3,
+    cap: 'motion',
+    fieldPath: 'detected',
+    becomes: true,
+  }
+  const night = {
+    deviceId: 77,
+    cap: 'binary',
+    fieldPath: 'on',
+    operator: 'eq' as const,
+    value: false,
+  }
+  const base = instance(
+    'n',
+    linkedTriggerValues({ targetDeviceId: 4, action: 'on', sources: [MOTION] }),
+  )
+
+  it('a row reads the limit and an instance takes and drops it', () => {
+    const withNight = withActiveWhen(base, night)
+    expect(withNight?.activeWhen).toEqual(night)
+    const read = triggerRows([
+      instance(
+        'n',
+        linkedTriggerValues({
+          ...(withNight ?? { targetDeviceId: 4, action: 'on', sources: [MOTION] }),
+        }),
+      ),
+    ])
+    expect(read.rows[0]?.activeWhen).toEqual(night)
+    const cleared = withActiveWhen(
+      instance(
+        'n',
+        linkedTriggerValues({
+          targetDeviceId: 4,
+          action: 'on',
+          activeWhen: night,
+          sources: [MOTION],
+        }),
+      ),
+      null,
+    )
+    expect(cleared === null ? null : 'activeWhen' in cleared).toBe(false)
   })
 })
