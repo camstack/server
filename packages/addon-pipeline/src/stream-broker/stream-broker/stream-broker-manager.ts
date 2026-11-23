@@ -3218,7 +3218,9 @@ export class StreamBrokerManager {
     // actually armed and there is demand — and it throttles itself, so calling
     // it on every publish costs nothing when nothing is waiting.
     void urlRefreshed
-    this.brokers.get(brokerIdFor(deviceId, camStreamId))?.kickReconnect()
+    this.brokers
+      .get(brokerIdFor(deviceId, camStreamId))
+      ?.kickReconnect(`publish ${camStreamId} (url ${urlRefreshed ? 'changed' : 'unchanged'})`)
 
     // Drain any derived streams that were queued in pendingDerivedStreams
     // because their source wasn't registered when loadPersistedDeviceOverrides
@@ -3303,7 +3305,9 @@ export class StreamBrokerManager {
       await this.ensureBroker(deviceId, d.camStreamId)
       const prevUrl = urlBefore.get(d.camStreamId)
       if (d.url !== undefined && prevUrl !== undefined && prevUrl !== d.url) {
-        this.brokers.get(brokerIdFor(deviceId, d.camStreamId))?.kickReconnect()
+        this.brokers
+          .get(brokerIdFor(deviceId, d.camStreamId))
+          ?.kickReconnect(`catalog url changed ${d.camStreamId}`)
       }
     }
 
@@ -5274,7 +5278,10 @@ export class StreamBrokerManager {
   private noteIdleTeardown(context: StreamHealthEmitContext): void {
     this.logger.info('lazy stream idled out — not an outage, no stream-offline', {
       tags: { deviceId: context.deviceId },
-      meta: { camStreamId: context.camStreamId, sourceType: context.sourceType },
+      meta: {
+        camStreamId: context.camStreamId,
+        sourceType: context.sourceType,
+      },
     })
     void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
   }
@@ -5286,7 +5293,10 @@ export class StreamBrokerManager {
   private noteIdleRebuild(context: StreamHealthEmitContext): void {
     this.logger.info('lazy stream rebuilt after idle — not a recovery, no stream-online', {
       tags: { deviceId: context.deviceId },
-      meta: { camStreamId: context.camStreamId, sourceType: context.sourceType },
+      meta: {
+        camStreamId: context.camStreamId,
+        sourceType: context.sourceType,
+      },
     })
     void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
   }
@@ -5430,11 +5440,21 @@ export class StreamBrokerManager {
     if (existing === undefined) {
       if (!this.api) {
         // Nothing to ask: judged as a mains camera, as before this existed.
-        const none: BatteryProbe = { state: 'done', isBattery: null, facts: null, readAt: now }
+        const none: BatteryProbe = {
+          state: 'done',
+          isBattery: null,
+          facts: null,
+          readAt: now,
+        }
         this.batteryProbe.set(deviceId, none)
         return none
       }
-      const pending: BatteryProbe = { state: 'pending', isBattery: null, facts: null, readAt: now }
+      const pending: BatteryProbe = {
+        state: 'pending',
+        isBattery: null,
+        facts: null,
+        readAt: now,
+      }
       this.batteryProbe.set(deviceId, pending)
       void this.probeBattery(deviceId)
       return pending
@@ -5500,7 +5520,10 @@ export class StreamBrokerManager {
       .catch(() => null)
     const parsed = LowPowerSleepStatusSchema.safeParse(slice)
     if (!parsed.success) return null
-    return { sleeping: parsed.data.sleeping, lastContactAt: parsed.data.lastContactAt }
+    return {
+      sleeping: parsed.data.sleeping,
+      lastContactAt: parsed.data.lastContactAt,
+    }
   }
 
   private recordBatterySleep(
@@ -7388,7 +7411,10 @@ export class StreamBrokerManager {
         if (value === null) {
           const current = next[name]
           if (current !== undefined) {
-            next[name] = { ...current, encodeProfile: DERIVED_PASSTHROUGH_PROFILE }
+            next[name] = {
+              ...current,
+              encodeProfile: DERIVED_PASSTHROUGH_PROFILE,
+            }
             nextOverride.derivedStreams = next
           }
           continue
@@ -8667,7 +8693,9 @@ export class StreamBrokerManager {
     }
 
     const sourceProbe = this.observedSourceProbe(deviceId, source)
-    const { built } = computeDerivedEncode(encodeProfile, sourceProbe, { loopbackUrl })
+    const { built } = computeDerivedEncode(encodeProfile, sourceProbe, {
+      loopbackUrl,
+    })
     const { args, audio, cadence, bitrate } = built
     this.derivedEffectiveEncodes.set(
       brokerIdFor(deviceId, camStreamId),
@@ -8793,7 +8821,10 @@ export class StreamBrokerManager {
     profile: EncodeProfile
     source?: DerivedSourceRef
   }): Promise<PreviewDerivedEncodeResult> {
-    const source: DerivedSourceRef = input.source ?? { kind: 'profile', profile: 'high' }
+    const source: DerivedSourceRef = input.source ?? {
+      kind: 'profile',
+      profile: 'high',
+    }
     const probe = this.observedSourceProbe(input.deviceId, source)
     const probed = Object.values(probe).some((value) => value !== null && value !== 0)
     if (!probed) {
@@ -8803,7 +8834,10 @@ export class StreamBrokerManager {
       })
       return { kind: 'no-source' }
     }
-    return { kind: 'preview', preview: computeDerivedEncode(input.profile, probe).preview }
+    return {
+      kind: 'preview',
+      preview: computeDerivedEncode(input.profile, probe).preview,
+    }
   }
 
   /**

@@ -629,6 +629,19 @@ function writerIdleBoundMs(segmentSeconds: number): number {
   return Math.max(WRITER_IDLE_MIN_MS, segmentSeconds * 1000 * WRITER_IDLE_SEGMENT_MULTIPLIER)
 }
 
+/** What made the recorder recover a writer: the cause, named on the give-up log. */
+type WriterRecoveryTrigger = 'source-restart' | 'idle-watchdog' | 'writer-exhausted-restarts'
+
+/** Measurements attached to the give-up log (null = never produced / never re-dialed). */
+interface WriterGiveUpEvidence {
+  readonly trigger: WriterRecoveryTrigger
+  /** Ms since each stalled profile last finalized a segment. */
+  readonly idleByProfile: Record<string, number | null>
+  readonly boundMs: number
+  /** Ms since the broker last re-dialed this device's source, as the recorder saw it. */
+  readonly brokerRedialedAgoMs: number | null
+}
+
 /** Key for the per-(device, profile) liveness stamp. */
 function idleKey(deviceId: number, profile: CamProfile): string {
   return `${deviceId}:${profile}`
@@ -1225,7 +1238,10 @@ export class RecordingController {
       this.triggers.set(deviceId, holdTrigger(this.triggersFor(deviceId), source, rise))
       this.deps.logger.info(
         'recorder: device signal recovered from the slice — the bus had not delivered the rise',
-        { tags: { deviceId }, meta: { since: rise, lastChangedAt: level.lastChangedAt } },
+        {
+          tags: { deviceId },
+          meta: { since: rise, lastChangedAt: level.lastChangedAt },
+        },
       )
       return
     }
@@ -1235,14 +1251,20 @@ export class RecordingController {
       this.signalContradictions.set(deviceId, contradictions)
       this.deps.logger.debug(
         'recorder: device signal read contradicts the hold — waiting for a second read to agree',
-        { tags: { deviceId }, meta: { since, reads: contradictions, absent: level === null } },
+        {
+          tags: { deviceId },
+          meta: { since, reads: contradictions, absent: level === null },
+        },
       )
       return
     }
     this.applySignalRelease(deviceId, source, nowMs, postMs)
     this.deps.logger.info(
       'recorder: device signal released by reconcile — two reads agreed the level is down',
-      { tags: { deviceId }, meta: { since, heldMs: nowMs - since, absent: level === null } },
+      {
+        tags: { deviceId },
+        meta: { since, heldMs: nowMs - since, absent: level === null },
+      },
     )
   }
 
@@ -1263,7 +1285,12 @@ export class RecordingController {
       'recorder: device signal held past its bound with no read confirming it — released, the episode may be cut',
       {
         tags: { deviceId },
-        meta: { since, confirmedAt, heldMs: nowMs - since, boundMs: SIGNAL_HOLD_MAX_MS },
+        meta: {
+          since,
+          confirmedAt,
+          heldMs: nowMs - since,
+          boundMs: SIGNAL_HOLD_MAX_MS,
+        },
       },
     )
   }
@@ -1328,7 +1355,13 @@ export class RecordingController {
         'recorder: device signal fell — post-buffer running, then the window closes',
         {
           tags: { deviceId },
-          meta: { source: triggerKey(source), since, atMs, heldMs: atMs - since, postMs },
+          meta: {
+            source: triggerKey(source),
+            since,
+            atMs,
+            heldMs: atMs - since,
+            postMs,
+          },
         },
       )
     }
@@ -1340,7 +1373,10 @@ export class RecordingController {
       // reconcile as backstop. Named, never silent.
       this.deps.logger.warn(
         'recorder: device signal attach deferred — stream not available yet (retries on next broker ready/reconcile)',
-        { tags: { deviceId }, meta: { source: triggerKey(source), active, error: errMsg(err) } },
+        {
+          tags: { deviceId },
+          meta: { source: triggerKey(source), active, error: errMsg(err) },
+        },
       )
     }
   }
@@ -1390,7 +1426,13 @@ export class RecordingController {
     }
     const nowMs = this.now()
     const before = this.batteryHolds.get(deviceId) ?? null
-    const resolved = resolveBatteryLevel({ bands, at: new Date(nowMs), raw, hold: before, nowMs })
+    const resolved = resolveBatteryLevel({
+      bands,
+      at: new Date(nowMs),
+      raw,
+      hold: before,
+      nowMs,
+    })
     if (resolved.hold === null) this.batteryHolds.delete(deviceId)
     else this.batteryHolds.set(deviceId, resolved.hold)
     if (resolved.dwellUntilMs === undefined) this.batteryDwellUntil.delete(deviceId)
@@ -1475,13 +1517,18 @@ export class RecordingController {
   /** When each device last had its writers recovered by a source restart. */
   private readonly lastSourceRestartRecoveryAt = new Map<number, number>()
 
-  private async recoverWriterGaveUp(deviceId: number, profile?: CamProfile): Promise<void> {
+  private async recoverWriterGaveUp(
+    deviceId: number,
+    profile: CamProfile | undefined,
+    trigger: WriterRecoveryTrigger,
+  ): Promise<void> {
     if (this.stopped) return
     const current = this.active.get(deviceId)
     if (!current || current.length === 0) return
 
     const stalled = profile === undefined ? current : current.filter((r) => r.profile === profile)
     if (stalled.length === 0) return
+    const evidence = this.giveUpEvidence(deviceId, stalled, trigger)
     const keep = profile === undefined ? [] : current.filter((r) => r.profile !== profile)
     // Only a sibling that FINALIZED a segment within its idle bound is "healthy".
     // When none did, every profile is stalled (a camera without power): the
@@ -1493,12 +1540,15 @@ export class RecordingController {
     if (keep.length > 0 && producing.length === 0) {
       this.deps.logger.warn(
         'recorder: writer gave up — no profile produced a segment recently (all stalled) — detaching + re-evaluating device',
-        { tags: { deviceId }, meta: { profile, stalledSiblings: silentSiblings } },
+        {
+          tags: { deviceId },
+          meta: { profile, stalledSiblings: silentSiblings, ...evidence },
+        },
       )
     } else if (keep.length === 0) {
       this.deps.logger.warn('recorder: writer gave up — detaching + re-evaluating device', {
         tags: { deviceId },
-        ...(profile !== undefined ? { meta: { profile } } : {}),
+        meta: { ...(profile !== undefined ? { profile } : {}), ...evidence },
       })
     }
     if (producing.length === 0) {
@@ -1528,6 +1578,7 @@ export class RecordingController {
           // Pinned but no segment yet (inside their grace window): kept pinned,
           // and NOT claimed as recording.
           ...(silentSiblings.length > 0 ? { pinnedWithoutSegment: silentSiblings } : {}),
+          ...evidence,
         },
       },
     )
@@ -1571,7 +1622,28 @@ export class RecordingController {
       tags: { deviceId },
       meta: { reason, profiles: current.map((r) => r.profile) },
     })
-    await this.recoverWriterGaveUp(deviceId)
+    await this.recoverWriterGaveUp(deviceId, undefined, 'source-restart')
+  }
+
+  /** Why a writer is being recovered, for the give-up log. */
+  private giveUpEvidence(
+    deviceId: number,
+    stalled: readonly ProfileRecording[],
+    trigger: WriterRecoveryTrigger,
+  ): WriterGiveUpEvidence {
+    const now = this.now()
+    const restartAt = this.lastSourceRestartRecoveryAt.get(deviceId)
+    return {
+      trigger,
+      idleByProfile: Object.fromEntries(
+        stalled.map((r) => {
+          const at = this.lastProducedAt.get(idleKey(deviceId, r.profile))
+          return [r.profile, at === undefined ? null : now - at]
+        }),
+      ),
+      boundMs: Math.max(...stalled.map((r) => writerIdleBoundMs(r.segmentSeconds))),
+      brokerRedialedAgoMs: restartAt === undefined ? null : now - restartAt,
+    }
   }
 
   /** Did this writer finalize a segment within its idle bound? Seeding at the pin does not count. */
@@ -1679,11 +1751,11 @@ export class RecordingController {
       [...byDevice.entries()].map(async ([deviceId, profiles]) => {
         const activeCount = this.active.get(deviceId)?.length ?? 0
         if (profiles.length >= activeCount) {
-          await this.recoverWriterGaveUp(deviceId)
+          await this.recoverWriterGaveUp(deviceId, undefined, 'idle-watchdog')
           return
         }
         for (const profile of profiles) {
-          await this.recoverWriterGaveUp(deviceId, profile)
+          await this.recoverWriterGaveUp(deviceId, profile, 'idle-watchdog')
         }
       }),
     )
@@ -1719,7 +1791,10 @@ export class RecordingController {
     if (receivedLagMs > TRIGGER_LAG_WARN_MS) {
       this.deps.logger.warn(
         'recorder: trigger arrived late — part of its window is already spent',
-        { tags: { deviceId }, meta: { source: triggerKey(source), atMs, receivedLagMs } },
+        {
+          tags: { deviceId },
+          meta: { source: triggerKey(source), atMs, receivedLagMs },
+        },
       )
     }
     this.recordTriggerWindow(deviceId, source, atMs, await this.postBufferMsFor(deviceId, atMs))
@@ -1740,7 +1815,10 @@ export class RecordingController {
       // silence would read as "never happened".
       this.deps.logger.warn(
         'recorder: trigger attach deferred — stream not available yet (retries on next broker ready/reconcile)',
-        { tags: { deviceId }, meta: { source: triggerKey(source), atMs, error: errMsg(err) } },
+        {
+          tags: { deviceId },
+          meta: { source: triggerKey(source), atMs, error: errMsg(err) },
+        },
       )
     }
   }
@@ -2357,7 +2435,12 @@ export class RecordingController {
           'recorder: recovered a reaped writer’s segments before re-attaching',
           {
             tags: { deviceId: target.deviceId },
-            meta: { profile: target.profile, dir: target.outDir, pid: writer.pid, ...report },
+            meta: {
+              profile: target.profile,
+              dir: target.outDir,
+              pid: writer.pid,
+              ...report,
+            },
           },
         )
       } catch (err: unknown) {
@@ -2365,7 +2448,11 @@ export class RecordingController {
           'recorder: recovering a reaped writer’s segments failed — left in staging for the next boot',
           {
             tags: { deviceId: target.deviceId },
-            meta: { profile: target.profile, dir: target.outDir, error: errMsg(err) },
+            meta: {
+              profile: target.profile,
+              dir: target.outDir,
+              error: errMsg(err),
+            },
           },
         )
       }
@@ -2519,7 +2606,13 @@ export class RecordingController {
     const writer = new SegmentWriter(
       // Pass the source video codec through so the passthrough muxer writes the
       // Apple-correct `hvc1` sample entry for HEVC (`-tag:v hvc1`, still copy).
-      { rtspUrl, outDir, segmentSeconds, videoCodec: source.videoCodec, consumerTag },
+      {
+        rtspUrl,
+        outDir,
+        segmentSeconds,
+        videoCodec: source.videoCodec,
+        consumerTag,
+      },
       {
         spawn: this.deps.spawn,
         ffmpegPath,
@@ -2560,7 +2653,7 @@ export class RecordingController {
               message: degraded.message,
             })
           }
-          void this.recoverWriterGaveUp(deviceId, profile)
+          void this.recoverWriterGaveUp(deviceId, profile, 'writer-exhausted-restarts')
         },
         // The host could not fork. This is a property of the NODE, not of this
         // camera — every other writer dialling in this wave is about to hit

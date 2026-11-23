@@ -180,6 +180,8 @@ export class StreamBroker implements IStreamBroker {
    * next connection is a RESTART, which is what `onSourceRestart` announces.
    */
   private dialCount = 0
+  /** Ms epoch of the most recent dial start (0 = never); names the cause in `kickReconnect`. */
+  private lastDialStartedAt = 0
   private readonly sourceRestartObservers = new Set<(reason: string) => void>()
   /** Armed per dial when the source declares `maxSessionMs`; see {@link armSessionLimit}. */
   private sessionLimitTimer: ReturnType<typeof setTimeout> | undefined
@@ -562,7 +564,10 @@ export class StreamBroker implements IStreamBroker {
    * has a start time, and `hasDemand()` consults it the way it consults every
    * other holder.
    */
-  private prebufferHold: { readonly id: string; readonly since: number } | null = null
+  private prebufferHold: {
+    readonly id: string
+    readonly since: number
+  } | null = null
   /**
    * Seconds of AnnexB video retained SPECIFICALLY so a notification clip can be
    * cut around a past instant (`renderPreBufferClip`). 0 = no clip retention.
@@ -1223,7 +1228,7 @@ export class StreamBroker implements IStreamBroker {
     this.sessionLimitTimer = undefined
   }
 
-  kickReconnect(): void {
+  kickReconnect(cause = 'unspecified'): void {
     if (this.manualStop || this.stopping || !this.source) return
     if (!this.hasLiveIntent()) return
     // A battery camera given up on is revived by a re-publish of a REAL source
@@ -1248,7 +1253,14 @@ export class StreamBroker implements IStreamBroker {
     this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
     this.nextDialAllowedAt = 0
     this.lastRefreshRequestAt = 0
-    this.logger?.info('reconnect kicked — publisher refreshed source')
+    this.logger?.info('reconnect kicked — publisher refreshed source', {
+      meta: {
+        cause,
+        sinceLastDialMs: this.lastDialStartedAt > 0 ? nowMs - this.lastDialStartedAt : null,
+        sinceLastPacketMs: this.lastPacketAt > 0 ? nowMs - this.lastPacketAt : null,
+        dialCount: this.dialCount,
+      },
+    })
     this.scheduleReconnect()
   }
 
@@ -1418,6 +1430,7 @@ export class StreamBroker implements IStreamBroker {
     // Arm the gate for THIS attempt: no re-dial before the current backoff
     // window elapses, whatever path asks. Success resets it (with the delay).
     this.nextDialAllowedAt = Date.now() + this.reconnectDelayMs
+    this.lastDialStartedAt = Date.now()
 
     this._status = 'connecting'
 
@@ -1698,7 +1711,11 @@ export class StreamBroker implements IStreamBroker {
   ): 'woke' | 'hold-extended' | 'no-consumer' {
     if (this.rtspRestreamer.getPrestreamSessionCount() === 0) return 'no-consumer'
     const wasLive = holdIsLive(this.wakeHold, at)
-    const { hold, outcome } = absorbSignal({ current: this.wakeHold, now: at, holdMs })
+    const { hold, outcome } = absorbSignal({
+      current: this.wakeHold,
+      now: at,
+      holdMs,
+    })
     this.wakeHold = hold
     this.logger?.info('wake signal from the camera', {
       tags: { deviceId: this.numericDeviceId },
@@ -3094,7 +3111,10 @@ export class StreamBroker implements IStreamBroker {
     // `accept` is what this consumer can READ. Absent means f32le and only
     // f32le — the plane expands for it, exactly as before D455 — so a
     // consumer deployed from an older bundle is never handed coded bytes.
-    const result = this.audioChunkPlane.subscribe({ tag, accept: options?.accept })
+    const result = this.audioChunkPlane.subscribe({
+      tag,
+      accept: options?.accept,
+    })
     reportConsumerEvent(
       this.logger,
       'attach',
@@ -4446,7 +4466,10 @@ export class StreamBroker implements IStreamBroker {
       if (this.manualStop || this.stopping) return
       this.logger?.warn('watchdog: no wake within the bound — reconnecting anyway', {
         tags: { deviceId: this.numericDeviceId },
-        meta: { boundMs: StreamBroker.SLEEP_WAIT_MAX_MS, ...this.sourceMetaForLog() },
+        meta: {
+          boundMs: StreamBroker.SLEEP_WAIT_MAX_MS,
+          ...this.sourceMetaForLog(),
+        },
       })
       this.forceFirstVideoReconnect(this.firstVideoTimeoutMs())
     }, StreamBroker.SLEEP_WAIT_MAX_MS)
@@ -4578,7 +4601,10 @@ export class StreamBroker implements IStreamBroker {
           'activity watchdog: camera is asleep — waiting for the wake instead of reconnecting',
           {
             tags: { deviceId: this.numericDeviceId },
-            meta: { timeoutMs: StreamBroker.RTP_ACTIVITY_TIMEOUT_MS, ...this.sourceMetaForLog() },
+            meta: {
+              timeoutMs: StreamBroker.RTP_ACTIVITY_TIMEOUT_MS,
+              ...this.sourceMetaForLog(),
+            },
           },
         )
       }

@@ -21,6 +21,8 @@ export interface KeepAwakeLoopDeps<H> {
   readonly onStop: (activeStreams: number) => void
   /** `firstInStretch` is true for the first failure since the last success. */
   readonly onFailure: (err: unknown, firstInStretch: boolean) => void
+  /** One wake that succeeded. */
+  readonly onSuccess?: () => void
 }
 
 export interface KeepAwakeLoop {
@@ -40,6 +42,11 @@ export function createKeepAwakeLoop<H>(deps: KeepAwakeLoopDeps<H>): KeepAwakeLoo
       .wake()
       .then(() => {
         failing = false
+        try {
+          deps.onSuccess?.()
+        } catch {
+          /* a logger must never break the loop */
+        }
       })
       .catch((err: unknown) => {
         const first = !failing

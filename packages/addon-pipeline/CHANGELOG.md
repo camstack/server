@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Recorder give-up logs name the trigger and idle time; the broker's reconnect-kick log names its cause
+
 ## [1.2.682] - 2026-11-22
 
 ### Changed

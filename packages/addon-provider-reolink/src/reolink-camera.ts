@@ -398,6 +398,9 @@ import {
 } from './power-source.js'
 import { DEFAULT_GUARD_TIMEOUT_SECONDS } from './ptz-guard.js'
 import { KEEP_AWAKE_INTERVAL_MS, createKeepAwakeLoop } from './keep-awake-loop.js'
+
+/** One successful wake in this many is logged at debug. */
+const KEEP_AWAKE_SUCCESS_LOG_EVERY = 15
 import {
   resolveZoomStep,
   ZOOM_FACTOR_SCALE,
@@ -772,11 +775,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
   /** What the features and the battery / sleep registration both read. */
   private featureInputs(): ReolinkFeatureInputs {
-    return { probe: this.getProbeFlags<ReolinkProbeFlags>(), isBattery: this.isBattery }
+    return {
+      probe: this.getProbeFlags<ReolinkProbeFlags>(),
+      isBattery: this.isBattery,
+    }
   }
 
   /** Lazy-connected Baichuan API. Spans the lifetime of every active stream. */
   private api: ReolinkBaichuanApi | null = null
+  /** Why the previous Baichuan session ended; named on the next login's log line. */
+  private lastSessionDropReason: string | null = null
+  private loginCount = 0
   /**
    * Stable bound handler for `api.onSimpleEvent` — created ONCE in
    * the class so every `onSimpleEvent` / `offSimpleEvent` call uses
@@ -884,16 +893,101 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         tags: { deviceId: this.id },
         meta: { activeStreams },
       }),
+    onSuccess: () => this.noteKeepAwakeResult(true, null),
     onFailure: (err, first) => {
+      const error = err instanceof Error ? err.message : String(err)
       const log = first
         ? this.ctx.logger.info.bind(this.ctx.logger)
         : this.ctx.logger.debug.bind(this.ctx.logger)
       log('keep-awake: wake failed', {
         tags: { deviceId: this.id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
+        meta: { error },
       })
+      this.noteKeepAwakeResult(false, error)
     },
   })
+
+  /** Wake counters for the current hour, plus the last broker packet count per stream. */
+  private keepAwakeStats = {
+    windowStartedAt: 0,
+    issued: 0,
+    succeeded: 0,
+    failed: 0,
+  }
+  private readonly keepAwakePacketCount = new Map<string, number>()
+
+  /**
+   * Make the keep-awake loop observable: a sampled debug line for successes, an
+   * hourly info summary, and — on a failure — whether the broker is still
+   * receiving video (a failed wake with flowing video is not a dead camera).
+   */
+  private noteKeepAwakeResult(ok: boolean, error: string | null): void {
+    const now = Date.now()
+    const stats = this.keepAwakeStats
+    if (stats.windowStartedAt === 0) stats.windowStartedAt = now
+    stats.issued += 1
+    if (ok) stats.succeeded += 1
+    else stats.failed += 1
+    if (ok && stats.succeeded % KEEP_AWAKE_SUCCESS_LOG_EVERY === 1) {
+      this.ctx.logger.debug('keep-awake: wake ok', {
+        tags: { deviceId: this.id },
+        meta: {
+          succeeded: stats.succeeded,
+          issued: stats.issued,
+          sampledEvery: KEEP_AWAKE_SUCCESS_LOG_EVERY,
+        },
+      })
+    }
+    if (now - stats.windowStartedAt >= 60 * 60_000) {
+      this.ctx.logger.info('keep-awake: hourly summary', {
+        tags: { deviceId: this.id },
+        meta: {
+          issued: stats.issued,
+          succeeded: stats.succeeded,
+          failed: stats.failed,
+          windowMs: now - stats.windowStartedAt,
+        },
+      })
+      this.keepAwakeStats = {
+        windowStartedAt: now,
+        issued: 0,
+        succeeded: 0,
+        failed: 0,
+      }
+    }
+    if (!ok) void this.logVideoFlowAfterWakeFailure(error ?? 'unknown')
+  }
+
+  private async logVideoFlowAfterWakeFailure(error: string): Promise<void> {
+    for (const camStreamId of [...this.active.keys()]) {
+      try {
+        const stats = await this.ctx.api.streamBroker.getBrokerStats.query({
+          brokerId: `${this.id}/${camStreamId}`,
+        })
+        const previous = this.keepAwakePacketCount.get(camStreamId)
+        this.keepAwakePacketCount.set(camStreamId, stats.packetCount)
+        const flowing = previous !== undefined ? stats.packetCount > previous : stats.inputFps > 0
+        if (flowing) {
+          this.ctx.logger.info('keep-awake: wake failed but the broker still receives video', {
+            tags: { deviceId: this.id, camStreamId },
+            meta: {
+              error,
+              inputFps: stats.inputFps,
+              packetCount: stats.packetCount,
+              packetsSinceLastFailedWake:
+                previous === undefined ? null : stats.packetCount - previous,
+              brokerStatus: stats.status,
+            },
+          })
+        }
+      } catch (err) {
+        this.ctx.logger.debug('keep-awake: broker stats unavailable for the video-flow check', {
+          tags: { deviceId: this.id, camStreamId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
+  }
 
   private syncKeepAwake(): void {
     this.keepAwake.sync(this.active.size)
@@ -8224,7 +8318,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     })
     this.ctx.logger.info('materialized rfc4571 stream socket on broker demand', {
       tags: { deviceId: this.id, camStreamId },
-      meta: { url: `tcp://${server.host}:${server.port}` },
+      meta: {
+        url: `tcp://${server.host}:${server.port}`,
+        // The broker kicks its reconnect on every re-publish: this is the
+        // provider-side cause of a `reconnect kicked — publisher refreshed source`.
+        republishCause: 'broker-source-refresh (materializeStreamSocket)',
+      },
     })
   }
 
@@ -8883,7 +8982,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       'wake transition — accessory re-probe (last probe older than the window)',
       {
         tags: { deviceId: this.id },
-        meta: { reason, lastProbedAt, ageMs: lastProbedAt > 0 ? now - lastProbedAt : null },
+        meta: {
+          reason,
+          lastProbedAt,
+          ageMs: lastProbedAt > 0 ? now - lastProbedAt : null,
+        },
       },
     )
     try {
@@ -11847,7 +11950,15 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
     this.ctx.logger.info('Connecting to Reolink', {
       tags: { deviceId: this.id, host: String(host) },
-      meta: { port, transport, hasUid: Boolean(uid) },
+      meta: {
+        port,
+        transport,
+        hasUid: Boolean(uid),
+        // First login of this process vs a re-login after the session was
+        // dropped, and what dropped it.
+        loginReason: this.lastSessionDropReason ?? 'first-login',
+        loginsSoFar: this.loginCount,
+      },
     })
 
     const debugOptions = this.getBaichuanDebugOptions()
@@ -11917,6 +12028,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.pendingLoginApi = null
       this.api = api
       this.loginPromise = null
+      this.loginCount += 1
+      if (this.lastSessionDropReason !== null) {
+        this.ctx.logger.info('Baichuan session re-logged-in', {
+          tags: { deviceId: this.id },
+          meta: {
+            reason: this.lastSessionDropReason,
+            loginCount: this.loginCount,
+          },
+        })
+        this.lastSessionDropReason = null
+      }
       this.reconnectAttempts = 0
       if (this.ownsReachability()) this.reachability.noteReachable()
 
@@ -12673,6 +12795,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private async dropBaichuanSession(reason: string): Promise<void> {
     const current = this.api
     this.api = null
+    if (current) this.lastSessionDropReason = reason
     if (!current) return
     try {
       await current.close({ reason })
@@ -12759,6 +12882,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // flip `this.online`; the firmware emits its own 'offline' push
       // when the camera state actually transitions.
       this.api = null
+      this.lastSessionDropReason = `disconnect: ${reason}`
       this.ctx.logger.debug('Battery cam disconnect — deferring reconnect to next demand', {
         tags: { deviceId: this.id },
         meta: { reason, sleeping: this.sleeping },
@@ -12790,6 +12914,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // socket survives independently and self-heals on the next client
     // connection.
     this.api = null
+    this.lastSessionDropReason = `reconnect: ${reason}`
 
     if (this.removed) return
     this.reconnectTimer = setTimeout(() => {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery camera keep-awake now logs sampled wakes, an hourly wake summary, session re-logins with their reason, and wake failures while video still flows
+
 ## [1.2.260] - 2026-11-23
 
 ### Changed

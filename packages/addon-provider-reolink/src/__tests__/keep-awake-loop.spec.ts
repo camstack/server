@@ -13,6 +13,7 @@ function harness(opts: { battery?: boolean; wake?: () => Promise<void> } = {}) {
   const onStart = vi.fn()
   const onStop = vi.fn()
   const onFailure = vi.fn()
+  const onSuccess = vi.fn()
   const loop = createKeepAwakeLoop({
     intervalMs: 20_000,
     isBattery: () => opts.battery ?? true,
@@ -28,14 +29,24 @@ function harness(opts: { battery?: boolean; wake?: () => Promise<void> } = {}) {
     onStart,
     onStop,
     onFailure,
+    onSuccess,
   })
   const live = (): FakeTimer[] => timers.filter((t) => !t.cleared)
-  return { loop, timers, live, wake, onStart, onStop, onFailure }
+  return { loop, timers, live, wake, onStart, onStop, onFailure, onSuccess }
 }
 
 const flush = (): Promise<void> => new Promise((r) => setImmediate(r))
 
 describe('keep-awake loop', () => {
+  it('reports each successful wake so the camera can count and sample them', async () => {
+    const h = harness()
+    h.loop.sync(1)
+    h.live()[0]?.fn()
+    await flush()
+    expect(h.onSuccess).toHaveBeenCalledTimes(1)
+    expect(h.onFailure).not.toHaveBeenCalled()
+  })
+
   it('starts on the first consumer and wakes each interval', async () => {
     const h = harness()
     h.loop.sync(1)
