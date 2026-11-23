@@ -532,8 +532,8 @@
       "notes": ""
     },
     {
-      "need": "Confirm before a destructive action",
-      "admin": "`ConfirmActionButton`, or `useConfirm`",
+      "need": "Confirm before a destructive action (loader until it settles)",
+      "admin": "In a `DataTable`: `table.destructive`; elsewhere `useConfirm({ …, action })`, `useDestructiveAction`, or `ConfirmActionButton`",
       "viewer": "`useConfirm` (`src/components/ui/confirm.tsx`)",
       "notes": "Never `window.confirm`"
     },

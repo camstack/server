@@ -47,7 +47,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | Copy a value | `CopyButton` | — | |
 | A modal dialog | `Dialog` + `DialogContent` (+ `DialogHeader`, `DialogBody`, `DialogFooter`) | `SheetModal` | `scroll="body"` when tall; `placement="sheet-on-mobile"` |
 | A list to pick one item from, in a sheet | `Dialog` + list | `PickerSheet` | |
-| Confirm before a destructive action | `ConfirmActionButton`, or `useConfirm` | `useConfirm` (`src/components/ui/confirm.tsx`) | Never `window.confirm` |
+| Confirm before a destructive action (loader until it settles) | In a `DataTable`: `table.destructive`; elsewhere `useConfirm({ …, action })`, `useDestructiveAction`, or `ConfirmActionButton` | `useConfirm` (`src/components/ui/confirm.tsx`) | Never `window.confirm` |
 | Ask for one value | `usePrompt` | `usePrompt` | |
 | Tell the operator something once | `useAlert` | `useNotice` | |
 | A secondary-actions menu | `KebabMenu` | `AnchoredMenu` | |

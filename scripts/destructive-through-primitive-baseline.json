@@ -1,0 +1,37 @@
+{
+  "_why": "Admin-ui files that still fire a delete/remove/uninstall/purge/discard/revoke mutation without the shared loader (table.destructive, useConfirm action, useDestructiveAction, ConfirmActionButton). Each moves to a primitive and its line is deleted. The list only shrinks.",
+  "families": {
+    "confirm-then-mutate": {
+      "packages/addon-admin-ui/src/components/access/LinkedAppsSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/access/LoginSessionsSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/access/TokensSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/auth/MySessionsSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/backup/ArchiveList.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/backup/BackupEntriesTable.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/certificates/MyDevicesSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/certificates/NodesCard.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/cluster/NodeCard.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/detection-intelligence/PeopleList.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/detection-intelligence/RecentPlates.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/detection-intelligence/SimilarGroupsModal.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/detection-intelligence/UnassignedFaces.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/detection-intelligence/VehiclesList.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/device/customize/triggers/TriggeredByTable.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/device/customize/use-customization.ts": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/pipeline/placement-board/NodeInferenceDevices.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/recordings/ExportsSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/system/secrets/use-keychain-actions.ts": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/components/users/UserSessionsModal.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/IntegrationDetail.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/build/CustomDeviceTab.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/build/templates/TemplatesTab.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NetworkAddresses.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationAlarm.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationCalendarEventsPage.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationProducerRules.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationRules.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationSummaries.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
+      "packages/addon-admin-ui/src/pages/system/NotificationTimelapses.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive"
+    }
+  }
+}

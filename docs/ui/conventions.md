@@ -236,6 +236,31 @@ not exist — the update confirm promised an automatic rollback for a while afte
 When a server capability is removed, remove the UI that consumed it. Dead controls
 are worse than absent ones: they tell the operator a feature exists.
 
+## Destructive actions: confirm, then a loader until it settles
+
+Every delete / remove / uninstall / purge / revoke goes through ONE of two paths,
+so it never reads as "done" while the work is still running:
+
+- **Inside a `DataTable`:** the table owns the row. A column's
+  `render(row, index, table)` calls `table.destructive(row, { title, message,
+  confirmLabel, run })`. The confirm closes, the row is dimmed and `aria-busy`
+  until `run` settles, a failure leaves the row tinted with the message and goes
+  to the table's `onRowActionError` (a toast). A page never wires `rowState` or
+  `useRowOperations` by hand. A wrapper column re-typed onto another row type
+  forwards with `forwardRowApi(table, outerRow)`.
+- **Outside a table** (a detail page, an editor, a card): `useConfirm()({ …,
+  action })` or `useDestructiveAction({ title, description, confirmLabel,
+  action })` (renders `ConfirmActionDialog`), or `ConfirmActionButton`. The
+  dialog stays open with a spinner until `action` settles and shows a failure
+  inside itself. `action` must return the real work's promise.
+
+`confirm()` without `action` closes at once and leaves the caller with no
+loader; a new `confirm(…)` followed by `.mutate(…)` is refused by
+`scripts/check-destructive-through-primitive.ts`. Files not migrated yet are
+listed in `scripts/destructive-through-primitive-baseline.json`, which only
+shrinks. (`DeviceList` rows use `useDeviceRemoval`, the same pending row in
+that layout.)
+
 ## Keyboard shortcuts (`useHotkey`)
 
 Shortcuts go through the library's hotkey registry, never a page-local

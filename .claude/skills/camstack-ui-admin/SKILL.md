@@ -68,6 +68,15 @@ right on its own dev server and broken in the hub.
   `DialogBody` / `DialogFooter`. Questions: `useConfirm`, `usePrompt`,
   `useAlert`, `ConfirmActionButton`. Never `fixed inset-0` overlays, never
   `window.confirm`.
+- **Destructive actions (delete, remove, uninstall, revoke…):** one behaviour,
+  a loader until the work settles. In a `DataTable` call
+  `table.destructive(row, { title, message, run })` from the column's
+  `render(row, index, table)` (the table owns the pending / failed row; never
+  hand-wire `rowState`). Elsewhere `useConfirm()({ …, action })`,
+  `useDestructiveAction` or `ConfirmActionButton` (dialog stays open with a
+  spinner, error inside). A confirm that closes and then fires `.mutate` is
+  refused by `check-destructive-through-primitive` (baseline only shrinks).
+  Rule: `docs/ui/conventions.md` → "Destructive actions".
 - **Secrets:** `PasswordInput`; keychain settings are `SecretFieldControl`
   (a schema `secret` field renders it), revealed only via
   `SecretRevealProvider` → audited `keychain-admin.reveal`.

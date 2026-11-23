@@ -304,6 +304,7 @@ jobs:
             scripts/check-no-settings-fallback-for-kinds.ts \
             scripts/check-one-instances-list.ts \
             scripts/check-no-stacked-provider-lists.ts \
+            scripts/check-destructive-through-primitive.ts \
             scripts/check-no-customize-device-picker-dialog.ts \
             scripts/check-one-instance-create-door.ts \
             scripts/check-action-block-importers.ts \

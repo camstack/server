@@ -118,6 +118,12 @@ component** (D43) — each needs its breakpoint
 container and kills every `sticky` inside; use `overflow-x-clip`
 ([conventions.md](conventions.md#field-learned-rendering-facts)).
 
+**A destructive action that closes its confirm and then fires `.mutate(…)`.**
+The operator sees nothing until the list refreshes. Inside a `DataTable` use
+`table.destructive(row, spec)`; elsewhere `useConfirm()({ …, action })` /
+`useDestructiveAction` ([conventions.md](conventions.md#destructive-actions-confirm-then-a-loader-until-it-settles);
+guard `check-destructive-through-primitive`).
+
 ## Viewer
 
 The viewer repository measures its own drift (`npm run ui:check -- src` there):
