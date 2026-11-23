@@ -1,10 +1,7 @@
 /**
- * A refresh that follows a no-packet watchdog must not hand back the cached
- * server just because it still listens: the camera went silent behind it, and
- * the broker dialled that dead loopback five times (~190 s). A refresh with
- * video flowing, or one that says nothing about silence, keeps the server.
- * Also: a caller joining a materialize run that has been in flight for a while
- * logs it, instead of waiting in silence.
+ * A cached listening server that went down is recreated (the library tears a
+ * server down after ~15 s with no client). A caller joining a materialize run
+ * that has been in flight for a while logs it, instead of waiting in silence.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
@@ -13,7 +10,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function makeCamera(lastVideoFlowAt: number) {
+function makeCamera() {
   const close = vi.fn(async () => undefined)
   const cached = { server: { listening: true }, close }
   const camera = Object.create(ReolinkCamera.prototype)
@@ -21,37 +18,29 @@ function makeCamera(lastVideoFlowAt: number) {
   Object.defineProperties(camera, {
     id: { value: 3628 },
     active: { value: new Map([['native:main', { camStreamId: 'native:main', server: cached }]]) },
-    lastVideoFlowAt: { value: lastVideoFlowAt, writable: true },
     ctx: { value: { logger: { warn, info: vi.fn(), debug: vi.fn(), error: vi.fn() } } },
     syncKeepAwake: { value: vi.fn() },
     // Recreation proceeds to a login; stop it there — the point is what happened before.
     ensureApi: { value: async () => Promise.reject(new Error('stop here')) },
     materializeInFlight: { value: new Map() },
     materializeStartedAt: { value: new Map() },
-    materializeSilent: { value: new Map() },
   })
   return { camera, close, cached, warn }
 }
 
-describe('ensureRfc4571Server after a silent source', () => {
-  it('recreates a listening server when the refresh says the source went silent', async () => {
-    const { camera, close } = makeCamera(Date.now() - 60_000)
-    const result = await camera.ensureRfc4571Server('native:main', 0, 'main', true)
+describe('ensureRfc4571Server cached entry', () => {
+  it('recreates the server when the cached one is no longer listening', async () => {
+    const { camera, close, cached } = makeCamera()
+    cached.server.listening = false
+    const result = await camera.ensureRfc4571Server('native:main', 0, 'main')
     expect(close).toHaveBeenCalledWith('recreate')
     expect(camera.active.has('native:main')).toBe(false)
     expect(result).toBeNull()
   })
 
-  it('keeps the listening server when the refresh says nothing about silence', async () => {
-    const { camera, close, cached } = makeCamera(Date.now() - 60_000)
-    const result = await camera.ensureRfc4571Server('native:main', 0, 'main', false)
-    expect(close).not.toHaveBeenCalled()
-    expect(result).toBe(cached)
-  })
-
-  it('keeps the listening server while video is still flowing', async () => {
-    const { camera, close, cached } = makeCamera(Date.now())
-    const result = await camera.ensureRfc4571Server('native:main', 0, 'main', true)
+  it('keeps a listening server', async () => {
+    const { camera, close, cached } = makeCamera()
+    const result = await camera.ensureRfc4571Server('native:main', 0, 'main')
     expect(close).not.toHaveBeenCalled()
     expect(result).toBe(cached)
   })
@@ -60,7 +49,7 @@ describe('ensureRfc4571Server after a silent source', () => {
 describe('materializeStreamSocket joining an old run', () => {
   it('warns with the deviceId when it joins a run in flight for over 20 s', async () => {
     vi.useFakeTimers()
-    const { camera, warn } = makeCamera(0)
+    const { camera, warn } = makeCamera()
     camera.materializeInFlight.set('native:main', new Promise<void>(() => {}))
     camera.materializeStartedAt.set('native:main', Date.now())
     void camera.materializeStreamSocket('native:main')
@@ -71,25 +60,5 @@ describe('materializeStreamSocket joining an old run', () => {
       expect.stringContaining('joining a run still in flight'),
       expect.objectContaining({ tags: { deviceId: 3628, camStreamId: 'native:main' } }),
     )
-  })
-
-  it('a source-silent caller joining an ordinary run re-runs with its reason once it settles', async () => {
-    let release: () => void = () => {}
-    const gate = new Promise<void>((r) => {
-      release = r
-    })
-    const { camera } = makeCamera(0)
-    const reasons: Array<string | undefined> = []
-    Object.defineProperty(camera, 'runMaterializeStreamSocket', {
-      value: async (_id: string, opts: { reason?: string }) => {
-        reasons.push(opts.reason)
-        if (reasons.length === 1) await gate
-      },
-    })
-    const ordinary = camera.materializeStreamSocket('native:main', {})
-    const silent = camera.materializeStreamSocket('native:main', { reason: 'source-silent' })
-    release()
-    await Promise.all([ordinary, silent])
-    expect(reasons).toEqual([undefined, 'source-silent'])
   })
 })

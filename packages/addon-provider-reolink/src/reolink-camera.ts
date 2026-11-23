@@ -447,11 +447,6 @@ import { TalkPcmTranscoder } from './talk-pcm-transcoder.js'
 /** A joiner of a materialize run older than this is logged (a stuck run reads as silence otherwise). */
 const MATERIALIZE_JOIN_LOG_AFTER_MS = 20_000
 
-/** What the broker said about WHY it asks for a refresh (absent: a dial failed). */
-export interface MaterializeOptions {
-  readonly reason?: 'source-silent'
-}
-
 /**
  * Baichuan's native PTZ speed scale is 1..63; `runPtz` maps the cap's
  * normalized 0..1 onto it. Named because the autotrack loop has to know the
@@ -3607,6 +3602,16 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *
    * @returns `true` when the slice actually changed.
    */
+  /** A battery camera running on its adapter is wired: it never sleeps. */
+  private isOnAdapterPower(): boolean {
+    return this.config.get('deviceCache')?.powerSourceSnapshot?.source === 'adapter'
+  }
+
+  /** Whether a silent stream source may be a camera gone to sleep. */
+  private streamSourceMaySleep(): boolean {
+    return reolinkCameraSleeps(this.featureInputs()) && !this.isOnAdapterPower()
+  }
+
   private commitSleepState(next: boolean, source: SleepCommitSource): boolean {
     if (!this.isBattery) return false
     const decision = decideSleepCommit({
@@ -3616,7 +3621,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       lastFirstHandCommitAt: this.sleepStateChangedAt,
       nowMs: Date.now(),
       videoFlowing: Date.now() - this.lastVideoFlowAt < VIDEO_FLOW_FRESH_MS,
-      wired: this.config.get('deviceCache')?.powerSourceSnapshot?.source === 'adapter',
+      wired: this.isOnAdapterPower(),
     })
     if (decision.kind === 'unchanged') return false
     if (decision.kind === 'refused') {
@@ -8318,7 +8323,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * Idempotent: subsequent calls reuse the cached server when still
    * listening; if the lib idle-tore-down between calls we recreate.
    */
-  async materializeStreamSocket(camStreamId: string, opts: MaterializeOptions = {}): Promise<void> {
+  async materializeStreamSocket(camStreamId: string): Promise<void> {
     // Single-flight per stream: the broker polls every 1–2 s and several
     // callers ask at once; each used to log + re-publish the same URL, and each
     // re-publish kicks the broker's reconnect. Concurrent callers share ONE run.
@@ -8331,23 +8336,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           meta: { inFlightMs: ageMs },
         })
       }
-      // The run in flight may be an ordinary one that will hand back the cached
-      // server. A joiner that knows the source went silent must not lose that:
-      // it re-runs, with its reason, once the run in flight has settled — even
-      // when that run failed, since a failed run is no reason to keep a dead server.
-      if (opts.reason === 'source-silent' && this.materializeSilent.get(camStreamId) !== true) {
-        return inFlight.then(
-          () => this.materializeStreamSocket(camStreamId, opts),
-          () => this.materializeStreamSocket(camStreamId, opts),
-        )
-      }
       return inFlight
     }
     this.materializeStartedAt.set(camStreamId, Date.now())
-    this.materializeSilent.set(camStreamId, opts.reason === 'source-silent')
-    const run = this.runMaterializeStreamSocket(camStreamId, opts).finally(() => {
+    const run = this.runMaterializeStreamSocket(camStreamId).finally(() => {
       this.materializeStartedAt.delete(camStreamId)
-      this.materializeSilent.delete(camStreamId)
       if (this.materializeInFlight.get(camStreamId) === run) {
         this.materializeInFlight.delete(camStreamId)
       }
@@ -8360,13 +8353,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private readonly materializeInFlight = new Map<string, Promise<void>>()
   /** When each in-flight run started, to say how long a joiner waited on it. */
   private readonly materializeStartedAt = new Map<string, number>()
-  /** Whether each in-flight run was asked to recreate a silent server. */
-  private readonly materializeSilent = new Map<string, boolean>()
 
-  private async runMaterializeStreamSocket(
-    camStreamId: string,
-    opts: MaterializeOptions,
-  ): Promise<void> {
+  private async runMaterializeStreamSocket(camStreamId: string): Promise<void> {
     const parts = parseCamStreamId(camStreamId, this.getChannel())
     if (!parts || parts.kind !== 'native') {
       // Non-native streams (rtsp/rtmp) carry their own URL upfront;
@@ -8380,12 +8368,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       tags: { deviceId: this.id },
       meta: { camStreamId },
     })
-    const server = await this.ensureRfc4571Server(
-      camStreamId,
-      parts.channel,
-      parts.profile,
-      opts.reason === 'source-silent',
-    )
+    const server = await this.ensureRfc4571Server(camStreamId, parts.channel, parts.profile)
     if (!server) {
       this.ctx.logger.warn('materializeStreamSocket: ensureRfc4571Server returned null', {
         tags: { deviceId: this.id, camStreamId },
@@ -8483,7 +8466,6 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     camStreamId: string,
     channel: number,
     profile: 'main' | 'sub' | 'ext',
-    sourceSilent = false,
   ): Promise<Rfc4571TcpServer | null> {
     // Self-healing: the lib's rfc4571 servers idle-teardown after
     // ~15s with no TCP client. If a previous `ensureRfc4571Server`
@@ -8491,19 +8473,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // `existing.server.server.listening` is false. We close the
     // cached entry and fall through to recreate.
     const existing = this.active.get(camStreamId)
-    // A refresh that follows a no-packet watchdog says the camera went silent
-    // behind this server. Listening is not alive: handing the same server back
-    // makes the broker dial a dead loopback again and again. Video flowing in
-    // the last few seconds keeps the server (an unchanged url keeps its writer).
-    const silent = sourceSilent && Date.now() - this.lastVideoFlowAt >= VIDEO_FLOW_FRESH_MS
-    if (existing?.server?.server?.listening && !silent) return existing.server
+    if (existing?.server?.server?.listening) return existing.server
     if (existing) {
-      this.ctx.logger.info(
-        silent
-          ? 'rfc4571: source went silent — recreating the listening server'
-          : 'rfc4571: cached server is down — recreating',
-        { tags: { deviceId: this.id, camStreamId } },
-      )
+      this.ctx.logger.info('rfc4571: cached server is down — recreating', {
+        tags: { deviceId: this.id, camStreamId },
+      })
       try {
         await existing.server.close('recreate')
       } catch {
@@ -8565,6 +8539,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // Pass a console-shaped logger; the lib only calls `.log`/`.error`/
         // `.warn`/`.info`/`.debug` and we want them on our scoped logger.
         logger: this.libLoggerAdapter(),
+        // Tells the lib's self-healing stream whether the camera may be
+        // asleep when its video goes silent. A sleeping camera is never
+        // re-dialled on its own (that would wake it and drain the battery):
+        // the session is discarded and the next consumer wakes it. A wired
+        // camera, or a battery model on its adapter (cmd 805 power mode),
+        // never sleeps, so a silent source is recovered in place.
+        resilience: { sleeps: this.streamSourceMaySleep() },
       })
     } catch (err) {
       this.ctx.logger.error('rfc4571: createRfc4571TcpServer failed', {
