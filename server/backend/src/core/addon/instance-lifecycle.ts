@@ -42,7 +42,7 @@ import {
 /** The slice of the `device-manager` singleton the delete cascade uses. */
 export interface DeviceCascadePort {
   readonly removeByIntegration?: (input: { integrationId: string }) => Promise<{ removed: number }>
-  readonly listAll?: (input: { addonId: string; projection: 'slim' }) => Promise<
+  readonly listAll?: (input: { addonId?: string; projection?: 'slim' }) => Promise<
     readonly {
       id: number
       addonId: string

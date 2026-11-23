@@ -35,13 +35,16 @@ describe('a concurrent removal cleanup', () => {
     })
     let running = 0
     let peak = 0
-    const gate = Promise.withResolvers<void>()
+    let openGate: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      openGate = resolve
+    })
     const step = (store: string): RemovalStep => ({
       store,
       run: async () => {
         running += 1
         peak = Math.max(peak, running)
-        await gate.promise
+        await gate
         running -= 1
         return 1
       },
@@ -49,7 +52,7 @@ describe('a concurrent removal cleanup', () => {
     const done = cleanup.run(7, [step('hook:a'), step('hook:b'), step('hook:c')])
     await settle()
     expect(peak).toBe(3)
-    gate.resolve()
+    openGate()
     const report = await done
     expect(report.counts).toEqual({ 'hook:a': 1, 'hook:b': 1, 'hook:c': 1 })
     expect(report.failed).toEqual([])

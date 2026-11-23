@@ -473,7 +473,7 @@ export class BlockSupervisor {
     this.retiredBlockIds = sent
     let result: ComposerApplyResult
     try {
-      result = await composer.apply(this.compositionApplyInput([], sent))
+      result = await composer.apply(this.compositionApplyInput(new Set(), sent))
     } catch (err: unknown) {
       throw new Error(`core-blocks: claims of "${blockId}" were not released — ${errMsg(err)}`, {
         cause: err,

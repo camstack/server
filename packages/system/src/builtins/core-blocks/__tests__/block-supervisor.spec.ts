@@ -704,8 +704,11 @@ describe('composition blocks', () => {
     await supervisor.converge()
 
     // A pass is in flight and stays there: it is parked on the process host.
-    const gate = Promise.withResolvers<readonly BlockRunnerSnapshot[]>()
-    const hostList = vi.spyOn(host, 'list').mockImplementation(() => gate.promise)
+    let openGate: (runners: readonly BlockRunnerSnapshot[]) => void = () => {}
+    const gate = new Promise<readonly BlockRunnerSnapshot[]>((resolve) => {
+      openGate = resolve
+    })
+    const hostList = vi.spyOn(host, 'list').mockImplementation(() => gate)
     const parked = supervisor.converge()
     await Promise.resolve()
     expect(hostList).toHaveBeenCalledTimes(1)
@@ -725,7 +728,7 @@ describe('composition blocks', () => {
     expect(last?.retiredBlockIds).toEqual(['c1'])
     expect(last?.blocks.map((b) => b.id)).toEqual(['c2'])
 
-    gate.resolve([])
+    openGate([])
     await parked
   })
 
