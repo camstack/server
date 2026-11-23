@@ -212,6 +212,16 @@ import { populateReolinkMetadata } from './metadata-populator.js'
 import { isWirelessLabel, mapNetworkReadout } from './network-link-mapping.js'
 
 /** Generate a short random hex token for per-stream RTSP-style credentials. */
+/**
+ * The error a login dialled with replaced settings ends with. A caller still
+ * awaiting it retries through `ensureApi`, which dials with the new settings.
+ */
+function supersededLoginError(cause: unknown): Error {
+  return new Error('Reolink login superseded by a connection settings change', {
+    cause: cause ?? undefined,
+  })
+}
+
 function randomToken(bytes: number): string {
   return randomBytes(bytes).toString('hex')
 }
@@ -890,6 +900,14 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
   /** Login lock — concurrent demand events must not race the login flow. */
   private loginPromise: Promise<ReolinkBaichuanApi> | null = null
+  /**
+   * Bumped by `disconnectAll`. A login started under an older generation was
+   * dialled with the OLD settings (e.g. the relay before the operator picked
+   * local-direct): it is closed and discarded instead of becoming `this.api`.
+   */
+  private loginGeneration = 0
+  /** The client a login in flight is dialling, so `disconnectAll` can abort it. */
+  private pendingLoginApi: ReolinkBaichuanApi | null = null
   /** Wall-clock ms of the last video packet the stream server produced; 0 = none yet. */
   private lastVideoFlowAt = 0
   /** True once we've discovered (via getBatteryInfo) that this is a battery cam. */
@@ -9453,6 +9471,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const entries = [...this.active.values()]
     this.active.clear()
     this.keepAwake.stop()
+    // A login still in flight was dialled with the settings being replaced:
+    // abandon it so the next demand dials with the new ones.
+    this.loginGeneration += 1
+    this.loginPromise = null
+    const pending = this.pendingLoginApi
+    this.pendingLoginApi = null
+    if (pending) {
+      try {
+        await pending.close({ reason: 'login-superseded' })
+      } catch {
+        /* best-effort */
+      }
+    }
     for (const entry of entries) {
       try {
         await entry.server.close('disconnect-all')
@@ -11839,6 +11870,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       })
     }
 
+    const generation = this.loginGeneration
     this.loginPromise = (async () => {
       const api = new ReolinkBaichuanApi({
         host,
@@ -11858,9 +11890,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // the wire.
         logger: this.libLoggerAdapter(),
       })
+      this.pendingLoginApi = api
       try {
         await api.login()
       } catch (err) {
+        if (generation !== this.loginGeneration) throw supersededLoginError(err)
+        this.pendingLoginApi = null
         this.loginPromise = null
         // An answer (bad credentials, a refused command) proves the camera is
         // there; only a network-level failure counts toward offline (D904).
@@ -11871,6 +11906,15 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
         throw err
       }
+      if (generation !== this.loginGeneration) {
+        try {
+          await api.close({ reason: 'login-superseded' })
+        } catch {
+          /* best-effort */
+        }
+        throw supersededLoginError(null)
+      }
+      this.pendingLoginApi = null
       this.api = api
       this.loginPromise = null
       this.reconnectAttempts = 0

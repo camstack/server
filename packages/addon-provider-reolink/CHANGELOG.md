@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A battery camera that answers with an all-zero placeholder no longer reports 0% and raises a false empty-battery alert
 - Adding a Reolink camera can now be set to Local only (direct to the camera IP, never the Reolink relay), and changing the connection mode or UDP discovery method of an existing camera takes effect at once.
 
+### Fixed
+
+- Changing how a camera connects (transport, UID, UDP discovery) while it is still logging in no longer keeps the old attempt alive: the camera dials again with the new settings.
+
 ## [1.2.259] - 2026-11-21
 
 ### Changed
