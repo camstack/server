@@ -235,7 +235,7 @@ export function MatterPairingPanel({
         ) : (
           <Button
             size="sm"
-            disabled={busy || noBroker || ownDown || code.trim().length === 0}
+            disabled={busy || noBroker || own === null || ownDown || code.trim().length === 0}
             onClick={submit}
           >
             {busy

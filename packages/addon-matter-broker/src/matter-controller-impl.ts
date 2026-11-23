@@ -17,6 +17,7 @@
  * BLE commissioning is not wired. IP / on-network share codes only.
  */
 
+import { join } from 'node:path'
 import { Environment, ServerNode } from '@matter/main'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import {
@@ -38,6 +39,7 @@ import {
   type CommissionProgress,
   CommissionPhase,
 } from './matter-commission-progress.js'
+import { reclaimStaleFabricLock } from './matter-storage-lock.js'
 import { subscribableFromPeer } from './matter-peer-subscribe.js'
 import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
 
@@ -68,22 +70,6 @@ interface PeerNodeView {
   readonly online: boolean
   readonly label: string
   readonly rootEndpoint: unknown
-}
-
-/** The slice of `Environment.vars` the fabric storage setup writes. */
-export interface FabricVarsSink {
-  set(name: string, value: boolean): void
-}
-
-/**
- * matter.js takes a pid-file lock on each fabric's storage directory and treats any live pid as
- * its owner. After a runner restart the recorded pid is often a different live process (pids
- * repeat inside the container), so the lock never clears and the fabric stays down until the file
- * is removed by hand. The addon runner is the only process that opens this dataDir (one addon =
- * one process) and the registry opens each fabric once, so the lock protects nothing here.
- */
-export function applyFabricStorageVars(vars: FabricVarsSink): void {
-  vars.set('storage.lock', false)
 }
 
 /** True when `value` is a non-null object (cast-free record narrowing). */
@@ -317,6 +303,12 @@ export class MatterJsController implements MatterController {
 
   async #openProductionServer(): Promise<MatterFabricServer> {
     const environment = this.#buildEnvironment()
+    await reclaimStaleFabricLock({
+      fabricDir: join(this.#options.dataDir, this.#options.brokerId),
+      brokerId: this.#options.brokerId,
+      selfPid: process.pid,
+      logger: this.#logger,
+    })
     const server = await ServerNode.create({
       environment,
       id: this.#options.brokerId,
@@ -345,7 +337,6 @@ export class MatterJsController implements MatterController {
     env.vars.set('storage.path', this.#options.dataDir)
     env.vars.set('runtime.signals', false)
     env.vars.set('runtime.exitcode', false)
-    applyFabricStorageVars(env.vars)
     return env
   }
 

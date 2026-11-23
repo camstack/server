@@ -112,6 +112,17 @@ describe('MatterPairingPanel', () => {
     }
   })
 
+  it('keeps Add disabled while the own fabric is not known yet', () => {
+    harness.box.brokers = []
+    try {
+      render(renderDialog(vi.fn(), 'matter_001'))
+      fireEvent.change(screen.getByLabelText('Pairing code'), { target: { value: '34970112332' } })
+      expect(screen.getByRole('button', { name: 'Add device' }).hasAttribute('disabled')).toBe(true)
+    } finally {
+      harness.box.brokers = [{ id: 'matter_001', usable: true }]
+    }
+  })
+
   it('says the own fabric is not running and never offers to create one', () => {
     harness.box.brokers = [{ id: 'matter_001', usable: false }]
     try {
