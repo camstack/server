@@ -1,6 +1,10 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
-import { MatterJsController, type MatterFabricServer } from '../matter-controller-impl.js'
+import {
+  applyFabricStorageVars,
+  MatterJsController,
+  type MatterFabricServer,
+} from '../matter-controller-impl.js'
 import { CommissionPhase } from '../matter-commission-progress.js'
 import type { CommissionProgress } from '../matter-commission-progress.js'
 import { SUBSCRIPTION_BACKOFF_INITIAL_MS } from '../matter-subscription.js'
@@ -211,5 +215,13 @@ describe('MatterJsController commissioning failures', () => {
     await expect(controller.commissionNode('34970112332')).resolves.toEqual({ nodeId: '11' })
     expect(phases.at(-1)?.phase).toBe(CommissionPhase.Done)
     expect(warns.some((m) => m.includes('first subscription failed'))).toBe(true)
+  })
+})
+
+describe('fabric storage vars', () => {
+  it('turns the matter.js storage pid lock off so a recycled pid cannot keep a fabric down', () => {
+    const set = vi.fn()
+    applyFabricStorageVars({ set })
+    expect(set).toHaveBeenCalledWith('storage.lock', false)
   })
 })

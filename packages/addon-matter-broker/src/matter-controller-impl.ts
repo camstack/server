@@ -70,6 +70,22 @@ interface PeerNodeView {
   readonly rootEndpoint: unknown
 }
 
+/** The slice of `Environment.vars` the fabric storage setup writes. */
+export interface FabricVarsSink {
+  set(name: string, value: boolean): void
+}
+
+/**
+ * matter.js takes a pid-file lock on each fabric's storage directory and treats any live pid as
+ * its owner. After a runner restart the recorded pid is often a different live process (pids
+ * repeat inside the container), so the lock never clears and the fabric stays down until the file
+ * is removed by hand. The addon runner is the only process that opens this dataDir (one addon =
+ * one process) and the registry opens each fabric once, so the lock protects nothing here.
+ */
+export function applyFabricStorageVars(vars: FabricVarsSink): void {
+  vars.set('storage.lock', false)
+}
+
 /** True when `value` is a non-null object (cast-free record narrowing). */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -329,6 +345,7 @@ export class MatterJsController implements MatterController {
     env.vars.set('storage.path', this.#options.dataDir)
     env.vars.set('runtime.signals', false)
     env.vars.set('runtime.exitcode', false)
+    applyFabricStorageVars(env.vars)
     return env
   }
 
