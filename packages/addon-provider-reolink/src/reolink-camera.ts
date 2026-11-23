@@ -154,6 +154,7 @@ import {
   decideSleepCommit,
   type SleepCommitSource,
 } from './sleep-state-decision.js'
+import { LOGIN_DEADLINE_MS, LoginDeadlineError, loginWithin } from './login-deadline.js'
 import { withSessionLimit } from './session-limit.js'
 import { watchVideoFlow } from './video-flow.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
@@ -438,6 +439,14 @@ import {
 } from './stream-routing.js'
 import { buildLazyRfc4571Url, buildSyntheticRfc4571Sdp } from './synthetic-sdp.js'
 import { TalkPcmTranscoder } from './talk-pcm-transcoder.js'
+
+/** A joiner of a materialize run older than this is logged (a stuck run reads as silence otherwise). */
+const MATERIALIZE_JOIN_LOG_AFTER_MS = 20_000
+
+/** What the broker said about WHY it asks for a refresh (absent: a dial failed). */
+export interface MaterializeOptions {
+  readonly reason?: 'source-silent'
+}
 
 /**
  * Baichuan's native PTZ speed scale is 1..63; `runPtz` maps the cap's
@@ -8293,13 +8302,24 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * Idempotent: subsequent calls reuse the cached server when still
    * listening; if the lib idle-tore-down between calls we recreate.
    */
-  async materializeStreamSocket(camStreamId: string): Promise<void> {
+  async materializeStreamSocket(camStreamId: string, opts: MaterializeOptions = {}): Promise<void> {
     // Single-flight per stream: the broker polls every 1–2 s and several
     // callers ask at once; each used to log + re-publish the same URL, and each
     // re-publish kicks the broker's reconnect. Concurrent callers share ONE run.
     const inFlight = this.materializeInFlight.get(camStreamId)
-    if (inFlight) return inFlight
-    const run = this.runMaterializeStreamSocket(camStreamId).finally(() => {
+    if (inFlight) {
+      const ageMs = Date.now() - (this.materializeStartedAt.get(camStreamId) ?? Date.now())
+      if (ageMs >= MATERIALIZE_JOIN_LOG_AFTER_MS) {
+        this.ctx.logger.warn('materializeStreamSocket: joining a run still in flight', {
+          tags: { deviceId: this.id, camStreamId },
+          meta: { inFlightMs: ageMs },
+        })
+      }
+      return inFlight
+    }
+    this.materializeStartedAt.set(camStreamId, Date.now())
+    const run = this.runMaterializeStreamSocket(camStreamId, opts).finally(() => {
+      this.materializeStartedAt.delete(camStreamId)
       if (this.materializeInFlight.get(camStreamId) === run) {
         this.materializeInFlight.delete(camStreamId)
       }
@@ -8310,8 +8330,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
   /** In-flight `materializeStreamSocket` runs, per camStreamId. */
   private readonly materializeInFlight = new Map<string, Promise<void>>()
+  /** When each in-flight run started, to say how long a joiner waited on it. */
+  private readonly materializeStartedAt = new Map<string, number>()
 
-  private async runMaterializeStreamSocket(camStreamId: string): Promise<void> {
+  private async runMaterializeStreamSocket(
+    camStreamId: string,
+    opts: MaterializeOptions,
+  ): Promise<void> {
     const parts = parseCamStreamId(camStreamId, this.getChannel())
     if (!parts || parts.kind !== 'native') {
       // Non-native streams (rtsp/rtmp) carry their own URL upfront;
@@ -8325,7 +8350,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       tags: { deviceId: this.id },
       meta: { camStreamId },
     })
-    const server = await this.ensureRfc4571Server(camStreamId, parts.channel, parts.profile)
+    const server = await this.ensureRfc4571Server(
+      camStreamId,
+      parts.channel,
+      parts.profile,
+      opts.reason === 'source-silent',
+    )
     if (!server) {
       this.ctx.logger.warn('materializeStreamSocket: ensureRfc4571Server returned null', {
         tags: { deviceId: this.id, camStreamId },
@@ -8423,6 +8453,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     camStreamId: string,
     channel: number,
     profile: 'main' | 'sub' | 'ext',
+    sourceSilent = false,
   ): Promise<Rfc4571TcpServer | null> {
     // Self-healing: the lib's rfc4571 servers idle-teardown after
     // ~15s with no TCP client. If a previous `ensureRfc4571Server`
@@ -8430,11 +8461,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // `existing.server.server.listening` is false. We close the
     // cached entry and fall through to recreate.
     const existing = this.active.get(camStreamId)
-    if (existing?.server?.server?.listening) return existing.server
+    // A refresh that follows a no-packet watchdog says the camera went silent
+    // behind this server. Listening is not alive: handing the same server back
+    // makes the broker dial a dead loopback again and again. Video flowing in
+    // the last few seconds keeps the server (an unchanged url keeps its writer).
+    const silent = sourceSilent && Date.now() - this.lastVideoFlowAt >= VIDEO_FLOW_FRESH_MS
+    if (existing?.server?.server?.listening && !silent) return existing.server
     if (existing) {
-      this.ctx.logger.info('rfc4571: cached server is down — recreating', {
-        tags: { deviceId: this.id, camStreamId },
-      })
+      this.ctx.logger.info(
+        silent
+          ? 'rfc4571: source went silent — recreating the listening server'
+          : 'rfc4571: cached server is down — recreating',
+        { tags: { deviceId: this.id, camStreamId } },
+      )
       try {
         await existing.server.close('recreate')
       } catch {
@@ -12057,9 +12096,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       })
       this.pendingLoginApi = api
       try {
-        await api.login()
+        await loginWithin(
+          () => api.login(),
+          LOGIN_DEADLINE_MS,
+          () => api.close({ reason: 'login-deadline' }),
+        )
       } catch (err) {
         if (generation !== this.loginGeneration) throw supersededLoginError(err)
+        if (err instanceof LoginDeadlineError) {
+          this.ctx.logger.warn('Baichuan login abandoned — camera did not answer in time', {
+            tags: { deviceId: this.id },
+            meta: { deadlineMs: err.deadlineMs },
+          })
+        }
         this.pendingLoginApi = null
         this.loginPromise = null
         // An answer (bad credentials, a refused command) proves the camera is

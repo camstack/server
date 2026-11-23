@@ -60,7 +60,12 @@ import { type ClipService, createClipService } from './clips/clip-service.js'
 import { type ReolinkDebugActions, reolinkDebugActions } from './debug-actions.js'
 import { intercomFailureReport } from './intercom-failure-report.js'
 import type { RawReadInput, RawReadResult } from './raw-read.js'
-import { REOLINK_ADDON_ID, ReolinkCamera, reolinkCameraSchema } from './reolink-camera.js'
+import {
+  REOLINK_ADDON_ID,
+  ReolinkCamera,
+  reolinkCameraSchema,
+  type MaterializeOptions,
+} from './reolink-camera.js'
 // Importing the module is what RUNS the declarations. Never drop it as an
 // "unused import": the channels vanish from the cluster if you do.
 import './log-channels.js'
@@ -864,10 +869,14 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     this.subscribe(
       { category: EventCategory.StreamBrokerOnRequestStreamSourceRefresh },
       (event) => {
-        const data = event.data as { deviceId?: number; camStreamId?: string }
+        const data = event.data as { deviceId?: number; camStreamId?: string; reason?: string }
         const deviceId = typeof data.deviceId === 'number' ? data.deviceId : null
         if (deviceId === null) return
-        void this.refreshDeviceStreams(deviceId, data.camStreamId).catch((err: unknown) => {
+        void this.refreshDeviceStreams(
+          deviceId,
+          data.camStreamId,
+          data.reason === 'source-silent' ? { reason: 'source-silent' } : {},
+        ).catch((err: unknown) => {
           this.ctx.logger.warn('refresh of Reolink stream failed', {
             tags: { deviceId },
             meta: {
@@ -1361,6 +1370,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   private async refreshDeviceStreams(
     deviceId: number,
     camStreamId: string | undefined,
+    opts: MaterializeOptions,
   ): Promise<void> {
     const dev = this.ctx.kernel.deviceRegistry?.getById(deviceId)
     if (!dev || !(dev instanceof ReolinkCamera)) return
@@ -1378,7 +1388,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // (rtsp/rtmp) camStreamIds, so logging "materializing" here — before the
     // check — claimed work that never happened (a silent drop that read as a
     // successful refresh in the logs).
-    await dev.materializeStreamSocket(camStreamId)
+    await dev.materializeStreamSocket(camStreamId, opts)
   }
 
   // ── Discovery: LAN scan via nodelink-js (UDP broadcast + ONVIF + HTTP) ──

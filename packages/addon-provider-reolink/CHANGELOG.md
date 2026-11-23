@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Battery camera keep-awake now logs sampled wakes, an hourly wake summary, session re-logins with their reason, and wake failures while video still flows
 - Battery cameras no longer run the hourly refresh or the wake warm-up while a stream is open, and concurrent source-refresh requests share one run, so video pauses are shorter.
 - Battery keep-awake skips its wake while video is flowing, so it no longer pauses the stream
+- Reolink battery cameras: a login the camera abandons no longer blocks the camera, standalone battery sessions re-dial before the camera's 30 min cut, and a silent stream gets a fresh server.
 
 ## [1.2.260] - 2026-11-23
 

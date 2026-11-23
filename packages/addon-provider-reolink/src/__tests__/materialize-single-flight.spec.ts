@@ -23,6 +23,7 @@ function makeCamera(ensure: () => Promise<unknown>) {
   Object.defineProperties(camera, {
     id: { value: 3628 },
     materializeInFlight: { value: new Map() },
+    materializeStartedAt: { value: new Map() },
     ctx: { value: { logger: { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() } } },
     getChannel: { value: () => 0 },
     cachedStreamDescriptors: { value: undefined, writable: true },
