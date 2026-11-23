@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Addons no longer raise a false 'Database is newer than this version' warning at boot for migrations they declare in a later phase
+- Deleting a device no longer waits on its removal hooks one after the other; they run together, and one that fails is logged and retried without delaying the rest.
 
 ## [1.2.943] - 2026-11-23
 

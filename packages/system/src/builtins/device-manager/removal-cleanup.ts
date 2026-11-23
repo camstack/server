@@ -41,6 +41,13 @@ export interface RemovalCleanupOptions {
   readonly logger: IScopedLogger
   /** The log message stem; the hook fan-out (D865) runs its own instance under another one. */
   readonly label?: string
+  /**
+   * Start every step at once instead of one after the other. For steps that are
+   * independent by construction (the hook implementers, D865): a slow one then
+   * costs its own time, not the sum. A step that throws still neither skips nor
+   * delays the rest.
+   */
+  readonly concurrent?: boolean
   readonly retryDelaysMs?: readonly number[]
   readonly setTimer?: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
   readonly clearTimer?: (handle: ReturnType<typeof setTimeout>) => void
@@ -59,11 +66,11 @@ interface Attempt {
   readonly errors: Record<string, string>
 }
 
-async function attempt(steps: readonly RemovalStep[]): Promise<Attempt> {
+async function attempt(steps: readonly RemovalStep[], concurrent: boolean): Promise<Attempt> {
   const counts: Record<string, number> = {}
   const failed: RemovalStep[] = []
   const errors: Record<string, string> = {}
-  for (const step of steps) {
+  const runOne = async (step: RemovalStep): Promise<void> => {
     try {
       counts[step.store] = await step.run()
     } catch (err: unknown) {
@@ -71,11 +78,18 @@ async function attempt(steps: readonly RemovalStep[]): Promise<Attempt> {
       errors[step.store] = errMsg(err)
     }
   }
+  if (concurrent) {
+    // `runOne` never rejects, so every step runs to its own end.
+    await Promise.all(steps.map(runOne))
+  } else {
+    for (const step of steps) await runOne(step)
+  }
   return { counts, failed, errors }
 }
 
 export function createRemovalCleanup(opts: RemovalCleanupOptions): RemovalCleanup {
   const label = opts.label ?? 'device removal cleanup'
+  const concurrent = opts.concurrent ?? false
   const delays = opts.retryDelaysMs ?? REMOVAL_RETRY_DELAYS_MS
   const setTimer = opts.setTimer ?? ((fn, ms) => setTimeout(fn, ms))
   const clearTimer = opts.clearTimer ?? ((handle) => clearTimeout(handle))
@@ -110,7 +124,7 @@ export function createRemovalCleanup(opts: RemovalCleanupOptions): RemovalCleanu
     steps: readonly RemovalStep[],
     retryIndex: number,
   ): Promise<void> => {
-    const result = await attempt(steps)
+    const result = await attempt(steps, concurrent)
     opts.logger.info(`${label} retried`, {
       tags: { deviceId },
       meta: { counts: result.counts, failed: result.failed.map((s) => s.store), retryIndex },
@@ -120,7 +134,7 @@ export function createRemovalCleanup(opts: RemovalCleanupOptions): RemovalCleanu
 
   return {
     async run(deviceId, steps) {
-      const result = await attempt(steps)
+      const result = await attempt(steps, concurrent)
       const failedStores = result.failed.map((s) => s.store)
       const meta = { counts: result.counts, failed: failedStores, errors: result.errors }
       if (failedStores.length === 0) {

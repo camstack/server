@@ -1423,6 +1423,7 @@ export class DeviceManagerAddon extends BaseAddon {
       this.removalHooksCleanupImpl = createRemovalCleanup({
         logger: this.ctx.logger,
         label: 'device removal hooks',
+        concurrent: true,
       })
     }
     return this.removalHooksCleanupImpl
