@@ -607,6 +607,8 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   /** Steps blocked only on another owner's step that has not applied yet (run again when it does). */
   private readonly migrationWaits = new MigrationDependencyWaits()
   private migrationWatch = false
+  /** Every id announced applied since the subscription: closes the in-flight-run window. */
+  private readonly migrationAppliedSeen = new Set<string>()
   private migrationRerunTail: Promise<void> = Promise.resolve()
 
   /**
@@ -618,25 +620,37 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     if (this.migrationWatch) return
     this.migrationWatch = true
     this.subscribe({ category: EventCategory.MigrationApplied }, (event) => {
-      const freed = this.migrationWaits.releasedBy(appliedIdsOf(event.data))
-      if (freed.length === 0) return
-      this.migrationRerunTail = this.migrationRerunTail
-        .catch(() => undefined)
-        .then(async () => {
-          this.ctx.logger.info('a migration predecessor applied — running the blocked steps', {
-            meta: { ids: freed },
-          })
-          await this.runBound([], { only: freed })
-        })
-        .then(
-          () => undefined,
-          (err: unknown) => {
-            this.ctx.logger.error('the blocked migration steps could not run again', {
-              meta: { ids: freed, error: errMsg(err) },
-            })
-          },
-        )
+      const ids = appliedIdsOf(event.data)
+      // Kept: an announce that lands while a run is in flight finds nothing waiting yet (the
+      // report is recorded after the run), so `runBound` releases against these once it has.
+      for (const id of ids) this.migrationAppliedSeen.add(id)
+      this.releaseBlockedMigrations(ids)
     })
+  }
+
+  /**
+   * Run again the waiting steps whose predecessor is among `applied`. The event is a hint (D8):
+   * a dropped one leaves the step blocked until this addon's next boot, which reads the ledger.
+   */
+  private releaseBlockedMigrations(applied: readonly string[]): void {
+    const freed = this.migrationWaits.releasedBy(applied)
+    if (freed.length === 0) return
+    this.migrationRerunTail = this.migrationRerunTail
+      .catch(() => undefined)
+      .then(async () => {
+        this.ctx.logger.info('a migration predecessor applied — running the blocked steps', {
+          meta: { ids: freed },
+        })
+        await this.runBound([], { only: freed })
+      })
+      .then(
+        () => undefined,
+        (err: unknown) => {
+          this.ctx.logger.error('the blocked migration steps could not run again', {
+            meta: { ids: freed, error: errMsg(err) },
+          })
+        },
+      )
   }
 
   private async runBound(
@@ -707,6 +721,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       ...report.blocked,
       ...report.skipped,
     ])
+    this.releaseBlockedMigrations([...this.migrationAppliedSeen])
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)
     }

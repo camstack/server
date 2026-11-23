@@ -164,7 +164,11 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
   const SELF = 'probe/2026-11-01-one'
 
   /** The hub blocks the first start on DEP; later starts proceed. */
-  function blockingHub(calls: string[], reason: string): TRPCLink<AppRouter> {
+  function blockingHub(
+    calls: string[],
+    reason: string,
+    whileBlocking: () => void,
+  ): TRPCLink<AppRouter> {
     let starts = 0
     return () =>
       ({ op }) =>
@@ -179,7 +183,7 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
                 }
               : op.path === 'migrations.startMigration'
                 ? ++starts === 1
-                  ? { proceed: false, state: 'blocked', reason }
+                  ? (whileBlocking(), { proceed: false, state: 'blocked', reason })
                   : { proceed: true, state: 'pending', reason: null }
                 : { status: 'applied', error: null, rowsChanged: 0 }
           observer.next({ result: { data: answer } })
@@ -187,11 +191,21 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
         })
   }
 
-  async function bootProbe(reason: string) {
+  async function bootProbe(reason: string, duringRun?: readonly string[]) {
     const calls: string[] = []
     let handler: SystemEventHandler | null = null
+    const announce = (ids: readonly string[]) =>
+      handler?.({
+        id: 'e1',
+        timestamp: new Date(),
+        source: { type: 'addon', id: 'sqlite-settings' },
+        category: EventCategory.MigrationApplied,
+        data: { ids },
+      })
     const base = fakeAddonContext({
-      api: createTRPCClient<AppRouter>({ links: [blockingHub(calls, reason)] }),
+      api: createTRPCClient<AppRouter>({
+        links: [blockingHub(calls, reason, () => duringRun && announce(duringRun))],
+      }),
     })
     const ctx: AddonContext = {
       ...base,
@@ -209,14 +223,7 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
     return {
       calls,
       report,
-      fire: (ids: string[]) =>
-        handler?.({
-          id: 'e1',
-          timestamp: new Date(),
-          source: { type: 'addon', id: 'sqlite-settings' },
-          category: EventCategory.MigrationApplied,
-          data: { ids },
-        }),
+      fire: (ids: string[]) => announce(ids),
     }
   }
   const finishes = (calls: string[]) => calls.filter((c) => c === 'migrations.finishMigration')
@@ -230,6 +237,11 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
       expect(calls.filter((c) => c === 'migrations.startMigration')).toHaveLength(1),
     )
     fire([DEP])
+    await vi.waitFor(() => expect(finishes(calls)).toHaveLength(1))
+  })
+
+  it('still runs the step when the predecessor applied WHILE the first run was in flight', async () => {
+    const { calls } = await bootProbe(`dependency-pending:${DEP}`, [DEP])
     await vi.waitFor(() => expect(finishes(calls)).toHaveLength(1))
   })
 
