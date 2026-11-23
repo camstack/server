@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addons no longer raise a false 'Database is newer than this version' warning at boot for migrations they declare in a later phase
 - Deleting a device no longer waits on its removal hooks one after the other; they run together, and one that fails is logged and retried without delaying the rest.
 - Deleting an integration reads only that integration's own devices when it claims legacy untagged ones, instead of listing the whole fleet.
+- Deleting a composition releases its claims with one composer apply instead of waiting behind a full block converge pass.
 
 ## [1.2.943] - 2026-11-23
 

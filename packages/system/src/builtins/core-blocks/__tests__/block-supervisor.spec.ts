@@ -25,7 +25,7 @@ import {
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
 } from '@camstack/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { blockAddonId } from '../block-package.js'
 import {
   type BlockProcessHost,
@@ -695,6 +695,76 @@ describe('composition blocks', () => {
     expect(retired.length).toBeGreaterThan(0)
     await supervisor.converge()
     expect(composer.applied.at(-1)?.retiredBlockIds).toContain('c1')
+  })
+
+  it('retireComposition releases the claims without joining the converge chain', async () => {
+    const composer = new FakeComposer()
+    store.setBlocks([composition(), composition({ id: 'c2' })])
+    const supervisor = makeSupervisor({ composer })
+    await supervisor.converge()
+
+    // A pass is in flight and stays there: it is parked on the process host.
+    const gate = Promise.withResolvers<readonly BlockRunnerSnapshot[]>()
+    const hostList = vi.spyOn(host, 'list').mockImplementation(() => gate.promise)
+    const parked = supervisor.converge()
+    await Promise.resolve()
+    expect(hostList).toHaveBeenCalledTimes(1)
+
+    store.setBlocks([composition({ id: 'c2' })])
+    let released: unknown = 'pending'
+    void supervisor.retireComposition('c1').then((claims) => {
+      released = claims
+    })
+    for (let i = 0; i < 20; i++) await Promise.resolve()
+
+    // It answered while the pass was still parked, and asked the composer about
+    // the retired block alone (with the compositions that remain), not the host.
+    expect(released).toEqual([])
+    expect(hostList).toHaveBeenCalledTimes(1)
+    const last = composer.applied.at(-1)
+    expect(last?.retiredBlockIds).toEqual(['c1'])
+    expect(last?.blocks.map((b) => b.id)).toEqual(['c2'])
+
+    gate.resolve([])
+    await parked
+  })
+
+  it('a retired block whose claim did not land is retried by the next pass, and a landed one is not', async () => {
+    const composer = new FakeComposer()
+    let failing = true
+    composer.answer = (input) => ({
+      blocks: input.blocks.map((b) => ({ blockId: b.id, status: 'running' })),
+      acted: true,
+      unreleasedClaims:
+        failing && input.retiredBlockIds?.includes('c1') === true
+          ? [{ deviceId: 101, capName: 'doorbell', owner: 'c1', error: 'row-unreadable' }]
+          : [],
+    })
+    store.setBlocks([composition()])
+    const supervisor = makeSupervisor({ composer })
+    await supervisor.converge()
+    store.setBlocks([])
+    expect(await supervisor.retireComposition('c1')).toHaveLength(1)
+
+    failing = false
+    await supervisor.converge()
+    expect(composer.applied.at(-1)?.retiredBlockIds).toEqual(['c1'])
+    const landed = composer.applied.length
+    await supervisor.converge()
+    await supervisor.converge()
+    expect(composer.applied.slice(landed).flatMap((a) => a.retiredBlockIds ?? [])).toEqual([])
+  })
+
+  it('retireComposition refuses loudly when the composer did not apply', async () => {
+    const composer = new FakeComposer()
+    composer.answer = (input) => ({
+      blocks: input.blocks.map((b) => ({ blockId: b.id, status: 'running' })),
+      acted: false,
+    })
+    store.setBlocks([composition()])
+    const supervisor = makeSupervisor({ composer })
+    store.setBlocks([])
+    await expect(supervisor.retireComposition('c1')).rejects.toThrow(/did not apply/)
   })
 })
 

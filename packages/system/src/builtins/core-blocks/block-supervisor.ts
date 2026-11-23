@@ -204,13 +204,16 @@ export class BlockSupervisor {
    * then never re-launch it.
    */
   /**
-   * The block row is already gone. The next apply names it retired so its
-   * claims are released before this resolves. A release that does not land is
-   * returned; the id stays retired so the following pass tries again.
+   * The block row is already gone. ONE composer apply names it retired so its
+   * claims are released before this resolves. It is NOT queued on the converge
+   * chain: that chain also launches, stops and reports every code block, and a
+   * delete waiting behind a pass that is compiling or spawning one paid for all
+   * of it. The composer serialises its own applies, so this one is ordered
+   * against a concurrent pass there. A release that does not land is returned;
+   * the id stays retired so the following pass tries again.
    */
   retireComposition(blockId: string): Promise<readonly UnreleasedClaim[]> {
-    this.retiredBlockIds = new Set([...this.retiredBlockIds, blockId])
-    return this.converge().then(() => this.claimsOf(blockId))
+    return this.releaseRetired(blockId)
   }
 
   /**
@@ -400,6 +403,7 @@ export class BlockSupervisor {
       return
     }
     const restart = this.pendingCompositionRestarts
+    const sentRetired = this.retiredBlockIds
     const integrationId = this.deps.integrationId()
     const storeLoaded = this.deps.storeLoaded()
     try {
@@ -415,7 +419,7 @@ export class BlockSupervisor {
         })),
         restartBlockIds: [...restart],
         unreadableBlocks: [...unreadable],
-        retiredBlockIds: [...this.retiredBlockIds],
+        retiredBlockIds: [...sentRetired],
       })
       if (this.failedApplies > 0) {
         this.deps.logger.info('the composer answered again', {
@@ -428,7 +432,7 @@ export class BlockSupervisor {
       )
       this.emptyAppliesOwed =
         !nothingToSay || !result.acted ? 2 : Math.max(0, this.emptyAppliesOwed - 1)
-      this.noteRelease(result)
+      this.noteRelease(result, sentRetired)
       const verdicts = new Map(result.blocks.map((v) => [v.blockId, v]))
       for (const { block } of compositions) {
         const verdict = verdicts.get(block.id)
@@ -458,17 +462,72 @@ export class BlockSupervisor {
     }
   }
 
-  private claimsOf(blockId: string): readonly UnreleasedClaim[] {
-    if (this.releaseReport.error !== null) {
+  private async releaseRetired(blockId: string): Promise<readonly UnreleasedClaim[]> {
+    const composer = this.deps.composer
+    if (composer === null) {
       throw new Error(
-        `core-blocks: claims of "${blockId}" were not released — ${this.releaseReport.error}`,
+        `core-blocks: claims of "${blockId}" were not released — no composer is available on this node — claims cannot be released`,
       )
     }
-    return this.releaseReport.unreleased.filter((claim) => claim.owner === blockId)
+    const sent = new Set([...this.retiredBlockIds, blockId])
+    this.retiredBlockIds = sent
+    let result: ComposerApplyResult
+    try {
+      result = await composer.apply(this.compositionApplyInput([], sent))
+    } catch (err: unknown) {
+      throw new Error(`core-blocks: claims of "${blockId}" were not released — ${errMsg(err)}`, {
+        cause: err,
+      })
+    }
+    const unreleased = result.unreleasedClaims ?? []
+    if (!result.acted) {
+      throw new Error(
+        `core-blocks: claims of "${blockId}" were not released — the composer did not apply — claims stay until it does`,
+      )
+    }
+    this.settleRetired(sent, unreleased)
+    return unreleased.filter((claim) => claim.owner === blockId)
+  }
+
+  /**
+   * After an apply that acted: an id it SENT stays retired only while it still
+   * holds a claim; an id added meanwhile (not in `sent`) is left alone — a
+   * concurrent apply must not forget a retirement it never carried.
+   */
+  private settleRetired(sent: ReadonlySet<string>, unreleased: readonly UnreleasedClaim[]): void {
+    const failed = new Set(unreleased.map((claim) => claim.owner))
+    this.retiredBlockIds = new Set(
+      [...this.retiredBlockIds].filter((id) => !sent.has(id) || failed.has(id)),
+    )
+  }
+
+  /** What one composer apply carries: every composition placed here, plus the retired ids. */
+  private compositionApplyInput(
+    restart: ReadonlySet<string>,
+    retired: ReadonlySet<string>,
+  ): ComposerApplyInput {
+    const compositions = this.deps.store.list().flatMap((block) => {
+      const composition = coreBlockComposition(block)
+      return composition !== null && this.isPlacedHere(block) ? [{ block, composition }] : []
+    })
+    return {
+      integrationId: this.deps.integrationId(),
+      storeLoaded: this.deps.storeLoaded(),
+      blocks: compositions.map(({ block, composition }) => ({
+        id: block.id,
+        name: block.name,
+        enabled: block.enabled,
+        updatedAt: block.updatedAt,
+        composition,
+      })),
+      restartBlockIds: [...restart],
+      unreadableBlocks: [...this.deps.store.unreadableCompositions()],
+      retiredBlockIds: [...retired],
+    }
   }
 
   /** Remember which retired ids still hold a claim. An apply that did not act keeps every id. */
-  private noteRelease(result: ComposerApplyResult): void {
+  private noteRelease(result: ComposerApplyResult, sent: ReadonlySet<string>): void {
     const unreleased = result.unreleasedClaims ?? []
     if (!result.acted) {
       this.releaseReport = {
@@ -478,8 +537,7 @@ export class BlockSupervisor {
       return
     }
     this.releaseReport = { error: null, unreleased }
-    const failed = new Set(unreleased.map((claim) => claim.owner))
-    this.retiredBlockIds = new Set([...this.retiredBlockIds].filter((id) => failed.has(id)))
+    this.settleRetired(sent, unreleased)
   }
 
   /** Compile, write the package, spawn. Each failure is reported ON the block
