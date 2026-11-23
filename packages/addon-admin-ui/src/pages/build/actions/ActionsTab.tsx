@@ -34,6 +34,7 @@ import { QuickEditDialog } from '../shared/QuickEditDialog'
 import { actionQuickEditInput, quickEditValuesOf } from '../shared/quick-edit-inputs'
 import { BuildQuickModal } from '../shared/BuildQuickModal'
 import { ActionExporters } from '../shared/quick-bodies/ActionExporters'
+import { ActionLastRuns } from '../shared/quick-bodies/QuickLastRuns'
 import { ActionQuickBody } from '../shared/quick-bodies/ActionQuickBody'
 import { ActionEditor } from './ActionEditor'
 
@@ -224,7 +225,11 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
         onSave={(values) => {
           const check = actionQuickEditInput(modalEntry, values)
-          if (check.ok) modalUpdate.mutate({ actionId: modalEntry.id, action: check.input })
+          if (check.ok)
+            modalUpdate.mutate({
+              actionId: modalEntry.id,
+              action: check.input,
+            })
         }}
         openLabel={t('build.quickModal.openAction', 'Open action')}
         onOpen={() => {
@@ -236,6 +241,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
           setQuickModalId(null)
         }}
         exporters={<ActionExporters actionId={modalEntry.id} />}
+        lastRuns={<ActionLastRuns actionId={modalEntry.id} />}
       >
         <ActionQuickBody entry={modalEntry} />
       </BuildQuickModal>

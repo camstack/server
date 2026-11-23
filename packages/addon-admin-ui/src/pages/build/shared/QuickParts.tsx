@@ -10,6 +10,7 @@ import {
   KeyValueList,
   SectionCard,
   Skeleton,
+  useCoreBlocksGet,
   useDeviceLabelById,
 } from '@camstack/ui-library'
 import { type ReactNode, useId } from 'react'
@@ -22,7 +23,7 @@ import {
   useOutcomeLabel,
   useSchedulerOutcomeLabel,
 } from '../flow/RunsPanel'
-import { type QuickRunRow, quickRunRows, runDurationParts } from './quick-runs'
+import { type QuickRunRow, type QuickStartedBy, quickRunRows, runDurationParts } from './quick-runs'
 
 export interface QuickSectionProps {
   readonly title: string
@@ -73,6 +74,47 @@ export function QuickDeviceLinks({
 
 export function QuickFacts({ items }: { readonly items: readonly QuickFact[] }): ReactNode {
   return <KeyValueList items={[...items]} />
+}
+
+/**
+ * The caller of a run, by name. Pending is a skeleton and an id that does not
+ * resolve (deleted, unreadable) is said as unknown with the id: an unanswered
+ * lookup never reads as a name, and a raw id is never shown alone (D315).
+ */
+export function QuickStartedByName({
+  startedBy,
+}: {
+  readonly startedBy: QuickStartedBy
+}): ReactNode {
+  const { t } = useTranslation()
+  const block = useCoreBlocksGet({ blockId: startedBy.blockId }, { retry: false })
+  if (block.isPending) {
+    return (
+      <Skeleton
+        className="inline-block h-3 w-20 align-middle"
+        data-testid="quick-started-by-pending"
+      />
+    )
+  }
+  const name = block.data?.block?.name
+  if (name === undefined) {
+    return (
+      <span className="text-foreground-subtle" data-testid="quick-started-by-unknown">
+        {t('build.quickModal.startedByUnknown', 'unknown ({{id}})', {
+          id: startedBy.blockId,
+        })}
+      </span>
+    )
+  }
+  return (
+    <Link
+      to={`/build?tab=automations&block=${encodeURIComponent(startedBy.blockId)}`}
+      className="hover:underline"
+      data-testid="quick-started-by-name"
+    >
+      {name}
+    </Link>
+  )
 }
 
 function DurationLabel({ ms }: { readonly ms: number }): ReactNode {
@@ -133,6 +175,12 @@ function RunRow({
       <span className="text-foreground-subtle">
         <DurationLabel ms={row.durationMs} />
       </span>
+      {row.startedBy !== null && (
+        <span className="basis-full text-foreground-muted" data-testid="quick-started-by">
+          {t('build.quickModal.startedBy', 'Started by')}{' '}
+          <QuickStartedByName startedBy={row.startedBy} />
+        </span>
+      )}
       {row.reason !== null && (
         <span className="min-w-0 basis-full flex-1 break-words text-foreground sm:basis-0">
           {row.reason}

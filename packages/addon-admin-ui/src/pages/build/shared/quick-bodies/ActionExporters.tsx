@@ -1,11 +1,14 @@
 /**
- * Exporter shortcuts of an action: one switch per export instance that can
+ * The Exporters tab of an action: one switch per export instance that can
  * expose actions (Alexa scenes, a Home Assistant button, …). What an exporter
  * can expose is ASKED of it (`listSupportedEntityKinds`); an instance that does
  * not answer, or does not take actions, shows nothing — never a switch that
- * cannot work.
+ * cannot work. An exposed action shows the name the exporter publishes it as.
+ * The panel is mounted only while its tab is open, so none of these queries
+ * runs at modal open.
  */
 import {
+  Skeleton,
   Switch,
   useDeviceExportExposeEntity,
   useDeviceExportListExposedEntities,
@@ -18,11 +21,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
-import { QuickSection } from '../QuickParts'
 
 const KindsSchema = z.array(z.string())
 const ExposedSchema = z.array(
-  z.object({ entity: z.object({ kind: z.string(), actionId: z.string().optional() }) }),
+  z.object({
+    entity: z.object({ kind: z.string(), actionId: z.string().optional() }),
+    exposedAs: z.string().optional(),
+  }),
 )
 
 function ActionExporterRow({
@@ -52,7 +57,8 @@ function ActionExporterRow({
   const parsed = ExposedSchema.safeParse(exposed.data)
   // Unanswered stays off the screen: not-yet-known must not read as "not exposed".
   if (!parsed.success) return null
-  const on = parsed.data.some((e) => e.entity.kind === 'action' && e.entity.actionId === actionId)
+  const mine = parsed.data.find((e) => e.entity.kind === 'action' && e.entity.actionId === actionId)
+  const on = mine !== undefined
   const target = {
     nodeId: 'hub',
     addonId: instance.addonId,
@@ -61,7 +67,19 @@ function ActionExporterRow({
   }
   return (
     <label className="flex items-center justify-between gap-3 text-sm">
-      <span className="min-w-0 truncate">{instance.name}</span>
+      <span className="min-w-0">
+        <span className="block truncate">{instance.name}</span>
+        {mine?.exposedAs !== undefined && (
+          <span
+            className="block truncate text-xs text-foreground-muted"
+            data-testid="exporter-exposed-as"
+          >
+            {t('build.quickModal.exposedAs', 'Exported as {{name}}', {
+              name: mine.exposedAs,
+            })}
+          </span>
+        )}
+      </span>
       <Switch
         checked={on}
         disabled={expose.isPending || unexpose.isPending}
@@ -77,19 +95,24 @@ function ActionExporterRow({
 export function ActionExporters({ actionId }: { readonly actionId: string }): ReactNode {
   const { t } = useTranslation()
   const instances = useInstancesOfCap({ functionCap: 'device-export' })
+  if (instances.isLoading) return <Skeleton className="h-10 w-full" />
   const usable = (instances.data ?? []).filter((i) => i.usable)
-  if (usable.length === 0) return null
+  if (usable.length === 0) {
+    return (
+      <p className="text-xs text-foreground-subtle">
+        {t('build.quickModal.noExporters', 'No exporter is set up.')}
+      </p>
+    )
+  }
   return (
-    <QuickSection title={t('build.quickModal.exporters', 'Exporters')}>
-      <div className="space-y-2">
-        {usable.map((instance) => (
-          <ActionExporterRow
-            key={`${instance.addonId}:${instance.id}`}
-            instance={instance}
-            actionId={actionId}
-          />
-        ))}
-      </div>
-    </QuickSection>
+    <div className="space-y-2">
+      {usable.map((instance) => (
+        <ActionExporterRow
+          key={`${instance.addonId}:${instance.id}`}
+          instance={instance}
+          actionId={actionId}
+        />
+      ))}
+    </div>
   )
 }

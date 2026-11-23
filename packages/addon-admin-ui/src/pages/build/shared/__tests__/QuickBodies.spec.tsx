@@ -10,14 +10,27 @@ import { describe, expect, it, vi } from 'vitest'
 import '../../../../i18n'
 import { ActionQuickBody } from '../quick-bodies/ActionQuickBody'
 import { AutomationQuickBody } from '../quick-bodies/AutomationQuickBody'
+import { ActionLastRuns, AutomationLastRuns } from '../quick-bodies/QuickLastRuns'
 
 const FAILED: AutomationRunTrace = {
   runId: 'r-failed',
   startedAt: 1000,
   endedAt: 3500,
-  trigger: { kind: 'detection', outcome: 'pass', reason: 'animal seen', vars: {} },
+  trigger: {
+    kind: 'detection',
+    outcome: 'pass',
+    reason: 'animal seen',
+    vars: {},
+  },
   conditions: [],
-  steps: [{ path: 'actions.0', kind: 'cap', outcome: 'error', message: 'Feeder offline' }],
+  steps: [
+    {
+      path: 'actions.0',
+      kind: 'cap',
+      outcome: 'error',
+      message: 'Feeder offline',
+    },
+  ],
   outcome: 'failed',
   repeat: 1,
   lastAt: 3500,
@@ -28,7 +41,10 @@ let traces: readonly AutomationRunTrace[] = [FAILED]
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useCoreBlocksGetTraces: () => ({ data: { traces, lastError: null }, error: null }),
+  useCoreBlocksGetTraces: () => ({
+    data: { traces, lastError: null },
+    error: null,
+  }),
   useActionsGetTraces: () => ({ data: { traces }, error: null }),
   useActionsRun: () => ({ mutate: runMutate, isPending: false, error: null }),
 }))
@@ -66,10 +82,10 @@ function wrap(node: React.ReactNode): React.ReactNode {
   )
 }
 
-describe('AutomationQuickBody', () => {
+describe('AutomationLastRuns', () => {
   it('lists the last runs with outcome and reason, and each opens the full run', () => {
     const onOpenRun = vi.fn()
-    render(wrap(<AutomationQuickBody block={BLOCK} onOpenRun={onOpenRun} />))
+    render(wrap(<AutomationLastRuns blockId={BLOCK.id} onOpenRun={onOpenRun} />))
     const row = screen.getByTestId('quick-run-row')
     expect(row.textContent).toContain('Feeder offline')
     fireEvent.click(screen.getByTestId('quick-run-open'))
@@ -78,18 +94,31 @@ describe('AutomationQuickBody', () => {
 
   it('says "never ran" when the ledger answered with no run', () => {
     traces = []
-    render(wrap(<AutomationQuickBody block={BLOCK} onOpenRun={vi.fn()} />))
+    render(wrap(<AutomationLastRuns blockId={BLOCK.id} onOpenRun={vi.fn()} />))
     expect(screen.queryByTestId('quick-run-row')).toBeNull()
     expect(screen.getByText('Never ran')).toBeTruthy()
     traces = [FAILED]
   })
 })
 
-describe('ActionQuickBody', () => {
-  it('runs the action from the modal and lists its executions without a run link', () => {
-    render(wrap(<ActionQuickBody entry={ACTION} />))
+describe('AutomationQuickBody', () => {
+  it('carries the summary only: the runs live in their own tab', () => {
+    render(wrap(<AutomationQuickBody block={BLOCK} />))
+    expect(screen.queryByTestId('quick-run-row')).toBeNull()
+  })
+})
+
+describe('ActionLastRuns', () => {
+  it('lists its executions without a run link', () => {
+    render(wrap(<ActionLastRuns actionId={ACTION.id} />))
     expect(screen.getByTestId('quick-run-row')).toBeTruthy()
     expect(screen.queryByTestId('quick-run-open')).toBeNull()
+  })
+})
+
+describe('ActionQuickBody', () => {
+  it('runs the action from the modal', () => {
+    render(wrap(<ActionQuickBody entry={ACTION} />))
     fireEvent.click(screen.getByTestId('quick-action-run'))
     expect(runMutate).toHaveBeenCalledWith({ actionId: 'internal:abc' })
   })
@@ -98,7 +127,10 @@ describe('ActionQuickBody', () => {
     render(
       wrap(
         <ActionQuickBody
-          entry={{ ...ACTION, status: { isRunning: true, lastRunAt: 1, lastError: null } }}
+          entry={{
+            ...ACTION,
+            status: { isRunning: true, lastRunAt: 1, lastError: null },
+          }}
         />,
       ),
     )

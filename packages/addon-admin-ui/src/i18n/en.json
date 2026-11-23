@@ -6535,7 +6535,13 @@
       "steps": "Steps",
       "summary": "Summary",
       "triggers": "It triggers",
-      "type": "Type"
+      "type": "Type",
+      "tabSettings": "Settings",
+      "startedBy": "Started by",
+      "startedByUnknown": "unknown ({{id}})",
+      "exposedAs": "Exported as {{name}}",
+      "noExporters": "No exporter is set up.",
+      "exportersNeedDevice": "Exporters are available once the device is reported."
     }
   },
   "automation": {

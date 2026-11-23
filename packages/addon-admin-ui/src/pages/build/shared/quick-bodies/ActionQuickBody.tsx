@@ -1,24 +1,15 @@
 /**
- * Action quick body: what it does (steps, the devices it names), a Run button,
- * and its last executions. The editor cannot select a run from a link, so the
- * rows carry no per-run link.
+ * Action quick body: what it does (steps, the devices it names), and a Run button. Its
+ * last executions are their own tab (`QuickLastRuns`).
  */
 import type { ActionEntry } from '@camstack/types'
-import { Badge, Button, useActionsGetTraces, useActionsRun } from '@camstack/ui-library'
+import { Badge, Button, useActionsRun } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { actionDeviceIds } from '../action-devices'
-import {
-  type QuickFact,
-  QuickDeviceLinks,
-  QuickFacts,
-  QuickRunList,
-  QuickSection,
-} from '../QuickParts'
-
-const TRACES_POLL_MS = 10_000
+import { type QuickFact, QuickDeviceLinks, QuickFacts, QuickSection } from '../QuickParts'
 
 export interface ActionQuickBodyProps {
   readonly entry: ActionEntry
@@ -30,7 +21,6 @@ export function ActionQuickBody({ entry }: ActionQuickBodyProps): ReactNode {
   const run = useActionsRun({
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: [['actions']] }),
   })
-  const traces = useActionsGetTraces({ actionId: entry.id }, { refetchInterval: TRACES_POLL_MS })
   const facts: QuickFact[] = [
     {
       key: t('build.quickModal.source', 'Source'),
@@ -75,14 +65,6 @@ export function ActionQuickBody({ entry }: ActionQuickBodyProps): ReactNode {
             <Play className="h-4 w-4" /> {t('actions.list.run', 'Run')}
           </Button>
         </div>
-      </QuickSection>
-      <QuickSection title={t('build.quickModal.lastExecutions', 'Last executions')}>
-        <QuickRunList
-          traces={traces.data?.traces}
-          failed={traces.error !== null && traces.error !== undefined}
-          emptyLabel={t('actions.status.neverRan', 'Never ran')}
-          kind="run"
-        />
       </QuickSection>
     </>
   )

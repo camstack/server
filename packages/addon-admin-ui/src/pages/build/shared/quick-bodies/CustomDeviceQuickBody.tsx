@@ -23,7 +23,7 @@ export interface CustomDeviceQuickBodyProps {
   readonly row: CompositionRow
 }
 
-/** The produced device's export section (Alexa / HomeKit / HA), when it has an id yet. */
+/** The Exporters tab: the produced device's export section (every field each provider declares, its name included), mounted only while the tab is open. */
 export function CustomDeviceExporters({ row }: CustomDeviceQuickBodyProps): ReactNode {
   const { t } = useTranslation()
   const deviceId = row.reportedDeviceId
@@ -31,13 +31,20 @@ export function CustomDeviceExporters({ row }: CustomDeviceQuickBodyProps): Reac
     { deviceId: deviceId ?? 0 },
     { enabled: deviceId !== null && deviceId > 0 },
   )
-  if (deviceId === null) return null
+  if (deviceId === null) {
+    return (
+      <p className="text-xs text-foreground-subtle">
+        {t(
+          'build.quickModal.exportersNeedDevice',
+          'Exporters are available once the device is reported.',
+        )}
+      </p>
+    )
+  }
   return (
-    <QuickSection title={t('build.quickModal.exporters', 'Exporters')}>
-      <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
-        <DeviceAggregateSection deviceId={deviceId} sectionFilter={isDeviceExportSection} />
-      </DeviceContextProvider>
-    </QuickSection>
+    <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
+      <DeviceAggregateSection deviceId={deviceId} sectionFilter={isDeviceExportSection} />
+    </DeviceContextProvider>
   )
 }
 

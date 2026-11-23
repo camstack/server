@@ -6610,7 +6610,13 @@
       "steps": "Passi",
       "summary": "Riepilogo",
       "triggers": "Cosa attiva",
-      "type": "Tipo"
+      "type": "Tipo",
+      "tabSettings": "Impostazioni",
+      "startedBy": "Avviata da",
+      "startedByUnknown": "sconosciuta ({{id}})",
+      "exposedAs": "Esportata come {{name}}",
+      "noExporters": "Nessun exporter configurato.",
+      "exportersNeedDevice": "Gli exporter sono disponibili quando il dispositivo viene riportato."
     }
   },
   "automation": {

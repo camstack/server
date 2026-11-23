@@ -56,6 +56,7 @@ import { automationQuickEditInput, quickEditValuesOf } from './shared/quick-edit
 import { BuildQuickModal } from './shared/BuildQuickModal'
 import { runEditorPath } from './shared/quick-runs'
 import { AutomationQuickBody } from './shared/quick-bodies/AutomationQuickBody'
+import { AutomationLastRuns } from './shared/quick-bodies/QuickLastRuns'
 import { TemplateInstancePanel } from './templates/TemplateInstancePanel'
 import { FROM_TEMPLATE_PARAM } from './templates/template-params'
 
@@ -398,14 +399,17 @@ export function AutomationsTab({
           modalUpdate.reset()
           setQuickModalId(null)
         }}
+        lastRuns={
+          <AutomationLastRuns
+            blockId={quickModalBlock.id}
+            onOpenRun={(runId) => {
+              setQuickModalId(null)
+              void navigate(runEditorPath('automations', 'block', quickModalBlock.id, runId))
+            }}
+          />
+        }
       >
-        <AutomationQuickBody
-          block={quickModalBlock}
-          onOpenRun={(runId) => {
-            setQuickModalId(null)
-            void navigate(runEditorPath('automations', 'block', quickModalBlock.id, runId))
-          }}
-        />
+        <AutomationQuickBody block={quickModalBlock} />
       </BuildQuickModal>
     )
 

@@ -3,8 +3,8 @@
  * action, scheduler, script, composed device, template) opens on a row click,
  * modelled on the device quick-detail: a header with the name and the tags
  * edited in place, an enable switch where the kind has one, and the button to
- * the full editor; the section's own body (facts, exporters, last runs) sits
- * below as children.
+ * the full editor; the section's own body sits below as children, with the Exporters and
+ * Last runs panels as lazy tabs where the kind has them.
  *
  * The shell only collects the two header values and reports them; the save is
  * the section's own (`quick-edit-inputs.ts`), so a rename never drops a step, a
@@ -21,6 +21,10 @@ import {
   Input,
   Switch,
   TagInput,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -44,9 +48,21 @@ export interface BuildQuickModalProps {
   readonly openLabel: string
   readonly onOpen: () => void
   readonly onClose: () => void
-  /** Exporter shortcuts (Alexa / HomeKit / HA), drawn as their own section by the caller; absent when the kind is not exportable. */
+  /**
+   * The Exporters tab (Alexa / HomeKit / HA): the caller's panel, mounted only
+   * while that tab is open, so its queries do not fire at modal open. Absent
+   * when the kind is not exportable (no tab).
+   */
   readonly exporters?: ReactNode
+  /** The Last runs tab, mounted only while open for the same reason; absent when the kind keeps no run ledger. */
+  readonly lastRuns?: ReactNode
   readonly children: ReactNode
+}
+
+type QuickTabId = 'settings' | 'exporters' | 'runs'
+
+function asQuickTab(value: string): QuickTabId {
+  return value === 'exporters' || value === 'runs' ? value : 'settings'
 }
 
 export function BuildQuickModal(props: BuildQuickModalProps): ReactNode {
@@ -77,9 +93,11 @@ function QuickModalContent({
   openLabel,
   onOpen,
   exporters,
+  lastRuns,
   children,
 }: BuildQuickModalProps): ReactNode {
   const { t } = useTranslation()
+  const [tab, setTab] = useState<QuickTabId>('settings')
   const [draft, setDraft] = useState(name)
 
   /** What the stored item holds, or what was last submitted: every save is built
@@ -171,8 +189,33 @@ function QuickModalContent({
         {error !== null && <ErrorBox className="mt-2" message={error} />}
       </DialogHeader>
       <DialogBody className="space-y-3">
-        {exporters}
-        {children}
+        {exporters === undefined && lastRuns === undefined ? (
+          children
+        ) : (
+          <Tabs value={tab} onValueChange={(next) => setTab(asQuickTab(next))}>
+            <TabsList>
+              <TabsTrigger value="settings" data-testid="quick-tab-settings">
+                {t('build.quickModal.tabSettings', 'Settings')}
+              </TabsTrigger>
+              {exporters !== undefined && (
+                <TabsTrigger value="exporters" data-testid="quick-tab-exporters">
+                  {t('build.quickModal.exporters', 'Exporters')}
+                </TabsTrigger>
+              )}
+              {lastRuns !== undefined && (
+                <TabsTrigger value="runs" data-testid="quick-tab-runs">
+                  {t('build.quickModal.lastRuns', 'Last runs')}
+                </TabsTrigger>
+              )}
+            </TabsList>
+            {/* An inactive panel is not mounted: its queries start when its tab opens. */}
+            <TabsContent value="settings" className="space-y-3">
+              {children}
+            </TabsContent>
+            <TabsContent value="exporters">{exporters}</TabsContent>
+            <TabsContent value="runs">{lastRuns}</TabsContent>
+          </Tabs>
+        )}
       </DialogBody>
     </>
   )
