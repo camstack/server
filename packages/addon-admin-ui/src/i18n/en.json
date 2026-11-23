@@ -3139,7 +3139,8 @@
       "editWindow": "Choose when the trigger from {{name}} may run",
       "windowTitle": "When the trigger from {{name}} may run",
       "windowShared": "The limit applies to every source of this trigger.",
-      "anyClass": "Any class"
+      "anyClass": "Any class",
+      "replacesNote": "This trigger is narrowed in a way a pick cannot show. Saving replaces it with the events and parts chosen here."
     }
   },
   "compositionEditor": {

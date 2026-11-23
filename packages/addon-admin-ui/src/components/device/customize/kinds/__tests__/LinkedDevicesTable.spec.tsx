@@ -119,8 +119,8 @@ vi.mock('../../assignments/use-source-candidates', () => ({
     ],
   }),
 }))
-vi.mock('../../assignments/CustomizeDevicePickerDialog', () => ({
-  CustomizeDevicePickerDialog: (p: {
+vi.mock('../../source-selector/SourceSelectorDevicesDialog', () => ({
+  SourceSelectorDevicesDialog: (p: {
     open: boolean
     candidates: unknown
     onConfirm: (c: readonly unknown[]) => void

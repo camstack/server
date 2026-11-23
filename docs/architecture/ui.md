@@ -780,7 +780,7 @@ that reason. Hrefs come only from `lib/customization-routes.ts`.
   (`SOURCE_CAP_ACTIVE_FIELD`: binary/switch `on`, motion `detected`, …) and
   shows that field read-only with its current value — never reachability,
   never another capability's internal flag — then the behaviour parameters. Assignment linked-devices may still use
-  `CustomizeDevicePickerDialog` or `AssignmentFieldPicker` (device then field
+  `SourceSelectorDevicesDialog` or `AssignmentFieldPicker` (device then field
   via `sourceFor`). The notification smart picker (D636) stays a selection
   editor only — no live value or field step. Candidate reads stay bounded: one
   slim `listAll` and one `listDeviceIdsByCaps` per source cap, never

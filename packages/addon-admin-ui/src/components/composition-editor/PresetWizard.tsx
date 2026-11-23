@@ -9,7 +9,7 @@ import { compositionSourceKey, type CompositionSourceRef } from '@camstack/types
 import { Button, Input } from '@camstack/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CustomizeDevicePickerDialog } from '../device/customize/assignments/CustomizeDevicePickerDialog'
+import { SourceSelectorDevicesDialog } from '../device/customize/source-selector/SourceSelectorDevicesDialog'
 import { useCandidateDevices } from '../device/customize/assignments/use-source-candidates'
 import { vocabularyCapTitle } from '../device/customize/vocabulary-field-label'
 import { deviceCandidates, entitySuggestions } from './command-sources'
@@ -177,7 +177,7 @@ export function PresetWizard({ preset, saving, onSave, onBack }: PresetWizardPro
           {t('preset.back')}
         </Button>
       </div>
-      <CustomizeDevicePickerDialog
+      <SourceSelectorDevicesDialog
         open={picking !== null}
         title={picking === null ? '' : t('preset.pickTitle', { slot: t(picking.labelKey) })}
         selection="single"

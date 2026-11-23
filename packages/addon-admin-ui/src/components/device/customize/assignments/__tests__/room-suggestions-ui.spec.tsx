@@ -54,7 +54,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 const { AssignmentSection } = await import('../AssignmentSection')
-const { CustomizeDevicePickerDialog } = await import('../CustomizeDevicePickerDialog')
+const { SourceSelectorDevicesDialog } = await import(
+  '../../source-selector/SourceSelectorDevicesDialog'
+)
 beforeAll(installDialogPolyfill)
 
 function wrap(node: ReactNode): ReactElement {
@@ -124,7 +126,7 @@ describe('the device picker', () => {
   function open(onConfirm = vi.fn(), room: RoomSuggestions | null = ROOM) {
     render(
       wrap(
-        <CustomizeDevicePickerDialog
+        <SourceSelectorDevicesDialog
           open
           title="Add a motion sensor"
           selection="multi"

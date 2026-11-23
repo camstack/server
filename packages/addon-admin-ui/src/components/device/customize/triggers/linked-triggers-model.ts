@@ -134,8 +134,6 @@ function filterOf(sources: readonly LinkedTriggerSource[]): TriggerFilter {
   const events = fired.map((s) => s.eventIds ?? [])
   const parts = fired.map((s) => s.sourceIds ?? [])
   const first = { events: events[0] ?? [], parts: parts[0] ?? [] }
-  const anyOf = (lists: readonly (readonly string[])[]): readonly string[] =>
-    lists.some((l) => l.length === 0) ? [] : union(lists)
   if (events.every((e) => sameSet(e, first.events))) {
     return { kind: 'fired', events: first.events, parts: anyOf(parts) }
   }
@@ -143,6 +141,39 @@ function filterOf(sources: readonly LinkedTriggerSource[]): TriggerFilter {
     return { kind: 'fired', events: anyOf(events), parts: first.parts }
   }
   return { kind: 'custom' }
+}
+
+/** One unfiltered list means "any", so the union is empty; otherwise every id any list names. */
+function anyOf(lists: readonly (readonly string[])[]): readonly string[] {
+  return lists.some((l) => l.length === 0) ? [] : union(lists)
+}
+
+/**
+ * Where the filter dialog starts for a row. A fired row starts from its own pick; a
+ * narrower or foreign filter (per-part events, a payload predicate, a category) starts
+ * from what its fired sources name together, or from "any" — saving replaces it with
+ * the one pick the dialog can say.
+ */
+export function editPickOf(instance: TemplateInstance | undefined, deviceId: number): FiredPick {
+  const params = instance === undefined ? null : linkedTriggerParamsOf(instance.values)
+  if (params === null) return { events: [], parts: [] }
+  const fired = params.sources.flatMap((s) =>
+    s.kind === 'device-fired' && s.deviceId === deviceId ? [s] : [],
+  )
+  return {
+    events: anyOf(fired.map((s) => s.eventIds ?? [])),
+    parts: anyOf(fired.map((s) => s.sourceIds ?? [])),
+  }
+}
+
+/** Every row but a motion report has a filter or a class pick to edit; a motion report has neither. */
+export function isEditable(filter: TriggerFilter): boolean {
+  return filter.kind !== 'motion'
+}
+
+/** Whether saving the filter dialog drops something the dialog cannot show. */
+export function replacesFilter(filter: TriggerFilter): boolean {
+  return filter.kind === 'custom' || filter.kind === 'category'
 }
 
 export function triggerRows(instances: readonly TemplateInstance[]): TriggerRowsRead {
@@ -189,7 +220,11 @@ export function withRowAction(
   if (params === null) return null
   const { onForSeconds, ...plain } = params
   return choice === ON_FOR_CHOICE
-    ? { ...plain, action: 'on', onForSeconds: onForSeconds ?? DEFAULT_ON_FOR_SECONDS }
+    ? {
+        ...plain,
+        action: 'on',
+        onForSeconds: onForSeconds ?? DEFAULT_ON_FOR_SECONDS,
+      }
     : { ...plain, action: choice }
 }
 
@@ -340,7 +375,11 @@ export function newTriggerParams(
           fieldPath: MOTION_FIELD,
           becomes: true,
         }
-      : { kind: 'detection', deviceIds: [sourceDeviceId], subjects: [{ macro: 'person' }] }
+      : {
+          kind: 'detection',
+          deviceIds: [sourceDeviceId],
+          subjects: [{ macro: 'person' }],
+        }
   return {
     targetDeviceId,
     action: 'on',

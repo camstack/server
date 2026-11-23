@@ -3214,7 +3214,8 @@
       "editWindow": "Scegli quando il trigger di {{name}} può scattare",
       "windowTitle": "Quando il trigger di {{name}} può scattare",
       "windowShared": "Il limite vale per tutte le sorgenti di questo trigger.",
-      "anyClass": "Qualsiasi classe"
+      "anyClass": "Qualsiasi classe",
+      "replacesNote": "Questo trigger ha un filtro che una scelta non puo mostrare. Salvando viene sostituito con gli eventi e le parti scelti qui."
     }
   },
   "compositionEditor": {

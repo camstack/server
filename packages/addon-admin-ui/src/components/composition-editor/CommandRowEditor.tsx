@@ -21,7 +21,7 @@ import type {
   AssignmentCandidate,
   CandidateDevice,
 } from '../device/customize/assignments/assignment-candidates'
-import { CustomizeDevicePickerDialog } from '../device/customize/assignments/CustomizeDevicePickerDialog'
+import { SourceSelectorDevicesDialog } from '../device/customize/source-selector/SourceSelectorDevicesDialog'
 import type { RoomSuggestions } from '../device/customize/assignments/room-suggestions'
 import type { Known } from '../device/customize/known'
 import type { CustomizationSaveOutcome } from '../device/customize/use-customization'
@@ -300,7 +300,7 @@ function RowEditor({
           {t('commands.cancel')}
         </Button>
       </div>
-      <CustomizeDevicePickerDialog
+      <SourceSelectorDevicesDialog
         open={picking}
         title={t('commands.pickTitle', { method: row.method })}
         selection="single"

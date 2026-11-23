@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Backup entries and Notification rules: on a phone, retention, databases, locations and the snooze switch are edited from a sheet that opens when the row is tapped
+- Triggered by shows each device with its parent like the other device lists, every trigger can be edited (events and parts), and adding a device uses the common source selector.
 
 ## [1.2.738] - 2026-11-22
 

@@ -29,6 +29,8 @@ export interface TriggerFilterDialogProps {
   readonly deviceId: number
   readonly deviceName: string
   readonly pick: FiredPick
+  /** Saving drops a narrower filter this dialog cannot show: say so. */
+  readonly replaces?: boolean
   readonly busy: boolean
   readonly onSave: (pick: FiredPick) => void
   readonly onClose: () => void
@@ -38,13 +40,17 @@ export function TriggerFilterDialog({
   deviceId,
   deviceName,
   pick,
+  replaces = false,
   busy,
   onSave,
   onClose,
 }: TriggerFilterDialogProps): ReactNode {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<FiredPick>(pick)
-  const query = useDeviceStateGetCapSlice({ deviceId, capName: EVENT_EMITTER_CAP })
+  const query = useDeviceStateGetCapSlice({
+    deviceId,
+    capName: EVENT_EMITTER_CAP,
+  })
   const state = firedVocabularyOf({ status: query.status, data: query.data })
   const vocabulary = state.kind === 'known' ? state.vocabulary : []
   const parts = firedSources(vocabulary)
@@ -68,6 +74,9 @@ export function TriggerFilterDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
+          {replaces && (
+            <p className="text-xs text-foreground-subtle">{t('customize.triggers.replacesNote')}</p>
+          )}
           {state.kind !== 'known' && (
             <p
               role={state.kind === 'unknown' ? 'alert' : 'status'}
@@ -84,7 +93,10 @@ export function TriggerFilterDialog({
                 {t('customize.triggers.events')}
               </span>
               <ToggleChipRow
-                chips={eventIds.map((id) => ({ id, label: eventLabel.get(id) ?? id }))}
+                chips={eventIds.map((id) => ({
+                  id,
+                  label: eventLabel.get(id) ?? id,
+                }))}
                 off={chipsOff(eventIds, draft.events)}
                 allLabel={t('customize.triggers.anyEvent')}
                 ariaLabel={t('customize.triggers.events')}
@@ -99,7 +111,10 @@ export function TriggerFilterDialog({
             <div className="flex flex-col gap-1">
               <span className="text-xs text-foreground-muted">{t('customize.triggers.parts')}</span>
               <ToggleChipRow
-                chips={partIds.map((id) => ({ id, label: partLabel.get(id) ?? id }))}
+                chips={partIds.map((id) => ({
+                  id,
+                  label: partLabel.get(id) ?? id,
+                }))}
                 off={chipsOff(partIds, draft.parts)}
                 allLabel={t('customize.triggers.anyPart')}
                 ariaLabel={t('customize.triggers.parts')}

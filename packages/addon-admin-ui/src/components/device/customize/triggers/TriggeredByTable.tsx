@@ -18,6 +18,7 @@ import {
   type DeviceListColumn,
   deviceTypeMetaOf,
   IconButton,
+  resolveDeviceLabel,
   Select,
   Switch,
   useCoreBlocksCreate,
@@ -25,6 +26,8 @@ import {
   useCoreBlocksListTemplateInstances,
   useCoreBlocksSetEnabled,
   useCoreBlocksUpdate,
+  useDeviceNameIndex,
+  useDeviceNameNouns,
   useUiText,
 } from '@camstack/ui-library'
 import { Clock, Pencil, X, Zap } from 'lucide-react'
@@ -38,7 +41,7 @@ import {
   type CandidateDevice,
   candidateDetail,
 } from '../assignments/assignment-candidates'
-import { CustomizeDevicePickerDialog } from '../assignments/CustomizeDevicePickerDialog'
+import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
@@ -47,13 +50,16 @@ import { useConfirmRemove } from '../use-confirm-remove'
 import {
   actionChoiceOf,
   commandCapOf,
+  editPickOf,
   type DetectionClass,
   type FiredPick,
   filterSummary,
+  isEditable,
   LINKED_TRIGGER_COMMAND_CAPS,
   MOTION_CAP,
   newTriggerParams,
   offeredChoices,
+  replacesFilter,
   sourceKindOf,
   type TriggerRow,
   triggerRows,
@@ -95,6 +101,8 @@ function messageOf(error: unknown): string {
 export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const { t } = useTranslation()
   const uiText = useUiText()
+  const nameIndex = useDeviceNameIndex()
+  const nameNouns = useDeviceNameNouns()
   const confirmRemove = useConfirmRemove()
   const [picking, setPicking] = useState(false)
   const [editing, setEditing] = useState<TriggerTableRow | null>(null)
@@ -129,7 +137,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         notices={
           instances.status === 'error' ? (
             <p role="alert" className="text-xs text-warning break-words">
-              {t('customize.assign.unknown', { reason: instances.error.message })}
+              {t('customize.assign.unknown', {
+                reason: instances.error.message,
+              })}
             </p>
           ) : (
             <p role="status" className="text-xs text-foreground-subtle">
@@ -149,11 +159,29 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const fleetById = new Map<number, CandidateDevice>(
     fleet.kind === 'known' ? fleet.value.map((d) => [d.id, d]) : [],
   )
+  /** The common device label (parent, noun), as every other device list shows it. */
+  const labelOf = (d: CandidateDevice): string =>
+    resolveDeviceLabel(
+      {
+        id: d.id,
+        name: d.name,
+        type: d.type,
+        stableId: d.stableId,
+        role: d.role ?? null,
+        parentDeviceId: d.parentDeviceId ?? null,
+        location: d.location,
+        primaryChildEntityId: d.primaryChildEntityId ?? null,
+        primaryChildPreference: d.primaryChildPreference ?? null,
+      },
+      'compact',
+      nameIndex,
+      nameNouns,
+    )
   const rows: readonly TriggerTableRow[] = read.rows.map((row) => {
     const known = fleetById.get(row.deviceId)
     return {
       ...row,
-      name: known?.name ?? null,
+      name: known === undefined ? null : labelOf(known),
       type: known?.type ?? null,
       detail: known === undefined ? null : candidateDetail(known.integration, known.location),
     }
@@ -177,7 +205,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
               .map((d) => ({
                 deviceId: d.id,
                 ref: { addonId: d.addonId, stableId: d.stableId },
-                name: d.name,
+                name: labelOf(d),
                 detail: candidateDetail(d.integration, d.location),
                 meta: deviceTypeMetaOf(d.type, uiText).label,
                 caps: sourceCaps.value.get(d.id) ?? [],
@@ -312,15 +340,15 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                 {t('customize.triggers.windowSet')}
               </span>
             )}
-            {(r.filter.kind === 'fired' || r.filter.kind === 'detection') && (
+            {isEditable(r.filter) && (
               <IconButton
                 icon={Pencil}
                 variant="ghost"
                 size="sm"
                 aria-label={t(
-                  r.filter.kind === 'fired'
-                    ? 'customize.triggers.editFilter'
-                    : 'customize.triggers.editClasses',
+                  r.filter.kind === 'detection'
+                    ? 'customize.triggers.editClasses'
+                    : 'customize.triggers.editFilter',
                   { name: r.name ?? r.deviceId },
                 )}
                 disabled={busy}
@@ -334,7 +362,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
               icon={Clock}
               variant="ghost"
               size="sm"
-              aria-label={t('customize.triggers.editWindow', { name: r.name ?? r.deviceId })}
+              aria-label={t('customize.triggers.editWindow', {
+                name: r.name ?? r.deviceId,
+              })}
               disabled={busy}
               onClick={(e) => {
                 e.stopPropagation()
@@ -355,7 +385,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           <div className="flex flex-wrap items-center gap-2">
             <div className="w-28">
               <Select
-                aria-label={t('customize.triggers.actionFor', { name: r.name ?? r.deviceId })}
+                aria-label={t('customize.triggers.actionFor', {
+                  name: r.name ?? r.deviceId,
+                })}
                 value={choice}
                 disabled={busy}
                 options={choices.map((option) => ({
@@ -374,7 +406,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
             {r.onForSeconds !== null && choice === 'on-for' && (
               <OnForField
                 seconds={r.onForSeconds}
-                label={t('customize.triggers.onForFor', { name: r.name ?? r.deviceId })}
+                label={t('customize.triggers.onForFor', {
+                  name: r.name ?? r.deviceId,
+                })}
                 hint={t('customize.triggers.onForHint')}
                 disabled={busy}
                 testId={`trigger-on-for-${r.key}`}
@@ -397,7 +431,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         <Switch
           checked={r.enabled}
           disabled={busy}
-          aria-label={t('customize.triggers.activeFor', { name: r.name ?? r.deviceId })}
+          aria-label={t('customize.triggers.activeFor', {
+            name: r.name ?? r.deviceId,
+          })}
           onCheckedChange={(enabled) =>
             void run(async () => {
               await setEnabled.mutateAsync({ blockId: r.blockId, enabled })
@@ -415,7 +451,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           icon={X}
           variant="ghost"
           size="sm"
-          aria-label={t('customize.assign.removeNamed', { name: r.name ?? r.deviceId })}
+          aria-label={t('customize.assign.removeNamed', {
+            name: r.name ?? r.deviceId,
+          })}
           disabled={busy}
           onClick={(e) => {
             e.stopPropagation()
@@ -450,7 +488,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           <>
             {fleet.kind === 'unknown' && (
               <p role="alert" className="text-xs text-warning break-words">
-                {t('customize.assign.devicesUnreadable', { reason: fleet.reason })}
+                {t('customize.assign.devicesUnreadable', {
+                  reason: fleet.reason,
+                })}
               </p>
             )}
             {read.unreadable.length > 0 && (
@@ -489,7 +529,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           )}
         </li>
       </AssignmentSection>
-      <CustomizeDevicePickerDialog
+      <SourceSelectorDevicesDialog
         open={picking}
         title={t('customize.triggers.pickTitle')}
         selection="multi"
@@ -501,16 +541,19 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         }}
         onClose={() => setPicking(false)}
       />
-      {editing !== null && editing.filter.kind === 'fired' && (
-        <TriggerFilterDialog
-          deviceId={editing.deviceId}
-          deviceName={editing.name ?? `#${String(editing.deviceId)}`}
-          pick={{ events: editing.filter.events, parts: editing.filter.parts }}
-          busy={busy}
-          onSave={(pick) => saveFilter(editing, pick)}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {editing !== null &&
+        editing.filter.kind !== 'detection' &&
+        editing.filter.kind !== 'motion' && (
+          <TriggerFilterDialog
+            deviceId={editing.deviceId}
+            deviceName={editing.name ?? `#${String(editing.deviceId)}`}
+            pick={editPickOf(instanceOf(editing.blockId), editing.deviceId)}
+            replaces={replacesFilter(editing.filter)}
+            busy={busy}
+            onSave={(pick) => saveFilter(editing, pick)}
+            onClose={() => setEditing(null)}
+          />
+        )}
       {editing !== null && editing.filter.kind === 'detection' && (
         <TriggerClassesDialog
           deviceName={editing.name ?? `#${String(editing.deviceId)}`}

@@ -27,7 +27,7 @@ import {
   type CandidateDevice,
   candidateDetail,
 } from '../assignments/assignment-candidates'
-import { CustomizeDevicePickerDialog } from '../assignments/CustomizeDevicePickerDialog'
+import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
 import { suggestedCount } from '../assignments/room-suggestions'
 import { useRoomSuggestions } from '../assignments/use-room-suggestions'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
@@ -333,7 +333,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
           )}
         </li>
       </AssignmentSection>
-      <CustomizeDevicePickerDialog
+      <SourceSelectorDevicesDialog
         open={picking}
         title={t('customize.linked.pickTitle')}
         selection="multi"
