@@ -942,21 +942,14 @@ function removalSteps(
 }
 
 /**
- * The rows that belong to `deviceId` and cannot outlive it: accessory children
- * (`parentDeviceId === id`) and rows that name it as their link while sitting
- * under a parent (`linkDeviceId === id`, `parentDeviceId` set). A row that only
- * LINKS to it (an operator-picked link, D356) is a device of its own and stays.
+ * The rows that belong to `deviceId` and cannot outlive it: its accessory
+ * children (`parentDeviceId === id`). A row that merely LINKS to it
+ * (`linkDeviceId`: an operator-picked link, or an entity of another integration
+ * adopted under its own container) is a device of its own and stays.
  */
 async function ownedRowIds(pctx: ProviderContext, deviceId: number): Promise<readonly number[]> {
-  const ids = new Set<number>()
-  for (const row of await pctx.metaStore.rows.listByParent(deviceId)) ids.add(row.meta.id)
-  for (const row of await pctx.metaStore.rows.listAll()) {
-    if (row.meta.linkDeviceId === deviceId && row.meta.parentDeviceId !== null) {
-      ids.add(row.meta.id)
-    }
-  }
-  ids.delete(deviceId)
-  return [...ids]
+  const rows = await pctx.metaStore.rows.listByParent(deviceId)
+  return rows.map((row) => row.meta.id).filter((id) => id !== deviceId)
 }
 
 /**

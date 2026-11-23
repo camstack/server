@@ -95,6 +95,8 @@ export interface OnForDeps<H> {
    * it cannot be told. A hold above it - asked now or already stored - is cut to it.
    */
   readonly limitSecondsOf?: (deviceId: number) => Promise<number | null>
+  /** The limit of a device could not be told (fail-open): the hold stays as asked, and this says so. */
+  readonly onLimitUnknown?: (deviceId: number) => void
   /** A hold cut to the device's limit: what was asked for, and what it was cut to (ms). */
   readonly onClamped?: (deviceId: number, askedMs: number, limitMs: number) => void
   /** A hold given up without its off having been sent. */
@@ -151,6 +153,7 @@ export class OnForHolds<H> {
     this.work = this.work
       .then(async () => {
         const limit = await limitOf(deviceId).catch(() => null)
+        if (limit === null) this.deps.onLimitUnknown?.(deviceId)
         if (limit === null || this.disposed || this.entries.get(deviceId) !== entry) return
         const now = this.deps.timers.now()
         const left = entry.hold.deadline - now
@@ -168,6 +171,7 @@ export class OnForHolds<H> {
     const limitOf = this.deps.limitSecondsOf
     if (limitOf === undefined) return ms
     const limit = await limitOf(deviceId).catch(() => null)
+    if (limit === null) this.deps.onLimitUnknown?.(deviceId)
     if (limit === null || ms <= limit * 1000) return ms
     this.deps.onClamped?.(deviceId, ms, limit * 1000)
     return limit * 1000

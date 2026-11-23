@@ -7,6 +7,7 @@ function world(rows: readonly OrphanRow[]) {
   let live = [...rows]
   const removed: number[] = []
   const logged: string[] = []
+  const summaries: Record<string, unknown>[] = []
   const ports = {
     listRows: async () => live,
     removeDevice: async (id: number) => {
@@ -24,9 +25,14 @@ function world(rows: readonly OrphanRow[]) {
       }
       live = live.filter((r) => !gone.has(r.id))
     },
+    rowLimit: 100,
+    summaries,
+    summary: (c: Record<string, unknown>) => {
+      summaries.push(c)
+    },
     info: (_m: string, id: number, parent: number) => logged.push(`${id}<-${parent}`),
   }
-  return { ports, removed, logged, rows: () => live }
+  return { ports, removed, logged, summaries, rows: () => live }
 }
 
 describe('device-manager/remove-orphan-children', () => {
@@ -42,9 +48,12 @@ describe('device-manager/remove-orphan-children', () => {
 
     expect(result).toEqual({
       kind: 'procedure',
-      result: { outcome: 'done', summary: { removed: [7] } },
+      result: { outcome: 'done', summary: { candidates: [7], removed: [7] } },
     })
     expect(w.logged).toEqual(['7<-99'])
+    expect(w.summaries).toEqual([
+      { rows: 4, candidateCount: 1, candidates: [7], confirmedCount: 1, confirmed: [7] },
+    ])
     expect(w.rows().map((r) => r.id)).toEqual([1, 2])
     expect(orphansOf(w.rows())).toEqual([])
   })
@@ -57,8 +66,45 @@ describe('device-manager/remove-orphan-children', () => {
     const [migration] = defineAddonMigrations(ORPHAN_CHILDREN_MIGRATIONS, w.ports)
     expect(await migration?.execute()).toEqual({
       kind: 'procedure',
-      result: { outcome: 'already-done', summary: { removed: [] } },
+      result: { outcome: 'already-done', summary: { candidates: [], removed: [] } },
     })
+    expect(w.removed).toEqual([])
+  })
+
+  it('removes nothing the second read does not confirm', async () => {
+    const w = world([
+      { id: 1, parentDeviceId: null },
+      { id: 7, parentDeviceId: 99 },
+    ])
+    let reads = 0
+    const ports = {
+      ...w.ports,
+      listRows: async () => {
+        reads += 1
+        // the parent appears between the two reads (a read that raced a registration)
+        return reads === 1 ? w.rows() : [...w.rows(), { id: 99, parentDeviceId: null } as OrphanRow]
+      },
+    }
+    const [migration] = defineAddonMigrations(ORPHAN_CHILDREN_MIGRATIONS, ports)
+    const result = await migration?.execute()
+    expect(w.removed).toEqual([])
+    expect(result).toEqual({
+      kind: 'procedure',
+      result: { outcome: 'done', summary: { candidates: [7], removed: [] } },
+    })
+  })
+
+  it('refuses to remove anything from a read that reached the row limit', async () => {
+    const w = world([
+      { id: 1, parentDeviceId: null },
+      { id: 7, parentDeviceId: 99 },
+    ])
+    const [migration] = defineAddonMigrations(ORPHAN_CHILDREN_MIGRATIONS, {
+      ...w.ports,
+      rowLimit: 2,
+    })
+    const result = await migration?.execute()
+    expect(result?.kind).toBe('failed')
     expect(w.removed).toEqual([])
   })
 })

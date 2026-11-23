@@ -73,17 +73,17 @@ describe('removeDevice cascades to what the device owns', () => {
     expect(unregistered).toEqual(expect.arrayContaining([parent, siren, nested]))
   })
 
-  it('removes a linked accessory under a parent, keeps a pure link', async () => {
+  it('keeps a row that only links to the removed device, even one with a parent of another integration', async () => {
     const h = await setup({})
     const parent = await registerCamera(h, 'provider-reolink', 'cam-a')
-    const scratch = await registerCamera(h, 'provider-reolink', 'cam-s')
-    const accessory = await registerChild(h, 'cam-a-spot', scratch, parent)
+    const container = await registerCamera(h, 'provider-ha', 'ha-container')
+    const entity = await registerChild(h, 'ha-entity', container, parent)
     const picked = await registerCamera(h, 'provider-reolink', 'lamp')
     await h.provider.setLinkDeviceId({ deviceId: picked, linkDeviceId: parent })
 
     await h.provider.removeDevice({ deviceId: parent })
 
-    expect(await exists(h, accessory)).toBe(false)
+    expect(await exists(h, entity)).toBe(true)
     expect(await exists(h, picked)).toBe(true)
   })
 

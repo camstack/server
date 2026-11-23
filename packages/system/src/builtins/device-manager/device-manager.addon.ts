@@ -108,7 +108,7 @@ import { DeviceTombstoneStore } from './device-tombstone-store.js'
 import { DiscoveryProposalService } from './discovery-proposal-service.js'
 import { DiscoveryProposalStore } from './discovery-proposal-store.js'
 import { deviceManagerRecordKinds } from './record-kinds.js'
-import { DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
+import { DEVICE_ROWS_FLEET_LIMIT, DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
 import { DeviceStateMirror } from './device-state-mirror.js'
 import { startCommandHolds } from './command-holds-wiring.js'
@@ -1013,7 +1013,10 @@ export class DeviceManagerAddon extends BaseAddon {
               id: row.meta.id,
               parentDeviceId: row.meta.parentDeviceId,
             })),
+          rowLimit: DEVICE_ROWS_FLEET_LIMIT,
           removeDevice: (deviceId) => metaActions.removeDevice(pctx, { deviceId }),
+          summary: (counts) =>
+            this.ctx.logger.info('device-manager: orphan children found', { meta: counts }),
           info: (message, deviceId, parentDeviceId) =>
             this.ctx.logger.info(message, { tags: { deviceId }, meta: { parentDeviceId } }),
         }),

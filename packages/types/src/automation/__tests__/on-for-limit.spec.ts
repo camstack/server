@@ -11,6 +11,7 @@ const HOUR_MS = 3_600_000
 function rig(limitSeconds: number | null, stored: readonly OnForHold[] = []) {
   const persisted: OnForHold[][] = []
   const clamped: string[] = []
+  const unknown: number[] = []
   const holds = new OnForHolds<number>({
     timers: { now: () => NOW, set: () => 1, clear: () => undefined },
     readOn: async () => false,
@@ -19,10 +20,11 @@ function rig(limitSeconds: number | null, stored: readonly OnForHold[] = []) {
       persisted.push([...list])
     },
     limitSecondsOf: async () => limitSeconds,
+    onLimitUnknown: (id) => unknown.push(id),
     onClamped: (id, asked, limit) => clamped.push(`${id}:${asked}:${limit}`),
   })
   holds.restore(stored)
-  return { holds, persisted, clamped }
+  return { holds, persisted, clamped, unknown }
 }
 
 describe('OnForHolds limit', () => {
@@ -51,6 +53,7 @@ describe('OnForHolds limit', () => {
     const r = rig(null)
     await r.holds.trigger(HEATER, 'switch.on', 24 * HOUR_MS)
     expect(r.holds.list()[0]?.deadline).toBe(NOW + 24 * HOUR_MS)
+    expect(r.unknown).toEqual([HEATER])
   })
 })
 
