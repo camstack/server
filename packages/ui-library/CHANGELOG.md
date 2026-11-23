@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DataTable: a fifth phone column role, sheet — columns with an input leave the phone row and open in a bottom sheet when the row is tapped (sheetOpenLabel keeps the row action reachable)
 - Generated device-manager hooks include repairMigrationSecrets.
 - Generated hooks follow the rooms-and-tags-as-records capability changes.
+- A table row's destructive action (DataTable column render gets table.destructive) now confirms, then shows the row as pending until it settles; useConfirm() takes an optional async action that keeps its dialog open with a spinner and shows a failure inside it; new useDestructiveAction hook
 
 ## [1.2.499] - 2026-11-22
 

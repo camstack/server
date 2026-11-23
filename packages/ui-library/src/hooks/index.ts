@@ -74,6 +74,8 @@ export type { DeviceRemoval, UseDeviceRemovalOptions } from './use-device-remova
 export { useDeviceRemoval } from './use-device-removal'
 export type { RowOperationState, UseRowOperationsResult } from './use-row-operations'
 export { errorMessageOf, useRowOperations } from './use-row-operations'
+export type { DestructiveAction, UseDestructiveActionOptions } from './use-destructive-action'
+export { useDestructiveAction } from './use-destructive-action'
 export type {
   DoorbellPressEvent,
   UseDoorbellEventsOptions,

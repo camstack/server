@@ -73,7 +73,8 @@
 import { Button } from '../primitives/button'
 import { BottomSheet } from '../primitives/bottom-sheet'
 import { Fragment, type JSX, type ReactNode, useMemo, useState } from 'react'
-import type { RowOperationState } from '../hooks/use-row-operations'
+import { type RowOperationState, useRowOperations } from '../hooks/use-row-operations'
+import { useConfirmIfAvailable } from './confirm-dialog'
 import { useIsPhone } from '../hooks/use-is-mobile'
 import { DataTablePager } from './data-table-pager'
 import {
@@ -95,6 +96,26 @@ import {
   type TableSortValue,
 } from './table-sort'
 
+/** A destructive row action: confirm, then a loader ON THE ROW until it settles. */
+export interface RowDestructiveSpec {
+  readonly title: string
+  readonly message: string
+  readonly confirmLabel?: string
+  /** Must resolve only once the work is really done; a throw is a failure. */
+  readonly run: () => Promise<unknown>
+}
+
+/** What a column's `render` can ask of its table. */
+export interface DataTableRowApi<T> {
+  /**
+   * Confirm dialog -> the dialog closes -> the row is `pending` (dimmed,
+   * `aria-busy`, no click) until `run` settles. A failure leaves the row
+   * tinted with the message and is reported to `onRowActionError`. Resolves
+   * `true` when the action completed, `false` when declined, refused or failed.
+   */
+  readonly destructive: (row: T, spec: RowDestructiveSpec) => Promise<boolean>
+}
+
 export interface DataColumn<T> {
   /** Stable key for React reconciliation + tests. */
   readonly key: string
@@ -108,8 +129,12 @@ export interface DataColumn<T> {
    *  wraps is a row that has already lost its table. Pass `false` only for a
    *  column whose value is meant to wrap (a description, a blob). */
   readonly nowrap?: boolean
-  /** Cell renderer. Receives the row value. */
-  readonly render: (row: T, rowIndex: number) => ReactNode
+  /**
+   * Cell renderer. Receives the row value and the table's row API: a row's
+   * destructive action goes through `table.destructive(row, spec)`, never
+   * through hand-wired row state.
+   */
+  readonly render: (row: T, rowIndex: number, table: DataTableRowApi<T>) => ReactNode
   /** Optional explicit Tailwind width class (e.g. `'w-24'`). */
   readonly width?: string
   /**
@@ -199,6 +224,11 @@ export interface DataTableProps<T> {
    * tints it and exposes the message as its title. Absent = idle rows.
    */
   readonly rowState?: (row: T, rowIndex: number) => RowOperationState | undefined
+  /**
+   * A row action started through `table.destructive` failed. Surface it (a
+   * toast); the row itself stays tinted with the same message.
+   */
+  readonly onRowActionError?: (message: string, row: T) => void
   /**
    * Tailwind `max-h-*` class capping the table. The rows then scroll INSIDE
    * this container and the column header is pinned to its top; the page around
@@ -308,6 +338,7 @@ export function DataTable<T>({
   bordered = true,
   rowClassName,
   rowState,
+  onRowActionError,
   maxBodyHeight,
   fill = false,
   defaultSort,
@@ -322,6 +353,25 @@ export function DataTable<T>({
   isExpanded,
 }: DataTableProps<T>): JSX.Element | null {
   const [innerSort, setInnerSort] = useState<TableSortState | null>(defaultSort ?? null)
+  const rowOps = useRowOperations<string | number>()
+  const confirmIfAvailable = useConfirmIfAvailable()
+  const { run: runRowOp, stateOf: rowOpStateOf } = rowOps
+  const tableApi: DataTableRowApi<T> = {
+    destructive: async (row, spec) => {
+      // No dialog host = no way to ask: a destructive action never runs unasked.
+      if (confirmIfAvailable === undefined) return false
+      const index = rows.indexOf(row)
+      const key = rowKey ? rowKey(row, index) : index
+      const accepted = await confirmIfAvailable({
+        title: spec.title,
+        message: spec.message,
+        confirmLabel: spec.confirmLabel,
+        variant: 'danger',
+      })
+      if (!accepted) return false
+      return runRowOp(key, spec.run, (message) => onRowActionError?.(message, row))
+    },
+  }
   const [innerPage, setInnerPage] = useState(0)
   const [sheetRowKey, setSheetRowKey] = useState<string | null>(null)
   const sort = sortProp !== undefined ? sortProp : innerSort
@@ -411,7 +461,7 @@ export function DataTable<T>({
   const primaryColumn = columns.find((col) => col.mobile === 'primary')
   const primaryCell =
     sheetRow !== undefined && primaryColumn !== undefined
-      ? primaryColumn.render(sheetRow, rows.indexOf(sheetRow))
+      ? primaryColumn.render(sheetRow, rows.indexOf(sheetRow), tableApi)
       : null
   const primaryText =
     typeof primaryCell === 'string' || typeof primaryCell === 'number' ? String(primaryCell) : null
@@ -436,7 +486,7 @@ export function DataTable<T>({
                 {col.headerRender ? col.headerRender() : col.header}
               </span>
               <div className="min-w-0 text-xs text-foreground">
-                {col.render(sheetRow, rows.indexOf(sheetRow))}
+                {col.render(sheetRow, rows.indexOf(sheetRow), tableApi)}
               </div>
             </div>
           ))}
@@ -522,7 +572,7 @@ export function DataTable<T>({
             {pageRows.map((row, rowIndex) => {
               const key = rowKey ? rowKey(row, rowIndex) : rowIndex
               const extra = rowClassName?.(row, rowIndex) ?? ''
-              const operation = rowState?.(row, rowIndex)
+              const operation = rowState?.(row, rowIndex) ?? rowOpStateOf(key)
               const pending = operation?.kind === 'pending'
               const opensSheet = sheetEnabled && sheetEntriesOf(row).length > 0
               const interactive = (onRowClick !== undefined || opensSheet) && !pending
@@ -592,7 +642,7 @@ export function DataTable<T>({
                         >
                           {col.mobile === 'primary' ? (
                             <>
-                              {col.render(row, rowIndex)}
+                              {col.render(row, rowIndex, tableApi)}
                               {detailColumns.length > 0 && (
                                 <div
                                   data-phone-detail=""
@@ -604,14 +654,14 @@ export function DataTable<T>({
                                       data-phone-detail-of={detail.key}
                                       className="min-w-0 max-w-full empty:hidden"
                                     >
-                                      {detail.render(row, rowIndex)}
+                                      {detail.render(row, rowIndex, tableApi)}
                                     </span>
                                   ))}
                                 </div>
                               )}
                             </>
                           ) : (
-                            col.render(row, rowIndex)
+                            col.render(row, rowIndex, tableApi)
                           )}
                         </td>
                       )

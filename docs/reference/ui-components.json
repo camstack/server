@@ -5187,6 +5187,12 @@
           "doc": "Per-row operation in flight (`useRowOperations().stateOf(key)`): `pending` dims the row, marks it `aria-busy` and withholds `onRowClick`; `f"
         },
         {
+          "name": "onRowActionError",
+          "type": "(message: string, row: T) => void",
+          "optional": true,
+          "doc": "A row action started through `table.destructive` failed. Surface it (a toast); the row itself stays tinted with the same message."
+        },
+        {
           "name": "maxBodyHeight",
           "type": "string",
           "optional": true,
@@ -21046,6 +21052,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-debounced-string.ts",
       "summary": "useDebouncedString — return `value` after `delay` ms have passed without further changes. Resets the timer on every change."
+    },
+    {
+      "name": "useDestructiveAction",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-destructive-action.tsx",
+      "summary": "useDestructiveAction — a destructive action OUTSIDE a table (a page's Delete, an editor's Delete, an integration's Remove)."
     },
     {
       "name": "useDevice",

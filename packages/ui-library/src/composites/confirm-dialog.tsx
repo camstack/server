@@ -73,6 +73,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { Loader2 } from 'lucide-react'
 import { createSharedContext } from '../lib/shared-context'
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,15 @@ export interface ConfirmOptions {
   readonly confirmLabel?: string
   readonly cancelLabel?: string
   readonly variant?: DialogVariant
+  /**
+   * The destructive work itself. When given, the dialog does NOT close on
+   * confirm: it stays open with a spinner until the action settles, shows a
+   * failure in the dialog (the operator can retry or cancel), and only then
+   * resolves — `true` once the action completed, `false` on cancel. Without it
+   * the dialog closes at once and the caller runs the work (and owns the
+   * loader).
+   */
+  readonly action?: () => Promise<unknown>
 }
 
 export interface AlertOptions {
@@ -316,6 +326,7 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
     state.kind === 'prompt' ? (state.options.defaultValue ?? '') : '',
   )
   const [error, setError] = useState<string | null>(null)
+  const [running, setRunning] = useState(false)
 
   // Open, then focus; restore focus on close. No trap — see the file docblock.
   useEffect(() => {
@@ -338,16 +349,33 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
   }, [])
 
   const cancel = useCallback(() => {
-    if (settled.current) return
+    if (settled.current || running) return
     settled.current = true
     if (state.kind === 'confirm') state.resolve(false)
     else if (state.kind === 'prompt') state.resolve(null)
     else state.resolve()
     onClose()
-  }, [state, onClose])
+  }, [state, onClose, running])
 
   const accept = useCallback(() => {
-    if (settled.current) return
+    if (settled.current || running) return
+    if (state.kind === 'confirm' && state.options.action !== undefined) {
+      const action = state.options.action
+      setError(null)
+      setRunning(true)
+      void action().then(
+        () => {
+          settled.current = true
+          state.resolve(true)
+          onClose()
+        },
+        (err: unknown) => {
+          setError(err instanceof Error ? err.message : String(err))
+          setRunning(false)
+        },
+      )
+      return
+    }
     if (state.kind === 'confirm') {
       settled.current = true
       state.resolve(true)
@@ -371,7 +399,7 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
     settled.current = true
     state.resolve(state.options.readOnly === true ? null : value)
     onClose()
-  }, [state, onClose, value])
+  }, [state, onClose, value, running])
 
   // Escape cancels, Enter takes the DEFAULT action. `stopPropagation` keeps the
   // key from also reaching the window listener of a modal underneath.
@@ -421,9 +449,19 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
     ) : (
       // `pre-line`: a message may list items one per line (e.g. the nodes an
       // uninstall reaches); single-line messages render exactly as before.
-      <p className="mt-2 text-xs text-foreground-subtle leading-relaxed whitespace-pre-line">
-        {state.options.message}
-      </p>
+      <>
+        <p className="mt-2 text-xs text-foreground-subtle leading-relaxed whitespace-pre-line">
+          {state.options.message}
+        </p>
+        {error !== null && (
+          <p
+            role="alert"
+            className="mt-3 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
+          >
+            {error}
+          </p>
+        )}
+      </>
     )
 
   const footer =
@@ -442,7 +480,8 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
           type="button"
           ref={affirmativeIsDefault(state) ? null : defaultButtonRef}
           onClick={cancel}
-          className={CANCEL_CLASS}
+          disabled={running}
+          className={`${CANCEL_CLASS} disabled:opacity-50`}
         >
           {state.options.cancelLabel ?? t('uiLibrary.confirmDialog.cancel', 'Cancel')}
         </button>
@@ -451,8 +490,11 @@ function DialogSurface({ state, onClose }: DialogSurfaceProps) {
             type={state.kind === 'prompt' ? 'submit' : 'button'}
             ref={affirmativeIsDefault(state) ? defaultButtonRef : null}
             onClick={state.kind === 'prompt' ? undefined : accept}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${style.button}`}
+            disabled={running}
+            aria-busy={running ? true : undefined}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-70 ${style.button}`}
           >
+            {running && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {state.options.confirmLabel ??
               (state.kind === 'prompt'
                 ? t('uiLibrary.confirmDialog.ok', 'OK')
