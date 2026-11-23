@@ -23,7 +23,10 @@ export interface CustomDeviceQuickBodyProps {
   readonly row: CompositionRow
 }
 
-/** The Exporters tab: the produced device's export section (every field each provider declares, its name included), mounted only while the tab is open. */
+/**
+ * The Exporters tab: the device page's Export section for the produced device, unchanged,
+ * mounted only while the tab is open. Before the device is reported there is nothing to show.
+ */
 export function CustomDeviceExporters({ row }: CustomDeviceQuickBodyProps): ReactNode {
   const { t } = useTranslation()
   const deviceId = row.reportedDeviceId

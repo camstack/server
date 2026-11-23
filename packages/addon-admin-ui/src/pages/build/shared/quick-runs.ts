@@ -66,11 +66,7 @@ export function runDurationParts(ms: number): {
   if (ms < 1000) return { unit: 'subSecond', seconds: 0, minutes: 0 }
   if (ms < 60_000) return { unit: 'seconds', seconds: Math.round(ms / 100) / 10, minutes: 0 }
   const total = Math.round(ms / 1000)
-  return {
-    unit: 'minutes',
-    minutes: Math.floor(total / 60),
-    seconds: total % 60,
-  }
+  return { unit: 'minutes', minutes: Math.floor(total / 60), seconds: total % 60 }
 }
 
 /** The editor URL of one run: the section tab, the item, and the run it opens on. */

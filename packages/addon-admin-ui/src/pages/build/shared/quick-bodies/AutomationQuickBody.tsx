@@ -20,9 +20,7 @@ export function useRunModeLabel(): (mode: AutomationRunMode) => string {
       case 'restart':
         return t('flow.runMode.restart', 'Restart the run')
       case 'queued':
-        return t('build.quickModal.runModeQueued', 'Queue it, up to {{max}}', {
-          max: mode.max,
-        })
+        return t('build.quickModal.runModeQueued', 'Queue it, up to {{max}}', { max: mode.max })
       case 'parallel':
         return t('build.quickModal.runModeParallel', 'Run at the same time, up to {{max}}', {
           max: mode.max,
@@ -49,10 +47,7 @@ export function AutomationQuickBody({ block }: AutomationQuickBodyProps): ReactN
       key: t('build.quickModal.status', 'Status'),
       value: <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>,
     },
-    {
-      key: t('build.quickModal.placement', 'Placement'),
-      value: block.placement,
-    },
+    { key: t('build.quickModal.placement', 'Placement'), value: block.placement },
   ]
   if (parsed.ok) {
     const trigger = triggerSummaryOf(parsed.recipe)

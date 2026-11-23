@@ -16,21 +16,9 @@ const FAILED: AutomationRunTrace = {
   runId: 'r-failed',
   startedAt: 1000,
   endedAt: 3500,
-  trigger: {
-    kind: 'detection',
-    outcome: 'pass',
-    reason: 'animal seen',
-    vars: {},
-  },
+  trigger: { kind: 'detection', outcome: 'pass', reason: 'animal seen', vars: {} },
   conditions: [],
-  steps: [
-    {
-      path: 'actions.0',
-      kind: 'cap',
-      outcome: 'error',
-      message: 'Feeder offline',
-    },
-  ],
+  steps: [{ path: 'actions.0', kind: 'cap', outcome: 'error', message: 'Feeder offline' }],
   outcome: 'failed',
   repeat: 1,
   lastAt: 3500,
@@ -41,10 +29,7 @@ let traces: readonly AutomationRunTrace[] = [FAILED]
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useCoreBlocksGetTraces: () => ({
-    data: { traces, lastError: null },
-    error: null,
-  }),
+  useCoreBlocksGetTraces: () => ({ data: { traces, lastError: null }, error: null }),
   useActionsGetTraces: () => ({ data: { traces }, error: null }),
   useActionsRun: () => ({ mutate: runMutate, isPending: false, error: null }),
 }))
@@ -127,10 +112,7 @@ describe('ActionQuickBody', () => {
     render(
       wrap(
         <ActionQuickBody
-          entry={{
-            ...ACTION,
-            status: { isRunning: true, lastRunAt: 1, lastError: null },
-          }}
+          entry={{ ...ACTION, status: { isRunning: true, lastRunAt: 1, lastError: null } }}
         />,
       ),
     )

@@ -225,11 +225,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
         onSave={(values) => {
           const check = actionQuickEditInput(modalEntry, values)
-          if (check.ok)
-            modalUpdate.mutate({
-              actionId: modalEntry.id,
-              action: check.input,
-            })
+          if (check.ok) modalUpdate.mutate({ actionId: modalEntry.id, action: check.input })
         }}
         openLabel={t('build.quickModal.openAction', 'Open action')}
         onOpen={() => {
