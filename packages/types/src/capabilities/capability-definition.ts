@@ -264,6 +264,26 @@ export interface CapabilityStatusItemArray {
   readonly emptyItem: Readonly<Record<string, unknown>>
 }
 
+/**
+ * Where a status field's closed set of values comes from at RUNTIME: the device's own
+ * declared catalog, never a code enum. The wireable-field builder asks the device's
+ * provider and offers the answer as the field's `enumValues` (a dropdown with free text
+ * kept as the escape hatch); a read that fails leaves `enumValues` absent.
+ *
+ *  - `method`: a cap method taking `{ deviceId }` whose answer holds a list of objects.
+ *  - `status`: the cap's own status slice holds the list.
+ *
+ * `listKey` names the list in the answer; `valueKey` the string each entry contributes.
+ */
+export type FieldEnumSource =
+  | {
+      readonly from: 'method'
+      readonly method: string
+      readonly listKey: string
+      readonly valueKey: string
+    }
+  | { readonly from: 'status'; readonly listKey: string; readonly valueKey: string }
+
 export interface CapabilityStatusSchema<TStatus extends z.ZodType = z.ZodType> {
   readonly schema: TStatus
   /** Documentation hint on update cadence — used by the aggregator and UI. */
@@ -294,6 +314,11 @@ export interface CapabilityStatusSchema<TStatus extends z.ZodType = z.ZodType> {
    * See {@link CapabilityStatusItemArray}. Omit for scalar-only caps.
    */
   readonly itemArray?: CapabilityStatusItemArray
+  /**
+   * Status field path (as `getWireableFields` reports it) → the device's declared
+   * catalog of values for it. See {@link FieldEnumSource}.
+   */
+  readonly fieldEnums?: Readonly<Record<string, FieldEnumSource>>
 }
 
 // ── Declarative UI contribution descriptor ──────────────────────────

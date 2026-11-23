@@ -46,6 +46,7 @@ import {
   sleep,
 } from '@camstack/types'
 import { ContributionCache, CONTRIBUTION_BUDGET_MS } from './contribution-cache.js'
+import { readFieldCatalog } from './wireable-enum-catalog.js'
 import { mergeAggregates, tagContribution, toWireShape } from './device-aggregation-merge.js'
 import { applyDriverFormPatch, viewStoredSecrets } from './device-form-secrets.js'
 import {
@@ -1336,6 +1337,38 @@ export function wireableEntryForDef(
 }
 
 /**
+ * Fill `enumValues` of the fields the cap declares a per-device catalog for
+ * (`status.fieldEnums`) from the device's own provider. A failed or empty read
+ * leaves the field untouched (free text), never an empty list.
+ */
+async function withDeclaredCatalogs(
+  deps: AggregationDeps,
+  registry: ICapabilityRegistry,
+  deviceId: number,
+  entry: WireableCapEntry,
+  def: CapabilityDefinition,
+): Promise<WireableCapEntry> {
+  const declared = def.status?.fieldEnums
+  if (!declared) return entry
+  const fields = await Promise.all(
+    entry.fields.map(async (field) => {
+      const source = declared[field.path]
+      if (!source || field.item === true) return field
+      const values = await readFieldCatalog({
+        registry,
+        logger: deps.ctx.logger,
+        capName: entry.cap,
+        deviceId,
+        path: field.path,
+        source,
+      })
+      return values === null ? field : { ...field, enumValues: values }
+    }),
+  )
+  return { ...entry, fields }
+}
+
+/**
  * Per-device wireable-field catalog — the domain status fields a device's
  * bound caps expose, for the operator's cross-device wiring UI. Binding-driven:
  * walks `getBindings(deviceId)`, skips wrapper caps (their status schemas are
@@ -1368,7 +1401,7 @@ export async function getWireableFields(
     // book-keeping (e.g. snapshot.lastCapturedAt), not wireable domain data.
     if (!def || def.kind === 'wrapper') continue
     const wireable = wireableEntryForDef(entry.capName, def)
-    if (wireable) caps.push(wireable)
+    if (wireable) caps.push(await withDeclaredCatalogs(deps, reg, deviceId, wireable, def))
   }
   if (input.includeSynthesizable === true) {
     const row = await deps.bindingsDeps.rows.get(deviceId)

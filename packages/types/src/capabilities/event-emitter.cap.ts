@@ -61,7 +61,13 @@ export const eventEmitterCapability = {
       },
     },
   },
-  status: { schema: EventEmitterStatusSchema, kind: 'push' },
+  status: {
+    schema: EventEmitterStatusSchema,
+    kind: 'push',
+    fieldEnums: {
+      'lastEvent.eventType': { from: 'status', listKey: 'vocabulary', valueKey: 'id' },
+    },
+  },
   runtimeState: EventEmitterStatusSchema,
 
   /**

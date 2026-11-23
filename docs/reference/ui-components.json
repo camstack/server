@@ -13182,6 +13182,51 @@
       "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
     },
     {
+      "name": "MultiSelectDropdown",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-list/multi-select.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "Trigger label, e.g. \"Type\". A count badge is appended when items are selected."
+        },
+        {
+          "name": "options",
+          "type": "readonly MultiSelectOption[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "selected",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(selected: readonly string[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "renderOption",
+          "type": "(option: MultiSelectOption) => ReactNode",
+          "optional": true,
+          "doc": "Draw an option's caption (a tag chip, …) instead of its plain `label`."
+        },
+        {
+          "name": "optionActions",
+          "type": "(option: MultiSelectOption) => ReactNode",
+          "optional": true,
+          "doc": "Controls at the end of an option's row (style, rename, remove…), outside its toggle."
+        }
+      ]
+    },
+    {
       "name": "NatResultCard",
       "kind": "component",
       "area": "composites",

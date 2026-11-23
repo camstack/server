@@ -6724,7 +6724,8 @@
       "oneTwoThree": "one, two, three",
       "pickValue": "Pick a value",
       "customValue": "Custom value…",
-      "customValueLabel": "Custom value"
+      "customValueLabel": "Custom value",
+      "pickValues": "Pick values"
     },
     "editor": {
       "listUnreadable": "Its recipe cannot be read ({{reason}}), so it cannot be opened visually. The code is intact and still running — edit it as a script."

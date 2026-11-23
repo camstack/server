@@ -182,6 +182,7 @@ export type {
   CapabilityMountHint,
   CapabilityMountKind,
   CapabilityStatusItemArray,
+  FieldEnumSource,
   CapabilityStatusKind,
   CapabilityStatusSchema,
   CapCaller,

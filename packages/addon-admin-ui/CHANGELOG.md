@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add device on a Matter integration uses its own fabric, says when it is not running instead of offering to create one, and calls the adoption tab Paired nodes
 - The Build quick view of an automation, action or custom device now has Settings, Exporters and Last runs tabs; exporters and runs load only when their tab opens, and a run started by an automation names it instead of showing its id.
 
+### Fixed
+
+- Automation editor: a fault code or button event on a Becomes / Is row is picked from the device's own list, and Is one of offers a multi-pick
+
 ## [1.2.738] - 2026-11-22
 
 ### Added

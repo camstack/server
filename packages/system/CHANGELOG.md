@@ -169,6 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A batching integration keeps one state-refresh schedule for all its devices; reads of one device are serialized, and a command waits at most 5 s for a read in flight (D1062).
 - An addon that shares a process with others (waste collections, Home Assistant export, Google export) can again adopt its own integration instance rows; its migration no longer fails and leaves the addon stopped
 - A notifier group test is never skipped as already delivered, and the test panel lists every member's outcome (sent, skipped with the reason, failed with the error)
+- Wireable fields of a device carry its declared fault codes and event vocabulary as enumValues
 
 ## [1.2.537] - 2026-11-01
 

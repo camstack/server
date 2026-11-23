@@ -21,7 +21,12 @@ import type {
   ProviderRegistration,
   StreamSourceEntry,
 } from '@camstack/types'
-import { consumablesCapability, DeviceType } from '@camstack/types'
+import {
+  consumablesCapability,
+  DeviceType,
+  errorCapability,
+  eventEmitterCapability,
+} from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { z } from 'zod'
@@ -3658,6 +3663,100 @@ describe('DeviceManagerAddon', () => {
       expect(byPath['cleanWater.status']!.kind).toBe('enum')
       expect([...byPath['cleanWater.status']!.enumValues!]).toEqual(['ok', 'low', 'full'])
       expect(byPath['cleanWater.level']!.kind).toBe('number')
+    })
+
+    describe('declared per-device catalogs (status.fieldEnums)', () => {
+      async function wireableFor(
+        capName: 'error' | 'event-emitter',
+        providerFor: () => unknown,
+      ): Promise<{
+        fields: Record<string, { enumValues?: string[] | readonly string[] | undefined }>
+        logger: IScopedLogger
+      }> {
+        const addon = new DeviceManagerAddon()
+        const { bus: eventBus } = makeEventBus()
+        const store = await makeSettingsStoreApi()
+        const records = await makeRecordsAccessForOwner('device-manager')
+        const logger = makeLogger()
+        const base = makeRegistryStub()
+        const registry = {
+          ...base,
+          getNativeCapsForDevice: () => [capName],
+          getDefinition: (cap: string) =>
+            cap === 'error'
+              ? errorCapability
+              : cap === 'event-emitter'
+                ? eventEmitterCapability
+                : undefined,
+          getProviderForDevice: providerFor,
+        }
+        const ctx = {
+          api: { settingsStore: store.api },
+          id: 'device-manager',
+          logger,
+          eventBus,
+          addonConfig: {},
+          dataDir: '/tmp',
+          settings: makeSettings(),
+          records,
+          kernel: { deviceRegistry: null, capabilityRegistry: registry, localNodeId: 'hub' },
+        }
+        const initResult = await addon.initialize(ctx as unknown as AddonContext)
+        const providers = Array.isArray(initResult) ? initResult : initResult?.providers
+        const first = providers?.[0]
+        if (!first) throw new Error('no provider registrations')
+        const dm = first.provider as IDeviceManagerProvider
+        const out = await dm.getWireableFields({ deviceId: 7 })
+        const entry = out.caps.find((c) => c.cap === capName)
+        return {
+          fields: Object.fromEntries((entry?.fields ?? []).map((f) => [f.path, f])),
+          logger,
+        }
+      }
+
+      it('error.code carries the fault codes the device declares', async () => {
+        const { fields } = await wireableFor('error', () => ({
+          listFaultTypes: async () => ({
+            types: [
+              { code: 'UNREACH', label: 'Unreachable', severity: 'error' },
+              { code: 'LOW_BAT', label: 'Low battery', severity: 'warning' },
+            ],
+          }),
+        }))
+        expect([...(fields['code']?.enumValues ?? [])]).toEqual(['UNREACH', 'LOW_BAT'])
+      })
+
+      it('event-emitter.lastEvent.eventType carries the device vocabulary', async () => {
+        const { fields } = await wireableFor('event-emitter', () => ({
+          getStatus: async () => ({
+            eventTypes: ['PRESS_SHORT', 'PRESS_LONG'],
+            vocabulary: [
+              { id: 'PRESS_SHORT', label: 'Short press' },
+              { id: 'PRESS_LONG', label: 'Long press' },
+            ],
+            lastEvent: null,
+            eventCountSinceStart: 0,
+          }),
+        }))
+        expect([...(fields['lastEvent.eventType']?.enumValues ?? [])]).toEqual([
+          'PRESS_SHORT',
+          'PRESS_LONG',
+        ])
+      })
+
+      it('a catalog read that fails leaves enumValues absent and logs with the device tag', async () => {
+        const { fields, logger } = await wireableFor('error', () => ({
+          listFaultTypes: async () => {
+            throw new Error('device offline')
+          },
+        }))
+        expect(fields['code']).toBeDefined()
+        expect(fields['code']?.enumValues).toBeUndefined()
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining('catalog'),
+          expect.objectContaining({ tags: { deviceId: 7 } }),
+        )
+      })
     })
 
     it('emits per-item fields (item:true) + the itemArray descriptor for an item-array cap', async () => {

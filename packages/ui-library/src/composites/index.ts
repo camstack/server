@@ -398,6 +398,8 @@ export {
 export * from './device-grid'
 export * from './device-item'
 export * from './device-list'
+export { MultiSelectDropdown } from './device-list/multi-select'
+export type { MultiSelectDropdownProps, MultiSelectOption } from './device-list/multi-select'
 export type { DeviceBatchToolbarProps } from './device-list/batch-toolbar'
 export { DeviceBatchToolbar } from './device-list/batch-toolbar'
 // DeviceBatchActionsBar is an internal detail of DeviceList (rendered only by

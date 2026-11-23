@@ -23,6 +23,7 @@ import {
 } from '@camstack/types'
 import {
   Input,
+  MultiSelectDropdown,
   Select,
   resolveSensorDisplay,
   useUnitPreferences,
@@ -108,7 +109,9 @@ export function ScalarValueInput({ value, field, deviceId, cap, onChange }: Scal
     )
   }
 
-  if (field?.kind === 'enum' && field.enumValues !== undefined && field.enumValues.length > 0) {
+  // A declared value set (a closed enum, or a device's own catalog on a string field)
+  // is picked from; "Custom value…" stays the way out.
+  if (field?.kind !== 'number' && field?.enumValues !== undefined && field.enumValues.length > 0) {
     return (
       <PickOrCustomInput
         value={String(value)}
@@ -167,7 +170,8 @@ export function ListValueInput({ value, field, deviceId, cap, onChange }: ListVa
   const shown = bridge
     ? value.map((part) => (typeof part === 'number' ? bridge.toDisplayValue(part) : part))
     : value
-  return (
+  const declared = field?.kind === 'number' ? undefined : field?.enumValues
+  const input = (
     <Input
       value={shown.join(', ')}
       placeholder={t('automation.valueInput.oneTwoThree', 'one, two, three')}
@@ -186,6 +190,18 @@ export function ListValueInput({ value, field, deviceId, cap, onChange }: ListVa
         )
       }}
     />
+  )
+  if (declared === undefined || declared.length === 0) return input
+  return (
+    <div className="flex flex-col gap-1">
+      <MultiSelectDropdown
+        label={t('automation.valueInput.pickValues', 'Pick values')}
+        options={declared.map((v) => ({ id: v, label: v }))}
+        selected={value.map(String)}
+        onChange={(next) => onChange([...next])}
+      />
+      {input}
+    </div>
   )
 }
 

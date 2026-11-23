@@ -83,6 +83,9 @@ export const errorCapability = {
     schema: ErrorStatusSchema,
     kind: 'push',
     empty: ERROR_STATUS_COLD,
+    fieldEnums: {
+      code: { from: 'method', method: 'listFaultTypes', listKey: 'types', valueKey: 'code' },
+    },
   },
   runtimeState: ErrorStatusSchema,
   /**
