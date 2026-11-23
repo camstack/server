@@ -22,7 +22,8 @@ const MANIFEST = OnboardingManifestSchema.parse(
 function agreeing(): RepositoryFacts {
   const claims = uiClaims(MANIFEST)
   return {
-    routes: new Set(claims.map((c) => c.ui.route)),
+    // The admin UI mounts paths; a `?tab=` query in a claim is not part of the route.
+    routes: new Set(claims.map((c) => c.ui.route.split('?')[0] ?? c.ui.route)),
     labels: new Set(claims.flatMap((c) => c.ui.nav)),
     addonPackages: new Map(
       MANIFEST.coreAddons.flatMap((g) => g.addons.map((a) => [a.id, a.package] as const)),
@@ -42,13 +43,20 @@ describe('check-onboarding-manifest', () => {
 
   it('a route the admin UI no longer mounts is named with the step that points at it', () => {
     const facts = agreeing()
-    const routes = new Set([...facts.routes].filter((r) => r !== '/system/storage'))
+    const routes = new Set([...facts.routes].filter((r) => r !== '/system/data'))
 
     const problems = manifestProblems(MANIFEST, { ...facts, routes })
 
     expect(problems.length).toBeGreaterThan(0)
-    expect(problems.every((p) => p.includes('no route /system/storage'))).toBe(true)
+    expect(problems.every((p) => p.includes('no route /system/data'))).toBe(true)
     expect(problems.join('\n')).toContain('step storage')
+  })
+
+  it('a claim with a ?tab= query is judged by the path the admin UI mounts', () => {
+    const tabbed = uiClaims(MANIFEST).filter((c) => c.ui.route.includes('?tab='))
+    expect(tabbed.length).toBeGreaterThan(0)
+    expect(agreeing().routes.has('/system/data')).toBe(true)
+    expect(manifestProblems(MANIFEST, agreeing())).toEqual([])
   })
 
   it('a renamed sidebar label is a problem', () => {

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1,
-  "contentHash": "35dceb3f7afd537d",
+  "revision": 2,
+  "contentHash": "e3254a43b7d2146f",
   "docsBaseUrl": "https://camstack-docs.zentik.app",
   "steps": [
     {
@@ -63,7 +63,7 @@
               "role": "hub",
               "accelerator": "intel"
             },
-            "next": "Use the host kind and accelerator the host check reported. The person runs the commands; you never run an installer for them."
+            "next": "Use the host kind and accelerator the host check reported. The person runs the commands; you never run an installer for them. A reply that asks for more answers is normal: give them and call it again. The paths answer holds the data directory path and the recordings directory path or paths on the host."
           },
           "manual": {
             "text": "Pick the page for your host — Docker Compose, Unraid, Proxmox or a Mac — and follow it. Each one starts from the published template, so do not write a compose file from memory.",
@@ -156,10 +156,10 @@
               "accelerator": "intel",
               "hubAddress": "<hub-ip>"
             },
-            "next": "Pairing is confirmed by the person on both screens with the six digits shown; nothing is copied between machines."
+            "next": "Check the Internal address of the hub first: the agent downloads from it. Pairing is confirmed by the person on both screens with the six digits shown; nothing is copied between machines."
           },
           "manual": {
-            "text": "Install the agent on the second machine, start pairing from the hub, and type the six digits each screen shows on the other one.",
+            "text": "Check the Internal address of the hub first: on the hub, open Network → Network Addresses and confirm the Internal role is an address the agent can reach. Then install the agent on the second machine, start pairing from the hub, and type the six digits each screen shows on the other one.",
             "ui": {
               "route": "/system/nodes",
               "nav": [
@@ -188,7 +188,7 @@
           "manual": {
             "text": "Open the Storage tab: one section per kind of data, each location with its mode and free space.",
             "ui": {
-              "route": "/system/storage",
+              "route": "/system/data?tab=storage",
               "nav": [
                 "Administration",
                 "Data"
@@ -199,7 +199,7 @@
         },
         {
           "id": "add-location",
-          "title": "Add a location on the recording disk",
+          "title": "Add a location on a dedicated disk",
           "agent": {
             "tool": "configure_setup_location_create",
             "args": {
@@ -207,12 +207,12 @@
               "name": "Recording disk",
               "path": "/recordings"
             },
-            "next": "Local paths only. A location that needs a password (SMB, SFTP, S3, WebDAV) is created by the person in the admin UI, never through a tool call."
+            "next": "Use a dedicated disk, not the volume the other locations already use. Local paths only. A location that needs a password (SMB, SFTP, S3, WebDAV) is created by the person in the admin UI, never through a tool call."
           },
           "manual": {
-            "text": "Add a location, pick its provider and its path, and test it. Two locations of one kind cannot share a folder, or sit one inside the other.",
+            "text": "Add a location on a dedicated disk, not the volume the other locations already use. Pick its provider and its path, and test it. Two locations of one kind cannot share a folder, or sit one inside the other.",
             "ui": {
-              "route": "/system/storage",
+              "route": "/system/data?tab=storage",
               "nav": [
                 "Administration",
                 "Data"
@@ -231,7 +231,7 @@
           "manual": {
             "text": "Set the location that takes new data to Active. Read-only keeps what is there; Drain empties it over time.",
             "ui": {
-              "route": "/system/storage",
+              "route": "/system/data?tab=storage",
               "nav": [
                 "Administration",
                 "Data"
@@ -297,7 +297,7 @@
             "none": "An account token or key is a secret: it goes into the form in the admin UI, never through an assistant."
           },
           "manual": {
-            "text": "Open the addon under Connectivity, add its account or tunnel and test it.",
+            "text": "Open the addon settings and add its account or tunnel, then test it. A camera or Home Assistant integration is under Integrations; a tunnel or other connection is under Connectivity.",
             "ui": {
               "route": "/system/integrations",
               "nav": [
@@ -315,7 +315,7 @@
       "title": "Add cameras, pick their streams, turn on recording",
       "phase": "make-it-work",
       "page": "/docs/get-started#cameras",
-      "summary": "Add each camera through its integration, check which stream does what, then decide what is recorded.",
+      "summary": "Add each camera through its integration, check which stream does what, then decide what is recorded. A camera is done when its main and sub streams are assigned and recording is on.",
       "actions": [
         {
           "id": "camera-providers",
@@ -324,11 +324,11 @@
             "tool": "configure_camera_providers"
           },
           "manual": {
-            "text": "Open Devices and start Add device: the list shows every installed camera integration.",
+            "text": "Open Integrations and pick the camera integration you installed. Devices → Add device is the alternative: it lists every installed camera integration.",
             "ui": {
-              "route": "/devices",
+              "route": "/integrations",
               "nav": [
-                "Devices"
+                "Integrations"
               ]
             },
             "page": "/docs/get-started/add-a-camera"
@@ -346,9 +346,9 @@
           "manual": {
             "text": "Run discovery for the integration and pick the cameras it found.",
             "ui": {
-              "route": "/devices",
+              "route": "/integrations",
               "nav": [
-                "Devices"
+                "Integrations"
               ]
             },
             "page": "/docs/get-started/add-a-camera"
@@ -364,9 +364,9 @@
           "manual": {
             "text": "Enter the address and the credentials of the camera and save.",
             "ui": {
-              "route": "/devices",
+              "route": "/integrations",
               "nav": [
-                "Devices"
+                "Integrations"
               ]
             },
             "page": "/docs/get-started/add-a-camera"
@@ -554,7 +554,8 @@
           "id": "read-remote-access",
           "title": "See how the hub is reachable",
           "agent": {
-            "tool": "configure_remote_access"
+            "tool": "configure_remote_access",
+            "next": "The tool can report a tunnel addon as not installed. Check the Addons page before you install one."
           },
           "manual": {
             "text": "Open Network: the addresses of the hub, which one the apps use, and whether a public endpoint is set.",
@@ -572,10 +573,11 @@
           "id": "set-remote-access",
           "title": "Set the public endpoint",
           "agent": {
-            "tool": "configure_remote_access_set"
+            "tool": "configure_remote_access_set",
+            "next": "Only a public HTTPS endpoint counts. A LAN, private, loopback, .local or plain-http address does not."
           },
           "manual": {
-            "text": "Pick the tunnel or the address that is reachable from outside as the public endpoint.",
+            "text": "Pick the tunnel or the address that is reachable from outside as the public endpoint. It must be a public HTTPS endpoint: a LAN, private, loopback, .local or plain-http address does not count.",
             "ui": {
               "route": "/system/network",
               "nav": [
@@ -618,7 +620,7 @@
           "title": "Add a target",
           "agent": {
             "tool": "configure_notification_target_upsert",
-            "next": "A target that needs a token is created by the person in the admin UI."
+            "next": "Read configure_notifiers first: it lists the target kinds and which fields are secret. A target that needs a token is created by the person in the admin UI."
           },
           "manual": {
             "text": "Add the phone app, email or another target.",
@@ -655,7 +657,7 @@
           "title": "Draft a rule from a few questions",
           "agent": {
             "tool": "configure_notification_rule_questionnaire",
-            "next": "Call it without answers to get the questions. Do it once for system alerts and once for detections."
+            "next": "Call it with answers: {} to get the first question. That question picks detections or system alerts; the draft then covers both the detection rule and the system-alert rule (node offline, disk full)."
           },
           "manual": {
             "text": "Create a rule: what triggers it, on which cameras, and where it is sent.",
@@ -703,9 +705,9 @@
             "none": "No tool writes backup settings yet. Send the person to the page below."
           },
           "manual": {
-            "text": "On the Backup tab, add a destination, set a schedule and run the first backup by hand.",
+            "text": "On the Backup tab, create a backup entry with the Backups locations it targets and a schedule, then run it once by hand.",
             "ui": {
-              "route": "/system/backup",
+              "route": "/system/data?tab=backup",
               "nav": [
                 "Administration",
                 "Data"
@@ -980,7 +982,7 @@
       ],
       "page": "/docs/recording/storage",
       "ui": {
-        "route": "/system/storage",
+        "route": "/system/data?tab=storage",
         "nav": [
           "Administration",
           "Data"

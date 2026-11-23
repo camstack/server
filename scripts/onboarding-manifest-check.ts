@@ -49,7 +49,8 @@ export function manifestProblems(
   facts: RepositoryFacts,
 ): readonly string[] {
   const ui = uiClaims(manifest).flatMap(({ where, ui: location }) => [
-    ...(facts.routes.has(location.route)
+    // A `?tab=` query picks a tab on the page; the route is the path before it.
+    ...(facts.routes.has(location.route.split('?')[0] ?? location.route)
       ? []
       : [`${where}: the admin UI has no route ${location.route}`]),
     ...location.nav

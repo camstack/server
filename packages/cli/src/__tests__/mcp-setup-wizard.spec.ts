@@ -778,7 +778,7 @@ describe('setup_wizard: actions', () => {
     const create = answer.requestedStep?.actions.find((x) => x.id === 'add-location')
     expect(create?.tool).toBeUndefined()
     expect(create?.note).toContain('not served')
-    expect(create?.manual?.ui?.route).toBe('/system/storage')
+    expect(create?.manual?.ui?.route).toBe('/system/data?tab=storage')
   })
 
   it('every tool an answer names is a tool this server lists', async () => {
