@@ -3368,10 +3368,16 @@ export class StreamBroker implements IStreamBroker {
   setPreBufferDuration(seconds: number): void {
     const clamped = Math.max(0, Math.min(seconds, StreamBroker.MAX_PRE_BUFFER_SEC))
     this.preBuffer.setDuration(clamped)
+    // Re-applied on every ensureBroker hit; log only a change, not each re-apply.
+    if (clamped === this.preBufferDurationSec) return
+    this.preBufferDurationSec = clamped
     this.logger?.info('Pre-buffer duration set', {
       meta: { seconds: clamped },
     })
   }
+
+  /** The last duration applied, so a re-apply of the same value stays silent. */
+  private preBufferDurationSec: number | null = null
 
   /** Retain `seconds` of AnnexB video for notification clips (0 = stop, frees the ring). */
   setClipRetention(seconds: number): void {
