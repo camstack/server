@@ -468,7 +468,7 @@ export function decodeDeviceRow(
     location: names.room(locationId ?? null),
     locationId: locationId ?? null,
     ...(tags !== undefined && tags.length > 0 ? { tags: [...tags] } : {}),
-    ...(tagIds !== undefined && tagIds.length > 0 ? { tagIds: [...tagIds] } : {}),
+    ...(tagIds === undefined ? {} : { tagIds: [...tagIds] }),
     disabled: readBoolean(data['disabled']) ?? false,
     parentDeviceId: parentDeviceId ?? null,
     ...(alias !== undefined ? { alias } : {}),
@@ -529,7 +529,8 @@ export function encodeDeviceRow(
     alias: meta.alias ?? null,
     userNamed: meta.userNamed ?? null,
     locationId: meta.locationId,
-    tagIds: meta.tagIds === undefined || meta.tagIds.length === 0 ? null : [...meta.tagIds],
+    // `[]` is a decision (this device has no tags); only an unset field is `null` (not migrated).
+    tagIds: meta.tagIds === undefined ? null : [...meta.tagIds],
     disabled: meta.disabled,
     parentDeviceId: meta.parentDeviceId,
     registered: extra.registered ?? false,

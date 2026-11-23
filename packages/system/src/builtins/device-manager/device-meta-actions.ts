@@ -544,13 +544,14 @@ export async function registerDevice(
     // an operator's `setLocation` may overwrite. Gated on first-registration
     // / re-parent so a routine post-probe re-register of a deliberately
     // location-less subtree never pays the ancestor walk.
-    const priorLocation = existingMeta?.location ?? null
-    const priorLocationId = priorLocation === null ? null : (existingMeta?.locationId ?? null)
+    // The stored id itself: `location` is the NAME its room record resolves to, and a record
+    // that did not resolve (not loaded yet) must never null the id a re-registration keeps.
+    const priorLocationId = existingMeta?.locationId ?? null
     const resolvedParentId = parentDeviceId ?? null
     const parentChanged =
       existingMeta !== undefined && (existingMeta.parentDeviceId ?? null) !== resolvedParentId
     const shouldInherit =
-      priorLocation === null && resolvedParentId !== null && (isFirst || parentChanged)
+      priorLocationId === null && resolvedParentId !== null && (isFirst || parentChanged)
     const inherited = shouldInherit
       ? await resolveInheritedLocation(pctx.metaStore.rows, resolvedParentId)
       : null
@@ -1367,21 +1368,19 @@ function tagNamesOf(pctx: ProviderContext, ids: readonly string[] | null): strin
 
 /**
  * The tag ids a write names: `tagIds` wins, else `tags` (text) is resolved through
- * `ensureTag` (D1089, accepted for one release). `[]` / none → `null` (the column's
- * absent form).
+ * `ensureTag` (D1089, accepted for one release). `[]` stays `[]`: the operator cleared
+ * them, and `null` would let the kept names of an older row read back as tags again.
  */
 async function resolveTagIds(
   pctx: ProviderContext,
   input: { readonly tags?: readonly string[]; readonly tagIds?: readonly string[] },
-): Promise<string[] | null> {
+): Promise<string[]> {
   if (input.tagIds !== undefined) {
-    const ids = [...new Set(input.tagIds)]
-    return ids.length === 0 ? null : ids
+    return [...new Set(input.tagIds)]
   }
   const names = normalizeTags(input.tags ?? [])
-  if (names.length === 0) return null
-  const ids = await pctx.ensureTagIds(names)
-  return ids.length === 0 ? null : [...new Set(ids)]
+  if (names.length === 0) return []
+  return [...new Set(await pctx.ensureTagIds(names))]
 }
 
 /**
