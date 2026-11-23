@@ -23,11 +23,11 @@ import {
   TooltipContent,
   TooltipTrigger,
   useAddonsSetCapabilityProviderEnabled,
-  useConfirm,
   useInstancesOfCap,
   useItemFormUrl,
   useSystem,
   type DataColumn,
+  type DataTableRowApi,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
@@ -266,7 +266,6 @@ export function InstancesTable({
   const { t } = useTranslation()
   const system = useSystem()
   const queryClient = useQueryClient()
-  const confirm = useConfirm()
   const data = useInstancesData(functionCap)
   const form = useItemFormUrl({ editKey: EDIT_KEY, newKey: `${EDIT_KEY}-new` })
   const [testing, setTesting] = useState<string | null>(null)
@@ -326,7 +325,7 @@ export function InstancesTable({
   )
 
   const runDelete = useCallback(
-    async (row: InstanceRow): Promise<void> => {
+    async (row: InstanceRow, table: DataTableRowApi<PanelRow>): Promise<void> => {
       // A failed look-up only drops the warning below; the delete itself still asks.
       const pinning = targetsPinning(targets.data ?? [], row.id)
       const pinned =
@@ -338,7 +337,7 @@ export function InstancesTable({
             )}`
           : ''
       const note = deleteNote?.(row) ?? null
-      const ok = await confirm({
+      await table.destructive(row, {
         title: t('providerInstances.deleteTitle', 'Delete {{name}}?', {
           name: row.name,
         }),
@@ -347,25 +346,22 @@ export function InstancesTable({
           'The record and its stored credentials are removed.',
         )}${pinned}${note === null ? '' : ` ${note}`}`,
         confirmLabel: t('common.delete', 'Delete'),
-        variant: 'danger',
+        run: async () => {
+          try {
+            await system.trpcClient.integrationInstances.deleteInstance.mutate({
+              addonId: row.addonId,
+              id: row.id,
+            })
+            await queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+          } catch (err: unknown) {
+            // The page took over a refused delete (a forced delete behind a second ask).
+            if (onDeleteRefused !== undefined && (await onDeleteRefused(row, err))) return
+            throw err
+          }
+        },
       })
-      if (!ok) return
-      try {
-        await system.trpcClient.integrationInstances.deleteInstance.mutate({
-          addonId: row.addonId,
-          id: row.id,
-        })
-        await queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
-      } catch (err: unknown) {
-        if (onDeleteRefused !== undefined && (await onDeleteRefused(row, err))) return
-        pushToast({
-          title: t('providerInstances.deleteFailed', 'Could not delete'),
-          message: `${row.name}: ${err instanceof Error ? err.message : String(err)}`,
-          severity: 'critical',
-        })
-      }
     },
-    [confirm, deleteNote, onDeleteRefused, queryClient, system, t, targets.data],
+    [deleteNote, onDeleteRefused, queryClient, system, t, targets.data],
   )
 
   const showKind = useMemo(
@@ -488,7 +484,7 @@ export function InstancesTable({
         mobile: 'keep',
         align: 'right',
         notSortableReason: t('providerInstances.actionsNotSortable', 'Row actions are not values.'),
-        render: (row) => (
+        render: (row, _index, table) => (
           <span className="inline-flex items-center gap-1">
             {row.kind === 'instance' && row.connectPath !== undefined && (
               <RowIconButton
@@ -554,7 +550,7 @@ export function InstancesTable({
                 variant="ghost"
                 size="sm"
                 aria-label={t('providerInstances.deleteRow', 'Delete {{name}}', { name: row.name })}
-                onClick={() => void runDelete(row)}
+                onClick={() => void runDelete(row, table)}
               />
             )}
           </span>
@@ -606,6 +602,13 @@ export function InstancesTable({
         rows={visibleRows}
         rowKey={(row) => row.key}
         bordered={false}
+        onRowActionError={(message, row) =>
+          pushToast({
+            title: t('providerInstances.deleteFailed', 'Could not delete'),
+            message: `${row.name}: ${message}`,
+            severity: 'critical',
+          })
+        }
         emptyMessage={t('instances.noneForProvider', 'This provider has no instance yet.')}
       />
     )

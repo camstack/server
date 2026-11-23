@@ -40,8 +40,9 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useConfirm: () => async (opts: unknown) => {
+  useConfirm: () => async (opts: { action?: () => Promise<unknown> }) => {
     h.confirmSpy(opts)
+    await opts.action?.()
     return true
   },
   usePrompt: () => async () => h.flags.promptAnswer,
@@ -85,7 +86,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
         }),
       },
       deleteDeviceCredential: {
-        useMutation: () => ({ mutate: h.removeMutate, isPending: false }),
+        useMutation: () => ({
+          mutate: vi.fn(),
+          mutateAsync: h.removeMutate,
+          isPending: false,
+        }),
       },
       startEnrollment: {
         useMutation: () => ({

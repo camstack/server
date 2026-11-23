@@ -6357,7 +6357,8 @@
       "lastRun": "Ultima esecuzione",
       "lastRunNotSortable": "Letto per automazione",
       "enabled": "Attiva",
-      "search": "Cerca automazioni"
+      "search": "Cerca automazioni",
+      "deleteFailed": "Impossibile eliminare l'automazione"
     },
     "blockEditor": {
       "loadExample": "Carica esempio",

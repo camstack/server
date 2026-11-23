@@ -148,9 +148,9 @@ export function UsersPage() {
       ),
       confirmLabel: t('common.delete', 'Delete'),
       variant: 'danger',
+      action: () => deleteMutation.mutateAsync({ id: user.id }),
     })
     if (!ok) return
-    deleteMutation.mutate({ id: user.id })
     if (formUrl.mode === 'edit' && formUrl.id === user.id) closeEditor()
   }
 

@@ -10,7 +10,12 @@ import type { ArchiveData } from '../use-archive-data'
 
 expect.extend(jestDomMatchers)
 
-const confirm = vi.fn<() => Promise<boolean>>()
+const confirm = vi.fn<(opts: { action?: () => Promise<unknown> }) => Promise<boolean>>()
+/** The real dialog runs `action` on accept; the mock does the same. */
+const accept = async (opts: { action?: () => Promise<unknown> }): Promise<boolean> => {
+  await opts.action?.()
+  return true
+}
 const prune = vi.fn()
 const removeFootage = vi.fn()
 const removeEvents = vi.fn()
@@ -19,9 +24,9 @@ const idle = { isPending: false }
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useConfirm: () => confirm,
-  useRecordingArchivePruneFootage: () => ({ ...idle, mutate: prune }),
-  useRecordingArchiveDeleteFootprint: () => ({ ...idle, mutate: removeFootage }),
-  usePipelineAnalyticsDeleteDeviceEvents: () => ({ ...idle, mutate: removeEvents }),
+  useRecordingArchivePruneFootage: () => ({ ...idle, mutateAsync: prune }),
+  useRecordingArchiveDeleteFootprint: () => ({ ...idle, mutateAsync: removeFootage }),
+  usePipelineAnalyticsDeleteDeviceEvents: () => ({ ...idle, mutateAsync: removeEvents }),
   useStorageListLocations: () => ({
     data: [
       { id: 'old', type: 'recordings', displayName: 'Old', mode: 'readonly' },
@@ -80,7 +85,7 @@ describe('ArchiveSpaceSection danger zone', () => {
   })
 
   it('prune uses the picked reason once confirmed', async () => {
-    confirm.mockResolvedValue(true)
+    confirm.mockImplementation(accept)
     renderSection()
     selectOption(screen.getByLabelText('Prune reason'), 'quota')
     fireEvent.click(screen.getByRole('button', { name: 'Apply retention now' }))
@@ -88,7 +93,7 @@ describe('ArchiveSpaceSection danger zone', () => {
   })
 
   it('delete footage and delete events run after the confirm', async () => {
-    confirm.mockResolvedValue(true)
+    confirm.mockImplementation(accept)
     renderSection()
     fireEvent.click(screen.getByRole('button', { name: 'Delete footage' }))
     await waitFor(() => expect(removeFootage).toHaveBeenCalledWith({ deviceId: 101 }))

@@ -9,7 +9,7 @@
 
 import { selectOption, selectOptionValues, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { LlmDefault } from '@camstack/types'
-import type { LinkableInstance } from '@camstack/ui-library'
+import { DETACHED_ROW_API, type LinkableInstance } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -104,7 +104,7 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
               <span>{p.name}</span>
               {(props.extraColumns ?? []).map((c) => (
                 <span key={c.key} data-testid={`${p.id}-${c.key}`}>
-                  {c.render(row, 0)}
+                  {c.render(row, 0, DETACHED_ROW_API)}
                 </span>
               ))}
             </div>

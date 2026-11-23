@@ -62,24 +62,28 @@ export function ArchiveSpaceSection({
   }, [locations, data.usage?.locations])
 
   const confirmDanger = useCallback(
-    async (title: string, message: string, confirmLabel: string): Promise<boolean> =>
-      confirm({ title, message, confirmLabel, variant: 'danger' }),
+    async (
+      title: string,
+      message: string,
+      confirmLabel: string,
+      action: () => Promise<unknown>,
+    ): Promise<boolean> => confirm({ title, message, confirmLabel, variant: 'danger', action }),
     [confirm],
   )
 
   const onPrune = async (): Promise<void> => {
-    const ok = await confirmDanger(
+    await confirmDanger(
       t('archive.space.pruneTitle', 'Apply retention to {{name}}?', { name: row.name }),
       t(
         'archive.space.pruneMessage',
         'Footage beyond the retention policy is permanently deleted.',
       ),
       t('archive.space.pruneNow', 'Prune now'),
+      () => prune.mutateAsync({ deviceId: row.deviceId, reason }),
     )
-    if (ok) prune.mutate({ deviceId: row.deviceId, reason })
   }
   const onDeleteFootage = async (): Promise<void> => {
-    const ok = await confirmDanger(
+    await confirmDanger(
       t('archive.space.deleteFootageTitle', 'Delete all footage for {{name}}?', { name: row.name }),
       t(
         'archive.space.deleteFootageMessage',
@@ -89,19 +93,19 @@ export function ArchiveSpaceSection({
         },
       ),
       t('archive.space.deleteFootage', 'Delete footage'),
+      () => removeFootage.mutateAsync({ deviceId: row.deviceId }),
     )
-    if (ok) removeFootage.mutate({ deviceId: row.deviceId })
   }
   const onDeleteEvents = async (): Promise<void> => {
-    const ok = await confirmDanger(
+    await confirmDanger(
       t('archive.space.deleteEventsTitle', 'Delete all events for {{name}}?', { name: row.name }),
       t(
         'archive.space.deleteEventsMessage',
         'Permanently deletes the events and their media. This cannot be undone.',
       ),
       t('archive.space.deleteEvents', 'Delete events'),
+      () => removeEvents.mutateAsync({ deviceId: row.deviceId }),
     )
-    if (ok) removeEvents.mutate({ deviceId: row.deviceId })
   }
 
   return (

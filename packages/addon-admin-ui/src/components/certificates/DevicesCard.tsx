@@ -90,11 +90,9 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
       ),
       confirmLabel: t('certificates.devicesCard.revoke2', 'Revoke'),
       variant: 'danger',
+      action: () => revoke.mutateAsync({ id: row.id }),
     })
-    if (!ok) return
-    setError(null)
-    setBusyId(row.id)
-    revoke.mutate({ id: row.id })
+    if (ok) setError(null)
   }
   const onDelete = async (row: CredentialRow): Promise<void> => {
     const ok = await confirm({
@@ -106,11 +104,9 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
       ),
       confirmLabel: t('common.delete', 'Delete'),
       variant: 'danger',
+      action: () => remove.mutateAsync({ id: row.id }),
     })
-    if (!ok) return
-    setError(null)
-    setBusyId(row.id)
-    remove.mutate({ id: row.id })
+    if (ok) setError(null)
   }
   const onRename = async (row: CredentialRow): Promise<void> => {
     const next = await prompt({

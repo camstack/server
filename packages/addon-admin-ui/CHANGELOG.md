@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Automation editor: a fault code or button event on a Becomes / Is row is picked from the device's own list, and Is one of offers a multi-pick
+- Deleting an automation, action, scheduler, script, device, location, zone, user, certificate device, archive footage or instance now keeps a loader on the row or in the confirm dialog until the action finishes, and shows a failure there
 
 ## [1.2.738] - 2026-11-22
 

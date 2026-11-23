@@ -279,7 +279,7 @@ export function LocationsPage() {
 
   const onDelete = async (name: string, deviceCount: number) => {
     const extra = deviceCount > 0 ? ` ${String(deviceCount)} device(s) will become unassigned.` : ''
-    const ok = await confirm({
+    await confirm({
       title: t('locations.deleteLocation', 'Delete location'),
       message: t('locations.deleteTheLocation', 'Delete the location “{{name}}”?{{extra}}', {
         name,
@@ -287,13 +287,12 @@ export function LocationsPage() {
       }),
       confirmLabel: t('common.delete', 'Delete'),
       variant: 'danger',
+      action: () => removeLocation.mutateAsync({ name, cascade: true }),
     })
-    if (!ok) return
-    await removeLocation.mutateAsync({ name, cascade: true })
   }
 
   const onDeleteZone = async (name: string) => {
-    const ok = await confirm({
+    await confirm({
       title: t('locations.deleteZone', 'Delete zone'),
       message: t(
         'locations.deleteTheZoneTheRooms',
@@ -302,9 +301,8 @@ export function LocationsPage() {
       ),
       confirmLabel: t('common.delete', 'Delete'),
       variant: 'danger',
+      action: () => removeSiteZone.mutateAsync({ name }),
     })
-    if (!ok) return
-    await removeSiteZone.mutateAsync({ name })
   }
 
   const onPickIcon = async (location: string, icon: IconKey | null) => {

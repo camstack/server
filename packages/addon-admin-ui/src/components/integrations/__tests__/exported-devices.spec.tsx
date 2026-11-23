@@ -6,6 +6,7 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DETACHED_ROW_API } from '@camstack/ui-library'
 import type { PanelRow } from '../../instances/instances-model'
 
 const h = vi.hoisted(() => ({
@@ -68,7 +69,7 @@ function cleanupPanelAndOpenFixed(): void {
 
 function cell(row: PanelRow) {
   const column = exportedDevicesColumn(t)
-  return render(<MemoryRouter>{column.render(row, 0)}</MemoryRouter>)
+  return render(<MemoryRouter>{column.render(row, 0, DETACHED_ROW_API)}</MemoryRouter>)
 }
 
 beforeEach(() => {

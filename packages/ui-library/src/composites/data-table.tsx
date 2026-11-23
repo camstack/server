@@ -116,6 +116,23 @@ export interface DataTableRowApi<T> {
   readonly destructive: (row: T, spec: RowDestructiveSpec) => Promise<boolean>
 }
 
+/**
+ * The row API for a column re-typed onto another row type (a wrapper that
+ * renders an inner column for the row it picked): the action still runs on the
+ * OUTER row the table knows.
+ */
+export function forwardRowApi<Outer, Inner>(
+  table: DataTableRowApi<Outer>,
+  outer: Outer,
+): DataTableRowApi<Inner> {
+  return { destructive: (_inner, spec) => table.destructive(outer, spec) }
+}
+
+/** A row API with no table behind it (a column rendered outside a `DataTable`, e.g. in a spec): it never runs anything. */
+export const DETACHED_ROW_API: DataTableRowApi<unknown> = {
+  destructive: () => Promise.resolve(false),
+}
+
 export interface DataColumn<T> {
   /** Stable key for React reconciliation + tests. */
   readonly key: string

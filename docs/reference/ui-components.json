@@ -5531,6 +5531,13 @@
       "summary": "Summary line for a selector — used by the raw picker's collapsed row."
     },
     {
+      "name": "DETACHED_ROW_API",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/data-table.tsx",
+      "summary": "A row API with no table behind it (a column rendered outside a `DataTable`, e.g. in a spec): it never runs anything."
+    },
+    {
       "name": "DetectionCanvas",
       "kind": "component",
       "area": "composites",
@@ -9576,6 +9583,13 @@
           "doc": "Override for the discard label."
         }
       ]
+    },
+    {
+      "name": "forwardRowApi",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/data-table.tsx",
+      "summary": "The row API for a column re-typed onto another row type (a wrapper that renders an inner column for the row it picked): the action still runs on the OUTER row the table knows."
     },
     {
       "name": "FOUNTAIN_LOW_PERCENT",

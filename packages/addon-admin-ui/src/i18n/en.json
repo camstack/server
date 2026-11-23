@@ -6282,7 +6282,8 @@
       "lastRun": "Last run",
       "lastRunNotSortable": "Read per automation",
       "enabled": "Enabled",
-      "search": "Search automations"
+      "search": "Search automations",
+      "deleteFailed": "Could not delete the automation"
     },
     "blockEditor": {
       "loadExample": "Load example",

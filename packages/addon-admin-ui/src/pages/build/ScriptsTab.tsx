@@ -405,8 +405,7 @@ export function ScriptsTab({
                     ),
                     confirmLabel: t('common.delete', 'Delete'),
                     variant: 'danger',
-                  }).then((accepted) => {
-                    if (accepted) remove.mutate(block.id)
+                    action: () => remove.mutateAsync(block.id),
                   })
                 }}
                 title={t('common.delete', 'Delete')}

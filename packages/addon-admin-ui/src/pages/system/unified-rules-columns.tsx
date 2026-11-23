@@ -15,7 +15,7 @@
  */
 
 import type { NcRule } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import { type DataColumn, forwardRowApi } from '@camstack/ui-library'
 import type { CalendarEventsRuleView } from './notification-calendar-events.helpers'
 import { calendarScheduleLabel } from './notification-calendar-events.helpers'
 import {
@@ -78,9 +78,9 @@ function lift<R>(
     ...(column.align !== undefined ? { align: column.align } : {}),
     ...(column.nowrap !== undefined ? { nowrap: column.nowrap } : {}),
     ...(column.width !== undefined ? { width: column.width } : {}),
-    render: (row, index) => {
+    render: (row, index, table) => {
       const own = pick(row)
-      return own === null ? null : column.render(own, index)
+      return own === null ? null : column.render(own, index, forwardRowApi(table, row))
     },
   }
 }
@@ -113,16 +113,17 @@ function sharedColumn(
     mobile: event?.mobile ?? 'hidden',
     ...(event?.align !== undefined ? { align: event.align } : {}),
     ...(event?.nowrap !== undefined ? { nowrap: event.nowrap } : {}),
-    render: (row, index) => {
+    render: (row, index, table) => {
+      const api = forwardRowApi(table, row)
       switch (row.family) {
         case 'event':
-          return event?.render(row.rule, index) ?? null
+          return event?.render(row.rule, index, api) ?? null
         case 'summary':
-          return summary?.render(row.rule, index) ?? null
+          return summary?.render(row.rule, index, api) ?? null
         case 'timelapse':
-          return timelapse?.render(row.rule, index) ?? null
+          return timelapse?.render(row.rule, index, api) ?? null
         case 'calendar-events':
-          return calendar?.render(row.rule, index) ?? null
+          return calendar?.render(row.rule, index, api) ?? null
       }
     },
   }
@@ -153,12 +154,14 @@ function whenColumn(deps: UnifiedColumnsDeps): DataColumn<UnifiedRuleRow> {
     mobile: 'detail',
     key: 'when',
     header: i18n.t('system.unifiedRulesColumns.when', 'When'),
-    render: (row, index) => {
+    render: (row, index, table) => {
       const label = producerWhenLabel(row)
       if (label !== null) {
         return <span className="text-[11px] text-foreground-subtle">{label}</span>
       }
-      return row.family === 'event' ? (trigger?.render(row.rule, index) ?? null) : null
+      return row.family === 'event'
+        ? (trigger?.render(row.rule, index, forwardRowApi(table, row)) ?? null)
+        : null
     },
   }
 }

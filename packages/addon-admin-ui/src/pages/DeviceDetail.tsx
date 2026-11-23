@@ -1275,7 +1275,7 @@ export function DeviceDetailPage() {
                     disabled: deleteMutation.isPending,
                     danger: true,
                     onClick: async () => {
-                      const confirmed = await confirm({
+                      await confirm({
                         title: t('deviceDetail.delete', 'Delete "{{name}}"?', { name }),
                         message: t(
                           'deviceDetail.thisWillRemoveTheDevice',
@@ -1283,8 +1283,8 @@ export function DeviceDetailPage() {
                         ),
                         confirmLabel: t('common.delete', 'Delete'),
                         variant: 'danger',
+                        action: () => deleteMutation.mutateAsync({ deviceId }),
                       })
-                      if (confirmed) deleteMutation.mutate({ deviceId })
                     },
                   },
                 ] as readonly KebabMenuItem[]

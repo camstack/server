@@ -262,8 +262,7 @@ export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: Schedu
                 ),
                 confirmLabel: t('common.delete', 'Delete'),
                 variant: 'danger',
-              }).then((accepted) => {
-                if (accepted) remove.mutate({ schedulerId: entry.id })
+                action: () => remove.mutateAsync({ schedulerId: entry.id }),
               })
             }}
           >

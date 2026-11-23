@@ -19,7 +19,6 @@ import {
   ErrorBox,
   TABLE_SCROLL_MAX_H,
   Skeleton,
-  useConfirm,
   useItemFormUrl,
   useSystem,
   useTemplateCreate,
@@ -90,7 +89,6 @@ export function AutomationsTab({
     openEdit,
     close: closeForm,
   } = useItemFormUrl({ editKey: 'block', newKey: 'new', push: true })
-  const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
   /** The automation whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
@@ -320,7 +318,7 @@ export function AutomationsTab({
         header: '',
         align: 'right',
         notSortableReason: 'Row actions',
-        render: (block) => {
+        render: (block, _index, table) => {
           const recipe = parseRecipeFromCode(block.code)
           return (
             <AutomationActions
@@ -328,7 +326,7 @@ export function AutomationsTab({
               onEdit={() => openEdit(block.id)}
               onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
               onDelete={() => {
-                void confirm({
+                void table.destructive(block, {
                   title: t(
                     'automation.automationList.deleteThisAutomation',
                     'Delete this automation?',
@@ -339,9 +337,10 @@ export function AutomationsTab({
                     { name: block.name },
                   ),
                   confirmLabel: t('common.delete', 'Delete'),
-                  variant: 'danger',
-                }).then((accepted) => {
-                  if (accepted) remove.mutate(block.id)
+                  run: async () => {
+                    await remove.mutateAsync(block.id)
+                    await blocksQuery.refetch()
+                  },
                 })
               }}
             />
@@ -349,7 +348,7 @@ export function AutomationsTab({
         },
       },
     ],
-    [confirm, logsFor, openEdit, remove, setEnabled, t],
+    [blocksQuery, logsFor, openEdit, remove, setEnabled, t],
   )
 
   const cancelInstance = (): void => {
@@ -494,7 +493,6 @@ export function AutomationsTab({
             closeForm()
           }}
         />
-        {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
         {templateError !== null && <ErrorBox message={templateError} />}
         {quickEditDialog}
       </div>
@@ -537,10 +535,16 @@ export function AutomationsTab({
               : t('build.automationsTab.noAutomationsYet', 'No automations yet.')
           }
           onRowClick={(block) => setQuickModalId(block.id)}
+          onRowActionError={(message, block) =>
+            pushToast({
+              title: t('build.automationsTab.deleteFailed', 'Could not delete the automation'),
+              message: `${block.name}: ${message}`,
+              severity: 'critical',
+            })
+          }
         />
       )}
 
-      {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
       {setEnabled.error != null && <ErrorBox message={errorMessage(setEnabled.error)} />}
       <NewAutomationChooser
         open={chooserOpen}
