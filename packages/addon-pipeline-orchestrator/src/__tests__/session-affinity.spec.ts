@@ -139,7 +139,7 @@ describe('session affinity (D916)', () => {
     let now = 0
     const memory = new SessionAffinityMemory(() => now)
     memory.note(7, 'mac', 'coreml:all')
-    expect(memory.previous(7)).toEqual({ nodeId: 'mac', deviceKey: 'coreml:all' })
+    expect(memory.previous(7)).toMatchObject({ nodeId: 'mac', deviceKey: 'coreml:all' })
     now += SESSION_AFFINITY_TTL_MS + 1
     expect(memory.previous(7)).toBeNull()
     memory.note(7, 'hub', null)
@@ -182,5 +182,17 @@ describe('session affinity (D916)', () => {
       previousDeviceKey: firstKey ?? null,
     })
     expect(gone).toMatchObject({ affinity: { sticky: false, reason: 'previous-ineligible' } })
+  })
+
+  it('remembers when the camera ARRIVED on a node: staying keeps it, moving resets it', () => {
+    let t = 1_000
+    const memory = new SessionAffinityMemory(() => t)
+    memory.note(7, 'hub', null)
+    t += 120_000
+    memory.note(7, 'hub', null)
+    expect(memory.previous(7)?.sinceMs).toBe(1_000)
+    t += 1_000
+    memory.note(7, 'mac', null)
+    expect(memory.previous(7)?.sinceMs).toBe(t)
   })
 })

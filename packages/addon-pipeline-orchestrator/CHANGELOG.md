@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Serves viewer 1.0.732
 - Serves viewer 1.0.733
+- On-motion cameras keep their pipeline node for a 10 minute minimum dwell instead of hopping every 10-60 s; the dispatch line reports stickyReason within-dwell
 
 ## [1.2.718] - 2026-11-23
 

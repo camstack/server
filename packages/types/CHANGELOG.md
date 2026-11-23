@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rooms and tags are records with an id: tagIds on devices, blocks, schedulers, templates and actions, derived read-only location and tags names, and migrations that move existing rooms and tags.
 - A capability can declare where a status field's values come from (status.fieldEnums); error.code and the event type use it
 - The device-removal-hook documentation now says the implementers are called concurrently.
+- A camera that just moved to a pipeline node now stays there for at least 10 minutes, so on-motion cameras stop hopping between nodes every few seconds
 
 ## [1.2.626] - 2026-11-22
 

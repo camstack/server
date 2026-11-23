@@ -245,6 +245,36 @@ describe('session dispatch — share placement (D748)', () => {
     }
   })
 
+  it('#672: five on-motion cameras over the shared history do not hop inside the dwell', async () => {
+    const w = world({
+      policy: 'share',
+      weights: { hub: 1, mac: 1, 'agent-a': 1 },
+      history: true,
+      affinity: true,
+    })
+    const cameras = [584, 587, 592, 615, 1443]
+    // A burst of short sessions: every camera's motion edge every ~75 s for 8 min.
+    for (let round = 0; round < 6; round++) {
+      for (const id of cameras) {
+        await motion(w, id)
+        await w.controller.handleSessionMotion(id, false, undefined, 'onboard', CAMERA_TRIGGER)
+        await vi.advanceTimersByTimeAsync(10_000)
+      }
+    }
+    for (let nth = 0; nth < cameras.length; nth++) {
+      const mine = w.placedOn.filter((_, i) => i % cameras.length === nth)
+      const moves = mine.filter((n, i) => i > 0 && n !== mine[i - 1]).length
+      expect(moves).toBe(0)
+    }
+    const kept = w.lines.filter(
+      (l) =>
+        l.message === 'detection session: dispatched on motion' &&
+        l.meta['stickyReason'] === 'within-dwell',
+    )
+    expect(kept.length).toBeGreaterThan(0)
+    expect(kept.every((l) => l.meta['sticky'] === true)).toBe(true)
+  })
+
   it('the placement statistics see every session start', async () => {
     const w = world({ policy: 'share' })
     await motion(w, 1)

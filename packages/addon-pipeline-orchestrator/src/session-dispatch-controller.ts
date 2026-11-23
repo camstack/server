@@ -1089,6 +1089,8 @@ export class SessionDispatchController {
     readonly eligible: readonly string[]
     /** The node the camera's previous session ran on (D916), or null. */
     readonly previousNodeId: string | null
+    /** When the camera arrived on that node (the minimum dwell), or null. */
+    readonly previousSinceMs: number | null
   }): SessionNodeElection {
     const balanced = (): BalancerDecision | null =>
       balance({
@@ -1120,6 +1122,10 @@ export class SessionDispatchController {
       runningByNode: running,
       ...(this.deps.shareHistory !== undefined ? { history: this.deps.shareHistory } : {}),
       previousNodeId: input.previousNodeId,
+      dwell:
+        input.previousSinceMs !== null
+          ? { previousSinceMs: input.previousSinceMs, nowMs: Date.now() }
+          : null,
     })
     const election = share.election
     // Nothing electable (every node capped, none online): `balance()` names why.
@@ -1283,6 +1289,7 @@ export class SessionDispatchController {
       weights,
       eligible,
       previousNodeId: previous?.nodeId ?? null,
+      previousSinceMs: previous?.sinceMs ?? null,
     })
 
     if (!decision || decision.kind !== 'assigned') {

@@ -144,6 +144,25 @@ function electFromScored(scored: readonly Scored[]): ShareElection {
  */
 export const SHARE_AFFINITY_TOLERANCE_SESSIONS = 1
 
+/**
+ * Minimum dwell (amends D916): a camera that arrived on its node less than this
+ * long ago stays there on a `share-off` verdict. The recency history is shared
+ * by every camera, so with five or more on-motion cameras each other election
+ * pushes the previous node more than one session off the turn holder, and a
+ * camera whose motion edges open short sessions hopped node every 10-60 s —
+ * each hop a stream dial and a cold pre-roll. Ten minutes outlasts a burst of
+ * edges; after it the tolerance rule applies unchanged, so the split still
+ * follows the shares. An ineligible, full or offline previous node still moves
+ * the camera at once.
+ */
+export const SHARE_AFFINITY_MIN_DWELL_MS = 10 * 60 * 1000
+
+/** When the camera arrived on its previous candidate, and the time now (both inputs, no clock here). */
+export interface ShareAffinityDwell {
+  readonly previousSinceMs: number
+  readonly nowMs: number
+}
+
 export type ShareAffinityReason =
   /** The camera has no remembered placement (first session, or it expired). */
   | 'no-previous'
@@ -155,6 +174,8 @@ export type ShareAffinityReason =
   | 'previous-is-turn'
   /** Kept: the previous candidate is within the tolerance of the turn holder. */
   | 'within-one-session'
+  /** Kept: over its share, but the camera arrived there less than the minimum dwell ago. */
+  | 'within-dwell'
   /** Moved: the previous candidate is more than the tolerance over its share. */
   | 'share-off'
 
@@ -193,6 +214,8 @@ export function electByShareWithAffinity(
   candidates: readonly ShareCandidate[],
   previousKey: string | null,
   toleranceSessions: number = SHARE_AFFINITY_TOLERANCE_SESSIONS,
+  dwell: ShareAffinityDwell | null = null,
+  minDwellMs: number = SHARE_AFFINITY_MIN_DWELL_MS,
 ): ShareAffinityElection {
   const scored = candidates.length === 0 ? [] : scoreShares(candidates)
   const plain: ShareElection = scored.length === 0 ? { kind: 'none' } : electFromScored(scored)
@@ -224,6 +247,9 @@ export function electByShareWithAffinity(
       true,
       'within-one-session',
     )
+  }
+  if (dwell !== null && dwell.nowMs - dwell.previousSinceMs < minDwellMs) {
+    return result({ kind: 'elected', key: previousKey, reason: 'share' }, true, 'within-dwell')
   }
   return result(plain, false, 'share-off')
 }

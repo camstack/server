@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { electByShareWithAffinity } from '../share-election.js'
+import { SHARE_AFFINITY_MIN_DWELL_MS, electByShareWithAffinity } from '../share-election.js'
 import type { ShareCandidate } from '../share-election.js'
 
 function cand(
@@ -65,5 +65,61 @@ describe('electByShareWithAffinity', () => {
     expect(out.scored.map((s) => s.key).toSorted()).toEqual(['a', 'b'])
     const a = out.scored.find((s) => s.key === 'a')
     expect(a).toMatchObject({ running: 2, recent: 0.5 })
+  })
+})
+
+describe('electByShareWithAffinity — minimum dwell (#672)', () => {
+  const over = (b: Partial<ShareCandidate> = {}): ShareCandidate[] => [
+    cand('a', 1, 0, { recent: 1 }),
+    cand('b', 1, 0, { recent: 2.6, ...b }),
+  ]
+  const at = (ageMs: number): { previousSinceMs: number; nowMs: number } => ({
+    previousSinceMs: 1_000_000,
+    nowMs: 1_000_000 + ageMs,
+  })
+
+  it('keeps a previous node that is over its share while the camera just arrived there', () => {
+    const out = electByShareWithAffinity(
+      over(),
+      'b',
+      undefined,
+      at(SHARE_AFFINITY_MIN_DWELL_MS - 1),
+    )
+    expect(out.election).toMatchObject({ kind: 'elected', key: 'b' })
+    expect(out).toMatchObject({ sticky: true, affinityReason: 'within-dwell', turnKey: 'a' })
+  })
+
+  it('after the dwell the tolerance rule applies unchanged', () => {
+    const out = electByShareWithAffinity(over(), 'b', undefined, at(SHARE_AFFINITY_MIN_DWELL_MS))
+    expect(out).toMatchObject({ sticky: false, affinityReason: 'share-off' })
+    expect(out.election).toMatchObject({ key: 'a' })
+  })
+
+  it('a tolerance keep inside the dwell keeps its own reason', () => {
+    const out = electByShareWithAffinity(
+      [cand('a', 1, 0, { recent: 1 }), cand('b', 1, 0, { recent: 1.5 })],
+      'b',
+      undefined,
+      at(1000),
+    )
+    expect(out.affinityReason).toBe('within-one-session')
+  })
+
+  it('moves at once inside the dwell when the previous node is gone or has no room', () => {
+    const early = at(1000)
+    expect(electByShareWithAffinity(over(), 'zz', undefined, early)).toMatchObject({
+      sticky: false,
+      affinityReason: 'previous-ineligible',
+    })
+    expect(electByShareWithAffinity(over({ capped: true }), 'b', undefined, early)).toMatchObject({
+      sticky: false,
+      affinityReason: 'previous-no-room',
+    })
+    expect(
+      electByShareWithAffinity(over({ saturated: true }), 'b', undefined, early),
+    ).toMatchObject({
+      sticky: false,
+      affinityReason: 'previous-no-room',
+    })
   })
 })

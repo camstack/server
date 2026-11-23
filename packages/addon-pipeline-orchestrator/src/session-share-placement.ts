@@ -14,7 +14,12 @@
  * A capacity derived from the measured latency table is NOT an input: it is
  * advisory in the Load balancing tab and must not become a de-facto cap.
  */
-import type { RunnerLocalLoad, ShareAffinityElection, ShareElection } from '@camstack/types'
+import type {
+  RunnerLocalLoad,
+  ShareAffinityDwell,
+  ShareAffinityElection,
+  ShareElection,
+} from '@camstack/types'
 import { electByShareWithAffinity } from '@camstack/types'
 import { isDeviceSaturated } from './device-balancer.js'
 import type { ShareElectionHistory } from './share-election-history.js'
@@ -35,6 +40,8 @@ export interface NodeShareInput {
    * within one session of the turn holder. Absent/null = a plain election.
    */
   readonly previousNodeId?: string | null
+  /** When the camera arrived on that node, and now: the minimum dwell's inputs. */
+  readonly dwell?: ShareAffinityDwell | null
 }
 
 /** The history scope of the node tier (device tiers are scoped by node id). */
@@ -68,7 +75,12 @@ export function electNodeByShareWithAffinity(input: NodeShareInput): ShareAffini
         ...(hasCap ? { spare: Math.max(0, cap - load.attachedCameras) } : {}),
       }
     })
-  const outcome = electByShareWithAffinity(candidates, input.previousNodeId ?? null)
+  const outcome = electByShareWithAffinity(
+    candidates,
+    input.previousNodeId ?? null,
+    undefined,
+    input.dwell ?? null,
+  )
   if (outcome.election.kind === 'elected') {
     input.history?.noteElected(NODE_TIER_HISTORY_SCOPE, outcome.election.key)
   }

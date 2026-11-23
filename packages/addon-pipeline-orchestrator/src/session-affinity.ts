@@ -17,6 +17,8 @@ export interface RememberedPlacement {
   readonly nodeId: string
   /** The elected device, or null when the node's default pool served it. */
   readonly deviceKey: string | null
+  /** When the camera arrived on this node (kept across sessions that stay on it). */
+  readonly sinceMs: number
 }
 
 interface Entry extends RememberedPlacement {
@@ -39,12 +41,18 @@ export class SessionAffinityMemory {
       this.entries.delete(deviceId)
       return null
     }
-    return { nodeId: entry.nodeId, deviceKey: entry.deviceKey }
+    return { nodeId: entry.nodeId, deviceKey: entry.deviceKey, sinceMs: entry.sinceMs }
   }
 
   /** Remember where the camera's session just attached. */
   note(deviceId: number, nodeId: string, deviceKey: string | null): void {
-    this.entries.set(deviceId, { nodeId, deviceKey, at: this.now() })
+    const at = this.now()
+    const existing = this.entries.get(deviceId)
+    const sinceMs =
+      existing !== undefined && existing.nodeId === nodeId && at - existing.at <= this.ttlMs
+        ? existing.sinceMs
+        : at
+    this.entries.set(deviceId, { nodeId, deviceKey, at, sinceMs })
   }
 
   /** Drop the camera's placement (its device refused the camera root). */
