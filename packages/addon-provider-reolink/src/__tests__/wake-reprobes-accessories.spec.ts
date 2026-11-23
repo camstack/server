@@ -42,7 +42,11 @@ function build(opts: {
     shouldRebuildCatalogOnWake: () => false,
     hasProbed: () => true,
     reprobe,
-    getBatteryRefresh: () => ({ noteAwake: async () => true }),
+    getBatteryRefresh: () => ({
+      noteAwake: async () => true,
+      shouldDeferForStream: () => false,
+      noteStreamDeferred: () => undefined,
+    }),
     refreshClipCatalogOnWake: async () => undefined,
     warmCapSlicesOnWake: async () => undefined,
     warmSnapshotOnWake: async () => undefined,
