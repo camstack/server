@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reolink battery cameras: a login the camera abandons no longer blocks the camera, standalone battery sessions re-dial before the camera's 30 min cut, and a silent stream gets a fresh server.
 - A battery camera's stream catalog, including the first one served after a restart, now carries the camera's current features instead of the stored list, so the hub no longer keeps it awake.
 
+### Fixed
+
+- A Reolink camera that drops and reconnects repeatedly no longer crashes the Reolink provider (and wakes every battery camera).
+
 ## [1.2.260] - 2026-11-23
 
 ### Changed

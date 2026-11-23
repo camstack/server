@@ -4,12 +4,12 @@
 
 # Guards
 
-260 repository guards: 255 in `scripts/`,
+261 repository guards: 256 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (248)
+## Enforced by CI checks (249)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -72,6 +72,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-decode-worker-child-lean.ts` | Guard: nothing reachable from the decode-worker CHILD entry may VALUE-import a workspace package. Type-only imports are free; a value import is not. |
 | `scripts/check-deps.ts` | Verify that every @camstack/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
 | `scripts/check-desktop-update-feeds.ts` | Desktop update-feed guard — two products, never one feed file. |
+| `scripts/check-destructive-through-primitive.ts` | One behaviour for every destructive action in the admin UI: the operator confirms, and a loader stays on screen until the work settles. Two paths give that, and nothing else does: 1. INSIDE a `DataTable`: a column's `render(row, index, t… |
 | `scripts/check-device-card-parts.ts` | GUARD: a device card is assembled from the shared parts, never redrawn. |
 | `scripts/check-device-card-scene-layout.ts` | GUARD: every device-card scene sits on the one fixed layout. |
 | `scripts/check-device-field-quantity-names.ts` | A device-scoped capability's status field names its QUANTITY, not its unit (`power`, not `watts`; `signal`, not `signalPercent`). The unit is the D944 base of the quantity, displayed and converted elsewhere. |
