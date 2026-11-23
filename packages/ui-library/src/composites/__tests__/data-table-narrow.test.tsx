@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataTable, type DataColumn } from '../data-table'
 
 interface Row {
@@ -175,5 +175,117 @@ describe('DataTable — narrow-viewport rendering', () => {
     const { container } = render(<DataTable columns={[...WIDE]} rows={[...ROWS]} />)
     const cell = container.querySelector('td')
     expect(cell?.className).toContain('whitespace-nowrap')
+  })
+
+  // `sheet`: the columns that do not fit a phone row are read and edited in a
+  // bottom sheet that a tap on the row opens.
+  describe('`sheet` columns', () => {
+    const SHEETED: readonly DataColumn<Row>[] = [
+      { mobile: 'primary', key: 'name', header: 'Name', render: (r) => r.name },
+      { mobile: 'keep', key: 'state', header: 'State', render: (r) => r.state },
+      {
+        mobile: 'sheet',
+        key: 'enabled',
+        header: 'Enabled',
+        render: (r) => <input type="checkbox" aria-label={`enabled ${r.name}`} />,
+      },
+      { mobile: 'sheet', key: 'seen', header: 'Last seen', render: (r) => r.seen },
+    ]
+
+    it('leaves a sheet column out of the phone row, header included', () => {
+      setViewport(true)
+      const { container } = render(<DataTable columns={[...SHEETED]} rows={[...ROWS]} />)
+      const keys = Array.from(container.querySelectorAll('tbody tr:first-child td')).map((td) =>
+        td.getAttribute('data-cell'),
+      )
+      expect(keys).toEqual(['name', 'state'])
+      expect(container.querySelectorAll('th')).toHaveLength(2)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('opens a sheet on a row tap with each sheet column as label + control, in column order', () => {
+      setViewport(true)
+      const { container } = render(<DataTable columns={[...SHEETED]} rows={[...ROWS]} />)
+      fireEvent.click(
+        container.querySelector('tbody tr:first-child td[data-cell="name"]') as Element,
+      )
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toContain('Enabled')
+      expect(dialog.textContent).toContain('Last seen')
+      expect(dialog.textContent).toContain('2m')
+      expect(dialog.querySelector('input[type="checkbox"]')).not.toBeNull()
+      const labels = Array.from(dialog.querySelectorAll('[data-sheet-label]')).map(
+        (el) => el.textContent,
+      )
+      expect(labels).toEqual(['Enabled', 'Last seen'])
+    })
+
+    it('does not open the sheet for a tap on an interactive control in the row', () => {
+      setViewport(true)
+      const columns: DataColumn<Row>[] = [
+        ...SHEETED,
+        { mobile: 'keep', key: 'act', render: () => <button type="button">Remove</button> },
+      ]
+      render(<DataTable columns={columns} rows={[...ROWS]} />)
+      fireEvent.click(screen.getAllByText('Remove')[0] as Element)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('takes the row tap from onRowClick on a phone, and leaves onRowClick alone otherwise', () => {
+      const onRowClick = vi.fn()
+      setViewport(true)
+      const phone = render(
+        <DataTable columns={[...SHEETED]} rows={[...ROWS]} onRowClick={onRowClick} />,
+      )
+      fireEvent.click(phone.container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(screen.getByRole('dialog')).not.toBeNull()
+      expect(onRowClick).not.toHaveBeenCalled()
+      phone.unmount()
+
+      setViewport(false)
+      const wide = render(
+        <DataTable columns={[...SHEETED]} rows={[...ROWS]} onRowClick={onRowClick} />,
+      )
+      fireEvent.click(wide.container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(onRowClick).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('ends the sheet with an open button that closes it and calls onRowClick, when asked for', () => {
+      const onRowClick = vi.fn()
+      setViewport(true)
+      const { container } = render(
+        <DataTable
+          columns={[...SHEETED]}
+          rows={[...ROWS]}
+          onRowClick={onRowClick}
+          sheetOpenLabel="Edit row"
+        />,
+      )
+      fireEvent.click(container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      fireEvent.click(screen.getByRole('button', { name: 'Edit row' }))
+      expect(onRowClick).toHaveBeenCalledWith(ROWS[0], 0)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('keeps onRowClick on a phone when the table has no sheet column', () => {
+      const onRowClick = vi.fn()
+      setViewport(true)
+      const { container } = render(
+        <DataTable columns={[...WIDE]} rows={[...ROWS]} onRowClick={onRowClick} />,
+      )
+      fireEvent.click(container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(onRowClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows a sheet column as a normal column from `sm` up, with no sheet', () => {
+      const { container } = render(<DataTable columns={[...SHEETED]} rows={[...ROWS]} />)
+      const keys = Array.from(container.querySelectorAll('tbody tr:first-child td')).map((td) =>
+        td.getAttribute('data-cell'),
+      )
+      expect(keys).toEqual(['name', 'state', 'enabled', 'seen'])
+      fireEvent.click(container.querySelector('tbody tr td[data-cell="name"]') as Element)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
   })
 })

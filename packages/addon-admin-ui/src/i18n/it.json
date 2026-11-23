@@ -562,7 +562,8 @@
       "searchRules": "Cerca regole",
       "offerAlertAction": "Offri l’azione dell’avviso",
       "offerAlertActionAria": "offri l’azione dell’avviso",
-      "offerAlertActionHint": "La notifica porta il pulsante dell’avviso stesso, ad esempio accedere di nuovo."
+      "offerAlertActionHint": "La notifica porta il pulsante dell’avviso stesso, ad esempio accedere di nuovo.",
+      "editRule": "Modifica regola"
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simula un evento",
@@ -5308,7 +5309,8 @@
       "delete": "Elimina {{value1}}",
       "thisEntryHasNoLocations": "Questa voce non ha posizioni selezionate.",
       "lastRun": "ultima esecuzione {{when}}",
-      "archivesFor": "Archivi di {{name}}"
+      "archivesFor": "Archivi di {{name}}",
+      "editEntry": "Modifica voce"
     },
     "backupEntryModal": {
       "editBackupEntry": "Modifica voce di backup",

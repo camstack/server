@@ -562,7 +562,8 @@
       "searchRules": "Search rules",
       "offerAlertAction": "Offer the alert’s action",
       "offerAlertActionAria": "offer the alert’s action",
-      "offerAlertActionHint": "The notification carries the alert’s own button, such as signing in again."
+      "offerAlertActionHint": "The notification carries the alert’s own button, such as signing in again.",
+      "editRule": "Edit rule"
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simulate an event",
@@ -5233,7 +5234,8 @@
       "delete": "Delete {{value1}}",
       "thisEntryHasNoLocations": "This entry has no locations selected.",
       "lastRun": "last run {{when}}",
-      "archivesFor": "Archives for {{name}}"
+      "archivesFor": "Archives for {{name}}",
+      "editEntry": "Edit entry"
     },
     "backupEntryModal": {
       "editBackupEntry": "Edit backup entry",

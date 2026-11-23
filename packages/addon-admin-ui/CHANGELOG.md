@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A device's "Triggered by" table can turn it on for a time, from a motion sensor or a camera detecting a class, optionally only at certain times; durations are typed as hours, minutes and seconds.
 
+### Changed
+
+- Backup entries and Notification rules: on a phone, retention, databases, locations and the snooze switch are edited from a sheet that opens when the row is tapped
+
 ## [1.2.738] - 2026-11-22
 
 ### Added

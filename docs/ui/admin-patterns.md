@@ -252,8 +252,15 @@ with `allowOffline` and `alwaysShow`, and mounts one `NodeCard` below
 
 Under 640 px a `DataTable` folds by the `mobile` role each `DataColumn` declares:
 `primary` (the identity, always shown), `keep` (shown beside it: one control or
-status), `detail` (a muted second line under the primary cell, one line) and
-`hidden`. No sideways scroll, no cards, rows at most 64 px. The fold runs in
+status), `detail` (a muted second line under the primary cell, one line),
+`sheet` and `hidden`. A `sheet` column is not in the phone row: when a table has
+one, tapping the row (outside a button, link or input) opens a `BottomSheet`
+that lists every `sheet` column as its header label plus its live cell, in
+column order. Use it for the columns that hold an input (a switch, a select, a
+number); a column that renders an input is never `hidden`. From 640 px a `sheet`
+column is an ordinary column. On a phone the sheet takes the row tap from
+`onRowClick`; `sheetOpenLabel` adds an "open" button at the end of the sheet
+that calls it. No sideways scroll, no cards, rows at most 64 px. The fold runs in
 markup (`useIsPhone()`): a CSS-hidden duplicate cell stays mounted and breaks
 every query that finds a cell by text. A header that cannot fit becomes an icon
 with an `aria-label` (the Network addresses table). A device row's actions sit

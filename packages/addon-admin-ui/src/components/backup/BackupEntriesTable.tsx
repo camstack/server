@@ -161,6 +161,7 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
       maxBodyHeight={TABLE_SCROLL_MAX_H}
       emptyMessage={t('backup.backupEntriesTable.noBackupEntriesYet', 'No backup entries yet')}
       onRowClick={(row) => onEdit(row)}
+      sheetOpenLabel={t('backup.backupEntriesTable.editEntry', 'Edit entry')}
       isExpanded={(row) => row.id === expanded}
       renderExpanded={(row) => (
         <EntryArchivesPanel
@@ -244,7 +245,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       ),
     },
     {
-      mobile: 'hidden',
+      mobile: 'sheet',
       key: 'databases',
       header: i18n.t('backup.backupEntriesTable.backsUp', 'Backs up'),
       nowrap: false,
@@ -252,7 +253,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       render: (row) => <BackupDatabaseBadges databases={selectionOfRow(row.databases)} />,
     },
     {
-      mobile: 'hidden',
+      mobile: 'sheet',
       key: 'locations',
       header: i18n.t('backup.backupEntriesTable.locations', 'Locations'),
       nowrap: false,
@@ -260,7 +261,7 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       render: (row) => <EntryLocationsCell row={row} destById={deps.destById} />,
     },
     {
-      mobile: 'hidden',
+      mobile: 'sheet',
       key: 'retention',
       header: i18n.t('backup.backupEntriesTable.retention', 'Retention'),
       width: 'w-24',

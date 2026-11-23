@@ -720,6 +720,7 @@ export function NotificationRulesPage({
               rows={areaRows}
               rowKey={(r) => `${r.family}:${r.id}`}
               onRowClick={openRow}
+              sheetOpenLabel={t('system.notificationRules.editRule', 'Edit rule')}
               minWidthPx={minWidthForArea(activeArea.key)}
               maxBodyHeight={TABLE_SCROLL_MAX_H}
             />

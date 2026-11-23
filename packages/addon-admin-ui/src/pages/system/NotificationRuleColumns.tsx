@@ -138,7 +138,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
       render: (rule) => <span className="text-[11px] text-foreground-subtle">{rule.priority}</span>,
     },
     {
-      mobile: 'hidden',
+      mobile: 'sheet',
       // SNOOZE (R3): a switch on a rule a window can silence; an EMPTY cell on
       // one it cannot (it concerns or arms the alarm — derived, never stored,
       // D133). The cell says nothing more: no badge, no sentence.

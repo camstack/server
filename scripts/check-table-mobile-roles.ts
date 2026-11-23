@@ -6,7 +6,9 @@
  * sideways or wraps every cell until a row is 200 px tall. `DataTable` folds
  * instead: each `DataColumn` declares `mobile` — `primary` (the row's
  * identity, may wrap), `keep` (short status, a number, the row's actions),
- * `detail` (one muted line under the primary) or `hidden`. The type makes the
+ * `detail` (one muted line under the primary), `sheet` (not in the phone row;
+ * a tap on the row opens a bottom sheet listing it as label + control — for
+ * columns that hold an input) or `hidden`. The type makes the
  * field required; this guard checks what a type cannot:
  *
  *   1. RAW TABLE   no `<table>` in an admin or addon page. `DataTable`,
@@ -22,6 +24,16 @@
  *                  only its upper bounds are checked. A list of column-shaped
  *                  literals (`key` + `render`) in which NOT ONE entry has
  *                  `mobile` is a table nobody migrated: it is reported too.
+ *      A `hidden` column whose `render` returns an input control is also
+ *      reported: an editable column that vanishes on a phone cannot be edited
+ *      there — make it `keep` (the row's one main control) or `sheet`. The
+ *      detection is a JSX-tag heuristic over the column literal's `render`: a
+ *      tag that is `input`/`select`/`textarea` or a name ending in `Switch`,
+ *      `Select`, `SelectField`, `Input`, `NumberField`, `Checkbox`, `Radio`,
+ *      `RadioGroup`, `Slider`, `Textarea` or `Toggle`. It does NOT see a
+ *      control produced by a helper component with another name, a render
+ *      delegated to a function (`render: renderEnabledCell`), or a column list
+ *      not written as literals.
  *   3. WRAPPING    (`packages/ui-library` only — a page cell is not scanned)
  *                  a cell (`<td>`/`<th>`) of a library table never carries
  *                  `flex-wrap` or an unconditional `whitespace-normal`: that
@@ -51,7 +63,9 @@ const RAW_TABLE = /<table(?=[\s/>]|$)/
 const WRAPPING_CLASS = /(?<![\w:-])(?:flex-wrap|whitespace-normal)(?![\w-])/
 /** A binding that names a table's WHOLE column list, not extra columns for another table. */
 const WHOLE_LIST_NAME = /^(?!.*(?:extra|additional))\w*columns$/i
-const MOBILE_ROLES: readonly string[] = ['primary', 'keep', 'detail', 'hidden']
+const MOBILE_ROLES: readonly string[] = ['primary', 'keep', 'detail', 'sheet', 'hidden']
+const INPUT_TAG =
+  /^(?:input|select|textarea|\w*(?:Switch|Select|SelectField|Input|NumberField|Checkbox|Radio|RadioGroup|Slider|Textarea|Toggle))$/
 
 export type TableRule = 'raw-table' | 'roles' | 'wrapping'
 
@@ -97,6 +111,26 @@ function literalRole(element: ts.Expression): string | null {
     if (ts.isStringLiteralLike(value) && MOBILE_ROLES.includes(value.text)) return value.text
   }
   return null
+}
+
+/** The input-control JSX tags inside one column literal's `render` property. */
+function inputTagsInRender(element: ts.Expression): string[] {
+  if (!ts.isObjectLiteralExpression(element)) return []
+  const tags: string[] = []
+  const visit = (node: ts.Node): void => {
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      const name = node.tagName.getText()
+      if (INPUT_TAG.test(name)) tags.push(name)
+    }
+    ts.forEachChild(node, visit)
+  }
+  for (const property of element.properties) {
+    const named =
+      (ts.isPropertyAssignment(property) || ts.isMethodDeclaration(property)) &&
+      property.name.getText() === 'render'
+    if (named) visit(property)
+  }
+  return tags
 }
 
 /** An object literal shaped like a `DataColumn`: a `key` and a `render`. */
@@ -160,6 +194,17 @@ export function findRoleViolations(source: string, fileName = 'file.tsx'): Table
   const visit = (node: ts.Node): void => {
     if (ts.isArrayLiteralExpression(node)) {
       const roles = node.elements.map(literalRole)
+      node.elements.forEach((element, index) => {
+        if (roles[index] !== 'hidden') return
+        const tags = inputTagsInRender(element)
+        if (tags.length > 0) {
+          found.push({
+            rule: 'roles',
+            line: lineOf(file, element),
+            message: `a \`hidden\` column renders <${tags[0]}> — an input must stay reachable on a phone: make it \`keep\` or \`sheet\``,
+          })
+        }
+      })
       const known = roles.filter((role): role is string => role !== null)
       if (known.length === 0 && node.elements.some(looksLikeColumn)) {
         found.push({

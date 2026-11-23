@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New DurationPartsInput: a length of time typed as hours, minutes and seconds side by side.
 
+### Changed
+
+- DataTable: a fifth phone column role, sheet — columns with an input leave the phone row and open in a bottom sheet when the row is tapped (sheetOpenLabel keeps the row action reachable)
+
 ## [1.2.499] - 2026-11-22
 
 ### Changed

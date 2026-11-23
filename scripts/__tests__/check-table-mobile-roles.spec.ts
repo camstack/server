@@ -121,4 +121,34 @@ describe('check-table-mobile-roles', () => {
     expect(checkFile('packages/addon-admin-ui/src/pages/X.tsx', cell)).toEqual([])
     expect(checkFile('packages/addon-admin-ui/src/pages/X.spec.tsx', table)).toEqual([])
   })
+
+  describe('an input column is never hidden', () => {
+    const withRender = (role: string, render: string): string =>
+      `const columns = [${column('primary', 'name')}, { mobile: '${role}', key: 'x', render: (r) => ${render} }]`
+
+    it('flags a hidden column that renders a library input or a native control', () => {
+      for (const jsx of [
+        '<Switch checked={r.on} />',
+        '<Select value={r.v} />',
+        '<NumberInput value={r.n} />',
+        '<Checkbox />',
+        '<input type="text" />',
+        '<div><Slider /></div>',
+      ]) {
+        const found = findRoleViolations(withRender('hidden', jsx))
+        expect(found.map((f) => f.message).join()).toContain('`hidden` column renders')
+      }
+    })
+
+    it('accepts the same control on a keep or sheet column, and a hidden text column', () => {
+      expect(findRoleViolations(withRender('sheet', '<Switch checked={r.on} />'))).toEqual([])
+      expect(findRoleViolations(withRender('keep', '<Switch checked={r.on} />'))).toEqual([])
+      expect(findRoleViolations(withRender('hidden', '<span>{r.v}</span>'))).toEqual([])
+    })
+
+    it('accepts `sheet` as a role', () => {
+      const src = `const columns = [${column('primary', 'a')}, ${column('sheet', 'b')}, ${column('sheet', 'c')}]`
+      expect(findRoleViolations(src)).toEqual([])
+    })
+  })
 })

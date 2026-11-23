@@ -32,12 +32,27 @@
  * ── Narrow viewports ──────────────────────────────────────────────────────
  * The table stays a table — never a card list — and on a phone (below `sm`)
  * it does NOT scroll sideways: every column declares what it does there with
- * `mobile` (`primary`, `keep`, `detail`, `hidden`). The primary column takes
+ * `mobile` (`primary`, `keep`, `detail`, `sheet`, `hidden`). The primary column takes
  * the free width and shows its value in full (it may wrap); the kept columns
  * stay beside it on one line; the detail columns are read in one muted,
  * truncated line under the primary value; the hidden ones are not shown. From
  * `sm` up nothing changes: one line per row, `minWidthPx`, and the wrapper's
  * `overflow-x-auto` for a table wider than its container (D862, as amended).
+ *
+ * ── Row sheet (`mobile: 'sheet'`) ─────────────────────────────────────────
+ * A row with several inputs (a switch, a select, a number per column) cannot
+ * show them all on a phone. A `sheet` column is not in the phone row; when the
+ * table has at least one, a tap on the row (outside an interactive control:
+ * button, link, input, select, switch, checkbox, or anything marked
+ * `data-no-row-sheet`) opens a `BottomSheet` listing every `sheet` column as its
+ * header label + its rendered, fully interactive cell, in column order. The
+ * sheet is phone-only: from `sm` up a `sheet` column is an ordinary column.
+ * `onRowClick` and the sheet: on a phone, a table with `sheet` columns gives the
+ * row tap to the sheet and does NOT call `onRowClick` (one tap, one meaning; a
+ * row that opens an editor keeps it reachable by passing `sheetOpenLabel`: the
+ * sheet then ends with a button of that label that closes it and calls
+ * `onRowClick`). Tables without
+ * `sheet` columns, and every table from `sm` up, keep `onRowClick` unchanged.
  *
  * ── Scrolling the BODY, not the page ──────────────────────────────────────
  * `maxBodyHeight` caps the table and scrolls its rows INSIDE the container
@@ -49,6 +64,8 @@
  * history) so the page keeps its own header, filters and actions in view while
  * the operator moves through the rows.
  */
+import { Button } from '../primitives/button'
+import { BottomSheet } from '../primitives/bottom-sheet'
 import { Fragment, type JSX, type ReactNode, useMemo, useState } from 'react'
 import type { RowOperationState } from '../hooks/use-row-operations'
 import { useIsPhone } from '../hooks/use-is-mobile'
@@ -116,6 +133,9 @@ export interface DataColumn<T> {
    *     actions trigger). At most three.
    *   - `detail`  — leaves the column strip and is read in the muted second
    *     line under the primary value.
+   *   - `sheet`   — not in the phone row; listed (label + control) in the bottom
+   *     sheet a row tap opens. For columns that hold an input. From `sm` up it
+   *     is an ordinary column.
    *   - `hidden`  — not shown on a phone; the row's page or expansion has it.
    * Required: a column with no declared phone behaviour is how a table ends
    * up wider than the screen (`scripts/check-table-mobile-roles.ts`).
@@ -123,7 +143,7 @@ export interface DataColumn<T> {
   readonly mobile: DataColumnMobileRole
 }
 
-export type DataColumnMobileRole = 'primary' | 'keep' | 'detail' | 'hidden'
+export type DataColumnMobileRole = 'primary' | 'keep' | 'detail' | 'sheet' | 'hidden'
 
 export interface DataTableProps<T> {
   readonly columns: readonly DataColumn<T>[]
@@ -132,6 +152,13 @@ export interface DataTableProps<T> {
   readonly rowKey?: (row: T, rowIndex: number) => string | number
   /** Click handler attached to each row. Adds hover + cursor-pointer. */
   readonly onRowClick?: (row: T, rowIndex: number) => void
+  /**
+   * With `sheet` columns AND `onRowClick`: on a phone the row tap opens the sheet
+   * instead of calling `onRowClick`; this label adds a button at the end of the
+   * sheet that closes it and calls `onRowClick` for the row (e.g. "Edit rule").
+   * Absent = the sheet has no such button.
+   */
+  readonly sheetOpenLabel?: string
   /** Min width in px for the inner table. Default: 480. */
   readonly minWidthPx?: number
   /** Empty-state message. Default: hides the table when rows=[]. */
@@ -231,8 +258,13 @@ const PHONE_CELL_CLASS: Record<DataColumnMobileRole, string> = {
     'max-sm:w-full max-sm:max-w-0 max-sm:min-w-[7rem] max-sm:whitespace-normal max-sm:break-words',
   keep: 'max-sm:whitespace-nowrap',
   detail: '',
+  sheet: '',
   hidden: '',
 }
+
+/** A tap on one of these is the control's own, never a row tap. */
+const INTERACTIVE_TARGET =
+  'button, a, input, select, textarea, label, [role="switch"], [role="checkbox"], [role="combobox"], [role="button"], [role="menuitem"], [data-no-row-sheet]'
 
 const ALIGN_CLASS: Record<NonNullable<DataColumn<unknown>['align']>, string> = {
   left: 'text-left',
@@ -245,6 +277,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   onRowClick,
+  sheetOpenLabel,
   minWidthPx = 480,
   emptyMessage,
   className,
@@ -266,6 +299,7 @@ export function DataTable<T>({
 }: DataTableProps<T>): JSX.Element | null {
   const [innerSort, setInnerSort] = useState<TableSortState | null>(defaultSort ?? null)
   const [innerPage, setInnerPage] = useState(0)
+  const [sheetRowKey, setSheetRowKey] = useState<string | null>(null)
   const sort = sortProp !== undefined ? sortProp : innerSort
   const changeSort = (next: TableSortState | null): void => {
     if (sortProp === undefined) setInnerSort(next)
@@ -313,6 +347,9 @@ export function DataTable<T>({
   const phone = useIsPhone()
   const detailColumns = phone ? columns.filter((col) => col.mobile === 'detail') : []
 
+  const sheetColumns = phone ? columns.filter((col) => col.mobile === 'sheet') : []
+  const sheetEnabled = sheetColumns.length > 0
+
   const keyOf = (row: T): string =>
     String(rowKey ? rowKey(row, rows.indexOf(row)) : rows.indexOf(row))
   const allColumns: readonly DataColumn<T>[] =
@@ -343,149 +380,207 @@ export function DataTable<T>({
     .filter(Boolean)
     .join(' ')
 
+  const sheetRow =
+    sheetEnabled && sheetRowKey !== null ? rows.find((r) => keyOf(r) === sheetRowKey) : undefined
+  const primaryColumn = columns.find((col) => col.mobile === 'primary')
+  const sheet = sheetEnabled && (
+    <BottomSheet open={sheetRow !== undefined} onClose={() => setSheetRowKey(null)}>
+      {sheetRow !== undefined && (
+        <div data-data-table-sheet="" className="flex flex-col gap-3">
+          {primaryColumn !== undefined && (
+            <div className="text-sm font-medium text-foreground">
+              {primaryColumn.render(sheetRow, rows.indexOf(sheetRow))}
+            </div>
+          )}
+          {sheetColumns.map((col) => (
+            <div key={col.key} className="flex items-center justify-between gap-3">
+              <span data-sheet-label="" className="text-xs text-foreground-muted">
+                {col.headerRender ? col.headerRender() : col.header}
+              </span>
+              <div className="min-w-0 text-xs text-foreground">
+                {col.render(sheetRow, rows.indexOf(sheetRow))}
+              </div>
+            </div>
+          ))}
+          {sheetOpenLabel !== undefined && onRowClick !== undefined && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSheetRowKey(null)
+                onRowClick(sheetRow, rows.indexOf(sheetRow))
+              }}
+            >
+              {sheetOpenLabel}
+            </Button>
+          )}
+        </div>
+      )}
+    </BottomSheet>
+  )
+
   const table = (
-    <div className={wrapperCls}>
-      <table
-        // `border-separate border-spacing-0` ONLY while the header is pinned.
-        // Tailwind's preflight makes every table `border-collapse: collapse`,
-        // and a collapsed table hands its cell borders to the table itself —
-        // so a `sticky` header keeps its background but loses the rule under
-        // it the moment the first row slides beneath. Separated borders with
-        // zero spacing render identically (each cell still draws its own
-        // bottom rule, and they abut) and belong to the cell, so the pinned
-        // header keeps its underline. Left alone when nothing is pinned:
-        // collapse is what every other table in the app already renders as.
-        className={`w-full text-xs ${scrolls ? 'border-separate border-spacing-0' : ''} max-sm:!min-w-0`}
-        style={{ minWidth: `${minWidthPx}px` }}
-      >
-        <thead className="bg-surface">
-          <tr>
-            {shownColumns.map((col) => {
-              const align = col.align ?? 'left'
-              const nowrap = col.nowrap ?? true
-              const sortable = col.sortValue !== undefined
-              const isSorted = activeSort !== null && activeSort.columnKey === col.key
+    <>
+      <div className={wrapperCls}>
+        <table
+          // `border-separate border-spacing-0` ONLY while the header is pinned.
+          // Tailwind's preflight makes every table `border-collapse: collapse`,
+          // and a collapsed table hands its cell borders to the table itself —
+          // so a `sticky` header keeps its background but loses the rule under
+          // it the moment the first row slides beneath. Separated borders with
+          // zero spacing render identically (each cell still draws its own
+          // bottom rule, and they abut) and belong to the cell, so the pinned
+          // header keeps its underline. Left alone when nothing is pinned:
+          // collapse is what every other table in the app already renders as.
+          className={`w-full text-xs ${scrolls ? 'border-separate border-spacing-0' : ''} max-sm:!min-w-0`}
+          style={{ minWidth: `${minWidthPx}px` }}
+        >
+          <thead className="bg-surface">
+            <tr>
+              {shownColumns.map((col) => {
+                const align = col.align ?? 'left'
+                const nowrap = col.nowrap ?? true
+                const sortable = col.sortValue !== undefined
+                const isSorted = activeSort !== null && activeSort.columnKey === col.key
+                return (
+                  <th
+                    key={col.key}
+                    // `aria-sort` belongs to the `<th>`, never to the inner
+                    // button — WAI-ARIA scopes it to the cell.
+                    aria-sort={sortable ? ariaSortForColumn(activeSort, col.key) : undefined}
+                    title={sortable ? undefined : col.notSortableReason}
+                    className={[
+                      'px-2 sm:px-3 py-2 text-foreground-subtle font-medium bg-surface border-b border-border',
+                      // Pinned to the SCROLLER, which is the wrapper above — the
+                      // one element that actually scrolls. `sticky` on the `th`
+                      // rather than on the `thead` because that is what works
+                      // under both border models and in every engine we ship to.
+                      scrolls ? 'sticky top-0 z-10' : '',
+                      ALIGN_CLASS[align],
+                      nowrap ? 'whitespace-nowrap' : '',
+                      col.width ?? '',
+                      PHONE_CELL_CLASS[col.mobile],
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {sortable ? (
+                      <SortHeaderButton
+                        label={col.headerRender ? col.headerRender() : col.header}
+                        active={isSorted}
+                        dir={isSorted && activeSort !== null ? activeSort.dir : 'asc'}
+                        onSort={() => changeSort(nextTableSort(sort, col.key))}
+                      />
+                    ) : col.headerRender ? (
+                      col.headerRender()
+                    ) : (
+                      col.header
+                    )}
+                  </th>
+                )
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((row, rowIndex) => {
+              const key = rowKey ? rowKey(row, rowIndex) : rowIndex
+              const extra = rowClassName?.(row, rowIndex) ?? ''
+              const operation = rowState?.(row, rowIndex)
+              const pending = operation?.kind === 'pending'
+              const interactive = (onRowClick !== undefined || sheetEnabled) && !pending
+              const detail =
+                renderExpanded !== undefined && isExpanded?.(row) === true
+                  ? renderExpanded(row, rowIndex)
+                  : null
               return (
-                <th
-                  key={col.key}
-                  // `aria-sort` belongs to the `<th>`, never to the inner
-                  // button — WAI-ARIA scopes it to the cell.
-                  aria-sort={sortable ? ariaSortForColumn(activeSort, col.key) : undefined}
-                  title={sortable ? undefined : col.notSortableReason}
-                  className={[
-                    'px-2 sm:px-3 py-2 text-foreground-subtle font-medium bg-surface border-b border-border',
-                    // Pinned to the SCROLLER, which is the wrapper above — the
-                    // one element that actually scrolls. `sticky` on the `th`
-                    // rather than on the `thead` because that is what works
-                    // under both border models and in every engine we ship to.
-                    scrolls ? 'sticky top-0 z-10' : '',
-                    ALIGN_CLASS[align],
-                    nowrap ? 'whitespace-nowrap' : '',
-                    col.width ?? '',
-                    PHONE_CELL_CLASS[col.mobile],
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {sortable ? (
-                    <SortHeaderButton
-                      label={col.headerRender ? col.headerRender() : col.header}
-                      active={isSorted}
-                      dir={isSorted && activeSort !== null ? activeSort.dir : 'asc'}
-                      onSort={() => changeSort(nextTableSort(sort, col.key))}
-                    />
-                  ) : col.headerRender ? (
-                    col.headerRender()
-                  ) : (
-                    col.header
+                <Fragment key={key}>
+                  <tr
+                    onClick={
+                      !interactive
+                        ? undefined
+                        : sheetEnabled
+                          ? (event) => {
+                              if (
+                                event.target instanceof Element &&
+                                event.target.closest(INTERACTIVE_TARGET) !== null
+                              ) {
+                                return
+                              }
+                              setSheetRowKey(keyOf(row))
+                            }
+                          : () => onRowClick?.(row, rowIndex)
+                    }
+                    aria-busy={pending ? true : undefined}
+                    title={operation?.kind === 'failed' ? operation.message : undefined}
+                    className={[
+                      interactive ? 'cursor-pointer hover:bg-primary/5' : 'hover:bg-primary/5',
+                      pending ? 'opacity-60 pointer-events-none' : '',
+                      operation?.kind === 'failed' ? 'bg-danger/5' : '',
+                      extra,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {shownColumns.map((col) => {
+                      const align = col.align ?? 'left'
+                      const nowrap = col.nowrap ?? true
+                      return (
+                        <td
+                          key={col.key}
+                          data-cell={col.key}
+                          className={[
+                            'px-2 sm:px-3 py-2 text-foreground border-b border-border',
+                            ALIGN_CLASS[align],
+                            nowrap ? 'whitespace-nowrap' : '',
+                            PHONE_CELL_CLASS[col.mobile],
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        >
+                          {col.mobile === 'primary' ? (
+                            <>
+                              {col.render(row, rowIndex)}
+                              {detailColumns.length > 0 && (
+                                <div
+                                  data-phone-detail=""
+                                  className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-normal text-foreground-subtle"
+                                >
+                                  {detailColumns.map((detail) => (
+                                    <span
+                                      key={detail.key}
+                                      data-phone-detail-of={detail.key}
+                                      className="min-w-0 max-w-full empty:hidden"
+                                    >
+                                      {detail.render(row, rowIndex)}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            col.render(row, rowIndex)
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                  {detail !== null && (
+                    <tr data-expanded-row="" className="bg-surface">
+                      <td
+                        colSpan={shownColumns.length}
+                        className="border-b border-border px-3 py-2"
+                      >
+                        {detail}
+                      </td>
+                    </tr>
                   )}
-                </th>
+                </Fragment>
               )
             })}
-          </tr>
-        </thead>
-        <tbody>
-          {pageRows.map((row, rowIndex) => {
-            const key = rowKey ? rowKey(row, rowIndex) : rowIndex
-            const extra = rowClassName?.(row, rowIndex) ?? ''
-            const operation = rowState?.(row, rowIndex)
-            const pending = operation?.kind === 'pending'
-            const interactive = onRowClick !== undefined && !pending
-            const detail =
-              renderExpanded !== undefined && isExpanded?.(row) === true
-                ? renderExpanded(row, rowIndex)
-                : null
-            return (
-              <Fragment key={key}>
-                <tr
-                  onClick={interactive ? () => onRowClick?.(row, rowIndex) : undefined}
-                  aria-busy={pending ? true : undefined}
-                  title={operation?.kind === 'failed' ? operation.message : undefined}
-                  className={[
-                    interactive ? 'cursor-pointer hover:bg-primary/5' : 'hover:bg-primary/5',
-                    pending ? 'opacity-60 pointer-events-none' : '',
-                    operation?.kind === 'failed' ? 'bg-danger/5' : '',
-                    extra,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {shownColumns.map((col) => {
-                    const align = col.align ?? 'left'
-                    const nowrap = col.nowrap ?? true
-                    return (
-                      <td
-                        key={col.key}
-                        data-cell={col.key}
-                        className={[
-                          'px-2 sm:px-3 py-2 text-foreground border-b border-border',
-                          ALIGN_CLASS[align],
-                          nowrap ? 'whitespace-nowrap' : '',
-                          PHONE_CELL_CLASS[col.mobile],
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                      >
-                        {col.mobile === 'primary' ? (
-                          <>
-                            {col.render(row, rowIndex)}
-                            {detailColumns.length > 0 && (
-                              <div
-                                data-phone-detail=""
-                                className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-normal text-foreground-subtle"
-                              >
-                                {detailColumns.map((detail) => (
-                                  <span
-                                    key={detail.key}
-                                    data-phone-detail-of={detail.key}
-                                    className="min-w-0 max-w-full empty:hidden"
-                                  >
-                                    {detail.render(row, rowIndex)}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          col.render(row, rowIndex)
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-                {detail !== null && (
-                  <tr data-expanded-row="" className="bg-surface">
-                    <td colSpan={shownColumns.length} className="border-b border-border px-3 py-2">
-                      {detail}
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+      {sheet}
+    </>
   )
   if (pager === null) {
     if (fill) {
