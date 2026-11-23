@@ -203,7 +203,14 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
     tmpDirs.push(addonsDir)
     const { logger, lines } = capturingLogger()
     const installer = new AddonInstaller(
-      { addonsDir, serverVersion: '1.2.0', resolveRequires: needsNewer },
+      {
+        addonsDir,
+        serverVersion: '1.2.0',
+        resolveRequires: needsNewer,
+        // The fallback probe lists the registry's versions; without this door it reaches the
+        // real registry and the spec depends on the network and the host's load.
+        listVersions: async () => ['10.0.0', '9.0.0'],
+      },
       logger,
     )
     const install = vi.spyOn(installer, 'installFromNpm')

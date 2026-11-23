@@ -237,13 +237,26 @@ describe('device template renderer operations', () => {
     '{% for a in stufa_veranda.big.items %}{% for b in stufa_veranda.big.items %}{% for c in stufa_veranda.big.items %}{% endfor %}{% endfor %}{% endfor %}'
 
   it('does not charge the worker cold start to the render budget', async () => {
-    const cold = make({ budgetMs: 30 })
+    // A cold start that is deterministically LONGER than the budget (the worker waits before it
+    // loads), while the render itself stays far inside it: only a budget that wrongly includes
+    // the cold start can refuse this render, whatever the host's load.
+    const COLD_START_MS = 1500
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tpl-cold-'))
+    const script = path.join(dir, 'worker.mjs')
+    fs.writeFileSync(
+      script,
+      `await new Promise((resolve) => setTimeout(resolve, ${COLD_START_MS}))
+await import(${JSON.stringify(WORKER)})
+`,
+    )
+    const cold = make({ workerPath: script, budgetMs: 1000, spawnTimeoutMs: 60_000 })
     try {
       expect(await cold.render('{{ 1 }}', resolver)).toMatchObject({ ok: true, text: '1' })
     } finally {
       cold.dispose()
+      fs.rmSync(dir, { recursive: true, force: true })
     }
-  }, 20_000)
+  }, 60_000)
 
   it('refuses with `busy` once the queue is full', async () => {
     const r = make({ maxQueue: 1 })
