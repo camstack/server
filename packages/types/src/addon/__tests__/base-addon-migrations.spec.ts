@@ -12,7 +12,12 @@ import { type AddonMigration, defineAddonMigrations } from '../../migrations/add
 import type { MigrationApiV1 } from '../../migrations/api/migration-api.v1.js'
 import type { MigrationMeta } from '../../migrations/migration.js'
 import { defineEntryKind, entryBody } from '../../records/entry-kind.js'
+import { EventCategory } from '../../enums/event-category.js'
+import type { AddonContext } from '../../interfaces/addon.js'
 import { BaseAddon } from '../base-addon.js'
+
+import type { EventFilter } from '../../interfaces/event-bus.js'
+type SystemEventHandler = Parameters<AddonContext['eventBus']['subscribe']>[1]
 import { AddonMigrationsBlockedError } from '../migrations-blocked-error.js'
 import { fakeAddonContext } from '../fake-addon-context.js'
 
@@ -184,15 +189,15 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
 
   async function bootProbe(reason: string) {
     const calls: string[] = []
-    let handler: ((event: { data: unknown }) => void) | null = null
+    let handler: SystemEventHandler | null = null
     const base = fakeAddonContext({
       api: createTRPCClient<AppRouter>({ links: [blockingHub(calls, reason)] }),
     })
-    const ctx = {
+    const ctx: AddonContext = {
       ...base,
       eventBus: {
         ...base.eventBus,
-        subscribe: (_filter: unknown, h: (event: { data: unknown }) => void) => {
+        subscribe: (_filter: EventFilter, h: SystemEventHandler) => {
           handler = h
           return () => undefined
         },
@@ -201,7 +206,18 @@ describe('BaseAddon.runMigrations — a step blocked on another owner', () => {
     const addon = new Probe({})
     await addon.initialize(ctx)
     const report = await addon.migrate([entry('one', 'tolerate')])
-    return { calls, report, fire: (ids: string[]) => handler?.({ data: { ids } }) }
+    return {
+      calls,
+      report,
+      fire: (ids: string[]) =>
+        handler?.({
+          id: 'e1',
+          timestamp: new Date(),
+          source: { type: 'addon', id: 'sqlite-settings' },
+          category: EventCategory.MigrationApplied,
+          data: { ids },
+        }),
+    }
   }
   const finishes = (calls: string[]) => calls.filter((c) => c === 'migrations.finishMigration')
 

@@ -127,6 +127,12 @@ export interface AddonMigrationRunReport {
   readonly applied: readonly string[]
   readonly failed: readonly string[]
   readonly blocked: readonly string[]
+  /**
+   * Blocked steps that wait ONLY for another step to apply (`dependency-pending` /
+   * `dependency-blocked`): they run once `on` lands applied. A `dependency-failed` step is
+   * never listed: a failed predecessor is not retried by itself.
+   */
+  readonly awaiting: readonly AwaitedDependency[]
   readonly skipped: readonly string[]
   /** Failed or blocked migrations whose `onFailure` is `block-owner`: the owner must not serve. */
   readonly blockOwner: readonly string[]
