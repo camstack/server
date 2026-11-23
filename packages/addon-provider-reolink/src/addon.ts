@@ -875,6 +875,15 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         if (!parsed.success) return
         const data = parsed.data
         const deviceId = data.deviceId
+        if (data.reason === 'source-silent') {
+          this.ctx.logger.debug(
+            'stream source refresh reason source-silent is advisory — the library heals a silent source itself',
+            {
+              tags: { deviceId },
+              meta: { camStreamId: data.camStreamId ?? null },
+            },
+          )
+        }
         void this.refreshDeviceStreams(deviceId, data.camStreamId).catch((err: unknown) => {
           this.ctx.logger.warn('refresh of Reolink stream failed', {
             tags: { deviceId },

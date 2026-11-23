@@ -3582,6 +3582,32 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
   }
 
+  /** A battery camera running on its adapter is wired: it never sleeps. */
+  private isOnAdapterPower(): boolean {
+    return this.config.get('deviceCache')?.powerSourceSnapshot?.source === 'adapter'
+  }
+
+  /**
+   * Whether a silent stream source may be a camera gone to sleep. A battery
+   * camera whose power source is not known yet (no snapshot, or `unknown`)
+   * counts as sleeping — refusing one recovery is cheap, waking a sleeper
+   * drains it; a camera with no battery feature is never refused.
+   */
+  private streamSourceMaySleep(): boolean {
+    return reolinkCameraSleeps(this.featureInputs()) && !this.isOnAdapterPower()
+  }
+
+  /** Asked by the lib before EVERY recovery of a silent source: read live, never frozen at creation. */
+  private streamRecoveryVerdict(): { allowed: true } | { allowed: false; reason: string } {
+    return this.streamSourceMaySleep()
+      ? {
+          allowed: false,
+          reason:
+            'the camera may be asleep: a new session would wake it, so the next consumer decides',
+        }
+      : { allowed: true }
+  }
+
   /**
    * THE single writer of the `battery.sleeping` slice.
    *
@@ -3602,16 +3628,6 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *
    * @returns `true` when the slice actually changed.
    */
-  /** A battery camera running on its adapter is wired: it never sleeps. */
-  private isOnAdapterPower(): boolean {
-    return this.config.get('deviceCache')?.powerSourceSnapshot?.source === 'adapter'
-  }
-
-  /** Whether a silent stream source may be a camera gone to sleep. */
-  private streamSourceMaySleep(): boolean {
-    return reolinkCameraSleeps(this.featureInputs()) && !this.isOnAdapterPower()
-  }
-
   private commitSleepState(next: boolean, source: SleepCommitSource): boolean {
     if (!this.isBattery) return false
     const decision = decideSleepCommit({
@@ -8544,8 +8560,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // re-dialled on its own (that would wake it and drain the battery):
         // the session is discarded and the next consumer wakes it. A wired
         // camera, or a battery model on its adapter (cmd 805 power mode),
-        // never sleeps, so a silent source is recovered in place.
-        resilience: { sleeps: this.streamSourceMaySleep() },
+        // never sleeps, so a silent source is recovered in place. The guard
+        // is read at every attempt: the server outlives a power change.
+        resilience: { recoveryGuard: () => this.streamRecoveryVerdict() },
       })
     } catch (err) {
       this.ctx.logger.error('rfc4571: createRfc4571TcpServer failed', {
