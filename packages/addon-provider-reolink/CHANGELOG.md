@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A Reolink camera that drops and reconnects repeatedly no longer crashes the Reolink provider (and wakes every battery camera).
+- A wired camera, or a battery camera on its adapter, recovers a stalled stream in place within seconds; a sleeping battery camera is never woken by a recovery
 
 ## [1.2.260] - 2026-11-23
 

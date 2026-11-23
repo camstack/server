@@ -1,5 +1,5 @@
 import { stampCurrentFeatures } from './stamp-current-features.js'
-import type { EncStreamPatch } from '@apocaliss92/nodelink-js'
+import type { EncStreamPatch, ResilientRecoveryVerdict } from '@apocaliss92/nodelink-js'
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import {
   ACCESSORY_LABEL,
@@ -3598,7 +3598,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
 
   /** Asked by the lib before EVERY recovery of a silent source: read live, never frozen at creation. */
-  private streamRecoveryVerdict(): { allowed: true } | { allowed: false; reason: string } {
+  private streamRecoveryVerdict(): ResilientRecoveryVerdict {
     return this.streamSourceMaySleep()
       ? {
           allowed: false,
