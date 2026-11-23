@@ -139,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Core blocks lists template instances, the read behind a device's linked triggers
 - An addon running a dev build newer than the registry latest is never moved down to the older registry version
 - The alert centre announces a device fault at its warning tier
+- A migration refuses to re-key a device to another addon while its settings hold a keychain secret, instead of leaving the secret under the old addon
 
 ### Removed
 

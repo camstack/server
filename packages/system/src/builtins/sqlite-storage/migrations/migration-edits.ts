@@ -48,6 +48,7 @@ import {
   type MigrationEdit,
   type MigrationPlan,
   deviceIdentityPrecondition,
+  isSecretMarker,
   parseRecordBody,
   preconditionOf,
 } from '@camstack/types'
@@ -272,6 +273,12 @@ function rekeyDevice(
  * re-key to another addon moves the old provider's rows under the new one; rows
  * other addons keep about the device (`recorder:<id>.…`) stay where they are. A
  * key the new owner already holds for this device is refused, never overwritten.
+ *
+ * A row holding a keychain marker is refused too: its ref names the old provider's
+ * scope (`secret://<owner>/device/<id>/<field>`, the AAD of the stored value) and
+ * the keychain is outside this file, so the move would hand the new owner a marker
+ * naming a scope that is not its own. Such a device changes provider through a
+ * procedure that re-puts the secret. A re-key within one addon never gets here.
  */
 function moveProviderSettings(
   db: Database.Database,
@@ -283,8 +290,8 @@ function moveProviderSettings(
   const fromScope = `${fromAddon}:${String(deviceId)}.`
   const toScope = `${toAddon}:${String(deviceId)}.`
   const rows = db
-    .prepare<[number, string], { id: string }>(
-      `SELECT id FROM ${table(DEVICE_SETTINGS_TABLE)} WHERE substr(id, 1, ?) = ?`,
+    .prepare<[number, string], { id: string; data: string }>(
+      `SELECT id, data FROM ${table(DEVICE_SETTINGS_TABLE)} WHERE substr(id, 1, ?) = ?`,
     )
     .all(fromScope.length, fromScope)
   const exists = db.prepare<[string], { id: string }>(
@@ -293,8 +300,13 @@ function moveProviderSettings(
   const move = db.prepare<[string, string, string]>(
     `UPDATE ${table(DEVICE_SETTINGS_TABLE)} SET id = ?, data = json_set(data, '$.addonId', ?) WHERE id = ?`,
   )
-  for (const { id } of rows) {
+  for (const { id, data } of rows) {
     const key = id.slice(fromScope.length)
+    if (holdsSecretMarker(parseJson(data))) {
+      throw new MigrationEditError(
+        `rekeyDevice: setting "${key}" of device ${deviceId} holds a keychain secret of "${fromAddon}"; the keychain is outside the migration transaction, so move this device to "${toAddon}" through a procedure`,
+      )
+    }
     if (exists.get(`${toScope}${key}`) !== undefined) {
       throw new MigrationEditError(
         `rekeyDevice: "${toAddon}" already has setting "${key}" for device ${deviceId}`,
@@ -302,6 +314,26 @@ function moveProviderSettings(
     }
     move.run(`${toScope}${key}`, toAddon, id)
   }
+}
+
+/** A stored settings row, parsed; a row that is not JSON holds no marker. */
+function parseJson(text: string): unknown {
+  try {
+    const parsed: unknown = JSON.parse(text)
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+/** True when `value` carries a keychain marker (`{ $secret }`) at any depth. */
+function holdsSecretMarker(value: unknown): boolean {
+  if (isSecretMarker(value)) return true
+  if (Array.isArray(value)) return value.some(holdsSecretMarker)
+  if (typeof value === 'object' && value !== null) {
+    return Object.values(value).some(holdsSecretMarker)
+  }
+  return false
 }
 
 function tombstoneDevice(
@@ -322,8 +354,15 @@ function tombstoneDevice(
   // Re-recording keeps the EARLIER deletedAt, exactly as DeviceTombstoneStore.record.
   if (records.read(DEVICE_MANAGER_OWNER, kind.name, id) === null) {
     const deletedAt = scope.now()
-    const body = parseRecordBody(kind, id, { deletedAt, providerAddonId: current.addonId })
-    records.upsert(DEVICE_MANAGER_OWNER, kind.name, { id, at: deletedAt, data: body })
+    const body = parseRecordBody(kind, id, {
+      deletedAt,
+      providerAddonId: current.addonId,
+    })
+    records.upsert(DEVICE_MANAGER_OWNER, kind.name, {
+      id,
+      at: deletedAt,
+      data: body,
+    })
   }
   // D865's central settings clearance: every addon's scope of this device, matched on the
   // deviceId each row carries (the same predicate `clearDeviceSettings` compiles).

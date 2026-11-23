@@ -33,7 +33,11 @@ const GRID_ADDON = 'camera-grid'
 
 const kinds = defineRecordKinds({
   'camera-grids': {
-    schema: z.object({ name: z.string(), cameras: z.array(z.number()), mark: z.string() }),
+    schema: z.object({
+      name: z.string(),
+      cameras: z.array(z.number()),
+      mark: z.string(),
+    }),
     class: 'config',
     writeTrigger: 'test',
     device: 'required',
@@ -95,8 +99,14 @@ beforeEach(async () => {
     CREATE TABLE "device-runtime-state" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);
     INSERT INTO "device-runtime-state" VALUES ('42', '{}'), ('43', '{}');
   `)
-  engine = new RecordsEngine(db, { databaseId: 'settings', logger: silentLogger() })
-  await engine.declareKinds({ owner: BLOCKS, kinds: { ...declarationsOf(kinds) } })
+  engine = new RecordsEngine(db, {
+    databaseId: 'settings',
+    logger: silentLogger(),
+  })
+  await engine.declareKinds({
+    owner: BLOCKS,
+    kinds: { ...declarationsOf(kinds) },
+  })
   await engine.declareKinds({
     owner: 'device-manager',
     kinds: { ...declarationsOf(deviceManagerRecordKinds) },
@@ -127,7 +137,12 @@ function movePlan(): MigrationPlan {
         data: { blockId: 'blk1', ...parsed },
         read: null,
       }),
-      recordDeleteEdit({ owner: BLOCKS, kind: kinds['camera-grids'], id: 'g1', read: old }),
+      recordDeleteEdit({
+        owner: BLOCKS,
+        kind: kinds['camera-grids'],
+        id: 'g1',
+        read: old,
+      }),
       rekeyDeviceEdit(
         42,
         { addonId: GRID_ADDON, stableId: 'grid-1' },
@@ -178,11 +193,19 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
       ['hub/2026-11-20-grid-to-block', 'applied', null],
     ])
 
-    const moved = await engine.get({ owner: BLOCKS, kind: 'composed-blocks', id: 'blk1' })
+    const moved = await engine.get({
+      owner: BLOCKS,
+      kind: 'composed-blocks',
+      id: 'blk1',
+    })
     expect(moved?.data).toEqual({ blockId: 'blk1', ...OLD_GRID })
     expect(moved?.deviceId).toBe(42)
     expect(await engine.get({ owner: BLOCKS, kind: 'camera-grids', id: 'g1' })).toBeNull()
-    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: BLOCKS, stableId: 'composed-blk1' })
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: BLOCKS,
+      stableId: 'composed-blk1',
+    })
     // The provider's own settings follow it to the new owner; another addon's stay.
     expect(settingsIds()).not.toContain(`${GRID_ADDON}:42.layout`)
     expect(settingsIds()).toContain('recorder:42.recordingConfig')
@@ -195,8 +218,14 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
 
     const second = t.apply({ ...PASS, bootId: 'boot-2' })
     expect(second.outcomes).toEqual([])
-    expect(second.statuses).toEqual({ 'hub/2026-11-20-grid-to-block': 'applied' })
-    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: BLOCKS, stableId: 'composed-blk1' })
+    expect(second.statuses).toEqual({
+      'hub/2026-11-20-grid-to-block': 'applied',
+    })
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: BLOCKS,
+      stableId: 'composed-blk1',
+    })
     expect((await engine.get({ owner: BLOCKS, kind: 'composed-blocks', id: 'blk1' }))?.rev).toBe(1)
   })
 
@@ -213,7 +242,11 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
     expect((await engine.get({ owner: BLOCKS, kind: 'camera-grids', id: 'g1' }))?.data).toEqual(
       OLD_GRID,
     )
-    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: GRID_ADDON, stableId: 'grid-1' })
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: GRID_ADDON,
+      stableId: 'grid-1',
+    })
     expect(settingsIds()).toContain(`${GRID_ADDON}:42.layout`)
     expect(settingsRow(`${BLOCKS}:42.layout`)).toBeNull()
   })
@@ -226,7 +259,11 @@ describe('a plan moves a record and re-keys its device in one transaction', () =
       codeVersion: '1.0.0',
     })
     expect(out).toMatchObject({ status: 'applied', error: null })
-    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: BLOCKS, stableId: 'composed-blk1' })
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: BLOCKS,
+      stableId: 'composed-blk1',
+    })
     expect(
       (await engine.get({ owner: BLOCKS, kind: 'composed-blocks', id: 'blk1' }))?.data.mark,
     ).toBe('marked-survives')
@@ -239,13 +276,22 @@ describe('tombstoneDevice', () => {
       {
         meta: meta('hub', 'retire-grid', 1),
         plan: () => ({
-          edits: [tombstoneDeviceEdit(43, { addonId: GRID_ADDON, stableId: 'grid-2' })],
+          edits: [
+            tombstoneDeviceEdit(43, {
+              addonId: GRID_ADDON,
+              stableId: 'grid-2',
+            }),
+          ],
         }),
       },
     ])
     expect(t.apply(PASS).outcomes[0]?.outcome).toBe('applied')
     expect(deviceRow(43)).toBeUndefined()
-    const tomb = await engine.get({ owner: 'device-manager', kind: 'tombstones', id: '43' })
+    const tomb = await engine.get({
+      owner: 'device-manager',
+      kind: 'tombstones',
+      id: '43',
+    })
     expect(tomb?.data).toMatchObject({ providerAddonId: GRID_ADDON })
     expect(settingsIds()).toEqual([`${GRID_ADDON}:42.layout`, 'recorder:42.recordingConfig'])
     expect(db.prepare('SELECT id FROM "device-runtime-state" ORDER BY id').all()).toEqual([
@@ -259,22 +305,40 @@ describe('tombstoneDevice', () => {
         meta: meta('hub', 'retire-grid', 1),
         plan: () => ({
           edits: [
-            tombstoneDeviceEdit(43, { addonId: GRID_ADDON, stableId: 'grid-2' }),
+            tombstoneDeviceEdit(43, {
+              addonId: GRID_ADDON,
+              stableId: 'grid-2',
+            }),
             { op: 'deleteRow', table: 'no_such_table', key: { id: 1 } },
           ],
         }),
       },
     ])
     expect(t.apply(PASS).outcomes[0]?.outcome).toBe('failed')
-    expect(deviceRow(43)).toEqual({ deviceId: 43, addonId: GRID_ADDON, stableId: 'grid-2' })
-    expect(await engine.get({ owner: 'device-manager', kind: 'tombstones', id: '43' })).toBeNull()
+    expect(deviceRow(43)).toEqual({
+      deviceId: 43,
+      addonId: GRID_ADDON,
+      stableId: 'grid-2',
+    })
+    expect(
+      await engine.get({
+        owner: 'device-manager',
+        kind: 'tombstones',
+        id: '43',
+      }),
+    ).toBeNull()
     expect(settingsIds()).toContain('recorder:43.recordingConfig')
   })
 })
 
 describe('refusals', () => {
   const applyAs = (owner: string, plan: MigrationPlan) =>
-    target([]).applyPlan({ meta: meta(owner, 'x', 1), plan, bootId: 'b', codeVersion: '1' })
+    target([]).applyPlan({
+      meta: meta(owner, 'x', 1),
+      plan,
+      bootId: 'b',
+      codeVersion: '1',
+    })
 
   it('an addon plan may not write another owner’s records', () => {
     const out = applyAs('ecowitt', movePlan())
@@ -292,7 +356,11 @@ describe('refusals', () => {
         edits: [rekeyDeviceEdit(44, read, { addonId: 'other', stableId: 'x-2' })],
       }).error,
     ).toMatch(/may re-key only a device it owns or adopts/)
-    expect(deviceRow(44)).toEqual({ deviceId: 44, addonId: 'other', stableId: 'x-1' })
+    expect(deviceRow(44)).toEqual({
+      deviceId: 44,
+      addonId: 'other',
+      stableId: 'x-1',
+    })
   })
 
   it('a re-key onto an identity another device holds, or from a stale read, is refused', () => {
@@ -313,7 +381,10 @@ describe('refusals', () => {
           deviceId: 42,
           addonId: BLOCKS,
           stableId: 'b',
-          precondition: deviceIdentityPrecondition({ addonId: GRID_ADDON, stableId: 'old' }),
+          precondition: deviceIdentityPrecondition({
+            addonId: GRID_ADDON,
+            stableId: 'old',
+          }),
         },
       ],
     })
@@ -333,7 +404,65 @@ describe('refusals', () => {
       ],
     })
     expect(clash.error).toMatch(/already has setting "layout"/)
-    expect(deviceRow(42)).toEqual({ deviceId: 42, addonId: GRID_ADDON, stableId: 'grid-1' })
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: GRID_ADDON,
+      stableId: 'grid-1',
+    })
+  })
+
+  it('a re-key to another addon is refused while the provider settings hold a keychain secret', () => {
+    // The marker's ref names the OLD provider's keychain scope, and the keychain is not in
+    // this file: moving the row would leave the new owner a marker it cannot resolve.
+    db.prepare('INSERT INTO "addon-device-settings" VALUES (?, ?)').run(
+      `${GRID_ADDON}:42.config`,
+      JSON.stringify({
+        addonId: GRID_ADDON,
+        deviceId: '42',
+        key: 'config',
+        value: {
+          host: 'cam.example.com',
+          auth: {
+            password: { $secret: `secret://${GRID_ADDON}/device/42/password` },
+          },
+        },
+      }),
+    )
+    const before = settingsIds()
+    const crossAddon = applyAs('hub', {
+      edits: [
+        rekeyDeviceEdit(
+          42,
+          { addonId: GRID_ADDON, stableId: 'grid-1' },
+          { addonId: BLOCKS, stableId: 'composed-blk1' },
+        ),
+      ],
+    })
+    expect(crossAddon.error).toMatch(/setting "config" of device 42 holds a keychain secret/)
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: GRID_ADDON,
+      stableId: 'grid-1',
+    })
+    expect(settingsIds()).toEqual(before)
+
+    // Same addon, new stableId: the keychain scope (owner + deviceId) is unchanged.
+    const sameAddon = applyAs('hub', {
+      edits: [
+        rekeyDeviceEdit(
+          42,
+          { addonId: GRID_ADDON, stableId: 'grid-1' },
+          { addonId: GRID_ADDON, stableId: 'grid-renamed' },
+        ),
+      ],
+    })
+    expect(sameAddon.error).toBeNull()
+    expect(deviceRow(42)).toEqual({
+      deviceId: 42,
+      addonId: GRID_ADDON,
+      stableId: 'grid-renamed',
+    })
+    expect(settingsIds()).toEqual(before)
   })
 
   it('a record body the kind schema refuses never becomes an edit', () => {

@@ -115,6 +115,10 @@ pre-migration snapshot, same rollback; the engine orders steps across owners by
     (`<addonId>:<deviceId>.<key>`), so the old provider's rows move under the new addon
     in the same transaction; other addons' rows about the device stay. A pair another
     device holds, or a setting the new addon already has for the device, is refused.
+    So is a re-key to ANOTHER addon while one of those rows holds a keychain marker:
+    the ref names the old provider's scope (`secret://<owner>/device/<id>/<field>`) and
+    the keychain is outside the transaction, so that device moves through a procedure
+    that re-puts the secret. A new `stableId` under the same addon keeps the scope.
   - `tombstoneDevice` (`deviceId`): what `removeDevice` records (D865) — the row goes, the
     `tombstones` record is written (an existing one keeps its earlier `deletedAt`), the
     device's `addon-device-settings` and `device-runtime-state` rows are cleared. The data
