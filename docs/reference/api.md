@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**217 capabilities · 1548 methods.**
+**217 capabilities · 1547 methods.**
 
 ## Method index
 
@@ -597,7 +597,6 @@
 | `keychain.resolve` | query | admin | keychain |
 | `keychain.delete` | mutation | admin | keychain |
 | `keychain.deleteDeviceScope` | mutation | admin | keychain |
-| `keychain.swapDeviceScopes` | mutation | admin | keychain |
 | `keychain.releaseRecordRefs` | mutation | admin | keychain |
 | `keychain.listMeta` | query | admin | keychain |
 | `keychain.getState` | query | admin | keychain |
@@ -3182,7 +3181,7 @@
 
 ### `keychain` → `keychain.*`
 
-- **Source:** `packages/types/src/capabilities/keychain.cap.ts:108`
+- **Source:** `packages/types/src/capabilities/keychain.cap.ts:98`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IKeychainProvider`
@@ -3193,7 +3192,6 @@
 | resolve | `keychain.resolve` | query | admin | `{ refs: string[] }` | `KeychainResolveResultSchema` |
 | delete | `keychain.delete` | mutation | admin | `{ refs: string[] }` | `{ deleted: number }` |
 | deleteDeviceScope | `keychain.deleteDeviceScope` | mutation | admin | `{ deviceId: number }` | `{ refs: string[] }` |
-| swapDeviceScopes | `keychain.swapDeviceScopes` | mutation | admin | `{ deviceA: number; deviceB: number }` | `DeviceScopeSwapSchema` |
 | releaseRecordRefs | `keychain.releaseRecordRefs` | mutation | admin | `{ refs: string[]; onBehalfOf: string }` | `{ released: number }` |
 | listMeta | `keychain.listMeta` | query | admin | `{}` | `KeychainSecretMetaSchema[]` |
 | getState | `keychain.getState` | query | admin | `{}` | `KeychainStateSchema` |

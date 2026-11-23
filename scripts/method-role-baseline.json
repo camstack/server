@@ -586,7 +586,6 @@
   "keychain.put": "admin",
   "keychain.releaseRecordRefs": "admin",
   "keychain.resolve": "admin",
-  "keychain.swapDeviceScopes": "admin",
   "keychainAdmin.acknowledgeReset": "admin",
   "keychainAdmin.deleteOrphans": "admin",
   "keychainAdmin.downloadRecoveryKey": "admin",

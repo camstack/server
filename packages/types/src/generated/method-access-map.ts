@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1548 method paths across 217 capabilities.
+ * Coverage: 1547 method paths across 217 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -609,7 +609,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'keychain.put': { capName: "keychain", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychain.releaseRecordRefs': { capName: "keychain", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychain.resolve': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'keychain.swapDeviceScopes': { capName: "keychain", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychainAdmin.acknowledgeReset': { capName: "keychain-admin", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychainAdmin.deleteOrphans': { capName: "keychain-admin", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'keychainAdmin.downloadRecoveryKey': { capName: "keychain-admin", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

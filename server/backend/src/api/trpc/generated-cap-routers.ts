@@ -9385,19 +9385,6 @@ export function createCapRouter_keychain(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDeviceScope(methodInput as any)
       }),
-    swapDeviceScopes: adminProcedure
-      .input(keychainCapability.methods.swapDeviceScopes.input.loose())
-      .output(keychainCapability.methods.swapDeviceScopes.output)
-      .mutation(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.swapDeviceScopes(methodInput as any)
-      }),
     releaseRecordRefs: adminProcedure
       .input(keychainCapability.methods.releaseRecordRefs.input.loose())
       .output(keychainCapability.methods.releaseRecordRefs.output)

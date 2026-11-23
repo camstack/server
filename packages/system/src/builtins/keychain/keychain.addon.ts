@@ -118,8 +118,6 @@ export class KeychainAddon extends BaseAddon {
       deleteDeviceScope: async (input) => ({
         refs: await service.deleteDeviceScope(callerOf(input), input.deviceId),
       }),
-      swapDeviceScopes: (input) =>
-        service.swapDeviceScopes(callerOf(input), input.deviceA, input.deviceB),
       releaseRecordRefs: async (input) => ({
         released: await service.releaseRecordRefs(callerOf(input), input.refs, input.onBehalfOf),
       }),

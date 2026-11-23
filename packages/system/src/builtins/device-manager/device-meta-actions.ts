@@ -323,12 +323,12 @@ export async function migrateDevice(
             }
           },
           swapHardwareState: async (a, b) => {
-            const swapDeviceScopes = pctx.host.ctx.secrets?.swapDeviceScopes
+            const forOwner = pctx.host.ctx.secrets?.forOwner
             const swapped = await swapHardwareState(
               pctx.settings,
               a,
               b,
-              swapDeviceScopes === undefined ? undefined : { swapDeviceScopes },
+              forOwner === undefined || forOwner === null ? undefined : { forOwner },
             )
             // Reseed the hub's runtime-state mirror so a read landing before the
             // respawn answers from the hardware now wearing each number, not the

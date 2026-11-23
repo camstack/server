@@ -7,7 +7,6 @@ supersedes:
 applies-to:
   - packages/system/src/builtins/device-manager/migrate-hardware-state.ts
   - packages/system/src/builtins/device-manager/device-row-store.ts
-  - packages/system/src/builtins/keychain/keychain-service.ts
 ---
 
 ## Context
@@ -26,11 +25,12 @@ re-derived from the wrong parent).
 ## Decision
 
 A migration moves secrets and location as follows. Each number's markers always
-point at that number's own keychain scope: `swapHardwareState` exchanges the
-two `device/<id>` scopes in the keychain FIRST (`keychain.swapDeviceScopes`,
-re-encrypting each value under its new ref, caller `device-manager` only), then
-re-points the markers, and reports the result as `secretScopes`. A keychain
-failure fails the swap before any config moves and is never swallowed.
+point at that number's own keychain scope: `swapHardwareState` swaps the
+configs with their markers unchanged (each still reads its value), then runs the
+same crash-idempotent repair described below to bring every value under the
+number that holds it, and reports the result as `secretScopes`. A repair failure
+fails the migration with the exact `repairMigrationSecrets` call that finishes
+it, and is never swallowed. There is no keychain-side exchange.
 `swapIds` leaves the room on the number, children included. A pair crossed by
 the old code is repaired with `deviceManager.repairMigrationSecrets` (admin,
 idempotent, dry-run by default) through `scripts/hub/repair-migration-pair.ts`.
@@ -43,13 +43,13 @@ configs already name each other's scope, so a second swap cannot mix the
 passwords. The repair keeps its state in the configs themselves (stage copy,
 point at it, write the end refs, point at them, delete the stage), so a crash at
 any step is re-run to the right end state; one-sided pairs work field by field.
-The migration swap's own keychain exchange (`swapDeviceScopes`) is NOT crash
-safe between its writes: a process death inside that millisecond window can
-lose a value, and the migration then reports a partial move the operator
-re-enters by hand. D339's "swap the markers" step is superseded by this record.
+The swap uses the repair's machinery, so a crash while its secrets move is
+re-run to the right end state too (a crash inside the last step leaves only
+`~repair` staging copies, purged with the device scope); a crash between the
+swap's two config writes is the older, loud partial state. D339's "swap the markers" step is superseded by this record.
 
 ## Enforcement
 
 `migrate-hardware-secrets.spec.ts`, `migrate-secret-repair.spec.ts`,
-`keychain-device-scope-swap.spec.ts` and `device-row-store-swap.spec.ts`
+and `device-row-store-swap.spec.ts`
 (location cases); each fails when the corresponding step is removed.

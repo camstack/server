@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1548 of 1548 methods.
+ * Coverage: 1547 of 1547 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -596,7 +596,6 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "keychain.put": "Store (or replace) the caller's value at ref. Refused while locked.",
   "keychain.releaseRecordRefs": "Release the values rows of a DROPPED record kind held, whatever the kind's owner (stale-data audit). Reserved to sqlite-settings, the engine that just deleted the rows: only refs scoped row/records:<kind>/... are accepted, and the audit names the operator it acted for. Answers a count.",
   "keychain.resolve": "Resolve the caller's refs in one round-trip. A locked keychain answers unavailable per ref — never missing, never an empty value.",
-  "keychain.swapDeviceScopes": "Exchange every value scoped device/<a> with every value scoped device/<b>, whatever its owner (D339): a migration swaps the two devices' hardware config, and the secrets its markers point at must follow, or removing the leftover device deletes the migrated camera's password. Reserved to device-manager. Answers refs, never values.",
   "keychainAdmin.acknowledgeReset": "Dismiss the \"keychain was reset\" notice. Audited.",
   "keychainAdmin.deleteOrphans": "Delete refs no owner points at any more. Re-checked here; unknown is kept.",
   "keychainAdmin.downloadRecoveryKey": "The master key, base64. Audited; marks the recovery copy as taken.",
