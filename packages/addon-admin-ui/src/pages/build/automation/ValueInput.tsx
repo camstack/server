@@ -198,7 +198,11 @@ export function ListValueInput({ value, field, deviceId, cap, onChange }: ListVa
         label={t('automation.valueInput.pickValues', 'Pick values')}
         options={declared.map((v) => ({ id: v, label: v }))}
         selected={value.map(String)}
-        onChange={(next) => onChange([...next])}
+        onChange={(next) =>
+          // The dropdown knows only the catalog: a value already in the list that the
+          // catalog does not hold (a hand-typed code) survives, in its own order.
+          onChange([...next, ...value.filter((v) => !declared.includes(String(v)))])
+        }
       />
       {input}
     </div>

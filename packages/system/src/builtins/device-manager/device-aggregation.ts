@@ -1361,6 +1361,7 @@ async function withDeclaredCatalogs(
         deviceId,
         path: field.path,
         source,
+        budgetMs: CONTRIBUTION_BUDGET_MS,
       })
       return values === null ? field : { ...field, enumValues: values }
     }),
@@ -1392,6 +1393,7 @@ export async function getWireableFields(
   const { entries } = await getBindings(deps.bindingsDeps, { deviceId })
   const seen = new Set<string>()
   const caps: WireableCapEntry[] = []
+  const pending: Array<{ wireable: WireableCapEntry; def: CapabilityDefinition }> = []
   for (const entry of entries) {
     if (seen.has(entry.capName)) continue
     seen.add(entry.capName)
@@ -1401,8 +1403,14 @@ export async function getWireableFields(
     // book-keeping (e.g. snapshot.lastCapturedAt), not wireable domain data.
     if (!def || def.kind === 'wrapper') continue
     const wireable = wireableEntryForDef(entry.capName, def)
-    if (wireable) caps.push(await withDeclaredCatalogs(deps, reg, deviceId, wireable, def))
+    if (wireable) pending.push({ wireable, def })
   }
+  // The per-cap catalog reads are independent: run them side by side.
+  caps.push(
+    ...(await Promise.all(
+      pending.map(({ wireable, def }) => withDeclaredCatalogs(deps, reg, deviceId, wireable, def)),
+    )),
+  )
   if (input.includeSynthesizable === true) {
     const row = await deps.bindingsDeps.rows.get(deviceId)
     const deviceType = row?.meta.type

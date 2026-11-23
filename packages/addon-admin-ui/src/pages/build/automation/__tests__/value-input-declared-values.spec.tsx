@@ -49,6 +49,14 @@ describe('ListValueInput with declared values', () => {
     expect(onChange).toHaveBeenCalledWith(['UNREACH', 'LOW_BAT'])
   })
 
+  it('a value outside the catalog survives a toggle', () => {
+    const onChange = vi.fn()
+    render(<ListValueInput value={['UNREACH', 'CUSTOM_X']} field={DECLARED} onChange={onChange} />)
+    fireEvent.click(screen.getByRole('button', { name: /Pick values/ }))
+    fireEvent.click(screen.getByText('LOW_BAT'))
+    expect(onChange).toHaveBeenCalledWith(['UNREACH', 'LOW_BAT', 'CUSTOM_X'])
+  })
+
   it('is only the text box without declared values', () => {
     render(<ListValueInput value={[]} field={FREE} onChange={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /Pick values/ })).toBeNull()

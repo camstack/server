@@ -3744,6 +3744,28 @@ describe('DeviceManagerAddon', () => {
         ])
       })
 
+      it('a cold slice or a provider without the catalog is a quiet absence (no warn)', async () => {
+        const cold = await wireableFor('event-emitter', () => ({ getStatus: async () => null }))
+        expect(cold.fields['lastEvent.eventType']?.enumValues).toBeUndefined()
+        const catalogWarns = (logger: IScopedLogger): number =>
+          vi.mocked(logger.warn).mock.calls.filter(([m]) => m.includes('catalog')).length
+        expect(catalogWarns(cold.logger)).toBe(0)
+        const bare = await wireableFor('error', () => ({}))
+        expect(bare.fields['code']?.enumValues).toBeUndefined()
+        expect(catalogWarns(bare.logger)).toBe(0)
+      })
+
+      it('a read that never answers is abandoned at the budget, with one tagged warn', async () => {
+        const { fields, logger } = await wireableFor('error', () => ({
+          listFaultTypes: () => new Promise(() => {}),
+        }))
+        expect(fields['code']?.enumValues).toBeUndefined()
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining('timed out'),
+          expect.objectContaining({ tags: { deviceId: 7 } }),
+        )
+      })
+
       it('a catalog read that fails leaves enumValues absent and logs with the device tag', async () => {
         const { fields, logger } = await wireableFor('error', () => ({
           listFaultTypes: async () => {

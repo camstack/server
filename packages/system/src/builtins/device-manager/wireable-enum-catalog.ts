@@ -41,7 +41,8 @@ async function readAnswer(
 ): Promise<unknown> {
   const name = source.from === 'method' ? source.method : 'getStatus'
   const fn = provider[name]
-  if (typeof fn !== 'function') throw new Error(`provider has no ${name}`)
+  // A provider without the catalog (another integration) is a quiet absence.
+  if (typeof fn !== 'function') return undefined
   return await Reflect.apply(fn, provider, [{ deviceId }])
 }
 
@@ -52,24 +53,46 @@ export interface CatalogRead {
   readonly deviceId: number
   readonly path: string
   readonly source: FieldEnumSource
+  /** The read is abandoned (field stays free text, one warn) after this many ms. */
+  readonly budgetMs: number
+}
+
+const TIMED_OUT = Symbol('catalog-read-timed-out')
+
+async function raceBudget(work: Promise<unknown>, budgetMs: number): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<typeof TIMED_OUT>((resolve) => {
+    timer = setTimeout(() => resolve(TIMED_OUT), budgetMs)
+    timer.unref?.()
+  })
+  try {
+    return await Promise.race([work, deadline])
+  } finally {
+    if (timer !== undefined) clearTimeout(timer)
+  }
 }
 
 /**
- * The device's declared values for one field, or `null` when they could not be
- * read (logged with the device tag) or the device declares none.
+ * The device's declared values for one field, or `null` when there are none to
+ * offer. A provider without the catalog, a cold (null) slice or an empty catalog
+ * is a quiet absence; a thrown read, a timeout or a malformed answer is warned
+ * with the device tag. Either way the field stays free text.
  */
 export async function readFieldCatalog(read: CatalogRead): Promise<string[] | null> {
-  const { registry, logger, capName, deviceId, path, source } = read
+  const { registry, logger, capName, deviceId, path, source, budgetMs } = read
   try {
     const provider: unknown = registry.getProviderForDevice(capName, deviceId)
-    if (!isProviderShape(provider)) {
-      logger.warn('wireable field catalog: no provider answers for the device', {
+    if (!isProviderShape(provider)) return null
+    const answer = await raceBudget(readAnswer(provider, source, deviceId), budgetMs)
+    if (answer === TIMED_OUT) {
+      logger.warn('wireable field catalog: read timed out, field stays free text', {
         tags: { deviceId },
-        meta: { deviceId, capName, path },
+        meta: { deviceId, capName, path, budgetMs },
       })
       return null
     }
-    const values = listOf(await readAnswer(provider, source, deviceId), source)
+    if (answer === undefined || answer === null) return null
+    const values = listOf(answer, source)
     if (values === null) {
       logger.warn('wireable field catalog: answer has an unexpected shape', {
         tags: { deviceId },
