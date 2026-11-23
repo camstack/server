@@ -7,6 +7,7 @@ supersedes:
 applies-to:
   - packages/types/src/automation/on-for.ts
   - packages/types/src/automation/codegen.ts
+  - packages/types/src/device/switch-run-limits.ts
   - packages/system/src/builtins/core-blocks/runs-ledger.ts
   - packages/ui-library/src/composites/duration-parts-input/**
 ---
@@ -59,3 +60,15 @@ overdue), `generated-block.spec.ts` ("on for a duration"), `runs-api.spec.ts`
 (holds kept, replaced, released), `linked-trigger.spec.ts`,
 `DurationPartsInput.spec.tsx`, `TriggeredByTable.spec.tsx`. The schema refuses a
 hold on any other action.
+
+## Amendment (2026-11-23): a hold never outlasts the device's run limit
+
+`ON_FOR_MAX_SECONDS` (24 h) is only the outer bound. A heater is held on for 3 h
+at most by its timed run (D993), so an "on for" could not be allowed to hold it
+longer. One table, `switchRunLimitOf(type, role)`
+(`packages/types/src/device/switch-run-limits.ts`), now serves both: heater 3 h,
+pet fountain 5 min, siren 10 min, every other switch 24 h (quick run 15 min).
+`timedRunLimitOf` reads it. The limit is enforced where the device is known:
+`validateDraft` refuses a step over it, the triggers table caps its input at it,
+and `OnForHolds` cuts a hold to it when arming (and a stored hold over it when
+restored), with a `warn` tagged with the device. `on-for-limit.spec.ts` pins it.

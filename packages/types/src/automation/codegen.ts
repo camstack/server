@@ -715,6 +715,7 @@ import {
   ConditionMirror,
   HoldTracker,
   OnForHolds,
+  switchRunLimitOf,
   DetectionTriggerFilter,
   DeviceFiredWatch,
   EventCategory,
@@ -1207,6 +1208,16 @@ ${
       ctx.logger.info('on-for: sent ' + actionId, { tags: { deviceId } })
     },
     persist: (holds) => persistOnFor(holds),
+    // a hold never outlasts what the device may be kept on for (switch-run-limits.ts): cut at arming, stored holds too
+    limitSecondsOf: async (deviceId) => {
+      const [row] = await ctx.api.deviceManager.listAll.query({ deviceIds: [deviceId], projection: 'slim' })
+      return row === undefined ? null : switchRunLimitOf(row.type, row.role).maxSeconds
+    },
+    onClamped: (deviceId, askedMs, limitMs) => {
+      ctx.logger.warn('on-for: ' + askedMs / 1000 + ' s is over what the device may be held on — cut to ' + limitMs / 1000 + ' s', {
+        tags: { deviceId },
+      })
+    },
     onError: (deviceId, what, err) => {
       ctx.logger.error('on-for: ' + what, {
         tags: { deviceId },

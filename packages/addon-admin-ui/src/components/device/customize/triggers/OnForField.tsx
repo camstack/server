@@ -14,6 +14,8 @@ export interface OnForFieldProps {
   readonly hint: string
   readonly disabled: boolean
   readonly testId: string
+  /** The most the target may be held on for; the 24 h bound when absent. */
+  readonly maxSeconds?: number
   readonly onCommit: (seconds: number) => void
 }
 
@@ -25,6 +27,7 @@ export function OnForField({
   hint,
   disabled,
   testId,
+  maxSeconds = ON_FOR_MAX_SECONDS,
   onCommit,
 }: OnForFieldProps): ReactNode {
   const labels = useDurationLabels()
@@ -33,7 +36,7 @@ export function OnForField({
   const commit = (): void => {
     if (draft === null) return
     setDraft(null)
-    if (draft !== seconds && draft >= MIN_SECONDS && draft <= ON_FOR_MAX_SECONDS) onCommit(draft)
+    if (draft !== seconds && draft >= MIN_SECONDS && draft <= maxSeconds) onCommit(draft)
   }
   return (
     <span
@@ -45,7 +48,7 @@ export function OnForField({
       <DurationPartsInput
         seconds={shown}
         min={MIN_SECONDS}
-        max={ON_FOR_MAX_SECONDS}
+        max={maxSeconds}
         labels={labels}
         aria-label={label}
         disabled={disabled}

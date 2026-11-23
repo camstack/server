@@ -2,6 +2,11 @@ import { z } from 'zod'
 import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
+import {
+  SWITCH_RUN_HEATER_LIMIT,
+  SWITCH_RUN_PET_FOUNTAIN_LIMIT,
+  switchRunLimitOf,
+} from '../device/switch-run-limits.js'
 
 /**
  * timed-run - run a device for a chosen time, then stop it (D993).
@@ -42,17 +47,17 @@ export interface TimedRunLimit {
 /** A plug-in heater (switch + `switch-heater`): up to 3 h, in minutes. */
 export const TIMED_RUN_HEATER_LIMIT: TimedRunLimit = {
   actuator: 'switch',
-  maxSeconds: 180 * 60,
+  maxSeconds: SWITCH_RUN_HEATER_LIMIT.maxSeconds,
   unit: 'min',
-  quickRunDefault: 30,
+  quickRunDefault: SWITCH_RUN_HEATER_LIMIT.quickRunSeconds / 60,
 }
 
 /** A pet fountain's pump: up to 5 min, in seconds. */
 export const TIMED_RUN_PET_FOUNTAIN_LIMIT: TimedRunLimit = {
   actuator: 'pet-fountain',
-  maxSeconds: 300,
+  maxSeconds: SWITCH_RUN_PET_FOUNTAIN_LIMIT.maxSeconds,
   unit: 's',
-  quickRunDefault: 60,
+  quickRunDefault: SWITCH_RUN_PET_FOUNTAIN_LIMIT.quickRunSeconds,
 }
 
 /**
@@ -79,8 +84,15 @@ export function timedRunLimitOf(
   deviceType: string,
   role: string | null | undefined,
 ): TimedRunLimit | null {
-  if (deviceType === DeviceType.PetFountain) return TIMED_RUN_PET_FOUNTAIN_LIMIT
-  if (deviceType === DeviceType.Switch && role === DeviceRole.SwitchHeater)
+  // the numbers come from the one per-type table (`switchRunLimitOf`); a timed run is offered only where it is narrower than the default
+  const limit = switchRunLimitOf(deviceType, role)
+  if (deviceType === DeviceType.PetFountain && limit === SWITCH_RUN_PET_FOUNTAIN_LIMIT)
+    return TIMED_RUN_PET_FOUNTAIN_LIMIT
+  if (
+    deviceType === DeviceType.Switch &&
+    role === DeviceRole.SwitchHeater &&
+    limit === SWITCH_RUN_HEATER_LIMIT
+  )
     return TIMED_RUN_HEATER_LIMIT
   return null
 }

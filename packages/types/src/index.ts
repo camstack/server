@@ -3142,3 +3142,11 @@ export {
 // D1089 - rooms, tags and zones are records with an id.
 export * from './entities/entity-id.js'
 export * from './entities/entities.js'
+export {
+  SWITCH_RUN_DEFAULT_LIMIT,
+  SWITCH_RUN_HEATER_LIMIT,
+  SWITCH_RUN_PET_FOUNTAIN_LIMIT,
+  SWITCH_RUN_SIREN_LIMIT,
+  type SwitchRunLimit,
+  switchRunLimitOf,
+} from './device/switch-run-limits.js'

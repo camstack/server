@@ -16,6 +16,7 @@ import type { z } from 'zod'
 import { ALL_CAPABILITY_DEFINITIONS } from '../../generated/capability-router-map.js'
 import { findVocabAction } from '../../device/cap-vocabulary/action-index.js'
 import { DeviceType } from '../../device/device-type.js'
+import { switchRunLimitOf } from '../../device/switch-run-limits.js'
 import {
   buildCapabilityLookup,
   type CompositionSourceDescription,
@@ -143,6 +144,7 @@ interface StepLike {
   readonly kind: string
   readonly actionId?: string | undefined
   readonly args?: Readonly<Record<string, unknown>> | undefined
+  readonly onFor?: { readonly seconds: number } | undefined
   readonly target?:
     | {
         readonly kind: string
@@ -173,6 +175,13 @@ function stepIssues(site: DraftSite, step: StepLike, at: string): readonly strin
         issues.push(
           `${at}.target: ${describeDevice(device)} cannot do ${step.actionId} (needs cap "${found.cap}")`,
         )
+      } else if (step.onFor !== undefined) {
+        const limit = switchRunLimitOf(device.type, device.role).maxSeconds
+        if (step.onFor.seconds > limit) {
+          issues.push(
+            `${at}.onFor: ${step.onFor.seconds} s is over the ${limit} s ${describeDevice(device)} may be held on`,
+          )
+        }
       }
     }
   }

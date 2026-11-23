@@ -7,6 +7,8 @@
  */
 import {
   builtinAutomationTemplate,
+  ON_FOR_MAX_SECONDS,
+  switchRunLimitOf,
   type DeviceInfo,
   LINKED_TRIGGER_TEMPLATE_ID,
   type LinkedTriggerParams,
@@ -412,6 +414,10 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                 hint={t('customize.triggers.onForHint')}
                 disabled={busy}
                 testId={`trigger-on-for-${r.key}`}
+                maxSeconds={Math.min(
+                  ON_FOR_MAX_SECONDS,
+                  switchRunLimitOf(device.type, device.role).maxSeconds,
+                )}
                 onCommit={(seconds) => {
                   const instance = instanceOf(r.blockId)
                   if (instance !== undefined) void save(instance, withRowOnFor(instance, seconds))

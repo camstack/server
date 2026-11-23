@@ -90,6 +90,13 @@ export interface OnForDeps<H> {
   readonly persist: (holds: readonly OnForHold[]) => Promise<void>
   /** A send or a persist that failed, for the log (it carries the device). */
   readonly onError?: (deviceId: number, what: string, err: unknown) => void
+  /**
+   * The most seconds this device may be held on (`switchRunLimitOf`), or null when
+   * it cannot be told. A hold above it - asked now or already stored - is cut to it.
+   */
+  readonly limitSecondsOf?: (deviceId: number) => Promise<number | null>
+  /** A hold cut to the device's limit: what was asked for, and what it was cut to (ms). */
+  readonly onClamped?: (deviceId: number, askedMs: number, limitMs: number) => void
   /** A hold given up without its off having been sent. */
   readonly onDropped?: (hold: OnForHold, reason: string) => void
 }
@@ -132,7 +139,38 @@ export class OnForHolds<H> {
       const entry: Entry<H> = { hold, handle: undefined, seenOn: true, retries: 0 }
       this.entries.set(hold.deviceId, entry)
       this.arm(entry)
+      this.clampStored(entry)
     }
+  }
+
+  /** A stored hold over the device's limit (saved before the limit existed) is cut to it. */
+  private clampStored(entry: Entry<H>): void {
+    const limitOf = this.deps.limitSecondsOf
+    if (limitOf === undefined) return
+    const deviceId = entry.hold.deviceId
+    this.work = this.work
+      .then(async () => {
+        const limit = await limitOf(deviceId).catch(() => null)
+        if (limit === null || this.disposed || this.entries.get(deviceId) !== entry) return
+        const now = this.deps.timers.now()
+        const left = entry.hold.deadline - now
+        if (left <= limit * 1000) return
+        this.deps.onClamped?.(deviceId, left, limit * 1000)
+        entry.hold = { ...entry.hold, deadline: now + limit * 1000 }
+        this.arm(entry)
+        await this.changed(deviceId)
+      })
+      .catch(() => undefined)
+  }
+
+  /** `ms` cut to what the device may be held on for. */
+  private async clamp(deviceId: number, ms: number): Promise<number> {
+    const limitOf = this.deps.limitSecondsOf
+    if (limitOf === undefined) return ms
+    const limit = await limitOf(deviceId).catch(() => null)
+    if (limit === null || ms <= limit * 1000) return ms
+    this.deps.onClamped?.(deviceId, ms, limit * 1000)
+    return limit * 1000
   }
 
   /** The step ran for `deviceId`. Events are taken one at a time, so two cannot both find it off. */
@@ -150,7 +188,9 @@ export class OnForHolds<H> {
     if (action === null) return 'not-holdable'
     const on = await this.deps.readOn(deviceId, action)
     if (this.disposed) return 'unknown'
-    const deadline = this.deps.timers.now() + ms
+    const held = await this.clamp(deviceId, ms)
+    if (this.disposed) return 'unknown'
+    const deadline = this.deps.timers.now() + held
     const existing = this.entries.get(deviceId)
     if (existing !== undefined) {
       const back = on === false

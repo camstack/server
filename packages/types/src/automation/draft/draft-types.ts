@@ -19,6 +19,8 @@ export const DraftSiteDeviceSchema = z.object({
   name: z.string().min(1),
   /** A `DeviceType` value. */
   type: z.string().min(1),
+  /** A `DeviceRole` value, when the device has one (it narrows the on-for limit). */
+  role: z.string().min(1).nullable().optional(),
   room: z.string().min(1).nullable(),
   addonId: z.string().min(1),
   stableId: z.string().min(1),

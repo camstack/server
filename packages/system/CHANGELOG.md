@@ -142,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A migration refuses to re-key a device to another addon while its settings hold a keychain secret, instead of leaving the secret under the old addon
 - Rooms and tags are records with an id: renaming a room or a tag is one change and no longer rewrites every device, rule or block; existing rooms, icons, descriptions, zones and tag colours are migrated automatically.
 - A migration blocked only on another addon's step that had not applied yet now runs as soon as that step applies, without restarting its addon
+- An on-for hold is now cut to the device's run limit (heater 3 h, siren 10 min, pet fountain 5 min), including holds saved before
 
 ### Removed
 
