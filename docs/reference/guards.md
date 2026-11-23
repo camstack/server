@@ -4,12 +4,12 @@
 
 # Guards
 
-259 repository guards: 254 in `scripts/`,
+260 repository guards: 255 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (247)
+## Enforced by CI checks (248)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -144,6 +144,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-config-yaml.ts` | No runtime code reads `config.yaml` (D1018, planning #342). |
 | `scripts/check-no-conflict-markers.ts` | Conflict-marker guard — fail the build if a tracked file contains an unresolved git merge marker. |
 | `scripts/check-no-credential-urls-in-fixtures.ts` | Credential-URL fixture guard — a RECORDED cap-output fixture must never carry a live camera credential. |
+| `scripts/check-no-customize-device-picker-dialog.ts` | One device-link surface: the `SourceSelector`. |
 | `scripts/check-no-detached-child-spawn.ts` | Guard (D668): no addon or server code spawns a child that LEAVES its runner's process group. |
 | `scripts/check-no-device-links.ts` | Wiring stays deleted — a cross-device derivation produces a DEVICE, never a field on somebody else's device. |
 | `scripts/check-no-devices-in-integration-form.ts` | an integration's settings form never edits its devices. |
