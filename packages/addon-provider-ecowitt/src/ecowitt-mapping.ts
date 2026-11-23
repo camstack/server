@@ -25,15 +25,6 @@ export type EcowittSensorCap =
   | 'numeric-sensor'
 
 /**
- * Map an Ecowitt quantity to its camstack sensor cap. Pure, total.
- *
- * Only temperature/humidity/pressure get a dedicated typed cap (the thermostat
- * surface consumes them); every other quantity rides `numeric-sensor` and is
- * typed by its {@link roleForQuantity} role instead. Accepts a plain `string`
- * so a persisted config value flows through without a cast — any unrecognised
- * string falls to `numeric-sensor`, the same safe default the tail uses.
- */
-/**
  * Lux per W/m2 of solar radiation. An approximation (daylight luminous efficacy ~ 126.7 lx per
  * W/m2): the station measures irradiance, not photometric illuminance, so the derived value is
  * good enough for a day/night threshold and nothing finer.
@@ -45,6 +36,15 @@ export function irradianceToLux(wattsPerSquareMetre: number): number {
   return wattsPerSquareMetre * LUX_PER_WM2
 }
 
+/**
+ * Map an Ecowitt quantity to its camstack sensor cap. Pure, total.
+ *
+ * Only temperature/humidity/pressure get a dedicated typed cap (the thermostat
+ * surface consumes them); every other quantity rides `numeric-sensor` and is
+ * typed by its {@link roleForQuantity} role instead. Accepts a plain `string`
+ * so a persisted config value flows through without a cast — any unrecognised
+ * string falls to `numeric-sensor`, the same safe default the tail uses.
+ */
 export function capForQuantity(quantity: Quantity | string): EcowittSensorCap {
   switch (quantity) {
     case 'temperature':
