@@ -18,7 +18,6 @@
       "packages/addon-admin-ui/src/components/detection-intelligence/VehiclesList.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
       "packages/addon-admin-ui/src/components/device/customize/triggers/TriggeredByTable.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
       "packages/addon-admin-ui/src/components/device/customize/use-customization.ts": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
-      "packages/addon-admin-ui/src/components/pipeline/placement-board/NodeInferenceDevices.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
       "packages/addon-admin-ui/src/components/recordings/ExportsSection.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
       "packages/addon-admin-ui/src/components/system/secrets/use-keychain-actions.ts": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",
       "packages/addon-admin-ui/src/components/users/UserSessionsModal.tsx": "confirms (or acts) and then fires the mutation with no loader until it settles; move to useConfirm({ action }) or table.destructive",

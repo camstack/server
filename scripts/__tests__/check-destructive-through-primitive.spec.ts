@@ -51,6 +51,19 @@ describe('check-destructive-through-primitive', () => {
     }
   })
 
+  it('an unrelated run: above a bare mutate is still a violation', () => {
+    const unrelated = file(
+      'pages/Mixed.tsx',
+      `table.destructive(row, {
+  title: 't',
+  run: () => other.mutateAsync({ id: row.id }),
+})
+const ok = await confirm({ title: 'Delete?' })
+if (ok) removeWidget.mutate({ id })`,
+    )
+    expect(bareDestructiveCalls(unrelated)).toEqual([6])
+  })
+
   it('skips specs and files outside the admin UI pages and components', () => {
     expect(
       bareDestructiveCalls({ ...CONFIRM_THEN_MUTATE, path: `${UI}pages/__tests__/x.tsx` }),

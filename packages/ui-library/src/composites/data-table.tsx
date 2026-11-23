@@ -72,7 +72,7 @@
  */
 import { Button } from '../primitives/button'
 import { BottomSheet } from '../primitives/bottom-sheet'
-import { Fragment, type JSX, type ReactNode, useMemo, useState } from 'react'
+import { Fragment, type JSX, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { type RowOperationState, useRowOperations } from '../hooks/use-row-operations'
 import { useConfirmIfAvailable } from './confirm-dialog'
 import { useIsPhone } from '../hooks/use-is-mobile'
@@ -372,13 +372,21 @@ export function DataTable<T>({
   const [innerSort, setInnerSort] = useState<TableSortState | null>(defaultSort ?? null)
   const rowOps = useRowOperations<string | number>()
   const confirmIfAvailable = useConfirmIfAvailable()
-  const { run: runRowOp, stateOf: rowOpStateOf } = rowOps
+  const { run: runRowOp, stateOf: rowOpStateOf, retain: retainRowOps } = rowOps
+  useEffect(() => {
+    if (rowKey === undefined) return
+    retainRowOps(new Set(rows.map((row, i) => rowKey(row, i))))
+  }, [rows, rowKey, retainRowOps])
   const tableApi: DataTableRowApi<T> = {
     destructive: async (row, spec) => {
       // No dialog host = no way to ask: a destructive action never runs unasked.
       if (confirmIfAvailable === undefined) return false
-      const index = rows.indexOf(row)
-      const key = rowKey ? rowKey(row, index) : index
+      // Without a stable key a re-sort would move the failure tint to another row.
+      if (rowKey === undefined) {
+        console.warn('DataTable: table.destructive needs a rowKey; the action was not run.')
+        return false
+      }
+      const key = rowKey(row, rows.indexOf(row))
       const accepted = await confirmIfAvailable({
         title: spec.title,
         message: spec.message,

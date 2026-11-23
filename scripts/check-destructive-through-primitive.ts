@@ -47,11 +47,53 @@ const SCANNED_DIRS: readonly string[] = ['pages/', 'components/', 'hooks/', 'lib
 const VERBS = String.raw`(?:delete|remove|uninstall|purge|discard|revoke|forget|wipe)`
 /** `removeFoo.mutate(`, `deleteMutation.mutateAsync(`, `.integrationInstances.deleteInstance.mutate(`. */
 const DESTRUCTIVE_CALL_RE = new RegExp(String.raw`\b\w*${VERBS}\w*\.mutate(?:Async)?\(`, 'i')
-/** A line that sits inside one of the two approved paths, or is a mutation's own definition. */
-const APPROVED_CONTEXT_RE =
-  /\b(?:action|run)\s*:|=>\s*[\w.]+\.mutateAsync\(|\bmutationFn\s*:|\bConfirmAction(?:Button|Dialog)\b|\buseDestructiveAction\b|\btable\.destructive\(/
+/** `action: async (x) =>` / `run: () =>` / `mutationFn: id =>` — the head of an approved arrow, just before `{`. */
+const APPROVED_ARROW_HEAD_RE =
+  /\b(?:action|run|mutationFn)\s*:\s*(?:async\s*)?(?:\([^()]*\)|\w+)\s*=>$/
+/** The promise handed straight to something that awaits it: `=> x.mutateAsync(`, `run: () => x.mutate(`. */
+const ARROW_BEFORE_CALL_RE = /=>\s*$/
+const APPROVED_TAG_RE = /<ConfirmAction(?:Button|Dialog)\b/g
 const COMMENT_LINE_RE = /^\s*(?:\*|\/\/|\/\*)/
-const LOOKBACK_LINES = 6
+const OPENERS: Readonly<Record<string, string>> = { '(': ')', '{': '}', '[': ']' }
+
+/** Offsets of the brackets still open at `offset`, outermost first. */
+function openBracketsAt(text: string, offset: number): number[] {
+  const stack: number[] = []
+  for (let i = 0; i < offset; i += 1) {
+    const ch = text.charAt(i)
+    if (OPENERS[ch] !== undefined) stack.push(i)
+    else if (ch === ')' || ch === '}' || ch === ']') stack.pop()
+  }
+  return stack
+}
+
+/** True when the `{` at `open` is the body of an `action:` / `run:` / `mutationFn:` arrow. */
+function isApprovedArrowBody(text: string, open: number): boolean {
+  if (text.charAt(open) !== '{') return false
+  const head = text.slice(Math.max(0, open - 160), open).trimEnd()
+  return APPROVED_ARROW_HEAD_RE.test(head)
+}
+
+/** True when an approved dialog tag is open (its `/>` not reached) around `offset`. */
+function insideApprovedTag(text: string, offset: number): boolean {
+  let tagAt = -1
+  for (const match of text.slice(0, offset).matchAll(APPROVED_TAG_RE)) tagAt = match.index
+  if (tagAt < 0) return false
+  const between = text.slice(tagAt, offset)
+  return !/\/>|<\/ConfirmAction/.test(between) && openBracketsAt(between, between.length).length > 0
+}
+
+/** The mutate call sits inside the value of an approved path, not merely below one. */
+function enclosedByApproved(text: string, callOffset: number, callEnd: number): boolean {
+  const before = text
+    .slice(0, callOffset)
+    .replace(/[\w.$?]*$/, '')
+    .trimEnd()
+  if (APPROVED_ARROW_HEAD_RE.test(before)) return true
+  if (ARROW_BEFORE_CALL_RE.test(before) && text.startsWith('mutateAsync(', callEnd)) return true
+  if (openBracketsAt(text, callOffset).some((open) => isApprovedArrowBody(text, open))) return true
+  return insideApprovedTag(text, callOffset)
+}
 
 function inScope(file: SourceFile): boolean {
   return (
@@ -67,12 +109,19 @@ export function bareDestructiveCalls(file: SourceFile): number[] {
   if (!inScope(file)) return []
   const lines = file.text.split('\n')
   const out: number[] = []
+  let lineStart = 0
   lines.forEach((line, index) => {
-    if (COMMENT_LINE_RE.test(line) || !DESTRUCTIVE_CALL_RE.test(line)) return
-    const from = Math.max(0, index - LOOKBACK_LINES)
-    const context = lines.slice(from, index + 1)
-    if (context.some((l) => APPROVED_CONTEXT_RE.test(l))) return
-    out.push(index + 1)
+    const match = COMMENT_LINE_RE.test(line) ? null : DESTRUCTIVE_CALL_RE.exec(line)
+    if (
+      match !== null &&
+      !enclosedByApproved(
+        file.text,
+        lineStart + match.index,
+        lineStart + match.index + match[0].lastIndexOf('.') + 1,
+      )
+    )
+      out.push(index + 1)
+    lineStart += line.length + 1
   })
   return out
 }

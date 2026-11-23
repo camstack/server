@@ -31,6 +31,7 @@ const h = vi.hoisted(() => ({
   removeMutate: vi.fn(),
   ownRevokeMutate: vi.fn(),
   confirmSpy: vi.fn(),
+  actionError: null as string | null,
   flags: {
     promptAnswer: null as string | null,
     devices: [] as unknown[],
@@ -42,7 +43,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useConfirm: () => async (opts: { action?: () => Promise<unknown> }) => {
     h.confirmSpy(opts)
-    await opts.action?.()
+    try {
+      await opts.action?.()
+    } catch (err) {
+      h.actionError = err instanceof Error ? err.message : String(err)
+      return false
+    }
     return true
   },
   usePrompt: () => async () => h.flags.promptAnswer,
@@ -155,6 +161,7 @@ beforeEach(() => {
   h.revokeCalls.length = 0
   h.failIds.clear()
   h.removeMutate.mockReset()
+  h.actionError = null
   h.ownRevokeMutate.mockReset()
   h.confirmSpy.mockReset()
   h.flags.promptAnswer = null
@@ -231,6 +238,16 @@ describe('DevicesCard', () => {
     expect(within(revokedRow).queryByRole('button', { name: /^Revoke/ })).toBeNull()
     fireEvent.click(within(revokedRow).getByRole('button', { name: 'Delete Phone z' }))
     await waitFor(() => expect(h.removeMutate).toHaveBeenCalledWith({ id: 'z' }))
+  })
+
+  it('a refused delete throws inside the confirm action and is not shown twice on the page', async () => {
+    h.flags.devices = [device({ id: 'a' }), device({ id: 'z', status: 'revoked' })]
+    h.removeMutate.mockResolvedValue({ result: 'live' })
+    render(<DevicesCard pairOpen={false} onPairClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Revoked 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Phone z' }))
+    await waitFor(() => expect(h.actionError).toContain('Only a revoked device can be deleted'))
+    expect(screen.queryByText(/Only a revoked device can be deleted/)).toBeNull()
   })
 })
 

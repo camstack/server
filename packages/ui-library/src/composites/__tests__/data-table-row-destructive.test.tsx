@@ -14,7 +14,11 @@ const ROWS: readonly Row[] = [
   { id: 'b', name: 'Bravo' },
 ]
 
-function setup(run: () => Promise<unknown>, onRowActionError?: (m: string, row: Row) => void) {
+function setup(
+  run: () => Promise<unknown>,
+  onRowActionError?: (m: string, row: Row) => void,
+  withRowKey = true,
+) {
   const columns: DataColumn<Row>[] = [
     {
       mobile: 'primary',
@@ -44,18 +48,20 @@ function setup(run: () => Promise<unknown>, onRowActionError?: (m: string, row: 
       ),
     },
   ]
-  render(
+  const tree = (data: readonly Row[]) => (
     <ConfirmDialogProvider>
       <DataTable
         columns={columns}
-        rows={[...ROWS]}
-        rowKey={(r) => r.id}
+        rows={[...data]}
+        rowKey={withRowKey ? (r) => r.id : undefined}
         onRowActionError={onRowActionError}
       />
-    </ConfirmDialogProvider>,
+    </ConfirmDialogProvider>
   )
+  const { rerender } = render(tree(ROWS))
+  const rerenderRows = (data: readonly Row[]): void => rerender(tree(data))
   const rows = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('tbody tr')]
-  return { rows }
+  return { rows, rerenderRows }
 }
 
 function deferred() {
@@ -95,5 +101,25 @@ describe('DataTable — row destructive action', () => {
     fireEvent.click(screen.getByLabelText('delete a'))
     fireEvent.click(await screen.findByText('Cancel'))
     expect(run).not.toHaveBeenCalled()
+  })
+  it('a failed row that is refetched away leaves no tint when it comes back', async () => {
+    const { rows, rerenderRows } = setup(() => Promise.reject(new Error('boom')))
+    fireEvent.click(screen.getByLabelText('delete a'))
+    fireEvent.click(await screen.findByText('Yes'))
+    await waitFor(() => expect(rows()[0]?.getAttribute('title')).toBe('boom'))
+    rerenderRows([ROWS[1] as Row])
+    rerenderRows(ROWS)
+    expect(rows()[0]?.getAttribute('title')).toBeNull()
+  })
+
+  it('without a rowKey the action is refused and never runs', async () => {
+    const run = vi.fn(() => Promise.resolve())
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    setup(run, undefined, false)
+    fireEvent.click(screen.getByLabelText('delete a'))
+    await waitFor(() => expect(warn).toHaveBeenCalled())
+    expect(screen.queryByText('Yes')).toBeNull()
+    expect(run).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

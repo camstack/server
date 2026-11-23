@@ -36,6 +36,12 @@ export interface UseRowOperationsResult<K> {
   ) => Promise<boolean>
   /** Forget a key's failure (the row goes back to idle). */
   readonly clearFailure: (key: K) => void
+  /**
+   * Drop every state whose key is not in `keys` (the rows now on screen), and
+   * refuse to record a later failure for a key outside them: a row that was
+   * refetched away leaks nothing.
+   */
+  readonly retain: (keys: ReadonlySet<K>) => void
 }
 
 export function errorMessageOf(error: unknown): string {
@@ -48,6 +54,7 @@ export function useRowOperations<K>(): UseRowOperationsResult<K> {
   // The in-flight guard is a ref: two clicks in one tick must not both start,
   // and state would only reflect the first after the next render.
   const inFlight = useRef<Set<K>>(new Set())
+  const liveKeys = useRef<ReadonlySet<K> | null>(null)
 
   const setState = useCallback((key: K, next: RowOperationState | null): void => {
     setStates((prev) => {
@@ -73,7 +80,8 @@ export function useRowOperations<K>(): UseRowOperationsResult<K> {
         return true
       } catch (error) {
         const message = errorMessageOf(error)
-        setState(key, { kind: 'failed', message })
+        const gone = liveKeys.current !== null && !liveKeys.current.has(key)
+        setState(key, gone ? null : { kind: 'failed', message })
         onError?.(message)
         return false
       } finally {
@@ -94,8 +102,18 @@ export function useRowOperations<K>(): UseRowOperationsResult<K> {
     })
   }, [])
 
+  const retain = useCallback((keys: ReadonlySet<K>): void => {
+    liveKeys.current = keys
+    setStates((prev) => {
+      let stale = false
+      for (const key of prev.keys()) if (!keys.has(key)) stale = true
+      if (!stale) return prev
+      return new Map([...prev].filter(([key]) => keys.has(key)))
+    })
+  }, [])
+
   return useMemo(
-    () => ({ states, stateOf, isPending, run, clearFailure }),
-    [states, stateOf, isPending, run, clearFailure],
+    () => ({ states, stateOf, isPending, run, clearFailure, retain }),
+    [states, stateOf, isPending, run, clearFailure, retain],
   )
 }

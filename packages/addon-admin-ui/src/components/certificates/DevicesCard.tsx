@@ -56,20 +56,9 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
 
   const revoke = trpc.deviceCredentials.revokeDeviceCredential.useMutation({
     onSuccess: done,
-    onError: failed('Revoke'),
   })
   const remove = trpc.deviceCredentials.deleteDeviceCredential.useMutation({
-    onSuccess: (res) => {
-      if (res.result !== 'deleted') {
-        setError(
-          res.result === 'live'
-            ? 'Only a revoked device can be deleted: revoke it first.'
-            : 'That device no longer exists.',
-        )
-      }
-      done()
-    },
-    onError: failed('Delete'),
+    onSuccess: done,
   })
   const rename = trpc.deviceCredentials.renameDeviceCredential.useMutation({
     onSuccess: done,
@@ -81,7 +70,8 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
   const rows = useMemo(() => (query.data ?? []).map(deviceCredentialRow), [query.data])
 
   const onRevoke = async (row: CredentialRow): Promise<void> => {
-    const ok = await confirm({
+    setError(null)
+    await confirm({
       title: t('certificates.devicesCard.revoke', 'Revoke "{{name}}"?', { name: row.name }),
       message: t(
         'certificates.devicesCard.sDeviceStopsSigningIn',
@@ -90,12 +80,19 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
       ),
       confirmLabel: t('certificates.devicesCard.revoke2', 'Revoke'),
       variant: 'danger',
-      action: () => revoke.mutateAsync({ id: row.id }),
+      action: async () => {
+        setBusyId(row.id)
+        try {
+          await revoke.mutateAsync({ id: row.id })
+        } finally {
+          setBusyId(null)
+        }
+      },
     })
-    if (ok) setError(null)
   }
   const onDelete = async (row: CredentialRow): Promise<void> => {
-    const ok = await confirm({
+    setError(null)
+    await confirm({
       title: t('certificates.devicesCard.delete', 'Delete "{{name}}"?', { name: row.name }),
       message: t(
         'certificates.devicesCard.isRemovedFromTheList',
@@ -104,9 +101,21 @@ export function DevicesCard({ pairOpen, onPairClose }: DevicesCardProps): ReactN
       ),
       confirmLabel: t('common.delete', 'Delete'),
       variant: 'danger',
-      action: () => remove.mutateAsync({ id: row.id }),
+      action: async () => {
+        setBusyId(row.id)
+        try {
+          const res = await remove.mutateAsync({ id: row.id })
+          if (res.result === 'deleted') return
+          throw new Error(
+            res.result === 'live'
+              ? 'Only a revoked device can be deleted: revoke it first.'
+              : 'That device no longer exists.',
+          )
+        } finally {
+          setBusyId(null)
+        }
+      },
     })
-    if (ok) setError(null)
   }
   const onRename = async (row: CredentialRow): Promise<void> => {
     const next = await prompt({
