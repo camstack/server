@@ -669,19 +669,34 @@ export async function registerDevice(
   // were known; the first registration brings them — secure what landed raw.
   const declaredSecretPaths = input.secretConfigPaths ?? []
   if (isFirstRegistration && declaredSecretPaths.length > 0) {
-    const converted = await secureRawDeclaredSecrets(
-      {
-        ctx: pctx.host.ctx,
-        readStored: () => pctx.settings.readDeviceStore(id),
-        write: (patch) => pctx.settings.writeDeviceStore(id, patch),
-      },
-      { deviceId: id, ownerAddonId: addonId, secretPaths: declaredSecretPaths },
-    )
-    if (converted.length > 0) {
-      pctx.host.ctx.logger.info('registerDevice: secured raw secret fields from the create write', {
-        tags: { deviceId: id },
-        meta: { paths: [...converted] },
-      })
+    // A keychain that cannot store the value must not fail the registration:
+    // the row stays as the create write left it, and the failure is reported.
+    try {
+      const converted = await secureRawDeclaredSecrets(
+        {
+          ctx: pctx.host.ctx,
+          readStored: () => pctx.settings.readDeviceStore(id),
+          write: (patch) => pctx.settings.writeDeviceStore(id, patch),
+        },
+        { deviceId: id, ownerAddonId: addonId, secretPaths: declaredSecretPaths },
+      )
+      if (converted.length > 0) {
+        pctx.host.ctx.logger.info(
+          'registerDevice: secured raw secret fields from the create write',
+          {
+            tags: { deviceId: id },
+            meta: { paths: [...converted] },
+          },
+        )
+      }
+    } catch (err) {
+      pctx.host.ctx.logger.warn(
+        'registerDevice: could not secure raw secret fields from the create write',
+        {
+          tags: { deviceId: id },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
     }
   }
 
