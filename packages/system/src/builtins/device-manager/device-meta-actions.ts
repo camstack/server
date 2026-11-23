@@ -941,11 +941,57 @@ function removalSteps(
   ]
 }
 
+/**
+ * The rows that belong to `deviceId` and cannot outlive it: accessory children
+ * (`parentDeviceId === id`) and rows that name it as their link while sitting
+ * under a parent (`linkDeviceId === id`, `parentDeviceId` set). A row that only
+ * LINKS to it (an operator-picked link, D356) is a device of its own and stays.
+ */
+async function ownedRowIds(pctx: ProviderContext, deviceId: number): Promise<readonly number[]> {
+  const ids = new Set<number>()
+  for (const row of await pctx.metaStore.rows.listByParent(deviceId)) ids.add(row.meta.id)
+  for (const row of await pctx.metaStore.rows.listAll()) {
+    if (row.meta.linkDeviceId === deviceId && row.meta.parentDeviceId !== null) {
+      ids.add(row.meta.id)
+    }
+  }
+  ids.delete(deviceId)
+  return [...ids]
+}
+
+/**
+ * Removing a device removes what it owns (an accessory child never outlives its
+ * parent: a Reolink siren row survived its camera with a dangling
+ * `parentDeviceId`). Each child goes through the same tombstoned removal, so
+ * its data stores, its removal hooks and its identity fence are the parent's.
+ */
 export async function removeDevice(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['removeDevice']>[0],
 ): ReturnType<IDeviceManagerProvider['removeDevice']> {
-  const { deviceId } = input
+  await removeDeviceTree(pctx, input.deviceId, new Set())
+}
+
+async function removeDeviceTree(
+  pctx: ProviderContext,
+  deviceId: number,
+  seen: Set<number>,
+): Promise<void> {
+  if (seen.has(deviceId)) return
+  seen.add(deviceId)
+  // read BEFORE the row goes: after it, nothing says who the children were
+  const ownedIds = await ownedRowIds(pctx, deviceId)
+  await removeOneDevice(pctx, deviceId)
+  for (const childId of ownedIds) {
+    pctx.host.ctx.logger.info('removed device: cascading to an owned child', {
+      tags: { deviceId: childId },
+      meta: { parentDeviceId: deviceId },
+    })
+    await removeDeviceTree(pctx, childId, seen)
+  }
+}
+
+async function removeOneDevice(pctx: ProviderContext, deviceId: number): Promise<void> {
   // Resolve the row before deleting it: the `DeviceUnregistered` event carries
   // the device's name and `parentDeviceId`, and by the time it fires the row is
   // gone.

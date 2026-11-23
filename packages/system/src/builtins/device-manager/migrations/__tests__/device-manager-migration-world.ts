@@ -18,7 +18,7 @@ import {
 } from '../../../sqlite-storage/migrations/migration-pass.js'
 import { DEVICE_ROWS_COLLECTION } from '../../device-row-store.js'
 import { deviceManagerRecordKinds } from '../../record-kinds.js'
-import { ADDON_MIGRATIONS, type DeviceManagerMigrationPorts } from '../index.js'
+import { ROOMS_AND_TAGS_MIGRATIONS, type DeviceManagerStatePorts } from '../index.js'
 import { deviceManagerMigrationPorts } from '../ports.js'
 
 export const OWNER = 'device-manager'
@@ -37,7 +37,7 @@ export interface MigrationWorld {
   readonly db: Database.Database
   readonly records: RecordsAccess
   readonly target: MigrateTarget
-  readonly ports: DeviceManagerMigrationPorts
+  readonly ports: DeviceManagerStatePorts
   /** Every info line the migration ports reported, in order. */
   readonly reports: { readonly message: string; readonly meta: Readonly<Record<string, unknown>> }[]
   /** The addon store rows as stored, by key. */
@@ -130,7 +130,7 @@ export async function makeMigrationWorld(devices: readonly SeedDevice[]): Promis
   })
   const target = migrateTargetOf(db, 'settings', [], world.settings.engine.migrationWriter())
   const migration = (id: string) => {
-    const found = ADDON_MIGRATIONS.find((m) => m.meta.id === id)
+    const found = ROOMS_AND_TAGS_MIGRATIONS.find((m) => m.meta.id === id)
     if (found === undefined || !('plan' in found)) throw new Error(`no plan migration ${id}`)
     return { meta: found.meta satisfies MigrationMeta, plan: found.plan }
   }

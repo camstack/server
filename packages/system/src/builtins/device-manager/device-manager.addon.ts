@@ -24,7 +24,7 @@
  *   - live operations previously served by `device-management.router.ts`
  */
 
-import { ADDON_MIGRATIONS as DEVICE_MANAGER_MIGRATIONS } from './migrations/index.js'
+import { ORPHAN_CHILDREN_MIGRATIONS, ROOMS_AND_TAGS_MIGRATIONS } from './migrations/index.js'
 import { deviceManagerMigrationPorts } from './migrations/ports.js'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -730,7 +730,7 @@ export class DeviceManagerAddon extends BaseAddon {
     // Rooms, zones and tag ids become records BEFORE the first read resolves a name (D1089).
     await this.runMigrations(
       defineAddonMigrations(
-        DEVICE_MANAGER_MIGRATIONS,
+        ROOMS_AND_TAGS_MIGRATIONS,
         deviceManagerMigrationPorts({
           readStoredKey: (key) => this.readStoredGlobalKey(key),
           rows: deviceRows,
@@ -1001,6 +1001,27 @@ export class DeviceManagerAddon extends BaseAddon {
           meta: { error: errMsg(err) },
         },
       )
+    }
+
+    // One-shot (D987): accessory rows left behind by a removal that did not cascade.
+    // Housekeeping again: a failure never stops the fleet coming up.
+    try {
+      await this.runMigrations(
+        defineAddonMigrations(ORPHAN_CHILDREN_MIGRATIONS, {
+          listRows: async () =>
+            (await deviceRows.listAll()).map((row) => ({
+              id: row.meta.id,
+              parentDeviceId: row.meta.parentDeviceId,
+            })),
+          removeDevice: (deviceId) => metaActions.removeDevice(pctx, { deviceId }),
+          info: (message, deviceId, parentDeviceId) =>
+            this.ctx.logger.info(message, { tags: { deviceId }, meta: { parentDeviceId } }),
+        }),
+      )
+    } catch (err) {
+      this.ctx.logger.warn('orphan-children migration failed — rows stay as they are', {
+        meta: { error: errMsg(err) },
+      })
     }
 
     const provider: IDeviceManagerProvider & {

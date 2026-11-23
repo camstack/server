@@ -6,7 +6,7 @@
 import type { RecordKindHandle, RoomBody, StoredKeyRead, ZoneBody } from '@camstack/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type { DeviceRowStore } from '../device-row-store.js'
-import type { DeviceManagerMigrationPorts } from './index.js'
+import type { DeviceManagerStatePorts } from './index.js'
 import { DEVICE_MANAGER_ID } from './rooms-as-records.js'
 
 export interface DeviceManagerPortsSource {
@@ -26,7 +26,7 @@ function stringArray(value: unknown): readonly string[] {
 
 export function deviceManagerMigrationPorts(
   source: DeviceManagerPortsSource,
-): DeviceManagerMigrationPorts {
+): DeviceManagerStatePorts {
   return {
     readStored: async (keys) => {
       const found: Record<string, unknown> = {}

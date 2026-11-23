@@ -1,5 +1,6 @@
 import type { AddonMigration } from '@camstack/types'
 import { DEVICE_TAG_IDS_ID, type DeviceTagIdsPorts, planDeviceTagIds } from './device-tag-ids.js'
+import { type OrphanChildrenPorts, removeOrphanChildren } from './orphan-children.js'
 import {
   DEVICE_MANAGER_ID,
   planRoomsAsRecords,
@@ -10,10 +11,15 @@ import {
 export { DEVICE_TAG_IDS_ID } from './device-tag-ids.js'
 export { ROOMS_AS_RECORDS_ID } from './rooms-as-records.js'
 
-export type DeviceManagerMigrationPorts = RoomsMigrationPorts & DeviceTagIdsPorts
+export const REMOVE_ORPHAN_CHILDREN_ID = 'device-manager/2026-11-23-remove-orphan-children'
 
-/** The `device-manager` catalogue (D987), offered to the engine when the addon initialises. */
-export const ADDON_MIGRATIONS: readonly AddonMigration<DeviceManagerMigrationPorts>[] = [
+/** The ports of the migrations that run before the first read (rooms, zones, tag ids). */
+export type DeviceManagerStatePorts = RoomsMigrationPorts & DeviceTagIdsPorts
+
+export type DeviceManagerMigrationPorts = DeviceManagerStatePorts & OrphanChildrenPorts
+
+/** Rooms, zones and tag ids: run BEFORE the first read resolves a name (D1089). */
+export const ROOMS_AND_TAGS_MIGRATIONS: readonly AddonMigration<DeviceManagerStatePorts>[] = [
   {
     meta: {
       id: ROOMS_AS_RECORDS_ID,
@@ -48,4 +54,31 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<DeviceManagerMigrationPor
     },
     plan: (ports) => planDeviceTagIds(ports),
   },
+]
+
+/** Accessory rows left behind by a removal that did not cascade: run once the fleet is up (D987). */
+export const ORPHAN_CHILDREN_MIGRATIONS: readonly AddonMigration<OrphanChildrenPorts>[] = [
+  {
+    meta: {
+      id: REMOVE_ORPHAN_CHILDREN_ID,
+      owner: DEVICE_MANAGER_ID,
+      level: 'addon-state',
+      seq: 3,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Remove every device row whose parentDeviceId names no row, through the tombstoned removal, each one logged',
+      fixtureMark: 'a child of a live parent and a top-level row, both kept',
+    },
+    procedure: removeOrphanChildren,
+  },
+]
+
+/** The whole `device-manager` catalogue (D987), in seq order. */
+export const ADDON_MIGRATIONS: readonly AddonMigration<DeviceManagerMigrationPorts>[] = [
+  ...ROOMS_AND_TAGS_MIGRATIONS,
+  ...ORPHAN_CHILDREN_MIGRATIONS,
 ]
