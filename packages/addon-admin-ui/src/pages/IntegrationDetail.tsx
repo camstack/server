@@ -238,6 +238,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   // Matter adds a pairing-code tab to the Add device modal: the operator commissions a shared
   // device there, then adopts the node from "Found on the network".
   const isMatter = integrationBrokerKind === 'matter'
+  const linkedBroker = instance.data?.formValues?.['brokerId']
+  const ownBrokerId = typeof linkedBroker === 'string' && linkedBroker !== '' ? linkedBroker : null
   const addDeviceLabel = !fabReady
     ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
     : t('integrations.addDevice', 'Add device')
@@ -696,8 +698,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             ? {
                 pairing: {
                   label: t('integrations.addMatter.tab', 'Pairing code'),
+                  networkLabel: t('integrations.addMatter.tabNetwork', 'Paired nodes'),
                   render: ({ onPaired }) => (
                     <MatterPairingPanel
+                      brokerId={ownBrokerId}
                       onClose={() => setShowAddDevice(false)}
                       onCommissioned={onPaired}
                     />

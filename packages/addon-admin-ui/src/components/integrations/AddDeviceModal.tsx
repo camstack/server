@@ -36,6 +36,8 @@ type TabId = 'network' | 'manual' | 'pairing'
 /** A pairing tab an integration adds beside the network and manual ones (a Matter share code). */
 export interface PairingTab {
   readonly label: string
+  /** What this integration calls the "Found on the network" tab (its adoptable nodes). */
+  readonly networkLabel?: string
   /** Drawn inside the tab; `onPaired` moves the operator to "Found on the network" to adopt. */
   readonly render: (api: { readonly onPaired: () => void }) => ReactElement
 }
@@ -134,7 +136,8 @@ export function AddDeviceModal({
           <TabsList className="shrink-0">
             {hasNetwork && (
               <TabsTrigger value="network">
-                {t('integrations.addDeviceModal.tabNetwork', 'Found on the network')}
+                {pairing?.networkLabel ??
+                  t('integrations.addDeviceModal.tabNetwork', 'Found on the network')}
               </TabsTrigger>
             )}
             {hasManual && (

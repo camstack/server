@@ -1914,7 +1914,10 @@
         "done": "Added"
       },
       "broker": "Matter fabric",
-      "tab": "Pairing code"
+      "tab": "Pairing code",
+      "tabNetwork": "Paired nodes",
+      "fabricDown": "The Matter fabric is not running ({{state}}). It starts again with the Matter addon; try again in a moment.",
+      "noFabric": "This integration is not linked to a Matter fabric. Edit it to link one."
     },
     "addonCard": {
       "summary": "{{integrations}} · {{devices}}",

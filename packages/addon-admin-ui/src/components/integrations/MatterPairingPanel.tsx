@@ -14,12 +14,10 @@ import {
   Input,
   Label,
   useBrokerGetState,
-  selectableBrokers,
   useBrokerInstances,
   useBrokerPublish,
 } from '@camstack/ui-library'
 import { Loader2 } from 'lucide-react'
-import { BrokerPicker } from '../brokers/BrokerPicker'
 
 /** The broker kind this dialog commissions into (this dialog IS the Matter flow). */
 const MATTER_BROKER_KIND = 'matter'
@@ -40,6 +38,8 @@ interface FailureCopy {
 }
 
 interface MatterPairingPanelProps {
+  /** The Matter fabric this integration is linked to; null when the link is not set. */
+  readonly brokerId: string | null
   readonly onClose: () => void
   readonly onCommissioned: () => void
 }
@@ -82,17 +82,15 @@ function failureCopy(failure: string | null, message: string | null): FailureCop
 }
 
 export function MatterPairingPanel({
+  brokerId,
   onClose,
   onCommissioned,
 }: MatterPairingPanelProps): ReactElement {
   const { t } = useTranslation()
+  // The fabric is the integration's own (its `brokerId`): never picked, never created here.
   const brokers = useBrokerInstances({ kind: MATTER_BROKER_KIND })
-  // One fabric is used as is; none or several are chosen (or created) in a BrokerPicker.
-  const [pickedBrokerId, setPickedBrokerId] = useState<string | null>(null)
-  // A fabric that is off, unconfigured or failing is not offered, unless it is the one picked.
-  const usableBrokers = selectableBrokers(brokers.data ?? [], pickedBrokerId)
-  const brokerCount = usableBrokers.length
-  const brokerId = pickedBrokerId ?? usableBrokers[0]?.id ?? null
+  const own = brokers.data?.find((b) => b.id === brokerId) ?? null
+  const ownDown = own !== null && !own.usable
   const publish = useBrokerPublish()
   const [code, setCode] = useState('')
   const [view, setView] = useState<CommissionView>({
@@ -145,8 +143,7 @@ export function MatterPairingPanel({
   const failedCopy = view.phase === 'failed' ? failureCopy(view.failure, view.message) : null
   const failure =
     failedCopy === null ? null : t(failedCopy.key, { defaultValue: failedCopy.defaultValue })
-  const brokersReady = brokers.isSuccess === true || brokers.data !== undefined
-  const noBroker = brokersReady && brokerId === null
+  const noBroker = brokerId === null
 
   return (
     <>
@@ -156,15 +153,22 @@ export function MatterPairingPanel({
             defaultValue: 'Paste the 11-digit pairing code or the MT: QR code.',
           })}
         </p>
-        {(noBroker || brokerCount > 1) && !busy && view.phase !== 'done' && (
-          <div className="space-y-1.5">
-            <Label>
-              {t('integrations.addMatter.broker', {
-                defaultValue: 'Matter fabric',
-              })}
-            </Label>
-            <BrokerPicker kind={MATTER_BROKER_KIND} value={brokerId} onChange={setPickedBrokerId} />
-          </div>
+        {noBroker && (
+          <ErrorBox
+            message={t('integrations.addMatter.noFabric', {
+              defaultValue:
+                'This integration is not linked to a Matter fabric. Edit it to link one.',
+            })}
+          />
+        )}
+        {own !== null && ownDown && (
+          <ErrorBox
+            message={t('integrations.addMatter.fabricDown', {
+              defaultValue:
+                'The Matter fabric is not running ({{state}}). It starts again with the Matter addon; try again in a moment.',
+              state: own.stateLabel ?? own.state,
+            })}
+          />
         )}
         {!noBroker && (
           <div className="space-y-1.5">
@@ -231,7 +235,7 @@ export function MatterPairingPanel({
         ) : (
           <Button
             size="sm"
-            disabled={busy || noBroker || code.trim().length === 0}
+            disabled={busy || noBroker || ownDown || code.trim().length === 0}
             onClick={submit}
           >
             {busy

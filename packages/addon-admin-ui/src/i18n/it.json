@@ -1914,7 +1914,10 @@
         "done": "Aggiunto"
       },
       "broker": "Fabric Matter",
-      "tab": "Codice di abbinamento"
+      "tab": "Codice di abbinamento",
+      "tabNetwork": "Nodi abbinati",
+      "fabricDown": "Il fabric Matter non e in esecuzione ({{state}}). Riparte con l'addon Matter; riprova tra un momento.",
+      "noFabric": "Questa integrazione non e collegata a un fabric Matter. Modificala per collegarne uno."
     },
     "addonCard": {
       "summary": "{{integrations}} · {{devices}}",

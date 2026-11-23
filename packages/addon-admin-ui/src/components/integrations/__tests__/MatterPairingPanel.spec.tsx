@@ -46,13 +46,20 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-function renderDialog(onCommissioned: () => void = vi.fn()): ReactElement {
+function renderDialog(
+  onCommissioned: () => void = vi.fn(),
+  brokerId: string | null = 'matter_001',
+): ReactElement {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
       <Dialog open>
         <DialogContent>
-          <MatterPairingPanel onClose={vi.fn()} onCommissioned={onCommissioned} />
+          <MatterPairingPanel
+            brokerId={brokerId}
+            onClose={vi.fn()}
+            onCommissioned={onCommissioned}
+          />
         </DialogContent>
       </Dialog>
     </QueryClientProvider>
@@ -86,20 +93,32 @@ describe('MatterPairingPanel', () => {
     )
   })
 
-  it('commissions through the usable fabric, not an unusable one listed first', () => {
+  it('uses the integration own fabric, even when other fabrics exist', () => {
     harness.publish.mockReset()
     harness.publish.mockImplementation(() => undefined)
     harness.box.brokers = [
-      { id: 'matter_off', usable: false },
+      { id: 'matter_other', usable: true },
       { id: 'matter_001', usable: true },
     ]
     try {
-      render(renderDialog())
+      render(renderDialog(vi.fn(), 'matter_001'))
       pasteAndSubmit('34970112332')
       expect(harness.publish).toHaveBeenCalledWith(
         expect.objectContaining({ brokerId: 'matter_001' }),
         expect.any(Object),
       )
+    } finally {
+      harness.box.brokers = [{ id: 'matter_001', usable: true }]
+    }
+  })
+
+  it('says the own fabric is not running and never offers to create one', () => {
+    harness.box.brokers = [{ id: 'matter_001', usable: false }]
+    try {
+      render(renderDialog(vi.fn(), 'matter_001'))
+      expect(screen.getByRole('alert').textContent).toContain('not running')
+      expect(screen.queryByText(/create/i)).toBeNull()
+      expect(screen.getByRole('button', { name: 'Add device' }).hasAttribute('disabled')).toBe(true)
     } finally {
       harness.box.brokers = [{ id: 'matter_001', usable: true }]
     }

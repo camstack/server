@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backup entries and Notification rules: on a phone, retention, databases, locations and the snooze switch are edited from a sheet that opens when the row is tapped
 - Triggered by shows each device with its parent like the other device lists, every trigger can be edited (events and parts), and adding a device uses the common source selector.
 - The Matter pairing panel no longer names another product in its help text
+- Add device on a Matter integration uses its own fabric, says when it is not running instead of offering to create one, and calls the adoption tab Paired nodes
 
 ## [1.2.738] - 2026-11-22
 
