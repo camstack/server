@@ -1894,7 +1894,7 @@
     "openNamed": "Open {{name}}",
     "addMatter": {
       "title": "Add Matter device",
-      "help": "In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.",
+      "help": "Paste the 11-digit pairing code or the MT: QR code.",
       "noBroker": "Create the Matter fabric from this integration’s settings first.",
       "code": "Pairing code",
       "progress": "Commissioning progress",

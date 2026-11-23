@@ -1,7 +1,7 @@
 /**
  * The pairing-code tab of the Add device modal (D1011) for a Matter fabric: a device that is
- * already on the network (Home Assistant "Share device", or the Aqara app). The operator pastes
- * the manual code or the `MT:` payload. Progress is the broker's commissioning phase. The modal
+ * already on the network, shared by another controller. The operator pastes the manual code or
+ * the `MT:` payload. Progress is the broker's commissioning phase. The modal
  * owns the dialog; this is the body and footer of its tab.
  */
 import { useEffect, useState, type ReactElement } from 'react'
@@ -153,8 +153,7 @@ export function MatterPairingPanel({
       <DialogBody className="space-y-4">
         <p className="text-xs text-foreground-subtle">
           {t('integrations.addMatter.help', {
-            defaultValue:
-              'In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.',
+            defaultValue: 'Paste the 11-digit pairing code or the MT: QR code.',
           })}
         </p>
         {(noBroker || brokerCount > 1) && !busy && view.phase !== 'done' && (

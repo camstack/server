@@ -1894,7 +1894,7 @@
     "openNamed": "Apri {{name}}",
     "addMatter": {
       "title": "Aggiungi dispositivo Matter",
-      "help": "In Home Assistant apri il dispositivo e scegli Condividi dispositivo. Incolla qui il codice numerico o il codice MT:. Il dispositivo resta anche in Home Assistant.",
+      "help": "Incolla il codice di abbinamento di 11 cifre o il codice QR MT:.",
       "noBroker": "Crea prima il fabric Matter dalle impostazioni di questa integrazione.",
       "code": "Codice di abbinamento",
       "progress": "Avanzamento dell'abbinamento",
