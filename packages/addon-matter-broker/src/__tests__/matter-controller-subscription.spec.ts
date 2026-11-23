@@ -141,3 +141,75 @@ describe('MatterJsController subscriptions', () => {
     await controller.stop()
   })
 })
+
+describe('MatterJsController commissioning failures', () => {
+  function recordingLogger(warns: string[]): IScopedLogger {
+    const logger: IScopedLogger = {
+      debug: () => undefined,
+      info: () => undefined,
+      warn: (message: string) => {
+        warns.push(message)
+      },
+      error: () => undefined,
+      child: () => logger,
+      withTags: () => logger,
+    }
+    return logger
+  }
+
+  it('logs and names the reason when the commission call itself fails', async () => {
+    const warns: string[] = []
+    const phases: CommissionProgress[] = []
+    const controller = new MatterJsController(
+      {
+        brokerId: 'matter_001',
+        dataDir: '/tmp/matter-test',
+        onCommissionProgress: (p) => phases.push(p),
+        openServer: async () => ({
+          start: async () => undefined,
+          close: async () => undefined,
+          listPeers: () => [],
+          commission: async () => {
+            throw new Error('Unexpected failure code 0x1c')
+          },
+        }),
+      },
+      recordingLogger(warns),
+    )
+    await controller.start()
+    await expect(controller.commissionNode('34970112332')).rejects.toThrow(/0x1c/)
+    expect(warns.some((m) => m.includes('commissioning failed'))).toBe(true)
+    expect(phases.at(-1)?.message).toContain('0x1c')
+  })
+
+  it('a committed node whose first subscription fails still ends Done', async () => {
+    const warns: string[] = []
+    const phases: CommissionProgress[] = []
+    const recorded = recordedPeer('11')
+    let committed = false
+    const controller = new MatterJsController(
+      {
+        brokerId: 'matter_001',
+        dataDir: '/tmp/matter-test',
+        onCommissionProgress: (p) => phases.push(p),
+        openServer: async () => ({
+          start: async () => undefined,
+          close: async () => undefined,
+          listPeers: () => {
+            if (committed) throw new Error('registry busy')
+            return []
+          },
+          commission: async () => {
+            committed = true
+            return recorded.peer
+          },
+        }),
+      },
+      recordingLogger(warns),
+    )
+    await controller.start()
+    await expect(controller.commissionNode('34970112332')).resolves.toEqual({ nodeId: '11' })
+    expect(phases.at(-1)?.phase).toBe(CommissionPhase.Done)
+    expect(warns.some((m) => m.includes('first subscription failed'))).toBe(true)
+  })
+})

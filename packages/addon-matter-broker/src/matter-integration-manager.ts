@@ -135,9 +135,17 @@ export class MatterIntegrationManager {
 
   /** Commission a node, then reconcile the inventory. */
   async commissionNode(pairingCode: string): Promise<CommissionResult> {
-    const result = await this.requireController().commissionNode(pairingCode)
-    await this.reconcile()
-    return result
+    try {
+      const result = await this.requireController().commissionNode(pairingCode)
+      await this.reconcile()
+      return result
+    } catch (err: unknown) {
+      this.#logger.warn('MatterIntegrationManager: commissioning failed', {
+        tags: { brokerId: this.#id },
+        meta: { error: errMsg(err) },
+      })
+      throw err
+    }
   }
 
   /** Remove (decommission) a node, then reconcile. */

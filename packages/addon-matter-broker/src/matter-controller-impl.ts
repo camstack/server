@@ -153,6 +153,7 @@ export class MatterJsController implements MatterController {
   async commissionNode(pairingCode: string): Promise<CommissionResult> {
     const server = this.#requireServer('commissionNode')
     this.#progress({ phase: CommissionPhase.Discovering, failure: null, message: null })
+    let committed = false
     try {
       const node = await server.commission({
         pairingCode,
@@ -161,30 +162,42 @@ export class MatterJsController implements MatterController {
           this.#progress({ phase: CommissionPhase.Commissioning, failure: null, message: null })
         },
       })
+      committed = true
       const view = this.#viewPeer(node)
       this.#logger.info('MatterJsController: node commissioned', {
         tags: { brokerId: this.#options.brokerId },
         meta: { nodeId: view?.id ?? '(unknown)' },
       })
-      await this.syncSubscriptions()
-      this.#emitAllReports()
       if (view === null) {
         throw new MatterCommissioningError('commissioned node exposed no operational id')
+      }
+      // The node is on the fabric: a failed first subscription or report seed must not
+      // turn a committed commissioning into a failure. The reconcile tick retries both.
+      try {
+        await this.syncSubscriptions()
+        this.#emitAllReports()
+      } catch (err: unknown) {
+        this.#logger.warn(
+          'MatterJsController: node commissioned but its first subscription failed',
+          {
+            tags: { brokerId: this.#options.brokerId },
+            meta: { nodeId: view.id, error: errMsg(err) },
+          },
+        )
       }
       this.#progress({ phase: CommissionPhase.Done, failure: null, message: null })
       return { nodeId: view.id }
     } catch (err: unknown) {
-      if (err instanceof MatterCommissioningError && err.message.includes('no operational id')) {
-        this.#failCommission(err.message)
-        throw err
-      }
       const message = errMsg(err)
-      this.#failCommission(message)
+      const reason = committed ? `node was commissioned but ${message}` : message
+      this.#logger.warn('MatterJsController: commissioning failed', {
+        tags: { brokerId: this.#options.brokerId },
+        meta: { error: message, committed },
+      })
+      this.#failCommission(reason)
       throw new MatterCommissioningError(
-        commissionFailureMessage(classifyCommissionError(message), message),
-        {
-          cause: err,
-        },
+        commissionFailureMessage(classifyCommissionError(message), reason),
+        { cause: err },
       )
     }
   }
