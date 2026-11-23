@@ -576,7 +576,17 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     )
     if (late.length === 0) {
       // Every declare so far was a partial view: state the final catalogue, running nothing.
-      if (this.declaredIncomplete) await this.runBound([], { only: [] })
+      if (!this.declaredIncomplete) return
+      try {
+        await this.runBound([], { only: [] })
+      } catch (err: unknown) {
+        // Nothing ran, so nothing is lost but the "newer" verdict: the owner stays partial for
+        // this process. A blocked owner still fails the boot, as on the late path below.
+        if (err instanceof AddonMigrationsBlockedError) throw err
+        this.ctx.logger.error('the closing migration declare failed', {
+          meta: { error: errMsg(err) },
+        })
+      }
       return
     }
     try {
