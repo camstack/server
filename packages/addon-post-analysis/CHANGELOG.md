@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.724] - 2026-11-23
+
 ### Changed
 
 - A camera stream that drops and comes back within 5 minutes no longer sends offline/online notifications, the same window devices already had

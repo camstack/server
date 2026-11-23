@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.58] - 2026-11-23
+
 ### Changed
 
 - Setup wizard text is no longer mangled by the output scrubber, and a secret flag on a schema field is kept
