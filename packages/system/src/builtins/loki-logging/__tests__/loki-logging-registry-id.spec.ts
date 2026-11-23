@@ -201,8 +201,9 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   it('does not offer the registry-toggle migration before the provider is registered', async () => {
     const w = await boot({ registry: 'active', stored: {} })
     addons.push(w.addon)
-    expect(w.offered).toHaveLength(1)
-    expect(w.offered[0]).not.toContain(REGISTRY_TOGGLE_TO_RECORD_ID)
+    // the boot declare is partial, the closing one states the final catalogue: neither offers it
+    expect(w.offered.length).toBeGreaterThan(0)
+    for (const ids of w.offered) expect(ids).not.toContain(REGISTRY_TOGGLE_TO_RECORD_ID)
     expect(w.finished.find((f) => f.id === REGISTRY_TOGGLE_TO_RECORD_ID)).toBeUndefined()
   })
 
