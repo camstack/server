@@ -1421,6 +1421,14 @@ export interface EventCatalog {
     readonly camStreamId: string
     readonly brokerId: string
     readonly reason: string
+    /** The re-dial points at a different url than the previous dial. */
+    readonly urlChanged: boolean
+    /**
+     * The dial was caused by a publisher's source refresh, not by a stall or a
+     * session limit. A kicked re-dial of an unchanged url cuts nothing the
+     * writer reads, so the recorder keeps it attached.
+     */
+    readonly kicked: boolean
   }
   /**
    * Low-latency nudge: a provider changed a device's stream parameters.

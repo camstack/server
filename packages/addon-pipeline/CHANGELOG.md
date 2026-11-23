@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Recorder give-up logs name the trigger and idle time; the broker's reconnect-kick log names its cause
+- A broker source refresh that re-dials the same url no longer respawns the recording writer, so recording resumes as soon as packets do.
 
 ## [1.2.682] - 2026-11-22
 

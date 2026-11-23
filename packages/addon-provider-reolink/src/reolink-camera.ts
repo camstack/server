@@ -992,6 +992,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private syncKeepAwake(): void {
     this.keepAwake.sync(this.active.size)
   }
+
+  /**
+   * A broker stream of this camera is open (a listening rfc4571 server in
+   * `this.active`) — in-memory only, never a read (D49). The scheduled battery
+   * refresh and the wake warm-up use it to keep their control burst off a
+   * session that is carrying video: the firmware pauses video while the
+   * control channel is busy.
+   */
+  private hasActiveStream(): boolean {
+    return this.active.size > 0
+  }
   /** Login lock — concurrent demand events must not race the login flow. */
   private loginPromise: Promise<ReolinkBaichuanApi> | null = null
   /**
@@ -8268,6 +8279,24 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * listening; if the lib idle-tore-down between calls we recreate.
    */
   async materializeStreamSocket(camStreamId: string): Promise<void> {
+    // Single-flight per stream: the broker polls every 1–2 s and several
+    // callers ask at once; each used to log + re-publish the same URL, and each
+    // re-publish kicks the broker's reconnect. Concurrent callers share ONE run.
+    const inFlight = this.materializeInFlight.get(camStreamId)
+    if (inFlight) return inFlight
+    const run = this.runMaterializeStreamSocket(camStreamId).finally(() => {
+      if (this.materializeInFlight.get(camStreamId) === run) {
+        this.materializeInFlight.delete(camStreamId)
+      }
+    })
+    this.materializeInFlight.set(camStreamId, run)
+    return run
+  }
+
+  /** In-flight `materializeStreamSocket` runs, per camStreamId. */
+  private readonly materializeInFlight = new Map<string, Promise<void>>()
+
+  private async runMaterializeStreamSocket(camStreamId: string): Promise<void> {
     const parts = parseCamStreamId(camStreamId, this.getChannel())
     if (!parts || parts.kind !== 'native') {
       // Non-native streams (rtsp/rtmp) carry their own URL upfront;
@@ -8813,6 +8842,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         logger: this.ctx.logger,
         now: () => Date.now(),
         isAwake: () => !this.sleeping,
+        isStreaming: () => this.hasActiveStream(),
         intervalMs: () => resolveBatteryRefreshIntervalMs(this.config.get('batteryRefreshMinutes')),
         lastFullRefreshAt: () => this.state.battery.lastFullRefreshAt,
         // The existing wake path, behind the shared cooldown: a wake some other
@@ -9105,7 +9135,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           .noteAwake()
           .catch(() => false)
       : false
-    if (!scheduledRefreshCovered) {
+    // While a broker stream is open the whole control burst (cap warm-up,
+    // snapshot, aux accessories, settings snapshot) stays off the session that
+    // carries the video: the state is fresh enough or arrives by push, and the
+    // next wake with no stream — or the scheduled window — reads it.
+    const streamingDefer = this.isBattery && this.hasActiveStream()
+    if (streamingDefer) this.getBatteryRefresh().noteStreamDeferred('wake-warm-up')
+    if (!scheduledRefreshCovered && !streamingDefer) {
       await this.warmCapSlicesOnWake()
       // Then a frame for the snapshot wrapper's cache, so the tile keeps
       // showing the last known image for the whole sleep window.

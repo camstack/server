@@ -2362,7 +2362,10 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
       this.sourceRestartUnsub = this.ctx.eventBus.subscribe(
         { category: EventCategory.StreamBrokerOnSourceRestart },
         (event) => {
-          void this.controller?.onSourceRestarted(event.data.deviceId, event.data.reason)
+          void this.controller?.onSourceRestarted(event.data.deviceId, event.data.reason, {
+            urlChanged: event.data.urlChanged,
+            kicked: event.data.kicked,
+          })
         },
       )
     }

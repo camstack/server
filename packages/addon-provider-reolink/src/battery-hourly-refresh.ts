@@ -157,6 +157,12 @@ export interface BatteryRefreshDeps {
   readonly now: () => number
   /** The mirror's view: not sleeping. */
   readonly isAwake: () => boolean
+  /**
+   * A broker stream of the camera is open — in-memory, never a read. While it
+   * is, the control burst of a refresh is deferred (the firmware pauses video
+   * while the control session is busy). Optional: absent = never streaming.
+   */
+  readonly isStreaming?: () => boolean
   /** The configured window in ms (`0` = off), read at each check. */
   readonly intervalMs: () => number
   readonly lastFullRefreshAt: () => number | undefined
@@ -219,6 +225,12 @@ export class BatteryHourlyRefresh {
       this.logSkip(decision.reason, trigger)
       return false
     }
+    // Due, but a stream is open: defer WITHOUT spending an attempt or stamping —
+    // the window stays owed and the next tick without a stream takes it.
+    if (this.deps.isStreaming?.() === true) {
+      this.noteStreamDeferred(trigger)
+      return false
+    }
     this.attempts += 1
     this.lastAttemptAt = nowMs
     const run = this.run(decision.kind, trigger).finally(() => {
@@ -226,6 +238,21 @@ export class BatteryHourlyRefresh {
     })
     this.inFlight = run
     return run
+  }
+
+  private streamDeferLoggedWindow = Number.NEGATIVE_INFINITY
+
+  /** Say once per window that a due control burst was held back for a stream. */
+  noteStreamDeferred(what: string): void {
+    const intervalMs = this.deps.intervalMs()
+    const offsetMs = intervalMs > 0 ? staggerOffsetMs(this.deps.deviceId, intervalMs) : 0
+    const window = intervalMs > 0 ? windowIndex(this.deps.now(), intervalMs, offsetMs) : 0
+    if (window === this.streamDeferLoggedWindow) return
+    this.streamDeferLoggedWindow = window
+    this.deps.logger.info('battery control burst deferred — a stream is active', {
+      tags: { deviceId: this.deps.deviceId },
+      meta: { what },
+    })
   }
 
   private async run(

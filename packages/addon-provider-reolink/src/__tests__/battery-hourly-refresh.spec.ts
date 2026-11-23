@@ -39,6 +39,7 @@ interface Rig {
     wakeWorks: boolean
     nextOutcome: BatteryRefreshOutcome
     intervalMs: number
+    streaming: boolean
   }
   readonly stop: () => void
 }
@@ -52,6 +53,7 @@ function rig(overrides?: Partial<Rig['state']>): Rig {
     wakeWorks: true,
     nextOutcome: { failed: [] },
     intervalMs: INTERVAL,
+    streaming: false,
     ...overrides,
   }
   const ctl = new BatteryHourlyRefresh({
@@ -59,6 +61,7 @@ function rig(overrides?: Partial<Rig['state']>): Rig {
     logger,
     now: () => Date.now(),
     isAwake: () => state.awake,
+    isStreaming: () => state.streaming,
     intervalMs: () => state.intervalMs,
     lastFullRefreshAt: () => state.stamp,
     wake: async () => {
@@ -92,6 +95,20 @@ describe('scheduled battery refresh (D847)', () => {
     await vi.advanceTimersByTimeAsync(2 * MIN)
     expect(r.counts).toEqual({ wakes: 0, refreshes: 1 })
     expect(r.state.stamp).toBeDefined()
+    r.stop()
+  })
+
+  it('a due refresh is deferred while a stream is open, taken once it closes; said once per window', async () => {
+    const r = rig({ awake: true, streaming: true })
+    await vi.advanceTimersByTimeAsync(10 * MIN)
+    expect(r.counts).toEqual({ wakes: 0, refreshes: 0 })
+    expect(r.state.stamp).toBeUndefined()
+    const said = r.logger.infos.filter((e) => e.message.includes('deferred — a stream is active'))
+    expect(said).toHaveLength(1)
+    expect(said[0]?.extras.tags).toEqual({ deviceId: DEVICE_ID })
+    r.state.streaming = false
+    await vi.advanceTimersByTimeAsync(2 * MIN)
+    expect(r.counts).toEqual({ wakes: 0, refreshes: 1 })
     r.stop()
   })
 

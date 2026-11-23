@@ -62,6 +62,17 @@ describe('StreamBroker planned re-dial before a declared session limit', () => {
     await broker.stop()
   })
 
+  it('tells observers the url is unchanged and the dial was not a publisher kick', async () => {
+    const broker = new StreamBroker('3628/main', mockLogger())
+    const infos: Array<{ urlChanged: boolean; kicked: boolean }> = []
+    broker.onSourceRestart((_reason, info) => infos.push(info))
+    broker.onEncodedData(() => {})
+    await broker.start(pushSource(LIMIT_MS))
+    await vi.advanceTimersByTimeAsync(LIMIT_MS + 1_000)
+    expect(infos).toEqual([{ urlChanged: false, kicked: false }])
+    await broker.stop()
+  })
+
   it('never re-dials a source that declares no limit', async () => {
     const broker = new StreamBroker('3629/main', mockLogger())
     const restarts: string[] = []

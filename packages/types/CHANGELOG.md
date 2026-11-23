@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - device-manager gains the admin method repairMigrationSecrets; migrateDevice reports the secret scopes it exchanged.
+- The source-restart event carries urlChanged and kicked.
 
 ## [1.2.626] - 2026-11-22
 

@@ -116,6 +116,14 @@ const PUSH_STALL_TIMEOUT_MS = 15_000
 /** Work-dropping branches on the packet path report at most this often. */
 const DROP_REPORT_INTERVAL_MS = 30_000
 
+/** What a source re-dial tells its observers beyond the reason. */
+export interface SourceRestartInfo {
+  /** The re-dial points at a different url than the previous dial. */
+  readonly urlChanged: boolean
+  /** The dial was caused by a publisher refresh (`kickReconnect`), not a stall or a session limit. */
+  readonly kicked: boolean
+}
+
 export class StreamBroker implements IStreamBroker {
   readonly deviceId: string
   /**
@@ -182,7 +190,13 @@ export class StreamBroker implements IStreamBroker {
   private dialCount = 0
   /** Ms epoch of the most recent dial start (0 = never); names the cause in `kickReconnect`. */
   private lastDialStartedAt = 0
-  private readonly sourceRestartObservers = new Set<(reason: string) => void>()
+  private readonly sourceRestartObservers = new Set<
+    (reason: string, info: SourceRestartInfo) => void
+  >()
+  /** The url of the previous dial, to tell a re-dial of the SAME source from a moved one. */
+  private lastDialedUrl: string | undefined
+  /** Set by `kickReconnect`, consumed by the dial it caused (see `SourceRestartInfo.kicked`). */
+  private kickedDial = false
   /** Armed per dial when the source declares `maxSessionMs`; see {@link armSessionLimit}. */
   private sessionLimitTimer: ReturnType<typeof setTimeout> | undefined
   private nativeClient: NativeRtspClient | null = null
@@ -1253,6 +1267,7 @@ export class StreamBroker implements IStreamBroker {
     this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
     this.nextDialAllowedAt = 0
     this.lastRefreshRequestAt = 0
+    this.kickedDial = true
     this.logger?.info('reconnect kicked — publisher refreshed source', {
       meta: {
         cause,
@@ -1441,7 +1456,8 @@ export class StreamBroker implements IStreamBroker {
     // rather than at each reader's first packet: subscribers re-arm on the next
     // packet whenever it arrives, and a dial that never delivers must still be
     // visible as a restart that stalled.
-    if (this.dialCount > 0) this.notifySourceRestart()
+    if (this.dialCount > 0) this.notifySourceRestart(source.url)
+    this.lastDialedUrl = source.url
     this.dialCount += 1
     this.armSessionLimit(source)
 
@@ -1575,19 +1591,22 @@ export class StreamBroker implements IStreamBroker {
    * delivers must still be observable rather than silently indistinguishable
    * from a healthy stream.
    */
-  onSourceRestart(observer: (reason: string) => void): () => void {
+  onSourceRestart(observer: (reason: string, info: SourceRestartInfo) => void): () => void {
     this.sourceRestartObservers.add(observer)
     return () => {
       this.sourceRestartObservers.delete(observer)
     }
   }
 
-  private notifySourceRestart(): void {
+  private notifySourceRestart(url: string | undefined): void {
+    const kicked = this.kickedDial
+    this.kickedDial = false
     if (this.sourceRestartObservers.size === 0) return
     const reason = `dial#${String(this.dialCount + 1)}`
+    const info: SourceRestartInfo = { urlChanged: url !== this.lastDialedUrl, kicked }
     for (const observer of this.sourceRestartObservers) {
       try {
-        observer(reason)
+        observer(reason, info)
       } catch (err) {
         // One subscriber's failure must not stop the others recovering.
         this.logger?.warn('source-restart observer threw', {

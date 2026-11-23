@@ -630,6 +630,12 @@ function writerIdleBoundMs(segmentSeconds: number): number {
 }
 
 /** What made the recorder recover a writer: the cause, named on the give-up log. */
+/** What the broker says about a source re-dial (`StreamBrokerOnSourceRestart`). */
+export interface SourceRestartSignal {
+  readonly urlChanged: boolean
+  readonly kicked: boolean
+}
+
 type WriterRecoveryTrigger = 'source-restart' | 'idle-watchdog' | 'writer-exhausted-restarts'
 
 /** Measurements attached to the give-up log (null = never produced / never re-dialed). */
@@ -1604,10 +1610,27 @@ export class RecordingController {
    * path an idle writer takes. Telemetry-driven: a missed event only means the
    * idle clock recovers it later.
    */
-  async onSourceRestarted(deviceId: number, reason: string): Promise<void> {
+  async onSourceRestarted(
+    deviceId: number,
+    reason: string,
+    restart?: SourceRestartSignal,
+  ): Promise<void> {
     if (this.stopped || this.paused) return
     const current = this.active.get(deviceId)
     if (!current || current.length === 0) return
+    // A publisher's source refresh that re-dialed the SAME url (a battery
+    // camera whose video paused while its control session stays up) cut
+    // nothing the writer reads: tearing it down turns a 10–40 s pause into a
+    // longer hole (the first segment lands 15–35 s after a respawn). Keep it
+    // attached — recording resumes with the packets, and the idle watchdog
+    // still recovers a writer that is really dead.
+    if (restart !== undefined && restart.kicked && !restart.urlChanged) {
+      this.deps.logger.info(
+        'recorder: kept writer across an unchanged-source restart — idle watchdog still guards it',
+        { tags: { deviceId }, meta: { reason, profiles: current.map((r) => r.profile) } },
+      )
+      return
+    }
     const now = this.now()
     const last = this.lastSourceRestartRecoveryAt.get(deviceId)
     if (last !== undefined && now - last < SOURCE_RESTART_RECOVERY_MIN_INTERVAL_MS) {

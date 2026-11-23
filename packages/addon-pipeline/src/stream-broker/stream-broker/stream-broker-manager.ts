@@ -8404,12 +8404,14 @@ export class StreamBrokerManager {
     // A re-dial cuts every reader that cannot see the cut itself (the
     // recorder's ffmpeg writer): announce it so they recover now, not after
     // their idle bound.
-    broker.onSourceRestart((reason) => {
+    broker.onSourceRestart((reason, info) => {
       this.emitCapEvent(EventCategory.StreamBrokerOnSourceRestart, deviceId, {
         deviceId,
         camStreamId,
         brokerId,
         reason,
+        urlChanged: info.urlChanged,
+        kicked: info.kicked,
       })
     })
     // The SENTRY. Everything it needs lives here and nowhere else: the

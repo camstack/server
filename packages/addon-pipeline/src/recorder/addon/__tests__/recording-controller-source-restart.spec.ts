@@ -121,6 +121,32 @@ describe('RecordingController.onSourceRestarted', () => {
     await h.controller.stop()
   })
 
+  it('keeps the writer across a publisher-refresh re-dial of the SAME url', async () => {
+    const h = makeHarness()
+    await h.controller.start()
+    expect(h.acquiresFor(99)).toBe(1)
+
+    await h.controller.onSourceRestarted(99, 'dial#2', { urlChanged: false, kicked: true })
+    await vi.advanceTimersByTimeAsync(5_000)
+
+    expect(h.acquiresFor(99)).toBe(1)
+    await h.controller.stop()
+  })
+
+  it('still respawns when the url changed, or when the re-dial was not a publisher kick', async () => {
+    const h = makeHarness()
+    await h.controller.start()
+    await h.controller.onSourceRestarted(99, 'dial#2', { urlChanged: true, kicked: true })
+    await settle(() => h.acquiresFor(99) >= 2)
+    expect(h.acquiresFor(99)).toBe(2)
+
+    h.advanceClock(SOURCE_RESTART_RECOVERY_MIN_INTERVAL_MS + 1)
+    await h.controller.onSourceRestarted(99, 'dial#3', { urlChanged: false, kicked: false })
+    await settle(() => h.acquiresFor(99) >= 3)
+    expect(h.acquiresFor(99)).toBe(3)
+    await h.controller.stop()
+  })
+
   it('does not thrash: a second restart inside the minimum interval is ignored', async () => {
     const h = makeHarness()
     await h.controller.start()
