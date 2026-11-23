@@ -20,6 +20,21 @@ describe('loginWithin', () => {
     expect(onExpire).toHaveBeenCalledTimes(1)
   })
 
+  it('a login that resolves while the api is being closed is still a failure', async () => {
+    vi.useFakeTimers()
+    let resolveLogin: () => void = () => {}
+    const login = new Promise<void>((r) => {
+      resolveLogin = r
+    })
+    // Closing the api makes the pending login resolve, as a torn-down client may.
+    const onExpire = vi.fn(async () => {
+      resolveLogin()
+    })
+    const outcome = loginWithin(() => login, 1_000, onExpire).catch((e: unknown) => e)
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(await outcome).toBeInstanceOf(LoginDeadlineError)
+  })
+
   it('a login that finishes in time is untouched', async () => {
     vi.useFakeTimers()
     const onExpire = vi.fn()

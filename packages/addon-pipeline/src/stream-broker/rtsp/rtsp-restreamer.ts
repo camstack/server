@@ -1620,6 +1620,9 @@ export class RtspRestreamer {
   /** True only while `pushPacket` feeds a placeholder packet to the deframer. */
   private pushingPlaceholder = false
 
+  /** Whether the packet before the current one was a placeholder (see `pushPacket`). */
+  private lastPushedPlaceholder = false
+
   pushPacket(packet: EncodedPacket): void {
     if (packet.type !== 'video') return
 
@@ -1641,7 +1644,20 @@ export class RtspRestreamer {
     // The placeholder flag is held for the duration of this synchronous push so
     // the NALs it emits are marked: a courtesy picture is a sentry's, never
     // footage for a recorder.
-    this.pushingPlaceholder = packet.isPlaceholder === true
+    const placeholder = packet.isPlaceholder === true
+    if (placeholder !== this.lastPushedPlaceholder) {
+      // The deframer emits a NAL only when the NEXT start code arrives, so the
+      // tail NAL of the previous packet is still buffered. Flush it under the
+      // flag it was pushed with, or it would leave tagged by this packet.
+      this.pushingPlaceholder = this.lastPushedPlaceholder
+      try {
+        this.deframer.flush()
+      } finally {
+        this.pushingPlaceholder = false
+      }
+      this.lastPushedPlaceholder = placeholder
+    }
+    this.pushingPlaceholder = placeholder
     try {
       this.deframer.push(packet.data)
     } finally {
@@ -1686,6 +1702,11 @@ export class RtspRestreamer {
     // parameter set NAL. This is reliable because the deframer works on
     // complete NAL units — unlike packet.keyframe which scans raw chunks
     // that may split a keyframe across two ffmpeg data events.
+    // A keyframe latch opened by a placeholder never absorbs a real NAL (or the
+    // reverse): the cache would mix two pictures under one flag.
+    if (this.collectingKeyframe && this.lastKeyframePlaceholder !== isPlaceholder) {
+      this.collectingKeyframe = false
+    }
     if (isKeyframe || this.isParameterSetNal(nal)) {
       if (!this.collectingKeyframe) {
         this.collectingKeyframe = true

@@ -28,8 +28,10 @@ export async function loginWithin(
   onExpire: () => Promise<void> | void,
 ): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined
+  let didExpire = false
   const expired = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
+      didExpire = true
       void Promise.resolve()
         .then(onExpire)
         .catch(() => undefined)
@@ -40,6 +42,9 @@ export async function loginWithin(
   run.catch(() => undefined)
   try {
     await Promise.race([run, expired])
+    // `onExpire` closes the api, and a login that resolves while it does would
+    // win the race with a closed client: expiry still means failure.
+    if (didExpire) throw new LoginDeadlineError(deadlineMs)
   } finally {
     if (timer !== undefined) clearTimeout(timer)
   }

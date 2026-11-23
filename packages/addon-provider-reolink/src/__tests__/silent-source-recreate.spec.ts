@@ -28,6 +28,7 @@ function makeCamera(lastVideoFlowAt: number) {
     ensureApi: { value: async () => Promise.reject(new Error('stop here')) },
     materializeInFlight: { value: new Map() },
     materializeStartedAt: { value: new Map() },
+    materializeSilent: { value: new Map() },
   })
   return { camera, close, cached, warn }
 }
@@ -70,5 +71,25 @@ describe('materializeStreamSocket joining an old run', () => {
       expect.stringContaining('joining a run still in flight'),
       expect.objectContaining({ tags: { deviceId: 3628, camStreamId: 'native:main' } }),
     )
+  })
+
+  it('a source-silent caller joining an ordinary run re-runs with its reason once it settles', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((r) => {
+      release = r
+    })
+    const { camera } = makeCamera(0)
+    const reasons: Array<string | undefined> = []
+    Object.defineProperty(camera, 'runMaterializeStreamSocket', {
+      value: async (_id: string, opts: { reason?: string }) => {
+        reasons.push(opts.reason)
+        if (reasons.length === 1) await gate
+      },
+    })
+    const ordinary = camera.materializeStreamSocket('native:main', {})
+    const silent = camera.materializeStreamSocket('native:main', { reason: 'source-silent' })
+    release()
+    await Promise.all([ordinary, silent])
+    expect(reasons).toEqual([undefined, 'source-silent'])
   })
 })

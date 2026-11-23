@@ -118,6 +118,13 @@ import {
 } from './reolink-subnet-scan.js'
 import { createWebhookHandler } from './webhook-plane.js'
 
+/** The broker's source-refresh request; an unknown `reason` reads as an ordinary refresh. */
+const sourceRefreshPayload = z.object({
+  deviceId: z.number(),
+  camStreamId: z.string().optional(),
+  reason: z.string().optional(),
+})
+
 /**
  * Adapt a camstack scoped logger to the lib's `Logger` shape (just
  * `log(...)`). Lib lines are prefixed with `[AutoDetect]` /
@@ -869,9 +876,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     this.subscribe(
       { category: EventCategory.StreamBrokerOnRequestStreamSourceRefresh },
       (event) => {
-        const data = event.data as { deviceId?: number; camStreamId?: string; reason?: string }
-        const deviceId = typeof data.deviceId === 'number' ? data.deviceId : null
-        if (deviceId === null) return
+        const parsed = sourceRefreshPayload.safeParse(event.data)
+        if (!parsed.success) return
+        const data = parsed.data
+        const deviceId = data.deviceId
         void this.refreshDeviceStreams(
           deviceId,
           data.camStreamId,

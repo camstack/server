@@ -8315,11 +8315,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           meta: { inFlightMs: ageMs },
         })
       }
+      // The run in flight may be an ordinary one that will hand back the cached
+      // server. A joiner that knows the source went silent must not lose that:
+      // it re-runs, with its reason, once the run in flight has settled.
+      if (opts.reason === 'source-silent' && this.materializeSilent.get(camStreamId) !== true) {
+        return inFlight.then(() => this.materializeStreamSocket(camStreamId, opts))
+      }
       return inFlight
     }
     this.materializeStartedAt.set(camStreamId, Date.now())
+    this.materializeSilent.set(camStreamId, opts.reason === 'source-silent')
     const run = this.runMaterializeStreamSocket(camStreamId, opts).finally(() => {
       this.materializeStartedAt.delete(camStreamId)
+      this.materializeSilent.delete(camStreamId)
       if (this.materializeInFlight.get(camStreamId) === run) {
         this.materializeInFlight.delete(camStreamId)
       }
@@ -8332,6 +8340,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private readonly materializeInFlight = new Map<string, Promise<void>>()
   /** When each in-flight run started, to say how long a joiner waited on it. */
   private readonly materializeStartedAt = new Map<string, number>()
+  /** Whether each in-flight run was asked to recreate a silent server. */
+  private readonly materializeSilent = new Map<string, boolean>()
 
   private async runMaterializeStreamSocket(
     camStreamId: string,

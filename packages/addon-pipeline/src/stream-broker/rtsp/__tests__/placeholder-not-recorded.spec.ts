@@ -65,13 +65,13 @@ function videoBytes(mock: Mock): number {
   return mock.written.reduce((n, w) => n + w.length, 0)
 }
 
-function packet(isPlaceholder: boolean): EncodedPacket {
+function packet(isPlaceholder: boolean, trailingStart = true): EncodedPacket {
   return {
     type: 'video',
     codec: 'h264',
     pts: 1000,
     keyframe: true,
-    data: Buffer.concat([SPS, PPS, IDR, START]),
+    data: Buffer.concat(trailingStart ? [SPS, PPS, IDR, START] : [SPS, PPS, IDR]),
     ...(isPlaceholder ? { isPlaceholder: true } : {}),
   }
 }
@@ -105,5 +105,27 @@ describe('placeholder frames are not footage', () => {
     restreamer.pushPacket(packet(true))
     expect(videoBytes(sentry)).toBeGreaterThan(0)
     expect(videoBytes(recorder)).toBe(0)
+  })
+
+  it('a placeholder AU with no trailing start code does not leak into the real packet that follows', () => {
+    const { restreamer, sentry, recorder } = setup()
+    // Production placeholders are one AU with no trailing start code: the last
+    // NAL is only emitted when the NEXT packet's first start code arrives.
+    restreamer.pushPacket(packet(true, false))
+    restreamer.pushPacket(packet(true, false))
+    expect(videoBytes(recorder)).toBe(0)
+    const sentryBefore = videoBytes(sentry)
+    // The real stream resumes. The recorder waits for a real keyframe, and gets
+    // only real bytes from it.
+    restreamer.pushPacket(packet(false, false))
+    restreamer.pushPacket(packet(false, false))
+    // The placeholder tail went to the sentry, not the recorder: the sentry saw it.
+    expect(videoBytes(sentry)).toBeGreaterThan(sentryBefore)
+    // And what the recorder got starts at a real parameter set: a lone
+    // placeholder IDR slice with no SPS/PPS in front would arrive first
+    // otherwise.
+    const payloads = recorder.written.filter((w) => w.length > 4)
+    expect(payloads.length).toBeGreaterThan(0)
+    expect(payloads[0]![12]! & 0x1f).toBe(7)
   })
 })

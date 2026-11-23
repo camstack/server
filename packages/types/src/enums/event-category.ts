@@ -468,7 +468,9 @@ export enum EventCategory {
    * only way to keep the broker dialable. Camera providers (Reolink
    * Baichuan native, …) subscribe and respond by re-running their publish
    * pipeline.
-   * Payload: `{ deviceId, camStreamId, brokerId }`.
+   * Payload: `{ deviceId, camStreamId, brokerId, reason? }`. `reason` is
+   * `'source-silent'` when a no-packet watchdog asked: a still-listening cached
+   * server is then the dead one and must be recreated.
    */
   StreamBrokerOnRequestStreamSourceRefresh = 'stream-broker.onRequestStreamSourceRefresh',
   /**
