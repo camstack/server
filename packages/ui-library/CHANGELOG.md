@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.499] - 2026-11-22
+
 ### Changed
 
 - History charts stored in metres switch between km, mi and m by your unit preference; rain in mm is unchanged

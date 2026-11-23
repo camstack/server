@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.239] - 2026-11-22
+
 ### Changed
 
 - An addon installed from a newer dev build is no longer offered an older registry version as an update; every command answers --help; the MCP status and doctor say which saved session it uses; the installer warns when another camstack is on PATH; help names the real toolsets

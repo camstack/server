@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.682] - 2026-11-22
+
 ### Changed
 
 - A sleeping battery camera whose stream cannot be built is asked once and left alone until it wakes or someone watches, instead of being retried every second
