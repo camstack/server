@@ -6392,9 +6392,11 @@ export class StreamBrokerManager {
 
   /**
    * Whether this device SLEEPS (`DeviceFeature.Sleeps`, #459 Q2) — the
-   * question every caller here asks. A device that only reports a battery
-   * (an HA sensor) is not one: it is dialled, prebuffered and judged like
-   * any mains camera.
+   * question the wake-on-play and sentry callers ask. A device that only
+   * reports a battery (an HA sensor) is not one for THEM: it is dialled and
+   * judged like any mains camera. The default PREBUFFER hold asks a wider
+   * question (`isLowPowerDevice`: Sleeps OR BatteryOperated) because a hold on
+   * a battery camera keeps it awake.
    *
    * The DEVICE REGISTRY, never the published cam-streams: a sleeping camera has
    * none — which is precisely when this question gets asked — and
@@ -8305,7 +8307,7 @@ export class StreamBrokerManager {
       // default reads that snapshot. Re-applying here is what keeps a camera
       // that turned out to be battery-operated from retaining 10 s of ring for
       // the rest of the process's life. It also RELEASES a prebuffer hold the
-      // first decision opened before the Sleeps fact was known — an orphan hold
+      // first decision opened before the Sleeps / battery fact was known — an orphan hold
       // keeps a battery camera awake for hours. Idempotent: an unchanged
       // decision is a no-op on the broker.
       this.applyPrebufferConfig(live, deviceId, camStreamId)

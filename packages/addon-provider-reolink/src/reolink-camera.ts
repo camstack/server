@@ -8217,7 +8217,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const stored = this.runtimeState.getCapState<StreamCatalogState>(streamCatalogCapability.name)
     const descriptors = stored?.descriptors
     if (!descriptors || descriptors.length === 0) return null
-    this.cachedStreamDescriptors = [...descriptors]
+    // The stored `deviceFeatures` belong to whichever build wrote the slice.
+    this.cachedStreamDescriptors = stampCurrentFeatures(descriptors, this.features)
     this.ctx.logger.info('stream catalog restored from the durable slice (no camera contact)', {
       tags: { deviceId: this.id },
       meta: {
