@@ -20,7 +20,11 @@ import {
 import { z } from 'zod'
 import { pickHaChildClass, tryPickHaChildClass } from '../ha-child-class-factory.js'
 import { deriveChildLayout } from '../ha-container-reconcile.js'
-import { dismissDeletedChildren } from '../ha-dismissed-children.js'
+import {
+  childDeviceIdsByEntity,
+  mergeChildDeviceIds,
+  settleDeletedChildren,
+} from '../ha-dismissed-children.js'
 import { type HaEntityState, HaEntityStateSchema } from '../ha-types.js'
 
 const haEntitySchema = z.object({
@@ -201,7 +205,7 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
 
   /** Set of this device's entity ids (the physical HA device's entities). The
    *  container's `online` is derived as "any of these entities reachable" (A3). */
-  private readonly entityIds: ReadonlySet<string>
+  private readonly entityIds: Set<string>
 
   /** Per-entity reachability, folded from `broker.message` availability pushes.
    *  `online` is recomputed as `any value === true`. */
@@ -445,20 +449,32 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
    * fails changes nothing.
    */
   override async onProbe(): Promise<void> {
-    await super.onProbe()
+    // BEFORE super: the base probe stamps the feature-probe slice, which triggers
+    // the kernel's debounced accessory reconcile.
     await this.dismissDeletedChildren()
+    await super.onProbe()
   }
 
   private async dismissDeletedChildren(): Promise<void> {
-    const { entities, childDeviceIds, dismissedEntityIds } = this.config.values
-    if (Object.keys(childDeviceIds).length === 0) return
     try {
-      const deleted = await this.ctx.api.deviceManager.listDeletedSince.query({ sinceMs: 0 })
-      const result = dismissDeletedChildren(
-        { entities, childDeviceIds, dismissedEntityIds },
-        new Set(deleted.map((t) => t.deviceId)),
+      // Stamp the live children first (merge-only), so a container adopted or
+      // upgraded just now is protected from its first probe.
+      const live = childDeviceIdsByEntity(
+        this.stableId,
+        await this.ctx.devices.getChildren(this.id).catch(() => []),
       )
-      if (result === null) return
+      const { entities, dismissedEntityIds } = this.config.values
+      const childDeviceIds = mergeChildDeviceIds(this.config.values.childDeviceIds, live)
+      const result = await settleDeletedChildren(
+        { entities, childDeviceIds, dismissedEntityIds },
+        () => this.ctx.api.deviceManager.listDeletedSince.query({ sinceMs: 0 }),
+      )
+      if (result === null) {
+        if (JSON.stringify(childDeviceIds) !== JSON.stringify(this.config.values.childDeviceIds)) {
+          await this.config.setAll({ childDeviceIds })
+        }
+        return
+      }
       await this.config.setAll({
         entities: [...result.entities],
         childDeviceIds: result.childDeviceIds,

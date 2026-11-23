@@ -106,7 +106,16 @@ import {
   type HaMigrationPorts,
 } from './migrations/index.js'
 import { createHaCalendarSource } from './ha-calendar-source.js'
-import { childDeviceIdsByEntity, withoutDismissed } from './ha-dismissed-children.js'
+import {
+  childDeviceIdsByEntity,
+  type DismissalState,
+  mergeChildDeviceIds,
+  parseChildDeviceIds,
+  parseStringList,
+  pruneChildDeviceIds,
+  settleDeletedChildren,
+  withoutDismissed,
+} from './ha-dismissed-children.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import {
   buildStandaloneEntityCandidates,
@@ -1717,28 +1726,51 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     const persisted: HaContainerEntityConfig[] = parseContainerEntities(
       container.config.get('entities'),
     )
-    const dismissed = container.config.get('dismissedEntityIds')
-    const fresh = withoutDismissed(
-      buildContainerEntities(haDevice),
-      Array.isArray(dismissed) ? dismissed.filter((d) => typeof d === 'string') : [],
-    )
-    const plan = diffContainerEntities(persisted, fresh)
-    // Remember which device id each child has, so a later delete is recognised.
-    const childDeviceIds = childDeviceIdsByEntity(
+    // Remember which device id each child has (MERGE: a deleted child's entry is
+    // what recognises its deletion), then dismiss the children the operator
+    // deleted BEFORE the fresh inventory decides what the container lists.
+    const live = childDeviceIdsByEntity(
       container.stableId,
       await this.ctx.kernel.devices.getChildren(container.id),
     )
-    if (!plan.entitiesChanged) {
-      if (
-        JSON.stringify(container.config.get('childDeviceIds') ?? {}) !==
-        JSON.stringify(childDeviceIds)
-      ) {
-        await container.config.setAll({ childDeviceIds })
+    const storedIds = parseChildDeviceIds(container.config.get('childDeviceIds'))
+    let state: DismissalState<HaContainerEntityConfig> = {
+      entities: persisted,
+      childDeviceIds: mergeChildDeviceIds(storedIds, live),
+      dismissedEntityIds: parseStringList(container.config.get('dismissedEntityIds')),
+    }
+    let settled = false
+    try {
+      const result = await settleDeletedChildren(state, () =>
+        this.ctx.api.deviceManager.listDeletedSince.query({ sinceMs: 0 }),
+      )
+      if (result !== null) {
+        state = result
+        settled = true
       }
+    } catch (err) {
+      this.ctx.logger.warn('ha re-sync: could not read deleted devices — children kept', {
+        tags: { deviceId: container.id },
+        meta: { error: errMsg(err) },
+      })
+    }
+    const fresh = withoutDismissed(buildContainerEntities(haDevice), state.dismissedEntityIds)
+    const plan = diffContainerEntities(state.entities, fresh)
+    const childDeviceIds = pruneChildDeviceIds(
+      state.childDeviceIds,
+      new Set(fresh.map((e) => e.entityId)),
+    )
+    const idsChanged = JSON.stringify(storedIds) !== JSON.stringify(childDeviceIds)
+    if (!plan.entitiesChanged && !settled) {
+      if (idsChanged) await container.config.setAll({ childDeviceIds })
       return { changed: false, rebuiltChildren: 0 }
     }
 
-    await container.config.setAll({ entities: plan.freshEntities, childDeviceIds })
+    await container.config.setAll({
+      entities: plan.freshEntities,
+      childDeviceIds,
+      dismissedEntityIds: [...state.dismissedEntityIds],
+    })
 
     if (plan.changedChildren.length > 0) {
       const children = await this.ctx.kernel.devices.getChildren(container.id)

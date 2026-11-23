@@ -39,6 +39,40 @@ export function childDeviceIdsByEntity(
 }
 
 /**
+ * Add the live children to the stored map. MERGE only: a child that is no longer
+ * live keeps its entry, because that is exactly the entry that recognises its
+ * deletion. An entry leaves the map only through {@link dismissDeletedChildren}
+ * or {@link pruneChildDeviceIds} (the entity is gone from HA).
+ */
+export function mergeChildDeviceIds(
+  stored: Readonly<Record<string, number>>,
+  live: Readonly<Record<string, number>>,
+): Record<string, number> {
+  return { ...stored, ...live }
+}
+
+/** Drop the entries of entities that are no longer part of the container. */
+export function pruneChildDeviceIds(
+  map: Readonly<Record<string, number>>,
+  entityIds: ReadonlySet<string>,
+): Record<string, number> {
+  return Object.fromEntries(Object.entries(map).filter(([entityId]) => entityIds.has(entityId)))
+}
+
+/**
+ * The one dismissal both the re-sync and the probe run: read the tombstones and
+ * dismiss. A failed read throws: the caller changes nothing and says so.
+ */
+export async function settleDeletedChildren<E extends { readonly entityId: string }>(
+  state: DismissalState<E>,
+  listDeleted: () => Promise<readonly { readonly deviceId: number }[]>,
+): Promise<DismissalResult<E> | null> {
+  if (Object.keys(state.childDeviceIds).length === 0) return null
+  const deleted = await listDeleted()
+  return dismissDeletedChildren(state, new Set(deleted.map((t) => t.deviceId)))
+}
+
+/**
  * Dismiss the entities whose recorded child was deleted. Returns `null` when
  * nothing was deleted, so the caller writes nothing.
  */
@@ -59,6 +93,21 @@ export function dismissDeletedChildren<E extends { readonly entityId: string }>(
     dismissedEntityIds: [...new Set([...state.dismissedEntityIds, ...dismissed])],
     dismissed,
   }
+}
+
+/** A stored config value read as an entity to device id map; anything else is empty. */
+export function parseChildDeviceIds(value: unknown): Record<string, number> {
+  if (typeof value !== 'object' || value === null) return {}
+  const out: Record<string, number> = {}
+  for (const [entityId, id] of Object.entries(value)) {
+    if (typeof id === 'number' && Number.isInteger(id)) out[entityId] = id
+  }
+  return out
+}
+
+/** A stored config value read as a list of strings; anything else is empty. */
+export function parseStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
 }
 
 /** The fresh HA inventory without what the operator deleted. */
