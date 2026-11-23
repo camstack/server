@@ -106,6 +106,7 @@ import {
   type HaMigrationPorts,
 } from './migrations/index.js'
 import { createHaCalendarSource } from './ha-calendar-source.js'
+import { childDeviceIdsByEntity, withoutDismissed } from './ha-dismissed-children.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import {
   buildStandaloneEntityCandidates,
@@ -1716,11 +1717,28 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     const persisted: HaContainerEntityConfig[] = parseContainerEntities(
       container.config.get('entities'),
     )
-    const fresh = buildContainerEntities(haDevice)
+    const dismissed = container.config.get('dismissedEntityIds')
+    const fresh = withoutDismissed(
+      buildContainerEntities(haDevice),
+      Array.isArray(dismissed) ? dismissed.filter((d) => typeof d === 'string') : [],
+    )
     const plan = diffContainerEntities(persisted, fresh)
-    if (!plan.entitiesChanged) return { changed: false, rebuiltChildren: 0 }
+    // Remember which device id each child has, so a later delete is recognised.
+    const childDeviceIds = childDeviceIdsByEntity(
+      container.stableId,
+      await this.ctx.kernel.devices.getChildren(container.id),
+    )
+    if (!plan.entitiesChanged) {
+      if (
+        JSON.stringify(container.config.get('childDeviceIds') ?? {}) !==
+        JSON.stringify(childDeviceIds)
+      ) {
+        await container.config.setAll({ childDeviceIds })
+      }
+      return { changed: false, rebuiltChildren: 0 }
+    }
 
-    await container.config.setAll({ entities: plan.freshEntities })
+    await container.config.setAll({ entities: plan.freshEntities, childDeviceIds })
 
     if (plan.changedChildren.length > 0) {
       const children = await this.ctx.kernel.devices.getChildren(container.id)

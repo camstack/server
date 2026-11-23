@@ -20,6 +20,7 @@ import {
 import { z } from 'zod'
 import { pickHaChildClass, tryPickHaChildClass } from '../ha-child-class-factory.js'
 import { deriveChildLayout } from '../ha-container-reconcile.js'
+import { dismissDeletedChildren } from '../ha-dismissed-children.js'
 import { type HaEntityState, HaEntityStateSchema } from '../ha-types.js'
 
 const haEntitySchema = z.object({
@@ -65,6 +66,11 @@ const haContainerSchema = z.object({
   haDeviceId: z.string(),
   integrationId: z.string().optional(),
   entities: z.array(haEntitySchema).default([]),
+  /** Entity id to the numeric id of its spawned child, stamped by the re-sync. A
+   *  child the operator deletes is recognised through it (see ha-dismissed-children). */
+  childDeviceIds: z.record(z.string(), z.number().int()).default({}),
+  /** Entities whose child the operator deleted: never spawned again. */
+  dismissedEntityIds: z.array(z.string()).default([]),
 })
 
 type HaContainerEntity = z.infer<typeof haEntitySchema>
@@ -429,6 +435,45 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
     return {
       source: 'homeassistant',
       data: { haDeviceId: this.config.values.haDeviceId, entities },
+    }
+  }
+
+  /**
+   * Runs before the kernel reconciles the accessory children (restore and every
+   * reprobe): a child the operator deleted is dropped from `entities[]` first, so
+   * the kernel does not spawn it again as a new device. A tombstone read that
+   * fails changes nothing.
+   */
+  override async onProbe(): Promise<void> {
+    await super.onProbe()
+    await this.dismissDeletedChildren()
+  }
+
+  private async dismissDeletedChildren(): Promise<void> {
+    const { entities, childDeviceIds, dismissedEntityIds } = this.config.values
+    if (Object.keys(childDeviceIds).length === 0) return
+    try {
+      const deleted = await this.ctx.api.deviceManager.listDeletedSince.query({ sinceMs: 0 })
+      const result = dismissDeletedChildren(
+        { entities, childDeviceIds, dismissedEntityIds },
+        new Set(deleted.map((t) => t.deviceId)),
+      )
+      if (result === null) return
+      await this.config.setAll({
+        entities: [...result.entities],
+        childDeviceIds: result.childDeviceIds,
+        dismissedEntityIds: [...result.dismissedEntityIds],
+      })
+      for (const entityId of result.dismissed) this.entityIds.delete(entityId)
+      this.ctx.logger.info('ha-container: deleted children stay deleted', {
+        tags: { deviceId: this.id },
+        meta: { entityIds: result.dismissed },
+      })
+    } catch (err) {
+      this.ctx.logger.warn('ha-container: could not read deleted devices — children kept', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
     }
   }
 
