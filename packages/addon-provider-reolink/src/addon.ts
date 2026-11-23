@@ -149,11 +149,6 @@ function getString(obj: Record<string, unknown>, key: string): string {
   return typeof v === 'string' ? v : ''
 }
 
-function getNumber(obj: Record<string, unknown>, key: string, fallback: number): number {
-  const v = obj[key]
-  return typeof v === 'number' && Number.isFinite(v) ? v : fallback
-}
-
 function buildAutodetectLabels(result: AutoDetectResult): string[] {
   const labels: string[] = []
   const model = result.deviceInfo?.type
