@@ -259,6 +259,22 @@ describe('RecordingController — recovery stays bounded and per-device', () => 
     vi.useRealTimers()
   })
 
+  it('a writer kept across an unchanged-source restart is still recovered by the idle watchdog when dead', async () => {
+    const h = makeHarness({ deviceIds: [99] })
+    await h.controller.start()
+    expect(h.acquiresFor(99)).toBe(1)
+
+    // The broker re-dialed the same url on a publisher kick: the writer stays.
+    await h.controller.onSourceRestarted(99, 'dial#2', { urlChanged: false, kicked: true })
+    await drain()
+    expect(h.acquiresFor(99)).toBe(1)
+
+    // It never produces a segment again: the idle clock recovers it.
+    await ageThenOnePass(h, 5 * 60_000)
+    await settle(() => h.acquiresFor(99) >= 2)
+    expect(h.acquiresFor(99)).toBe(2)
+  })
+
   it('abandons a hung broker acquire under a bound and names the deferral', async () => {
     const h = makeHarness({ deviceIds: [99], hangReacquireFor: [99] })
     await h.controller.start()

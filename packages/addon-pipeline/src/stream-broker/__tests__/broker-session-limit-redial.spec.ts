@@ -73,6 +73,32 @@ describe('StreamBroker planned re-dial before a declared session limit', () => {
     await broker.stop()
   })
 
+  it('a kick that is aborted does not mark the next, unrelated re-dial as kicked', async () => {
+    const broker = new StreamBroker('3628/main', mockLogger())
+    const infos: Array<{ urlChanged: boolean; kicked: boolean }> = []
+    broker.onSourceRestart((_reason, info) => infos.push(info))
+    broker.onEncodedData(() => {})
+    await broker.start(pushSource(LIMIT_MS))
+    // Arm a reconnect timer so the kick takes effect, then abort that dial.
+    Reflect.set(
+      broker,
+      'reconnectTimer',
+      setTimeout(() => {}, 1_000),
+    )
+    broker.kickReconnect('test')
+    const suspend: unknown = Reflect.get(broker, 'suspend')
+    if (typeof suspend !== 'function') throw new Error('no suspend')
+    suspend.call(broker)
+    expect(infos).toEqual([])
+
+    // A later, session-limit re-dial.
+    Reflect.set(broker, '_suspended', false)
+    Reflect.set(broker, 'reconnectTimer', undefined)
+    await broker.start(pushSource(LIMIT_MS))
+    expect(infos).toEqual([{ urlChanged: false, kicked: false }])
+    await broker.stop()
+  })
+
   it('never re-dials a source that declares no limit', async () => {
     const broker = new StreamBroker('3629/main', mockLogger())
     const restarts: string[] = []

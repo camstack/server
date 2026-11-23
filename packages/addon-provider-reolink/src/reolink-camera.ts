@@ -9139,7 +9139,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // snapshot, aux accessories, settings snapshot) stays off the session that
     // carries the video: the state is fresh enough or arrives by push, and the
     // next wake with no stream — or the scheduled window — reads it.
-    const streamingDefer = this.isBattery && this.hasActiveStream()
+    // Bounded: once the last full refresh is older than STREAM_DEFER_MAX_AGE_MS
+    // the burst runs under the stream, so a camera that streams forever is
+    // still refreshed.
+    const streamingDefer = this.isBattery && this.getBatteryRefresh().shouldDeferForStream()
     if (streamingDefer) this.getBatteryRefresh().noteStreamDeferred('wake-warm-up')
     if (!scheduledRefreshCovered && !streamingDefer) {
       await this.warmCapSlicesOnWake()
@@ -9154,7 +9157,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // the only free catalog read a standalone battery camera ever gets. There
     // is deliberately no second wake hook — this one already fires on a camera
     // event, the sleep poll's flip, a hub summary and a confirmed wake.
-    await this.refreshClipCatalogOnWake()
+    if (!streamingDefer) await this.refreshClipCatalogOnWake()
   }
 
   // ── Reliability watchdogs (Slice 10) ─────────────────────────────────

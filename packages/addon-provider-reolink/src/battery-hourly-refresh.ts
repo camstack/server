@@ -65,6 +65,12 @@ export const BATTERY_REFRESH_TICK_MS = 60_000
 export const MAX_ATTEMPTS_PER_WINDOW = 2
 /** The least time between two attempts in one window. */
 export const RETRY_BACKOFF_MS = 10 * 60_000
+/**
+ * How old the last full refresh may grow while a stream is open before the
+ * control burst runs under that stream anyway. A camera that streams 24/7
+ * would otherwise never refresh battery, accessories or settings.
+ */
+export const STREAM_DEFER_MAX_AGE_MS = 4 * 60 * 60_000
 /** The one refresh step whose failure does not hold the window open. */
 const SOFT_FAILURE_STEP = 'snapshot'
 const MAX_WAKE_LEAD_MS = 5 * 60_000
@@ -227,10 +233,11 @@ export class BatteryHourlyRefresh {
     }
     // Due, but a stream is open: defer WITHOUT spending an attempt or stamping —
     // the window stays owed and the next tick without a stream takes it.
-    if (this.deps.isStreaming?.() === true) {
+    if (this.shouldDeferForStream()) {
       this.noteStreamDeferred(trigger)
       return false
     }
+    if (this.deps.isStreaming?.() === true) this.logDeferralBoundReached(trigger)
     this.attempts += 1
     this.lastAttemptAt = nowMs
     const run = this.run(decision.kind, trigger).finally(() => {
@@ -238,6 +245,25 @@ export class BatteryHourlyRefresh {
     })
     this.inFlight = run
     return run
+  }
+
+  /**
+   * A stream is open AND the last full refresh is younger than
+   * {@link STREAM_DEFER_MAX_AGE_MS}: the control burst waits. Past that age (or
+   * with no refresh on record) it runs under the stream — the deferral is bounded.
+   */
+  shouldDeferForStream(): boolean {
+    if (this.deps.isStreaming?.() !== true) return false
+    const last = this.deps.lastFullRefreshAt()
+    if (typeof last !== 'number' || last <= 0) return false
+    return this.deps.now() - last < STREAM_DEFER_MAX_AGE_MS
+  }
+
+  logDeferralBoundReached(what: string): void {
+    this.deps.logger.info('battery control burst: deferral bound reached — refreshing under an active stream', {
+      tags: { deviceId: this.deps.deviceId },
+      meta: { what, maxAgeMs: STREAM_DEFER_MAX_AGE_MS },
+    })
   }
 
   private streamDeferLoggedWindow = Number.NEGATIVE_INFINITY

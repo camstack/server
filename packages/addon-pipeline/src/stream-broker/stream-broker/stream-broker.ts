@@ -1183,6 +1183,8 @@ export class StreamBroker implements IStreamBroker {
   redial(reason: string): void {
     if (this.manualStop || this.stopping || !this.source) return
     if (!this.hasLiveIntent()) return
+    // A forced redial is not a publisher kick, whatever kick preceded it.
+    this.kickedDial = false
     this.logger?.info('source redial — the camera changed under a live reader', {
       meta: { reason, status: this._status },
     })
@@ -1267,6 +1269,9 @@ export class StreamBroker implements IStreamBroker {
     this.reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS
     this.nextDialAllowedAt = 0
     this.lastRefreshRequestAt = 0
+    // The flag lives exactly as long as the dial this kick arms: it is cleared
+    // below when no dial was armed, and by stop / suspend / redial / a start
+    // that finds no demand.
     this.kickedDial = true
     this.logger?.info('reconnect kicked — publisher refreshed source', {
       meta: {
@@ -1277,6 +1282,7 @@ export class StreamBroker implements IStreamBroker {
       },
     })
     this.scheduleReconnect()
+    if (!this.reconnectTimer) this.kickedDial = false
   }
 
   /**
@@ -1411,6 +1417,7 @@ export class StreamBroker implements IStreamBroker {
     // `checkDemand()` resumes the source the moment a subscriber
     // arrives or the pre-buffer flips on (both feed `hasDemand`).
     if (shouldDeferBrokerStart(source) && !this.hasLiveIntent()) {
+      this.kickedDial = false
       this._suspended = true
       this._status = 'idle'
       this.logger?.info(
@@ -1506,6 +1513,7 @@ export class StreamBroker implements IStreamBroker {
 
   async stop(): Promise<void> {
     this.logger?.info('Broker stopping')
+    this.kickedDial = false
     this.stopping = true
     this.dialGaveUp = null
     this.clearSleepWaitBound()
@@ -2137,6 +2145,7 @@ export class StreamBroker implements IStreamBroker {
 
   /** Suspend the stream: kill ffmpeg/native client, clear buffers, go idle. Source is preserved for resume. */
   private suspend(): void {
+    this.kickedDial = false
     if (this._suspended) return
     this._suspended = true
     this._status = 'idle'
@@ -4737,6 +4746,7 @@ export class StreamBroker implements IStreamBroker {
     // re-arming the reconnect timer; the next subscriber triggers
     // `checkDemand()` → `start(this.source)` to dial again.
     if (!this.hasLiveIntent()) {
+      this.kickedDial = false
       this._suspended = true
       this._status = 'idle'
       this.stopErrorPlaceholder()

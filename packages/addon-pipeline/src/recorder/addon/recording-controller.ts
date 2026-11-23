@@ -624,18 +624,18 @@ const WRITER_IDLE_MIN_MS = 90_000
  */
 const WRITER_IDLE_SEGMENT_MULTIPLIER = 3
 
-/** How long a writer may go without finalizing a segment before it is recovered. */
-function writerIdleBoundMs(segmentSeconds: number): number {
-  return Math.max(WRITER_IDLE_MIN_MS, segmentSeconds * 1000 * WRITER_IDLE_SEGMENT_MULTIPLIER)
-}
-
-/** What made the recorder recover a writer: the cause, named on the give-up log. */
 /** What the broker says about a source re-dial (`StreamBrokerOnSourceRestart`). */
 export interface SourceRestartSignal {
   readonly urlChanged: boolean
   readonly kicked: boolean
 }
 
+/** How long a writer may go without finalizing a segment before it is recovered. */
+function writerIdleBoundMs(segmentSeconds: number): number {
+  return Math.max(WRITER_IDLE_MIN_MS, segmentSeconds * 1000 * WRITER_IDLE_SEGMENT_MULTIPLIER)
+}
+
+/** What made the recorder recover a writer: the cause, named on the give-up log. */
 type WriterRecoveryTrigger = 'source-restart' | 'idle-watchdog' | 'writer-exhausted-restarts'
 
 /** Measurements attached to the give-up log (null = never produced / never re-dialed). */

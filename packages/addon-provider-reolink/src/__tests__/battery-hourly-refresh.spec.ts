@@ -6,6 +6,7 @@ import {
   decideBatteryRefresh,
   MAX_ATTEMPTS_PER_WINDOW,
   RETRY_BACKOFF_MS,
+  STREAM_DEFER_MAX_AGE_MS,
   resolveBatteryRefreshIntervalMs,
   staggerOffsetMs,
   wakeLeadMs,
@@ -99,16 +100,29 @@ describe('scheduled battery refresh (D847)', () => {
   })
 
   it('a due refresh is deferred while a stream is open, taken once it closes; said once per window', async () => {
-    const r = rig({ awake: true, streaming: true })
+    const previous = WINDOW_START - 30 * MIN
+    const r = rig({ awake: true, streaming: true, stamp: previous })
     await vi.advanceTimersByTimeAsync(10 * MIN)
     expect(r.counts).toEqual({ wakes: 0, refreshes: 0 })
-    expect(r.state.stamp).toBeUndefined()
+    expect(r.state.stamp).toBe(previous)
     const said = r.logger.infos.filter((e) => e.message.includes('deferred — a stream is active'))
     expect(said).toHaveLength(1)
     expect(said[0]?.extras.tags).toEqual({ deviceId: DEVICE_ID })
     r.state.streaming = false
     await vi.advanceTimersByTimeAsync(2 * MIN)
     expect(r.counts).toEqual({ wakes: 0, refreshes: 1 })
+    r.stop()
+  })
+
+  it('a camera that streams forever is still refreshed once the last refresh is older than the bound', async () => {
+    const r = rig({ awake: true, streaming: true, stamp: WINDOW_START - 30 * MIN })
+    await vi.advanceTimersByTimeAsync(STREAM_DEFER_MAX_AGE_MS - 60 * MIN)
+    expect(r.counts.refreshes).toBe(0)
+    await vi.advanceTimersByTimeAsync(2 * HOUR)
+    expect(r.counts).toEqual({ wakes: 0, refreshes: 1 })
+    expect(
+      r.logger.infos.some((e) => e.message.includes('deferral bound reached — refreshing under')),
+    ).toBe(true)
     r.stop()
   })
 
