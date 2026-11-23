@@ -730,6 +730,10 @@ describe('composition blocks', () => {
 
     openGate([])
     await parked
+
+    // The parked pass started before the delete; what it sends must not bring c1 back.
+    const afterPark = composer.applied.at(-1)
+    expect(afterPark?.blocks.map((b) => b.id)).toEqual(['c2'])
   })
 
   it('a retired block whose claim did not land is retried by the next pass, and a landed one is not', async () => {

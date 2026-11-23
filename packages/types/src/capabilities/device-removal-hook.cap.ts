@@ -18,7 +18,7 @@
  *    path only — a device that is unregistered, offline or whose provider is
  *    restarting is NOT deleted and gets none.
  * 2. After a delete, device-manager calls `onDeviceRemoved` on EVERY provider of
- *    this collection, one by one, with bounded retries, logged.
+ *    this collection, concurrently (one failing never delays the others), each with bounded retries, logged.
  * 3. An implementer that was down asks `deviceManager.listDeletedSince` at start
  *    (and periodically) and runs its own `onDeviceRemoved` for each tombstone it
  *    may have missed. Reconcile is driven by tombstones, never by "the device is

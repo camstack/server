@@ -353,7 +353,7 @@ export class BlockSupervisor {
     }
 
     // 4. Compositions: the whole set, every pass (idempotent), to the composer.
-    await this.convergeCompositions(blocks, snapshots)
+    await this.convergeCompositions(snapshots)
   }
 
   /**
@@ -362,11 +362,11 @@ export class BlockSupervisor {
    * does not trust its store or seed yet) is mirrored as `starting`; the next
    * pass of this same converge is the retry — no timer of its own (D3).
    */
-  private async convergeCompositions(
-    blocks: readonly CoreBlock[],
-    runners: readonly BlockRunnerSnapshot[],
-  ): Promise<void> {
-    const compositions = blocks.flatMap((block) => {
+  private async convergeCompositions(runners: readonly BlockRunnerSnapshot[]): Promise<void> {
+    // The store is read AGAIN here, not taken from the pass's start: a pass parked on the
+    // process host while `retireComposition` landed would otherwise send the deleted
+    // composition live and re-claim its devices.
+    const compositions = this.deps.store.list().flatMap((block) => {
       const composition = coreBlockComposition(block)
       return composition !== null && this.isPlacedHere(block) ? [{ block, composition }] : []
     })

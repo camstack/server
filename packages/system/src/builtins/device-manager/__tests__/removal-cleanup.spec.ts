@@ -12,14 +12,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { createRemovalCleanup, type RemovalStep } from '../removal-cleanup.js'
 
 function logger(): IScopedLogger {
-  const l = {
+  const fake: IScopedLogger = {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    child: () => l,
+    child: () => fake,
   }
-  return l as unknown as IScopedLogger
+  return fake
 }
 
 /** Yield to the microtask queue a few times — enough for every started step to have started. */
