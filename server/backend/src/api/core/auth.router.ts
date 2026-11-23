@@ -1415,6 +1415,7 @@ export function createAuthRouter(
       minter,
       credentialProcedure,
       ...(nativeLink !== null ? { handoffs: nativeLink.browserHandoffs } : {}),
+      ...(options.logger !== undefined ? { logger: options.logger } : {}),
     }),
     ...createCliLoginProcedures({
       cliApprovals: options.cliApprovals ?? cliApprovals,

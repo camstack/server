@@ -33,6 +33,9 @@ export const HANDOFF_CODE_TTL_MS = 60_000
  *  only guards against a runaway authenticated client). */
 export const HANDOFF_CODE_MAX_PENDING = 1_000
 
+/** Hard bound on parent sessions whose browser-handoff children are tracked; the oldest tie is dropped past it. */
+export const HANDOFF_CHILD_PARENTS_MAX = 1_000
+
 export interface HandoffCodeMintResult {
   /** The raw single-use code — returned exactly once, never stored. */
   readonly code: string
@@ -177,9 +180,23 @@ export class HandoffCodeService {
    * restart forgets the tie and the child then lives out its own expiry.
    */
   adoptChildSession(parentSessionId: string, childSessionId: string): void {
-    const children = this.childSessions.get(parentSessionId) ?? new Set<string>()
+    const known = this.childSessions.get(parentSessionId)
+    const children = known ?? new Set<string>()
     children.add(childSessionId)
-    this.childSessions.set(parentSessionId, children)
+    if (known === undefined) {
+      // Bounded: past the cap the OLDEST parent's tie is dropped (its children live out their own expiry).
+      while (this.childSessions.size >= HANDOFF_CHILD_PARENTS_MAX) {
+        const oldest = this.childSessions.keys().next()
+        if (oldest.done === true) break
+        this.childSessions.delete(oldest.value)
+      }
+      this.childSessions.set(parentSessionId, children)
+    }
+  }
+
+  /** Number of parent sessions with a tracked child. Test/diag aid. */
+  get childParentCount(): number {
+    return this.childSessions.size
   }
 
   /** The sessions opened from `parentSessionId`, forgotten once taken. */

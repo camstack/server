@@ -4,6 +4,7 @@ import {
   HANDOFF_CODE_PREFIX,
   HANDOFF_CODE_TTL_MS,
   HANDOFF_CODE_MAX_PENDING,
+  HANDOFF_CHILD_PARENTS_MAX,
 } from './handoff-code.service.js'
 
 /** Deterministic clock the tests can advance. */
@@ -81,5 +82,21 @@ describe('HandoffCodeService', () => {
       service.create(`u-${i}`)
     }
     expect(() => service.create('u-overflow')).toThrow(/Too many pending handoff codes/)
+  })
+
+  it('forgets a parent once its children are taken, and caps the tracked parents (oldest evicted)', () => {
+    const service = new HandoffCodeService()
+    service.adoptChildSession('p-0', 'c-0')
+    expect(service.takeChildSessions('p-0')).toEqual(['c-0'])
+    expect(service.childParentCount).toBe(0)
+    expect(service.takeChildSessions('p-0')).toEqual([])
+
+    for (let i = 0; i < HANDOFF_CHILD_PARENTS_MAX + 5; i++)
+      service.adoptChildSession(`p-${i}`, `c-${i}`)
+    expect(service.childParentCount).toBe(HANDOFF_CHILD_PARENTS_MAX)
+    expect(service.takeChildSessions('p-0')).toEqual([])
+    expect(service.takeChildSessions(`p-${HANDOFF_CHILD_PARENTS_MAX + 4}`)).toEqual([
+      `c-${HANDOFF_CHILD_PARENTS_MAX + 4}`,
+    ])
   })
 })

@@ -122,6 +122,63 @@ describe('auth sessions', () => {
     expect(() => auth.verifyToken(unrelated.token)).not.toThrow()
   })
 
+  it('SECURITY: logout ends the caller first, and one failing child does not keep it signed in (D1094)', async () => {
+    const browserHandoffs = new HandoffCodeService()
+    const warnings: string[] = []
+    const users = [{ id: 'u-alice', username: 'alice', isAdmin: false, password: 'pw-alice-1' }]
+    const h = sessionHarness(users)
+    const router = createAuthRouter(
+      h.auth,
+      h.registry as never,
+      null,
+      new HandoffCodeService(),
+      undefined,
+      {
+        completions: new NativeLinkCompletions(),
+        browserHandoffs,
+        link: async () => 'linked' as const,
+      },
+      {
+        sessions: h.backing,
+        limiters: createAuthLimiters(),
+        logger: { warn: (m: string) => void warnings.push(m) } as never,
+      },
+    )
+    const anon = router.createCaller({ user: null })
+    const login = () => anon.login({ username: 'alice', password: 'pw-alice-1', refreshable: true })
+    const viewer = await login()
+    const badChild = await login()
+    const goodChild = await login()
+    browserHandoffs.adoptChildSession(viewer.sessionId ?? '', badChild.sessionId ?? '')
+    browserHandoffs.adoptChildSession(viewer.sessionId ?? '', goodChild.sessionId ?? '')
+    const realRevoke = h.sessions.revoke.bind(h.sessions)
+    const order: string[] = []
+    h.sessions.revoke = async (id, reason) => {
+      order.push(id)
+      if (id === badChild.sessionId) throw new Error('store down')
+      return realRevoke(id, reason)
+    }
+    const payload = h.auth.verifyToken(viewer.token)
+    await router
+      .createCaller({
+        user: {
+          id: 'u-alice',
+          username: 'alice',
+          isAdmin: false,
+          permissions: { isAdmin: false, allowedProviders: '*', allowedDevices: {} },
+          isApiKey: false,
+          interactive: true,
+          userDelegated: true,
+          sessionId: payload.sid ?? '',
+        },
+      })
+      .logout()
+    expect(order[0]).toBe(viewer.sessionId)
+    expect(() => h.auth.verifyToken(viewer.token)).toThrow(/no longer valid/)
+    expect(() => h.auth.verifyToken(goodChild.token)).toThrow(/no longer valid/)
+    expect(warnings.join(' ')).toMatch(/handoff child/)
+  })
+
   it('SECURITY: a revoked session is rejected wherever a token is verified (every surface asks verifyToken)', async () => {
     const { anon, auth, sessions } = setup()
     const login = await anon.login({ username: 'alice', password: 'pw-alice-1' })

@@ -7,7 +7,11 @@
 import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
-import { DEVICE_REFRESH_REFUSAL_PREFIX, type DeviceRefusalReason } from '@camstack/types'
+import {
+  DEVICE_REFRESH_REFUSAL_PREFIX,
+  type DeviceRefusalReason,
+  type IScopedLogger,
+} from '@camstack/types'
 import type { HandoffCodeService } from '../../core/auth/handoff-code.service.js'
 import { userManagementInternal } from '../../auth/hub-sessions.js'
 import {
@@ -65,6 +69,7 @@ export interface SessionProcedureDeps {
   readonly credentialProcedure: typeof publicProcedure
   /** Ties a browser handoff's session to the one that asked for it; absent without the native wiring. */
   readonly handoffs?: Pick<HandoffCodeService, 'takeChildSessions'>
+  readonly logger?: IScopedLogger
 }
 
 function requireSessions(registry: CapabilityRegistry | null) {
@@ -175,16 +180,26 @@ export function createSessionProcedures(deps: SessionProcedureDeps) {
           const revoked = await sessions.revokeAllForUser(ctx.user.id, {
             reason: 'logout-everywhere',
           })
+          // Every session of the user is gone, children included: forget the tie.
+          if (ctx.user.sessionId !== undefined) deps.handoffs?.takeChildSessions(ctx.user.sessionId)
           return { success: true as const, revoked }
         }
         const sessionId = ctx.user.sessionId
-        // The Admin sessions this one opened through a browser handoff end with it.
+        // The caller's own session goes FIRST: nothing below may keep the user signed in.
+        const revoked = sessionId === undefined ? false : await sessions.revoke(sessionId, 'logout')
+        // The Admin sessions it opened through a browser handoff end with it, each isolated.
         if (sessionId !== undefined) {
           for (const child of deps.handoffs?.takeChildSessions(sessionId) ?? []) {
-            await sessions.revoke(child, 'logout')
+            try {
+              await sessions.revoke(child, 'logout')
+            } catch (error: unknown) {
+              deps.logger?.warn('Logout could not revoke a handoff child session', {
+                tags: { userId: ctx.user.id },
+                meta: { error: error instanceof Error ? error.message : String(error) },
+              })
+            }
           }
         }
-        const revoked = sessionId === undefined ? false : await sessions.revoke(sessionId, 'logout')
         return { success: true as const, revoked: revoked ? 1 : 0 }
       }),
 

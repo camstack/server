@@ -43,10 +43,13 @@ export function planViewerEmbed(basename: string = routerBasename()): ViewerEmbe
 export const VIEWER_EMBED_FLAG = '__CAMSTACK_VIEWER_EMBED__'
 
 /**
- * True when the viewer app is hosting this admin UI — a same-origin iframe on
- * the web, or the flagged WebView on a phone. The viewer then offers the Admin
- * app from its own drawer, so this UI hides its own entry to the viewer: the
- * viewer must not nest in itself.
+ * True when this UI is shown inside ANOTHER frame, or the viewer's native
+ * WebView flagged it. It cannot tell the viewer's iframe from any other
+ * embedder: a same-origin frame is all the web shell can see (the hub refuses
+ * every other ancestor, `frame-ancestors 'self'`), and the only signal that
+ * names the viewer is the flag its native WebView sets. The viewer offers the
+ * Admin app from its own drawer, so this UI then hides its entry to the viewer:
+ * the viewer must not nest in itself.
  */
 export function isEmbeddedByViewer(win: Window = window): boolean {
   if (Reflect.get(win, VIEWER_EMBED_FLAG) === true) return true

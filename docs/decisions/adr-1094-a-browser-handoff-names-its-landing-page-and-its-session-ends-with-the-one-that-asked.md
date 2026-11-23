@@ -48,9 +48,18 @@ Signing out of the viewer ends its Admin sessions on the hub. `logout
 everywhere` already ended everything. A new destination is a new enum member
 and a spec, never a path from the caller.
 
+Accepted risk: the viewer's Nodes app POSTs the one-time unlock ticket to the
+agent's UI at `http://<lan-ip>:4444` in cleartext. It is reachable only on the
+LAN (off-LAN the app refuses to open a node), the ticket is single-use and
+short-lived, and an agent UI has no certificate to offer. The frame itself keeps
+to that one origin: any other link leaves through the system browser, and the
+session script only writes when `location.origin` is the frame's origin.
+
 ## Enforcement
 
 `native-return.spec.ts` (location per destination, closed enum),
 `auth-router-native-link.spec.ts` (the minted path names only a code and the
-destination), `auth-router-sessions.spec.ts` (logout revokes the child, and
-only the child).
+destination), `auth-router-sessions.spec.ts` (logout revokes the parent first,
+then the child, and only the child; one failing child does not keep the user
+signed in), `sso-routes-handoff-parent.spec.ts` (the redeem route ties the child
+to the parent through the real route).
