@@ -117,6 +117,14 @@ const PUSH_STALL_TIMEOUT_MS = 15_000
 const DROP_REPORT_INTERVAL_MS = 30_000
 
 /** What a source re-dial tells its observers beyond the reason. */
+/**
+ * Why the broker asks the publisher to refresh a source. Absent: a dial
+ * failed or the URL is lazy — the publisher may keep a server that still
+ * listens. `source-silent`: a watchdog saw no packets behind a connection that
+ * opened, so a still-listening server is the dead one and must be recreated.
+ */
+export type SourceRefreshReason = 'source-silent'
+
 export interface SourceRestartInfo {
   /** The re-dial points at a different url than the previous dial. */
   readonly urlChanged: boolean
@@ -162,7 +170,7 @@ export class StreamBroker implements IStreamBroker {
    * reconnect resolves it via `sourceProvider`. `null` when the
    * broker has no manager attached (tests).
    */
-  private requestSourceRefresh: (() => void) | null = null
+  private requestSourceRefresh: ((reason?: SourceRefreshReason) => void) | null = null
   /**
    * Last time we asked the publisher to refresh the source — used to
    * dedup the refresh notify. A single connect failure fans out into
@@ -988,7 +996,7 @@ export class StreamBroker implements IStreamBroker {
    * asks the publishing addon to republish with a fresh transport;
    * the next reconnect picks it up via `sourceProvider`.
    */
-  setRequestSourceRefresh(notify: () => void): void {
+  setRequestSourceRefresh(notify: (reason?: SourceRefreshReason) => void): void {
     this.requestSourceRefresh = notify
   }
 
@@ -1136,12 +1144,12 @@ export class StreamBroker implements IStreamBroker {
    * dial-failure path fans into onError + reader.connect().catch; we
    * only want one round-trip to the publisher per real failure.
    */
-  private notifySourceRefresh(): void {
+  private notifySourceRefresh(reason?: SourceRefreshReason): void {
     if (!this.requestSourceRefresh) return
     const now = Date.now()
     if (now - this.lastRefreshRequestAt < 500) return
     this.lastRefreshRequestAt = now
-    this.requestSourceRefresh()
+    this.requestSourceRefresh(reason)
   }
 
   /**
@@ -4447,7 +4455,7 @@ export class StreamBroker implements IStreamBroker {
     // republish. Siblings (`onError`, the activity-watchdog expiry) already
     // gate this on the source type; match them.
     if (this.source?.type === 'rfc4571') {
-      this.notifySourceRefresh()
+      this.notifySourceRefresh('source-silent')
     }
     this.scheduleReconnect()
   }
@@ -4685,8 +4693,11 @@ export class StreamBroker implements IStreamBroker {
         this.nextDialAllowedAt = 0
       }
       // The lib's loopback may have idle-rotated — ask the publisher to
-      // refresh before the next dial picks up a stale URL.
-      this.notifySourceRefresh()
+      // refresh before the next dial picks up a stale URL. The camera went
+      // SILENT behind a loopback that may still be listening, so the request
+      // says so: the publisher must not hand the same dead server back.
+      this.lastRefreshRequestAt = 0
+      this.notifySourceRefresh('source-silent')
       this.scheduleReconnect()
       return
     }

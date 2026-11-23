@@ -124,6 +124,17 @@ describe('StreamBroker rfc4571 teardown = failure edge', () => {
     expect(broker.getRtpActivityWatchdogStatus().armed).toBe(true)
   })
 
+  it('a watchdog kill of a connection that opened but stayed silent says so in the refresh request', async () => {
+    await broker.start(rfc4571Source(lb.port))
+    await waitFor(() => lb.connections.length === 1)
+    refreshSpy.mockClear()
+    // The loopback accepted and never sends a byte: the camera is silent behind
+    // a server that still listens. The publisher must be told, or it hands the
+    // same dead server back.
+    await waitFor(() => refreshSpy.mock.calls.some((c) => c[0] === 'source-silent'), 25_000)
+    expect(refreshSpy).toHaveBeenCalledWith('source-silent')
+  }, 30_000)
+
   it('treats a source-side close (destroyed=false) as a failure edge — not phantom streaming', async () => {
     await broker.start(rfc4571Source(lb.port))
     await waitFor(() => broker.getStats().status === 'streaming')

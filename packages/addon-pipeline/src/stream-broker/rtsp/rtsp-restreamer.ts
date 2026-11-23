@@ -1614,6 +1614,12 @@ export class RtspRestreamer {
     return true
   }
 
+  /** The cached keyframe is a placeholder picture: only a sentry may be served it. */
+  private lastKeyframePlaceholder = false
+
+  /** True only while `pushPacket` feeds a placeholder packet to the deframer. */
+  private pushingPlaceholder = false
+
   pushPacket(packet: EncodedPacket): void {
     if (packet.type !== 'video') return
 
@@ -1623,7 +1629,7 @@ export class RtspRestreamer {
     if (!this.deframer) {
       this.detectedCodec = packet.codec === 'h265' || packet.codec === 'hevc' ? 'h265' : 'h264'
       this.deframer = new AnnexBDeframer(this.detectedCodec, (nal, isKeyframe) => {
-        this.handleNal(nal, isKeyframe)
+        this.handleNal(nal, isKeyframe, this.pushingPlaceholder)
       })
     }
 
@@ -1631,8 +1637,16 @@ export class RtspRestreamer {
     // deframer emits a complete keyframe NAL — NOT from packet.keyframe,
     // which is unreliable because ffmpeg chunks don't align to NAL boundaries.
 
-    // Push raw bytes — the deframer emits complete NALs via handleNal callback
-    this.deframer.push(packet.data)
+    // Push raw bytes — the deframer emits complete NALs via handleNal callback.
+    // The placeholder flag is held for the duration of this synchronous push so
+    // the NALs it emits are marked: a courtesy picture is a sentry's, never
+    // footage for a recorder.
+    this.pushingPlaceholder = packet.isPlaceholder === true
+    try {
+      this.deframer.push(packet.data)
+    } finally {
+      this.pushingPlaceholder = false
+    }
   }
 
   destroy(): void {
@@ -1662,7 +1676,7 @@ export class RtspRestreamer {
   }
 
   /** Called by deframer for each complete NAL unit. */
-  private handleNal(nal: Buffer, isKeyframe: boolean): void {
+  private handleNal(nal: Buffer, isKeyframe: boolean, isPlaceholder: boolean): void {
     // Initialize codec params from parameter set NALs (SPS/PPS/VPS)
     if (!this.codecParams) {
       this.tryInitCodec(nal)
@@ -1675,6 +1689,7 @@ export class RtspRestreamer {
     if (isKeyframe || this.isParameterSetNal(nal)) {
       if (!this.collectingKeyframe) {
         this.collectingKeyframe = true
+        this.lastKeyframePlaceholder = isPlaceholder
         this.lastKeyframeNals = []
         this.lastKeyframeNalBytes = 0
         this.lastKeyframeTimestamp = this.currentTimestamp
@@ -1711,6 +1726,9 @@ export class RtspRestreamer {
     for (const rtp of rtpPackets) {
       for (const session of this.sessions.values()) {
         if (this.pendingKeyframe.has(session.getSessionId())) continue
+        // A placeholder NAL goes to a sentry only; any other session gets
+        // nothing while it plays, so the recorder's idle watchdog re-pins.
+        if (isPlaceholder && !session.isPrestreamIntent()) continue
         if (session.isPlaying()) {
           this.recordLiveOutcome(session.sendRtp(rtp))
         }
@@ -1725,7 +1743,11 @@ export class RtspRestreamer {
     const ready: string[] = []
     for (const sessionId of this.pendingKeyframe) {
       const session = this.sessions.get(sessionId)
-      if (session?.isPlaying()) ready.push(sessionId)
+      if (!session?.isPlaying()) continue
+      // A placeholder keyframe is a sentry's courtesy picture, never footage:
+      // a non-sentry waits for a real keyframe.
+      if (this.lastKeyframePlaceholder && !session.isPrestreamIntent()) continue
+      ready.push(sessionId)
     }
 
     if (ready.length === 0) return

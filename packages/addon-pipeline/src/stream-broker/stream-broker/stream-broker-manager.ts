@@ -189,7 +189,7 @@ import {
 } from './source-parser.js'
 import { CH_WEBRTC } from '../log-channels.js'
 import { judgeCatalogAbsence, type CatalogAbsenceMarks } from '../catalog-absence.js'
-import { StreamBroker } from './stream-broker'
+import { StreamBroker, type SourceRefreshReason } from './stream-broker'
 import type { EgressChannel } from './transcode-egress.js'
 import { TranscodePipelineManager } from './transcode-pipeline.js'
 
@@ -8389,8 +8389,8 @@ export class StreamBrokerManager {
       const latest = this.cameraStreams.get(deviceId)?.get(camStreamId)
       return latest ? this.buildSourceFromCamStream(latest) : null
     })
-    broker.setRequestSourceRefresh(() => {
-      this.emitRequestStreamSourceRefresh(deviceId, camStreamId, brokerId)
+    broker.setRequestSourceRefresh((reason) => {
+      this.emitRequestStreamSourceRefresh(deviceId, camStreamId, brokerId, reason)
     })
     // A battery camera that does not answer is given up on, never dialled in a
     // loop (`StreamBroker.giveUpDial`); read at use time, the feature can land late.
@@ -9123,11 +9123,13 @@ export class StreamBrokerManager {
     deviceId: number,
     camStreamId: string,
     brokerId: string,
+    reason?: SourceRefreshReason,
   ): void {
     this.emitCapEvent(EventCategory.StreamBrokerOnRequestStreamSourceRefresh, deviceId, {
       deviceId,
       camStreamId,
       brokerId,
+      ...(reason === undefined ? {} : { reason }),
     })
   }
 
