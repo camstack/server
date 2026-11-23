@@ -155,6 +155,15 @@ function readRow(
   return row ?? null
 }
 
+/** The columns a `putRow` precondition covers: all of the row, or only the named ones. */
+function projectColumns(
+  row: Record<string, unknown> | null,
+  columns: readonly string[] | undefined,
+): unknown {
+  if (row === null || columns === undefined) return row
+  return Object.fromEntries(columns.map((name) => [name, row[name] ?? null]))
+}
+
 function checkPrecondition(edit: MigrationEdit, read: unknown, existed: boolean): void {
   if (edit.precondition === undefined) {
     if (existed) {
@@ -400,7 +409,7 @@ function applyOne(db: Database.Database, edit: MigrationEdit, scope: MigrationEd
     }
     case 'putRow': {
       const existing = readRow(db, edit.table, edit.key)
-      checkPrecondition(edit, existing, existing !== null)
+      checkPrecondition(edit, projectColumns(existing, edit.preconditionColumns), existing !== null)
       const { clause, params } = whereOf(edit.key)
       if (existing !== null) {
         const names = Object.keys(edit.row)

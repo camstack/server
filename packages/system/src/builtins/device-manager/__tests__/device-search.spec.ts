@@ -173,6 +173,21 @@ describe('searchDevices', () => {
     expect(await ids('zzz-nothing')).toEqual([])
   })
 
+  describe('a location filter (D1089)', () => {
+    it('accepts a room id as well as a name, for one release', async () => {
+      const deps: DeviceSearchDeps = {
+        ...makeDeps({ fleet: smallFleet }),
+        roomNameOf: (value) => (value === 'room_garage' ? 'Garage' : null),
+      }
+      const byName = await searchDevices(deps, { filters: { locations: ['Garage'] } })
+      const byId = await searchDevices(deps, { filters: { locations: ['room_garage'] } })
+      expect(byName.total).toBeGreaterThan(0)
+      expect(byId.total).toBe(byName.total)
+      const unknownId = await searchDevices(deps, { filters: { locations: ['room_gone'] } })
+      expect(unknownId.total).toBe(0)
+    })
+  })
+
   describe('facets', () => {
     it('count the compatible set with the OTHER facets applied, not their own', async () => {
       const deps = makeDeps({ fleet: smallFleet })

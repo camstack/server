@@ -23,6 +23,7 @@ import type {
 } from '@camstack/types'
 import { deviceProviderCapability } from '@camstack/types'
 import type { AdoptionJobEngine } from './adoption-job-engine.js'
+import type { RoomStore } from './room-store.js'
 import type { BindingsDeps } from './device-bindings-store.js'
 import type { DeviceManagerSettings, DeviceMetaStore } from './device-meta-store.js'
 import type { FieldClaimsIndex } from './field-claims-index.js'
@@ -112,6 +113,14 @@ export interface ProviderHost {
  */
 export interface ProviderContext {
   readonly host: ProviderHost
+  /** The rooms and site zones, as records with an id (D1089). */
+  readonly rooms: RoomStore
+  /** The current name of tag `id`; `null` for an id with no record (D1089). */
+  /** Revalidate the tag-name copy when older than its window (the reader's freshness, D224). */
+  readonly freshTagNames: () => Promise<void>
+  readonly tagNameOf: (id: string) => string | null
+  /** Resolve tag names to ids through `ensureTag` (D1089). */
+  readonly ensureTagIds: (names: readonly string[]) => Promise<string[]>
   readonly metaStore: DeviceMetaStore
   readonly settings: DeviceManagerSettings
   /** Hub-process device registry (null when this node owns no registry). */

@@ -128,9 +128,17 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   // The template alias (D1021): entity_id style, unique cluster-wide, generated once.
   { name: 'alias', type: 'TEXT' },
   { name: 'userNamed', type: 'BOOLEAN' },
+  // Legacy room label (D1089): written by nobody any more, cleared by the
+  // `rooms-as-records` migration. A reader derives `meta.location` from `locationId`.
   { name: 'location', type: 'TEXT' },
-  // Operator tags (D1054): a JSON array of names, absent = none.
+  // The room (D1089): the id of a `rooms` record. Nullable TEXT: an additive ALTER.
+  { name: 'locationId', type: 'TEXT' },
+  // Operator tags (D1054): a JSON array of names, absent = none. After D1089 these
+  // are the KEPT names the tag migration leaves beside `tagIds`; nobody writes them.
   { name: 'tags', type: 'JSON' },
+  // The tag ids (D1089), index-aligned with the kept `tags` names until the later
+  // migration drops them. Nullable JSON: an additive ALTER.
+  { name: 'tagIds', type: 'JSON' },
   { name: 'disabled', type: 'BOOLEAN', notNull: true, defaultValue: false },
   { name: 'parentDeviceId', type: 'INTEGER' },
   { name: 'registered', type: 'BOOLEAN', notNull: true, defaultValue: false },
@@ -214,6 +222,7 @@ export interface DeviceRowBackend {
   query(input: {
     collection: string
     filter?: QueryFilter
+    columns?: readonly string[]
   }): Promise<readonly SettingsRecord<Record<string, unknown>>[]>
   updateWhere(input: {
     collection: string
@@ -258,8 +267,10 @@ export interface DeviceRowPatch {
   /** The template alias (D1021) — written by the first-registration stamp, `setAlias` and the backfill. */
   readonly alias?: string
   readonly userNamed?: boolean
-  readonly location?: string | null
-  readonly tags?: readonly string[] | null
+  /** The room (D1089). There is no `location` patch: the name is derived. */
+  readonly locationId?: string | null
+  /** The tag ids (D1089). */
+  readonly tagIds?: readonly string[] | null
   readonly disabled?: boolean
   readonly parentDeviceId?: number | null
   readonly registered?: boolean
@@ -301,7 +312,7 @@ export interface DeviceRegistrationRow {
   readonly type: string
   readonly name: string
   readonly userNamed: boolean
-  readonly location: string | null
+  readonly locationId: string | null
   readonly disabled: boolean
   readonly parentDeviceId: number | null
   readonly registered: boolean
@@ -334,13 +345,21 @@ interface SwapPlan {
  */
 function inheritedRoomPatch(
   child: DeviceRow,
-  oldParentRoom: string | null,
-  newParentRoom: string | null,
-): Pick<DeviceRowPatch, 'location'> {
-  if (child.meta.location !== oldParentRoom) return {}
-  if (oldParentRoom === newParentRoom) return {}
-  return { location: newParentRoom }
+  oldParentRoom: string | null | undefined,
+  newParentRoom: string | null | undefined,
+): Pick<DeviceRowPatch, 'locationId'> {
+  if ((child.meta.locationId ?? null) !== (oldParentRoom ?? null)) return {}
+  if ((oldParentRoom ?? null) === (newParentRoom ?? null)) return {}
+  return { locationId: newParentRoom ?? null }
 }
+
+/** Resolves the derived name fields (D1089). An unknown id answers `null`. */
+export interface DerivedNames {
+  readonly room: (id: string | null | undefined) => string | null
+  readonly tag: (id: string) => string | null
+}
+
+const NO_DERIVED_NAMES: DerivedNames = { room: () => null, tag: () => null }
 
 // ── Row decoding ──────────────────────────────────────────────────────────
 
@@ -380,7 +399,10 @@ function readStringArray(value: unknown): readonly string[] | undefined {
  * `name`). A row like that cannot be projected into a `DeviceInfo` and taking
  * the whole fleet read down for it would be worse — the caller logs the skip.
  */
-export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null {
+export function decodeDeviceRow(
+  data: Record<string, unknown>,
+  names: DerivedNames = NO_DERIVED_NAMES,
+): DeviceRow | null {
   const deviceId = readNumber(data['deviceId'])
   const addonId = readString(data['addonId'])
   const stableId = readString(data['stableId'])
@@ -400,8 +422,19 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     return null
   }
 
-  const location = readString(data['location'])
-  const tags = readStringArray(data['tags'])
+  const locationId = readString(data['locationId'])
+  const keptTags = readStringArray(data['tags'])
+  const tagIds = readStringArray(data['tagIds'])
+  // D1089: the room name and the tag names are DERIVED, never stored beside the id.
+  // An id with no record reads as unset; a tag id with no record reads as the kept
+  // name at the same index (the tag migration keeps them aligned) until it is dropped.
+  const tags =
+    tagIds === undefined
+      ? keptTags
+      : tagIds.flatMap((id, i) => {
+          const name = names.tag(id) ?? keptTags?.[i]
+          return name === undefined ? [] : [name]
+        })
   const parentDeviceId = readNumber(data['parentDeviceId'])
   const userNamed = readBoolean(data['userNamed'])
   const features = readStringArray(data['features'])
@@ -432,8 +465,10 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     stableId,
     type,
     name,
-    location: location ?? null,
+    location: names.room(locationId ?? null),
+    locationId: locationId ?? null,
     ...(tags !== undefined && tags.length > 0 ? { tags: [...tags] } : {}),
+    ...(tagIds !== undefined && tagIds.length > 0 ? { tagIds: [...tagIds] } : {}),
     disabled: readBoolean(data['disabled']) ?? false,
     parentDeviceId: parentDeviceId ?? null,
     ...(alias !== undefined ? { alias } : {}),
@@ -493,8 +528,8 @@ export function encodeDeviceRow(
     name: meta.name,
     alias: meta.alias ?? null,
     userNamed: meta.userNamed ?? null,
-    location: meta.location,
-    tags: meta.tags === undefined || meta.tags.length === 0 ? null : [...meta.tags],
+    locationId: meta.locationId,
+    tagIds: meta.tagIds === undefined || meta.tagIds.length === 0 ? null : [...meta.tagIds],
     disabled: meta.disabled,
     parentDeviceId: meta.parentDeviceId,
     registered: extra.registered ?? false,
@@ -536,6 +571,14 @@ export function encodeDeviceRowPatch(patch: DeviceRowPatch): Record<string, unkn
  */
 export class DeviceRowStore {
   private declared: Promise<void> | null = null
+
+  /** Where `meta.location` / `meta.tags` get their names (D1089); set once the records are read. */
+  private names: DerivedNames = NO_DERIVED_NAMES
+
+  /** Wire the room and tag name lookups the decoder derives `location` / `tags` from. */
+  setDerivedNames(names: DerivedNames): void {
+    this.names = names
+  }
 
   /** Call-site attribution for fleet reads. Armed only by
    *  `CAMSTACK_FLEET_READ_CENSUS_MS`; see `fleet-read-census.ts`. */
@@ -603,7 +646,7 @@ export class DeviceRowStore {
       key: String(deviceId),
     })
     if (!isPlainObject(raw)) return null
-    const decoded = decodeDeviceRow(raw)
+    const decoded = decodeDeviceRow(raw, this.names)
     if (decoded === null) {
       this.logger.warn('device row skipped — identity fields missing', { tags: { deviceId } })
       return null
@@ -810,6 +853,20 @@ export class DeviceRowStore {
     return this.backend.count({ collection: DEVICE_ROWS_COLLECTION })
   }
 
+  /**
+   * The named columns of EVERY row, raw: no decode, no derived names. The migrations read the
+   * legacy `location` and the kept `tags` this way, because the decoded row no longer shows them.
+   */
+  async readRawColumns(columns: readonly string[]): Promise<readonly Record<string, unknown>[]> {
+    await this.declare()
+    const records = await this.backend.query({
+      collection: DEVICE_ROWS_COLLECTION,
+      filter: {},
+      columns,
+    })
+    return records.map((record) => record.data)
+  }
+
   private async list(
     filter: QueryFilter,
     columns?: readonly string[],
@@ -846,7 +903,7 @@ export class DeviceRowStore {
     this.census.record(site, records.length)
     const out: DeviceRow[] = []
     for (const record of records) {
-      const decoded = decodeDeviceRow(record.data)
+      const decoded = decodeDeviceRow(record.data, this.names)
       if (decoded === null) {
         // A skipped row is a device that disappears from every listing. Silence
         // here reads as "the device was removed", which is the one thing it is not.
@@ -923,7 +980,7 @@ export class DeviceRowStore {
         type: row.type,
         name: row.name,
         userNamed: row.userNamed,
-        location: row.location,
+        locationId: row.locationId,
         disabled: row.disabled,
         parentDeviceId: row.parentDeviceId,
         registered: row.registered,
@@ -991,9 +1048,9 @@ export class DeviceRowStore {
     // the row follows the hardware. `moveRow` carries `meta.location` with the
     // row, so each landing row is rewritten with the room its number had.
     await this.moveRow(rowA, tempId)
-    await this.moveRow({ ...rowB, meta: { ...rowB.meta, location: rowA.meta.location } }, a)
+    await this.moveRow({ ...rowB, meta: { ...rowB.meta, locationId: rowA.meta.locationId } }, a)
     await this.moveRow(
-      { ...rowA, meta: { ...rowA.meta, id: tempId, location: rowB.meta.location } },
+      { ...rowA, meta: { ...rowA.meta, id: tempId, locationId: rowB.meta.locationId } },
       b,
     )
 
@@ -1003,13 +1060,13 @@ export class DeviceRowStore {
     for (const child of childrenOfA) {
       await this.patch(child.meta.id, {
         parentDeviceId: b,
-        ...inheritedRoomPatch(child, rowA.meta.location, rowB.meta.location),
+        ...inheritedRoomPatch(child, rowA.meta.locationId, rowB.meta.locationId),
       })
     }
     for (const child of childrenOfB) {
       await this.patch(child.meta.id, {
         parentDeviceId: a,
-        ...inheritedRoomPatch(child, rowB.meta.location, rowA.meta.location),
+        ...inheritedRoomPatch(child, rowB.meta.locationId, rowA.meta.locationId),
       })
     }
 

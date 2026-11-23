@@ -1,7 +1,7 @@
 ---
 id: D1089
 title: A room and a tag are records with an id; everything else references the id
-status: proposed
+status: accepted
 date: 2026-11-22
 supersedes: D1054
 applies-to:

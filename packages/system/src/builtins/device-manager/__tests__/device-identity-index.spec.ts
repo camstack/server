@@ -250,7 +250,7 @@ describe('DeviceIdentityIndex — maintained from the row writes', () => {
       type: 'camera',
       name: 'New',
       userNamed: false,
-      location: null,
+      locationId: null,
       disabled: false,
       parentDeviceId: null,
       registered: true,

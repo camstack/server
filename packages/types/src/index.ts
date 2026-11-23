@@ -522,6 +522,7 @@ export {
   TagColorIdSchema,
   TagNameSchema,
   TagStyleSchema,
+  TagIdsFieldSchema,
   TagsFieldSchema,
   defaultTagColorId,
   normalizeTags,
@@ -3137,3 +3138,7 @@ export {
   OnForSpecSchema,
   onForActionOf,
 } from './automation/index.js'
+
+// D1089 - rooms, tags and zones are records with an id.
+export * from './entities/entity-id.js'
+export * from './entities/entities.js'

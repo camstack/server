@@ -5,7 +5,10 @@ import {
   ActionMinDelaySecSchema,
   ActionStepSchema,
   ActionVariableSchema,
+  TagIdsFieldSchema,
   TagsFieldSchema,
+  TagBodySchema,
+  type TagBody,
   TagStyleSchema,
   type TagStyle,
   type Scheduler,
@@ -71,6 +74,7 @@ export type ActionRowBody = {
   readonly variables?: z.infer<typeof ActionVariableSchema>[]
   readonly minDelaySec?: number
   readonly tags?: string[]
+  readonly tagIds?: string[]
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -80,6 +84,7 @@ export const ActionRowBodySchema: z.ZodType<ActionRowBody> = z.object({
   variables: z.array(ActionVariableSchema).max(20).optional(),
   minDelaySec: ActionMinDelaySecSchema.optional(),
   tags: TagsFieldSchema.optional(),
+  tagIds: TagIdsFieldSchema.optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
@@ -112,6 +117,7 @@ export type TemplateRowBody = {
   readonly name: string
   readonly payload: unknown
   readonly tags?: string[]
+  readonly tagIds?: string[]
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -120,6 +126,7 @@ export const TemplateRowBodySchema: z.ZodType<TemplateRowBody> = z.object({
   name: z.string().min(1).max(120),
   payload: z.unknown(),
   tags: TagsFieldSchema.optional(),
+  tagIds: TagIdsFieldSchema.optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
@@ -131,6 +138,13 @@ export const TemplateRowBodySchema: z.ZodType<TemplateRowBody> = z.object({
  */
 export type TagStyleRowBody = TagStyle
 export const TagStyleRowBodySchema: z.ZodType<TagStyleRowBody> = TagStyleSchema
+
+/**
+ * A tag (D1089): a record with an opaque id, carrying its name, colour, icon and
+ * description. Every owner references the id, so a rename is ONE write here.
+ */
+export type TagRowBody = TagBody
+export const TagRowBodySchema: z.ZodType<TagRowBody> = TagBodySchema
 
 /**
  * A pending timed run (D993): the device is on and the hub owes it an off at
@@ -231,13 +245,21 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     retention: { none: 'operator delete only; a template a device still uses is refused' },
     maxDataBytes: 256 * 1024,
   },
+  tags: {
+    schema: TagRowBodySchema,
+    class: 'config',
+    writeTrigger: 'ensureTag / updateTag / deleteTag, and the tags-as-records migration (D1089)',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'operator action only: deleting the tag' },
+  },
   'tag-styles': {
     schema: TagStyleRowBodySchema,
     class: 'config',
-    writeTrigger: 'the operator styles a tag (setStyle); a rename moves it; a remove deletes it',
+    writeTrigger: 'legacy only — the tags-as-records migration reads then deletes rows (D1089)',
     device: 'none',
     at: 'none',
-    retention: { none: 'operator action only: removing or renaming the tag' },
+    retention: { none: 'rows deleted by the tags-as-records migration' },
   },
   settings: {
     schema: CoreBlockSettingsBodySchema,
@@ -258,6 +280,7 @@ export type CoreBlocksRecordKindsMap = {
   readonly 'scheduler-state': DefinedRecordKind<z.ZodType<SchedulerStateRowBody>>
   readonly 'action-links': DefinedRecordKind<z.ZodType<ActionLinksRowBody>>
   readonly templates: DefinedRecordKind<z.ZodType<TemplateRowBody>>
+  readonly tags: DefinedRecordKind<z.ZodType<TagRowBody>>
   readonly 'tag-styles': DefinedRecordKind<z.ZodType<TagStyleRowBody>>
   readonly settings: DefinedRecordKind<z.ZodType<CoreBlockSettingsBody>>
 }

@@ -40,6 +40,7 @@ import { DeviceIdentifierKeySchema, DeviceIdentifiersSchema } from '../device/de
 import { IdentityCandidatesSchema } from '../device/device-identity-candidates.js'
 import { IdentityLinkDecisionSchema, IdentityLinksReadSchema } from '../device/identity-links.js'
 import { TagsFieldSchema } from '../tags/tag.js'
+import { RoomNameSchema, RoomPatchSchema, RoomSchema } from '../entities/entities.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
 import { AdoptionJobSchema } from '../interfaces/adoption-job.js'
@@ -145,8 +146,12 @@ export const DeviceInfoSchema = z.object({
   alias: DeviceAliasSchema.optional(),
   /** Operator-organisational location label. `null` when unset. */
   location: z.string().nullable(),
+  /** The room id (D1089); `location` is its current name, DERIVED and read-only. */
+  locationId: z.string().nullable().optional(),
   /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is their current names, DERIVED and read-only. */
+  tagIds: z.array(z.string()).optional(),
   /** Soft-disabled flag. */
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
@@ -356,8 +361,12 @@ export const SavedDeviceRowSchema = z.object({
   name: z.string(),
   /** Operator-organisational location label. `null` when unset. */
   location: z.string().nullable(),
+  /** The room id (D1089); `location` is its current name, DERIVED and read-only. */
+  locationId: z.string().nullable().optional(),
   /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is their current names, DERIVED and read-only. */
+  tagIds: z.array(z.string()).optional(),
   /** Soft-disabled flag. */
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
@@ -381,8 +390,12 @@ export const DeviceMetaSchema = z.object({
    *  `DeviceMeta.userNamed`. */
   userNamed: z.boolean().optional(),
   location: z.string().nullable(),
+  /** The room (D1089): `location` is its current name, DERIVED. `null` when unset or unknown. */
+  locationId: z.string().nullable().optional(),
   /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is their current names, DERIVED and read-only. */
+  tagIds: z.array(z.string()).optional(),
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -805,7 +818,13 @@ export const deviceManagerCapability = {
     /** Update the operator-organisational location label. `null`
      *  clears it. */
     setLocation: method(
-      z.object({ deviceId: z.number(), location: z.string().nullable() }),
+      z.object({
+        deviceId: z.number(),
+        /** The room by TEXT: accepted for one release, resolved through `ensureRoom` (D1089). */
+        location: z.string().nullable().optional(),
+        /** The room by id (D1089); wins over `location`. `null` clears it. */
+        locationId: z.string().nullable().optional(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -814,10 +833,17 @@ export const deviceManagerCapability = {
      *  on write (trimmed, deduplicated case-insensitively); `[]` clears them.
      *  Tags are not inherited: unlike `setLocation`, nothing cascades to
      *  descendants. */
-    setTags: method(z.object({ deviceId: z.number(), tags: TagsFieldSchema }), z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
+    setTags: method(
+      z.object({
+        deviceId: z.number(),
+        /** Tags by TEXT: accepted for one release, resolved through `ensureTag` (D1089). */
+        tags: TagsFieldSchema.optional(),
+        /** Tags by id (D1089); wins over `tags`. */
+        tagIds: z.array(z.string()).max(20).optional(),
+      }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
 
     /** Update the device type. Writes the meta row, emits a
      *  `DeviceMetaChanged` event. Used by the kernel to apply
@@ -984,7 +1010,9 @@ export const deviceManagerCapability = {
         deviceId: z.number(),
         name: z.string().optional(),
         location: z.string().nullable().optional(),
+        locationId: z.string().nullable().optional(),
         tags: TagsFieldSchema.optional(),
+        tagIds: z.array(z.string()).max(20).optional(),
         type: z.enum(DeviceType).optional(),
         integrationId: z.string().optional(),
         linkDeviceId: z.number().nullable().optional(),
@@ -1103,6 +1131,33 @@ export const deviceManagerCapability = {
      *  when the link is unknown (`unknown-link`), not dismissed (`wrong-state`),
      *  or its devices no longer declare the pair (`evidence-gone`). */
     relinkIdentity: method(z.object({ linkId: z.string().min(1) }), IdentityLinkDecisionSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+
+    /** Create the room named `name`, or return the one that has it (trimmed,
+     *  case-insensitive): the "type a new name in the picker" flow is one call
+     *  (D1089). A new room gets a random id. */
+    ensureRoom: method(z.object({ name: RoomNameSchema }), RoomSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+
+    /** Every room record, sorted by `order` then name. A room with no device is listed. */
+    listRooms: method(z.void(), z.array(RoomSchema), { role: 'viewer' }),
+
+    /** ONE write to ONE record: rename, restyle, describe, move to a zone. A field
+     *  left out is kept, `null` clears it. A rename onto the name another room
+     *  has is refused (`room-name-taken`); merge by moving devices instead. No
+     *  device is rewritten. Unknown id is refused (`room-not-found`). */
+    updateRoom: method(z.object({ id: z.string().min(1), patch: RoomPatchSchema }), RoomSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+
+    /** Delete a room and clear every reference to it in one server operation:
+     *  its devices read as having no room. Idempotent. */
+    deleteRoom: method(z.object({ id: z.string().min(1) }), z.object({ cleared: z.number() }), {
       kind: 'mutation',
       auth: 'admin',
     }),

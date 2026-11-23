@@ -24,6 +24,8 @@
  *   - live operations previously served by `device-management.router.ts`
  */
 
+import { ADDON_MIGRATIONS as DEVICE_MANAGER_MIGRATIONS } from './migrations/index.js'
+import { deviceManagerMigrationPorts } from './migrations/ports.js'
 import { randomUUID } from 'node:crypto'
 import type {
   DeviceBindingEntry,
@@ -34,6 +36,7 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
+  defineAddonMigrations,
   deviceManagerCapability,
   deviceProviderCapability,
   deviceExtensionCapability,
@@ -85,6 +88,9 @@ import { FeatureDeriver, subscribeFeatureDeriver } from './feature-deriver.js'
 import { createDeviceManagerExtensionProvider } from './device-extension-linked-slot.js'
 import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices.js'
 import * as metaActions from './device-meta-actions.js'
+import * as roomActions from './room-actions.js'
+import { RoomStore } from './room-store.js'
+import { TagNames } from './tag-names.js'
 import { setAttachedIdentifiers, setIdentifiers } from './device-identifiers-action.js'
 import { IdentityLinkReconciler } from './identity-link-reconciler.js'
 import { IdentityLinksStore } from './identity-links-store.js'
@@ -554,6 +560,8 @@ export class DeviceManagerAddon extends BaseAddon {
             return new Map<string, string>()
           }
         },
+        // A location filter value that is a room id is searched under that room's name (D1089).
+        roomNameOf: (value) => pctx.rooms.nameOf(value),
         logger: this.ctx.logger,
       },
       input,
@@ -719,6 +727,34 @@ export class DeviceManagerAddon extends BaseAddon {
       throw new Error('[device-manager] ctx.records is required on the hub')
     }
     await records.declare(deviceManagerRecordKinds)
+    // Rooms, zones and tag ids become records BEFORE the first read resolves a name (D1089).
+    await this.runMigrations(
+      defineAddonMigrations(
+        DEVICE_MANAGER_MIGRATIONS,
+        deviceManagerMigrationPorts({
+          readStoredKey: (key) => this.readStoredGlobalKey(key),
+          rows: deviceRows,
+          rooms: records.kind(deviceManagerRecordKinds.rooms),
+          zones: records.kind(deviceManagerRecordKinds.zones),
+        }),
+      ),
+    )
+    const rooms = RoomStore.of(records)
+    await rooms.load()
+    const tagApi = this.ctx.api?.tags
+    const tagNames = new TagNames(
+      tagApi === undefined
+        ? null
+        : {
+            list: () => tagApi.listTags.query({}),
+            ensure: (name) => tagApi.ensureTag.mutate({ name }),
+          },
+      this.ctx.logger.child('tag-names'),
+    )
+    deviceRows.setDerivedNames({
+      room: (id) => rooms.nameOf(id),
+      tag: (id) => tagNames.nameOf(id),
+    })
     const tombstones = DeviceTombstoneStore.of(records, this.ctx.logger.child('tombstones'))
     // Identity links (D1063): read once, then kept by the reconciler, which
     // runs after the seed below and on every identity change the index reports.
@@ -891,6 +927,10 @@ export class DeviceManagerAddon extends BaseAddon {
     const templates = this.makeTemplateActions()
     const pctx: ProviderContext = {
       host: this.providerHost,
+      rooms,
+      freshTagNames: () => tagNames.fresh(),
+      tagNameOf: (id) => tagNames.nameOf(id),
+      ensureTagIds: (names) => tagNames.ensureIds(names),
       metaStore,
       settings,
       registry,
@@ -1035,19 +1075,23 @@ export class DeviceManagerAddon extends BaseAddon {
       setMetadata: (input) => metaActions.setMetadata(pctx, input),
       setDisabled: (input) => metaActions.setDisabled(pctx, input),
       loadRuntimeState: (input) => metaActions.loadRuntimeState(pctx, input),
-      listLocations: () => metaActions.listLocations(pctx),
-      addLocation: (input) => metaActions.addLocation(pctx, input),
-      removeLocation: (input) => metaActions.removeLocation(pctx, input),
-      renameLocation: (input) => metaActions.renameLocation(pctx, input),
-      listLocationIcons: () => metaActions.listLocationIcons(pctx),
-      setLocationIcon: (input) => metaActions.setLocationIcon(pctx, input),
-      listLocationDescriptions: () => metaActions.listLocationDescriptions(pctx),
-      setLocationDescription: (input) => metaActions.setLocationDescription(pctx, input),
-      listSiteZones: () => metaActions.listSiteZones(pctx),
-      setSiteZone: (input) => metaActions.setSiteZone(pctx, input),
-      removeSiteZone: (input) => metaActions.removeSiteZone(pctx, input),
-      renameSiteZone: (input) => metaActions.renameSiteZone(pctx, input),
-      setLocationZone: (input) => metaActions.setLocationZone(pctx, input),
+      ensureRoom: (input) => roomActions.ensureRoom(pctx, input),
+      listRooms: () => roomActions.listRooms(pctx),
+      updateRoom: (input) => roomActions.updateRoom(pctx, input),
+      deleteRoom: (input) => roomActions.deleteRoom(pctx, input),
+      listLocations: () => roomActions.listLocations(pctx),
+      addLocation: (input) => roomActions.addLocation(pctx, input),
+      removeLocation: (input) => roomActions.removeLocation(pctx, input),
+      renameLocation: (input) => roomActions.renameLocation(pctx, input),
+      listLocationIcons: () => roomActions.listLocationIcons(pctx),
+      setLocationIcon: (input) => roomActions.setLocationIcon(pctx, input),
+      listLocationDescriptions: () => roomActions.listLocationDescriptions(pctx),
+      setLocationDescription: (input) => roomActions.setLocationDescription(pctx, input),
+      listSiteZones: () => roomActions.listSiteZones(pctx),
+      setSiteZone: (input) => roomActions.setSiteZone(pctx, input),
+      removeSiteZone: (input) => roomActions.removeSiteZone(pctx, input),
+      renameSiteZone: (input) => roomActions.renameSiteZone(pctx, input),
+      setLocationZone: (input) => roomActions.setLocationZone(pctx, input),
 
       // ── Queries + live runtime + provider/adoption ops (see device-queries.ts) ─
       // Thin delegators over the extracted query/live functions.

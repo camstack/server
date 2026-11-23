@@ -13,6 +13,7 @@
  *   - the pure resolver core
  */
 
+import { roomNameOf } from './room-name-of.js'
 import type {
   AddonContext,
   IDevice,
@@ -43,7 +44,7 @@ import {
 } from '../device-linked-devices.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import type { FakeSettingsStore } from './settings-store-api.js'
-import { makeSettingsStoreApi, readDeviceRow } from './settings-store-api.js'
+import { makeSettingsStoreApi } from './settings-store-api.js'
 
 let fakeIdSeq = 900
 
@@ -338,9 +339,9 @@ describe('setLocation cascade to descendants', () => {
     emit.mockClear()
     await h.provider.setLocation({ deviceId: container.id, location: 'front door' })
 
-    expect((await readDeviceRow(h.store, container.id)).location).toBe('front door')
-    expect((await readDeviceRow(h.store, child.id)).location).toBe('front door')
-    expect((await readDeviceRow(h.store, grandchild.id)).location).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, container.id)).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, child.id)).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, grandchild.id)).toBe('front door')
 
     // One event for the container + one per cascaded descendant — never
     // silent, so the auto-link consumer (and anything else subscribed) can
@@ -369,7 +370,7 @@ describe('setLocation cascade to descendants', () => {
 
     await h.provider.setLocation({ deviceId: container.id, location: 'front door' })
 
-    expect((await readDeviceRow(h.store, relocatedChild.id)).location).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, relocatedChild.id)).toBe('front door')
   })
 
   it('a NON-container parent (a camera) cascades exactly like a container — the accessories follow', async () => {
@@ -385,9 +386,9 @@ describe('setLocation cascade to descendants', () => {
     emit.mockClear()
     await h.provider.setLocation({ deviceId: parent.id, location: 'garden' })
 
-    expect((await readDeviceRow(h.store, parent.id)).location).toBe('garden')
-    expect((await readDeviceRow(h.store, child.id)).location).toBe('garden')
-    expect((await readDeviceRow(h.store, grandchild.id)).location).toBe('garden')
+    expect(await roomNameOf(h.provider, h.store, parent.id)).toBe('garden')
+    expect(await roomNameOf(h.provider, h.store, child.id)).toBe('garden')
+    expect(await roomNameOf(h.provider, h.store, grandchild.id)).toBe('garden')
 
     // Same one-event-per-written-row contract as the container path — a
     // cascade the consumers cannot see is a cascade that did not happen.
@@ -413,11 +414,11 @@ describe('setLocation cascade to descendants', () => {
       parentDeviceId: cam.id,
       location: 'kitchen',
     })
-    expect((await readDeviceRow(h.store, accessory.id)).location).toBe('kitchen')
+    expect(await roomNameOf(h.provider, h.store, accessory.id)).toBe('kitchen')
 
     await h.provider.setLocation({ deviceId: cam.id, location: 'front door' })
 
-    expect((await readDeviceRow(h.store, accessory.id)).location).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, accessory.id)).toBe('front door')
   })
 
   it('a leaf device with NO children is still a single row — nothing to cascade to', async () => {
@@ -429,10 +430,10 @@ describe('setLocation cascade to descendants', () => {
 
     await h.provider.setLocation({ deviceId: lonely.id, location: 'garden' })
 
-    expect((await readDeviceRow(h.store, lonely.id)).location).toBe('garden')
+    expect(await roomNameOf(h.provider, h.store, lonely.id)).toBe('garden')
     // Removing the type predicate must not turn the cascade into a fleet-wide
     // write: only DESCENDANTS move.
-    expect((await readDeviceRow(h.store, unrelated.id)).location).toBeNull()
+    expect(await roomNameOf(h.provider, h.store, unrelated.id)).toBeNull()
   })
 
   it('a cascade write failure is surfaced, not silent: succeeding descendants still land and the failure is logged against the PARENT', async () => {
@@ -460,9 +461,9 @@ describe('setLocation cascade to descendants', () => {
     await h.provider.setLocation({ deviceId: container.id, location: 'front door' })
 
     // The good sibling still landed — one failing row does not abort the rest.
-    expect((await readDeviceRow(h.store, goodChild.id)).location).toBe('front door')
+    expect(await roomNameOf(h.provider, h.store, goodChild.id)).toBe('front door')
     // The bad sibling did NOT land — it stayed at its pre-cascade (null) value.
-    expect((await readDeviceRow(h.store, badChild.id)).location).toBeNull()
+    expect(await roomNameOf(h.provider, h.store, badChild.id)).toBeNull()
     // The failure is surfaced via the logger, tagged on the PARENT (the
     // device the operator actually acted on) — never indistinguishable from
     // a clean cascade.

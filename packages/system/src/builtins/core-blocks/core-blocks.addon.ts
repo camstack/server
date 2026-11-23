@@ -60,6 +60,8 @@ import {
   ADDON_MIGRATIONS,
   coreBlocksMigrationPorts,
   remoteMigrationPortsOver,
+  tagIdsPortsOver,
+  tagsAsRecordsPortsOver,
 } from './migrations/index.js'
 import type { RemoteDeviceStores } from './migrations/remote-config-migrations.js'
 import { isRecord, parseConfirmedStateChanged } from '../shared/device-state-changed.js'
@@ -117,7 +119,7 @@ import { readComposedDeviceNames, writeComposedDeviceName } from './sync-compose
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
-import { buildTagsService } from './tags-wiring.js'
+import { buildTagsService, devicesPort, notificationRulesPort } from './tags-wiring.js'
 import type { TagsService } from './tags-service.js'
 import { extractSettingsSchema } from './extract-settings-schema.js'
 
@@ -201,8 +203,32 @@ export class CoreBlocksAddon extends BaseAddon {
     this.blocksInstances = buildBlocksInstances(records)
     // Stored compositions take the shape the current caps validate BEFORE the store loads
     // them: a fountain still carrying its pump cycle on `pet-fountain` would not build.
+    const migrationLogger = this.ctx.logger.child('migrations')
+    const tagIdsPorts = tagIdsPortsOver(
+      {
+        blocks: records.kind(coreBlocksRecordKinds.blocks),
+        schedulers: records.kind(coreBlocksRecordKinds.schedulers),
+        templates: records.kind(coreBlocksRecordKinds.templates),
+        actions: records.kind(coreBlocksRecordKinds.actions),
+      },
+      migrationLogger,
+    )
+    const api = (): AddonApi | undefined => this.ctx.api
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
+        ...tagIdsPorts,
+        ...tagsAsRecordsPortsOver({
+          tagIds: tagIdsPorts,
+          // The device manager and the notification rules: read over the API, best effort.
+          external: async () =>
+            [
+              ...(await devicesPort(api).list()),
+              ...(await notificationRulesPort(api).list()),
+            ].flatMap((owner) => owner.tags),
+          styles: records.kind(coreBlocksRecordKinds['tag-styles']),
+          tags: records.kind(coreBlocksRecordKinds.tags),
+          logger: migrationLogger,
+        }),
         ...coreBlocksMigrationPorts(
           records.kind(coreBlocksRecordKinds.blocks),
           this.ctx.logger.child('migrations'),

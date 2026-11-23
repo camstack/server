@@ -136,6 +136,7 @@ export async function listAll(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['listAll']>[0],
 ): ReturnType<IDeviceManagerProvider['listAll']> {
+  await pctx.freshTagNames()
   // An owner filter that is PRESENT but is not an addon id is refused, never
   // widened to "everything".
   //
@@ -359,6 +360,7 @@ export async function getDevice(
   input: Parameters<IDeviceManagerProvider['getDevice']>[0],
 ): ReturnType<IDeviceManagerProvider['getDevice']> {
   const { deviceId } = input
+  await pctx.freshTagNames()
 
   // Prefer live (hub-registry) when present; otherwise fall back to
   // persisted metadata so we also find devices owned by forked workers.

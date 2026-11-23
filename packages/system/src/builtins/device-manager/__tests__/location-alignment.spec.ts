@@ -25,6 +25,8 @@
  *      never match — a branch that drops work says so.
  */
 
+import { type FakeTagsApi, makeFakeTagsApi } from './fake-tags-api.js'
+import type { RecordsAccess } from '@camstack/types'
 import type {
   AddonContext,
   IDeviceManagerProvider,
@@ -40,7 +42,8 @@ import type { PersistedDeviceMeta } from '../device-meta-types.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import { LOCATION_BACKFILL_MARKER_KEY, planNullLocationFills } from '../location-alignment.js'
 import type { FakeSettingsStore } from './settings-store-api.js'
-import { makeSettingsStoreApi, readDeviceRow } from './settings-store-api.js'
+import { roomNameOf } from './room-name-of.js'
+import { makeSettingsStoreApi } from './settings-store-api.js'
 
 let idSeq = 7000
 
@@ -91,6 +94,9 @@ function makeSettings() {
 interface PersistentState {
   readonly store: FakeSettingsStore
   readonly settings: ReturnType<typeof makeSettings>
+  /** The room and tag records survive a reboot too (D1089). */
+  readonly records: RecordsAccess
+  readonly tags: FakeTagsApi
 }
 
 interface BootHandle {
@@ -109,6 +115,8 @@ async function boot(shared?: PersistentState): Promise<BootHandle> {
   const state: PersistentState = shared ?? {
     store: await makeSettingsStoreApi(),
     settings: makeSettings(),
+    records: await makeRecordsAccessForOwner('device-manager'),
+    tags: makeFakeTagsApi(),
   }
   const addon = new DeviceManagerAddon()
   const bus: IEventBus = {
@@ -117,9 +125,9 @@ async function boot(shared?: PersistentState): Promise<BootHandle> {
     getRecent: () => [],
   } as unknown as IEventBus
   const logger = makeLogger()
-  const records = await makeRecordsAccessForOwner('device-manager')
+  const records = state.records
   const ctx = {
-    api: { settingsStore: state.store.api },
+    api: { settingsStore: state.store.api, tags: state.tags },
     id: 'device-manager',
     logger,
     eventBus: bus,
@@ -167,15 +175,12 @@ async function register(
  * therefore its cascade — the exact persisted state of a container whose
  * location predates the cascade shipping (or whose cascade partially failed).
  */
-async function writeLocationRaw(
-  state: PersistentState,
-  deviceId: number,
-  location: string,
-): Promise<void> {
-  await state.store.backend.updateWhere({
+async function writeLocationRaw(h: BootHandle, deviceId: number, location: string): Promise<void> {
+  const room = await h.provider.ensureRoom({ name: location })
+  await h.state.store.backend.updateWhere({
     collection: 'device-manager:devices',
     filter: { where: { id: String(deviceId) } },
-    data: { location },
+    data: { locationId: room.id },
   })
 }
 
@@ -201,6 +206,8 @@ function meta(over: Partial<PersistedDeviceMeta> & { id: number }): PersistedDev
     addonId: 'test-addon',
     stableId: `s${over.id}`,
     location: null,
+    locationId:
+      over.location === undefined || over.location === null ? null : `room-${over.location}`,
     disabled: false,
     parentDeviceId: null,
     ...over,
@@ -216,7 +223,12 @@ describe('planNullLocationFills (pure)', () => {
     ]
     const plan = planNullLocationFills(rows)
     expect(plan.map((f) => f.id).sort((a, b) => a - b)).toEqual([2, 3])
-    expect(plan.every((f) => f.location === 'front door' && f.ancestorId === 1)).toBe(true)
+    expect(
+      plan.every(
+        (f) =>
+          f.location === 'front door' && f.locationId === 'room-front door' && f.ancestorId === 1,
+      ),
+    ).toBe(true)
   })
 
   it('prefers the NEAREST located ancestor over a farther one', () => {
@@ -226,7 +238,9 @@ describe('planNullLocationFills (pure)', () => {
       meta({ id: 3, parentDeviceId: 2 }),
     ]
     const plan = planNullLocationFills(rows)
-    expect(plan).toEqual([{ id: 3, location: 'kitchen', ancestorId: 2 }])
+    expect(plan).toEqual([
+      { id: 3, location: 'kitchen', locationId: 'room-kitchen', ancestorId: 2 },
+    ])
   })
 
   /**
@@ -281,7 +295,7 @@ describe('planNullLocationFills (pure)', () => {
       meta({ id: 4, parentDeviceId: 3 }),
     ]
     const plan = planNullLocationFills(rows)
-    expect(plan).toEqual([{ id: 4, location: 'garden', ancestorId: 3 }])
+    expect(plan).toEqual([{ id: 4, location: 'garden', locationId: 'room-garden', ancestorId: 3 }])
   })
 })
 
@@ -292,13 +306,13 @@ describe('boot backfill — one-shot repair of pre-cascade containers', () => {
     const childId = await register(h1, { type: 'lock', parentDeviceId: containerId })
     const grandchildId = await register(h1, { type: 'sensor', parentDeviceId: childId })
     // Legacy state: the container's location landed BEFORE the cascade shipped.
-    await writeLocationRaw(h1.state, containerId, 'front door')
+    await writeLocationRaw(h1, containerId, 'front door')
     await resetBackfillMarker(h1.state)
 
     const h2 = await boot(h1.state)
 
-    expect((await readDeviceRow(h2.state.store, childId)).location).toBe('front door')
-    expect((await readDeviceRow(h2.state.store, grandchildId)).location).toBe('front door')
+    expect(await roomNameOf(h2.provider, h2.state.store, childId)).toBe('front door')
+    expect(await roomNameOf(h2.provider, h2.state.store, grandchildId)).toBe('front door')
     // COALESCED: one `DeviceMetaChanged` per repaired ANCESTOR, never one per
     // row. The viewer invalidates its meta-sensitive queries on EVERY event of
     // this category (device-meta-invalidation.tsx, deliberately broad), so a
@@ -320,14 +334,14 @@ describe('boot backfill — one-shot repair of pre-cascade containers', () => {
     const camId = await register(h1, { type: 'camera', location: 'front door' })
     const containerId = await register(h1, { type: 'container' })
     const lockId = await register(h1, { type: 'lock', parentDeviceId: containerId })
-    await writeLocationRaw(h1.state, containerId, 'front door')
+    await writeLocationRaw(h1, containerId, 'front door')
     await resetBackfillMarker(h1.state)
 
     const h2 = await boot(h1.state)
     // D356: nothing links by location any more — what the cascade buys is
     // that the child carries the camera's location, so the picker SUGGESTS it.
-    expect((await readDeviceRow(h2.state.store, lockId)).location).toBe(
-      (await readDeviceRow(h2.state.store, camId)).location,
+    expect(await roomNameOf(h2.provider, h2.state.store, lockId)).toBe(
+      await roomNameOf(h2.provider, h2.state.store, camId),
     )
   })
 
@@ -339,12 +353,12 @@ describe('boot backfill — one-shot repair of pre-cascade containers', () => {
       parentDeviceId: containerId,
       location: 'kitchen',
     })
-    await writeLocationRaw(h1.state, containerId, 'front door')
+    await writeLocationRaw(h1, containerId, 'front door')
     await resetBackfillMarker(h1.state)
 
     const h2 = await boot(h1.state)
 
-    expect((await readDeviceRow(h2.state.store, relocatedId)).location).toBe('kitchen')
+    expect(await roomNameOf(h2.provider, h2.state.store, relocatedId)).toBe('kitchen')
   })
 
   it('runs ONCE: with the marker set, later misalignment is NOT rewritten — but IS warned about, every boot', async () => {
@@ -352,12 +366,12 @@ describe('boot backfill — one-shot repair of pre-cascade containers', () => {
     const containerId = await register(h1, { type: 'container' })
     const childId = await register(h1, { type: 'lock', parentDeviceId: containerId })
     // State re-entered AFTER the one-shot already ran (e.g. a partial cascade).
-    await writeLocationRaw(h1.state, containerId, 'front door')
+    await writeLocationRaw(h1, containerId, 'front door')
 
     const h2 = await boot(h1.state)
 
     // Not repaired — the one-shot must not fight an operator's later edits.
-    expect((await readDeviceRow(h2.state.store, childId)).location).toBeNull()
+    expect(await roomNameOf(h2.provider, h2.state.store, childId)).toBeNull()
     // But never silent: the detection names the ancestor to re-save.
     expect(h2.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining('misaligned'),
@@ -384,12 +398,12 @@ describe('boot backfill — one-shot repair of pre-cascade containers', () => {
     const h1 = await boot()
     const camId = await register(h1, { type: 'camera' })
     const sirenId = await register(h1, { type: 'siren', parentDeviceId: camId })
-    await writeLocationRaw(h1.state, camId, 'front door')
+    await writeLocationRaw(h1, camId, 'front door')
     await resetBackfillMarker(h1.state)
 
     const h2 = await boot(h1.state)
 
-    expect((await readDeviceRow(h2.state.store, sirenId)).location).toBeNull()
+    expect(await roomNameOf(h2.provider, h2.state.store, sirenId)).toBeNull()
     expect(h2.logger.warn).not.toHaveBeenCalledWith(
       expect.stringContaining('misaligned'),
       expect.anything(),
@@ -424,7 +438,7 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
 
     const childId = await register(h, { type: 'lock', parentDeviceId: containerId })
 
-    expect((await readDeviceRow(h.state.store, childId)).location).toBe('front door')
+    expect(await roomNameOf(h.provider, h.state.store, childId)).toBe('front door')
     const events = locationEventsOf(h.bus)
     expect(events).toContainEqual({ deviceId: childId, value: 'front door' })
   })
@@ -437,8 +451,8 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
     const lockId = await register(h, { type: 'lock', parentDeviceId: containerId })
 
     // D356: the picker suggests it by location; nothing links it on its own.
-    expect((await readDeviceRow(h.state.store, lockId)).location).toBe(
-      (await readDeviceRow(h.state.store, camId)).location,
+    expect(await roomNameOf(h.provider, h.state.store, lockId)).toBe(
+      await roomNameOf(h.provider, h.state.store, camId),
     )
   })
 
@@ -451,7 +465,7 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
     // No location stamped: a camera accessory with the room on its own column
     // would auto-link to every OTHER camera in the room (cross-camera noise);
     // its own camera needs no location to reach it.
-    expect((await readDeviceRow(h.state.store, sirenId)).location).toBeNull()
+    expect(await roomNameOf(h.provider, h.state.store, sirenId)).toBeNull()
     const result = await h.provider.getLinkedDevices({ deviceId: camId })
     expect(result.devices.map((d) => d.deviceId)).toContain(sirenId)
   })
@@ -473,7 +487,7 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
       config: {},
     })
 
-    expect((await readDeviceRow(h.state.store, childId)).location).toBe('kitchen')
+    expect(await roomNameOf(h.provider, h.state.store, childId)).toBe('kitchen')
   })
 
   it('out-of-order adoption: a middle parent registered after its own child pulls the ancestor location down to it', async () => {
@@ -482,7 +496,7 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
     // The leaf registers FIRST, naming a parent the ledger does not know yet.
     const middleId = idSeq++
     const leafId = await register(h, { type: 'sensor', parentDeviceId: middleId })
-    expect((await readDeviceRow(h.state.store, leafId)).location).toBeNull()
+    expect(await roomNameOf(h.provider, h.state.store, leafId)).toBeNull()
     // Now the middle container arrives, under the located grandparent.
     await h.provider.allocateDeviceId({ addonId: 'test-addon', stableId: `align-dev-${middleId}` })
     await h.provider.registerDevice({
@@ -496,7 +510,7 @@ describe('registerDevice — a later-adopted child inherits the located ancestor
       config: {},
     })
 
-    expect((await readDeviceRow(h.state.store, middleId)).location).toBe('garden')
-    expect((await readDeviceRow(h.state.store, leafId)).location).toBe('garden')
+    expect(await roomNameOf(h.provider, h.state.store, middleId)).toBe('garden')
+    expect(await roomNameOf(h.provider, h.state.store, leafId)).toBe('garden')
   })
 })

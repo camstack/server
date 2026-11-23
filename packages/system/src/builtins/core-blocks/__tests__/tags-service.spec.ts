@@ -8,12 +8,14 @@ import {
   type IconKey,
   normalizeTags,
   type RecordKindHandle,
+  type TagBody,
 } from '@camstack/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ActionsStore } from '../actions-store.js'
 import { coreBlocksRecordKinds, type TemplateRowBody } from '../record-kinds.js'
 import { SchedulersStore } from '../scheduler/scheduler-store.js'
 import { type TagOwnerPort, TagOwnerUnreachableError } from '../tags-service.js'
+import type { TagRecord } from '@camstack/types'
 import { buildTagsService, parseRuleTagOwnerId, ruleTagOwnerId } from '../tags-wiring.js'
 import { coreBlockRecordsHarness, recordingLogger } from './fixtures.js'
 import type { CoreBlockStore } from '../core-block-store.js'
@@ -24,12 +26,20 @@ const STAR: IconKey = 'star'
 interface FakeDevice {
   readonly id: number
   tags: string[]
+  tagIds?: string[]
   readonly mark: string
 }
 
 function fakeDevices(devices: FakeDevice[], failOn?: number): TagOwnerPort {
   return {
-    list: async () => devices.map((d) => ({ id: String(d.id), tags: d.tags })),
+    storage: 'ids',
+    list: async () =>
+      devices.map((d) => ({ id: String(d.id), tags: d.tags, tagIds: d.tagIds ?? [] })),
+    setTagIds: async (id, tagIds) => {
+      const device = devices.find((d) => d.id === Number(id))
+      if (device === undefined) throw new Error('unknown device')
+      device.tagIds = tagIds
+    },
     setTags: async (id, tags) => {
       if (failOn !== undefined && Number(id) === failOn) throw new Error('device manager refused')
       const device = devices.find((d) => d.id === Number(id))
@@ -52,9 +62,13 @@ interface FakeRule {
  */
 function fakeRules(rules: FakeRule[], unreachable = false): TagOwnerPort {
   return {
+    storage: 'names',
     list: async () => {
       if (unreachable) throw new Error('provider not available: notificationRules')
-      return rules.map((r) => ({ id: r.id, tags: r.tags }))
+      return rules.map((r) => ({ id: r.id, tags: r.tags, tagIds: [] }))
+    },
+    setTagIds: async () => {
+      throw new Error('a notification rule carries names only')
     },
     setTags: async (id, tags) => {
       const rule = rules.find((r) => r.id === id)
@@ -72,9 +86,7 @@ interface World {
   readonly templates: RecordKindHandle<TemplateRowBody>
   readonly devices: FakeDevice[]
   readonly rules: FakeRule[]
-  readonly styles: {
-    get(id: string): Promise<{ data: { name: string; color: string; icon: string } } | null>
-  }
+  readonly styles: RecordKindHandle<TagBody>
 }
 
 async function world(failDevice?: number, rulesUnreachable = false): Promise<World> {
@@ -153,7 +165,7 @@ async function world(failDevice?: number, rulesUnreachable = false): Promise<Wor
     templates,
     devices,
     rules,
-    styles: records.kind(coreBlocksRecordKinds['tag-styles']),
+    styles: records.kind(coreBlocksRecordKinds.tags),
   }
 }
 
@@ -278,35 +290,10 @@ describe('rename', () => {
     expect(w.devices[0]?.tags).toEqual(['Garden'])
   })
 
-  it('a rename that would leave a record past the per-record cap refuses before any write', async () => {
-    const crowded = Array.from({ length: 20 }, (_, i) => `t${i}`)
-    w.devices.push({ id: 44, tags: ['Garden', ...crowded], mark: 'crowded' })
-    await expect(w.tags.rename({ from: 'Garden', to: 'Yard' })).rejects.toThrow(
-      /nothing was written/,
-    )
-    expect(w.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
-    expect(w.devices[0]?.tags).toEqual(['Garden'])
-  })
-
   it('a rename does not reset a scheduler timeline', async () => {
     await w.schedulers.setProcessedUntil('sch-1', 123)
     await w.tags.rename({ from: 'Garden', to: 'Yard' })
     expect(await w.schedulers.processedUntil('sch-1')).toBe(123)
-  })
-
-  it('merging onto an existing tag keeps the TARGET style and drops the source style', async () => {
-    await w.tags.setStyle({ name: 'Garden', color: 'tag-a', icon: 'sun' })
-    await w.tags.setStyle({ name: 'Yard', color: 'tag-e', icon: STAR })
-    await w.tags.rename({ from: 'Garden', to: 'yard' })
-    expect(await w.styles.get('garden')).toBeNull()
-    expect((await w.styles.get('yard'))?.data).toEqual({ name: 'Yard', color: 'tag-e', icon: STAR })
-  })
-
-  it('moves the style when the target is unstyled', async () => {
-    await w.tags.setStyle({ name: 'Garden', color: 'tag-b', icon: STAR })
-    await w.tags.rename({ from: 'Garden', to: 'Yard' })
-    expect(await w.styles.get('garden')).toBeNull()
-    expect((await w.styles.get('yard'))?.data).toEqual({ name: 'Yard', color: 'tag-b', icon: STAR })
   })
 
   it('an empty target throws before anything is written', async () => {
@@ -315,18 +302,6 @@ describe('rename', () => {
     )
     expect(w.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
     expect(w.devices[0]?.tags).toEqual(['Garden'])
-  })
-
-  it('a failing device is reported, the rest still move, and the style stays put', async () => {
-    const failing = await world(42)
-    await failing.tags.setStyle({ name: 'Garden', color: 'tag-b', icon: STAR })
-    await expect(failing.tags.rename({ from: 'Garden', to: 'Yard' })).rejects.toThrow(
-      /repeat the call/,
-    )
-    expect(failing.blocks.get('blk-1')?.tags).toEqual(['Yard', 'Solo'])
-    expect(failing.devices[0]?.tags).toEqual(['Yard'])
-    expect(failing.devices[1]?.tags).toEqual(['garden', 'Night'])
-    expect(await failing.styles.get('garden')).not.toBeNull()
   })
 })
 
@@ -353,7 +328,7 @@ describe('remove', () => {
       [[], 'rule-untagged'],
       [[], 'summary-mark'],
     ])
-    expect(await w.styles.get('garden')).toBeNull()
+    expect((await w.tags.listTags({})).map((t) => t.name)).not.toContain('Garden')
     expect(normalizeTags(w.devices.flatMap((d) => d.tags))).toEqual(['Night'])
   })
 })
@@ -371,19 +346,6 @@ describe('an unreachable owner (notification rules down)', () => {
       notificationRules: null,
     })
   })
-
-  it('rename and remove refuse with a typed reason naming the owner, and write nothing', async () => {
-    const down = await world(undefined, true)
-    const rename = down.tags.rename({ from: 'Garden', to: 'Yard' })
-    await expect(rename).rejects.toBeInstanceOf(TagOwnerUnreachableError)
-    await expect(rename).rejects.toMatchObject({ owner: 'notificationRules' })
-    await expect(down.tags.remove({ name: 'Garden' })).rejects.toThrow(
-      /notificationRules owner could not be read/,
-    )
-    expect(down.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
-    expect(down.devices.map((d) => d.tags)).toEqual([['Garden'], ['garden', 'Night'], []])
-    expect(down.rules.map((r) => r.tags)).toEqual([['GARDEN', 'Night'], [], ['Garden']])
-  })
 })
 
 describe('notification-rule owner ids', () => {
@@ -392,5 +354,131 @@ describe('notification-rule owner ids', () => {
       expect(parseRuleTagOwnerId(ruleTagOwnerId(kind, 'a:b'))).toEqual({ kind, ruleId: 'a:b' })
     }
     expect(() => parseRuleTagOwnerId('rule-1')).toThrow(/not a notification-rule owner id/)
+  })
+})
+
+/** Point every owner at the tag by ID, the way a migrated fleet is (D1089). */
+async function adopt(world0: World, tag: TagRecord): Promise<void> {
+  await world0.blocks.setTagIds('blk-1', [tag.id])
+  await world0.schedulers.setTagIds('sch-1', [tag.id])
+  await world0.actions.setTagIds('internal:act-1', [tag.id])
+  const template = await world0.templates.get('tpl-1')
+  if (template === null) throw new Error('fixture template missing')
+  await world0.templates.put({ id: 'tpl-1', data: { ...template.data, tagIds: [tag.id] } })
+  for (const device of world0.devices) {
+    if (device.tags.length > 0) device.tagIds = [tag.id]
+  }
+}
+
+async function tagRows(world0: World): Promise<string> {
+  const page = await world0.styles.query({})
+  return JSON.stringify(page.records.map((r) => [r.id, r.data]).toSorted())
+}
+
+describe('tags are records with an id (D1089)', () => {
+  it('ensureTag returns the existing tag for the same name, and the id is not the name', async () => {
+    const a = await w.tags.ensureTag({ name: 'Garden' })
+    const b = await w.tags.ensureTag({ name: '  gARDEN ' })
+    expect(b.id).toBe(a.id)
+    expect(a.id).not.toBe('garden')
+    expect((await w.tags.listTags({})).map((t) => t.name)).toEqual(['Garden'])
+  })
+
+  it('a rename writes exactly ONE record and touches no owner', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    const night = await w.tags.ensureTag({ name: 'Night' })
+    await adopt(w, garden)
+    const before = JSON.parse(await tagRows(w)) as [string, unknown][]
+    const blockBefore = JSON.stringify(w.blocks.get('blk-1'))
+    const deviceBefore = JSON.stringify(w.devices)
+    const rulesBefore = JSON.stringify(w.rules)
+
+    await w.tags.updateTag({ id: garden.id, patch: { name: 'Orchard' } })
+
+    const after = JSON.parse(await tagRows(w)) as [string, unknown][]
+    const changed = after.filter(
+      ([id, data]) => JSON.stringify(data) !== JSON.stringify(before.find(([i]) => i === id)?.[1]),
+    )
+    expect(changed.map(([id]) => id)).toEqual([garden.id])
+    expect(after).toHaveLength(2)
+    expect(night.id).not.toBe(garden.id)
+    expect(JSON.stringify(w.blocks.get('blk-1'))).toBe(blockBefore)
+    expect(JSON.stringify(w.devices)).toBe(deviceBefore)
+    expect(JSON.stringify(w.rules)).toBe(rulesBefore)
+  })
+
+  it('a rename needs no owner to be reachable', async () => {
+    const down = await world(undefined, true)
+    const tag = await down.tags.ensureTag({ name: 'Garden' })
+    const renamed = await down.tags.updateTag({ id: tag.id, patch: { name: 'Orchard' } })
+    expect(renamed.name).toBe('Orchard')
+  })
+
+  it('a rename onto another tag name is refused and writes nothing', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    await w.tags.ensureTag({ name: 'Night' })
+    const before = await tagRows(w)
+    await expect(w.tags.updateTag({ id: garden.id, patch: { name: ' night ' } })).rejects.toThrow(
+      /name already taken/,
+    )
+    expect(await tagRows(w)).toBe(before)
+  })
+
+  it('deleteTag clears the id from every owner, keeps the others, and removes the record', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    await adopt(w, garden)
+    const result = await w.tags.deleteTag({ id: garden.id })
+    expect(result.updated).toEqual({
+      coreBlocks: 1,
+      schedulers: 1,
+      templates: 1,
+      actions: 1,
+      devices: 2,
+      notificationRules: 2,
+    })
+    expect(w.blocks.get('blk-1')?.tagIds).toBeUndefined()
+    expect((await w.schedulers.get('sch-1'))?.tagIds).toBeUndefined()
+    expect((await w.schedulers.get('sch-1'))?.priority).toBe(77)
+    expect((await w.templates.get('tpl-1'))?.data.tagIds).toBeUndefined()
+    expect(w.devices.map((d) => d.tagIds)).toEqual([[], [], undefined])
+    expect(w.rules.map((r) => r.tags)).toEqual([['Night'], [], []])
+    expect(await w.tags.listTags({})).toEqual([])
+  })
+
+  it('deleteTag refuses while an owner cannot be read, naming it, and writes nothing', async () => {
+    const down = await world(undefined, true)
+    const tag = await down.tags.ensureTag({ name: 'Garden' })
+    await adopt(down, tag)
+    await expect(down.tags.deleteTag({ id: tag.id })).rejects.toBeInstanceOf(
+      TagOwnerUnreachableError,
+    )
+    expect(down.blocks.get('blk-1')?.tagIds).toEqual([tag.id])
+    expect((await down.tags.listTags({})).map((t) => t.id)).toEqual([tag.id])
+  })
+
+  it('an owner pointing at an id with no record reads as unset: list answers, nothing throws', async () => {
+    await w.blocks.setTagIds('blk-1', ['tag_gone'])
+    const list = await w.tags.list({})
+    expect(list.map((t) => t.name)).not.toContain('tag_gone')
+  })
+
+  it('setStyle creates the record and the old list shows it styled', async () => {
+    await w.tags.setStyle({ name: 'Orchard', color: 'tag-b', icon: STAR })
+    const entry = (await w.tags.list({})).find((t) => t.name === 'Orchard')
+    expect(entry).toMatchObject({ styled: true, color: 'tag-b', icon: 'star' })
+  })
+
+  it('the rename shim is one record write for a plain rename, and merges onto an existing tag', async () => {
+    const garden = await w.tags.ensureTag({ name: 'Garden' })
+    const night = await w.tags.ensureTag({ name: 'Night' })
+    await adopt(w, garden)
+    const spy = vi.spyOn(w.blocks, 'setTagIds')
+    await w.tags.rename({ from: 'Garden', to: 'Orchard' })
+    expect(spy).not.toHaveBeenCalled()
+    expect((await w.tags.listTags({})).map((t) => t.name).toSorted()).toEqual(['Night', 'Orchard'])
+
+    await w.tags.rename({ from: 'Orchard', to: 'Night' })
+    expect((await w.tags.listTags({})).map((t) => t.id)).toEqual([night.id])
+    expect(w.blocks.get('blk-1')?.tagIds).toEqual([night.id])
   })
 })

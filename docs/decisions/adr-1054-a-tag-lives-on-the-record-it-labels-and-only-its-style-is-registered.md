@@ -1,7 +1,7 @@
 ---
 id: D1054
 title: A tag lives on the record it labels; only its style is registered
-status: accepted
+status: superseded
 date: 2026-11-15
 supersedes:
 applies-to:

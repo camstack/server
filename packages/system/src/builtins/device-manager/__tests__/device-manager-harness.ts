@@ -8,6 +8,7 @@
  * `field-claims-api.spec.ts`: one addon fixture, not a verbatim copy per spec.
  * Style mirrors `device-disabled-events.spec.ts`.
  */
+import { makeFakeTagsApi } from './fake-tags-api.js'
 import type {
   DeviceDataEntry,
   DeviceRemovedInput,
@@ -317,6 +318,7 @@ export async function setup(opts: SetupOptions = {}): Promise<Harness> {
   const ctx = {
     api: {
       settingsStore: settingsStoreApi,
+      tags: makeFakeTagsApi(),
       pipelineOrchestrator: {
         // The prior states the migration reads before its disable phase: every
         // switch offered, ON unless `priorOff` names it for that device.

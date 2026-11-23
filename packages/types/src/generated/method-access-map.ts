@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1547 method paths across 217 capabilities.
+ * Coverage: 1555 method paths across 217 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -341,6 +341,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.cleanupDeletedDevicesData': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.confirmIdentityLink': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.createDevice': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.deleteRoom': { capName: "device-manager", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'deviceManager.disable': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.discoverAllProviders': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.discoverDevices': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -349,6 +350,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.dismissDiscoveryProposal': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.dismissIdentityLink': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.enable': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.ensureRoom': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.getAllBindings': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.getBindings': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'deviceManager.getBindingsBatch': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -381,6 +383,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.listLocationIcons': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'deviceManager.listLocations': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.listPersistedByAddon': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceManager.listRooms': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'deviceManager.listSiteZones': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'deviceManager.listWrappersForCap': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.loadConfig': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -435,6 +438,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.updateConfig': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.updateDeviceField': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.updateDeviceFieldsBatch': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.updateRoom': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceOps.getConfigEntries': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceOps.getRawState': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceOps.getSettingsSchema': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1413,10 +1417,14 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'system.setLoggingSettings': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.setRetentionConfig': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.setSiteLocation': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'tags.deleteTag': { capName: "tags", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'tags.ensureTag': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'tags.list': { capName: "tags", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'tags.listTags': { capName: "tags", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'tags.remove': { capName: "tags", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'tags.rename': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'tags.setStyle': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'tags.updateTag': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'tamper.getStatus': { capName: "tamper", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'temperatureSensor.getStatus': { capName: "temperature-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'template.create': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

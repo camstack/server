@@ -120,8 +120,12 @@ export interface PersistedDeviceMeta {
    * snapshot. Free-text — providers don't interpret it.
    */
   location: string | null
-  /** Operator tags (D1054), normalised on write. Absent = no tags. */
+  /** The room (D1089): the id of a `rooms` record. `location` above is its current name, DERIVED at read. */
+  locationId?: string | null
+  /** Operator tags, DERIVED at read from `tagIds` (D1089). Never written. Absent = no tags. */
   tags?: string[]
+  /** The tag ids (D1089). Absent = no tags. */
+  tagIds?: string[]
   /**
    * Soft-disabled flag. When `true`, the device class is still
    * instantiated and visible in the UI (so the operator can flip

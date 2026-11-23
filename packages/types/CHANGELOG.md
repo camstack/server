@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - device-manager gains the admin method repairMigrationSecrets; migrateDevice reports the secret scopes it exchanged.
 - The source-restart event carries urlChanged and kicked.
+- Rooms and tags are records with an id: tagIds on devices, blocks, schedulers, templates and actions, derived read-only location and tags names, and migrations that move existing rooms and tags.
 
 ## [1.2.626] - 2026-11-22
 

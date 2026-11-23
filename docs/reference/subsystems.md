@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9216 source files · 1295 file(s) in no subsystem.**
+**31 subsystems · 9228 source files · 1298 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -26,7 +26,7 @@ commits. A generated page may not.
 | Kernel, addon lifecycle and boot | 136 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +101 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 115 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +62 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 354 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +276 more, 51 ADRs | 2026-11-21 | ✅ |
-| Device model and the provider contract | 181 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +84 more, 6 ADRs | 2026-11-08 | ✅ |
+| Device model and the provider contract | 188 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +84 more, 6 ADRs | 2026-11-08 | ✅ |
 | Device providers (per vendor) | 1010 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 145 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-10-24 | ✅ |
@@ -46,7 +46,7 @@ commits. A generated page may not.
 | Update, release, OTA and agent delivery | 76 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +38 more, 10 ADRs | 2026-11-12 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 407 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +59 more, 20 ADRs | 2026-11-08 | ⚠️ |
 | Remote access and networking | 77 | `architecture/network.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +22 more | 2026-10-21 | ⚠️ |
-| Automations, blocks and declared devices | 225 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, +64 more, 1 ADR | 2026-11-08 | ⚠️ |
+| Automations, blocks and declared devices | 227 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, +64 more, 1 ADR | 2026-11-08 | ⚠️ |
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +45 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 44 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
@@ -90,7 +90,7 @@ What a device IS across twenty vendors — identity, kinds, bindings, runtime st
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/types/src/device/**`, `packages/types/src/device-extension/**`, `packages/system/src/builtins/device-manager/**`, `packages/system/src/kernel/device-registry.ts`, `packages/system/src/kernel/provider-kind-drift.ts`, `server/backend/src/core/provider/**`
-- **Files**: 181 (180 claimed by some document)
+- **Files**: 188 (187 claimed by some document)
 - **Uncovered**: `server/backend/src/core/provider` (1)
 
 ### ✅ Device providers (per vendor)
@@ -270,7 +270,7 @@ The operator-authored logic layer — expression blocks, recipes and the devices
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/core-blocks/**`, `packages/system/src/builtins/composer/**`, `packages/types/src/expression/**`, `packages/types/src/automation/**`, `packages/types/src/composition/**`
-- **Files**: 225 (225 claimed by some document)
+- **Files**: 227 (227 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Alerts, liveness and system health
@@ -341,4 +341,4 @@ Everything that measures or builds CamStack rather than running it — the bench
 The taxonomy has a hole here. This list is the `--max-orphans` ratchet in
 `.github/workflows/ci.yml`; it only ever goes down.
 
-`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (16), `packages/addon-waste-collections/src` (15), `packages/types/src/migrations` (14), `packages/types/src/records` (13), +69 more directories
+`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (16), `packages/addon-waste-collections/src` (15), `packages/types/src/migrations` (14), `packages/types/src/records` (13), +70 more directories

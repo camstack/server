@@ -929,6 +929,18 @@ export const useDeviceManagerUnlinkIdentity: typeof trpc.deviceManager.unlinkIde
 /** Generated alias around `trpc.deviceManager.relinkIdentity.useMutation`. */
 export const useDeviceManagerRelinkIdentity: typeof trpc.deviceManager.relinkIdentity.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.relinkIdentity.useMutation)
 
+/** Generated alias around `trpc.deviceManager.ensureRoom.useMutation`. */
+export const useDeviceManagerEnsureRoom: typeof trpc.deviceManager.ensureRoom.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.ensureRoom.useMutation)
+
+/** Generated alias around `trpc.deviceManager.listRooms.useQuery`. */
+export const useDeviceManagerListRooms: typeof trpc.deviceManager.listRooms.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listRooms.useQuery)
+
+/** Generated alias around `trpc.deviceManager.updateRoom.useMutation`. */
+export const useDeviceManagerUpdateRoom: typeof trpc.deviceManager.updateRoom.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.updateRoom.useMutation)
+
+/** Generated alias around `trpc.deviceManager.deleteRoom.useMutation`. */
+export const useDeviceManagerDeleteRoom: typeof trpc.deviceManager.deleteRoom.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.deleteRoom.useMutation)
+
 /** Generated alias around `trpc.deviceManager.listLocations.useQuery`. */
 export const useDeviceManagerListLocations: typeof trpc.deviceManager.listLocations.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listLocations.useQuery)
 
@@ -3760,6 +3772,18 @@ export const useSystemSetLoggingSettings: typeof trpc.system.setLoggingSettings.
 
 /** Generated alias around `trpc.system.debugWatch.useMutation`. */
 export const useSystemDebugWatch: typeof trpc.system.debugWatch.useMutation = /*#__PURE__*/ alias(() => trpc.system.debugWatch.useMutation)
+
+/** Generated alias around `trpc.tags.ensureTag.useMutation`. */
+export const useTagsEnsureTag: typeof trpc.tags.ensureTag.useMutation = /*#__PURE__*/ alias(() => trpc.tags.ensureTag.useMutation)
+
+/** Generated alias around `trpc.tags.listTags.useQuery`. */
+export const useTagsListTags: typeof trpc.tags.listTags.useQuery = /*#__PURE__*/ alias(() => trpc.tags.listTags.useQuery)
+
+/** Generated alias around `trpc.tags.updateTag.useMutation`. */
+export const useTagsUpdateTag: typeof trpc.tags.updateTag.useMutation = /*#__PURE__*/ alias(() => trpc.tags.updateTag.useMutation)
+
+/** Generated alias around `trpc.tags.deleteTag.useMutation`. */
+export const useTagsDeleteTag: typeof trpc.tags.deleteTag.useMutation = /*#__PURE__*/ alias(() => trpc.tags.deleteTag.useMutation)
 
 /** Generated alias around `trpc.tags.list.useQuery`. */
 export const useTagsList: typeof trpc.tags.list.useQuery = /*#__PURE__*/ alias(() => trpc.tags.list.useQuery)

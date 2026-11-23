@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - DataTable: a fifth phone column role, sheet — columns with an input leave the phone row and open in a bottom sheet when the row is tapped (sheetOpenLabel keeps the row action reachable)
 - Generated device-manager hooks include repairMigrationSecrets.
+- Generated hooks follow the rooms-and-tags-as-records capability changes.
 
 ## [1.2.499] - 2026-11-22
 

@@ -21,7 +21,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 import { DeviceType } from '../device/device-type.js'
 import type { ConfigUISchema } from '../interfaces/config-ui.js'
 import { RunningThresholdProposalSchema } from '../running-state/proposal-schema.js'
-import { TagsFieldSchema } from '../tags/tag.js'
+import { TagIdsFieldSchema, TagsFieldSchema } from '../tags/tag.js'
 import {
   SettingsPatchSchema,
   SettingsSchemaWithValuesSchema,
@@ -176,6 +176,8 @@ export const CoreBlockInputFieldsSchema = z.object({
   settingsSchema: CoreBlockSettingsSchemaBridge.optional(),
   /** Operator tags (D1054), kept on the record. Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is kept beside them for one release. */
+  tagIds: TagIdsFieldSchema.optional(),
 })
 
 /** Client-authored fields for create — requires `code` or `files[entry]`. */
@@ -286,6 +288,8 @@ export const CoreBlockSchema = z.object({
   settingsSchema: CoreBlockSettingsSchemaBridge.optional(),
   /** Operator tags (D1054). Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is kept beside them for one release. */
+  tagIds: TagIdsFieldSchema.optional(),
   id: z.string(),
   createdAt: z.number(),
   updatedAt: z.number(),

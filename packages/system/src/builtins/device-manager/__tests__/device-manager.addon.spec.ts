@@ -3005,7 +3005,7 @@ describe('DeviceManagerAddon', () => {
       expect(rowWrites[0]?.columns).toEqual(
         expect.arrayContaining([
           'name',
-          'location',
+          'locationId',
           'type',
           'integrationId',
           'linkDeviceId',

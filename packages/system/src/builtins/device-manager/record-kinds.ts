@@ -6,10 +6,14 @@ import {
   DeviceTombstoneSchema,
   DiscoveryProposalBodySchema,
   IdentityLinkBodySchema,
+  RoomBodySchema,
+  ZoneBodySchema,
   defineRecordKinds,
   type DefinedRecordKind,
   type DiscoveryProposalBody,
   type IdentityLinkBody,
+  type RoomBody,
+  type ZoneBody,
 } from '@camstack/types'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
@@ -45,6 +49,28 @@ const _deviceManagerRecordKinds = defineRecordKinds({
     indexes: [{ name: 'last_seen_at', fields: ['lastSeenAt'] }],
     retention: { ttlMs: 90 * 24 * 60 * 60 * 1000, from: 'at' },
   },
+  // D1089: a room and a site zone are records with an id; a device meta carries
+  // `locationId`. A rename, a restyle or a new description is ONE write here.
+  rooms: {
+    schema: RoomBodySchema,
+    class: 'config',
+    writeTrigger:
+      '`ensureRoom` creates one, `updateRoom` edits it (rename, icon, description, zone); `deleteRoom` removes it and clears every device reference in one operation',
+    device: 'none',
+    at: 'none',
+    indexes: [],
+    retention: { none: 'a room lives until the operator deletes it' },
+  },
+  zones: {
+    schema: ZoneBodySchema,
+    class: 'config',
+    writeTrigger:
+      '`setSiteZone` / `setLocationZone` create one, `renameSiteZone` edits it, `removeSiteZone` removes it and clears the `zoneId` of its rooms',
+    device: 'none',
+    at: 'none',
+    indexes: [],
+    retention: { none: 'a zone lives until the operator deletes it' },
+  },
   'identity-links': {
     schema: IdentityLinkBodySchema,
     class: 'config',
@@ -68,6 +94,8 @@ export type DeviceManagerRecordKindsMap = {
   readonly tombstones: DefinedRecordKind<z.ZodType<DeviceTombstoneBody>>
   readonly 'discovery-proposals': DefinedRecordKind<z.ZodType<DiscoveryProposalBody>>
   readonly 'identity-links': DefinedRecordKind<z.ZodType<IdentityLinkBody>>
+  readonly rooms: DefinedRecordKind<z.ZodType<RoomBody>>
+  readonly zones: DefinedRecordKind<z.ZodType<ZoneBody>>
 }
 
 export const deviceManagerRecordKinds: DeviceManagerRecordKindsMap = _deviceManagerRecordKinds

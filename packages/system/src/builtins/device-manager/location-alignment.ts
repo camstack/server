@@ -58,7 +58,9 @@ export const LOCATION_BACKFILL_VERSION = 1
  *  nearest located ancestor `ancestorId`. */
 export interface NullLocationFill {
   readonly id: number
-  readonly location: string
+  readonly location: string | null
+  /** The room id written onto the row (D1089); `location` is its name, for logs. */
+  readonly locationId: string
   readonly ancestorId: number
 }
 
@@ -75,7 +77,7 @@ function nearestLocatedAncestor(
     visited.add(cursor)
     const ancestor = byId.get(cursor)
     if (!ancestor) return null
-    if (ancestor.location !== null) return ancestor
+    if (ancestor.locationId !== undefined && ancestor.locationId !== null) return ancestor
     cursor = ancestor.parentDeviceId
   }
   return null
@@ -108,17 +110,28 @@ export function planNullLocationFills(
   const byId = new Map<number, PersistedDeviceMeta>(rows.map((r) => [r.id, r]))
   const plan: NullLocationFill[] = []
   for (const row of rows) {
-    if (row.location !== null) continue
+    if (row.locationId !== undefined && row.locationId !== null) continue
     if (row.parentDeviceId === null) continue
     const hit = nearestLocatedAncestor(byId, row.parentDeviceId)
     if (hit === null) continue
     if (hit.type !== DeviceType.Container) continue
     // `nearestLocatedAncestor` only returns a row with a non-null location;
     // the guard narrows the type without a cast.
-    if (hit.location === null) continue
-    plan.push({ id: row.id, location: hit.location, ancestorId: hit.id })
+    if (hit.locationId === undefined || hit.locationId === null) continue
+    plan.push({
+      id: row.id,
+      location: hit.location,
+      locationId: hit.locationId,
+      ancestorId: hit.id,
+    })
   }
   return plan
+}
+
+/** A room inherited from a container ancestor: the id to write, the name to log. */
+export interface InheritedRoom {
+  readonly locationId: string
+  readonly location: string | null
 }
 
 /** The one row-store method the async ancestor walk needs. */
@@ -141,15 +154,17 @@ export interface RowReader {
 export async function resolveInheritedLocation(
   rows: RowReader,
   parentDeviceId: number | null,
-): Promise<string | null> {
+): Promise<InheritedRoom | null> {
   const visited = new Set<number>()
   let cursor = parentDeviceId
   while (cursor !== null && !visited.has(cursor)) {
     visited.add(cursor)
     const ancestor = await rows.get(cursor)
     if (ancestor === null) return null
-    if (ancestor.meta.location !== null) {
-      return ancestor.meta.type === DeviceType.Container ? ancestor.meta.location : null
+    const locationId = ancestor.meta.locationId ?? null
+    if (locationId !== null) {
+      if (ancestor.meta.type !== DeviceType.Container) return null
+      return { locationId, location: ancestor.meta.location }
     }
     cursor = ancestor.meta.parentDeviceId
   }
@@ -199,8 +214,8 @@ export async function runLocationBackfillAtBoot(
           // that landed between listing and here wins — the backfill only ever
           // fills a hole that still exists.
           const current = await pctx.metaStore.rows.get(fill.id)
-          if (current === null || current.meta.location !== null) continue
-          await pctx.metaStore.rows.patch(fill.id, { location: fill.location })
+          if (current === null || (current.meta.locationId ?? null) !== null) continue
+          await pctx.metaStore.rows.patch(fill.id, { locationId: fill.locationId })
           patched.push(fill)
         } catch (err) {
           failed.push({ id: fill.id, error: err })

@@ -10,6 +10,8 @@ import {
   PUMP_CYCLE_SPLIT_ID,
   splitPumpCycleFromFountain,
 } from './pump-cycle-split.js'
+import { addTagIds, CORE_BLOCKS_TAG_IDS_ID, type TagIdsPorts } from './tag-ids.js'
+import { TAGS_AS_RECORDS_ID, type TagsAsRecordsPorts, writeTagRecords } from './tags-as-records.js'
 
 import {
   dropRemotePowerMode,
@@ -29,8 +31,17 @@ export {
 } from './remote-config-migrations.js'
 
 /** Everything the core-blocks catalogue touches: the block rows, and the stored remotes and templates. */
-export type CoreBlocksCatalogPorts = CoreBlocksMigrationPorts & RemoteMigrationPorts
+export type CoreBlocksCatalogPorts = CoreBlocksMigrationPorts &
+  RemoteMigrationPorts &
+  TagIdsPorts &
+  TagsAsRecordsPorts
 export { HELPER_TO_CUSTOMIZE_ID } from './helper-to-customize.js'
+export { CORE_BLOCKS_TAG_IDS_ID, tagIdsPortsOver, type TagIdsPorts } from './tag-ids.js'
+export {
+  TAGS_AS_RECORDS_ID,
+  tagsAsRecordsPortsOver,
+  type TagsAsRecordsPorts,
+} from './tags-as-records.js'
 export {
   coreBlocksMigrationPorts,
   PUMP_CYCLE_SPLIT_ID,
@@ -39,6 +50,9 @@ export {
 } from './pump-cycle-split.js'
 
 /** The `core-blocks` catalogue (D987): offered to the engine when the hub-resident addon initialises. */
+/** The device manager's step (a ledger id, not an import: addons never import each other). */
+const DEVICE_MANAGER_TAG_IDS_ID = 'device-manager/2026-11-23-device-tag-ids'
+
 export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[] = [
   {
     meta: {
@@ -142,5 +156,41 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[]
       fixtureMark: 'the block createdBy and name, which the migration does not know',
     },
     procedure: regenerateAutomationsConfirmedView,
+  },
+  {
+    meta: {
+      id: CORE_BLOCKS_TAG_IDS_ID,
+      owner: 'core-blocks',
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Add the ids of its tags to each block, scheduler, template and action beside the kept names, derived from the folded name',
+      fixtureMark:
+        'the name and the enabled flag of each record, which the migration does not know',
+    },
+    procedure: addTagIds,
+  },
+  {
+    meta: {
+      id: TAGS_AS_RECORDS_ID,
+      owner: 'core-blocks',
+      level: 'addon-state',
+      seq: 8,
+      // The owner steps that wrote `tagIds`: a tag record exists under the id they used.
+      dependsOn: [CORE_BLOCKS_TAG_IDS_ID, DEVICE_MANAGER_TAG_IDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Write one tags record per tag in use or styled, carrying the colour and icon of its style, then delete the tag style rows',
+      fixtureMark: 'the colour and icon of each styled tag',
+    },
+    procedure: writeTagRecords,
   },
 ]

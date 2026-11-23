@@ -17,6 +17,13 @@ export type TagName = z.infer<typeof TagNameSchema>
 /** The `tags` field every owner record carries. Absent = no tags. */
 export const TagsFieldSchema = z.array(TagNameSchema).max(TAGS_PER_RECORD_MAX)
 
+/**
+ * The ids of the tags a record carries (D1089): the reference. The kept
+ * {@link TagsFieldSchema} names stay beside it until a later migration drops
+ * them; a reader prefers the id and falls back to the name at the same index.
+ */
+export const TagIdsFieldSchema = z.array(z.string().min(1)).max(TAGS_PER_RECORD_MAX)
+
 /** Fixed tag palette ids (map to `--color-tag-*` theme tokens, never a hex). */
 export const TAG_COLOR_IDS = [
   'tag-a',

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Migrating a device now keeps each number's saved passwords and its room on that number; a pair swapped earlier can be repaired from the admin API.
+- Rooms and tags become records with an id; renaming one edits a single record. Existing rooms, zones and tags are migrated on first start; the old names keep working for one release.
 
 ### Fixed
 

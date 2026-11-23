@@ -5499,6 +5499,72 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.relinkIdentity(methodInput as any)
       }),
+    ensureRoom: adminProcedure
+      .input(deviceManagerCapability.methods.ensureRoom.input.loose())
+      .output(deviceManagerCapability.methods.ensureRoom.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.ensureRoom(methodInput as any)
+      }),
+    listRooms: protectedProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(deviceManagerCapability.methods.listRooms.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'device-manager',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.listRooms()
+      }),
+    updateRoom: adminProcedure
+      .input(deviceManagerCapability.methods.updateRoom.input.loose())
+      .output(deviceManagerCapability.methods.updateRoom.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.updateRoom(methodInput as any)
+      }),
+    deleteRoom: adminProcedure
+      .input(deviceManagerCapability.methods.deleteRoom.input.loose())
+      .output(deviceManagerCapability.methods.deleteRoom.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.deleteRoom(methodInput as any)
+      }),
     listLocations: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listLocations.output)
@@ -20338,6 +20404,42 @@ export function createCapRouter_tags(
   createRemoteProxy?: (capName: string, nodeId: string) => TagsProvider | null,
 ) {
   return trpcRouter({
+    ensureTag: adminProcedure
+      .input(tagsCapability.methods.ensureTag.input.loose())
+      .output(tagsCapability.methods.ensureTag.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('tags', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.ensureTag(methodInput as any)
+      }),
+    listTags: protectedProcedure
+      .input(tagsCapability.methods.listTags.input.loose())
+      .output(tagsCapability.methods.listTags.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('tags', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listTags(methodInput as any)
+      }),
+    updateTag: adminProcedure
+      .input(tagsCapability.methods.updateTag.input.loose())
+      .output(tagsCapability.methods.updateTag.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('tags', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.updateTag(methodInput as any)
+      }),
+    deleteTag: adminProcedure
+      .input(tagsCapability.methods.deleteTag.input.loose())
+      .output(tagsCapability.methods.deleteTag.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('tags', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.deleteTag(methodInput as any)
+      }),
     list: protectedProcedure
       .input(tagsCapability.methods.list.input.loose())
       .output(tagsCapability.methods.list.output)

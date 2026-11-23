@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { TemplateKindSchema } from '../template/template-kinds.js'
-import { TagsFieldSchema } from '../tags/tag.js'
+import { TagIdsFieldSchema, TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * template — the generic store of reusable, named operator data (D963). A
@@ -29,6 +29,8 @@ export const TemplateRecordSchema = z.object({
   builtIn: z.literal(true).optional(),
   /** Operator tags (D1054). Absent = no tags. */
   tags: TagsFieldSchema.optional(),
+  /** The tag ids (D1089); `tags` is kept beside them for one release. */
+  tagIds: TagIdsFieldSchema.optional(),
 })
 export type TemplateRecord = z.infer<typeof TemplateRecordSchema>
 

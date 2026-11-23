@@ -1385,6 +1385,7 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 
 ### `CoreBlockPlacementSchema`
 
@@ -1402,6 +1403,7 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 - `id`: `string`
 - `createdAt`: `number`
 - `updatedAt`: `number`
@@ -1729,7 +1731,9 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `name`: `string`
 - `alias?`: `string`
 - `location`: `string \| null`
+- `locationId?`: `string \| null`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 - `disabled`: `boolean`
 - `parentDeviceId`: `number \| null`
 - `role?`: `string \| null`
@@ -7456,6 +7460,7 @@ Enum: `"jwt-signing-key"`
 - `updatedAt`: `number`
 - `builtIn?`: `true`
 - `tags?`: `string[]`
+- `tagIds?`: `string[]`
 
 ### `TemplateUserSchema`
 

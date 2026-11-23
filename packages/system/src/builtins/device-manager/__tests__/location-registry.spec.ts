@@ -18,6 +18,7 @@
  * the operator's write is ordered against the cascade rather than racing it.
  */
 
+import { makeFakeTagsApi } from './fake-tags-api.js'
 import { DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
@@ -30,7 +31,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import type { FakeSettingsStore } from './settings-store-api.js'
-import { makeSettingsStoreApi, readDeviceRow } from './settings-store-api.js'
+import { roomNameOf } from './room-name-of.js'
+import { makeSettingsStoreApi } from './settings-store-api.js'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
@@ -87,7 +89,7 @@ async function setup(): Promise<{
   const settings = makeSettings()
   const records = await makeRecordsAccessForOwner('device-manager')
   const ctx = {
-    api: { settingsStore: store.api },
+    api: { settingsStore: store.api, tags: makeFakeTagsApi() },
     id: 'device-manager',
     logger: makeLogger(),
     eventBus: bus,
@@ -135,8 +137,8 @@ describe('removeLocation cascade', () => {
     // Case-insensitive + trimmed, same equality the registry uses.
     await provider.removeLocation({ name: '  kitchen ', cascade: true })
 
-    expect((await readDeviceRow(store, kitchen)).location).toBeNull()
-    expect((await readDeviceRow(store, garage)).location).toBe('Garage')
+    expect(await roomNameOf(provider, store, kitchen)).toBeNull()
+    expect(await roomNameOf(provider, store, garage)).toBe('Garage')
     expect(await provider.listLocations()).toEqual(['Garage'])
   })
 
@@ -147,7 +149,7 @@ describe('removeLocation cascade', () => {
 
     await provider.removeLocation({ name: 'Kitchen' })
 
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Kitchen')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen')
   })
 
   it('does not revert an operator setLocation that races it', async () => {
@@ -186,7 +188,7 @@ describe('removeLocation cascade', () => {
     releaseCascade()
     await Promise.all([cascade, operator])
 
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Garage')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Garage')
   })
 })
 
@@ -215,8 +217,8 @@ describe('renameLocation', () => {
 
     await provider.renameLocation({ from: 'Kitchen', to: 'Kitchen grande' })
 
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Kitchen grande')
-    expect((await readDeviceRow(store, garage)).location).toBe('Garage')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen grande')
+    expect(await roomNameOf(provider, store, garage)).toBe('Garage')
     // `listLocations` sorts and folds in labels carried by devices, so what is
     // pinned here is the SET, not an order. An earlier version of this test
     // claimed to pin in-place ordering; disarming the implementation to append
@@ -231,7 +233,7 @@ describe('renameLocation', () => {
 
     await provider.renameLocation({ from: '  kitchen ', to: 'Sala' })
 
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Sala')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Sala')
     expect(await provider.listLocations()).toEqual(['Sala'])
   })
 
@@ -245,11 +247,11 @@ describe('renameLocation', () => {
     await provider.renameLocation({ from: 'kitchen', to: 'Kitchen' })
 
     expect(await provider.listLocations()).toEqual(['Kitchen'])
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Kitchen')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen')
   })
 
   it('merges into an existing room without leaving a duplicate label', async () => {
-    const { provider, store, settings } = await setup()
+    const { provider, store } = await setup()
     const a = await seedDevice(provider, 'cam-a', 'Sala')
     const b = await seedDevice(provider, 'cam-b', 'Hall')
     await provider.addLocation({ name: 'Sala' })
@@ -257,14 +259,11 @@ describe('renameLocation', () => {
 
     await provider.renameLocation({ from: 'Sala', to: 'Hall' })
 
-    expect((await readDeviceRow(store, a)).location).toBe('Hall')
-    expect((await readDeviceRow(store, b)).location).toBe('Hall')
+    expect(await roomNameOf(provider, store, a)).toBe('Hall')
+    expect(await roomNameOf(provider, store, b)).toBe('Hall')
     expect(await provider.listLocations()).toEqual(['Hall'])
-    // `listLocations` would fold a duplicate away, so the assertion above
-    // cannot see one. The stored array can, and it is what grows: without the
-    // target being dropped first, every rename onto an existing room appends
-    // another copy of that room's label, forever.
-    expect((await settings.readAddonStore()).locations).toEqual(['Hall'])
+    // One record per room: the merged-away room's record is gone, not hidden.
+    expect((await provider.listRooms()).map((room) => room.name)).toEqual(['Hall'])
   })
 
   it('refuses an empty target and writes NOTHING — not the registry, not a device', async () => {
@@ -276,7 +275,7 @@ describe('renameLocation', () => {
 
     // A half-applied rename is the exact failure this method exists to remove.
     expect(await provider.listLocations()).toEqual(['Kitchen'])
-    expect((await readDeviceRow(store, kitchen)).location).toBe('Kitchen')
+    expect(await roomNameOf(provider, store, kitchen)).toBe('Kitchen')
   })
 
   it('reports how many devices it moved', async () => {
@@ -302,7 +301,7 @@ describe('renameLocation', () => {
     // the only devices that need the rename unreachable.
     const result = await provider.renameLocation({ from: 'Ripostiglio', to: 'Sgabuzzino' })
 
-    expect((await readDeviceRow(store, ghost)).location).toBe('Sgabuzzino')
+    expect(await roomNameOf(provider, store, ghost)).toBe('Sgabuzzino')
     expect(result).toEqual({ moved: 1 })
   })
 })
@@ -373,14 +372,6 @@ describe('location icons', () => {
     expect(await provider.listLocationIcons()).toEqual([
       { locationKey: 'ripostiglio', icon: 'package' },
     ])
-  })
-
-  it('drops a stored id outside the vocabulary instead of handing it to a renderer', async () => {
-    const { provider, settings } = await setup()
-    // A hand-edit, a partial restore, or a hub ahead of this one.
-    await settings.writeAddonStore({ locationIcons: { kitchen: 'teapot', garage: 'car' } })
-
-    expect(await provider.listLocationIcons()).toEqual([{ locationKey: 'garage', icon: 'car' }])
   })
 
   it('survives a case-only rename, which is what the folded key is FOR', async () => {

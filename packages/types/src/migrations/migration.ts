@@ -226,6 +226,12 @@ export const MigrationEditSchema = z.discriminatedUnion('op', [
     table: z.string().min(1),
     key: z.record(z.string(), z.unknown()),
     row: z.record(z.string(), z.unknown()),
+    /**
+     * The columns of the EXISTING row the precondition covers. Absent = the whole row (`SELECT *`).
+     * A plan that owns a few plain columns of a wide row (the legacy `location` of a device row)
+     * names them, so a concurrent write to a column it never read does not refuse it.
+     */
+    preconditionColumns: z.array(z.string().min(1)).min(1).optional(),
     precondition: PreconditionSchema,
   }),
   z.object({

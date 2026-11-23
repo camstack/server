@@ -174,7 +174,7 @@ Singleton or collection providers, addressed without a device.
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 14 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 14 | — | — | — | — | `device-history` |
-| `device-manager` | 111 | — | — | — | — | `device-manager` |
+| `device-manager` | 115 | — | — | — | — | `device-manager` |
 | `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
@@ -236,7 +236,7 @@ Singleton or collection providers, addressed without a device.
 | `storage-provider` | 16 | — | — | — | ✓ | `sftp-storage` `s3-storage` `webdav-storage` `smb-storage` `filesystem-storage` |
 | `stream-broker` | 39 | — | — | — | — | `stream-broker` |
 | `system` | 16 | — | — | — | — | — |
-| `tags` | 4 | — | — | — | — | `core-blocks` |
+| `tags` | 8 | — | — | — | — | `core-blocks` |
 | `template` | 5 | — | — | — | — | `core-blocks` |
 | `terminal-session` | 8 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |

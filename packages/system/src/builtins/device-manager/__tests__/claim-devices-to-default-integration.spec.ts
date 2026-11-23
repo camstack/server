@@ -85,7 +85,7 @@ describe('claimDevicesToDefaultIntegration', () => {
     expect(row['integrationId']).toBe('int_0012')
     expect(row['stableId']).toBe('gree:aa')
     expect(row['deviceId']).toBe(orphan)
-    expect(row['location']).toBe('Kitchen')
+    expect(row['locationId']).toEqual(expect.any(String))
     expect((await readDeviceRow(w.h.settingsStore, orphanTwo))['integrationId']).toBe('int_0012')
     // the already-stamped device keeps ITS integration
     expect((await readDeviceRow(w.h.settingsStore, stamped))['integrationId']).toBe('int_0031')

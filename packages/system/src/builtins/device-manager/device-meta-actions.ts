@@ -33,16 +33,12 @@ import {
   DeviceType,
   deviceManagerCapability,
   EventCategory,
-  type IconKey,
   InferProvider,
-  locationIconKey,
   normalizeTags,
   normalizeUnit,
   reconcileReportedFeatures,
   type RoleDisplayDefault,
   settleDeviceFeatures,
-  siteZoneKey,
-  userError,
 } from '@camstack/types'
 import { canonicalDeviceFingerprint } from '@camstack/types/node'
 import { clearDeviceSettings } from '../../kernel/device-settings-store.js'
@@ -58,7 +54,7 @@ import {
   secureRawDeclaredSecrets,
 } from './device-config-secrets.js'
 import type { DeviceMetaStore } from './device-meta-store.js'
-import type { PersistedDeviceMeta, SiteZoneRecord } from './device-meta-types.js'
+import type { PersistedDeviceMeta } from './device-meta-types.js'
 import type { ProviderContext } from './device-provider-context.js'
 import { removalHookStep } from './device-removal-hooks.js'
 import { splitRuntimeBlob } from './field-ownership.js'
@@ -150,6 +146,7 @@ export async function allocateDeviceId(
         type: 'generic',
         name: stableId,
         location: null,
+        locationId: null,
         disabled: false,
         parentDeviceId: null,
         id,
@@ -548,6 +545,7 @@ export async function registerDevice(
     // / re-parent so a routine post-probe re-register of a deliberately
     // location-less subtree never pays the ancestor walk.
     const priorLocation = existingMeta?.location ?? null
+    const priorLocationId = priorLocation === null ? null : (existingMeta?.locationId ?? null)
     const resolvedParentId = parentDeviceId ?? null
     const parentChanged =
       existingMeta !== undefined && (existingMeta.parentDeviceId ?? null) !== resolvedParentId
@@ -572,7 +570,7 @@ export async function registerDevice(
       // provider name; `wasUserNamed` stamps the decision durably.
       name: resolvedName,
       userNamed: wasUserNamed,
-      location: priorLocation ?? inherited,
+      locationId: priorLocationId ?? inherited?.locationId ?? null,
       disabled: existingMeta?.disabled ?? false,
       parentDeviceId: resolvedParentId,
       registered: true,
@@ -608,7 +606,7 @@ export async function registerDevice(
       for (const descendant of await collectDescendants(pctx.metaStore, id)) {
         if (descendant.location !== null) continue
         try {
-          await pctx.metaStore.rows.patch(descendant.id, { location: inherited })
+          await pctx.metaStore.rows.patch(descendant.id, { locationId: inherited.locationId })
           descendantsFilled.push(descendant.id)
         } catch (err) {
           descendantsFailed.push({ id: descendant.id, error: err })
@@ -620,7 +618,7 @@ export async function registerDevice(
       storedFeatures: settledFeatures,
       exportFingerprint: fingerprint,
       fingerprintChanged: existingMeta?.exportFingerprint !== fingerprint,
-      inheritedLocation: inherited,
+      inheritedLocation: inherited?.location ?? null,
       inheritedDescendantIds: descendantsFilled,
       inheritFailed: descendantsFailed,
       filledRole: roleToFill,
@@ -1295,18 +1293,23 @@ export async function setLocation(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['setLocation']>[0],
 ): ReturnType<IDeviceManagerProvider['setLocation']> {
-  const { deviceId, location } = input
+  const { deviceId } = input
+  const locationId = await resolveRoomId(pctx, input)
+  if (locationId === undefined) {
+    throw new Error('[device-manager] setLocation: name `location` or `locationId`')
+  }
+  const location = pctx.rooms.nameOf(locationId)
   const cascaded: number[] = []
   const failed: Array<{ id: number; error: unknown }> = []
   await pctx.metaStore.withMetaWriteLock(async () => {
     const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
     if (!persisted) throw new Error(`[device-manager] setLocation: unknown device id=${deviceId}`)
-    await pctx.metaStore.rows.patch(deviceId, { location })
+    await pctx.metaStore.rows.patch(deviceId, { locationId })
 
     const descendants = await collectDescendants(pctx.metaStore, deviceId)
     for (const descendant of descendants) {
       try {
-        await pctx.metaStore.rows.patch(descendant.id, { location })
+        await pctx.metaStore.rows.patch(descendant.id, { locationId })
         cascaded.push(descendant.id)
       } catch (err) {
         failed.push({ id: descendant.id, error: err })
@@ -1350,10 +1353,35 @@ export async function setLocation(
   }
 }
 
-/** The tags a write stores: normalised, `null` (the column's absent form) when none are left. */
-function storedTags(tags: readonly string[]): string[] | null {
-  const normalized = normalizeTags(tags)
-  return normalized.length === 0 ? null : normalized
+export { resolveRoomId } from './room-actions.js'
+import { resolveRoomId } from './room-actions.js'
+
+/** The current names of tag ids; an id with no tag record is left out, never shown raw. */
+function tagNamesOf(pctx: ProviderContext, ids: readonly string[] | null): string[] | null {
+  if (ids === null) return null
+  return ids.flatMap((id) => {
+    const name = pctx.tagNameOf(id)
+    return name === null ? [] : [name]
+  })
+}
+
+/**
+ * The tag ids a write names: `tagIds` wins, else `tags` (text) is resolved through
+ * `ensureTag` (D1089, accepted for one release). `[]` / none → `null` (the column's
+ * absent form).
+ */
+async function resolveTagIds(
+  pctx: ProviderContext,
+  input: { readonly tags?: readonly string[]; readonly tagIds?: readonly string[] },
+): Promise<string[] | null> {
+  if (input.tagIds !== undefined) {
+    const ids = [...new Set(input.tagIds)]
+    return ids.length === 0 ? null : ids
+  }
+  const names = normalizeTags(input.tags ?? [])
+  if (names.length === 0) return null
+  const ids = await pctx.ensureTagIds(names)
+  return ids.length === 0 ? null : [...new Set(ids)]
 }
 
 /**
@@ -1366,11 +1394,12 @@ export async function setTags(
   input: Parameters<IDeviceManagerProvider['setTags']>[0],
 ): ReturnType<IDeviceManagerProvider['setTags']> {
   const { deviceId } = input
-  const tags = storedTags(input.tags)
+  const tagIds = await resolveTagIds(pctx, input)
+  const tags = tagNamesOf(pctx, tagIds)
   await pctx.metaStore.withMetaWriteLock(async () => {
     const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
     if (!persisted) throw new Error(`[device-manager] setTags: unknown device id=${deviceId}`)
-    await pctx.metaStore.rows.patch(deviceId, { tags })
+    await pctx.metaStore.rows.patch(deviceId, { tagIds })
   })
   pctx.host.ctx.eventBus.emit({
     id: randomUUID(),
@@ -1691,6 +1720,12 @@ export async function applyInitialMeta(
   input: Parameters<IDeviceManagerProvider['applyInitialMeta']>[0],
 ): ReturnType<IDeviceManagerProvider['applyInitialMeta']> {
   const { deviceId, name, location, tags, type, integrationId, linkDeviceId, role } = input
+  const locationId =
+    location === undefined && input.locationId === undefined
+      ? undefined
+      : await resolveRoomId(pctx, input)
+  const tagIds =
+    tags === undefined && input.tagIds === undefined ? undefined : await resolveTagIds(pctx, input)
   await pctx.metaStore.withMetaWriteLock(async () => {
     const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
     if (!persisted)
@@ -1700,8 +1735,8 @@ export async function applyInitialMeta(
     // the per-field setters' single-field merge).
     await pctx.metaStore.rows.patch(deviceId, {
       ...(name !== undefined ? { name } : {}),
-      ...(location !== undefined ? { location } : {}),
-      ...(tags !== undefined ? { tags: storedTags(tags) } : {}),
+      ...(locationId !== undefined ? { locationId } : {}),
+      ...(tagIds !== undefined ? { tagIds } : {}),
       ...(type !== undefined ? { type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
       ...(linkDeviceId !== undefined ? { linkDeviceId } : {}),
@@ -1721,8 +1756,10 @@ export async function applyInitialMeta(
     })
   }
   if (name !== undefined) emitMetaChanged('name', name)
-  if (location !== undefined) emitMetaChanged('location', location)
-  if (tags !== undefined) emitMetaChanged('tags', storedTags(tags) ?? [])
+  if (locationId !== undefined) emitMetaChanged('location', pctx.rooms.nameOf(locationId))
+  if (tagIds !== undefined) {
+    emitMetaChanged('tags', tagNamesOf(pctx, tagIds) ?? [])
+  }
   if (type !== undefined) emitMetaChanged('type', type)
   if (integrationId !== undefined) emitMetaChanged('integrationId', integrationId)
   if (linkDeviceId !== undefined) emitMetaChanged('linkDeviceId', linkDeviceId)
@@ -1882,614 +1919,6 @@ export async function loadRuntimeState(
   // record (`$owned`, D663) stays on the hub: the provider hydrates exactly
   // its own truth and never learns which of its fields a composition owns.
   return splitRuntimeBlob(pctx.host.seedMirrorFromRow(deviceId, data, pctx.settings)).native
-}
-
-/**
- * Union of (1) operator-curated location registry and (2) labels
- * currently in use on persisted devices. Case-insensitive
- * dedupe (preserves the first-seen casing). Sorted
- * case-insensitively for stable UI. Drives the Device Info
- * location autocomplete.
- */
-export async function listLocations(
-  pctx: ProviderContext,
-): ReturnType<IDeviceManagerProvider['listLocations']> {
-  const store = await pctx.metaStore.readStore()
-  const locations = store.locations ?? []
-  // Map from lower-cased key to the first-seen casing so duplicate
-  // entries with different cases collapse to one.
-  const seen = new Map<string, string>()
-  const consider = (raw: unknown): void => {
-    if (typeof raw !== 'string') return
-    const trimmed = raw.trim()
-    if (trimmed.length === 0) return
-    const key = trimmed.toLowerCase()
-    if (!seen.has(key)) seen.set(key, trimmed)
-  }
-  for (const label of locations) consider(label)
-  for (const row of await pctx.metaStore.rows.listAll()) consider(row.meta.location)
-  return [...seen.values()].toSorted((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' }),
-  )
-}
-
-/**
- * Add a label to the curated location registry. Idempotent:
- * existing entries (case-insensitive match) are silently kept.
- * Empty / whitespace-only inputs throw — operators must supply a
- * meaningful label.
- */
-export async function addLocation(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['addLocation']>[0],
-): ReturnType<IDeviceManagerProvider['addLocation']> {
-  const trimmed = input.name.trim()
-  if (trimmed.length === 0) {
-    throw userError(
-      'system.location-name-required',
-      undefined,
-      '[device-manager] addLocation: name must be non-empty',
-    )
-  }
-  // Read-modify-write of the `locations` ARRAY: two operators adding two
-  // labels at once each appended to their own pre-read copy, and the second
-  // write replaced the first. Same shape as `deviceBindings`, same lock.
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const current = store.locations ?? []
-    if (current.some((l) => l.toLowerCase() === trimmed.toLowerCase())) {
-      // Already present — no-op (preserves first-seen casing).
-      return
-    }
-    await pctx.settings.writeAddonStore({ locations: [...current, trimmed] })
-  })
-}
-
-/**
- * Every location that carries an icon, as `(locationKey, icon)` pairs.
- *
- * ADDITIVE beside `listLocations`, which still answers `string[]` — the
- * autocomplete, the HA adoption import and the recorder all read a list of
- * LABELS and a shape change there would break every one of them. A surface
- * that wants icons asks for them and joins on `locationIconKey`.
- *
- * Returns only what was actually stored. A location with no assignment is
- * ABSENT, never `map-pin`: the fallback belongs to the renderer
- * (`resolveIconKey`), and folding it in here would make "the operator
- * picked the pin" indistinguishable from "the operator picked nothing" —
- * which is the difference an icon picker has to draw.
- */
-export async function listLocationIcons(
-  pctx: ProviderContext,
-): ReturnType<IDeviceManagerProvider['listLocationIcons']> {
-  const store = await pctx.metaStore.readStore()
-  const icons = store.locationIcons ?? {}
-  return Object.entries(icons)
-    .map(([locationKey, icon]) => ({ locationKey, icon }))
-    .toSorted((a, b) => a.locationKey.localeCompare(b.locationKey))
-}
-
-/**
- * Set (or clear) the icon of a location label.
- *
- * Keyed on `locationIconKey` — trimmed + lower-cased, the equality the
- * registry matches on everywhere — so a case-only rename keeps the icon and
- * two spellings of one room can never carry two different icons.
- *
- * The label need NOT be registered: `setLocation` accepts a free-form string
- * and `listLocations` folds in whatever devices carry, so requiring
- * registration here would leave exactly the ad-hoc rooms unable to have an
- * icon. An empty label throws — there is no room to name.
- *
- * Same read-modify-write and same lock as `addLocation`: the map is one key of
- * the addon store, and `writeAddonStore` re-inserts the whole key range, so an
- * unordered write carries a stale copy of every other key.
- */
-export async function setLocationIcon(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['setLocationIcon']>[0],
-): ReturnType<IDeviceManagerProvider['setLocationIcon']> {
-  const trimmed = input.location.trim()
-  if (trimmed.length === 0) {
-    throw userError(
-      'system.location-required',
-      undefined,
-      '[device-manager] setLocationIcon: location must be non-empty',
-    )
-  }
-  const key = locationIconKey(trimmed)
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const icons = store.locationIcons ?? {}
-    if (input.icon === null) {
-      if (!(key in icons)) return
-      const { [key]: _cleared, ...kept } = icons
-      await pctx.settings.writeAddonStore({ locationIcons: kept })
-      return
-    }
-    if (icons[key] === input.icon) return
-    await pctx.settings.writeAddonStore({
-      locationIcons: { ...icons, [key]: input.icon },
-    })
-  })
-}
-
-/**
- * Every location that carries a description, sorted by key.
- *
- * Only what was WRITTEN — a location with no description is absent, and the
- * digest then tells the model the location name alone, exactly as it did
- * before descriptions existed.
- */
-export async function listLocationDescriptions(
-  pctx: ProviderContext,
-): ReturnType<IDeviceManagerProvider['listLocationDescriptions']> {
-  const store = await pctx.metaStore.readStore()
-  const descriptions = store.locationDescriptions ?? {}
-  return Object.entries(descriptions)
-    .map(([locationKey, description]) => ({ locationKey, description }))
-    .toSorted((a, b) => a.locationKey.localeCompare(b.locationKey))
-}
-
-/**
- * Set (or clear) a location's description.
- *
- * A BLANK description clears, exactly as `null` does: an empty line handed to
- * a vision model costs attention and says nothing, so the two must not be
- * different states. The label is folded with `locationIconKey` — the same key
- * the icon uses, which is the whole point of this living here.
- *
- * Same read-modify-write and same lock as `setLocationIcon`; `writeAddonStore`
- * re-inserts the whole key range, so an unordered write carries a stale copy
- * of every other key.
- */
-export async function setLocationDescription(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['setLocationDescription']>[0],
-): ReturnType<IDeviceManagerProvider['setLocationDescription']> {
-  const trimmed = input.location.trim()
-  if (trimmed.length === 0) {
-    throw new Error('[device-manager] setLocationDescription: location must be non-empty')
-  }
-  const key = locationIconKey(trimmed)
-  const text = input.description === null ? '' : input.description.trim()
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const descriptions = store.locationDescriptions ?? {}
-    if (text.length === 0) {
-      if (!(key in descriptions)) return
-      const { [key]: _cleared, ...kept } = descriptions
-      await pctx.settings.writeAddonStore({ locationDescriptions: kept })
-      return
-    }
-    if (descriptions[key] === text) return
-    await pctx.settings.writeAddonStore({
-      locationDescriptions: { ...descriptions, [key]: text },
-    })
-  })
-}
-
-/**
- * Every site zone, with its rooms, sorted by key.
- *
- * Membership is inverted HERE rather than stored both ways: the store keeps
- * `location → zone`, which is what makes "one zone per room" structural, and a
- * second copy keyed the other way is a second thing that can disagree with the
- * first.
- */
-export async function listSiteZones(
-  pctx: ProviderContext,
-): ReturnType<IDeviceManagerProvider['listSiteZones']> {
-  const store = await pctx.metaStore.readStore()
-  const zones = store.siteZones ?? {}
-  const membership = store.locationZones ?? {}
-  const rooms = new Map<string, string[]>()
-  for (const [locationKey, zoneKey] of Object.entries(membership)) {
-    const list = rooms.get(zoneKey)
-    if (list === undefined) rooms.set(zoneKey, [locationKey])
-    else list.push(locationKey)
-  }
-  return Object.entries(zones)
-    .map(([zoneKey, record]) => ({
-      zoneKey,
-      label: record.label,
-      icon: record.icon ?? null,
-      locationKeys: (rooms.get(zoneKey) ?? []).toSorted((a, b) => a.localeCompare(b)),
-    }))
-    .toSorted((a, b) => a.zoneKey.localeCompare(b.zoneKey))
-}
-
-/**
- * Create a zone, or set the icon of one that already exists.
- *
- * `icon: null` clears the icon and KEEPS the zone. Conflating the two would
- * make a mis-click on "no icon" delete every room's membership — the icon is a
- * decoration and the grouping is the data.
- *
- * `icon` OMITTED leaves whatever icon is there: creating a zone from a screen
- * with no picker must not silently clear the glyph a previous screen set.
- */
-export async function setSiteZone(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['setSiteZone']>[0],
-): ReturnType<IDeviceManagerProvider['setSiteZone']> {
-  const label = input.name.trim()
-  if (label.length === 0) {
-    throw userError(
-      'system.site-zone-name-required',
-      undefined,
-      '[device-manager] setSiteZone: name must be non-empty',
-    )
-  }
-  const key = siteZoneKey(label)
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const zones = store.siteZones ?? {}
-    const existing = zones[key]
-    const icon =
-      input.icon === undefined ? existing?.icon : input.icon === null ? undefined : input.icon
-    const next: SiteZoneRecord = icon === undefined ? { label } : { label, icon }
-    if (existing?.label === next.label && existing.icon === next.icon) return
-    await pctx.settings.writeAddonStore({ siteZones: { ...zones, [key]: next } })
-  })
-}
-
-/**
- * Delete a zone. Its LOCATIONS survive, unattached.
- *
- * Deleting a grouping must never delete what was grouped — the rooms exist
- * independently and the devices in them were never touched to begin with.
- */
-export async function removeSiteZone(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['removeSiteZone']>[0],
-): ReturnType<IDeviceManagerProvider['removeSiteZone']> {
-  const key = siteZoneKey(input.name)
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const zones = store.siteZones ?? {}
-    const membership = store.locationZones ?? {}
-    const hadZone = key in zones
-    const orphaned = Object.entries(membership).filter(([, zoneKey]) => zoneKey === key)
-    if (!hadZone && orphaned.length === 0) return
-    const { [key]: _dropped, ...keptZones } = zones
-    const keptMembership = Object.fromEntries(
-      Object.entries(membership).filter(([, zoneKey]) => zoneKey !== key),
-    )
-    await pctx.settings.writeAddonStore({
-      ...(hadZone ? { siteZones: keptZones } : {}),
-      ...(orphaned.length > 0 ? { locationZones: keptMembership } : {}),
-    })
-  })
-}
-
-/**
- * Rename a zone, carrying its icon AND every room in it.
- *
- * It exists so that renaming is not delete-then-recreate, which drops both.
- * A rename onto an existing zone MERGES: the target keeps its own icon and the
- * rooms are unioned, the same rule `renameLocation` follows.
- */
-export async function renameSiteZone(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['renameSiteZone']>[0],
-): ReturnType<IDeviceManagerProvider['renameSiteZone']> {
-  const toLabel = input.to.trim()
-  if (toLabel.length === 0) {
-    throw new Error('[device-manager] renameSiteZone: target name must be non-empty')
-  }
-  const fromKey = siteZoneKey(input.from)
-  const toKey = siteZoneKey(toLabel)
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const zones = store.siteZones ?? {}
-    const moved = zones[fromKey]
-    if (moved === undefined) return
-    const { [fromKey]: _dropped, ...rest } = zones
-    // A merge keeps the TARGET's record; a plain rename carries the source's
-    // icon under the new label.
-    const target = rest[toKey]
-    const nextZones: Record<string, SiteZoneRecord> = {
-      ...rest,
-      [toKey]:
-        target ??
-        (moved.icon === undefined ? { label: toLabel } : { label: toLabel, icon: moved.icon }),
-    }
-    const membership = store.locationZones ?? {}
-    const nextMembership = Object.fromEntries(
-      Object.entries(membership).map(([locationKey, zoneKey]) => [
-        locationKey,
-        zoneKey === fromKey ? toKey : zoneKey,
-      ]),
-    )
-    await pctx.settings.writeAddonStore({
-      siteZones: nextZones,
-      locationZones: nextMembership,
-    })
-  })
-}
-
-/**
- * Put a location in a zone, or take it out with `zone: null`.
- *
- * ONE slot per location, so a second call moves the room rather than listing it
- * twice. The zone is created if it does not exist — a screen that assigns
- * before creating is a normal order, and refusing it would be the only place in
- * this registry that demands registration first.
- */
-export async function setLocationZone(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['setLocationZone']>[0],
-): ReturnType<IDeviceManagerProvider['setLocationZone']> {
-  const location = input.location.trim()
-  if (location.length === 0) {
-    throw new Error('[device-manager] setLocationZone: location must be non-empty')
-  }
-  const locationKey = locationIconKey(location)
-  const label = input.zone === null ? null : input.zone.trim()
-  if (label !== null && label.length === 0) {
-    throw new Error('[device-manager] setLocationZone: zone must be non-empty or null')
-  }
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const membership = store.locationZones ?? {}
-    if (label === null) {
-      if (!(locationKey in membership)) return
-      const { [locationKey]: _cleared, ...kept } = membership
-      await pctx.settings.writeAddonStore({ locationZones: kept })
-      return
-    }
-    const zoneKey = siteZoneKey(label)
-    const zones = store.siteZones ?? {}
-    const needsZone = !(zoneKey in zones)
-    if (membership[locationKey] === zoneKey && !needsZone) return
-    await pctx.settings.writeAddonStore({
-      ...(needsZone ? { siteZones: { ...zones, [zoneKey]: { label } } } : {}),
-      locationZones: { ...membership, [locationKey]: zoneKey },
-    })
-  })
-}
-
-/**
- * Move a location's zone membership from one key to another, for
- * `renameLocation`. Same shape as the icon and description movers.
- */
-function renameLocationZone(
-  membership: Readonly<Record<string, string>>,
-  fromKey: string,
-  toKey: string,
-): Record<string, string> | null {
-  const moved = membership[fromKey]
-  if (moved === undefined) return null
-  if (fromKey === toKey) return null
-  const { [fromKey]: _dropped, ...rest } = membership
-  // A merge lands the room in the TARGET's zone: the devices are moving into a
-  // room that already has a place in the property.
-  return toKey in rest ? rest : { ...rest, [toKey]: moved }
-}
-
-/**
- * Move a location's description from one key to another, for `renameLocation`.
- *
- * Identical rule to {@link renameLocationIcon}, deliberately: a merge keeps the
- * TARGET's description, because renaming "Sala" into "Hall" moves devices
- * into Hall and does not re-describe it. Split from the icon mover only
- * because the value types differ; if one ever changes, the other must.
- */
-function renameLocationDescription(
-  descriptions: Readonly<Record<string, string>>,
-  fromKey: string,
-  toKey: string,
-): Record<string, string> | null {
-  const moved = descriptions[fromKey]
-  if (moved === undefined) return null
-  if (fromKey === toKey) return null
-  const { [fromKey]: _dropped, ...rest } = descriptions
-  return toKey in rest ? rest : { ...rest, [toKey]: moved }
-}
-
-/**
- * Move a location's icon from one key to another, for `renameLocation`.
- *
- * Returns `null` when NOTHING changes, so the caller can leave the key out of
- * its `writeAddonStore` patch instead of re-writing an identical map.
- *
- * A rename onto a room that already has an icon is a MERGE, and the surviving
- * room keeps its own: the operator renaming "Sala" into "Hall" is moving
- * devices into Hall, not restyling it. The source key is dropped either way.
- * Pure — builds a new record, mutates nothing.
- */
-function renameLocationIcon(
-  icons: Readonly<Record<string, IconKey>>,
-  fromKey: string,
-  toKey: string,
-): Record<string, IconKey> | null {
-  const moved = icons[fromKey]
-  if (moved === undefined) return null
-  if (fromKey === toKey) return null
-  const { [fromKey]: _dropped, ...rest } = icons
-  return toKey in rest ? rest : { ...rest, [toKey]: moved }
-}
-
-/**
- * Remove a label from the curated registry. Match is
- * case-insensitive. Devices that still reference this label keep
- * their `meta.location` value (the registry is a suggestion
- * list, not a foreign key) — pass `cascade: true` to also clear
- * `setLocation` on every device that referenced this exact
- * label. Cascade only matches case-insensitively + trimmed, same
- * as the registry equality check.
- */
-/**
- * Rename a room in ONE server operation: the registry label in place, then
- * every device that carried it.
- *
- * The lock order is the one `removeLocation` documents and must not be
- * "simplified": the registry edit takes the addon-store lock and RELEASES it
- * before the cascade takes the meta lock. Holding both, in that order, is the
- * reverse of `allocateNextDeviceId`'s meta ⊃ addon-store nesting — the pair
- * that deadlocks.
- *
- * Validation happens BEFORE either lock. A rename that throws halfway is the
- * exact failure this function exists to remove, so an empty target must be
- * refused while nothing has been written yet.
- */
-export async function renameLocation(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['renameLocation']>[0],
-): ReturnType<IDeviceManagerProvider['renameLocation']> {
-  const from = input.from.trim()
-  const to = input.to.trim()
-  if (from.length === 0) {
-    throw new Error('[device-manager] renameLocation: `from` must be non-empty')
-  }
-  if (to.length === 0) {
-    throw new Error('[device-manager] renameLocation: `to` must be non-empty')
-  }
-  const fromKey = from.toLowerCase()
-  const toKey = to.toLowerCase()
-
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const current = store.locations ?? []
-    const registered = current.some((l) => l.trim().toLowerCase() === fromKey)
-    // The ICON moves with the room, and it moves even when the label was never
-    // REGISTERED: `setLocationIcon` does not require registration either (the
-    // registry is a suggestion list, and the rooms that most need a rename are
-    // the ones nobody registered). An early return on `registered` alone would
-    // leave the icon parked on a key no location will ever carry again — an
-    // orphan that reads as "the icon was lost" and can only be cleared by
-    // re-creating the old room.
-    const icons = store.locationIcons ?? {}
-    const movedIcons = renameLocationIcon(icons, fromKey, toKey)
-    // The DESCRIPTION moves on exactly the same terms. It has to be here and
-    // not in the addon that reads it: while it lived in post-analysis settings
-    // under a hand-typed label, this rename carried the icon and left the
-    // description behind, and nothing anywhere said so.
-    const descriptions = store.locationDescriptions ?? {}
-    const movedDescriptions = renameLocationDescription(descriptions, fromKey, toKey)
-    // And the ZONE it belongs to, for the third time and the same reason.
-    const membership = store.locationZones ?? {}
-    const movedZones = renameLocationZone(membership, fromKey, toKey)
-    // `from` was never registered AND carried neither — nothing to rewrite
-    // here; the device cascade below is the whole job.
-    if (!registered && movedIcons === null && movedDescriptions === null && movedZones === null)
-      return
-    // Drop BOTH labels and write the target once. Dropping `to` as well is what
-    // makes renaming onto an existing room a MERGE rather than a duplicate
-    // entry, and it is also what lets a case-only rename (`kitchen` → `Kitchen`)
-    // through: there, the two keys are the same one.
-    //
-    // Position is deliberately not preserved — `listLocations` sorts, so the
-    // stored order is not observable and pretending to hold it would be
-    // untestable ceremony.
-    const kept = current.filter((l) => {
-      const key = l.trim().toLowerCase()
-      return key !== fromKey && key !== toKey
-    })
-    await pctx.settings.writeAddonStore({
-      ...(registered ? { locations: [...kept, to] } : {}),
-      ...(movedIcons !== null ? { locationIcons: movedIcons } : {}),
-      ...(movedDescriptions !== null ? { locationDescriptions: movedDescriptions } : {}),
-      ...(movedZones !== null ? { locationZones: movedZones } : {}),
-    })
-  })
-
-  const moved = await pctx.metaStore.withMetaWriteLock(async () => {
-    const out: number[] = []
-    for (const row of await pctx.metaStore.rows.listAll()) {
-      const location = row.meta.location
-      if (typeof location !== 'string') continue
-      if (location.trim().toLowerCase() !== fromKey) continue
-      await pctx.metaStore.rows.patch(row.meta.id, { location: to })
-      out.push(row.meta.id)
-    }
-    return out
-  })
-  for (const deviceId of moved) {
-    pctx.host.ctx.eventBus.emit({
-      id: randomUUID(),
-      timestamp: new Date(),
-      source: { type: 'device', id: deviceId },
-      category: EventCategory.DeviceMetaChanged,
-      data: { deviceId, field: 'location', value: to },
-    })
-  }
-  pctx.host.ctx.logger.info('renameLocation: room renamed', {
-    meta: { from, to, moved: moved.length },
-  })
-  return { moved: moved.length }
-}
-
-export async function removeLocation(
-  pctx: ProviderContext,
-  input: Parameters<IDeviceManagerProvider['removeLocation']>[0],
-): ReturnType<IDeviceManagerProvider['removeLocation']> {
-  const trimmed = input.name.trim()
-  if (trimmed.length === 0) return
-  // The registry edit takes the addon-store lock and RELEASES it before the
-  // cascade takes the meta lock below. Holding both at once, in this order,
-  // would be the reverse of `allocateNextDeviceId`'s meta ⊃ addon-store
-  // nesting — which is the pair that deadlocks.
-  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
-    const store = await pctx.metaStore.readStore()
-    const current = store.locations ?? []
-    const key = locationIconKey(trimmed)
-    const remaining = current.filter((l) => l.toLowerCase() !== key)
-    const droppedLabel = remaining.length !== current.length
-    // The icon goes with the room. Leaving it behind is not harmless: the key
-    // survives forever in a store nobody lists, and re-creating a room of the
-    // same name silently inherits an icon the operator never chose for it.
-    const icons = store.locationIcons ?? {}
-    const droppedIcon = key in icons
-    // Same reasoning for the description, and the stake is higher: a re-created
-    // room silently inheriting a description the operator never wrote for it
-    // would be fed to a model as fact.
-    const descriptions = store.locationDescriptions ?? {}
-    const droppedDescription = key in descriptions
-    // A removed room leaves its zone. Leaving the entry keeps a key nothing
-    // lists, and a room re-created with the same name would silently rejoin a
-    // zone nobody put it in.
-    const membership = store.locationZones ?? {}
-    const droppedZone = key in membership
-    if (!droppedLabel && !droppedIcon && !droppedDescription && !droppedZone) return
-    const { [key]: _removedIcon, ...keptIcons } = icons
-    const { [key]: _removedDescription, ...keptDescriptions } = descriptions
-    const { [key]: _removedZone, ...keptMembership } = membership
-    await pctx.settings.writeAddonStore({
-      ...(droppedLabel ? { locations: remaining } : {}),
-      ...(droppedIcon ? { locationIcons: keptIcons } : {}),
-      ...(droppedDescription ? { locationDescriptions: keptDescriptions } : {}),
-      ...(droppedZone ? { locationZones: keptMembership } : {}),
-    })
-  })
-  if (input.cascade !== true) return
-
-  // The cascade is a read-modify-write over device rows and belongs under the
-  // same lock every other device writer takes. It used to run OUTSIDE it: a
-  // `setLocation` landing between this scan and its write was silently undone,
-  // and a `registerDevice` in the same window had its whole row overwritten by
-  // the pre-read snapshot the blob write carried.
-  const cleared = await pctx.metaStore.withMetaWriteLock(async () => {
-    const out: number[] = []
-    for (const row of await pctx.metaStore.rows.listAll()) {
-      const location = row.meta.location
-      if (typeof location !== 'string') continue
-      if (location.trim().toLowerCase() !== trimmed.toLowerCase()) continue
-      await pctx.metaStore.rows.patch(row.meta.id, { location: null })
-      out.push(row.meta.id)
-    }
-    return out
-  })
-  for (const deviceId of cleared) {
-    pctx.host.ctx.eventBus.emit({
-      id: randomUUID(),
-      timestamp: new Date(),
-      source: { type: 'device', id: deviceId },
-      category: EventCategory.DeviceMetaChanged,
-      data: { deviceId, field: 'location', value: null },
-    })
-  }
 }
 
 /**

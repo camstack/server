@@ -168,6 +168,18 @@ export class ActionsStore {
     await this.actions.put({ id: existing.id, data: { ...rest, ...tagsBody(tags) } })
   }
 
+  /** Replace the tag ids of an internal action (D1089); everything else is left as it is. */
+  async setTagIds(actionId: string, tagIds: readonly string[]): Promise<void> {
+    const existing = isInternalActionId(actionId) ? await this.actions.get(uuidOf(actionId)) : null
+    if (existing === null) throw new ActionError('not-found', `no internal action "${actionId}"`)
+    const { tagIds: _previous, ...rest } = existing.data
+    const unique = [...new Set(tagIds)]
+    await this.actions.put({
+      id: existing.id,
+      data: unique.length === 0 ? rest : { ...rest, tagIds: unique },
+    })
+  }
+
   async delete(actionId: string): Promise<boolean> {
     if (!isInternalActionId(actionId)) return false
     return this.actions.delete(uuidOf(actionId))

@@ -322,6 +322,19 @@ export class CoreBlockStore {
     this.byId.set(next.id, next)
   }
 
+  /** Replace the tag ids of a block (D1089); everything else is left as it is. */
+  async setTagIds(blockId: string, tagIds: readonly string[]): Promise<void> {
+    const existing = this.byId.get(blockId)
+    if (!existing) throw new Error(`core block not found: ${blockId}`)
+    const { tagIds: _previous, ...rest } = existing
+    const unique = [...new Set(tagIds)]
+    const next: CoreBlock = CoreBlockSchema.parse(
+      unique.length === 0 ? rest : { ...rest, tagIds: unique },
+    )
+    await this.persist(next)
+    this.byId.set(next.id, next)
+  }
+
   /**
    * Store a composition block (D659): hub-placed, no code, never `running` on
    * creation — the composer's verdict, mirrored by the supervisor, says that.

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { IconKeySchema } from '../device/icon-catalog.js'
 import { TagColorIdSchema, TagNameSchema } from '../tags/tag.js'
+import { TagPatchSchema, TagRecordSchema } from '../entities/entities.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /**
@@ -58,6 +59,28 @@ export const tagsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
+    /** Create the tag named `name`, or return the one that has it (trimmed,
+     *  case-insensitive). A new tag gets a random id (D1089). */
+    ensureTag: method(z.object({ name: TagNameSchema }), TagRecordSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    /** Every tag record, sorted by `order` then name. */
+    listTags: method(z.object({}), z.array(TagRecordSchema), { auth: 'protected' }),
+    /** ONE write to ONE record: rename, restyle, describe. No owner is rewritten
+     *  and none has to be reachable. A rename onto another tag's name is refused
+     *  (`tag-name-taken`). */
+    updateTag: method(z.object({ id: z.string().min(1), patch: TagPatchSchema }), TagRecordSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    /** Delete a tag and clear it from every owner (the one fan-out that remains).
+     *  Refused while an owner cannot be read, naming it. */
+    deleteTag: method(
+      z.object({ id: z.string().min(1) }),
+      z.object({ updated: TagUsageCountsSchema }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     /**
      * Every tag: styled or in use, with how many records of each kind carry it.
      * An unreachable owner degrades that kind's count to `null`; the call still

@@ -3,6 +3,8 @@
  * meta row, a re-registration keeps it, and nothing cascades to descendants
  * (a tag labels the record it is on; a location is organisational).
  */
+import { type FakeTagsApi, makeFakeTagsApi } from './fake-tags-api.js'
+import type { RecordsAccess } from '@camstack/types'
 import type { IDeviceManagerProvider, IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
@@ -68,6 +70,9 @@ function makeSettings() {
 interface PersistentState {
   readonly store: FakeSettingsStore
   readonly settings: ReturnType<typeof makeSettings>
+  /** The room and tag records survive a reboot too (D1089). */
+  readonly records: RecordsAccess
+  readonly tags: FakeTagsApi
 }
 
 interface BootHandle {
@@ -85,15 +90,17 @@ async function boot(shared?: PersistentState): Promise<BootHandle> {
   const state: PersistentState = shared ?? {
     store: await makeSettingsStoreApi(),
     settings: makeSettings(),
+    records: await makeRecordsAccessForOwner('device-manager'),
+    tags: makeFakeTagsApi(),
   }
   const addon = new DeviceManagerAddon()
   const logger = makeLogger()
-  const records = await makeRecordsAccessForOwner('device-manager')
+  const records = state.records
   const ctx = makeAddonContext({
     id: 'device-manager',
     logger,
     settings: state.settings,
-    api: { settingsStore: state.store.api },
+    api: { settingsStore: state.store.api, tags: state.tags },
     kernel: { deviceRegistry: new DeviceRegistry() },
     records,
   })

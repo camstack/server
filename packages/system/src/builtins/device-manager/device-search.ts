@@ -60,6 +60,12 @@ export interface DeviceSearchDeps {
   ) => Promise<Readonly<Record<string, Readonly<Record<string, unknown>>>>>
   /** Integration id → display name. */
   readonly integrationLabels: () => Promise<ReadonlyMap<string, string>>
+  /**
+   * The current name of room `id`, `null` when `value` is not a room id (D1089). A location
+   * filter accepts an id or a name for one release: an id is turned into the name the
+   * facets and the devices carry, anything else is taken as the name it always was.
+   */
+  readonly roomNameOf?: (value: string) => string | null
   readonly logger: Pick<IScopedLogger, 'warn'>
 }
 
@@ -282,8 +288,9 @@ export async function searchDevices(
   let compatibleTotal = 0
   let hiddenIncompatible = 0
   const filters = input.filters
+  const locationFilter = filters?.locations?.map((value) => deps.roomNameOf?.(value) ?? value)
   for (const c of textPass) {
-    const okLocation = matches(filters?.locations, c.device.location)
+    const okLocation = matches(locationFilter, c.device.location)
     const okIntegration = matches(filters?.integrationIds, c.integrationId)
     const okType = matches(filters?.types, c.device.type)
     if (c.compatible) {

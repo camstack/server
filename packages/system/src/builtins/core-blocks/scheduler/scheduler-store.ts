@@ -103,6 +103,16 @@ export class SchedulersStore {
     await this.schedulers.put({ id: existing.id, data: body })
   }
 
+  /** Replace the tag ids of a scheduler (D1089); everything else is left as it is. */
+  async setTagIds(schedulerId: string, tagIds: readonly string[]): Promise<void> {
+    const existing = await this.schedulers.get(schedulerId)
+    if (existing === null) throw new SchedulerError('not-found', `no scheduler "${schedulerId}"`)
+    const { tagIds: _previous, ...rest } = existing.data
+    const unique = [...new Set(tagIds)]
+    const body: SchedulerRowBody = unique.length === 0 ? rest : { ...rest, tagIds: unique }
+    await this.schedulers.put({ id: existing.id, data: body })
+  }
+
   async delete(schedulerId: string): Promise<boolean> {
     const removed = await this.schedulers.delete(schedulerId)
     if (removed) await this.state.delete(schedulerId)

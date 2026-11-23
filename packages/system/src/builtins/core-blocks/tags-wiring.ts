@@ -31,38 +31,51 @@ export interface TagsRuntimeDeps {
 
 function coreBlocksPort(blocks: () => CoreBlockStore): TagOwnerPort {
   return {
+    storage: 'ids',
     list: async () =>
       blocks()
         .list()
-        .map((b) => ({ id: b.id, tags: b.tags ?? [] })),
+        .map((b) => ({ id: b.id, tags: b.tags ?? [], tagIds: b.tagIds ?? [] })),
     setTags: async (id, tags) => {
       await blocks().setTags(id, tags)
+    },
+    setTagIds: async (id, tagIds) => {
+      await blocks().setTagIds(id, tagIds)
     },
   }
 }
 
 function schedulersPort(store: SchedulersStore): TagOwnerPort {
   return {
-    list: async () => (await store.list()).map((s) => ({ id: s.id, tags: s.tags ?? [] })),
+    storage: 'ids',
+    list: async () =>
+      (await store.list()).map((s) => ({ id: s.id, tags: s.tags ?? [], tagIds: s.tagIds ?? [] })),
     setTags: (id, tags) => store.setTags(id, tags),
+    setTagIds: (id, tagIds) => store.setTagIds(id, tagIds),
   }
 }
 
 function actionsPort(store: ActionsStore): TagOwnerPort {
   return {
-    list: async () => (await store.list()).map((a) => ({ id: a.id, tags: a.tags ?? [] })),
+    storage: 'ids',
+    list: async () =>
+      (await store.list()).map((a) => ({ id: a.id, tags: a.tags ?? [], tagIds: a.tagIds ?? [] })),
     setTags: (id, tags) => store.setTags(id, tags),
+    setTagIds: (id, tagIds) => store.setTagIds(id, tagIds),
   }
 }
 
 function templatesPort(templates: RecordKindHandle<TemplateRowBody>): TagOwnerPort {
   return {
+    storage: 'ids',
     list: async () => {
       const out: TagOwnerRecord[] = []
       let cursor: string | undefined
       do {
         const page = await templates.query(cursor === undefined ? {} : { cursor })
-        for (const row of page.records) out.push({ id: row.id, tags: row.data.tags ?? [] })
+        for (const row of page.records) {
+          out.push({ id: row.id, tags: row.data.tags ?? [], tagIds: row.data.tagIds ?? [] })
+        }
         cursor = page.nextCursor ?? undefined
       } while (cursor !== undefined)
       return out
@@ -77,22 +90,33 @@ function templatesPort(templates: RecordKindHandle<TemplateRowBody>): TagOwnerPo
         data: normalized.length === 0 ? rest : { ...rest, tags: normalized },
       })
     },
+    setTagIds: async (id, tagIds) => {
+      const row = await templates.get(id)
+      if (row === null) throw new Error(`no template "${id}"`)
+      const { tagIds: _previous, ...rest } = row.data
+      const unique = [...new Set(tagIds)]
+      await templates.put({ id, data: unique.length === 0 ? rest : { ...rest, tagIds: unique } })
+    },
   }
 }
 
-function devicesPort(api: () => AddonApi | undefined): TagOwnerPort {
+export function devicesPort(api: () => AddonApi | undefined): TagOwnerPort {
   const need = (): AddonApi => {
     const current = api()
     if (current === undefined) throw new Error('[tags] the cluster API is not available yet')
     return current
   }
   return {
+    storage: 'ids',
     list: async () => {
       const rows = await need().deviceManager.listAll.query({ projection: 'slim' })
-      return rows.map((d) => ({ id: String(d.id), tags: d.tags ?? [] }))
+      return rows.map((d) => ({ id: String(d.id), tags: d.tags ?? [], tagIds: d.tagIds ?? [] }))
     },
     setTags: async (id, tags) => {
       await need().deviceManager.setTags.mutate({ deviceId: Number(id), tags })
+    },
+    setTagIds: async (id, tagIds) => {
+      await need().deviceManager.setTags.mutate({ deviceId: Number(id), tagIds })
     },
   }
 }
@@ -119,12 +143,17 @@ export function parseRuleTagOwnerId(id: string): { kind: NcTaggedRuleKind; ruleI
   return { kind: kind.data, ruleId: id.slice(sep + 1) }
 }
 
-function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
+export function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
   return {
+    // A notification rule still carries text only (its migration is a later step of D1089).
+    storage: 'names',
     // Every rule KIND carries tags (D1054): one read covers all four stores.
     list: async () => {
       const { rules } = await needApi(api).notificationRules.listRuleTags.query({})
-      return rules.map((r) => ({ id: ruleTagOwnerId(r.kind, r.ruleId), tags: r.tags }))
+      return rules.map((r) => ({ id: ruleTagOwnerId(r.kind, r.ruleId), tags: r.tags, tagIds: [] }))
+    },
+    setTagIds: async () => {
+      throw new Error('[tags] a notification rule carries tag names only')
     },
     // Only the tags: never a whole-rule update, which a stale copy would clobber.
     setTags: async (id, tags) => {
@@ -155,7 +184,7 @@ export function buildTagsService(deps: TagsRuntimeDeps): TagsService {
       devices: deps.devices ?? devicesPort(deps.api),
       notificationRules: deps.notificationRules ?? notificationRulesPort(deps.api),
     },
-    styles: records.kind(coreBlocksRecordKinds['tag-styles']),
+    tags: records.kind(coreBlocksRecordKinds.tags),
     logger: deps.logger,
   })
 }

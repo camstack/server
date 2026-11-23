@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1547 of 1547 methods.
+ * Coverage: 1555 of 1555 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -328,6 +328,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.cleanupDeletedDevicesData": "Admin-triggered clean-up of data that belongs to devices deleted BEFORE tombstones existed (D865). Asks every device-removal-hook implementer which device ids it holds data for, keeps those absent from the device list — confirmed by TWO reads of the list, skipped if either fails — and with confirm: false only reports the counts per store. confirm: true deletes. Never runs on its own.",
   "deviceManager.confirmIdentityLink": "Confirm a proposed link: it becomes linked by the operator and its default contributions are added. Refused by name when the link is unknown or not proposed.",
   "deviceManager.createDevice": "Create a new device via the device-provider capability.",
+  "deviceManager.deleteRoom": "Delete a room and clear every reference to it in one server operation: its devices read as having no room. Idempotent.",
   "deviceManager.disable": "Disable a device (writes enabled=false to device config).",
   "deviceManager.discoverAllProviders": "Scan EVERY discovery-capable provider; returns candidates grouped by addon.",
   "deviceManager.discoverDevices": "Trigger device discovery on a device-provider addon.",
@@ -336,6 +337,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.dismissDiscoveryProposal": "Hide a proposal for good; seeing the device again does not bring it back.",
   "deviceManager.dismissIdentityLink": "Dismiss a proposed link: sticky, never proposed again.",
   "deviceManager.enable": "Enable a device (writes enabled=true to device config).",
+  "deviceManager.ensureRoom": "Create the room named name, or return the one that has it (trimmed, case-insensitive): the \"type a new name in the picker\" flow is one call (D1089). A new room gets a random id.",
   "deviceManager.getAllBindings": "Return the binding map for every device known to the hub. Used by SystemManager warm-boot: a single round-trip resolves the routing for the entire fleet so subsequent sm.getDeviceById(id) calls are sync. Bindings change rarely (only on wrapper toggle or device add/remove) — clients invalidate via the capability.binding-changed event.",
   "deviceManager.getBindings": "Return the per-capability binding map for a device. Each entry lists the currently-active provider (native or wrapper) + the underlying native addon id, so consumers can decide routing without re-running discovery.",
   "deviceManager.getBindingsBatch": "getBindings for a NAMED set of devices, in one call.",
@@ -368,6 +370,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.listLocationIcons": "Every location that carries an ICON, as (locationKey, icon) pairs.",
   "deviceManager.listLocations": "Operator-curated location registry. Returns the union of: (1) labels persisted in the registry via addLocation, and (2) labels currently in use on at least one device's meta.location field. Sorted case-insensitively + deduped + trimmed of empty strings. Drives the autocomplete in the Device Info location editor.",
   "deviceManager.listPersistedByAddon": "List persisted devices for an addon (DB, for restore).",
+  "deviceManager.listRooms": "Every room record, sorted by order then name. A room with no device is listed.",
   "deviceManager.listSiteZones": "Every SITE ZONE — a named part of the property that groups locations (\"Night zone\" holds the bedrooms). One call answers the whole picture: key, the label as typed, the icon, and the locations inside.",
   "deviceManager.listWrappersForCap": "Return the addon ids that declared a wrapper provider for capName. Backs the device-bindings UI's wrapper-picker dropdown. Entries are sourced from CapabilityRegistry.wrapperProviders, populated when the cap definition declares kind: 'wrapper'.",
   "deviceManager.loadConfig": "Load persisted config for a device. Called at restore time.",
@@ -422,6 +425,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.updateConfig": "Update device config values (partial merge).",
   "deviceManager.updateDeviceField": "Write one device field through the capability that owns it.",
   "deviceManager.updateDeviceFieldsBatch": "Batched counterpart of updateDeviceField — the admin UI groups per-provider changes so a single round-trip triggers at most one applyDeviceSettingsPatch per (capName, addonId) tuple. Per-patch failures are reported in failures[] without aborting the others; consumers inspect the list and surface targeted errors.",
+  "deviceManager.updateRoom": "ONE write to ONE record: rename, restyle, describe, move to a zone. A field left out is kept, null clears it. A rename onto the name another room has is refused (room-name-taken); merge by moving devices instead. No device is rewritten. Unknown id is refused (room-not-found).",
   "deviceOps.getConfigEntries": "Return the device's config entries (key + current value). Used by the device-manager aggregator when reading the driver's schema+values.",
   "deviceOps.getRawState": "Opt-in: return the device's RAW upstream state (the provider's cached values) as a display-safe { source, data } blob. Returns null when the device exposes no raw state — the State panel hides its Raw toggle in that case. One-shot (read the provider's existing cache; no upstream round-trip).",
   "deviceOps.getSettingsSchema": "Build the ConfigUISchema (FormBuilder input shape) from the device's Zod config schema. Runs on the worker that owns the IDevice so the Zod types stay local (they're function references, not serializable). Returns a fully JSON-serializable schema with sections/fields the admin UI renders directly.",
@@ -1400,10 +1404,14 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "system.setLoggingSettings": "Write the logging settings document. The ONLY write authority over log levels and diagnostic windows — arming the request census went through system.setRequestCensus until 2026-08-27 and no longer does, because two writes that disagree about the same window is exactly the defect this document exists to remove (D245).",
   "system.setRetentionConfig": "Change the analytics data retention settings.",
   "system.setSiteLocation": "Operator input. Always lands as source: 'operator-set'.",
+  "tags.deleteTag": "Delete a tag and clear it from every owner (the one fan-out that remains). Refused while an owner cannot be read, naming it.",
+  "tags.ensureTag": "Create the tag named name, or return the one that has it (trimmed, case-insensitive). A new tag gets a random id (D1089).",
   "tags.list": "Every tag: styled or in use, with how many records of each kind carry it. An unreachable owner degrades that kind's count to null; the call still answers.",
+  "tags.listTags": "Every tag record, sorted by order then name.",
   "tags.remove": "Drop a tag from every owner and delete its style. Refused like rename while an owner cannot be read.",
   "tags.rename": "Rename a tag on EVERY owner in one call. When to already exists the two merge and the TARGET's style wins (like renameLocation). An empty to is refused before anything is written, and so is any call while an owner cannot be read (the error names the owner): a rename applied to only some owners would split the fleet across two spellings.",
   "tags.setStyle": "Choose the colour and icon of a tag. The tag need not be in use.",
+  "tags.updateTag": "ONE write to ONE record: rename, restyle, describe. No owner is rewritten and none has to be reachable. A rename onto another tag's name is refused (tag-name-taken).",
   "tamper.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "temperatureSensor.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "template.create": "Create a template of a given kind with a name and payload.",
