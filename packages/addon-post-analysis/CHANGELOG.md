@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device that is only unknown after an integration restart no longer raises a device-offline notification
+- A lock or contact marker whose camera snapshot failed at the moment of the event now gets its picture attached a few seconds later instead of staying empty.
 
 ## [1.2.726] - 2026-11-24
 

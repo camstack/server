@@ -391,6 +391,22 @@ export class BuildStores extends BuildStoresBase {
       snapshot: { getSnapshot: (i) => api.snapshot.getSnapshot.query(i) },
       media: mediaStore,
       tracks: trackStore,
+      // A marker that landed bare is retried (D60); every exit is on the record.
+      onMediaOutcome: (o) =>
+        (o.outcome === 'landed' ? logger.info : logger.warn).call(
+          logger,
+          o.outcome === 'landed'
+            ? 'synthetic marker media attached on retry'
+            : `synthetic marker media not attached (${o.outcome})`,
+          {
+            tags: { deviceId: o.deviceId },
+            meta: {
+              trackId: o.trackId,
+              attempt: o.attempt,
+              ...(o.reason !== undefined ? { reason: o.reason } : {}),
+            },
+          },
+        ),
       // Every materializer error names its camera (the id it was called for):
       // "why did 102 land without a picture" is asked per camera.
       onError: (scope, err, deviceId) =>

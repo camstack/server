@@ -68,6 +68,19 @@ export interface SyntheticTrackDeps {
   readonly makeId?: () => string
   readonly now?: () => number
   /**
+   * Waits before each background media retry of a marker that landed bare
+   * (D60). Default {@link DEFAULT_MEDIA_RETRY_DELAYS_MS}.
+   */
+  readonly retryDelaysMs?: readonly number[]
+  /**
+   * A retried frame is attached only while `now - event time` is within this
+   * bound; a later frame no longer shows the event. Default
+   * {@link DEFAULT_MEDIA_MAX_ATTACH_AGE_MS}.
+   */
+  readonly maxAttachAgeMs?: number
+  /** One report per marker whose media was retried: landed, gave up, or refused as stale. */
+  readonly onMediaOutcome?: (outcome: SyntheticMediaOutcome) => void
+  /**
    * Report a failed step. `deviceId` is the CAMERA the projection was for and
    * is passed on every call that has one — a snapshot that times out is asked
    * about per camera ("why does 101's doorbell marker have no picture?"), and a
@@ -120,6 +133,26 @@ export interface SyntheticTrackInput {
 }
 
 const DEFAULT_DEBOUNCE_MS = 10_000
+
+/**
+ * Background retries of a marker that landed with no media (D60): 2 s, 4 s, 8 s
+ * after the first miss, ~14 s in all. A 503 / cold-cache miss on a camera
+ * snapshot endpoint clears within seconds, and past ~15 s the frame no longer
+ * shows the press; three attempts keep the load on a struggling endpoint small.
+ */
+export const DEFAULT_MEDIA_RETRY_DELAYS_MS: readonly number[] = [2_000, 4_000, 8_000]
+
+/** A retried frame fetched later than this after the event is refused (retries end by ~14 s; slack for slow reads). */
+export const DEFAULT_MEDIA_MAX_ATTACH_AGE_MS = 20_000
+
+/** How a marker's media retry ended. `attempt` is the retry number (1-based). */
+export interface SyntheticMediaOutcome {
+  readonly outcome: 'landed' | 'gave-up' | 'stale-refused'
+  readonly attempt: number
+  readonly deviceId: number
+  readonly trackId: string
+  readonly reason?: string
+}
 
 /**
  * What {@link SyntheticTrackMaterializer.materializeOrShare} answers.
@@ -177,6 +210,14 @@ class SnapshotTimeoutError extends Error {
   }
 }
 
+/** A timer the process does not wait for. */
+function sleep(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms)
+    timer.unref()
+  })
+}
+
 /** Reject with `SnapshotTimeoutError` if `promise` doesn't settle within `ms`. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -228,6 +269,12 @@ export class SyntheticTrackMaterializer {
   private readonly now: () => number
   /** The open window per {@link debounceKey}: its start and the marker it lands. */
   private readonly windows = new Map<string, DebounceWindow>()
+  private readonly retryDelaysMs: readonly number[]
+  private readonly maxAttachAgeMs: number
+  /** In-flight background media retries. */
+  private readonly pendingRetries = new Set<Promise<void>>()
+  /** Why the most recent snapshot read produced no frame (read right after a null return). */
+  private lastSnapshotReason = 'unknown'
 
   constructor(deps: SyntheticTrackDeps) {
     this.deps = deps
@@ -238,6 +285,13 @@ export class SyntheticTrackMaterializer {
     // random half shrinks with every other track id (see `track-id.ts`).
     this.makeId = deps.makeId ?? ((): string => `pa-synth-${newTrackId()}`)
     this.now = deps.now ?? Date.now
+    this.retryDelaysMs = deps.retryDelaysMs ?? DEFAULT_MEDIA_RETRY_DELAYS_MS
+    this.maxAttachAgeMs = deps.maxAttachAgeMs ?? DEFAULT_MEDIA_MAX_ATTACH_AGE_MS
+  }
+
+  /** Resolves when every background media retry has ended (tests, shutdown). */
+  async whenMediaSettled(): Promise<void> {
+    while (this.pendingRetries.size > 0) await Promise.all([...this.pendingRetries])
   }
 
   /**
@@ -264,10 +318,12 @@ export class SyntheticTrackMaterializer {
         timeoutMs,
       )
       if (snap === null) {
+        this.lastSnapshotReason = 'snapshot returned null'
         this.deps.onError?.('getSnapshot', new Error('snapshot returned null'), cameraId)
       }
       return snap
     } catch (err) {
+      this.lastSnapshotReason = err instanceof Error ? err.message : String(err)
       this.deps.onError?.(
         err instanceof SnapshotTimeoutError ? 'snapshotTimeout' : 'snapshotMedia',
         err,
@@ -318,6 +374,121 @@ export class SyntheticTrackMaterializer {
     return { kind: window === null ? 'materialized' : 'debounced', track }
   }
 
+  /**
+   * Downscale and persist one snapshot as the marker's `keyFrameSmall`.
+   * Returns the media id, or null when the write failed (reported).
+   *
+   * Best shot (native-media-persistence design C): the snapshot cap returns a
+   * RAW native-resolution frame (e.g. 4K). A synthetic event has no detection
+   * bbox, so the best shot is the whole CLEAN frame downscaled to the
+   * <=960x540 envelope BEFORE it is persisted, under `kind: 'keyFrameSmall'`
+   * so the viewer hero/clean/reel selectors pick it up (a `'snapshot'` blob is
+   * ignored there). A decode failure falls back to the raw bytes.
+   */
+  private async storeMedia(
+    snap: { base64: string; contentType: string },
+    trackId: string,
+    ts: number,
+    cameraId: number,
+  ): Promise<number | null> {
+    try {
+      const raw = Buffer.from(snap.base64, 'base64')
+      let data: Buffer = raw
+      try {
+        data = await downscaleFullFrameJpeg(
+          raw,
+          SYNTHETIC_SNAPSHOT_MAX_WIDTH,
+          SYNTHETIC_SNAPSHOT_MAX_HEIGHT,
+        )
+      } catch (err) {
+        this.deps.onError?.('downscaleSnapshot', err, cameraId)
+      }
+      return await this.deps.media.put({
+        deviceId: cameraId,
+        ownerKind: 'track',
+        ownerId: trackId,
+        kind: 'keyFrameSmall',
+        timestamp: ts,
+        data,
+      })
+    } catch (err) {
+      this.deps.onError?.('snapshotMedia', err, cameraId)
+      return null
+    }
+  }
+
+  /**
+   * D60: media a later pass depends on is retried until it LANDS, under a
+   * bound. The marker is already persisted bare (the notification must not
+   * wait); this re-reads the snapshot with backoff and, when one lands, writes
+   * the media under the SAME marker id and re-persists the same row (upsert),
+   * never a second marker. The gate is "did the media persist", not the first
+   * answer.
+   */
+  private scheduleMediaRetry(track: Track, input: SyntheticTrackInput): void {
+    if (this.retryDelaysMs.length === 0) return
+    const tracked: Promise<void> = this.retryMedia(track, input)
+      .catch((err: unknown) => {
+        this.deps.onError?.('snapshotRetry', err, input.cameraId)
+      })
+      .finally(() => {
+        this.pendingRetries.delete(tracked)
+      })
+    this.pendingRetries.add(tracked)
+  }
+
+  private async retryMedia(track: Track, input: SyntheticTrackInput): Promise<void> {
+    const report = (
+      outcome: SyntheticMediaOutcome['outcome'],
+      attempt: number,
+      reason?: string,
+    ): void =>
+      this.deps.onMediaOutcome?.({
+        outcome,
+        attempt,
+        deviceId: input.cameraId,
+        trackId: track.trackId,
+        ...(reason !== undefined ? { reason } : {}),
+      })
+    const timeoutMs = input.snapshotTimeoutMs ?? this.snapshotTimeoutMs
+    let reason = this.lastSnapshotReason
+    for (let i = 0; i < this.retryDelaysMs.length; i++) {
+      const attempt = i + 1
+      await sleep(this.retryDelaysMs[i] ?? 0)
+      const snap = await this.fetchSnapshot(input.cameraId, timeoutMs)
+      if (snap === null) {
+        reason = this.lastSnapshotReason
+        continue
+      }
+      const age = this.now() - input.timestamp
+      if (age > this.maxAttachAgeMs) {
+        report('stale-refused', attempt, `frame fetched ${age}ms after the event`)
+        return
+      }
+      const mediaId = await this.storeMedia(snap, track.trackId, input.timestamp, input.cameraId)
+      if (mediaId === null) {
+        reason = 'media write failed'
+        continue
+      }
+      const withMedia: Track = {
+        ...track,
+        snapshots: [
+          { timestamp: input.timestamp, position: zeroPosition(input.timestamp), mediaId },
+        ],
+      }
+      try {
+        await this.deps.tracks.persistSyntheticTrack(withMedia)
+      } catch (err) {
+        this.deps.onError?.('persistSyntheticTrack', err, input.cameraId)
+        report('gave-up', attempt, 'persist of the media failed')
+        return
+      }
+      report('landed', attempt)
+      return
+    }
+    report('gave-up', this.retryDelaysMs.length, reason)
+  }
+
   private async land(input: SyntheticTrackInput): Promise<Track | null> {
     const trackId = this.makeId()
     const ts = input.timestamp
@@ -328,39 +499,7 @@ export class SyntheticTrackMaterializer {
       input.snapshotTimeoutMs ?? this.snapshotTimeoutMs,
     )
     if (snap !== null) {
-      try {
-        // Best shot (native-media-persistence design C): the snapshot cap
-        // returns a RAW native-resolution frame (e.g. 4K). A synthetic event
-        // has no detection bbox, so the best shot is the whole CLEAN frame
-        // downscaled to the ≤960×540 envelope (no box) BEFORE it is persisted —
-        // matching the pipeline tracks' `keyFrameSmall` resolution, never the
-        // retired ≤640 crop cap. Persisted under `kind: 'keyFrameSmall'` so the
-        // viewer hero/clean/reel selectors pick it up (a `'snapshot'` blob is
-        // ignored there — that stuck the pa-synth reel on "loading"). A decode
-        // failure falls back to the raw bytes so a marker still lands media
-        // (best-effort, never blocks the sensor record).
-        const raw = Buffer.from(snap.base64, 'base64')
-        let data: Buffer = raw
-        try {
-          data = await downscaleFullFrameJpeg(
-            raw,
-            SYNTHETIC_SNAPSHOT_MAX_WIDTH,
-            SYNTHETIC_SNAPSHOT_MAX_HEIGHT,
-          )
-        } catch (err) {
-          this.deps.onError?.('downscaleSnapshot', err, input.cameraId)
-        }
-        mediaId = await this.deps.media.put({
-          deviceId: input.cameraId,
-          ownerKind: 'track',
-          ownerId: trackId,
-          kind: 'keyFrameSmall',
-          timestamp: ts,
-          data,
-        })
-      } catch (err) {
-        this.deps.onError?.('snapshotMedia', err, input.cameraId)
-      }
+      mediaId = await this.storeMedia(snap, trackId, ts, input.cameraId)
     }
 
     const track: Track = {
@@ -411,6 +550,7 @@ export class SyntheticTrackMaterializer {
       this.deps.onError?.('persistSyntheticTrack', err, input.cameraId)
       return null
     }
+    if (mediaId === null) this.scheduleMediaRetry(track, input)
     return track
   }
 }
