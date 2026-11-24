@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.629] - 2026-11-24
+
 ### Changed
 
 - A timed run (on for N) is offered on every device that has a switch, not only heaters and pet fountains
