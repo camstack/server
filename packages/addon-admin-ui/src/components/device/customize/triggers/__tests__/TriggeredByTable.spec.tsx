@@ -4,7 +4,7 @@ import {
   linkedTriggerValues,
   readRecipeLiteral,
 } from '@camstack/types'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { DeviceFleetProvider } from '@camstack/ui-library'
@@ -148,21 +148,34 @@ vi.mock('../../assignments/use-source-candidates', () => ({
     ],
   }),
 }))
-vi.mock('../../source-selector/SourceSelectorDevicesDialog', () => ({
-  SourceSelectorDevicesDialog: (p: {
-    open: boolean
+/** The limit controls need a tRPC client of their own (a device picker); the trigger spec does not. */
+vi.mock('../../../../../pages/build/templates/TemplateInputsForm', () => ({
+  TimeWindowControl: () => <div data-testid="time-window-stub" />,
+  DeviceStateControl: () => <div data-testid="device-state-stub" />,
+}))
+/** The common SourceSelector, stubbed to one button per offered device. */
+vi.mock('../../source-selector/SourceSelector', () => ({
+  SourceSelector: (p: {
+    kind: string
+    selection: string
     candidates: { kind: string; value?: readonly { deviceId: number }[] }
-    onConfirm: (c: readonly unknown[]) => void
+    picked: readonly number[]
+    onPickedChange: (ids: readonly number[]) => void
   }) => {
-    offeredToPicker.current = p.candidates
-    return p.open ? (
-      <button
-        type="button"
-        onClick={() => p.onConfirm((p.candidates.value ?? []).filter((c) => c.deviceId === 13))}
-      >
-        pick-13
-      </button>
-    ) : null
+    offeredToPicker.current = {
+      ...p.candidates,
+      kind: p.kind,
+      selection: p.selection,
+    }
+    return (
+      <div data-testid="source-selector-stub" data-picked={p.picked.join(',')}>
+        {(p.candidates.value ?? []).map((c) => (
+          <button key={c.deviceId} type="button" onClick={() => p.onPickedChange([c.deviceId])}>
+            {`pick-${String(c.deviceId)}`}
+          </button>
+        ))}
+      </div>
+    )
   },
 }))
 const { TriggeredByTable } = await import('../TriggeredByTable')
@@ -174,6 +187,11 @@ function wrap(node: ReactNode): ReactNode {
 /** The section's own Save: nothing is written until it is pressed. */
 function pressSave(): void {
   fireEvent.click(screen.getByRole('button', { name: /^Save$/i }))
+}
+
+/** The trigger dialog's Save: it only moves the change into the section's draft. */
+function saveDialog(): void {
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^Save$/i }))
 }
 
 function paramsIn(code: string) {
@@ -224,6 +242,7 @@ describe('TriggeredByTable', () => {
     }
     expect(offered.value.map((c) => c.deviceId)).toEqual([13])
     fireEvent.click(screen.getByText('pick-13'))
+    saveDialog()
     expect(screen.getByText('Pulsante ingresso')).toBeTruthy()
     expect(create).not.toHaveBeenCalled()
     pressSave()
@@ -339,6 +358,7 @@ describe('TriggeredByTable', () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
     fireEvent.click(screen.getByText('pick-13'))
+    saveDialog()
     pressSave()
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
     expect(paramsIn(create.mock.calls[0]?.[0].block.code ?? '')).toEqual({
@@ -374,7 +394,10 @@ describe('TriggeredByTable', () => {
     expect(setEnabled).not.toHaveBeenCalled()
     pressSave()
     await waitFor(() =>
-      expect(setEnabled).toHaveBeenCalledWith({ blockId: '4864c0cc', enabled: false }),
+      expect(setEnabled).toHaveBeenCalledWith({
+        blockId: '4864c0cc',
+        enabled: false,
+      }),
     )
   })
 
@@ -417,7 +440,7 @@ describe('TriggeredByTable', () => {
     expect(screen.getAllByText(/Telecomando/).length).toBeGreaterThan(0)
   })
 
-  it('a trigger narrowed per part is editable, and saving writes only the code with one pick', async () => {
+  it('an edit that changes only the source device keeps every condition and writes only the code', async () => {
     const perPart = {
       ...LIVE,
       values: linkedTriggerValues({
@@ -443,26 +466,82 @@ describe('TriggeredByTable', () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('button', {
-        name: /Choose the events of .*Pulsante studio/i,
+        name: /Edit the trigger from .*Pulsante studio/i,
       }),
     )
-    fireEvent.click(await screen.findByRole('button', { name: /^Save$/i }))
+    fireEvent.click(screen.getByText('pick-13'))
+    saveDialog()
     expect(update).not.toHaveBeenCalled()
     pressSave()
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
     const block = update.mock.calls[0]?.[0].block
+    expect(update.mock.calls[0]?.[0].blockId).toBe('4864c0cc')
     expect(Object.keys(Object(block))).toEqual(['code'])
     expect(paramsIn(block?.code ?? '')?.sources).toEqual([
       {
         kind: 'device-fired',
-        deviceId: 12,
-        sourceIds: ['1', '2'],
-        eventIds: ['PRESS_SHORT', 'PRESS_LONG'],
+        deviceId: 13,
+        sourceIds: ['1'],
+        eventIds: ['PRESS_SHORT'],
+      },
+      {
+        kind: 'device-fired',
+        deviceId: 13,
+        sourceIds: ['2'],
+        eventIds: ['PRESS_LONG'],
       },
     ])
   })
 
-  it('a device-event trigger is editable too', () => {
+  it('an edit saved without touching anything is not a change', () => {
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Edit the trigger from .*Pulsante studio/i,
+      }),
+    )
+    saveDialog()
+    expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('Add and Edit open the same single dialog, with the common SourceSelector inside', () => {
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByTestId('source-selector-stub')).toBeTruthy()
+    expect(offeredToPicker.current).toMatchObject({
+      kind: 'devices',
+      selection: 'single',
+    })
+    expect(screen.getByTestId('source-selector-stub').getAttribute('data-picked')).toBe('')
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: /^Cancel$/i,
+      }),
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Edit the trigger from .*Pulsante studio/i,
+      }),
+    )
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByTestId('source-selector-stub')).toBeTruthy()
+    expect(offeredToPicker.current).toMatchObject({
+      kind: 'devices',
+      selection: 'single',
+    })
+    // The source being edited is offered and chosen, beside the devices that are not yet a source.
+    expect(screen.getByTestId('source-selector-stub').getAttribute('data-picked')).toBe('12')
+    const offered = offeredToPicker.current as {
+      value: readonly { deviceId: number }[]
+    }
+    expect(offered.value.map((c) => c.deviceId)).toEqual([12, 13])
+  })
+
+  it('a device-event trigger opens the edit dialog too', () => {
     instances.current = {
       status: 'success',
       data: {
@@ -479,10 +558,11 @@ describe('TriggeredByTable', () => {
       },
     }
     render(wrap(<TriggeredByTable device={LIGHT} />))
-    expect(
+    fireEvent.click(
       screen.getByRole('button', {
-        name: /Choose the events of .*Pulsante studio/i,
+        name: /Edit the trigger from .*Pulsante studio/i,
       }),
-    ).toBeTruthy()
+    )
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
   })
 })

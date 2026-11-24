@@ -41,32 +41,27 @@ import {
   type CandidateDevice,
   candidateDetail,
 } from '../assignments/assignment-candidates'
-import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
 import {
   commandCapOf,
   editPickOf,
-  type DetectionClass,
-  type FiredPick,
   LINKED_TRIGGER_COMMAND_CAPS,
   MOTION_CAP,
   newTriggerParams,
-  replacesFilter,
+  rowSourceKindOf,
   sourceKindOf,
   triggerRows,
-  withActiveLimits,
+  type TriggerSourceKind,
+  withConditions,
   withoutRow,
   withRowAction,
-  withRowClasses,
-  withRowFilter,
   withRowOnFor,
+  withRowSource,
 } from './linked-triggers-model'
 import { TriggerRowCard, type TriggerRowView } from './TriggerRowCard'
-import { TriggerClassesDialog } from './TriggerClassesDialog'
-import { TriggerFilterDialog } from './TriggerFilterDialog'
-import { TriggerWindowDialog } from './TriggerWindowDialog'
+import { TriggerDialog, type TriggerDialogInitial, type TriggerDialogResult } from './TriggerDialog'
 import {
   draftOps,
   EMPTY_DRAFT,
@@ -91,6 +86,10 @@ interface TriggerTableRow extends TriggerRowView {
   readonly type: string | null
 }
 
+type TriggerDialogState =
+  | { readonly kind: 'add' }
+  | { readonly kind: 'edit'; readonly row: TriggerTableRow }
+
 /** What a source device may carry: events it fires, or motion it reports. A camera needs neither. */
 const SOURCE_CAPS: readonly string[] = [EVENT_EMITTER_CAP, MOTION_CAP]
 const CAMERA_TYPE = 'camera'
@@ -105,9 +104,8 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const nameIndex = useDeviceNameIndex()
   const nameNouns = useDeviceNameNouns()
   const [draft, setDraft] = useState<TriggerDraft>(EMPTY_DRAFT)
-  const [picking, setPicking] = useState(false)
-  const [editing, setEditing] = useState<TriggerTableRow | null>(null)
-  const [timing, setTiming] = useState<TriggerTableRow | null>(null)
+  /** The one dialog: absent, a new trigger, or the row being edited. */
+  const [dialog, setDialog] = useState<TriggerDialogState | null>(null)
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
   const instances = useCoreBlocksListTemplateInstances({
@@ -119,8 +117,8 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const working = workingInstances(stored, draft)
   const read = instances.data === undefined ? null : triggerRows(working)
   const shown = read !== null && (read.rows.length > 0 || read.unreadable.length > 0)
-  const fleet = useCandidateDevices(picking || shown)
-  const sourceCaps = useCapIndex(SOURCE_CAPS, picking)
+  const fleet = useCandidateDevices(dialog !== null || shown)
+  const sourceCaps = useCapIndex(SOURCE_CAPS, dialog !== null)
   const create = useCoreBlocksCreate()
   const update = useCoreBlocksUpdate()
   const remove = useCoreBlocksDelete()
@@ -188,7 +186,12 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       detail: known === undefined ? null : candidateDetail(known.integration, known.location),
     }
   })
-  const sourceIds = new Set(read.rows.map((r) => r.deviceId))
+  // The devices already a source stay out, except the one being edited: it may keep itself.
+  const sourceIds = new Set(
+    read.rows.flatMap((r) =>
+      dialog?.kind === 'edit' && dialog.row.key === r.key ? [] : [r.deviceId],
+    ),
+  )
 
   const candidates: Known<readonly AssignmentCandidate[]> =
     fleet.kind !== 'known'
@@ -251,9 +254,15 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       for (const op of ops) {
         if (op.kind === 'delete') await remove.mutateAsync({ blockId: op.blockId })
         else if (op.kind === 'update') {
-          await update.mutateAsync({ blockId: op.instance.blockId, block: codeOf(op.instance) })
+          await update.mutateAsync({
+            blockId: op.instance.blockId,
+            block: codeOf(op.instance),
+          })
         } else if (op.kind === 'enable') {
-          await setEnabled.mutateAsync({ blockId: op.blockId, enabled: op.enabled })
+          await setEnabled.mutateAsync({
+            blockId: op.blockId,
+            enabled: op.enabled,
+          })
         } else {
           const params = linkedTriggerParamsOf(op.instance.values)
           if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
@@ -284,47 +293,93 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     setDraft((d) => withParams(d, instance, params))
   }
 
-  const add = (picked: readonly AssignmentCandidate[]): void => {
-    if (capability === null) {
+  const kindOf = (deviceId: number): TriggerSourceKind | null =>
+    sourceKindOf(
+      fleetById.get(deviceId)?.type ?? null,
+      sourceCaps.kind === 'known' ? (sourceCaps.value.get(deviceId) ?? []) : [],
+    )
+
+  /** What an edit of a row starts the dialog from: its source, conditions and limits as stored. */
+  const initialOf = (row: TriggerTableRow): TriggerDialogInitial => ({
+    deviceId: row.deviceId,
+    kind: rowSourceKindOf(row.filter),
+    filter: row.filter,
+    pick: editPickOf(instanceOf(row.blockId), row.deviceId),
+    classes: row.filter.kind === 'detection' ? row.filter.classes : [],
+    activeWindow: row.activeWindow,
+    activeWhen: row.activeWhen,
+  })
+
+  /** A new trigger from the dialog: the source's defaults, then what the operator changed. */
+  const addTrigger = (result: TriggerDialogResult): void => {
+    const fresh =
+      capability === null
+        ? null
+        : newTriggerParams(device.id, result.deviceId, capability, result.kind)
+    if (fresh === null) {
       setRefusal(t('customize.triggers.notCommandable'))
       return
     }
-    setRefusal(null)
-    let next = draft
-    for (const candidate of picked) {
-      const kind = sourceKindOf(fleetById.get(candidate.deviceId)?.type ?? null, candidate.caps)
-      const params =
-        kind === null ? null : newTriggerParams(device.id, candidate.deviceId, capability, kind)
-      if (params === null) {
-        setRefusal(t('customize.triggers.notCommandable'))
-        return
-      }
-      next = withAdded(next, {
-        name: t('customize.triggers.blockName', { source: candidate.name, target: device.name }),
-        enabled: true,
-        templateId: LINKED_TRIGGER_TEMPLATE_ID,
-        values: linkedTriggerValues(params),
-      })
+    const source =
+      candidates.kind === 'known'
+        ? candidates.value.find((c) => c.deviceId === result.deviceId)
+        : undefined
+    const base: Omit<TemplateInstance, 'blockId'> = {
+      name: t('customize.triggers.blockName', {
+        source: source?.name ?? `#${String(result.deviceId)}`,
+        target: device.name,
+      }),
+      enabled: true,
+      templateId: LINKED_TRIGGER_TEMPLATE_ID,
+      values: linkedTriggerValues(fresh),
     }
-    setDraft(next)
+    const params = withConditions({ ...base, blockId: '' }, result.deviceId, result)
+    if (params === null) {
+      setRefusal(t('customize.triggers.unreadableOne'))
+      return
+    }
+    setRefusal(null)
+    setDraft((d) => withAdded(d, { ...base, values: linkedTriggerValues(params) }))
+  }
+
+  /** An edit: the source swapped when it changed, the conditions the operator touched, the limits. */
+  const editTrigger = (row: TriggerTableRow, result: TriggerDialogResult): void => {
+    const instance = instanceOf(row.blockId)
+    if (instance === undefined) return
+    const moved = withRowSource(
+      instance,
+      row.deviceId,
+      result.deviceId,
+      rowSourceKindOf(row.filter),
+      result.kind,
+    )
+    const params =
+      moved === null
+        ? null
+        : withConditions(
+            { ...instance, values: linkedTriggerValues(moved) },
+            result.deviceId,
+            result,
+          )
+    if (params === null) {
+      setRefusal(t('customize.triggers.unreadableOne'))
+      return
+    }
+    setRefusal(null)
+    edit(instance, params)
+  }
+
+  const saveDialog = (result: TriggerDialogResult): void => {
+    const open = dialog
+    setDialog(null)
+    if (open?.kind === 'add') addTrigger(result)
+    else if (open?.kind === 'edit') editTrigger(open.row, result)
   }
 
   const unlink = (row: TriggerTableRow): void => {
     const instance = instanceOf(row.blockId)
     if (instance === undefined) return
     setDraft((d) => withRemoval(d, instance, withoutRow(instance, row.deviceId)))
-  }
-
-  const saveClasses = (row: TriggerTableRow, classes: readonly DetectionClass[]): void => {
-    const instance = instanceOf(row.blockId)
-    setEditing(null)
-    if (instance !== undefined) edit(instance, withRowClasses(instance, row.deviceId, classes))
-  }
-
-  const saveFilter = (row: TriggerTableRow, pick: FiredPick): void => {
-    const instance = instanceOf(row.blockId)
-    setEditing(null)
-    if (instance !== undefined) edit(instance, withRowFilter(instance, row.deviceId, pick))
   }
 
   return (
@@ -334,7 +389,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         icon={Zap}
         title={t('customize.triggers.title')}
         addLabel={t('customize.triggers.add')}
-        onAdd={busy || capability === null ? undefined : () => setPicking(true)}
+        onAdd={busy || capability === null ? undefined : () => setDialog({ kind: 'add' })}
         notices={
           <>
             {fleet.kind === 'unknown' && (
@@ -392,8 +447,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                     onEnabled={(enabled) => {
                       if (instance !== undefined) setDraft((d) => withEnabled(d, instance, enabled))
                     }}
-                    onEditEvent={() => setEditing(r)}
-                    onEditWindow={() => setTiming(r)}
+                    onEdit={() => setDialog({ kind: 'edit', row: r })}
                     onRemove={() => unlink(r)}
                   />
                 )
@@ -413,52 +467,21 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           setDraft(EMPTY_DRAFT)
         }}
       />
-      <SourceSelectorDevicesDialog
-        open={picking}
-        title={t('customize.triggers.pickTitle')}
-        selection="multi"
-        candidates={candidates}
-        confirmLabel={(count) => t('customize.assign.addCount', { count })}
-        onConfirm={(picked) => {
-          setPicking(false)
-          add(picked)
-        }}
-        onClose={() => setPicking(false)}
-      />
-      {editing !== null &&
-        editing.filter.kind !== 'detection' &&
-        editing.filter.kind !== 'motion' && (
-          <TriggerFilterDialog
-            deviceId={editing.deviceId}
-            deviceName={editing.name ?? `#${String(editing.deviceId)}`}
-            pick={editPickOf(instanceOf(editing.blockId), editing.deviceId)}
-            replaces={replacesFilter(editing.filter)}
-            busy={busy}
-            onSave={(pick) => saveFilter(editing, pick)}
-            onClose={() => setEditing(null)}
-          />
-        )}
-      {editing !== null && editing.filter.kind === 'detection' && (
-        <TriggerClassesDialog
-          deviceName={editing.name ?? `#${String(editing.deviceId)}`}
-          classes={editing.filter.classes}
+      {dialog !== null && (
+        <TriggerDialog
+          title={
+            dialog.kind === 'add'
+              ? t('customize.triggers.pickTitle')
+              : t('customize.triggers.editTitle', {
+                  name: dialog.row.name ?? `#${String(dialog.row.deviceId)}`,
+                })
+          }
+          candidates={candidates}
+          kindOf={kindOf}
+          initial={dialog.kind === 'edit' ? initialOf(dialog.row) : null}
           busy={busy}
-          onSave={(classes) => saveClasses(editing, classes)}
-          onClose={() => setEditing(null)}
-        />
-      )}
-      {timing !== null && (
-        <TriggerWindowDialog
-          deviceName={timing.name ?? `#${String(timing.deviceId)}`}
-          window={timing.activeWindow}
-          state={timing.activeWhen}
-          busy={busy}
-          onSave={(window, state) => {
-            const instance = instanceOf(timing.blockId)
-            setTiming(null)
-            if (instance !== undefined) edit(instance, withActiveLimits(instance, window, state))
-          }}
-          onClose={() => setTiming(null)}
+          onSave={saveDialog}
+          onClose={() => setDialog(null)}
         />
       )}
     </>

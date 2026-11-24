@@ -15,6 +15,7 @@ import {
   type LinkedTriggerParams,
   type LinkedTriggerSource,
   linkedTriggerParamsOf,
+  linkedTriggerValues,
   onForActionOf,
   type TemplateInstance,
   type TemplateDeviceStateValue,
@@ -169,9 +170,10 @@ export function editPickOf(instance: TemplateInstance | undefined, deviceId: num
   }
 }
 
-/** Every row but a motion report has a filter or a class pick to edit; a motion report has neither. */
-export function isEditable(filter: TriggerFilter): boolean {
-  return filter.kind !== 'motion'
+/** What kind of source a stored row has, read from its filter. */
+export function rowSourceKindOf(filter: TriggerFilter): TriggerSourceKind {
+  if (filter.kind === 'motion') return 'motion'
+  return filter.kind === 'detection' ? 'camera' : 'emitter'
 }
 
 /** Whether saving the filter dialog drops something the dialog cannot show. */
@@ -327,6 +329,74 @@ export function withRowFilter(
   const sources =
     at < 0 ? [...others, source] : [...others.slice(0, at), source, ...others.slice(at)]
   return { ...params, sources }
+}
+
+/**
+ * The instance with one source device swapped for another. The same kind of source
+ * keeps every condition (events, parts, classes, payload) and only names the new
+ * device; another kind starts from that kind's default source, in the old position.
+ * The action, time, window and state stay as stored.
+ */
+export function withRowSource(
+  instance: TemplateInstance,
+  from: number,
+  to: number,
+  fromKind: TriggerSourceKind,
+  toKind: TriggerSourceKind,
+): LinkedTriggerParams | null {
+  const params = linkedTriggerParamsOf(instance.values)
+  if (params === null) return null
+  if (from === to) return params
+  if (fromKind === toKind) {
+    const sources = params.sources.map((source): LinkedTriggerSource => {
+      if (source.kind === 'detection') {
+        if (!source.deviceIds.includes(from)) return source
+        const ids = source.deviceIds.map((id) => (id === from ? to : id))
+        return { ...source, deviceIds: [...new Set(ids)] }
+      }
+      return source.deviceId === from ? { ...source, deviceId: to } : source
+    })
+    return { ...params, sources }
+  }
+  const fresh = newTriggerParams(params.targetDeviceId, to, params.capability, toKind)
+  const [source] = fresh?.sources ?? []
+  if (source === undefined) return null
+  const at = params.sources.findIndex((s) => sourceDeviceIds(s).includes(from))
+  const others = sourcesWithout(params.sources, from)
+  return {
+    ...params,
+    sources: at < 0 ? [...others, source] : [...others.slice(0, at), source, ...others.slice(at)],
+  }
+}
+
+/** What the trigger dialog changed about a source's conditions; null = left as stored. */
+export interface TriggerConditions {
+  readonly fired: FiredPick | null
+  readonly classes: readonly DetectionClass[] | null
+  readonly activeWindow: TemplateTimeWindowValue | null
+  readonly activeWhen: TemplateDeviceStateValue | null
+}
+
+/** The instance's params with one source's touched conditions and both run limits applied. */
+export function withConditions(
+  instance: TemplateInstance,
+  deviceId: number,
+  conditions: TriggerConditions,
+): LinkedTriggerParams | null {
+  const asInstance = (params: LinkedTriggerParams): TemplateInstance => ({
+    ...instance,
+    values: linkedTriggerValues(params),
+  })
+  let params: LinkedTriggerParams | null = linkedTriggerParamsOf(instance.values)
+  if (params !== null && conditions.fired !== null) {
+    params = withRowFilter(asInstance(params), deviceId, conditions.fired)
+  }
+  if (params !== null && conditions.classes !== null) {
+    params = withRowClasses(asInstance(params), deviceId, conditions.classes)
+  }
+  return params === null
+    ? null
+    : withActiveLimits(asInstance(params), conditions.activeWindow, conditions.activeWhen)
 }
 
 /** Removing a row: the instance without that device, or its deletion when nothing is left. */

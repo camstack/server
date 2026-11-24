@@ -5,14 +5,13 @@
  * control edits the section's draft; none of them writes.
  */
 import { IconButton, Select, Switch } from '@camstack/ui-library'
-import { Clock, Pencil, X } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LinkedNameCell } from '../kinds/LinkedNameCell'
 import {
   actionChoiceOf,
   filterSummary,
-  isEditable,
   offeredChoices,
   type TriggerActionChoice,
   type TriggerRow,
@@ -32,8 +31,7 @@ export interface TriggerRowCardProps {
   readonly onAction: (choice: TriggerActionChoice) => void
   readonly onOnFor: (seconds: number) => void
   readonly onEnabled: (enabled: boolean) => void
-  readonly onEditEvent: () => void
-  readonly onEditWindow: () => void
+  readonly onEdit: () => void
   readonly onRemove: () => void
 }
 
@@ -44,8 +42,7 @@ export function TriggerRowCard({
   onAction,
   onOnFor,
   onEnabled,
-  onEditEvent,
-  onEditWindow,
+  onEdit,
   onRemove,
 }: TriggerRowCardProps): ReactNode {
   const { t } = useTranslation()
@@ -88,7 +85,11 @@ export function TriggerRowCard({
                       : summary.events.join(', '),
                     ...(summary.parts.length === 0
                       ? []
-                      : [t('customize.triggers.partsNamed', { parts: summary.parts.join(', ') })]),
+                      : [
+                          t('customize.triggers.partsNamed', {
+                            parts: summary.parts.join(', '),
+                          }),
+                        ]),
                   ].join(' · ')}
           {(row.activeWindow !== null || row.activeWhen !== null) && (
             <span className="ml-1 text-[11px] text-foreground-muted">
@@ -97,28 +98,13 @@ export function TriggerRowCard({
           )}
         </span>
         <div className="flex shrink-0 items-center">
-          {isEditable(row.filter) && (
-            <IconButton
-              icon={Pencil}
-              variant="ghost"
-              size="sm"
-              aria-label={t(
-                row.filter.kind === 'detection'
-                  ? 'customize.triggers.editClasses'
-                  : 'customize.triggers.editFilter',
-                { name: who },
-              )}
-              disabled={disabled}
-              onClick={onEditEvent}
-            />
-          )}
           <IconButton
-            icon={Clock}
+            icon={Pencil}
             variant="ghost"
             size="sm"
-            aria-label={t('customize.triggers.editWindow', { name: who })}
+            aria-label={t('customize.triggers.editTrigger', { name: who })}
             disabled={disabled}
-            onClick={onEditWindow}
+            onClick={onEdit}
           />
         </div>
       </div>
