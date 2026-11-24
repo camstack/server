@@ -31,7 +31,7 @@ export type TimeWindowPreset = z.infer<typeof TimeWindowPresetSchema>
 
 const timeWindowShape = {
   between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
-  days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
+  days: z.array(WeekdayKeySchema).min(1).max(7).readonly().optional(),
   preset: TimeWindowPresetSchema.optional(),
 }
 
