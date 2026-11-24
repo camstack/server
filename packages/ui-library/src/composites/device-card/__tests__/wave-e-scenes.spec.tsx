@@ -69,9 +69,9 @@ describe('connectedCardKindOf — the wave-E types', () => {
     expect(connectedCardKindOf(DeviceType.Notifier, null, [])).toBeNull()
   })
 
-  it('draws a gateway from what it is, and leaves container and generic to the hero', () => {
+  it('draws a gateway and a container from what they are, and leaves generic to the hero', () => {
     expect(connectedCardKindOf(DeviceType.Gateway, null, [])).toBe('gateway')
-    expect(connectedCardKindOf(DeviceType.Container, null, ['switch'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Container, null, ['switch'])).toBe('container')
     expect(connectedCardKindOf(DeviceType.Generic, null, ['switch'])).toBeNull()
   })
 })

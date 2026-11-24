@@ -163,6 +163,7 @@ function withoutAddedRoles(cap: string, entry: unknown): unknown {
 /** Methods declared after the snapshot with an excuse (`notOperatorFacing`), by cap. */
 const ADDED_EXCUSES: Readonly<Record<string, readonly string[]>> = {
   switch: ['powerCycle'],
+  'timed-run': ['setSettings'],
 }
 
 /** The entry with the listed method excuses taken out. */
