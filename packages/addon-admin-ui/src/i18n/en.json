@@ -1948,7 +1948,9 @@
       "alsoAdopted_one": "{{count}} also in the adoption list",
       "alsoAdopted_other": "{{count}} also in the adoption list",
       "noCreationType": "This integration cannot create a device from this candidate.",
-      "scanUnavailable": "The network scan is unavailable for this integration: {{reason}}"
+      "scanUnavailable": "The network scan is unavailable for this integration: {{reason}}",
+      "openDevice": "Open device",
+      "proposalsFailed": "The devices found in the background could not be read. Scan now to look again."
     },
     "discoveryProposals": {
       "title": "Found in the background",

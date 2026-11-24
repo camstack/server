@@ -90,4 +90,21 @@ describe('mergeNetworkCandidates', () => {
     expect(rows[1]?.parentKey).toBe('gw')
     expect(rows[0]?.parentKey).toBeNull()
   })
+
+  it('carries the hub device an adopted row is, from the provider or from the hub list', () => {
+    const rows = mergeNetworkCandidates({
+      adoption: [
+        { childNativeId: 'a', name: 'a', alreadyAdopted: true, adoptedDeviceId: 11 },
+        { childNativeId: 'n', name: 'n', alreadyAdopted: false, adoptedDeviceId: null },
+      ],
+      scan: [hit('held', '192.0.2.50')],
+      proposals: [],
+      existingStableIds: new Set(['held']),
+      existingDeviceIds: new Map([['held', 22]]),
+    })
+    const byKey = new Map(rows.map((r) => [r.key, r]))
+    expect(byKey.get('a')?.deviceId).toBe(11)
+    expect(byKey.get('n')?.deviceId).toBeNull()
+    expect(byKey.get('held')?.deviceId).toBe(22)
+  })
 })

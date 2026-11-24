@@ -35,6 +35,11 @@ const state = vi.hoisted(() => ({
   scan: [] as unknown[],
   proposals: [] as unknown[],
   adoption: [] as unknown[],
+  /** Devices the hub already holds. */
+  devices: [] as { id: number; stableId: string }[],
+  /** What each query has answered: the single list never reads a pending one as "none". */
+  proposalsAnswer: 'answered' as 'pending' | 'answered' | 'failed',
+  devicesAnswer: 'answered' as 'pending' | 'answered' | 'failed',
   adopt: vi.fn().mockResolvedValue({}),
 }))
 
@@ -94,7 +99,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       isLoading: false,
     }),
     useDeviceManagerListDiscoveryProposals: () => ({
-      data: { proposals: state.proposals },
+      data: state.proposalsAnswer === 'answered' ? { proposals: state.proposals } : undefined,
+      isSuccess: state.proposalsAnswer === 'answered',
+      isError: state.proposalsAnswer === 'failed',
     }),
     useDeviceManagerAdoptionListCandidates: () => ({
       data: { candidates: state.adoption },
@@ -107,7 +114,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       mutateAsync: vi.fn(),
       isPending: false,
     }),
-    useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
+    useDeviceManagerListAll: () => ({
+      data: state.devicesAnswer === 'answered' ? state.devices : undefined,
+      isLoading: state.devicesAnswer === 'pending',
+      isSuccess: state.devicesAnswer === 'answered',
+      isError: state.devicesAnswer === 'failed',
+    }),
     useLocalNetworkGetScanSubnets: () => ({
       data: { subnets: [] },
       refetch: vi.fn(),
@@ -161,8 +173,10 @@ const adoptionEntry = (id: string, name: string) => ({
   childNativeId: id,
   name,
   alreadyAdopted: false,
+  adoptedDeviceId: null,
   type: 'container',
   children: [],
+  metadata: {},
 })
 
 describe('AddDeviceModal', () => {
@@ -188,6 +202,9 @@ describe('AddDeviceModal', () => {
     state.scan = []
     state.proposals = []
     state.adoption = []
+    state.devices = []
+    state.proposalsAnswer = 'answered'
+    state.devicesAnswer = 'answered'
     state.adopt.mockClear()
   })
 
@@ -285,23 +302,87 @@ describe('AddDeviceModal', () => {
     expect(screen.getByRole('button', { name: /add selected/i })).toBeTruthy()
   })
 
-  it('a scan hit the adoption list already holds is not listed twice', () => {
-    state.scan = [hit('esp-attic', '192.0.2.10'), hit('esp-new', '192.0.2.12')]
-    state.adoption = [adoptionEntry('esp-attic', 'attic')]
-    renderModal({ kind: 'device-adoption', canScan: true })
-    const rows = screen.getAllByTestId(/^network-row-/)
-    expect(rows).toHaveLength(1)
-    expect(rows[0]?.getAttribute('data-testid')).toBe('network-row-esp-new')
-    expect(screen.getByText(/1 also in the adoption list/i)).toBeTruthy()
-  })
+  describe('one list for an adoption integration that can scan', () => {
+    const names = () => screen.getAllByTestId('candidate-name').map((n) => n.textContent)
 
-  it('a board in both lists that needs a key stays in the scan block and asks for it', () => {
-    state.scan = [hit('esp-enc', '192.0.2.13', { needsParams: ['encryptionKey'] })]
-    state.adoption = [adoptionEntry('esp-enc', 'enc')]
-    renderModal({ kind: 'device-adoption', canScan: true })
-    expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(1)
-    fireEvent.click(screen.getByRole('button', { name: /enter details/i }))
-    expect(screen.getByText('API encryption key')).toBeTruthy()
+    it('lists a scan hit the adoption list holds once, and a hit only the scan saw next to it', () => {
+      state.scan = [hit('esp-attic', '192.0.2.10'), hit('esp-new', '192.0.2.12')]
+      state.adoption = [adoptionEntry('esp-attic', 'attic')]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(names()).toEqual(['attic', 'esp-new'])
+      expect(screen.queryByText(/also in the adoption list/i)).toBeNull()
+      // One table: the found-only row sits beside the candidate, not in a block of its own.
+      expect(screen.getAllByRole('table')).toHaveLength(1)
+    })
+
+    it('a new device keeps its add action', () => {
+      state.scan = [hit('esp-new', '192.0.2.12')]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByRole('button', { name: /^add$/i })).toBeTruthy()
+      expect(screen.queryByTestId('adopted-mark')).toBeNull()
+    })
+
+    it('an adopted device that is found carries the badge and a link, and no action', () => {
+      state.scan = [hit('esp-attic', '192.0.2.10')]
+      state.adoption = [
+        { ...adoptionEntry('esp-attic', 'attic'), alreadyAdopted: true, adoptedDeviceId: 7 },
+      ]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByTestId('adopted-mark').textContent).toContain('Adopted')
+      expect(screen.getByRole('link').getAttribute('href')).toBe('/devices/7')
+      expect(screen.queryByRole('button', { name: /^add$/i })).toBeNull()
+      expect(screen.queryByRole('button', { name: /^select$/i })).toBeNull()
+    })
+
+    it('an adopted device the network does not show is still listed, marked adopted', () => {
+      state.scan = []
+      state.adoption = [
+        { ...adoptionEntry('esp-gone', 'gone'), alreadyAdopted: true, adoptedDeviceId: 8 },
+      ]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(names()).toEqual(['gone'])
+      expect(screen.getByTestId('adopted-mark')).toBeTruthy()
+      expect(screen.getByRole('link').getAttribute('href')).toBe('/devices/8')
+    })
+
+    it('a found device the hub already holds reads adopted and links to it', () => {
+      state.scan = [hit('esp-held', '192.0.2.14')]
+      state.devices = [{ id: 9, stableId: 'esp-held' }]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByTestId('adopted-mark')).toBeTruthy()
+      expect(screen.getByRole('link').getAttribute('href')).toBe('/devices/9')
+      expect(screen.queryByRole('button', { name: /^add$/i })).toBeNull()
+    })
+
+    it('does not offer Add while the hub has not said which devices it holds', () => {
+      state.scan = [hit('esp-held', '192.0.2.14')]
+      state.devicesAnswer = 'pending'
+      renderModal({ kind: 'device-adoption', canScan: true })
+      const add = screen.getByRole('button', { name: /^add$/i }) as HTMLButtonElement
+      expect(add.disabled).toBe(true)
+    })
+
+    it('does not say nothing was found while the discovered proposals are still pending', () => {
+      state.proposalsAnswer = 'pending'
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.queryByText(/no candidate devices found/i)).toBeNull()
+    })
+
+    it('says the proposals failed instead of an empty list when they could not be read', () => {
+      state.proposalsAnswer = 'failed'
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByText(/could not be read/i)).toBeTruthy()
+      expect(screen.queryByText(/no candidate devices found/i)).toBeNull()
+    })
+
+    it('a board in both lists that needs a key shows one row and asks for the key', () => {
+      state.scan = [hit('esp-enc', '192.0.2.13', { needsParams: ['encryptionKey'] })]
+      state.adoption = [adoptionEntry('esp-enc', 'enc')]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(names()).toEqual(['enc'])
+      fireEvent.click(screen.getByRole('button', { name: /enter details/i }))
+      expect(screen.getByText('API encryption key')).toBeTruthy()
+    })
   })
 
   it('the scan block asks for the creation type of this integration, not the addon', () => {

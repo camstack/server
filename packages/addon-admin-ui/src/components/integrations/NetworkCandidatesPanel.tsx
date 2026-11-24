@@ -1,37 +1,32 @@
 /**
- * "Found on the network" tab of the Add device modal: ONE list of the devices
- * this integration could take, merged from what its adoption provider lists,
- * what a network scan scoped to it finds, and what passive discovery proposed.
+ * The standalone "Found on the network" list of the Add device modal, for an integration whose
+ * devices are found by a scan and not listed by an adoption provider: ONE list of the devices this
+ * integration could take, merged from what a network scan scoped to it finds and what passive
+ * discovery proposed. An integration that also has an adoption provider draws its single list in
+ * `AdoptDevicesPanel`, reading the same `useNetworkScan` state.
  *
- * A row that needs parameters the provider cannot guess (an encryption key, a
- * password) does not add on click: it opens the provider's creation form
- * prefilled with what was found, and adds through the same call afterwards.
+ * A row that needs parameters the provider cannot guess (an encryption key, a password) does not add
+ * on click: it opens the provider's creation form prefilled with what was found, and adds through the
+ * same call afterwards.
  */
 import type { DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType } from '@camstack/types'
 import {
   Button,
   DialogBody,
   DialogFooter,
-  useDeviceManagerAdoptDevice,
   useDeviceManagerAdoptionListCandidates,
-  useDeviceManagerAdoptionStartJob,
-  useDeviceManagerDiscoverProvider,
   useDeviceManagerGetCreationSchema,
-  useDeviceManagerListAll,
-  useDeviceManagerListDiscoveryProposals,
   useDeviceManagerProviderCreationType,
-  useDeviceManagerProviderDiscoveryParamsSchema,
 } from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
-import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, ArrowLeft, Check, Download, Loader2, Radar } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Download, Loader2, Radar } from 'lucide-react'
 import { type ReactElement, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
-import { needsIntegrationSetup } from './integration-setup-seed'
-import { mergeNetworkCandidates, type NetworkCandidate } from './network-candidates'
+import { AdoptedMark } from './AdoptedMark'
 import { ScanSubnetEditor } from './ScanSubnetEditor'
+import { type NetworkRow, type NetworkScan, useNetworkScan } from './use-network-scan'
 
 /** The adoption list is only read to flag and merge rows: one page is enough. */
 const ADOPTION_PAGE_SIZE = 500
@@ -40,17 +35,7 @@ interface NetworkCandidatesPanelProps {
   readonly addonId: string
   readonly integrationId: string
   readonly onClose: () => void
-  /**
-   * The adopt surface is drawn right below this one: only what the scan and
-   * passive discovery found is listed here, and a device the adoption list
-   * already holds is left to it, so it is shown once.
-   */
-  readonly alongsideAdoption?: boolean
 }
-
-type ScanData = NonNullable<ReturnType<typeof useDeviceManagerDiscoverProvider>['data']>
-type Hit = ScanData['candidates'][number]
-type Row = NetworkCandidate<Hit>
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -73,71 +58,31 @@ export function NetworkCandidatesPanel({
   addonId,
   integrationId,
   onClose,
-  alongsideAdoption = false,
 }: NetworkCandidatesPanelProps): ReactElement {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
-
-  const paramsSchemaQuery = useDeviceManagerProviderDiscoveryParamsSchema({ addonId })
-  const scanParamsSchema = (paramsSchemaQuery.data ?? null) as ConfigUISchema | null
-  const [scanParams, setScanParams] = useState<Record<string, unknown>>({})
-  const scan = useDeviceManagerDiscoverProvider()
-
-  const proposalsQuery = useDeviceManagerListDiscoveryProposals({})
   const adoptionQuery = useDeviceManagerAdoptionListCandidates(
     { addonId, integrationId, page: 1, pageSize: ADOPTION_PAGE_SIZE },
     { retry: false },
   )
-  const { data: allDevices } = useDeviceManagerListAll({ projection: 'slim' })
-
-  const adoptDevice = useDeviceManagerAdoptDevice()
-  const startJob = useDeviceManagerAdoptionStartJob()
-  const [busy, setBusy] = useState<ReadonlySet<string>>(new Set())
-  const [added, setAdded] = useState<ReadonlySet<string>>(new Set())
-  const [error, setError] = useState<string | null>(null)
-  const [paramsFor, setParamsFor] = useState<Row | null>(null)
-
-  const rows = useMemo<readonly Row[]>(() => {
-    const adoption = (adoptionQuery.data?.candidates ?? []).map((c: DiscoveredChildDevice) => ({
-      childNativeId: c.childNativeId,
-      name: c.name,
-      alreadyAdopted: c.alreadyAdopted,
-      parentStableId: c.parentStableId,
-    }))
-    // Inside an integration only devices of THIS integration are offered: a candidate that is an
-    // integration to set up (a console, a host) belongs to the Integrations page, never here.
-    const proposals = (proposalsQuery.data?.proposals ?? [])
-      .filter((p) => p.addonId === addonId && !needsIntegrationSetup(p.candidate))
-      .map((p) => ({ id: p.id, candidate: p.candidate }))
-    return mergeNetworkCandidates<Hit>({
-      adoption,
-      scan: (scan.data?.candidates ?? []).filter((c) => !needsIntegrationSetup(c)),
-      proposals,
-      existingStableIds: new Set((allDevices ?? []).map((d) => d.stableId)),
-    })
-  }, [adoptionQuery.data, proposalsQuery.data, scan.data, allDevices, addonId])
-
-  // Next to the adopt list, a row it already holds is left to it — unless the scan hit
-  // carries what only this block can act on: a parameter to ask for.
-  const holdsScanOnlyAction = (r: Row): boolean => r.hit !== null && r.needsParams.length > 0
-  const visibleRows = useMemo(
+  const adoption = useMemo(
     () =>
-      alongsideAdoption
-        ? rows.filter((r) => !r.sources.includes('adoption') || holdsScanOnlyAction(r))
-        : rows,
-    [rows, alongsideAdoption],
+      (adoptionQuery.data?.candidates ?? []).map((c: DiscoveredChildDevice) => ({
+        childNativeId: c.childNativeId,
+        name: c.name,
+        alreadyAdopted: c.alreadyAdopted,
+        adoptedDeviceId: c.adoptedDeviceId,
+        parentStableId: c.parentStableId,
+      })),
+    [adoptionQuery.data],
   )
-  const inAdoptionList = alongsideAdoption
-    ? rows.filter(
-        (r) => r.sources.includes('adoption') && r.hit !== null && !visibleRows.includes(r),
-      ).length
-    : 0
+  const scan = useNetworkScan({ addonId, integrationId, adoption })
+  const { rows, paramsFor, busy, added, error } = scan
 
   const depthOf = useCallback(
-    (row: Row): number => {
-      const byKey = new Map(visibleRows.map((r) => [r.key, r]))
+    (row: NetworkRow): number => {
+      const byKey = new Map(rows.map((r) => [r.key, r]))
       let depth = 0
-      let cursor: Row | undefined = row
+      let cursor: NetworkRow | undefined = row
       while (cursor?.parentKey != null && depth < 8) {
         cursor = byKey.get(cursor.parentKey)
         if (cursor === undefined) break
@@ -145,70 +90,7 @@ export function NetworkCandidatesPanel({
       }
       return depth
     },
-    [visibleRows],
-  )
-
-  const runScan = useCallback(() => {
-    setError(null)
-    scan.mutate({ addonId, params: scanParams })
-  }, [scan, addonId, scanParams])
-
-  const withBusy = useCallback(
-    async (key: string, work: () => Promise<void>) => {
-      setBusy((prev) => new Set(prev).add(key))
-      setError(null)
-      try {
-        await work()
-        setAdded((prev) => new Set(prev).add(key))
-        void queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-        void queryClient.invalidateQueries({ queryKey: [['integrations']] })
-      } catch (err) {
-        setError(errorText(err))
-      } finally {
-        setBusy((prev) => {
-          const next = new Set(prev)
-          next.delete(key)
-          return next
-        })
-      }
-    },
-    [queryClient],
-  )
-
-  const addRow = useCallback(
-    async (row: Row, config?: Readonly<Record<string, unknown>>) => {
-      const hit = row.hit
-      if (hit !== null) {
-        await withBusy(row.key, async () => {
-          await adoptDevice.mutateAsync({
-            addonId,
-            integrationId,
-            candidate: { ...hit, prefilledConfig: { ...hit.prefilledConfig, ...config } },
-          })
-          setParamsFor(null)
-        })
-        return
-      }
-      if (row.adoptionId !== null) {
-        const childNativeId = row.adoptionId
-        await withBusy(row.key, async () => {
-          await startJob.mutateAsync({ addonId, integrationId, childNativeIds: [childNativeId] })
-        })
-      }
-    },
-    [adoptDevice, startJob, addonId, integrationId, withBusy],
-  )
-
-  const pick = useCallback(
-    (row: Row) => {
-      if (row.needsParams.length > 0 && row.hit !== null) {
-        setError(null)
-        setParamsFor(row)
-        return
-      }
-      void addRow(row)
-    },
-    [addRow],
+    [rows],
   )
 
   if (paramsFor !== null && paramsFor.hit !== null) {
@@ -220,84 +102,43 @@ export function NetworkCandidatesPanel({
         found={paramsFor.hit.prefilledConfig}
         busy={busy.has(paramsFor.key)}
         error={error}
-        embedded={alongsideAdoption}
-        onBack={() => setParamsFor(null)}
-        onSubmit={(values) => void addRow(paramsFor, values)}
+        embedded={false}
+        onBack={() => scan.setParamsFor(null)}
+        onSubmit={(values) => void scan.addRow(paramsFor, values)}
       />
     )
   }
 
-  const empty = visibleRows.length === 0
-  const content = (
-    <>
-      <ScanSubnetEditor />
-      {scanParamsSchema && (
-        <FormBuilder schema={scanParamsSchema} values={scanParams} onChange={setScanParams} />
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-foreground-subtle">
-          {scan.isPending
-            ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
-            : visibleRows.length > 0
-              ? t('integrations.addDeviceModal.found', {
-                  defaultValue_one: '{{count}} device found',
-                  defaultValue_other: '{{count}} devices found',
-                  count: visibleRows.length,
-                })
-              : ''}
-          {!scan.isPending && inAdoptionList > 0
-            ? ` · ${t('integrations.addDeviceModal.alsoAdopted', {
-                defaultValue_one: '{{count}} also in the adoption list',
-                defaultValue_other: '{{count}} also in the adoption list',
-                count: inAdoptionList,
-              })}`
-            : ''}
-        </p>
-        <Button variant="outline" size="sm" onClick={runScan} disabled={scan.isPending}>
-          {scan.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Radar className="h-3.5 w-3.5" />
-          )}
-          {t('integrations.addDeviceModal.scanNow', 'Scan now')}
-        </Button>
-      </div>
-      {scan.isError && (
-        <ErrorLine
-          text={t('integrations.addDeviceModal.scanFailed', 'The scan failed. Try again.')}
-        />
-      )}
-      {error !== null && <ErrorLine text={error} />}
-      {empty && !scan.isPending && (
-        <p className="py-6 text-center text-xs text-foreground-subtle">
-          {scan.data
-            ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
-            : t('integrations.addDeviceModal.scanHint', 'Scan the network to find devices to add.')}
-        </p>
-      )}
-      <div
-        className={alongsideAdoption ? 'max-h-48 space-y-1.5 overflow-y-auto' : 'space-y-1.5'}
-        data-testid="network-candidates"
-      >
-        {visibleRows.map((row) => (
-          <CandidateRow
-            key={row.key}
-            row={row}
-            depth={depthOf(row)}
-            busy={busy.has(row.key)}
-            added={added.has(row.key)}
-            onPick={pick}
-          />
-        ))}
-      </div>
-    </>
-  )
-  if (alongsideAdoption) {
-    return <div className="shrink-0 space-y-3 border-b border-border pb-3">{content}</div>
-  }
+  const answered = scan.proposals === 'answered' && !scan.scanning
   return (
     <>
-      <DialogBody className="space-y-3">{content}</DialogBody>
+      <DialogBody className="space-y-3">
+        <ScanControls scan={scan} listed={rows.length} />
+        {rows.length === 0 && answered && (
+          <p className="py-6 text-center text-xs text-foreground-subtle">
+            {scan.scanAnswered
+              ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
+              : t(
+                  'integrations.addDeviceModal.scanHint',
+                  'Scan the network to find devices to add.',
+                )}
+          </p>
+        )}
+        <div className="space-y-1.5" data-testid="network-candidates">
+          {rows.map((row) => (
+            <CandidateRow
+              key={row.key}
+              row={row}
+              depth={depthOf(row)}
+              busy={busy.has(row.key)}
+              added={added.has(row.key)}
+              devicesKnown={scan.devices === 'answered'}
+              onPick={scan.pick}
+              onNavigate={onClose}
+            />
+          ))}
+        </div>
+      </DialogBody>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onClose}>
           {t('integrations.close', 'Close')}
@@ -307,7 +148,69 @@ export function NetworkCandidatesPanel({
   )
 }
 
-function ErrorLine({ text }: { readonly text: string }): ReactElement {
+/**
+ * The scan side of the list: the extra networks, the provider's scan parameters, what is known so far
+ * and the scan button. Drawn above the standalone list and above the single adoption list alike.
+ */
+export function ScanControls({
+  scan,
+  listed,
+}: {
+  readonly scan: NetworkScan
+  /** How many rows the list below shows, for the count line. */
+  readonly listed: number
+}): ReactElement {
+  const { t } = useTranslation()
+  return (
+    <div className="shrink-0 space-y-3 pb-3" data-testid="scan-controls">
+      <ScanSubnetEditor />
+      {scan.scanParamsSchema && (
+        <FormBuilder
+          schema={scan.scanParamsSchema}
+          values={scan.scanParams}
+          onChange={scan.setScanParams}
+        />
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-foreground-subtle">
+          {scan.scanning
+            ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
+            : listed > 0
+              ? t('integrations.addDeviceModal.found', {
+                  defaultValue_one: '{{count}} device found',
+                  defaultValue_other: '{{count}} devices found',
+                  count: listed,
+                })
+              : ''}
+        </p>
+        <Button variant="outline" size="sm" onClick={scan.runScan} disabled={scan.scanning}>
+          {scan.scanning ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Radar className="h-3.5 w-3.5" />
+          )}
+          {t('integrations.addDeviceModal.scanNow', 'Scan now')}
+        </Button>
+      </div>
+      {scan.scanFailed && (
+        <ErrorLine
+          text={t('integrations.addDeviceModal.scanFailed', 'The scan failed. Try again.')}
+        />
+      )}
+      {scan.proposals === 'failed' && (
+        <ErrorLine
+          text={t(
+            'integrations.addDeviceModal.proposalsFailed',
+            'The devices found in the background could not be read. Scan now to look again.',
+          )}
+        />
+      )}
+      {scan.error !== null && <ErrorLine text={scan.error} />}
+    </div>
+  )
+}
+
+export function ErrorLine({ text }: { readonly text: string }): ReactElement {
   return (
     <div className="flex items-start gap-2 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2">
       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
@@ -316,23 +219,62 @@ function ErrorLine({ text }: { readonly text: string }): ReactElement {
   )
 }
 
+/**
+ * The add action of a found row: Add, or Enter details when the provider needs a value it cannot
+ * guess. Disabled until the hub's device list has answered, so a device that is already added is
+ * never offered as new (D315).
+ */
+export function RowAddButton({
+  row,
+  busy,
+  devicesKnown,
+  onPick,
+}: {
+  readonly row: NetworkRow
+  readonly busy: boolean
+  readonly devicesKnown: boolean
+  readonly onPick: (row: NetworkRow) => void
+}): ReactElement | null {
+  const { t } = useTranslation()
+  if (row.hit?.selectable === false) return null
+  const asks = row.needsParams.length > 0
+  return (
+    <Button
+      size="sm"
+      variant={asks ? 'outline' : 'primary'}
+      onClick={() => onPick(row)}
+      disabled={busy || !devicesKnown}
+    >
+      {busy ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : asks ? null : (
+        <Download className="h-3.5 w-3.5" />
+      )}
+      {asks
+        ? t('integrations.addDeviceModal.enterDetails', 'Enter details')
+        : t('common.add', 'Add')}
+    </Button>
+  )
+}
+
 function CandidateRow({
   row,
   depth,
   busy,
   added,
+  devicesKnown,
   onPick,
+  onNavigate,
 }: {
-  readonly row: Row
+  readonly row: NetworkRow
   readonly depth: number
   readonly busy: boolean
   readonly added: boolean
-  readonly onPick: (row: Row) => void
+  readonly devicesKnown: boolean
+  readonly onPick: (row: NetworkRow) => void
+  readonly onNavigate: () => void
 }): ReactElement {
-  const { t } = useTranslation()
   const already = row.alreadyAdded || added
-  const selectable = row.hit?.selectable !== false
-  const asks = row.needsParams.length > 0
   return (
     <div
       className={`flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 ${
@@ -345,34 +287,12 @@ function CandidateRow({
         {row.address !== null && (
           <p className="truncate font-mono text-[10px] text-foreground-subtle">{row.address}</p>
         )}
-        {already && row.addedName !== null && (
-          <p className="truncate text-[10px] text-foreground-subtle">{row.addedName}</p>
-        )}
       </div>
       {already ? (
-        <span className="flex items-center gap-1 text-[11px] text-foreground-subtle">
-          <Check className="h-3.5 w-3.5" />
-          {row.alreadyAdded
-            ? t('integrations.scanNetworkModal.alreadyAdded', 'Already added')
-            : t('integrations.scanNetworkModal.added', 'Added')}
-        </span>
-      ) : selectable ? (
-        <Button
-          size="sm"
-          variant={asks ? 'outline' : 'primary'}
-          onClick={() => onPick(row)}
-          disabled={busy}
-        >
-          {busy ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : asks ? null : (
-            <Download className="h-3.5 w-3.5" />
-          )}
-          {asks
-            ? t('integrations.addDeviceModal.enterDetails', 'Enter details')
-            : t('common.add', 'Add')}
-        </Button>
-      ) : null}
+        <AdoptedMark deviceId={row.deviceId} deviceName={row.addedName} onNavigate={onNavigate} />
+      ) : (
+        <RowAddButton row={row} busy={busy} devicesKnown={devicesKnown} onPick={onPick} />
+      )}
     </div>
   )
 }
@@ -395,13 +315,13 @@ export function CandidateParamsStep({
 }: {
   readonly addonId: string
   readonly integrationId: string
-  readonly row: Row
+  readonly row: NetworkRow
   readonly found: Readonly<Record<string, unknown>>
   readonly busy: boolean
   readonly error: string | null
   readonly onBack: () => void
   readonly onSubmit: (values: Record<string, unknown>) => void
-  /** Drawn above the adopt surface: no dialog body or footer of its own. */
+  /** Drawn inside the adopt surface: no dialog body or footer of its own. */
   readonly embedded: boolean
 }): ReactElement {
   const { t } = useTranslation()

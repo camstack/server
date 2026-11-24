@@ -650,6 +650,14 @@ a creation type and a form), and a single remaining flow is not drawn as a tab.
 The network list is `mergeNetworkCandidates` over the adoption candidates, a
 scan scoped to the integration and the passive proposals: one row per device. A
 row with `needsParams` opens the creation form prefilled before it is adopted.
+An adoption integration that can also scan shows the SAME single list: `AdoptDevicesPanel` with
+`withScan` draws the scan controls (`ScanControls`) above ONE `DeviceList`, whose rows are the adoption
+candidates (with the scan hit that matches each) plus the devices only the scan or discovery saw. A
+device the hub already holds carries the library `Badge` "Adopted" and a link to it (`AdoptedMark`) and
+has no add action, whether or not the network shows it right now. Add stays disabled until the hub's
+device list has answered, and an empty or failed answer is never worded as "none found" (D315). The
+list's scroller carries `overscroll-contain`, so a flick that reaches an end never scrolls the page
+behind the modal.
 Inside an integration the LAN scan is drawn only when the instance's provider says so: each served
 instance carries `addDevice` (`scan`: the scan finds devices this instance holds; `children`: only its
 own children, via adoption; `none`: manual add only). It is decided per instance, not per provider

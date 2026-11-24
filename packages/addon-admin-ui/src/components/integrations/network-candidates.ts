@@ -32,6 +32,8 @@ export interface AdoptionEntry {
   readonly childNativeId: string
   readonly name: string
   readonly alreadyAdopted?: boolean | undefined
+  /** The hub device an adopted entry became, when the provider says so. */
+  readonly adoptedDeviceId?: number | null | undefined
   readonly parentStableId?: string | undefined
 }
 
@@ -55,6 +57,8 @@ export interface NetworkCandidate<H extends ScanHit = ScanHit> {
   readonly proposalId: string | null
   readonly alreadyAdded: boolean
   readonly addedName: string | null
+  /** The hub device this row already is, when one is known; null for a row that is not added. */
+  readonly deviceId: number | null
   readonly needsParams: readonly string[]
   readonly parentKey: string | null
 }
@@ -65,6 +69,8 @@ export interface MergeInput<H extends ScanHit = ScanHit> {
   readonly proposals: readonly ProposalEntry<H>[]
   /** `stableId` of every device that already exists on the hub. */
   readonly existingStableIds: ReadonlySet<string>
+  /** `stableId` → hub device id, to link an added row to its device. */
+  readonly existingDeviceIds?: ReadonlyMap<string, number> | undefined
 }
 
 interface Draft<H extends ScanHit> {
@@ -78,6 +84,7 @@ interface Draft<H extends ScanHit> {
   proposalId: string | null
   alreadyAdded: boolean
   addedName: string | null
+  deviceId: number | null
   needsParams: readonly string[]
   parentId: string | null
 }
@@ -124,12 +131,14 @@ export function mergeNetworkCandidates<H extends ScanHit>(
       proposalId: null,
       alreadyAdded: false,
       addedName: null,
+      deviceId: null,
       needsParams: [],
       parentId: entry.parentStableId ?? null,
     }))
     addSource(draft, 'adoption')
     draft.adoptionId = entry.childNativeId
     if (entry.alreadyAdopted === true) draft.alreadyAdded = true
+    if (typeof entry.adoptedDeviceId === 'number') draft.deviceId = entry.adoptedDeviceId
   }
 
   const absorb = (hit: H, source: CandidateSource, proposalId: string | null): void => {
@@ -145,6 +154,7 @@ export function mergeNetworkCandidates<H extends ScanHit>(
       proposalId: null,
       alreadyAdded: false,
       addedName: null,
+      deviceId: null,
       needsParams: [],
       parentId: null,
     }))
@@ -163,6 +173,8 @@ export function mergeNetworkCandidates<H extends ScanHit>(
     ) {
       draft.alreadyAdded = true
       draft.addedName = hit.onboardedName ?? draft.addedName
+      draft.deviceId =
+        hit.onboardedDeviceId ?? input.existingDeviceIds?.get(hit.stableId) ?? draft.deviceId
     }
   }
 
@@ -170,7 +182,11 @@ export function mergeNetworkCandidates<H extends ScanHit>(
   for (const proposal of input.proposals) absorb(proposal.candidate, 'proposal', proposal.id)
 
   for (const draft of drafts) {
-    if ([...draft.ids].some((id) => input.existingStableIds.has(id))) draft.alreadyAdded = true
+    const existing = [...draft.ids].find((id) => input.existingStableIds.has(id))
+    if (existing !== undefined) {
+      draft.alreadyAdded = true
+      draft.deviceId = draft.deviceId ?? input.existingDeviceIds?.get(existing) ?? null
+    }
   }
 
   return drafts.map((d) => {
@@ -185,6 +201,7 @@ export function mergeNetworkCandidates<H extends ScanHit>(
       proposalId: d.proposalId,
       alreadyAdded: d.alreadyAdded,
       addedName: d.addedName,
+      deviceId: d.deviceId,
       needsParams: d.needsParams,
       parentKey: parent !== undefined && parent !== d ? parent.key : null,
     }

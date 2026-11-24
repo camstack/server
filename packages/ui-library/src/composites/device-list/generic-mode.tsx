@@ -280,7 +280,7 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
 
       {typeof belowFilters === 'function' ? belowFilters({ filtered }) : belowFilters}
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {isLoading && totalItems === 0 ? (
           <div className="flex items-center justify-center py-12 text-xs text-foreground-subtle">
             {t('uiLibrary.genericModeList.loading', 'Loading…')}

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { AdoptionFilter, DiscoveredChildDevice } from '@camstack/types'
+import { type AdoptionFilter, type DiscoveredChildDevice, DeviceType } from '@camstack/types'
 import {
   allDeviceTypeFilterOptions,
   Button,
@@ -32,9 +32,12 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AdoptedMark } from './AdoptedMark'
 import { AdoptJobProgress } from './AdoptJobProgress'
 import { candidateDistinguisher, orderCandidatesAsTree } from './adopt-candidate-rows'
 import { candidateSearchText } from './adopt-candidate-search'
+import { CandidateParamsStep, RowAddButton, ScanControls } from './NetworkCandidatesPanel'
+import { type NetworkRow, useNetworkScan } from './use-network-scan'
 
 // The reserved, universal default granularity. A provider that declares no
 // filters is treated as a single implicit `devices` filter — exactly the
@@ -68,6 +71,54 @@ interface AdoptDevicesModalProps {
   addonId: string
   integrationId: string
   onClose: () => void
+  /**
+   * The integration also finds devices by a network scan: the list then carries every device found,
+   * the ones the adoption provider lists and the ones only the scan or passive discovery saw, in ONE
+   * table, with the scan controls above it.
+   */
+  withScan?: boolean
+}
+
+/**
+ * One row of the single list: a device the adoption provider lists (with the scan hit that matches
+ * it, when there is one) or a device only the scan or passive discovery found.
+ */
+type ListItem =
+  | {
+      readonly kind: 'candidate'
+      readonly candidate: DiscoveredChildDevice
+      readonly found: NetworkRow | null
+    }
+  | { readonly kind: 'found'; readonly row: NetworkRow }
+
+interface AdoptedState {
+  readonly adopted: boolean
+  /** The hub device the row is, when the hub (or the provider) said which one. */
+  readonly deviceId: number | null
+}
+
+/** Whether a row is a device the hub already holds, and which: whichever source knew. */
+function adoptedStateOf(item: ListItem, added: ReadonlySet<string>): AdoptedState {
+  if (item.kind === 'found') {
+    return {
+      adopted: item.row.alreadyAdded || added.has(item.row.key),
+      deviceId: item.row.deviceId,
+    }
+  }
+  const { candidate, found } = item
+  const adopted =
+    candidate.alreadyAdopted || (found !== null && (found.alreadyAdded || added.has(found.key)))
+  return { adopted, deviceId: candidate.adoptedDeviceId ?? found?.deviceId ?? null }
+}
+
+function itemKey(item: ListItem): string {
+  return item.kind === 'candidate' ? item.candidate.childNativeId : item.row.key
+}
+
+function itemSearchText(item: ListItem): string {
+  return item.kind === 'candidate'
+    ? candidateSearchText(item.candidate)
+    : `${item.row.name} ${item.row.address ?? ''}`.toLowerCase()
 }
 
 /**
@@ -118,7 +169,12 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
  * list, the job progress and the footer. The Add device modal mounts it as a
  * tab; `AdoptDevicesModal` mounts it alone.
  */
-export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevicesModalProps) {
+export function AdoptDevicesPanel({
+  addonId,
+  integrationId,
+  onClose,
+  withScan = false,
+}: AdoptDevicesModalProps) {
   const uiText = useUiText()
   const { t } = useTranslation()
 
@@ -222,9 +278,51 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
       ? refreshMutation.data.lastError
       : null
 
-  const candidates: readonly DiscoveredChildDevice[] = listQuery.data?.candidates ?? []
+  const listData = listQuery.data
+  const candidates: readonly DiscoveredChildDevice[] = useMemo(
+    () => listData?.candidates ?? [],
+    [listData],
+  )
   // Children (`parentStableId`) nest under their parent, in tree order.
   const treeRows = useMemo(() => orderCandidatesAsTree(candidates), [candidates])
+
+  // The scan side of the single list: found devices merge with the adoption candidates by identity,
+  // so one device is one row whichever source saw it. The scan only speaks for the default
+  // granularity — a flat per-entity list has no network device to match.
+  const adoptionEntries = useMemo(
+    () =>
+      candidates.map((c) => ({
+        childNativeId: c.childNativeId,
+        name: c.name,
+        alreadyAdopted: c.alreadyAdopted,
+        adoptedDeviceId: c.adoptedDeviceId,
+        parentStableId: c.parentStableId,
+      })),
+    [candidates],
+  )
+  const scan = useNetworkScan({
+    addonId,
+    integrationId,
+    adoption: adoptionEntries,
+    enabled: withScan,
+  })
+  const scanActive = withScan && activeFilter === DEFAULT_FILTER_ID
+  const items = useMemo<readonly ListItem[]>(() => {
+    const foundByAdoptionId = new Map(
+      scan.rows.flatMap((r) => (r.adoptionId !== null ? [[r.adoptionId, r] as const] : [])),
+    )
+    const fromAdoption = treeRows.map<ListItem>((r) => ({
+      kind: 'candidate',
+      candidate: r.candidate,
+      found: scanActive ? (foundByAdoptionId.get(r.candidate.childNativeId) ?? null) : null,
+    }))
+    const foundOnly = scanActive
+      ? scan.rows
+          .filter((r) => r.adoptionId === null)
+          .map<ListItem>((row) => ({ kind: 'found', row }))
+      : []
+    return [...fromAdoption, ...foundOnly]
+  }, [treeRows, scan.rows, scanActive])
   const depthById = useMemo(
     () => new Map(treeRows.map((r) => [r.candidate.childNativeId, r.depth])),
     [treeRows],
@@ -381,8 +479,29 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
    */
   const adoptionDone = jobId !== null && selectedCount === 0 && !adoptMutation.isPending
 
+  // A found device that needs a value the provider cannot guess opens its creation form in place
+  // of the list, prefilled with what was found.
+  if (scan.paramsFor !== null && scan.paramsFor.hit !== null) {
+    return (
+      <CandidateParamsStep
+        addonId={addonId}
+        integrationId={integrationId}
+        row={scan.paramsFor}
+        found={scan.paramsFor.hit.prefilledConfig}
+        busy={scan.busy.has(scan.paramsFor.key)}
+        error={scan.error}
+        embedded={false}
+        onBack={() => scan.setParamsFor(null)}
+        onSubmit={(values) => {
+          if (scan.paramsFor !== null) void scan.addRow(scan.paramsFor, values)
+        }}
+      />
+    )
+  }
+
   return (
     <>
+      {withScan && <ScanControls scan={scan} listed={scanActive ? items.length : 0} />}
       {supportsLocationImport && (
         <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
           <Checkbox
@@ -423,19 +542,26 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
         <div className="flex-1 min-h-0">
           <DeviceList
             mode="generic"
-            items={treeRows.map((r) => r.candidate)}
+            items={items}
             pageSize={CLIENT_PAGE_SIZE}
-            getKey={(c) => c.childNativeId}
-            getSearchText={candidateSearchText}
-            getFilterType={(c) => c.type}
+            getKey={itemKey}
+            getSearchText={itemSearchText}
+            getFilterType={(item) =>
+              item.kind === 'candidate' ? item.candidate.type : (item.row.hit?.type ?? null)
+            }
             filterOptions={allDeviceTypeFilterOptions(uiText)}
             filterLabel={t('integrations.adoptColType', { defaultValue: 'Type' })}
-            isLoading={listQuery.isLoading || (isRefreshing && candidates.length === 0)}
+            isLoading={
+              listQuery.isLoading ||
+              (isRefreshing && candidates.length === 0) ||
+              (scanActive && scan.proposals === 'pending')
+            }
             searchPlaceholder={t('integrations.adoptSearch', {
               defaultValue: 'Search candidates…',
             })}
             emptyLabel={
-              (warmError ?? listError ?? refreshStatusError) && candidates.length === 0
+              ((warmError ?? listError ?? refreshStatusError) && candidates.length === 0) ||
+              (scanActive && scan.proposals === 'failed')
                 ? ''
                 : t('integrations.adoptNoCandidates', {
                     defaultValue: 'No candidate devices found.',
@@ -460,7 +586,7 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
               {
                 // Name cell follows the unified generic convention: a
                 // chevron-in-name-cell expand affordance (left), then the
-                // candidate name + adopted badge — same shape as the
+                // device name + adopted mark, the same shape as the
                 // integrations list's `name` column. The candidate-specific
                 // entity count rides next to the chevron.
                 key: 'name',
@@ -469,31 +595,55 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
                 // truncates instead of pushing the selection column off-screen.
                 headerClassName: 'w-full sm:w-[55%]',
                 cellClassName: 'max-w-0',
-                cell: (c) => (
-                  <CandidateNameCell
-                    candidate={c}
-                    depth={depthById.get(c.childNativeId) ?? 0}
-                    {...(parentNameById.get(c.childNativeId) !== undefined
-                      ? { containerName: parentNameById.get(c.childNativeId) }
-                      : {})}
-                    // Flat granularities (e.g. entities) have no children to
-                    // expand — render a plain selectable row, no chevron.
-                    expandable={!isFlatFilter}
-                    expanded={expanded.has(c.childNativeId)}
-                    onToggleExpand={() => toggleExpand(c.childNativeId)}
-                    adoptedLabel={t('integrations.adoptAlready', { defaultValue: 'Adopted' })}
-                    typeLabel={deviceTypeMetaOf(c.type, uiText).label}
-                  />
-                ),
+                cell: (item) => {
+                  const state = adoptedStateOf(item, scan.added)
+                  if (item.kind === 'found') {
+                    return (
+                      <FoundNameCell
+                        row={item.row}
+                        adopted={state.adopted}
+                        deviceId={state.deviceId}
+                        typeLabel={
+                          deviceTypeMetaOf(item.row.hit?.type ?? DeviceType.Camera, uiText).label
+                        }
+                        alignWithChevron={!isFlatFilter}
+                        onNavigate={onClose}
+                      />
+                    )
+                  }
+                  const c = item.candidate
+                  return (
+                    <CandidateNameCell
+                      candidate={c}
+                      depth={depthById.get(c.childNativeId) ?? 0}
+                      {...(parentNameById.get(c.childNativeId) !== undefined
+                        ? { containerName: parentNameById.get(c.childNativeId) }
+                        : {})}
+                      // Flat granularities (e.g. entities) have no children to
+                      // expand: render a plain selectable row, no chevron.
+                      expandable={!isFlatFilter}
+                      expanded={expanded.has(c.childNativeId)}
+                      onToggleExpand={() => toggleExpand(c.childNativeId)}
+                      adopted={state.adopted}
+                      deviceId={state.deviceId}
+                      onNavigate={onClose}
+                      typeLabel={deviceTypeMetaOf(c.type, uiText).label}
+                    />
+                  )
+                },
               },
               {
-                // Type — icon + label from the exhaustive device-type map.
+                // Type: icon + label from the exhaustive device-type map.
                 key: 'type',
                 header: t('integrations.adoptColType', { defaultValue: 'Type' }),
                 headerClassName: 'w-[30%] hidden sm:table-cell',
                 cellClassName: 'hidden sm:table-cell',
-                cell: (c) => {
-                  const meta = deviceTypeMetaOf(c.type, uiText)
+                cell: (item) => {
+                  const type =
+                    item.kind === 'candidate'
+                      ? item.candidate.type
+                      : (item.row.hit?.type ?? DeviceType.Camera)
+                  const meta = deviceTypeMetaOf(type, uiText)
                   const Icon = meta.icon
                   return (
                     <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground-subtle">
@@ -504,51 +654,84 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
                 },
               },
               {
-                // Selection — RIGHT, mirroring the integration list's
-                // right-aligned actions cell (`justify-end`).
+                // Action, RIGHT, mirroring the integration list's
+                // right-aligned actions cell (`justify-end`). An adopted row has none.
                 key: 'select',
                 header: '',
                 headerClassName: 'w-10 sm:w-[15%] text-right',
                 cellClassName: 'text-right',
-                cell: (c) => (
-                  <div className="flex items-center justify-end">
-                    <Button
-                      variant="unstyled"
-                      onClick={() => toggleSelect(c)}
-                      disabled={c.alreadyAdopted}
-                      aria-label={
-                        selected.has(c.childNativeId)
-                          ? t('integrations.adoptDevicesModal.deselect', 'Deselect')
-                          : t('integrations.adoptDevicesModal.select', 'Select')
-                      }
-                      className={`inline-flex h-5 w-5 items-center justify-center rounded border ${
-                        selected.has(c.childNativeId)
-                          ? 'border-primary bg-primary'
-                          : 'border-border'
-                      } ${c.alreadyAdopted ? 'cursor-not-allowed opacity-50' : ''}`}
-                    >
-                      {selected.has(c.childNativeId) && (
-                        <Check className="h-3 w-3 text-primary-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                ),
+                cell: (item) => {
+                  const state = adoptedStateOf(item, scan.added)
+                  if (state.adopted) return null
+                  const found = item.kind === 'found' ? item.row : item.found
+                  const asksDetails =
+                    found !== null && found.hit !== null && found.needsParams.length > 0
+                  if (found !== null && (item.kind === 'found' || asksDetails)) {
+                    return (
+                      <div className="flex items-center justify-end">
+                        <RowAddButton
+                          row={found}
+                          busy={scan.busy.has(found.key)}
+                          devicesKnown={scan.devices === 'answered'}
+                          onPick={scan.pick}
+                        />
+                      </div>
+                    )
+                  }
+                  if (item.kind !== 'candidate') return null
+                  const c = item.candidate
+                  return (
+                    <div className="flex items-center justify-end">
+                      <Button
+                        variant="unstyled"
+                        onClick={() => toggleSelect(c)}
+                        aria-label={
+                          selected.has(c.childNativeId)
+                            ? t('integrations.adoptDevicesModal.deselect', 'Deselect')
+                            : t('integrations.adoptDevicesModal.select', 'Select')
+                        }
+                        className={`inline-flex h-5 w-5 items-center justify-center rounded border ${
+                          selected.has(c.childNativeId)
+                            ? 'border-primary bg-primary'
+                            : 'border-border'
+                        }`}
+                      >
+                        {selected.has(c.childNativeId) && (
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  )
+                },
               },
             ]}
-            isExpanded={(c) => !isFlatFilter && expanded.has(c.childNativeId)}
+            isExpanded={(item) =>
+              !isFlatFilter &&
+              item.kind === 'candidate' &&
+              expanded.has(item.candidate.childNativeId)
+            }
             renderExpanded={
               isFlatFilter
                 ? undefined
-                : (c) => (
-                    <CandidateEntities
-                      candidate={c}
-                      hiddenChildIds={overrides.get(c.childNativeId)?.hiddenChildIds ?? new Set()}
-                      onToggleChildHidden={(childId) => toggleChildHidden(c.childNativeId, childId)}
-                    />
-                  )
+                : (item) =>
+                    item.kind === 'candidate' ? (
+                      <CandidateEntities
+                        candidate={item.candidate}
+                        hiddenChildIds={
+                          overrides.get(item.candidate.childNativeId)?.hiddenChildIds ?? new Set()
+                        }
+                        onToggleChildHidden={(childId) =>
+                          toggleChildHidden(item.candidate.childNativeId, childId)
+                        }
+                      />
+                    ) : null
             }
-            rowClassName={(c) =>
-              c.alreadyAdopted ? 'opacity-60' : selected.has(c.childNativeId) ? 'bg-primary/5' : ''
+            rowClassName={(item) =>
+              adoptedStateOf(item, scan.added).adopted
+                ? 'opacity-60'
+                : item.kind === 'candidate' && selected.has(item.candidate.childNativeId)
+                  ? 'bg-primary/5'
+                  : ''
             }
           />
         </div>
@@ -649,7 +832,12 @@ export interface CandidateNameCellProps {
   expandable: boolean
   expanded: boolean
   onToggleExpand: () => void
-  adoptedLabel: string
+  /** The hub already holds this device: it carries the Adopted mark and no add action. */
+  adopted: boolean
+  /** The hub device it is, to link to. */
+  deviceId: number | null
+  /** Leaves the modal before the device link navigates. */
+  onNavigate: () => void
   // Device-type label, shown under the name on a phone (the Type column is hidden there).
   typeLabel: string
 }
@@ -668,7 +856,9 @@ export function CandidateNameCell({
   expandable,
   expanded,
   onToggleExpand,
-  adoptedLabel,
+  adopted,
+  deviceId,
+  onNavigate,
   typeLabel,
 }: CandidateNameCellProps) {
   const { t } = useTranslation()
@@ -726,10 +916,44 @@ export function CandidateNameCell({
         {/* The Type column is hidden on a phone: its label rides under the name. */}
         <div className="truncate text-[10px] text-foreground-subtle sm:hidden">{typeLabel}</div>
       </div>
-      {candidate.alreadyAdopted && (
-        <span className="rounded-full bg-success/10 px-2 py-0.5 text-[9px] font-medium text-success shrink-0">
-          {adoptedLabel}
-        </span>
+      {adopted && <AdoptedMark deviceId={deviceId} onNavigate={onNavigate} />}
+    </div>
+  )
+}
+
+interface FoundNameCellProps {
+  readonly row: NetworkRow
+  readonly adopted: boolean
+  readonly deviceId: number | null
+  readonly typeLabel: string
+  readonly onNavigate: () => void
+  /** Keeps the name aligned with the candidate rows that carry a chevron slot. */
+  readonly alignWithChevron: boolean
+}
+
+/** Name cell of a device only the scan or passive discovery found: name, address, adopted mark. */
+function FoundNameCell({
+  row,
+  adopted,
+  deviceId,
+  typeLabel,
+  onNavigate,
+  alignWithChevron,
+}: FoundNameCellProps) {
+  return (
+    <div className="flex items-center gap-2.5 min-w-0" data-testid={`network-row-${row.key}`}>
+      {alignWithChevron && <span className="h-5 w-5 flex-shrink-0" aria-hidden="true" />}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs font-medium text-foreground" data-testid="candidate-name">
+          {row.name}
+        </div>
+        {row.address !== null && (
+          <div className="truncate font-mono text-[10px] text-foreground-subtle">{row.address}</div>
+        )}
+        <div className="truncate text-[10px] text-foreground-subtle sm:hidden">{typeLabel}</div>
+      </div>
+      {adopted && (
+        <AdoptedMark deviceId={deviceId} deviceName={row.addedName} onNavigate={onNavigate} />
       )}
     </div>
   )

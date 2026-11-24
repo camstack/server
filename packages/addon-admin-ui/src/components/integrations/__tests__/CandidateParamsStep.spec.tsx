@@ -32,6 +32,7 @@ const row: ComponentProps<typeof CandidateParamsStep>['row'] = {
   proposalId: null,
   alreadyAdded: false,
   addedName: null,
+  deviceId: null,
   needsParams: [],
   parentKey: null,
 }

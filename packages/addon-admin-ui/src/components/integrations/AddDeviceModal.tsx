@@ -99,9 +99,10 @@ export function AddDeviceModal({
   const tabCount = [hasNetwork, hasManual, pairing !== undefined].filter(Boolean).length
 
   // An adoption integration lists its candidates through the adopt surface, whole.
-  // When the provider can also scan, the scan block is drawn above it and leaves
-  // out what the adoption list already holds. Neither is drawn before the answer
-  // is known, so the surface never remounts after the first paint.
+  // When the provider can also scan, ONE list carries every device found: the
+  // adoption candidates, the scan hits and what discovery proposed, merged by
+  // identity. Nothing is drawn before the answer is known, so the surface never
+  // remounts after the first paint.
   const network = scanPending ? (
     <DialogBody>
       <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
@@ -109,15 +110,12 @@ export function AddDeviceModal({
   ) : kind === 'device-adoption' ? (
     <>
       {scanFailure !== null && <ScanFailure reason={scanFailure} />}
-      {canScan === true && (
-        <NetworkCandidatesPanel
-          addonId={addonId}
-          integrationId={integrationId}
-          onClose={onClose}
-          alongsideAdoption
-        />
-      )}
-      <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
+      <AdoptDevicesPanel
+        addonId={addonId}
+        integrationId={integrationId}
+        onClose={onClose}
+        withScan={canScan === true}
+      />
     </>
   ) : scanFailure !== null ? (
     <ScanFailure reason={scanFailure} />

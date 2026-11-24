@@ -10,6 +10,7 @@
 import type { AdoptionJob } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import type React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -188,6 +189,21 @@ vi.mock('@camstack/ui-library', async (orig) => ({
   useDeviceManagerAdoptionCancelJob: () => ({ mutate: cancelJob, isPending: false }),
   useDeviceManagerAdoptionRefresh: () => refreshResult,
   useIntegrationsGetAvailableTypes: () => availableTypesResult,
+  // The panel mounts the network-scan hook disabled when the integration does not scan.
+  useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceManagerDiscoverProvider: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+    data: undefined,
+  }),
+  useDeviceManagerProviderDiscoveryParamsSchema: () => ({ data: undefined }),
+  useDeviceManagerListDiscoveryProposals: () => ({
+    data: undefined,
+    isSuccess: false,
+    isError: false,
+  }),
+  useDeviceManagerListAll: () => ({ data: undefined, isSuccess: false, isError: false }),
 }))
 
 /**
@@ -200,7 +216,11 @@ function renderModal(ui: React.ReactElement): ReturnType<typeof render> {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('AdoptDevicesModal', () => {

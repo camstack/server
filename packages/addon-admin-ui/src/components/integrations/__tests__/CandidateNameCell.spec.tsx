@@ -1,5 +1,6 @@
 import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 import { CandidateNameCell } from '../AdoptDevicesModal'
@@ -26,7 +27,9 @@ function renderCell(c: DiscoveredChildDevice, containerName?: string): void {
       expandable={false}
       expanded={false}
       onToggleExpand={vi.fn()}
-      adoptedLabel="Adopted"
+      adopted={false}
+      deviceId={null}
+      onNavigate={vi.fn()}
       typeLabel="Speaker"
     />,
   )
@@ -60,7 +63,9 @@ describe('CandidateNameCell', () => {
         expandable
         expanded={false}
         onToggleExpand={vi.fn()}
-        adoptedLabel="Adopted"
+        adopted={false}
+        deviceId={null}
+        onNavigate={vi.fn()}
         typeLabel="Speaker"
       />,
     )
@@ -77,5 +82,25 @@ describe('CandidateNameCell', () => {
   it('names no container for a top-level row', () => {
     renderCell(candidate({}))
     expect(screen.queryByTestId('candidate-container')).toBeNull()
+  })
+
+  it('marks an adopted row with the library badge and a link to its device', () => {
+    render(
+      <MemoryRouter>
+        <CandidateNameCell
+          candidate={candidate({ alreadyAdopted: true, adoptedDeviceId: 42 })}
+          depth={0}
+          expandable={false}
+          expanded={false}
+          onToggleExpand={vi.fn()}
+          adopted
+          deviceId={42}
+          onNavigate={vi.fn()}
+          typeLabel="Speaker"
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('adopted-mark').textContent).toContain('Adopted')
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/devices/42')
   })
 })
