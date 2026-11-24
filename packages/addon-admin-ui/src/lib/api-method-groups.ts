@@ -214,6 +214,8 @@ const ROUTERS_BY_GROUP: Readonly<Record<MappedGroupId, readonly string[]>> = {
     'addonWidgets',
     'addonWidgetsSource',
     'adminUi',
+    'appSource',
+    'apps',
     'boardKeySource',
     'broker',
     'integrationInstances',

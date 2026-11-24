@@ -82,6 +82,9 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'vehicle',
   // Retention P3: the retention-source catalog a data owner declares.
   'retention-source',
+  // D1096: the apps a shell lists, and the per-provider source the aggregator reads.
+  'app-source',
+  'apps',
 ]
 
 /**

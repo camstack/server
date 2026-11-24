@@ -24,7 +24,7 @@ import type { DurableState } from '@camstack/types'
 import type { z } from 'zod'
 import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
-import { accessoryShapeKey } from '../reconcile/accessory-shape.js'
+import { accessoryShapeKey, type BuiltAccessoryShape } from '../reconcile/accessory-shape.js'
 
 type LifecycleHandler = (event: SystemEvent) => void
 
@@ -47,6 +47,7 @@ interface FakeConfig {
 
 class TestAddon extends ExportHapAddon {
   devices = new Map<number, FakeDevice>()
+  boundCaps: readonly string[] = ['motion-detection']
   private fake: FakeConfig = { exposed: [], exportSyncState: {} }
   get fakeConfig(): FakeConfig {
     return this.fake
@@ -92,7 +93,9 @@ class TestAddon extends ExportHapAddon {
         },
       },
       // Bound, so the shape is answered; no `cameraStreams`, so no recording token.
-      fetchDevice: async () => ({ binding: { entries: [{ capName: 'motion-detection' }] } }),
+      fetchDevice: async () => ({
+        binding: { entries: this.boundCaps.map((capName) => ({ capName })) },
+      }),
       // The HomeKit name store answers "none stored", so the device's own name is used.
       settings: { readDeviceStore: async () => ({}), writeDeviceStore: async () => {} },
       logger,
@@ -122,6 +125,11 @@ class TestAddon extends ExportHapAddon {
 
   protected override async reconcileDevice(_inst: BridgeInstance, deviceId: string): Promise<void> {
     this.reconciled.push(deviceId)
+  }
+
+  /** Record the shape a live accessory was built from, as the boot build does. */
+  recordBuilt(deviceId: number, built: BuiltAccessoryShape): void {
+    this.inst.builtShapes.set(String(deviceId), built)
   }
 
   callComputeExportFingerprint(deviceId: number): Promise<string | null> {
@@ -249,6 +257,56 @@ describe('computeExportFingerprint — probe-readiness gate', () => {
 
     const current = await addon.callComputeExportFingerprint(1)
     expect(current).toBe(persisted) // last?.fingerprint === current → reconcile no-op
+  })
+})
+
+describe('computeExportFingerprint — bound caps are never frozen by the probe gate', () => {
+  const builtShape = (caps: readonly string[]): BuiltAccessoryShape => {
+    const shape = {
+      inputs: {
+        kind: 'camera' as const,
+        deviceType: 'camera',
+        features: ['motion-trigger'],
+        caps,
+        role: null,
+        name: 'Device 1',
+      },
+      recordability: null,
+    }
+    return { shape, key: accessoryShapeKey(shape) }
+  }
+
+  it('an un-probed camera that gains a doorbell binding after the build gets a NEW key', async () => {
+    addon.devices.set(1, { type: 'camera', features: ['motion-trigger'], probed: false })
+    const built = builtShape(['motion-detection'])
+    addon.fakeConfig = {
+      exposed: [exposed(1)],
+      exportSyncState: { '1': { fingerprint: built.key, externalIds: ['uuid-1'] } },
+    }
+    addon.recordBuilt(1, built)
+    addon.boundCaps = ['motion-detection', 'doorbell']
+
+    const key = await addon.callComputeExportFingerprint(1)
+    expect(key).not.toBe(built.key)
+    expect(key).toBe(
+      accessoryShapeKey({
+        ...built.shape,
+        inputs: { ...built.shape.inputs, caps: ['doorbell', 'motion-detection'] },
+      }),
+    )
+  })
+
+  it('an un-probed camera whose caps did not move still carries the built key (no churn on features)', async () => {
+    // Fresh features differ from the built ones (mid-probe), caps are the same.
+    addon.devices.set(1, { type: 'camera', features: [], probed: false })
+    const built = builtShape(['motion-detection'])
+    addon.fakeConfig = {
+      exposed: [exposed(1)],
+      exportSyncState: { '1': { fingerprint: built.key, externalIds: ['uuid-1'] } },
+    }
+    addon.recordBuilt(1, built)
+
+    expect(await addon.callComputeExportFingerprint(1)).toBe(built.key)
   })
 })
 

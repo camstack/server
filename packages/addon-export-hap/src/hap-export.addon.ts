@@ -1610,10 +1610,23 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       const persisted = (await this.syncStateOf(inst)).get(deviceId)?.fingerprint
       // Absent `probed` (record from an older device-manager build) → treat as
       // not-ready → carry forward; never advertise a partial shape.
+      // The gate guards the FEATURE-derived inputs only. The bound caps were just
+      // read fresh, so while unprobed the key is the last-BUILT shape with the
+      // fresh caps swapped in: a doorbell grafted after the boot build rebuilds.
+      const built = inst.builtShapes.get(String(deviceId))
       const key = resolveExportFingerprint({
         ready: device.probed ?? false,
         fresh: accessoryShapeKey(shape, persisted),
-        persisted,
+        // What a not-ready device carries forward: the shape it was BUILT from
+        // (the persisted key when no build is known), never the feature-derived
+        // inputs read now, but WITH the caps bound now.
+        persisted:
+          built === undefined
+            ? persisted
+            : accessoryShapeKey(
+                { ...built.shape, inputs: { ...built.shape.inputs, caps: shape.inputs.caps } },
+                persisted,
+              ),
       })
       return { key, shape }
     } catch {

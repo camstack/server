@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A doorbell bound to a camera whose probe has not completed now rebuilds the HomeKit accessory, so the doorbell rings
+
 ## [1.2.209] - 2026-11-21
 
 ### Changed

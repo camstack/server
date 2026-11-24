@@ -1266,7 +1266,9 @@ export class HikvisionCamera
       try {
         await this.probeAndPersistAccessoryCaps()
       } catch (err) {
-        this.ctx.logger.debug('hikvision accessory cap probe failed', {
+        // A probe that fails leaves the device UNPROBED (no `lastProbedAt`), which
+        // freezes every export carry-forward gate: the reason is named, not debug.
+        this.ctx.logger.warn('hikvision accessory cap probe failed — device stays unprobed', {
           tags: { deviceId: this.id },
           meta: { error: err instanceof Error ? err.message : String(err) },
         })
@@ -1292,6 +1294,11 @@ export class HikvisionCamera
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
     }
+    // This override replaces the base probe, which is what stamps `lastProbedAt`.
+    // Without the stamp the device stayed `probed: false` for ever (615): the
+    // kernel logged "Initial probe did not complete" and retried a probe that had
+    // already worked. Stamp only once the accessory-cap probe succeeded.
+    if (this.accessoryCapsProbed) await super.onProbe()
   }
 
   /** Phase 5 — fired after probe + accessory reconciliation. Primes the
@@ -1620,7 +1627,7 @@ export class HikvisionCamera
    * `hasAlarmIo` via `getAccessoryChildren`) sees the freshest probe
    * results.
    */
-  private async probeAndPersistAccessoryCaps(): Promise<void> {
+  protected async probeAndPersistAccessoryCaps(): Promise<void> {
     const isapi = this.ensureClient()
     const cameraNumber = DEFAULT_CAMERA_NUMBER
 

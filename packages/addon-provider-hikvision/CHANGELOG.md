@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Hikvision camera is marked probed once its capability probe succeeds, and a failed probe logs its reason
+
 ## [1.2.194] - 2026-11-21
 
 ### Changed
