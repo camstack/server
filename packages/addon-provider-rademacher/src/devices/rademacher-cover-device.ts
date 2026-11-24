@@ -116,7 +116,15 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
   private recomputeSlice(): void {
     const handle = rademacherSessions.getCover(this.integrationId, this.did)
     if (handle === null) return
-    if (this.online !== handle.online) this.markOnline(handle.online)
+    if (this.online !== handle.online) {
+      this.ctx.logger.info(
+        handle.online
+          ? 'rademacher cover: the bridge reports it reachable again'
+          : 'rademacher cover: the bridge reports it unreachable',
+        { tags: { deviceId: this.id }, meta: { did: this.did } },
+      )
+      this.markOnline(handle.online)
+    }
     const snapshot = snapshotFromHandle(handle, this.supportsTilt)
     const status = toCoverStatus(snapshot, { invertPosition: this.invertPosition }, Date.now())
     this.runtimeState.setCapState('cover', status)
