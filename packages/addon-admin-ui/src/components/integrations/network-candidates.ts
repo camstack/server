@@ -8,8 +8,9 @@
  *
  * Two entries are the same device when they share ANY identity: the scan
  * `stableId`, the adoption `childNativeId` (the provider uses the same string
- * for both on purpose) the hardware MAC (`mac:`), or the host they were seen at. A row that merged several
- * sources keeps the scan hit — the only one `deviceManager.adoptDevice` takes.
+ * for both on purpose), the hardware MAC (`mac:`), or the host they were seen
+ * at. A row that merged several sources keeps the scan hit — the only one
+ * `deviceManager.adoptDevice` takes.
  */
 
 /** The part of a scan hit or proposal candidate the list reads. */
