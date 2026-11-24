@@ -101,7 +101,9 @@ export interface ReolinkAccessoryHost {
    *  entirely while sleeping and runs once on the sleep→awake
    *  transition.
    *  Optional for back-compat — host impls that don't expose battery
-   *  info should return false (the safe default). */
+   *  info should return false (the safe default). The camera answers from
+   *  its `isBattery` flag (set from the persisted `deviceCache` during cap
+   *  registration, and again at login), not from the `feature-probe` slice. */
   isBatteryCam?(): boolean
   /** True when the parent camera is currently asleep. Used by the
    *  accessory's `onProbe` to gate runtime refresh: at runtime we

@@ -1393,9 +1393,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // first three hours, each one a wake, none of them asked for by anybody.
     //
     // Gating here is only safe because `isBattery` no longer depends on this
-    // probe: it is set in the constructor from `deviceCache.deviceType` /
-    // `hasBattery`, and `sleeping` reads the RESTORED `battery` slice — both
-    // are already true before the first probe attempt. The probe is re-run
+    // probe: it is set during cap registration from the persisted
+    // `deviceCache` (`deviceType` / `hasBattery`), and `sleeping` reads the
+    // RESTORED `battery` slice — both are already true before the first probe attempt. The probe is re-run
     // for free by `onWakeTransition` the next time the camera comes up on its
     // own, which is the only moment it costs nothing.
     if (this.isBattery && this.sleeping) {
@@ -3153,6 +3153,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     //     Hub children always go through the parent's TCP socket so
     //     `deviceType` stays `'camera'` even for batteries; the
     //     dedicated `hasBattery` flag is the right discriminator here.
+    this.adoptBatteryFromDeviceCache()
+  }
+
+  /** Sets `isBattery` from the persisted `deviceCache` and, for a battery
+   *  camera, registers its battery cap and arms the refresh timer. Called from
+   *  cap registration; `isBatteryCam()` answers from the flag it sets. */
+  private adoptBatteryFromDeviceCache(): void {
     const cache = this.config.get('deviceCache')
     if (cache?.deviceType === 'battery-cam' || cache?.hasBattery === true) {
       this.isBattery = true
@@ -12005,17 +12012,14 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * separate auth flow per accessory. `ReolinkAccessory` calls this
    * inside its `applyOn` / `fetchOn` to reach the camera firmware.
    */
-  /** Implements `ReolinkAccessoryHost.isBatteryCam` so spawned
-   *  accessory children skip background polling on a sleeping
-   *  battery cam (Baichuan polls on a sleeping camera return 400 +
-   *  drain the battery). Reads from the runtime feature-probe slice
-   *  populated during `onProbe()`; falls back to false when the probe
-   *  hasn't completed yet. */
+  /** Implements `ReolinkAccessoryHost.isBatteryCam`: returns `this.isBattery`,
+   *  the same flag the parent's own sleep gates read. That flag is set during
+   *  cap registration from the persisted `deviceCache`
+   *  (`deviceType === 'battery-cam' || hasBattery`) and again at login. It is
+   *  NOT read from the `feature-probe` slice: a battery camera asleep at boot
+   *  never seeds that slice, so every accessory probed straight through its
+   *  sleep gate and woke the camera (#666, device 640). */
   isBatteryCam(): boolean {
-    // The constructor-set `isBattery` (the same one the parent's own sleep
-    // gates read), NOT the `feature-probe` slice: a battery camera asleep at
-    // boot never seeds that slice, so every accessory probed straight through
-    // its sleep gate and woke the camera (#666, device 640).
     return this.isBattery
   }
 
