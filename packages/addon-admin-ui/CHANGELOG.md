@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Admin now publishes its app and navigation to the viewer shell from the same table as its sidebar
+
 ## [1.2.740] - 2026-11-24
 
 ### Changed

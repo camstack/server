@@ -1,7 +1,8 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IAdminUiProvider, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, adminUiCapability } from '@camstack/types'
+import type { IAdminUiProvider, IAppSourceProvider, ProviderRegistration } from '@camstack/types'
+import { BaseAddon, adminUiCapability, appSourceCapability } from '@camstack/types'
+import { buildAdminApp } from './admin-app'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,7 +25,13 @@ export class AdminUIAddon extends BaseAddon {
       getStaticDir: async () => ({ staticDir: resolveAdminUiDistDir() }),
       getVersion: async () => ({ version: __APP_VERSION__ }),
     }
-    return [{ capability: adminUiCapability, provider }]
+    const appSource: IAppSourceProvider = {
+      listApps: async () => [buildAdminApp()],
+    }
+    return [
+      { capability: adminUiCapability, provider },
+      { capability: appSourceCapability, provider: appSource },
+    ]
   }
 }
 

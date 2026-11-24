@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9261 source files · 1304 file(s) in no subsystem.**
+**31 subsystems · 9264 source files · 1304 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -30,7 +30,7 @@ commits. A generated page may not.
 | Device providers (per vendor) | 1013 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 145 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-10-24 | ✅ |
-| Pipeline orchestration and placement | 215 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +110 more, 27 ADRs | 2026-11-21 | ✅ |
+| Pipeline orchestration and placement | 216 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +110 more, 27 ADRs | 2026-11-21 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 510 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-11-12 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-11-12 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 310 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +107 more, 27 ADRs | 2026-11-12 | ✅ |
@@ -50,7 +50,7 @@ commits. A generated page may not.
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +45 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 44 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1886 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +180 more, 15 ADRs | 2026-11-16 | ✅ |
+| Admin UI and the shared component library | 1888 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +180 more, 15 ADRs | 2026-11-16 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +23 more, 7 ADRs | 2026-11-16 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 950 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +192 more, 14 ADRs | 2026-11-21 | ⚠️ |
@@ -126,7 +126,7 @@ Decides which node runs which camera's pipeline, and keeps sessions, balancing a
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline-orchestrator/src/*.ts`, `packages/addon-pipeline-orchestrator/src/durable/**`, `packages/addon-pipeline-orchestrator/src/camera-status/**`, `packages/addon-pipeline-orchestrator/src/camera-sensors/**`, `packages/addon-pipeline/src/pipeline-runner/**`, `packages/addon-pipeline-orchestrator/src/widgets/**`, `packages/addon-pipeline-orchestrator/src/auto-tune/**`, `packages/system/src/pipeline/**`, `packages/types/src/pipeline/**`
-- **Files**: 215 (215 claimed by some document)
+- **Files**: 216 (216 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Post-analysis — tracking, the confirmation gate and media
@@ -306,7 +306,7 @@ The operator's web console, and the design-system package every CamStack surface
 
 - **Owner doc**: `docs/architecture/ui.md`
 - **Code**: `packages/addon-admin-ui/**`, `packages/addon-agent-ui/**`, `packages/ui-library/**`
-- **Files**: 1886 (1886 claimed by some document)
+- **Files**: 1888 (1888 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack

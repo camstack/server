@@ -129,6 +129,7 @@ import {
   SHARE_SOURCE_SETTING_KEY,
   ShareSourceSchema,
   viewerUiCapability,
+  appSourceCapability,
   zoneRulesCapability,
   zonesCapability,
 } from '@camstack/types'
@@ -242,6 +243,7 @@ import {
 } from './settings-ui-schemas.js'
 import { createDisplayPaletteProvider } from './display-palette-provider.js'
 import { createViewerUiProvider } from './viewer-ui-provider.js'
+import { createViewerAppSourceProvider } from './viewer-app-source.js'
 import { pipelineOrchestratorWidgets } from './widget-catalog.js'
 import { ZoneRulesProvider } from './zone-rules-provider.js'
 import { ZonesProvider } from './zones-provider.js'
@@ -850,6 +852,7 @@ export default class PipelineOrchestratorAddon
         // the viewer repo's copy-dist-to-orchestrator.js). The hub's main.ts
         // mounts it at /viewer/camstack; it 404s cleanly when nothing is staged.
         { capability: viewerUiCapability, provider: createViewerUiProvider() },
+        { capability: appSourceCapability, provider: createViewerAppSourceProvider() },
         // Cluster colour table (D940). One key in this addon's settings store.
         {
           capability: displayPaletteCapability,

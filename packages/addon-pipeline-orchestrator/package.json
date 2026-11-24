@@ -63,6 +63,9 @@
             "name": "viewer-ui"
           },
           {
+            "name": "app-source"
+          },
+          {
             "name": "display-palette"
           },
           {

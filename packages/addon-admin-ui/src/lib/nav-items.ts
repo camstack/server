@@ -40,7 +40,12 @@ import {
   Terminal,
   Wrench,
 } from 'lucide-react'
-import { SYSTEM_PAGE_PATH } from './system-page-url'
+import {
+  NAV_SECTION_SPECS,
+  PAGE_REQUIRED_CAPABILITY,
+  type NavItemSpec,
+  type NavSectionKey,
+} from './nav-data'
 
 /** The `t` call shapes `buildNavSections` uses. Production passes the hook's
  *  `t`, which satisfies this; tests can stub without i18next's TFunction brand. */
@@ -62,7 +67,7 @@ export interface NavItem {
   readonly requiresCapability?: string
 }
 
-export type NavSectionKey = 'top' | 'detection' | 'cluster' | 'administration'
+export type { NavSectionKey }
 
 export interface NavSection {
   readonly key: NavSectionKey
@@ -71,25 +76,35 @@ export interface NavSection {
   readonly items: readonly NavItem[]
 }
 
-/**
- * The capability whose provider a built-in page needs, by path. The ONE place a
- * page declares what addon it depends on: the sidebar greys the entry and the
- * route shows a not-installed state from this, decided only on an answered
- * registry query. A page absent from the map has no addon dependency.
- */
-export const PAGE_REQUIRED_CAPABILITY: Readonly<Record<string, string>> = {
-  '/system/pipeline': 'pipeline-orchestrator',
-  '/system/history': 'device-history',
-  '/system/ai': 'llm',
+export { PAGE_REQUIRED_CAPABILITY }
+
+/** Lucide name (the manifest's vocabulary, `nav-data.ts`) to the component. */
+const NAV_ICONS: Readonly<Record<string, LucideIcon>> = {
+  camera: Camera,
+  plug: Plug,
+  hammer: Hammer,
+  'map-pin': MapPin,
+  monitor: Monitor,
+  library: Library,
+  archive: Archive,
+  network: Network,
+  'line-chart': LineChart,
+  'git-branch': GitBranch,
+  puzzle: Puzzle,
+  sparkles: Sparkles,
+  lock: Lock,
+  globe: Globe,
+  database: Database,
+  bell: Bell,
+  calendar: Calendar,
+  settings: SettingsIcon,
+  'scroll-text': ScrollText,
+  terminal: Terminal,
 }
 
-function visibleTo(items: readonly NavItem[], isAdmin: boolean): readonly NavItem[] {
-  return items
-    .filter((item) => !item.adminOnly || isAdmin)
-    .map((item) => {
-      const requiresCapability = PAGE_REQUIRED_CAPABILITY[item.path]
-      return requiresCapability === undefined ? item : { ...item, requiresCapability }
-    })
+/** The icon component of a manifest icon name; the sidebar shows a puzzle for an unknown one. */
+export function navIconFor(name: string): LucideIcon {
+  return NAV_ICONS[name] ?? Puzzle
 }
 
 export interface BuildNavSectionsParams {
@@ -99,153 +114,35 @@ export interface BuildNavSectionsParams {
   readonly embeddedByViewer?: boolean
 }
 
-/** Builds the 4 built-in sidebar sections, gated by `isAdmin`. Pure — same
- *  inputs always produce the same sections, so it's safe to call from both
- *  the sidebar render and the search index build without a shared cache. */
+function toNavItem(spec: NavItemSpec, t: NavTranslate): NavItem {
+  const requiresCapability = PAGE_REQUIRED_CAPABILITY[spec.path]
+  return {
+    label: t(spec.labelKey, spec.fallback),
+    icon: navIconFor(spec.icon),
+    path: spec.path,
+    ...(spec.adminOnly === true ? { adminOnly: true } : {}),
+    ...(spec.keywords !== undefined ? { keywords: spec.keywords } : {}),
+    ...(requiresCapability !== undefined ? { requiresCapability } : {}),
+  }
+}
+
+/** Builds the 4 built-in sidebar sections from `NAV_SECTION_SPECS`, gated by `isAdmin`. Pure. */
 export function buildNavSections({
   t,
   isAdmin,
   embeddedByViewer = false,
 }: BuildNavSectionsParams): readonly NavSection[] {
-  const top = visibleTo(
-    [
-      { label: t('nav.devices', 'Devices'), icon: Camera, path: '/devices' },
-      { label: t('nav.integrations'), icon: Plug, path: '/integrations' },
-      {
-        label: t('nav.build', 'Build-your-self'),
-        icon: Hammer,
-        path: '/build',
-        adminOnly: true,
-      },
-      {
-        label: t('nav.locations', 'Locations'),
-        icon: MapPin,
-        path: '/locations',
-        adminOnly: true,
-      },
-      ...(embeddedByViewer
-        ? []
-        : [{ label: t('nav.viewer', 'Viewer'), icon: Monitor, path: '/live' }]),
-    ],
-    isAdmin,
-  )
-
-  const detection = visibleTo(
-    [
-      {
-        label: t('nav.library', 'Library'),
-        icon: Library,
-        path: '/library',
-        adminOnly: true,
-        // Former Detection nav labels + common aliases so search still finds
-        // the unified page after the hard cut to a single Library entry.
-        keywords: [
-          'People',
-          'Vehicles',
-          'Events',
-          'Scenes',
-          'plates',
-          'faces',
-          'detection-intelligence',
-        ],
-      },
-      {
-        label: t('nav.archive', 'Archive'),
-        icon: Archive,
-        path: '/archive',
-        adminOnly: true,
-      },
-    ],
-    isAdmin,
-  )
-
-  const cluster = visibleTo(
-    [
-      {
-        label: t('nav.nodes', 'Nodes'),
-        icon: Network,
-        path: '/system/nodes',
-        adminOnly: true,
-      },
-      {
-        // Device, node and storage series side by side (D899).
-        label: t('nav.history', 'History'),
-        icon: LineChart,
-        path: '/system/history',
-        adminOnly: true,
-        keywords: ['charts', 'graphs', 'energy', 'temperature', 'metrics', 'trends'],
-      },
-      { label: t('nav.pipeline', 'Pipeline'), icon: GitBranch, path: '/system/pipeline' },
-      { label: t('system.addons'), icon: Puzzle, path: '/system/addons', adminOnly: true },
-      { label: t('system.ai', 'AI'), icon: Sparkles, path: '/system/ai', adminOnly: true },
-    ],
-    isAdmin,
-  )
-
-  const administration = visibleTo(
-    [
-      {
-        label: t('system.identity', 'Identity & Access'),
-        icon: Lock,
-        path: '/system/identity',
-        adminOnly: true,
-      },
-      {
-        label: t('system.network', 'Network'),
-        icon: Globe,
-        path: '/system/network',
-        adminOnly: true,
-      },
-      {
-        label: t('system.integrations', 'Connectivity'),
-        icon: Plug,
-        path: '/system/integrations',
-        adminOnly: true,
-      },
-      { label: t('system.data', 'Data'), icon: Database, path: '/system/data', adminOnly: true },
-      {
-        label: t('system.notifications', 'Notifications'),
-        icon: Bell,
-        path: '/system/notifications',
-        adminOnly: true,
-      },
-      {
-        label: t('system.calendars', 'Calendars'),
-        icon: Calendar,
-        path: '/system/calendars',
-        adminOnly: true,
-      },
-      {
-        // System hosts Settings, Secrets and Capabilities as tabs
-        // (`lib/system-page-url.ts`); they are not sidebar entries of their own.
-        label: t('system.systemNav', 'System'),
-        icon: SettingsIcon,
-        path: SYSTEM_PAGE_PATH,
-        adminOnly: true,
-      },
-      { label: t('system.logs', 'Logs'), icon: ScrollText, path: '/system/logs', adminOnly: true },
-      {
-        label: t('system.terminal', 'Terminal'),
-        icon: Terminal,
-        path: '/system/terminal',
-        adminOnly: true,
-      },
-      // "My access" deliberately NOT listed here — it lives in the bottom
-      // profile section of the sidebar (theme → alerts → my-access →
-      // sign out), rendered directly by AppLayout rather than looped from
-      // this registry, so it stays out of the "page" search domain too:
-      // adding it here would recreate exactly the kind of hand-written,
-      // sidebar-diverging entry this registry exists to prevent.
-    ],
-    isAdmin,
-  )
-
-  return [
-    { key: 'top', label: null, items: top },
-    { key: 'detection', label: t('nav.detectionSection', 'Detection'), items: detection },
-    { key: 'cluster', label: t('nav.clusterSection', 'Cluster'), items: cluster },
-    { key: 'administration', label: t('system.title', 'Administration'), items: administration },
-  ]
+  return NAV_SECTION_SPECS.map((section) => ({
+    key: section.key,
+    label: section.labelKey === null ? null : t(section.labelKey, section.fallback),
+    items: section.items
+      .filter(
+        (item) =>
+          (item.adminOnly !== true || isAdmin) &&
+          !(embeddedByViewer && item.hiddenWhenEmbedded === true),
+      )
+      .map((item) => toNavItem(item, t)),
+  }))
 }
 
 /** Maps an addon page's `icon` string declaration to a Lucide component —

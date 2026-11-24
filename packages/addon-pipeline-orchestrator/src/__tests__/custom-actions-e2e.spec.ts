@@ -38,9 +38,10 @@ describe('PipelineOrchestratorAddon — custom actions envelope', () => {
     //   - zone-rules (per-stage gating CRUD)
     //   - addon-widgets-source (dashboard widgets)
     //   - viewer-ui (serves the staged viewer web SPA)
+    //   - app-source (the Viewer app, D1096)
     //   - display-palette (cluster colour table, D940)
     //   - node-removal-hook (a forgotten node's pipeline data, #265)
-    expect(envelope?.providers).toHaveLength(8)
+    expect(envelope?.providers).toHaveLength(9)
     expect(envelope?.providers?.map((p) => p.capability.name)).toEqual(
       expect.arrayContaining([
         'pipeline-orchestrator',
@@ -49,6 +50,7 @@ describe('PipelineOrchestratorAddon — custom actions envelope', () => {
         'zone-rules',
         'addon-widgets-source',
         'viewer-ui',
+        'app-source',
         'display-palette',
         'node-removal-hook',
       ]),

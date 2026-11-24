@@ -44,6 +44,9 @@
         "capabilities": [
           {
             "name": "admin-ui"
+          },
+          {
+            "name": "app-source"
           }
         ],
         "protected": true

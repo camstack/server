@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Viewer is now declared as an app for the viewer shell's app switcher
+
 ## [1.2.719] - 2026-11-24
 
 ### Changed
