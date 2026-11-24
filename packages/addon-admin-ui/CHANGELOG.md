@@ -10,13 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The timed run's one-tap duration moved from the device settings page to the control next to the start button; its strings follow.
+- Customize tab: linked cameras are rows of the one customizations table (add through a dialog, unlink with a confirm); events get an active switch and a confirmed remove; a link-stamped row offers Unlink; a power-source row's Edit opens the link dialog; a second quick save no longer fails on a stale version
 
 ## [1.2.744] - 2026-11-24
 
 ### Changed
 
 - Triggered by: Add and Edit open one dialog where you pick the source device with the common device selector and set its events, parts or classes and when the trigger may run; editing a trigger can now change its source device
-- Customize tab: linked cameras are rows of the one customizations table (add through a dialog, unlink with a confirm); events get an active switch and a confirmed remove; a link-stamped row offers Unlink; a power-source row's Edit opens the link dialog; a second quick save no longer fails on a stale version
 
 ## [1.2.743] - 2026-11-24
 
