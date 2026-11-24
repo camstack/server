@@ -108,6 +108,7 @@ describe('TrackDetailDispatcher — typed not-attached refusal short-circuits th
     }))
     const captureCropBase64 = vi.fn(async () => 'Y3JvcA==')
     dispatcher = new TrackDetailDispatcher({
+      nowMs: () => 0,
       runDetailSubtree,
       routeResults: vi.fn(async () => {}),
       captureParkedFrame,
@@ -149,6 +150,7 @@ describe('TrackDetailDispatcher — typed not-attached refusal short-circuits th
       }))
       const captureCropBase64 = vi.fn(async () => 'Y3JvcA==')
       dispatcher = new TrackDetailDispatcher({
+        nowMs: () => 0,
         runDetailSubtree,
         routeResults: vi.fn(async () => {}),
         captureParkedFrame,

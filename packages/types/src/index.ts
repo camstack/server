@@ -2779,6 +2779,7 @@ export {
   NATIVE_LEASE_SECTION_ID,
   NATIVE_LEASE_TILE_BUDGET_FIELD,
   NATIVE_LEASE_TILE_BUDGET_KEY,
+  NATIVE_CROP_LEASE_MAX_AGE_MS,
   type NativeLeaseAdmission,
   NativeLeaseAdmissionSchema,
   type NativeLeaseKnob,

@@ -137,6 +137,7 @@ describe('detail dispatcher — parked key-frame rung', () => {
     const captureParkedFrame = vi.fn(async () => parkedFrame())
 
     dispatcher = new TrackDetailDispatcher({
+      nowMs: () => 0,
       runDetailSubtree,
       routeResults,
       captureCropBase64,
@@ -168,6 +169,7 @@ describe('detail dispatcher — parked key-frame rung', () => {
     )
     const captureParkedFrame = vi.fn(async () => parkedFrame())
     dispatcher = new TrackDetailDispatcher({
+      nowMs: () => 0,
       runDetailSubtree,
       routeResults: vi.fn(async () => {}),
       captureParkedFrame,
@@ -188,6 +190,7 @@ describe('detail dispatcher — parked key-frame rung', () => {
     })
     const captureParkedFrame = vi.fn(async () => parkedFrame(1000))
     dispatcher = new TrackDetailDispatcher({
+      nowMs: () => 0,
       runDetailSubtree,
       routeResults: vi.fn(async () => {}),
       captureParkedFrame,
@@ -219,6 +222,7 @@ describe('detail dispatcher — parked key-frame rung', () => {
       return input.cropJpeg !== undefined ? { details: [] } : null
     })
     dispatcher = new TrackDetailDispatcher({
+      nowMs: () => 0,
       runDetailSubtree,
       routeResults: vi.fn(async () => {}),
       captureCropBase64: vi.fn(async () => 'dGlsZQ=='),

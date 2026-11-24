@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification rules carry the ids of their tags, so renaming a tag no longer detaches it from a rule
+- Detail enrichment no longer re-requests camera frames whose native lease already expired; one expired handle is dropped for every track at once.
 
 ## [1.2.724] - 2026-11-23
 

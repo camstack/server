@@ -104,6 +104,7 @@ interface Harness {
 function harness(): Harness {
   const calls: RunDetailSubtreeInput[] = []
   const dispatcher = new TrackDetailDispatcher({
+    nowMs: () => 0,
     runDetailSubtree: async (
       input: RunDetailSubtreeInput,
     ): Promise<RunDetailSubtreeResult | null> => {

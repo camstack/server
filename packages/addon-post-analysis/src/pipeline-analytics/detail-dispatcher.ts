@@ -38,7 +38,11 @@ import type {
   RunDetailSubtreeInput,
   RunDetailSubtreeResult,
 } from '@camstack/types'
-import { isRootSuppliableStepId, rootSupplyServes } from '@camstack/types'
+import {
+  isRootSuppliableStepId,
+  NATIVE_CROP_LEASE_MAX_AGE_MS,
+  rootSupplyServes,
+} from '@camstack/types'
 import { isDetailHandleExpiredRefusal, isDetailNotAttachedRefusal } from './detail-refusal.js'
 import { type DetailRequest, DetailScheduler } from './detail-scheduler.js'
 import { BestDetectionTracker } from './pipeline/best-detection-tracker.js'
@@ -165,6 +169,8 @@ export interface DetailDispatcherDeps {
   readonly logger: IScopedLogger
   /** Max concurrent `runDetailSubtree` calls per device (default 2). */
   readonly maxInFlightPerDevice?: number
+  /** Wall clock for the handle age check; defaults to `Date.now`. */
+  readonly nowMs?: () => number
   /** Periodic tick interval ms (default 1000). */
   readonly tickIntervalMs?: number
 }
@@ -261,7 +267,20 @@ const FAIL_WARN_THROTTLE_MS = 60_000
 /** How often a camera reports the coasted frames its detail plane ignored (D397). */
 const COASTED_REPORT_INTERVAL_MS = 60_000
 
+/** Most retired handle ids one device remembers; the oldest is forgotten first. */
+const RETIRED_HANDLES_MAX = 512
+
+function handleKey(h: FrameHandle): string {
+  return `${h.shmId}#${h.slot}#${h.seq}`
+}
+
 interface DeviceState {
+  /**
+   * Handles known to be past the lease age bound (refused by the runner, or
+   * judged too old here), insertion-ordered and capped. One verdict per HANDLE,
+   * shared by every track and step that holds it (#628).
+   */
+  readonly retiredHandles: Set<string>
   readonly scheduler: DetailScheduler
   /** Freshest frame association per live track. */
   readonly tracks: Map<string, TrackDetailFrame>
@@ -434,6 +453,7 @@ export class TrackDetailDispatcher {
         lastFailWarnAt: 0,
         lastEnrichWarnAt: 0,
         rootBoxMissLogged: new Set(),
+        retiredHandles: new Set(),
       }
       this.devices.set(deviceId, dev)
     }
@@ -555,6 +575,21 @@ export class TrackDetailDispatcher {
       const frame = dev.tracks.get(req.trackId)
       // Track ended between enqueue and dispatch → drop (no result to feed).
       if (frame === undefined) continue
+      if (
+        req.reason === 'retry' &&
+        frame.frameHandle !== undefined &&
+        dev.retiredHandles.has(handleKey(frame.frameHandle)) &&
+        this.deps.captureParkedFrame === undefined
+      ) {
+        // The only frame source this retry has is a handle already judged
+        // expired: sending it again is the refusal we are avoiding (#628).
+        this.deps.logger.info('detail retry dropped — its only frame source is a retired handle', {
+          tags: { deviceId },
+          meta: { trackId: req.trackId, stepId: req.stepId, handle: handleKey(frame.frameHandle) },
+        })
+        dev.scheduler.onFrameMiss(req.trackId, req.stepId, Date.now())
+        continue
+      }
       dev.inFlight += 1
       void this.dispatch(deviceId, dev, req, frame).finally(() => {
         dev.inFlight -= 1
@@ -676,8 +711,14 @@ export class TrackDetailDispatcher {
     // native-strict crop rung below would name the same handle and be refused
     // the same way, so it is skipped (D688).
     let handleRefused = false
+    // The hub's own verdict on the handle, before any RPC: already retired
+    // (by another track or step), or older than the lease bound by the frame's
+    // own timestamp (#628).
+    if (frame.frameHandle !== undefined && this.handleUnusable(deviceId, dev, req, frame)) {
+      handleRefused = true
+    }
 
-    if (frame.frameHandle !== undefined) {
+    if (frame.frameHandle !== undefined && !handleRefused) {
       try {
         const primary = await this.deps.runDetailSubtree(
           { deviceId, frameHandle: frame.frameHandle, parent, steps, ...supplied },
@@ -783,6 +824,53 @@ export class TrackDetailDispatcher {
     return null
   }
 
+  /** Record a handle as retired for the whole device; bounded, oldest first. */
+  private retireHandle(dev: DeviceState, handle: FrameHandle): boolean {
+    const key = handleKey(handle)
+    if (dev.retiredHandles.has(key)) return false
+    dev.retiredHandles.add(key)
+    if (dev.retiredHandles.size > RETIRED_HANDLES_MAX) {
+      const oldest = dev.retiredHandles.values().next()
+      if (oldest.done !== true) dev.retiredHandles.delete(oldest.value)
+    }
+    return true
+  }
+
+  /**
+   * True when the frame's handle must not be sent: retired already, or past
+   * the lease age bound (same constant the runner enforces). The first
+   * too-old verdict per handle is logged; later dispatches find it retired.
+   */
+  private handleUnusable(
+    deviceId: number,
+    dev: DeviceState,
+    req: DetailRequest,
+    frame: TrackDetailFrame,
+  ): boolean {
+    const handle = frame.frameHandle
+    if (handle === undefined) return false
+    if (dev.retiredHandles.has(handleKey(handle))) return true
+    const ageMs = (this.deps.nowMs ?? Date.now)() - frame.timestamp
+    if (ageMs <= NATIVE_CROP_LEASE_MAX_AGE_MS) return false
+    this.retireHandle(dev, handle)
+    this.deps.logger.info(
+      'detail dispatch: frame handle past the lease age bound — not sent, parked frame only',
+      {
+        tags: { deviceId },
+        meta: {
+          trackId: req.trackId,
+          stepId: req.stepId,
+          reason: 'handle-too-old',
+          handle: handleKey(handle),
+          handleAgeMs: ageMs,
+          leaseMaxAgeMs: NATIVE_CROP_LEASE_MAX_AGE_MS,
+          parkedFrameRung: this.deps.captureParkedFrame !== undefined,
+        },
+      },
+    )
+    return true
+  }
+
   /**
    * The runner refused `frame`'s handle as past the lease age bound (D688).
    * That verdict is final for the handle, so the track's stored association
@@ -802,6 +890,7 @@ export class TrackDetailDispatcher {
     req: DetailRequest,
     frame: TrackDetailFrame,
   ): void {
+    if (frame.frameHandle !== undefined) this.retireHandle(dev, frame.frameHandle)
     const current = dev.tracks.get(req.trackId)
     if (current === undefined || current.frameHandle !== frame.frameHandle) return
     const { frameHandle: refused, ...withoutHandle } = current
