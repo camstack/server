@@ -52,8 +52,10 @@ describe('hero-layout provider', () => {
       role: DeviceRole.SwitchHeater,
     })
     expect(heater.rows).toEqual(['run-for', 'cycle'])
+    // D1097: every switch layout carries the run-for row; a device without a
+    // timed-run binding is filtered out when the hero model is built.
     const plain = await service({}).getLayout({ deviceType: DeviceType.Switch })
-    expect(plain.rows).not.toContain('run-for')
+    expect(plain.rows).toContain('run-for')
   })
 
   it('a switch whose provider says it cannot be set offers no on/off', async () => {
