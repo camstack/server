@@ -29,7 +29,7 @@ import {
   StateLookSchema,
   type HeroTone,
 } from './hero-state.js'
-import { HeroMeasurementSchema } from './hero-measurement.js'
+import { HeroMeasurementSchema, HeroMeasurementsSchema } from './hero-measurement.js'
 import { HeroSceneSchema } from './hero-scene.js'
 import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
 
@@ -512,6 +512,11 @@ export const HeroModelSchema = z.object({
    * the caption, tiles and value chips. Absent = the card draws as before.
    */
   measurement: HeroMeasurementSchema.optional(),
+  /**
+   * EVERY measurement of a sensor, the role's own reading first (a sensor with one measuring
+   * cap has one, and `measurement` too). Two or more draw the pie card; absent = not a sensor.
+   */
+  measurements: HeroMeasurementsSchema.optional(),
   /** Ids of parts that actuate the device, hidden from a session that may not act on it. */
   gated: z.array(z.string()),
   provenance: z.array(HeroProvenanceSchema),

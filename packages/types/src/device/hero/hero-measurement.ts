@@ -8,6 +8,7 @@
  * open. Everything the card draws is decided here; a client only paints it.
  */
 import { z } from 'zod'
+import { DeviceRole } from '../device-type.js'
 import { primarySeriesKey } from '../../history/primary-series.js'
 import { IconKeySchema, type IconKey } from '../icon-catalog.js'
 import { ReadingQuantitySchema, type ReadingQuantity } from '../../units/quantity.js'
@@ -19,6 +20,8 @@ export const HERO_MEASUREMENT_QUANTITIES = [
   'humidity',
   'power',
   'contact',
+  'motion',
+  'illuminance',
   'text',
 ] as const
 export type HeroMeasurementQuantity = (typeof HERO_MEASUREMENT_QUANTITIES)[number]
@@ -88,6 +91,8 @@ export const HeroMeasurementSchema: z.ZodType<HeroMeasurement> = z.object({
   sinceKind: z.enum(HERO_MEASUREMENT_SINCE_KINDS),
   historyKey: z.string().nullable(),
 })
+
+export const HeroMeasurementsSchema = z.array(HeroMeasurementSchema)
 
 /** Below this a temperature reads cold, above `HOT_ABOVE_C` hot (°C). */
 export const COLD_BELOW_C = 12
@@ -195,6 +200,51 @@ export function contactMeasurement(open: boolean, since: number | null): HeroMea
   }
 }
 
+export function motionMeasurement(
+  detected: boolean,
+  lastDetectedAt: number | null,
+): HeroMeasurement {
+  return {
+    quantity: 'motion',
+    reading: null,
+    icon: 'footprints',
+    value: detected ? heroText('Active', 'Attivo') : heroText('Clear', 'Nessuno'),
+    unit: null,
+    band: null,
+    level: detected ? 1 : 0,
+    word: detected ? heroText('Motion', 'Movimento') : heroText('Clear', 'Nessun movimento'),
+    tone: detected ? 'primary' : 'muted',
+    since: lastDetectedAt,
+    sinceKind: 'changed',
+    historyKey: null,
+  }
+}
+
+/** The lux at which the light reads fully bright (a lit room). */
+export const ILLUMINANCE_FULL_SCALE_LX = 1000
+/** Below this the room reads dark (lx). */
+export const DARK_BELOW_LX = 10
+
+export function illuminanceMeasurement(lux: number, since: number | null): HeroMeasurement {
+  const dark = lux < DARK_BELOW_LX
+  return {
+    quantity: 'illuminance',
+    reading: { value: lux, quantity: 'illuminance' },
+    icon: 'sun',
+    value: same(String(Math.round(lux))),
+    unit: 'lx',
+    band: null,
+    level: clamp01(lux / ILLUMINANCE_FULL_SCALE_LX),
+    word: dark ? heroText('Dark', 'Buio') : heroText('Light', 'Luce'),
+    tone: 'muted',
+    since,
+    sinceKind: 'updated',
+    historyKey: ILLUMINANCE_HISTORY_KEY,
+  }
+}
+
+const ILLUMINANCE_HISTORY_KEY = 'cap:ambient-light-sensor.illuminance'
+
 export function textMeasurement(text: string, since: number | null): HeroMeasurement {
   return {
     quantity: 'text',
@@ -243,6 +293,13 @@ const QUANTITY_FACE: Readonly<
     historyKey: primarySeriesKey('power-meter'),
   },
   contact: { icon: null, unit: null, sinceKind: 'changed', historyKey: null },
+  motion: { icon: 'footprints', unit: null, sinceKind: 'changed', historyKey: null },
+  illuminance: {
+    icon: 'sun',
+    unit: 'lx',
+    sinceKind: 'updated',
+    historyKey: ILLUMINANCE_HISTORY_KEY,
+  },
   text: { icon: null, unit: null, sinceKind: 'updated', historyKey: null },
 }
 
@@ -285,4 +342,49 @@ const ROLES_READING_ANOTHER_FIELD: Readonly<
 export function measurementFitsRole(m: HeroMeasurement, role: string | null): boolean {
   if (role === null) return true
   return !(ROLES_READING_ANOTHER_FIELD[m.quantity]?.has(role) ?? false)
+}
+
+/**
+ * The quantity a role's device is FOR: the pie's first wedge. A role that names
+ * none (a generic or enum sensor) leaves the order to the quantities' own.
+ */
+export const HERO_LEAD_QUANTITY_BY_ROLE: Readonly<
+  Partial<Record<DeviceRole, HeroMeasurementQuantity>>
+> = {
+  [DeviceRole.MotionSensor]: 'motion',
+  [DeviceRole.PirSensor]: 'motion',
+  [DeviceRole.TemperatureSensor]: 'temperature',
+  [DeviceRole.HumiditySensor]: 'humidity',
+  [DeviceRole.ContactSensor]: 'contact',
+  [DeviceRole.AmbientLightSensor]: 'illuminance',
+  [DeviceRole.PowerSensor]: 'power',
+  [DeviceRole.EnumSensor]: 'text',
+}
+
+const isDeviceRole = (role: string): role is DeviceRole =>
+  Object.values<string>(DeviceRole).includes(role)
+
+function leadQuantityOf(role: string | null): HeroMeasurementQuantity | undefined {
+  if (role === null || !isDeviceRole(role)) return undefined
+  return HERO_LEAD_QUANTITY_BY_ROLE[role]
+}
+
+/**
+ * Every measurement of a sensor, in the order its card draws them: the reading of
+ * the device's ROLE first, then the rest in the quantities' own order (a stable
+ * sort, so two readings of one quantity keep the order their caps contributed).
+ * A reading that is not the role's own field (see {@link measurementFitsRole}) is left out.
+ */
+export function orderedMeasurements(
+  measured: readonly HeroMeasurement[],
+  role: string | null,
+): HeroMeasurement[] {
+  const lead = leadQuantityOf(role)
+  const rank = (m: HeroMeasurement): number =>
+    m.quantity === lead ? -1 : HERO_MEASUREMENT_QUANTITIES.indexOf(m.quantity)
+  return measured
+    .filter((m) => measurementFitsRole(m, role))
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i)
+    .map((x) => x.m)
 }

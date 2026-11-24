@@ -32,6 +32,7 @@ import type { HeroFragment } from './hero-fragment.js'
 import {
   emptyMeasurement,
   humidityMeasurement,
+  illuminanceMeasurement,
   temperatureMeasurement,
   textMeasurement,
 } from './hero-measurement.js'
@@ -495,28 +496,37 @@ const illuminanceContribution = contribution(
   'ambient-light-sensor',
   AmbientLightSensorStatusSchema,
   (slice) =>
-    sensorFragment(
-      slice?.illuminance ?? null,
-      'illuminance',
-      'sun',
-      'Light',
-      'Luce',
-      `${Math.round(slice?.illuminance ?? 0)} lx`,
+    measured(
+      sensorFragment(
+        slice?.illuminance ?? null,
+        'illuminance',
+        'sun',
+        'Light',
+        'Luce',
+        `${Math.round(slice?.illuminance ?? 0)} lx`,
+      ),
+      slice?.illuminance == null
+        ? emptyMeasurement('illuminance')
+        : illuminanceMeasurement(slice.illuminance, slice.lastFetchedAt),
     ),
 )
 
-const numericContribution = contribution('numeric-sensor', NumericSensorStatusSchema, (slice, ctx) => {
-  const unit = ctx.quantity == null ? undefined : baseUnitOf(ctx.quantity)
-  const text = String(Number((slice?.value ?? 0).toFixed(2)))
-  return sensorFragment(
-    slice?.value ?? null,
-    'reading',
-    'gauge',
-    'Value',
-    'Valore',
-    unit === undefined ? text : `${text} ${unit}`,
-  )
-})
+const numericContribution = contribution(
+  'numeric-sensor',
+  NumericSensorStatusSchema,
+  (slice, ctx) => {
+    const unit = ctx.quantity == null ? undefined : baseUnitOf(ctx.quantity)
+    const text = String(Number((slice?.value ?? 0).toFixed(2)))
+    return sensorFragment(
+      slice?.value ?? null,
+      'reading',
+      'gauge',
+      'Value',
+      'Valore',
+      unit === undefined ? text : `${text} ${unit}`,
+    )
+  },
+)
 
 const enumContribution = contribution('enum-sensor', EnumSensorStatusSchema, (slice) => {
   // A timestamp is not a state: it would read as an opaque string.

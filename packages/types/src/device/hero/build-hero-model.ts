@@ -32,7 +32,12 @@ import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
 import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
-import { emptyMeasurement, measurementFitsRole, type HeroMeasurement } from './hero-measurement.js'
+import {
+  emptyMeasurement,
+  measurementFitsRole,
+  orderedMeasurements,
+  type HeroMeasurement,
+} from './hero-measurement.js'
 import { resolveOwnPower } from './own-power.js'
 
 export interface HeroModelInput {
@@ -232,6 +237,22 @@ function measurementOf(
   return input.device.online ? only : emptyMeasurement(only.quantity)
 }
 
+/**
+ * Every measurement of a sensor, the role's own first. An offline device keeps them
+ * all but empty, like the single one. Absent for a device that is not a sensor or
+ * measures nothing.
+ */
+function measurementsOf(
+  input: HeroModelInput,
+  fragments: readonly HeroFragment[],
+): HeroMeasurement[] | undefined {
+  if (input.device.type !== DeviceType.Sensor) return undefined
+  const measured = fragments.flatMap((f) => (f.measurement === undefined ? [] : [f.measurement]))
+  const ordered = orderedMeasurements(measured, input.device.role)
+  if (ordered.length === 0) return undefined
+  return input.device.online ? ordered : ordered.map((m) => emptyMeasurement(m.quantity))
+}
+
 function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {
   const parts = fragments.flatMap((f) => (f.scene === undefined ? [] : [f.scene]))
   return {
@@ -266,6 +287,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
 
   const readings = fragments.flatMap((f) => (f.reading === undefined ? [] : [f.reading]))
   const measurement = measurementOf(input, fragments)
+  const measurements = measurementsOf(input, fragments)
   const { state, assumed, title } = stateOf(input, readings)
   const scene = sceneOf(device.role, device.type, fragments)
   const look = resolveHeroLook(device.role, device.type, state, scene.mode)
@@ -363,6 +385,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     powerSupply,
     rows,
     ...(measurement === undefined ? {} : { measurement }),
+    ...(measurements === undefined ? {} : { measurements }),
     gated,
     provenance: contributed.flatMap((c) => provenanceOf(c.cap, c.fragment)),
   }

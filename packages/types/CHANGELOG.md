@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - timed-run: setSettings is allowed to whoever may operate the device, and the derived settings form is gone.
 - Long-term history now records more readings: the battery camera's sleeping state, presence, charge state, media/vacuum/mower states and a host's temperature
 - device-status carries an optional unknown marker for a device its provider has not answered yet
+- The sensor model carries every reading in order, the device's own role first, with motion and light as readings.
 
 ## [1.2.630] - 2026-11-24
 

@@ -30,11 +30,13 @@ import {
   contribution,
   elapsedText,
   fact,
+  measured,
   reading,
   row,
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { StateSource } from './hero-fragment.js'
+import { emptyMeasurement, motionMeasurement } from './hero-measurement.js'
 import type { HeroFact, HeroRow, HeroSideTile } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
@@ -167,29 +169,34 @@ const binaryContribution = detection({
 })
 
 const motionContribution = contribution('motion', MotionStatusSchema, (slice, ctx) => {
-  if (slice === undefined) return { reading: reading('motion', 'unknown') }
+  if (slice === undefined) {
+    return measured({ reading: reading('motion', 'unknown') }, emptyMeasurement('motion'))
+  }
   const last = slice.lastDetectedAt
   const ago = last === null ? null : elapsedText(last, ctx.now)
-  return {
-    reading: reading(
-      'motion',
-      slice.detected ? 'on' : 'idle',
-      false,
-      slice.detected ? detected.yes : heroText('Clear', 'Nessun movimento'),
-    ),
-    ...(ago === null
-      ? {}
-      : {
-          facts: [
-            fact(
-              'since',
-              'clock',
-              heroText(`Last motion ${ago.en}`, `Ultimo movimento ${ago.it}`),
-              slice.detected ? 'primary' : 'muted',
-            ),
-          ],
-        }),
-  }
+  return measured(
+    {
+      reading: reading(
+        'motion',
+        slice.detected ? 'on' : 'idle',
+        false,
+        slice.detected ? detected.yes : heroText('Clear', 'Nessun movimento'),
+      ),
+      ...(ago === null
+        ? {}
+        : {
+            facts: [
+              fact(
+                'since',
+                'clock',
+                heroText(`Last motion ${ago.en}`, `Ultimo movimento ${ago.it}`),
+                slice.detected ? 'primary' : 'muted',
+              ),
+            ],
+          }),
+    },
+    motionMeasurement(slice.detected, last),
+  )
 })
 
 // ── presence ───────────────────────────────────────────────────────────────
