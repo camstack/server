@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Triggered by: Add and Edit open one dialog where you pick the source device with the common device selector and set its events, parts or classes and when the trigger may run; editing a trigger can now change its source device
+
 ## [1.2.743] - 2026-11-24
 
 ### Changed
 
 - Add device: the network scan section is collapsed with Scan now in its header, errors stay visible, a scanned device matches its adopted entry by MAC, and Refresh says it only reloads the list
-- Triggered by: Add and Edit open one dialog where you pick the source device with the common device selector and set its events, parts or classes and when the trigger may run; editing a trigger can now change its source device
 
 ## [1.2.742] - 2026-11-24
 
