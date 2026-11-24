@@ -541,6 +541,9 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 - `temperatureC?`: `number \| null`
 - `lastContactAt?`: `number`
 - `lastFullRefreshAt?`: `number`
+- `refreshAttemptWindow?`: `number`
+- `refreshAttempts?`: `number`
+- `refreshLastAttemptAt?`: `number`
 - `binary?`: `boolean`
 
 ### `BinaryStatusSchema`

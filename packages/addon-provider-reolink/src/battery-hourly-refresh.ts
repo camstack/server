@@ -177,15 +177,97 @@ export interface BatteryRefreshDeps {
   /** Reads every fact and the snapshot. Never stamps; the controller does. */
   readonly refreshAll: () => Promise<BatteryRefreshOutcome>
   readonly stamp: (at: number) => void
+  /** Persisted attempt bookkeeping: a restart neither forgets an attempt nor repeats it. */
+  readonly attemptLedger?: RefreshAttemptLedger
 }
 
 export type RefreshTrigger = 'tick' | 'wake-transition'
+
+/** The attempt bookkeeping of ONE window — what a restart must not forget. */
+export interface RefreshAttemptRecord {
+  readonly window: number
+  readonly attempts: number
+  readonly lastAttemptAt: number | undefined
+}
+
+/**
+ * Where the attempt record lives between restarts. The camera backs it with
+ * the persisted battery slice, next to `lastFullRefreshAt`. Absent = in memory
+ * only (specs).
+ */
+export interface RefreshAttemptLedger {
+  readonly read: () => RefreshAttemptRecord | undefined
+  readonly write: (record: RefreshAttemptRecord) => void
+}
+
+/** The persisted bookkeeping of the scheduled refresh, as the battery slice carries it. */
+export interface RefreshBookkeeping {
+  readonly lastFullRefreshAt?: number | undefined
+  readonly refreshAttemptWindow?: number | undefined
+  readonly refreshAttempts?: number | undefined
+  readonly refreshLastAttemptAt?: number | undefined
+}
+
+/**
+ * A FULL-slice write replaces the slice, so every writer that composes its own
+ * value must carry the scheduled refresh's bookkeeping over from the slice it
+ * replaces. Dropping it makes a restart read "never refreshed" and owe the
+ * camera a wake (#666: the stamp read back `null` after any battery read that
+ * followed it).
+ */
+export function carryRefreshBookkeeping<T extends object>(
+  previous: RefreshBookkeeping,
+  next: T,
+): T & RefreshBookkeeping {
+  return {
+    ...next,
+    ...(previous.lastFullRefreshAt !== undefined
+      ? { lastFullRefreshAt: previous.lastFullRefreshAt }
+      : {}),
+    ...(previous.refreshAttemptWindow !== undefined
+      ? { refreshAttemptWindow: previous.refreshAttemptWindow }
+      : {}),
+    ...(previous.refreshAttempts !== undefined
+      ? { refreshAttempts: previous.refreshAttempts }
+      : {}),
+    ...(previous.refreshLastAttemptAt !== undefined
+      ? { refreshLastAttemptAt: previous.refreshLastAttemptAt }
+      : {}),
+  }
+}
+
+/** The ledger over the slice's flat fields; `write` receives the patch to persist. */
+export function attemptLedgerOverSlice(
+  readSlice: () => RefreshBookkeeping,
+  writeFields: (fields: Required<Omit<RefreshBookkeeping, 'lastFullRefreshAt'>>) => void,
+): RefreshAttemptLedger {
+  return {
+    read: () => {
+      const s = readSlice()
+      if (typeof s.refreshAttemptWindow !== 'number' || typeof s.refreshAttempts !== 'number') {
+        return undefined
+      }
+      return {
+        window: s.refreshAttemptWindow,
+        attempts: s.refreshAttempts,
+        lastAttemptAt: s.refreshLastAttemptAt,
+      }
+    },
+    write: (r) =>
+      writeFields({
+        refreshAttemptWindow: r.window,
+        refreshAttempts: r.attempts,
+        refreshLastAttemptAt: r.lastAttemptAt ?? 0,
+      }),
+  }
+}
 
 export class BatteryHourlyRefresh {
   private inFlight: Promise<boolean> | null = null
   private attemptWindow = Number.NEGATIVE_INFINITY
   private attempts = 0
   private lastAttemptAt: number | undefined
+  private hydrated = false
 
   constructor(private readonly deps: BatteryRefreshDeps) {}
 
@@ -212,6 +294,7 @@ export class BatteryHourlyRefresh {
     const intervalMs = this.deps.intervalMs()
     const offsetMs = intervalMs > 0 ? staggerOffsetMs(this.deps.deviceId, intervalMs) : 0
     const window = intervalMs > 0 ? windowIndex(nowMs, intervalMs, offsetMs) : 0
+    this.hydrateAttempts()
     if (window !== this.attemptWindow) {
       this.attemptWindow = window
       this.attempts = 0
@@ -240,11 +323,30 @@ export class BatteryHourlyRefresh {
     if (this.deps.isStreaming?.() === true) this.logDeferralBoundReached(trigger)
     this.attempts += 1
     this.lastAttemptAt = nowMs
+    this.deps.attemptLedger?.write({
+      window,
+      attempts: this.attempts,
+      lastAttemptAt: nowMs,
+    })
     const run = this.run(decision.kind, trigger).finally(() => {
       this.inFlight = null
     })
     this.inFlight = run
     return run
+  }
+
+  /** Once, at the first decision: take the persisted bookkeeping of the window a restart interrupted. */
+  private hydrateAttempts(): void {
+    if (this.hydrated) return
+    this.hydrated = true
+    const stored = this.deps.attemptLedger?.read()
+    if (stored === undefined) return
+    this.attemptWindow = stored.window
+    this.attempts = stored.attempts
+    this.lastAttemptAt =
+      typeof stored.lastAttemptAt === 'number' && stored.lastAttemptAt > 0
+        ? stored.lastAttemptAt
+        : undefined
   }
 
   /**
@@ -260,10 +362,13 @@ export class BatteryHourlyRefresh {
   }
 
   logDeferralBoundReached(what: string): void {
-    this.deps.logger.info('battery control burst: deferral bound reached — refreshing under an active stream', {
-      tags: { deviceId: this.deps.deviceId },
-      meta: { what, maxAgeMs: STREAM_DEFER_MAX_AGE_MS },
-    })
+    this.deps.logger.info(
+      'battery control burst: deferral bound reached — refreshing under an active stream',
+      {
+        tags: { deviceId: this.deps.deviceId },
+        meta: { what, maxAgeMs: STREAM_DEFER_MAX_AGE_MS },
+      },
+    )
   }
 
   private streamDeferLoggedWindow = Number.NEGATIVE_INFINITY

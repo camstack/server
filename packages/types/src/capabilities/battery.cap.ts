@@ -130,6 +130,16 @@ export const BatteryStatusSchema = z.object({
    */
   lastFullRefreshAt: z.number().optional(),
   /**
+   * The scheduled refresh's attempt bookkeeping for the window it last tried
+   * (window index, attempts spent, ms epoch of the last attempt; `0` = none).
+   * Persisted beside `lastFullRefreshAt` so a restart neither forgets a wake
+   * the window already spent nor repeats it (#666). Written only by the
+   * provider's refresh controller.
+   */
+  refreshAttemptWindow: z.number().optional(),
+  refreshAttempts: z.number().optional(),
+  refreshLastAttemptAt: z.number().optional(),
+  /**
    * True when the source is a BINARY low-battery indicator (HA
    * `binary_sensor` device_class=battery / `LOW_BAT`) that has no real
    * charge level — `level` is then a coarse stand-in (100 = normal,

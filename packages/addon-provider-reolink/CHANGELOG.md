@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Reolink probe that only half-answers (a lossy link) no longer deletes and re-creates the camera's Siren, Floodlight or PIR devices under new ids.
 - A battery camera switched to wired power is no longer marked asleep by the background sleep check, which used to close its live and recording streams.
 - Reolink streams self-heal with nodelink-js 0.13.2: a silent wired camera recovers in place, a sleeping battery camera is not re-woken by the recovery.
+- A battery camera's scheduled-refresh stamp and attempt count now survive a restart and later battery reads, so a restart no longer wakes a camera the window already served or gave up on.
 
 ### Fixed
 

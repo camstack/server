@@ -96,9 +96,11 @@ import {
   reportsPowerSource,
 } from './battery-charging.js'
 import {
+  attemptLedgerOverSlice,
   BATTERY_REFRESH_TICK_MS,
   BatteryHourlyRefresh,
   type BatteryRefreshOutcome,
+  carryRefreshBookkeeping,
   resolveBatteryRefreshIntervalMs,
 } from './battery-hourly-refresh.js'
 import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
@@ -3808,10 +3810,15 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const now = Date.now()
     const quantised = now - (now % ReolinkCamera.CONTACT_WRITE_QUANTUM_MS)
     const previousContact = this.state.battery.lastContactAt ?? 0
-    this.setCapSlice(batteryCapability, {
-      ...mapped,
-      lastContactAt: Math.max(previousContact, quantised),
-    })
+    // A full-slice write REPLACES the slice: carry the scheduled refresh's
+    // bookkeeping over, or the next restart reads "never refreshed" (#666).
+    this.setCapSlice(
+      batteryCapability,
+      carryRefreshBookkeeping(this.state.battery, {
+        ...mapped,
+        lastContactAt: Math.max(previousContact, quantised),
+      }),
+    )
   }
 
   /**
@@ -8939,6 +8946,14 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         stamp: (at) => {
           this.state.battery.lastFullRefreshAt = at
         },
+        // Persisted beside the stamp: a restart neither forgets a spent
+        // attempt nor repeats it (#666).
+        attemptLedger: attemptLedgerOverSlice(
+          () => this.state.battery,
+          (fields) => {
+            this.runtimeState.patchCapState(batteryCapability.name, fields)
+          },
+        ),
       })
     }
     return this.batteryRefresh

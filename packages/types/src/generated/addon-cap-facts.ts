@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 91 caps with 507 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 91 caps with 510 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -249,7 +249,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "ambient-light-sensor": [{"path":"illuminance","valueType":"number"}],
   "audio-metrics": [{"path":"ts","valueType":"number"}, {"path":"windowSec","valueType":"number"}, {"path":"level.rms","valueType":"number"}, {"path":"level.dbfs","valueType":"number"}, {"path":"peakDbfs","valueType":"number"}, {"path":"avgDbfs","valueType":"number"}, {"path":"current.className","valueType":"string"}, {"path":"current.score","valueType":"number"}, {"path":"current.timestamp","valueType":"number"}],
   "automation-control": [{"path":"enabled","valueType":"boolean"}, {"path":"isRunning","valueType":"boolean"}, {"path":"lastTriggeredAt","valueType":"number"}, {"path":"lastError","valueType":"string"}],
-  "battery": [{"path":"level","valueType":"number"}, {"path":"charging","valueType":"enum","enumValues":["dc","solar","none","unknown"]}, {"path":"sleeping","valueType":"boolean"}, {"path":"lastUpdated","valueType":"number"}, {"path":"voltage","valueType":"number"}, {"path":"chargeState","valueType":"enum","enumValues":["charging","full","idle","unknown"]}, {"path":"currentMa","valueType":"number"}, {"path":"temperatureC","valueType":"number"}, {"path":"lastContactAt","valueType":"number"}, {"path":"lastFullRefreshAt","valueType":"number"}, {"path":"binary","valueType":"boolean"}],
+  "battery": [{"path":"level","valueType":"number"}, {"path":"charging","valueType":"enum","enumValues":["dc","solar","none","unknown"]}, {"path":"sleeping","valueType":"boolean"}, {"path":"lastUpdated","valueType":"number"}, {"path":"voltage","valueType":"number"}, {"path":"chargeState","valueType":"enum","enumValues":["charging","full","idle","unknown"]}, {"path":"currentMa","valueType":"number"}, {"path":"temperatureC","valueType":"number"}, {"path":"lastContactAt","valueType":"number"}, {"path":"lastFullRefreshAt","valueType":"number"}, {"path":"refreshAttemptWindow","valueType":"number"}, {"path":"refreshAttempts","valueType":"number"}, {"path":"refreshLastAttemptAt","valueType":"number"}, {"path":"binary","valueType":"boolean"}],
   "binary": [{"path":"on","valueType":"boolean"}],
   "brightness": [{"path":"level","valueType":"number"}],
   "broker": [{"path":"brokerCount","valueType":"number"}, {"path":"connectedCount","valueType":"number"}],
@@ -350,7 +350,7 @@ export const CAP_STATE_FIELD_PRESENCE: Readonly<
   "ambient-light-sensor": { "illuminance": "required", "lastFetchedAt": "required" },
   "audio-metrics": { "avgDbfs": "required", "byClass": "required", "current": "required", "level": "required", "peakDbfs": "required", "ts": "required", "windowSec": "required" },
   "automation-control": { "enabled": "required", "isRunning": "required", "lastChangedAt": "required", "lastError": "required", "lastTriggeredAt": "required" },
-  "battery": { "binary": "optional", "chargeState": "optional", "charging": "required", "currentMa": "optional", "lastContactAt": "optional", "lastFullRefreshAt": "optional", "lastUpdated": "required", "level": "required", "sleeping": "required", "temperatureC": "optional", "voltage": "optional" },
+  "battery": { "binary": "optional", "chargeState": "optional", "charging": "required", "currentMa": "optional", "lastContactAt": "optional", "lastFullRefreshAt": "optional", "lastUpdated": "required", "level": "required", "refreshAttempts": "optional", "refreshAttemptWindow": "optional", "refreshLastAttemptAt": "optional", "sleeping": "required", "temperatureC": "optional", "voltage": "optional" },
   "binary": { "lastChangedAt": "required", "on": "required" },
   "brightness": { "lastChangedAt": "required", "level": "required" },
   "camera-streams": { "lastChangedAt": "required", "online": "required", "slotErrors": "required", "slotStatuses": "required" },
