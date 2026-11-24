@@ -81,7 +81,6 @@ describe('TrackDetailDispatcher — per-frame track adoption (F6)', () => {
     )
     const routeResults = vi.fn(async () => {})
     dispatcher = new TrackDetailDispatcher({
-      nowMs: () => 0,
       runDetailSubtree,
       routeResults,
       logger: silentLogger(),
@@ -138,7 +137,6 @@ describe('TrackDetailDispatcher — permanent frame-miss give-up (retry loop fix
     const runDetailSubtree = vi.fn(async () => null)
     const routeResults = vi.fn(async () => {})
     dispatcher = new TrackDetailDispatcher({
-      nowMs: () => 0,
       runDetailSubtree,
       routeResults,
       logger: silentLogger(),
@@ -260,12 +258,7 @@ describe('TrackDetailDispatcher — silent enrichment miss (BUG C)', () => {
       }),
     )
     const routeResults = vi.fn(async () => {})
-    dispatcher = new TrackDetailDispatcher({
-      nowMs: () => 0,
-      runDetailSubtree,
-      routeResults,
-      logger,
-    })
+    dispatcher = new TrackDetailDispatcher({ runDetailSubtree, routeResults, logger })
 
     dispatcher.onTrackStarted(DEVICE_ID, 'v1', 'vehicle', PLATE_ANNOUNCE, vehicleFrame(), 1000)
     await flush()
@@ -296,12 +289,7 @@ describe('TrackDetailDispatcher — silent enrichment miss (BUG C)', () => {
       }),
     )
     const routeResults = vi.fn(async () => {})
-    dispatcher = new TrackDetailDispatcher({
-      nowMs: () => 0,
-      runDetailSubtree,
-      routeResults,
-      logger,
-    })
+    dispatcher = new TrackDetailDispatcher({ runDetailSubtree, routeResults, logger })
 
     dispatcher.onTrackStarted(DEVICE_ID, 'v2', 'vehicle', PLATE_ANNOUNCE, vehicleFrame(), 1000)
     await flush()

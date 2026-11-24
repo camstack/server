@@ -120,7 +120,6 @@ describe('TrackDetailDispatcher — root supply (D730)', () => {
     )
     const log = info ?? makeLogger()
     dispatcher = new TrackDetailDispatcher({
-      nowMs: () => 0,
       runDetailSubtree,
       routeResults: vi.fn(async () => {}),
       logger: log.logger,

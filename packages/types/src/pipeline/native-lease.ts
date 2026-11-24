@@ -44,14 +44,6 @@ import type { HydratedSettingsView } from './detail-crop.js'
  * (cluster-wide) settings. Keys are unique across that addon's whole schema, so
  * the reader can walk every section instead of trusting the section id.
  */
-/**
- * The age past which a native crop lease handle is refused (the decode
- * worker's own tile TTL). Shared so the hub-side dispatcher judges a handle by
- * the very bound the runner enforces — see addon-pipeline
- * `native-crop-lease-age.ts` for the measurement behind the value.
- */
-export const NATIVE_CROP_LEASE_MAX_AGE_MS = 30_000
-
 export const NATIVE_LEASE_SECTION_ID = 'native-lease'
 export const NATIVE_LEASE_HOLD_KEY = 'nativeLeaseHoldFrames'
 export const NATIVE_LEASE_BUDGET_KEY = 'nativeLeaseBudgetMb'

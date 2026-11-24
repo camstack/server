@@ -38,11 +38,7 @@ import type {
   RunDetailSubtreeInput,
   RunDetailSubtreeResult,
 } from '@camstack/types'
-import {
-  isRootSuppliableStepId,
-  NATIVE_CROP_LEASE_MAX_AGE_MS,
-  rootSupplyServes,
-} from '@camstack/types'
+import { isRootSuppliableStepId, rootSupplyServes } from '@camstack/types'
 import { isDetailHandleExpiredRefusal, isDetailNotAttachedRefusal } from './detail-refusal.js'
 import { type DetailRequest, DetailScheduler } from './detail-scheduler.js'
 import { BestDetectionTracker } from './pipeline/best-detection-tracker.js'
@@ -169,8 +165,6 @@ export interface DetailDispatcherDeps {
   readonly logger: IScopedLogger
   /** Max concurrent `runDetailSubtree` calls per device (default 2). */
   readonly maxInFlightPerDevice?: number
-  /** Wall clock for the handle age check; defaults to `Date.now`. */
-  readonly nowMs?: () => number
   /** Periodic tick interval ms (default 1000). */
   readonly tickIntervalMs?: number
 }
@@ -711,10 +705,9 @@ export class TrackDetailDispatcher {
     // native-strict crop rung below would name the same handle and be refused
     // the same way, so it is skipped (D688).
     let handleRefused = false
-    // The hub's own verdict on the handle, before any RPC: already retired
-    // (by another track or step), or older than the lease bound by the frame's
-    // own timestamp (#628).
-    if (frame.frameHandle !== undefined && this.handleUnusable(deviceId, dev, req, frame)) {
+    // A handle the runner refused for ANOTHER track or step is not sent
+    // again (#628).
+    if (this.handleRetired(deviceId, dev, req, frame)) {
       handleRefused = true
     }
 
@@ -837,37 +830,22 @@ export class TrackDetailDispatcher {
   }
 
   /**
-   * True when the frame's handle must not be sent: retired already, or past
-   * the lease age bound (same constant the runner enforces). The first
-   * too-old verdict per handle is logged; later dispatches find it retired.
+   * True when the frame's handle was already refused by the runner (for any
+   * track or step) and must not be sent again. The runner's refusal is the
+   * only authority on age; the skip is logged, never silent.
    */
-  private handleUnusable(
+  private handleRetired(
     deviceId: number,
     dev: DeviceState,
     req: DetailRequest,
     frame: TrackDetailFrame,
   ): boolean {
     const handle = frame.frameHandle
-    if (handle === undefined) return false
-    if (dev.retiredHandles.has(handleKey(handle))) return true
-    const ageMs = (this.deps.nowMs ?? Date.now)() - frame.timestamp
-    if (ageMs <= NATIVE_CROP_LEASE_MAX_AGE_MS) return false
-    this.retireHandle(dev, handle)
-    this.deps.logger.info(
-      'detail dispatch: frame handle past the lease age bound — not sent, parked frame only',
-      {
-        tags: { deviceId },
-        meta: {
-          trackId: req.trackId,
-          stepId: req.stepId,
-          reason: 'handle-too-old',
-          handle: handleKey(handle),
-          handleAgeMs: ageMs,
-          leaseMaxAgeMs: NATIVE_CROP_LEASE_MAX_AGE_MS,
-          parkedFrameRung: this.deps.captureParkedFrame !== undefined,
-        },
-      },
-    )
+    if (handle === undefined || !dev.retiredHandles.has(handleKey(handle))) return false
+    this.deps.logger.debug('detail dispatch: frame handle already refused — not sent again', {
+      tags: { deviceId },
+      meta: { trackId: req.trackId, stepId: req.stepId, handle: handleKey(handle) },
+    })
     return true
   }
 

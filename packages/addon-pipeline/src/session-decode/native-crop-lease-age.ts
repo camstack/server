@@ -1,5 +1,3 @@
-import { NATIVE_CROP_LEASE_MAX_AGE_MS } from '@camstack/types'
-
 /**
  * THE age bound on a native crop lease (ADR-0419).
  *
@@ -74,7 +72,7 @@ import { NATIVE_CROP_LEASE_MAX_AGE_MS } from '@camstack/types'
  * parcel since D422, the group shot is deleted by D680). Until the dispatcher
  * is fixed a tighter bound cannot be told apart from a broken one.
  */
-export { NATIVE_CROP_LEASE_MAX_AGE_MS }
+export const NATIVE_CROP_LEASE_MAX_AGE_MS = 30_000
 
 /**
  * Whether a handle registered `ageMs` ago may still be served.
