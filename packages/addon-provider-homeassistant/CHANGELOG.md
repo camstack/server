@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.702] - 2026-11-24
+
 ### Changed
 
 - A Home Assistant device you deleted stays deleted: the next sync no longer re-imports it as a new device.

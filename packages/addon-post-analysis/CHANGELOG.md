@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.725] - 2026-11-24
+
 ### Changed
 
 - Notification rules carry the ids of their tags, so renaming a tag no longer detaches it from a rule

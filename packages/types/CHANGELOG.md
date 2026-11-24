@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.627] - 2026-11-24
+
 ### Added
 
 - An automation step can hold a device on for a time: it turns off only what it turned on, a new event restarts the time, and the hold survives a restart. The linked trigger gains motion and camera-detection sources and a time window; the "Motion → light" template is retired.

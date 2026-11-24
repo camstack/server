@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.739] - 2026-11-24
+
 ### Added
 
 - A device's "Triggered by" table can turn it on for a time, from a motion sensor or a camera detecting a class, optionally only at certain times; durations are typed as hours, minutes and seconds.

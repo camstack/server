@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.175] - 2026-11-24
+
 ### Changed
 
 - Matter commissioning failures are now logged with the reason, and a node that joined the fabric is no longer reported as failed when its first subscription fails

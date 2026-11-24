@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.944] - 2026-11-24
+
 ### Changed
 
 - Migrating a device now keeps each number's saved passwords and its room on that number; a pair swapped earlier can be repaired from the admin API.
