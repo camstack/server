@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.503] - 2026-11-24
+
 ### Changed
 
 - The device list's scroller no longer hands a fast scroll to the page behind a modal, which made the screen flash

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.742] - 2026-11-24
+
 ### Changed
 
 - Add device shows one list of every device found, with adopted devices marked Adopted and linked, instead of a scan block above the adoption list
