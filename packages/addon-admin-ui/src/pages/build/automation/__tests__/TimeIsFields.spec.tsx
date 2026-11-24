@@ -86,7 +86,7 @@ describe('TimeIsFields — a preset leaf', () => {
     expect(screen.getByRole('combobox', { name: 'Time of day' })).toHaveProperty('value', 'preset')
     expect(screen.getByText('Nighttime (sunset to sunrise)')).toBeTruthy()
     expect(screen.queryByTestId('time-is-from')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'sat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sat' }))
     expect(seen[0]?.preset).toBe('night')
   })
 })

@@ -1436,6 +1436,9 @@
         "jsonField": "Valore JSON",
         "invalidJsonField": "JSON non valido"
       }
+    },
+    "notificationTimelapse": {
+      "denseSeconds": "Secondi tra i fotogrammi"
     }
   },
   "common": {
