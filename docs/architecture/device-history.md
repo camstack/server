@@ -90,6 +90,13 @@ changes nothing: it is counted (`reconcileFailures`), logged, and the next pass
 tries again. The first successful reconcile after boot also writes the baseline
 of every series that has none, and sets `ready`.
 
+**Every linkable reading is recorded.** `check-cap-history-declared` refuses a
+cap whose `vocabulary.state` offers a `numeric`, `boolean` or `enum` field that
+`history.fields` does not list (rule `unrecorded-state-field`). The only way out
+is an entry in `HISTORY_EXEMPT` (`scripts/lib/cap-history.ts`), keyed
+`<cap>.<field>` with a one-line reason: a setting, a value derived from
+members, or a reading another ledger already keeps.
+
 ## Keyed arrays (D917)
 
 `history.items: { path, key, label?, fields }` records one series per (item

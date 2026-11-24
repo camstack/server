@@ -115,6 +115,7 @@ export const lawnMowerControlCapability = {
    */
   history: {
     fields: {
+      activity: { kind: 'enum' },
       batteryLevel: { kind: 'gauge', unit: '%', deadband: 2 },
     },
   },

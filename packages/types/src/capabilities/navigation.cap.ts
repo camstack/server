@@ -637,7 +637,7 @@ export const navigationCapability = {
   /**
    * History (D850): none — control state of a robotic camera, configuration-like.
    */
-  history: 'none',
+  history: { fields: { mode: { kind: 'enum' } } },
   vocabulary: {
     noun: t('Robot movement', 'Movimento del robot'),
     order: 2080,

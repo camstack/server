@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 49 caps with series (150 series), 40 caps answered `'none'`.
+ * 53 caps with series (167 series), 36 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -29,6 +29,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'illuminance': { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
   },
   'battery': {
+    'charging': { kind: 'enum', values: ['dc', 'solar', 'none', 'unknown'] },
+    'chargeState': { kind: 'enum', values: ['charging', 'full', 'idle', 'unknown'] },
     'level': { kind: 'gauge', unit: '%' },
     'voltage': { kind: 'gauge', unit: 'V' },
     'temperatureC': { kind: 'gauge', unit: '°C' },
@@ -43,6 +45,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'climate-control': {
+    'mode': { kind: 'enum', values: ['off', 'heat', 'cool', 'auto', 'heat_cool', 'fan_only', 'dry'] },
     'currentTemp': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
     'currentHumidity': { kind: 'gauge', unit: '%', deadband: 0.5 },
     'target': { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
@@ -62,6 +65,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'online': { kind: 'boolean' },
   },
   'dishwasher': {
+    'filterCleaningDue': { kind: 'boolean' },
+    'machineCareDue': { kind: 'boolean' },
     'progress': { kind: 'gauge', unit: '%', deadband: 2 },
     'state': { kind: 'enum', values: ['idle', 'running', 'paused', 'finished', 'error', 'unavailable'] },
     'operationState': { kind: 'enum', values: ['Inactive', 'Ready', 'DelayedStart', 'Run', 'Pause', 'ActionRequired', 'Finished', 'Error', 'Aborting'] },
@@ -123,7 +128,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'humidity-sensor': {
     'humidity': { kind: 'gauge', unit: '%', deadband: 0.5 },
   },
+  'intercom': {
+    'talking': { kind: 'boolean' },
+  },
   'lawn-mower-control': {
+    'activity': { kind: 'enum', values: ['idle', 'mowing', 'paused', 'docked', 'error'] },
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
   },
   'location': {
@@ -134,7 +143,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'lock-control': {
     'state': { kind: 'enum', values: ['locked', 'unlocked', 'locking', 'unlocking', 'jammed', 'door-open'] },
   },
+  'low-power-sleep': {
+    'sleeping': { kind: 'boolean' },
+  },
   'media-player': {
+    'state': { kind: 'enum', values: ['off', 'on', 'idle', 'playing', 'paused', 'buffering', 'standby'] },
     'volumeLevel': { kind: 'gauge', unit: '%', deadband: 1 },
     'isMuted': { kind: 'boolean' },
   },
@@ -144,7 +157,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'motion': {
     'detected': { kind: 'boolean', excludeDeviceTypes: [DeviceType.Camera] },
   },
+  'navigation': {
+    'mode': { kind: 'enum', values: ['idle', 'cleaning', 'spot', 'following', 'goto', 'returning', 'paused', 'unknown'] },
+  },
   'network-link': {
+    'type': { kind: 'enum', values: ['wifi', 'ethernet', 'cellular', 'unknown'] },
     'signal': { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
     'rssi': { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
   },
@@ -152,6 +169,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'value': { kind: 'gauge', minIntervalMs: 30000 },
   },
   'pet-feeder': {
+    'lowFood': { kind: 'boolean' },
     'feeding': { kind: 'boolean' },
     'eating': { kind: 'boolean' },
     'foodLevel': { kind: 'gauge' },
@@ -162,6 +180,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'desiccantLeftDays': { kind: 'gauge', unit: 's' },
   },
   'pet-fountain': {
+    'empty': { kind: 'boolean' },
     'waterLevel': { kind: 'gauge', unit: '%', deadband: 1 },
     'waterVolume': { kind: 'gauge', unit: 'L' },
   },
@@ -172,6 +191,9 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'current': { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
     'apparentPower': { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
     'powerFactor': { kind: 'gauge', unit: 'ratio', deadband: 0.01, minIntervalMs: 60000 },
+  },
+  'presence': {
+    'state': { kind: 'enum' },
   },
   'pressure-sensor': {
     'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
@@ -198,6 +220,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'temperature': { kind: 'gauge', unit: '°C', deadband: 0.1 },
   },
   'vacuum-control': {
+    'state': { kind: 'enum', values: ['idle', 'cleaning', 'paused', 'returning', 'docked', 'drying', 'error'] },
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
   },
   'valve': {
@@ -224,6 +247,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'water-heater': {
+    'away': { kind: 'boolean' },
     'currentTemp': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.5 },
     'targetTemp': { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
   },
@@ -256,6 +280,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'rainYearly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
   },
   'workload': {
+    'resources.temperature': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Temperature' },
     'state': { kind: 'enum', values: ['running', 'paused', 'stopped', 'starting', 'stopping', 'crashed'] },
     'resources.cpuPercent': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'CPU' },
     'resources.memoryUsedBytes': { kind: 'gauge', unit: 'bytes', displayName: 'Memory used' },
@@ -325,16 +350,12 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'group-status',
   'image',
   'image-settings',
-  'intercom',
   'ir-transmitter',
-  'low-power-sleep',
   'motion-trigger',
   'motion-zones',
   'native-object-detection',
-  'navigation',
   'notifier',
   'power-source',
-  'presence',
   'privacy-mask',
   'ptz-autotrack',
   'pump-cycle',

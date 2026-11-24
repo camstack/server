@@ -265,6 +265,8 @@ export const batteryCapability = {
    */
   history: {
     fields: {
+      charging: { kind: 'enum' },
+      chargeState: { kind: 'enum' },
       level: { kind: 'gauge', unit: '%' },
       voltage: { kind: 'gauge', unit: 'V' },
       // `currentMa` is not recorded: the history unit catalog has A, not mA.

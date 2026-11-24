@@ -143,6 +143,7 @@ export const networkLinkCapability = {
    */
   history: {
     fields: {
+      type: { kind: 'enum' },
       signal: { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
       rssi: { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
     },

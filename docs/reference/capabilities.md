@@ -30,7 +30,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `audio-analysis` | 4 | — | — | — | — | `audio-analyzer` |
 | `audio-metrics` | 2 | — | ✓ | none | — | `pipeline-analytics` |
 | `automation-control` | 4 | ✓ | ✓ | none | — | — |
-| `battery` | 1 | ✓ | ✓ | 3 series | — | — |
+| `battery` | 1 | ✓ | ✓ | 5 series | — | — |
 | `binary` | 1 | ✓ | ✓ | 1 series | — | — |
 | `brightness` | 2 | ✓ | ✓ | 1 series | — | — |
 | `button` | 1 | — | — | — | — | — |
@@ -39,7 +39,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `camera-pipeline-config` | 3 | — | — | — | — | `pipeline-orchestrator` |
 | `camera-streams` | 5 | — | ✓ | none | — | `stream-broker` |
 | `carbon-monoxide` | 1 | ✓ | ✓ | 1 series | — | — |
-| `climate-control` | 9 | ✓ | ✓ | 5 series | — | `bosch-homecom` |
+| `climate-control` | 9 | ✓ | ✓ | 6 series | — | `bosch-homecom` |
 | `color` | 2 | ✓ | ✓ | none | — | — |
 | `connectivity` | 1 | ✓ | ✓ | 1 series | — | — |
 | `consumables` | 2 | ✓ | ✓ | 3 per item | — | `bosch-home-connect` `provider-dreame` `provider-petkit` |
@@ -55,7 +55,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `device-state-refresh` | 2 | — | — | — | — | — |
 | `device-status` | 1 | ✓ | ✓ | 1 series | — | — |
 | `device-transitions` | 5 | — | — | — | — | `device-history` |
-| `dishwasher` | 15 | ✓ | ✓ | 6 series | — | `bosch-home-connect` |
+| `dishwasher` | 15 | ✓ | ✓ | 8 series | — | `bosch-home-connect` |
 | `do-not-disturb` | 2 | ✓ | ✓ | 1 series | — | — |
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |
 | `energy-system` | 1 | ✓ | ✓ | 16 series | — | — |
@@ -76,30 +76,30 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `humidity-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `image` | 1 | ✓ | ✓ | none | — | `provider-homeassistant` |
 | `image-settings` | 3 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` |
-| `intercom` | 7 | ✓ | ✓ | none | — | — |
+| `intercom` | 7 | ✓ | ✓ | 1 series | — | — |
 | `ir-transmitter` | 3 | — | ✓ | none | — | — |
-| `lawn-mower-control` | 4 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
+| `lawn-mower-control` | 4 | ✓ | ✓ | 2 series | — | `provider-homeassistant` |
 | `location` | 1 | ✓ | ✓ | 3 series | — | — |
 | `lock-control` | 4 | ✓ | ✓ | 1 series | — | — |
-| `low-power-sleep` | 2 | ✓ | ✓ | none | — | — |
-| `media-player` | 19 | ✓ | ✓ | 2 series | — | — |
+| `low-power-sleep` | 2 | ✓ | ✓ | 1 series | — | — |
+| `media-player` | 19 | ✓ | ✓ | 3 series | — | — |
 | `meter` | 1 | ✓ | ✓ | 1 series | — | — |
 | `motion` | 2 | ✓ | ✓ | 1 series | — | `camera-grid` |
 | `motion-detection` | 6 | — | — | — | — | `motion-wasm` |
 | `motion-trigger` | 2 | ✓ | ✓ | none | — | — |
 | `motion-zones` | 3 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` `provider-reolink` |
 | `native-object-detection` | 4 | ✓ | ✓ | none | — | — |
-| `navigation` | 11 | ✓ | ✓ | none | — | `provider-dreame` |
-| `network-link` | 1 | ✓ | ✓ | 2 series | — | — |
+| `navigation` | 11 | ✓ | ✓ | 1 series | — | `provider-dreame` |
+| `network-link` | 1 | ✓ | ✓ | 3 series | — | — |
 | `notifier` | 3 | ✓ | ✓ | none | — | — |
 | `numeric-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `osd` | 2 | ✓ | — | — | — | — |
-| `pet-feeder` | 11 | ✓ | ✓ | 8 series | — | `provider-petkit` |
-| `pet-fountain` | 2 | ✓ | ✓ | 2 series | — | — |
+| `pet-feeder` | 11 | ✓ | ✓ | 9 series | — | `provider-petkit` |
+| `pet-fountain` | 2 | ✓ | ✓ | 3 series | — | — |
 | `pipeline-analytics` | 89 | — | — | — | — | `pipeline-analytics` |
 | `power-meter` | 1 | ✓ | ✓ | 6 series | — | — |
 | `power-source` | 4 | — | ✓ | none | — | `core-blocks` |
-| `presence` | 1 | ✓ | ✓ | none | — | — |
+| `presence` | 1 | ✓ | ✓ | 1 series | — | — |
 | `pressure-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `privacy-mask` | 4 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` `provider-reolink` |
 | `ptz` | 17 | ✓ | — | — | — | — |
@@ -124,16 +124,16 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `temperature-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `timed-run` | 5 | ✓ | ✓ | none | — | `core-blocks` |
 | `update` | 2 | ✓ | ✓ | none | — | `provider-homeassistant` |
-| `vacuum-control` | 7 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
+| `vacuum-control` | 7 | ✓ | ✓ | 2 series | — | `provider-homeassistant` |
 | `valve` | 5 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `vehicle` | 2 | ✓ | ✓ | 15 series | — | — |
 | `vibration` | 1 | ✓ | ✓ | 1 series | — | — |
 | `videoclips` | 7 | — | — | — | — | `export-hap` `recorder` `provider-amcrest` `provider-hikvision` `provider-reolink` |
-| `water-heater` | 4 | ✓ | ✓ | 2 series | — | `bosch-homecom` `provider-homeassistant` |
+| `water-heater` | 4 | ✓ | ✓ | 3 series | — | `bosch-homecom` `provider-homeassistant` |
 | `weather` | 1 | ✓ | ✓ | 4 series | — | `provider-homeassistant` |
 | `weather-station` | 1 | ✓ | ✓ | 20 series | — | `provider-ecowitt` |
 | `webrtc-session` | 11 | — | — | — | — | `stream-broker` |
-| `workload` | 8 | ✓ | ✓ | 6 series | — | — |
+| `workload` | 8 | ✓ | ✓ | 7 series | — | — |
 | `zone-analytics` | 5 | — | ✓ | none | — | `pipeline-analytics` |
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |

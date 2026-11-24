@@ -467,6 +467,12 @@ export const workloadCapability = {
     primary: 'resources.cpuPercent',
     priority: 40,
     fields: {
+      'resources.temperature': {
+        kind: 'gauge',
+        unit: '°C',
+        deadband: 0.5,
+        displayName: 'Temperature',
+      },
       state: { kind: 'enum' },
       'resources.cpuPercent': {
         kind: 'gauge',

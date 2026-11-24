@@ -565,6 +565,7 @@ export const mediaPlayerCapability = {
    */
   history: {
     fields: {
+      state: { kind: 'enum' },
       volumeLevel: { kind: 'gauge', unit: '%', deadband: 1 },
       isMuted: { kind: 'boolean' },
     },

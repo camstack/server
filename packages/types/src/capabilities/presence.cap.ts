@@ -71,7 +71,8 @@ export const presenceCapability = {
    * `scripts/check-runtime-state-durability.ts`.
    */
   durability: 'restored',
-  history: 'none',
+  /** History (D850): home / not_home / zone name as an enum timeline. */
+  history: { fields: { state: { kind: 'enum' } } },
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],

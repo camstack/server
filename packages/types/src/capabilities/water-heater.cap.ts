@@ -187,6 +187,7 @@ export const waterHeaterCapability = {
    */
   history: {
     fields: {
+      away: { kind: 'boolean' },
       currentTemp: { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.5 },
       targetTemp: { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
     },

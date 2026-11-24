@@ -495,6 +495,8 @@ export const dishwasherCapability = {
   durability: 'session',
   history: {
     fields: {
+      filterCleaningDue: { kind: 'boolean' },
+      machineCareDue: { kind: 'boolean' },
       progress: { kind: 'gauge', unit: '%', deadband: 2 },
       // The coarse and the appliance's own state: change-only enums.
       state: { kind: 'enum' },

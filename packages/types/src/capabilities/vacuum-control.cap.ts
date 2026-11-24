@@ -189,6 +189,7 @@ export const vacuumControlCapability = {
    */
   history: {
     fields: {
+      state: { kind: 'enum' },
       batteryLevel: { kind: 'gauge', unit: '%', deadband: 2 },
     },
   },

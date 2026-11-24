@@ -124,6 +124,7 @@ export const petFountainCapability = {
   /** History (D850): recorded series. */
   history: {
     fields: {
+      empty: { kind: 'boolean' },
       waterLevel: { kind: 'gauge', unit: '%', deadband: 1 },
       waterVolume: { kind: 'gauge', unit: 'L' },
     },

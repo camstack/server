@@ -249,7 +249,7 @@ export const intercomCapability = {
   /**
    * History (D850): none — talk sessions are a ledger concern, not a trend.
    */
-  history: 'none',
+  history: { fields: { talking: { kind: 'boolean' } } },
   vocabulary: {
     noun: t('Intercom', 'Citofono'),
     order: 3150,

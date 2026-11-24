@@ -4,7 +4,7 @@
 
 # Decisions
 
-1062 architecture decision records. One file per decision, never
+1063 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1076,6 +1076,7 @@ that rots.
 | D1095 | [A camera dwells on its node for a minimum time before the share may move it](adr-1095-a-camera-dwells-on-its-node-before-the-share-may-move-it.md) | ✅ accepted | 2026-11-24 |
 | D1096 | [An app in the shell is a capability entry; the shell owns the only drawer, and an embedded app is chromeless and publishes its nav as data](adr-1096-an-app-in-the-shell-is-a-capability-entry-the-shell-owns-the-only-drawer-and-an-embedded-app-is-chromeless.md) | ✅ accepted | 2026-11-24 |
 | D1097 | [A timed run is offered on every device that has a switch, through the one wrapper](adr-1097-a-timed-run-is-offered-on-every-device-that-has-a-switch.md) | ✅ accepted | 2026-11-24 |
+| D1098 | [Every Customize kind is one typed spec, seen and removable from both sides](adr-1098-every-customize-kind-is-one-typed-spec-seen-from-both-sides.md) | ✅ accepted | 2026-11-24 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

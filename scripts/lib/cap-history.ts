@@ -33,9 +33,53 @@ export interface HistoryCapView {
   readonly runtimeState: RuntimeStateSchema | undefined
   readonly history: CapabilityHistory | undefined
   readonly volatileStateFields: readonly string[]
+  /** The `vocabulary.state` triggers: the fields the cap offers as readings. */
+  readonly vocabularyState?: readonly VocabularyStateField[]
+}
+
+/** One `vocabulary.state` entry, reduced to what the guard needs. */
+export interface VocabularyStateField {
+  readonly kind: string
+  readonly field: string
+}
+
+/** Vocabulary state kinds that are a recordable reading (numeric, boolean, enum). */
+const RECORDABLE_STATE_KINDS: ReadonlySet<string> = new Set(['numeric', 'boolean', 'enum'])
+
+/**
+ * Readings a cap offers as a state trigger that are deliberately NOT recorded
+ * as history, keyed `<cap>.<field>`, each with its reason (#699). A new
+ * linkable reading does NOT go here: it declares its history.
+ */
+export const HISTORY_EXEMPT: Readonly<Record<string, string>> = {
+  'automation-control.enabled': 'operator setting; the automation owns it',
+  'automation-control.isRunning': 'run lifecycle, kept by the automation run records',
+  'script-runner.isRunning': 'run lifecycle, kept by the script run records',
+  'battery.sleeping': 'superseded by low-power-sleep.sleeping',
+  'color.mode': 'display representation setting, not a reading',
+  'day-night.mode': 'firmware configuration',
+  'error.active': 'the error ledger keeps raise/clear events',
+  'group-status.included': 'derived from the group members',
+  'group-status.excluded': 'derived from the group members',
+  'group-status.total': 'derived from the group members',
+  'motion-trigger.enabled': 'per-camera function switch, owned by its authority (D62)',
+  'native-object-detection.enabled': 'per-camera function switch, owned by its authority (D62)',
+  'privacy-mask.enabled': 'per-camera function switch, owned by its authority (D62)',
+  'privacy-mask.audioEnabled': 'per-camera function switch, owned by its authority (D62)',
+  'ptz-autotrack.enabled': 'per-camera function switch, owned by its authority (D62)',
+  'pump-cycle.enabled': 'operator setting of the cycle',
+  'power-source.switchOn': 'mirror of the switch cap, which records the on/off series',
+  'recording-onboard.recordingToNowhere': 'diagnostic flag derived from configuration',
+  'recording-signal.active': 'the recordings ledger',
+  'siren.active': 'switch / alarm events',
+  'update.updatable': 'firmware update lifecycle, kept by update events',
+  'update.inProgress': 'firmware update lifecycle, kept by update events',
+  'cover.state': 'derived from the recorded position (opening / closing follow it)',
+  'valve.state': 'derived from the recorded position (opening / closing follow it)',
 }
 
 export type HistoryViolationRule =
+  | 'unrecorded-state-field'
   | 'missing-block'
   | 'block-without-runtime-state'
   | 'empty-fields'
@@ -403,7 +447,8 @@ export function judgeCapHistory(cap: HistoryCapView): readonly HistoryViolation[
       },
     ]
   }
-  if (history === 'none') return []
+  const unrecorded = judgeUnrecordedState(cap, history)
+  if (history === 'none') return unrecorded
   const entries = Object.entries(history.fields)
   const itemEntries = Object.entries(history.items?.fields ?? {})
   if (entries.length === 0 && itemEntries.length === 0) {
@@ -420,9 +465,33 @@ export function judgeCapHistory(cap: HistoryCapView): readonly HistoryViolation[
     ...judgeGroups(cap.capName, history.fields),
     ...judgePrimary(cap, history),
   ]
-  return history.items === undefined
-    ? top
-    : [...top, ...judgeItems(cap, runtimeState, history.items)]
+  return [
+    ...unrecorded,
+    ...top,
+    ...(history.items === undefined ? [] : judgeItems(cap, runtimeState, history.items)),
+  ]
+}
+
+/**
+ * A cap offering a numeric / boolean / enum reading as a state trigger must
+ * record it (#699): a linkable reading without long-term history cannot ship.
+ * `HISTORY_EXEMPT` is the only way out, with a reason.
+ */
+function judgeUnrecordedState(
+  cap: HistoryCapView,
+  history: CapabilityHistory,
+): readonly HistoryViolation[] {
+  const recorded = history === 'none' ? {} : history.fields
+  return (cap.vocabularyState ?? [])
+    .filter((s) => RECORDABLE_STATE_KINDS.has(s.kind) && !s.field.includes('['))
+    .filter((s) => recorded[s.field] === undefined)
+    .filter((s) => HISTORY_EXEMPT[`${cap.capName}.${s.field}`] === undefined)
+    .map((s) => ({
+      capName: cap.capName,
+      rule: 'unrecorded-state-field' as const,
+      field: s.field,
+      message: `\`vocabulary.state\` offers the ${s.kind} reading \`${s.field}\` but \`history\` does not record it — add it to \`history.fields\`, or list the cap in HISTORY_EXEMPT with a reason`,
+    }))
 }
 
 /** A keyed array (D917): an array of objects, a string key (and label), item-relative fields. */
@@ -482,6 +551,7 @@ function judgeItems(
 
 interface CapModuleShape {
   readonly runtimeState?: unknown
+  readonly vocabulary?: { readonly state?: readonly VocabularyStateField[] }
   readonly history?: CapabilityHistory
 }
 
@@ -505,6 +575,7 @@ export async function loadHistoryCaps(): Promise<readonly HistoryCapView[]> {
       capName: info.capName,
       runtimeState,
       history: def.history,
+      vocabularyState: def.vocabulary?.state ?? [],
       volatileStateFields: info.volatileStateFields,
     })
   }

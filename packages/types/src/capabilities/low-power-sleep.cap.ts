@@ -86,8 +86,8 @@ export const lowPowerSleepCapability = {
    * the presence derivation have (the same argument as `battery`).
    */
   durability: 'restored',
-  /** History (D850): none — battery never recorded a sleep series either. */
-  history: 'none',
+  /** History (D850): the awake / asleep timeline of a battery camera. */
+  history: { fields: { sleeping: { kind: 'boolean' } } },
   volatileStateFields: ['lastUpdated'],
   // The sleep state stays phrased through the battery vocabulary (asleep / woke
   // up) until its writer moves here; `wakeUp` carries its own excuse.

@@ -514,6 +514,7 @@ export const climateControlCapability = {
     primary: 'currentTemp',
     priority: 70,
     fields: {
+      mode: { kind: 'enum' },
       currentTemp: { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
       currentHumidity: { kind: 'gauge', unit: '%', deadband: 0.5 },
       target: { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },

@@ -459,6 +459,7 @@ export const petFeederCapability = {
    */
   history: {
     fields: {
+      lowFood: { kind: 'boolean' },
       feeding: { kind: 'boolean' },
       eating: { kind: 'boolean' },
       foodLevel: { kind: 'gauge' },

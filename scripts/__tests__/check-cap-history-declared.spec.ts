@@ -11,6 +11,7 @@ import { DeviceType } from '../../packages/types/src/device/device-type.js'
 import {
   enumValuesOf,
   judgeCapHistory,
+  HISTORY_EXEMPT,
   loadHistoryCaps,
   type HistoryCapView,
   type HistoryViolationRule,
@@ -341,6 +342,38 @@ describe('keyed items (D917)', () => {
 
   it('the catalog projects an item z.enum field’s values', () => {
     expect(enumValuesOf(STATE, 'status', 'keyed')).toEqual(['ok', 'low'])
+  })
+})
+
+describe('a recordable vocabulary reading must be recorded (#699)', () => {
+  const withVocab = (
+    history: HistoryCapView['history'],
+    field: string,
+    kind: string,
+  ): HistoryCapView => cap({ history, vocabularyState: [{ kind, field }] })
+
+  it('flags a boolean / numeric / enum reading missing from history', () => {
+    expect(rules(withVocab('none', 'on', 'boolean'))).toEqual(['unrecorded-state-field'])
+    expect(rules(withVocab('none', 'celsius', 'numeric'))).toEqual(['unrecorded-state-field'])
+    expect(rules(withVocab('none', 'mode', 'enum'))).toEqual(['unrecorded-state-field'])
+    expect(rules(withVocab({ fields: { celsius: { kind: 'gauge' } } }, 'on', 'boolean'))).toEqual([
+      'unrecorded-state-field',
+    ])
+  })
+
+  it('accepts a recorded reading and a free-text `value` trigger', () => {
+    expect(rules(withVocab({ fields: { on: { kind: 'boolean' } } }, 'on', 'boolean'))).toEqual([])
+    expect(rules(withVocab('none', 'label', 'value'))).toEqual([])
+  })
+
+  it('every HISTORY_EXEMPT entry names a real unrecorded reading', {
+    timeout: 60_000,
+  }, async () => {
+    const caps = await loadHistoryCaps()
+    const offered = new Set(
+      caps.flatMap((c) => (c.vocabularyState ?? []).map((s) => `${c.capName}.${s.field}`)),
+    )
+    for (const key of Object.keys(HISTORY_EXEMPT)) expect(offered.has(key), key).toBe(true)
   })
 })
 
