@@ -236,6 +236,12 @@ export const useAlertsDismiss: typeof trpc.alerts.dismiss.useMutation = /*#__PUR
 /** Generated alias around `trpc.ambientLightSensor.getStatus.useQuery`. */
 export const useAmbientLightSensorGetStatus: typeof trpc.ambientLightSensor.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.ambientLightSensor.getStatus.useQuery)
 
+/** Generated alias around `trpc.apps.listApps.useQuery`. */
+export const useAppsListApps: typeof trpc.apps.listApps.useQuery = /*#__PURE__*/ alias(() => trpc.apps.listApps.useQuery)
+
+/** Generated alias around `trpc.apps.getNavBadges.useQuery`. */
+export const useAppsGetNavBadges: typeof trpc.apps.getNavBadges.useQuery = /*#__PURE__*/ alias(() => trpc.apps.getNavBadges.useQuery)
+
 /** Generated alias around `trpc.audioAnalysis.resolveDeviceSettings.useQuery`. */
 export const useAudioAnalysisResolveDeviceSettings: typeof trpc.audioAnalysis.resolveDeviceSettings.useQuery = /*#__PURE__*/ alias(() => trpc.audioAnalysis.resolveDeviceSettings.useQuery)
 

@@ -38,6 +38,28 @@ export const PIPELINE_OWNER_CAPABILITY_NAMES: readonly string[] = [
   'pipeline-runner',
 ]
 
+export type {
+  AppDeclaration,
+  AppEntry,
+  AppLabel,
+  AppNavItem,
+  AppNavSection,
+  AppReach,
+  AppRole,
+  IAppSourceProvider,
+} from './app-source.cap.js'
+export {
+  AppDeclarationSchema,
+  AppEntrySchema,
+  AppLabelSchema,
+  AppNavItemSchema,
+  AppNavSectionSchema,
+  AppReachSchema,
+  AppRoleSchema,
+  appSourceCapability,
+} from './app-source.cap.js'
+export type { AppInfo, AppNavBadge, IAppsAggregatorProvider } from './apps.cap.js'
+export { AppInfoSchema, AppNavBadgeSchema, appsCapability } from './apps.cap.js'
 export type { IAddonPagesAggregatorProvider } from './addon-pages.cap.js'
 export { AddonPageInfoSchema, addonPagesCapability } from './addon-pages.cap.js'
 export type { IAddonPagesSourceProvider } from './addon-pages-source.cap.js'
@@ -3724,6 +3746,8 @@ import type { IReadinessRegistry } from '../interfaces/readiness.js'
 import type { accessoriesCapability } from './accessories.cap.js'
 import type { addonPagesCapability } from './addon-pages.cap.js'
 import type { addonPagesSourceCapability } from './addon-pages-source.cap.js'
+import type { appSourceCapability } from './app-source.cap.js'
+import type { appsCapability } from './apps.cap.js'
 import type { addonRoutesCapability } from './addon-routes.cap.js'
 // ── Strongly-typed readiness registry ───────────────────────────────
 //
@@ -3991,6 +4015,8 @@ type AnyCapability =
   | typeof deviceExportCapability
   | typeof addonPagesCapability
   | typeof addonPagesSourceCapability
+  | typeof appSourceCapability
+  | typeof appsCapability
   | typeof addonWidgetsCapability
   | typeof addonWidgetsSourceCapability
   | typeof customModelRegistryCapability

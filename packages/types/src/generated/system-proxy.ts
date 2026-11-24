@@ -12,6 +12,7 @@ import type { addonsCapability } from '../capabilities/addons.cap.js'
 import type { addonSettingsCapability } from '../capabilities/addon-settings.cap.js'
 import type { addonWidgetsCapability } from '../capabilities/addon-widgets.cap.js'
 import type { alertsCapability } from '../capabilities/alerts.cap.js'
+import type { appsCapability } from '../capabilities/apps.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
 import type { audioCodecCapability } from '../capabilities/audio-codec.cap.js'
 import type { backupCapability } from '../capabilities/backup.cap.js'
@@ -87,6 +88,7 @@ export interface SystemProxy {
   readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getScopedSettings' | 'listScopedSettings' | 'updateScopedSettings' | 'readScopedValues' | 'getDeclaredSettingsKeys' | 'unsetStoredSettingsKeys'>
   readonly addonWidgets: Pick<InferProvider<typeof addonWidgetsCapability>, 'listWidgets'>
   readonly alerts: Pick<InferProvider<typeof alertsCapability>, 'emit' | 'update' | 'list' | 'getUnreadCount' | 'markRead' | 'markAllRead' | 'dismiss'>
+  readonly apps: Pick<InferProvider<typeof appsCapability>, 'listApps' | 'getNavBadges'>
   readonly audioAnalyzer: Pick<InferProvider<typeof audioAnalyzerCapability>, 'analyseChunk' | 'classify' | 'attachDevice' | 'isReady' | 'dispose' | 'reprobeAudioEngine'>
   readonly audioCodec: Pick<InferProvider<typeof audioCodecCapability>, 'listSupportedCodecs' | 'canHandle' | 'createDecodeSession' | 'createEncodeSession' | 'closeSession' | 'pushEncodedFrame' | 'pullPcm' | 'pushPcm' | 'pullEncoded' | 'flushEncode' | 'listActiveSessions'>
   readonly backup: Pick<InferProvider<typeof backupCapability>, 'listDestinations' | 'trigger' | 'listRuns' | 'cancel' | 'list' | 'listLocations' | 'getEntries' | 'restore' | 'getEncryption' | 'setupEncryption' | 'disableEncryption' | 'checkBackupKey' | 'delete' | 'listArchives' | 'upsertDestinationPolicy' | 'previewSchedule' | 'listSchedules' | 'listAvailableDatabases' | 'upsertSchedule' | 'deleteSchedule'>
@@ -239,6 +241,11 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     markRead: (input?: unknown) => dispatch('alerts', 'markRead', 'mutation', input),
     markAllRead: (input?: unknown) => dispatch('alerts', 'markAllRead', 'mutation', input),
     dismiss: (input?: unknown) => dispatch('alerts', 'dismiss', 'mutation', input),
+  }
+
+  const appsInterface = {
+    listApps: (input?: unknown) => dispatch('apps', 'listApps', 'query', input),
+    getNavBadges: (input?: unknown) => dispatch('apps', 'getNavBadges', 'query', input),
   }
 
   const audioAnalyzerInterface = {
@@ -1110,6 +1117,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     addonSettings: addonSettingsInterface,
     addonWidgets: addonWidgetsInterface,
     alerts: alertsInterface,
+    apps: appsInterface,
     audioAnalyzer: audioAnalyzerInterface,
     audioCodec: audioCodecInterface,
     backup: backupInterface,

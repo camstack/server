@@ -145,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An on-for hold is now cut to the device's run limit (heater 3 h, siren 10 min, pet fountain 5 min), including holds saved before
 - Removing a device now removes the accessory children it owns, and a one-time pass removes existing child rows whose parent no longer exists
 - An automation draft whose on-for exceeds the target device's run limit is refused, and an already saved one is cut to the limit when it runs
+- Apps for the viewer shell are declared through the app-source capability and listed, filtered by role, by the apps capability.
 
 ### Removed
 

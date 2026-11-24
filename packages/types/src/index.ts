@@ -147,6 +147,7 @@ export type { IAuthProvider } from './capabilities/auth-provider.cap.js'
 export type { DisposerChainOptions, DisposerFn } from './disposer-chain.js'
 export { DisposerChain } from './disposer-chain.js'
 export * from './encode-profile.js'
+export * from './app-bridge.js'
 export * from './camera/stream-pick.js'
 export * from './ffmpeg/encode-defaults.js'
 // The reader half of the fMP4 sink. Pure and dependency-free, so it sits in the

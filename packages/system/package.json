@@ -387,6 +387,21 @@
         ]
       },
       {
+        "id": "apps-aggregator",
+        "category": "system",
+        "name": "Apps Aggregator",
+        "icon": "assets/apps-aggregator/icon.svg",
+        "color": "#4f46e5",
+        "description": "Hub-only singleton that aggregates `app-source` (collection) providers and emits the role-filtered `apps.listApps` surface the viewer shell reads.",
+        "entry": "./dist/builtins/apps-aggregator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "apps"
+          }
+        ]
+      },
+      {
         "id": "addon-widgets-aggregator",
         "category": "system",
         "name": "Addon Widgets Aggregator",

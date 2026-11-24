@@ -4,7 +4,7 @@
 
 # Decisions
 
-1060 architecture decision records. One file per decision, never
+1061 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1074,6 +1074,7 @@ that rots.
 | D1093 | [A migration keeps each number's secrets and location on that number](adr-1093-a-migration-keeps-secrets-and-location-on-their-own-number.md) | ✅ accepted | 2026-11-23 |
 | D1094 | [A browser handoff names its landing page, and the session it opens ends with the one that asked](adr-1094-a-browser-handoff-names-its-landing-page-and-its-session-ends-with-the-one-that-asked.md) | ✅ accepted | 2026-11-23 |
 | D1095 | [A camera dwells on its node for a minimum time before the share may move it](adr-1095-a-camera-dwells-on-its-node-before-the-share-may-move-it.md) | ✅ accepted | 2026-11-24 |
+| D1096 | [An app in the shell is a capability entry; the shell owns the only drawer, and an embedded app is chromeless and publishes its nav as data](adr-1096-an-app-in-the-shell-is-a-capability-entry-the-shell-owns-the-only-drawer-and-an-embedded-app-is-chromeless.md) | ✅ accepted | 2026-11-24 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

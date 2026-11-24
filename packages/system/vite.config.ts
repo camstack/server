@@ -62,6 +62,9 @@ const base = buildLibPreset({
     'builtins/addon-pages-aggregator/index': 'src/builtins/addon-pages-aggregator/index.ts',
     'builtins/addon-pages-aggregator/addon-pages-aggregator.addon':
       'src/builtins/addon-pages-aggregator/addon-pages-aggregator.addon.ts',
+    'builtins/apps-aggregator/index': 'src/builtins/apps-aggregator/index.ts',
+    'builtins/apps-aggregator/apps-aggregator.addon':
+      'src/builtins/apps-aggregator/apps-aggregator.addon.ts',
     'builtins/addon-widgets-aggregator/index': 'src/builtins/addon-widgets-aggregator/index.ts',
     'builtins/addon-widgets-aggregator/addon-widgets-aggregator.addon':
       'src/builtins/addon-widgets-aggregator/addon-widgets-aggregator.addon.ts',

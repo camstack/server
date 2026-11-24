@@ -1762,3 +1762,21 @@ camera picker (`recordings/export-camera-filter.ts`).
   `components/archive/*.ts` beside `__tests__/archive-pure.spec.ts`.
 - Location mode is read only through `@camstack/types` (`mayWriteToLocation`, `resolveLocationMode`);
   `scripts/check-storage-location-mode-single-owner.ts` scans admin-ui too.
+
+## Multi-app shell ([D1096](../decisions/adr-1096-an-app-in-the-shell-is-a-capability-entry-the-shell-owns-the-only-drawer-and-an-embedded-app-is-chromeless.md))
+
+The viewer is a shell that hosts apps (the viewer itself, Admin, later others).
+An app is a capability entry, never a name in the shell: an addon registers an
+`app-source` provider (`listApps` returns `AppDeclaration[]`: label, icon,
+entry `native | web | addon-page`, reach, role gate, nav sections, shared
+search, settings) and the hub singleton `apps` (builtin `apps-aggregator`)
+merges them, stamps the addon id and filters by the caller's role. A failing
+provider is skipped and logged. `apps.getNavBadges` answers `{}` until the shell
+lands; an unmeasured count is `null`, never `0`.
+
+The shell owns the one drawer (hamburger on the left of the toolbar): user and
+server, shared search, the app list, the active app's nav, settings, sign out.
+An embedded app talks to the shell over the `app-bridge` `postMessage` envelope
+(`packages/types/src/app-bridge.ts`, exported from `@camstack/types/client`;
+`parseAppBridgeMessage` returns the typed message or `null`) and goes chromeless
+only after the shell's `hello`. Labels are i18n keys with an English fallback.

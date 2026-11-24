@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1131 shared schemas.**
+**1140 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -185,6 +185,36 @@ Enum: `"active" \| "in-progress" \| "completed" \| "failed" \| "dismissed"`
 
 Enum: `"motion" \| "audio-dbfs" \| "battery" \| "occupancy"`
 
+### `AppDeclarationSchema`
+
+- `id`: `string`
+- `label`: `AppLabelSchema`
+- `icon`: `string`
+- `order?`: `number`
+- `entry`: `AppEntrySchema`
+- `reach`: `AppReachSchema`
+- `adminOnly`: `boolean`
+- `roles?`: `AppRoleSchema[]`
+- `nav`: `AppNavSectionSchema[]`
+- `takesSharedSearch`: `boolean`
+- `settings`: `{ label?: AppLabelSchema; path: string } \| null`
+
+### `AppEntrySchema`
+
+- `{ kind: "native"; route: string }`
+- `{ kind: "web"; path: string; auth: "session-cookie" \| "handoff" }`
+- `{ kind: "addon-page"; pageId: string }`
+
+### `AppInfoSchema`
+
+- `addonId`: `string`
+- `app`: `AppDeclarationSchema`
+
+### `AppLabelSchema`
+
+- `key`: `string`
+- `fallback`: `string`
+
 ### `AppleFmAvailabilitySchema`
 
 - `{ state: "available"; osVersion: string; contextSize: number; languages: string[]; imageInput: boolean }`
@@ -208,6 +238,38 @@ Enum: `"deviceNotEligible" \| "appleIntelligenceNotEnabled" \| "modelNotReady" \
 - `finalPhase`: `string \| null`
 - `energyStartKwh`: `number \| null`
 - `powerObservedMs`: `number`
+
+### `AppNavBadgeSchema`
+
+- `count`: `number \| null`
+- `tone`: `"neutral" \| "info" \| "warning" \| "danger"`
+
+### `AppNavItemSchema`
+
+- `id`: `string`
+- `label`: `AppLabelSchema`
+- `icon`: `string`
+- `path`: `string`
+- `adminOnly?`: `boolean`
+- `keywords?`: `string[]`
+- `badgeKey?`: `string`
+- `requiresCapability?`: `string`
+
+### `AppNavSectionSchema`
+
+- `id`: `string`
+- `label`: `AppLabelSchema \| null`
+- `items`: `AppNavItemSchema[]`
+
+### `AppReachSchema`
+
+- `{ kind: "hub" }`
+- `{ kind: "lan-only" }`
+- `{ kind: "node"; nodeId: string }`
+
+### `AppRoleSchema`
+
+Enum: `"admin" \| "user"`
 
 ### `ArchiveEntrySchema`
 

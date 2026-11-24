@@ -4,7 +4,7 @@
 
 # Addons
 
-96 addon manifests across 52 packages.
+97 addon manifests across 52 packages.
 
 One addon = one `addon-runner` process by default. A shared `execution.group`
 collapses its members into ONE process so their cap calls resolve in-process
@@ -24,6 +24,7 @@ this column exists to stop.
 | `agent-ui` | `@camstack/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
 | `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `integration-instances` `llm` `llm-runtime` `node-removal-hook` |
 | `alert-center` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `alerts` |
+| `apps-aggregator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `apps` |
 | `audio-analyzer` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
 | `auth-oidc` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-routes` `auth-provider` `integration-instances` `login-method` |
 | `auth-webauthn` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
@@ -123,4 +124,4 @@ this column exists to stop.
 - `networking` — 5
 - `pipeline` — 8
 - `providers` — 27
-- `system` — 43
+- `system` — 44

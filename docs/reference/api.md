@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**217 capabilities · 1555 methods.**
+**219 capabilities · 1558 methods.**
 
 ## Method index
 
@@ -90,6 +90,9 @@
 | `alerts.markAllRead` | mutation | protected | alerts |
 | `alerts.dismiss` | mutation | protected | alerts |
 | `ambientLightSensor.getStatus` | query | protected | ambient-light-sensor (auto) |
+| `appSource.listApps` | query | admin | app-source |
+| `apps.listApps` | query | protected | apps |
+| `apps.getNavBadges` | query | protected | apps |
 | `audioAnalysis.getDeviceSettingsContribution` | query | protected | audio-analysis (auto) |
 | `audioAnalysis.getDeviceLiveContribution` | query | protected | audio-analysis (auto) |
 | `audioAnalysis.applyDeviceSettingsPatch` | mutation | admin | audio-analysis (auto) |
@@ -1804,6 +1807,29 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `ambientLightSensor.getStatus` | query | protected | `{ deviceId: number }` | `AmbientLightSensorStatusSchema` |
+
+### `app-source` → `appSource.*`
+
+- **Source:** `packages/types/src/capabilities/app-source.cap.ts:81`
+- **Meta:** scope: `system` · mode: `collection` · mount: `skip`
+- **Archetypes:** internal
+- **Provider interface:** `IAppSourceProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listApps | `appSource.listApps` | query | admin | `void` | `AppDeclarationSchema[]` |
+
+### `apps` → `apps.*`
+
+- **Source:** `packages/types/src/capabilities/apps.cap.ts:25`
+- **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
+- **Archetypes:** —
+- **Provider interface:** `IAppsAggregatorProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listApps | `apps.listApps` | query | protected | `{}` | `AppInfoSchema[]` |
+| getNavBadges | `apps.getNavBadges` | query | protected | `{ appId: string }` | `Record<string, AppNavBadgeSchema>` |
 
 ### `audio-analysis` → `audioAnalysis.*`
 

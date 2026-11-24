@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1555 method paths across 217 capabilities.
+ * Coverage: 1558 method paths across 219 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -99,6 +99,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'alerts.markRead': { capName: "alerts", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'alerts.update': { capName: "alerts", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'ambientLightSensor.getStatus': { capName: "ambient-light-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'apps.getNavBadges': { capName: "apps", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'apps.listApps': { capName: "apps", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'appSource.listApps': { capName: "app-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'audioAnalysis.applyDeviceSettingsPatch': { capName: "audio-analysis", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'audioAnalysis.getDeviceLiveContribution': { capName: "audio-analysis", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'audioAnalysis.getDeviceSettingsContribution': { capName: "audio-analysis", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1596,6 +1599,8 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "alarm-panel",
   "alerts",
   "ambient-light-sensor",
+  "app-source",
+  "apps",
   "audio-analysis",
   "audio-analyzer",
   "audio-codec",
@@ -1931,6 +1936,8 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "addons",
   "admin-ui",
   "alerts",
+  "app-source",
+  "apps",
   "audio-analyzer",
   "audio-codec",
   "auth-provider",

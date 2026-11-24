@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+
 - A PoE port's device card draws a LAN port whose link lights blink while the port is on.
 - Every duration field is now the same hours / minutes / seconds / milliseconds input, including the recording segment length, the event post-buffer and the timed-run box; the stored values do not change.
 - A daily window and a time of day are one input everywhere: clock or sunrise / sunset with an offset, a range over midnight, Day / Night and weekdays (TimeWindowInput, TimeSpecInput, the time-window settings field).
 - A time-window settings field keeps an invalid draft on screen with its error, the sun offset commits whole minutes on blur, and a stored whole-day window stays named when weekdays are off
+- Apps for the viewer shell are declared through the app-source capability and listed, filtered by role, by the apps capability.
 
 ## [1.2.500] - 2026-11-24
 

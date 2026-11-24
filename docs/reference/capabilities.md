@@ -4,7 +4,7 @@
 
 # Capabilities
 
-217 capability definitions in `packages/types/src/capabilities/`.
+219 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -138,7 +138,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (103)
+## System-scoped (105)
 
 Singleton or collection providers, addressed without a device.
 
@@ -155,6 +155,8 @@ Singleton or collection providers, addressed without a device.
 | `addons` | 32 | — | — | — | — | — |
 | `admin-ui` | 2 | — | — | — | ✓ | `admin-ui` `agent-ui` |
 | `alerts` | 7 | — | — | — | — | `alert-center` |
+| `app-source` | 1 | — | — | — | ✓ | — |
+| `apps` | 2 | — | — | — | — | `apps-aggregator` |
 | `audio-analyzer` | 7 | — | — | — | — | `audio-analyzer` |
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |

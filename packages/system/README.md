@@ -44,6 +44,7 @@ Package `@camstack/server` on npm.
   - Capabilities: `calendars`.
 - **Addon Pages Aggregator** (`addon-pages-aggregator`): Hub-only singleton that aggregates `addon-pages-source` (collection) providers and emits the public `addon-pages.listPages` surface with versioned bundleUrls. Category: system.
   - Capabilities: `addon-pages`.
+- **Apps Aggregator** (`apps-aggregator`): Hub-only singleton that aggregates `app-source` (collection) providers and emits the role-filtered `apps.listApps` surface the viewer shell reads. Category: system.
 - **Addon Widgets Aggregator** (`addon-widgets-aggregator`): Hub-only singleton that aggregates `addon-widgets-source` (collection) providers and emits the public `addon-widgets.listWidgets` surface with versioned bundleUrls. Category: system.
   - Capabilities: `addon-widgets`.
 - **Device Manager** (`device-manager`): Hub-side singleton that unifies device persistence and management. Uses ctx.settings for storage — no direct SQLite access. Replaces device-persistence cap (Phase 2 will delete device-persistence once all consumers are migrated). Category: system.

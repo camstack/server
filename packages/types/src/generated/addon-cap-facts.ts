@@ -38,6 +38,8 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "alarm-panel",
   "alerts",
   "ambient-light-sensor",
+  "app-source",
+  "apps",
   "audio-analysis",
   "audio-analyzer",
   "audio-codec",
