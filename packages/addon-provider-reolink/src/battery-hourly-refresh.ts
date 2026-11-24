@@ -201,7 +201,7 @@ export interface RefreshAttemptLedger {
 }
 
 /** The persisted bookkeeping of the scheduled refresh, as the battery slice carries it. */
-export interface RefreshBookkeeping {
+export type RefreshBookkeeping = {
   readonly lastFullRefreshAt?: number | undefined
   readonly refreshAttemptWindow?: number | undefined
   readonly refreshAttempts?: number | undefined
