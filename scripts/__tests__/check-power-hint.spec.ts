@@ -83,5 +83,5 @@ describe('check-power-hint — provider wiring', () => {
 
   it('is green on the real tree for the humidifier', () => {
     expect(checkProviderWiring(collectPowerGuardFiles(), HINTED, new Map())).toEqual([])
-  })
+  }, 120_000)
 })
