@@ -208,6 +208,8 @@ describe('plug scene — the zones of each mockup variant', () => {
 describe('plug scene — a PoE port draws a LAN port', () => {
   it('draws the port, not the socket, and its LEDs follow on / off', () => {
     const [on, off] = plugPoePortFixtures()
+    if (on === undefined || off === undefined)
+      throw new Error('the PoE port fixtures need an on and an off port')
     const { unmount } = render(<PlugCard model={on.model} actions={plugActions()} />)
     expect(screen.getByTestId('dc-poe-port-art').getAttribute('data-on')).toBe('true')
     unmount()
@@ -217,6 +219,7 @@ describe('plug scene — a PoE port draws a LAN port', () => {
 
   it('a plain plug keeps the socket', () => {
     const [fixture] = plugFixtures(NOW)
+    if (fixture === undefined) throw new Error('the plug fixtures are empty')
     render(<PlugCard model={fixture.model} actions={plugActions()} />)
     expect(screen.queryByTestId('dc-poe-port-art')).toBeNull()
   })
