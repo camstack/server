@@ -123,13 +123,21 @@ function makeService(env: NodeJS.ProcessEnv, execNpm: NpmExecFn): RootUpdateServ
   })
 }
 
-function seedDevUploads(version: string, packages: Readonly<Record<string, string>>): string {
+function seedDevUploads(
+  version: string,
+  packages: Readonly<Record<string, string>>,
+  buildTimeMs?: number,
+): string {
   const dir = devUploadVersionDir(serverRootDir(dataDir), version)
   fs.mkdirSync(dir, { recursive: true })
   for (const filename of Object.values(packages)) {
     fs.writeFileSync(path.join(dir, filename), 'tgz-bytes', 'utf-8')
   }
-  writeDevUploadManifest(dir, { version, packages })
+  writeDevUploadManifest(dir, {
+    version,
+    packages,
+    ...(buildTimeMs === undefined ? {} : { buildTimeMs }),
+  })
   return dir
 }
 
@@ -177,6 +185,27 @@ describe('stageClosure — dev-uploads branch', () => {
     expect(marker && fs.existsSync(marker.stagingPath)).toBe(true)
   })
 
+  it('bounds the install with --before = build time + 5 min when the manifest carries one', async () => {
+    const buildTimeMs = Date.parse('2026-11-24T10:00:00.000Z')
+    seedDevUploads(DEV_VERSION, { '@camstack/server': 'camstack-server.tgz' }, buildTimeMs)
+    const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
+    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+
+    const result = await svc.applyServerUpdate({ version: DEV_VERSION })
+    expect(result.accepted, result.message).toBe(true)
+    expect(calls[0]!.args).toContain('--before=2026-11-24T10:05:00.000Z')
+  })
+
+  it('installs unbounded (no --before) when the manifest has no build time', async () => {
+    seedDevUploads(DEV_VERSION, { '@camstack/server': 'camstack-server.tgz' })
+    const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
+    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+
+    const result = await svc.applyServerUpdate({ version: DEV_VERSION })
+    expect(result.accepted, result.message).toBe(true)
+    expect(calls[0]!.args.some((a) => a.startsWith('--before'))).toBe(false)
+  })
+
   it('registry path is untouched when no dev-uploads dir exists', async () => {
     const { execNpm, calls } = makeInstallCapture('1.1.51')
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
@@ -187,6 +216,7 @@ describe('stageClosure — dev-uploads branch', () => {
     expect(calls).toHaveLength(1)
     const call = calls[0]!
     expect(call.args).toContain('@camstack/server@1.1.51')
+    expect(call.args.some((a) => a.startsWith('--before'))).toBe(false)
     const pkgJson = call.stagingPackageJson as Record<string, unknown>
     expect(pkgJson['dependencies']).toBeUndefined()
     expect(pkgJson['overrides']).toBeUndefined()

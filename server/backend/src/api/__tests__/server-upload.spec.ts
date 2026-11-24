@@ -287,4 +287,25 @@ describe('POST /api/server-upload — happy path', () => {
       expect(fs.existsSync(path.join(dir, filename))).toBe(true)
     }
   })
+
+  it('records the CLI build time in the manifest, and omits it when the field is absent or invalid', async () => {
+    const files = [
+      { filename: 'camstack-server.tgz', buffer: makeTgz('@camstack/server', DEV_VERSION) },
+    ]
+    const dir = devUploadVersionDir(serverRootDir(dataDir), DEV_VERSION)
+
+    const withTime = await injectUpload({
+      files,
+      fields: { version: DEV_VERSION, buildTime: '1790000000000' },
+    })
+    expect(withTime.statusCode, withTime.payload).toBe(200)
+    expect(readDevUploadManifest(dir)?.buildTimeMs).toBe(1790000000000)
+
+    const invalid = await injectUpload({
+      files,
+      fields: { version: DEV_VERSION, buildTime: 'not-a-number' },
+    })
+    expect(invalid.statusCode, invalid.payload).toBe(200)
+    expect(readDevUploadManifest(dir)?.buildTimeMs).toBeUndefined()
+  })
 })

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- deploy --closure records the closure build time so a node install cannot pick up packages npm published after it
+
 ## [1.2.240] - 2026-11-23
 
 ### Changed

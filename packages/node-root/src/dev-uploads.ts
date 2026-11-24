@@ -75,6 +75,14 @@ export function devUploadVersionDir(rootDir: string, version: string): string {
 export interface DevUploadManifest {
   readonly version: string
   readonly packages: Readonly<Record<string, string>>
+  /**
+   * Epoch milliseconds at which the CLI built the closure (taken once per
+   * deploy, before packing). The install passes `--before` from it so nothing
+   * published to npm after the build can enter the tree (#681). Absent on a
+   * manifest written by an older CLI. Zero-dep module: a plain optional field,
+   * checked by hand like the rest of the manifest.
+   */
+  readonly buildTimeMs?: number
 }
 
 export function devUploadManifestPath(versionDirPath: string): string {
@@ -87,7 +95,11 @@ function isDevUploadManifest(v: unknown): v is DevUploadManifest {
   if (typeof m['version'] !== 'string') return false
   const packages = m['packages']
   if (typeof packages !== 'object' || packages === null || Array.isArray(packages)) return false
-  return Object.values(packages).every((filename) => typeof filename === 'string')
+  if (!Object.values(packages).every((filename) => typeof filename === 'string')) return false
+  const buildTimeMs = m['buildTimeMs']
+  return (
+    buildTimeMs === undefined || (typeof buildTimeMs === 'number' && Number.isFinite(buildTimeMs))
+  )
 }
 
 /** Read + validate the manifest. Returns null when missing/corrupt. */
@@ -107,4 +119,13 @@ export function writeDevUploadManifest(versionDirPath: string, manifest: DevUplo
   const tmp = `${target}.tmp`
   fs.writeFileSync(tmp, JSON.stringify(manifest, null, 2), 'utf-8')
   fs.renameSync(tmp, target)
+}
+
+/** Margin added to the build time so a registry mirror's clock skew cannot hide a pin made at build. */
+export const DEV_UPLOAD_BEFORE_MARGIN_MS = 5 * 60_000
+
+/** The `--before` npm argument for a manifest, or null when it records no build time (older CLI). */
+export function devUploadBeforeArg(manifest: DevUploadManifest): string | null {
+  if (manifest.buildTimeMs === undefined) return null
+  return `--before=${new Date(manifest.buildTimeMs + DEV_UPLOAD_BEFORE_MARGIN_MS).toISOString()}`
 }

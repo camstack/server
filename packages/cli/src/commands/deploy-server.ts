@@ -179,6 +179,8 @@ async function uploadClosure(args: {
   readonly serverUrl: string
   readonly token: string
   readonly version: string
+  /** Closure build time (epoch ms), sent as the `buildTime` form field. */
+  readonly buildTimeMs: number
   readonly tarballs: readonly PackedTarball[]
   readonly authSource?: CredentialSource
 }): Promise<void> {
@@ -187,6 +189,9 @@ async function uploadClosure(args: {
   const parts: Buffer[] = [
     Buffer.from(
       `--${boundary}${CRLF}Content-Disposition: form-data; name="version"${CRLF}${CRLF}${args.version}${CRLF}`,
+    ),
+    Buffer.from(
+      `--${boundary}${CRLF}Content-Disposition: form-data; name="buildTime"${CRLF}${CRLF}${args.buildTimeMs}${CRLF}`,
     ),
   ]
   for (const tarball of args.tarballs) {
@@ -576,7 +581,10 @@ export async function deployServer(opts: DeployServerOptions): Promise<void> {
   const closure = discoverServerClosure(workspaceRoot)
   printClosure(closure)
 
-  const devVersion = computeDevVersion(closure.serverVersion, Math.floor(Date.now() / 1000))
+  // One build time per deploy, before packing: the hub records it and the node
+  // install refuses anything npm published after it (#681).
+  const buildTimeMs = Date.now()
+  const devVersion = computeDevVersion(closure.serverVersion, Math.floor(buildTimeMs / 1000))
   console.log(`[camstack] Dev version: ${devVersion}`)
 
   console.log(`[camstack] Building ${closure.buildSet.length} packages (dependency order)...`)
@@ -605,6 +613,7 @@ export async function deployServer(opts: DeployServerOptions): Promise<void> {
       serverUrl: opts.serverUrl,
       token: opts.token,
       version: devVersion,
+      buildTimeMs,
       tarballs,
       ...(opts.authSource ? { authSource: opts.authSource } : {}),
     })

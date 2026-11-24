@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rooms and tags become records with an id; renaming one edits a single record. Existing rooms, zones and tags are migrated on first start; the old names keep working for one release.
 - A browser handoff can land on the Admin UI, and signing out of the viewer ends the Admin sessions it opened
 - Linked triggers accept an optional device-state limit (only while a device reads a value), so a night derived from a luminosity sensor can gate them.
+- a dev-uploaded closure now installs with npm --before set to its build time, so later npm publishes cannot enter it (#681)
 
 ### Fixed
 

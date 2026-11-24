@@ -141,6 +141,13 @@ export function validateTarballSet(
   return validated
 }
 
+/** The CLI's closure build time (epoch ms); anything else is treated as absent. */
+function parseBuildTimeMs(raw: string | null): number | null {
+  if (raw === null) return null
+  const value = Number(raw)
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
 export function registerServerUploadRoute(
   fastify: FastifyInstance,
   options: ServerUploadRouteOptions,
@@ -160,12 +167,15 @@ export function registerServerUploadRoute(
     // Drain the multipart stream first (files can precede or follow the
     // version field), then validate the whole set before touching disk.
     let version: string | null = null
+    let buildTimeRaw: string | null = null
     const files: UploadedTarball[] = []
     for await (const part of request.parts()) {
       if (part.type === 'file') {
         files.push({ filename: part.filename, buffer: await part.toBuffer() })
       } else if (part.fieldname === 'version' && typeof part.value === 'string') {
         version = part.value
+      } else if (part.fieldname === 'buildTime' && typeof part.value === 'string') {
+        buildTimeRaw = part.value
       }
     }
 
@@ -198,7 +208,12 @@ export function registerServerUploadRoute(
       fs.writeFileSync(path.join(versionDir, tgzName), pkg.buffer)
       packages[pkg.name] = tgzName
     }
-    writeDevUploadManifest(versionDir, { version, packages })
+    const buildTimeMs = parseBuildTimeMs(buildTimeRaw)
+    writeDevUploadManifest(versionDir, {
+      version,
+      packages,
+      ...(buildTimeMs === null ? {} : { buildTimeMs }),
+    })
 
     logger.info('server-upload stored dev closure', {
       meta: { version, packages: Object.keys(packages), dir: versionDir },

@@ -37,6 +37,7 @@ import type {
 import {
   DEV_UPLOADS_KEEP_COUNT,
   devChannelEpoch,
+  devUploadBeforeArg,
   devUploadVersionDir,
   devUploadsDir,
   isDevChannelVersion,
@@ -1126,6 +1127,28 @@ export class RootUpdateService {
   }
 
   /**
+   * `--before=<build time + margin>` for a dev-uploads install, so a package
+   * published after the closure was built cannot enter it (#681). Logged on the
+   * staging line; a manifest without a build time (older CLI) is unbounded.
+   */
+  private devUploadsBeforeArg(devDir: string, target: string): readonly string[] {
+    const manifest = readDevUploadManifest(devDir)
+    const arg = manifest === null ? null : devUploadBeforeArg(manifest)
+    if (arg === null) {
+      this.logger.warn('dev-uploads install is unbounded: the manifest carries no build time', {
+        tags: this.logTags,
+        meta: { targetVersion: target },
+      })
+      return []
+    }
+    this.logger.info('dev-uploads install bounded by the closure build time', {
+      tags: this.logTags,
+      meta: { targetVersion: target, npmBefore: arg },
+    })
+    return [arg]
+  }
+
+  /**
    * One install attempt. `seeded` copies `current/` in first; `clean` is an
    * empty directory. The dev-upload branch ignores `source` — it always
    * writes its own manifest.
@@ -1161,7 +1184,8 @@ export class RootUpdateService {
           JSON.stringify(this.buildDevUploadsPackageJson(devDir, target), null, 2),
           'utf-8',
         )
-        await this.execNpm([...installArgs, ...buildNpmRegistryArgs(registry)], {
+        const before = this.devUploadsBeforeArg(devDir, target)
+        await this.execNpm([...installArgs, ...before, ...buildNpmRegistryArgs(registry)], {
           cwd: stagingDir,
           timeoutMs: NPM_INSTALL_CEILING_MS,
         })
