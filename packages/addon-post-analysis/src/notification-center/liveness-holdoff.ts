@@ -7,10 +7,9 @@
  * subject's state has been STABLE for {@link DEVICE_LIVENESS_HOLDOFF_MS}; if
  * it bounced back to the last notified (or seeded) state, nothing is sent.
  *
- * Node liveness rides a SECOND instance with a much shorter delay
- * ({@link NODE_LIVENESS_HOLDOFF_MS}): an agent that is down for five silent
- * minutes is the opposite of the restart flap the device delay swallows, but a
- * node's reconnect storm is real — on 2026-10-09 `agent-a` came back from
+ * Node liveness rides a SECOND instance with its own delay
+ * ({@link NODE_LIVENESS_HOLDOFF_MS}), longer than the device one: a node's
+ * reconnect storm is real — on 2026-10-09 `agent-a` came back from
  * a memory-thrash freeze and flipped offline/online every 2–6 s for twenty
  * minutes (≈90 node events per 15 min) while the mesh re-authenticated it.
  * Sixty seconds is long enough to swallow that, short enough to still be the
@@ -25,7 +24,12 @@
 import type { NcIncomingEvent } from './event-intake.js'
 import type { NcLivenessState } from './liveness-ledger.js'
 
-export const DEVICE_LIVENESS_HOLDOFF_MS = 5 * 60_000
+/**
+ * Fifteen seconds (operator 2026-11-24): each provider already confirms a
+ * device's state before it flips it, so the centre only has to swallow the
+ * restart flap of a plugin, which settles within seconds.
+ */
+export const DEVICE_LIVENESS_HOLDOFF_MS = 15_000
 
 /**
  * Stream offline / online ride the device window: a stream that drops and

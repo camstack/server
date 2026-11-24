@@ -1867,7 +1867,7 @@ Everything else runs in `runBootBackfill`, a single sequential pass armed by
 | # | Phase | Cold cost, until it lands |
 | --- | --- | --- |
 | 1 | `deviceDirectory` | a device event is not worded as a camera |
-| 2 | `liveness` | a genuine offline is seeded silently, never announced (D130 direction; device liveness is additionally held 5 min by the hold-off) |
+| 2 | `liveness` | a genuine offline is seeded silently, never announced (D130 direction; device liveness is additionally held 15 s by the hold-off) |
 | 3 | `deviceAlerts` | every open battery/consumable episode re-announces — hence straight after liveness, for the same reason |
 | 4 | `occupancy` | a confirmed edge re-announces |
 | 5 | `outbox` | the dedup horizon is cold — see below. It also hydrates the NOTIFIED set (D692) from the last 24 h of rows, before the replay in phase 10: a cold set would let a replayed window re-notify a track |
@@ -2314,7 +2314,7 @@ a recovery inside the window cancels it, and no online is sent for an offline th
 never sent. A hold whose camera has gone back to sleep is dropped instead of emitted. A source failing while another source of the same camera delivers is not
 the camera's outage. The system-event
 subject is `stream:<deviceId>`; a multi-stream event renders the unprofiled sentence.
-The centre then holds each accepted `stream-offline` for the device window (`STREAM_LIVENESS_HOLDOFF_MS`, 5 min, the same as `device-offline`): a return inside it sends neither the offline nor the online.
+The centre then holds each accepted `stream-offline` for the device window (`STREAM_LIVENESS_HOLDOFF_MS`, 15 s, the same as `device-offline`): a return inside it sends neither the offline nor the online.
 
 ## An alert reaches a phone only through a rule ([D890](../decisions/adr-0890-the-alert-centre-notifies-nothing-an-alert-reaches-a-phone-only-through-a-system-event-rule.md), 2026-10-21)
 

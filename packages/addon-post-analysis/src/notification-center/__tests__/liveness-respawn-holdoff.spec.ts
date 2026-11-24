@@ -100,7 +100,7 @@ async function offlineThenKilled(world: InMemoryRecords): Promise<void> {
       state: 'offline',
     })
   })
-  await vi.advanceTimersByTimeAsync(40_000)
+  await vi.advanceTimersByTimeAsync(DEVICE_LIVENESS_HOLDOFF_MS / 3)
   await first.stop()
   expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
 }
@@ -112,7 +112,7 @@ describe('liveness hold-off across a runner respawn', () => {
     await offlineThenKilled(world)
 
     const second = await startCenter(world)
-    await vi.advanceTimersByTimeAsync(30_000)
+    await vi.advanceTimersByTimeAsync(DEVICE_LIVENESS_HOLDOFF_MS / 3)
     second.onSystemEvent(liveness(true))
     await vi.advanceTimersByTimeAsync(6 * 60_000)
 

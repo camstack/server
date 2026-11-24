@@ -76,13 +76,13 @@ async function withStreamRule(world: InMemoryRecords): Promise<NotificationCente
   return center
 }
 
-describe('stream liveness 5-minute hold-off, wired', () => {
+describe('stream liveness hold-off, wired', () => {
   it('a stream that drops and returns inside the window notifies nothing', async () => {
     vi.useFakeTimers()
     const world = makeNcRecords()
     const center = await withStreamRule(world)
     center.onSystemEvent(stream(false))
-    await vi.advanceTimersByTimeAsync(STREAM_LIVENESS_HOLDOFF_MS - 60_000)
+    await vi.advanceTimersByTimeAsync(STREAM_LIVENESS_HOLDOFF_MS / 2)
     center.onSystemEvent(stream(true))
     await vi.advanceTimersByTimeAsync(STREAM_LIVENESS_HOLDOFF_MS)
     expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
