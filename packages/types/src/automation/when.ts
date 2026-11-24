@@ -202,10 +202,7 @@ const DeviceFiredLeafSchema = z.object({
   match: z.array(DeviceFiredMatchSchema).min(1).max(8).optional(),
 })
 
-const ManualLeafSchema = z.object({
-  kind: z.literal('manual'),
-  ...eventLeafId,
-})
+const ManualLeafSchema = z.object({ kind: z.literal('manual'), ...eventLeafId })
 
 const IntervalLeafSchema = z.object({
   kind: z.literal('interval'),
@@ -285,19 +282,20 @@ const StationaryPresentLeafSchema = z.object({
 })
 
 /**
- * True while the site-local clock is inside a daily window and/or on one of
- * the named days. `days` names the local day a window STARTS on, so
- * 22:00-06:00 on weekdays is still inside at 01:00 Saturday. A one-date spec
- * (`kind: 'date'`) is refused: only a clock time or a sun event makes a window
- * that repeats every day.
- */
-/**
  * What a `time-is` leaf holds beside its kind: the one window model of
  * `time/time-window.ts`. A template's time-window input stores exactly this.
  */
 export const TimeIsWindowSchema = TimeWindowSchema
 export type TimeIsWindow = TimeWindow
 
+/**
+ * True while the site-local clock is inside a daily window and/or on one of
+ * the named days. `days` names the local day a window STARTS on, so
+ * 22:00-06:00 on weekdays is still inside at 01:00 Saturday. A one-date spec
+ * (`kind: 'date'`) is refused: only a clock time or a sun event makes a window
+ * that repeats every day.
+ * A `preset` (day or night) stands for a sun window and takes the place of `between`.
+ */
 const TimeIsLeafSchema = TimeWindowObjectSchema.extend({
   kind: z.literal('time-is'),
 }).superRefine(refineTimeWindow)
@@ -390,14 +388,8 @@ export type AutomationWhen = AutomationAll | AutomationAny | AutomationNot | Aut
 
 export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
   z.discriminatedUnion('kind', [
-    z.object({
-      kind: z.literal('all'),
-      children: z.array(AutomationWhenSchema),
-    }),
-    z.object({
-      kind: z.literal('any'),
-      children: z.array(AutomationWhenSchema),
-    }),
+    z.object({ kind: z.literal('all'), children: z.array(AutomationWhenSchema) }),
+    z.object({ kind: z.literal('any'), children: z.array(AutomationWhenSchema) }),
     z.object({ kind: z.literal('not'), child: AutomationWhenSchema }),
     DeviceBecomesLeafSchema,
     DeviceEventLeafSchema,

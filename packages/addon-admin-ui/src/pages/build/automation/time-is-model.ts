@@ -29,10 +29,12 @@ const DEFAULT_WINDOW: TimeWindow = {
 function build(
   between: TimeWindow | undefined,
   days: readonly WeekdayKey[] | undefined,
+  preset?: TimeIsLeaf['preset'],
 ): TimeIsLeaf {
   return {
     kind: 'time-is',
     ...(between === undefined ? {} : { between }),
+    ...(preset === undefined ? {} : { preset }),
     ...(days === undefined ? {} : { days: [...days] }),
   }
 }
@@ -54,11 +56,13 @@ export function toggleDay(leaf: TimeIsLeaf, day: WeekdayKey): TimeIsLeaf {
     ? current.filter((d) => d !== day)
     : ALL_WEEKDAYS.filter((d) => d === day || current.includes(d))
   const everyDay = next.length === ALL_WEEKDAYS.length
-  return build(leaf.between, everyDay && leaf.between !== undefined ? undefined : next)
+  const hasWindow = leaf.between !== undefined || leaf.preset !== undefined
+  return build(leaf.between, everyDay && hasWindow ? undefined : next, leaf.preset)
 }
 
 /** The whole day, or a window. Dropping the window keeps the days explicit: the row needs one of the two. */
 export function withWindow(leaf: TimeIsLeaf, on: boolean): TimeIsLeaf {
+  // The row edits a window by its ends: a day/night preset gives way to them.
   if (on) {
     const everyDay = leaf.days !== undefined && leaf.days.length === ALL_WEEKDAYS.length
     return build(leaf.between ?? DEFAULT_WINDOW, everyDay ? undefined : leaf.days)

@@ -111,3 +111,21 @@ describe('recipeSiteError — the save-time refusal the editor shows', () => {
     expect(recipeSiteError(recipe, undefined)).toBeNull()
   })
 })
+
+describe('a day/night preset leaf', () => {
+  const presetNight: TimeIsLeaf = { kind: 'time-is', preset: 'night' }
+
+  it('keeps the preset when its days are edited, and stays legal', () => {
+    const weekdaysOnly = toggleDay(toggleDay(presetNight, 'sat'), 'sun')
+    expect(weekdaysOnly.preset).toBe('night')
+    expect(weekdaysOnly.days).toEqual(['mon', 'tue', 'wed', 'thu', 'fri'])
+    expect(AutomationWhenSchema.safeParse(weekdaysOnly).success).toBe(true)
+    const back = toggleDay(toggleDay(weekdaysOnly, 'sat'), 'sun')
+    expect(back).toEqual(presetNight)
+  })
+
+  it('gives way to a window once the row edits one', () => {
+    expect(withWindow(presetNight, true).preset).toBeUndefined()
+    expect(withWindow(presetNight, false).preset).toBeUndefined()
+  })
+})

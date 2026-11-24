@@ -85,3 +85,21 @@ describe('recipeSiteIssues', () => {
     expect(recipeSiteIssues(recipe, WITH_LOCATION)).toEqual([])
   })
 })
+
+describe('a day or night preset leaf is a sun window', () => {
+  const presetNight: AutomationWhen = { kind: 'time-is', preset: 'night' }
+  const presetDay: AutomationWhen = { kind: 'time-is', preset: 'day', days: ['mon'] }
+
+  it.each([
+    ['night', presetNight],
+    ['day', presetDay],
+  ])('refuses the %s preset on a site with no location, like a sun between', (_name, leaf) => {
+    const issues = whenSiteIssues({ kind: 'all', children: [button, leaf] }, NO_LOCATION)
+    expect(issues.map((i) => i.path)).toEqual(['when.1.between.from', 'when.1.between.to'])
+    expect(issues[0]).toMatchObject({ reason: 'sun-needs-site-location' })
+  })
+
+  it('accepts a preset once the site has a location', () => {
+    expect(whenSiteIssues(presetNight, WITH_LOCATION)).toEqual([])
+  })
+})

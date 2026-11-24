@@ -78,3 +78,15 @@ describe('TimeIsFields', () => {
     expect(screen.getByTestId('time-is-wraps')).toBeTruthy()
   })
 })
+
+describe('TimeIsFields — a preset leaf', () => {
+  it('shows Nighttime, not "The whole day", and keeps the preset when a day is pressed', () => {
+    const seen: TimeIsLeaf[] = []
+    render(<Harness initial={{ kind: 'time-is', preset: 'night' }} seen={seen} />)
+    expect(screen.getByRole('combobox', { name: 'Time of day' })).toHaveProperty('value', 'preset')
+    expect(screen.getByText('Nighttime (sunset to sunrise)')).toBeTruthy()
+    expect(screen.queryByTestId('time-is-from')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'sat' }))
+    expect(seen[0]?.preset).toBe('night')
+  })
+})

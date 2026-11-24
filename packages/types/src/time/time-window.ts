@@ -78,8 +78,8 @@ const PRESET_RANGE: Readonly<Record<TimeWindowPreset, { from: TimeSpec; to: Time
   day: { from: SUNRISE, to: SUNSET },
 }
 
-/** The window with its preset expanded into a `between` range. */
-function resolved(window: TimeWindow): TimeWindow {
+/** The window with its preset expanded into a `between` range (both ends are sun events). */
+export function expandTimeWindowPreset(window: TimeWindow): TimeWindow {
   if (window.preset === undefined) return window
   return {
     ...(window.days === undefined ? {} : { days: window.days }),
@@ -148,7 +148,7 @@ export function judgeTimeWindow(
   nowMs: number,
   site: TimeSite,
 ): TimeWindowJudgement {
-  const window = resolved(rawWindow)
+  const window = expandTimeWindowPreset(rawWindow)
   const blocked = unresolvable(window, site)
   if (blocked !== null) {
     return {

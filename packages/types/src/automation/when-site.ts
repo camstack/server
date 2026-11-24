@@ -10,6 +10,7 @@ import {
   type TimeSpecRefusal,
   validateTimeSpecForSite,
 } from '../time/time-spec.js'
+import { expandTimeWindowPreset } from '../time/time-window.js'
 import { type AutomationRecipe, stepConditionsOf } from './recipe.js'
 import { type AutomationWhen, forEachLeaf } from './when.js'
 
@@ -32,9 +33,12 @@ export function whenSiteIssues(
   forEachLeaf(
     when,
     (leaf, path) => {
-      if (leaf.kind !== 'time-is' || leaf.between === undefined) return
+      if (leaf.kind !== 'time-is') return
+      // A preset is a sun window: judged as the range it expands to.
+      const between = expandTimeWindowPreset(leaf).between
+      if (between === undefined) return
       for (const end of WINDOW_ENDS) {
-        const checked = validateTimeSpecForSite(leaf.between[end], reading)
+        const checked = validateTimeSpecForSite(between[end], reading)
         if (!checked.ok) {
           issues.push({
             path: `${path}.between.${end}`,

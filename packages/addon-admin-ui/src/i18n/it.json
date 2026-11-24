@@ -7003,7 +7003,11 @@
       "from": "Da",
       "to": "A",
       "wraps": "Questa finestra termina il giorno dopo. I giorni sono quelli in cui inizia.",
-      "noDays": "Scegli almeno un giorno."
+      "noDays": "Scegli almeno un giorno.",
+      "preset": {
+        "day": "Giorno (dall'alba al tramonto)",
+        "night": "Notte (dal tramonto all'alba)"
+      }
     },
     "triggeredBy": {
       "triggers": "Avviata da",

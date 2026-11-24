@@ -116,8 +116,21 @@ export function TimeIsFields({ leaf, onChange }: TimeIsFieldsProps) {
           <Select
             wrapperClassName="relative w-40"
             aria-label={t('automation.timeIs.window', 'Time of day')}
-            value={between === undefined ? 'whole-day' : 'between'}
+            value={
+              leaf.preset !== undefined ? 'preset' : between === undefined ? 'whole-day' : 'between'
+            }
             options={[
+              ...(leaf.preset === undefined
+                ? []
+                : [
+                    {
+                      value: 'preset',
+                      label:
+                        leaf.preset === 'night'
+                          ? t('automation.timeIs.preset.night', 'Nighttime (sunset to sunrise)')
+                          : t('automation.timeIs.preset.day', 'Daytime (sunrise to sunset)'),
+                    },
+                  ]),
               {
                 value: 'between',
                 label: t('automation.timeIs.between', 'Between two times'),
@@ -127,7 +140,10 @@ export function TimeIsFields({ leaf, onChange }: TimeIsFieldsProps) {
                 label: t('automation.timeIs.wholeDay', 'The whole day'),
               },
             ]}
-            onChange={(e) => onChange(withWindow(leaf, e.target.value === 'between'))}
+            onChange={(e) => {
+              if (e.target.value !== 'preset')
+                onChange(withWindow(leaf, e.target.value === 'between'))
+            }}
           />
         </label>
         {between !== undefined && (

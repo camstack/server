@@ -190,3 +190,31 @@ describe('TimeWindowSchema', () => {
     expect(TimeWindowSchema.safeParse(value).success).toBe(true)
   })
 })
+
+describe('night and day presets across a DST change (Europe/Berlin)', () => {
+  const BERLIN: TimeSite = { lat: 52.52, lon: 13.405, timeZone: 'Europe/Berlin' }
+
+  it.each([
+    // spring-forward 2026-03-29: sunrise ~06:35 CEST (04:35Z), sunset ~19:25 CEST (17:25Z)
+    ['spring: 01:30Z (night, before the jump)', '2026-03-29T01:30:00Z', true],
+    ['spring: 03:00Z (05:00 CEST, still night)', '2026-03-29T03:00:00Z', true],
+    ['spring: 12:00Z (day)', '2026-03-29T12:00:00Z', false],
+    ['spring: 19:00Z (21:00 CEST, night)', '2026-03-29T19:00:00Z', true],
+    // fall-back 2026-10-25: both 02:30 hours are inside the night; sunrise ~07:25 CET, sunset ~16:55 CET
+    ['fall: 00:30Z (02:30 CEST, first pass)', '2026-10-25T00:30:00Z', true],
+    ['fall: 01:30Z (02:30 CET, second pass)', '2026-10-25T01:30:00Z', true],
+    ['fall: 10:00Z (day)', '2026-10-25T10:00:00Z', false],
+    ['fall: 17:30Z (night)', '2026-10-25T17:30:00Z', true],
+  ])('night preset, %s', (_name, iso, inside) => {
+    expect(isWithinTimeWindow(NIGHT_WINDOW, at(iso), BERLIN)).toBe(inside)
+    expect(isWithinTimeWindow(DAY_WINDOW, at(iso), BERLIN)).toBe(!inside)
+  })
+
+  it('reports a future boundary across the change', () => {
+    for (const iso of ['2026-03-29T01:30:00Z', '2026-10-25T01:30:00Z']) {
+      const next = judgeTimeWindow(NIGHT_WINDOW, at(iso), BERLIN).nextChangeAtMs
+      expect(next).not.toBeNull()
+      expect(next ?? 0).toBeGreaterThan(at(iso))
+    }
+  })
+})

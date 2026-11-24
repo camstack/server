@@ -6928,7 +6928,11 @@
       "from": "From",
       "to": "To",
       "wraps": "This window ends the next day. The days are the days it starts on.",
-      "noDays": "Pick at least one day."
+      "noDays": "Pick at least one day.",
+      "preset": {
+        "day": "Daytime (sunrise to sunset)",
+        "night": "Nighttime (sunset to sunrise)"
+      }
     },
     "triggeredBy": {
       "triggers": "Started by",
