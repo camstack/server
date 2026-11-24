@@ -58,6 +58,7 @@ export type DiscoveredChildDevice = {
     model?: string
     serialNumber?: string
     uid?: string
+    mac?: string
     rtspChannel?: number
     isBattery?: boolean
     isDoorbell?: boolean
@@ -92,6 +93,9 @@ export const DiscoveredChildDeviceSchema: z.ZodType<DiscoveredChildDevice> = z.l
         model: z.string().optional(),
         serialNumber: z.string().optional(),
         uid: z.string().optional(),
+        /** The device's hardware MAC, any separator or case. The Add device list matches it to a
+         *  scan hit's `sourceInfo.uniqueId`, so one physical device is one row. */
+        mac: z.string().optional(),
         /** Reolink: 0-based channel index inside the parent NVR. */
         rtspChannel: z.number().int().nonnegative().optional(),
         isBattery: z.boolean().optional(),

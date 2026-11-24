@@ -15,6 +15,8 @@ export interface EspDiscoveredBoard {
   readonly id: string
   /** The board announced that its API is encrypted (mDNS TXT `api_encryption`): it needs a key. */
   readonly encrypted: boolean
+  /** The board's MAC from the mDNS TXT `mac` record (12 hex digits); empty when it did not announce one. */
+  readonly mac: string
 }
 
 export const ESPHOME_MDNS_SERVICE = '_esphomelib._tcp'
@@ -44,6 +46,7 @@ export function boardsFromHits(hits: readonly DiscoveryHit[]): readonly EspDisco
       name: mdns.instance.split('._')[0] ?? mdns.instance,
       id: mdns.host.length > 0 ? stripLocal(mdns.host) : hit.host,
       encrypted: (mdns.txt['api_encryption'] ?? '').length > 0,
+      mac: (mdns.txt['mac'] ?? '').trim().toLowerCase(),
     })
   }
   return out
@@ -76,6 +79,9 @@ export function boardCandidates(
     suggestedName: board.name,
     prefilledConfig: { host: board.host, port: board.port || ESPHOME_DEFAULT_PORT },
     selectable: true,
+    ...(board.mac.length > 0
+      ? { sourceInfo: { id: board.id, system: 'esphome', uniqueId: board.mac } }
+      : {}),
     ...(board.encrypted ? { needsParams: ['encryptionKey'] } : {}),
   }))
 }

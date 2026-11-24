@@ -13,6 +13,7 @@ import type { DiscoveredChildDevice } from '@camstack/types'
 import { DeviceType } from '@camstack/types'
 import {
   Button,
+  CollapsibleCard,
   DialogBody,
   DialogFooter,
   useDeviceManagerAdoptionListCandidates,
@@ -161,37 +162,59 @@ export function ScanControls({
   readonly listed: number
 }): ReactElement {
   const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
+  const status = scan.scanning
+    ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
+    : listed > 0
+      ? t('integrations.addDeviceModal.found', {
+          defaultValue_one: '{{count}} device found',
+          defaultValue_other: '{{count}} devices found',
+          count: listed,
+        })
+      : ''
   return (
-    <div className="shrink-0 space-y-3 pb-3" data-testid="scan-controls">
-      <ScanSubnetEditor />
-      {scan.scanParamsSchema && (
-        <FormBuilder
-          schema={scan.scanParamsSchema}
-          values={scan.scanParams}
-          onChange={scan.setScanParams}
-        />
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-foreground-subtle">
-          {scan.scanning
-            ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
-            : listed > 0
-              ? t('integrations.addDeviceModal.found', {
-                  defaultValue_one: '{{count}} device found',
-                  defaultValue_other: '{{count}} devices found',
-                  count: listed,
-                })
-              : ''}
-        </p>
-        <Button variant="outline" size="sm" onClick={scan.runScan} disabled={scan.scanning}>
-          {scan.scanning ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Radar className="h-3.5 w-3.5" />
+    <div className="shrink-0 space-y-2 pb-3" data-testid="scan-controls">
+      <CollapsibleCard
+        expanded={expanded}
+        onExpandedChange={setExpanded}
+        header={
+          <>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">
+                {t('integrations.addDeviceModal.scanSection', 'Network scan')}
+              </p>
+              {status !== '' && <p className="truncate text-xs text-foreground-subtle">{status}</p>}
+            </div>
+            {/* The header toggles the card; the button must not. */}
+            <span
+              role="presentation"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <Button variant="outline" size="sm" onClick={scan.runScan} disabled={scan.scanning}>
+                {scan.scanning ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Radar className="h-3.5 w-3.5" />
+                )}
+                {t('integrations.addDeviceModal.scanNow', 'Scan now')}
+              </Button>
+            </span>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <ScanSubnetEditor />
+          {scan.scanParamsSchema && (
+            <FormBuilder
+              schema={scan.scanParamsSchema}
+              values={scan.scanParams}
+              onChange={scan.setScanParams}
+            />
           )}
-          {t('integrations.addDeviceModal.scanNow', 'Scan now')}
-        </Button>
-      </div>
+        </div>
+      </CollapsibleCard>
+      {/* Outside the card: a failure stays visible while the section is collapsed. */}
       {scan.scanFailed && (
         <ErrorLine
           text={t('integrations.addDeviceModal.scanFailed', 'The scan failed. Try again.')}
@@ -333,7 +356,10 @@ export function CandidateParamsStep({
   readonly embedded: boolean
 }): ReactElement {
   const { t } = useTranslation()
-  const typeQuery = useDeviceManagerProviderCreationType({ addonId, integrationId })
+  const typeQuery = useDeviceManagerProviderCreationType({
+    addonId,
+    integrationId,
+  })
   const type = typeQuery.data?.deviceType ?? null
   const schemaQuery = useDeviceManagerGetCreationSchema(
     { addonId, integrationId, type: type ?? DeviceType.Camera },

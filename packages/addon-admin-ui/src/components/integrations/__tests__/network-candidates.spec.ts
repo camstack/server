@@ -4,7 +4,12 @@ import { mergeNetworkCandidates, type ScanHit } from '../network-candidates'
 const NONE = new Set<string>()
 
 function hit(stableId: string, host: string, extra: Partial<ScanHit> = {}): ScanHit {
-  return { stableId, suggestedName: stableId, prefilledConfig: { host }, ...extra }
+  return {
+    stableId,
+    suggestedName: stableId,
+    prefilledConfig: { host },
+    ...extra,
+  }
 }
 
 describe('mergeNetworkCandidates', () => {
@@ -58,7 +63,10 @@ describe('mergeNetworkCandidates', () => {
       adoption: [{ childNativeId: 'c', name: 'c', alreadyAdopted: true }],
       scan: [
         hit('a', '192.0.2.10'),
-        hit('b', '192.0.2.11', { alreadyOnboarded: true, onboardedName: 'Garage' }),
+        hit('b', '192.0.2.11', {
+          alreadyOnboarded: true,
+          onboardedName: 'Garage',
+        }),
       ],
       proposals: [],
       existingStableIds: new Set(['a']),
@@ -94,8 +102,18 @@ describe('mergeNetworkCandidates', () => {
   it('carries the hub device an adopted row is, from the provider or from the hub list', () => {
     const rows = mergeNetworkCandidates({
       adoption: [
-        { childNativeId: 'a', name: 'a', alreadyAdopted: true, adoptedDeviceId: 11 },
-        { childNativeId: 'n', name: 'n', alreadyAdopted: false, adoptedDeviceId: null },
+        {
+          childNativeId: 'a',
+          name: 'a',
+          alreadyAdopted: true,
+          adoptedDeviceId: 11,
+        },
+        {
+          childNativeId: 'n',
+          name: 'n',
+          alreadyAdopted: false,
+          adoptedDeviceId: null,
+        },
       ],
       scan: [hit('held', '192.0.2.50')],
       proposals: [],
@@ -106,5 +124,56 @@ describe('mergeNetworkCandidates', () => {
     expect(byKey.get('a')?.deviceId).toBe(11)
     expect(byKey.get('n')?.deviceId).toBeNull()
     expect(byKey.get('held')?.deviceId).toBe(22)
+  })
+  it('merges adopted boards with the scan hits that name them differently, by the MAC both carry', () => {
+    // Live shapes: the adoption side keys on the broker id, the scan on `esphome:<mDNS name>`.
+    const adopted = [
+      {
+        childNativeId: 'esp_3aa912f8',
+        name: 'switch-luci-veranda-2',
+        mac: 'AA:BB:CC:3A:A9:12',
+        alreadyAdopted: true,
+        adoptedDeviceId: 5978,
+      },
+      {
+        childNativeId: 'esp_1b1b1213',
+        name: 'switch-luci-veranda-1',
+        mac: 'AA:BB:CC:1B:1B:12',
+        alreadyAdopted: true,
+        adoptedDeviceId: 5969,
+      },
+      {
+        childNativeId: 'ir-transmitter-salone',
+        name: 'ir-transmitter-salone',
+        mac: 'AA:BB:CC:00:00:51',
+        alreadyAdopted: true,
+        adoptedDeviceId: 5394,
+      },
+    ]
+    const found = (name: string, ip: string, mac: string): ScanHit =>
+      hit(`esphome:${name}`, ip, { sourceInfo: { uniqueId: mac } })
+    const rows = mergeNetworkCandidates({
+      adoption: adopted,
+      scan: [
+        found('switch-luci-veranda-2', '192.0.2.62', 'aabbcc3aa912'),
+        found('switch-luci-veranda-1', '192.0.2.61', 'aabbcc1b1b12'),
+        found('ir-transmitter-salone', '192.0.2.63', 'aabbcc000051'),
+      ],
+      proposals: [],
+      existingStableIds: NONE,
+    })
+    expect(rows).toHaveLength(3)
+    expect(rows.every((r) => r.sources.join() === 'adoption,scan' && r.alreadyAdded)).toBe(true)
+    expect(rows.find((r) => r.adoptionId === 'esp_3aa912f8')?.deviceId).toBe(5978)
+  })
+
+  it('never merges on a value that is not a MAC', () => {
+    const rows = mergeNetworkCandidates({
+      adoption: [{ childNativeId: 'a', name: 'a', mac: 'not-a-mac' }],
+      scan: [hit('b', '192.0.2.1', { sourceInfo: { uniqueId: 'not-a-mac' } })],
+      proposals: [],
+      existingStableIds: NONE,
+    })
+    expect(rows).toHaveLength(2)
   })
 })

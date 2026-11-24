@@ -1860,7 +1860,7 @@
     "adoptNoCandidates": "No candidate devices found.",
     "adoptRefresh": "Refresh",
     "adoptRefreshFailed": "Could not discover devices.",
-    "adoptRefreshTitle": "Re-scan Home Assistant for devices",
+    "adoptRefreshTitle": "Reload this integration's device list (does not scan the network)",
     "adoptSearch": "Search candidates…",
     "alreadyAdded": "Already added",
     "alreadyAddedHint": "Already added as \"{{name}}\" — re-adding would overwrite its settings.",
@@ -1949,7 +1949,8 @@
       "scanUnavailable": "The network scan is unavailable for this integration: {{reason}}",
       "openDevice": "Open device",
       "proposalsFailed": "The devices found in the background could not be read. Scan now to look again.",
-      "devicesFailed": "The hub's device list could not be read, so Add is unavailable. Reopen this window to try again."
+      "devicesFailed": "The hub's device list could not be read, so Add is unavailable. Reopen this window to try again.",
+      "scanSection": "Network scan"
     },
     "discoveryProposals": {
       "title": "Found in the background",

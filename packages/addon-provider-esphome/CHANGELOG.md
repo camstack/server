@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ESPHome boards announce their MAC on scan results and adoption candidates, so a found board that is already adopted shows once
+
 ## [0.1.28] - 2026-11-21
 
 ### Changed

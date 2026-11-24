@@ -108,7 +108,10 @@ function adoptedStateOf(item: ListItem, added: ReadonlySet<string>): AdoptedStat
   const { candidate, found } = item
   const adopted =
     candidate.alreadyAdopted || (found !== null && (found.alreadyAdded || added.has(found.key)))
-  return { adopted, deviceId: candidate.adoptedDeviceId ?? found?.deviceId ?? null }
+  return {
+    adopted,
+    deviceId: candidate.adoptedDeviceId ?? found?.deviceId ?? null,
+  }
 }
 
 function itemKey(item: ListItem): string {
@@ -203,7 +206,10 @@ export function AdoptDevicesPanel({
   // integration's provider — not the device-adoption singleton shadow). A
   // provider that declares none — or exactly one — is treated as the implicit
   // single `devices` filter, so the selector is hidden and the look is unchanged.
-  const filtersQuery = useDeviceManagerAdoptionListCandidateFilters({ addonId, integrationId })
+  const filtersQuery = useDeviceManagerAdoptionListCandidateFilters({
+    addonId,
+    integrationId,
+  })
   const declaredFilters = filtersQuery.data?.filters
   const filters: readonly AdoptionFilter[] =
     declaredFilters && declaredFilters.length > 0 ? declaredFilters : [implicitDefaultFilter(t)]
@@ -297,6 +303,7 @@ export function AdoptDevicesPanel({
         alreadyAdopted: c.alreadyAdopted,
         adoptedDeviceId: c.adoptedDeviceId,
         parentStableId: c.parentStableId,
+        mac: c.metadata.mac,
       })),
     [candidates],
   )
@@ -493,7 +500,9 @@ export function AdoptDevicesPanel({
         : scan.scanAnswered
           ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
           : t('integrations.addDeviceModal.scanHint', 'Scan the network to find devices to add.')
-      : t('integrations.adoptNoCandidates', { defaultValue: 'No candidate devices found.' })
+      : t('integrations.adoptNoCandidates', {
+          defaultValue: 'No candidate devices found.',
+        })
 
   // A found device that needs a value the provider cannot guess opens its creation form in place
   // of the list, prefilled with what was found.
@@ -566,7 +575,9 @@ export function AdoptDevicesPanel({
               item.kind === 'candidate' ? item.candidate.type : (item.row.hit?.type ?? null)
             }
             filterOptions={allDeviceTypeFilterOptions(uiText)}
-            filterLabel={t('integrations.adoptColType', { defaultValue: 'Type' })}
+            filterLabel={t('integrations.adoptColType', {
+              defaultValue: 'Type',
+            })}
             isLoading={listQuery.isLoading || (isRefreshing && candidates.length === 0)}
             searchPlaceholder={t('integrations.adoptSearch', {
               defaultValue: 'Search candidates…',
@@ -579,7 +590,7 @@ export function AdoptDevicesPanel({
                 onClick={doRefresh}
                 disabled={isRefreshing}
                 title={t('integrations.adoptRefreshTitle', {
-                  defaultValue: 'Re-scan Home Assistant for devices',
+                  defaultValue: "Reload this integration's device list (does not scan the network)",
                 })}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-60 shrink-0"
               >
@@ -595,7 +606,9 @@ export function AdoptDevicesPanel({
                 // integrations list's `name` column. The candidate-specific
                 // entity count rides next to the chevron.
                 key: 'name',
-                header: t('integrations.adoptColName', { defaultValue: 'Name' }),
+                header: t('integrations.adoptColName', {
+                  defaultValue: 'Name',
+                }),
                 // `max-w-0` lets the cell shrink to its column so a long name
                 // truncates instead of pushing the selection column off-screen.
                 headerClassName: 'w-full sm:w-[55%]',
@@ -640,7 +653,9 @@ export function AdoptDevicesPanel({
               {
                 // Type: icon + label from the exhaustive device-type map.
                 key: 'type',
-                header: t('integrations.adoptColType', { defaultValue: 'Type' }),
+                header: t('integrations.adoptColType', {
+                  defaultValue: 'Type',
+                }),
                 headerClassName: 'w-[30%] hidden sm:table-cell',
                 cellClassName: 'hidden sm:table-cell',
                 cell: (item) => {

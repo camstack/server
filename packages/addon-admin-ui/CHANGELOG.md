@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add device: the network scan section is collapsed with Scan now in its header, errors stay visible, a scanned device matches its adopted entry by MAC, and Refresh says it only reloads the list
+
 ## [1.2.742] - 2026-11-24
 
 ### Changed

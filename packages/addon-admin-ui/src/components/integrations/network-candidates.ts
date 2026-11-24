@@ -8,7 +8,7 @@
  *
  * Two entries are the same device when they share ANY identity: the scan
  * `stableId`, the adoption `childNativeId` (the provider uses the same string
- * for both on purpose) or the host they were seen at. A row that merged several
+ * for both on purpose) the hardware MAC (`mac:`), or the host they were seen at. A row that merged several
  * sources keeps the scan hit — the only one `deviceManager.adoptDevice` takes.
  */
 
@@ -23,6 +23,8 @@ export interface ScanHit {
   readonly onboardedDeviceId?: number | undefined
   readonly onboardedName?: string | undefined
   readonly setupIntegration?: boolean | undefined
+  /** Upstream identity the scan read; `uniqueId` is the device's MAC when the provider knows it. */
+  readonly sourceInfo?: { readonly uniqueId?: string | undefined } | undefined
   /** Parameters the provider cannot guess; the row asks for them before adding. */
   readonly needsParams?: readonly string[] | undefined
 }
@@ -35,6 +37,8 @@ export interface AdoptionEntry {
   /** The hub device an adopted entry became, when the provider says so. */
   readonly adoptedDeviceId?: number | null | undefined
   readonly parentStableId?: string | undefined
+  /** The device's hardware MAC (adoption `metadata.mac`), any separator or case. */
+  readonly mac?: string | undefined
 }
 
 export interface ProposalEntry<H extends ScanHit = ScanHit> {
@@ -94,6 +98,14 @@ function hostOf(config: Readonly<Record<string, unknown>>): string | null {
   return typeof host === 'string' && host.length > 0 ? host.toLowerCase() : null
 }
 
+/** `mac:<12 hex>` for a MAC in any notation; nothing for a value that is not one. */
+function macIdentity(mac: string | undefined): readonly string[] {
+  const hex = (mac ?? '').toLowerCase().replace(/[^0-9a-f]/g, '')
+  return hex.length === 12 && (mac ?? '').replace(/[0-9a-fA-F:.-]/g, '').length === 0
+    ? [`mac:${hex}`]
+    : []
+}
+
 function hostIdentity(host: string | null): readonly string[] {
   return host === null ? [] : [`host:${host}`]
 }
@@ -120,7 +132,7 @@ export function mergeNetworkCandidates<H extends ScanHit>(
   }
 
   for (const entry of input.adoption) {
-    const draft = place([entry.childNativeId], () => ({
+    const draft = place([entry.childNativeId, ...macIdentity(entry.mac)], () => ({
       key: entry.childNativeId,
       ids: new Set(),
       name: entry.name,
@@ -143,21 +155,24 @@ export function mergeNetworkCandidates<H extends ScanHit>(
 
   const absorb = (hit: H, source: CandidateSource, proposalId: string | null): void => {
     const host = hostOf(hit.prefilledConfig)
-    const draft = place([hit.stableId, ...hostIdentity(host)], () => ({
-      key: hit.stableId,
-      ids: new Set(),
-      name: hit.suggestedName,
-      address: host,
-      sources: [],
-      hit: null,
-      adoptionId: null,
-      proposalId: null,
-      alreadyAdded: false,
-      addedName: null,
-      deviceId: null,
-      needsParams: [],
-      parentId: null,
-    }))
+    const draft = place(
+      [hit.stableId, ...macIdentity(hit.sourceInfo?.uniqueId), ...hostIdentity(host)],
+      () => ({
+        key: hit.stableId,
+        ids: new Set(),
+        name: hit.suggestedName,
+        address: host,
+        sources: [],
+        hit: null,
+        adoptionId: null,
+        proposalId: null,
+        alreadyAdded: false,
+        addedName: null,
+        deviceId: null,
+        needsParams: [],
+        parentId: null,
+      }),
+    )
     addSource(draft, source)
     // A scan hit is fresher than a proposal: it wins when both exist.
     if (draft.hit === null || source === 'scan') draft.hit = hit

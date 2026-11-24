@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- device-adoption candidate metadata carries an optional mac, matched against a scan hit's sourceInfo.uniqueId
+
 ## [1.2.629] - 2026-11-24
 
 ### Changed

@@ -105,6 +105,7 @@ export function buildEspAdoptionProvider(deps: EspAdoptionProviderDeps): IDevice
       metadata: {
         model: board.model,
         manufacturer: 'ESPHome',
+        ...(board.macAddress.length > 0 ? { mac: board.macAddress } : {}),
       },
       alreadyAdopted: adoptedId !== null,
       adoptedDeviceId: adoptedId,

@@ -1860,7 +1860,7 @@
     "adoptNoCandidates": "Nessun dispositivo candidato trovato.",
     "adoptRefresh": "Aggiorna",
     "adoptRefreshFailed": "Impossibile rilevare i dispositivi.",
-    "adoptRefreshTitle": "Riesegui la scansione dei dispositivi di Home Assistant",
+    "adoptRefreshTitle": "Ricarica l'elenco dispositivi dell'integrazione (non esegue la scansione della rete)",
     "adoptSearch": "Cerca candidati…",
     "alreadyAdded": "Già aggiunto",
     "alreadyAddedHint": "Già aggiunto come \"{{name}}\" — aggiungerlo di nuovo ne sovrascriverebbe le impostazioni.",
@@ -1949,7 +1949,8 @@
       "scanUnavailable": "La scansione di rete non è disponibile per questa integrazione: {{reason}}",
       "openDevice": "Apri il dispositivo",
       "proposalsFailed": "Non è stato possibile leggere i dispositivi trovati in background. Avvia una scansione per riprovare.",
-      "devicesFailed": "Non è stato possibile leggere l'elenco dei dispositivi dell'hub, quindi Aggiungi non è disponibile. Riapri questa finestra per riprovare."
+      "devicesFailed": "Non è stato possibile leggere l'elenco dei dispositivi dell'hub, quindi Aggiungi non è disponibile. Riapri questa finestra per riprovare.",
+      "scanSection": "Scansione di rete"
     },
     "discoveryProposals": {
       "title": "Trovati in background",

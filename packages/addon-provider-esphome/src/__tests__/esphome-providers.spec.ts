@@ -69,6 +69,7 @@ describe('adoption provider', () => {
       'power-meter',
     ])
     expect(candidate?.alreadyAdopted).toBe(false)
+    expect(candidate?.metadata.mac).toBe('AA:BB:CC:00:00:01')
   })
 
   it('never offers a board that belongs to another integration', async () => {

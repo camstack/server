@@ -253,7 +253,7 @@ describe('AddDeviceModal', () => {
     renderModal()
     expect(screen.queryByRole('tab', { name: 'Enter parameters' })).toBeNull()
     expect(screen.queryByRole('tab')).toBeNull()
-    expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Scan now' })).toBeTruthy()
   })
 
   it('hides the manual tab for the integration the provider refuses it for, keeps it for another', () => {
@@ -296,10 +296,19 @@ describe('AddDeviceModal', () => {
   it('an adoption integration that can scan keeps the whole adopt surface and adds the scan', () => {
     state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     renderModal({ kind: 'device-adoption', canScan: true })
-    expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Scan now' })).toBeTruthy()
     expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /refresh/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /add selected/i })).toBeTruthy()
+  })
+
+  it('keeps the scan parameters collapsed, with Scan now and a failure still in view', () => {
+    state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
+    state.devicesAnswer = 'failed'
+    renderModal({ kind: 'device-adoption', canScan: true })
+    expect(screen.getByRole('button', { name: 'Scan now' })).toBeTruthy()
+    expect(screen.queryByTestId('scan-subnets')).toBeNull()
+    expect(screen.getByText(/device list could not be read/i)).toBeTruthy()
   })
 
   describe('one list for an adoption integration that can scan', () => {
@@ -436,20 +445,20 @@ describe('AddDeviceModal', () => {
     state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     const view = renderModal({ kind: 'device-adoption', canScan: null })
     expect(screen.queryByPlaceholderText(/search candidates/i)).toBeNull()
-    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Scan now' })).toBeNull()
     view.update({ kind: 'device-adoption', canScan: true })
     expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
     const search = screen.getByPlaceholderText(/search candidates/i)
     view.update({ kind: 'device-adoption', canScan: true })
     expect(screen.getByPlaceholderText(/search candidates/i)).toBe(search)
-    expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Scan now' })).toBeTruthy()
   })
 
   it('an adoption integration without a scan keeps the adoption list and no scan', () => {
     state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     renderModal({ kind: 'device-adoption', canScan: false })
     expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Scan now' })).toBeNull()
     expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
   })
 
@@ -479,7 +488,7 @@ describe('AddDeviceModal', () => {
       state.proposals = [{ id: 'p1', addonId: 'provider-esphome', candidate: console_ }]
       state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
       renderModal({ kind: 'device-adoption', canScan: false })
-      expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Scan now' })).toBeNull()
       expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
       expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
     })
@@ -489,7 +498,7 @@ describe('AddDeviceModal', () => {
     state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     renderModal({ kind: 'device-adoption', canScan: false, scanFailure: 'describe refused' })
     expect(screen.getByText(/network scan is unavailable.*describe refused/i)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Scan now' })).toBeNull()
     expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
   })
 

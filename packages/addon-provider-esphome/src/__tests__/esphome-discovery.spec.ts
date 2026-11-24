@@ -29,7 +29,7 @@ describe('ESPHome mDNS discovery', () => {
         boardHit('192.0.2.30', 'kitchen._esphomelib._tcp.local', 'Kitchen.local', 6054),
       ]),
     ).toEqual([
-      { host: '192.0.2.30', port: 6054, name: 'kitchen', id: 'kitchen', encrypted: false },
+      { host: '192.0.2.30', port: 6054, name: 'kitchen', id: 'kitchen', encrypted: false, mac: '' },
     ])
   })
 
@@ -54,6 +54,21 @@ describe('ESPHome mDNS discovery', () => {
     expect(boardCandidates([hit], ['192.0.2.30'])).toEqual([])
   })
 
+  it('carries the announced MAC as the hit identity, so a scan hit matches its adopted board', () => {
+    const hit = boardHit(
+      '192.0.2.50',
+      'switch-luci-veranda-2._esphomelib._tcp.local',
+      'switch-luci-veranda-2.local',
+      6053,
+      { mac: '3AA912F8AB01' },
+    )
+    expect(boardCandidates([hit], [])[0]?.sourceInfo).toEqual({
+      id: 'switch-luci-veranda-2',
+      system: 'esphome',
+      uniqueId: '3aa912f8ab01',
+    })
+  })
+
   it('asks for the key of an encrypted board only', () => {
     const encrypted = boardHit('192.0.2.40', 'attic', 'attic.local', 6053, {
       api_encryption: 'Noise_NNpsk0_25519_ChaChaPoly_SHA256',
@@ -66,8 +81,8 @@ describe('ESPHome mDNS discovery', () => {
 
   it('does not propose a board that is already configured', () => {
     const found = [
-      { host: '10.0.0.1', port: 6053, name: 'a', id: 'a', encrypted: false },
-      { host: '10.0.0.2', port: 6053, name: 'b', id: 'b', encrypted: false },
+      { host: '10.0.0.1', port: 6053, name: 'a', id: 'a', encrypted: false, mac: '' },
+      { host: '10.0.0.2', port: 6053, name: 'b', id: 'b', encrypted: false, mac: '' },
     ]
     expect(proposeBoards(found, ['10.0.0.1']).map((b) => b.id)).toEqual(['b'])
     expect(proposeBoards(found, ['B.local']).map((b) => b.id)).toEqual(['a'])
