@@ -925,6 +925,8 @@ export async function connectReolinkHub(
     transport: connection.transport,
     ...(connection.uid ? { uid: connection.uid } : {}),
   })
+  // A hub is mains-powered: its dead general session is always recycled.
+  api.setGeneralSessionRecycling({ guard: () => true })
   await api.login()
   return api
 }

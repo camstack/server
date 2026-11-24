@@ -12246,6 +12246,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         this.isBattery = false
       }
 
+      // A powered camera's dead general session is recycled whenever it dies
+      // (the 30-min BCUDP holes, 3629). A battery camera keeps the library's
+      // own check, which refuses a recycle that would wake a sleeping camera.
+      if (!this.isBattery) api.setGeneralSessionRecycling({ guard: () => true })
+
       // Slice 9: start the periodic sleep-status poll for battery cams
       // so we catch missed sleeping/awake transitions from push events.
       if (this.isBattery) {
