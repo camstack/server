@@ -94,6 +94,9 @@ export const DEVICE_CARD_CSS: string = `
 @keyframes dc-axv{from{transform:rotateX(var(--dc-a0))}to{transform:rotateX(var(--dc-a1))}}
 .dc-heater[data-on="true"] .dc-heater-coil{animation:dc-pulse 2.4s ease-in-out infinite}
 @keyframes dc-pulse{50%{opacity:.55}}
+.dc-poe[data-on="true"] .dc-poe-led{animation:dc-poe-blink 1.1s steps(1,end) infinite}
+.dc-poe[data-on="true"] .dc-poe-led-b{animation-duration:.7s;animation-delay:.3s}
+@keyframes dc-poe-blink{50%{opacity:.15}}
 .dc-cover .dc-grip{cursor:grab;touch-action:none;outline:none}
 .dc-cover .dc-grip:focus-visible .dc-pill{stroke:currentColor;stroke-width:2}
 .dc-appl .dc-drum{transform-box:view-box;transform-origin:60px 74px}
@@ -156,5 +159,5 @@ export const DEVICE_CARD_CSS: string = `
 .dc-station-cups{transform-box:view-box;transform-origin:${STATION_CUP_HUB.x}px ${STATION_CUP_HUB.y}px}
 .dc-station[data-spin="true"] .dc-station-cups{animation:dc-spin var(--dc-station-period,1.6s) linear infinite}
 .dc-station-vane{transform-box:view-box;transform-origin:${STATION_VANE_PIVOT.x}px ${STATION_VANE_PIVOT.y}px;transform:rotate(var(--dc-station-bearing,0deg));transition:--dc-station-bearing .7s ease}
-@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *,.dc-station *,.dc-station{animation:none!important}.dc-station-vane{transition:none}}
+@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-poe *,.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *,.dc-station *,.dc-station{animation:none!important}.dc-station-vane{transition:none}}
 `

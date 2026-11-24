@@ -10,6 +10,8 @@ export interface PlugCardModel {
   readonly timer: SwitchTimerModel | null
   /** The switch's provider declares a native power cycle (`getOptions().supportsPowerCycle`). */
   readonly powerCycle: boolean
+  /** What the scene draws: a wall socket (default) or a LAN port (a PoE port device). */
+  readonly art?: 'socket' | 'port'
 }
 
 export interface PlugCardActions extends CardCommonActions, SwitchTimerActions {

@@ -102,3 +102,36 @@ export function plugPowerCycleFixtures(): readonly PlugFixture[] {
     },
   ]
 }
+
+/** A PoE port as the Cantina switch reports it: PoE on or off, no watts. */
+export function plugPoePortFixtures(): readonly PlugFixture[] {
+  const common: PlugCardModel['common'] = {
+    ...mockupCommon({
+      name: 'Cantina (porta 3)',
+      integration: 'UniFi',
+      watts: 0,
+      supplyName: '',
+      consumables: [],
+      remote: [],
+    }),
+    power: null,
+    battery: null,
+    supply: null,
+    consumables: null,
+    remote: null,
+  }
+  return [
+    {
+      id: 'poe-port-on',
+      caption: 'Porta PoE accesa',
+      orientation: 'vertical',
+      model: { common, on: true, since: '3 g', timer: null, powerCycle: false, art: 'port' },
+    },
+    {
+      id: 'poe-port-off',
+      caption: 'Porta PoE spenta',
+      orientation: 'vertical',
+      model: { common, on: false, since: '3 g', timer: null, powerCycle: false, art: 'port' },
+    },
+  ]
+}

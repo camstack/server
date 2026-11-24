@@ -61,6 +61,7 @@ import { lightFixtures } from '../../../../packages/ui-library/src/composites/de
 import { mediaFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/media'
 import {
   plugFixtures,
+  plugPoePortFixtures,
   plugPowerCycleFixtures,
 } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
@@ -432,6 +433,12 @@ export function DeviceCardPreview(): ReactElement {
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
               <ClimateCard model={f.model} actions={CLIMATE_ACTIONS} orientation={f.orientation} />
+            </Cell>
+          ))
+        ) : type === 'poe' ? (
+          plugPoePortFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={false}>
+              <PlugCard model={f.model} actions={PLUG_ACTIONS} orientation={f.orientation} />
             </Cell>
           ))
         ) : type === 'fault' ? (

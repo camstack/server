@@ -1,4 +1,6 @@
+import { DeviceRole } from '@camstack/types'
 import type { ReactElement } from 'react'
+import { useDeviceManagerGetDevice } from '../../../generated/system-hooks'
 import { PlugCard } from '../scenes/plug/PlugCard'
 import type { CardOrientation } from '../shell/model'
 import { useCardCommon } from './use-card-common'
@@ -28,6 +30,7 @@ export function ConnectedPlugCard({
   const card = useCardCommon({ deviceId, canActuate })
   const power = useSwitchPower({ deviceId, card })
   const cycle = usePowerCycle({ deviceId, card })
+  const role = useDeviceManagerGetDevice({ deviceId }).data?.role
   if (!power.bound || power.on === undefined) return null
   return (
     <PlugCard
@@ -39,6 +42,7 @@ export function ConnectedPlugCard({
         since: power.since,
         timer: power.timer,
         powerCycle: cycle.declared,
+        art: role === DeviceRole.PoePort ? 'port' : 'socket',
       }}
       actions={{
         ...card.actions,

@@ -2,6 +2,7 @@ import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { PlugIllustration } from '../../illustrations/PlugIllustration'
+import { PoePortIllustration } from '../../illustrations/PoePortIllustration'
 import { rowTimer } from '../../shell/bottom-rows'
 import { columnArmedButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
@@ -65,7 +66,11 @@ export function PlugCard({
             testId="dc-plug-power"
             onToggle={actions.onPower}
           >
-            <PlugIllustration on={on} className={SCENE_DRAWING_CLASS} />
+            {model.art === 'port' ? (
+              <PoePortIllustration on={on} className={SCENE_DRAWING_CLASS} />
+            ) : (
+              <PlugIllustration on={on} className={SCENE_DRAWING_CLASS} />
+            )}
           </ScenePower>
         ),
         bottom: model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })],

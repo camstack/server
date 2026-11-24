@@ -14815,6 +14815,27 @@
       ]
     },
     {
+      "name": "PoePortIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/PoePortIllustration.tsx",
+      "summary": "An RJ45 / LAN port seen from the front: the socket with its contact pins and the two link LEDs above it. The LEDs blink while the port is on and stay dark when it is off; reduced motion keeps them lit and still.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "Popover",
       "kind": "component",
       "area": "primitives",
