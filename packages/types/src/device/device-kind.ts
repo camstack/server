@@ -149,7 +149,8 @@ export interface DeviceKindGate {
  *
  * Fails open where the old type-only gate did: no `deviceTypes` (or an empty
  * list) applies to every device, and an unknown type never filters (a failed
- * meta read must not destroy work, D49). A type the cap's `deviceRoles` names
+ * meta read must not destroy work, D49). A cap that declares `bindsWhenDeviceHas`
+ * does NOT use this gate: `capAdmitsDevice` does, and it never fails open. A type the cap's `deviceRoles` names
  * is offered only to the roles listed there; an unknown role is NOT one of
  * them, so a `switch` whose role could not be read is not a heater.
  */

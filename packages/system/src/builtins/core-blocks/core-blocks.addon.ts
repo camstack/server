@@ -286,6 +286,9 @@ export class CoreBlocksAddon extends BaseAddon {
       const data = parseConfirmedStateChanged(event.data)
       if (data !== null) void timedRun.onDeviceState(data)
     })
+    this.subscribe({ category: EventCategory.DeviceBindingsChanged }, (event) => {
+      timedRun.bindingsChanged(event.data.deviceId)
+    })
     // ARMED, never awaited: the device registry answers only after boot.
     void armTimedRuns(timedRun, this.ctx.logger.child('timed-run'), {
       isDisposed: () => this.disposed,

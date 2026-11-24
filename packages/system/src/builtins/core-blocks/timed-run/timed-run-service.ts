@@ -98,6 +98,8 @@ export class TimedRunService implements ITimedRunProvider {
   private stopped = false
   /** Devices whose status has been published: a switch grafted after boot is not in the boot sweep. */
   private readonly announced = new Set<number>()
+  /** Devices the last read called not bound; cleared by `bindingsChanged`. */
+  private readonly notBound = new Set<number>()
 
   constructor(private readonly deps: TimedRunServiceDeps) {}
 
@@ -216,7 +218,13 @@ export class TimedRunService implements ITimedRunProvider {
 
   /** Feed one `DeviceStateChanged`: a manual off cancels the pending deadline. */
   async onDeviceState(state: ObservedDeviceState): Promise<void> {
-    await this.announceLateSwitch(state)
+    // The cancel comes first and never waits on a read: a failed announce must not
+    // leave a deadline armed after a manual off (D49).
+    await this.cancelOnManualOff(state)
+    await this.announceLateSwitchGuarded(state)
+  }
+
+  private async cancelOnManualOff(state: ObservedDeviceState): Promise<void> {
     const row = this.pending.get(state.deviceId)
     if (row === undefined) return
     const off =
@@ -235,11 +243,35 @@ export class TimedRunService implements ITimedRunProvider {
    * driver, D1097) is offered a timed run with no restart: the first time its switch
    * speaks, its status is published once, so a surface has the one-tap run to show.
    */
+  private async announceLateSwitchGuarded(state: ObservedDeviceState): Promise<void> {
+    try {
+      await this.announceLateSwitch(state)
+    } catch (error) {
+      this.deps.logger.warn('timed-run could not announce a device that gained a switch', {
+        tags: { deviceId: state.deviceId },
+        meta: { error: String(error) },
+      })
+    }
+  }
+
   private async announceLateSwitch(state: ObservedDeviceState): Promise<void> {
-    if (state.capName !== 'switch' || this.announced.has(state.deviceId)) return
-    if ((await this.limitOf(state.deviceId)) === null) return
-    this.announced.add(state.deviceId)
-    await this.publishStatus(state.deviceId)
+    const { deviceId } = state
+    if (state.capName !== 'switch' || this.announced.has(deviceId)) return
+    // A device the last answer called "not bound" stays so until its bindings change.
+    if (this.notBound.has(deviceId)) return
+    if ((await this.limitOf(deviceId)) === null) {
+      this.notBound.add(deviceId)
+      this.announced.delete(deviceId)
+      return
+    }
+    this.announced.add(deviceId)
+    await this.publishStatus(deviceId)
+  }
+
+  /** `DeviceBindingsChanged`: the device may now (or no longer) have a switch; ask again. */
+  bindingsChanged(deviceId: number): void {
+    this.notBound.delete(deviceId)
+    this.announced.delete(deviceId)
   }
 
   /** Boot: a passed deadline is switched off once, a future one is re-armed. */

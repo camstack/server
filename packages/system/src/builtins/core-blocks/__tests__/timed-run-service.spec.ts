@@ -48,6 +48,7 @@ function harness(
     // device 9 has no switch: the wiring answers null for it (D1097)
   ])
   const quickRuns = new Map<number, number>()
+  const reads = { count: 0, fail: false }
   const actuation: TimedRunActuation = {
     set: async (deviceId, actuator, on) => {
       commands.push({ deviceId, actuator, on })
@@ -56,7 +57,11 @@ function harness(
   }
   const service = new TimedRunService({
     rows: store.api,
-    deviceKindOf: async (deviceId) => kinds.get(deviceId) ?? null,
+    deviceKindOf: async (deviceId) => {
+      reads.count += 1
+      if (reads.fail) throw new Error('bindings unavailable')
+      return kinds.get(deviceId) ?? null
+    },
     timedRunDeviceIds: async () => [HEATER, FOUNTAIN],
     actuation,
     quickRuns: {
@@ -85,7 +90,19 @@ function harness(
     logger,
   })
   const live = () => timers.filter((t) => !t.cancelled)
-  return { service, clock, store, commands, timers, live, published, lines, quickRuns }
+  return {
+    service,
+    clock,
+    store,
+    commands,
+    timers,
+    live,
+    published,
+    lines,
+    quickRuns,
+    kinds,
+    reads,
+  }
 }
 
 describe('TimedRunService', () => {
@@ -260,6 +277,45 @@ describe('TimedRunService', () => {
     })
     expect(h.published.map((p) => p.deviceId)).toEqual([PLAIN_SWITCH])
     expect(h.published[0]?.status.quickRun).toEqual({ duration: 15, unit: 'min' })
+  })
+
+  it('D49: a failed bindings read during a manual off still cancels the deadline, and is logged with the device', async () => {
+    const h = harness()
+    await h.service.runFor({ deviceId: PLAIN_SWITCH, duration: 10, unit: 'min' })
+    h.reads.fail = true
+    await expect(
+      h.service.onDeviceState({ deviceId: PLAIN_SWITCH, capName: 'switch', slice: { on: false } }),
+    ).resolves.toBeUndefined()
+    expect(h.store.rows.has(PLAIN_SWITCH)).toBe(false)
+    expect(h.live()).toHaveLength(0)
+    const warn = h.lines.find((l) => l.level === 'warn')
+    expect(warn?.extras?.tags).toEqual({ deviceId: PLAIN_SWITCH })
+  })
+
+  it('D1097: a device found not bound is not asked again until its bindings change; a lost then regained switch is announced again', async () => {
+    const h = harness()
+    await h.service.reconcile()
+    h.published.length = 0
+    const speak = () =>
+      h.service.onDeviceState({ deviceId: 9, capName: 'switch', slice: { on: true } })
+    const before = h.reads.count
+    await speak()
+    await speak()
+    expect(h.reads.count - before).toBe(1)
+    h.kinds.set(9, { type: DeviceType.Switch, role: null })
+    await speak()
+    expect(h.published).toEqual([])
+    h.service.bindingsChanged(9)
+    await speak()
+    expect(h.published.map((p) => p.deviceId)).toEqual([9])
+    // lost, then regained
+    h.kinds.delete(9)
+    h.service.bindingsChanged(9)
+    await h.service.onDeviceState({ deviceId: 9, capName: 'switch', slice: { on: true } })
+    h.kinds.set(9, { type: DeviceType.Switch, role: null })
+    h.service.bindingsChanged(9)
+    await speak()
+    expect(h.published.map((p) => p.deviceId)).toEqual([9, 9])
   })
 
   it('restart: a passed deadline switches off exactly once, a future one is re-armed', async () => {
