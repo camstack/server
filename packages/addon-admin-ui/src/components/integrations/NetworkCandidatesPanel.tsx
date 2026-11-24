@@ -205,6 +205,14 @@ export function ScanControls({
           )}
         />
       )}
+      {scan.devices === 'failed' && (
+        <ErrorLine
+          text={t(
+            'integrations.addDeviceModal.devicesFailed',
+            "The hub's device list could not be read, so Add is unavailable. Reopen this window to try again.",
+          )}
+        />
+      )}
       {scan.error !== null && <ErrorLine text={scan.error} />}
     </div>
   )

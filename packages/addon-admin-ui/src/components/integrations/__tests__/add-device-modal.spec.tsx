@@ -368,6 +368,33 @@ describe('AddDeviceModal', () => {
       expect(screen.queryByText(/no candidate devices found/i)).toBeNull()
     })
 
+    it('keeps loaded adoption candidates visible while the proposals are still pending', () => {
+      state.proposalsAnswer = 'pending'
+      state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(names()).toEqual(['cellar'])
+    })
+
+    it('names why Add is unavailable when the hub device list could not be read', () => {
+      state.scan = [hit('esp-new', '192.0.2.12')]
+      state.devicesAnswer = 'failed'
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByText(/device list could not be read/i)).toBeTruthy()
+    })
+
+    it('words an empty merged list by the scan, never as no candidates', () => {
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByText(/no devices responded to the scan/i)).toBeTruthy()
+      expect(screen.queryByText(/no candidate devices found/i)).toBeNull()
+    })
+
+    it('counts only the devices the scan or discovery found, not plain provider candidates', () => {
+      state.scan = [hit('esp-new', '192.0.2.12')]
+      state.adoption = [adoptionEntry('esp-cellar', 'cellar'), adoptionEntry('esp-loft', 'loft')]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      expect(screen.getByText('1 device found')).toBeTruthy()
+    })
+
     it('says the proposals failed instead of an empty list when they could not be read', () => {
       state.proposalsAnswer = 'failed'
       renderModal({ kind: 'device-adoption', canScan: true })

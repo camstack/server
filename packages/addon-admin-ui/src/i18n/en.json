@@ -1945,12 +1945,11 @@
       "back": "Back to the list",
       "found_one": "{{count}} device found",
       "found_other": "{{count}} devices found",
-      "alsoAdopted_one": "{{count}} also in the adoption list",
-      "alsoAdopted_other": "{{count}} also in the adoption list",
       "noCreationType": "This integration cannot create a device from this candidate.",
       "scanUnavailable": "The network scan is unavailable for this integration: {{reason}}",
       "openDevice": "Open device",
-      "proposalsFailed": "The devices found in the background could not be read. Scan now to look again."
+      "proposalsFailed": "The devices found in the background could not be read. Scan now to look again.",
+      "devicesFailed": "The hub's device list could not be read, so Add is unavailable. Reopen this window to try again."
     },
     "discoveryProposals": {
       "title": "Found in the background",

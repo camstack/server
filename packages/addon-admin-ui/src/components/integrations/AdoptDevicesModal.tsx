@@ -479,6 +479,22 @@ export function AdoptDevicesPanel({
    */
   const adoptionDone = jobId !== null && selectedCount === 0 && !adoptMutation.isPending
 
+  const foundCount = items.filter(
+    (i) => i.kind === 'found' || (i.found !== null && i.found.hit !== null),
+  ).length
+  const discoveryFailed = (warmError ?? listError ?? refreshStatusError) && candidates.length === 0
+  // Nothing listed is worded by what was asked: a merged list names the scan, never the bare
+  // "no candidates"; a pending or failed answer says nothing at all (D315).
+  const emptyLabel = discoveryFailed
+    ? ''
+    : scanActive
+      ? scan.proposals !== 'answered' || scan.scanning
+        ? ''
+        : scan.scanAnswered
+          ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
+          : t('integrations.addDeviceModal.scanHint', 'Scan the network to find devices to add.')
+      : t('integrations.adoptNoCandidates', { defaultValue: 'No candidate devices found.' })
+
   // A found device that needs a value the provider cannot guess opens its creation form in place
   // of the list, prefilled with what was found.
   if (scan.paramsFor !== null && scan.paramsFor.hit !== null) {
@@ -501,7 +517,7 @@ export function AdoptDevicesPanel({
 
   return (
     <>
-      {withScan && <ScanControls scan={scan} listed={scanActive ? items.length : 0} />}
+      {withScan && <ScanControls scan={scan} listed={scanActive ? foundCount : 0} />}
       {supportsLocationImport && (
         <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
           <Checkbox
@@ -551,22 +567,11 @@ export function AdoptDevicesPanel({
             }
             filterOptions={allDeviceTypeFilterOptions(uiText)}
             filterLabel={t('integrations.adoptColType', { defaultValue: 'Type' })}
-            isLoading={
-              listQuery.isLoading ||
-              (isRefreshing && candidates.length === 0) ||
-              (scanActive && scan.proposals === 'pending')
-            }
+            isLoading={listQuery.isLoading || (isRefreshing && candidates.length === 0)}
             searchPlaceholder={t('integrations.adoptSearch', {
               defaultValue: 'Search candidates…',
             })}
-            emptyLabel={
-              ((warmError ?? listError ?? refreshStatusError) && candidates.length === 0) ||
-              (scanActive && scan.proposals === 'failed')
-                ? ''
-                : t('integrations.adoptNoCandidates', {
-                    defaultValue: 'No candidate devices found.',
-                  })
-            }
+            emptyLabel={emptyLabel}
             toolbar={
               <Button
                 variant="unstyled"

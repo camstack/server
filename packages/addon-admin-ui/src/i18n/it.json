@@ -1945,12 +1945,11 @@
       "back": "Torna all'elenco",
       "found_one": "{{count}} dispositivo trovato",
       "found_other": "{{count}} dispositivi trovati",
-      "alsoAdopted_one": "{{count}} anche nell'elenco di adozione",
-      "alsoAdopted_other": "{{count}} anche nell'elenco di adozione",
       "noCreationType": "Questa integrazione non può creare un dispositivo da questo candidato.",
       "scanUnavailable": "La scansione di rete non è disponibile per questa integrazione: {{reason}}",
       "openDevice": "Apri il dispositivo",
-      "proposalsFailed": "Non è stato possibile leggere i dispositivi trovati in background. Avvia una scansione per riprovare."
+      "proposalsFailed": "Non è stato possibile leggere i dispositivi trovati in background. Avvia una scansione per riprovare.",
+      "devicesFailed": "Non è stato possibile leggere l'elenco dei dispositivi dell'hub, quindi Aggiungi non è disponibile. Riapri questa finestra per riprovare."
     },
     "discoveryProposals": {
       "title": "Trovati in background",
