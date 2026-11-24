@@ -5,8 +5,26 @@
 import type { TimeIsLeaf } from '@camstack/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../i18n/index'
+type SiteAnswer = {
+  data:
+    | {
+        location: { latitude: number; longitude: number } | null
+        timeZone: string
+      }
+    | undefined
+}
+let siteAnswer: SiteAnswer = {
+  data: { location: { latitude: 45, longitude: 9 }, timeZone: 'Europe/Rome' },
+}
+
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return { ...actual, useSystemGetSiteLocation: () => siteAnswer }
+})
+
 import { TimeIsFields } from '../TimeIsFields'
 
 const NIGHT: TimeIsLeaf = {
@@ -83,10 +101,27 @@ describe('TimeIsFields — a preset leaf', () => {
   it('shows Nighttime, not "The whole day", and keeps the preset when a day is pressed', () => {
     const seen: TimeIsLeaf[] = []
     render(<Harness initial={{ kind: 'time-is', preset: 'night' }} seen={seen} />)
-    expect(screen.getByRole('combobox', { name: 'Time of day' })).toHaveProperty('value', 'preset')
+    expect(screen.getByRole('combobox', { name: 'Time of day' })).toHaveProperty('value', 'night')
     expect(screen.getByText('Nighttime (sunset to sunrise)')).toBeTruthy()
     expect(screen.queryByTestId('time-is-from')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Sat' }))
     expect(seen[0]?.preset).toBe('night')
+  })
+})
+
+describe('TimeIsFields — a site with no location', () => {
+  beforeEach(() => {
+    siteAnswer = { data: { location: null, timeZone: 'Europe/Rome' } }
+  })
+
+  it('says a sun preset cannot be judged', () => {
+    render(<Harness initial={{ kind: 'time-is', preset: 'night' }} seen={[]} />)
+    expect(screen.getByTestId('time-is-no-location')).toBeTruthy()
+  })
+
+  it('does not disable anything while the read is pending', () => {
+    siteAnswer = { data: undefined }
+    render(<Harness initial={{ kind: 'time-is', preset: 'night' }} seen={[]} />)
+    expect(screen.queryByTestId('time-is-no-location')).toBeNull()
   })
 })

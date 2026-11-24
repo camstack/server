@@ -55,6 +55,17 @@ export default defineFixtures({
     'coreBlocks.list': { blocks: [BLOCK] },
     'coreBlocks.getTraces': { traces: [], lastError: null },
     'schedulers.list': [],
+    'template.list': [],
+    'deviceManager.search': {
+      items: [],
+      nextCursor: null,
+      total: 0,
+      compatibleTotal: 0,
+      fleetTotal: 0,
+      hiddenIncompatible: 0,
+      facets: { locations: [], integrations: [], types: [] },
+      suggested: [],
+    },
     'auth.listLoginMethods': [],
     'preferences.get': { rows: [] },
     // A site with a zone and NO location: the sun end of the window cannot be placed, and the editor says so.

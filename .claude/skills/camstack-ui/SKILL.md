@@ -97,7 +97,7 @@ sub-skill before the first edit.
 | A local component with a library component's name | `shadows-library` |
 | The shared device name (`DeviceName`) | not checkable: showing `device.name` is legitimate in strings, titles and logs; only review tells a device label from a sentence |
 | Dictionary pickers (event categories, units, timezones, models …) | not checkable: there is no single component or marker, each dictionary has its own picker (`ui:find`) |
-| Time windows | not checkable: the library has no time-window component to point at yet |
+| Time windows and times of day | not checkable: `TimeWindowInput` / `TimeSpecInput` are the components (`ui:find`), a hand-rolled from / to row is caught only in review |
 
 A deliberate exception carries `ui-check-ok: <reason>` on the line or above.
 Existing drift is reported, not fixed here: pay it on touch.

@@ -32,6 +32,7 @@ import type {
   ConfigTimezoneField,
   ConfigDateTimeField,
   ConfigDurationField,
+  ConfigTimeWindowField,
   ConfigColorField,
   ConfigIconField,
   ConfigTextAreaField,
@@ -54,7 +55,13 @@ import type {
   FieldInlineAction,
   FieldProbeResult,
 } from '@camstack/types'
-import { isKeychainStoredField, isSecretClear, isSecretFieldView } from '@camstack/types'
+import {
+  isKeychainStoredField,
+  isSecretClear,
+  isSecretFieldView,
+  type TimeWindow,
+  TimeWindowDraftSchema,
+} from '@camstack/types'
 import { useClusterNodes as useClusterNodesHook } from '../hooks/use-cluster-nodes'
 import { useCapabilityNodePresence } from '../hooks/use-capability-presence'
 import { ConfigIconFieldControl } from './config-icon-field'
@@ -87,6 +94,7 @@ import { ConfigInstanceSelectControl } from './config-instance-select-field'
 import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
 import { formatNumeric } from '../lib/format-numeric'
 import { DurationInput } from './duration-input/DurationInput'
+import { TimeWindowInput } from './time-window-input/TimeWindowInput'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
 export interface ProbeState {
@@ -655,6 +663,44 @@ function DurationField({
         fractional={field.fractional}
         disabled={disabled || field.disabled}
         aria-label={resolveLabel(field.label, translationFn)}
+        testIdPrefix={`field-${field.key}`}
+      />
+    </FieldWrapper>
+  )
+}
+
+function TimeWindowField({
+  field,
+  value,
+  onChange,
+  disabled,
+  translationFn,
+}: {
+  field: ConfigTimeWindowField
+  value: unknown
+  onChange: (v: unknown) => void
+  disabled?: boolean
+  translationFn?: TranslationFn
+}) {
+  // Stored as ONE TimeWindow object. It is read STRUCTURALLY (no refinement): an invalid draft
+  // (`days: []`, an end the preset forbids) stays on screen with its inline error, never snapped
+  // to a default. A missing value shows the field's declared default, else an empty window.
+  const parsed = TimeWindowDraftSchema.safeParse(value)
+  const current: TimeWindow = parsed.success ? parsed.data : (field.default ?? {})
+  return (
+    <FieldWrapper
+      label={field.label}
+      description={field.description}
+      required={field.required}
+      span={field.span}
+      translationFn={translationFn}
+    >
+      <TimeWindowInput
+        value={current}
+        onChange={onChange}
+        presets={field.presets}
+        weekdays={field.weekdays}
+        disabled={disabled || field.disabled}
         testIdPrefix={`field-${field.key}`}
       />
     </FieldWrapper>
@@ -3071,6 +3117,16 @@ export function FormField({
     case 'duration':
       return (
         <DurationField
+          field={field}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          translationFn={translationFn}
+        />
+      )
+    case 'time-window':
+      return (
+        <TimeWindowField
           field={field}
           value={value}
           onChange={handleChange}

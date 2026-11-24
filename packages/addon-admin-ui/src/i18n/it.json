@@ -6997,19 +6997,6 @@
         "tree-full": "Le regole sono piene: rimuovi prima una riga."
       }
     },
-    "timeIs": {
-      "window": "Momento del giorno",
-      "wholeDay": "Tutto il giorno",
-      "between": "Tra due orari",
-      "from": "Da",
-      "to": "A",
-      "wraps": "Questa finestra termina il giorno dopo. I giorni sono quelli in cui inizia.",
-      "noDays": "Scegli almeno un giorno.",
-      "preset": {
-        "day": "Giorno (dall'alba al tramonto)",
-        "night": "Notte (dal tramonto all'alba)"
-      }
-    },
     "triggeredBy": {
       "triggers": "Avviata da",
       "noRows": "Questa automazione non ha righe trigger da scegliere. Aggiungine prima una alle regole.",
@@ -11628,6 +11615,45 @@
       "minutes": "Minuti",
       "seconds": "Secondi",
       "millis": "Millisecondi"
+    },
+    "timeWindow": {
+      "noLocation": "Questo sito non ha una posizione, quindi un orario solare non puo essere valutato. Imposta la posizione del sito per usarlo.",
+      "kind": {
+        "clock": "A un'ora",
+        "sun": "A un evento solare",
+        "date": "In una data"
+      },
+      "time": "Ora",
+      "date": "Data e ora",
+      "sunEvent": "Evento solare",
+      "sun": {
+        "sunrise": "alba",
+        "sunset": "tramonto",
+        "dawn": "aurora",
+        "dusk": "crepuscolo"
+      },
+      "offset": "Scostamento (minuti, negativo = prima)",
+      "windowLabel": "Momento del giorno",
+      "mode": {
+        "wholeDay": "Tutto il giorno",
+        "between": "Tra due orari",
+        "day": "Giorno (dall'alba al tramonto)",
+        "night": "Notte (dal tramonto all'alba)"
+      },
+      "from": "Da",
+      "to": "A",
+      "days": "Giorni",
+      "noDays": "Scegli almeno un giorno.",
+      "wraps": "Questa finestra termina il giorno dopo. I giorni sono quelli in cui inizia.",
+      "day": {
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Gio",
+        "fri": "Ven",
+        "sat": "Sab",
+        "sun": "Dom"
+      }
     }
   },
   "helpers": {
@@ -13775,12 +13801,10 @@
       "addEdge": "Evento",
       "addHold": "Mantenimento",
       "addRelease": "Rilascio",
-      "clock": "A un'ora",
       "edge": "Evento: esegui una volta",
       "grace": "Attesa (minuti)",
       "hold": "Mantenimento: tieni vero",
       "kind": "Tipo di punto",
-      "offset": "Scostamento (minuti, negativo = prima)",
       "override": "Se qualcuno lo cambia a mano",
       "reassert": "Rimetti il mantenimento dopo un po'",
       "release": "Rilascio: termina il mantenimento",
@@ -13789,9 +13813,7 @@
       "respect": "Lascialo stare",
       "sun": "A un evento solare",
       "sunComputed": "Oggi alle {{time}} ({{zone}})",
-      "sunEvent": "Evento solare",
       "sunUnknown": "Nessun orario oggi: la posizione del sito non è impostata.",
-      "time": "Ora",
       "when": "Quando"
     },
     "profile": {

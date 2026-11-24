@@ -1,5 +1,6 @@
 import { isKeychainStoredField } from './config-ui-secrets.js'
 import { isSecretMarker, toSecretFieldView } from '../keychain/secret-marker.js'
+import type { TimeWindow } from '../time/time-window.js'
 import type {
   CustomModelMetadata,
   ModelCatalogEntry,
@@ -192,6 +193,7 @@ export type ConfigField =
   | ConfigTimezoneField
   | ConfigDateTimeField
   | ConfigDurationField
+  | ConfigTimeWindowField
   | ConfigColorField
   | ConfigIconField
   | ConfigPasswordField
@@ -641,6 +643,23 @@ export interface ConfigDurationField extends ConfigFieldBase {
   readonly default?: number
   /** The smallest visible unit takes a fraction. */
   readonly fractional?: boolean
+}
+
+/**
+ * A daily window: the whole day, two times (a clock time or a sun event with
+ * an offset, possibly crossing midnight), or the Day / Night preset, plus
+ * weekdays. The stored value is ONE `TimeWindow` object (`TimeWindowSchema`);
+ * the renderer mounts the shared `<TimeWindowInput>`. A field that never
+ * restricts weekdays sets `weekdays: false` (the whole-day choice goes with it,
+ * a window needs a range, a preset or days).
+ */
+export interface ConfigTimeWindowField extends ConfigFieldBase {
+  readonly type: 'time-window'
+  /** Offer the Day / Night presets. Default true. */
+  readonly presets?: boolean
+  /** Offer weekday chips and the whole-day choice. Default true. */
+  readonly weekdays?: boolean
+  readonly default?: TimeWindow
 }
 
 export interface ConfigColorField extends ConfigFieldBase {
@@ -1394,6 +1413,7 @@ export type ConfigFieldWithValue =
   | (ConfigTimezoneField & { readonly value: unknown })
   | (ConfigDateTimeField & { readonly value: unknown })
   | (ConfigDurationField & { readonly value: unknown })
+  | (ConfigTimeWindowField & { readonly value: unknown })
   | (ConfigColorField & { readonly value: unknown })
   | (ConfigIconField & { readonly value: unknown })
   | (ConfigPasswordField & { readonly value: unknown })

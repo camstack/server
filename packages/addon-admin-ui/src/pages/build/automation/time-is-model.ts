@@ -7,36 +7,28 @@ import {
   type AutomationRecipe,
   recipeSiteIssues,
   type SiteReading,
-  type SunEvent,
   type TimeIsLeaf,
+  type TimeWindow,
   type WeekdayKey,
 } from '@camstack/types'
+import {
+  type TimeWindowEnd,
+  toggleWindowDay,
+  windowWrapsMidnight,
+  withWindowEnd,
+  withWindowMode,
+} from '@camstack/ui-library'
 
 export const ALL_WEEKDAYS: readonly WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-export const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']
 
-export type TimeWindow = NonNullable<TimeIsLeaf['between']>
-/** One end of the window: a clock time or a sun event (a one-date spec cannot bound a daily window). */
-export type TimeEnd = Extract<TimeWindow['from'], { kind: 'clock' | 'sun' }>
-export type TimeEndKey = 'from' | 'to'
-export type TimeEndKind = TimeEnd['kind']
-
-const DEFAULT_WINDOW: TimeWindow = {
-  from: { kind: 'clock', hh: 22, mm: 0 },
-  to: { kind: 'clock', hh: 6, mm: 0 },
+/** A leaf is a daily window plus its `kind`: the window edits live in the library's `TimeWindowInput` model. */
+function windowOf(leaf: TimeIsLeaf): TimeWindow {
+  const { kind: _kind, ...window } = leaf
+  return window
 }
 
-function build(
-  between: TimeWindow | undefined,
-  days: readonly WeekdayKey[] | undefined,
-  preset?: TimeIsLeaf['preset'],
-): TimeIsLeaf {
-  return {
-    kind: 'time-is',
-    ...(between === undefined ? {} : { between }),
-    ...(preset === undefined ? {} : { preset }),
-    ...(days === undefined ? {} : { days: [...days] }),
-  }
+function leafOf(window: TimeWindow): TimeIsLeaf {
+  return { kind: 'time-is', ...window }
 }
 
 /** The days the row shows pressed: an absent list is every day. */
@@ -44,55 +36,23 @@ export function selectedDays(leaf: TimeIsLeaf): readonly WeekdayKey[] {
   return leaf.days ?? ALL_WEEKDAYS
 }
 
-/**
- * Press or release one day. All seven with a window is "every day" (no list);
- * with no window the list stays, because the row needs one of the two. Releasing
- * the last day leaves an empty list the schema refuses — the row then says so
- * instead of silently meaning "every day".
- */
+/** Press or release one day (see `toggleWindowDay`). */
 export function toggleDay(leaf: TimeIsLeaf, day: WeekdayKey): TimeIsLeaf {
-  const current = selectedDays(leaf)
-  const next = current.includes(day)
-    ? current.filter((d) => d !== day)
-    : ALL_WEEKDAYS.filter((d) => d === day || current.includes(d))
-  const everyDay = next.length === ALL_WEEKDAYS.length
-  const hasWindow = leaf.between !== undefined || leaf.preset !== undefined
-  return build(leaf.between, everyDay && hasWindow ? undefined : next, leaf.preset)
+  return leafOf(toggleWindowDay(windowOf(leaf), day))
 }
 
 /** The whole day, or a window. Dropping the window keeps the days explicit: the row needs one of the two. */
 export function withWindow(leaf: TimeIsLeaf, on: boolean): TimeIsLeaf {
-  // The row edits a window by its ends: a day/night preset gives way to them.
-  if (on) {
-    const everyDay = leaf.days !== undefined && leaf.days.length === ALL_WEEKDAYS.length
-    return build(leaf.between ?? DEFAULT_WINDOW, everyDay ? undefined : leaf.days)
-  }
-  return build(undefined, selectedDays(leaf))
+  return leafOf(withWindowMode(windowOf(leaf), on ? 'between' : 'whole-day'))
 }
 
-export function withEnd(leaf: TimeIsLeaf, key: TimeEndKey, end: TimeEnd): TimeIsLeaf {
-  const between = leaf.between ?? DEFAULT_WINDOW
-  return build({ ...between, [key]: end }, leaf.days)
+export function withEnd(leaf: TimeIsLeaf, key: 'from' | 'to', end: TimeWindowEnd): TimeIsLeaf {
+  return leafOf(withWindowEnd(windowOf(leaf), key, end))
 }
 
-/** A blank end of one kind. */
-export function seedEnd(kind: TimeEndKind): TimeEnd {
-  return kind === 'sun'
-    ? { kind: 'sun', event: 'sunset', offsetMin: 0 }
-    : { kind: 'clock', hh: 12, mm: 0 }
-}
-
-/** The end as the row edits it; a one-date spec (which the schema refuses here) reads as a blank clock time. */
-export function editableEnd(end: TimeWindow['from']): TimeEnd {
-  return end.kind === 'date' ? seedEnd('clock') : end
-}
-
-/** Two clock ends where the second is not after the first: the window ends the next day. */
+/** The window ends the next day. */
 export function wrapsMidnight(leaf: TimeIsLeaf): boolean {
-  const between = leaf.between
-  if (between === undefined || between.from.kind !== 'clock' || between.to.kind !== 'clock')
-    return false
-  return between.to.hh * 60 + between.to.mm <= between.from.hh * 60 + between.from.mm
+  return windowWrapsMidnight(windowOf(leaf))
 }
 
 /**

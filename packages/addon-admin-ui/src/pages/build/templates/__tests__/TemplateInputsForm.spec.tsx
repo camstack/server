@@ -80,6 +80,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     ),
     useDeviceLabelById: (id: number) => `Device ${String(id)}`,
     useDeviceStateGetCapSlice: () => ({ status: 'pending', data: undefined }),
+    useSystemGetSiteLocation: () => ({
+      data: {
+        location: { latitude: 45, longitude: 9 },
+        timeZone: 'Europe/Rome',
+      },
+    }),
   }
 })
 
@@ -165,7 +171,12 @@ const PAYLOAD: AutomationTemplatePayload = {
   ],
   bindings: [
     // Every button's triggers, verbatim, are the automation's `any`.
-    { kind: 'entries', input: 'when', in: 'buttons', path: ['when', 'children'] },
+    {
+      kind: 'entries',
+      input: 'when',
+      in: 'buttons',
+      path: ['when', 'children'],
+    },
     {
       kind: 'rows',
       input: 'buttons',
@@ -204,7 +215,9 @@ function Harness({ start, problems = [], onValues }: HarnessProps): ReactNode {
   )
 }
 
-const FILLED: TemplateInputValues = { buttons: [{ when: [FIRED], do: [TOGGLE] }] }
+const FILLED: TemplateInputValues = {
+  buttons: [{ when: [FIRED], do: [TOGGLE] }],
+}
 
 describe('the Buttons → devices form', () => {
   it('starts as one card named "New button" with one trigger field and one step field', () => {
@@ -248,7 +261,9 @@ describe('the Buttons → devices form', () => {
       />,
     )
     fireEvent.click(screen.getByTestId('fake-remove-action'))
-    expect(onValues).toHaveBeenLastCalledWith({ buttons: [{ when: [FIRED], do: [ROOM_OFF] }] })
+    expect(onValues).toHaveBeenLastCalledWith({
+      buttons: [{ when: [FIRED], do: [ROOM_OFF] }],
+    })
   })
 
   it('stores a trigger as a whole device-fired leaf, its id kept', () => {
@@ -264,7 +279,11 @@ describe('the Buttons → devices form', () => {
 
   it('shows a problem under the field its address names', () => {
     const problems: readonly TemplateInstanceProblem[] = [
-      { code: 'missing-input', input: 'buttons.0.do', detail: 'add at least one' },
+      {
+        code: 'missing-input',
+        input: 'buttons.0.do',
+        detail: 'add at least one',
+      },
     ]
     render(<Harness start={FILLED} problems={problems} onValues={vi.fn()} />)
     expect(screen.getByText('add at least one')).toBeTruthy()
@@ -288,7 +307,10 @@ describe('the optional "Only when" window', () => {
     expect(onValues).toHaveBeenLastCalledWith(
       expect.objectContaining({
         active: {
-          between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+          between: {
+            from: { kind: 'clock', hh: 22, mm: 0 },
+            to: { kind: 'clock', hh: 6, mm: 0 },
+          },
         },
       }),
     )

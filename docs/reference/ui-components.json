@@ -694,6 +694,12 @@
       "notes": "A number with a unit select, or a bare seconds field, is what it replaced"
     },
     {
+      "need": "Enter a time of day or a daily window (a clock time, sunrise / sunset ± minutes, a range over midnight, Day / Night, weekdays)",
+      "admin": "`TimeWindowInput` (value is a `TimeWindow`; shows the schema refusals inline; `siteHasNoLocation` disables sun choices with a reason) and `TimeSpecInput` for one moment (`allowDate` for a one-off date); a settings form declares it as `type: 'time-window'`",
+      "viewer": "—",
+      "notes": "A raw `Input type=\"time\"` plus a sun select, or a hand-written from / to row, is what it replaced. A schedule stored in another shape (notification schedule, scheduler profile, recording bands) is not this window and is not edited with it"
+    },
+    {
       "need": "Live camera video",
       "admin": "`CameraStreamPlayer`, `StreamPanel`",
       "viewer": "the embed player (`embed/`)",
@@ -5424,6 +5430,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/data-table-pagination.ts",
       "summary": "Client-side pagination for {@link DataTable} — pure, no React."
+    },
+    {
+      "name": "DEFAULT_TIME_WINDOW_RANGE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/time-window-model.ts",
+      "summary": "The pure edits of a daily window. A window keeps its optional keys OMITTED when unset (it is serialised into recipes and generated files), and \"every day\" is the absence of `days`, never a list of seven."
     },
     {
       "name": "DEFAULT_UNIT_PREFERENCES",
@@ -20417,6 +20430,114 @@
       ]
     },
     {
+      "name": "TimeSpecInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/TimeSpecInput.tsx",
+      "summary": "One moment of the day, as data: a clock time, a sun event plus or minus an offset, or (only when the caller allows it) one local date and time. The value is a `TimeSpec` from `@camstack/types`; nothing is converted.",
+      "props": [
+        {
+          "name": "value",
+          "type": "TimeSpec",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: TimeSpec) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "allowDate",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer \"On a date\" (one local date and time). Default false: a daily window cannot use it."
+        },
+        {
+          "name": "siteHasNoLocation",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The site has no location: sun choices are disabled and say why."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "Names the group, and prefixes each control's accessible name (\"From: Time\")."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "TimeWindowInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/TimeWindowInput.tsx",
+      "summary": "A daily window as the operator edits it: the whole day, two times (a clock time or a sun event with an offset each; the range may cross midnight, and the input says so), or the Day / Night preset, plus the weekdays. T…",
+      "props": [
+        {
+          "name": "value",
+          "type": "TimeWindow",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: TimeWindow) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "presets",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer the Day / Night presets. Default true."
+        },
+        {
+          "name": "weekdays",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer the weekday chips and the whole-day choice. Default true."
+        },
+        {
+          "name": "siteHasNoLocation",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The site has no location: sun choices are disabled with a reason."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testIdPrefix",
+          "type": "string",
+          "optional": true,
+          "doc": "Prefix of the test ids: `<p>-fields`, `<p>-from`, `<p>-to`, `<p>-wraps`, `<p>-no-days`, `<p>-errors`."
+        }
+      ]
+    },
+    {
       "name": "TimezoneSelector",
       "kind": "component",
       "area": "composites",
@@ -20515,6 +20636,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "Tick or untick one filter key."
+    },
+    {
+      "name": "toggleWindowDay",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/time-window-model.ts",
+      "summary": "Press or release one day. All seven with a window is \"every day\" (no list); with no window the list stays, because a window needs one of the two. Releasing the last day leaves an empty list the schema refuses: the inp…"
     },
     {
       "name": "toneClass",
@@ -22528,6 +22656,13 @@
       ]
     },
     {
+      "name": "windowWrapsMidnight",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/time-window-model.ts",
+      "summary": "A window that ends the next day: two clock ends where the second is not after the first, or the night preset."
+    },
+    {
       "name": "withError",
       "kind": "function",
       "area": "composites",
@@ -22589,6 +22724,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/root-model-source.tsx",
       "summary": "The settings bag with the flag set — every other key untouched."
+    },
+    {
+      "name": "withWindowEnd",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/time-window-model.ts",
+      "summary": "The pure edits of a daily window. A window keeps its optional keys OMITTED when unset (it is serialised into recipes and generated files), and \"every day\" is the absence of `days`, never a list of seven."
+    },
+    {
+      "name": "withWindowMode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/time-window-model.ts",
+      "summary": "Switch the window to a mode, keeping the days. Leaving a preset for two times unfolds the preset into its range, so the ends start where it was. The whole day keeps the days explicit: a window needs one of the two."
     },
     {
       "name": "writeStoredGroupBy",

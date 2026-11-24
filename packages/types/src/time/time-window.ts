@@ -39,6 +39,15 @@ const timeWindowShape = {
 
 export const TimeWindowObjectSchema = z.object(timeWindowShape)
 
+/**
+ * The shape an editor may HOLD while the window is being edited: the same keys,
+ * but a day list may be empty or long (releasing the last day is a draft, not a
+ * parse failure). The editor shows the refusal; {@link TimeWindowSchema} judges.
+ */
+export const TimeWindowDraftSchema = TimeWindowObjectSchema.extend({
+  days: z.array(WeekdayKeySchema).readonly().optional(),
+})
+
 /** The ONE shape of a daily window: clock or sun range (wrapping midnight), a preset, weekdays. */
 export type TimeWindow = z.infer<typeof TimeWindowObjectSchema>
 

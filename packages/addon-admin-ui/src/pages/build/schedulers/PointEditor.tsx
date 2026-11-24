@@ -10,9 +10,8 @@ import type {
   SchedulerIssue,
   SchedulerPoint,
   SchedulerPointMode,
-  SunEvent,
 } from '@camstack/types'
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, Select, TimeSpecInput } from '@camstack/ui-library'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ActionList } from '../automation/ActionList'
@@ -20,9 +19,7 @@ import type { ActionKind } from '../automation/recipe-parts'
 import type { AutomationDevice } from '../automation/automation-data'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import {
-  clockText,
   minuteText,
-  parseClockText,
   type PointTime,
   type SiteView,
   sunBaseMinute,
@@ -39,7 +36,6 @@ export interface PointEditorProps {
   readonly onRemove: () => void
 }
 
-const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']
 const GRACE_STEP_MS = 60_000
 
 /**
@@ -116,69 +112,18 @@ export function PointEditor({
             }}
           />
         </label>
-        <label className="space-y-1 text-xs text-foreground-muted">
+        <div className="space-y-1 text-xs text-foreground-muted">
           <span>{t('schedulers.point.when', 'When')}</span>
-          <Select
-            aria-label={t('schedulers.point.when', 'When')}
-            value={at.kind === 'sun' ? 'sun' : 'clock'}
-            options={[
-              {
-                value: 'clock',
-                label: t('schedulers.point.clock', 'At a time'),
-              },
-              {
-                value: 'sun',
-                label: t('schedulers.point.sun', 'At a sun event'),
-              },
-            ]}
-            onChange={(e) => {
-              if (e.target.value === 'sun') setAt({ kind: 'sun', event: 'sunset', offsetMin: 0 })
-              else setAt({ kind: 'clock', hh: 12, mm: 0 })
+          <TimeSpecInput
+            label={t('schedulers.point.when', 'When')}
+            value={at}
+            onChange={(next) => {
+              if (next.kind !== 'date') setAt(next)
             }}
           />
-        </label>
-        {at.kind === 'clock' && (
-          <label className="space-y-1 text-xs text-foreground-muted">
-            <span>{t('schedulers.point.time', 'Time')}</span>
-            <Input
-              type="time"
-              aria-label={t('schedulers.point.time', 'Time')}
-              value={clockText(at.hh, at.mm)}
-              onChange={(e) => {
-                const parsed = parseClockText(e.target.value)
-                if (parsed !== null) setAt(parsed)
-              }}
-            />
-          </label>
-        )}
+        </div>
         {at.kind === 'sun' && (
           <>
-            <label className="space-y-1 text-xs text-foreground-muted">
-              <span>{t('schedulers.point.sunEvent', 'Sun event')}</span>
-              <Select
-                aria-label={t('schedulers.point.sunEvent', 'Sun event')}
-                value={at.event}
-                options={SUN_EVENTS.map((event) => ({
-                  value: event,
-                  label: t(`schedulers.sun.${event}`, event),
-                }))}
-                onChange={(e) => {
-                  const event = SUN_EVENTS.find((candidate) => candidate === e.target.value)
-                  if (event !== undefined) setAt({ ...at, event })
-                }}
-              />
-            </label>
-            <label className="space-y-1 text-xs text-foreground-muted">
-              <span>{t('schedulers.point.offset', 'Offset (minutes, negative = before)')}</span>
-              <DraftNumberInput
-                aria-label={t('schedulers.point.offset', 'Offset (minutes, negative = before)')}
-                className="w-28"
-                value={at.offsetMin}
-                onValue={(value) => {
-                  if (value !== null) setAt({ ...at, offsetMin: Math.round(value) })
-                }}
-              />
-            </label>
             <p className="pb-2 text-xs text-foreground-muted" data-testid="sun-computed">
               {sunMinute === null || base === null
                 ? t('schedulers.point.sunUnknown', 'No time today: the site location is not set.')

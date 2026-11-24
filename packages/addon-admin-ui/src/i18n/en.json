@@ -6922,19 +6922,6 @@
         "tree-full": "The rules are full: remove a row first."
       }
     },
-    "timeIs": {
-      "window": "Time of day",
-      "wholeDay": "The whole day",
-      "between": "Between two times",
-      "from": "From",
-      "to": "To",
-      "wraps": "This window ends the next day. The days are the days it starts on.",
-      "noDays": "Pick at least one day.",
-      "preset": {
-        "day": "Daytime (sunrise to sunset)",
-        "night": "Nighttime (sunset to sunrise)"
-      }
-    },
     "triggeredBy": {
       "triggers": "Started by",
       "noRows": "This automation has no trigger row to choose. Add one to the rules first.",
@@ -11606,6 +11593,45 @@
       "minutes": "Minutes",
       "seconds": "Seconds",
       "millis": "Milliseconds"
+    },
+    "timeWindow": {
+      "noLocation": "This site has no location, so a sun time cannot be judged. Set the site location to use it.",
+      "kind": {
+        "clock": "At a time",
+        "sun": "At a sun event",
+        "date": "On a date"
+      },
+      "time": "Time",
+      "date": "Date and time",
+      "sunEvent": "Sun event",
+      "sun": {
+        "sunrise": "sunrise",
+        "sunset": "sunset",
+        "dawn": "dawn",
+        "dusk": "dusk"
+      },
+      "offset": "Offset (minutes, negative = before)",
+      "windowLabel": "Time of day",
+      "mode": {
+        "wholeDay": "The whole day",
+        "between": "Between two times",
+        "day": "Daytime (sunrise to sunset)",
+        "night": "Nighttime (sunset to sunrise)"
+      },
+      "from": "From",
+      "to": "To",
+      "days": "Days",
+      "noDays": "Pick at least one day.",
+      "wraps": "This window ends the next day. The days are the days it starts on.",
+      "day": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
     }
   },
   "helpers": {
@@ -13753,12 +13779,10 @@
       "addEdge": "Edge",
       "addHold": "Hold",
       "addRelease": "Release",
-      "clock": "At a time",
       "edge": "Edge: run once",
       "grace": "Wait (minutes)",
       "hold": "Hold: keep true",
       "kind": "Point type",
-      "offset": "Offset (minutes, negative = before)",
       "override": "If someone changes it by hand",
       "reassert": "Put the hold back after a while",
       "release": "Release: end the hold",
@@ -13767,9 +13791,7 @@
       "respect": "Leave it alone",
       "sun": "At a sun event",
       "sunComputed": "Today at {{time}} ({{zone}})",
-      "sunEvent": "Sun event",
       "sunUnknown": "No time today: the site location is not set.",
-      "time": "Time",
       "when": "When"
     },
     "profile": {
