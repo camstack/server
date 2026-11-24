@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.945",
+  "version": "1.2.946",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -68,11 +68,9 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.740",
-        "@camstack/addon-agent-ui": ">=1.2.438",
-        "@camstack/addon-export-alexa": ">=1.2.208",
-        "@camstack/addon-export-hap": ">=1.2.210",
-        "@camstack/addon-provider-hikvision": ">=1.2.195"
+        "@camstack/addon-admin-ui": ">=1.2.741",
+        "@camstack/addon-agent-ui": ">=1.2.439",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.720"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

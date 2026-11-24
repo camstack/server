@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.946] - 2026-11-24
+
 ### Changed
 
 - The timed-run wrapper binds to every device with a switch and re-evaluates when a device gains or loses its switch
