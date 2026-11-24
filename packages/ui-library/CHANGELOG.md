@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Plain switches, plugs and fans show the on-for timer on their card
+
 ## [1.2.501] - 2026-11-24
 
 ### Changed

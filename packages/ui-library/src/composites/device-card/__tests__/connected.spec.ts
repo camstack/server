@@ -1,10 +1,4 @@
-import {
-  CLIMATE_ROLES,
-  DeviceRole,
-  DeviceType,
-  TIMED_RUN_HEATER_LIMIT,
-  timedRunLimitOf,
-} from '@camstack/types'
+import { CLIMATE_ROLES, DeviceRole, DeviceType, timedRunLimitOf } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { climateRoleOf } from '../connected/climate-model'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
@@ -24,8 +18,9 @@ describe('connectedCardKindOf — a card only for what the device IS (type + rol
     expect(
       connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchHeater, ['timed-run']),
     ).toBeNull()
-    expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)).toBe(TIMED_RUN_HEATER_LIMIT)
-    expect(timedRunLimitOf(DeviceType.Switch, null)).toBeNull()
+    expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater).maxSeconds).toBe(180 * 60)
+    // any other switch has a limit too, the default one (D1097)
+    expect(timedRunLimitOf(DeviceType.Switch, null).maxSeconds).toBe(24 * 3600)
   })
 
   it('draws every climate role that binds climate-control as climate', () => {

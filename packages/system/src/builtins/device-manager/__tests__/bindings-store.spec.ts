@@ -10,7 +10,6 @@
 
 import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import {
-  DeviceRole,
   type AddonContext,
   DeviceType,
   EventCategory,
@@ -613,7 +612,7 @@ describe('device-manager bindings store', () => {
       expect(entries.map((e) => e.capName)).not.toContain('snapshot')
     })
 
-    it('D1033: a cap gated by role binds to that role only, and follows a role change', async () => {
+    it('D1097: a cap that binds when the device has a switch follows the switch, with no restart', async () => {
       const registry = makeTypedRegistry()
       registry.declareCapability({
         name: 'timed-run',
@@ -621,33 +620,35 @@ describe('device-manager bindings store', () => {
         mode: 'singleton',
         kind: 'wrapper',
         defaultActive: true,
-        deviceTypes: [DeviceType.Switch],
-        deviceRoles: { [DeviceType.Switch]: [DeviceRole.SwitchHeater] },
+        deviceTypes: [DeviceType.PetFountain],
+        bindsWhenDeviceHas: ['switch'],
         methods: {},
       })
       registry.registerWrapper('timed-run', 'core-blocks', { defaultActive: true })
       ctx.kernel.capabilityRegistry = registry
+      // a plain switch with a native `switch`, a light with none yet, a fountain by type
       await seedDeviceRow(store, { deviceId: 801, type: DeviceType.Switch })
-      await seedDeviceRow(store, {
-        deviceId: 802,
-        type: DeviceType.Switch,
-        role: DeviceRole.SwitchHeater,
-      })
+      await seedDeviceRow(store, { deviceId: 802, type: DeviceType.Light })
+      await seedDeviceRow(store, { deviceId: 803, type: DeviceType.PetFountain })
+      await seedDeviceRow(store, { deviceId: 804, type: DeviceType.Camera })
+      registry.registerNativeProvider('switch', 801, 'addon-provider-tuya', {})
+      registry.registerNativeProvider('switch', 804, 'addon-provider-tuya', {})
       const caps = async (deviceId: number) =>
         (await addon.getBindings({ deviceId })).entries.map((e) => e.capName)
 
-      expect(await caps(801)).not.toContain('timed-run')
-      expect(await caps(802)).toContain('timed-run')
-
-      // No restart: the next read of the row decides.
-      await seedDeviceRow(store, {
-        deviceId: 801,
-        type: DeviceType.Switch,
-        role: DeviceRole.SwitchHeater,
-      })
-      await seedDeviceRow(store, { deviceId: 802, type: DeviceType.Switch, role: null })
       expect(await caps(801)).toContain('timed-run')
+      expect(await caps(803)).toContain('timed-run')
+      // no switch, no timed run: the phantom feature never appears
       expect(await caps(802)).not.toContain('timed-run')
+
+      // a switch grafted AFTER boot (composer, a late driver) brings it in, no restart
+      registry.registerNativeProvider('switch', 802, 'composer', {})
+      expect(await caps(802)).toContain('timed-run')
+      // and losing the switch takes it away again
+      registry.unregisterNativeProvider('switch', 802)
+      expect(await caps(802)).not.toContain('timed-run')
+      // the role plays no part: any switch is offered the run
+      expect(await caps(804)).toContain('timed-run')
     })
 
     it('an unknown device type never filters — a typeless row keeps every binding', async () => {

@@ -1,10 +1,10 @@
 /**
  * A real device's power, the way every card reads it: `switch` is the one
  * on/off control (D1042) — a light, a fan, a heater and a plug all turn on and
- * off through it — and `timed-run`, when the device binds it and its type and
- * role are offered one (D1033), is the switch's timer.
+ * off through it — and `timed-run`, which every device with a switch binds
+ * (D1097), is the switch's timer.
  */
-import { DeviceType, timedRunLimitOf, timedRunMaxIn } from '@camstack/types'
+import { timedRunLimitOf, timedRunMaxIn } from '@camstack/types'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
@@ -29,9 +29,6 @@ export interface SwitchPowerInput {
   readonly card: Pick<CardCommonResult, 'deviceType' | 'role' | 'fail' | 'succeed'>
 }
 
-const DEVICE_TYPES: ReadonlySet<string> = new Set(Object.values(DeviceType))
-const isDeviceType = (value: string): value is DeviceType => DEVICE_TYPES.has(value)
-
 export function useSwitchPower({ deviceId, card }: SwitchPowerInput): SwitchPower {
   const t = useUiText()
   const client = useTrpcClient()
@@ -42,10 +39,7 @@ export function useSwitchPower({ deviceId, card }: SwitchPowerInput): SwitchPowe
   const runCommand = useDeviceCommand()
   const cap = dev?.switch
   const timedRun = dev?.timedRun
-  const limit =
-    card.deviceType !== null && isDeviceType(card.deviceType)
-      ? timedRunLimitOf(card.deviceType, card.role)
-      : null
+  const limit = card.deviceType === null ? null : timedRunLimitOf(card.deviceType, card.role)
   const timer: SwitchTimerModel | null =
     timedRun === undefined || run === undefined || limit === null || limit.unit !== 'min'
       ? null

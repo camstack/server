@@ -18,9 +18,12 @@ import { ALL_CAPABILITY_DEFINITIONS } from '../generated/capability-router-map.j
  * default wrapper must say which device types it is for.
  */
 describe('defaultActive wrappers declare deviceTypes', () => {
-  it('every cap with defaultActive:true declares a non-empty deviceTypes', () => {
+  it('every cap with defaultActive:true declares a non-empty deviceTypes (or bindsWhenDeviceHas, D1097)', () => {
     const offenders = ALL_CAPABILITY_DEFINITIONS.filter(
-      (def) => def.defaultActive === true && (def.deviceTypes?.length ?? 0) === 0,
+      (def) =>
+        def.defaultActive === true &&
+        (def.deviceTypes?.length ?? 0) === 0 &&
+        (def.bindsWhenDeviceHas?.length ?? 0) === 0,
     ).map((def) => def.name)
 
     expect(

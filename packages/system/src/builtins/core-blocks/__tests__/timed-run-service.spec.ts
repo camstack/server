@@ -11,7 +11,7 @@ import { recordingLogger } from './fixtures.js'
 
 const HEATER = 5
 const FOUNTAIN = 6
-/** A plain switch: same controls as the heater, no heater role (D1033). */
+/** A plain switch: any device with a switch is offered a timed run (D1097). */
 const PLAIN_SWITCH = 7
 const T0 = 1_000_000
 
@@ -45,7 +45,7 @@ function harness(
     [HEATER, { type: DeviceType.Switch, role: DeviceRole.SwitchHeater }],
     [FOUNTAIN, { type: DeviceType.PetFountain, role: null }],
     [PLAIN_SWITCH, { type: DeviceType.Switch, role: null }],
-    [9, { type: DeviceType.Camera, role: null }],
+    // device 9 has no switch: the wiring answers null for it (D1097)
   ])
   const quickRuns = new Map<number, number>()
   const actuation: TimedRunActuation = {
@@ -124,7 +124,7 @@ describe('TimedRunService', () => {
     expect(h.timers).toHaveLength(0)
   })
 
-  it('refuses a device type that has no timed run', async () => {
+  it('refuses a device that has no switch', async () => {
     const h = harness()
     expect(await h.service.runFor({ deviceId: 9, duration: 1, unit: 'min' })).toEqual({
       ok: false,
@@ -134,15 +134,24 @@ describe('TimedRunService', () => {
     expect(h.commands).toEqual([])
   })
 
-  it('D1033: a switch without the heater role has no timed run, the heater-role switch does', async () => {
+  it('D1097: a plain switch runs for a time, with the default limit; over it is REFUSED, never clamped', async () => {
     const h = harness()
-    expect(await h.service.runFor({ deviceId: PLAIN_SWITCH, duration: 1, unit: 'min' })).toEqual({
-      ok: false,
-      reason: 'unsupported-device',
-      maxSeconds: null,
+    expect((await h.service.runFor({ deviceId: PLAIN_SWITCH, duration: 20, unit: 'min' })).ok).toBe(
+      true,
+    )
+    expect(h.commands).toEqual([{ deviceId: PLAIN_SWITCH, actuator: 'switch', on: true }])
+    const over = await h.service.runFor({
+      deviceId: PLAIN_SWITCH,
+      duration: 24 * 60 + 1,
+      unit: 'min',
     })
-    expect(h.commands).toEqual([])
-    expect((await h.service.runFor({ deviceId: HEATER, duration: 1, unit: 'min' })).ok).toBe(true)
+    expect(over).toEqual({ ok: false, reason: 'over-max', maxSeconds: 24 * 3600 })
+    expect(h.commands).toHaveLength(1)
+    expect(await h.service.getOptions({ deviceId: PLAIN_SWITCH })).toEqual({
+      unit: 'min',
+      maxDuration: 24 * 60,
+      defaultDuration: 15,
+    })
   })
 
   it('a failed on command leaves no row and no timer', async () => {
@@ -229,6 +238,28 @@ describe('TimedRunService', () => {
       slice: { pumpRunning: false },
     })
     expect(h.store.rows.has(FOUNTAIN)).toBe(false)
+  })
+
+  it('D1097: a switch that appears after boot has its status published once, on its first state', async () => {
+    const h = harness()
+    await h.service.reconcile()
+    h.published.length = 0
+    // no switch bound: nothing to publish, however often it speaks
+    await h.service.onDeviceState({ deviceId: 9, capName: 'switch', slice: { on: true } })
+    expect(h.published).toEqual([])
+    // a switch the boot sweep did not know (grafted later)
+    await h.service.onDeviceState({
+      deviceId: PLAIN_SWITCH,
+      capName: 'switch',
+      slice: { on: false },
+    })
+    await h.service.onDeviceState({
+      deviceId: PLAIN_SWITCH,
+      capName: 'switch',
+      slice: { on: true },
+    })
+    expect(h.published.map((p) => p.deviceId)).toEqual([PLAIN_SWITCH])
+    expect(h.published[0]?.status.quickRun).toEqual({ duration: 15, unit: 'min' })
   })
 
   it('restart: a passed deadline switches off exactly once, a future one is re-armed', async () => {

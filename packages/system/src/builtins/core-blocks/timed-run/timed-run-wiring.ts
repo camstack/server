@@ -7,7 +7,6 @@ import {
   type AddonApi,
   type IScopedLogger,
   type RecordsAccess,
-  timedRunLimitOf,
   type TimedRunActuator,
 } from '@camstack/types'
 import { invokeCapOver } from '../actions-wiring.js'
@@ -99,16 +98,16 @@ export function buildTimedRunService(deps: TimedRunWiringDeps): TimedRunService 
     rows: rowsOver(deps.records),
     deviceKindOf: async (deviceId) => {
       const found = await need().deviceManager.getDevice.query({ deviceId })
-      return found === null || found === undefined
-        ? null
-        : { type: found.type, role: found.role ?? null }
+      if (found === null || found === undefined) return null
+      // Offered where the cap is BOUND (D1097): the bindings are the one answer to
+      // "does this device have a switch", the same one the binding rule asks.
+      const { entries } = await need().deviceManager.getBindings.query({ deviceId })
+      return entries.some((entry) => entry.capName === 'timed-run')
+        ? { type: found.type, role: found.role ?? null }
+        : null
     },
-    timedRunDeviceIds: async () => {
-      const devices = await need().deviceManager.listAll.query({ projection: 'slim' })
-      return devices
-        .filter((d) => timedRunLimitOf(d.type, d.role ?? null) !== null)
-        .map((d) => d.id)
-    },
+    timedRunDeviceIds: async () =>
+      need().deviceManager.listDeviceIdsByCaps.query({ capNames: ['timed-run'] }),
     actuation: actuationOver(deps.api),
     quickRuns: quickRunsOver(deps.settings),
     publish: async (deviceId, status) => {

@@ -140,6 +140,8 @@ export function isSwitchHeater(type: string, role: string | null | undefined): b
 export interface DeviceKindGate {
   readonly deviceTypes?: readonly DeviceType[]
   readonly deviceRoles?: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>>
+  /** Also offered on a device that has one of these caps bound (D1097). */
+  readonly bindsWhenDeviceHas?: readonly string[]
 }
 
 /**
@@ -164,4 +166,28 @@ export function capAppliesToDeviceKind(
   const roles = gate?.deviceRoles?.[type]
   if (roles === undefined) return true
   return role !== null && role !== undefined && roles.some((candidate) => candidate === role)
+}
+
+/**
+ * Is a capability offered on this device, by its kind OR by a cap it has (D1097)?
+ *
+ * Without `bindsWhenDeviceHas` this is exactly {@link capAppliesToDeviceKind}. With
+ * it, a device that has one of the named caps is admitted whatever its type, and
+ * otherwise only a KNOWN type that `deviceTypes` names is: the fail-open of an
+ * unresolved type does not apply, because "has a switch" is the rule and an
+ * unresolved type must not conjure a cap onto a device that has none.
+ */
+export function capAdmitsDevice(
+  gate: DeviceKindGate | undefined,
+  deviceType: string | undefined,
+  role: string | null | undefined,
+  hasCap: (capName: string) => boolean,
+): boolean {
+  const companions = gate?.bindsWhenDeviceHas
+  if (companions === undefined || companions.length === 0) {
+    return capAppliesToDeviceKind(gate, deviceType, role)
+  }
+  if (companions.some(hasCap)) return true
+  if (deviceType === undefined || (gate?.deviceTypes?.length ?? 0) === 0) return false
+  return capAppliesToDeviceKind(gate, deviceType, role)
 }

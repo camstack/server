@@ -15,7 +15,7 @@
  */
 import { Flame } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { TIMED_RUN_HEATER_LIMIT } from '@camstack/types'
+import { DeviceRole, DeviceType, timedRunLimitOf } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
@@ -25,7 +25,7 @@ import { AirflowViz, KEYFRAMES } from './ac-panel'
 import type { DeviceControlProps } from './control-registry'
 import { TimedRunControl } from './timed-run-control'
 
-const HEATER_LIMIT = TIMED_RUN_HEATER_LIMIT
+const HEATER_LIMIT = timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)
 const HEAT_ACCENT = 'var(--color-warning)'
 const HEAT_PERIOD_SEC = 1.8
 
@@ -129,7 +129,7 @@ export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
           }}
         />
       </label>
-      {timer.cap !== undefined && HEATER_LIMIT !== undefined && (
+      {timer.cap !== undefined && (
         <TimedRunControl trpc={props.trpc} deviceId={props.deviceId} limit={HEATER_LIMIT} />
       )}
     </div>

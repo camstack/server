@@ -976,6 +976,11 @@ running source: an appliance on a plug keeps its power while idle. The quick-run
 a timed-run device is per device (`timed-run` status `quickRun`, edited through the derived
 form), bounded by the type's maximum. See D1020.
 
+A timed run ("on for N") is offered on EVERY device that has a `switch` (D1097): the
+`timed-run` wrapper declares `bindsWhenDeviceHas: ['switch']` and pet fountains by type, and
+`getBindings` derives it per call, so a device that gains its switch after boot gets it with
+no restart. Limits come only from `switchRunLimitOf(type, role)`; over the maximum is refused.
+
 ### Math (D944)
 
 Five templates build a number or a yes/no from readings. A **threshold** turns

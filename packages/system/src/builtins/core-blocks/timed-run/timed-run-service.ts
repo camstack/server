@@ -21,6 +21,7 @@ import {
   type IScopedLogger,
   type ITimedRunProvider,
   type TimedRunActuator,
+  type TimedRunLimit,
   type TimedRunStatus,
   timedRunLimitOf,
   timedRunMaxIn,
@@ -59,9 +60,12 @@ export interface DeviceKind {
 
 export interface TimedRunServiceDeps {
   readonly rows: TimedRunRows
-  /** The device's type and role, or null when it is gone: together they decide the limit (D1033). */
+  /**
+   * The device's type and role, or null when it is gone or has nothing to run (no
+   * switch, and not a pet fountain, D1097): together they decide the limit.
+   */
   readonly deviceKindOf: (deviceId: number) => Promise<DeviceKind | null>
-  /** Every device whose type offers a timed run: boot publishes each one's status. */
+  /** Every device a timed run is offered on: boot publishes each one's status. */
   readonly timedRunDeviceIds: () => Promise<readonly number[]>
   readonly actuation: TimedRunActuation
   readonly quickRuns: TimedRunQuickRuns
@@ -92,6 +96,8 @@ export class TimedRunService implements ITimedRunProvider {
   private armedFor: number | null = null
   private inflight: Promise<void> = Promise.resolve()
   private stopped = false
+  /** Devices whose status has been published: a switch grafted after boot is not in the boot sweep. */
+  private readonly announced = new Set<number>()
 
   constructor(private readonly deps: TimedRunServiceDeps) {}
 
@@ -130,7 +136,7 @@ export class TimedRunService implements ITimedRunProvider {
     await this.publishStatus(deviceId)
   }
 
-  private async limitOf(deviceId: number): Promise<ReturnType<typeof timedRunLimitOf>> {
+  private async limitOf(deviceId: number): Promise<TimedRunLimit | null> {
     const kind = await this.deps.deviceKindOf(deviceId)
     return kind === null ? null : timedRunLimitOf(kind.type, kind.role)
   }
@@ -210,6 +216,7 @@ export class TimedRunService implements ITimedRunProvider {
 
   /** Feed one `DeviceStateChanged`: a manual off cancels the pending deadline. */
   async onDeviceState(state: ObservedDeviceState): Promise<void> {
+    await this.announceLateSwitch(state)
     const row = this.pending.get(state.deviceId)
     if (row === undefined) return
     const off =
@@ -221,6 +228,18 @@ export class TimedRunService implements ITimedRunProvider {
     const at = this.switchedOnAt.get(state.deviceId)
     if (at !== undefined && this.deps.now() - at < this.deps.settleMs) return
     await this.forget(state.deviceId)
+  }
+
+  /**
+   * A device that gained its switch after the boot sweep (a composer graft, a late
+   * driver, D1097) is offered a timed run with no restart: the first time its switch
+   * speaks, its status is published once, so a surface has the one-tap run to show.
+   */
+  private async announceLateSwitch(state: ObservedDeviceState): Promise<void> {
+    if (state.capName !== 'switch' || this.announced.has(state.deviceId)) return
+    if ((await this.limitOf(state.deviceId)) === null) return
+    this.announced.add(state.deviceId)
+    await this.publishStatus(state.deviceId)
   }
 
   /** Boot: a passed deadline is switched off once, a future one is re-armed. */
@@ -238,7 +257,10 @@ export class TimedRunService implements ITimedRunProvider {
       ...rows.map((row) => row.deviceId),
       ...(await this.deps.timedRunDeviceIds()),
     ])
-    for (const deviceId of ids) await this.publishStatus(deviceId)
+    for (const deviceId of ids) {
+      this.announced.add(deviceId)
+      await this.publishStatus(deviceId)
+    }
   }
 
   /** Resolves when every deadline that already fired has been carried out. */

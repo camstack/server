@@ -755,7 +755,7 @@ export type ComposedMethodAnswer =
 
 /*
  * How long a device may be run for (`switch.runFor`) is NOT here: it is the one
- * type + role table of the timed run (`TIMED_RUN_LIMITS`), never a second copy.
+ * type + role table `switchRunLimitOf`, never a second copy.
  */
 
 /** A boolean slice field and its setter, e.g. `humidifier.on` + `setOn({ on })`. */
@@ -1008,10 +1008,19 @@ export interface CapabilityDefinition<
   /** For `scope: 'device'` caps — allowed device types. Omit → applies to every type. */
   readonly deviceTypes?: readonly DeviceType[]
   /**
+   * Also offered on any device that HAS one of these capabilities bound (D1097),
+   * whatever its type: the cap is admitted when the type matches `deviceTypes`
+   * OR the device carries one of these. It is judged from the device's live
+   * bindings on every `getBindings`, so a device that gains the cap after boot
+   * (a composer graft, a driver that registers late) gains this one with it, and
+   * one that loses it loses this one. `timed-run` is `['switch']`: "on for N" is
+   * offered wherever a switch is.
+   */
+  readonly bindsWhenDeviceHas?: readonly string[]
+  /**
    * Narrows `deviceTypes` by role (D1033): for a type named here, the cap is
    * offered only on a device carrying one of these roles. A type absent from
-   * this map keeps every role. `timed-run` is offered on a `switch` only when
-   * it is a `switch-heater`.
+   * this map keeps every role.
    */
   readonly deviceRoles?: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>>
   /**

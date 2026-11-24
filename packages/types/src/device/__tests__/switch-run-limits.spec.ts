@@ -20,11 +20,14 @@ describe('switchRunLimitOf', () => {
     })
   })
 
-  it('feeds timedRunLimitOf, which stays null where timed run is not offered', () => {
-    expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)?.maxSeconds).toBe(
-      switchRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater).maxSeconds,
-    )
-    expect(timedRunLimitOf(DeviceType.PetFountain, null)?.maxSeconds).toBe(300)
-    expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.Siren)).toBeNull()
+  it('feeds timedRunLimitOf for every device: one table, no second one', () => {
+    for (const [type, role] of [
+      [DeviceType.Switch, DeviceRole.SwitchHeater],
+      [DeviceType.Switch, DeviceRole.Siren],
+      [DeviceType.Switch, null],
+      [DeviceType.PetFountain, null],
+    ] as const) {
+      expect(timedRunLimitOf(type, role).maxSeconds).toBe(switchRunLimitOf(type, role).maxSeconds)
+    }
   })
 })

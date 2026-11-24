@@ -20,6 +20,7 @@ import type {
 import {
   COMPOSER_ADDON_ID,
   EventCategory,
+  capAdmitsDevice,
   capAppliesToDeviceKind,
   implementedMethodsOf,
 } from '@camstack/types'
@@ -625,6 +626,15 @@ async function resolveBindingsForDevice(
   } else if (deps.capabilityRegistry) {
     const skippedForType: string[] = []
     const skippedSystem: string[] = []
+    // A cap that binds BY a companion cap (`bindsWhenDeviceHas`, D1097) asks what
+    // the device has RIGHT NOW: an operator's activation (step 1), a hub-local
+    // native or a remote one — the same three sources steps 3 and 4 read, so a
+    // switch grafted after boot admits the cap on the next call, with no list to
+    // keep in sync.
+    const hasBound = (companion: string): boolean =>
+      entries.some((entry) => entry.capName === companion) ||
+      deps.capabilityRegistry?.getNativeAddonId(companion, deviceId) != null ||
+      resolveRemote(companion) !== null
     for (const capName of deps.capabilityRegistry.getCapsWithDefaultWrapper()) {
       if (seenCaps.has(capName)) continue
       // `registerWrapper` keys only on `kind: 'wrapper'`, so a system-scoped
@@ -635,7 +645,7 @@ async function resolveBindingsForDevice(
         skippedSystem.push(capName)
         continue
       }
-      if (!capAppliesToDeviceType(definition, deviceType, deviceRole)) {
+      if (!capAdmitsDevice(definition, deviceType, deviceRole, hasBound)) {
         skippedForType.push(capName)
         continue
       }

@@ -1,12 +1,8 @@
 import { z } from 'zod'
-import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
-import {
-  SWITCH_RUN_HEATER_LIMIT,
-  SWITCH_RUN_PET_FOUNTAIN_LIMIT,
-  switchRunLimitOf,
-} from '../device/switch-run-limits.js'
+import { DeviceType } from '../device/device-type.js'
+import { switchRunLimitOf } from '../device/switch-run-limits.js'
 
 /**
  * timed-run - run a device for a chosen time, then stop it (D993).
@@ -22,9 +18,12 @@ import {
  * boot a deadline already past sends the off once (a failed off is logged, never
  * retried in a loop - D49); a future one is re-armed.
  *
- * What a device may be run for, and for how long at most, is per device type
- * and role ({@link timedRunLimitOf}): the maximum is a safety bound, not a preference,
- * so a request above it is REFUSED with a typed reason, never clamped.
+ * It is offered on EVERY device that has a `switch` (and on a pet fountain, which
+ * switches its pump): the binding rule is `bindsWhenDeviceHas: ['switch']` (D1097).
+ * What a device may be run for, and for how long at most, is the one table of
+ * `switchRunLimitOf` by device type and role ({@link timedRunLimitOf}): the maximum
+ * is a safety bound, not a preference, so a request above it is REFUSED with a
+ * typed reason, never clamped.
  */
 
 export const TimedRunUnitSchema = z.enum(['s', 'min'])
@@ -44,57 +43,31 @@ export interface TimedRunLimit {
   readonly quickRunDefault: number
 }
 
-/** A plug-in heater (switch + `switch-heater`): up to 3 h, in minutes. */
-export const TIMED_RUN_HEATER_LIMIT: TimedRunLimit = {
-  actuator: 'switch',
-  maxSeconds: SWITCH_RUN_HEATER_LIMIT.maxSeconds,
-  unit: 'min',
-  quickRunDefault: SWITCH_RUN_HEATER_LIMIT.quickRunSeconds / 60,
-}
-
-/** A pet fountain's pump: up to 5 min, in seconds. */
-export const TIMED_RUN_PET_FOUNTAIN_LIMIT: TimedRunLimit = {
-  actuator: 'pet-fountain',
-  maxSeconds: SWITCH_RUN_PET_FOUNTAIN_LIMIT.maxSeconds,
-  unit: 's',
-  quickRunDefault: SWITCH_RUN_PET_FOUNTAIN_LIMIT.quickRunSeconds,
-}
-
 /**
- * The device types `timed-run` may be offered on. A `switch` is narrowed by
- * role ({@link TIMED_RUN_DEVICE_ROLES}): only a plug-in heater runs on a timer.
- */
-export const TIMED_RUN_DEVICE_TYPES: readonly DeviceType[] = [
-  DeviceType.Switch,
-  DeviceType.PetFountain,
-]
-
-/** The roles that make a device of these types timed-run-able (D1033). */
-export const TIMED_RUN_DEVICE_ROLES: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>> =
-  {
-    [DeviceType.Switch]: [DeviceRole.SwitchHeater],
-  }
-
-/**
- * The longest run of a device, by its type AND role (D1033): a `switch` is a
- * heater only with role `switch-heater`, a pet fountain always is what it is.
- * `null` - the device is not offered `timed-run`.
+ * The timed-run limit of ANY device the cap is bound to: the numbers come from
+ * the one table (`switchRunLimitOf`), the unit and the actuator from the type.
+ * A pet fountain runs its pump and thinks in seconds; every other device is
+ * switched through `switch.setState` and thinks in minutes.
  */
 export function timedRunLimitOf(
   deviceType: string,
   role: string | null | undefined,
-): TimedRunLimit | null {
-  // the numbers come from the one per-type table (`switchRunLimitOf`); a timed run is offered only where it is narrower than the default
+): TimedRunLimit {
   const limit = switchRunLimitOf(deviceType, role)
-  if (deviceType === DeviceType.PetFountain && limit === SWITCH_RUN_PET_FOUNTAIN_LIMIT)
-    return TIMED_RUN_PET_FOUNTAIN_LIMIT
-  if (
-    deviceType === DeviceType.Switch &&
-    role === DeviceRole.SwitchHeater &&
-    limit === SWITCH_RUN_HEATER_LIMIT
-  )
-    return TIMED_RUN_HEATER_LIMIT
-  return null
+  if (deviceType === DeviceType.PetFountain) {
+    return {
+      actuator: 'pet-fountain',
+      maxSeconds: limit.maxSeconds,
+      unit: 's',
+      quickRunDefault: limit.quickRunSeconds,
+    }
+  }
+  return {
+    actuator: 'switch',
+    maxSeconds: limit.maxSeconds,
+    unit: 'min',
+    quickRunDefault: limit.quickRunSeconds / 60,
+  }
 }
 
 const MS_PER_SECOND = 1000
@@ -144,7 +117,7 @@ export function timedRunQuickRun(limit: TimedRunLimit, stored: number | null): T
 
 /** Why a request was not carried out. Typed, so a caller can say it in words. */
 export const TimedRunRefusalSchema = z.enum([
-  /** The device type has no timed run. */
+  /** The device has no timed run (no switch, and not a pet fountain). */
   'unsupported-device',
   /** Longer than the type's maximum (`maxSeconds` names it). */
   'over-max',
@@ -200,8 +173,9 @@ export const timedRunCapability = {
   mode: 'singleton',
   kind: 'wrapper',
   defaultActive: true,
-  deviceTypes: TIMED_RUN_DEVICE_TYPES,
-  deviceRoles: TIMED_RUN_DEVICE_ROLES,
+  // A pet fountain by type; every other device by the `switch` it has (D1097).
+  deviceTypes: [DeviceType.PetFountain],
+  bindsWhenDeviceHas: ['switch'],
   deviceConfig: {
     ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },
   },

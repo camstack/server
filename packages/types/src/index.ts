@@ -1609,6 +1609,7 @@ export {
   featuresOfBoundCaps,
 } from './device/device-type.js'
 export {
+  capAdmitsDevice,
   capAppliesToDeviceKind,
   canonicalStoredDeviceType,
   CLIMATE_ROLES,

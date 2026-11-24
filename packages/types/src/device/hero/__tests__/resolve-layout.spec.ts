@@ -39,4 +39,17 @@ describe('fixed hero layouts', () => {
   it('reads a type D1033 retired as its live type, not as unknown', () => {
     expect(resolveHeroLayout('thermostat')).toBe(HERO_LAYOUT_BY_TYPE[DeviceType.Climate])
   })
+
+  it('D1097: every type a switch can sit on offers the run-for row (an unbound device still gets none)', () => {
+    for (const type of [
+      DeviceType.Switch,
+      DeviceType.Light,
+      DeviceType.Fan,
+      DeviceType.Siren,
+      DeviceType.Camera,
+    ]) {
+      expect(resolveHeroLayout(type).rows, type).toContain('run-for')
+    }
+    expect(resolveHeroLayout(DeviceType.Switch, DeviceRole.SwitchHeater).rows).toContain('run-for')
+  })
 })

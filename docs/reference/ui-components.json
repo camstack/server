@@ -21772,7 +21772,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/use-switch-power.ts",
-      "summary": "A real device's power, the way every card reads it: `switch` is the one on/off control (D1042) — a light, a fan, a heater and a plug all turn on and off through it — and `timed-run`, when the device binds it and its t…"
+      "summary": "A real device's power, the way every card reads it: `switch` is the one on/off control (D1042) — a light, a fan, a heater and a plug all turn on and off through it — and `timed-run`, which every device with a switch b…"
     },
     {
       "name": "useSystem",

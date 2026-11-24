@@ -5061,8 +5061,8 @@
 
 ### `timed-run` → `timedRun.*`
 
-- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:197`
-- **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `switch, pet-fountain`
+- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:170`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `pet-fountain`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`
 - **runtimeState:** `TimedRunStatusSchema`

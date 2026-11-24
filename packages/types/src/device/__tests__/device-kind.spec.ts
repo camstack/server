@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { timedRunCapability, timedRunLimitOf } from '../../capabilities/timed-run.cap.js'
 import {
   canonicalStoredDeviceType,
-  capAppliesToDeviceKind,
+  capAdmitsDevice,
   climateRoleOf,
   isAirConditioner,
   isTv,
@@ -21,41 +21,54 @@ import { resolveHeroSceneId } from '../hero/hero-scene.js'
 
 // D1033 — a type is a set of controls; devices with the same controls differ by role.
 describe('device kind (D1033)', () => {
-  describe('timed-run is offered by type AND role', () => {
-    it('a switch with the heater role has the heater limit', () => {
-      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)).toEqual(
-        expect.objectContaining({ actuator: 'switch', unit: 'min', maxSeconds: 180 * 60 }),
-      )
-      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)?.quickRunDefault).toBe(30)
+  describe('timed-run is offered on every device that has a switch (D1097)', () => {
+    it('every switch kind has the one limit of switchRunLimitOf, in its own unit', () => {
+      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)).toEqual({
+        actuator: 'switch',
+        unit: 'min',
+        maxSeconds: 180 * 60,
+        quickRunDefault: 30,
+      })
+      expect(timedRunLimitOf(DeviceType.Switch, null)).toEqual({
+        actuator: 'switch',
+        unit: 'min',
+        maxSeconds: 24 * 3600,
+        quickRunDefault: 15,
+      })
+      expect(timedRunLimitOf(DeviceType.Light, null).actuator).toBe('switch')
+      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.Siren).maxSeconds).toBe(600)
     })
 
-    it('a plain switch, an outlet and a role-less switch have none', () => {
-      expect(timedRunLimitOf(DeviceType.Switch, null)).toBeNull()
-      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.Outlet)).toBeNull()
+    it('a pet fountain keeps its pump actuator and its seconds, whatever its role', () => {
+      expect(timedRunLimitOf(DeviceType.PetFountain, null)).toEqual({
+        actuator: 'pet-fountain',
+        unit: 's',
+        maxSeconds: 300,
+        quickRunDefault: 60,
+      })
     })
 
-    it('a pet fountain keeps its limit whatever its role', () => {
-      expect(timedRunLimitOf(DeviceType.PetFountain, null)?.actuator).toBe('pet-fountain')
+    it('the cap admits a pet fountain by type and any device by its switch', () => {
+      const none = (): boolean => false
+      const hasSwitch = (name: string): boolean => name === 'switch'
+      expect(capAdmitsDevice(timedRunCapability, DeviceType.PetFountain, null, none)).toBe(true)
+      expect(capAdmitsDevice(timedRunCapability, DeviceType.Switch, null, hasSwitch)).toBe(true)
+      expect(capAdmitsDevice(timedRunCapability, DeviceType.Light, null, hasSwitch)).toBe(true)
+      // no switch, no timed run: no phantom feature
+      expect(capAdmitsDevice(timedRunCapability, DeviceType.Switch, null, none)).toBe(false)
+      expect(capAdmitsDevice(timedRunCapability, DeviceType.Camera, null, none)).toBe(false)
+      // an unresolved type never admits by type: only the switch does
+      expect(capAdmitsDevice(timedRunCapability, undefined, null, none)).toBe(false)
+      expect(capAdmitsDevice(timedRunCapability, undefined, null, hasSwitch)).toBe(true)
     })
 
-    it('the cap binds to a heater switch, not to a plain one', () => {
+    it('a gate without companions is the type gate, and an unknown type stays fail-open', () => {
+      const none = (): boolean => false
       expect(
-        capAppliesToDeviceKind(timedRunCapability, DeviceType.Switch, DeviceRole.SwitchHeater),
+        capAdmitsDevice({ deviceTypes: [DeviceType.Switch] }, DeviceType.Switch, null, none),
       ).toBe(true)
-      expect(capAppliesToDeviceKind(timedRunCapability, DeviceType.Switch, null)).toBe(false)
-      expect(capAppliesToDeviceKind(timedRunCapability, DeviceType.Switch, 'unknown-role')).toBe(
-        false,
-      )
-      expect(capAppliesToDeviceKind(timedRunCapability, DeviceType.PetFountain, null)).toBe(true)
-      expect(capAppliesToDeviceKind(timedRunCapability, DeviceType.Light, null)).toBe(false)
-    })
-
-    it('a gate without roles is the type gate, and an unknown type stays fail-open', () => {
-      expect(
-        capAppliesToDeviceKind({ deviceTypes: [DeviceType.Switch] }, DeviceType.Switch, null),
-      ).toBe(true)
-      expect(capAppliesToDeviceKind({}, DeviceType.Switch, null)).toBe(true)
-      expect(capAppliesToDeviceKind({ deviceTypes: [DeviceType.Switch] }, undefined, null)).toBe(
+      expect(capAdmitsDevice({}, DeviceType.Switch, null, none)).toBe(true)
+      expect(capAdmitsDevice({ deviceTypes: [DeviceType.Switch] }, undefined, null, none)).toBe(
         true,
       )
     })
@@ -78,7 +91,7 @@ describe('device kind (D1033)', () => {
       expect(resolveDeviceControlKind(DeviceType.Switch, DeviceRole.SwitchFan)).toBe(
         resolveDeviceControlKind(DeviceType.Switch, null),
       )
-      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchFan)).toBeNull()
+      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchFan).actuator).toBe('switch')
     })
   })
 
@@ -102,7 +115,7 @@ describe('device kind (D1033)', () => {
       expect(resolveDeviceControlKind(DeviceType.Switch, DeviceRole.SwitchLight)).toBe(
         resolveDeviceControlKind(DeviceType.Switch, null),
       )
-      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchLight)).toBeNull()
+      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchLight).actuator).toBe('switch')
     })
 
     it('is told apart by one accessor: a switch with the role, nothing else', () => {

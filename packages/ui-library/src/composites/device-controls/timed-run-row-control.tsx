@@ -1,8 +1,8 @@
 /**
  * The list-row timed run (D993): Run beside the power control while idle,
  * Stop and the time left while a run is armed. Drawn only when the device
- * binds `timed-run`. The words and the bound come from the same limit the
- * row projection uses.
+ * binds `timed-run`, which is every device that has a switch (D1097). The words
+ * and the bound come from the same limit the row projection uses.
  */
 import { Square, Timer } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
@@ -18,7 +18,7 @@ export interface TimedRunRowControlProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly deviceId: number
   readonly deviceType: string
-  /** With the type, which device this is: a switch has a timed run only as a heater (D1033). */
+  /** With the type, which device this is: the role narrows the limit (a heater runs longer, a siren shorter). */
   readonly deviceRole: string | null
 }
 
@@ -47,8 +47,8 @@ export function TimedRunRowControl({
     slice: (d) => d.state.timedRun,
   })
   const activeUntil = slice?.activeUntil ?? null
-  const now = useNow(limit !== null && cap !== undefined && activeUntil !== null)
-  if (limit === null || cap === undefined) return null
+  const now = useNow(cap !== undefined && activeUntil !== null)
+  if (cap === undefined) return null
 
   const duration = slice?.quickRun?.duration ?? limit.quickRunDefault
   const unit: TimedRunUnit = limit.unit

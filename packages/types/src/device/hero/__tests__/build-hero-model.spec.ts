@@ -327,8 +327,10 @@ describe('timed run', () => {
     expect(model.timedRun?.activeUntil).toBeNull()
   })
 
-  it('a type without a limit is offered no timed run', () => {
-    expect(build(DeviceType.Switch, HEATER).timedRun).toBeNull()
+  it('a plain switch with a timed-run binding is offered the default run (D1097)', () => {
+    const model = build(DeviceType.Switch, HEATER)
+    expect(model.timedRun?.quickRun).toEqual({ duration: 15, unit: 'min' })
+    expect(build(DeviceType.Switch, ['switch']).timedRun).toBeNull()
   })
 })
 

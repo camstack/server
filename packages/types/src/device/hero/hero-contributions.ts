@@ -408,8 +408,7 @@ function remainingWords(amount: number, unit: TimedRunUnit): HeroText {
 
 const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (slice, ctx) => {
   const limit = timedRunLimitOf(ctx.type, ctx.role)
-  // Offered only to the kinds that have a limit. A bound cap on any other device adds nothing.
-  if (limit === null) return {}
+  // Bound on every device that has a switch (D1097): the limit is the one table's, never null.
   const quickRun = slice?.quickRun ?? timedRunQuickRun(limit, null)
   const activeUntil =
     slice?.activeUntil != null && slice.activeUntil > ctx.now ? slice.activeUntil : null

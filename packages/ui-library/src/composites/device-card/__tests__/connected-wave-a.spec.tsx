@@ -159,11 +159,11 @@ describe('the heater timer is timed-run', () => {
     )
   })
 
-  it('a switch whose role has no timed-run limit draws no timer', () => {
+  it('a plain switch is offered the timer too: the default limit (D1097)', () => {
     hub.deviceType = DeviceType.Switch
     hub.role = null
     render(<ConnectedHeaterCard deviceId={1} />)
-    expect(screen.queryByTestId('dc-plug-timer')).toBeNull()
+    expect(screen.queryByTestId('dc-plug-timer')).not.toBeNull()
   })
 })
 

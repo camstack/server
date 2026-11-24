@@ -93,7 +93,7 @@ describe('TimedRunRowControl', () => {
     expect(container.textContent).toBe('')
   })
 
-  it('a bound cap on a switch WITHOUT the heater role draws nothing (no limit by type alone)', () => {
+  it('a bound cap on a plain switch draws the default run (D1097)', () => {
     timer = {
       cap: { runFor, cancel },
       slice: { activeUntil: null, requestedBy: null, quickRun: null },
@@ -108,6 +108,6 @@ describe('TimedRunRowControl', () => {
         deviceRole={null}
       />,
     )
-    expect(container.textContent).toBe('')
+    expect(container.textContent).toBe('Run 15 min')
   })
 })

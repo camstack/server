@@ -18,7 +18,7 @@ export interface HeroLayout {
 
 /** Every other type: the facts a bound cap adds, nothing type-specific. */
 export const HERO_LAYOUT_DEFAULT: HeroLayout = {
-  rows: ['contact', 'motion-trigger'],
+  rows: ['contact', 'motion-trigger', 'run-for'],
 }
 
 const HEATER_LAYOUT: HeroLayout = { rows: ['run-for', 'cycle'] }
@@ -35,17 +35,19 @@ const CLIMATE_LAYOUT: HeroLayout = {
 }
 /** The circuits, then the power pills, then the System group, one row per mode (D1026). */
 const HEAT_PUMP_LAYOUT: HeroLayout = { rows: ['circuit', 'heat-pump-power', 'system-mode'] }
-const SWITCH_LAYOUT: HeroLayout = { rows: ['motion-trigger'] }
+const SWITCH_LAYOUT: HeroLayout = { rows: ['motion-trigger', 'run-for'] }
 const LOCK_LAYOUT: HeroLayout = { rows: ['lock'] }
 const ALARM_LAYOUT: HeroLayout = { rows: ['alarm'] }
-const FAN_LAYOUT: HeroLayout = { rows: ['fan'] }
+const FAN_LAYOUT: HeroLayout = { rows: ['fan', 'run-for'] }
 const VACUUM_LAYOUT: HeroLayout = { rows: ['vacuum', 'vacuum-suction'] }
 const MOWER_LAYOUT: HeroLayout = { rows: ['mower'] }
 const FEEDER_LAYOUT: HeroLayout = { rows: ['feeder'] }
 const FOUNTAIN_LAYOUT: HeroLayout = { rows: ['fountain', 'pump-cycle'] }
 const AUTOMATION_LAYOUT: HeroLayout = { rows: ['automation'] }
 const SCRIPT_LAYOUT: HeroLayout = { rows: ['script'] }
-const LIGHT_LAYOUT: HeroLayout = { rows: ['brightness', 'color', 'contact', 'motion-trigger'] }
+const LIGHT_LAYOUT: HeroLayout = {
+  rows: ['brightness', 'color', 'contact', 'motion-trigger', 'run-for'],
+}
 const COVER_LAYOUT: HeroLayout = { rows: ['cover'] }
 const VALVE_LAYOUT: HeroLayout = { rows: ['valve'] }
 const HUMIDIFIER_LAYOUT: HeroLayout = { rows: ['humidifier'] }
