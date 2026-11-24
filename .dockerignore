@@ -5,6 +5,10 @@
 *
 # D326: the root package helper is image-baked (applyServerUpdate must not
 # replace a root process). These two files are the only monorepo COPY.
+!scripts/closure-pins-install.mjs
+!packages/node-root
+!packages/node-root/src
+!packages/node-root/src/closure-pins.ts
 !scripts/docker
 !scripts/docker/**
 

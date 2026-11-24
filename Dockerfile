@@ -35,9 +35,18 @@ ENV CI=true
 #    NEVER pin to the product version: packages are published to npm on their
 #    own line, and per-package versions drift. `@latest` is the closure this
 #    image bakes; the product tag is only the image label (intel-X.Y.Z).
+#    #681: the helper resolves `latest` ONCE, packs that exact version, writes
+#    its closure-pins.json as root `overrides` (so no third-party package
+#    published after the release can enter the closure) and prints the version
+#    the install then uses. A server without the file installs unpinned and
+#    the build log says why; it never fails the build.
+COPY scripts/closure-pins-install.mjs /opt/scripts/closure-pins-install.mjs
+COPY packages/node-root/src/closure-pins.ts /opt/packages/node-root/src/closure-pins.ts
 RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
     npm init -y >/dev/null && \
-    npm install --omit=dev --no-audit --no-fund "@camstack/server@latest" && \
+    SERVER_VERSION="$(node /opt/scripts/closure-pins-install.mjs /opt/camstack-hub latest)" && \
+    echo "[image] installing @camstack/server@$SERVER_VERSION" && \
+    npm install --omit=dev --no-audit --no-fund "@camstack/server@$SERVER_VERSION" && \
     test -e node_modules/@camstack/server/dist/launcher.js && \
     test -e node_modules/@camstack/server/dist/starter.js
 

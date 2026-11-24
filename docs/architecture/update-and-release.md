@@ -557,8 +557,20 @@ Why not an `npm-shrinkwrap.json` inside the server: npm honours `overrides` only
 in the ROOT project, and a shrinkwrap in a dependency nests the whole tree under
 `node_modules/@camstack/server/` and installs none of the `@camstack/*` addons
 it does not list. Measured: pinned `@trpc/server` 11.18.0 at the root with the
-addons beside it, unpinned 11.31.0. Not covered yet: the Docker image
-(`npm install @camstack/server@latest` in a bare dir) and the desktop install.
+addons beside it, unpinned 11.31.0.
+
+### Docker and desktop now pinned
+
+The Docker image and the desktop build install the closure outside the node
+updater, so they go through `scripts/closure-pins-install.mjs`: it resolves
+`latest` once, packs that exact version, writes its `closure-pins.json` as root
+`overrides` into the install dir and prints the version; the install then uses
+`@camstack/server@<that version>`. The Dockerfile COPYs the helper and
+`packages/node-root/src/closure-pins.ts` (the shared parser, read by Node's type
+stripping) into the fetch stage; `packages/desktop/scripts/stage-deps.mjs` runs
+the same helper. A release without the file installs unpinned and the build
+log says why (`[closure-pins] ... UNPINNED: <reason>`); it never fails the
+build. No env var, port or volume changed (D717, D822).
 
 ## Migrations survive a version jump (D1014)
 

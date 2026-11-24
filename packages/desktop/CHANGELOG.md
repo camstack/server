@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The desktop shell force-kills a node that outlives an update restart, recording the last child output and a stack sample.
 - The desktop app can use the Mac's Touch ID passkeys on a signed build, asks which passkey when several are saved, and keeps single sign-in popups inside the app while opening other links in your browser
 - macOS: the agent app no longer stays without a node after a server update restart: a desktop update the native updater has not staged is no longer installed (the refused quit left the shell believing it was quitting), and a quit that does not happen is recovered
+- The desktop app installs the third-party versions its release was tested with, so a package published after the release cannot enter the bundled server
 
 ### Fixed
 

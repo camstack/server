@@ -59,6 +59,7 @@ const stageModules = join(stageDir, 'node_modules')
 // addon-* + third-party deps) transitively. `@latest` is deliberate:
 // the product version is not an npm version (D943).
 const SPECS = ['@camstack/server@latest']
+const SERVER_TAG = 'latest' // the SPECS entry, resolved once by closure-pins-install.mjs
 
 // The closure install is the one long (~90 s), network-heavy, externally
 // killable step of the desktop build. On the self-hosted linux runner an
@@ -78,8 +79,20 @@ writeFileSync(
   `${JSON.stringify({ name: 'camstack-desktop-deps-stage', private: true, version: '0.0.0' }, null, 2)}\n`,
 )
 
-console.log(`[stage-deps] installing PRE-BUILT closure from npm: ${SPECS.join(' ')}`)
-const closureInstall = `npm install --omit=dev --no-audit --no-fund ${SPECS.join(' ')}`
+// #681: resolve `latest` ONCE, write the release's closure-pins.json as root
+// `overrides`, then install that exact version. Unpinned (with a logged
+// reason) when the release ships no file; never a failure.
+const closurePinsInstall = join(desktopDir, '..', '..', 'scripts', 'closure-pins-install.mjs')
+const pinnedVersion = execFileSync(process.execPath, [closurePinsInstall, stageDir, SERVER_TAG], {
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'inherit'],
+}).trim()
+const installSpecs = SPECS.map((spec) =>
+  spec === `@camstack/server@${SERVER_TAG}` ? `@camstack/server@${pinnedVersion}` : spec,
+)
+
+console.log(`[stage-deps] installing PRE-BUILT closure from npm: ${installSpecs.join(' ')}`)
+const closureInstall = `npm install --omit=dev --no-audit --no-fund ${installSpecs.join(' ')}`
 try {
   runWithRetry(() => execSync(closureInstall, { cwd: stageDir, stdio: 'inherit' }), {
     attempts: CLOSURE_INSTALL_ATTEMPTS,
