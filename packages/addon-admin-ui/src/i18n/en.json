@@ -2566,7 +2566,8 @@
         "rising": "Rising edge",
         "button": "Button press",
         "native-event": "Native event"
-      }
+      },
+      "removeWhat": "The {{name}} customization"
     },
     "doorbell": {
       "title": "Doorbell",
@@ -2731,11 +2732,13 @@
       "notLinked": "no longer linked — still on timeline",
       "reverseTitle": "Linked to cameras",
       "camera": "Camera",
-      "linkedColumn": "Linked",
-      "linkTo": "Linked to {{name}}",
       "impliedByStructure": "Linked through its parent",
-      "noCameras": "No cameras to link yet.",
-      "reverseHint": "A tick adds this device to that camera's linked devices; its controls then show with the camera."
+      "reverseHint": "The cameras listed here link this device: its controls show with each camera.",
+      "pickCameraTitle": "Link to cameras",
+      "removeFromCamera": "The link from {{camera}} to {{device}}",
+      "camerasUnreadable": "Linked cameras could not be read: {{reason}}",
+      "someFailed": "Not linked: {{failures}}",
+      "cameraOption": "Linked camera"
     },
     "advancedLink": "Advanced — expression editor",
     "suggest": {
@@ -3013,7 +3016,8 @@
         "offCatalog": "Other fields",
         "actions": "Linked actions",
         "linked": "Linked devices",
-        "oscillation-axes": "Oscillation axes"
+        "oscillation-axes": "Oscillation axes",
+        "linkedCameras": "Linked cameras"
       },
       "caps": {
         "battery": "Battery",
@@ -3088,7 +3092,9 @@
         "sourceDevice": "Source device",
         "projectHint": "The whole capability follows this device, not single values. Readings stored one by one below are refused.",
         "referenceHint": "This device's own capability is read for the card; nothing is copied into this device."
-      }
+      },
+      "unlink": "Unlink {{device}}",
+      "unlinkWhat": "The link to {{device}}, which added: {{features}}"
     },
     "followSwitch": {
       "label": "Follow the device's switch",

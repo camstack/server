@@ -9,7 +9,7 @@ import {
   type CustomizeCatalogTarget,
   type DeviceInfo,
 } from '@camstack/types'
-import { Badge, Checkbox, IconButton } from '@camstack/ui-library'
+import { Badge, IconButton } from '@camstack/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +17,8 @@ import { LiveValueText } from '../assignments/LiveValueText'
 import { formulaOneLiner } from '../cards/field-entry-copy'
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { LinkUnlinkButton } from './LinkUnlinkButton'
+import { RowActiveSwitch } from './RowActiveSwitch'
 import { useFieldSources } from './use-field-sources'
 import type { CustomizationHandle } from '../use-customization'
 import { FollowSwitchToggle } from '../scalar/FollowSwitchToggle'
@@ -184,16 +186,23 @@ export function ScalarActionsCell(props: ScalarActionsProps): ReactNode {
       )}
       {offers.linkToggle && (
         // A feature a device link added is switched off, never removed: a removed one comes back (D1063).
-        <label className="flex items-center gap-1.5 text-xs text-foreground">
-          <Checkbox
-            aria-label={`${t('customize.table.linkActive')} ${row.title}`}
-            data-testid={`scalar-link-active-${rowKey}`}
-            checked={row.enabled}
-            disabled={row.saving}
-            onChange={(event) => void row.setEnabled(event.target.checked).then(props.onError)}
-          />
-          {t('customize.table.linkActive')}
-        </label>
+        <RowActiveSwitch
+          title={row.title}
+          checked={row.enabled}
+          disabled={row.saving}
+          testId={`scalar-link-active-${rowKey}`}
+          onChange={(on) => void row.setEnabled(on).then(props.onError)}
+        />
+      )}
+      {offers.linkToggle && row.linkStamp !== null && (
+        // A link's row is not removed alone (it would come back): the action undoes the link.
+        <LinkUnlinkButton
+          device={props.device}
+          handle={props.handle}
+          linkId={row.linkStamp}
+          testId={`scalar-unlink-${rowKey}`}
+          onError={props.onError}
+        />
       )}
       {offers.remove && (
         <IconButton

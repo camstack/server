@@ -10,7 +10,7 @@
  * must stay the same DOM nodes, never be torn down and rebuilt.
  */
 import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { GenericModeList } from '../generic-mode'
 
 interface Row {
@@ -34,11 +34,25 @@ function list(items: readonly Row[]) {
 }
 
 describe('GenericModeList scrolling', () => {
-  it('contains its overscroll so a flick that reaches an end never scrolls the page behind', () => {
+  it('contains its overscroll when its parent bounds its height, so a flick at an end never scrolls the page behind', () => {
+    // jsdom has no layout: a bounded region is one whose content is taller than its box.
+    const scrollHeight = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(900)
+    const clientHeight = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(300)
+    try {
+      render(list(rowsOf(30)))
+      const scroller = screen.getByRole('table').closest('.overflow-y-auto')
+      expect(scroller).not.toBeNull()
+      expect(scroller?.className).toContain('overscroll-contain')
+    } finally {
+      scrollHeight.mockRestore()
+      clientHeight.mockRestore()
+    }
+  })
+
+  it('does not capture the wheel when its parent gives it no height (its box fits its content)', () => {
     render(list(rowsOf(30)))
-    const scroller = screen.getByRole('table').closest('.overflow-y-auto')
-    expect(scroller).not.toBeNull()
-    expect(scroller?.className).toContain('overscroll-contain')
+    expect(screen.getByRole('table').closest('.overflow-y-auto')).toBeNull()
+    expect(screen.getByRole('table').closest('.overscroll-contain')).toBeNull()
   })
 
   it('keeps the same row nodes when its data refreshes to an equal, new array', () => {

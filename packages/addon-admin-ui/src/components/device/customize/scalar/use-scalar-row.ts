@@ -31,6 +31,7 @@ import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
 import type { ScalarDialogSeed } from './ScalarOverrideDialog'
+import { decodeLooseSourceLink } from './override-link-decode'
 import { type ScalarBadge, scalarBadge } from './scalar-badge'
 
 const PLACEHOLDER_DEVICE: DeviceNameFields = {
@@ -140,12 +141,12 @@ export function useScalarRow(
   const stored = storedRead(handle, storedScalarFeature(handle, cap, target.id))
   const decoded =
     stored.kind === 'known' && stored.value !== null
-      ? decodeScalarOverride({
+      ? (decodeScalarOverride({
           feature: stored.value,
           device: handle.target,
           cap,
           targetId: target.id,
-        })
+        }) ?? decodeLooseSourceLink(stored.value, cap, target))
       : null
   const recognized = decoded !== null
   const devices = useCandidateDevices(recognized)

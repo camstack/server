@@ -68,6 +68,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useConfirm: () => async () => confirm.answer,
+    useDeviceManagerListAll: () => ({ status: 'success', data: [] }),
     useDeviceManagerGetWireableFields: () => ({ status: 'pending', data: undefined }),
     useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
   }

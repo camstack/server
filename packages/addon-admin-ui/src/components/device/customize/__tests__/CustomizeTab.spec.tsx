@@ -217,7 +217,18 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useDeviceManagerListAll: () => fleet.current,
     // The assignment cards' capability index (one query per source cap); unanswered here.
-    trpc: { ...actual.trpc, useQueries: () => [] },
+    trpc: {
+      ...actual.trpc,
+      useQueries: () => [],
+      useUtils: () => ({ deviceExtension: { listSlots: { fetch: async () => [] } } }),
+    },
+    // The linked cameras of a guest: unanswered here.
+    useDeviceManagerGetLinkedDevicesBatch: () => ({
+      status: 'pending',
+      data: undefined,
+      error: null,
+      refetch: async () => undefined,
+    }),
     // The cards' live values (the native battery row); unanswered here.
     useSystem: () => ({ trpcClient: null }),
     useDeviceStateGetCapSlice: (input: { readonly deviceId: number; readonly capName: string }) => {

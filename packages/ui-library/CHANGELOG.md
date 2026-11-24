@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The timed run is one compact control on every card and row of a device that supports it: the one-tap duration is edited next to the start button, and the row no longer squeezes it.
+- Device lists no longer trap the page scroll when the parent gives them no height; the formula input shows suggestions only while focused
 
 ## [1.2.503] - 2026-11-24
 

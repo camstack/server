@@ -34,7 +34,6 @@ import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
 import { useConfirmRemove } from '../use-confirm-remove'
 import { LinkedNameCell } from './LinkedNameCell'
-import { LinkedToCamerasTable } from './LinkedToCamerasTable'
 import {
   type LinkedRow,
   type LinkedSlotValue,
@@ -64,14 +63,13 @@ function errorMessage(error: { readonly message: string } | null | undefined): s
 }
 
 /**
- * One table, two directions: a camera lists the devices it links (the slot it
- * hosts); a device a camera can link lists the cameras, a tick being its own
- * membership in each camera's list. A container is never a pick: no table.
+ * A camera lists the devices it links (the slot it hosts). A device a camera can
+ * link has no table of its own: the cameras that link it are rows of the Customize
+ * table (`LinkedCamerasRows`). A container is never a pick: nothing.
  */
 export function LinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode {
   const relation = slotRelationOf('linked-devices', device.type)
   if (relation === 'host') return <HostLinkedDevicesTable device={device} />
-  if (relation === 'guest') return <LinkedToCamerasTable device={device} />
   return null
 }
 

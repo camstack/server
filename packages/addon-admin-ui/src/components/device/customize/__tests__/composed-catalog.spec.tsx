@@ -72,7 +72,17 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useCoreBlocksValidateComposition: mutation,
     useIntegrationsList: () => ({ data: undefined }),
     useSystem: () => ({ trpcClient: null }),
-    trpc: { ...actual.trpc, useQueries: () => [] },
+    trpc: {
+      ...actual.trpc,
+      useQueries: () => [],
+      useUtils: () => ({ deviceExtension: { listSlots: { fetch: async () => [] } } }),
+    },
+    useDeviceManagerGetLinkedDevicesBatch: () => ({
+      status: 'pending',
+      data: undefined,
+      error: null,
+      refetch: async () => undefined,
+    }),
     useConfirm: () => vi.fn(async () => true),
     // The extension rows read their own configuration; unanswered here.
     useRemoteGetConfig: () => pending,

@@ -14,7 +14,6 @@ import {
 import {
   Badge,
   Button,
-  Checkbox,
   ErrorBox,
   useDeviceLabel,
   type DeviceNameFields,
@@ -34,6 +33,7 @@ import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import { formatRelativeTime } from '../../hero/format'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { RowActiveSwitch } from '../table/RowActiveSwitch'
 import { EventPulseDialog } from './EventPulseDialog'
 import type { PulseFormSource } from './event-form'
 import { doorbellRingStatus } from './event-status-text'
@@ -139,22 +139,15 @@ export function EventPulseCard({
         actions={
           <>
             {storedFeature !== null && (
-              <label className="flex items-center gap-1.5 text-[11px] text-foreground">
-                <Checkbox
-                  aria-label={t('customize.doorbell.active')}
-                  checked={storedFeature.enabled !== false}
-                  disabled={!answered || handle.saving}
-                  onChange={(event) => {
-                    void save(
-                      withFeature(current, handle.target, {
-                        ...storedFeature,
-                        enabled: event.target.checked,
-                      }),
-                    )
-                  }}
-                />
-                {t('customize.doorbell.active')}
-              </label>
+              <RowActiveSwitch
+                title={title}
+                checked={storedFeature.enabled !== false}
+                disabled={!answered || handle.saving}
+                testId={`event-active-${cap}`}
+                onChange={(enabled) => {
+                  void save(withFeature(current, handle.target, { ...storedFeature, enabled }))
+                }}
+              />
             )}
             <Badge>{t(eventBadgeKey(projection.text, projection.status.state))}</Badge>
           </>

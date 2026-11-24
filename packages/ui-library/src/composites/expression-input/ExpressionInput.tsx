@@ -23,7 +23,10 @@ export function ExpressionInput({
   const t = useUiText()
   const input = useRef<HTMLInputElement>(null)
   const [cursor, setCursor] = useState(value.length)
-  const suggestions = expressionSuggestions(value, cursor, bindings)
+  // Suggestions belong to typing: an input that is merely SHOWING its value (a dialog that opens
+  // on `x`) must not open a list that repeats it.
+  const [focused, setFocused] = useState(false)
+  const suggestions = focused ? expressionSuggestions(value, cursor, bindings) : []
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1 text-[11px]">
@@ -33,6 +36,8 @@ export function ExpressionInput({
           className="font-mono px-1.5 py-0.5 text-[11px] bg-background border border-border rounded"
           value={value}
           placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onChange={(e) => {
             onChange(e.target.value)
             setCursor(e.target.selectionStart ?? e.target.value.length)
@@ -45,6 +50,8 @@ export function ExpressionInput({
           role="listbox"
           aria-label={t('compositionEditor.suggestions', 'Suggestions')}
           className="rounded border border-border bg-surface text-[11px]"
+          // Picking a suggestion must not blur the input first, or the list is gone before the click.
+          onMouseDown={(e) => e.preventDefault()}
         >
           {suggestions.map((s) => (
             <li

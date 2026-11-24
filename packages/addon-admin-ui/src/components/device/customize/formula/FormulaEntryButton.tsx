@@ -9,8 +9,9 @@ import { useTranslation } from 'react-i18next'
 import { featureOf, withFeature } from '../customization-save'
 import type { CustomizationHandle } from '../use-customization'
 import { currentComposition } from '../customization-read'
+import { useFieldSources } from '../table/use-field-sources'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
-import { FormulaFieldDialog } from './FormulaFieldDialog'
+import { FormulaFieldDialog, type FormulaFieldDialogProps } from './FormulaFieldDialog'
 
 const NO_NAMES: ReadonlyMap<string, string> = new Map()
 
@@ -91,16 +92,26 @@ export function FormulaEntryButton({
           {label ?? t('compositionEditor.formula')}
         </Button>
       )}
-      <FormulaFieldDialog
-        open={open}
-        title={t('compositionEditor.formulaFor', { path: fieldLabel })}
-        fieldPath={fieldPath}
-        fieldLabel={fieldLabel}
-        sourceNames={sourceNames}
-        initial={source}
-        onClose={() => setOpen(false)}
-        onSave={(next) => void save(next)}
-      />
+      {open && (
+        <OpenFormulaDialog
+          title={t('compositionEditor.formulaFor', { path: fieldLabel })}
+          fieldPath={fieldPath}
+          fieldLabel={fieldLabel}
+          sourceNames={sourceNames}
+          initial={source}
+          onClose={() => setOpen(false)}
+          onSave={(next) => void save(next)}
+        />
+      )}
     </>
   )
+}
+
+type OpenFormulaDialogProps = Omit<FormulaFieldDialogProps, 'open'>
+
+/** A binding names its device: the fleet answers when the caller did not bring the names. */
+function OpenFormulaDialog({ sourceNames, ...rest }: OpenFormulaDialogProps): ReactNode {
+  const fleet = useFieldSources(true)
+  const names = sourceNames !== undefined && sourceNames.size > 0 ? sourceNames : fleet.names
+  return <FormulaFieldDialog open sourceNames={names} {...rest} />
 }

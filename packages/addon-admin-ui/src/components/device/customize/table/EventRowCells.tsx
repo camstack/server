@@ -10,21 +10,24 @@ import {
   decodePulseOverride,
   projectSpanAssignment,
 } from '@camstack/types'
-import { Badge, type DeviceNameFields, useDeviceLabel } from '@camstack/ui-library'
+import { Badge, type DeviceNameFields, IconButton, useDeviceLabel } from '@camstack/ui-library'
+import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'
-import { featureOf } from '../customization-save'
+import { featureOf, withFeature, withoutFeature } from '../customization-save'
 import { DoorbellRingStatus } from '../event/EventPulseCard'
 import { MotionNowLine, SensorRowName, spanRead } from '../event/EventSpanCard'
 import { type EventCardTarget, eventBadgeKey, eventCardTargets } from '../event/event-targets'
 import { storedRead } from '../scalar/use-scalar-row'
 import { candidateFields } from '../source-selector/source-selector-parent-detail'
+import { useConfirmRemove } from '../use-confirm-remove'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import type { CustomizationHandle } from '../use-customization'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
 import type { CustomizeRowSpec } from './customize-rows'
+import { RowActiveSwitch } from './RowActiveSwitch'
 
 const PLACEHOLDER_DEVICE: DeviceNameFields = {
   id: 0,
@@ -173,6 +176,75 @@ function SpanSource({ sensors, view }: SpanSourceProps): ReactNode {
           {row.reason !== null ? ` — ${t(`customize.motion.state.${row.state}`)}` : ''}
         </span>
       ))}
+    </span>
+  )
+}
+
+export interface EventActionsProps extends EventRowProps {
+  readonly title: string
+  readonly onEdit: () => void
+  readonly onError: (reason: string | null) => void
+}
+
+/**
+ * Edit, active switch and remove of an event row — the same three actions a
+ * scalar row has. The switch and the bin exist once something is stored: a row
+ * that only follows the device has nothing to switch off or remove.
+ */
+export function EventActionsCell({
+  spec,
+  title,
+  handle,
+  onEdit,
+  onError,
+}: EventActionsProps): ReactNode {
+  const { t } = useTranslation()
+  const confirmRemove = useConfirmRemove()
+  const current = currentComposition(handle.state)
+  const stored = featureOf(current, spec.cap)
+  const answered = handle.state.kind === 'none' || handle.state.kind === 'present'
+  const report = async (next: Parameters<CustomizationHandle['save']>[0]): Promise<void> => {
+    const outcome = await handle.save(next)
+    onError(outcome.kind === 'refused' ? outcome.reason : null)
+  }
+  return (
+    <span className="flex items-center justify-end gap-1">
+      <IconButton
+        variant="ghost"
+        size="sm"
+        icon={Pencil}
+        aria-label={t('customize.table.editWhat', { title })}
+        data-testid={`customize-manage-${spec.key}`}
+        onClick={onEdit}
+      />
+      {stored !== null && current !== null && (
+        <RowActiveSwitch
+          title={title}
+          checked={stored.enabled !== false}
+          disabled={!answered || handle.saving}
+          testId={`event-active-${spec.key}`}
+          onChange={(enabled) =>
+            void report(withFeature(current, handle.target, { ...stored, enabled }))
+          }
+        />
+      )}
+      {stored !== null && current !== null && (
+        <IconButton
+          variant="ghost"
+          size="sm"
+          icon={Trash2}
+          aria-label={`${t('customize.table.remove')} ${title}`}
+          data-testid={`event-remove-${spec.key}`}
+          disabled={!answered || handle.saving}
+          onClick={() => {
+            const next = withoutFeature(current, spec.cap)
+            void confirmRemove(
+              t('customize.event.removeWhat', { name: title }),
+              next === null,
+            ).then((ok) => (ok ? report(next) : undefined))
+          }}
+        />
+      )}
     </span>
   )
 }

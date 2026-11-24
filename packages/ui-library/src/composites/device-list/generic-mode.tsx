@@ -14,6 +14,7 @@ import { type MultiSelectOption } from './multi-select'
 import { ResponsiveTypeFilter } from './type-filter'
 import { OptionSelect } from '../option-select/OptionSelect'
 import { useDebouncedString } from '../../hooks/use-debounced-string'
+import { useOwnsScroll } from '../../hooks/use-owns-scroll'
 import { fuzzyMatch } from './fuzzy-match'
 import { Pagination } from './pagination'
 import { PageSizeSelect } from './page-size-select'
@@ -178,6 +179,7 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
 
   const [searchInput, setSearchInput] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
+  const scroll = useOwnsScroll<HTMLDivElement>()
   useSearchFieldHotkey(searchRef)
   const debouncedSearch = useDebouncedString(searchInput, 300)
   const [typeFilters, setTypeFilters] = useState<readonly string[]>(() => [...initialTypeFilters])
@@ -280,7 +282,14 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
 
       {typeof belowFilters === 'function' ? belowFilters({ filtered }) : belowFilters}
 
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+      {/* The rows scroll inside the list only when the parent gives it a height; under one that
+          does not, the page scrolls and this region must not hold on to the wheel. */}
+      <div
+        ref={scroll.ref}
+        className={
+          scroll.owns ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain' : 'flex-1 min-h-0'
+        }
+      >
         {isLoading && totalItems === 0 ? (
           <div className="flex items-center justify-center py-12 text-xs text-foreground-subtle">
             {t('uiLibrary.genericModeList.loading', 'Loading…')}

@@ -122,6 +122,8 @@ export function FormulaFieldDialog({
         width="lg"
         scroll="body"
         placement="sheet-on-mobile"
+        // Opened from a table cell that aligns its text to the right: the dialog sits inside it.
+        className="text-left"
         data-testid="formula-dialog"
       >
         <DialogHeader>

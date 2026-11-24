@@ -56,9 +56,16 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
   // read a real change as a no-op and drop it silently (D391, task 5 review M2).
   const inFlight = useRef(false)
   const [busy, setBusy] = useState(false)
+  // The block a plan is made against is the NEWEST one read, not the one the
+  // render that built this `save` closed over: a second save fired before React
+  // re-rendered would otherwise send the first save's `updatedAt` and the server
+  // would refuse it as "changed since you read it". Every render and every
+  // landed refetch refresh it.
+  const latest = useRef(state)
+  latest.current = state
 
   const run = async (next: Composition | null): Promise<CustomizationSaveOutcome> => {
-    const plan = planCustomizationSave(state, next)
+    const plan = planCustomizationSave(latest.current, next)
     try {
       switch (plan.kind) {
         case 'refused':
@@ -79,7 +86,17 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
           await remove.mutateAsync({ blockId: plan.blockId })
           break
       }
-      await query.refetch()
+      const fresh = await query.refetch()
+      if (fresh !== undefined) {
+        latest.current = resolveCustomization({
+          status: fresh.status,
+          data: fresh.data,
+          error:
+            fresh.error === null || fresh.error === undefined
+              ? null
+              : { message: fresh.error.message },
+        })
+      }
       return { kind: 'saved' }
     } catch (err: unknown) {
       return { kind: 'refused', reason: reasonOf(err) }

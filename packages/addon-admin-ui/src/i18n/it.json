@@ -2641,7 +2641,8 @@
         "rising": "Fronte di salita",
         "button": "Pressione",
         "native-event": "Evento nativo"
-      }
+      },
+      "removeWhat": "La personalizzazione {{name}}"
     },
     "doorbell": {
       "title": "Campanello",
@@ -2806,11 +2807,13 @@
       "notLinked": "non più collegato — ancora in timeline",
       "reverseTitle": "Collegato alle telecamere",
       "camera": "Telecamera",
-      "linkedColumn": "Collegato",
-      "linkTo": "Collegato a {{name}}",
       "impliedByStructure": "Collegato tramite il suo dispositivo padre",
-      "noCameras": "Nessuna telecamera a cui collegarlo.",
-      "reverseHint": "Una spunta aggiunge questo dispositivo ai dispositivi collegati della telecamera; i suoi controlli compaiono con la telecamera."
+      "reverseHint": "Le telecamere elencate collegano questo dispositivo: i suoi controlli compaiono con ciascuna telecamera.",
+      "pickCameraTitle": "Collega alle telecamere",
+      "removeFromCamera": "Il collegamento da {{camera}} a {{device}}",
+      "camerasUnreadable": "Impossibile leggere le telecamere collegate: {{reason}}",
+      "someFailed": "Non collegate: {{failures}}",
+      "cameraOption": "Telecamera collegata"
     },
     "advancedLink": "Avanzate — editor delle espressioni",
     "suggest": {
@@ -3088,7 +3091,8 @@
         "offCatalog": "Altri campi",
         "actions": "Azioni collegate",
         "linked": "Dispositivi collegati",
-        "oscillation-axes": "Assi di oscillazione"
+        "oscillation-axes": "Assi di oscillazione",
+        "linkedCameras": "Telecamere collegate"
       },
       "caps": {
         "battery": "Batteria",
@@ -3163,7 +3167,9 @@
         "sourceDevice": "Dispositivo sorgente",
         "projectHint": "Tutta la funzione segue questo dispositivo, non i singoli valori. Le letture salvate una per una qui sotto vengono rifiutate.",
         "referenceHint": "La funzione di questo dispositivo viene letta dalla scheda; niente viene copiato in questo dispositivo."
-      }
+      },
+      "unlink": "Scollega {{device}}",
+      "unlinkWhat": "Il collegamento a {{device}}, che ha aggiunto: {{features}}"
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",

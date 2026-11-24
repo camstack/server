@@ -42,6 +42,16 @@ import {
   linkedActionTableLines,
   useLinkedActions,
 } from '../kinds/LinkedActionsCard'
+import {
+  hasLinkedCameras,
+  isLinkedCameraLine,
+  LinkedCameraButtons,
+  LinkedCameraItem,
+  type LinkedCamerasState,
+  LinkedCameraValue,
+  type LinkedCameraTableLine,
+  useLinkedCameras,
+} from '../kinds/LinkedCamerasRows'
 import type { Known } from '../known'
 import { followSwitchRowListed } from '../scalar/follow-switch'
 import { scalarRowTitle, storedScalarFeature } from '../scalar/use-scalar-row'
@@ -59,7 +69,7 @@ import {
   planRows,
   splitRows,
 } from './customize-rows'
-import { EventSourceCell, EventValueCell } from './EventRowCells'
+import { EventActionsCell, EventSourceCell, EventValueCell } from './EventRowCells'
 import {
   CapActionsCell,
   capGroupTitle,
@@ -109,6 +119,7 @@ type TableLine =
       readonly rows: readonly FieldRow[]
     }
   | LinkedActionTableLine
+  | LinkedCameraTableLine
 
 function lineKey(line: TableLine): string {
   switch (line.kind) {
@@ -134,6 +145,14 @@ function lineKey(line: TableLine): string {
       return 'action-error'
     case 'actionEntry':
       return `action:${line.entry.id}`
+    case 'cameraSection':
+      return 'camera-section'
+    case 'cameraPending':
+      return 'camera-pending'
+    case 'cameraError':
+      return 'camera-error'
+    case 'cameraEntry':
+      return `camera:${line.camera.id}`
   }
 }
 
@@ -181,6 +200,7 @@ function buildLines(
   advancedOpen: ReadonlySet<string>,
   itemLines: (cap: string) => readonly TableLine[],
   actions: readonly LinkedActionTableLine[],
+  cameras: readonly LinkedCameraTableLine[],
 ): readonly TableLine[] {
   // A link sits right above the first listed row of its cap; a cap with nothing listed yet
   // (every reading still in "+ Add") gets it at the end of its section.
@@ -232,25 +252,33 @@ function buildLines(
       ? group.advanced.map((row): TableLine => ({ kind: 'field', row }))
       : []),
   ])
-  return [...catalog, ...rest, ...actions]
+  return [...catalog, ...rest, ...actions, ...cameras]
 }
 
 export function CustomizeTable(props: CustomizeTableProps): ReactNode {
   if (props.device.type === DeviceType.Camera) return <CameraCustomizeTable {...props} />
-  return <CustomizeTableBody {...props} actions={null} />
+  if (hasLinkedCameras(props.device.type)) return <GuestCustomizeTable {...props} />
+  return <CustomizeTableBody {...props} actions={null} cameras={null} />
+}
+
+/** A device a camera can link: the cameras that link it are lines of this table. */
+function GuestCustomizeTable(props: CustomizeTableProps): ReactNode {
+  const cameras = useLinkedCameras(props.device)
+  return <CustomizeTableBody {...props} actions={null} cameras={cameras} />
 }
 
 function CameraCustomizeTable(props: CustomizeTableProps): ReactNode {
   const actions = useLinkedActions(props.device)
-  return <CustomizeTableBody {...props} actions={actions} />
+  return <CustomizeTableBody {...props} actions={actions} cameras={null} />
 }
 
 interface CustomizeTableBodyProps extends CustomizeTableProps {
   readonly actions: LinkedActionsState | null
+  readonly cameras: LinkedCamerasState | null
 }
 
 function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
-  const { device, handle, facts, actions } = props
+  const { device, handle, facts, actions, cameras } = props
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -296,10 +324,13 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
   const split = splitRows(planRows(specs, facts, isLinked))
   const linkLines = offeredLinks([...split.active, ...split.addable], device.type)
   const actionLines = actions === null ? [] : linkedActionTableLines(actions)
+  const cameraLines = cameras === null ? [] : cameras.lines
   if (
     specs.length === 0 &&
     groups.length === 0 &&
     actionLines.length === 0 &&
+    cameraLines.length === 0 &&
+    cameras?.canAdd !== true &&
     linkLines.length === 0
   )
     return null
@@ -316,6 +347,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
     (cap) =>
       itemFieldRows(featureOf(current, cap)).map((row): TableLine => ({ kind: 'field', row })),
     actionLines,
+    cameraLines,
   )
   const openField = groups
     .flatMap((group) => [...group.rows, ...group.advanced])
@@ -339,6 +371,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionItem line={line} />
+        if (isLinkedCameraLine(line)) return <LinkedCameraItem line={line} />
         if (line.kind === 'section' || line.kind === 'capSection') {
           return (
             <span className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
@@ -390,6 +423,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       notSortableReason: t('customize.table.col.value'),
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionValue line={line} />
+        if (isLinkedCameraLine(line)) return <LinkedCameraValue line={line} />
         if (
           line.kind === 'section' ||
           line.kind === 'capSection' ||
@@ -431,6 +465,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionSource line={line} />
+        if (isLinkedCameraLine(line)) return null
         if (line.kind === 'capLink') {
           return <CapLinkRow device={device} handle={handle} offered={line.offered} />
         }
@@ -471,6 +506,9 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         if (isLinkedActionLine(line)) {
           return actions === null ? null : <LinkedActionButtons line={line} state={actions} />
         }
+        if (isLinkedCameraLine(line)) {
+          return cameras === null ? null : <LinkedCameraButtons line={line} state={cameras} />
+        }
         if (line.kind === 'section' || line.kind === 'advanced' || line.kind === 'capLink') {
           return null
         }
@@ -509,6 +547,19 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             />
           )
         }
+        if (spec.kind === 'event') {
+          return (
+            <EventActionsCell
+              spec={spec}
+              title={titleOf(spec)}
+              device={device}
+              handle={handle}
+              sensors={props.sensors}
+              onEdit={() => setOpen(spec.key)}
+              onError={setError}
+            />
+          )
+        }
         return (
           <IconButton
             variant="ghost"
@@ -535,6 +586,11 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           titleOf={titleOf}
           disabled={!answered || handle.saving}
           onPick={(key) => setOpen(key)}
+          extra={
+            cameras !== null && cameras.canAdd
+              ? { label: t('customize.linked.cameraOption'), onPick: cameras.openPicker }
+              : null
+          }
         />
       }
     >
@@ -560,7 +616,10 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             bordered={false}
             minWidthPx={320}
             rowClassName={(line) =>
-              line.kind === 'section' || line.kind === 'capSection' || line.kind === 'actionSection'
+              line.kind === 'section' ||
+              line.kind === 'capSection' ||
+              line.kind === 'actionSection' ||
+              line.kind === 'cameraSection'
                 ? 'bg-surface-hover'
                 : undefined
             }
@@ -610,6 +669,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         />
       )}
       {actions?.dialog}
+      {cameras?.dialog}
       {openPlan !== undefined && openPlan.spec.kind !== 'scalar' && (
         <ManagedRowDialog
           key={openPlan.spec.key}
@@ -632,13 +692,15 @@ interface AddPickerProps {
   readonly titleOf: (spec: CustomizeRowSpec) => string
   readonly disabled: boolean
   readonly onPick: (key: string) => void
+  /** A line that is not a catalog row (the cameras that link this device): its own picker. */
+  readonly extra: { readonly label: string; readonly onPick: () => void } | null
 }
 
 /** "+ Add customization": every offered row that is not linked yet, by section. */
-function AddPicker({ rows, titleOf, disabled, onPick }: AddPickerProps): ReactNode {
+function AddPicker({ rows, titleOf, disabled, onPick, extra }: AddPickerProps): ReactNode {
   const { t } = useTranslation()
   // A picker with nothing to pick is not rendered.
-  if (rows.length === 0) return null
+  if (rows.length === 0 && extra === null) return null
   return (
     <Dropdown>
       <DropdownTrigger
@@ -659,6 +721,11 @@ function AddPicker({ rows, titleOf, disabled, onPick }: AddPickerProps): ReactNo
             {titleOf(plan.spec)}
           </DropdownItem>
         ))}
+        {extra !== null && (
+          <DropdownItem data-testid="customize-table-add-linked-camera" onClick={extra.onPick}>
+            {extra.label}
+          </DropdownItem>
+        )}
       </DropdownContent>
     </Dropdown>
   )
