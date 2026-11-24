@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The adoption list says which CamStack device an adopted Home Assistant device or entity is
+
 ## [1.2.702] - 2026-11-24
 
 ### Changed

@@ -78,7 +78,7 @@ describe('generateStandaloneEntityStableId', () => {
 
 describe('entityToStandaloneCandidate', () => {
   it('produces a flat candidate (childNativeId=entityId, capabilities, no children)', () => {
-    const c = entityToStandaloneCandidate(switchEntity(), false)
+    const c = entityToStandaloneCandidate(switchEntity(), null)
     expect(c.childNativeId).toBe('switch.kitchen')
     expect(c.name).toBe('Kitchen Switch')
     expect(c.type).toBe(DeviceType.Switch)
@@ -88,20 +88,20 @@ describe('entityToStandaloneCandidate', () => {
     expect(c.sourceInfo?.system).toBe('homeassistant')
   })
   it('threads alreadyAdopted through', () => {
-    expect(entityToStandaloneCandidate(switchEntity(), true).alreadyAdopted).toBe(true)
-    expect(entityToStandaloneCandidate(switchEntity(), false).alreadyAdopted).toBe(false)
+    expect(entityToStandaloneCandidate(switchEntity(), 7).alreadyAdopted).toBe(true)
+    expect(entityToStandaloneCandidate(switchEntity(), null).alreadyAdopted).toBe(false)
   })
   it('marks unavailable state offline', () => {
-    expect(entityToStandaloneCandidate(switchEntity({ state: 'unavailable' }), false).status).toBe(
+    expect(entityToStandaloneCandidate(switchEntity({ state: 'unavailable' }), null).status).toBe(
       'offline',
     )
   })
   it('carries entity.area as metadata.externalLocation', () => {
-    const c = entityToStandaloneCandidate(switchEntity({ area: 'Kitchen' }), false)
+    const c = entityToStandaloneCandidate(switchEntity({ area: 'Kitchen' }), null)
     expect((c.metadata as Record<string, unknown>)['externalLocation']).toBe('Kitchen')
   })
   it('omits metadata.externalLocation when entity.area is null', () => {
-    const c = entityToStandaloneCandidate(switchEntity(), false)
+    const c = entityToStandaloneCandidate(switchEntity(), null)
     expect((c.metadata as Record<string, unknown>)['externalLocation']).toBeUndefined()
   })
 })
@@ -159,7 +159,7 @@ describe('buildStandaloneEntityCandidates', () => {
       { entities: [switchEntity(), lightEntity()] },
       { entities: [switchEntity({ entityId: 'switch.hall', name: 'Hall' })] },
     ]
-    const candidates = buildStandaloneEntityCandidates(haDevices, new Set())
+    const candidates = buildStandaloneEntityCandidates(haDevices, new Map())
     expect(candidates).toHaveLength(3)
     expect(candidates.map((c) => c.childNativeId)).toEqual([
       'switch.kitchen',
@@ -174,13 +174,14 @@ describe('buildStandaloneEntityCandidates', () => {
     const haDevices = [
       { entities: [switchEntity(), switchEntity({ entityId: 'switch.unmapped', mappedTo: null })] },
     ]
-    const candidates = buildStandaloneEntityCandidates(haDevices, new Set())
+    const candidates = buildStandaloneEntityCandidates(haDevices, new Map())
     expect(candidates.map((c) => c.childNativeId)).toEqual(['switch.kitchen'])
   })
   it('marks alreadyAdopted only for entityIds with an existing standalone device', () => {
     const haDevices = [{ entities: [switchEntity(), lightEntity()] }]
-    const candidates = buildStandaloneEntityCandidates(haDevices, new Set(['light.lamp']))
+    const candidates = buildStandaloneEntityCandidates(haDevices, new Map([['light.lamp', 7]]))
     const byId = new Map(candidates.map((c) => [c.childNativeId, c.alreadyAdopted]))
+    expect(candidates.find((c) => c.childNativeId === 'light.lamp')?.adoptedDeviceId).toBe(7)
     expect(byId.get('switch.kitchen')).toBe(false)
     expect(byId.get('light.lamp')).toBe(true)
   })
@@ -199,7 +200,7 @@ describe('buildStandaloneEntityCandidates', () => {
         capabilities: ['temperature-sensor'],
       },
     })
-    const candidates = buildStandaloneEntityCandidates([{ entities: [orphanTemp] }], new Set())
+    const candidates = buildStandaloneEntityCandidates([{ entities: [orphanTemp] }], new Map())
     expect(candidates).toHaveLength(1)
     expect(candidates[0]?.childNativeId).toBe('sensor.min_temperature')
     expect(candidates[0]?.capabilities).toEqual(['temperature-sensor'])

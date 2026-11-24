@@ -48,6 +48,7 @@ import { cascadeRemoveDevicesForBroker } from './ha-broker-device-cascade.js'
 import { markBrokerDevicesOffline } from './ha-broker-offline.js'
 import { entryToSettings, type HaBrokerEntry, HaBrokerRegistry } from './ha-broker-registry.js'
 import { haDeviceToCandidate } from './ha-candidate-mapper.js'
+import { markAdoption, type AdoptionRegistryDevice } from './ha-adoption-marking.js'
 import type { HaContainerEntityConfig } from './ha-container-reconcile.js'
 import {
   buildContainerEntities,
@@ -825,22 +826,11 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         }
         const brokerId = await brokerFor(integrationId)
         const allDevices = await this.ctx.kernel.devices.getAll()
-        // Build a set of adopted haDeviceIds for marking candidates.
-        const adoptedHaDeviceIds = new Set<string>()
-        for (const d of allDevices) {
-          if (d.parentDeviceId !== null) continue
-          const haDeviceId = d.config.get('haDeviceId')
-          if (typeof haDeviceId === 'string') adoptedHaDeviceIds.add(haDeviceId)
-        }
-
         let haDevices = await this.fetchHaDiscoveredDevices(brokerId)
         // Synthetic orphan bucket is for the Entities tab only.
         haDevices = haDevices.filter((d) => d.haDeviceId !== HA_ORPHAN_ENTITIES_DEVICE_ID)
-        // Mark alreadyAdopted based on current registry state.
-        haDevices = haDevices.map((dev) => ({
-          ...dev,
-          alreadyAdopted: adoptedHaDeviceIds.has(dev.haDeviceId),
-        }))
+        // Mark alreadyAdopted + the CamStack ids from the current registry state.
+        haDevices = markAdoption(haDevices, this.adoptionRegistry(allDevices))
 
         // Apply text/query filters (the candidate-list narrowing, distinct
         // from the granularity `filter`).
@@ -882,18 +872,12 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       getCandidate: async ({ integrationId, childNativeId }) => {
         const brokerId = await brokerFor(integrationId)
         const allDevices = await this.ctx.kernel.devices.getAll()
-        const adoptedHaDeviceIds = new Set<string>()
-        for (const d of allDevices) {
-          if (d.parentDeviceId !== null) continue
-          const haDeviceId = d.config.get('haDeviceId')
-          if (typeof haDeviceId === 'string') adoptedHaDeviceIds.add(haDeviceId)
-        }
         const haDevices = await this.fetchHaDiscoveredDevices(brokerId)
         if (childNativeId === HA_ORPHAN_ENTITIES_DEVICE_ID) return null
         const found = haDevices.find((d) => d.haDeviceId === childNativeId) ?? null
         if (!found) return null
-        const withAdoption = { ...found, alreadyAdopted: adoptedHaDeviceIds.has(found.haDeviceId) }
-        return haDeviceToCandidate(withAdoption)
+        const [withAdoption] = markAdoption([found], this.adoptionRegistry(allDevices))
+        return withAdoption === undefined ? null : haDeviceToCandidate(withAdoption)
       },
 
       adopt: async ({ integrationId, childNativeIds, filter, perCandidate, importLocations }) => {
@@ -1089,9 +1073,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
    * `alreadyAdopted` on the `entities` granularity: a container-child for the
    * same entity does NOT count (both import paths coexist).
    */
-  private async collectStandaloneAdoptedEntityIds(brokerId: string): Promise<Set<string>> {
+  private async collectStandaloneAdoptedEntityIds(brokerId: string): Promise<Map<string, number>> {
     const all = await this.ctx.kernel.devices.getAll()
-    const out = new Set<string>()
+    const out = new Map<string, number>()
     for (const dev of all) {
       if (dev.parentDeviceId !== null) continue
       const source = readHaSource(this.snapshotConfig(dev))
@@ -1099,9 +1083,22 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       if (source.brokerId !== brokerId) continue
       if (source.haDeviceId !== undefined) continue
       if (source.entityId === undefined) continue
-      out.add(source.entityId)
+      out.set(source.entityId, dev.id)
     }
     return out
+  }
+
+  /** The registry slice the adoption marking reads. */
+  private adoptionRegistry(devices: readonly IDevice[]): AdoptionRegistryDevice[] {
+    return devices.map((d) => {
+      const haDeviceId = d.config.get('haDeviceId')
+      return {
+        id: d.id,
+        stableId: d.stableId,
+        parentDeviceId: d.parentDeviceId,
+        haDeviceId: typeof haDeviceId === 'string' ? haDeviceId : null,
+      }
+    })
   }
 
   /** Flatten a device's live config into a plain blob for `readHaSource`. */

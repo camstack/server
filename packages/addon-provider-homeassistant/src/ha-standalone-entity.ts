@@ -128,7 +128,7 @@ export function buildStandaloneEntityConfig(args: {
  */
 export function entityToStandaloneCandidate(
   entity: HaDiscoveredEntity,
-  alreadyAdopted: boolean,
+  adoptedDeviceId: number | null,
 ): DiscoveredChildDevice {
   const sourceInfo: SourceInfo = { id: entity.entityId, system: 'homeassistant' }
   return {
@@ -137,8 +137,8 @@ export function entityToStandaloneCandidate(
     type: entity.mappedTo?.deviceType ?? DeviceType.Generic,
     status: entityStatus(entity.state),
     metadata: entity.area !== null ? { externalLocation: entity.area } : {},
-    alreadyAdopted,
-    adoptedDeviceId: null,
+    alreadyAdopted: adoptedDeviceId !== null,
+    adoptedDeviceId,
     capabilities: entity.mappedTo ? [...entity.mappedTo.capabilities] : [],
     sourceInfo,
   }
@@ -147,19 +147,19 @@ export function entityToStandaloneCandidate(
 /**
  * Flatten every HA device's entities into the flat `'entities'`-granularity
  * candidate list. Entities with no CamStack mapping are skipped (they cannot
- * be imported as a standalone device). `adoptedEntityIds` is the set of
- * entityIds that already have a STANDALONE device — those are marked
+ * be imported as a standalone device). `adoptedEntityDeviceIds` maps the
+ * entityIds that already have a STANDALONE device to its device id — those are marked
  * `alreadyAdopted` (a container-child for the same entity does NOT count).
  */
 export function buildStandaloneEntityCandidates(
   haDevices: readonly { entities: readonly HaDiscoveredEntity[] }[],
-  adoptedEntityIds: ReadonlySet<string>,
+  adoptedEntityDeviceIds: ReadonlyMap<string, number>,
 ): DiscoveredChildDevice[] {
   const out: DiscoveredChildDevice[] = []
   for (const dev of haDevices) {
     for (const ent of dev.entities) {
       if (ent.mappedTo === null) continue
-      out.push(entityToStandaloneCandidate(ent, adoptedEntityIds.has(ent.entityId)))
+      out.push(entityToStandaloneCandidate(ent, adoptedEntityDeviceIds.get(ent.entityId) ?? null))
     }
   }
   return out
