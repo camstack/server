@@ -8,7 +8,6 @@
  * The engine is the hub's own (`sqlite-storage`), mounted on purpose from the sibling package:
  * a fake store with a different layout is exactly what hid the Loki outage.
  */
-import { fileURLToPath } from 'node:url'
 import {
   type AddonMigrationHost,
   defineAddonMigrations,
@@ -21,7 +20,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MigrationEngine } from '../../../../../system/src/builtins/sqlite-storage/migrations/migration-engine.js'
 import { MigrationsProvider } from '../../../../../system/src/builtins/sqlite-storage/migrations/migrations-provider.js'
 import { openOwnedSqliteFile } from '../../../../../system/src/builtins/sqlite-storage/owned-sqlite-file.js'
-import { SqliteSnapshotter } from '../../../../../system/src/builtins/sqlite-storage/sqlite-snapshotter.js'
+import { takeVerifiedCopy } from '../../../../../system/src/builtins/sqlite-storage/sqlite-snapshot-worker.js'
+import {
+  type SnapshotWorkerHandle,
+  SqliteSnapshotter,
+} from '../../../../../system/src/builtins/sqlite-storage/sqlite-snapshotter.js'
 import {
   makeHarness,
   recordingLogger,
@@ -36,12 +39,34 @@ import {
   LOCAL_ORIGIN_TO_NODE_ID,
 } from '../index.js'
 
-const SNAPSHOT_WORKER = fileURLToPath(
-  new URL(
-    '../../../../../system/src/builtins/sqlite-storage/sqlite-snapshot-worker.ts',
-    import.meta.url,
-  ),
-)
+/**
+ * The pre-migration snapshot runs the worker's own job (`takeVerifiedCopy`) on this thread. A real
+ * thread loaded through tsx took seconds to boot on a loaded machine and blew the per-test
+ * deadline; the thread is not what these specs prove (the snapshot specs own it), the rows are.
+ */
+function inProcessSnapshotWorker(
+  data: Parameters<typeof takeVerifiedCopy>[0],
+): SnapshotWorkerHandle {
+  const onMessage: Array<(message: unknown) => void> = []
+  const onExit: Array<(code: number) => void> = []
+  void takeVerifiedCopy(data).then(
+    (copy) => {
+      for (const l of onMessage) l({ kind: 'done', copy })
+      for (const l of onExit) l(0)
+    },
+    (err: unknown) => {
+      const detail = err instanceof Error ? err.message : String(err)
+      for (const l of onMessage) l({ kind: 'refused', reason: 'failed', detail })
+      for (const l of onExit) l(0)
+    },
+  )
+  return {
+    onMessage: (l) => void onMessage.push(l),
+    onError: () => undefined,
+    onExit: (l) => void onExit.push(l),
+    terminate: () => Promise.resolve(),
+  }
+}
 const ADDON = 'cloudflare-tunnel'
 const wrapper = (addonId: string, key: string, value: unknown, nodeId?: string): string =>
   JSON.stringify(nodeId === undefined ? { addonId, key, value } : { addonId, key, value, nodeId })
@@ -180,8 +205,7 @@ async function boot(options: Options = {}) {
       new SqliteSnapshotter({
         livePath,
         logger: recordingLogger(h.lines, 'Snapshot'),
-        workerPath: SNAPSHOT_WORKER,
-        workerExecArgv: ['--import', 'tsx'],
+        spawnWorker: inProcessSnapshotWorker,
       }),
   })
   await openOwnedSqliteFile(h.specOf('settings'), {
