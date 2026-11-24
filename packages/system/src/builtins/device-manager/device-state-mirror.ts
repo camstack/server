@@ -120,8 +120,15 @@ function errorMessage(err: unknown): string {
 /** Told of every native slice a provider reported, changed or not (D1062 push health). */
 export type SliceReportTap = (deviceId: number, capName: string) => void
 
-/** Whether a device's provider has yet to answer its first read after registering (D1099). */
-export type ReadinessGate = (deviceId: number) => boolean
+/**
+ * Whether a provider has yet to answer its first read after registering
+ * (D1099): for a device that carries its own refresh policy, and for an
+ * integration (`addonId::integrationId`) whose policy sits on its gateway.
+ */
+export interface ReadinessGate {
+  deviceAwaiting(deviceId: number): boolean
+  integrationAwaiting(key: string): boolean
+}
 
 export class DeviceStateMirror {
   private reportTap: SliceReportTap | null = null
@@ -132,6 +139,8 @@ export class DeviceStateMirror {
    * from the scheduler on every write, so nothing here can strand a device.
    */
   private readonly deferredOffline = new Map<number, Record<string, unknown>>()
+  /** The integration (`addonId::integrationId`) each device belongs to, as the device row states it. */
+  private readonly integrationKeys = new Map<number, string>()
   /**
    * Hub-side mirror of every device's cap-keyed NATIVE runtime state — what the
    * provider wrote. Key: deviceId. Value: per-cap slice map. Empty by default —
@@ -214,6 +223,25 @@ export class DeviceStateMirror {
     if (gate === null) this.deferredOffline.clear()
   }
 
+  /** Record which integration a device belongs to (read from its row by the device-manager). */
+  noteIntegration(deviceId: number, key: string): void {
+    this.integrationKeys.set(deviceId, key)
+  }
+
+  /** Whether {@link noteIntegration} has already been told this device's integration. */
+  hasIntegrationNote(deviceId: number): boolean {
+    return this.integrationKeys.has(deviceId)
+  }
+
+  /** The device's provider has not answered yet: on its own policy, or through its integration. */
+  private isAwaiting(deviceId: number): boolean {
+    const gate = this.readinessGate
+    if (gate === null) return false
+    if (gate.deviceAwaiting(deviceId)) return true
+    const key = this.integrationKeys.get(deviceId)
+    return key !== undefined && gate.integrationAwaiting(key)
+  }
+
   /**
    * The integration answered for these devices: apply the offline each one had
    * held back, through the normal path (so the notification centre's own
@@ -239,9 +267,8 @@ export class DeviceStateMirror {
    * state is the authority, so this re-reads it (D8, D49).
    */
   reconcileReadiness(): number[] {
-    const gate = this.readinessGate
-    if (gate === null) return []
-    const ready = [...this.deferredOffline.keys()].filter((id) => !gate(id))
+    if (this.readinessGate === null) return []
+    const ready = [...this.deferredOffline.keys()].filter((id) => !this.isAwaiting(id))
     return this.releaseDeferredOffline(ready)
   }
 
@@ -254,7 +281,7 @@ export class DeviceStateMirror {
     deviceId: number,
     slice: Record<string, unknown>,
   ): Record<string, unknown> {
-    const awaiting = this.readinessGate?.(deviceId) === true
+    const awaiting = this.isAwaiting(deviceId)
     if (!awaiting || slice['online'] !== false) {
       this.deferredOffline.delete(deviceId)
       return slice

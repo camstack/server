@@ -112,6 +112,7 @@ import { DEVICE_ROWS_FLEET_LIMIT, DeviceRowStore, deviceRowBackendOf } from './d
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
 import { DeviceStateMirror } from './device-state-mirror.js'
 import { startCommandHolds } from './command-holds-wiring.js'
+import { integrationGroupKey } from './state-refresh-scheduler.js'
 import { startStateRefresh } from './state-refresh-wiring.js'
 import {
   startDeviceTransitions,
@@ -1374,6 +1375,20 @@ export class DeviceManagerAddon extends BaseAddon {
         // spare that fails REFUSES the write: the throw propagates to the
         // worker, which logs it and re-sends (D391). A device already seeded
         // (every device `loadRuntimeState` booted) pays nothing here.
+        if (capName === 'device-status' && !stateMirror.hasIntegrationNote(deviceId)) {
+          // D1099: the integration a child device belongs to is on its row, or on its parent's.
+          const integrationId =
+            persisted.meta.integrationId ??
+            (persisted.meta.parentDeviceId === null
+              ? undefined
+              : (await resolvePersistedById(persisted.meta.parentDeviceId))?.meta.integrationId)
+          if (integrationId !== undefined) {
+            stateMirror.noteIntegration(
+              deviceId,
+              integrationGroupKey(persisted.addonId, integrationId),
+            )
+          }
+        }
         if (!stateMirror.isSeeded(deviceId)) {
           await stateMirror.ensureSeeded(deviceId, settings, fieldClaims.view())
         }

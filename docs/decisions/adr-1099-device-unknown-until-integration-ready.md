@@ -63,9 +63,15 @@ Nothing in the pipeline could say "not yet known".
 
 ## Consequences
 
-- A provider with no `device-state-refresh` policy has no scheduler group and is
-  not gated (unchanged behaviour). Extending readiness to non-migrated providers
-  needs each of them to declare a policy first.
+- The gate is per INTEGRATION as well as per device. Homematic, Home Assistant
+  and UniFi register their policy once, on the gateway/broker cap
+  (`integrationId` = the integration id); their child devices carry none. The
+  device-manager reads each device's `integrationId` from its row (or its
+  parent's) when its first `device-status` write arrives, and the mirror treats
+  the device as awaiting while the scheduler group `addonId::integrationId` has
+  a device that has not had its first read settle. No new registry or lookup.
+- A device of an integration with no `device-state-refresh` policy at all has no
+  scheduler group and is not gated (unchanged behaviour).
 - A device whose integration is down for real stays `unknown` until the first
   read settles — at most one declared refresh interval after registration —
   and is then offline plus the 15 s hold-off.

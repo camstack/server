@@ -39,12 +39,20 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
     refresh: deps.refresh,
     resubscribe: deps.resubscribe,
     onFirstReadSettled: (deviceIds) => {
-      const applied = deps.mirror.releaseDeferredOffline(deviceIds)
+      // The devices that settled themselves, then every device held through an
+      // integration whose first read just settled (the gate is re-read).
+      const applied = [
+        ...deps.mirror.releaseDeferredOffline(deviceIds),
+        ...deps.mirror.reconcileReadiness(),
+      ]
       if (applied.length > 0) deps.onOfflineApplied?.(applied)
     },
   })
   deps.mirror.setReportTap((deviceId) => scheduler.onReport(deviceId))
-  deps.mirror.setReadinessGate((deviceId) => scheduler.isAwaitingFirstRead(deviceId))
+  deps.mirror.setReadinessGate({
+    deviceAwaiting: (deviceId) => scheduler.isAwaitingFirstRead(deviceId),
+    integrationAwaiting: (key) => scheduler.isIntegrationAwaitingFirstRead(key),
+  })
   const uninstall = getCommandFollowUpRegistry().set(scheduler.onCommand)
   return () => {
     uninstall()

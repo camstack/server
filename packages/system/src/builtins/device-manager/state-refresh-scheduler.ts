@@ -121,8 +121,13 @@ interface GroupState {
   lastReportAt: number
 }
 
+/** The key one integration instance is scheduled under: `addonId::integrationId`. */
+export function integrationGroupKey(addonId: string, integrationId: string): string {
+  return `${addonId}::${integrationId}`
+}
+
 function groupKeyOf(entry: StateRefreshPolicyEntry): string {
-  return `${entry.addonId}::${entry.policy.integrationId}`
+  return integrationGroupKey(entry.addonId, entry.policy.integrationId)
 }
 
 function errorMessage(err: unknown): string {
@@ -185,6 +190,19 @@ export class StateRefreshScheduler {
    */
   isAwaitingFirstRead(deviceId: number): boolean {
     return this.devices.get(deviceId)?.awaitingFirstRead === true
+  }
+
+  /**
+   * Whether the integration (`integrationGroupKey`) still has a scheduled
+   * device whose provider has not answered its first read (D1099). The
+   * integration's policy is registered once, on its gateway/broker cap; the
+   * child devices that carry no policy of their own are judged through it.
+   */
+  isIntegrationAwaitingFirstRead(key: string): boolean {
+    for (const device of this.devices.values()) {
+      if (device.awaitingFirstRead && groupKeyOf(device.entry) === key) return true
+    }
+    return false
   }
 
   dispose(): void {
