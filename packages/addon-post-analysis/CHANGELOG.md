@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device that is only unknown after an integration restart no longer raises a device-offline notification
+
 ## [1.2.726] - 2026-11-24
 
 ### Changed

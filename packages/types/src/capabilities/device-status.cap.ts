@@ -30,6 +30,13 @@ export const DeviceStatusSchema = z.object({
   /** Ms epoch of the last `online` transition. Lets consumers tell
    *  apart "just came online" from "still online". */
   lastChangedAt: z.number(),
+  /**
+   * D1099: the provider has not answered since the (re)start, so `online` is a
+   * placeholder (the last known value) and NOT a fact. Absent means answered.
+   * "Not yet known" must never read as offline: a consumer that judges
+   * liveness ignores a slice carrying it.
+   */
+  unknown: z.literal(true).optional(),
 })
 
 export type DeviceStatus = z.infer<typeof DeviceStatusSchema>

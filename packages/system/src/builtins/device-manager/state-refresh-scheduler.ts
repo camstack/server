@@ -61,6 +61,12 @@ export interface StateRefreshSchedulerDeps {
   ) => Promise<void>
   /** Ask the provider to re-establish its push subscription. */
   readonly resubscribe: (routeDeviceId: number) => Promise<void>
+  /**
+   * Told, in-process, which devices just had their FIRST read after
+   * registration settle (D1099). Never an event: the same fact stays readable
+   * through {@link StateRefreshScheduler.isAwaitingFirstRead}.
+   */
+  readonly onFirstReadSettled?: (deviceIds: readonly number[]) => void
 }
 
 type Timer = ReturnType<typeof setTimeout>
@@ -95,6 +101,12 @@ interface DeviceSchedule {
   pushWindow: Timer | null
   /** Reads that failed in a row; a successful read resets it. */
   failures: number
+  /**
+   * No read of the device has settled since it registered (D1099): the
+   * provider has not answered yet, so its state is unknown rather than
+   * offline. A full-push device is never read, so it never waits.
+   */
+  awaitingFirstRead: boolean
 }
 
 interface GroupState {
@@ -166,6 +178,15 @@ export class StateRefreshScheduler {
     if (group !== undefined) group.lastReportAt = now
   }
 
+  /**
+   * Whether the device's provider has yet to answer its first read since the
+   * device registered (D1099). A read of this scheduler's own state, safe to
+   * ask at any time; a device it does not schedule is never awaiting.
+   */
+  isAwaitingFirstRead(deviceId: number): boolean {
+    return this.devices.get(deviceId)?.awaitingFirstRead === true
+  }
+
   dispose(): void {
     this.disposed = true
     this.unsubscribe()
@@ -202,6 +223,7 @@ export class StateRefreshScheduler {
           burst: [],
           pushWindow: null,
           failures: 0,
+          awaitingFirstRead: entry.policy.push !== 'full',
         })
       } else {
         if (effectiveRefreshIntervalMs(existing.entry.policy) !== interval)
@@ -527,12 +549,28 @@ export class StateRefreshScheduler {
           const device = this.devices.get(deviceId)
           if (device !== undefined && device.inFlight === settled) device.inFlight = null
         }
+        this.settleFirstRead(deviceIds)
       })
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
       if (device !== undefined) device.inFlight = settled
     }
     await settled
+  }
+
+  /**
+   * A read settled (a failed first read is an answer too: the integration is
+   * unreachable). The devices it covered stop awaiting and the consumer is told.
+   */
+  private settleFirstRead(deviceIds: readonly number[]): void {
+    const ready: number[] = []
+    for (const deviceId of deviceIds) {
+      const device = this.devices.get(deviceId)
+      if (device === undefined || !device.awaitingFirstRead) continue
+      device.awaitingFirstRead = false
+      ready.push(deviceId)
+    }
+    if (ready.length > 0) this.deps.onFirstReadSettled?.(ready)
   }
 
   /**

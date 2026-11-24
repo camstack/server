@@ -120,8 +120,18 @@ function errorMessage(err: unknown): string {
 /** Told of every native slice a provider reported, changed or not (D1062 push health). */
 export type SliceReportTap = (deviceId: number, capName: string) => void
 
+/** Whether a device's provider has yet to answer its first read after registering (D1099). */
+export type ReadinessGate = (deviceId: number) => boolean
+
 export class DeviceStateMirror {
   private reportTap: SliceReportTap | null = null
+  private readinessGate: ReadinessGate | null = null
+  /**
+   * `online: false` writes held back because the device's integration was not
+   * ready (D1099), by device id. In-memory by design: the gate is re-derived
+   * from the scheduler on every write, so nothing here can strand a device.
+   */
+  private readonly deferredOffline = new Map<number, Record<string, unknown>>()
   /**
    * Hub-side mirror of every device's cap-keyed NATIVE runtime state — what the
    * provider wrote. Key: deviceId. Value: per-cap slice map. Empty by default —
@@ -198,6 +208,68 @@ export class DeviceStateMirror {
     this.reportTap = tap
   }
 
+  /** Set once by the device-manager: whether a device still awaits its provider's first answer (D1099). */
+  setReadinessGate(gate: ReadinessGate | null): void {
+    this.readinessGate = gate
+    if (gate === null) this.deferredOffline.clear()
+  }
+
+  /**
+   * The integration answered for these devices: apply the offline each one had
+   * held back, through the normal path (so the notification centre's own
+   * hold-off still applies). Returns the ids whose mirror actually changed.
+   */
+  releaseDeferredOffline(deviceIds: readonly number[]): number[] {
+    const changed: number[] = []
+    for (const deviceId of deviceIds) {
+      const held = this.deferredOffline.get(deviceId)
+      if (held === undefined) continue
+      this.deferredOffline.delete(deviceId)
+      this.ctx.logger.info('offline applied — the integration answered its first read', {
+        tags: { deviceId },
+      })
+      if (this.applySingleCapUpdate(deviceId, 'device-status', held)) changed.push(deviceId)
+    }
+    return changed
+  }
+
+  /**
+   * Release every held offline whose device no longer awaits the provider. The
+   * readiness push is in-process and can in principle be missed; the scheduler's
+   * state is the authority, so this re-reads it (D8, D49).
+   */
+  reconcileReadiness(): number[] {
+    const gate = this.readinessGate
+    if (gate === null) return []
+    const ready = [...this.deferredOffline.keys()].filter((id) => !gate(id))
+    return this.releaseDeferredOffline(ready)
+  }
+
+  /**
+   * D1099: an `online: false` for a device whose integration has not answered
+   * yet is not a fact. Keep the last known `online`, mark the slice `unknown`,
+   * remember the offline and say so (D391). An `online: true` is an answer.
+   */
+  private gateDeviceStatus(
+    deviceId: number,
+    slice: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const awaiting = this.readinessGate?.(deviceId) === true
+    if (!awaiting || slice['online'] !== false) {
+      this.deferredOffline.delete(deviceId)
+      return slice
+    }
+    const prior = this.stateMirror.get(deviceId)?.get('device-status')
+    const lastChangedAt =
+      typeof prior?.['lastChangedAt'] === 'number' ? prior['lastChangedAt'] : Date.now()
+    this.deferredOffline.set(deviceId, slice)
+    this.ctx.logger.info('offline not applied — the integration has not answered yet (unknown)', {
+      tags: { deviceId },
+      meta: { reason: 'integration-not-ready' },
+    })
+    return { online: prior?.['online'] !== false, lastChangedAt, unknown: true }
+  }
+
   // ── Command holds (D1061) ────────────────────────────────────────────────
 
   /**
@@ -251,6 +323,10 @@ export class DeviceStateMirror {
    */
   applySingleCapUpdate(deviceId: number, capName: string, slice: Record<string, unknown>): boolean {
     this.reportTap?.(deviceId, capName)
+    if (capName === 'device-status') {
+      this.reconcileReadiness()
+      slice = this.gateDeviceStatus(deviceId, slice)
+    }
     let perCap = this.stateMirror.get(deviceId)
     if (!perCap) {
       perCap = new Map()

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Anyone who can operate a device can set its timed-run one-tap duration from the card; the device settings page no longer carries it.
+- A device whose integration has not answered since a restart is now shown as unknown instead of offline, and goes offline only after the integration's first read
 
 ## [1.2.950] - 2026-11-24
 

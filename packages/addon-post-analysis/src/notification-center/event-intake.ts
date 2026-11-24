@@ -1170,6 +1170,9 @@ export function incomingFromSystemEvent(
       if (deviceId === undefined || capName !== 'device-status' || typeof online !== 'boolean') {
         return null
       }
+      // D1099: the provider has not answered yet — `online` is a placeholder,
+      // not a liveness claim.
+      if (slice?.['unknown'] === true) return null
       return deviceLiveness(facts, deviceId, online, lookup(deviceId))
     }
     case 'device.online':

@@ -2723,7 +2723,7 @@
 
 ### `device-status` → `deviceStatus.*`
 
-- **Source:** `packages/types/src/capabilities/device-status.cap.ts:37`
+- **Source:** `packages/types/src/capabilities/device-status.cap.ts:44`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDeviceStatusProvider`

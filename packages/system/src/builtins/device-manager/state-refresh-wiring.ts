@@ -23,6 +23,8 @@ export interface StateRefreshWiringDeps {
     reason: StateRefreshReason,
   ) => Promise<void>
   readonly resubscribe: (deviceId: number) => Promise<void>
+  /** Called with the devices whose held offline was applied (to persist them). */
+  readonly onOfflineApplied?: (deviceIds: readonly number[]) => void
   /** Defaults to the process-wide registry. */
   readonly policies?: StateRefreshPolicySource
 }
@@ -36,12 +38,18 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
     holdRemainingMs: (deviceId) => deps.mirror.holdRemainingMs(deviceId),
     refresh: deps.refresh,
     resubscribe: deps.resubscribe,
+    onFirstReadSettled: (deviceIds) => {
+      const applied = deps.mirror.releaseDeferredOffline(deviceIds)
+      if (applied.length > 0) deps.onOfflineApplied?.(applied)
+    },
   })
   deps.mirror.setReportTap((deviceId) => scheduler.onReport(deviceId))
+  deps.mirror.setReadinessGate((deviceId) => scheduler.isAwaitingFirstRead(deviceId))
   const uninstall = getCommandFollowUpRegistry().set(scheduler.onCommand)
   return () => {
     uninstall()
     deps.mirror.setReportTap(null)
+    deps.mirror.setReadinessGate(null)
     scheduler.dispose()
   }
 }

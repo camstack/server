@@ -826,6 +826,11 @@ export class DeviceManagerAddon extends BaseAddon {
     this.stopStateRefresh = startStateRefresh({
       mirror: stateMirror,
       logger: this.ctx.logger.child('state-refresh'),
+      onOfflineApplied: (deviceIds) => {
+        for (const id of deviceIds) {
+          stateMirror.scheduleRuntimeStateDiskWrite(id, settings, 'device-status')
+        }
+      },
       refresh: async (deviceId, deviceIds, reason) => {
         const api = this.ctx.api
         if (api === undefined) throw new Error('ctx.api not ready')

@@ -1963,6 +1963,7 @@ Enum: `"open" \| "closed"`
 
 - `online`: `boolean`
 - `lastChangedAt`: `number`
+- `unknown?`: `true`
 
 ### `DeviceTombstoneSchema`
 

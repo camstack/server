@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 91 caps with 510 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 91 caps with 511 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -267,7 +267,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "day-night": [{"path":"mode","valueType":"enum","enumValues":["auto","day","night","schedule"]}, {"path":"sensitivity","valueType":"number"}, {"path":"switchDelaySec","valueType":"number"}],
   "device-adoption": [{"path":"lastDiscoveryAt","valueType":"number"}, {"path":"candidateCount","valueType":"number"}, {"path":"adoptedCount","valueType":"number"}, {"path":"lastError","valueType":"string"}],
   "device-export": [{"path":"linkState","valueType":"enum","enumValues":["unlinked","linked","error"]}, {"path":"push","valueType":"enum","enumValues":["ok","paused"]}, {"path":"exposedDeviceCount","valueType":"number"}, {"path":"error","valueType":"string"}, {"path":"setup.qr","valueType":"string"}, {"path":"setup.note","valueType":"string"}],
-  "device-status": [{"path":"online","valueType":"boolean"}],
+  "device-status": [{"path":"online","valueType":"boolean"}, {"path":"unknown","valueType":"string"}],
   "dishwasher": [{"path":"availability","valueType":"enum","enumValues":["available","offline","description-missing"]}, {"path":"state","valueType":"enum","enumValues":["idle","running","paused","finished","error","unavailable"]}, {"path":"operationState","valueType":"enum","enumValues":["Inactive","Ready","DelayedStart","Run","Pause","ActionRequired","Finished","Error","Aborting"]}, {"path":"program","valueType":"string"}, {"path":"selectedProgram","valueType":"string"}, {"path":"remaining","valueType":"number"}, {"path":"delayedStart","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"doorOpen","valueType":"boolean"}, {"path":"doorLocked","valueType":"boolean"}, {"path":"remoteStartAllowed","valueType":"boolean"}, {"path":"remoteControlActive","valueType":"boolean"}, {"path":"localControlActive","valueType":"boolean"}, {"path":"powerOn","valueType":"boolean"}, {"path":"powerState","valueType":"string"}, {"path":"filterCleaningDue","valueType":"boolean"}, {"path":"machineCareDue","valueType":"boolean"}, {"path":"machineCareRemainingRuns","valueType":"number"}, {"path":"halfLoad","valueType":"boolean"}, {"path":"hygienePlus","valueType":"boolean"}, {"path":"extraDry","valueType":"boolean"}, {"path":"intensiveZone","valueType":"boolean"}, {"path":"varioSpeedPlus","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"errorCode","valueType":"number"}, {"path":"errorLabel","valueType":"string"}],
   "do-not-disturb": [{"path":"enabled","valueType":"boolean"}],
   "doorbell": [{"path":"lastPressedAt","valueType":"number"}, {"path":"pressCountSinceStart","valueType":"number"}],
@@ -365,7 +365,7 @@ export const CAP_STATE_FIELD_PRESENCE: Readonly<
   "control": { "kind": "required", "lastChangedAt": "required", "max": "optional", "min": "optional", "options": "required", "step": "optional", "value": "required" },
   "cover": { "lastChangedAt": "required", "position": "required", "state": "required", "tiltPosition": "required" },
   "day-night": { "lastFetchedAt": "required", "mode": "required", "sensitivity": "optional", "switchDelaySec": "optional" },
-  "device-status": { "lastChangedAt": "required", "online": "required" },
+  "device-status": { "lastChangedAt": "required", "online": "required", "unknown": "optional" },
   "dishwasher": { "activeEvents": "required", "availability": "required", "availablePrograms": "required", "childLock": "required", "delayedStart": "required", "doorLocked": "required", "doorOpen": "required", "errorCode": "required", "errorLabel": "required", "extraDry": "required", "filterCleaningDue": "required", "halfLoad": "required", "hygienePlus": "required", "intensiveZone": "required", "lastFetchedAt": "required", "localControlActive": "required", "machineCareDue": "required", "machineCareRemainingRuns": "required", "operationState": "required", "powerOn": "required", "powerState": "required", "program": "required", "progress": "required", "remaining": "required", "remoteControlActive": "required", "remoteStartAllowed": "required", "selectedProgram": "required", "state": "required", "varioSpeedPlus": "required" },
   "do-not-disturb": { "enabled": "required", "lastChangedAt": "required" },
   "doorbell": { "lastPressedAt": "required", "pressCountSinceStart": "required" },
