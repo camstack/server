@@ -87,6 +87,12 @@ const capsOf = vi.hoisted((): { current: ReadonlyMap<number, readonly string[]> 
 const offeredToPicker = vi.hoisted((): { current: unknown } => ({
   current: null,
 }))
+/** What the event-emitter slice answers: pending until a spec gives the device a vocabulary. */
+const slice = vi.hoisted((): { current: { status: string; data: unknown } } => ({
+  current: { status: 'pending', data: undefined },
+}))
+/** The camera joins the offered devices only in the specs that pick one. */
+const withCamera = vi.hoisted((): { current: boolean } => ({ current: false }))
 const create = vi.fn(async (_input: { block: { name: string; code: string } }) => ({}))
 const update = vi.fn(async (_input: { blockId: string; block: { code: string } }) => ({}))
 const remove = vi.fn(async (_input: { blockId: string }) => ({}))
@@ -96,7 +102,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useDeviceStateGetCapSlice: () => ({ status: 'pending', data: undefined }),
+    useDeviceStateGetCapSlice: () => slice.current,
     useCoreBlocksListTemplateInstances: () => ({
       ...instances.current,
       refetch: vi.fn(async () => undefined),
@@ -110,10 +116,21 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 vi.mock('../../assignments/use-cap-index', () => ({
   useCapIndex: () => ({ kind: 'known', value: capsOf.current }),
 }))
+const CAMERA = vi.hoisted(() => ({
+  id: 15,
+  name: 'Telecamera',
+  addonId: 'cam',
+  stableId: 'c15',
+  type: 'camera',
+  location: 'Ingresso',
+  isCamera: true,
+  integration: 'Reolink',
+}))
 vi.mock('../../assignments/use-source-candidates', () => ({
   useCandidateDevices: () => ({
     kind: 'known',
     value: [
+      ...(withCamera.current ? [CAMERA] : []),
       {
         id: 12,
         name: 'Pulsante studio',
@@ -150,8 +167,21 @@ vi.mock('../../assignments/use-source-candidates', () => ({
 }))
 /** The limit controls need a tRPC client of their own (a device picker); the trigger spec does not. */
 vi.mock('../../../../../pages/build/templates/TemplateInputsForm', () => ({
-  TimeWindowControl: () => <div data-testid="time-window-stub" />,
-  DeviceStateControl: () => <div data-testid="device-state-stub" />,
+  TimeWindowControl: (p: { onChange: (value: unknown) => void }) => (
+    <button type="button" onClick={() => p.onChange({ preset: 'night' })}>
+      set-window
+    </button>
+  ),
+  DeviceStateControl: (p: { onChange: (value: unknown) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        p.onChange({ deviceId: 5767, cap: 'switch', fieldPath: 'on', operator: 'eq', value: true })
+      }
+    >
+      set-state
+    </button>
+  ),
 }))
 /** The common SourceSelector, stubbed to one button per offered device. */
 vi.mock('../../source-selector/SourceSelector', () => ({
@@ -209,6 +239,8 @@ beforeEach(() => {
     [13, ['event-emitter']],
   ])
   offeredToPicker.current = null
+  slice.current = { status: 'pending', data: undefined }
+  withCamera.current = false
   for (const fn of [create, update, remove, setEnabled]) fn.mockClear()
 })
 
@@ -564,5 +596,147 @@ describe('TriggeredByTable', () => {
       }),
     )
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  })
+
+  describe('the one dialog writes what it shows', () => {
+    const FLEET = [
+      { id: 5767, name: 'Luce studio', type: 'light', stableId: 'l', parentDeviceId: null },
+      { id: 12, name: 'Pulsante studio', type: 'button', stableId: 'b12', parentDeviceId: null },
+      { id: 13, name: 'Pulsante ingresso', type: 'button', stableId: 'b13', parentDeviceId: null },
+      { id: 15, name: 'Telecamera', type: 'camera', stableId: 'c15', parentDeviceId: null },
+    ]
+    const renderTable = (): void => {
+      render(
+        wrap(
+          <DeviceFleetProvider devices={FLEET}>
+            <TriggeredByTable device={LIGHT} />
+          </DeviceFleetProvider>,
+        ),
+      )
+    }
+    const openEdit = (): void => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /Edit the trigger from .*Pulsante studio/i }),
+      )
+    }
+    const openAdd = (): void => {
+      fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
+    }
+    const writtenParams = async () => {
+      pressSave()
+      await waitFor(() => expect(create.mock.calls.length + update.mock.calls.length).toBe(1))
+      const code = create.mock.calls[0]?.[0].block.code ?? update.mock.calls[0]?.[0].block.code
+      return paramsIn(code ?? '')
+    }
+
+    it('a new emitter trigger writes the events and parts chosen in the dialog', async () => {
+      slice.current = {
+        status: 'success',
+        data: {
+          eventTypes: ['PRESS_SHORT', 'PRESS_LONG'],
+          vocabulary: [
+            { id: 'PRESS_SHORT', label: 'Short press', source: { id: '1', label: 'Top' } },
+            { id: 'PRESS_LONG', label: 'Long press', source: { id: '1', label: 'Top' } },
+            { id: 'PRESS_SHORT', label: 'Short press', source: { id: '2', label: 'Bottom' } },
+            { id: 'PRESS_LONG', label: 'Long press', source: { id: '2', label: 'Bottom' } },
+          ],
+          lastEvent: null,
+          eventCountSinceStart: 0,
+        },
+      }
+      instances.current = { status: 'success', data: { instances: [] } }
+      renderTable()
+      openAdd()
+      fireEvent.click(screen.getByText('pick-13'))
+      const events = screen.getByRole('group', { name: 'Events' })
+      fireEvent.click(within(events).getByRole('button', { name: 'Long press' }))
+      const parts = screen.getByRole('group', { name: 'Parts of the device' })
+      fireEvent.click(within(parts).getByRole('button', { name: 'Bottom' }))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.sources).toEqual([
+        {
+          kind: 'device-fired',
+          deviceId: 13,
+          sourceIds: ['1'],
+          eventIds: ['PRESS_SHORT'],
+        },
+      ])
+    })
+
+    it('a new camera trigger writes the classes chosen in the dialog', async () => {
+      instances.current = { status: 'success', data: { instances: [] } }
+      withCamera.current = true
+      renderTable()
+      openAdd()
+      fireEvent.click(screen.getByText('pick-15'))
+      const classes = screen.getByRole('group', { name: 'Detected classes' })
+      fireEvent.click(within(classes).getByRole('button', { name: 'Vehicle' }))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.sources).toMatchObject([
+        {
+          kind: 'detection',
+          deviceIds: [15],
+          subjects: [{ macro: 'person' }, { macro: 'vehicle' }],
+        },
+      ])
+    })
+
+    it('the time window and the device-state limit are written with the trigger', async () => {
+      instances.current = { status: 'success', data: { instances: [] } }
+      renderTable()
+      openAdd()
+      fireEvent.click(screen.getByText('pick-13'))
+      fireEvent.click(screen.getByRole('button', { name: 'set-window' }))
+      fireEvent.click(screen.getByRole('button', { name: 'set-state' }))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.activeWindow).toEqual({ preset: 'night' })
+      expect(params?.activeWhen).toMatchObject({ cap: 'switch', fieldPath: 'on', value: true })
+    })
+
+    it('an edit keeps the stored conditions of the source it does not change and adds a limit', async () => {
+      renderTable()
+      openEdit()
+      fireEvent.click(screen.getByRole('button', { name: 'set-window' }))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.activeWindow).toEqual({ preset: 'night' })
+      expect(params?.sources).toEqual(
+        paramsIn(String(update.mock.calls[0]?.[0].block.code))?.sources,
+      )
+      expect(
+        (params?.sources ?? []).map((source) =>
+          source.kind === 'device-fired' ? source.eventIds : null,
+        ),
+      ).toEqual([['PRESS_SHORT'], ['PRESS_SHORT']])
+    })
+
+    it('moving the source to another kind drops the old conditions', async () => {
+      withCamera.current = true
+      renderTable()
+      openEdit()
+      fireEvent.click(screen.getByText('pick-15'))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.sources).toMatchObject([
+        { kind: 'detection', deviceIds: [15], subjects: [{ macro: 'person' }] },
+      ])
+      expect(JSON.stringify(params?.sources)).not.toContain('PRESS_SHORT')
+    })
+
+    it('a source whose kind is not answered keeps its conditions, the limits and Save', async () => {
+      capsOf.current = new Map([[5767, ['switch']]])
+      renderTable()
+      openEdit()
+      expect(screen.getByTestId('trigger-conditions')).toBeTruthy()
+      const save = within(screen.getByRole('dialog')).getByRole('button', { name: /^Save$/i })
+      expect((save as HTMLButtonElement).disabled).toBe(false)
+      fireEvent.click(screen.getByRole('button', { name: 'set-state' }))
+      saveDialog()
+      const params = await writtenParams()
+      expect(params?.activeWhen).toMatchObject({ cap: 'switch' })
+    })
   })
 })

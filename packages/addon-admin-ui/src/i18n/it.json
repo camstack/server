@@ -3175,7 +3175,6 @@
     "triggers": {
       "title": "Attivata da",
       "add": "Aggiungi trigger",
-      "pickTitle": "Dispositivi i cui eventi comandano questo",
       "source": "Sorgente",
       "event": "Evento",
       "action": "Azione",
@@ -3216,7 +3215,8 @@
       "anyClass": "Qualsiasi classe",
       "replacesNote": "Questo trigger ha un filtro che una scelta non può mostrare. Salvando viene sostituito con gli eventi e le parti scelti qui.",
       "editTrigger": "Modifica il trigger di {{name}}",
-      "editTitle": "Trigger di {{name}}"
+      "editTitle": "Trigger di {{name}}",
+      "addTitle": "Aggiungi un comando"
     }
   },
   "compositionEditor": {

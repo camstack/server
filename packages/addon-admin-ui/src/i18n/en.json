@@ -3100,7 +3100,6 @@
     "triggers": {
       "title": "Triggered by",
       "add": "Add trigger",
-      "pickTitle": "Devices whose events command this one",
       "source": "Source",
       "event": "Event",
       "action": "Action",
@@ -3141,7 +3140,8 @@
       "anyClass": "Any class",
       "replacesNote": "This trigger is narrowed in a way a pick cannot show. Saving replaces it with the events and parts chosen here.",
       "editTrigger": "Edit the trigger from {{name}}",
-      "editTitle": "Trigger from {{name}}"
+      "editTitle": "Trigger from {{name}}",
+      "addTitle": "Add a trigger"
     }
   },
   "compositionEditor": {

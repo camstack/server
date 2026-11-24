@@ -94,7 +94,14 @@ export function TriggerDialog({
   )
   const [state, setState] = useState<TemplateDeviceStateValue | null>(initial?.activeWhen ?? null)
   const deviceId = picked[0] ?? null
-  const kind = deviceId === null ? null : kindOf(deviceId)
+  // The row's own source keeps its stored kind: the live lookup can be unanswered
+  // (offline, removed, caps pending) and must not hide what is already stored.
+  const kind =
+    deviceId === null
+      ? null
+      : initial !== null && deviceId === initial.deviceId
+        ? initial.kind
+        : kindOf(deviceId)
   // A condition the stored source cannot carry over to another kind starts from "any".
   const sameKind = initial !== null && kind === initial.kind
   const firedShown = fired ?? (sameKind ? initial.pick : NO_PICK)
@@ -123,7 +130,7 @@ export function TriggerDialog({
             onPickedChange={pick}
             onChoose={(chosen) => pick(chosen.map((c) => c.deviceId))}
           />
-          {deviceId !== null && kind !== null && (
+          {deviceId !== null && (
             <div className="flex flex-col gap-3" data-testid="trigger-conditions">
               {kind === 'emitter' && (
                 <>

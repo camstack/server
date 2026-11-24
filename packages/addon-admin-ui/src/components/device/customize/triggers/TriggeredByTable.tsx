@@ -471,7 +471,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         <TriggerDialog
           title={
             dialog.kind === 'add'
-              ? t('customize.triggers.pickTitle')
+              ? t('customize.triggers.addTitle')
               : t('customize.triggers.editTitle', {
                   name: dialog.row.name ?? `#${String(dialog.row.deviceId)}`,
                 })
