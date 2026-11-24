@@ -77,6 +77,7 @@ import {
 import {
   fetchClosurePins,
   isRejectedPinsMiss,
+  readClosurePinsFromTarball,
   withClosureOverrides,
   type ClosurePinsRead,
 } from './closure-pins.js'
@@ -1185,12 +1186,15 @@ export class RootUpdateService {
         '--loglevel=error',
       ]
       if (fs.existsSync(devDir)) {
+        const devPins = this.devUploadPins(devDir, target)
         fs.writeFileSync(
           path.join(stagingDir, 'package.json'),
-          JSON.stringify(this.buildDevUploadsPackageJson(devDir, target), null, 2),
+          JSON.stringify(this.buildDevUploadsPackageJson(devDir, target, devPins.pins), null, 2),
           'utf-8',
         )
-        const before = this.devUploadsBeforeArg(devDir, target)
+        // Valid pins bound the third-party versions exactly; `--before` is the
+        // fallback for a closure that ships none.
+        const before = devPins.pins === null ? this.devUploadsBeforeArg(devDir, target) : []
         await this.execNpm([...installArgs, ...before, ...buildNpmRegistryArgs(registry)], {
           cwd: stagingDir,
           timeoutMs: NPM_INSTALL_CEILING_MS,
@@ -1317,26 +1321,45 @@ export class RootUpdateService {
       })
       read = { pins: null, miss: 'no-tarball' }
     }
-    if (read.pins !== null) {
-      this.logger.info('closure install pinned', {
-        tags: this.logTags,
-        meta: { targetVersion: target, pins: Object.keys(read.pins).length },
-      })
-    } else {
-      // A shipped file that was refused is a warn: a broken pins file must not
-      // read as an old release that never had one.
-      const context = { tags: this.logTags, meta: { targetVersion: target, reason: read.miss } }
-      if (isRejectedPinsMiss(read.miss)) {
-        this.logger.warn('closure install unpinned: pins file rejected', context)
-      } else {
-        this.logger.info('closure install unpinned', context)
-      }
-    }
+    this.logPinsRead(read, target)
     fs.writeFileSync(
       manifestPath,
       JSON.stringify(withClosureOverrides(raw, read.pins), null, 2),
       'utf-8',
     )
+  }
+
+  private logPinsRead(read: ClosurePinsRead, target: string): void {
+    if (read.pins !== null) {
+      this.logger.info('closure install pinned', {
+        tags: this.logTags,
+        meta: { targetVersion: target, pins: Object.keys(read.pins).length },
+      })
+      return
+    }
+    // A shipped file that was refused is a warn: a broken pins file must not
+    // read as an old release that never had one.
+    const context = { tags: this.logTags, meta: { targetVersion: target, reason: read.miss } }
+    if (isRejectedPinsMiss(read.miss)) {
+      this.logger.warn('closure install unpinned: pins file rejected', context)
+    } else {
+      this.logger.info('closure install unpinned', context)
+    }
+  }
+
+  /** The pins inside the uploaded server tarball; a tarball that cannot be read ships none. */
+  private devUploadPins(devDir: string, target: string): ClosurePinsRead {
+    const manifest = readDevUploadManifest(devDir)
+    const rootTgz = manifest?.packages[this.spec.packageName]
+    if (rootTgz === undefined) return { pins: null, miss: 'no-tarball' }
+    let read: ClosurePinsRead
+    try {
+      read = readClosurePinsFromTarball(fs.readFileSync(path.join(devDir, rootTgz)))
+    } catch {
+      read = { pins: null, miss: 'no-tarball' }
+    }
+    this.logPinsRead(read, target)
+    return read
   }
 
   /**
@@ -1369,6 +1392,7 @@ export class RootUpdateService {
   private buildDevUploadsPackageJson(
     devDir: string,
     target: string,
+    pins: Readonly<Record<string, string>> | null,
   ): {
     readonly name: string
     readonly private: true
@@ -1398,7 +1422,8 @@ export class RootUpdateService {
       }
       return `file:${abs}`
     }
-    const overrides: Record<string, string> = {}
+    // Third-party pins first; the `@camstack/*` file: entries win on overlap.
+    const overrides: Record<string, string> = { ...pins }
     for (const [pkgName, filename] of Object.entries(manifest.packages)) {
       if (pkgName === this.spec.packageName) continue
       overrides[pkgName] = fileRef(filename)

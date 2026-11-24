@@ -545,7 +545,13 @@ resolves to more than one version is left out (an override is by name).
 @camstack/server@<target>` into a temp dir, then `package/closure-pins.json`)
 and writes it as `overrides` into the staging `package.json`. A target without
 the file, or a failed pack, installs unpinned as before and logs `closure
-install unpinned`. The dev-uploads branch does not read it.
+install unpinned`.
+
+The dev-uploads branch reads the same file from the uploaded server tarball and
+merges it into the synthetic `overrides` (the `@camstack/*` `file:` entries win
+on overlap). With valid pins the install passes no `--before`. A tarball
+without a usable pins file keeps the interim bound, `--before = build time + 5
+min` (`DevUploadManifest.buildTimeMs`), and logs why; a rejected file warns.
 
 Why not an `npm-shrinkwrap.json` inside the server: npm honours `overrides` only
 in the ROOT project, and a shrinkwrap in a dependency nests the whole tree under

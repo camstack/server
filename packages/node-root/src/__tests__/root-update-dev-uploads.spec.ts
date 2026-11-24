@@ -11,6 +11,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import * as zlib from 'node:zlib'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   DEV_UPLOADS_KEEP_COUNT,
@@ -106,6 +107,19 @@ function makeInstallCapture(version: string): {
     return { stdout: '' }
   }
   return { execNpm, calls }
+}
+
+/** A gzipped ustar tarball holding `files` under `package/`. */
+function tarballWith(files: Readonly<Record<string, string>>): Buffer {
+  const blocks: Buffer[] = []
+  for (const [name, body] of Object.entries(files)) {
+    const header = Buffer.alloc(512)
+    header.write(`package/${name}`, 0, 'utf8')
+    header.write(`${body.length.toString(8).padStart(11, '0')}\0`, 124, 'ascii')
+    blocks.push(header, Buffer.from(body, 'utf8'), Buffer.alloc((512 - (body.length % 512)) % 512))
+  }
+  blocks.push(Buffer.alloc(1024))
+  return zlib.gzipSync(Buffer.concat(blocks))
 }
 
 function makeService(env: NodeJS.ProcessEnv, execNpm: NpmExecFn): RootUpdateService {
@@ -204,6 +218,70 @@ describe('stageClosure — dev-uploads branch', () => {
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted, result.message).toBe(true)
     expect(calls[0]!.args.some((a) => a.startsWith('--before'))).toBe(false)
+  })
+
+  describe('closure pins inside the uploaded server tarball (#681)', () => {
+    const PINS = { '@trpc/server': '11.18.0', sharp: '0.35.2' }
+    const BUILD_TIME = Date.parse('2026-11-24T10:00:00.000Z')
+
+    it('merges the pins into overrides (file: entries win) and passes no --before', async () => {
+      const dir = seedDevUploads(
+        DEV_VERSION,
+        { '@camstack/server': 'camstack-server.tgz', '@camstack/types': 'camstack-types.tgz' },
+        BUILD_TIME,
+      )
+      fs.writeFileSync(
+        path.join(dir, 'camstack-server.tgz'),
+        tarballWith({
+          'closure-pins.json': JSON.stringify({ ...PINS, '@camstack/types': '9.9.9' }),
+        }),
+      )
+      const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
+      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+
+      const result = await svc.applyServerUpdate({ version: DEV_VERSION })
+      expect(result.accepted, result.message).toBe(true)
+      const pkgJson = calls[0]!.stagingPackageJson as { overrides?: Record<string, string> }
+      expect(pkgJson.overrides).toEqual({
+        ...PINS,
+        '@camstack/types': `file:${path.join(dir, 'camstack-types.tgz')}`,
+      })
+      expect(calls[0]!.args.some((a) => a.startsWith('--before'))).toBe(false)
+    })
+
+    it('keeps --before when the tarball ships no pins file', async () => {
+      const dir = seedDevUploads(
+        DEV_VERSION,
+        { '@camstack/server': 'camstack-server.tgz' },
+        BUILD_TIME,
+      )
+      fs.writeFileSync(path.join(dir, 'camstack-server.tgz'), tarballWith({ 'other.json': '{}' }))
+      const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
+      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+
+      const result = await svc.applyServerUpdate({ version: DEV_VERSION })
+      expect(result.accepted, result.message).toBe(true)
+      expect(calls[0]!.args).toContain('--before=2026-11-24T10:05:00.000Z')
+      expect(calls[0]!.stagingPackageJson).not.toHaveProperty('overrides')
+    })
+
+    it('keeps --before when the pins file is rejected', async () => {
+      const dir = seedDevUploads(
+        DEV_VERSION,
+        { '@camstack/server': 'camstack-server.tgz' },
+        BUILD_TIME,
+      )
+      fs.writeFileSync(
+        path.join(dir, 'camstack-server.tgz'),
+        tarballWith({ 'closure-pins.json': JSON.stringify({ sharp: '^0.35.0' }) }),
+      )
+      const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
+      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+
+      const result = await svc.applyServerUpdate({ version: DEV_VERSION })
+      expect(result.accepted, result.message).toBe(true)
+      expect(calls[0]!.args).toContain('--before=2026-11-24T10:05:00.000Z')
+    })
   })
 
   it('registry path is untouched when no dev-uploads dir exists', async () => {

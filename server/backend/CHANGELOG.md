@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Linked triggers accept an optional device-state limit (only while a device reads a value), so a night derived from a luminosity sensor can gate them.
 - a dev-uploaded closure now installs with npm --before set to its build time, so later npm publishes cannot enter it (#681)
 - A registry update installs every third-party package at the version the release was tested with (closure-pins.json), so a package published after the release can no longer break an update
+- A dev-uploaded closure installs third-party packages at the versions its closure-pins.json lists, so later npm publishes cannot enter it
 
 ### Fixed
 

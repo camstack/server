@@ -83,6 +83,18 @@ export function parseClosurePins(raw: string): ClosurePinsRead {
   return Object.keys(pins).length === 0 ? { pins: null, miss: 'empty' } : { pins, miss: null }
 }
 
+/** The pins a server tarball (registry or dev-uploaded) ships, or why it ships none. */
+export function readClosurePinsFromTarball(tgz: Buffer): ClosurePinsRead {
+  let entry: Buffer | null
+  try {
+    entry = readTarballEntry(tgz, `package/${CLOSURE_PINS_FILE}`)
+  } catch {
+    return { pins: null, miss: 'no-tarball' }
+  }
+  if (entry === null) return { pins: null, miss: 'entry-missing' }
+  return parseClosurePins(entry.toString('utf8'))
+}
+
 /**
  * Pins of `<packageName>@<target>` as published: `npm pack` it into a temp dir
  * (the install that follows reads the same tarball from npm's cache) and read
@@ -116,12 +128,7 @@ export async function fetchClosurePins(
     )
     const tgz = fs.readdirSync(dir).find((f) => f.endsWith('.tgz'))
     if (tgz === undefined) return { pins: null, miss: 'no-tarball' }
-    const entry = readTarballEntry(
-      fs.readFileSync(path.join(dir, tgz)),
-      `package/${CLOSURE_PINS_FILE}`,
-    )
-    if (entry === null) return { pins: null, miss: 'entry-missing' }
-    return parseClosurePins(entry.toString('utf8'))
+    return readClosurePinsFromTarball(fs.readFileSync(path.join(dir, tgz)))
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
