@@ -44,38 +44,60 @@ export function readTarballEntry(tgz: Buffer, entryPath: string): Buffer | null 
   return null
 }
 
-/** Parse a pins file; anything but `{ name: exact-version }` is refused (`null`). */
-export function parseClosurePins(raw: string): ClosurePins | null {
+/** Why a target installs unpinned. The last three mean a pins file WAS shipped and was refused. */
+export type ClosurePinsMiss =
+  | 'no-tarball'
+  | 'entry-missing'
+  | 'unparseable'
+  | 'non-exact-version'
+  | 'empty'
+
+export type ClosurePinsRead =
+  | { readonly pins: ClosurePins; readonly miss: null }
+  | { readonly pins: null; readonly miss: ClosurePinsMiss }
+
+/** A shipped pins file the installer refused: a broken file must not pass for an old release. */
+export function isRejectedPinsMiss(miss: ClosurePinsMiss): boolean {
+  return miss === 'unparseable' || miss === 'non-exact-version' || miss === 'empty'
+}
+
+/** Parse a pins file; anything but `{ name: exact-version }` is refused, with the reason. */
+export function parseClosurePins(raw: string): ClosurePinsRead {
   let parsed: unknown
   try {
     parsed = JSON.parse(raw)
   } catch {
-    return null
+    return { pins: null, miss: 'unparseable' }
   }
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return { pins: null, miss: 'unparseable' }
+  }
   const pins: Record<string, string> = {}
   for (const [name, version] of Object.entries(parsed)) {
     if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/.test(version)) {
-      return null
+      return { pins: null, miss: 'non-exact-version' }
     }
     if (name.startsWith('@camstack/')) continue
     pins[name] = version
   }
-  return Object.keys(pins).length === 0 ? null : pins
+  return Object.keys(pins).length === 0 ? { pins: null, miss: 'empty' } : { pins, miss: null }
 }
 
 /**
  * Pins of `<packageName>@<target>` as published: `npm pack` it into a temp dir
  * (the install that follows reads the same tarball from npm's cache) and read
- * `package/closure-pins.json`. `null` = this target ships none (an older
- * server), or the pack failed — the install then runs unpinned, as before.
+ * `package/closure-pins.json`. `pins: null` carries the `miss` reason: this
+ * target ships none (an older server), or the file was refused. A pack that
+ * throws propagates; the caller installs unpinned and says so.
  */
 export async function fetchClosurePins(
   execNpm: PackRunner,
   packageName: string,
   target: string,
   registryArgs: readonly string[],
-): Promise<ClosurePins | null> {
+  /** The staging dir: the pack then sees the same `.npmrc` as the install that follows. */
+  cwd: string,
+): Promise<ClosurePinsRead> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-pins-'))
   try {
     await execNpm(
@@ -90,15 +112,16 @@ export async function fetchClosurePins(
         '--loglevel=error',
         ...registryArgs,
       ],
-      { timeoutMs: PACK_TIMEOUT_MS },
+      { cwd, timeoutMs: PACK_TIMEOUT_MS },
     )
     const tgz = fs.readdirSync(dir).find((f) => f.endsWith('.tgz'))
-    if (tgz === undefined) return null
+    if (tgz === undefined) return { pins: null, miss: 'no-tarball' }
     const entry = readTarballEntry(
       fs.readFileSync(path.join(dir, tgz)),
       `package/${CLOSURE_PINS_FILE}`,
     )
-    return entry === null ? null : parseClosurePins(entry.toString('utf8'))
+    if (entry === null) return { pins: null, miss: 'entry-missing' }
+    return parseClosurePins(entry.toString('utf8'))
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

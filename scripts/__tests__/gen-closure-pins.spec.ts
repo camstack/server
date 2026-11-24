@@ -1,6 +1,9 @@
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error plain .mjs script without declarations
-import { buildPins } from '../gen-closure-pins.mjs'
+import { buildPins, generateClosurePins } from '../gen-closure-pins.mjs'
 
 interface LockEntry {
   version?: string
@@ -75,5 +78,56 @@ describe('buildPins', () => {
   it('leaves out a name resolved to two versions: an override is by name', () => {
     expect(pins['dup']).toBeUndefined()
     expect(stats.ambiguous).toEqual(['dup'])
+  })
+})
+
+interface GenerateResult {
+  readonly ok: boolean
+  readonly written: boolean
+  readonly message: string
+}
+
+describe('generateClosurePins without a usable lockfile', () => {
+  function checkout(lockfile: string | null): string {
+    const repo = mkdtempSync(join(tmpdir(), 'closure-pins-repo-'))
+    mkdirSync(join(repo, 'server', 'backend'), { recursive: true })
+    if (lockfile !== null) writeFileSync(join(repo, 'package-lock.json'), lockfile)
+    return repo
+  }
+
+  it('warns and writes nothing when the lockfile is missing, so npm pack goes on', () => {
+    const repo = checkout(null)
+    try {
+      const result: GenerateResult = generateClosurePins(repo)
+      expect(result.ok).toBe(true)
+      expect(result.written).toBe(false)
+      expect(result.message).toContain('ships unpinned')
+      expect(existsSync(join(repo, 'server', 'backend', 'closure-pins.json'))).toBe(false)
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  })
+
+  it('warns and writes nothing when the lockfile has no server entry', () => {
+    const repo = checkout(JSON.stringify({ lockfileVersion: 3, packages: {} }))
+    try {
+      const result: GenerateResult = generateClosurePins(repo)
+      expect(result.ok).toBe(true)
+      expect(result.written).toBe(false)
+      expect(result.message).toContain('ships unpinned')
+      expect(existsSync(join(repo, 'server', 'backend', 'closure-pins.json'))).toBe(false)
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  })
+
+  it('still fails --check, which is the guard', () => {
+    const repo = checkout(null)
+    try {
+      const result: GenerateResult = generateClosurePins(repo, { check: true })
+      expect(result.ok).toBe(false)
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
   })
 })

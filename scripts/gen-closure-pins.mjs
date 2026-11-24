@@ -132,25 +132,53 @@ export function buildPins(lock, opts = {}) {
   return { pins, stats: { pinned: Object.keys(pins).length, ambiguous } }
 }
 
-function main() {
-  const here = path.dirname(fileURLToPath(import.meta.url))
-  const repo = path.resolve(here, '..')
-  const lock = JSON.parse(fs.readFileSync(path.join(repo, 'package-lock.json'), 'utf8'))
-  const { pins, stats } = buildPins(lock)
+/**
+ * Write (or `--check`) `<repo>/server/backend/closure-pins.json`.
+ *
+ * A missing or unusable root lockfile (a checkout without it, a lockfile with
+ * no server entry) must not break `npm pack` / `npm publish`: nothing is
+ * written, a warning says the closure ships unpinned, and `ok` stays true —
+ * which is what the closure did before pins existed. Only `--check` fails.
+ *
+ * @returns {{ ok: boolean, written: boolean, message: string }}
+ */
+export function generateClosurePins(repo, opts = {}) {
   const target = path.join(repo, SERVER_DIR, PINS_FILE)
-  const text = `${JSON.stringify(pins, null, 2)}\n`
-  if (process.argv.includes('--check')) {
-    const onDisk = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null
-    if (onDisk !== text) {
-      process.stderr.write(`${target} disagrees with package-lock.json\n`)
-      process.exit(1)
+  let result
+  try {
+    const lock = JSON.parse(fs.readFileSync(path.join(repo, 'package-lock.json'), 'utf8'))
+    result = buildPins(lock)
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    return {
+      ok: opts.check !== true,
+      written: false,
+      message: `[closure-pins] WARNING: no pins written, the closure ships unpinned (${reason})`,
     }
-    return
+  }
+  const { pins, stats } = result
+  const text = `${JSON.stringify(pins, null, 2)}\n`
+  if (opts.check === true) {
+    const onDisk = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null
+    return onDisk === text
+      ? { ok: true, written: false, message: '' }
+      : { ok: false, written: false, message: `${target} disagrees with package-lock.json` }
   }
   fs.writeFileSync(target, text)
-  process.stdout.write(
-    `[closure-pins] ${stats.pinned} pins (${stats.ambiguous.length} ambiguous left out) -> ${target}\n`,
-  )
+  return {
+    ok: true,
+    written: true,
+    message: `[closure-pins] ${stats.pinned} pins (${stats.ambiguous.length} ambiguous left out) -> ${target}`,
+  }
+}
+
+function main() {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const result = generateClosurePins(path.resolve(here, '..'), {
+    check: process.argv.includes('--check'),
+  })
+  if (result.message !== '') process.stderr.write(`${result.message}\n`)
+  if (!result.ok) process.exit(1)
 }
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

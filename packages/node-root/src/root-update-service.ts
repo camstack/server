@@ -74,7 +74,12 @@ import {
   ELECTRON_APP_VERSION_ENV,
   type WrapperProbeReadings,
 } from './wrapper-identity.js'
-import { fetchClosurePins, withClosureOverrides } from './closure-pins.js'
+import {
+  fetchClosurePins,
+  isRejectedPinsMiss,
+  withClosureOverrides,
+  type ClosurePinsRead,
+} from './closure-pins.js'
 import { seedStagingFromCurrent } from './closure-stage-seed.js'
 import { assertInstalledClosureTree } from './closure-tree-check.js'
 import {
@@ -1292,30 +1297,44 @@ export class RootUpdateService {
     const manifestPath = path.join(stagingDir, 'package.json')
     const raw: unknown = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
     if (!isJsonObject(raw)) return
-    let pins: Awaited<ReturnType<typeof fetchClosurePins>> = null
+    let read: ClosurePinsRead
     try {
-      pins = await fetchClosurePins(
+      read = await fetchClosurePins(
         this.execNpm,
         this.spec.packageName,
         target,
         buildNpmRegistryArgs(registry),
+        stagingDir,
       )
     } catch (error) {
-      this.logger.warn('closure pins could not be read', {
+      this.logger.warn('closure pins could not be read: installing unpinned', {
         tags: this.logTags,
         meta: {
           targetVersion: target,
+          reason: 'pack-failed',
           error: error instanceof Error ? error.message : String(error),
         },
       })
+      read = { pins: null, miss: 'no-tarball' }
     }
-    this.logger.info(pins === null ? 'closure install unpinned' : 'closure install pinned', {
-      tags: this.logTags,
-      meta: { targetVersion: target, pins: pins === null ? 0 : Object.keys(pins).length },
-    })
+    if (read.pins !== null) {
+      this.logger.info('closure install pinned', {
+        tags: this.logTags,
+        meta: { targetVersion: target, pins: Object.keys(read.pins).length },
+      })
+    } else {
+      // A shipped file that was refused is a warn: a broken pins file must not
+      // read as an old release that never had one.
+      const context = { tags: this.logTags, meta: { targetVersion: target, reason: read.miss } }
+      if (isRejectedPinsMiss(read.miss)) {
+        this.logger.warn('closure install unpinned: pins file rejected', context)
+      } else {
+        this.logger.info('closure install unpinned', context)
+      }
+    }
     fs.writeFileSync(
       manifestPath,
-      JSON.stringify(withClosureOverrides(raw, pins), null, 2),
+      JSON.stringify(withClosureOverrides(raw, read.pins), null, 2),
       'utf-8',
     )
   }

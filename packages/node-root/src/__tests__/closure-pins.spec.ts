@@ -47,9 +47,16 @@ describe('closure pins file', () => {
   })
 
   it('accepts exact versions only and never a @camstack pin', () => {
-    expect(parseClosurePins(JSON.stringify({ ...PINS, '@camstack/sdk': '1.0.0' }))).toEqual(PINS)
-    expect(parseClosurePins(JSON.stringify({ a: '^1.0.0' }))).toBeNull()
-    expect(parseClosurePins('not json')).toBeNull()
+    expect(parseClosurePins(JSON.stringify({ ...PINS, '@camstack/sdk': '1.0.0' }))).toEqual({
+      pins: PINS,
+      miss: null,
+    })
+    expect(parseClosurePins(JSON.stringify({ a: '^1.0.0' }))).toEqual({
+      pins: null,
+      miss: 'non-exact-version',
+    })
+    expect(parseClosurePins('not json')).toEqual({ pins: null, miss: 'unparseable' })
+    expect(parseClosurePins('{}')).toEqual({ pins: null, miss: 'empty' })
   })
 
   it('replaces the seeded overrides, and drops them when there are no pins', () => {
@@ -65,10 +72,16 @@ describe('staging a registry closure', () => {
     activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
     seedDir: 'CAMSTACK_SEED_SERVER_DIR',
   }
+  interface LogLine {
+    readonly level: 'info' | 'warn'
+    readonly message: string
+    readonly meta: Readonly<Record<string, unknown>>
+  }
+  const lines: LogLine[] = []
   const logger: RootUpdateLogger = {
     debug: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
+    info: (message, context) => lines.push({ level: 'info', message, meta: context?.meta ?? {} }),
+    warn: (message, context) => lines.push({ level: 'warn', message, meta: context?.meta ?? {} }),
     error: () => undefined,
   }
   let tmp: string
@@ -146,5 +159,33 @@ describe('staging a registry closure', () => {
     await stage(stub(null))
     expect(installManifests).toHaveLength(1)
     expect(installManifests[0]).not.toHaveProperty('overrides')
+  })
+
+  it('names the reason, and warns only when a shipped pins file was rejected', async () => {
+    const cases: ReadonlyArray<readonly [Buffer | null, string, 'info' | 'warn']> = [
+      [null, 'no-tarball', 'info'],
+      [makeTarball({ 'package.json': '{}' }), 'entry-missing', 'info'],
+      [makeTarball({ 'closure-pins.json': 'not json' }), 'unparseable', 'warn'],
+      [makeTarball({ 'closure-pins.json': '{"a":"^1.0.0"}' }), 'non-exact-version', 'warn'],
+    ]
+    for (const [tgz, reason, level] of cases) {
+      installManifests = []
+      lines.length = 0
+      await stage(stub(tgz))
+      const line = lines.find((l) => l.message.startsWith('closure install unpinned'))
+      expect(line?.meta['reason'], reason).toBe(reason)
+      expect(line?.level, reason).toBe(level)
+    }
+  })
+
+  it('runs the pack in the staging dir, beside the manifest the install uses', async () => {
+    const packCwds: Array<string | undefined> = []
+    const inner = stub(makeTarball({ 'closure-pins.json': JSON.stringify(PINS) }))
+    await stage(async (args, opts) => {
+      if (args[0] === 'pack') packCwds.push(opts.cwd)
+      return inner(args, opts)
+    })
+    expect(packCwds).toHaveLength(1)
+    expect(packCwds[0]).toContain('.staging')
   })
 })
