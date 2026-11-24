@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The timed-run wrapper binds to every device with a switch and re-evaluates when a device gains or loses its switch
+
 ## [1.2.945] - 2026-11-24
 
 ### Changed
 
 - Apps for the viewer shell are declared through the app-source capability and listed, filtered by role, by the apps capability.
-- The timed-run wrapper binds to every device with a switch and re-evaluates when a device gains or loses its switch
 
 ## [1.2.944] - 2026-11-24
 
