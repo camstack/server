@@ -4,11 +4,7 @@ import type { DeviceControlProps } from './control-registry'
 
 /** Inline placeholder: renders nothing (no-op row atom for types with no inline control). */
 export function DummyInline(_p: DeviceControlProps): ReactNode {
-  return (
-    <span className="text-foreground-subtle text-xs select-none" aria-hidden="true">
-      —
-    </span>
-  )
+  return null
 }
 
 /** Hero card placeholder: shows a muted "Controls coming soon" card for unimplemented types. */

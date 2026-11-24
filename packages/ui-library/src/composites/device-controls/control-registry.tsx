@@ -356,13 +356,13 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.Presence]: false,
   // ── natural width: readout (event stream, no interactive control) ──────
   [DeviceType.EventEmitter]: false,
-  // ── natural width: DummyInline placeholder ("—") — no real control yet ─
+  // ── natural width: DummyInline renders nothing — no real control yet ─
   [DeviceType.Notifier]: false,
   // Script inline = Run/Stop button + "3 min ago"; automation inline =
   // enabled pill + Trigger. Both are natural width.
   [DeviceType.Script]: false,
   [DeviceType.Automation]: false,
-  // ── natural width: DummyInline placeholder ("—") ───────────────────
+  // ── natural width: DummyInline renders nothing ───────────────────
   [DeviceType.Camera]: false,
   [DeviceType.Update]: false,
   [DeviceType.Generic]: false,
