@@ -4,7 +4,7 @@
  * data exists only when the device binds `motion-trigger`, implements
  * `setMotionTrigger` and its slice answered; the toggle action sends once.
  */
-import type { MotionTriggerStatus } from '@camstack/types'
+import type { MotionTriggerRuntimeState } from '@camstack/types'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCardCommon } from '../connected/use-card-common'
@@ -12,7 +12,7 @@ import { useCardCommon } from '../connected/use-card-common'
 const fake = vi.hoisted(() => ({
   bound: true,
   methods: ['setMotionTrigger'] as readonly string[],
-  slice: undefined as MotionTriggerStatus | undefined,
+  slice: undefined as MotionTriggerRuntimeState | undefined,
   setMotionTrigger: vi.fn(),
 }))
 
@@ -62,7 +62,7 @@ vi.mock('../../../generated/system-hooks', () => {
 beforeEach(() => {
   fake.bound = true
   fake.methods = ['setMotionTrigger']
-  fake.slice = { enabled: true, lastChangedAt: 0 }
+  fake.slice = { enabled: true, lastChangedAt: 0, lastFetchedAt: 0 }
   fake.setMotionTrigger.mockReset()
   fake.setMotionTrigger.mockImplementation(() => new Promise(() => undefined))
 })
@@ -73,6 +73,13 @@ const mount = () => renderHook(() => useCardCommon({ deviceId: 1, canActuate: tr
 describe('the shared card hook and "on motion"', () => {
   it('serves the corner data when the device binds motion-trigger', () => {
     expect(mount().result.current.common.motionTrigger).toEqual({ on: true, pending: false })
+  })
+
+  it('serves an unknown corner for the cold-start seed, and off for a real off read', () => {
+    fake.slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 0 }
+    expect(mount().result.current.common.motionTrigger).toEqual({ on: null, pending: false })
+    fake.slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 1_700_000_000_000 }
+    expect(mount().result.current.common.motionTrigger).toEqual({ on: false, pending: false })
   })
 
   it('serves none without the binding, without the method, or before the slice answers', () => {

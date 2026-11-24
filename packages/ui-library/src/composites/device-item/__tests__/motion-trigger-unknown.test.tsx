@@ -8,7 +8,7 @@ import { OnMotionToggle } from '../actions'
 import { ChildMotionTriggerToggle } from '../children-accordion'
 
 const setMotionTrigger = vi.fn(() => Promise.resolve(undefined))
-let slice: { enabled: boolean; lastChangedAt: number } | undefined
+let slice: { enabled: boolean; lastChangedAt: number; lastFetchedAt: number } | undefined
 
 vi.mock('../../../hooks/use-device-capability', () => ({
   useDeviceCapability: () => ({
@@ -37,7 +37,7 @@ const surfaces = [
 
 describe.each(surfaces)('%s', (_name, mount) => {
   it('shows unknown, not off, for the cold-start seed, and still sets it on', () => {
-    slice = { enabled: false, lastChangedAt: 0 }
+    slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 0 }
     render(mount())
     const button = screen.getByRole('button')
     expect(button.getAttribute('aria-pressed')).toBe('mixed')
@@ -47,7 +47,7 @@ describe.each(surfaces)('%s', (_name, mount) => {
   })
 
   it('shows off once the camera was read', () => {
-    slice = { enabled: false, lastChangedAt: 1_700_000_000_000 }
+    slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 1_700_000_000_000 }
     render(mount())
     const button = screen.getByRole('button')
     expect(button.getAttribute('aria-pressed')).toBe('false')

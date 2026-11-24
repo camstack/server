@@ -3,14 +3,14 @@
  * The shared hook behind every connected card's "on motion" corner: the served
  * slice only, nothing without the binding or the method, one send per change.
  */
-import type { MotionTriggerStatus } from '@camstack/types'
+import type { MotionTriggerRuntimeState } from '@camstack/types'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMotionTrigger } from '../connected/use-motion-trigger'
 
 const hub = vi.hoisted(() => ({
   bound: true,
-  slice: undefined as MotionTriggerStatus | undefined,
+  slice: undefined as MotionTriggerRuntimeState | undefined,
   setMotionTrigger: vi.fn(),
 }))
 
@@ -36,7 +36,7 @@ function motionOn(settable: boolean): boolean | null {
 
 beforeEach(() => {
   hub.bound = true
-  hub.slice = { enabled: true, lastChangedAt: 0 }
+  hub.slice = { enabled: true, lastChangedAt: 0, lastFetchedAt: 0 }
   hub.setMotionTrigger.mockReset()
   hub.setMotionTrigger.mockImplementation(() => new Promise(() => undefined))
 })
@@ -48,12 +48,14 @@ describe('useMotionTrigger', () => {
   })
 
   it('reads the cold-start seed as unknown, and a read camera that is off as off', () => {
-    hub.slice = { enabled: false, lastChangedAt: 0 }
+    hub.slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 0 }
     const seed = renderHook(() => useMotionTrigger({ deviceId: 1, settable: true, fail, succeed }))
       .result.current
     expect(seed.present).toBe(true)
     expect(seed.on).toBeNull()
-    hub.slice = { enabled: false, lastChangedAt: 1_700_000_000_000 }
+    hub.slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 1_700_000_000_000 }
+    expect(motionOn(true)).toBe(false)
+    hub.slice = { enabled: false, lastChangedAt: 1_700_000_000_000, lastFetchedAt: 0 }
     expect(motionOn(true)).toBe(false)
   })
 

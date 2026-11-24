@@ -8,7 +8,7 @@ import { MotionTriggerToggle } from '../MotionTriggerToggle'
 // not "off": the toggle claims neither state yet still accepts a write.
 
 const setMotionTrigger = vi.fn(() => Promise.resolve(undefined))
-let slice: { enabled: boolean; lastChangedAt: number } | undefined
+let slice: { enabled: boolean; lastChangedAt: number; lastFetchedAt: number } | undefined
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
@@ -28,7 +28,7 @@ afterEach(cleanup)
 
 describe('MotionTriggerToggle', () => {
   it('shows unknown for the cold-start seed, and still sets it on', () => {
-    slice = { enabled: false, lastChangedAt: 0 }
+    slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 0 }
     render(<MotionTriggerToggle dev={dev} busy={false} setBusy={vi.fn()} />)
     const button = screen.getByRole('button')
     expect(button.getAttribute('aria-pressed')).toBe('mixed')
@@ -39,7 +39,7 @@ describe('MotionTriggerToggle', () => {
   })
 
   it('shows off once the camera was read', () => {
-    slice = { enabled: false, lastChangedAt: 1_700_000_000_000 }
+    slice = { enabled: false, lastChangedAt: 0, lastFetchedAt: 1_700_000_000_000 }
     render(<MotionTriggerToggle dev={dev} busy={false} setBusy={vi.fn()} />)
     const button = screen.getByRole('button')
     expect(button.getAttribute('aria-pressed')).toBe('false')
