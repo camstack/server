@@ -374,6 +374,9 @@ export class RtspRestreamer {
 
   /** Throttled drop/withhold accounting — see {@link reportDrops}. */
   private dropsWithheldSpan = 0
+  /** Pre-roll asks refused because the window exceeds the bound: a REAL shortfall (#626). */
+  private dropsPreRollRefused = 0
+  private preRollRefusedRequestedMs = 0
   private dropsWithheldPackets = 0
   /**
    * Muted (local-decoder loopback) joins refused the ring burst because it was
@@ -1164,7 +1167,13 @@ export class RtspRestreamer {
         const plan = planFor(requestedMs)
         if (plan.active) {
           if (plan.overBound) {
-            this.dropsWithheldSpan++
+            // The consumer ASKED for history and got none: a real shortfall,
+            // so it counts toward the warn (requested vs delivered below).
+            this.dropsPreRollRefused++
+            this.preRollRefusedRequestedMs = Math.max(
+              this.preRollRefusedRequestedMs,
+              plan.requestedMs,
+            )
             withheld++
             continue
           }
@@ -1523,16 +1532,21 @@ export class RtspRestreamer {
     // policy, not lost media (#626): it is reported at debug and never raises
     // the warn on its own. The attach itself reports what it got
     // (`restream attach live-edge`).
-    const realDrops = this.dropsPrimeBacklog + this.dropsLiveLatched + this.dropsLiveClosed
+    const realDrops =
+      this.dropsPrimeBacklog +
+      this.dropsLiveLatched +
+      this.dropsLiveClosed +
+      this.dropsPreRollRefused
     const level = realDrops > 0 ? 'warn' : 'debug'
     const message = realDrops > 0 ? 'restream dropped packets' : 'restream join burst withheld'
     this.logger?.[level](message, {
       tags: { deviceId: this.deviceId },
       meta: {
         streamName: this.streamName,
-        // This warn is the ONLY line a fully-withheld join produces (the info
-        // line above returns early when nothing was served), so the bound that
-        // caused the withhold has to be readable from it.
+        // A fully-withheld join produces no `restream prime` info line (it
+        // returns early when nothing was served), so this line — debug for a
+        // policy trim, warn for a real shortfall — carries the bound that
+        // caused the withhold.
         boundSpanMs: bound.maxSpanMs,
         boundPackets: bound.maxPackets,
         primeWithheldSpanMs: this.dropsWithheldSpan,
@@ -1542,11 +1556,16 @@ export class RtspRestreamer {
         primeWithheldMutedLiveEdge: this.dropsWithheldMutedLiveEdge,
         liveEdgeMaxSpanMs: LIVE_EDGE_MAX_SPAN_MS,
         primeAbortedOnBacklog: this.dropsPrimeBacklog,
+        preRollRefused: this.dropsPreRollRefused,
+        preRollRefusedRequestedMs: this.preRollRefusedRequestedMs,
+        preRollRefusedDeliveredMs: 0,
         liveDroppedUntilKeyframe: this.dropsLiveLatched,
         clientsClosedOnBacklog: this.dropsLiveClosed,
         windowMs: DROP_REPORT_INTERVAL_MS,
       },
     })
+    this.dropsPreRollRefused = 0
+    this.preRollRefusedRequestedMs = 0
     this.dropsWithheldSpan = 0
     this.dropsWithheldPackets = 0
     this.dropsWithheldMutedLiveEdge = 0

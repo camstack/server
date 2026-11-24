@@ -69,7 +69,7 @@ The saving is **not yet measured**: this was decided in a read-only session, so
 the load-ledger entry (`docs/architecture/load-ledger.md`, 2026-08-28) is open
 and carries the after-measurement procedure — `detectionIntentServed` over
 detection dials must go from ~0.5 to ~1.0, `primeWithheldSpanMs` on the
-unconditional `restream dropped packets` warn must go to 0, and `boundSpanMs`
+unconditional `restream dropped packets` warn (a debug `restream join burst withheld` since #626, amendment: the warn now means real loss only) must go to 0, and `boundSpanMs`
 for non-detection consumers must stay 2 000.
 
 `preRollMs` is untouched and stays 0. It answers a different question (analysing

@@ -250,6 +250,15 @@ describe('RtspRestreamer — pre-roll on the detection join', () => {
     // trusting its input: over the bound the session joins at the next live
     // keyframe, clean, exactly as D57 prescribes.
     const restreamer = new RtspRestreamer('101/native:main')
+    const warn = vi.fn()
+    restreamer.setLogger({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn,
+      error: vi.fn(),
+      child: vi.fn().mockReturnThis(),
+      withTags: vi.fn().mockReturnThis(),
+    })
     restreamer.setCameraSdp(SDP, 'h264', null)
     restreamer.setRtpPreBufferSupplier(() => burst(20, 2600, LIVE_TS))
     restreamer.setPreRollSupplier(() => ({
@@ -263,6 +272,19 @@ describe('RtspRestreamer — pre-roll on the detection join', () => {
     vi.advanceTimersByTime(1000)
 
     expect(countRtpFrames(detect.written)).toBe(0)
+    // A consumer asked for pre-roll and got none: a REAL shortfall, so it warns
+    // with what was asked and what was delivered (#626).
+    expect(warn).toHaveBeenCalledWith(
+      'restream dropped packets',
+      expect.objectContaining({
+        tags: { deviceId: 101 },
+        meta: expect.objectContaining({
+          preRollRefused: 1,
+          preRollRefusedRequestedMs: DETECTION_PRE_ROLL_REQUEST_MS,
+          preRollRefusedDeliveredMs: 0,
+        }),
+      }),
+    )
   })
 
   it('falls back to the current GOP when the ring retained no history', () => {

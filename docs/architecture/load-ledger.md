@@ -828,8 +828,11 @@ code already said so — «the `restream prime` info line returns early when
 nothing was served, which is exactly why device 108's blind starts were
 unattributable» — and it was read only afterwards.
 
-The unconditioned line is the **warn** `restream dropped packets`, which
-`reportDrops` emits precisely when something was withheld.
+The unconditioned line is `reportDrops`, which emits whenever something was
+withheld. Since #626 its level depends on what was lost: **warn**
+`restream dropped packets` only for a real shortfall (consumer backlog, a
+refused pre-roll ask), **debug** `restream join burst withheld` for policy
+trims of the prime burst (span, packets, muted live-edge).
 
 **Hypothesis 1, CONFIRMED: the join burst is withheld, and the session waits
 for an IDR.** The mechanism is in `join-burst-bound.ts`, which writes down its arithmetic
@@ -942,8 +945,9 @@ cameras of the ~50 % group (108, 104, 111, 112):
 1. `detectionIntentServed` / `detection first frame` lines must go from
    **~0.5 to ~1.0**. If it does not get there, the exemption is not in production and
    nothing else counts.
-2. `primeWithheldSpanMs` on `restream dropped packets` must go to **0** on the
-   detection population. It is the unconditioned line: it is the only one that says so.
+2. `primeWithheldSpanMs` on `restream join burst withheld` must go to **0** on the
+   detection population. It is the unconditioned line (debug
+   `restream join burst withheld` since #626): it is the only one that says so.
 3. `forkToFrameMs` p50 must drop towards that of the never-withheld cameras
    (**1,500-1,950 ms**), not to zero. If it drops to ~3 s and stops there,
    the withhold was only a part and the rest is term 2.

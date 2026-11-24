@@ -4,7 +4,7 @@ import type { IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PRIME_MAX_PACKETS, PRIME_MAX_SPAN_MS, RtspRestreamer } from '../rtsp/rtsp-restreamer.js'
 import { RtspSession } from '../rtsp/rtsp-session.js'
-import { MAX_WRITE_BUFFER } from '../rtsp/rtsp-types.js'
+import { MAX_MISSED_KEYFRAMES, MAX_WRITE_BUFFER } from '../rtsp/rtsp-types.js'
 
 /**
  * Reassemble the interleaved RTP records a session wrote.
@@ -370,7 +370,12 @@ describe('RTSP join burst — backpressure', () => {
     // Ten written, then the backlog gate stops the burst — the broken code
     // wrote all 300 regardless of `writableLength`.
     expect(countRtpFrames(viewer.written)).toBe(10)
-    expect(logger.warn).toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      'restream dropped packets',
+      expect.objectContaining({
+        meta: expect.objectContaining({ primeAbortedOnBacklog: 1 }),
+      }),
+    )
     // The socket is NOT closed: our own catch-up burst must never kill a client.
     expect(viewer.socket.destroy).not.toHaveBeenCalled()
   })
@@ -399,8 +404,35 @@ describe('RTSP join burst — backpressure', () => {
     // per camera. Silence here read as "never happened" for three hours once.
     const warned = vi
       .mocked(logger.warn)
-      .mock.calls.some(([, extras]) => extras?.tags?.deviceId === 101)
+      .mock.calls.some(
+        ([, extras]) =>
+          extras?.tags?.deviceId === 101 && extras.meta?.['liveDroppedUntilKeyframe'] === 1,
+      )
     expect(warned).toBe(true)
+  })
+
+  it('warns clientsClosedOnBacklog when a session misses MAX_MISSED_KEYFRAMES while behind', () => {
+    const burst = ring(4, 20)
+    const { restreamer, logger } = makeRestreamer(burst)
+    const viewer = createMockSocket()
+    playSession(restreamer, viewer, false)
+
+    restreamer.pushRtpPassthrough(rtpWithTimestamp(20 * 90 + 3000), false, false)
+    vi.advanceTimersByTime(100)
+    viewer.setWritableLength(MAX_WRITE_BUFFER + 1)
+    for (let i = 0; i < MAX_MISSED_KEYFRAMES; i++) {
+      // A keyframe AU start needs the previous GOP's latch closed by a delta.
+      restreamer.pushRtpPassthrough(rtpWithTimestamp(20 * 90 + 6000 + i * 6000), true, false)
+      restreamer.pushRtpPassthrough(rtpWithTimestamp(20 * 90 + 9000 + i * 6000), false, false)
+    }
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      'restream dropped packets',
+      expect.objectContaining({
+        tags: { deviceId: 101 },
+        meta: expect.objectContaining({ clientsClosedOnBacklog: 1 }),
+      }),
+    )
   })
 
   it('logs the drop-until-keyframe latch on a muted session', () => {
