@@ -291,9 +291,10 @@ describe('RtspRestreamer muted-withhold visibility', () => {
 
     // Still withheld — the behaviour is deliberate and unchanged.
     expect(countRtpFrames(muted.written)).toBe(0)
-    // …but no longer silent.
-    expect(logger.warn).toHaveBeenCalledWith(
-      'restream dropped packets',
+    // …and not silent, but it is policy trimming, not lost media (#626): debug.
+    expect(logger.warn).not.toHaveBeenCalled()
+    expect(logger.debug).toHaveBeenCalledWith(
+      'restream join burst withheld',
       expect.objectContaining({
         tags: { deviceId: 108 },
         meta: expect.objectContaining({ primeWithheldMutedLiveEdge: 1 }),
@@ -321,8 +322,9 @@ describe('RtspRestreamer muted-withhold visibility', () => {
     restreamer.pushRtpPassthrough(rtpWithTimestamp(6000), false, false)
 
     expect(countRtpFrames(muted.written)).toBe(0)
-    expect(logger.warn).toHaveBeenCalledWith(
-      'restream dropped packets',
+    expect(logger.warn).not.toHaveBeenCalled()
+    expect(logger.debug).toHaveBeenCalledWith(
+      'restream join burst withheld',
       expect.objectContaining({
         tags: { deviceId: 108 },
         meta: expect.objectContaining({ primeWithheldMutedLiveEdge: 1 }),

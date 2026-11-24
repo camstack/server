@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A battery camera no longer keeps a prebuffer hold open: the hold is released when the battery fact arrives late, and a 0-second prebuffer never holds the source
 - Battery-camera recordings no longer capture the sleeping-camera placeholder picture as footage, and a silent source now asks its publisher to recreate its stream server.
 - A battery camera that reports only a battery is no longer held awake by the default prebuffer hold.
+- The stream broker's 'restream dropped packets' warning now fires only for real consumer drops; join bursts trimmed by the prime bound are logged at debug as 'restream join burst withheld'.
 
 ## [1.2.682] - 2026-11-22
 

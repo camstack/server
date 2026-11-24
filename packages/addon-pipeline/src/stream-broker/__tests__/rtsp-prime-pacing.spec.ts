@@ -313,7 +313,12 @@ describe('RTSP join burst — bound', () => {
     restreamer.pushRtpPassthrough(rtpWithTimestamp(2996 * 90 + 3000), false, false)
     vi.advanceTimersByTime(1000)
     expect(countRtpFrames(viewer.written)).toBe(0)
-    expect(logger.warn).toHaveBeenCalled()
+    // Policy trimming of the prime burst is not lost media (#626): no warn.
+    expect(logger.warn).not.toHaveBeenCalled()
+    expect(logger.debug).toHaveBeenCalledWith(
+      'restream join burst withheld',
+      expect.objectContaining({ tags: { deviceId: 101 } }),
+    )
 
     // The next live keyframe AU start unlatches it — first frame = the live edge.
     restreamer.pushRtpPassthrough(rtpWithTimestamp(2996 * 90 + 6000), true, false)

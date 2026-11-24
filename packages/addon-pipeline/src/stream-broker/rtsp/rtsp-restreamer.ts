@@ -1518,7 +1518,15 @@ export class RtspRestreamer {
     if (!force && now - this.dropReportMs < DROP_REPORT_INTERVAL_MS) return
     this.dropReportMs = now
     const bound = this.currentPrimeBound()
-    this.logger?.warn('restream dropped packets', {
+    // REAL loss = a consumer that could not keep up (backpressure). A join
+    // burst withheld by the admission rule / the prime bound is trimming by
+    // policy, not lost media (#626): it is reported at debug and never raises
+    // the warn on its own. The attach itself reports what it got
+    // (`restream attach live-edge`).
+    const realDrops = this.dropsPrimeBacklog + this.dropsLiveLatched + this.dropsLiveClosed
+    const level = realDrops > 0 ? 'warn' : 'debug'
+    const message = realDrops > 0 ? 'restream dropped packets' : 'restream join burst withheld'
+    this.logger?.[level](message, {
       tags: { deviceId: this.deviceId },
       meta: {
         streamName: this.streamName,
