@@ -26,6 +26,12 @@ import { ExpressionBindingSourceSchema } from '../expression/binding-source.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
 import { TimeSpecSchema, WeekdayKeySchema } from '../time/time-spec.js'
+import {
+  type TimeWindow,
+  TimeWindowObjectSchema,
+  TimeWindowSchema,
+  refineTimeWindow,
+} from '../time/time-window.js'
 import { QuantityValueSchema } from '../units/quantity-input.js'
 import { DetectionSubjectSchema, StationarySubjectSchema } from './detection-subject.js'
 import { FaultCodesSchema } from './device-fault.js'
@@ -196,7 +202,10 @@ const DeviceFiredLeafSchema = z.object({
   match: z.array(DeviceFiredMatchSchema).min(1).max(8).optional(),
 })
 
-const ManualLeafSchema = z.object({ kind: z.literal('manual'), ...eventLeafId })
+const ManualLeafSchema = z.object({
+  kind: z.literal('manual'),
+  ...eventLeafId,
+})
 
 const IntervalLeafSchema = z.object({
   kind: z.literal('interval'),
@@ -282,41 +291,16 @@ const StationaryPresentLeafSchema = z.object({
  * (`kind: 'date'`) is refused: only a clock time or a sun event makes a window
  * that repeats every day.
  */
-const timeIsWindowShape = {
-  between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
-  days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
-}
-
-function timeIsWindowProblems(window: TimeIsWindow, ctx: z.RefinementCtx): void {
-  if (window.between === undefined && window.days === undefined) {
-    ctx.addIssue({
-      code: 'custom',
-      message: 'a time-is leaf needs a between window, days, or both',
-    })
-  }
-  for (const end of ['from', 'to'] as const) {
-    if (window.between?.[end].kind === 'date') {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'a one-date time cannot bound a daily window: use a clock time or a sun event',
-        path: ['between', end],
-      })
-    }
-  }
-}
-
-const TimeIsWindowObjectSchema = z.object(timeIsWindowShape)
-
 /**
- * What a `time-is` leaf holds beside its kind, judged by the leaf's own rules.
- * A template's time-window input stores exactly this.
+ * What a `time-is` leaf holds beside its kind: the one window model of
+ * `time/time-window.ts`. A template's time-window input stores exactly this.
  */
-export const TimeIsWindowSchema = TimeIsWindowObjectSchema.superRefine(timeIsWindowProblems)
-export type TimeIsWindow = z.infer<typeof TimeIsWindowObjectSchema>
+export const TimeIsWindowSchema = TimeWindowSchema
+export type TimeIsWindow = TimeWindow
 
-const TimeIsLeafSchema = z
-  .object({ kind: z.literal('time-is'), ...timeIsWindowShape })
-  .superRefine(timeIsWindowProblems)
+const TimeIsLeafSchema = TimeWindowObjectSchema.extend({
+  kind: z.literal('time-is'),
+}).superRefine(refineTimeWindow)
 
 /** How many event leaves one `triggered-by` names. */
 export const TRIGGERED_BY_MAX_IDS = 20
@@ -406,8 +390,14 @@ export type AutomationWhen = AutomationAll | AutomationAny | AutomationNot | Aut
 
 export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
   z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('all'), children: z.array(AutomationWhenSchema) }),
-    z.object({ kind: z.literal('any'), children: z.array(AutomationWhenSchema) }),
+    z.object({
+      kind: z.literal('all'),
+      children: z.array(AutomationWhenSchema),
+    }),
+    z.object({
+      kind: z.literal('any'),
+      children: z.array(AutomationWhenSchema),
+    }),
     z.object({ kind: z.literal('not'), child: AutomationWhenSchema }),
     DeviceBecomesLeafSchema,
     DeviceEventLeafSchema,

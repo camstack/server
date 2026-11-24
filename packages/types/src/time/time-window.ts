@@ -13,19 +13,78 @@
  *   day no window. A sun event on a site WITHOUT a location (or an unknown
  *   zone) cannot be judged at all: the result is `unknown`, never a guess.
  */
+import { z } from 'zod'
 import {
   type TimeSite,
   type TimeSpec,
-  type WeekdayKey,
+  TimeSpecSchema,
+  WeekdayKeySchema,
   isKnownTimeZone,
   localDateOf,
   occurrenceOn,
   weekdayOfLocalDate,
 } from './time-spec.js'
 
-export interface TimeWindow {
-  readonly between?: { readonly from: TimeSpec; readonly to: TimeSpec }
-  readonly days?: readonly WeekdayKey[]
+/** A named daily window, resolved to a sun range: `night` is sunset to sunrise, `day` the reverse. */
+export const TimeWindowPresetSchema = z.enum(['day', 'night'])
+export type TimeWindowPreset = z.infer<typeof TimeWindowPresetSchema>
+
+const timeWindowShape = {
+  between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
+  days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
+  preset: TimeWindowPresetSchema.optional(),
+}
+
+export const TimeWindowObjectSchema = z.object(timeWindowShape)
+
+/** The ONE shape of a daily window: clock or sun range (wrapping midnight), a preset, weekdays. */
+export type TimeWindow = z.infer<typeof TimeWindowObjectSchema>
+
+/** The cross-field rules of a window, for a schema that embeds the window's fields. */
+export function refineTimeWindow(window: TimeWindow, ctx: z.RefinementCtx): void {
+  if (window.between === undefined && window.days === undefined && window.preset === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'a time window needs a between range, a preset, days, or a combination',
+    })
+  }
+  if (window.preset !== undefined && window.between !== undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'a preset and a between range name the same thing: give one',
+      path: ['preset'],
+    })
+  }
+  for (const end of ['from', 'to'] as const) {
+    if (window.between?.[end].kind === 'date') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'a one-date time cannot bound a daily window: use a clock time or a sun event',
+        path: ['between', end],
+      })
+    }
+  }
+}
+
+export const TimeWindowSchema = TimeWindowObjectSchema.superRefine(refineTimeWindow)
+
+const SUNSET: TimeSpec = { kind: 'sun', event: 'sunset', offsetMin: 0 }
+const SUNRISE: TimeSpec = { kind: 'sun', event: 'sunrise', offsetMin: 0 }
+export const NIGHT_WINDOW: TimeWindow = { preset: 'night' }
+export const DAY_WINDOW: TimeWindow = { preset: 'day' }
+
+const PRESET_RANGE: Readonly<Record<TimeWindowPreset, { from: TimeSpec; to: TimeSpec }>> = {
+  night: { from: SUNSET, to: SUNRISE },
+  day: { from: SUNRISE, to: SUNSET },
+}
+
+/** The window with its preset expanded into a `between` range. */
+function resolved(window: TimeWindow): TimeWindow {
+  if (window.preset === undefined) return window
+  return {
+    ...(window.days === undefined ? {} : { days: window.days }),
+    between: PRESET_RANGE[window.preset],
+  }
 }
 
 export interface TimeWindowJudgement {
@@ -79,11 +138,17 @@ function intervalStartingOn(
   return end === null || end <= start ? null : { start, end }
 }
 
+/** Is `nowMs` inside the window. False when the window cannot be placed on the site (never a guess). */
+export function isWithinTimeWindow(window: TimeWindow, nowMs: number, site: TimeSite): boolean {
+  return judgeTimeWindow(window, nowMs, site).inside
+}
+
 export function judgeTimeWindow(
-  window: TimeWindow,
+  rawWindow: TimeWindow,
   nowMs: number,
   site: TimeSite,
 ): TimeWindowJudgement {
+  const window = resolved(rawWindow)
   const blocked = unresolvable(window, site)
   if (blocked !== null) {
     return {
@@ -110,7 +175,12 @@ export function judgeTimeWindow(
     if (midnight !== null && midnight > nowMs && (next === null || midnight < next)) next = midnight
   }
   const days = window.days === undefined ? '' : ` on ${window.days.join(', ')}`
-  const span = window.between === undefined ? 'the whole day' : 'the window'
+  const span =
+    rawWindow.preset !== undefined
+      ? `the ${rawWindow.preset}`
+      : window.between === undefined
+        ? 'the whole day'
+        : 'the window'
   return {
     inside,
     unknown: false,
