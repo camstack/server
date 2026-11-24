@@ -102,6 +102,8 @@ export interface TimeWindowJudgement {
 const MIDNIGHT: TimeSpec = { kind: 'clock', hh: 0, mm: 0 }
 /** Start dates looked at for a boundary: yesterday .. the day after tomorrow. */
 const LOOKAHEAD_DAYS = 2
+/** A weekday restriction repeats every 7 days: its next boundary is within a week plus the day it started on. */
+const WEEKDAY_LOOKAHEAD_DAYS = 8
 
 function addDays(localDate: string, days: number): string {
   const [y, m, d] = localDate.split('-').map(Number)
@@ -170,6 +172,10 @@ function insideOnWallClock(
 }
 
 /** The first instant after `nowMs` the clock window's verdict flips; null for a sun or date window. */
+function lookaheadFor(window: TimeWindow): number {
+  return window.days === undefined ? LOOKAHEAD_DAYS : WEEKDAY_LOOKAHEAD_DAYS
+}
+
 function nextWallClockFlip(window: TimeWindow, nowMs: number, site: TimeSite): number | null {
   const between = window.between
   if (between === undefined || between.from.kind !== 'clock' || between.to.kind !== 'clock') {
@@ -183,7 +189,7 @@ function nextWallClockFlip(window: TimeWindow, nowMs: number, site: TimeSite): n
   return nextVerdictFlip({
     nowMs,
     timeZone: site.timeZone,
-    lookaheadDays: LOOKAHEAD_DAYS,
+    lookaheadDays: lookaheadFor(window),
     boundaries: [
       boundaryOf(between.from, between.from.hh * MINUTES_PER_HOUR + between.from.mm),
       boundaryOf(between.to, between.to.hh * MINUTES_PER_HOUR + between.to.mm),
@@ -232,7 +238,9 @@ function judge(
     inside = wallClock
     next = withWallClockNext ? nextWallClockFlip(window, nowMs, site) : null
   } else {
-    for (let offset = -1; offset <= LOOKAHEAD_DAYS; offset += 1) {
+    // The inside-only path needs no future boundary: it keeps the short reach.
+    const reach = withWallClockNext ? lookaheadFor(window) : LOOKAHEAD_DAYS
+    for (let offset = -1; offset <= reach; offset += 1) {
       const interval = intervalStartingOn(window, addDays(today, offset), site)
       if (interval === null) continue
       if (interval.start <= nowMs && nowMs < interval.end) inside = true

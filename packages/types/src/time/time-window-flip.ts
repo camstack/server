@@ -10,7 +10,7 @@ const MS_PER_HOUR = 60 * MS_PER_MINUTE
 const MS_PER_DAY = 24 * MS_PER_HOUR
 const MINUTES_PER_DAY = 24 * 60
 /** Jumps are sampled from one day before a bucket to this many days after its start. */
-const JUMP_SPAN_DAYS = 5
+const JUMP_SPAN_DAYS = 11
 const JUMP_CACHE_LIMIT = 64
 
 /** A DST change: the instant the wall clock jumped, and by how many ms (negative = repeated hour). */

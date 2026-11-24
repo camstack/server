@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { nextTimeBoundaryInMs } from '../../automation/condition-eval.js'
 import { isWithinClockRange } from '../clock-range.js'
 import { zoneOnlySite } from '../time-spec.js'
 import * as flip from '../time-window-flip.js'
@@ -53,14 +54,42 @@ describe('nextChangeAtMs outside Berlin DST', () => {
     expect(j.nextChangeAtMs).toBeNull()
   })
 
-  it('days-restricted: a flip beyond the lookahead is null, not a guess', () => {
-    // Monday-only 22:00-23:00; asked on a Tuesday there is no Monday in the lookahead.
+  it('days-restricted: the next listed day is found up to a week ahead', () => {
+    // Monday-only 22:00-23:00; asked on a Tuesday the next flip is the following Monday.
     const w: TimeWindow = {
       between: { from: clock(22), to: clock(23) },
       days: ['mon'],
     }
-    expect(next(w, Date.UTC(2026, 5, 2, 12, 0))).toBeNull() // Tue 2026-06-02
+    expect(next(w, Date.UTC(2026, 5, 2, 12, 0))).toBe(Date.UTC(2026, 5, 8, 22, 0)) // Tue -> Mon 2026-06-08
     expect(next(w, Date.UTC(2026, 5, 1, 12, 0))).toBe(Date.UTC(2026, 5, 1, 22, 0)) // the Monday itself
+  })
+
+  it('days-restricted across the spring-forward day: Berlin Monday 22:00 CEST is 20:00Z', () => {
+    const w: TimeWindow = {
+      between: { from: clock(22), to: clock(23) },
+      days: ['mon'],
+    }
+    expect(next(w, Date.UTC(2026, 2, 24, 12, 0), BERLIN)).toBe(Date.UTC(2026, 2, 30, 20, 0)) // Tue 24 Mar
+    expect(next(w, Date.UTC(2026, 2, 29, 12, 0), BERLIN)).toBe(Date.UTC(2026, 2, 30, 20, 0)) // the DST Sunday
+  })
+
+  it('nextTimeBoundaryInMs, the scheduler wake source, arms a Monday-only leaf asked on a Tuesday', () => {
+    const leaf = {
+      kind: 'time-is' as const,
+      days: ['mon' as const],
+      between: { from: clock(22), to: clock(23) },
+    }
+    const now = Date.UTC(2026, 5, 2, 12, 0) // Tuesday
+    expect(nextTimeBoundaryInMs(leaf, now, UTC)).toBe(Date.UTC(2026, 5, 8, 22, 0) - now)
+  })
+
+  it('an all-day-from-each-Monday window ends the next morning', () => {
+    const w: TimeWindow = {
+      between: { from: clock(6), to: clock(6) },
+      days: ['mon'],
+    }
+    // Whole 24 h from each Monday 06:00: asked mid-Monday, it ends Tuesday 06:00.
+    expect(next(w, Date.UTC(2026, 5, 1, 12, 0))).toBe(Date.UTC(2026, 5, 2, 6, 0))
   })
 
   it('Lord Howe repeats half an hour on 2026-04-05: the second 01:45 is 30 min after the first would be, not 60', () => {
