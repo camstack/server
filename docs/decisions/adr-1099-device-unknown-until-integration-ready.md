@@ -75,6 +75,14 @@ Nothing in the pipeline could say "not yet known".
 - A device whose integration is down for real stays `unknown` until the first
   read settles — at most one declared refresh interval after registration —
   and is then offline plus the 15 s hold-off.
+- A later adoption under a running integration re-holds its siblings: the new
+  device awaits its first read, and so does its group until that read settles.
+- The `unknown` slice is persisted like any `device-status` slice (restored at
+  boot as the last known `online` plus the marker); the next answer replaces it.
+- A legacy row with no `meta.integrationId` on itself or its parent stays
+  ungated (it has no integration to wait for).
+- With no prior reading, a held offline writes NO slice (no invented
+  `online: true`); the device reads as unreported until the first read settles.
 - `unknown` is a new optional field of a capability schema: a framework change
   (server closure), and consumers that render reachability (UI, exports) must
   learn to show it; the admin UI is not changed by this record.

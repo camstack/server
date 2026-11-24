@@ -72,7 +72,9 @@ function leafType(schema: z.ZodType): StateLeaf['valueType'] | null {
   if (schema instanceof z.ZodBoolean) return 'boolean'
   if (schema instanceof z.ZodString) return 'string'
   if (schema instanceof z.ZodEnum) return 'enum'
-  if (schema instanceof z.ZodLiteral) return 'string'
+  if (schema instanceof z.ZodLiteral) {
+    return [...schema.values].every((v) => typeof v === 'boolean') ? 'boolean' : 'string'
+  }
   return null
 }
 

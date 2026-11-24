@@ -662,6 +662,15 @@ export function discardedSystemEvent(
 ): NcDiscardedSystemEvent | null {
   const accessory = discardedAccessoryLiveness(event, lookup)
   if (accessory !== null) return accessory
+  if (event.category === 'device.state-changed' && isUnknownStatusSlice(event.data)) {
+    const deviceId = numberField(event.data, 'deviceId')
+    return {
+      category: event.category,
+      reason: 'the provider has not answered yet (unknown)',
+      tags: deviceId !== undefined ? { deviceId } : {},
+      meta: { reason: 'integration-not-ready' },
+    }
+  }
   if (event.category === 'worker.online' || event.category === 'worker.offline') {
     const workerId = stringField(event.data, 'workerId')
     return {
@@ -686,6 +695,13 @@ export function discardedSystemEvent(
       ...(camStreamId !== undefined ? { camStreamId } : {}),
     },
   }
+}
+
+function isUnknownStatusSlice(data: Readonly<Record<string, unknown>>): boolean {
+  return (
+    stringField(data, 'capName') === 'device-status' &&
+    recordField(data, 'slice')?.['unknown'] === true
+  )
 }
 
 /**

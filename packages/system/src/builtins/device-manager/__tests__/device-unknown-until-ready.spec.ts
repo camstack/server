@@ -63,6 +63,25 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
     stop()
   })
 
+  it('an offline with NO prior slice writes nothing: no invented online:true (D315, D393)', async () => {
+    const h = harness()
+    const policies = new StateRefreshPolicyRegistry()
+    policies.set('in-process', { deviceId: 7, addonId: 'provider-x', policy: POLICY })
+    const stop = startStateRefresh({
+      mirror: h.mirror,
+      logger: noopLogger,
+      policies,
+      refresh: async () => undefined,
+      resubscribe: async () => undefined,
+    })
+    // Device 7 has no seeded slice (a first-ever reading).
+    expect(h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)).toBe(false)
+    expect(h.mirror.capSlice(7, 'device-status')).toBeNull()
+    await vi.advanceTimersByTimeAsync(15_001)
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    stop()
+  })
+
   it('after the first read settles, the held offline is applied (still unanswered = offline)', async () => {
     const { h, stop } = setup()
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)

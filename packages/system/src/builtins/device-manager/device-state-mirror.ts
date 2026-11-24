@@ -280,21 +280,24 @@ export class DeviceStateMirror {
   private gateDeviceStatus(
     deviceId: number,
     slice: Record<string, unknown>,
-  ): Record<string, unknown> {
+  ): Record<string, unknown> | null {
     const awaiting = this.isAwaiting(deviceId)
     if (!awaiting || slice['online'] !== false) {
       this.deferredOffline.delete(deviceId)
       return slice
     }
     const prior = this.stateMirror.get(deviceId)?.get('device-status')
-    const lastChangedAt =
-      typeof prior?.['lastChangedAt'] === 'number' ? prior['lastChangedAt'] : Date.now()
     this.deferredOffline.set(deviceId, slice)
     this.ctx.logger.info('offline not applied — the integration has not answered yet (unknown)', {
       tags: { deviceId },
       meta: { reason: 'integration-not-ready' },
     })
-    return { online: prior?.['online'] !== false, lastChangedAt, unknown: true }
+    // No prior reading: nothing is written, so no placeholder `online` is
+    // invented (D315, D393). The slice stays absent until the integration answers.
+    if (prior === undefined || typeof prior['online'] !== 'boolean') return null
+    const lastChangedAt =
+      typeof prior['lastChangedAt'] === 'number' ? prior['lastChangedAt'] : Date.now()
+    return { online: prior['online'], lastChangedAt, unknown: true }
   }
 
   // ── Command holds (D1061) ────────────────────────────────────────────────
@@ -352,7 +355,9 @@ export class DeviceStateMirror {
     this.reportTap?.(deviceId, capName)
     if (capName === 'device-status') {
       this.reconcileReadiness()
-      slice = this.gateDeviceStatus(deviceId, slice)
+      const gated = this.gateDeviceStatus(deviceId, slice)
+      if (gated === null) return false
+      slice = gated
     }
     let perCap = this.stateMirror.get(deviceId)
     if (!perCap) {

@@ -6,7 +6,7 @@ import type { SystemEvent } from '@camstack/types'
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity } from '../device-directory.js'
-import { incomingFromSystemEvent } from '../event-intake.js'
+import { discardedSystemEvent, incomingFromSystemEvent } from '../event-intake.js'
 
 const LOOKUP = (deviceId: number): NcDeviceIdentity => ({
   deviceId,
@@ -38,5 +38,16 @@ describe('an unknown device-status slice is not a liveness claim (D1099)', () =>
       LOOKUP,
     )
     expect(incoming?.subject.systemEvent?.kind).toBe('device-offline')
+  })
+
+  it('names the drop with the device tag so it is not silent (D391)', () => {
+    const slice = { online: false, lastChangedAt: 3_000, unknown: true }
+    expect(discardedSystemEvent(sliceEvent(slice), LOOKUP)).toMatchObject({
+      tags: { deviceId: 9 },
+      meta: { reason: 'integration-not-ready' },
+    })
+    expect(
+      discardedSystemEvent(sliceEvent({ online: false, lastChangedAt: 3_000 }), LOOKUP),
+    ).toBeNull()
   })
 })
