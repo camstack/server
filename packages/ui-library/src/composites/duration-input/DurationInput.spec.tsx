@@ -144,4 +144,30 @@ describe('DurationInput', () => {
     fireEvent.blur(field('Seconds'), { relatedTarget: screen.getByText('elsewhere') })
     expect(onChange).toHaveBeenCalledTimes(1)
   })
+  it('required: emptying every box emits nothing and redisplays the kept value on blur', () => {
+    const onChange = vi.fn()
+    render(<DurationInput value={5} units={['minutes', 'seconds']} onChange={onChange} />)
+    fireEvent.change(field('Seconds'), { target: { value: '' } })
+    expect(onChange).not.toHaveBeenCalled()
+    fireEvent.blur(field('Seconds'))
+    expect(field('Seconds').value).toBe('5')
+  })
+
+  it('deferred: an emptied group tells the caller through onEmptyCommit', () => {
+    const onChange = vi.fn()
+    const onEmptyCommit = vi.fn()
+    render(
+      <DurationInput
+        deferred
+        value={5}
+        units={['seconds']}
+        onChange={onChange}
+        onEmptyCommit={onEmptyCommit}
+      />,
+    )
+    fireEvent.change(field('Seconds'), { target: { value: '' } })
+    fireEvent.blur(field('Seconds'))
+    expect(onChange).not.toHaveBeenCalled()
+    expect(onEmptyCommit).toHaveBeenCalledTimes(1)
+  })
 })

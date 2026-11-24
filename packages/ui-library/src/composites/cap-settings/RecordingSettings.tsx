@@ -238,6 +238,11 @@ export function RecordingSettings({
             aria-label={t('uiLibrary.recordingSettings.segment', 'Segment')}
             onChange={(segmentSeconds) => setCommon({ ...common, segmentSeconds })}
           />
+          {common.segmentSeconds === undefined && (
+            <span className="text-foreground-subtle">
+              {t('uiLibrary.recordingSettings.default', 'default')}
+            </span>
+          )}
         </label>
       </div>
 

@@ -67,6 +67,8 @@ interface DurationInputBaseProps {
   readonly disabled?: boolean
   /** Emit once when focus leaves the group, not on every keystroke. */
   readonly deferred?: boolean
+  /** Deferred only: focus left a group whose boxes were all emptied, so nothing was committed. */
+  readonly onEmptyCommit?: () => void
   /** Names the fields as one group. */
   readonly 'aria-label'?: string
   /** `<prefix>-hours`, `<prefix>-minutes`, `<prefix>-seconds`, `<prefix>-millis`. */
@@ -142,7 +144,10 @@ export function DurationInput(props: DurationInputProps): ReactNode {
     if (deferred) {
       setBlank(empty && total === 0 && !cleared)
       setPending(cleared ? null : total)
-    } else emit(cleared ? undefined : total)
+    } else if (props.optional === true || !(empty && total === 0)) {
+      // A required field keeps its last value while every box is empty: an empty box is not "0".
+      emit(cleared ? undefined : total)
+    }
   }
 
   const emit = (total: number | undefined): void => {
@@ -158,6 +163,7 @@ export function DurationInput(props: DurationInputProps): ReactNode {
     setPending(undefined)
     if (blank) {
       setBlank(false)
+      props.onEmptyCommit?.()
       return
     }
     emit(pending ?? undefined)

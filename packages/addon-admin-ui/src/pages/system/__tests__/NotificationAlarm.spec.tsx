@@ -1225,7 +1225,7 @@ describe('NotificationAlarm — the shared table, field and target components', 
     ).toBeTruthy()
   })
 
-  it('an emptied delay commits nothing on leaving the field', async () => {
+  it('an emptied delay commits nothing and is said to be unsaved on leaving the field', async () => {
     mockSetAlarmConfig.mockClear()
     renderPage()
     openMode('away')
@@ -1233,5 +1233,8 @@ describe('NotificationAlarm — the shared table, field and target components', 
     fireEvent.change(input, { target: { value: '' } })
     fireEvent.blur(input)
     expect(mockSetAlarmConfig).not.toHaveBeenCalled()
+    expect(
+      screen.getByText(/Nothing was entered, so nothing was saved — Enter a whole number/i),
+    ).toBeTruthy()
   })
 })

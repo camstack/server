@@ -79,8 +79,10 @@ export function delayRangeError(max: number): string {
 }
 
 /** Said after a refused entry: what was dropped, and what would have been accepted. */
-export function delayRefusedMessage(seconds: number, max: number): string {
-  return `${seconds} s was not saved — ${delayRangeError(max)}`
+export function delayRefusedMessage(seconds: number | null, max: number): string {
+  const lead =
+    seconds === null ? 'Nothing was entered, so nothing was saved' : `${seconds} s was not saved`
+  return `${lead} — ${delayRangeError(max)}`
 }
 
 export function AlarmDelayField({
@@ -95,7 +97,7 @@ export function AlarmDelayField({
   onCommit,
 }: AlarmDelayFieldProps) {
   // What a refused entry discarded; said until the next change so the entry is never lost silently.
-  const [refused, setRefused] = useState<number | null>(null)
+  const [refused, setRefused] = useState<number | null | 'empty'>(null)
   // "45 s" is the unit already beside the box; only 0 ("arms immediately") and minutes add words.
   const readout = delayLabel(value, zeroMeans)
 
@@ -112,7 +114,9 @@ export function AlarmDelayField({
     <FormField
       label={label}
       {...(hint !== undefined ? { description: hint } : {})}
-      {...(refused !== null ? { error: delayRefusedMessage(refused, max) } : {})}
+      {...(refused !== null
+        ? { error: delayRefusedMessage(refused === 'empty' ? null : refused, max) }
+        : {})}
     >
       <div className="flex items-center gap-2">
         <DurationInput
@@ -124,6 +128,7 @@ export function AlarmDelayField({
           aria-label={label}
           testIdPrefix={testId}
           onChange={commit}
+          onEmptyCommit={() => setRefused('empty')}
         />
         {adornment}
       </div>
