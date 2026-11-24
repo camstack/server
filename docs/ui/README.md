@@ -36,7 +36,7 @@ None needs the MCP, a build or the network. All read the committed catalogue
 | `npm run ui:show -- <Name>` | one export: file, summary, props, and real call sites |
 | `npm run ui:tokens -- [admin\|viewer]` | the colour tokens, web ↔ viewer, with drift marked |
 | `npm run ui:i18n` | the i18n guard: no admin-ui / ui-library literal bypasses `t()` — see below |
-| `npm run ui:check -- <files…>` | raw hex / `rgb()`, palette classes, inline styles, raw `<button>` / `<table>` / `<select>` / hand-rolled dialogs — each with its replacement |
+| `npm run ui:check -- <files…>` | raw hex / `rgb()`, palette classes, inline styles, raw `<button>` / `<table>` / `<select>` / hand-rolled dialogs, a number input for a duration (`duration-number-input`), a write fired from `onBlur` (`commit-on-blur`), a hand-rolled device select (`device-select-lookalike`) — each with its replacement |
 
 ### Words go through i18n
 

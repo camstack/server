@@ -31,6 +31,9 @@ export type UiRule =
   | 'raw-password-input'
   | 'shadows-library'
   | 'icon-title'
+  | 'duration-number-input'
+  | 'commit-on-blur'
+  | 'device-select-lookalike'
 
 export interface UiFinding {
   readonly file: string
@@ -301,6 +304,97 @@ export function iconTitleFindings(file: string, source: string): UiFinding[] {
   return findings
 }
 
+const DURATION_NUMBER_MESSAGE =
+  'a number <input> for a duration → `DurationPartsInput` (days / hours / minutes / seconds, one value in ms), never a bare number whose unit the operator must guess'
+const COMMIT_ON_BLUR_MESSAGE =
+  'a write fired from `onBlur` → keep the edit in a draft and write on Save through `FormSaveBar` (`pendingCount`, `onSave`, `onDiscard`); docs/ui/admin-patterns.md "Edits are saved through Save / Discard". A live device control or a one-shot action is `ui-check-ok: <reason>`'
+const DEVICE_SELECT_MESSAGE =
+  'a hand-rolled device picker → `SourceSelector` (a camera / source choice) or `DeviceValuePicker` (a device value), which carry the device name, the filter bar and the orphan row'
+
+const DURATION_WORD =
+  /\b(seconds?|minutes?|hours?|duration|timeout|interval|ttl|dwell|delay|cooldown|retention)\b/i
+const DURATION_SUFFIX = /\b\w+(?:Ms|Sec|Secs|Seconds|Minutes|Hours|Duration|Timeout|Interval)\b/
+const NUMBER_TYPE = /\btype=(?:["']number["']|\{\s*["']number["']\s*\})/
+const DURATION_OWNER = /(?:duration-parts-input\/|primitives\/input\.tsx$)/
+const DEVICE_PICKER_OWNER =
+  /(?:composites\/device-|SourceSelector|DeviceValuePicker|device-selector-picker)/
+const SAVE_CALL =
+  /\b(?:mutateAsync|mutate|save[A-Z]\w*|persist\w*|patch[A-Z]\w*|submit[A-Z]\w*)\s*\(|\bonSave\b/
+const SAVE_REFERENCE = /^(?:\w+\.)?(?:handle)?(?:save|persist|submit)\w*$/i
+const DEVICE_LIST_USE =
+  /\b(?:devices?|cameras?|deviceList|deviceOptions)\s*(?:\?\.|\.)(?:map|filter)\(|\boptions=\{\s*\w*[dD]evice\w*/
+
+/** Index of the `}` closing the `{` at `open`; string-aware like `openingTagEnd`. */
+function braceEnd(source: string, open: number): number {
+  let depth = 0
+  let quote: string | null = null
+  for (let i = open; i < source.length; i++) {
+    const c = source[i]
+    if (quote !== null) {
+      if (c === '\\') {
+        i++
+        continue
+      }
+      if (c === quote) quote = null
+      continue
+    }
+    if (c === '"' || c === "'" || c === '`') quote = c
+    else if (c === '{') depth++
+    else if (c === '}' && --depth === 0) return i
+  }
+  return source.length
+}
+
+/**
+ * The semantic shapes: a number input standing in for a duration, a write
+ * fired from `onBlur`, and a hand-rolled device `<select>`. Each is judged on
+ * the element's own text (plus the label line above), so an unrelated
+ * `type="number"` or a `setTouched` on blur is not a finding.
+ */
+export function semanticFindings(file: string, source: string): UiFinding[] {
+  if (!file.endsWith('.tsx') || implementsPrimitive(file)) return []
+  const findings: UiFinding[] = []
+  const add = (index: number, rule: UiRule, match: string, message: string): void => {
+    if (suppressedAt(source, index)) return
+    findings.push({ file, line: lineNumberAt(source, index), rule, match, message })
+  }
+  const lineStartOf = (index: number): number => source.lastIndexOf('\n', index - 1) + 1
+  if (!DURATION_OWNER.test(file)) {
+    for (const m of source.matchAll(/<(?:input|Input)\b/g)) {
+      const index = m.index
+      if (index === undefined) continue
+      const open = source.slice(index, openingTagEnd(source, index))
+      if (!NUMBER_TYPE.test(open)) continue
+      const above = source.slice(lineStartOf(Math.max(0, lineStartOf(index) - 1)), index)
+      const context = `${above}${open}`
+      if (DURATION_WORD.test(context) || DURATION_SUFFIX.test(context)) {
+        add(index, 'duration-number-input', '<input type="number">', DURATION_NUMBER_MESSAGE)
+      }
+    }
+  }
+  for (const m of source.matchAll(/\bonBlur=\{/g)) {
+    const index = m.index
+    if (index === undefined) continue
+    const open = index + m[0].length - 1
+    const body = source.slice(open + 1, braceEnd(source, open)).trim()
+    if (SAVE_CALL.test(body) || SAVE_REFERENCE.test(body)) {
+      add(index, 'commit-on-blur', 'onBlur={…save…}', COMMIT_ON_BLUR_MESSAGE)
+    }
+  }
+  if (!DEVICE_PICKER_OWNER.test(file)) {
+    for (const m of source.matchAll(/<(?:select|Select)\b/g)) {
+      const index = m.index
+      if (index === undefined) continue
+      const end = source.indexOf('</', openingTagEnd(source, index))
+      const element = source.slice(index, Math.min(end === -1 ? index + 600 : end, index + 900))
+      if (DEVICE_LIST_USE.test(element)) {
+        add(index, 'device-select-lookalike', m[0], DEVICE_SELECT_MESSAGE)
+      }
+    }
+  }
+  return findings
+}
+
 /**
  * `libraryComponents`: the names `@camstack/ui-library` exports as components.
  * A file outside the library that EXPORTS a component of the same name is a
@@ -411,6 +505,7 @@ export function checkUiSource(
   }
   if (isTsx) {
     for (const finding of iconTitleFindings(file, source)) findings.push(finding)
+    for (const finding of semanticFindings(file, source)) findings.push(finding)
   }
   if (isTsx && !file.startsWith('packages/ui-library/')) {
     for (const [index, text] of lines.entries()) {

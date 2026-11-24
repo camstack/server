@@ -53,6 +53,13 @@ Hard rules:
   Discard restores the server state. Never a write from `onBlur` / `onChange`
   / a per-row control on a settings surface; only live device controls and
   one-shot buttons act immediately.
+- MUST-use pieces (table of rule ids in `camstack-ui` §3): `DataTable` (`raw-table`),
+  `SourceSelector` / `DeviceValuePicker` for device picks (`device-select-lookalike`),
+  `useConfirm` / `ConfirmActionButton` for destructive actions
+  (`native-dialog-call`, `inline-confirm-state`), `DurationPartsInput` for durations
+  (`duration-number-input`), `FormSaveBar` not commit-on-blur (`commit-on-blur`),
+  tokens. Not mechanically checked, so yours to follow: `DeviceName` for a device
+  label, the existing dictionary pickers, time windows.
 - Viewer: any layout change (structure, grouping, navigation) is proposed to
   the operator and waits for an answer. Bug, token and string fixes do not.
 - Do not ship: no npm publish, no deploy, no viewer OTA or store build, no

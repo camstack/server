@@ -84,6 +84,24 @@ sub-skill before the first edit.
 - **A removed capability takes its UI with it** — a dead control is worse than
   an absent one.
 
+### MUST-use shared pieces, and what checks each (#662, #675)
+
+| Constraint | `ui:check` rule |
+| --- | --- |
+| A table is `DataTable` | `raw-table` |
+| A device / source choice is `SourceSelector` or `DeviceValuePicker`, never a hand-rolled select over `devices.map` | `raw-select`, `device-select-lookalike` |
+| A destructive action is `useConfirm` / `ConfirmActionButton` (modal naming the item), never `window.confirm`, an inline "Delete?" swap or a custom modal | `native-dialog-call`, `inline-confirm-state`, `raw-dialog` |
+| A duration is `DurationPartsInput`, never a bare `<input type="number">` for seconds / minutes / ms | `duration-number-input` |
+| Edits save through Save / Discard (`FormSaveBar`), never a write from `onBlur` | `commit-on-blur` |
+| Theme tokens only | `raw-hex`, `raw-color-fn`, `palette-class`, `undeclared-token`, `inline-style` |
+| A local component with a library component's name | `shadows-library` |
+| The shared device name (`DeviceName`) | not checkable: showing `device.name` is legitimate in strings, titles and logs; only review tells a device label from a sentence |
+| Dictionary pickers (event categories, units, timezones, models …) | not checkable: there is no single component or marker, each dictionary has its own picker (`ui:find`) |
+| Time windows | not checkable: the library has no time-window component to point at yet |
+
+A deliberate exception carries `ui-check-ok: <reason>` on the line or above.
+Existing drift is reported, not fixed here: pay it on touch.
+
 ## 4. The token map (web ↔ viewer)
 
 One palette, two spellings. Web: `packages/ui-library/src/tailwind/camstack-theme.css`

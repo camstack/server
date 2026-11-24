@@ -264,3 +264,38 @@ describe('icon-title', () => {
     )
   })
 })
+
+describe('the MUST-use shapes (#662, #675)', () => {
+  it('flags a number input that is a duration, not a plain count', () => {
+    const dur = '<label>Timeout (seconds)</label>\n<input type="number" value={x} />\n'
+    expect(rules(ADMIN, dur)).toEqual(['duration-number-input'])
+    expect(rules(ADMIN, '<Input type="number" value={retryCount} min={0} />\n')).toEqual([])
+    expect(rules(ADMIN, '<input type="number" value={dwellMs} />\n')).toEqual([
+      'duration-number-input',
+    ])
+    expect(
+      rules('packages/ui-library/src/composites/duration-parts-input/DurationPartsInput.tsx', dur),
+    ).toEqual([])
+  })
+
+  it('flags a write fired from onBlur, not a draft setter', () => {
+    expect(rules(ADMIN, '<Input onBlur={() => save.mutate({ name })} />\n')).toEqual([
+      'commit-on-blur',
+    ])
+    expect(rules(ADMIN, '<Input onBlur={handleSave} />\n')).toEqual(['commit-on-blur'])
+    expect(rules(ADMIN, '<Input onBlur={() => setTouched(true)} />\n')).toEqual([])
+    expect(
+      rules(ADMIN, '// ui-check-ok: a live dimmer\n<Slider onBlur={() => mutate({ v })} />\n'),
+    ).toEqual([])
+  })
+
+  it('flags a hand-rolled device select, not a select of anything else', () => {
+    const bad =
+      '<Select value={id} options={devices.map((d) => ({ value: d.id, label: d.name }))} />\n'
+    expect(rules(ADMIN, bad)).toEqual(['device-select-lookalike'])
+    expect(rules(ADMIN, '<Select value={mode} options={MODES} />\n')).toEqual([])
+    expect(
+      rules('packages/ui-library/src/composites/device-value-picker/DeviceValuePicker.tsx', bad),
+    ).toEqual([])
+  })
+})

@@ -31,6 +31,10 @@ dialogs, status tokens, daily paths) is planned in
 | `shadows-library` | 0 | — | 0 | the library export, or a prop on it |
 | `undeclared-token` (added 2026-11-03; first run: 253 hits in 76 files) | most | most | `addon-pipeline`, `osd-manager` | a declared token: `bg-muted` → `bg-surface-hover`, `text-muted-foreground` → `text-foreground-muted`, `text-destructive` → `text-danger`, `bg-surface-subtle/-elevated/-raised/-alt` → `bg-surface` / `bg-background-elevated`, `accent` → `primary`. Tailwind emits nothing for an undeclared name, and `cn()` still lets it evict a primitive's real `bg-*` (the invisible dropdown options). |
 
+Added 2026-11-24 (#662, #675), baseline in admin-ui at introduction: 19 / 5 / 3 findings: `duration-number-input`
+(→ `DurationPartsInput`), `commit-on-blur` (→ a draft + `FormSaveBar`),
+`device-select-lookalike` (→ `SourceSelector` / `DeviceValuePicker`).
+
 Total: 2,142 findings in 413 of 1,156 UI files. A `raw-button` in the library
 is often legitimate (a primitive's own internals, a chip that is a button);
 mark a deliberate one `ui-check-ok: <reason>` rather than leaving it to read
