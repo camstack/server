@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9244 source files · 250 units claimed by at least one document (9213 files).**
+**257 units · 9245 source files · 250 units claimed by at least one document (9214 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -180,6 +180,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli/src/host-check` | 5 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md` | 2026-11-21 |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-11-12 |
 | `packages/types/src/schemas` | 5 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |
+| `packages/types/src/time` | 5 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md` | — |
 | `packages/addon-admin-ui` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +4 more | 2026-11-11 |
 | `packages/addon-admin-ui/src/test-setup` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/detection-sensors` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0772-alexa-detection-sensors-are-motionsensor-endpoints-fed-by-tracks-and-reconciled.md`, `decisions/adr-0778-alexa-detection-sensor-classes-are-chosen-per-camera-from-what-its-pipeline-produces-default-none.md`, +5 more, 2 ADRs | 2026-08-26 |
@@ -193,7 +194,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/logging` | 4 | `logging` | `decisions/adr-0248-channels-are-declared-by-addons-values-stay-in-one-document.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md` _(covers)_ | — |
 | `packages/types/src/running-state` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0933-a-device-reports-whether-it-is-running-natively-or-from-one-assigned-field.md`, `decisions/adr-1008-an-anti-crease-pulse-does-not-re-arm-a-run.md` | — |
 | `packages/types/src/template` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1086-an-operator-linked-trigger-is-an-automation-template-instance-on-the-target.md` | — |
-| `packages/types/src/time` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md` | — |
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/icons` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |

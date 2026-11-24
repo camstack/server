@@ -50,6 +50,11 @@ export type WeekdayKey = z.infer<typeof WeekdayKeySchema>
 
 const WEEKDAY_BY_INDEX: readonly WeekdayKey[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
+/** The key of a numeric weekday (0 = Sunday … 6 = Saturday, as `Date.getDay`), or undefined out of range. */
+export function weekdayKeyOfIndex(index: number): WeekdayKey | undefined {
+  return WEEKDAY_BY_INDEX[index]
+}
+
 /** Where a spec is read: coordinates for the sun, an IANA zone for the wall clock. */
 export interface TimeSite {
   readonly lat: number

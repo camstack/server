@@ -1,3 +1,4 @@
+import { hostTimeZone, isWithinClockRange, zoneOnlySite } from '@camstack/types'
 import type { RecordingBand } from './config-types.js'
 
 const MINUTES_PER_DAY = 1440
@@ -43,16 +44,9 @@ export function batteryAdmits(band: RecordingBand, battery: BatteryContext | und
 
 export function bandActiveAt(band: RecordingBand, date: Date, battery?: BatteryContext): boolean {
   if (!batteryAdmits(band, battery)) return false
-  const wd = date.getDay()
-  const prevWd = (wd + 6) % 7
-  const t = date.getHours() * 60 + date.getMinutes()
-  const s = toMin(band.start)
-  const e = endMin(band.end)
-  const applies = (d: number): boolean => band.days.length === 0 || band.days.includes(d)
-
-  if (s < e) return applies(wd) && t >= s && t < e
-  if (s > e) return (applies(wd) && t >= s) || (applies(prevWd) && t < e)
-  return applies(wd)
+  const days = band.days.length === 0 ? undefined : band.days
+  const site = zoneOnlySite(hostTimeZone())
+  return isWithinClockRange(days, toMin(band.start), endMin(band.end), date.getTime(), site)
 }
 
 /**
