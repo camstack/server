@@ -4,12 +4,12 @@
 
 # Guards
 
-262 repository guards: 257 in `scripts/`,
+263 repository guards: 258 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (250)
+## Enforced by CI checks (251)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -85,6 +85,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-device-settings-standard.ts` | Device-settings standard guard (D865) — per-device CONFIGURATION has one home. |
 | `scripts/check-device-template-catalogue-docs.ts` | The public "Device templates" function table is generated from the catalogue. |
 | `scripts/check-device-template-grammar.ts` | Guard (D1021): the template engine is reachable through ONE module. |
+| `scripts/check-device-type-card-coverage.ts` | Every device type has a card, or a named reason it has none. |
 | `scripts/check-device-type-declared.ts` | A device's type is declared, never guessed (#459). |
 | `scripts/check-docs-drift.ts` | Docs drift guard — the half of the sync story that `docs-generate.ts` cannot cover. |
 | `scripts/check-docs-english.ts` | Docs-language guard — documentation under docs/ is written in English. |
