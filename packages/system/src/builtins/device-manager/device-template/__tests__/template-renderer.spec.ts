@@ -3,7 +3,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { DeviceTemplateView } from '@camstack/types'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { DeviceTemplateRenderer, type DeviceTemplateResolver } from '../template-renderer.js'
 
 const WORKER = fileURLToPath(new URL('../template-worker.ts', import.meta.url))
@@ -301,9 +301,24 @@ if (!fs.existsSync(${JSON.stringify(marker)})) { fs.writeFileSync(${JSON.stringi
 else await import(${JSON.stringify(WORKER)})
 `,
     )
-    const r = make({ workerPath: script, spawnTimeoutMs: 2500 })
+    // The stub never says ready, so its spawn deadline is a virtual clock advanced by hand instead of
+    // waited out. Real timers come back before the respawn: the second worker is then awaited on its
+    // own `ready` signal, and its (huge) deadline can never be what ends the wait, whatever the load.
+    const SPAWN_DEADLINE_MS = 600_000
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const r = make({ workerPath: script, spawnTimeoutMs: SPAWN_DEADLINE_MS })
     try {
-      const first = await r.render('{{ 1 }}', resolver)
+      const firstRender = r.render('{{ 1 }}', resolver)
+      // The real signal that the stub is up and silent: it wrote its marker. Only then is its
+      // spawn deadline due; advancing earlier would kill it before it ran, and the respawn would
+      // be a "first launch" again.
+      await vi.waitFor(() => expect(fs.existsSync(marker)).toBe(true), {
+        timeout: 20_000,
+        interval: 20,
+      })
+      await vi.advanceTimersByTimeAsync(SPAWN_DEADLINE_MS)
+      const first = await firstRender
+      vi.useRealTimers()
       expect(first.ok).toBe(false)
       const second = await r.render('{{ 2 }}', resolver)
       expect(JSON.stringify(second)).toContain('"text":"2"')
@@ -312,4 +327,8 @@ else await import(${JSON.stringify(WORKER)})
       fs.rmSync(dir, { recursive: true, force: true })
     }
   }, 30_000)
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 })
