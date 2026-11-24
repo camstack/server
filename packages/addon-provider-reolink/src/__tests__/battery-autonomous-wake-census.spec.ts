@@ -104,7 +104,7 @@ describe('no self-initiated path wakes a sleeping battery camera', () => {
     // no second wake path (D355's contact-expiry wake is gone).
     const wiring = sliceMethodBody(cameraSource, 'private getBatteryRefresh()')
     const cooldownIdx = wiring.indexOf("this.canProactivelyWake('scheduled-refresh')")
-    const wakeIdx = wiring.indexOf('this.wakeIfSleeping()')
+    const wakeIdx = wiring.indexOf("this.wakeIfSleeping('scheduled-refresh')")
     expect(cooldownIdx).toBeGreaterThanOrEqual(0)
     // The cooldown gate sits before the login, which IS the wake.
     expect(cooldownIdx).toBeLessThan(wakeIdx)

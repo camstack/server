@@ -83,7 +83,7 @@ describe('Reolink battery-cam scheduled full refresh — wiring', () => {
 
     it('wakes only through the existing wake path, and stamps the battery slice', () => {
       expect(body).toContain("this.canProactivelyWake('scheduled-refresh')")
-      expect(body).toContain('return this.wakeIfSleeping()')
+      expect(body).toContain("return this.wakeIfSleeping('scheduled-refresh')")
       expect(body).toContain('this.state.battery.lastFullRefreshAt = at')
     })
 

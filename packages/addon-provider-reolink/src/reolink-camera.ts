@@ -2165,7 +2165,24 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // email-push-eligible only (the section is hidden otherwise); persists its
     // own `emailConfigSnapshot` via `setAll`. Best-effort: a failure just
     // leaves the prior snapshot. The cam is awake here (caller gates on it).
+    //
+    // "The cam is awake here" is an assumption the caller made when it STARTED
+    // the refresh: a scheduled pass is ~40 s of reads, and the camera may have
+    // gone back to sleep inside it (#666, device 640 woken 22 s after it fell
+    // asleep). `refreshCameraEmailConfig` wakes a sleeper, so the tail reads
+    // only while the mirror still says awake; otherwise the wake-transition
+    // path takes it next time.
     if (slices === undefined && this.isBattery && this.isEmailPushEligible) {
+      if (this.sleeping) {
+        this.ctx.logger.info(
+          'reolink email config read skipped — the camera fell asleep during the refresh',
+          {
+            tags: { deviceId: this.id },
+            meta: { reason },
+          },
+        )
+        return
+      }
       await this.refreshCameraEmailConfig().catch((err: unknown) => {
         this.ctx.logger.debug('reolink email config probe failed', {
           meta: { error: err instanceof Error ? err.message : String(err) },
@@ -2303,7 +2320,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * leave the catalog stale rather than stamping it fresh.
    */
   async wakeForClipCatalogRefresh(): Promise<void> {
-    const awake = await this.wakeIfSleeping()
+    const awake = await this.wakeIfSleeping('clip-catalog-refresh')
     if (!awake) {
       throw new Error(
         `ReolinkCamera ${this.id}: the authorised clip-refresh wake did not bring the camera up`,
@@ -2319,7 +2336,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * so the service can refuse `wake-timeout` by name.
    */
   async wakeForClipRead(timeoutMs: number): Promise<boolean> {
-    return this.wakeIfSleeping(timeoutMs)
+    return this.wakeIfSleeping('clip-read', timeoutMs)
   }
 
   private readonly clipTimeZoneWarned = { done: false }
@@ -2465,7 +2482,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * camera. No-op for non-battery or already-awake cams. Best-effort:
    * returns whether the camera is (now) reachable/awake.
    */
-  private async wakeIfSleeping(timeoutMs = 15_000): Promise<boolean> {
+  private async wakeIfSleeping(caller: string, timeoutMs = 15_000): Promise<boolean> {
     if (!this.isBattery || !this.sleeping) return true
     let api: ReolinkBaichuanApi
     try {
@@ -2479,7 +2496,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     this.markWakeIssued()
     this.ctx.logger.info('proactive action: waking sleeping battery cam', {
       tags: { deviceId: this.id },
-      meta: { timeoutMs },
+      meta: { timeoutMs, caller },
     })
     this.ctx.eventBus.emit(
       createEvent(EventCategory.BatteryOnWakeStarted, this.eventSource(), {
@@ -2519,7 +2536,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     } catch (err) {
       this.ctx.logger.warn('proactive action: wake did not complete in time', {
         tags: { deviceId: this.id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
+        meta: { caller, error: err instanceof Error ? err.message : String(err) },
       })
       return false
     }
@@ -2588,7 +2605,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // Operator-initiated action on a battery cam: wake it first so the
     // Baichuan round-trip below reaches a live camera instead of failing
     // against a sleeping one. No-op for non-battery / already-awake cams.
-    await this.wakeIfSleeping()
+    await this.wakeIfSleeping('auto-configure-email-push')
 
     const api = await this.ensureApi()
     this.ctx.logger.info('email-push: auto-configuring camera', {
@@ -2669,7 +2686,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       )
     }
 
-    await this.wakeIfSleeping()
+    await this.wakeIfSleeping('auto-configure-baichuan-webhook')
     const api = await this.ensureApi()
     const supported = await api.probeBaichuanWebhookSupport()
     this.baichuanWebhookSupportedCached = supported
@@ -2791,7 +2808,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * Push tab read.
    */
   async refreshCameraEmailConfig(): Promise<void> {
-    await this.wakeIfSleeping()
+    await this.wakeIfSleeping('refresh-camera-email-config')
     const api = await this.ensureApi()
     const channel = this.getChannel()
     const [email, task] = await Promise.all([
@@ -3041,7 +3058,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // rehydrate that silently declines is the defect it exists to cure
         // (measured on 3825, 2026-09-19: the old handler hit the sleep gate,
         // warmed one slice of six, and returned `void` either way).
-        const awake = await this.wakeIfSleeping()
+        const awake = await this.wakeIfSleeping('operator-rehydrate')
         const [snapshot, warm] = await Promise.allSettled([
           this.refreshParentSettingsSnapshot(undefined, 'operator'),
           this.warmCapSlicesOnWake({ force: true }),
@@ -4152,7 +4169,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     emailSendNickname?: unknown
     emailScheduleEnabled?: unknown
   }): Promise<void> {
-    await this.wakeIfSleeping()
+    await this.wakeIfSleeping('apply-email-config-patch')
     const api = await this.ensureApi()
     const channel = this.getChannel()
     const patch: import('@apocaliss92/nodelink-js').EmailConfigPatch = {}
@@ -8940,7 +8957,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         wake: async () => {
           if (!this.canProactivelyWake('scheduled-refresh')) return false
           this.markWakeIssued()
-          return this.wakeIfSleeping()
+          return this.wakeIfSleeping('scheduled-refresh')
         },
         refreshAll: () => this.refreshEverythingNow(),
         stamp: (at) => {
@@ -11215,7 +11232,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       emailSmtpServer !== undefined ||
       emailRecipient1 !== undefined ||
       powerSource !== undefined
-    if (touchesCamera && !(await this.wakeIfSleeping())) {
+    if (touchesCamera && !(await this.wakeIfSleeping('settings-write'))) {
       this.ctx.logger.warn('settings write: battery cam did not wake — writing anyway', {
         tags: { deviceId: this.id },
       })
@@ -12015,7 +12032,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /** Implements `ReolinkAccessoryHost.wakeForWrite`: an accessory's operator
    *  write (PIR, ...) wakes a sleeping battery camera first. */
   wakeForWrite(): Promise<boolean> {
-    return this.wakeIfSleeping()
+    return this.wakeIfSleeping('write')
   }
 
   /** Implements `ReolinkAccessoryHost.probeAbility`: the effective probe flag
