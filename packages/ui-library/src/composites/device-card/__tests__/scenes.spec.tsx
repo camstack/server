@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CLIMATE_FIXTURES } from '../__fixtures__/climate'
 import { offline, readOnly } from '../__fixtures__/common'
-import { plugFixtures } from '../__fixtures__/plug'
+import { plugFixtures, plugPoePortFixtures } from '../__fixtures__/plug'
 import { ambientLayers } from '../illustrations/AmbientFx'
 import { ClimateCard } from '../scenes/climate/ClimateCard'
 import type { ClimateCardActions } from '../scenes/climate/model'
@@ -202,6 +202,23 @@ describe('plug scene — the zones of each mockup variant', () => {
     fireEvent.click(screen.getByTestId('dc-plug-restart'))
     fireEvent.click(screen.getByTestId('dc-plug-restart'))
     expect(actions.onPowerCycle).not.toHaveBeenCalled()
+  })
+})
+
+describe('plug scene — a PoE port draws a LAN port', () => {
+  it('draws the port, not the socket, and its LEDs follow on / off', () => {
+    const [on, off] = plugPoePortFixtures()
+    const { unmount } = render(<PlugCard model={on.model} actions={plugActions()} />)
+    expect(screen.getByTestId('dc-poe-port-art').getAttribute('data-on')).toBe('true')
+    unmount()
+    render(<PlugCard model={off.model} actions={plugActions()} />)
+    expect(screen.getByTestId('dc-poe-port-art').getAttribute('data-on')).toBe('false')
+  })
+
+  it('a plain plug keeps the socket', () => {
+    const [fixture] = plugFixtures(NOW)
+    render(<PlugCard model={fixture.model} actions={plugActions()} />)
+    expect(screen.queryByTestId('dc-poe-port-art')).toBeNull()
   })
 })
 
