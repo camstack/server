@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.504] - 2026-11-24
+
 ### Changed
 
 - The timed run is one compact control on every card and row of a device that supports it: the one-tap duration is edited next to the start button, and the row no longer squeezes it.

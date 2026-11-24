@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.951] - 2026-11-24
+
 ### Changed
 
 - Anyone who can operate a device can set its timed-run one-tap duration from the card; the device settings page no longer carries it.

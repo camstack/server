@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.631] - 2026-11-24
+
 ### Changed
 
 - timed-run: setSettings is allowed to whoever may operate the device, and the derived settings form is gone.
