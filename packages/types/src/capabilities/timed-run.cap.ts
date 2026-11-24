@@ -190,7 +190,12 @@ export const timedRunCapability = {
       }),
       z.void(),
       // Same authority as `runFor`: whoever may operate the device may set how long its one tap runs.
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'the one-tap duration next to the Run button — a preference, the run itself is runFor',
+      },
     ),
     /**
      * Turn the device on and arm its off. A run already armed is replaced (the

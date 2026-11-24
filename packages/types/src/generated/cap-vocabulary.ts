@@ -3364,6 +3364,9 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'timer-off',
       },
     ],
+    notOperatorFacing: {
+      setSettings: 'the one-tap duration next to the Run button — a preference, the run itself is runFor',
+    },
   },
   'do-not-disturb': {
     scope: 'device',
