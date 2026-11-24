@@ -133,6 +133,28 @@ export function portNameWrite(input: {
   }
 }
 
+/**
+ * Whether an adopted infra device takes the controller's name. The device manager's flag decides:
+ * `userNamed` true is an operator rename and is kept; false is a name the system wrote, which
+ * follows the controller. A row without the flag (legacy) follows only while it still carries
+ * the name this addon adopted it under — any other name is the operator's. Pure.
+ */
+export function infraNameWrite(input: {
+  readonly currentName: string
+  readonly userNamed: boolean | undefined
+  readonly adoptedName: string | undefined
+  readonly desiredName: string
+}): { readonly kind: 'keep' } | { readonly kind: 'rename'; readonly name: string } {
+  if (input.desiredName.length === 0 || input.currentName === input.desiredName) {
+    return { kind: 'keep' }
+  }
+  if (input.userNamed === true) return { kind: 'keep' }
+  if (input.userNamed === undefined && input.currentName !== input.adoptedName) {
+    return { kind: 'keep' }
+  }
+  return { kind: 'rename', name: input.desiredName }
+}
+
 /** A human-facing label for a spawned switch/button/sensor child. */
 export function featureLabel(
   descriptor: UnifiFeatureDescriptor,

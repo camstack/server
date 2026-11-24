@@ -778,6 +778,108 @@ describe('UniFi devices on a stub device context', () => {
     expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
   })
 
+  describe('a port whose camera moved to another port (planning#689)', () => {
+    const NAMED = 'Salon camera (port 2)'
+    async function movedRig(userNamed: boolean | undefined, name: string = NAMED) {
+      const infra: UnifiInfraSnapshot[] = [
+        {
+          ...SWITCH,
+          ports: [
+            port({ idx: 2, poePowerW: 3, clientMac: PHONE.mac, clientMacs: [PHONE.mac] }),
+            port({ idx: 3 }),
+          ],
+        },
+      ]
+      await harness(infra)
+      const setName = vi.fn(async (_input: { deviceId: number; name: string }) => undefined)
+      const { ctx } = rig(
+        {
+          kind: 'port',
+          integrationId: INT,
+          infraNativeId: 'sw1',
+          portIdx: 2,
+          clientMac: PHONE.mac,
+          clientMacs: [PHONE.mac],
+          system: UNIFI_SYSTEM,
+        },
+        DeviceType.Switch,
+        {
+          deviceManager: {
+            setAttachedIdentifiers: { mutate: vi.fn(async () => undefined) },
+            loadMeta: { query: vi.fn(async () => ({ name, userNamed })) },
+            setName: { mutate: setName },
+          },
+        },
+      )
+      await new UnifiFeatureDevice(ctx).onActivate()
+      // The camera now sits on port 3; port 2 is empty.
+      infra[0] = {
+        ...SWITCH,
+        ports: [
+          port({ idx: 2 }),
+          port({ idx: 3, poePowerW: 3, clientMac: PHONE.mac, clientMacs: [PHONE.mac] }),
+        ],
+      }
+      await unifiControllers.getManager(INT)?.poll()
+      unifiControllers.emitSnapshot(INT)
+      return { ctx, setName }
+    }
+
+    it('drops the stale clientMac / clientMacs and names itself "Port 2" again', async () => {
+      const { ctx, setName } = await movedRig(false)
+      await vi.waitFor(() => expect(setName).toHaveBeenCalled())
+      expect(setName.mock.calls[0]?.[0]).toMatchObject({ deviceId: 7, name: 'Port 2' })
+      const persisted = vi.mocked(ctx.persistConfig).mock.calls.map((c) => c[0])
+      const last = persisted[persisted.length - 1]
+      expect(last).toBeDefined()
+      expect(last).not.toHaveProperty('clientMac')
+      expect(last).toHaveProperty('clientMacs', [])
+    })
+
+    it('keeps an operator-chosen name', async () => {
+      const { setName } = await movedRig(true, 'Salon camera')
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(setName).not.toHaveBeenCalled()
+    })
+  })
+
+  it('an infra device takes the controller rename unless the operator renamed it (planning#689)', async () => {
+    const infra: UnifiInfraSnapshot[] = [{ ...SWITCH, name: 'Switch Lite 8 PoE Studio 1' }]
+    await harness(infra)
+    const run = async (meta: { name: string; userNamed: boolean | undefined }) => {
+      const setName = vi.fn(async (_input: { deviceId: number; name: string }) => undefined)
+      const { ctx } = rig(
+        {
+          integrationId: INT,
+          infraNativeId: 'sw1',
+          model: 'USW',
+          system: UNIFI_SYSTEM,
+          name: 'Switch Lite 8 PoE Studio',
+        },
+        DeviceType.Switch,
+        {
+          deviceManager: {
+            loadMeta: { query: vi.fn(async () => meta) },
+            setName: { mutate: setName },
+          },
+        },
+      )
+      await new UnifiInfraDevice(ctx).onActivate()
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      return setName
+    }
+    const followed = await run({ name: 'Switch Lite 8 PoE Studio', userNamed: false })
+    expect(followed).toHaveBeenCalledWith({
+      deviceId: 7,
+      name: 'Switch Lite 8 PoE Studio 1',
+      stampUserNamed: false,
+    })
+    // Legacy row that still carries the adopted name follows too.
+    expect(await run({ name: 'Switch Lite 8 PoE Studio', userNamed: undefined })).toHaveBeenCalled()
+    expect(await run({ name: 'My switch', userNamed: true })).not.toHaveBeenCalled()
+    expect(await run({ name: 'My switch', userNamed: undefined })).not.toHaveBeenCalled()
+  })
+
   it('a PoE port that never saw a client declares nothing attached', async () => {
     await harness()
     const { ctx, mutate } = attachedRig()

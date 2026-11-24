@@ -87,6 +87,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   /** Every client this port answers for, persisted so a restart keeps the set. */
   private knownClients: readonly string[]
   private lastDesiredName: string | null = null
+  /** The port's last client was seen on another port and the port is still empty. */
+  private clientMovedAway = false
   /** The attached identifiers last declared (D1063), so a poll tick writes only on change. */
   private lastAttachedKey: string | null = null
 
@@ -266,6 +268,24 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     if (result.outcome !== 'declared') this.lastAttachedKey = null
   }
 
+  /**
+   * Drop the persisted `clientMac` when the port shows no client and the controller now shows
+   * that client on another port. A client merely missing for a poll stays (D1063). Returns
+   * whether the port's last client moved away.
+   */
+  private async releaseMovedClient(port: UnifiInfraPort): Promise<boolean> {
+    const last = this.lastClientMac
+    if (port.clientMac !== null || last === undefined) return false
+    if (!this.macsOnOtherPorts().has(last.toLowerCase())) return false
+    this.lastClientMac = undefined
+    await this.config.deleteKey('clientMac')
+    this.ctx.logger.info('UniFi PoE port: its client moved to another port, cleared', {
+      tags: { deviceId: this.id },
+      meta: { portIdx: port.idx, clientMac: last },
+    })
+    return true
+  }
+
   /** Clients the controller shows NOW on any other port: they moved, this port lets them go. */
   private macsOnOtherPorts(): ReadonlySet<string> {
     const out = new Set<string>()
@@ -297,7 +317,13 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
       // the clients seen elsewhere and re-declares its known ones as retained, so a camera that
       // moved to a powering port takes the link and a transient 0 W never drops one.
       await this.declareAttached(portIsPowering(port) ? port.clientMacs : [])
-      if (port.clientName === null) return
+      // The port's last client now sits on ANOTHER port: this one is empty, not "unread".
+      if (port.clientMac !== null) this.clientMovedAway = false
+      else if (await this.releaseMovedClient(port)) this.clientMovedAway = true
+      const moved = this.clientMovedAway
+      // A port with no client name names itself "Port N" only once its client is known gone;
+      // an unanswered read (no local account) never strips a name (D49).
+      if (port.clientName === null && !moved) return
       const desired = portLabel(port.idx, port.clientName)
       if (desired === this.lastDesiredName) return
       this.lastDesiredName = desired

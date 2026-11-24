@@ -15,6 +15,7 @@ import {
 } from './unifi-discovery.js'
 import type { UnifiAdoptInput } from './unifi-device-adopter.js'
 import { unifiControllers } from './unifi-node-resolver.js'
+import { livePortChildOf, markPortChildren, type LivePortChild } from './unifi-adoption-marking.js'
 
 export interface UnifiAdoptionProviderDeps {
   readonly hasIntegration: (integrationId: string) => boolean
@@ -81,13 +82,41 @@ export function buildUnifiAdoptionProvider(
 
   async function candidates(integrationId: string): Promise<readonly DiscoveredChildDevice[]> {
     unifiControllers.getManager(integrationId)?.revalidateIfStale()
-    return buildDiscoveryCandidates({
+    const built = buildDiscoveryCandidates({
       controllerName: controllerName(integrationId),
       controllerOnline: unifiControllers.getManager(integrationId)?.status === 'connected',
       infra: unifiControllers.getInfraList(integrationId),
       clients: unifiControllers.getClientList(integrationId),
       adopted: await adoptedMap(integrationId),
     })
+    return markPortChildren(built, await livePortChildren(integrationId, built))
+  }
+
+  /** The live port devices under each adopted infra candidate, read from the registry. */
+  async function livePortChildren(
+    integrationId: string,
+    built: readonly DiscoveredChildDevice[],
+  ): Promise<ReadonlyMap<number, readonly LivePortChild[]>> {
+    const out = new Map<number, readonly LivePortChild[]>()
+    for (const candidate of built) {
+      const parentId = candidate.adoptedDeviceId
+      if (parentId === null || parentId === undefined || candidate.children === undefined) continue
+      const ports: LivePortChild[] = []
+      try {
+        for (const childId of await deps.childDeviceIds(parentId)) {
+          const port = livePortChildOf(childId, await deps.findDeviceConfig(childId))
+          if (port !== null) ports.push(port)
+        }
+      } catch (err: unknown) {
+        // The ports stay not adopted this read, never guessed adopted.
+        logger.warn('unifi adoption list: could not read the port devices of an adopted device', {
+          tags: { deviceId: parentId },
+          meta: { integrationId, error: errMsg(err) },
+        })
+      }
+      out.set(parentId, ports)
+    }
+    return out
   }
 
   async function status(integrationId: string): Promise<AdoptionStatus> {

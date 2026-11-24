@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A switch's port devices show as adopted in the Add device list, and an adopted switch and its ports follow the controller's names and client changes unless you renamed them.
+
 ## [0.2.175] - 2026-11-22
 
 ### Changed

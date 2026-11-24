@@ -1,6 +1,7 @@
 import { registerUnifiAdminLink } from '../unifi-admin-link.js'
 import {
   BaseDevice,
+  errMsg,
   type AccessoryChildSpec,
   type DeviceContext,
   DeviceFeature,
@@ -21,6 +22,7 @@ import {
   deviceTypeForDescriptor,
   featureLabel,
   featureSuffix,
+  infraNameWrite,
   roleForDescriptor,
 } from '../unifi-mapping.js'
 import { UnifiControllerNotConnectedError, UnifiDeviceMismatchError } from '../unifi-errors.js'
@@ -64,6 +66,8 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   private snapshotUnsub: (() => void) | null = null
   /** The last identity declaration sent, so an unchanged poll sends nothing. */
   private lastIdentityKey: string | null = null
+  /** The controller name last decided on, so an unchanged poll asks nothing. */
+  private lastDesiredName: string | null = null
   private poeTotalRegistered = false
 
   constructor(ctx: DeviceContext) {
@@ -96,8 +100,10 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, () => {
       this.recomputeWorkload()
       void this.declareIdentity()
+      void this.followControllerName()
     })
     void this.declareIdentity()
+    void this.followControllerName()
     // The cap is gated to `workload` devices; a legacy Container keeps none.
     if (this.type !== DeviceType.Workload) return
     const provider: InferNativeProvider<typeof workloadCapability> = {
@@ -204,6 +210,53 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
       unread: declaration.unread,
     })
     if (result.outcome !== 'declared') this.lastIdentityKey = null
+  }
+
+  /**
+   * Keep the device name on the controller's, unless the operator renamed the device in
+   * CamStack (`infraNameWrite`). A refused rename is logged once per controller name.
+   */
+  private async followControllerName(): Promise<void> {
+    const desired = unifiControllers.getLiveInfra(this.integrationId, this.infraNativeId)?.name
+    if (desired === undefined || desired.length === 0 || desired === this.lastDesiredName) return
+    try {
+      const manager = this.ctx.api?.deviceManager
+      if (manager === undefined) return
+      const meta = await manager.loadMeta.query({ deviceId: this.id })
+      if (meta === null) return
+      const decision = infraNameWrite({
+        currentName: meta.name,
+        userNamed: meta.userNamed,
+        adoptedName: this.config.values.name,
+        desiredName: desired,
+      })
+      this.lastDesiredName = desired
+      if (decision.kind === 'keep') {
+        if (meta.name !== desired) {
+          this.ctx.logger.info('UniFi device keeps its CamStack name, the operator renamed it', {
+            tags: { deviceId: this.id },
+            meta: { name: meta.name, controllerName: desired },
+          })
+        }
+        return
+      }
+      await manager.setName.mutate({
+        deviceId: this.id,
+        name: decision.name,
+        stampUserNamed: false,
+      })
+      await this.config.set('name', decision.name)
+      this.ctx.logger.info('UniFi device took the controller name', {
+        tags: { deviceId: this.id },
+        meta: { from: meta.name, name: decision.name },
+      })
+    } catch (err) {
+      this.lastDesiredName = null
+      this.ctx.logger.warn('UniFi device: following the controller name failed', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   /** The client on one of this device's ports in the live snapshot, or null. */
