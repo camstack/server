@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A daily time window is one model: clock or sun range across midnight, day/night presets and weekdays, judged by one evaluator
 - A duration settings field kind: one number stored in the declared unit (ms or s)
 - A notification schedule and a recording band read their clock window through the one shared time-window evaluator; behaviour is unchanged
+- A clock time window is judged on the wall clock: both passes of the hour a fall-back change repeats match, and a window inside a skipped spring-forward hour stays empty
 
 ## [1.2.626] - 2026-11-22
 

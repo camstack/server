@@ -4,14 +4,7 @@
  * recording band, keep their shape and ask "is this instant inside" of the one
  * evaluator, {@link judgeTimeWindow}, through this adapter.
  */
-import {
-  type TimeSite,
-  type TimeSpec,
-  type WeekdayKey,
-  localDateOf,
-  occurrenceOn,
-  weekdayKeyOfIndex,
-} from './time-spec.js'
+import { type TimeSite, type TimeSpec, type WeekdayKey, weekdayKeyOfIndex } from './time-spec.js'
 import { type TimeWindow, judgeTimeWindow } from './time-window.js'
 
 const MINUTES_PER_DAY = 1440
@@ -58,24 +51,8 @@ export function clockRangeWindow(
 }
 
 /**
- * Does a same-day range (`startMinute < endMinute`) collapse on the local day of
- * `atMs`? Both ends inside the hour a spring-forward change skips land on the
- * same instant, and the shared model would then read the range as a 24 h
- * wrap. A stored range names wall-clock minutes that do not exist that day, so
- * it is empty.
- */
-function collapsedByGap(window: TimeWindow, atMs: number, site: TimeSite): boolean {
-  if (window.between === undefined) return false
-  const date = localDateOf(atMs, site.timeZone)
-  const start = occurrenceOn(window.between.from, date, site)
-  const end = occurrenceOn(window.between.to, date, site)
-  return start !== null && end !== null && end <= start
-}
-
-/**
  * Is `atMs` inside the stored clock range on `site`. Same arguments as
- * {@link clockRangeWindow}; the answer is the shared evaluator's, except that a
- * same-day range emptied by a DST gap is empty.
+ * {@link clockRangeWindow}; the answer is the shared evaluator's.
  */
 export function isWithinClockRange(
   days: readonly number[] | undefined,
@@ -84,19 +61,13 @@ export function isWithinClockRange(
   atMs: number,
   site: TimeSite,
 ): boolean {
-  const window = clockRangeWindow(days, startMinute, endMinute)
-  // An end of 1440 is the NEXT midnight, never a collapse of the same day.
-  if (
-    startMinute < endMinute &&
-    endMinute < MINUTES_PER_DAY &&
-    collapsedByGap(window, atMs, site)
-  ) {
-    return false
-  }
-  return judgeTimeWindow(window, atMs, site).inside
+  return judgeTimeWindow(clockRangeWindow(days, startMinute, endMinute), atMs, site).inside
 }
 
-/** The host's IANA zone, read per call (the process zone can change). */
+let hostZone: string | undefined
+
+/** The host's IANA zone, resolved once: a process does not change its zone while running. */
 export function hostTimeZone(): string {
-  return new Intl.DateTimeFormat().resolvedOptions().timeZone
+  hostZone ??= new Intl.DateTimeFormat().resolvedOptions().timeZone
+  return hostZone
 }

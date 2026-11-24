@@ -21,6 +21,7 @@ import {
   WeekdayKeySchema,
   isKnownTimeZone,
   localDateOf,
+  localMinuteOfDay,
   occurrenceOn,
   weekdayOfLocalDate,
 } from './time-spec.js'
@@ -138,6 +139,35 @@ function intervalStartingOn(
   return end === null || end <= start ? null : { start, end }
 }
 
+const MINUTES_PER_HOUR = 60
+
+/**
+ * A window whose ends are both wall-clock times names MINUTES OF THE DAY, so it
+ * is judged on the wall clock itself: the hour a fall-back change repeats is
+ * inside a window that names it on both passes, and a window wholly inside the
+ * hour a spring-forward change skips never matches. `null` when an end is a sun
+ * event or a date, which are instants and are judged as such.
+ */
+function insideOnWallClock(
+  window: TimeWindow,
+  nowMs: number,
+  today: string,
+  site: TimeSite,
+): boolean | null {
+  const between = window.between
+  if (between === undefined || between.from.kind !== 'clock' || between.to.kind !== 'clock') {
+    return null
+  }
+  const start = between.from.hh * MINUTES_PER_HOUR + between.from.mm
+  const end = between.to.hh * MINUTES_PER_HOUR + between.to.mm
+  const minute = localMinuteOfDay(nowMs, site.timeZone)
+  const listed = (date: string): boolean =>
+    window.days === undefined || window.days.includes(weekdayOfLocalDate(date))
+  if (start < end) return listed(today) && minute >= start && minute < end
+  // Crosses midnight (an equal start and end is a full 24 h from the start).
+  return (listed(today) && minute >= start) || (listed(addDays(today, -1)) && minute < end)
+}
+
 /** Is `nowMs` inside the window. False when the window cannot be placed on the site (never a guess). */
 export function isWithinTimeWindow(window: TimeWindow, nowMs: number, site: TimeSite): boolean {
   return judgeTimeWindow(window, nowMs, site).inside
@@ -169,6 +199,7 @@ export function judgeTimeWindow(
       if (boundary > nowMs && (next === null || boundary < next)) next = boundary
     }
   }
+  inside = insideOnWallClock(window, nowMs, today, site) ?? inside
   if (window.between === undefined) {
     // A whole-day window is re-judged every local midnight, whether or not the day changes membership.
     const midnight = occurrenceOn(MIDNIGHT, addDays(today, 1), site)

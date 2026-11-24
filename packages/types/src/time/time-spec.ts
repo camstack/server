@@ -122,6 +122,12 @@ function wallClockOf(epochMs: number, timeZone: string): WallClock {
   }
 }
 
+/** Minutes since local midnight at an instant, read on the zone's wall clock (a repeated hour reads twice). */
+export function localMinuteOfDay(epochMs: number, timeZone: string): number {
+  const w = wallClockOf(epochMs, timeZone)
+  return w.hour * 60 + w.minute
+}
+
 /** The zone's offset from UTC at an instant, in ms (positive east of Greenwich). */
 function offsetMs(epochMs: number, timeZone: string): number {
   const w = wallClockOf(epochMs, timeZone)

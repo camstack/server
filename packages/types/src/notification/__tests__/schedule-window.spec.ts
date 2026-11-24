@@ -137,6 +137,26 @@ describe('isScheduleActive: pinned semantics', () => {
       expect(isScheduleActive(s, Date.UTC(2026, 9, 25, 1, 59))).toBe(true) // 02:59 CET
       expect(isScheduleActive(s, Date.UTC(2026, 9, 25, 2, 0))).toBe(false) // 03:00 CET
     })
+    it('fall-back day: a partial-hour window matches in BOTH passes of the repeated hour', () => {
+      const s = sched([{ days: [0], startMinute: 135, endMinute: 160 }]) // 02:15-02:40
+      const probes = [
+        [0, 10],
+        [0, 20],
+        [0, 39],
+        [0, 45],
+        [1, 10],
+        [1, 20],
+        [1, 39],
+        [1, 45],
+      ].map(([h, m]) => isScheduleActive(s, Date.UTC(2026, 9, 25, h ?? 0, m ?? 0)))
+      expect(probes).toEqual([false, true, true, false, false, true, true, false])
+    })
+    it('fall-back day: 00:00-02:30 runs through the second 02:00 and ends at the second 02:30', () => {
+      const s = sched([{ days: [0], startMinute: 0, endMinute: 150 }])
+      expect(isScheduleActive(s, Date.UTC(2026, 9, 25, 1, 10))).toBe(true)
+      expect(isScheduleActive(s, Date.UTC(2026, 9, 25, 1, 29))).toBe(true)
+      expect(isScheduleActive(s, Date.UTC(2026, 9, 25, 1, 30))).toBe(false)
+    })
     it('a wrapped window across the spring change keeps its wall-clock end', () => {
       const s = sched([{ days: [6], startMinute: 1320, endMinute: 360 }]) // Sat 22:00 -> Sun 06:00
       expect(isScheduleActive(s, Date.UTC(2026, 2, 29, 3, 59))).toBe(true) // Sun 05:59 CEST

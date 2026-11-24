@@ -46,7 +46,11 @@ export function bandActiveAt(band: RecordingBand, date: Date, battery?: BatteryC
   if (!batteryAdmits(band, battery)) return false
   const days = band.days.length === 0 ? undefined : band.days
   const site = zoneOnlySite(hostTimeZone())
-  return isWithinClockRange(days, toMin(band.start), endMin(band.end), date.getTime(), site)
+  const start = toMin(band.start)
+  const end = endMin(band.end)
+  // A malformed time reads as NaN, which the band always treated as "the whole day".
+  const [from, to] = Number.isNaN(start) || Number.isNaN(end) ? [0, 0] : [start, end]
+  return isWithinClockRange(days, from, to, date.getTime(), site)
 }
 
 /**

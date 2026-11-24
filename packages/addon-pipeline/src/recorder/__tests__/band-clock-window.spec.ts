@@ -107,6 +107,30 @@ describe('bandActiveAt: pinned clock-window semantics (host clock = Berlin)', ()
       expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 1, 30)))).toBe(true)
       expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 2, 0)))).toBe(false)
     })
+    it('fall-back Sunday: a partial-hour band matches in BOTH passes of the repeated hour', () => {
+      const b = band({ days: [0], start: '02:15', end: '02:40' })
+      const probes = [
+        [0, 10],
+        [0, 20],
+        [0, 39],
+        [0, 45],
+        [1, 10],
+        [1, 20],
+        [1, 39],
+        [1, 45],
+      ].map(([h, m]) => bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, h ?? 0, m ?? 0))))
+      expect(probes).toEqual([false, true, true, false, false, true, true, false])
+    })
+    it('fall-back Sunday: 00:00-02:30 keeps recording through the second 02:00', () => {
+      const b = band({ days: [0], start: '00:00', end: '02:30' })
+      expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 1, 10)))).toBe(true)
+      expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 1, 29)))).toBe(true)
+      expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 1, 30)))).toBe(false)
+    })
+    it('a malformed time reads as 0 minutes: the band is active all day', () => {
+      expect(bandActiveAt(band({ start: 'ab', end: '' }), at(13, 0))).toBe(true)
+      expect(bandActiveAt(band({ start: '', end: '' }), at(3, 0))).toBe(true)
+    })
     it('a whole-day band (start == end) is inside all of a 25 h day', () => {
       const b = band({ days: [0], start: '00:00', end: '00:00' })
       expect(bandActiveAt(b, new Date(Date.UTC(2026, 9, 25, 5, 0)))).toBe(true)
