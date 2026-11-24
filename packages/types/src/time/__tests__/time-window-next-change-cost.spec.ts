@@ -30,11 +30,16 @@ describe('the inside-only path never runs the flip search', () => {
   })
 
   it('a minute-by-minute scan of 2 days stays cheap', () => {
+    // The flip search on this path cost ~1.7 s for this scan; the bound sits far
+    // below that and far above a loaded test slot, and the best of 3 runs drops a GC pause.
     const t0 = Date.UTC(2026, 9, 25, 0, 0)
-    const started = performance.now()
-    for (let i = 0; i < 2880; i += 1)
-      isWithinClockRange(undefined, 22 * 60, 4 * 60, t0 + i * MIN, BERLIN)
-    expect(performance.now() - started).toBeLessThan(50)
+    const scanMs = (): number => {
+      const started = performance.now()
+      for (let i = 0; i < 2880; i += 1)
+        isWithinClockRange(undefined, 22 * 60, 4 * 60, t0 + i * MIN, BERLIN)
+      return performance.now() - started
+    }
+    expect(Math.min(scanMs(), scanMs(), scanMs())).toBeLessThan(250)
   })
 })
 
