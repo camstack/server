@@ -21,6 +21,8 @@ export type {
   UseDeviceCapabilityResult,
 } from './use-device-capability'
 export { useDeviceCapability } from './use-device-capability'
+export { readMotionTrigger } from './motion-trigger-reading'
+export type { MotionTriggerReading } from './motion-trigger-reading'
 export type { RunDeviceCommand } from './use-device-command'
 export { useDeviceCommand } from './use-device-command'
 export type {

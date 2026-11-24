@@ -5062,7 +5062,8 @@
     "motionTriggerToggle": {
       "awaitingState": "Awaiting state…",
       "disableTriggerOnMotion": "Disable trigger on motion",
-      "enableTriggerOnMotion": "Enable trigger on motion"
+      "enableTriggerOnMotion": "Enable trigger on motion",
+      "unknownTriggerOnMotion": "Not read from the camera yet. Click to enable"
     },
     "sensorHero": {
       "motionDetected": "Motion detected",
@@ -8198,7 +8199,8 @@
       "awaiting": "Awaiting state…",
       "motionOn": "Motion-trigger: on (click to disable)",
       "motionOff": "Motion-trigger: off (click to enable)",
-      "ptz": "PTZ controls"
+      "ptz": "PTZ controls",
+      "motionUnknown": "Motion-trigger: not read from the camera yet (click to enable)"
     },
     "deviceTable": {
       "name": "Name",
@@ -9368,7 +9370,8 @@
       "motionTriggerOn": "Motion-trigger: on (click to disable)",
       "motionTriggerOff": "Motion-trigger: off (click to enable)",
       "parts": "Parts",
-      "primary": "Primary"
+      "primary": "Primary",
+      "motionTriggerUnknown": "Motion-trigger: not read from the camera yet (click to enable)"
     },
     "deviceDeleteAction": {
       "title": "Delete device?",
@@ -11272,7 +11275,8 @@
       "trend": {
         "start": "{{hours}} h ago",
         "now": "now"
-      }
+      },
+      "onMotionUnknown": "On motion: not read from the camera yet"
     },
     "language": "en",
     "measurement": {

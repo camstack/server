@@ -28,6 +28,7 @@ import { Activity, Gamepad2 } from 'lucide-react'
 import { DeviceType, primaryChildPreferenceOf } from '@camstack/types'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
+import { readMotionTrigger } from '../../hooks/motion-trigger-reading'
 import { usePTZ } from '../../hooks/use-ptz'
 import { PTZOverlay } from '../ptz-overlay'
 import {
@@ -337,7 +338,7 @@ interface OnMotionToggleProps {
   readonly features: readonly string[] | undefined
 }
 
-function OnMotionToggle({ trpc, deviceId, features }: OnMotionToggleProps): ReactNode {
+export function OnMotionToggle({ trpc, deviceId, features }: OnMotionToggleProps): ReactNode {
   const t = useUiText()
   const { dev, cap, slice, available } = useDeviceCapability({
     trpc,
@@ -351,7 +352,9 @@ function OnMotionToggle({ trpc, deviceId, features }: OnMotionToggleProps): Reac
 
   if (dev !== null && !cap) return null
 
-  const on = slice?.enabled === true
+  const reading = slice === undefined ? undefined : readMotionTrigger(slice)
+  const on = reading === 'on'
+  const unknown = reading === 'unknown'
 
   const handleClick = async (e: MouseEvent): Promise<void> => {
     e.stopPropagation()
@@ -376,16 +379,22 @@ function OnMotionToggle({ trpc, deviceId, features }: OnMotionToggleProps): Reac
         on
           ? 'text-primary bg-primary/10'
           : 'text-foreground-subtle hover:text-foreground hover:bg-surface-hover',
+        unknown && 'border border-dashed border-border',
         (pending || !available) && 'opacity-50',
       )}
       title={
         !available
           ? t('uiLibrary.deviceItemActions.awaiting', 'Awaiting state…')
-          : on
-            ? t('uiLibrary.deviceItemActions.motionOn', 'Motion-trigger: on (click to disable)')
-            : t('uiLibrary.deviceItemActions.motionOff', 'Motion-trigger: off (click to enable)')
+          : unknown
+            ? t(
+                'uiLibrary.deviceItemActions.motionUnknown',
+                'Motion-trigger: not read from the camera yet (click to enable)',
+              )
+            : on
+              ? t('uiLibrary.deviceItemActions.motionOn', 'Motion-trigger: on (click to disable)')
+              : t('uiLibrary.deviceItemActions.motionOff', 'Motion-trigger: off (click to enable)')
       }
-      aria-pressed={on}
+      aria-pressed={unknown ? 'mixed' : on}
     >
       <Activity className="h-2.5 w-2.5" />
     </button>

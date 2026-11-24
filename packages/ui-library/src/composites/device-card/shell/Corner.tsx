@@ -210,7 +210,8 @@ export function RemoteCorner({ onOpen }: { readonly onOpen: () => void }): React
 }
 
 export interface MotionCornerProps {
-  readonly on: boolean
+  /** Null: not read yet. Drawn neither on nor off; a tap still sets it on. */
+  readonly on: boolean | null
   readonly pending: boolean
   /** Gating: a blocked card may not be commanded. */
   readonly blocked: boolean
@@ -227,16 +228,25 @@ export function MotionCorner({ on, pending, blocked, onToggle }: MotionCornerPro
       variant="unstyled"
       data-corner="bl"
       data-testid="dc-motion"
-      aria-pressed={on}
+      aria-pressed={on === null ? 'mixed' : on}
       aria-busy={pending}
       aria-label={t('uiLibrary.deviceCard.onMotion', 'On motion')}
-      title={t('uiLibrary.deviceCard.onMotion', 'On motion')}
+      title={
+        on === null
+          ? t('uiLibrary.deviceCard.onMotionUnknown', 'On motion: not read from the camera yet')
+          : t('uiLibrary.deviceCard.onMotion', 'On motion')
+      }
+      data-state={on === null ? 'unknown' : on ? 'on' : 'off'}
       disabled={pending || blocked}
-      onClick={() => onToggle(!on)}
+      onClick={() => onToggle(on !== true)}
       className={cn(
         placed,
         'border px-1.5 py-1 transition-colors disabled:pointer-events-none',
-        on ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground-muted',
+        on === true
+          ? 'border-primary bg-primary/10 text-primary'
+          : on === null
+            ? 'border-dashed border-border text-foreground-subtle'
+            : 'border-border text-foreground-muted',
         blocked && !pending && 'opacity-45',
       )}
     >

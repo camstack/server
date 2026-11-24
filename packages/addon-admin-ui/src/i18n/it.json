@@ -5137,7 +5137,8 @@
     "motionTriggerToggle": {
       "awaitingState": "In attesa dello stato…",
       "disableTriggerOnMotion": "Disabilita il trigger su movimento",
-      "enableTriggerOnMotion": "Abilita il trigger su movimento"
+      "enableTriggerOnMotion": "Abilita il trigger su movimento",
+      "unknownTriggerOnMotion": "Non ancora letto dalla camera. Clicca per attivare"
     },
     "sensorHero": {
       "motionDetected": "Movimento rilevato",
@@ -8220,7 +8221,8 @@
       "awaiting": "In attesa dello stato…",
       "motionOn": "Trigger di movimento: attivo (clicca per disattivare)",
       "motionOff": "Trigger di movimento: disattivo (clicca per attivare)",
-      "ptz": "Controlli PTZ"
+      "ptz": "Controlli PTZ",
+      "motionUnknown": "Attivazione al movimento: non ancora letta dalla camera (clicca per attivare)"
     },
     "deviceTable": {
       "name": "Nome",
@@ -9390,7 +9392,8 @@
       "motionTriggerOn": "Trigger di movimento: attivo (clicca per disattivare)",
       "motionTriggerOff": "Trigger di movimento: disattivo (clicca per attivare)",
       "parts": "Parti",
-      "primary": "Principale"
+      "primary": "Principale",
+      "motionTriggerUnknown": "Attivazione al movimento: non ancora letta dalla camera (clicca per attivare)"
     },
     "deviceDeleteAction": {
       "title": "Eliminare il dispositivo?",
@@ -11294,7 +11297,8 @@
       "trend": {
         "start": "{{hours}} h fa",
         "now": "ora"
-      }
+      },
+      "onMotionUnknown": "Al movimento: non ancora letto dalla camera"
     },
     "language": "it",
     "measurement": {

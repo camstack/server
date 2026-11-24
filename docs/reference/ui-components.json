@@ -13229,9 +13229,9 @@
       "props": [
         {
           "name": "on",
-          "type": "boolean",
+          "type": "boolean | null",
           "optional": false,
-          "doc": ""
+          "doc": "Null: not read yet. Drawn neither on nor off; a tap still sets it on."
         },
         {
           "name": "pending",
@@ -15694,6 +15694,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/use-device-history.ts",
       "summary": "Identity of a read item: subject + key (+ scope when narrowed)."
+    },
+    {
+      "name": "readMotionTrigger",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/motion-trigger-reading.ts",
+      "summary": ""
     },
     {
       "name": "readStoredGroupBy",

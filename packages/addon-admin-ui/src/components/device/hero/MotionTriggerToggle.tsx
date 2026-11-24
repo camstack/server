@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Activity } from 'lucide-react'
-import { useDeviceStateSlice, Button } from '@camstack/ui-library'
+import { useDeviceStateSlice, readMotionTrigger, Button } from '@camstack/ui-library'
 import type { DeviceProxy } from '@camstack/types'
 import { useTranslation } from 'react-i18next'
 
@@ -42,7 +42,11 @@ export function MotionTriggerToggle({
 
   if (!motionTrigger) return null
 
-  const isOn = slice?.enabled === true
+  const reading = slice === undefined ? undefined : readMotionTrigger(slice)
+  const isOn = reading === 'on'
+  // The camera was never read: the slice's `false` is a placeholder, so the
+  // toggle claims neither state yet still accepts a write.
+  const isUnknown = reading === 'unknown'
   const hasState = slice !== undefined
 
   const handleToggle = async () => {
@@ -65,9 +69,11 @@ export function MotionTriggerToggle({
       ? 'Disabling…'
       : 'Enabling…'
     : hasState
-      ? isOn
-        ? 'On motion: on'
-        : 'On motion: off'
+      ? isUnknown
+        ? 'On motion: not read yet'
+        : isOn
+          ? 'On motion: on'
+          : 'On motion: off'
       : 'On motion: …'
 
   return (
@@ -81,15 +87,22 @@ export function MotionTriggerToggle({
       title={
         !hasState
           ? t('hero.motionTriggerToggle.awaitingState', 'Awaiting state…')
-          : isOn
-            ? t('hero.motionTriggerToggle.disableTriggerOnMotion', 'Disable trigger on motion')
-            : t('hero.motionTriggerToggle.enableTriggerOnMotion', 'Enable trigger on motion')
+          : isUnknown
+            ? t(
+                'hero.motionTriggerToggle.unknownTriggerOnMotion',
+                'Not read from the camera yet. Click to enable',
+              )
+            : isOn
+              ? t('hero.motionTriggerToggle.disableTriggerOnMotion', 'Disable trigger on motion')
+              : t('hero.motionTriggerToggle.enableTriggerOnMotion', 'Enable trigger on motion')
       }
-      aria-pressed={isOn}
+      aria-pressed={isUnknown ? 'mixed' : isOn}
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         isOn
           ? 'border-primary/50 bg-primary/15 text-primary'
-          : 'border-border bg-surface text-foreground-subtle hover:text-foreground'
+          : isUnknown
+            ? 'border-dashed border-border bg-surface text-foreground-subtle hover:text-foreground'
+            : 'border-border bg-surface text-foreground-subtle hover:text-foreground'
       }`}
     >
       <Activity className="h-3 w-3" />

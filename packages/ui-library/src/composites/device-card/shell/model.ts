@@ -171,7 +171,8 @@ export interface CardCommon {
 }
 
 export interface CardMotionTrigger {
-  readonly on: boolean
+  /** Null: the camera was never read, so the corner claims neither on nor off. */
+  readonly on: boolean | null
   readonly pending: boolean
 }
 

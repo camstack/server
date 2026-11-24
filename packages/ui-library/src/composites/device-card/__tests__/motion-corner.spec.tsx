@@ -77,6 +77,21 @@ describe('MotionCorner', () => {
     expect(screen.getByTestId('dc-motion').hasAttribute('disabled')).toBe(true)
   })
 
+  it('is unknown, not off, while the camera was never read, and a tap sets it on', () => {
+    const onMotionTrigger = vi.fn()
+    mount({ on: null, pending: false }, onMotionTrigger)
+    const corner = screen.getByTestId('dc-motion')
+    expect(corner.getAttribute('aria-pressed')).toBe('mixed')
+    expect(corner.getAttribute('data-state')).toBe('unknown')
+    fireEvent.click(corner)
+    expect(onMotionTrigger).toHaveBeenCalledWith(true)
+  })
+
+  it('is off when the camera answered off', () => {
+    mount({ on: false, pending: false })
+    expect(screen.getByTestId('dc-motion').getAttribute('data-state')).toBe('off')
+  })
+
   it('leaves the battery beside it, not under it', () => {
     mount({ on: true, pending: false })
     expect(screen.getByTestId('dc-battery').className).toContain('left-11')

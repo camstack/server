@@ -13,6 +13,7 @@
 import { Activity } from 'lucide-react'
 import { type CSSProperties, type MouseEvent, type ReactNode, useState } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
+import { readMotionTrigger } from '../../hooks/motion-trigger-reading'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
@@ -259,7 +260,7 @@ interface ChildMotionTriggerToggleProps {
   readonly features: readonly string[] | undefined
 }
 
-function ChildMotionTriggerToggle({
+export function ChildMotionTriggerToggle({
   trpc,
   deviceId,
   features,
@@ -277,7 +278,9 @@ function ChildMotionTriggerToggle({
 
   if (dev !== null && !cap) return null
 
-  const on = slice?.enabled === true
+  const reading = slice === undefined ? undefined : readMotionTrigger(slice)
+  const on = reading === 'on'
+  const unknown = reading === 'unknown'
 
   const handleClick = async (e: MouseEvent): Promise<void> => {
     e.stopPropagation()
@@ -302,22 +305,28 @@ function ChildMotionTriggerToggle({
         on
           ? 'text-primary bg-primary/10'
           : 'text-foreground-subtle hover:text-foreground hover:bg-surface-hover',
+        unknown && 'border border-dashed border-border',
         (pending || !available) && 'opacity-50',
       )}
       title={
         !available
           ? t('uiLibrary.childrenAccordion.awaitingState', 'Awaiting state…')
-          : on
+          : unknown
             ? t(
-                'uiLibrary.childrenAccordion.motionTriggerOn',
-                'Motion-trigger: on (click to disable)',
+                'uiLibrary.childrenAccordion.motionTriggerUnknown',
+                'Motion-trigger: not read from the camera yet (click to enable)',
               )
-            : t(
-                'uiLibrary.childrenAccordion.motionTriggerOff',
-                'Motion-trigger: off (click to enable)',
-              )
+            : on
+              ? t(
+                  'uiLibrary.childrenAccordion.motionTriggerOn',
+                  'Motion-trigger: on (click to disable)',
+                )
+              : t(
+                  'uiLibrary.childrenAccordion.motionTriggerOff',
+                  'Motion-trigger: off (click to enable)',
+                )
       }
-      aria-pressed={on}
+      aria-pressed={unknown ? 'mixed' : on}
     >
       <Activity className="h-2.5 w-2.5" />
     </button>

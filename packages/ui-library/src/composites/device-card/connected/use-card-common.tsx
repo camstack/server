@@ -258,7 +258,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     ),
     remoteLayoutPending: remoteLayoutPending(remote.data, templates.data, templates.status),
     deviceId,
-    motionTrigger: motion.on === null ? null : { on: motion.on, pending: motion.pending },
+    motionTrigger: motion.present ? { on: motion.on, pending: motion.pending } : null,
     history:
       seriesReady || actuationsOffered
         ? {

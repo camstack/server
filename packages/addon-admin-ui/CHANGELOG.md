@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Customize Triggered by section stacks each trigger so nothing is clipped in the narrow pane, and its edits (action, time, active, events, add, remove) are saved together with Save and dropped with Discard.
 - Durations (automation holds, timeouts and retries, notification grouping and cooldown, remote step delay) are entered as hours, minutes and seconds; camera choices use the device picker; backup retention, zone rename and per-node session caps are saved explicitly
 - The remote source step-pause label no longer says milliseconds now that it is entered as hours, minutes and seconds.
+- The device hero's 'On motion' toggle reads 'not read yet' instead of 'off' until the camera has been read.
 
 ### Fixed
 

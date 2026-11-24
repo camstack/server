@@ -47,6 +47,16 @@ describe('useMotionTrigger', () => {
     expect(motionOn(true)).toBe(true)
   })
 
+  it('reads the cold-start seed as unknown, and a read camera that is off as off', () => {
+    hub.slice = { enabled: false, lastChangedAt: 0 }
+    const seed = renderHook(() => useMotionTrigger({ deviceId: 1, settable: true, fail, succeed }))
+      .result.current
+    expect(seed.present).toBe(true)
+    expect(seed.on).toBeNull()
+    hub.slice = { enabled: false, lastChangedAt: 1_700_000_000_000 }
+    expect(motionOn(true)).toBe(false)
+  })
+
   it('offers nothing without the binding, the method, or an answered slice', () => {
     hub.bound = false
     expect(motionOn(true)).toBeNull()
