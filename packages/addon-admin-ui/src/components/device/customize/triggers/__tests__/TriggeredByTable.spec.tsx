@@ -87,9 +87,6 @@ const capsOf = vi.hoisted((): { current: ReadonlyMap<number, readonly string[]> 
 const offeredToPicker = vi.hoisted((): { current: unknown } => ({
   current: null,
 }))
-const confirmAnswer = vi.hoisted((): { current: boolean } => ({
-  current: true,
-}))
 const create = vi.fn(async (_input: { block: { name: string; code: string } }) => ({}))
 const update = vi.fn(async (_input: { blockId: string; block: { code: string } }) => ({}))
 const remove = vi.fn(async (_input: { blockId: string }) => ({}))
@@ -99,7 +96,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useConfirm: () => async () => confirmAnswer.current,
     useDeviceStateGetCapSlice: () => ({ status: 'pending', data: undefined }),
     useCoreBlocksListTemplateInstances: () => ({
       ...instances.current,
@@ -175,6 +171,11 @@ function wrap(node: ReactNode): ReactNode {
   return <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
 }
 
+/** The section's own Save: nothing is written until it is pressed. */
+function pressSave(): void {
+  fireEvent.click(screen.getByRole('button', { name: /^Save$/i }))
+}
+
 function paramsIn(code: string) {
   const read = readRecipeLiteral(code)
   const link = read.status === 'recipe' ? read.recipe.template : undefined
@@ -182,7 +183,6 @@ function paramsIn(code: string) {
 }
 
 beforeEach(() => {
-  confirmAnswer.current = true
   instances.current = { status: 'success', data: { instances: [LIVE] } }
   // Every device carries `switch` and `event-emitter` here except the thermometer.
   capsOf.current = new Map([
@@ -224,6 +224,9 @@ describe('TriggeredByTable', () => {
     }
     expect(offered.value.map((c) => c.deviceId)).toEqual([13])
     fireEvent.click(screen.getByText('pick-13'))
+    expect(screen.getByText('Pulsante ingresso')).toBeTruthy()
+    expect(create).not.toHaveBeenCalled()
+    pressSave()
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
     const block = create.mock.calls[0]?.[0].block
     expect(paramsIn(block?.code ?? '')).toEqual({
@@ -234,9 +237,11 @@ describe('TriggeredByTable', () => {
     })
   })
 
-  it('removing the only source deletes the automation after a confirmation', async () => {
+  it('removing the only source deletes the automation only when saved', async () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
+    expect(remove).not.toHaveBeenCalled()
+    pressSave()
     await waitFor(() => expect(remove).toHaveBeenCalledWith({ blockId: '4864c0cc' }))
     expect(update).not.toHaveBeenCalled()
   })
@@ -249,6 +254,8 @@ describe('TriggeredByTable', () => {
       }),
     )
     fireEvent.click(await screen.findByRole('option', { name: /off/i }))
+    expect(update).not.toHaveBeenCalled()
+    pressSave()
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
     const sent: unknown = update.mock.calls[0]?.[0]
     expect(sent).toMatchObject({ blockId: '4864c0cc' })
@@ -265,6 +272,7 @@ describe('TriggeredByTable', () => {
       }),
     )
     fireEvent.click(await screen.findByRole('option', { name: 'On for' }))
+    pressSave()
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
     const block = update.mock.calls[0]?.[0].block
     expect(Object.keys(Object(block))).toEqual(['code'])
@@ -274,7 +282,7 @@ describe('TriggeredByTable', () => {
     })
   })
 
-  it('a motion trigger shows its time one field per unit, and writes it once the fields are left', async () => {
+  it('a motion trigger shows its time one field per unit, and writes it only when saved', async () => {
     instances.current = {
       status: 'success',
       data: { instances: [MOTION_HOLD] },
@@ -284,8 +292,9 @@ describe('TriggeredByTable', () => {
     const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
     expect(minutes).toHaveProperty('value', '5')
     fireEvent.change(minutes, { target: { value: '10' } })
-    expect(update).not.toHaveBeenCalled()
     fireEvent.blur(minutes)
+    expect(update).not.toHaveBeenCalled()
+    pressSave()
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
     expect(paramsIn(update.mock.calls[0]?.[0].block.code ?? '')).toMatchObject({
       action: 'on',
@@ -303,6 +312,22 @@ describe('TriggeredByTable', () => {
     fireEvent.change(minutes, { target: { value: '0' } })
     fireEvent.blur(minutes)
     await Promise.resolve()
+    expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it("a time above the device's run limit is never drafted, so Save cannot write it", async () => {
+    instances.current = {
+      status: 'success',
+      data: { instances: [MOTION_HOLD] },
+    }
+    // A siren may be held on for ten minutes at most.
+    render(wrap(<TriggeredByTable device={{ ...LIGHT, role: 'siren' }} />))
+    const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
+    fireEvent.change(minutes, { target: { value: '30' } })
+    fireEvent.blur(minutes)
+    await Promise.resolve()
+    expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull()
     expect(update).not.toHaveBeenCalled()
   })
 
@@ -314,6 +339,7 @@ describe('TriggeredByTable', () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
     fireEvent.click(screen.getByText('pick-13'))
+    pressSave()
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
     expect(paramsIn(create.mock.calls[0]?.[0].block.code ?? '')).toEqual({
       targetDeviceId: 5767,
@@ -332,12 +358,24 @@ describe('TriggeredByTable', () => {
     })
   })
 
-  it('a refused confirmation removes nothing', async () => {
-    confirmAnswer.current = false
+  it('Discard drops every pending edit without a write, and the stored row is back', () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
-    await Promise.resolve()
-    expect(remove).not.toHaveBeenCalled()
+    expect(screen.queryByText('Pulsante studio')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /^Discard$/i }))
+    expect(screen.getByText('Pulsante studio')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull()
+    for (const fn of [create, update, remove, setEnabled]) expect(fn).not.toHaveBeenCalled()
+  })
+
+  it('the active switch is a pending change too, written as one setEnabled on Save', async () => {
+    render(wrap(<TriggeredByTable device={LIGHT} />))
+    fireEvent.click(screen.getByRole('switch', { name: /Active/i }))
+    expect(setEnabled).not.toHaveBeenCalled()
+    pressSave()
+    await waitFor(() =>
+      expect(setEnabled).toHaveBeenCalledWith({ blockId: '4864c0cc', enabled: false }),
+    )
   })
 
   it('names a trigger it cannot read and never rewrites it', () => {
@@ -409,6 +447,8 @@ describe('TriggeredByTable', () => {
       }),
     )
     fireEvent.click(await screen.findByRole('button', { name: /^Save$/i }))
+    expect(update).not.toHaveBeenCalled()
+    pressSave()
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
     const block = update.mock.calls[0]?.[0].block
     expect(Object.keys(Object(block))).toEqual(['code'])

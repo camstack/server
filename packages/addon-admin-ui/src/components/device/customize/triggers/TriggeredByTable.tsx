@@ -12,17 +12,15 @@ import {
   type DeviceInfo,
   LINKED_TRIGGER_TEMPLATE_ID,
   type LinkedTriggerParams,
+  linkedTriggerParamsOf,
   linkedTriggerValues,
   type TemplateInstance,
 } from '@camstack/types'
 import {
   DeviceList,
-  type DeviceListColumn,
   deviceTypeMetaOf,
-  IconButton,
+  FormSaveBar,
   resolveDeviceLabel,
-  Select,
-  Switch,
   useCoreBlocksCreate,
   useCoreBlocksDelete,
   useCoreBlocksListTemplateInstances,
@@ -32,7 +30,7 @@ import {
   useDeviceNameNouns,
   useUiText,
 } from '@camstack/ui-library'
-import { Clock, Pencil, X, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EVENT_EMITTER_CAP } from '../../../../pages/build/automation/fired-model'
@@ -47,23 +45,16 @@ import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDe
 import { useCapIndex } from '../assignments/use-cap-index'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
-import { LinkedNameCell } from '../kinds/LinkedNameCell'
-import { useConfirmRemove } from '../use-confirm-remove'
 import {
-  actionChoiceOf,
   commandCapOf,
   editPickOf,
   type DetectionClass,
   type FiredPick,
-  filterSummary,
-  isEditable,
   LINKED_TRIGGER_COMMAND_CAPS,
   MOTION_CAP,
   newTriggerParams,
-  offeredChoices,
   replacesFilter,
   sourceKindOf,
-  type TriggerRow,
   triggerRows,
   withActiveLimits,
   withoutRow,
@@ -72,10 +63,20 @@ import {
   withRowFilter,
   withRowOnFor,
 } from './linked-triggers-model'
-import { OnForField } from './OnForField'
+import { TriggerRowCard, type TriggerRowView } from './TriggerRowCard'
 import { TriggerClassesDialog } from './TriggerClassesDialog'
 import { TriggerFilterDialog } from './TriggerFilterDialog'
 import { TriggerWindowDialog } from './TriggerWindowDialog'
+import {
+  draftOps,
+  EMPTY_DRAFT,
+  type TriggerDraft,
+  withAdded,
+  withEnabled,
+  withParams,
+  withRemoval,
+  workingInstances,
+} from './trigger-draft'
 
 export interface TriggeredByTableProps {
   readonly device: DeviceInfo
@@ -86,10 +87,8 @@ interface TriggerCodePatch {
   readonly code: string | undefined
 }
 
-interface TriggerTableRow extends TriggerRow {
-  readonly name: string | null
+interface TriggerTableRow extends TriggerRowView {
   readonly type: string | null
-  readonly detail: string | null
 }
 
 /** What a source device may carry: events it fires, or motion it reports. A camera needs neither. */
@@ -105,7 +104,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const uiText = useUiText()
   const nameIndex = useDeviceNameIndex()
   const nameNouns = useDeviceNameNouns()
-  const confirmRemove = useConfirmRemove()
+  const [draft, setDraft] = useState<TriggerDraft>(EMPTY_DRAFT)
   const [picking, setPicking] = useState(false)
   const [editing, setEditing] = useState<TriggerTableRow | null>(null)
   const [timing, setTiming] = useState<TriggerTableRow | null>(null)
@@ -116,7 +115,9 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     deviceId: device.id,
   })
   const commandCaps = useCapIndex(LINKED_TRIGGER_COMMAND_CAPS, true)
-  const read = instances.data === undefined ? null : triggerRows(instances.data.instances)
+  const stored = instances.data?.instances ?? []
+  const working = workingInstances(stored, draft)
+  const read = instances.data === undefined ? null : triggerRows(working)
   const shown = read !== null && (read.rows.length > 0 || read.unreadable.length > 0)
   const fleet = useCandidateDevices(picking || shown)
   const sourceCaps = useCapIndex(SOURCE_CAPS, picking)
@@ -155,9 +156,8 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     )
   }
 
-  const stored = instances.data?.instances ?? []
   const instanceOf = (blockId: string): TemplateInstance | undefined =>
-    stored.find((i) => i.blockId === blockId)
+    working.find((i) => i.blockId === blockId)
   const fleetById = new Map<number, CandidateDevice>(
     fleet.kind === 'known' ? fleet.value.map((d) => [d.id, d]) : [],
   )
@@ -215,23 +215,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
               })),
           }
 
-  /** One write at a time; a refusal is shown, never swallowed. */
-  const run = async (work: () => Promise<void>): Promise<void> => {
-    if (busy) {
-      setRefusal(t('customize.saveInFlight'))
-      return
-    }
-    setBusy(true)
-    setRefusal(null)
-    try {
-      await work()
-      await instances.refetch()
-    } catch (err: unknown) {
-      setRefusal(messageOf(err))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const ops = draftOps(stored, draft)
 
   const blockOf = (params: LinkedTriggerParams, name: string, enabled: boolean) => {
     const template = builtinAutomationTemplate(LINKED_TRIGGER_TEMPLATE_ID)
@@ -249,237 +233,98 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
 
   // An edit owns the recipe only: the update is partial, so the block's name, tags,
   // integration and placement stay as stored.
-  const codeOf = (params: LinkedTriggerParams, instance: TemplateInstance): TriggerCodePatch => ({
-    code: blockOf(params, instance.name, instance.enabled).code,
-  })
-
-  const save = (instance: TemplateInstance, params: LinkedTriggerParams | null): Promise<void> =>
-    run(async () => {
-      if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
-      await update.mutateAsync({
-        blockId: instance.blockId,
-        block: codeOf(params, instance),
-      })
-    })
-
-  const add = (picked: readonly AssignmentCandidate[]): Promise<void> =>
-    run(async () => {
-      if (capability === null) throw new Error(t('customize.triggers.notCommandable'))
-      for (const candidate of picked) {
-        const kind = sourceKindOf(fleetById.get(candidate.deviceId)?.type ?? null, candidate.caps)
-        const params =
-          kind === null ? null : newTriggerParams(device.id, candidate.deviceId, capability, kind)
-        if (params === null) throw new Error(t('customize.triggers.notCommandable'))
-        const name = t('customize.triggers.blockName', {
-          source: candidate.name,
-          target: device.name,
-        })
-        await create.mutateAsync({ block: blockOf(params, name, true) })
-      }
-    })
-
-  const unlink = async (row: TriggerTableRow): Promise<void> => {
-    const instance = instanceOf(row.blockId)
-    if (instance === undefined) return
-    const name = row.name ?? `#${String(row.deviceId)}`
-    if (!(await confirmRemove(t('customize.triggers.removeWhat', { name }), false))) return
-    const removal = withoutRow(instance, row.deviceId)
-    await run(async () => {
-      if (removal.kind === 'delete') await remove.mutateAsync({ blockId: instance.blockId })
-      else {
-        await update.mutateAsync({
-          blockId: instance.blockId,
-          block: codeOf(removal.params, instance),
-        })
-      }
-    })
+  const codeOf = (instance: TemplateInstance): TriggerCodePatch => {
+    const params = linkedTriggerParamsOf(instance.values)
+    if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
+    return { code: blockOf(params, instance.name, instance.enabled).code }
   }
 
-  const columns: readonly DeviceListColumn<TriggerTableRow>[] = [
-    {
-      key: 'device',
-      header: t('customize.triggers.source'),
-      cell: (r) => (
-        <LinkedNameCell name={r.name} deviceId={r.deviceId} detail={r.detail}>
-          {r.flagged && (
-            <span role="alert" className="text-[11px] text-warning">
-              {t('customize.triggers.flagged')}
-            </span>
-          )}
-        </LinkedNameCell>
-      ),
-    },
-    {
-      key: 'event',
-      header: t('customize.triggers.event'),
-      cellClassName: 'text-xs text-foreground-subtle',
-      cell: (r) => {
-        const summary = filterSummary(r.filter)
-        return (
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="break-words">
-              {r.filter.kind === 'motion'
-                ? t('customize.triggers.motionDetected')
-                : r.filter.kind === 'detection'
-                  ? r.filter.classes.map((c) => t(`customize.triggers.classes.${c}`)).join(', ')
-                  : summary.custom
-                    ? t('customize.triggers.customFilter')
-                    : [
-                        summary.events.length === 0
-                          ? t('customize.triggers.anyEvent')
-                          : summary.events.join(', '),
-                        ...(summary.parts.length === 0
-                          ? []
-                          : [
-                              t('customize.triggers.partsNamed', {
-                                parts: summary.parts.join(', '),
-                              }),
-                            ]),
-                      ].join(' · ')}
-            </span>
-            {(r.activeWindow !== null || r.activeWhen !== null) && (
-              <span className="shrink-0 text-[11px] text-foreground-muted">
-                {t('customize.triggers.windowSet')}
-              </span>
-            )}
-            {isEditable(r.filter) && (
-              <IconButton
-                icon={Pencil}
-                variant="ghost"
-                size="sm"
-                aria-label={t(
-                  r.filter.kind === 'detection'
-                    ? 'customize.triggers.editClasses'
-                    : 'customize.triggers.editFilter',
-                  { name: r.name ?? r.deviceId },
-                )}
-                disabled={busy}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setEditing(r)
-                }}
-              />
-            )}
-            <IconButton
-              icon={Clock}
-              variant="ghost"
-              size="sm"
-              aria-label={t('customize.triggers.editWindow', {
-                name: r.name ?? r.deviceId,
-              })}
-              disabled={busy}
-              onClick={(e) => {
-                e.stopPropagation()
-                setTiming(r)
-              }}
-            />
-          </div>
-        )
-      },
-    },
-    {
-      key: 'action',
-      header: t('customize.triggers.action'),
-      cell: (r) => {
-        const choice = actionChoiceOf(r)
-        const choices = offeredChoices(r.capability)
-        return (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="w-28">
-              <Select
-                aria-label={t('customize.triggers.actionFor', {
-                  name: r.name ?? r.deviceId,
-                })}
-                value={choice}
-                disabled={busy}
-                options={choices.map((option) => ({
-                  value: option,
-                  label: t(`customize.triggers.actions.${option}`),
-                }))}
-                onChange={(e) => {
-                  const instance = instanceOf(r.blockId)
-                  const next = choices.find((option) => option === e.target.value)
-                  if (instance !== undefined && next !== undefined && next !== choice) {
-                    void save(instance, withRowAction(instance, next))
-                  }
-                }}
-              />
-            </div>
-            {r.onForSeconds !== null && choice === 'on-for' && (
-              <OnForField
-                seconds={r.onForSeconds}
-                label={t('customize.triggers.onForFor', {
-                  name: r.name ?? r.deviceId,
-                })}
-                hint={t('customize.triggers.onForHint')}
-                disabled={busy}
-                testId={`trigger-on-for-${r.key}`}
-                maxSeconds={Math.min(
-                  ON_FOR_MAX_SECONDS,
-                  switchRunLimitOf(device.type, device.role).maxSeconds,
-                )}
-                onCommit={(seconds) => {
-                  const instance = instanceOf(r.blockId)
-                  if (instance !== undefined) void save(instance, withRowOnFor(instance, seconds))
-                }}
-              />
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      key: 'enabled',
-      header: t('customize.triggers.active'),
-      headerClassName: 'text-right',
-      cellClassName: 'text-right',
-      cell: (r) => (
-        <Switch
-          checked={r.enabled}
-          disabled={busy}
-          aria-label={t('customize.triggers.activeFor', {
-            name: r.name ?? r.deviceId,
-          })}
-          onCheckedChange={(enabled) =>
-            void run(async () => {
-              await setEnabled.mutateAsync({ blockId: r.blockId, enabled })
-            })
-          }
-        />
-      ),
-    },
-    {
-      key: 'remove',
-      header: '',
-      cellClassName: 'text-right w-10',
-      cell: (r) => (
-        <IconButton
-          icon={X}
-          variant="ghost"
-          size="sm"
-          aria-label={t('customize.assign.removeNamed', {
-            name: r.name ?? r.deviceId,
-          })}
-          disabled={busy}
-          onClick={(e) => {
-            e.stopPropagation()
-            void unlink(r)
-          }}
-        />
-      ),
-    },
-  ]
+  /** Every pending change, written once. A refusal keeps the draft and is shown. */
+  const saveAll = async (): Promise<void> => {
+    if (busy) {
+      setRefusal(t('customize.saveInFlight'))
+      return
+    }
+    setBusy(true)
+    setRefusal(null)
+    try {
+      for (const op of ops) {
+        if (op.kind === 'delete') await remove.mutateAsync({ blockId: op.blockId })
+        else if (op.kind === 'update') {
+          await update.mutateAsync({ blockId: op.instance.blockId, block: codeOf(op.instance) })
+        } else if (op.kind === 'enable') {
+          await setEnabled.mutateAsync({ blockId: op.blockId, enabled: op.enabled })
+        } else {
+          const params = linkedTriggerParamsOf(op.instance.values)
+          if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
+          await create.mutateAsync({
+            block: blockOf(params, op.instance.name, op.instance.enabled),
+          })
+          setDraft((d) => ({
+            ...d,
+            added: d.added.filter((a) => a.blockId !== op.instance.blockId),
+          }))
+        }
+      }
+      await instances.refetch()
+      setDraft(EMPTY_DRAFT)
+    } catch (err: unknown) {
+      setRefusal(messageOf(err))
+      await instances.refetch()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const edit = (instance: TemplateInstance, params: LinkedTriggerParams | null): void => {
+    if (params === null) {
+      setRefusal(t('customize.triggers.unreadableOne'))
+      return
+    }
+    setDraft((d) => withParams(d, instance, params))
+  }
+
+  const add = (picked: readonly AssignmentCandidate[]): void => {
+    if (capability === null) {
+      setRefusal(t('customize.triggers.notCommandable'))
+      return
+    }
+    setRefusal(null)
+    let next = draft
+    for (const candidate of picked) {
+      const kind = sourceKindOf(fleetById.get(candidate.deviceId)?.type ?? null, candidate.caps)
+      const params =
+        kind === null ? null : newTriggerParams(device.id, candidate.deviceId, capability, kind)
+      if (params === null) {
+        setRefusal(t('customize.triggers.notCommandable'))
+        return
+      }
+      next = withAdded(next, {
+        name: t('customize.triggers.blockName', { source: candidate.name, target: device.name }),
+        enabled: true,
+        templateId: LINKED_TRIGGER_TEMPLATE_ID,
+        values: linkedTriggerValues(params),
+      })
+    }
+    setDraft(next)
+  }
+
+  const unlink = (row: TriggerTableRow): void => {
+    const instance = instanceOf(row.blockId)
+    if (instance === undefined) return
+    setDraft((d) => withRemoval(d, instance, withoutRow(instance, row.deviceId)))
+  }
 
   const saveClasses = (row: TriggerTableRow, classes: readonly DetectionClass[]): void => {
     const instance = instanceOf(row.blockId)
     setEditing(null)
-    if (instance !== undefined) void save(instance, withRowClasses(instance, row.deviceId, classes))
+    if (instance !== undefined) edit(instance, withRowClasses(instance, row.deviceId, classes))
   }
 
   const saveFilter = (row: TriggerTableRow, pick: FiredPick): void => {
     const instance = instanceOf(row.blockId)
     setEditing(null)
-    if (instance !== undefined) void save(instance, withRowFilter(instance, row.deviceId, pick))
+    if (instance !== undefined) edit(instance, withRowFilter(instance, row.deviceId, pick))
   }
 
   return (
@@ -528,13 +373,46 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
               getFilterType={(r) =>
                 r.type === null ? null : deviceTypeMetaOf(r.type, uiText).label
               }
-              columns={columns}
+              renderItem={(r) => {
+                const instance = instanceOf(r.blockId)
+                return (
+                  <TriggerRowCard
+                    row={r}
+                    disabled={busy}
+                    maxOnForSeconds={Math.min(
+                      ON_FOR_MAX_SECONDS,
+                      switchRunLimitOf(device.type, device.role).maxSeconds,
+                    )}
+                    onAction={(choice) => {
+                      if (instance !== undefined) edit(instance, withRowAction(instance, choice))
+                    }}
+                    onOnFor={(seconds) => {
+                      if (instance !== undefined) edit(instance, withRowOnFor(instance, seconds))
+                    }}
+                    onEnabled={(enabled) => {
+                      if (instance !== undefined) setDraft((d) => withEnabled(d, instance, enabled))
+                    }}
+                    onEditEvent={() => setEditing(r)}
+                    onEditWindow={() => setTiming(r)}
+                    onRemove={() => unlink(r)}
+                  />
+                )
+              }}
               searchPlaceholder={t('customize.assign.search')}
               emptyLabel={t('customize.assign.none')}
             />
           )}
         </li>
       </AssignmentSection>
+      <FormSaveBar
+        pendingCount={ops.length}
+        saving={busy}
+        onSave={() => void saveAll()}
+        onDiscard={() => {
+          setRefusal(null)
+          setDraft(EMPTY_DRAFT)
+        }}
+      />
       <SourceSelectorDevicesDialog
         open={picking}
         title={t('customize.triggers.pickTitle')}
@@ -543,7 +421,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         confirmLabel={(count) => t('customize.assign.addCount', { count })}
         onConfirm={(picked) => {
           setPicking(false)
-          void add(picked)
+          add(picked)
         }}
         onClose={() => setPicking(false)}
       />
@@ -578,8 +456,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           onSave={(window, state) => {
             const instance = instanceOf(timing.blockId)
             setTiming(null)
-            if (instance !== undefined)
-              void save(instance, withActiveLimits(instance, window, state))
+            if (instance !== undefined) edit(instance, withActiveLimits(instance, window, state))
           }}
           onClose={() => setTiming(null)}
         />

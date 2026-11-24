@@ -1,11 +1,11 @@
 /**
  * How long a linked trigger holds its device on: the shared per-unit duration
- * fields. What is typed is kept here and written once, when the fields are
- * left, so one edit is one save.
+ * fields. A valid time goes to the section's draft as it is typed; the write
+ * happens when the section is saved, never from here.
  */
 import { ON_FOR_MAX_SECONDS } from '@camstack/types'
 import { DurationPartsInput } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useDurationLabels } from '../../../../lib/use-duration-labels'
 
 export interface OnForFieldProps {
@@ -16,7 +16,7 @@ export interface OnForFieldProps {
   readonly testId: string
   /** The most the target may be held on for; the 24 h bound when absent. */
   readonly maxSeconds?: number
-  readonly onCommit: (seconds: number) => void
+  readonly onChange: (seconds: number) => void
 }
 
 const MIN_SECONDS = 1
@@ -28,32 +28,24 @@ export function OnForField({
   disabled,
   testId,
   maxSeconds = ON_FOR_MAX_SECONDS,
-  onCommit,
+  onChange,
 }: OnForFieldProps): ReactNode {
   const labels = useDurationLabels()
-  const [draft, setDraft] = useState<number | null>(null)
-  const shown = draft ?? seconds
-  const commit = (): void => {
-    if (draft === null) return
-    setDraft(null)
-    if (draft !== seconds && draft >= MIN_SECONDS && draft <= maxSeconds) onCommit(draft)
-  }
   return (
-    <span
-      title={hint}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) commit()
-      }}
-    >
+    <span title={hint} className="max-w-full min-w-0">
       <DurationPartsInput
-        seconds={shown}
+        seconds={seconds}
         min={MIN_SECONDS}
         max={maxSeconds}
         labels={labels}
         aria-label={label}
         disabled={disabled}
         testIdPrefix={testId}
-        onChange={setDraft}
+        className="flex-wrap"
+        onChange={(next) => {
+          // A time outside the bounds stays in the fields, marked, and is not drafted.
+          if (next !== seconds && next >= MIN_SECONDS && next <= maxSeconds) onChange(next)
+        }}
       />
     </span>
   )
