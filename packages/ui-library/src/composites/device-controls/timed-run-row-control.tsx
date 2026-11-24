@@ -1,18 +1,15 @@
 /**
- * The list-row timed run (D993): Run beside the power control while idle,
- * Stop and the time left while a run is armed. Drawn only when the device
- * binds `timed-run`, which is every device that has a switch (D1097). The words
- * and the bound come from the same limit the row projection uses.
+ * The list-row timed run (D993): the shared compact control (`TimedRunQuick`) beside the
+ * power control. Drawn only when the device binds `timed-run`, which is every device that has
+ * a switch (D1097). The bound is the same limit the hub refuses against; the value is the
+ * device's own saved one-tap run.
  */
-import { Square, Timer } from 'lucide-react'
-import { type ReactNode, useEffect, useState } from 'react'
-import { timedRunLimitOf, timedRunRemaining, type TimedRunUnit } from '@camstack/types'
-import { useUiText } from '../../contexts/ui-text'
+import type { ReactNode } from 'react'
+import { timedRunLimitOf } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
-import { Button } from '../../primitives/button'
-
-const TICK_MS = 1000
+import { TimedRunQuick } from './timed-run-quick'
+import { timedRunQuickCalls, timedRunQuickView } from './timed-run-quick-model'
 
 export interface TimedRunRowControlProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -20,16 +17,7 @@ export interface TimedRunRowControlProps {
   readonly deviceType: string
   /** With the type, which device this is: the role narrows the limit (a heater runs longer, a siren shorter). */
   readonly deviceRole: string | null
-}
-
-function useNow(active: boolean): number {
-  const [now, setNow] = useState<number>(() => Date.now())
-  useEffect(() => {
-    if (!active) return undefined
-    const handle = setInterval(() => setNow(Date.now()), TICK_MS)
-    return () => clearInterval(handle)
-  }, [active])
-  return now
+  readonly className?: string
 }
 
 export function TimedRunRowControl({
@@ -37,8 +25,8 @@ export function TimedRunRowControl({
   deviceId,
   deviceType,
   deviceRole,
+  className,
 }: TimedRunRowControlProps): ReactNode {
-  const t = useUiText()
   const limit = timedRunLimitOf(deviceType, deviceRole)
   const { cap, slice, online } = useDeviceCapability({
     trpc,
@@ -46,47 +34,13 @@ export function TimedRunRowControl({
     cap: (d) => d.timedRun,
     slice: (d) => d.state.timedRun,
   })
-  const activeUntil = slice?.activeUntil ?? null
-  const now = useNow(cap !== undefined && activeUntil !== null)
   if (cap === undefined) return null
-
-  const duration = slice?.quickRun?.duration ?? limit.quickRunDefault
-  const unit: TimedRunUnit = limit.unit
-  const unitLabel =
-    unit === 'min' ? t('uiLibrary.timedRun.minutes', 'min') : t('uiLibrary.timedRun.seconds', 's')
-  const armed = activeUntil !== null && activeUntil > now
-
-  if (armed && activeUntil !== null) {
-    const left = timedRunRemaining(activeUntil, now, unit)
-    return (
-      <span className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-        <Button size="xs" variant="outline" disabled={!online} onClick={() => void cap.cancel({})}>
-          <Square className="h-3 w-3" aria-hidden />
-          {t('uiLibrary.timedRun.stop', 'Stop')}
-        </Button>
-        <span className="whitespace-nowrap text-xs tabular-nums text-foreground">
-          {t('uiLibrary.timedRun.remaining', '{{time}} left', {
-            time: `${left} ${unitLabel}`,
-          })}
-        </span>
-      </span>
-    )
-  }
-
   return (
-    <span onClick={(e) => e.stopPropagation()}>
-      <Button
-        size="xs"
-        variant="outline"
-        disabled={!online}
-        onClick={() => void cap.runFor({ duration, unit })}
-      >
-        <Timer className="h-3 w-3" aria-hidden />
-        {t('uiLibrary.timedRun.quickRun', 'Run {{duration}} {{unit}}', {
-          duration,
-          unit: unitLabel,
-        })}
-      </Button>
-    </span>
+    <TimedRunQuick
+      {...timedRunQuickView(limit, slice)}
+      {...timedRunQuickCalls(cap, limit.unit)}
+      online={online}
+      className={className}
+    />
   )
 }

@@ -1,4 +1,5 @@
 import type { SirenDurationRange, SirenOptions, SirenStatus } from '@camstack/types'
+import type { SwitchTimerActions, SwitchTimerModel } from '../../parts/switch-timer-model'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 /** `unknown`: neither the siren nor its switch has reported whether it sounds. */
@@ -62,9 +63,11 @@ export interface SirenCardModel {
   readonly adjustable: SirenAdjustable
   /** The siren's options were asked and failed: the chips are unknown, not absent. */
   readonly optionsUnavailable: boolean
+  /** The switch's timed run; null when the device binds none. */
+  readonly timer: SwitchTimerModel | null
 }
 
-export interface SirenCardActions extends CardCommonActions {
+export interface SirenCardActions extends CardCommonActions, SwitchTimerActions {
   readonly onTrigger: (amount: SirenAmount | null) => void
   readonly onStop: () => void
 }

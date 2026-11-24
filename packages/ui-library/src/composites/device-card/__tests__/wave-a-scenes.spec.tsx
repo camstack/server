@@ -13,7 +13,6 @@ import { coverFixtures } from '../__fixtures__/cover'
 import { fanFixtures } from '../__fixtures__/fan'
 import { heaterFixtures } from '../__fixtures__/heater'
 import { lightFixtures } from '../__fixtures__/light'
-import { plugFixtures } from '../__fixtures__/plug'
 import { fanAxisOf, fanPresetChoice, fanPresetFailure, fanSliceModel } from '../connected/fan-model'
 import { lightColorOf } from '../connected/ConnectedLightCard'
 import { ambientLayers } from '../illustrations/AmbientFx'
@@ -31,7 +30,6 @@ import { HeaterCard } from '../scenes/heater/HeaterCard'
 import type { HeaterCardActions } from '../scenes/heater/model'
 import { LightCard } from '../scenes/light/LightCard'
 import type { LightCardActions } from '../scenes/light/model'
-import { PlugCard } from '../scenes/plug/PlugCard'
 
 afterEach(cleanup)
 
@@ -47,7 +45,15 @@ function coverActions(): CoverCardActions {
   }
 }
 function lightActions(): LightCardActions {
-  return { onPower: vi.fn(), onBrightness: vi.fn(), onColor: vi.fn(), onWhite: vi.fn() }
+  return {
+    onPower: vi.fn(),
+    onBrightness: vi.fn(),
+    onColor: vi.fn(),
+    onWhite: vi.fn(),
+    onTimerStart: vi.fn(),
+    onTimerSave: vi.fn(),
+    onTimerStop: vi.fn(),
+  }
 }
 function fanActions(): FanCardActions {
   return {
@@ -59,10 +65,11 @@ function fanActions(): FanCardActions {
     onAxis: vi.fn(),
     onTimerStart: vi.fn(),
     onTimerStop: vi.fn(),
+    onTimerSave: vi.fn(),
   }
 }
 function heaterActions(): HeaterCardActions {
-  return { onPower: vi.fn(), onTimerStart: vi.fn(), onTimerStop: vi.fn() }
+  return { onPower: vi.fn(), onTimerStart: vi.fn(), onTimerSave: vi.fn(), onTimerStop: vi.fn() }
 }
 
 function cover(drawing: string): CoverCardModel {
@@ -180,28 +187,6 @@ describe('cover card', () => {
 })
 
 describe('shared parts', () => {
-  it('names a whole-hour run "1 h" on the plug timer', () => {
-    const plug = plugFixtures(NOW).find((f) => f.model.timer !== null)
-    if (plug === undefined || plug.model.timer === null) throw new Error('no plug with a timer')
-    const model = {
-      ...plug.model,
-      timer: { ...plug.model.timer, defaultMinutes: 60, endsAt: null },
-    }
-    render(
-      <PlugCard
-        model={model}
-        actions={{
-          onPower: vi.fn(),
-          onTimerStart: vi.fn(),
-          onTimerStop: vi.fn(),
-          onPowerCycle: vi.fn(),
-        }}
-      />,
-    )
-    expect(screen.getByTestId('dc-plug-timer-start').textContent).toContain('1 h')
-    expect(screen.getByTestId('dc-plug-timer-start').textContent).not.toContain('0′')
-  })
-
   it('sends a slider value when the pointer is cancelled mid-drag', () => {
     const actions = coverActions()
     render(<CoverCard model={cover('shutter')} actions={actions} />)

@@ -1,4 +1,5 @@
 import type { ApplianceKind } from '../../illustrations/ApplianceIllustration'
+import type { SwitchTimerActions, SwitchTimerModel } from '../../parts/switch-timer-model'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 /**
@@ -50,9 +51,11 @@ export interface ApplianceCardModel {
   /** Why the machine refuses a remote start (remote start off, door open); null when it may. */
   readonly startBlocked: string | null
   readonly errorLabel: string | null
+  /** The switch's timed run; null when the device binds none. */
+  readonly timer: SwitchTimerModel | null
 }
 
-export interface ApplianceCardActions extends CardCommonActions {
+export interface ApplianceCardActions extends CardCommonActions, SwitchTimerActions {
   readonly onPower: (on: boolean) => void
   readonly onProgram: (id: string) => void
   readonly onStart: () => void

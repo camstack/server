@@ -24,6 +24,7 @@ export function ConnectedHeaterCard({
         onPower: power.onPower,
         onTimerStart: power.onTimerStart,
         onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
       }}
     />
   )

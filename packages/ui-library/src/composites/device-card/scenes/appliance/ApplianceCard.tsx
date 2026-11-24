@@ -9,7 +9,7 @@ import {
   columnButton,
   columnStep,
 } from '../../shell/column-items'
-import { type BottomRow, rowButtons, rowLines, rowText } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowLines, rowText, rowTimer } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -278,6 +278,7 @@ export function ApplianceCard({
                 }),
               ]),
           ...start,
+          ...(model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })]),
         ],
       }}
     />

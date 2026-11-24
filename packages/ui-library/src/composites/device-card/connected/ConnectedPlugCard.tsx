@@ -49,6 +49,7 @@ export function ConnectedPlugCard({
         onPower: power.onPower,
         onTimerStart: power.onTimerStart,
         onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
         onPowerCycle: cycle.onPowerCycle,
       }}
     />

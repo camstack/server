@@ -152,7 +152,7 @@ export const TimedRunStatusSchema = z.object({
 })
 export type TimedRunStatus = z.infer<typeof TimedRunStatusSchema>
 
-/** What the settings form needs: the unit, the bounds and the type's default. */
+/** What a surface needs: the unit, the bounds and the type's default. */
 export const TimedRunOptionsSchema = z.object({
   unit: TimedRunUnitSchema,
   /** The longest run, in `unit`. */
@@ -176,15 +176,12 @@ export const timedRunCapability = {
   // A pet fountain by type; every other device by the `switch` it has (D1097).
   deviceTypes: [DeviceType.PetFountain],
   bindsWhenDeviceHas: ['switch'],
-  deviceConfig: {
-    ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },
-  },
   methods: {
     /** The timed-run options of a device. */
     getOptions: method(z.object({ deviceId: z.number().int() }), TimedRunOptionsSchema),
     /**
-     * The one-tap run of this device. A duration above the type's maximum is
-     * REFUSED (thrown), like `runFor`: the maximum is a safety bound.
+     * The one-tap run of this device, set from the control next to the Run button. A duration
+     * above the type's maximum is REFUSED (thrown), like `runFor`: the maximum is a safety bound.
      */
     setSettings: method(
       z.object({
@@ -192,7 +189,8 @@ export const timedRunCapability = {
         settings: TimedRunSettingsPatchSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      // Same authority as `runFor`: whoever may operate the device may set how long its one tap runs.
+      { kind: 'mutation', auth: 'protected' },
     ),
     /**
      * Turn the device on and arm its off. A run already armed is replaced (the

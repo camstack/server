@@ -1436,7 +1436,7 @@
 | `terminalSession.close` | mutation | admin | terminal-session |
 | `timedRun.getStatus` | query | protected | timed-run (auto) |
 | `timedRun.getOptions` | query | protected | timed-run |
-| `timedRun.setSettings` | mutation | admin | timed-run |
+| `timedRun.setSettings` | mutation | protected | timed-run |
 | `timedRun.runFor` | mutation | protected | timed-run |
 | `timedRun.cancel` | mutation | protected | timed-run |
 | `toast.onToast` | subscription | protected | toast |
@@ -5063,7 +5063,7 @@
 
 - **Source:** `packages/types/src/capabilities/timed-run.cap.ts:170`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `pet-fountain`
-- **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
+- **Archetypes:** status(push) · runtimeState · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`
 - **runtimeState:** `TimedRunStatusSchema`
 
@@ -5071,7 +5071,7 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `timedRun.getStatus` | query | protected | `{ deviceId: number }` | `TimedRunStatusSchema` |
 | getOptions | `timedRun.getOptions` | query | protected | `{ deviceId: number }` | `TimedRunOptionsSchema` |
-| setSettings | `timedRun.setSettings` | mutation | admin | `{ deviceId: number; settings: TimedRunSettingsPatchSchema }` | `void` |
+| setSettings | `timedRun.setSettings` | mutation | protected | `{ deviceId: number; settings: TimedRunSettingsPatchSchema }` | `void` |
 | runFor | `timedRun.runFor` | mutation | protected | `{ deviceId: number; duration: number; unit: TimedRunUnitSchema }` | `TimedRunResultSchema` |
 | cancel | `timedRun.cancel` | mutation | protected | `{ deviceId: number }` | `void` |
 

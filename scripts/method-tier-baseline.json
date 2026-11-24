@@ -1314,7 +1314,7 @@
   "timedRun.cancel": "protected",
   "timedRun.getOptions": "protected",
   "timedRun.runFor": "protected",
-  "timedRun.setSettings": "admin",
+  "timedRun.setSettings": "protected",
   "toast.onToast": "protected",
   "training.canaryResult": "admin",
   "training.cancelJob": "admin",

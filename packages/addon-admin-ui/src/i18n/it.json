@@ -10436,10 +10436,12 @@
       "remaining": "{{time}} rimasti",
       "run": "Avvia",
       "unsupported": "Questo dispositivo non supporta il timer.",
-      "quickRun": "Accendi per {{duration}} {{unit}}",
       "stop": "Ferma",
       "restart": "Riavvia",
-      "running": "Esecuzione a tempo"
+      "running": "Esecuzione a tempo",
+      "runAria": "Avvia per {{duration}} {{unit}}",
+      "stopAria": "Ferma l’esecuzione a tempo, {{left}}",
+      "saveFailed": "Impossibile salvare: {{reason}}"
     },
     "powerMeterLine": {
       "energy": "Energia",
@@ -10615,15 +10617,6 @@
       "plug": {
         "on": "Accesa",
         "off": "Spenta",
-        "minutes": "{{m}} min",
-        "hoursMinutes": "{{h}} h {{m}}′",
-        "less": "Meno",
-        "more": "Più",
-        "start": "Avvia {{duration}}",
-        "startAria": "Accendi per {{duration}}, poi spegni",
-        "stop": "Ferma",
-        "stopAria": "Ferma il ciclo a tempo e spegni",
-        "hours": "{{h}} h",
         "restart": "Riavvia"
       },
       "climate": {

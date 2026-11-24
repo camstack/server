@@ -18344,13 +18344,6 @@
       "summary": "A stored duration as one number per visible unit. A larger unit takes what fits whole; the smallest takes the rest, so what is shown always sums back."
     },
     {
-      "name": "splitSwitchTimerDuration",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
-      "summary": "The switch's timed run, as every card whose power is a `switch` offers it (plug, heater, fan): one model, one stepping rule, one control (`SwitchTimer`)."
-    },
-    {
       "name": "StableTabPanel",
       "kind": "component",
       "area": "composites",
@@ -19023,13 +19016,6 @@
       ]
     },
     {
-      "name": "stepSwitchTimer",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
-      "summary": "The next duration one press of + or - gives: 5 min steps up to an hour, then 15."
-    },
-    {
       "name": "StepTimings",
       "kind": "component",
       "area": "composites",
@@ -19621,13 +19607,6 @@
       ]
     },
     {
-      "name": "SWITCH_TIMER_MIN_MINUTES",
-      "kind": "constant",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
-      "summary": "The switch's timed run, as every card whose power is a `switch` offers it (plug, heater, fan): one model, one stepping rule, one control (`SwitchTimer`)."
-    },
-    {
       "name": "SwitchInlineControl",
       "kind": "component",
       "area": "composites",
@@ -19646,7 +19625,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/SwitchTimer.tsx",
-      "summary": "The switch's timed run — ONE control for every card whose power is a switch: \"- Run 25 min +\" until it runs, then \"Stop · mm:ss\".",
+      "summary": "The switch's timed run — the one compact control every card shares with the device rows: \"⏱ 25 min ▶\" until it runs, then \"■ 12 min left\". The number is editable and saved per device.",
       "props": [
         {
           "name": "timer",

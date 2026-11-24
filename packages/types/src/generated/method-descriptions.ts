@@ -1431,7 +1431,7 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "timedRun.getOptions": "The timed-run options of a device.",
   "timedRun.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "timedRun.runFor": "Turn the device on and arm its off. A run already armed is replaced (the new deadline wins). Refuses with a typed reason above the type's maximum.",
-  "timedRun.setSettings": "The one-tap run of this device. A duration above the type's maximum is REFUSED (thrown), like runFor: the maximum is a safety bound.",
+  "timedRun.setSettings": "The one-tap run of this device, set from the control next to the Run button. A duration above the type's maximum is REFUSED (thrown), like runFor: the maximum is a safety bound.",
   "toast.onToast": "Stream toast notifications from the hub to the admin UI.",
   "training.canaryResult": "Pin the registered model on these accelerators, remembering what it replaced.",
   "training.cancelJob": "Cancel a training job.",

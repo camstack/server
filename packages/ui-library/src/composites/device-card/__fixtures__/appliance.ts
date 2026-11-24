@@ -156,6 +156,7 @@ function plugFixture(kind: ApplianceKind, phase: PlugPhase): ApplianceFixture {
       progress: null,
       startBlocked: null,
       errorLabel: null,
+      timer: null,
     },
   }
 }
@@ -215,6 +216,7 @@ function cycleFixture(
       progress: phase === 'idle' ? null : Math.round(((total - LEFT_MINUTES) / total) * 100),
       startBlocked: null,
       errorLabel: null,
+      timer: null,
     },
   }
 }

@@ -1447,7 +1447,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'timedRun.getOptions': { capName: "timed-run", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'timedRun.getStatus': { capName: "timed-run", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'timedRun.runFor': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'timedRun.setSettings': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'timedRun.setSettings': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'toast.onToast': { capName: "toast", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'training.canaryResult': { capName: "training", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'training.cancelJob': { capName: "training", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

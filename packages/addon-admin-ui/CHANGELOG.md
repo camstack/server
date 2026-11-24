@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The timed run's one-tap duration moved from the device settings page to the control next to the start button; its strings follow.
+
 ## [1.2.744] - 2026-11-24
 
 ### Changed

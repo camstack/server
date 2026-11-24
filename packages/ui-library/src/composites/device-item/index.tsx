@@ -244,7 +244,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
               }
             : {})}
           className={cn(
-            'flex items-center gap-2 cursor-pointer hover:border-foreground-subtle/30 w-full px-2.5 py-1.5',
+            'flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer hover:border-foreground-subtle/30 w-full px-2.5 py-1.5',
             // Batch-mode selected highlight — mirrors the table row's token so
             // the selected state reads identically across views.
             selection?.selected && 'bg-primary/10',
@@ -409,7 +409,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           showFeatureRow={false}
         />
 
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
           <DeviceItemPreview
             trpc={trpc}
             device={device}

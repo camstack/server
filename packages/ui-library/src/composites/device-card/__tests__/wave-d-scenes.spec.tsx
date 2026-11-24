@@ -43,7 +43,13 @@ import { compassOf, kmhOf, weatherSkyOf } from '../scenes/weather/model'
 afterEach(cleanup)
 
 const noop = (): void => undefined
-const SIREN_NOOP = { onTrigger: noop, onStop: noop }
+const SIREN_NOOP = {
+  onTrigger: noop,
+  onStop: noop,
+  onTimerStart: () => Promise.resolve({ ok: true as const, activeUntil: 0 }),
+  onTimerSave: () => Promise.resolve(),
+  onTimerStop: () => Promise.resolve(),
+}
 
 function fixture<T extends { readonly id: string }>(list: readonly T[], id: string): T {
   const found = list.find((f) => f.id === id)

@@ -84,9 +84,13 @@ export function ConnectedSirenCard({
         run: sirenRunOf(sirenSlice, activity === 'sounding'),
         adjustable: sirenTriggers ? sirenAdjustableOf(options.data) : sirenAdjustableOf(undefined),
         optionsUnavailable: sirenTriggers && readsOptions && options.isError,
+        timer: power.timer,
       }}
       actions={{
         ...card.actions,
+        onTimerStart: power.onTimerStart,
+        onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
         onTrigger: (amount) =>
           sendOnce(() =>
             sirenTriggers

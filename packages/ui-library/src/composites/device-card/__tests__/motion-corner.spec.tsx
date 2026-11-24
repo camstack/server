@@ -18,6 +18,7 @@ function actions(onMotionTrigger: PlugCardActions['onMotionTrigger']): PlugCardA
     onPower: vi.fn(),
     onTimerStart: vi.fn(),
     onTimerStop: vi.fn(),
+    onTimerSave: vi.fn(),
     onPowerCycle: vi.fn(),
     ...(onMotionTrigger === undefined ? {} : { onMotionTrigger }),
   }

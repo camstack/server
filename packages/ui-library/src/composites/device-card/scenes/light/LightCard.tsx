@@ -5,6 +5,7 @@ import { LightIllustration, rgbCss } from '../../illustrations/LightIllustration
 import { CardButton } from '../../parts/CardButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { columnButton, columnPopover, columnSlider } from '../../shell/column-items'
+import { rowTimer } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -153,6 +154,7 @@ export function LightCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
+        bottom: model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })],
       }}
     />
   )

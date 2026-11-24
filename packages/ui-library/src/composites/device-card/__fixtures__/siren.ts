@@ -31,6 +31,7 @@ const base = (): SirenCardModel => ({
   run: null,
   adjustable: ADJUSTABLE,
   optionsUnavailable: false,
+  timer: { defaultMinutes: 1, maxMinutes: 10, endsAt: null },
 })
 
 export function sirenFixtures(): readonly SirenFixture[] {

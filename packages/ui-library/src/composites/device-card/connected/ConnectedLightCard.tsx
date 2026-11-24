@@ -57,6 +57,7 @@ export function ConnectedLightCard({
         since: power.since,
         brightness: dev?.brightness === undefined ? null : (brightness?.level ?? null),
         color: lightColorOf(color),
+        timer: power.timer,
         palette,
         white: white
           ? {
@@ -70,6 +71,9 @@ export function ConnectedLightCard({
       actions={{
         ...card.actions,
         onPower: power.onPower,
+        onTimerStart: power.onTimerStart,
+        onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
         onBrightness: (level) => send(() => dev?.brightness?.setBrightness({ level })),
         onColor: (rgb) => send(() => colorCap?.setColor({ color: { mode: 'rgb', rgb } })),
         onWhite: (kelvin) =>

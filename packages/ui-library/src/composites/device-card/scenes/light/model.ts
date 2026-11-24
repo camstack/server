@@ -1,4 +1,5 @@
 import type { LightRgb } from '../../illustrations/LightIllustration'
+import type { SwitchTimerActions, SwitchTimerModel } from '../../parts/switch-timer-model'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 /** The white range the Bianco popover offers, in kelvin. */
@@ -31,9 +32,11 @@ export interface LightCardModel {
   readonly palette: boolean
   /** It takes a white temperature: the White popover, at this kelvin (null = not reported). */
   readonly white: { readonly kelvin: number | null } | null
+  /** The switch's timed run; null when the device binds none. */
+  readonly timer: SwitchTimerModel | null
 }
 
-export interface LightCardActions extends CardCommonActions {
+export interface LightCardActions extends CardCommonActions, SwitchTimerActions {
   readonly onPower: (on: boolean) => void
   readonly onBrightness: (level: number) => void
   readonly onColor: (color: LightRgb) => void

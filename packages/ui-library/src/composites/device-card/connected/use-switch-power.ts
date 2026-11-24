@@ -4,7 +4,8 @@
  * off through it — and `timed-run`, which every device with a switch binds
  * (D1097), is the switch's timer.
  */
-import { timedRunLimitOf, timedRunMaxIn } from '@camstack/types'
+import { timedRunLimitOf } from '@camstack/types'
+import { timedRunQuickCalls, timedRunQuickView } from '../../device-controls/timed-run-quick-model'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
@@ -40,15 +41,16 @@ export function useSwitchPower({ deviceId, card }: SwitchPowerInput): SwitchPowe
   const cap = dev?.switch
   const timedRun = dev?.timedRun
   const limit = card.deviceType === null ? null : timedRunLimitOf(card.deviceType, card.role)
-  const timer: SwitchTimerModel | null =
+  const quick =
     timedRun === undefined || run === undefined || limit === null || limit.unit !== 'min'
       ? null
-      : {
-          defaultMinutes:
-            run.quickRun?.unit === 'min' ? run.quickRun.duration : limit.quickRunDefault,
-          maxMinutes: timedRunMaxIn(limit),
-          endsAt: run.activeUntil,
-        }
+      : timedRunQuickView(limit, run)
+  const timer: SwitchTimerModel | null =
+    quick === null
+      ? null
+      : { defaultMinutes: quick.saved, maxMinutes: quick.max, endsAt: quick.activeUntil }
+  const calls = timedRun === undefined ? null : timedRunQuickCalls(timedRun, 'min')
+  const unbound = (): Promise<never> => Promise.reject(new Error('timed-run is not bound'))
   const report = { fail: card.fail, succeed: card.succeed }
   return {
     bound: cap !== undefined,
@@ -56,8 +58,9 @@ export function useSwitchPower({ deviceId, card }: SwitchPowerInput): SwitchPowe
     since: sinceText(display?.lastChangedAt, Date.now(), t) ?? null,
     timer,
     onPower: (on) => reportedCommand(runCommand, report)(() => cap?.setState({ on })),
-    onTimerStart: (minutes) =>
-      void timedRun?.runFor({ duration: minutes, unit: 'min' }).then(card.succeed, card.fail),
-    onTimerStop: () => void timedRun?.cancel({}).then(card.succeed, card.fail),
+    // The control says a refusal itself, so these hand the promise back instead of the card notice.
+    onTimerStart: (minutes) => calls?.run(minutes) ?? unbound(),
+    onTimerSave: (minutes) => calls?.save(minutes) ?? unbound(),
+    onTimerStop: () => calls?.stop() ?? unbound(),
   }
 }

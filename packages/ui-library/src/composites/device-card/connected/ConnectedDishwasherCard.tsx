@@ -15,6 +15,7 @@ import {
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
+import { useSwitchPower } from './use-switch-power'
 
 interface ProgramCatalogue {
   readonly getOptions?: (input?: unknown) => Promise<unknown>
@@ -80,6 +81,7 @@ export function ConnectedDishwasherCard({
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
+  const power = useSwitchPower({ deviceId, card })
   const slice = useDeviceStateSlice(
     dev?.dishwasher === undefined ? undefined : dev.state.dishwasher,
   )
@@ -119,6 +121,7 @@ export function ConnectedDishwasherCard({
         progress: display.progress,
         startBlocked: dishwasherStartBlocked(display, t),
         errorLabel: display.errorLabel,
+        timer: power.timer,
       }}
       actions={{
         ...card.actions,
@@ -128,6 +131,9 @@ export function ConnectedDishwasherCard({
         onPause: () => send(() => cap.pause({})),
         onResume: () => send(() => cap.resume({})),
         onStop: () => send(() => cap.stop({})),
+        onTimerStart: power.onTimerStart,
+        onTimerSave: power.onTimerSave,
+        onTimerStop: power.onTimerStop,
       }}
     />
   )

@@ -10414,10 +10414,12 @@
       "remaining": "{{time}} left",
       "run": "Run",
       "unsupported": "This device cannot run on a timer.",
-      "quickRun": "Run {{duration}} {{unit}}",
       "stop": "Stop",
       "restart": "Restart",
-      "running": "Timed run"
+      "running": "Timed run",
+      "runAria": "Run for {{duration}} {{unit}}",
+      "stopAria": "Stop the timed run, {{left}}",
+      "saveFailed": "Could not save: {{reason}}"
     },
     "powerMeterLine": {
       "energy": "Energy",
@@ -10593,15 +10595,6 @@
       "plug": {
         "on": "On",
         "off": "Off",
-        "minutes": "{{m}} min",
-        "hoursMinutes": "{{h}} h {{m}}′",
-        "less": "Shorter",
-        "more": "Longer",
-        "start": "Run {{duration}}",
-        "startAria": "Turn on for {{duration}}, then off",
-        "stop": "Stop",
-        "stopAria": "Stop the timed run and turn off",
-        "hours": "{{h}} h",
         "restart": "Restart"
       },
       "climate": {

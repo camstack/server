@@ -1424,7 +1424,7 @@
   "timedRun.getOptions": "viewer",
   "timedRun.getStatus": "viewer",
   "timedRun.runFor": "viewer",
-  "timedRun.setSettings": "admin",
+  "timedRun.setSettings": "viewer",
   "toast.onToast": "admin",
   "training.canaryResult": "admin",
   "training.cancelJob": "admin",

@@ -126,8 +126,9 @@ function HistoryActuations(): ReactElement {
 const noop = (): void => undefined
 const PLUG_ACTIONS: PlugCardActions = {
   onPower: noop,
-  onTimerStart: noop,
-  onTimerStop: noop,
+  onTimerStart: () => Promise.resolve({ ok: true, activeUntil: 0 }),
+  onTimerSave: () => Promise.resolve(),
+  onTimerStop: () => Promise.resolve(),
   onPowerCycle: noop,
 }
 const CLIMATE_ACTIONS: ClimateCardActions = {

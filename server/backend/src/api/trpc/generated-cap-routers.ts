@@ -20824,7 +20824,7 @@ export function createCapRouter_timedRun(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
-    setSettings: adminProcedure
+    setSettings: protectedProcedure
       .input(timedRunCapability.methods.setSettings.input.loose())
       .output(timedRunCapability.methods.setSettings.output)
       .mutation(async ({ input, ctx }) => {

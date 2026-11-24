@@ -10,7 +10,10 @@ import type { ClimateCardActions } from '../scenes/climate/model'
 import { PlugCard } from '../scenes/plug/PlugCard'
 import type { PlugCardActions } from '../scenes/plug/model'
 
-afterEach(cleanup)
+afterEach(() => {
+  vi.useRealTimers()
+  cleanup()
+})
 
 const NOW = 1_700_000_000_000
 
@@ -19,6 +22,7 @@ function plugActions(): PlugCardActions {
     onPower: vi.fn(),
     onTimerStart: vi.fn(),
     onTimerStop: vi.fn(),
+    onTimerSave: vi.fn(),
     onPowerCycle: vi.fn(),
     onSupply: vi.fn(),
     onConsumableReset: vi.fn(),
@@ -117,6 +121,8 @@ describe('plug scene — the zones of each mockup variant', () => {
 
   for (const fixture of plugFixtures(NOW)) {
     it(`${fixture.id}: shell anatomy, power and the timed run`, () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(NOW)
       render(
         <PlugCard
           model={fixture.model}
@@ -131,9 +137,9 @@ describe('plug scene — the zones of each mockup variant', () => {
       expect(present('dc-plug-power')).toBe(true)
       // A running cycle shows its countdown and Stop; otherwise the picker and Start.
       const running = fixture.model.timer?.endsAt !== null
-      expect(present('dc-plug-timer')).toBe(!running)
+      expect(present('dc-plug-timer')).toBe(true)
       expect(present('dc-plug-timer-stop')).toBe(running)
-      expect(present('dc-plug-timer-start')).toBe(!running)
+      expect(present('dc-plug-timer-run')).toBe(!running)
       expect(present('dc-reason')).toBe(false)
     })
   }
@@ -142,7 +148,7 @@ describe('plug scene — the zones of each mockup variant', () => {
     const [fixture] = plugFixtures(NOW)
     if (fixture === undefined) throw new Error('no plug fixture')
     render(<PlugCard model={{ ...fixture.model, timer: null }} actions={plugActions()} />)
-    for (const id of ['dc-plug-timer', 'dc-plug-timer-start', 'dc-plug-timer-stop']) {
+    for (const id of ['dc-plug-timer', 'dc-plug-timer-run', 'dc-plug-timer-stop']) {
       expect(present(id), id).toBe(false)
     }
     expect(present('dc-plug-power')).toBe(true)
@@ -289,7 +295,7 @@ describe('shell behaviour shared by every scene', () => {
     )
     expect(present('dc-reason')).toBe(true)
     expect(screen.getByTestId('dc-plug-power').getAttribute('aria-disabled')).toBe('true')
-    expect(screen.getByTestId('dc-plug-timer-stop')).toHaveProperty('disabled', true)
+    expect(screen.getByTestId('dc-plug-timer-run')).toHaveProperty('disabled', true)
   })
 
   it('opens the consumables popover and resets an item', () => {

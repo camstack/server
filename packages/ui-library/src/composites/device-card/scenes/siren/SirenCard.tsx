@@ -8,7 +8,7 @@ import { CardIcon } from '../../parts/CardIcon'
 import { CountdownRing } from '../../parts/CountdownRing'
 import { MenuButton } from '../../parts/MenuButton'
 import { useCountdown } from '../../parts/use-countdown'
-import { type BottomRow, rowButtons, rowText } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowText, rowTimer } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
@@ -283,7 +283,10 @@ export function SirenCard({
           </CountdownRing>
         ),
         columns: { right: sideCommands(model, actions, t) },
-        bottom: bottomRows(model, pick, setPick, t),
+        bottom: [
+          ...bottomRows(model, pick, setPick, t),
+          ...(model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })]),
+        ],
       }}
     />
   )

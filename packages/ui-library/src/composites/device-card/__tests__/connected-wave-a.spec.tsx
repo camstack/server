@@ -150,7 +150,7 @@ describe('the heater timer is timed-run', () => {
     hub.deviceType = DeviceType.Switch
     hub.role = DeviceRole.SwitchHeater
     render(<ConnectedHeaterCard deviceId={1} />)
-    fireEvent.click(screen.getByTestId('dc-plug-timer-start'))
+    fireEvent.click(screen.getByTestId('dc-plug-timer-run'))
     await vi.waitFor(() =>
       expect(hub.runFor).toHaveBeenCalledWith({
         duration: expect.any(Number),

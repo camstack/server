@@ -57,10 +57,14 @@ export function ConnectedApplianceCard({
         progress: null,
         startBlocked: null,
         errorLabel: null,
+        timer: power.timer,
       }}
       actions={{
         ...card.actions,
         onPower: power.onPower,
+        onTimerStart: power.onTimerStart,
+        onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
         onProgram: noop,
         onStart: noop,
         onPause: noop,

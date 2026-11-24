@@ -48,6 +48,9 @@ function applianceActions(): ApplianceCardActions {
     onPause: vi.fn(),
     onResume: vi.fn(),
     onStop: vi.fn(),
+    onTimerStart: vi.fn(),
+    onTimerSave: vi.fn(),
+    onTimerStop: vi.fn(),
   }
 }
 

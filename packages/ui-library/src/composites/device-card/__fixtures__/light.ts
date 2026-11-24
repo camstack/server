@@ -131,6 +131,7 @@ export function lightFixtures(): readonly LightFixture[] {
       color: row.color,
       palette: row.palette,
       white: row.kelvin === null ? null : { kelvin: row.kelvin },
+      timer: { defaultMinutes: 15, maxMinutes: 240, endsAt: null },
     },
   }))
 }

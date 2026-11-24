@@ -77,6 +77,9 @@ const SENSOR_VALUE_TYPES: ReadonlySet<string> = new Set<string>([
  * remaining ones (motion-trigger toggle, reboot). Each is derived from the
  * device's features and bound capabilities, as on the wide row.
  */
+/** The timed run as an item of its own in a row: it keeps its width, and below `sm` takes a line. */
+const TIMED_RUN_OWN_ITEM = 'max-sm:basis-full max-sm:items-end'
+
 export type DeviceItemActionsPart = 'all' | 'main' | 'lead' | 'rest'
 
 export interface DeviceItemActionsProps {
@@ -156,6 +159,9 @@ export function DeviceItemActions({
   // PTZ quick-action: a floating popover with the movement d-pad +
   // presets (NO auto-track — that lives in the device-detail panel).
   const showPtz = (device.features ?? []).includes('pan-tilt-zoom')
+  // In a table the control sits in the control column. Elsewhere it is its own item of the row,
+  // after the column: never squeezed by the slider, and on its own line when the width runs out.
+  const timedRunInColumn = placement === 'table'
   const timedRun =
     InlineControl !== null && !isModelRow ? (
       <TimedRunRowControl
@@ -163,6 +169,7 @@ export function DeviceItemActions({
         deviceId={device.id}
         deviceType={device.type}
         deviceRole={device.role ?? null}
+        className={timedRunInColumn || part === 'lead' ? undefined : TIMED_RUN_OWN_ITEM}
       />
     ) : null
 
@@ -214,12 +221,13 @@ export function DeviceItemActions({
             InlineControl !== null && (
               <>
                 <TypeInlineControl trpc={trpc} device={device} InlineControl={InlineControl} />
-                {inlineExtras && timedRun}
+                {inlineExtras && timedRunInColumn && timedRun}
               </>
             )
           )}
         </ControlColumn>
       )}
+      {inlineExtras && !timedRunInColumn && timedRun}
       {inlineExtras && !isSensorRow && !isModelRow && InlineControl === null && showOnMotion && (
         <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
       )}
@@ -292,6 +300,7 @@ function ContainerPrimaryInline({
   const isModelRow = MODEL_ROW_TYPES.has(child.type)
   const childControl =
     isSensorRow || isModelRow ? null : resolveDeviceControl(child.type, child.role)
+  const timedRunInColumn = placement === 'table'
   const timedRun =
     childControl?.InlineControl != null ? (
       <TimedRunRowControl
@@ -299,6 +308,7 @@ function ContainerPrimaryInline({
         deviceId={child.id}
         deviceType={child.type}
         deviceRole={child.role ?? null}
+        className={timedRunInColumn || part === 'lead' ? undefined : TIMED_RUN_OWN_ITEM}
       />
     ) : null
   if (part === 'lead') return timedRun
@@ -323,10 +333,13 @@ function ContainerPrimaryInline({
   const InlineControl = control?.InlineControl ?? null
   if (InlineControl === null) return null
   return (
-    <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
-      <TypeInlineControl trpc={trpc} device={child} InlineControl={InlineControl} />
-      {part === 'all' && timedRun}
-    </ControlColumn>
+    <>
+      <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
+        <TypeInlineControl trpc={trpc} device={child} InlineControl={InlineControl} />
+        {part === 'all' && timedRunInColumn && timedRun}
+      </ControlColumn>
+      {part === 'all' && !timedRunInColumn && timedRun}
+    </>
   )
 }
 

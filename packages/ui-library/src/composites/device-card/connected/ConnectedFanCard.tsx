@@ -69,6 +69,7 @@ export function ConnectedFanCard({
         onPower: power.onPower,
         onTimerStart: power.onTimerStart,
         onTimerStop: power.onTimerStop,
+        onTimerSave: power.onTimerSave,
         onSpeed: (speed) => send(() => cap?.setPercentage?.({ speed })),
         onDirection: (direction) => send(() => cap?.setDirection?.({ direction })),
         onOscillating: (oscillating) => send(() => cap?.setOscillating?.({ oscillating })),
