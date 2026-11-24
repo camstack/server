@@ -1,11 +1,14 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { DeviceType } from '@camstack/types'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CameraRow } from '../../components/archive/camera-rows'
+import { withDeviceSearchHub, type SearchHubDevice } from '../../test-setup/device-search-hub'
+import '../../i18n'
 
 expect.extend(jestDomMatchers)
 
@@ -20,31 +23,13 @@ const row = (deviceId: number, name: string): CameraRow => ({
   eventRows: 1,
   eventBytes: 1,
 })
+// The REAL camera picker over a fake search hub: a light sits in the fleet to prove it is left out.
+const FLEET: readonly SearchHubDevice[] = [
+  { id: 101, name: 'Front door', type: DeviceType.Camera },
+  { id: 102, name: 'Garden', type: DeviceType.Camera },
+  { id: 103, name: 'Porch light', type: DeviceType.Light },
+]
 const ROWS: readonly CameraRow[] = [row(101, 'Front door'), row(102, 'Garden')]
-
-// The device picker has its own spec; here a native select stands in for it.
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
-  return {
-    ...real,
-    DeviceValuePicker: ({
-      value,
-      onChange,
-    }: {
-      value: { deviceId: number } | null
-      onChange: (picked: { deviceId: number } | null) => void
-    }) => (
-      <select
-        aria-label="Camera"
-        value={value?.deviceId ?? ''}
-        onChange={(e) => onChange({ deviceId: Number(e.target.value) })}
-      >
-        <option value="101">Front door</option>
-        <option value="102">Garden</option>
-      </select>
-    ),
-  }
-})
 
 vi.mock('../../components/archive/use-archive-data', () => ({
   useArchiveData: () => ({
@@ -100,19 +85,22 @@ function Search(): ReactElement {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route
-          path="/archive"
-          element={
-            <>
-              <ArchivePage />
-              <Search />
-            </>
-          }
-        />
-      </Routes>
-    </MemoryRouter>,
+    withDeviceSearchHub(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route
+            path="/archive"
+            element={
+              <>
+                <ArchivePage />
+                <Search />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+      FLEET,
+    ),
   )
 }
 
@@ -124,12 +112,13 @@ describe('ArchivePage', () => {
     expect(screen.queryByTestId('archive-camera-section')).not.toBeInTheDocument()
   })
 
-  it('a camera row opens the Cameras section on that camera', () => {
+  it('a camera row opens the Cameras section on that camera', async () => {
     renderAt('/archive')
     fireEvent.click(screen.getByText('Garden'))
     expect(screen.getByTestId('search')).toHaveTextContent('section=cameras&camera=102')
     expect(screen.getByTestId('review-section')).toHaveTextContent('102')
-    expect(screen.getByRole('combobox', { name: 'Camera' })).toHaveValue('102')
+    // The picker names the camera it holds, not its id.
+    await waitFor(() => expect(screen.getByTestId('archive-camera')).toHaveTextContent('Garden'))
   })
 
   it('the Cameras section has no camera list, and Review is its default view', () => {
@@ -148,9 +137,16 @@ describe('ArchivePage', () => {
     expect(screen.getByTestId('search')).toHaveTextContent('view=settings')
   })
 
-  it('picking another camera in the header keeps the section and replaces the camera', () => {
+  it('the header picker names the camera, offers cameras only, and picking one replaces the camera', async () => {
     renderAt('/archive?section=cameras&camera=101')
-    fireEvent.change(screen.getByRole('combobox', { name: 'Camera' }), { target: { value: '102' } })
+    const picker = screen.getByTestId('archive-camera')
+    await waitFor(() => expect(picker).toHaveTextContent('Front door'))
+
+    fireEvent.click(within(picker).getAllByRole('button')[0])
+    const garden = await screen.findByRole('option', { name: /Garden/ })
+    expect(screen.queryByRole('option', { name: /Porch light/ })).toBeNull()
+
+    fireEvent.click(garden)
     expect(screen.getByTestId('review-section')).toHaveTextContent('102')
   })
 })

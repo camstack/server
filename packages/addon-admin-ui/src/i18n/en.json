@@ -9092,7 +9092,9 @@
       "uncoveredHintSkip": "Sit that light out. No verdict, no alarm, no flag touched — it picks itself back up when a light it knows returns. This is why the night capture is optional.",
       "uncoveredHintJudge": "Compare against the references you do have. Only correct when the two lights genuinely look alike (a floodlit driveway, an indoor lamp) — against a real infrared frame it will report a change that did not happen.",
       "matchThreshold": "Match threshold — <0>{{value}}</0>",
-      "confirmHint": "The model is asked <0>only</0> when the region has already changed enough to flip the answer — roughly twice a week for a bin, not once a minute. It reasons about the object rather than the pixels, so rain, shadows and a repositioned bin stop counting as the thing being taken. If it cannot be reached, the change is held rather than announced."
+      "confirmHint": "The model is asked <0>only</0> when the region has already changed enough to flip the answer — roughly twice a week for a bin, not once a minute. It reasons about the object rather than the pixels, so rain, shadows and a repositioned bin stop counting as the thing being taken. If it cannot be reached, the change is held rather than announced.",
+      "nameRequired": "The scene needs a name.",
+      "questionRequired": "The confirmation question cannot be empty."
     },
     "clipBandBar": {
       "eventsDensity": "Events · density"
@@ -13554,7 +13556,7 @@
         "carrierHint": "Empty leaves it to the transmitter; most televisions use 38.",
         "nativeHint": "A code learned from the transmitter, in its own format. It is sent as is when the transmitter replays that format."
       },
-      "stepDelay": "Pause between steps (ms)",
+      "stepDelay": "Pause between steps",
       "stepDelayHint": "How long the television needs between two presses of a source.",
       "error": {
         "stepDelay": "Enter a whole number from {{min}} to {{max}}.",

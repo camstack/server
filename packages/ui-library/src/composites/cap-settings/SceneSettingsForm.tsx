@@ -171,8 +171,17 @@ export function SceneSettingsForm({
 
   const confirmEnabled = monitor.confirm?.enabled === true
   const pending = pendingPatch(monitor, draft, confirmEnabled, patchCheck)
-  const pendingCount = Object.keys(pending).length
+  const writeCount = Object.keys(pending).length
+  const dirty = !sameDraft(draft, draftOf(monitor))
+  const problem = draftProblem(monitor, draft, t)
+  // A dirty draft always offers Save / Discard, even when nothing can be written yet.
+  const pendingCount = dirty ? Math.max(1, writeCount) : 0
   const save = (): void => {
+    if (problem !== undefined) return
+    if (writeCount === 0) {
+      setDraft(draftOf(monitor))
+      return
+    }
     setDraft((d) => ({
       ...d,
       label: d.label.trim(),
@@ -539,6 +548,7 @@ export function SceneSettingsForm({
       <FormSaveBar
         pendingCount={pendingCount}
         saving={disabled}
+        problem={problem}
         onSave={save}
         onDiscard={() => setDraft(draftOf(monitor))}
       />
@@ -557,6 +567,20 @@ function sameDraft(a: Draft, b: Draft): boolean {
     a.minObservationSpacingSec === b.minObservationSpacingSec &&
     a.confirmPrompt === b.confirmPrompt
   )
+}
+
+/** Why the draft cannot be saved, or `undefined` when it can. */
+function draftProblem(monitor: SceneMonitor, draft: Draft, t: UiTextFn): string | undefined {
+  if (draft.label.trim().length === 0) {
+    return t('uiLibrary.sceneSettingsForm.nameRequired', 'The scene needs a name.')
+  }
+  if (monitor.confirm !== undefined && draft.confirmPrompt.trim().length === 0) {
+    return t(
+      'uiLibrary.sceneSettingsForm.questionRequired',
+      'The confirmation question cannot be empty.',
+    )
+  }
+  return undefined
 }
 
 /** What Save would write: only the fields whose draft differs from the stored scene. */

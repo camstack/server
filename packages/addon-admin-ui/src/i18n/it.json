@@ -9114,7 +9114,9 @@
       "uncoveredHintSkip": "Salta quella luce. Nessun verdetto, nessun allarme, nessun flag toccato: riprende da sola quando torna una luce che conosce. Per questo la cattura notturna è facoltativa.",
       "uncoveredHintJudge": "Confronta con i riferimenti che hai. Corretto solo quando le due luci sono davvero simili (un vialetto illuminato, una lampada interna): contro un vero fotogramma a infrarossi segnalerà un cambiamento che non è avvenuto.",
       "matchThreshold": "Soglia di corrispondenza — <0>{{value}}</0>",
-      "confirmHint": "Il modello viene interpellato <0>solo</0> quando la regione è già cambiata abbastanza da ribaltare la risposta: circa due volte a settimana per un bidone, non una volta al minuto. Ragiona sull'oggetto e non sui pixel, quindi pioggia, ombre e un bidone spostato non contano più come la cosa portata via. Se non è raggiungibile, il cambiamento viene trattenuto invece di essere annunciato."
+      "confirmHint": "Il modello viene interpellato <0>solo</0> quando la regione è già cambiata abbastanza da ribaltare la risposta: circa due volte a settimana per un bidone, non una volta al minuto. Ragiona sull'oggetto e non sui pixel, quindi pioggia, ombre e un bidone spostato non contano più come la cosa portata via. Se non è raggiungibile, il cambiamento viene trattenuto invece di essere annunciato.",
+      "nameRequired": "La scena ha bisogno di un nome.",
+      "questionRequired": "La domanda di conferma non può essere vuota."
     },
     "clipBandBar": {
       "eventsDensity": "Eventi · densità"
@@ -13576,7 +13578,7 @@
         "carrierHint": "Vuoto: decide il trasmettitore; la maggior parte dei televisori usa 38.",
         "nativeHint": "Un codice appreso dal trasmettitore, nel suo formato. Viene inviato così com'è se il trasmettitore riproduce quel formato."
       },
-      "stepDelay": "Pausa tra i passi (ms)",
+      "stepDelay": "Pausa tra i passi",
       "stepDelayHint": "Quanto tempo serve al televisore tra due pressioni di una sorgente.",
       "error": {
         "stepDelay": "Inserisci un numero intero da {{min}} a {{max}}.",

@@ -306,9 +306,6 @@ export function DeviceBecomesFields({
   )
 }
 
-/** Seconds on screen, milliseconds in the recipe. An empty box means the knob is
- *  not set at all, which is not the same as zero. */
-
 interface DeviceEventFieldsProps {
   readonly leaf: DeviceEventLeaf
   readonly devices?: readonly AutomationDevice[]

@@ -23,7 +23,6 @@ import {
   emptyRuleForm,
   isRuleFormValid,
   parseDeliveryChoice,
-  parseGroupingSec,
   type NcRuleFormState,
   ruleDeliveryLabel,
   ruleFormProblems,
@@ -229,14 +228,6 @@ describe('the list column', () => {
 })
 
 describe('the seconds are bounded like the hub (5..60)', () => {
-  it('parses a whole number and ignores everything else', () => {
-    expect(parseGroupingSec('30')).toBe(30)
-    expect(parseGroupingSec('12.7')).toBe(12)
-    expect(parseGroupingSec('')).toBeUndefined()
-    expect(parseGroupingSec('abc')).toBeUndefined()
-    expect(parseGroupingSec('-3')).toBeUndefined()
-  })
-
   it('blocks a save outside the bounds, with a sentence', () => {
     for (const bad of [NC_GROUPING_MIN_SEC - 1, NC_GROUPING_MAX_SEC + 1]) {
       const form = formFor({ groupingSec: bad })

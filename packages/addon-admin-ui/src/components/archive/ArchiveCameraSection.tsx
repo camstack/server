@@ -90,6 +90,7 @@ export function ArchiveCameraSection({ data }: ArchiveCameraSectionProps): React
           noun="camera"
           fixedTypes={CAMERA_TYPES}
           recentKey="archive-camera"
+          testId="archive-camera"
           clearable={false}
           className="w-auto min-w-48"
           value={{ deviceId }}

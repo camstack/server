@@ -38,7 +38,6 @@ import {
   NC_RULE_TABS,
   type NcRuleFormState,
   type NcRuleSectionSubject,
-  parseCooldown,
   parseDelivery,
   parseLinkedCameras,
   parseMediaImage,
@@ -1074,7 +1073,6 @@ describe('the cooldown is authored, not merely preserved', () => {
     // could only be authored through the API. The hub has always taken
     // `int().min(0).max(86_400)`; the picker was the only thing narrowing it.
     for (const seconds of [5, 10, 15]) {
-      expect(parseCooldown(String(seconds))).toBe(seconds)
       expect(
         buildRuleInput({ ...emptyRuleForm(), name: 'x', targetIds: ['t'], cooldownSec: seconds })
           .throttle,
@@ -1088,19 +1086,6 @@ describe('the cooldown is authored, not merely preserved', () => {
     expect(cooldownLabel(137)).toBe('137 seconds')
     expect(cooldownLabel(7200)).toBe('2 hours')
     expect(cooldownLabel(5)).toBe('5 seconds')
-  })
-
-  it('ignores a stray input value rather than writing it', () => {
-    expect(parseCooldown('600')).toBe(600)
-    // NOT zero: `Number('')` is 0, and "No cooldown" is a real setting that an
-    // empty change event must never author. The operator clears the box to
-    // retype, and a box that authors 0 mid-keystroke silences the throttle.
-    expect(parseCooldown('')).toBeUndefined()
-    expect(parseCooldown('nope')).toBeUndefined()
-    expect(parseCooldown('-1')).toBeUndefined()
-    // A free-text number box can produce a fraction; the hub's schema is
-    // `.int()`, so it is truncated here rather than refused by the server.
-    expect(parseCooldown('12.7')).toBe(12)
   })
 
   it('BLOCKS a cooldown the hub would refuse instead of shipping a Zod string', () => {

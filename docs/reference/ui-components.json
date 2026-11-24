@@ -9676,6 +9676,12 @@
           "type": "string",
           "optional": true,
           "doc": "Override for the discard label."
+        },
+        {
+          "name": "problem",
+          "type": "string",
+          "optional": true,
+          "doc": "Why the pending edits cannot be saved yet. Shown instead of the count and keeps Save disabled; Discard stays available, so a draft that is d"
         }
       ]
     },

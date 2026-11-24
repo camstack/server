@@ -186,18 +186,6 @@ export function ruleDeliveryLabel(
     : deliveryLabel(rule.delivery)
 }
 
-/**
- * The grouping window as typed: a whole number, or `undefined` for an empty or
- * unreadable box (the caller keeps the previous value). Range is NOT judged
- * here, so "3" can be typed on the way to "30"; `ruleFormProblems` blocks the
- * save. Same contract as {@link parseCooldown}.
- */
-export function parseGroupingSec(value: string): number | undefined {
-  if (value.trim().length === 0) return undefined
-  const n = Number(value)
-  return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : undefined
-}
-
 /** Human label for a delivery kind (list rows / summaries). Falls back to the raw value. */
 export function deliveryLabel(delivery: NcDelivery): string {
   return NC_DELIVERY_OPTIONS.find((o) => o.value === delivery)?.label ?? delivery
@@ -509,23 +497,6 @@ export function cooldownLabel(seconds: number): string {
   if (seconds % 60 === 0)
     return i18n.t('helpers.ruleFormParsers.cdMinutes', { count: seconds / 60 })
   return i18n.t('helpers.ruleFormParsers.cdSeconds', { count: seconds })
-}
-
-/**
- * Narrow a raw number-input string to a cooldown, else undefined (ignore it).
- *
- * Two refusals that are not fussiness:
- *  - `''` is NOT zero. `Number('')` is 0, and clearing the box to retype is the
- *    ordinary gesture — a control that authored "no cooldown" mid-keystroke
- *    would silence the throttle on a rule nobody meant to change.
- *  - a fraction is TRUNCATED rather than sent. The hub's schema is `.int()`, so
- *    `12.7` would come back as a Zod error string on save; the box is
- *    `step={1}` and this is the same promise on the value side.
- */
-export function parseCooldown(value: string): number | undefined {
-  if (value.trim().length === 0) return undefined
-  const n = Number(value)
-  return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : undefined
 }
 
 /**

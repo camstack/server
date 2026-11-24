@@ -28,6 +28,12 @@ export interface FormSaveBarProps {
   readonly saveLabel?: string
   /** Override for the discard label. */
   readonly discardLabel?: string
+  /**
+   * Why the pending edits cannot be saved yet. Shown instead of the count and
+   * keeps Save disabled; Discard stays available, so a draft that is dirty but
+   * invalid is never left without a way out.
+   */
+  readonly problem?: string
 }
 
 export function FormSaveBar({
@@ -37,24 +43,40 @@ export function FormSaveBar({
   saving = false,
   saveLabel,
   discardLabel,
+  problem,
 }: FormSaveBarProps): JSX.Element | null {
   const t = useUiText()
   if (pendingCount <= 0) return null
 
   return (
     <div className="sticky bottom-0 z-10 -mb-3 flex items-center justify-between gap-3 rounded-lg border border-primary/40 bg-surface px-3 py-2 shadow-sm">
-      <span className="text-xs text-foreground">
-        {t(
-          'uiLibrary.formSaveBar.unsavedChanges',
-          { one: '{{count}} unsaved change', other: '{{count}} unsaved changes' },
-          { count: pendingCount },
-        )}
-      </span>
+      {problem === undefined ? (
+        <span className="text-xs text-foreground">
+          {t(
+            'uiLibrary.formSaveBar.unsavedChanges',
+            {
+              one: '{{count}} unsaved change',
+              other: '{{count}} unsaved changes',
+            },
+            { count: pendingCount },
+          )}
+        </span>
+      ) : (
+        <span role="alert" className="text-xs text-danger">
+          {problem}
+        </span>
+      )}
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" type="button" onClick={onDiscard} disabled={saving}>
           {discardLabel ?? t('uiLibrary.formSaveBar.discard', 'Discard')}
         </Button>
-        <Button variant="primary" size="sm" type="button" onClick={onSave} disabled={saving}>
+        <Button
+          variant="primary"
+          size="sm"
+          type="button"
+          onClick={onSave}
+          disabled={saving || problem !== undefined}
+        >
           {saving
             ? t('uiLibrary.formSaveBar.saving', 'Saving…')
             : (saveLabel ?? t('uiLibrary.formSaveBar.save', 'Save'))}

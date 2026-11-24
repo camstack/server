@@ -10,7 +10,7 @@
 import { selectOption } from '@camstack/ui-library/testing'
 import { DeviceType, type NcRule } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   type FleetListInput,
@@ -67,18 +67,6 @@ vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...real,
-    // The device picker is covered by its own spec; here it only has to hand the page a camera.
-    DeviceValuePicker: ({
-      testId,
-      onChange,
-    }: {
-      testId?: string
-      onChange: (picked: { deviceId: number } | null) => void
-    }) => (
-      <button type="button" data-testid={testId} onClick={() => onChange({ deviceId: 101 })}>
-        pick a camera
-      </button>
-    ),
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
       listAllHook(input, options),
     useSystem: () => ({
@@ -96,8 +84,25 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+import { DeviceSearchTrpc, type SearchHubDevice } from '../../../test-setup/device-search-hub'
 import { NotificationSimulatePage } from '../NotificationSimulate'
 import { clearSimulatePrefill } from '../notification-simulate.helpers'
+
+/** What the REAL camera picker is offered: a lock named like the camera must stay out. */
+const SEARCH_FLEET: readonly SearchHubDevice[] = [
+  { id: 101, name: 'Front door', type: DeviceType.Camera },
+  { id: 42, name: 'Serratura front door', type: DeviceType.Lock },
+]
+
+/** Opens the camera picker, checks it offers cameras only, and picks Front door. */
+async function pickFrontDoor(): Promise<void> {
+  const picker = await screen.findByTestId('simulate-camera')
+  fireEvent.click(within(picker).getAllByRole('button')[0])
+  const option = await screen.findByRole('option', { name: /^Front door/ })
+  expect(screen.queryByRole('option', { name: /Serratura/ })).toBeNull()
+  fireEvent.click(option)
+  await waitFor(() => expect(picker).toHaveTextContent('Front door'))
+}
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -105,7 +110,9 @@ function renderPage() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <NotificationSimulatePage />
+      <DeviceSearchTrpc fleet={SEARCH_FLEET}>
+        <NotificationSimulatePage />
+      </DeviceSearchTrpc>
     </QueryClientProvider>,
   )
 }
@@ -124,7 +131,7 @@ describe('NotificationSimulate page', () => {
 
   it('injects through the registered custom action and omits untouched optionals', async () => {
     renderPage()
-    fireEvent.click(await screen.findByTestId('simulate-camera'))
+    await pickFrontDoor()
     selectOption(screen.getByTestId('simulate-trigger'), 'track-end')
 
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
@@ -149,7 +156,7 @@ describe('NotificationSimulate page', () => {
 
   it('renders the answer, including a run where nothing was evaluated', async () => {
     renderPage()
-    fireEvent.click(await screen.findByTestId('simulate-camera'))
+    await pickFrontDoor()
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
 
     await waitFor(() => expect(screen.getByText('synthetic:abc')).toBeTruthy())
