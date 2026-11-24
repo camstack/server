@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A camera that just moved to a pipeline node now stays there for at least 10 minutes, so on-motion cameras stop hopping between nodes every few seconds
 - A switch kind carries its own run limit (heater 3 h, pet fountain 5 min, siren 10 min), shared by timed runs and on-for holds.
 - A daily time window is one model: clock or sun range across midnight, day/night presets and weekdays, judged by one evaluator
+- A duration settings field kind: one number stored in the declared unit (ms or s)
 
 ## [1.2.626] - 2026-11-22
 

@@ -31,6 +31,7 @@ import type {
   ConfigInstanceSelectField,
   ConfigTimezoneField,
   ConfigDateTimeField,
+  ConfigDurationField,
   ConfigColorField,
   ConfigIconField,
   ConfigTextAreaField,
@@ -85,6 +86,7 @@ import { OptionSelect, type OptionSelectOption } from './option-select'
 import { ConfigInstanceSelectControl } from './config-instance-select-field'
 import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
 import { formatNumeric } from '../lib/format-numeric'
+import { DurationInput } from './duration-parts-input/DurationInput'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
 export interface ProbeState {
@@ -615,6 +617,45 @@ function DateTimeField({
         placeholder={field.placeholder}
         disabled={disabled || field.disabled}
         onChange={(e) => onChange(e.target.value)}
+      />
+    </FieldWrapper>
+  )
+}
+
+function DurationField({
+  field,
+  value,
+  onChange,
+  disabled,
+  translationFn,
+}: {
+  field: ConfigDurationField
+  value: unknown
+  onChange: (v: unknown) => void
+  disabled?: boolean
+  translationFn?: TranslationFn
+}) {
+  // Stored as ONE number in the declared unit; a missing value reads as the default.
+  const stored = typeof value === 'number' ? value : (field.default ?? 0)
+  return (
+    <FieldWrapper
+      label={field.label}
+      description={field.description}
+      required={field.required}
+      span={field.span}
+      translationFn={translationFn}
+    >
+      <DurationInput
+        value={stored}
+        onChange={onChange}
+        storageUnit={field.storageUnit}
+        units={field.units}
+        min={field.min}
+        max={field.max}
+        fractional={field.fractional}
+        disabled={disabled || field.disabled}
+        aria-label={resolveLabel(field.label, translationFn)}
+        testIdPrefix={`field-${field.key}`}
       />
     </FieldWrapper>
   )
@@ -3020,6 +3061,16 @@ export function FormField({
     case 'datetime':
       return (
         <DateTimeField
+          field={field}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          translationFn={translationFn}
+        />
+      )
+    case 'duration':
+      return (
+        <DurationField
           field={field}
           value={value}
           onChange={handleChange}

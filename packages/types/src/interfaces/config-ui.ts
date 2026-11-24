@@ -191,6 +191,7 @@ export type ConfigField =
   | ConfigMultiSelectField
   | ConfigTimezoneField
   | ConfigDateTimeField
+  | ConfigDurationField
   | ConfigColorField
   | ConfigIconField
   | ConfigPasswordField
@@ -622,6 +623,24 @@ export interface ConfigTimezoneField extends ConfigFieldBase {
  */
 export interface ConfigDateTimeField extends ConfigFieldBase {
   readonly type: 'datetime'
+}
+
+/**
+ * A length of time, entered as hours / minutes / seconds / milliseconds
+ * fields. The stored value is ONE number in `storageUnit` — the form never
+ * hands the addon a different unit than it declared. The renderer mounts the
+ * shared `<DurationInput>`; `units` picks the visible fields (default
+ * hours, minutes, seconds) and `min` / `max` are in `storageUnit`.
+ */
+export interface ConfigDurationField extends ConfigFieldBase {
+  readonly type: 'duration'
+  readonly storageUnit: 'ms' | 's'
+  readonly units?: readonly ('hours' | 'minutes' | 'seconds' | 'millis')[]
+  readonly min?: number
+  readonly max?: number
+  readonly default?: number
+  /** The smallest visible unit takes a fraction. */
+  readonly fractional?: boolean
 }
 
 export interface ConfigColorField extends ConfigFieldBase {
@@ -1374,6 +1393,7 @@ export type ConfigFieldWithValue =
   | (ConfigMultiSelectField & { readonly value: unknown })
   | (ConfigTimezoneField & { readonly value: unknown })
   | (ConfigDateTimeField & { readonly value: unknown })
+  | (ConfigDurationField & { readonly value: unknown })
   | (ConfigColorField & { readonly value: unknown })
   | (ConfigIconField & { readonly value: unknown })
   | (ConfigPasswordField & { readonly value: unknown })
@@ -1796,6 +1816,7 @@ function typeOf(field: ConfigField): 'string' | 'number' | 'boolean' | 'other' {
       return 'string'
     case 'number':
     case 'slider':
+    case 'duration':
       return 'number'
     case 'boolean':
       return 'boolean'
