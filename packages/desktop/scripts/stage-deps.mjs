@@ -79,22 +79,26 @@ writeFileSync(
   `${JSON.stringify({ name: 'camstack-desktop-deps-stage', private: true, version: '0.0.0' }, null, 2)}\n`,
 )
 
-// #681: resolve `latest` ONCE, write the release's closure-pins.json as root
-// `overrides`, then install that exact version. Unpinned (with a logged
-// reason) when the release ships no file; never a failure.
+// #681: resolve `latest` ONCE per attempt, write the release's closure-pins.json
+// as root `overrides`, then install that exact version. The helper degrades to
+// an unpinned install (with a logged reason); only a package.json write failure
+// fails. It runs inside the retry so a transient kill costs no release.
 const closurePinsInstall = join(desktopDir, '..', '..', 'scripts', 'closure-pins-install.mjs')
-const pinnedVersion = execFileSync(process.execPath, [closurePinsInstall, stageDir, SERVER_TAG], {
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'inherit'],
-}).trim()
-const installSpecs = SPECS.map((spec) =>
-  spec === `@camstack/server@${SERVER_TAG}` ? `@camstack/server@${pinnedVersion}` : spec,
-)
-
-console.log(`[stage-deps] installing PRE-BUILT closure from npm: ${installSpecs.join(' ')}`)
-const closureInstall = `npm install --omit=dev --no-audit --no-fund ${installSpecs.join(' ')}`
+let closureInstall = `npm install --omit=dev --no-audit --no-fund ${SPECS.join(' ')}`
+const installClosure = () => {
+  const pinnedVersion = execFileSync(process.execPath, [closurePinsInstall, stageDir, SERVER_TAG], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'inherit'],
+  }).trim()
+  const installSpecs = SPECS.map((spec) =>
+    spec === `@camstack/server@${SERVER_TAG}` ? `@camstack/server@${pinnedVersion}` : spec,
+  )
+  console.log(`[stage-deps] installing PRE-BUILT closure from npm: ${installSpecs.join(' ')}`)
+  closureInstall = `npm install --omit=dev --no-audit --no-fund ${installSpecs.join(' ')}`
+  execSync(closureInstall, { cwd: stageDir, stdio: 'inherit' })
+}
 try {
-  runWithRetry(() => execSync(closureInstall, { cwd: stageDir, stdio: 'inherit' }), {
+  runWithRetry(installClosure, {
     attempts: CLOSURE_INSTALL_ATTEMPTS,
     delayMs: CLOSURE_INSTALL_RETRY_MS,
     sleep: sleepSync,

@@ -569,7 +569,7 @@ updater, so they go through `scripts/closure-pins-install.mjs`: it resolves
 `packages/node-root/src/closure-pins.ts` (the shared parser, read by Node's type
 stripping) into the fetch stage; `packages/desktop/scripts/stage-deps.mjs` runs
 the same helper. A release without the file installs unpinned and the build
-log says why (`[closure-pins] ... UNPINNED: <reason>`); it never fails the
+log says why (`[closure-pins] ... UNPINNED: <reason>`); an unreachable registry (3 `npm view` attempts) prints the tag and installs unpinned too; only a failed write of the install dir's package.json fails the
 build. No env var, port or volume changed (D717, D822).
 
 ## Migrations survive a version jump (D1014)

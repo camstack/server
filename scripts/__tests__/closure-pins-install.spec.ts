@@ -3,6 +3,7 @@
  * a bare `npm install`; `scripts/closure-pins-install.mjs` resolves the version
  * once and writes the tarball's `closure-pins.json` as root `overrides` first.
  */
+import { spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -90,6 +91,52 @@ describe('closure-pins-install', () => {
     })
     expect(out.pinned).toBe(false)
     expect(logs.join('\n')).toContain('pack failed')
+  })
+
+  describe('the real CLI entry under node (no vitest transpile)', () => {
+    let bin: string
+    beforeEach(() => {
+      bin = fs.mkdtempSync(path.join(os.tmpdir(), 'pins-bin-'))
+    })
+    afterEach(() => fs.rmSync(bin, { recursive: true, force: true }))
+
+    function runCli() {
+      return spawnSync(process.execPath, [path.join(ROOT, 'scripts/closure-pins-install.mjs'), dir, 'latest'], {
+        encoding: 'utf8',
+        env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env['PATH'] ?? ''}`, CLOSURE_PINS_RETRY_MS: '1' },
+      })
+    }
+    function stubNpm(body: string): void {
+      const file = path.join(bin, 'npm')
+      fs.writeFileSync(file, `#!${process.execPath}\n${body}\n`)
+      fs.chmodSync(file, 0o755)
+    }
+
+    it('exits 0 and prints the tag as the only stdout line when npm view fails', () => {
+      stubNpm('process.stderr.write("E503\\n"); process.exit(1)')
+      const r = runCli()
+      expect(r.status).toBe(0)
+      expect(r.stdout).toBe('latest\n')
+      expect(r.stderr).toContain('UNPINNED: cannot resolve @camstack/server@latest after 3 attempts')
+      expect(manifest().overrides).toBeUndefined()
+    })
+
+    it('loads the .ts parser through type stripping, writes overrides, prints one version line, no warning', () => {
+      const tgz = path.join(bin, 'fixture.tgz')
+      fs.writeFileSync(tgz, makeTarball({ 'closure-pins.json': JSON.stringify(PINS) }))
+      stubNpm(`
+const fs = require('node:fs'), path = require('node:path')
+const a = process.argv.slice(2)
+if (a[0] === 'view') { console.log('"9.9.9"'); process.exit(0) }
+if (a[0] === 'pack') { fs.copyFileSync(${JSON.stringify(tgz)}, path.join(a[a.indexOf('--pack-destination') + 1], 'server-9.9.9.tgz')); process.exit(0) }
+process.exit(1)`)
+      const r = runCli()
+      expect(r.status).toBe(0)
+      expect(r.stdout).toBe('9.9.9\n')
+      expect(manifest().overrides).toEqual(PINS)
+      expect(r.stderr).toContain('pinned: 2 third-party versions')
+      expect(r.stderr).not.toContain('MODULE_TYPELESS_PACKAGE_JSON')
+    })
   })
 
   it('the Dockerfile and the desktop stage install through the helper', () => {
