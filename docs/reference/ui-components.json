@@ -689,7 +689,7 @@
     },
     {
       "need": "Enter a length of time (a wait, a timeout, \"on for\")",
-      "admin": "`DurationPartsInput` (hours, minutes and seconds side by side; takes and emits seconds)",
+      "admin": "`DurationInput` (hours / minutes / seconds / milliseconds fields, any subset via `units`; `storageUnit` `ms` or `s`, `min` / `max` in that unit; a settings form declares it as `type: 'duration'`). `DurationPartsInput` is its seconds-only alias",
       "viewer": "—",
       "notes": "A number with a unit select, or a bare seconds field, is what it replaced"
     },
@@ -5405,6 +5405,13 @@
       "summary": "The accessible name of each field; pass translated ones."
     },
     {
+      "name": "DEFAULT_DURATION_UNIT_LABELS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/DurationInput.tsx",
+      "summary": "The accessible name of each field; pass translated ones."
+    },
+    {
       "name": "DEFAULT_LAYOUT_COLUMNS",
       "kind": "constant",
       "area": "composites",
@@ -8067,11 +8074,99 @@
       "summary": "A duration in seconds, as the three numbers a person reads: hours, minutes, seconds."
     },
     {
+      "name": "DURATION_UNITS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "A duration in seconds, as the three numbers a person reads: hours, minutes, seconds."
+    },
+    {
+      "name": "DurationInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/DurationInput.tsx",
+      "summary": "A duration as one number field per unit — hours, minutes, seconds, milliseconds — in any subset the caller shows. The caller also names the unit the value is STORED in (`ms` or `s`), so the form never converts. Typing…",
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": "The duration, in `storageUnit`."
+        },
+        {
+          "name": "onChange",
+          "type": "(value: number) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "storageUnit",
+          "type": "DurationStorageUnit",
+          "optional": true,
+          "doc": "The unit `value`, `min` and `max` are in."
+        },
+        {
+          "name": "units",
+          "type": "readonly DurationUnit[]",
+          "optional": true,
+          "doc": "The fields shown; default hours, minutes, seconds."
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": true,
+          "doc": "Bounds in `storageUnit`; outside them the fields are marked, the number is still emitted."
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fractional",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The smallest shown unit takes a fraction (a half-second wait)."
+        },
+        {
+          "name": "labels",
+          "type": "Partial<DurationUnitLabels>",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "'aria-label'",
+          "type": "string",
+          "optional": true,
+          "doc": "Names the fields as one group."
+        },
+        {
+          "name": "testIdPrefix",
+          "type": "string",
+          "optional": true,
+          "doc": "`<prefix>-hours`, `<prefix>-minutes`, `<prefix>-seconds`, `<prefix>-millis`."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DurationPartsInput",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/duration-parts-input/DurationPartsInput.tsx",
-      "summary": "A duration as one number field per unit: hours, minutes, seconds, side by side. `seconds` is the stored duration; typing in one field keeps the other two and emits the new total. A field shows what was typed until it …",
+      "summary": "A duration in SECONDS as hours, minutes and seconds side by side — the default shape of {@link DurationInput}, kept as the name its callers use.",
       "props": [
         {
           "name": "seconds",
@@ -11813,6 +11908,13 @@
           "doc": "The body is a flex column, so a child with `min-h-0 flex-1` takes the dialog's remaining height and scrolls inside it (a long picker); the d"
         }
       ]
+    },
+    {
+      "name": "joinDuration",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "The stored duration of the per-unit numbers, rounded to the millisecond."
     },
     {
       "name": "joinDurationParts",
@@ -18336,6 +18438,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/responsive.ts",
       "summary": "Sidebar narrow lane in a SPLIT_PANEL_OUTER layout."
+    },
+    {
+      "name": "splitDuration",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/duration-parts-input/duration-parts.ts",
+      "summary": "A stored duration as one number per visible unit. A larger unit takes what fits whole; the smallest takes the rest, so what is shown always sums back."
     },
     {
       "name": "splitDurationParts",
