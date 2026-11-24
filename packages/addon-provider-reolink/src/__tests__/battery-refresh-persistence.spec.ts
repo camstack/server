@@ -1,9 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DeviceRuntimeState } from '@camstack/types'
-// The cap SOURCE, not the built package: the schema under test is the one in this checkout.
-import { batteryCapability } from '../../../types/src/capabilities/battery.cap.js'
+import { batteryCapability, DeviceRuntimeState } from '@camstack/types'
 import {
   attemptLedgerOverSlice,
   BatteryHourlyRefresh,
@@ -107,8 +105,15 @@ describe('a later battery read does not erase the stamp', () => {
     state.installCapSchema('battery', batteryCapability.runtimeState)
 
     // What a battery read composes: a fresh value, no bookkeeping of its own.
-    const read = { level: 79, charging: 'none' as const, sleeping: false, lastUpdated: 2 }
-    state.setCapState('battery', carryRefreshBookkeeping(state.getCapState('battery') ?? {}, read))
+    const read: Record<string, unknown> = {
+      level: 79,
+      charging: 'none',
+      sleeping: false,
+      lastUpdated: 2,
+    }
+    const previous =
+      state.getCapState<RefreshBookkeeping & Record<string, unknown>>('battery') ?? {}
+    state.setCapState('battery', carryRefreshBookkeeping(previous, read))
 
     const next = state.getCapState('battery')
     expect(next?.['level']).toBe(79)
