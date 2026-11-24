@@ -6,7 +6,7 @@
  * and the corner's "since".
  */
 import { DeviceType, type HeroModel, type HeroRow, temperatureMeasurement } from '@camstack/types'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'
 import { buildModel } from '../../hero-model/__tests__/fixtures'
@@ -24,6 +24,8 @@ const NOW = Date.UTC(2026, 10, 13, 12, 0, 0)
 const hub = vi.hoisted(() => ({
   status: 'success' as 'pending' | 'success' | 'error',
   model: null as HeroModel | null,
+  /** What the shared card common offers as the device's History view; undefined = the fixture's own. */
+  history: undefined as { charts: string | null; events: null } | undefined,
 }))
 
 vi.mock('../../../generated/system-hooks', () => ({
@@ -49,6 +51,7 @@ vi.mock('../connected/use-card-common', () => ({
         consumables: null,
         supply: null,
         remote: null,
+        ...(hub.history === undefined ? {} : { history: hub.history }),
       },
       actions: {},
       deviceType: DeviceType.Generic,
@@ -98,6 +101,13 @@ const SETTABLE: HeroRow = {
 beforeEach(() => {
   hub.status = 'success'
   hub.model = null
+  hub.history = undefined
+  HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+    this.open = true
+  }
+  HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+    this.open = false
+  }
 })
 afterEach(cleanup)
 
@@ -173,6 +183,28 @@ describe('the connected sensor card', () => {
       screen.getAllByTestId('dc-pie-wedge').map((w) => w.getAttribute('data-quantity')),
     ).toEqual(['motion', 'illuminance'])
     expect(drawn).toHaveBeenCalledWith(true)
+  })
+  it('a pie device keeps the full History: the state corner opens it', () => {
+    hub.model = motionAndLight()
+    hub.history = { charts: 'FULL HISTORY', events: null }
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    fireEvent.click(screen.getByTestId('dc-state'))
+    expect(screen.getByText('FULL HISTORY')).toBeTruthy()
+  })
+  it('a wedge with no series of its own (motion) opens the full History, not "no history"', () => {
+    hub.model = motionAndLight()
+    hub.history = { charts: 'FULL HISTORY', events: null }
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[0] as Element)
+    expect(screen.getByText('FULL HISTORY')).toBeTruthy()
+    expect(screen.queryByTestId('dc-pie-no-history')).toBeNull()
+  })
+  it('a wedge with no series and no History at all says so', () => {
+    hub.model = motionAndLight()
+    hub.history = { charts: null, events: null }
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[0] as Element)
+    expect(screen.getByTestId('dc-pie-no-history')).toBeTruthy()
   })
   it('draws the placeholder while the model loads', () => {
     hub.status = 'pending'

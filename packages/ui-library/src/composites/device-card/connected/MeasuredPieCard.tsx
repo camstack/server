@@ -1,5 +1,5 @@
 import type { HeroMeasurement, HeroMeasurementQuantity } from '@camstack/types'
-import { type ReactElement, useEffect, useState } from 'react'
+import { type ReactElement, type ReactNode, useEffect, useState } from 'react'
 import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceManagerGetDevice } from '../../../generated/system-hooks'
@@ -47,6 +47,9 @@ function quantityLabel(t: UiTextFn, quantity: HeroMeasurementQuantity): string {
       return t('uiLibrary.sensorPie.quantity.text', 'State')
   }
 }
+
+/** Whether the reading keeps a series of its own (motion and contact do not). */
+const hasOwnSeries = (m: HeroMeasurement): boolean => m.historyKey !== null && m.reading !== null
 
 /** Two readings of one quantity would share a key: the index keeps them apart. */
 const idOf = (m: HeroMeasurement, index: number): string => `${m.quantity}-${String(index)}`
@@ -114,6 +117,9 @@ export function MeasuredPieCard({
   const ago = formatLastSeen(latestSince(all), t)
   const picked = shown.findIndex((m, i) => idOf(m, i) === selected)
   const pickedMeasurement = picked < 0 ? undefined : shown[picked]
+  const fullHistory = card.common.history?.charts ?? null
+  const fullHistoryShown =
+    pickedMeasurement !== undefined && !hasOwnSeries(pickedMeasurement) && fullHistory !== null
 
   return (
     <>
@@ -142,10 +148,11 @@ export function MeasuredPieCard({
           if (!open) setSelected(null)
         }}
       >
-        <DialogContent width="sm">
+        <DialogContent width={fullHistoryShown ? 'xl' : 'sm'} scroll="body">
           {pickedMeasurement === undefined ? null : (
             <ReadingHistory
               deviceId={deviceId}
+              fullHistory={fullHistory}
               measurement={pickedMeasurement}
               text={textOf(pickedMeasurement)}
               subject={subject}
@@ -185,15 +192,18 @@ export function MeasuredPieCard({
 
 interface ReadingHistoryProps {
   readonly deviceId: number
+  /** The device's whole History view, for a reading that keeps no series of its own. */
+  readonly fullHistory: ReactNode
   readonly measurement: HeroMeasurement
   readonly text: MeasurementText
   readonly subject: ReadingDisplaySubject | null
   readonly since: string | null
 }
 
-/** One reading's value and the last day of it; a reading with no kept series says so. */
+/** One reading's value and the last day of it; a reading with no series of its own shows the device's whole History. */
 function ReadingHistory({
   deviceId,
+  fullHistory,
   measurement,
   text,
   subject,
@@ -224,7 +234,7 @@ function ReadingHistory({
             text={measurement.quantity === 'text' || measurement.quantity === 'contact'}
           />
           {since === null ? null : <span className="text-xs text-foreground-muted">{since}</span>}
-          {trend ?? (
+          {trend ?? fullHistory ?? (
             <span className="text-xs text-foreground-muted" data-testid="dc-pie-no-history">
               {t('uiLibrary.sensorPie.noHistory', 'No history is kept for this reading.')}
             </span>

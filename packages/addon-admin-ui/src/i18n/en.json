@@ -11263,7 +11263,8 @@
         "summary": "{{online}} of {{total}} online",
         "online": "Online",
         "offline": "Offline",
-        "lowBattery": "Low battery"
+        "lowBattery": "Low battery",
+        "failed": "Could not read the devices"
       }
     },
     "language": "en",

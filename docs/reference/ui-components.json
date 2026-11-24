@@ -3074,6 +3074,13 @@
       "summary": "The grid as the template store will read it, or null when the schema refuses it."
     },
     {
+      "name": "childBatteryOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedContainerCard.tsx",
+      "summary": "One child's battery from the batch read. Everything the read has not answered (pending, failed, past the bound) is `unknown`, never zero or none."
+    },
+    {
       "name": "childEntityId",
       "kind": "function",
       "area": "composites",
@@ -4613,7 +4620,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/container/container-model.ts",
-      "summary": "The children split into online / offline / low battery. An unknown level is never low."
+      "summary": "The children split into online / offline / low battery; low battery is unknown (null) while any level is."
     },
     {
       "name": "ContainerPrimaryHero",

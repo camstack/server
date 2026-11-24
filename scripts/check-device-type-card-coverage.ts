@@ -14,6 +14,7 @@
  */
 import { DeviceType } from '@camstack/types'
 import { connectedCardKindOf } from '../packages/ui-library/src/composites/device-card/connected/connected-card-kind.js'
+import { CAP_NAMES } from '../packages/types/src/generated/addon-cap-facts.js'
 import { isMain } from './lib/family-baseline.js'
 
 /** The device types the shell cards do not resolve, and what draws each one instead. */
@@ -59,6 +60,12 @@ export const RESOLVER_CAPS: readonly string[] = [
   'workload',
 ]
 
+/** Pure: the names in `list` that are not a real capability (a renamed or removed cap would leave a dead entry that hides a gap). */
+export function unknownCaps(list: readonly string[], real: readonly string[]): string[] {
+  const known = new Set(real)
+  return list.filter((name) => !known.has(name))
+}
+
 export interface CoverageProblem {
   readonly type: string
   readonly problem: string
@@ -90,6 +97,8 @@ function main(): number {
     (type) => connectedCardKindOf(type, null, RESOLVER_CAPS) !== null,
     DEVICE_TYPE_CARD_EXEMPTIONS,
   )
+  for (const name of unknownCaps(RESOLVER_CAPS, CAP_NAMES))
+    problems.push({ type: name, problem: 'is in RESOLVER_CAPS but is not a capability' })
   for (const p of problems) console.error(`check-device-type-card-coverage: ${p.type} ${p.problem}`)
   if (problems.length === 0) console.log('check-device-type-card-coverage: ok')
   return problems.length === 0 ? 0 : 1

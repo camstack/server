@@ -12,6 +12,8 @@ export interface ContainerCardModel {
   readonly common: CardCommon
   /** `null` = the children have not been read yet (never drawn as zero). */
   readonly counts: ContainerCounts | null
+  /** The children could not be read: say so instead of counting forever. */
+  readonly failed?: boolean
 }
 
 export interface ContainerCardProps {
@@ -30,8 +32,9 @@ export function ContainerCard({
 }: ContainerCardProps): ReactElement {
   const t = useUiText()
   const { counts } = model
-  const attention = counts !== null && (counts.offline > 0 || counts.lowBattery > 0)
-  const value = (n: number | undefined): string => (n === undefined ? '—' : String(n))
+  const attention = counts !== null && (counts.offline > 0 || (counts.lowBattery ?? 0) > 0)
+  const value = (n: number | null | undefined): string =>
+    n === undefined || n === null ? '—' : String(n)
   return (
     <DeviceCard
       kind="container"
@@ -43,13 +46,22 @@ export function ContainerCard({
       state={{
         label:
           counts === null
-            ? t('uiLibrary.deviceCard.container.unknown', 'Counting…')
+            ? model.failed === true
+              ? t('uiLibrary.deviceCard.container.failed', 'Could not read the devices')
+              : t('uiLibrary.deviceCard.container.unknown', 'Counting…')
             : t('uiLibrary.deviceCard.container.summary', '{{online}} of {{total}} online', {
                 online: counts.online,
                 total: counts.total,
               }),
         since: null,
-        tone: counts === null ? 'muted' : attention ? 'warning' : 'success',
+        tone:
+          counts === null
+            ? model.failed === true
+              ? 'danger'
+              : 'muted'
+            : attention
+              ? 'warning'
+              : 'success',
       }}
       scene={{
         columns: {},
@@ -79,7 +91,7 @@ export function ContainerCard({
                 id: 'low',
                 name: t('uiLibrary.deviceCard.container.lowBattery', 'Low battery'),
                 value: value(counts?.lowBattery),
-                tone: counts !== null && counts.lowBattery > 0 ? 'warning' : 'default',
+                tone: counts !== null && (counts.lowBattery ?? 0) > 0 ? 'warning' : 'default',
                 testId: 'dc-container-low',
               },
             ],

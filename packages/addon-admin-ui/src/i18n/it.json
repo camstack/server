@@ -11285,7 +11285,8 @@
         "summary": "{{online}} di {{total}} online",
         "online": "Online",
         "offline": "Offline",
-        "lowBattery": "Batteria scarica"
+        "lowBattery": "Batteria scarica",
+        "failed": "Impossibile leggere i dispositivi"
       }
     },
     "language": "it",

@@ -1,10 +1,12 @@
 import { DeviceType } from '@camstack/types'
+import { CAP_NAMES } from '../../packages/types/src/generated/addon-cap-facts.js'
 import { describe, expect, it } from 'vitest'
 import { connectedCardKindOf } from '../../packages/ui-library/src/composites/device-card/connected/connected-card-kind.js'
 import {
   coverageProblems,
   DEVICE_TYPE_CARD_EXEMPTIONS,
   RESOLVER_CAPS,
+  unknownCaps,
 } from '../check-device-type-card-coverage.js'
 
 describe('coverageProblems', () => {
@@ -53,5 +55,14 @@ describe('the real DeviceType table', () => {
   it('gateway, heat pump and container have cards', () => {
     for (const type of [DeviceType.Gateway, DeviceType.HeatPump, DeviceType.Container])
       expect(connectedCardKindOf(type, null, RESOLVER_CAPS)).not.toBeNull()
+  })
+})
+
+describe('RESOLVER_CAPS', () => {
+  it('names only real capabilities', () => {
+    expect(unknownCaps(RESOLVER_CAPS, CAP_NAMES)).toEqual([])
+  })
+  it('a renamed or invented cap is reported', () => {
+    expect(unknownCaps(['switch', 'no-such-cap'], ['switch'])).toEqual(['no-such-cap'])
   })
 })

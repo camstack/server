@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useDeviceManagerGetChildren } from '../../../generated/system-hooks'
-import { type ContainerCardChild, containerCountsOf } from '../scenes/container/container-model'
+import {
+  type ChildBattery,
+  type ContainerCardChild,
+  containerCountsOf,
+} from '../scenes/container/container-model'
 import { ContainerCard } from '../scenes/container/ContainerCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
@@ -10,9 +14,21 @@ import { useCardCommon } from './use-card-common'
 /** More children than this are counted for reachability only; a battery read each is too many calls. */
 const BATTERY_READ_MAX = 50
 
-const levelOf = (slice: Readonly<Record<string, unknown>> | null): number | null => {
+/** A battery slice's level; a slice that was never written (or carries none) is `none`. */
+const levelOf = (slice: Readonly<Record<string, unknown>> | null): number | 'none' => {
   const level = slice?.['level']
-  return typeof level === 'number' ? level : null
+  return typeof level === 'number' ? level : 'none'
+}
+
+/**
+ * One child's battery from the batch read. Everything the read has not
+ * answered (pending, failed, past the bound) is `unknown`, never zero or none.
+ */
+export function childBatteryOf(
+  read: ReadonlyMap<number, number | 'none'> | undefined,
+  childId: number,
+): ChildBattery {
+  return read?.get(childId) ?? 'unknown'
 }
 
 /**
@@ -34,15 +50,14 @@ export function ConnectedContainerCard({
     queryKey: ['container-card-batteries', deviceId, ids],
     enabled: ids.length > 0,
     staleTime: 60_000,
-    queryFn: async (): Promise<ReadonlyMap<number, number>> => {
+    queryFn: async (): Promise<ReadonlyMap<number, number | 'none'>> => {
       const settled = await Promise.allSettled(
         ids.map((id) => client.deviceState.getCapSlice.query({ deviceId: id, capName: 'battery' })),
       )
-      const levels = new Map<number, number>()
+      const levels = new Map<number, number | 'none'>()
       settled.forEach((r, i) => {
         const id = ids[i]
-        const level = r.status === 'fulfilled' ? levelOf(r.value) : null
-        if (id !== undefined && level !== null) levels.set(id, level)
+        if (id !== undefined && r.status === 'fulfilled') levels.set(id, levelOf(r.value))
       })
       return levels
     },
@@ -50,12 +65,19 @@ export function ConnectedContainerCard({
   const rows: readonly ContainerCardChild[] | null =
     children.data === undefined
       ? null
-      : children.data.map((c) => ({ online: c.online, battery: batteries.data?.get(c.id) ?? null }))
+      : children.data.map((c) => ({
+          online: c.online,
+          battery: childBatteryOf(batteries.data, c.id),
+        }))
   return (
     <ContainerCard
       orientation={orientation}
       showName={showName}
-      model={{ common: card.common, counts: rows === null ? null : containerCountsOf(rows) }}
+      model={{
+        common: card.common,
+        counts: rows === null ? null : containerCountsOf(rows),
+        failed: children.status === 'error',
+      }}
       actions={card.actions}
     />
   )
