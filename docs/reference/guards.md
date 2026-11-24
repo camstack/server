@@ -4,12 +4,12 @@
 
 # Guards
 
-261 repository guards: 256 in `scripts/`,
+262 repository guards: 257 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (249)
+## Enforced by CI checks (250)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -168,6 +168,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-private-lan-scan.ts` | An addon does not scan the LAN itself (D977). |
 | `scripts/check-no-provider-call-in-registry-read.ts` | An integrations read never calls an addon (D1066). |
 | `scripts/check-no-provider-poll-loops.ts` | A provider migrated to the core state refresh (D1062) owns no poll timer. |
+| `scripts/check-no-raw-duration-input.ts` | A duration is typed through ONE component, `DurationInput` (#661). |
 | `scripts/check-no-raw-secret-read.ts` | Addon code never reads its settings through a MARKER-bearing view (D798). |
 | `scripts/check-no-raw-secrets-in-collections.ts` | A credential never sits in plain text in a persisted row (D879). |
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |

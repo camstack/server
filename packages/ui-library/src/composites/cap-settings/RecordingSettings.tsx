@@ -13,6 +13,7 @@ import {
   type DeviceSignalPresence,
   type RecordingSensorContext,
 } from './RecordingBandsEditor'
+import { DurationInput } from '../duration-input/DurationInput'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { alwaysBand } from './recording-config-form'
 
@@ -230,16 +231,13 @@ export function RecordingSettings({
         )}
         <label className="flex items-center gap-1">
           {t('uiLibrary.recordingSettings.segment', 'Segment')}
-          {/* ui-check-ok: empty means the node default segment length; DurationPartsInput always holds a value, so it cannot express unset */}
-          <input
-            type="number"
+          <DurationInput
+            optional
+            value={common.segmentSeconds}
             min={1}
-            value={common.segmentSeconds ?? ''}
-            placeholder={t('uiLibrary.recordingSettings.default', 'default')}
-            onChange={(e) => setCommon({ ...common, segmentSeconds: numOrUndef(e.target.value) })}
-            className="w-16 rounded-md border border-border bg-background px-1 py-1 text-xs"
+            aria-label={t('uiLibrary.recordingSettings.segment', 'Segment')}
+            onChange={(segmentSeconds) => setCommon({ ...common, segmentSeconds })}
           />
-          s
         </label>
       </div>
 

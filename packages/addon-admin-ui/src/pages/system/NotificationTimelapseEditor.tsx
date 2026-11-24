@@ -42,7 +42,7 @@ import {
   TabsTrigger,
   TagInput,
   useSystem,
-  DurationPartsInput,
+  DurationInput,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Film, Loader2 } from 'lucide-react'
@@ -56,6 +56,7 @@ import {
   DIGEST_LABEL_CLASS,
   DigestCameraField,
   type DigestCameraOption,
+  DigestDurationField,
   DigestNumberField,
   DigestProblems,
   DigestSection,
@@ -104,7 +105,6 @@ import {
 } from './notification-timelapse.helpers'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatNumeric } from '@camstack/ui-library'
-import { useDurationLabels } from '../../lib/use-duration-labels'
 
 /** The passage length the dense-cadence hint is written against. */
 const EXAMPLE_PASS_SEC = 7
@@ -132,7 +132,6 @@ export function NotificationTimelapseEditor({
   onCancel,
 }: NotificationTimelapseEditorProps) {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const system = useSystem()
   const [form, setForm] = useState<TimelapseFormState>(() =>
     rule === null ? emptyTimelapseForm() : timelapseRuleToForm(rule),
@@ -317,7 +316,7 @@ export function NotificationTimelapseEditor({
                 )}
               >
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <DigestNumberField
+                  <DigestDurationField
                     label={t(
                       'system.notificationTimelapseEditor.baseCadenceSeconds',
                       'Base cadence (seconds)',
@@ -385,15 +384,14 @@ export function NotificationTimelapseEditor({
                       data-testid="timelapse-dense-mode"
                     />
                     {form.denseCadenceSec !== undefined && (
-                      <DurationPartsInput
+                      <DurationInput
                         aria-label={t(
                           'system.notificationTimelapse.denseSeconds',
                           'Seconds between frames',
                         )}
-                        seconds={form.denseCadenceSec}
-                        fractionalSeconds
+                        value={form.denseCadenceSec}
+                        fractional
                         min={TIMELAPSE_DENSE_FLOOR_SEC}
-                        labels={durationLabels}
                         testIdPrefix="timelapse-dense-seconds"
                         onChange={(seconds) => patch({ denseCadenceSec: seconds })}
                       />
@@ -415,7 +413,7 @@ export function NotificationTimelapseEditor({
                   </p>
                 </div>
 
-                <DigestNumberField
+                <DigestDurationField
                   label={t(
                     'system.notificationTimelapseEditor.minimumSecondsOfVideoPer',
                     'Minimum seconds of video per detection (optional)',

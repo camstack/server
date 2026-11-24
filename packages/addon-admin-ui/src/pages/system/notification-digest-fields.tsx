@@ -16,6 +16,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DurationInput,
   Input,
   NotificationTargetsField,
   Switch,
@@ -199,6 +200,63 @@ export function DigestTargetsField(props: DigestTargetsFieldProps) {
 }
 
 // ── Scalars ──────────────────────────────────────────────────────────
+
+export interface DigestDurationFieldProps {
+  readonly label: string
+  /** The duration in SECONDS; `undefined` is "not set". */
+  readonly value: number | undefined
+  readonly onChange: (next: number | undefined) => void
+  readonly min?: number
+  readonly max?: number
+  /** A step under one second (a half-second stay) lets the seconds field take a fraction. */
+  readonly step?: number
+  readonly hint?: ReactNode
+  /** Said beside the fields while the value is `undefined` — what absence MEANS. */
+  readonly emptyPlaceholder?: string
+  readonly testId?: string
+  readonly disabled?: boolean
+}
+
+/**
+ * A duration stored in seconds that may legitimately be ABSENT: the same shape
+ * as {@link DigestNumberField}, typed in hours / minutes / seconds. Clearing
+ * every field yields `undefined`, never 0.
+ */
+export function DigestDurationField({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  hint,
+  emptyPlaceholder,
+  testId,
+  disabled = false,
+}: DigestDurationFieldProps) {
+  return (
+    <div>
+      <label className={DIGEST_LABEL_CLASS}>{label}</label>
+      <div className="flex flex-wrap items-center gap-2">
+        <DurationInput
+          optional
+          value={value}
+          fractional={step !== undefined && step < 1}
+          disabled={disabled}
+          aria-label={label}
+          {...(min !== undefined ? { min } : {})}
+          {...(max !== undefined ? { max } : {})}
+          {...(testId !== undefined ? { testIdPrefix: testId } : {})}
+          onChange={onChange}
+        />
+        {value === undefined && emptyPlaceholder !== undefined && (
+          <span className="text-xs text-foreground-subtle">{emptyPlaceholder}</span>
+        )}
+      </div>
+      {hint !== undefined && <p className={DIGEST_HINT_CLASS}>{hint}</p>}
+    </div>
+  )
+}
 
 export interface DigestNumberFieldProps {
   readonly label: string

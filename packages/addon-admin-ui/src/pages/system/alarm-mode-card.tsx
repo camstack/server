@@ -30,7 +30,7 @@ import {
 import { Badge, Button, Switch, Select } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { Loader2, RotateCcw } from 'lucide-react'
-import { ALARM_DELAY_META, DelayField } from './alarm-delay-field'
+import { ALARM_DELAY_META, AlarmDelayField } from './alarm-delay-field'
 import { ScheduleField } from './notification-schedule-field'
 import {
   type AlarmDeviceNames,
@@ -270,7 +270,7 @@ function ModeDelays({
         {ALARM_DELAY_META.filter((meta) => meta.field !== 'triggeredDurationSec').map((meta) => {
           const inherited = resolved.source[meta.field] === 'default'
           return (
-            <DelayField
+            <AlarmDelayField
               key={meta.field}
               label={t(meta.labelKey)}
               value={resolved[meta.field]}
@@ -364,7 +364,7 @@ function ModeDelays({
           ? ALARM_DELAY_META.filter((meta) => meta.field === 'triggeredDurationSec').map((meta) => {
               const inherited = resolved.source[meta.field] === 'default'
               return (
-                <DelayField
+                <AlarmDelayField
                   key={meta.field}
                   label={t(meta.labelKey)}
                   value={resolved[meta.field]}

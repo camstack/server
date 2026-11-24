@@ -1560,10 +1560,7 @@
     "motionWord": "movimento",
     "stale": "obsoleto",
     "tags": "Tag",
-    "more": "Altro",
-    "durationHours": "Ore",
-    "durationMinutes": "Minuti",
-    "durationSeconds": "Secondi"
+    "more": "Altro"
   },
   "connection": {
     "disconnected": "Server non raggiungibile — riconnessione in corso…",
@@ -11625,6 +11622,12 @@
     "deviceRow": {
       "open": "Apri",
       "actions": "Azioni per {{name}}"
+    },
+    "duration": {
+      "hours": "Ore",
+      "minutes": "Minuti",
+      "seconds": "Secondi",
+      "millis": "Millisecondi"
     }
   },
   "helpers": {
@@ -13261,7 +13264,6 @@
       "class": "Classe",
       "every": "Ogni",
       "firesWhen": "Scatta quando",
-      "intervalMinutes": "Minuti",
       "minScore": "Punteggio minimo: {{value}}",
       "minScoreAny": "Punteggio minimo: qualsiasi",
       "minScoreAria": "Punteggio minimo",

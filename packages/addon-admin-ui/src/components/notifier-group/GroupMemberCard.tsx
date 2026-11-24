@@ -18,7 +18,7 @@ import {
   Select,
   Switch,
   ToggleChipRow,
-  DurationPartsInput,
+  DurationInput,
 } from '@camstack/ui-library'
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
@@ -37,7 +37,6 @@ import {
   withFallbackFor,
   withoutKey,
 } from './group-members-model'
-import { useDurationLabels } from '../../lib/use-duration-labels'
 
 const ALARM_STATES = AlarmStateSchema.options
 const WHEN_KINDS: readonly GroupMemberWhen['kind'][] = ['always', 'schedule', 'alarm']
@@ -80,7 +79,6 @@ export function GroupMemberCard({
   onRemove,
 }: GroupMemberCardProps): ReactElement {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const [open, setOpen] = useState(defaultOpen)
   const when = member.when ?? { kind: 'always' }
   const enabled = member.enabled !== false
@@ -341,11 +339,10 @@ export function GroupMemberCard({
             </div>
             <div className="space-y-1">
               <Label>{t('notifierGroup.throttle', 'At most one per (seconds)')}</Label>
-              <DurationPartsInput
+              <DurationInput
                 aria-label={t('notifierGroup.throttle', 'At most one per (seconds)')}
-                seconds={member.throttleSec ?? 0}
+                value={member.throttleSec ?? 0}
                 min={0}
-                labels={durationLabels}
                 onChange={(seconds) =>
                   onChange(
                     seconds > 0

@@ -1560,10 +1560,7 @@
     "motionWord": "motion",
     "stale": "stale",
     "tags": "Tags",
-    "more": "More",
-    "durationHours": "Hours",
-    "durationMinutes": "Minutes",
-    "durationSeconds": "Seconds"
+    "more": "More"
   },
   "connection": {
     "disconnected": "Server unreachable — reconnecting…",
@@ -11603,6 +11600,12 @@
     "deviceRow": {
       "open": "Open",
       "actions": "Actions for {{name}}"
+    },
+    "duration": {
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seconds": "Seconds",
+      "millis": "Milliseconds"
     }
   },
   "helpers": {
@@ -13239,7 +13242,6 @@
       "class": "Class",
       "every": "Every",
       "firesWhen": "Fires when it",
-      "intervalMinutes": "Minutes",
       "minScore": "Minimum score: {{value}}",
       "minScoreAny": "Minimum score: any",
       "minScoreAria": "Minimum score",

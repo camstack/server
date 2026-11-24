@@ -32,7 +32,7 @@ import {
   Slider,
   Textarea,
   Select,
-  DurationPartsInput,
+  DurationInput,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react'
@@ -51,7 +51,6 @@ import { useTranslation } from 'react-i18next'
 import { NotificationGroupMemberOutcomes } from './NotificationGroupMemberOutcomes'
 import { useNotificationTargets } from './use-notification-targets'
 import i18n from '../../i18n/index'
-import { useDurationLabels } from '../../lib/use-duration-labels'
 
 interface NotificationTestPanelProps {
   readonly target: Target
@@ -101,7 +100,6 @@ const LABEL_CLASS = 'block text-[11px] font-medium text-foreground mb-1'
 
 export function NotificationTestPanel({ target, kind, open, onClose }: NotificationTestPanelProps) {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const system = useSystem()
   const controls = useMemo(() => visibleControls(kind.caps), [kind.caps])
   const presets = useMemo(() => availablePresets(kind.caps), [kind.caps])
@@ -401,11 +399,10 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.ttlSeconds', 'TTL (seconds)')}
                 </label>
-                <DurationPartsInput
+                <DurationInput
                   aria-label={t('system.notificationTestPanel.ttlSeconds', 'TTL (seconds)')}
-                  seconds={Number(form.ttl) || 0}
+                  value={Number(form.ttl) || 0}
                   min={0}
-                  labels={durationLabels}
                   onChange={(seconds) => patch({ ttl: seconds > 0 ? String(seconds) : '' })}
                 />
               </div>

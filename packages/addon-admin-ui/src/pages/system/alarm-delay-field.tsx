@@ -1,7 +1,7 @@
 /**
- * One alarm duration field, shared by the global "Default delays" card and every mode card.
+ * One alarm duration field, shared by every mode card.
  *
- * Committed on BLUR: local state until then, so a half-typed "4" of "45" never reaches the panel —
+ * Committed when focus LEAVES the field (`DurationInput` `deferred`), so a half-typed "4" of "45" never reaches the panel —
  * an alarm briefly configured with a 4-second entry delay is not a UI detail. The field does NOT
  * decide whether a typed value is a change: a mode that inherits 45 s and is typed 45 must still
  * store the override, so the caller decides (`modeDelayEdit` for a mode, a plain compare for the
@@ -13,10 +13,13 @@ import {
   NC_ALARM_TRIGGERED_MAX_SEC,
   type NcAlarmDelayField,
 } from '@camstack/types'
-import { FormField, Input } from '@camstack/ui-library'
+import { DurationInput, FormField } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
-import { delayLabel, parseDelayInput } from './notification-alarm.helpers'
+import { delayLabel } from './notification-alarm.helpers'
 import i18n from '../../i18n/index'
+
+/** The fields an alarm delay shows; it is stored in seconds. */
+const ALARM_DELAY_UNITS = ['minutes', 'seconds'] as const
 
 export interface AlarmDelayMeta {
   readonly field: NcAlarmDelayField
@@ -56,7 +59,7 @@ export const ALARM_DELAY_META: readonly AlarmDelayMeta[] = [
   },
 ]
 
-interface DelayFieldProps {
+interface AlarmDelayFieldProps {
   readonly label: string
   readonly value: number
   readonly max: number
@@ -70,19 +73,17 @@ interface DelayFieldProps {
   readonly onCommit: (seconds: number) => void
 }
 
-/** Said while a typed value would be refused on blur, so a discarded entry is never silent. */
+/** Said when a typed value is outside what the hub accepts, so a discarded entry is never silent. */
 export function delayRangeError(max: number): string {
   return i18n.t('system.alarmDelay.rangeError', { max })
 }
 
-/** Said after a blur that discarded the typed text: what was dropped, and what would have been accepted. */
-export function delayRefusedMessage(text: string, max: number): string {
-  const typed = text.trim()
-  const lead = typed === '' ? 'Nothing was entered, so nothing was saved' : `${typed} was not saved`
-  return `${lead} — ${delayRangeError(max)}`
+/** Said after a refused entry: what was dropped, and what would have been accepted. */
+export function delayRefusedMessage(seconds: number, max: number): string {
+  return `${seconds} s was not saved — ${delayRangeError(max)}`
 }
 
-export function DelayField({
+export function AlarmDelayField({
   label,
   value,
   max,
@@ -92,55 +93,38 @@ export function DelayField({
   hint,
   adornment,
   onCommit,
-}: DelayFieldProps) {
-  const [draft, setDraft] = useState<string | null>(null)
-  // What a refused blur discarded; said until the next keystroke so the entry is never lost silently.
-  const [refused, setRefused] = useState<string | null>(null)
-  const shown = draft ?? String(value)
-  // An empty draft is mid-edit (the operator is retyping), not an error — it is judged on blur.
-  const invalid = draft !== null && draft.trim() !== '' && parseDelayInput(draft, max) === null
+}: AlarmDelayFieldProps) {
+  // What a refused entry discarded; said until the next change so the entry is never lost silently.
+  const [refused, setRefused] = useState<number | null>(null)
   // "45 s" is the unit already beside the box; only 0 ("arms immediately") and minutes add words.
   const readout = delayLabel(value, zeroMeans)
 
-  const commit = (): void => {
-    const parsed = draft === null ? null : parseDelayInput(draft, max)
-    setDraft(null)
-    if (parsed !== null) {
-      setRefused(null)
-      onCommit(parsed)
-    } else if (draft !== null) {
-      setRefused(draft)
+  const commit = (seconds: number): void => {
+    if (seconds > max) {
+      setRefused(seconds)
+      return
     }
+    setRefused(null)
+    onCommit(seconds)
   }
 
   return (
     <FormField
       label={label}
       {...(hint !== undefined ? { description: hint } : {})}
-      {...(invalid
-        ? { error: delayRangeError(max) }
-        : refused !== null
-          ? { error: delayRefusedMessage(refused, max) }
-          : {})}
+      {...(refused !== null ? { error: delayRefusedMessage(refused, max) } : {})}
     >
       <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          min={0}
+        <DurationInput
+          deferred
+          value={value}
+          units={ALARM_DELAY_UNITS}
           max={max}
-          value={shown}
           disabled={disabled}
-          state={invalid || refused !== null ? 'error' : 'default'}
           aria-label={label}
-          onChange={(e) => {
-            setRefused(null)
-            setDraft(e.target.value)
-          }}
-          onBlur={commit}
-          className="w-20"
-          data-testid={testId}
+          testIdPrefix={testId}
+          onChange={commit}
         />
-        <span className="text-xs text-foreground-subtle">s</span>
         {adornment}
       </div>
       {readout !== `${value} s` ? (

@@ -21,7 +21,7 @@ import { Crosshair, Loader2, AlertCircle } from 'lucide-react'
 import type { PtzAutotrackSettings } from '@camstack/types'
 import { useDeviceAutotrack } from '../../hooks/use-device-autotrack'
 import { WidgetPanel } from '../widget-panel'
-import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { DurationInput } from '../duration-input/DurationInput'
 import { FormSaveBar } from '../form-save-bar'
 
 interface AutotrackSectionProps {
@@ -148,8 +148,8 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
           <span className="text-[10px] font-medium text-foreground-subtle">
             {t('uiLibrary.autotrack.stopDelay', 'Stop delay (s)')}
           </span>
-          <DurationPartsInput
-            seconds={draft.stopDelaySeconds}
+          <DurationInput
+            value={draft.stopDelaySeconds}
             min={0}
             max={300}
             disabled={isPending}
@@ -162,8 +162,8 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
           <span className="text-[10px] font-medium text-foreground-subtle">
             {t('uiLibrary.autotrack.disappearDelay', 'Disappear delay (s)')}
           </span>
-          <DurationPartsInput
-            seconds={draft.disappearDelaySeconds}
+          <DurationInput
+            value={draft.disappearDelaySeconds}
             min={0}
             max={300}
             disabled={isPending}

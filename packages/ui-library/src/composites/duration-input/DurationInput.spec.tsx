@@ -98,4 +98,50 @@ describe('DurationInput', () => {
     fireEvent.change(field('Milliseconds'), { target: { value: '1.5' } })
     expect(onChange).not.toHaveBeenCalled()
   })
+  it('stores minutes: the stored value survives a round trip unchanged', () => {
+    const onChange = vi.fn()
+    render(
+      <DurationInput
+        value={90}
+        storageUnit="min"
+        units={['hours', 'minutes']}
+        onChange={onChange}
+      />,
+    )
+    expect(field('Hours').value).toBe('1')
+    expect(field('Minutes').value).toBe('30')
+    fireEvent.change(field('Minutes'), { target: { value: '45' } })
+    expect(onChange).toHaveBeenLastCalledWith(105)
+    fireEvent.change(field('Minutes'), { target: { value: '30' } })
+    expect(onChange).toHaveBeenLastCalledWith(90)
+  })
+
+  it('optional: shows empty fields for undefined and emits undefined when cleared', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<DurationInput optional value={undefined} onChange={onChange} />)
+    expect(field('Seconds').value).toBe('')
+    rerender(<DurationInput optional value={30} onChange={onChange} />)
+    fireEvent.change(field('Seconds'), { target: { value: '' } })
+    expect(onChange).toHaveBeenLastCalledWith(undefined)
+  })
+
+  it('deferred: emits once when focus leaves the group, nothing for an emptied group', () => {
+    const onChange = vi.fn()
+    render(
+      <div>
+        <DurationInput deferred value={60} units={['minutes', 'seconds']} onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </div>,
+    )
+    fireEvent.change(field('Minutes'), { target: { value: '2' } })
+    expect(onChange).not.toHaveBeenCalled()
+    fireEvent.blur(field('Minutes'), { relatedTarget: screen.getByText('elsewhere') })
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(onChange).toHaveBeenLastCalledWith(120)
+
+    fireEvent.change(field('Minutes'), { target: { value: '' } })
+    fireEvent.change(field('Seconds'), { target: { value: '' } })
+    fireEvent.blur(field('Seconds'), { relatedTarget: screen.getByText('elsewhere') })
+    expect(onChange).toHaveBeenCalledTimes(1)
+  })
 })

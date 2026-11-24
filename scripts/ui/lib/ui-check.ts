@@ -305,7 +305,7 @@ export function iconTitleFindings(file: string, source: string): UiFinding[] {
 }
 
 const DURATION_NUMBER_MESSAGE =
-  'a number <input> for a duration → `DurationPartsInput` (days / hours / minutes / seconds, one value in ms), never a bare number whose unit the operator must guess'
+  'a number <input> for a duration → `DurationInput` (hours / minutes / seconds / ms, the stored unit named by the caller), never a bare number whose unit the operator must guess'
 const COMMIT_ON_BLUR_MESSAGE =
   'a write fired from `onBlur` → keep the edit in a draft and write on Save through `FormSaveBar` (`pendingCount`, `onSave`, `onDiscard`); docs/ui/admin-patterns.md "Edits are saved through Save / Discard". A live device control or a one-shot action is `ui-check-ok: <reason>`'
 const DEVICE_SELECT_MESSAGE =
@@ -315,7 +315,7 @@ const DURATION_WORD =
   /\b(seconds?|minutes?|hours?|duration|timeout|interval|ttl|dwell|delay|cooldown|retention)\b/i
 const DURATION_SUFFIX = /\b\w+(?:Ms|Sec|Secs|Seconds|Minutes|Hours|Duration|Timeout|Interval)\b/
 const NUMBER_TYPE = /\btype=(?:["']number["']|\{\s*["']number["']\s*\})/
-const DURATION_OWNER = /(?:duration-parts-input\/|primitives\/input\.tsx$)/
+const DURATION_OWNER = /(?:duration-input\/|primitives\/input\.tsx$)/
 const DEVICE_PICKER_OWNER =
   /(?:composites\/device-|SourceSelector|DeviceValuePicker|device-selector-picker)/
 const SAVE_CALL =

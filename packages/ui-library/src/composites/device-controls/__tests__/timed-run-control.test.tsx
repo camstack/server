@@ -33,7 +33,7 @@ beforeEach(() => {
 describe('TimedRunControl', () => {
   it('runs for the typed duration in the type unit', () => {
     render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
-    const input = screen.getByRole('spinbutton')
+    const input = screen.getByRole('spinbutton', { name: 'Minutes' })
     fireEvent.change(input, { target: { value: '45' } })
     fireEvent.click(screen.getByRole('button', { name: /run/i }))
     expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
@@ -41,14 +41,21 @@ describe('TimedRunControl', () => {
 
   it('a pet fountain runs in seconds', () => {
     render(<TimedRunControl trpc={trpc} deviceId={6} limit={FOUNTAIN} />)
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '90' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Minutes' }), {
+      target: { value: '1' },
+    })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Seconds' }), {
+      target: { value: '30' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /run/i }))
     expect(runFor).toHaveBeenCalledWith({ duration: 90, unit: 's' })
   })
 
   it('refuses a value above the maximum without calling the device', () => {
     render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '181' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Minutes' }), {
+      target: { value: '181' },
+    })
     expect(screen.getByRole('button', { name: /run/i }).hasAttribute('disabled')).toBe(true)
     expect(runFor).not.toHaveBeenCalled()
   })
@@ -66,7 +73,7 @@ describe('TimedRunControl', () => {
     expect(screen.queryByTestId('timed-run-countdown')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Restart' })).toBeNull()
-    expect(screen.getByRole('spinbutton')).toBeTruthy()
+    expect(screen.getByRole('spinbutton', { name: 'Minutes' })).toBeTruthy()
   })
 
   it('armed: Stop, the time left and Restart replace the start control', () => {

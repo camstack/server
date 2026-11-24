@@ -18,7 +18,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-  DurationPartsInput,
+  DurationInput,
 } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,7 +48,7 @@ import {
   syncDeclaredEventPick,
   updateEventPickMode,
 } from './source-selector-event-add'
-import { EventEdgeField, NumberSecondsField } from './source-selector-event-params'
+import { EventEdgeField } from './source-selector-event-params'
 import { wireableFieldsForDestination } from './source-selector-fields'
 import {
   groupSourceValues,
@@ -61,7 +61,6 @@ import {
   sourceSearchRequires,
 } from './source-selector-model'
 import { siblingSuggestions } from './source-selector-siblings'
-import { useDurationLabels } from '../../../../lib/use-duration-labels'
 
 export type { EventPickedRow }
 
@@ -209,7 +208,6 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
 
 function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const durationLabels = useDurationLabels()
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
     () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
@@ -318,12 +316,11 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
             <EventEdgeField edges={props.edges} edge={props.edge} onChange={props.onEdgeChange} />
             <div className="flex flex-col gap-1 text-[11px] text-foreground">
               {t('customize.event.debounce')}
-              <DurationPartsInput
+              <DurationInput
                 aria-label={t('customize.event.debounce')}
-                seconds={Number.isFinite(props.debounceSec) ? props.debounceSec : 0}
-                fractionalSeconds
+                value={Number.isFinite(props.debounceSec) ? props.debounceSec : 0}
+                fractional
                 min={0}
-                labels={durationLabels}
                 onChange={(seconds) => props.onDebounceSecChange(seconds)}
               />
             </div>
@@ -331,17 +328,27 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         )}
         {props.shape === 'span' && (
           <>
-            <NumberSecondsField
-              label={t('customize.event.timeout')}
-              value={props.timeoutSec}
-              onChange={props.onTimeoutSecChange}
-            />
-            {props.cooldownSec !== null && (
-              <NumberSecondsField
-                label={t('customize.event.cooldown')}
-                value={props.cooldownSec}
-                onChange={props.onCooldownSecChange}
+            <div className="flex flex-col gap-1 text-[11px] text-foreground">
+              {t('customize.event.timeout')}
+              <DurationInput
+                aria-label={t('customize.event.timeout')}
+                value={Number.isFinite(props.timeoutSec) ? props.timeoutSec : 0}
+                fractional
+                min={0}
+                onChange={props.onTimeoutSecChange}
               />
+            </div>
+            {props.cooldownSec !== null && (
+              <div className="flex flex-col gap-1 text-[11px] text-foreground">
+                {t('customize.event.cooldown')}
+                <DurationInput
+                  aria-label={t('customize.event.cooldown')}
+                  value={Number.isFinite(props.cooldownSec) ? props.cooldownSec : 0}
+                  fractional
+                  min={0}
+                  onChange={props.onCooldownSecChange}
+                />
+              </div>
             )}
           </>
         )}

@@ -86,7 +86,7 @@ import { OptionSelect, type OptionSelectOption } from './option-select'
 import { ConfigInstanceSelectControl } from './config-instance-select-field'
 import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
 import { formatNumeric } from '../lib/format-numeric'
-import { DurationInput } from './duration-parts-input/DurationInput'
+import { DurationInput } from './duration-input/DurationInput'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
 export interface ProbeState {

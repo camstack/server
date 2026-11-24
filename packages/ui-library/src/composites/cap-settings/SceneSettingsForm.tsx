@@ -38,7 +38,7 @@
 import { Slider } from '../../primitives/slider'
 import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
-import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { DurationInput } from '../duration-input/DurationInput'
 import { FormSaveBar } from '../form-save-bar'
 import type { SceneCheck, SceneMonitor, SceneUncoveredPolicy } from '@camstack/types'
 import { useEffect, useRef, useState, type JSX } from 'react'
@@ -262,8 +262,8 @@ export function SceneSettingsForm({
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.checkEvery', 'Check every (seconds)')}
           </span>
-          <DurationPartsInput
-            seconds={draft.checkIntervalSec}
+          <DurationInput
+            value={draft.checkIntervalSec}
             min={MIN_INTERVAL_SEC}
             max={MAX_INTERVAL_SEC}
             disabled={disabled}
@@ -348,8 +348,8 @@ export function SceneSettingsForm({
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.quietFor', 'Quiet for (seconds) before a check counts')}
           </span>
-          <DurationPartsInput
-            seconds={draft.quietSeconds}
+          <DurationInput
+            value={draft.quietSeconds}
             min={0}
             max={3_600}
             disabled={disabled}
@@ -375,8 +375,8 @@ export function SceneSettingsForm({
               'Minimum gap between counted checks (seconds)',
             )}
           </span>
-          <DurationPartsInput
-            seconds={draft.minObservationSpacingSec}
+          <DurationInput
+            value={draft.minObservationSpacingSec}
             min={0}
             max={3_600}
             disabled={disabled}

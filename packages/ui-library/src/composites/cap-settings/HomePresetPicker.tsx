@@ -34,7 +34,7 @@ import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useState } from 'react'
-import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { DurationInput } from '../duration-input/DurationInput'
 import { FormSaveBar } from '../form-save-bar'
 import type { UsePTZResult } from '../../hooks/use-ptz'
 
@@ -136,8 +136,8 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
             <span className="text-[10px] font-medium text-foreground-subtle">
               {t('uiLibrary.homePresetPicker.after', 'After (s)')}
             </span>
-            <DurationPartsInput
-              seconds={afterDraft ?? homeReturn.seconds}
+            <DurationInput
+              value={afterDraft ?? homeReturn.seconds}
               min={0}
               max={3600}
               disabled={disabled}

@@ -9,7 +9,7 @@ applies-to:
   - packages/types/src/automation/codegen.ts
   - packages/types/src/device/switch-run-limits.ts
   - packages/system/src/builtins/core-blocks/runs-ledger.ts
-  - packages/ui-library/src/composites/duration-parts-input/**
+  - packages/ui-library/src/composites/duration-input/**
 ---
 
 ## Context

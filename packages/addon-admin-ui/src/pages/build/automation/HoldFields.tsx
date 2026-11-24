@@ -13,10 +13,9 @@
  */
 
 import type { HoldMode, HoldSpec } from '@camstack/types'
-import { Input, Select, DurationPartsInput } from '@camstack/ui-library'
+import { Input, Select, DurationInput } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
-import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 const NO_HOLD = 'none'
 
@@ -29,7 +28,6 @@ export interface HoldFieldsProps {
 
 export function HoldFields({ hold, modes, onChange }: HoldFieldsProps) {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const labels: Readonly<Record<HoldMode, string>> = {
     held: t('automation.hold.held', 'held'),
     stable: t('automation.hold.stable', 'stable'),
@@ -64,12 +62,11 @@ export function HoldFields({ hold, modes, onChange }: HoldFieldsProps) {
       {hold !== undefined && (
         <div>
           <PickerLabel>{t('automation.hold.seconds', 'Seconds')}</PickerLabel>
-          <DurationPartsInput
+          <DurationInput
             aria-label={t('automation.hold.seconds', 'Seconds')}
-            seconds={hold.ms / 1000}
-            fractionalSeconds
+            value={hold.ms / 1000}
+            fractional
             min={0}
-            labels={durationLabels}
             testIdPrefix="hold-duration"
             onChange={(seconds) =>
               onChange(seconds > 0 ? { ...hold, ms: Math.round(seconds * 1000) } : undefined)

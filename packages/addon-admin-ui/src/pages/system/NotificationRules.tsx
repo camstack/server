@@ -1,4 +1,4 @@
-import { resolveParentNames, Checkbox, DurationPartsInput } from '@camstack/ui-library'
+import { resolveParentNames, Checkbox, DurationInput } from '@camstack/ui-library'
 /**
  * Notification RULES management page (slice D1 — list + CRUD shell).
  *
@@ -186,7 +186,6 @@ import { ruleScopeList } from './rule-scope-model'
 import { useNotificationTargets } from './use-notification-targets'
 import { zoneCameraIds } from './zone-scope-items'
 import { NcListEmpty, NcListLoading } from './notification-list-chrome'
-import { useDurationLabels } from '../../lib/use-duration-labels'
 
 /**
  * Query keys shared with the SIMULATE tab.
@@ -867,7 +866,6 @@ function RuleFormDialog({
 }: RuleFormDialogProps) {
   const system = useSystem()
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const isExisting = rule != null && rule.id.length > 0
   // The form as OPENED — the saved rule, or a new rule's seed. Kept apart from
   // `form` because a device picker whose empty value means "all" warns from
@@ -1271,12 +1269,11 @@ function RuleFormDialog({
                 <label className="block text-[11px] font-medium text-foreground mb-1">
                   {t('notificationRules.grouping.seconds', 'Group for (seconds)')}
                 </label>
-                <DurationPartsInput
+                <DurationInput
                   aria-label={t('notificationRules.grouping.seconds', 'Group for (seconds)')}
-                  seconds={Number(groupingSecN)}
+                  value={Number(groupingSecN)}
                   min={NC_GROUPING_MIN_SEC}
                   max={NC_GROUPING_MAX_SEC}
-                  labels={durationLabels}
                   testIdPrefix="rule-grouping-sec"
                   onChange={(seconds) => patch({ groupingSec: seconds })}
                 />
@@ -1300,15 +1297,14 @@ function RuleFormDialog({
               <label className="block text-[11px] font-medium text-foreground mb-1">
                 {t('notificationRules.groupWithin.seconds', 'Group notifications within (s)')}
               </label>
-              <DurationPartsInput
+              <DurationInput
                 aria-label={t(
                   'notificationRules.groupWithin.seconds',
                   'Group notifications within (s)',
                 )}
-                seconds={form.groupWithinSec}
+                value={form.groupWithinSec}
                 min={0}
                 max={NC_GROUP_WITHIN_MAX_SEC}
-                labels={durationLabels}
                 testIdPrefix="rule-group-within-sec"
                 onChange={(seconds) => patch({ groupWithinSec: seconds })}
               />
@@ -1458,12 +1454,11 @@ function RuleFormDialog({
             <label className="block text-[11px] font-medium text-foreground mb-1">
               {t('system.notificationRules.cooldownSeconds', 'Cooldown (seconds)')}
             </label>
-            <DurationPartsInput
+            <DurationInput
               aria-label={t('system.notificationRules.cooldownSeconds', 'Cooldown (seconds)')}
-              seconds={form.cooldownSec}
+              value={form.cooldownSec}
               min={0}
               max={NC_COOLDOWN_MAX_SEC}
-              labels={durationLabels}
               testIdPrefix="rule-cooldown"
               onChange={(seconds) => patch({ cooldownSec: seconds })}
             />

@@ -34,6 +34,7 @@ import {
   ErrorBox,
   Input,
   DeviceValuePicker,
+  DurationInput,
   Select,
   useDeviceManagerListAll,
   useSystem,
@@ -421,12 +422,13 @@ export function NotificationSimulatePage() {
               </div>
               <div>
                 <label className={LABEL_CLASS}>
-                  {t('system.notificationSimulate.dwellSeconds', 'Dwell (seconds)')}
+                  {t('system.notificationSimulate.dwellSeconds', 'Dwell')}
                 </label>
-                <NumberField
+                <DurationInput
+                  optional
                   value={form.dwellSeconds}
                   min={0}
-                  step={1}
+                  aria-label={t('system.notificationSimulate.dwellSeconds', 'Dwell')}
                   onChange={(v) => patch({ dwellSeconds: v })}
                 />
               </div>

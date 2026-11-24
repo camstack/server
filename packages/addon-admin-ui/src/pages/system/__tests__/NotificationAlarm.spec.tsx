@@ -798,7 +798,7 @@ describe('NotificationAlarm — arm outcomes and save errors are visible', () =>
     )
     renderPage()
     openMode('away')
-    const input = await screen.findByTestId('alarm-delay-away-exit')
+    const input = await screen.findByTestId('alarm-delay-away-exit-seconds')
     fireEvent.change(input, { target: { value: '99' } })
     fireEvent.blur(input)
     expect(await screen.findByText(/could not save/i)).toBeTruthy()
@@ -814,7 +814,7 @@ describe('NotificationAlarm — per-mode delays and the landed check (D697)', ()
   const exitInput = async (mode: string): Promise<HTMLInputElement> => {
     await screen.findByTestId(`alarm-tab-${mode}`)
     openMode(mode)
-    const el = await screen.findByTestId(`alarm-delay-${mode}-exit`)
+    const el = await screen.findByTestId(`alarm-delay-${mode}-exit-seconds`)
     if (!(el instanceof HTMLInputElement)) throw new Error('not an input')
     return el
   }
@@ -1126,7 +1126,7 @@ describe('NotificationAlarm — an answer from a hub older than D697 / D636 (rev
     // The old hub strips the key it does not know: the answer still has no modeDelays.
     mockSetAlarmConfig.mockImplementation(() => Promise.resolve(WITHOUT_MODE_DELAYS))
     renderPage()
-    const input = await screen.findByTestId('alarm-delay-away-exit')
+    const input = await screen.findByTestId('alarm-delay-away-exit-seconds')
     fireEvent.change(input, { target: { value: '60' } })
     fireEvent.blur(input)
     await waitFor(() => expect(mockSetAlarmConfig).toHaveBeenCalledTimes(1))
@@ -1209,34 +1209,29 @@ describe('NotificationAlarm — the shared table, field and target components', 
     expect(screen.queryByTestId('alarm-sensors-away')).toBeNull()
   })
 
-  it('a delay that would be refused on blur says why, and sends nothing', async () => {
+  it('a delay that would be refused on leaving the field says why, and sends nothing', async () => {
     mockSetAlarmConfig.mockClear()
     renderPage()
     openMode('away')
-    const input = await screen.findByTestId('alarm-delay-away-exit')
+    const input = await screen.findByTestId('alarm-delay-away-exit-seconds')
     fireEvent.change(input, { target: { value: '99999' } })
-    expect(await screen.findByText(/whole number of seconds from 0 to/i)).toBeTruthy()
+    // Nothing is sent while typing, and nothing on leaving either.
+    expect(mockSetAlarmConfig).not.toHaveBeenCalled()
     fireEvent.blur(input)
     expect(mockSetAlarmConfig).not.toHaveBeenCalled()
-    // The refusal stays after the blur — the box is back at the stored value, and a
-    // message that vanished with the draft would leave a silently discarded entry.
-    expect(screen.getByText(/99999 was not saved — Enter a whole number of seconds/i)).toBeTruthy()
-    // ...until the next keystroke.
-    fireEvent.change(input, { target: { value: '4' } })
-    expect(screen.queryByText(/was not saved/i)).toBeNull()
+    // The refusal stays after the blur: a message that vanished would leave a silently discarded entry.
+    expect(
+      screen.getByText(/99999 s was not saved — Enter a whole number of seconds/i),
+    ).toBeTruthy()
   })
 
-  it('an emptied delay is not flagged while typing, and is said to be unsaved on blur', async () => {
+  it('an emptied delay commits nothing on leaving the field', async () => {
     mockSetAlarmConfig.mockClear()
     renderPage()
     openMode('away')
-    const input = await screen.findByTestId('alarm-delay-away-exit')
+    const input = await screen.findByTestId('alarm-delay-away-exit-seconds')
     fireEvent.change(input, { target: { value: '' } })
-    expect(screen.queryByText(/whole number of seconds from 0 to/i)).toBeNull()
     fireEvent.blur(input)
     expect(mockSetAlarmConfig).not.toHaveBeenCalled()
-    expect(
-      screen.getByText(/Nothing was entered, so nothing was saved — Enter a whole number/i),
-    ).toBeTruthy()
   })
 })

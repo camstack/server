@@ -9,11 +9,10 @@ import {
   REACH_RETRY_INTERVAL_S,
   REACH_RETRY_MAX_S,
 } from '@camstack/types'
-import { Input, Select, DurationPartsInput } from '@camstack/ui-library'
+import { Input, Select, DurationInput } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
 import { probeExpect, probeRetry, probeSaveAs, wholeNumber } from './reach-step-model'
-import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 export interface ProbeFieldsProps {
   readonly index: number
@@ -27,7 +26,6 @@ function expectOf(value: string): AutomationProbeStep['expect'] {
 
 export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const at = String(index)
   return (
     <div className="space-y-2" data-testid={`probe-step-${at}`}>
@@ -55,12 +53,11 @@ export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
         </label>
         <div>
           <PickerLabel>{t('automation.reach.timeout', 'Timeout (s)')}</PickerLabel>
-          <DurationPartsInput
+          <DurationInput
             aria-label={t('automation.reach.timeout', 'Timeout (s)')}
-            seconds={step.timeoutSeconds}
+            value={step.timeoutSeconds}
             min={1}
             max={PROBE_TIMEOUT_MAX_S}
-            labels={durationLabels}
             testIdPrefix={`probe-timeout-${at}`}
             onChange={(seconds) => onChange({ ...step, timeoutSeconds: Math.max(1, seconds) })}
           />
@@ -83,11 +80,10 @@ export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
         </label>
         <div>
           <PickerLabel>{t('automation.reach.retry', 'Keep trying for (s)')}</PickerLabel>
-          <DurationPartsInput
+          <DurationInput
             aria-label={t('automation.reach.retry', 'Keep trying for (s)')}
-            seconds={step.retryUntilSeconds ?? 0}
+            value={step.retryUntilSeconds ?? 0}
             max={REACH_RETRY_MAX_S}
-            labels={durationLabels}
             testIdPrefix={`probe-retry-${at}`}
             onChange={(seconds) => onChange(probeRetry(step, seconds > 0 ? seconds : undefined))}
           />

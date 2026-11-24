@@ -7,6 +7,7 @@ import {
   SOURCE_CAP_ACTIVE_FIELD,
   type RecordingObjectTriggerClass,
 } from '@camstack/types'
+import { DurationInput } from '../duration-input/DurationInput'
 import { DeviceValuePicker } from '../device-value-picker/DeviceValuePicker'
 import { deviceIdsOf, pickedFromDeviceIds } from '../device-value-picker/device-id-values'
 import { FieldShell } from '../device-value-picker/device-value-form-fields'
@@ -412,16 +413,13 @@ function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandR
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-1">
               {t('uiLibrary.recordingBands.postBuffer', 'Post-buffer')}
-              {/* ui-check-ok: empty means the default buffer; DurationPartsInput always holds a value, so it cannot express unset */}
-              <input
-                type="number"
-                min={0}
-                value={band.postBufferSec ?? ''}
-                placeholder={String(DEFAULT_EVENTS_BAND_BUFFER_SEC.postBufferSec)}
-                onChange={(e) => onChange({ postBufferSec: numOrUndef(e.target.value) })}
-                className="w-16 rounded-md border border-border bg-background px-1 py-1 text-xs"
+              <DurationInput
+                optional
+                value={band.postBufferSec}
+                placeholder={DEFAULT_EVENTS_BAND_BUFFER_SEC.postBufferSec}
+                aria-label={t('uiLibrary.recordingBands.postBuffer', 'Post-buffer')}
+                onChange={(postBufferSec) => onChange({ postBufferSec })}
               />
-              s
             </label>
           </div>
         </div>

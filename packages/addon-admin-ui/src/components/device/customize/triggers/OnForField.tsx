@@ -4,9 +4,8 @@
  * happens when the section is saved, never from here.
  */
 import { ON_FOR_MAX_SECONDS } from '@camstack/types'
-import { DurationPartsInput } from '@camstack/ui-library'
+import { DurationInput } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
-import { useDurationLabels } from '../../../../lib/use-duration-labels'
 
 export interface OnForFieldProps {
   readonly seconds: number
@@ -30,14 +29,12 @@ export function OnForField({
   maxSeconds = ON_FOR_MAX_SECONDS,
   onChange,
 }: OnForFieldProps): ReactNode {
-  const labels = useDurationLabels()
   return (
     <span title={hint} className="max-w-full min-w-0">
-      <DurationPartsInput
-        seconds={seconds}
+      <DurationInput
+        value={seconds}
         min={MIN_SECONDS}
         max={maxSeconds}
-        labels={labels}
         aria-label={label}
         disabled={disabled}
         testIdPrefix={testId}

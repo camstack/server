@@ -33,6 +33,7 @@ import {
   Button,
   DeviceEventPicker,
   DeviceValuePicker,
+  DurationInput,
   FormField,
   IconButton,
   Input,
@@ -52,7 +53,6 @@ import { FiredFields } from '../automation/FiredFields'
 import { EVENT_EMITTER_CAP, firedVocabularyOf } from '../automation/fired-model'
 import { ActionEditor, TemplateActionPicker } from './TemplateActionPicker'
 import { commandStepsOf, entriesValueOf, firedLeavesOf } from './entries-values'
-import { DurationValueInput } from './DurationValueInput'
 import {
   groupBounds,
   type NestedGroupAt,
@@ -720,7 +720,8 @@ function ScalarControl({
     case 'duration':
       return (
         <span data-testid={`template-input-${address}`}>
-          <DurationValueInput
+          <DurationInput
+            optional
             value={typeof value === 'number' ? value : undefined}
             disabled={disabled}
             {...(input.min === undefined ? {} : { min: input.min })}

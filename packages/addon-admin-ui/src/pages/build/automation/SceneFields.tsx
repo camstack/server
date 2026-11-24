@@ -14,7 +14,7 @@ import type {
   StationaryLeaf,
   StationaryPresentLeaf,
 } from '@camstack/types'
-import { DeviceValuePicker, SegmentedChoice, Slider } from '@camstack/ui-library'
+import { DeviceValuePicker, DurationInput, SegmentedChoice, Slider } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { CAMERA_TYPES } from '../flow/build-device-filters'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
@@ -138,6 +138,9 @@ export function StationaryFields({ leaf: trigger, devices, onChange }: Stationar
   )
 }
 
+/** An interval is stored in whole minutes; hours and minutes are what it is typed in. */
+const INTERVAL_UNITS = ['hours', 'minutes'] as const
+
 export interface IntervalFieldsProps {
   readonly leaf: IntervalLeaf
   readonly onChange: (next: IntervalLeaf) => void
@@ -148,15 +151,15 @@ export function IntervalFields({ leaf: trigger, onChange }: IntervalFieldsProps)
   return (
     <div className="flex items-center gap-2" data-testid="interval-fields">
       <FieldLabel>{t('flow.scene.every', 'Every')}</FieldLabel>
-      <DraftNumberInput
-        aria-label={t('flow.scene.intervalMinutes', 'Minutes')}
-        className="w-20"
+      <DurationInput
+        storageUnit="min"
+        units={INTERVAL_UNITS}
+        min={1}
+        aria-label={t('flow.scene.every', 'Every')}
+        testIdPrefix="interval"
         value={trigger.minutes}
-        onValue={(minutes) => {
-          if (minutes !== null) onChange({ kind: 'interval', minutes: Math.round(minutes) })
-        }}
+        onChange={(minutes) => onChange({ kind: 'interval', minutes })}
       />
-      <FieldLabel>{t('flow.scene.minutes', 'minutes')}</FieldLabel>
     </div>
   )
 }

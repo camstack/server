@@ -71,6 +71,7 @@ import {
   DIGEST_LABEL_CLASS,
   DigestCameraField,
   type DigestCameraOption,
+  DigestDurationField,
   DigestNumberField,
   DigestProblems,
   DigestSection,
@@ -409,7 +410,7 @@ export function NotificationSummaryEditor({
 
                 {form.windowKind === 'motion' ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <DigestNumberField
+                    <DigestDurationField
                       label={t(
                         'system.notificationSummaryEditor.quietPeriodSeconds',
                         'Quiet period (seconds)',
@@ -424,7 +425,7 @@ export function NotificationSummaryEditor({
                       )}
                       testId="summary-quiet"
                     />
-                    <DigestNumberField
+                    <DigestDurationField
                       label={t(
                         'system.notificationSummaryEditor.longestWindowSeconds',
                         'Longest window (seconds)',
@@ -458,7 +459,7 @@ export function NotificationSummaryEditor({
                   </div>
                 )}
 
-                <DigestNumberField
+                <DigestDurationField
                   label={t(
                     'system.notificationSummaryEditor.waitForOpenTracksSeconds',
                     'Wait for open tracks (seconds)',
@@ -557,7 +558,7 @@ export function NotificationSummaryEditor({
                     )}
                     testId="summary-min-importance"
                   />
-                  <DigestNumberField
+                  <DigestDurationField
                     label={t(
                       'system.notificationSummaryEditor.minimumStaySeconds',
                       'Minimum stay (seconds)',
@@ -851,7 +852,7 @@ export function NotificationSummaryEditor({
                     )}
                     testId="summary-max-ai-images"
                   />
-                  <DigestNumberField
+                  <DigestDurationField
                     label={t(
                       'system.notificationSummaryEditor.timeLimitSeconds',
                       'Time limit (seconds)',

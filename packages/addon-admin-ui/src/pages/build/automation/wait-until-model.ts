@@ -1,6 +1,6 @@
 /**
  * The pure edits of a `wait-until` step and of a `wait` step: a duration is
- * stored in seconds and edited one field per unit (`DurationPartsInput`).
+ * stored in seconds and edited one field per unit (`DurationInput`).
  */
 import {
   type AutomationWaitUntilStep,

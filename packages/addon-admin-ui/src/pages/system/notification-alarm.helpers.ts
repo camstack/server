@@ -133,22 +133,6 @@ export function coverageIsEmpty(coverage: NcAlarmModeCoverage): boolean {
   return coverage.ruleCount === 0
 }
 
-/**
- * Parse a number field without letting an empty box become 0.
- *
- * An operator clearing the entry-delay box to retype it would otherwise commit
- * "0 seconds" — an alarm that fires the instant the door opens — on the way to
- * typing "45". Null means "leave it alone".
- */
-export function parseDelayInput(raw: string, max: number): number | null {
-  const trimmed = raw.trim()
-  if (trimmed === '') return null
-  const value = Number(trimmed)
-  if (!Number.isFinite(value) || !Number.isInteger(value)) return null
-  if (value < 0 || value > max) return null
-  return value
-}
-
 // ── Live panel ──────────────────────────────────────────────────────
 
 /** How often the tab re-reads the panel. Fast only while something is

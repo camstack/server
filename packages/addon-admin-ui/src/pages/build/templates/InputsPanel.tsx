@@ -8,6 +8,7 @@ import type { AutomationTemplatePayload, TemplateInput } from '@camstack/types'
 import {
   Badge,
   Button,
+  DurationInput,
   FormField,
   IconButton,
   Input,
@@ -29,7 +30,6 @@ import {
   uniqueInputKey,
 } from './mark-as-input'
 import { optionsFromText, optionsToText, patchInput } from './input-edit'
-import { DurationValueInput } from './DurationValueInput'
 
 export interface InputsPanelProps {
   readonly payload: AutomationTemplatePayload
@@ -165,7 +165,8 @@ function InputEditor({ input, deviceInputs, onChange }: InputEditorProps): React
           <FormField label={t('build.templates.min', 'Minimum')}>
             {input.kind === 'duration' ? (
               <span data-testid="template-input-min">
-                <DurationValueInput
+                <DurationInput
+                  optional
                   value={input.min}
                   aria-label={t('build.templates.min', 'Minimum')}
                   onChange={(seconds) => onChange(patchInput(input, { min: seconds }))}
@@ -183,7 +184,8 @@ function InputEditor({ input, deviceInputs, onChange }: InputEditorProps): React
           <FormField label={t('build.templates.max', 'Maximum')}>
             {input.kind === 'duration' ? (
               <span data-testid="template-input-max">
-                <DurationValueInput
+                <DurationInput
+                  optional
                   value={input.max}
                   aria-label={t('build.templates.max', 'Maximum')}
                   onChange={(seconds) => onChange(patchInput(input, { max: seconds }))}
@@ -201,7 +203,8 @@ function InputEditor({ input, deviceInputs, onChange }: InputEditorProps): React
           <FormField label={t('build.templates.default', 'Default')}>
             {input.kind === 'duration' ? (
               <span data-testid="template-input-default">
-                <DurationValueInput
+                <DurationInput
+                  optional
                   value={input.default}
                   aria-label={t('build.templates.default', 'Default')}
                   onChange={(seconds) => onChange(patchInput(input, { default: seconds }))}

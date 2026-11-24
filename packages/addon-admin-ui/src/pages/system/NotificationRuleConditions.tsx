@@ -69,7 +69,13 @@ import {
   sensorTransitionNeverFires,
   systemFamilyOfKind,
 } from '@camstack/types'
-import { Select, Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import {
+  DurationInput,
+  Select,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@camstack/ui-library'
 import { Info } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useMemo } from 'react'
@@ -565,10 +571,12 @@ function ConditionWidget({
       if (!isNumberKey(descriptor.id)) break
       const key = descriptor.id
       return (
-        <NumberField
+        <DurationInput
+          optional
           value={readNumber(conditions, key)}
           min={0}
-          step={1}
+          aria-label={conditionLabel(descriptor, t)}
+          testIdPrefix={`condition-${key}`}
           onChange={(v) => onFieldChange(key, v)}
         />
       )

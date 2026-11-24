@@ -86,6 +86,7 @@ function TimeEndFields({ label, testId, end, onChange }: TimeEndFieldsProps) {
                 if (event !== undefined) onChange({ ...end, event })
               }}
             />
+            {/* duration-input-ok: a signed offset from a sun event, a time-of-day point (the scheduler phase), not a length of time */}
             <DraftNumberInput
               aria-label={named(
                 t('schedulers.point.offset', 'Offset (minutes, negative = before)'),

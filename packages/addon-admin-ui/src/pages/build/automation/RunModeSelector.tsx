@@ -5,6 +5,7 @@
  */
 
 import type { AutomationRecipe, AutomationRunMode } from '@camstack/types'
+import { DurationInput } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { FixedSelect } from '../flow/FixedSelect'
@@ -14,6 +15,8 @@ type ModeName = AutomationRunMode['mode']
 const MODES: readonly ModeName[] = ['single', 'restart', 'queued', 'parallel', 'cooldown']
 const DEFAULT_COUNT = 2
 const DEFAULT_MINUTES = 30
+/** A cooldown is stored in whole minutes; hours and minutes are what it is typed in. */
+const COOLDOWN_UNITS = ['hours', 'minutes'] as const
 
 /** The mode a recipe runs in. */
 export function runModeOf(recipe: AutomationRecipe): AutomationRunMode {
@@ -103,13 +106,14 @@ export function RunModeSelector({ value, onChange }: RunModeSelectorProps) {
           <span className="block text-xs text-foreground-subtle">
             {t('flow.runMode.minutes', 'Minutes')}
           </span>
-          <DraftNumberInput
-            className="w-20"
+          <DurationInput
+            storageUnit="min"
+            units={COOLDOWN_UNITS}
+            min={1}
             aria-label={t('flow.runMode.minutes', 'Minutes')}
+            testIdPrefix="run-mode-cooldown"
             value={value.minutes}
-            onValue={(minutes) => {
-              if (minutes !== null) onChange({ mode: 'cooldown', minutes: Math.round(minutes) })
-            }}
+            onChange={(minutes) => onChange({ mode: 'cooldown', minutes })}
           />
         </label>
       )}

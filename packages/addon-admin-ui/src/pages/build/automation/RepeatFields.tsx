@@ -17,6 +17,7 @@ import {
 import {
   type DeviceListState,
   DeviceValuePicker,
+  DurationInput,
   ErrorBox,
   Input,
   Select,
@@ -150,19 +151,16 @@ export function RepeatFields({
               />
             </label>
             <label className="w-40">
-              <PickerLabel>{t('automation.repeat.wait', 'Pause between rounds (s)')}</PickerLabel>
-              <Input
-                type="number"
+              <PickerLabel>{t('automation.repeat.wait', 'Pause between rounds')}</PickerLabel>
+              <DurationInput
+                optional
+                value={loop.waitS}
                 min={1}
                 max={WAIT_MAX_SECONDS}
-                data-testid={`repeat-wait-${String(index)}`}
-                value={loop.waitS === undefined ? '' : String(loop.waitS)}
-                placeholder={t('automation.repeat.noWait', 'none')}
-                onChange={(e) =>
-                  onChange({
-                    ...step,
-                    loop: setLoopWait(loop, e.target.value === '' ? null : Number(e.target.value)),
-                  })
+                aria-label={t('automation.repeat.wait', 'Pause between rounds')}
+                testIdPrefix={`repeat-wait-${String(index)}`}
+                onChange={(seconds) =>
+                  onChange({ ...step, loop: setLoopWait(loop, seconds ?? null) })
                 }
               />
             </label>

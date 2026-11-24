@@ -148,7 +148,9 @@ describe('RuleConditionsEditor — the catalog names the field', () => {
     const { changes } = renderEditor([
       descriptor({ id: 'minDwellSeconds', group: 'quality', label: 'Dwell', valueType: 'number' }),
     ])
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '12' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Seconds' }), {
+      target: { value: '12' },
+    })
     expect(changes).toEqual([{ minDwellSeconds: 12 }])
   })
 

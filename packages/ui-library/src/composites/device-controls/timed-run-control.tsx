@@ -18,12 +18,15 @@ import type { TimedRunLimit, TimedRunRefusal } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { Button } from '../../primitives/button'
-import { Input } from '../../primitives/input'
+import { DurationInput } from '../duration-input/DurationInput'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 
 const TICK_MS = 1000
 const SECONDS_PER_MINUTE = 60
 const MS_PER_SECOND = 1000
+/** The fields shown for a device whose run is counted in minutes / in seconds; the stored unit is the device's own. */
+const MINUTE_UNITS = ['hours', 'minutes'] as const
+const SECOND_UNITS = ['minutes', 'seconds'] as const
 
 export interface TimedRunControlProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -121,20 +124,16 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          {/* ui-check-ok: the unit is per device (min or s) and runFor takes a count in that unit; a live one-shot control */}
-          <Input
-            type="number"
-            inputMode="numeric"
+          <DurationInput
+            value={Number.isFinite(draft) ? draft : 0}
+            storageUnit={limit.unit === 'min' ? 'min' : 's'}
+            units={limit.unit === 'min' ? MINUTE_UNITS : SECOND_UNITS}
             min={1}
             max={max}
-            step={1}
-            value={Number.isFinite(draft) ? draft : ''}
             disabled={!online}
             aria-label={t('uiLibrary.timedRun.duration', 'Run for')}
-            className="w-20 tabular-nums"
-            onChange={(event) => setEdited(event.target.valueAsNumber)}
+            onChange={setEdited}
           />
-          <span className="text-xs text-foreground-muted">{unitLabel}</span>
           <Button size="sm" disabled={!online || !valid} onClick={run}>
             <Timer className="h-4 w-4" aria-hidden />
             {t('uiLibrary.timedRun.run', 'Run')}

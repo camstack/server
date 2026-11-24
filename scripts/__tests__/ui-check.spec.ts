@@ -274,7 +274,7 @@ describe('the MUST-use shapes (#662, #675)', () => {
       'duration-number-input',
     ])
     expect(
-      rules('packages/ui-library/src/composites/duration-parts-input/DurationPartsInput.tsx', dur),
+      rules('packages/ui-library/src/composites/duration-input/DurationInput.tsx', dur),
     ).toEqual([])
   })
 

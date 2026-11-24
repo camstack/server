@@ -321,9 +321,9 @@ describe('ActionList repeat (#500)', () => {
     expect(latest[0]).toMatchObject({ loop: { by: 'while', maxIterations: 10 } })
     fireEvent.change(screen.getByTestId('repeat-max-0'), { target: { value: '400' } })
     expect(latest[0]).toMatchObject({ loop: { by: 'while', maxIterations: 50 } })
-    fireEvent.change(screen.getByTestId('repeat-wait-0'), { target: { value: '30' } })
+    fireEvent.change(screen.getByTestId('repeat-wait-0-seconds'), { target: { value: '30' } })
     expect(latest[0]).toMatchObject({ loop: { waitS: 30 } })
-    fireEvent.change(screen.getByTestId('repeat-wait-0'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('repeat-wait-0-seconds'), { target: { value: '' } })
     expect(latest[0]?.kind === 'repeat' ? latest[0].loop : null).not.toHaveProperty('waitS')
   })
 

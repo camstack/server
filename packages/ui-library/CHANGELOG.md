@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Autotrack, scene settings and the home-return delay now save with Save / Discard instead of on blur, delays are entered as hours, minutes and seconds, and a grid cell's source is picked with the device picker
 - The scene settings form always shows Save and Discard while edits are pending, and says why a blank name or question cannot be saved.
 - A motion-trigger toggle on a device card, row or hero reads 'not read yet' instead of 'off' until the camera has been read; it can still be set.
+- Every duration field is now the same hours / minutes / seconds / milliseconds input, including the recording segment length, the event post-buffer and the timed-run box; the stored values do not change.
 
 ## [1.2.499] - 2026-11-22
 

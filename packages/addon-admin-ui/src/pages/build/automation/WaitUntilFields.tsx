@@ -7,14 +7,13 @@ import {
   type AutomationWaitUntilStep,
   WAIT_UNTIL_TIMEOUT_MAX_S,
 } from '@camstack/types'
-import { DurationPartsInput, ErrorBox, Select } from '@camstack/ui-library'
+import { DurationInput, ErrorBox, Select } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
 import { guardProblem } from './StepGuard'
 import { WhenTree } from './WhenTree'
 import { clampTimeout } from './wait-until-model'
-import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 export interface WaitUntilFieldsProps {
   /** The step's position in its list, for the test ids. */
@@ -28,7 +27,6 @@ export function WaitUntilFields({ index, step, devices, onChange }: WaitUntilFie
   const { t } = useTranslation()
   const recipe: AutomationRecipe = { when: step.when, actions: [] }
   const problem = guardProblem(step.when)
-  const durationLabels = useDurationLabels()
   return (
     <div className="space-y-2">
       <p className="text-xs text-foreground-subtle">
@@ -48,12 +46,11 @@ export function WaitUntilFields({ index, step, devices, onChange }: WaitUntilFie
       <div className="flex flex-wrap items-end gap-2">
         <div>
           <PickerLabel>{t('automation.waitUntil.timeout', 'At most')}</PickerLabel>
-          <DurationPartsInput
+          <DurationInput
             aria-label={t('automation.waitUntil.timeout', 'At most')}
-            seconds={step.timeoutS}
+            value={step.timeoutS}
             min={1}
             max={WAIT_UNTIL_TIMEOUT_MAX_S}
-            labels={durationLabels}
             testIdPrefix={`wait-until-timeout-${String(index)}`}
             onChange={(seconds) => onChange({ ...step, timeoutS: clampTimeout(seconds) })}
           />

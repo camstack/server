@@ -24,7 +24,7 @@ import { AutomationCodeEditor } from '../../../components/code/AutomationCodeEdi
 import {
   Badge,
   Button,
-  DurationPartsInput,
+  DurationInput,
   Input,
   Select,
   Switch,
@@ -52,7 +52,6 @@ import { RepeatFields } from './RepeatFields'
 import { StepGuard, StepIf } from './StepGuard'
 import { WaitUntilFields } from './WaitUntilFields'
 import { clampWait } from './wait-until-model'
-import { useDurationLabels } from '../../../lib/use-duration-labels'
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { type StepChoice, type StepKindOption, StepKindPicker } from './StepKindPicker'
@@ -148,7 +147,6 @@ export function ActionList({
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
-  const durationLabels = useDurationLabels()
   const [picking, setPicking] = useState(false)
   const offered = offeredStepKinds(allowedKinds, flowControl)
   const kinds = ACTION_KINDS.filter((k) => offered.includes(k.value))
@@ -254,12 +252,11 @@ export function ActionList({
             <div className="flex flex-wrap items-end gap-2">
               <div>
                 <PickerLabel>{t('automation.actionList.waitFor', 'Wait for')}</PickerLabel>
-                <DurationPartsInput
+                <DurationInput
                   aria-label={t('automation.actionList.waitFor', 'Wait for')}
-                  seconds={action.seconds}
+                  value={action.seconds}
                   max={WAIT_MAX_SECONDS}
-                  fractionalSeconds
-                  labels={durationLabels}
+                  fractional
                   testIdPrefix={`wait-${String(index)}`}
                   onChange={(seconds) =>
                     onChange(replaceAt(actions, index, { ...action, seconds: clampWait(seconds) }))

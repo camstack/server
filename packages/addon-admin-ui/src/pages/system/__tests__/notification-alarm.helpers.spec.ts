@@ -22,7 +22,6 @@ import {
   nonBlockingFor,
   openingsSummary,
   parseArmOutcome,
-  parseDelayInput,
   skippedSummary,
 } from '../notification-alarm.helpers'
 
@@ -110,28 +109,6 @@ describe('coverageSummary', () => {
     const row = coverage({ ruleCount: 1, deviceIds: [] })
     expect(coverageIsEmpty(row)).toBe(false)
     expect(coverageSummary(row, NAME_OF)).toMatch(/no device restriction/i)
-  })
-})
-
-describe('parseDelayInput', () => {
-  it('refuses an EMPTY box rather than committing 0', () => {
-    // Clearing the entry-delay field on the way to typing "45" would otherwise
-    // arm an alarm that fires the instant the door opens.
-    expect(parseDelayInput('', 600)).toBeNull()
-    expect(parseDelayInput('   ', 600)).toBeNull()
-  })
-
-  it('accepts a whole number in range, including a deliberate 0', () => {
-    expect(parseDelayInput('45', 600)).toBe(45)
-    expect(parseDelayInput('0', 600)).toBe(0)
-    expect(parseDelayInput('600', 600)).toBe(600)
-  })
-
-  it('refuses anything the cap would reject anyway', () => {
-    expect(parseDelayInput('601', 600)).toBeNull()
-    expect(parseDelayInput('-5', 600)).toBeNull()
-    expect(parseDelayInput('4.5', 600)).toBeNull()
-    expect(parseDelayInput('abc', 600)).toBeNull()
   })
 })
 
