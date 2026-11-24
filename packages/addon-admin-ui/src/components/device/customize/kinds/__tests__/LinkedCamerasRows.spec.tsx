@@ -43,14 +43,13 @@ interface QueryAnswer {
   readonly data?: unknown
   readonly error?: { readonly message: string }
 }
-/** Each camera's own slot read, by camera id (the remove path). */
-const slotsByCamera = vi.hoisted((): { current: Record<number, QueryAnswer> } => ({ current: {} }))
 /** The one batch read: which cameras link which devices. */
 const batch = vi.hoisted((): { current: QueryAnswer } => ({ current: { status: 'pending' } }))
-/** The fresh slot read of an add, by camera id; a missing id fails. */
+/** The fresh slot read of an add or a remove, by camera id; a missing id fails. */
 const freshSlots = vi.hoisted((): { current: Record<number, unknown> } => ({ current: {} }))
 const setSlot = vi.fn(async (_input: unknown) => ({ applied: true, reload: 'none' }))
 const refetch = vi.fn(async () => undefined)
+const invalidate = vi.fn(async (_input: unknown) => undefined)
 const fetchSlots = vi.fn(async (input: { deviceId: number }) => {
   const rows = freshSlots.current[input.deviceId]
   if (rows === undefined) throw new Error('owner timed out')
@@ -60,11 +59,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    trpc: { useUtils: () => ({ deviceExtension: { listSlots: { fetch: fetchSlots } } }) },
-    useDeviceExtensionListSlots: (input: { deviceId: number }) => ({
-      ...(slotsByCamera.current[input.deviceId] ?? { status: 'pending' }),
-      refetch,
-    }),
+    trpc: {
+      useUtils: () => ({ deviceExtension: { listSlots: { fetch: fetchSlots, invalidate } } }),
+    },
     useDeviceExtensionSetSlot: () => ({ mutateAsync: setSlot, isPending: false }),
     useDeviceManagerGetLinkedDevicesBatch: () => ({ ...batch.current, refetch }),
   }
@@ -159,12 +156,11 @@ const batchOf = (links: Readonly<Record<number, readonly number[]>>): QueryAnswe
 beforeEach(() => {
   setSlot.mockClear()
   fetchSlots.mockClear()
+  invalidate.mockClear()
   // Only the porch camera links the gate.
   batch.current = batchOf({ 103: [701, 703], 104: [705] })
-  slotsByCamera.current = {
-    103: { status: 'success', data: [slotOf([701, 702, 703], [702])] },
-  }
   freshSlots.current = {
+    103: [slotOf([701, 702, 703], [702])],
     104: [slotOf([705])],
     105: [slotOf([], [])],
   }
@@ -224,17 +220,19 @@ describe('Linked cameras rows on a device a camera can link', () => {
   })
 
   it('a camera whose slot cannot be read is not written, and says so', async () => {
-    freshSlots.current = {}
+    freshSlots.current = { 103: [slotOf([701, 703])] }
     render(wrap(<Harness device={GATE} />))
     fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera shed' }))
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/owner timed out/))
+    expect(await screen.findByText(/owner timed out/)).toBeTruthy()
     expect(setSlot).not.toHaveBeenCalled()
   })
 
   it('removing drops only this device from the camera slot, keeping its other ids and tracked opt-in', async () => {
     render(wrap(<Harness device={GATE} />))
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Camera porch' }))
+    const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
+    await waitFor(() => expect(remove.hasAttribute('disabled')).toBe(false))
+    fireEvent.click(remove)
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
@@ -244,12 +242,38 @@ describe('Linked cameras rows on a device a camera can link', () => {
     )
   })
 
-  it('a camera whose slot has not answered cannot be removed from yet', () => {
-    slotsByCamera.current = { 103: { status: 'pending' } }
+  it('removing writes from a slot read AFTER the confirm: a link another operator added meanwhile survives', async () => {
     render(wrap(<Harness device={GATE} />))
-    const remove = screen.getByRole('button', { name: 'Remove Camera porch' })
+    const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
+    await waitFor(() => expect(remove.hasAttribute('disabled')).toBe(false))
+    // Another operator links 801 to the camera while the confirm is open.
+    freshSlots.current[103] = [slotOf([701, 702, 703, 801], [702])]
+    fireEvent.click(remove)
+    await waitFor(() =>
+      expect(setSlot).toHaveBeenCalledWith({
+        deviceId: 103,
+        slotRef: 'device-manager:linked-devices',
+        value: { slot: 'linked-devices', deviceIds: [701, 702, 801], trackedDeviceIds: [702] },
+      }),
+    )
+    expect(invalidate).toHaveBeenCalledWith({ deviceId: 103 })
+  })
+
+  it('a camera whose slot cannot be read cannot be removed from', async () => {
+    freshSlots.current = {}
+    render(wrap(<Harness device={GATE} />))
+    const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
+    await screen.findByText(/owner timed out/)
     expect(remove.hasAttribute('disabled')).toBe(true)
     fireEvent.click(remove)
     expect(setSlot).not.toHaveBeenCalled()
+  })
+
+  it("the cameras' slots are read in ONE query for the table, not one per row", async () => {
+    batch.current = batchOf({ 103: [703], 104: [703] })
+    freshSlots.current = { 103: [slotOf([703])], 104: [slotOf([703])] }
+    render(wrap(<Harness device={GATE} />))
+    await screen.findAllByRole('button', { name: /^Remove Camera/ })
+    expect(fetchSlots).toHaveBeenCalledTimes(2)
   })
 })

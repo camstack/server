@@ -55,8 +55,12 @@ export function LinkUnlinkButton(props: LinkUnlinkButtonProps): ReactNode {
     { deviceId: other?.deviceId ?? 0 },
     { enabled: other !== null },
   )
-  // The link is read before it can be undone: an unread one offers nothing to click (D315).
-  const ready = link !== undefined && link.state === 'linked'
+  // The link AND the composition that names what its undoing takes back are both
+  // read before it can be undone: an unread one offers nothing to click, and a
+  // pending composition is not an empty one (D315).
+  const compositionRead =
+    props.handle.state.kind === 'present' || props.handle.state.kind === 'none'
+  const ready = link !== undefined && link.state === 'linked' && compositionRead
   const deviceName = otherDevice.data?.name ?? (other === null ? '' : `#${String(other.deviceId)}`)
   const features = stampedBy(props.handle, props.linkId)
     .map((f) => t(`customize.scalar.caps.${f.cap}`, f.cap))

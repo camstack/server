@@ -31,6 +31,24 @@ export interface CustomizationHandle {
   readonly save: (next: Composition | null) => Promise<CustomizationSaveOutcome>
 }
 
+/**
+ * The state a plan should be made against: `incoming` unless it is an OLDER
+ * block than the one held. A render closes over the query data of its own time,
+ * so one that lands after a save's refetch assignment must not drag the ref back
+ * to a block whose `updatedAt` the server would refuse.
+ */
+export function newerCustomization<T extends StampedState>(held: T, incoming: T): T {
+  const heldAt = held.view?.block.updatedAt
+  const incomingAt = incoming.view?.block.updatedAt
+  return heldAt !== undefined && incomingAt !== undefined && incomingAt < heldAt ? held : incoming
+}
+
+/** The one field of a state the order of two reads depends on. */
+export interface StampedState {
+  readonly kind: string
+  readonly view?: { readonly block: { readonly updatedAt: number } }
+}
+
 function reasonOf(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
@@ -60,9 +78,9 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
   // render that built this `save` closed over: a second save fired before React
   // re-rendered would otherwise send the first save's `updatedAt` and the server
   // would refuse it as "changed since you read it". Every render and every
-  // landed refetch refresh it.
+  // landed refetch advance it, never back to an older block.
   const latest = useRef(state)
-  latest.current = state
+  latest.current = newerCustomization(latest.current, state)
 
   const run = async (next: Composition | null): Promise<CustomizationSaveOutcome> => {
     const plan = planCustomizationSave(latest.current, next)
@@ -88,14 +106,17 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
       }
       const fresh = await query.refetch()
       if (fresh !== undefined) {
-        latest.current = resolveCustomization({
-          status: fresh.status,
-          data: fresh.data,
-          error:
-            fresh.error === null || fresh.error === undefined
-              ? null
-              : { message: fresh.error.message },
-        })
+        latest.current = newerCustomization(
+          latest.current,
+          resolveCustomization({
+            status: fresh.status,
+            data: fresh.data,
+            error:
+              fresh.error === null || fresh.error === undefined
+                ? null
+                : { message: fresh.error.message },
+          }),
+        )
       }
       return { kind: 'saved' }
     } catch (err: unknown) {

@@ -4,7 +4,7 @@
  * stored composition (D391): the switch keeps the stored feature and flips only
  * `enabled`; the remove drops the feature.
  */
-import { CAP_CUSTOMIZE_CATALOG, type Composition, type DeviceInfo } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type Composition, DeviceInfoSchema } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
@@ -68,6 +68,23 @@ const STATE = resolveCustomization({
   },
 })
 
+/** A device built through the schema, so the fixture cannot drift from the type. */
+const DEVICE = DeviceInfoSchema.parse({
+  id: 1,
+  name: 'Doorbell',
+  addonId: TARGET.addonId,
+  stableId: TARGET.stableId,
+  type: 'camera',
+  location: null,
+  role: null,
+  disabled: false,
+  parentDeviceId: null,
+  online: true,
+  features: [],
+  isCamera: true,
+  config: {},
+})
+
 const save = vi.fn(async (_next: Composition | null) => ({ kind: 'saved' as const }))
 
 function renderCell(): void {
@@ -76,7 +93,7 @@ function renderCell(): void {
     <EventActionsCell
       spec={SPEC}
       title="Doorbell"
-      device={{ id: 1 } as DeviceInfo}
+      device={DEVICE}
       handle={{ target: TARGET, state: STATE, saving: false, save }}
       sensors={{
         presence: 'pending',

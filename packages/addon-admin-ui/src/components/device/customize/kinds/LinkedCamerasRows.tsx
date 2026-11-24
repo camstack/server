@@ -16,12 +16,11 @@ import {
   deviceTypeMetaOf,
   IconButton,
   trpc,
-  useDeviceExtensionListSlots,
   useDeviceExtensionSetSlot,
   useDeviceManagerGetLinkedDevicesBatch,
   useUiText,
 } from '@camstack/ui-library'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,7 +34,13 @@ import type { Known } from '../known'
 import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
 import { useConfirmRemove } from '../use-confirm-remove'
 import { LinkedNameCell } from './LinkedNameCell'
-import { linksDevice, linkedSlotOf, slotRelationOf, withLinkToggled } from './linked-devices-model'
+import {
+  type LinkedSlotRead,
+  linksDevice,
+  linkedSlotOf,
+  slotRelationOf,
+  withLinkToggled,
+} from './linked-devices-model'
 
 export type LinkedCameraTableLine =
   | { readonly kind: 'cameraSection' }
@@ -60,8 +65,10 @@ export interface LinkedCamerasState {
   readonly canAdd: boolean
   readonly busy: boolean
   readonly openPicker: () => void
-  /** Re-read which cameras link this device (after a camera's own slot was written). */
-  readonly refresh: () => Promise<void>
+  /** Each linked camera's own slot, read ONCE for the whole table (the remove path). */
+  readonly slotOf: (cameraId: number) => LinkedSlotRead
+  /** Re-read which cameras link this device, after these cameras' own slots were written. */
+  readonly refresh: (written: readonly number[]) => Promise<void>
   readonly dialog: ReactNode
 }
 
@@ -69,6 +76,8 @@ export interface LinkedCamerasState {
 export function hasLinkedCameras(deviceType: string): boolean {
   return slotRelationOf('linked-devices', deviceType) === 'guest'
 }
+
+const LINKED_SLOTS_KEY = 'linkedCameraSlots'
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -134,9 +143,41 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
             })),
         }
 
-  const refresh = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-    await linkage.refetch()
+  // ONE read for the table: every linked camera's own slot, for the remove path
+  // (the implied flag and the write base). A camera whose read failed is its own
+  // `unknown`, never a failure of the others.
+  const linkedCameraIds = linkedCameras.kind === 'known' ? linkedCameras.value.map((c) => c.id) : []
+  const slotReads = useQuery({
+    queryKey: [LINKED_SLOTS_KEY, device.id, linkedCameraIds.join(',')],
+    enabled: linkedCameraIds.length > 0,
+    queryFn: async (): Promise<ReadonlyMap<number, LinkedSlotRead>> => {
+      const entries = await Promise.all(
+        linkedCameraIds.map(async (id): Promise<readonly [number, LinkedSlotRead]> => {
+          try {
+            const rows = await utils.deviceExtension.listSlots.fetch(
+              { deviceId: id },
+              { staleTime: 0 },
+            )
+            return [id, linkedSlotOf({ status: 'success', data: rows, error: null })]
+          } catch (err: unknown) {
+            return [id, { kind: 'unknown', reason: messageOf(err) }]
+          }
+        }),
+      )
+      return new Map(entries)
+    },
+  })
+  const slotOf = (cameraId: number): LinkedSlotRead =>
+    slotReads.data?.get(cameraId) ?? { kind: 'pending' }
+
+  // Only what a camera's write touched: its own slot reads and this table's own
+  // reads — never the whole deviceManager tree.
+  const refresh = async (written: readonly number[]): Promise<void> => {
+    await Promise.all([
+      ...written.map((deviceId) => utils.deviceExtension.listSlots.invalidate({ deviceId })),
+      queryClient.invalidateQueries({ queryKey: [LINKED_SLOTS_KEY, device.id] }),
+      linkage.refetch(),
+    ])
   }
 
   /** Each picked camera: its slot read fresh, this device added, written back whole (D49). */
@@ -176,7 +217,7 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
       setRefusal(t('customize.linked.someFailed', { failures: failures.join('; ') }))
     }
     try {
-      await refresh()
+      await refresh(picked.map((c) => c.deviceId))
     } finally {
       setBusy(false)
     }
@@ -211,6 +252,7 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
     canAdd: candidates.kind === 'known' && candidates.value.length > 0,
     busy,
     openPicker: () => setPicking(true),
+    slotOf,
     refresh,
     dialog: (
       <SourceSelectorDevicesDialog
@@ -280,25 +322,23 @@ interface CameraUnlinkProps {
   readonly state: LinkedCamerasState
 }
 
-/** One linked camera's remove: reads that camera's own slot and writes it back whole without this device. */
+/** One linked camera's remove: its slot is read fresh AFTER the confirm and written back whole without this device. */
 function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
   const { t } = useTranslation()
   const confirmRemove = useConfirmRemove()
-  const slots = useDeviceExtensionListSlots({ deviceId: camera.id })
+  const utils = trpc.useUtils()
   const setSlot = useDeviceExtensionSetSlot()
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
-  const read = linkedSlotOf({
-    status: slots.status,
-    data: slots.data,
-    error:
-      slots.error === null || slots.error === undefined ? null : { message: slots.error.message },
-  })
+  const read = state.slotOf(camera.id)
   const implied =
     read.kind === 'present' && linksDevice(read.slot, read.value, state.device.id).implied
-  // D49: the write is built from this read, so a read still refreshing must not be written back.
+  // D49: the table's read only gates the button and shows the implied flag; the
+  // WRITE is built from a read taken after the confirm, so a link another
+  // operator added while the dialog was open survives (`setSlot` takes the
+  // whole value, with no stamp to refuse a stale one).
   const unlink = async (): Promise<void> => {
-    if (read.kind !== 'present' || busy || slots.isFetching) return
+    if (read.kind !== 'present' || busy) return
     const accepted = await confirmRemove(
       t('customize.linked.removeFromCamera', { camera: camera.name, device: state.device.name }),
       false,
@@ -307,13 +347,19 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
     setBusy(true)
     setRefusal(null)
     try {
+      const rows = await utils.deviceExtension.listSlots.fetch(
+        { deviceId: camera.id },
+        { staleTime: 0 },
+      )
+      const fresh = linkedSlotOf({ status: 'success', data: rows, error: null })
+      if (fresh.kind === 'unknown') throw new Error(fresh.reason)
+      if (fresh.kind !== 'present') throw new Error(t('customize.assign.none'))
       await setSlot.mutateAsync({
         deviceId: camera.id,
-        slotRef: read.slot.slotRef,
-        value: withLinkToggled(read.value, state.device.id, false),
+        slotRef: fresh.slot.slotRef,
+        value: withLinkToggled(fresh.value, state.device.id, false),
       })
-      await slots.refetch()
-      await state.refresh()
+      await state.refresh([camera.id])
     } catch (err: unknown) {
       setRefusal(messageOf(err))
     } finally {
@@ -328,7 +374,7 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
           variant="ghost"
           size="sm"
           aria-label={t('customize.assign.removeNamed', { name: camera.name })}
-          disabled={read.kind !== 'present' || busy || slots.isFetching}
+          disabled={read.kind !== 'present' || busy}
           onClick={(e) => {
             e.stopPropagation()
             void unlink()

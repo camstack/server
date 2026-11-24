@@ -102,7 +102,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useCoreBlocksDelete: idle,
   }
 })
-const { useCustomization } = await import('../use-customization')
+const { newerCustomization, useCustomization } = await import('../use-customization')
 
 const TARGET = { addonId: 'provider-homeassistant', stableId: 'ha:feeder' }
 const NEXT: Composition = {
@@ -163,5 +163,17 @@ describe('useCustomization — a second save plans against the block the first o
     expect(first).toEqual({ kind: 'saved' })
     expect(second).toEqual({ kind: 'saved' })
     expect(store.updates).toEqual([{ expectedUpdatedAt: 1000 }, { expectedUpdatedAt: 1001 }])
+  })
+})
+
+describe('newerCustomization — the plan base never goes back to an older block', () => {
+  const present = (updatedAt: number) => ({ kind: 'present', view: { block: { updatedAt } } })
+  it('keeps the held block when a render brings an older one', () => {
+    const held = present(1001)
+    expect(newerCustomization(held, present(1000))).toBe(held)
+  })
+  it('advances to a newer block', () => {
+    const incoming = present(1002)
+    expect(newerCustomization(present(1001), incoming)).toBe(incoming)
   })
 })
