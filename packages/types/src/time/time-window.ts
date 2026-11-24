@@ -171,11 +171,12 @@ function insideOnWallClock(
   return (listed(today) && minute >= start) || (listed(addDays(today, -1)) && minute < end)
 }
 
-/** The first instant after `nowMs` the clock window's verdict flips; null for a sun or date window. */
+/** How many local days ahead a boundary is searched: a full week when a weekday restriction applies. */
 function lookaheadFor(window: TimeWindow): number {
   return window.days === undefined ? LOOKAHEAD_DAYS : WEEKDAY_LOOKAHEAD_DAYS
 }
 
+/** The first instant after `nowMs` the clock window's verdict flips; null for a sun or date window. */
 function nextWallClockFlip(window: TimeWindow, nowMs: number, site: TimeSite): number | null {
   const between = window.between
   if (between === undefined || between.from.kind !== 'clock' || between.to.kind !== 'clock') {
