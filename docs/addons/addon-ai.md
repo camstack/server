@@ -127,6 +127,37 @@ Consequences to keep in mind:
   only when `/api/tags` answers, best-effort, never failing the list.
   Response shapes are pinned as fixtures in `src/__tests__/fixtures/list-models/`.
 
+## Choosing a local model
+
+No code catalogue lists the models of an external LM Studio: a profile of kind
+`openai-compatible` names a model id and a `baseUrl`, nothing more, so the
+choice below is operator guidance, not a preset. (The managed catalogue in
+`src/runtime/llm-model-catalog.ts` is only for models the runtime downloads
+itself, each with a pinned URL and sha256.)
+
+| | `qwen3-vl-4b` | `thinkingmachines/inkling-2-mini` |
+| --- | --- | --- |
+| RAM | ~3 GB | ~18 GB (26.4B, GGUF Q4_K_M, vision through the mmproj; ~17 GB RSS) |
+| Speed | fast; fits the 8 s confirm budget | ~29 tok/s on a 32 GB Mac mini; ~15 s for one event summary (TTFT 1.5 s) |
+| Vision | yes | yes |
+| Reasoning | no | yes: ~345 of 402 output tokens in the measured run were thinking |
+| Quality | good for yes/no and one-line answers | better on scene and package questions, summaries |
+
+- **Latency-bound paths** (NC confirm gate, timeout 1-20 s, default 8 s; package
+  confirm): `qwen3-vl-4b`. A reasoning model that thinks for 10-15 s times the
+  gate out and the rule falls back to its `onUnavailable` choice.
+- **Quality paths** (event and window summaries, package and scene questions,
+  retrain annotation proposals): `inkling-2-mini`, with a generous `maxTokens`
+  on the profile (4096 is the floor we use; the thinking is paid out of it, a
+  small cap returns an empty or truncated answer) and a `timeoutMs` above 60 s.
+  `reasoningEffort` on the profile lowers the thinking cost when needed.
+- **RAM rule:** one at a time on a 32 GB machine (1.1 GB free with inkling
+  loaded alone, 2026-11-24). A profile whose model is not loaded fails every
+  call (`no-profile` / connection errors), so switching the loaded model means
+  switching the default selectors too.
+- Profile id convention for the Mac mini: `mac-lmstudio-<model>`
+  (`mac-lmstudio-inkling2mini`).
+
 ## Testing
 
 `runTestChatStream` takes every seam as an injected dep (`TestChatStreamDeps`),
