@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A duration settings field kind: one number stored in the declared unit (ms or s)
 - A notification schedule and a recording band read their clock window through the one shared time-window evaluator; behaviour is unchanged
 - A clock time window is judged on the wall clock: both passes of the hour a fall-back change repeats match, and a window inside a skipped spring-forward hour stays empty
+- A clock-range automation window now reports its next change at the real wall-clock boundary on a daylight-saving change day, so it re-evaluates on time
 
 ## [1.2.626] - 2026-11-22
 

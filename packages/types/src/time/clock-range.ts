@@ -66,7 +66,12 @@ export function isWithinClockRange(
 
 let hostZone: string | undefined
 
-/** The host's IANA zone, resolved once: a process does not change its zone while running. */
+/**
+ * The host's IANA zone, resolved once and cached for the life of the process.
+ * The cache can be stale only if the host zone changes while running (a TZ edit
+ * or a laptop crossing zones); a restart picks the new zone up. A DST change is
+ * not a zone change and never stales it.
+ */
 export function hostTimeZone(): string {
   hostZone ??= new Intl.DateTimeFormat().resolvedOptions().timeZone
   return hostZone
