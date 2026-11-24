@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [1.2.501] - 2026-11-24
 
+### Changed
 
 - A PoE port's device card draws a LAN port whose link lights blink while the port is on.
 - Every duration field is now the same hours / minutes / seconds / milliseconds input, including the recording segment length, the event post-buffer and the timed-run box; the stored values do not change.

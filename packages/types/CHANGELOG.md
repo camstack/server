@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.628] - 2026-11-24
+
 ### Changed
 
-
-### Changed
 - Settings forms can declare a time-window field (type: 'time-window'), stored as a TimeWindow.
 - TimeWindowDraftSchema: the shape a time-window editor holds while editing (a day list may be empty)
 - Apps for the viewer shell are declared through the app-source capability and listed, filtered by role, by the apps capability.

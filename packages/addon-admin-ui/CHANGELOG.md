@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.740] - 2026-11-24
+
 ### Changed
 
 - A PoE port's device card draws a LAN port whose link lights blink while the port is on.
