@@ -9,10 +9,11 @@ import {
   REACH_RETRY_INTERVAL_S,
   REACH_RETRY_MAX_S,
 } from '@camstack/types'
-import { Input, Select } from '@camstack/ui-library'
+import { Input, Select, DurationPartsInput } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
 import { probeExpect, probeRetry, probeSaveAs, wholeNumber } from './reach-step-model'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 export interface ProbeFieldsProps {
   readonly index: number
@@ -26,6 +27,7 @@ function expectOf(value: string): AutomationProbeStep['expect'] {
 
 export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const at = String(index)
   return (
     <div className="space-y-2" data-testid={`probe-step-${at}`}>
@@ -51,19 +53,18 @@ export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
             onChange={(e) => onChange({ ...step, port: wholeNumber(e.target.value) ?? 0 })}
           />
         </label>
-        <label className="w-32">
+        <div>
           <PickerLabel>{t('automation.reach.timeout', 'Timeout (s)')}</PickerLabel>
-          <Input
-            data-testid={`probe-timeout-${at}`}
-            type="number"
+          <DurationPartsInput
+            aria-label={t('automation.reach.timeout', 'Timeout (s)')}
+            seconds={step.timeoutSeconds}
             min={1}
             max={PROBE_TIMEOUT_MAX_S}
-            value={String(step.timeoutSeconds)}
-            onChange={(e) =>
-              onChange({ ...step, timeoutSeconds: wholeNumber(e.target.value) ?? 1 })
-            }
+            labels={durationLabels}
+            testIdPrefix={`probe-timeout-${at}`}
+            onChange={(seconds) => onChange({ ...step, timeoutSeconds: Math.max(1, seconds) })}
           />
-        </label>
+        </div>
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="w-56">
@@ -80,18 +81,17 @@ export function ProbeFields({ index, step, onChange }: ProbeFieldsProps) {
             ]}
           />
         </label>
-        <label className="w-44">
+        <div>
           <PickerLabel>{t('automation.reach.retry', 'Keep trying for (s)')}</PickerLabel>
-          <Input
-            data-testid={`probe-retry-${at}`}
-            type="number"
-            min={1}
+          <DurationPartsInput
+            aria-label={t('automation.reach.retry', 'Keep trying for (s)')}
+            seconds={step.retryUntilSeconds ?? 0}
             max={REACH_RETRY_MAX_S}
-            placeholder={t('automation.reach.retryOnce', 'once')}
-            value={step.retryUntilSeconds === undefined ? '' : String(step.retryUntilSeconds)}
-            onChange={(e) => onChange(probeRetry(step, wholeNumber(e.target.value)))}
+            labels={durationLabels}
+            testIdPrefix={`probe-retry-${at}`}
+            onChange={(seconds) => onChange(probeRetry(step, seconds > 0 ? seconds : undefined))}
           />
-        </label>
+        </div>
         <label className="w-44">
           <PickerLabel>{t('automation.reach.saveAs', 'Save result as')}</PickerLabel>
           <Input

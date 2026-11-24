@@ -51,7 +51,14 @@ import {
   patchAudio,
   toggleAudioLabel,
 } from '@camstack/types'
-import { EventKindGlyph, Input, Select, Button, Slider } from '@camstack/ui-library'
+import {
+  EventKindGlyph,
+  Input,
+  Select,
+  Button,
+  Slider,
+  DurationPartsInput,
+} from '@camstack/ui-library'
 import { Activity, Search, X, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -76,6 +83,7 @@ import {
 } from './notification-rules.helpers'
 import { useStateLabel } from './use-state-label'
 import i18n from '../../i18n/index'
+import { useDurationLabels } from '../../lib/use-duration-labels'
 
 export const LABEL_CLASS = 'block text-[11px] font-medium text-foreground'
 export const HINT_CLASS = 'text-[10px] text-foreground-subtle mt-0.5'
@@ -543,6 +551,7 @@ export function OccupancyField({
   onChange,
 }: OccupancyFieldProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const { options: zoneOptions, loading } = useZoneOptions(deviceIds, cameras)
   const current = value ?? NC_OCCUPANCY_DEFAULTS
   const patch = (next: Partial<NcOccupancyCondition>): void => onChange({ ...current, ...next })
@@ -606,20 +615,17 @@ export function OccupancyField({
             onChange={(e) => patch({ count: Math.max(0, Number(e.target.value) || 0) })}
           />
         </label>
-        <label className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
           {t('system.notificationConditionWidgets.holdFor', 'Hold for')}
-          <Input
-            type="number"
+          <DurationPartsInput
+            aria-label={t('system.notificationConditionWidgets.holdFor', 'Hold for')}
+            seconds={current.sustainSeconds}
             min={0}
             max={3600}
-            className="w-16"
-            value={String(current.sustainSeconds)}
-            onChange={(e) =>
-              patch({ sustainSeconds: Math.min(3600, Math.max(0, Number(e.target.value) || 0)) })
-            }
-          />
-          s
-        </label>
+            labels={durationLabels}
+            onChange={(seconds) => patch({ sustainSeconds: Math.min(3600, Math.max(0, seconds)) })}
+          />{' '}
+        </div>
         {value !== undefined ? (
           <Button
             variant="unstyled"
@@ -703,6 +709,7 @@ interface AudioFieldProps {
  */
 export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const current = audioOrDefaults(value)
   const patch = (next: NcAudioPatch): void => onChange(patchAudio(value, next))
   const { choices, unknownLabels } = audioLabelChoices(taxonomy, current.labels)
@@ -807,19 +814,17 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
               />
               {t('system.notificationConditionWidgets.frames')}
             </label>
-            <label className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               {t('system.notificationConditionWidgets.within')}
-              <Input
-                type="number"
+              <DurationPartsInput
+                aria-label={t('system.notificationConditionWidgets.within')}
+                seconds={current.confirmWindowSec ?? NC_AUDIO_CONFIRM_WINDOW_SEC_DEFAULT}
                 min={NC_AUDIO_CONFIRM_WINDOW_MIN_SEC}
                 max={NC_AUDIO_CONFIRM_WINDOW_MAX_SEC}
-                step={1}
-                className="w-16"
-                value={String(current.confirmWindowSec ?? NC_AUDIO_CONFIRM_WINDOW_SEC_DEFAULT)}
-                onChange={(e) => patch({ confirmWindowSec: Number(e.target.value) })}
-              />
-              s
-            </label>
+                labels={durationLabels}
+                onChange={(seconds) => patch({ confirmWindowSec: seconds })}
+              />{' '}
+            </div>
           </div>
           <p className="text-[11px] text-foreground-subtle">
             {t('system.notificationConditionWidgets.audioConfirmHint', {
@@ -861,21 +866,20 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
                 value: NC_AUDIO_DEFAULTS.hitPercent,
               })}
             </label>
-            <label className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               {t('system.notificationConditionWidgets.over')}
-              <Input
-                type="number"
+              <DurationPartsInput
+                aria-label={t('system.notificationConditionWidgets.over')}
+                seconds={current.samplingSeconds}
                 min={NC_AUDIO_SAMPLING_MIN_SEC}
                 max={NC_AUDIO_SAMPLING_MAX_SEC}
-                step={5}
-                className="w-16"
-                value={String(current.samplingSeconds)}
-                onChange={(e) => patch({ samplingSeconds: Number(e.target.value) })}
+                labels={durationLabels}
+                onChange={(seconds) => patch({ samplingSeconds: seconds })}
               />
               {t('system.notificationConditionWidgets.secondsDefault', {
                 value: NC_AUDIO_DEFAULTS.samplingSeconds,
               })}
-            </label>
+            </div>
           </div>
           <p className="text-[11px] text-foreground-subtle">
             {t('system.notificationConditionWidgets.dbfsHint', { min: NC_AUDIO_DB_MIN })}

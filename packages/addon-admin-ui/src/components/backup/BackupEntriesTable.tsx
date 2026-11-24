@@ -35,12 +35,14 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CalendarClock,
+  Check,
   ChevronDown,
   ChevronRight,
   Loader2,
   Pencil,
   Play,
   Trash2,
+  X,
 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -402,34 +404,56 @@ function EntryRetentionInput({ row }: { readonly row: EntryRow }) {
     setRetentionDraft(String(row.retentionCount))
   }, [row.retentionCount])
 
-  const persistRetention = (): void => {
-    const parsed = Number.parseInt(retentionDraft, 10)
-    if (Number.isNaN(parsed) || parsed < 1) {
-      setRetentionDraft(String(row.retentionCount))
-      return
-    }
-    if (parsed === row.retentionCount) return
-    upsert.mutate({ ...basePayload, enabled: row.enabled, retentionCount: parsed })
+  const parsedDraft = Number.parseInt(retentionDraft, 10)
+  const draftValid = !Number.isNaN(parsedDraft) && parsedDraft >= 1
+  const dirty = retentionDraft !== String(row.retentionCount)
+
+  const saveRetention = (): void => {
+    if (!draftValid) return
+    upsert.mutate({ ...basePayload, enabled: row.enabled, retentionCount: parsedDraft })
   }
+  const discardRetention = (): void => setRetentionDraft(String(row.retentionCount))
 
   return (
-    <Input
-      type="number"
-      min={1}
-      max={1000}
-      value={retentionDraft}
-      disabled={upsert.isPending}
-      onChange={(e) => setRetentionDraft(e.target.value)}
-      onBlur={persistRetention}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-        if (e.key === 'Escape') setRetentionDraft(String(row.retentionCount))
-      }}
-      className="w-16"
-      aria-label={t('backup.backupEntriesTable.retentionFor', 'Retention for {{value1}}', {
-        value1: row.label || row.id,
-      })}
-    />
+    <div className="flex items-center gap-1">
+      {/* ui-check-ok: the retention is a count of archives kept, not a duration */}
+      <Input
+        type="number"
+        min={1}
+        max={1000}
+        value={retentionDraft}
+        disabled={upsert.isPending}
+        onChange={(e) => setRetentionDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') saveRetention()
+          if (e.key === 'Escape') discardRetention()
+        }}
+        className="w-16"
+        aria-label={t('backup.backupEntriesTable.retentionFor', 'Retention for {{value1}}', {
+          value1: row.label || row.id,
+        })}
+      />
+      {dirty && (
+        <>
+          <IconButton
+            icon={Check}
+            size="sm"
+            variant="ghost"
+            aria-label={t('common.save')}
+            disabled={!draftValid || upsert.isPending}
+            onClick={saveRetention}
+          />
+          <IconButton
+            icon={X}
+            size="sm"
+            variant="ghost"
+            aria-label={t('common.cancel')}
+            disabled={upsert.isPending}
+            onClick={discardRetention}
+          />
+        </>
+      )}
+    </div>
   )
 }
 

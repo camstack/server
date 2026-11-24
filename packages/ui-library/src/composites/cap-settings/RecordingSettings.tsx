@@ -230,6 +230,7 @@ export function RecordingSettings({
         )}
         <label className="flex items-center gap-1">
           {t('uiLibrary.recordingSettings.segment', 'Segment')}
+          {/* ui-check-ok: empty means the node default segment length; DurationPartsInput always holds a value, so it cannot express unset */}
           <input
             type="number"
             min={1}

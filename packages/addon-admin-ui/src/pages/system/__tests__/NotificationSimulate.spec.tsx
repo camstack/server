@@ -7,7 +7,7 @@
  * hub registered, and that the payload it puts on the wire still omits an
  * untouched optional rather than sending it as zero.
  */
-import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
+import { selectOption } from '@camstack/ui-library/testing'
 import { DeviceType, type NcRule } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -67,6 +67,18 @@ vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...real,
+    // The device picker is covered by its own spec; here it only has to hand the page a camera.
+    DeviceValuePicker: ({
+      testId,
+      onChange,
+    }: {
+      testId?: string
+      onChange: (picked: { deviceId: number } | null) => void
+    }) => (
+      <button type="button" data-testid={testId} onClick={() => onChange({ deviceId: 101 })}>
+        pick a camera
+      </button>
+    ),
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
       listAllHook(input, options),
     useSystem: () => ({
@@ -112,9 +124,7 @@ describe('NotificationSimulate page', () => {
 
   it('injects through the registered custom action and omits untouched optionals', async () => {
     renderPage()
-    const camera = await screen.findByTestId('simulate-camera')
-    await waitForSelectRows(camera, (rows) => rows.some((r) => r.label === 'Front door'))
-    selectOption(camera, '101')
+    fireEvent.click(await screen.findByTestId('simulate-camera'))
     selectOption(screen.getByTestId('simulate-trigger'), 'track-end')
 
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
@@ -139,9 +149,7 @@ describe('NotificationSimulate page', () => {
 
   it('renders the answer, including a run where nothing was evaluated', async () => {
     renderPage()
-    const camera = await screen.findByTestId('simulate-camera')
-    await waitForSelectRows(camera, (rows) => rows.some((r) => r.label === 'Front door'))
-    selectOption(camera, '101')
+    fireEvent.click(await screen.findByTestId('simulate-camera'))
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
 
     await waitFor(() => expect(screen.getByText('synthetic:abc')).toBeTruthy())

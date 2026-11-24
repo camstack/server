@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A linked trigger can now also be limited to while a yes/no device (for example a daylight threshold sensor) is on or off, next to the time window.
 - The on-for field of a linked trigger is capped at what the target device may be held on for
 - The Customize Triggered by section stacks each trigger so nothing is clipped in the narrow pane, and its edits (action, time, active, events, add, remove) are saved together with Save and dropped with Discard.
+- Durations (automation holds, timeouts and retries, notification grouping and cooldown, remote step delay) are entered as hours, minutes and seconds; camera choices use the device picker; backup retention, zone rename and per-node session caps are saved explicitly
 
 ### Fixed
 

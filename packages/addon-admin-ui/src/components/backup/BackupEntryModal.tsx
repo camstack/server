@@ -196,6 +196,7 @@ export function BackupEntryModal({ entry, onClose, onSaved }: BackupEntryModalPr
             label={t('backup.backupEntryModal.retentionArchivesKept', 'Retention (archives kept)')}
             required
           >
+            {/* ui-check-ok: the retention is a count of archives kept, not a duration */}
             <Input
               type="number"
               min={1}

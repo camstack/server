@@ -2,7 +2,6 @@
 
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { selectOption } from '@camstack/ui-library/testing'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,6 +21,30 @@ const row = (deviceId: number, name: string): CameraRow => ({
   eventBytes: 1,
 })
 const ROWS: readonly CameraRow[] = [row(101, 'Front door'), row(102, 'Garden')]
+
+// The device picker has its own spec; here a native select stands in for it.
+vi.mock('@camstack/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    ...real,
+    DeviceValuePicker: ({
+      value,
+      onChange,
+    }: {
+      value: { deviceId: number } | null
+      onChange: (picked: { deviceId: number } | null) => void
+    }) => (
+      <select
+        aria-label="Camera"
+        value={value?.deviceId ?? ''}
+        onChange={(e) => onChange({ deviceId: Number(e.target.value) })}
+      >
+        <option value="101">Front door</option>
+        <option value="102">Garden</option>
+      </select>
+    ),
+  }
+})
 
 vi.mock('../../components/archive/use-archive-data', () => ({
   useArchiveData: () => ({
@@ -127,7 +150,7 @@ describe('ArchivePage', () => {
 
   it('picking another camera in the header keeps the section and replaces the camera', () => {
     renderAt('/archive?section=cameras&camera=101')
-    selectOption(screen.getByRole('combobox', { name: 'Camera' }), '102')
+    fireEvent.change(screen.getByRole('combobox', { name: 'Camera' }), { target: { value: '102' } })
     expect(screen.getByTestId('review-section')).toHaveTextContent('102')
   })
 })

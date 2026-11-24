@@ -1749,9 +1749,9 @@ describe('the "Immediate, grouped" trigger choice', () => {
 
   it('shows the seconds input pre-filled with 20, and the hint naming 20 s', async () => {
     await openNewRule()
-    expect(screen.queryByTestId('rule-grouping-sec')).toBeNull()
+    expect(screen.queryByTestId('rule-grouping-sec-seconds')).toBeNull()
     selectOption(triggerSelect(), 'immediate-grouped')
-    const input = await screen.findByTestId('rule-grouping-sec')
+    const input = await screen.findByTestId('rule-grouping-sec-seconds')
     expect((input as HTMLInputElement).value).toBe('20')
     expect(screen.getByText(/waits up to 20 s for subjects to be recognised/)).toBeTruthy()
     expect(
@@ -1762,7 +1762,9 @@ describe('the "Immediate, grouped" trigger choice', () => {
   it('creates the rule with delivery immediate and groupingSec, edited seconds included', async () => {
     await openNewRule()
     selectOption(triggerSelect(), 'immediate-grouped')
-    fireEvent.change(await screen.findByTestId('rule-grouping-sec'), { target: { value: '30' } })
+    fireEvent.change(await screen.findByTestId('rule-grouping-sec-seconds'), {
+      target: { value: '30' },
+    })
     fireEvent.change(screen.getByPlaceholderText(/Front door package/i), {
       target: { value: 'Grouped rule' },
     })
@@ -1777,7 +1779,9 @@ describe('the "Immediate, grouped" trigger choice', () => {
   it('shows the reason after Create when the seconds leave 5..60', async () => {
     await openNewRule()
     selectOption(triggerSelect(), 'immediate-grouped')
-    fireEvent.change(await screen.findByTestId('rule-grouping-sec'), { target: { value: '3' } })
+    fireEvent.change(await screen.findByTestId('rule-grouping-sec-seconds'), {
+      target: { value: '3' },
+    })
     expect(screen.queryByTestId('rule-form-problems')).toBeNull()
     fireEvent.click(screen.getByText('Create rule'))
     await waitFor(() => expect(screen.getByText(/between 5 and 60/)).toBeTruthy())
@@ -1823,7 +1827,7 @@ describe('the "Immediate, grouped" trigger choice', () => {
     await waitFor(() => expect(screen.getByText('Front door')).toBeTruthy())
     openRuleRow('Front door')
     await waitFor(() => expect(screen.getByText('Edit Front door')).toBeTruthy())
-    expect((screen.getByTestId('rule-grouping-sec') as HTMLInputElement).value).toBe('25')
+    expect((screen.getByTestId('rule-grouping-sec-seconds') as HTMLInputElement).value).toBe('25')
     expect(screen.getByText(/not recognised within 25 s is not notified/)).toBeTruthy()
     expect(screen.queryByText(/Fires only if the name is already known/)).toBeNull()
   })

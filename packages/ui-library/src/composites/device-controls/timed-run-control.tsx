@@ -121,6 +121,7 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
         </div>
       ) : (
         <div className="flex items-center gap-2">
+          {/* ui-check-ok: the unit is per device (min or s) and runFor takes a count in that unit; a live one-shot control */}
           <Input
             type="number"
             inputMode="numeric"

@@ -8374,7 +8374,7 @@
       "targetType": "Tipo di bersaglio",
       "stopDelay": "Ritardo di arresto (s)",
       "disappearDelay": "Ritardo di scomparsa (s)",
-      "note": "Le impostazioni si salvano all'uscita dal campo. Il supporto varia per produttore: Reolink rispetta tutti e tre i valori; Hikvision solo tipo di bersaglio e ritardo di arresto (il ritardo di scomparsa è accettato ma ignorato all'invio al firmware)."
+      "note": "Il supporto varia per produttore: Reolink rispetta tutti e tre i valori; Hikvision solo tipo di bersaglio e ritardo di arresto (il ritardo di scomparsa è accettato ma ignorato all'invio al firmware)."
     },
     "deviceSelectField": {
       "all": "Tutti",

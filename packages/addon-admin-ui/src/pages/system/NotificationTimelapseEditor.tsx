@@ -42,6 +42,7 @@ import {
   TabsTrigger,
   TagInput,
   useSystem,
+  DurationPartsInput,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Film, Loader2 } from 'lucide-react'
@@ -103,6 +104,7 @@ import {
 } from './notification-timelapse.helpers'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatNumeric } from '@camstack/ui-library'
+import { useDurationLabels } from '../../lib/use-duration-labels'
 
 /** The passage length the dense-cadence hint is written against. */
 const EXAMPLE_PASS_SEC = 7
@@ -130,6 +132,7 @@ export function NotificationTimelapseEditor({
   onCancel,
 }: NotificationTimelapseEditorProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const system = useSystem()
   const [form, setForm] = useState<TimelapseFormState>(() =>
     rule === null ? emptyTimelapseForm() : timelapseRuleToForm(rule),
@@ -382,17 +385,17 @@ export function NotificationTimelapseEditor({
                       data-testid="timelapse-dense-mode"
                     />
                     {form.denseCadenceSec !== undefined && (
-                      <Input
-                        type="number"
-                        className="w-28"
+                      <DurationPartsInput
+                        aria-label={t(
+                          'system.notificationTimelapse.denseSeconds',
+                          'Seconds between frames',
+                        )}
+                        seconds={form.denseCadenceSec}
+                        fractionalSeconds
                         min={TIMELAPSE_DENSE_FLOOR_SEC}
-                        step={0.1}
-                        value={String(form.denseCadenceSec)}
-                        onChange={(e) => {
-                          const parsed = Number(e.target.value)
-                          if (Number.isFinite(parsed)) patch({ denseCadenceSec: parsed })
-                        }}
-                        data-testid="timelapse-dense-seconds"
+                        labels={durationLabels}
+                        testIdPrefix="timelapse-dense-seconds"
+                        onChange={(seconds) => patch({ denseCadenceSec: seconds })}
                       />
                     )}
                   </div>

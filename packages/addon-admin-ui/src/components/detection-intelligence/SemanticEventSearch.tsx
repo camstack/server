@@ -24,11 +24,11 @@
  * overloaded to mean three different kinds of id.
  */
 
-import type { ClipSearchStrictness, ScoredObjectEvent } from '@camstack/types'
+import { type ClipSearchStrictness, DeviceType, type ScoredObjectEvent } from '@camstack/types'
 import {
+  DeviceValuePicker,
   eventKindLabel,
   MediaGrid,
-  Select,
   useDebouncedString,
   useDeviceManagerListAll,
   usePipelineAnalyticsListEventKindsBatch,
@@ -46,6 +46,8 @@ import { DELETE_TRACKS_AVAILABLE } from './use-delete-tracks.js'
 import { useTranslation } from 'react-i18next'
 
 /** Max hits requested from the CLIP index. */
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
+
 const SEARCH_LIMIT = 50
 
 /** Debounce so keystrokes don't spam the CLIP query. */
@@ -283,22 +285,18 @@ export function SemanticEventSearch({
 
           {/* Device filter (single); fixed on a camera page */}
           {fixedDeviceId === undefined && (
-            <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+            <div className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
               <span>{t('detectionIntelligence.semanticEventSearch.camera', 'Camera')}</span>
-              <Select
-                value={deviceId === null ? '' : String(deviceId)}
-                onChange={(e) => setDeviceId(e.target.value === '' ? null : Number(e.target.value))}
-                className="h-7 text-xs"
-                aria-label={t(
-                  'detectionIntelligence.semanticEventSearch.filterByCamera',
-                  'Filter by camera',
-                )}
-                options={[
-                  { value: '', label: t('detectionIntelligence.semanticEventSearch.all', 'All') },
-                  ...devices.map((d) => ({ value: String(d.id), label: d.name })),
-                ]}
+              <DeviceValuePicker
+                pick="device"
+                noun="camera"
+                fixedTypes={CAMERA_TYPES}
+                recentKey="semantic-event-search-camera"
+                placeholder={t('detectionIntelligence.semanticEventSearch.all', 'All')}
+                value={deviceId === null ? null : { deviceId }}
+                onChange={(picked) => setDeviceId(picked === null ? null : picked.deviceId)}
               />
-            </label>
+            </div>
           )}
 
           {/* strictness presets — model-relative floors */}

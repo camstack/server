@@ -27,18 +27,21 @@
  *
  * ## Editing model
  *
- * Local draft, committed on blur when it differs — the `AutotrackSection`
- * shape. Selects and checkboxes commit on change, because there is no
- * intermediate state worth protecting. There is no second store and no "save"
- * button: `updateScene` writes the authority the provider already owns and the
- * caller refetches (D62).
+ * The typed knobs (name, intervals, threshold, agreeing checks, the question)
+ * are a local draft that one Save writes together; Discard restores the stored
+ * scene. Selects and checkboxes commit on change, because there is no
+ * intermediate state worth protecting. There is no second store:
+ * `updateScene` writes the authority the provider already owns and the caller
+ * refetches (D62).
  */
 
 import { Slider } from '../../primitives/slider'
 import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
+import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { FormSaveBar } from '../form-save-bar'
 import type { SceneCheck, SceneMonitor, SceneUncoveredPolicy } from '@camstack/types'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import { UiTrans, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { TEXT_HINT } from '../../lib/responsive'
 import { formatNumeric } from '../../lib/format-numeric'
@@ -138,17 +141,18 @@ export function SceneSettingsForm({
 }: SceneSettingsFormProps): JSX.Element {
   const t = useUiText()
   const [draft, setDraft] = useState<Draft>(() => draftOf(monitor))
-  // While a field has focus the server copy must NOT overwrite what is being
-  // typed: this card re-renders on every pushed runtime slice, which for a
-  // 60 s scene is often enough to eat a keystroke.
-  const [editing, setEditing] = useState(false)
+  // The server copy the draft was last in step with. This card re-renders on
+  // every pushed runtime slice: a draft the operator has not saved is never
+  // overwritten, an untouched one follows the server.
+  const synced = useRef<Draft>(draft)
 
   useEffect(() => {
-    if (!editing) setDraft(draftOf(monitor))
-  }, [monitor, editing])
+    const stored = draftOf(monitor)
+    setDraft((current) => (sameDraft(current, synced.current) ? stored : current))
+    synced.current = stored
+  }, [monitor])
 
   const commit = (patch: SceneSettingsPatch): void => {
-    setEditing(false)
     onPatch(patch)
   }
 
@@ -166,9 +170,20 @@ export function SceneSettingsForm({
         }
 
   const confirmEnabled = monitor.confirm?.enabled === true
-  // Narrowed once: the union is re-read inside several handlers, and TypeScript
-  // cannot carry a narrowing across a closure boundary.
-  const storedThreshold = monitor.check.mode === 'similarity' ? monitor.check.threshold : null
+  const pending = pendingPatch(monitor, draft, confirmEnabled, patchCheck)
+  const pendingCount = Object.keys(pending).length
+  const save = (): void => {
+    setDraft((d) => ({
+      ...d,
+      label: d.label.trim(),
+      checkIntervalSec: clamp(d.checkIntervalSec, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC),
+      hysteresisCount: clamp(d.hysteresisCount, 1, 10),
+      quietSeconds: clamp(d.quietSeconds, 0, 3_600),
+      minObservationSpacingSec: clamp(d.minObservationSpacingSec, 0, 3_600),
+      confirmPrompt: d.confirmPrompt.trim(),
+    }))
+    commit(pending)
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -184,13 +199,7 @@ export function SceneSettingsForm({
             value={draft.label}
             disabled={disabled}
             className={FIELD}
-            onFocus={() => setEditing(true)}
             onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
-            onBlur={() => {
-              const label = draft.label.trim()
-              if (label.length > 0 && label !== monitor.label) commit({ label })
-              else setEditing(false)
-            }}
           />
         </label>
 
@@ -240,31 +249,20 @@ export function SceneSettingsForm({
         </label>
         <p className={TEXT_HINT}>{triggerHint(monitor.triggerMode, t)}</p>
 
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.checkEvery', 'Check every (seconds)')}
           </span>
-          <input
-            type="number"
+          <DurationPartsInput
+            seconds={draft.checkIntervalSec}
             min={MIN_INTERVAL_SEC}
             max={MAX_INTERVAL_SEC}
-            value={draft.checkIntervalSec}
             disabled={disabled}
-            className={FIELD}
-            onFocus={() => setEditing(true)}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                checkIntervalSec: Number(e.target.value) || 0,
-              }))
-            }
-            onBlur={() => {
-              const sec = clamp(draft.checkIntervalSec, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC)
-              if (sec !== monitor.checkIntervalSec) commit({ checkIntervalSec: sec })
-              else setEditing(false)
-            }}
+            aria-label={t('uiLibrary.sceneSettingsForm.checkEvery', 'Check every (seconds)')}
+            testIdPrefix="scene-check-every"
+            onChange={(seconds) => setDraft((d) => ({ ...d, checkIntervalSec: seconds }))}
           />
-        </label>
+        </div>
         <p className={TEXT_HINT}>
           {t(
             'uiLibrary.sceneSettingsForm.intervalHint',
@@ -296,22 +294,7 @@ export function SceneSettingsForm({
                 step={0.01}
                 value={draft.threshold}
                 disabled={disabled}
-                onFocus={() => setEditing(true)}
                 onChange={(e) => setDraft((d) => ({ ...d, threshold: Number(e.target.value) }))}
-                onMouseUp={() => {
-                  if (draft.threshold !== storedThreshold) {
-                    commit({
-                      check: patchCheck({ threshold: draft.threshold }),
-                    })
-                  } else setEditing(false)
-                }}
-                onBlur={() => {
-                  if (draft.threshold !== storedThreshold) {
-                    commit({
-                      check: patchCheck({ threshold: draft.threshold }),
-                    })
-                  } else setEditing(false)
-                }}
               />
             </label>
             <p className={TEXT_HINT}>
@@ -337,19 +320,12 @@ export function SceneSettingsForm({
             value={draft.hysteresisCount}
             disabled={disabled}
             className={FIELD}
-            onFocus={() => setEditing(true)}
             onChange={(e) =>
               setDraft((d) => ({
                 ...d,
                 hysteresisCount: Number(e.target.value) || 1,
               }))
             }
-            onBlur={() => {
-              const n = clamp(draft.hysteresisCount, 1, 10)
-              if (n !== monitor.check.hysteresisCount) {
-                commit({ check: patchCheck({ hysteresisCount: n }) })
-              } else setEditing(false)
-            }}
           />
         </label>
         <p className={TEXT_HINT}>
@@ -359,31 +335,23 @@ export function SceneSettingsForm({
           )}
         </p>
 
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.quietFor', 'Quiet for (seconds) before a check counts')}
           </span>
-          <input
-            type="number"
+          <DurationPartsInput
+            seconds={draft.quietSeconds}
             min={0}
             max={3_600}
-            value={draft.quietSeconds}
             disabled={disabled}
-            className={FIELD}
-            onFocus={() => setEditing(true)}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                quietSeconds: Number(e.target.value) || 0,
-              }))
-            }
-            onBlur={() => {
-              const sec = clamp(draft.quietSeconds, 0, 3_600)
-              if (sec !== monitor.quietSeconds) commit({ quietSeconds: sec })
-              else setEditing(false)
-            }}
+            aria-label={t(
+              'uiLibrary.sceneSettingsForm.quietFor',
+              'Quiet for (seconds) before a check counts',
+            )}
+            testIdPrefix="scene-quiet-for"
+            onChange={(seconds) => setDraft((d) => ({ ...d, quietSeconds: seconds }))}
           />
-        </label>
+        </div>
         <p className={TEXT_HINT}>
           {t(
             'uiLibrary.sceneSettingsForm.quietHint',
@@ -391,35 +359,26 @@ export function SceneSettingsForm({
           )}
         </p>
 
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className={LABEL}>
             {t(
               'uiLibrary.sceneSettingsForm.minGap',
               'Minimum gap between counted checks (seconds)',
             )}
           </span>
-          <input
-            type="number"
+          <DurationPartsInput
+            seconds={draft.minObservationSpacingSec}
             min={0}
             max={3_600}
-            value={draft.minObservationSpacingSec}
             disabled={disabled}
-            className={FIELD}
-            onFocus={() => setEditing(true)}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                minObservationSpacingSec: Number(e.target.value) || 0,
-              }))
-            }
-            onBlur={() => {
-              const sec = clamp(draft.minObservationSpacingSec, 0, 3_600)
-              if (sec !== monitor.minObservationSpacingSec) {
-                commit({ minObservationSpacingSec: sec })
-              } else setEditing(false)
-            }}
+            aria-label={t(
+              'uiLibrary.sceneSettingsForm.minGap',
+              'Minimum gap between counted checks (seconds)',
+            )}
+            testIdPrefix="scene-min-gap"
+            onChange={(seconds) => setDraft((d) => ({ ...d, minObservationSpacingSec: seconds }))}
           />
-        </label>
+        </div>
         <p className={TEXT_HINT}>
           {t(
             'uiLibrary.sceneSettingsForm.minGapHint',
@@ -565,19 +524,7 @@ export function SceneSettingsForm({
             )}
             disabled={disabled}
             className={FIELD}
-            onFocus={() => setEditing(true)}
             onChange={(e) => setDraft((d) => ({ ...d, confirmPrompt: e.target.value }))}
-            onBlur={() => {
-              const prompt = draft.confirmPrompt.trim()
-              if (prompt.length > 0 && prompt !== monitor.confirm?.prompt) {
-                commit({
-                  confirm: {
-                    ...defaultConfirm(prompt),
-                    enabled: confirmEnabled,
-                  },
-                })
-              } else setEditing(false)
-            }}
           />
         </label>
         <p className={TEXT_HINT}>
@@ -588,8 +535,63 @@ export function SceneSettingsForm({
           />
         </p>
       </div>
+
+      <FormSaveBar
+        pendingCount={pendingCount}
+        saving={disabled}
+        onSave={save}
+        onDiscard={() => setDraft(draftOf(monitor))}
+      />
     </div>
   )
+}
+
+/** Whether two drafts hold the same values. */
+function sameDraft(a: Draft, b: Draft): boolean {
+  return (
+    a.label === b.label &&
+    a.checkIntervalSec === b.checkIntervalSec &&
+    a.threshold === b.threshold &&
+    a.hysteresisCount === b.hysteresisCount &&
+    a.quietSeconds === b.quietSeconds &&
+    a.minObservationSpacingSec === b.minObservationSpacingSec &&
+    a.confirmPrompt === b.confirmPrompt
+  )
+}
+
+/** What Save would write: only the fields whose draft differs from the stored scene. */
+function pendingPatch(
+  monitor: SceneMonitor,
+  draft: Draft,
+  confirmEnabled: boolean,
+  patchCheck: (next: Partial<{ threshold: number; hysteresisCount: number }>) => SceneCheck,
+): SceneSettingsPatch {
+  const label = draft.label.trim()
+  const interval = clamp(draft.checkIntervalSec, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC)
+  const hysteresis = clamp(draft.hysteresisCount, 1, 10)
+  const quiet = clamp(draft.quietSeconds, 0, 3_600)
+  const spacing = clamp(draft.minObservationSpacingSec, 0, 3_600)
+  const prompt = draft.confirmPrompt.trim()
+  const storedThreshold = monitor.check.mode === 'similarity' ? monitor.check.threshold : null
+  const thresholdChanged = storedThreshold !== null && draft.threshold !== storedThreshold
+  const hysteresisChanged = hysteresis !== monitor.check.hysteresisCount
+  return {
+    ...(label.length > 0 && label !== monitor.label ? { label } : {}),
+    ...(interval !== monitor.checkIntervalSec ? { checkIntervalSec: interval } : {}),
+    ...(thresholdChanged || hysteresisChanged
+      ? {
+          check: patchCheck({
+            ...(thresholdChanged ? { threshold: draft.threshold } : {}),
+            hysteresisCount: hysteresis,
+          }),
+        }
+      : {}),
+    ...(quiet !== monitor.quietSeconds ? { quietSeconds: quiet } : {}),
+    ...(spacing !== monitor.minObservationSpacingSec ? { minObservationSpacingSec: spacing } : {}),
+    ...(prompt.length > 0 && prompt !== monitor.confirm?.prompt
+      ? { confirm: { ...defaultConfirm(prompt), enabled: confirmEnabled } }
+      : {}),
+  }
 }
 
 function clamp(value: number, min: number, max: number): number {

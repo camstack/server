@@ -21,9 +21,8 @@
  */
 import { Slider } from '../../primitives/slider'
 import { Checkbox } from '../../primitives/checkbox'
-import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
-import { useDeviceLabel } from '../device-name'
+import { DeviceValuePicker } from '../device-value-picker/DeviceValuePicker'
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import {
   AlertCircle,
@@ -66,6 +65,7 @@ const FULL_FRAME: GridNormalizedRect = { x: 0, y: 0, width: 1, height: 1 }
 const MAX_CELLS = 16
 /** Hoisted so `useDevices` does not re-subscribe on every render. */
 const CAMERA_FILTER = { type: DeviceType.Camera } as const
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
 
 export interface CameraGridLayoutEditorProps {
   readonly deviceId: number
@@ -410,7 +410,7 @@ export function CameraGridLayoutEditor({ deviceId }: CameraGridLayoutEditorProps
           <CellInspector
             cell={draft.cells[selected]}
             index={selected}
-            cameras={cameras.filter((camera) => camera.id !== deviceId)}
+            selfDeviceId={deviceId}
             onChange={(patch) => {
               patchCell(selected, patch)
             }}
@@ -563,23 +563,16 @@ function GridCellBox({ cell, selected, onSelect, onDragStart }: GridCellBoxProps
   )
 }
 
-interface CameraOptionLabelProps {
-  readonly camera: DeviceInfo
-}
-
-function CameraOptionLabel({ camera }: CameraOptionLabelProps): string {
-  return useDeviceLabel(camera, 'compact')
-}
-
 interface CellInspectorProps {
   readonly cell: GridLayoutCell
   readonly index: number
-  readonly cameras: readonly DeviceInfo[]
+  /** The camera this grid belongs to: never offered as one of its own sources. */
+  readonly selfDeviceId: number
   readonly onChange: (patch: Partial<GridLayoutCell>) => void
   readonly onRemove: () => void
 }
 
-function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspectorProps) {
+function CellInspector({ cell, index, selfDeviceId, onChange, onRemove }: CellInspectorProps) {
   const t = useUiText()
   return (
     <div className="flex flex-col gap-2 rounded border border-border p-2 text-[10.5px]">
@@ -593,24 +586,23 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
-      <label className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <span className="w-16 text-foreground-subtle">
           {t('uiLibrary.cameraGridLayout.source', 'Source')}
         </span>
-        <Select
-          value={String(cell.deviceId)}
-          onChange={(event) => {
-            onChange({ deviceId: Number(event.target.value) })
+        <DeviceValuePicker
+          pick="device"
+          noun="camera"
+          fixedTypes={CAMERA_TYPES}
+          excludeIds={[selfDeviceId]}
+          clearable={false}
+          className="flex-1"
+          value={{ deviceId: cell.deviceId }}
+          onChange={(picked) => {
+            if (picked !== null) onChange({ deviceId: picked.deviceId })
           }}
-          className="flex-1 rounded border border-border bg-transparent px-1 py-0.5"
-        >
-          {cameras.map((camera) => (
-            <option key={camera.id} value={String(camera.id)}>
-              <CameraOptionLabel camera={camera} />
-            </option>
-          ))}
-        </Select>
-      </label>
+        />
+      </div>
       {/* The part of the camera this cell shows, dragged on the camera's own
           picture. The numbers below still work and are the way to type an exact
           value; they are no longer the ONLY way, which is what made a crop a

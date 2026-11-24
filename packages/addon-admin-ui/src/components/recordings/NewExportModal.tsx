@@ -17,15 +17,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DeviceValuePicker,
   useDeviceManagerListAll,
   useRecordingExportCreateExport,
   Checkbox,
   Input,
   Select,
 } from '@camstack/ui-library'
+import { DeviceType } from '@camstack/types'
 import { Film } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
 
 export interface NewExportModalProps {
   readonly onClose: () => void
@@ -133,17 +137,17 @@ export function NewExportModal({
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.camera', 'Camera')}
               </label>
-              <Select
-                value={effectiveDeviceId ?? ''}
-                onChange={(e) => setDeviceId(Number(e.target.value))}
-                className="w-full"
-              >
-                {cameras.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
+              <DeviceValuePicker
+                pick="device"
+                noun="camera"
+                fixedTypes={CAMERA_TYPES}
+                recentKey="new-export-camera"
+                clearable={false}
+                value={effectiveDeviceId === null ? null : { deviceId: effectiveDeviceId }}
+                onChange={(picked) => {
+                  if (picked !== null) setDeviceId(picked.deviceId)
+                }}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">

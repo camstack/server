@@ -7,13 +7,14 @@
  */
 import {
   Badge,
+  DeviceValuePicker,
   EmptyState,
-  Select,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@camstack/ui-library'
+import { DeviceType } from '@camstack/types'
 import { Camera } from 'lucide-react'
 import { useCallback, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,6 +33,7 @@ import { buildCameraHealth } from './camera-health'
 import { cameraFindings } from './camera-rows'
 import type { ArchiveData } from './use-archive-data'
 
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
 const VIEWS = ['review', 'health', 'settings'] as const
 type ArchiveCameraView = (typeof VIEWS)[number]
 
@@ -83,18 +85,18 @@ export function ArchiveCameraSection({ data }: ArchiveCameraSectionProps): React
   return (
     <div className="flex flex-col gap-3" data-testid="archive-camera-section">
       <div className="flex flex-wrap items-center gap-2">
-        <Select
-          wrapperClassName="inline-block w-auto"
-          value={deviceId}
-          onChange={(e) => setParam(CAMERA_PARAM, e.target.value)}
-          aria-label={t('archive.camera.picker', 'Camera')}
-        >
-          {data.cameras.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
+        <DeviceValuePicker
+          pick="device"
+          noun="camera"
+          fixedTypes={CAMERA_TYPES}
+          recentKey="archive-camera"
+          clearable={false}
+          className="w-auto min-w-48"
+          value={{ deviceId }}
+          onChange={(picked) => {
+            if (picked !== null) setParam(CAMERA_PARAM, String(picked.deviceId))
+          }}
+        />
         {functions.map((f) => (
           <Badge key={f.fn} variant={FUNCTION_STATE_VARIANT[f.state]}>
             {t(`archive.function.${f.fn}`, f.fn)} · {t(`archive.functionState.${f.state}`, f.state)}

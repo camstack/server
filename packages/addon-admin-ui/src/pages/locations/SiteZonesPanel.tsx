@@ -1,5 +1,5 @@
-import { Button, DataTable, Input, type DataColumn } from '@camstack/ui-library'
-import { Trash2 } from 'lucide-react'
+import { Button, DataTable, IconButton, Input, type DataColumn } from '@camstack/ui-library'
+import { Check, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 
 import type { IconKey, SiteZone } from '@camstack/types'
@@ -71,19 +71,34 @@ export function SiteZonesPanel({
       sortValue: (zone) => zone.label.toLowerCase(),
       render: (zone) =>
         renaming === zone.label ? (
-          <Input
-            value={renameDraft}
-            onChange={(e) => setRenameDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void submitRename(zone.label)
-              if (e.key === 'Escape') setRenaming(null)
-            }}
-            onBlur={() => void submitRename(zone.label)}
-            aria-label={t('locations.siteZonesPanel.rename', 'Rename {{label}}', {
-              label: zone.label,
-            })}
-            autoFocus
-          />
+          <div className="flex items-center gap-1">
+            <Input
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submitRename(zone.label)
+                if (e.key === 'Escape') setRenaming(null)
+              }}
+              aria-label={t('locations.siteZonesPanel.rename', 'Rename {{label}}', {
+                label: zone.label,
+              })}
+              autoFocus
+            />
+            <IconButton
+              icon={Check}
+              size="sm"
+              variant="ghost"
+              aria-label={t('common.save')}
+              onClick={() => void submitRename(zone.label)}
+            />
+            <IconButton
+              icon={X}
+              size="sm"
+              variant="ghost"
+              aria-label={t('common.cancel')}
+              onClick={() => setRenaming(null)}
+            />
+          </div>
         ) : (
           <Button
             type="button"

@@ -13,9 +13,10 @@
  */
 
 import type { HoldMode, HoldSpec } from '@camstack/types'
-import { Input, Select } from '@camstack/ui-library'
+import { Input, Select, DurationPartsInput } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 const NO_HOLD = 'none'
 
@@ -26,16 +27,9 @@ export interface HoldFieldsProps {
   readonly onChange: (next: HoldSpec | undefined) => void
 }
 
-/** Seconds typed → a hold window in ms; blank or invalid is no window. */
-function secondsToMs(raw: string): number | undefined {
-  if (raw.trim() === '') return undefined
-  const seconds = Number(raw)
-  if (Number.isNaN(seconds) || seconds <= 0) return undefined
-  return Math.round(seconds * 1000)
-}
-
 export function HoldFields({ hold, modes, onChange }: HoldFieldsProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const labels: Readonly<Record<HoldMode, string>> = {
     held: t('automation.hold.held', 'held'),
     stable: t('automation.hold.stable', 'stable'),
@@ -68,18 +62,20 @@ export function HoldFields({ hold, modes, onChange }: HoldFieldsProps) {
         />
       </label>
       {hold !== undefined && (
-        <label className="w-24">
+        <div>
           <PickerLabel>{t('automation.hold.seconds', 'Seconds')}</PickerLabel>
-          <Input
-            type="number"
-            min={1}
-            value={String(hold.ms / 1000)}
-            onChange={(e) => {
-              const ms = secondsToMs(e.target.value)
-              onChange(ms === undefined ? undefined : { ...hold, ms })
-            }}
+          <DurationPartsInput
+            aria-label={t('automation.hold.seconds', 'Seconds')}
+            seconds={hold.ms / 1000}
+            fractionalSeconds
+            min={0}
+            labels={durationLabels}
+            testIdPrefix="hold-duration"
+            onChange={(seconds) =>
+              onChange(seconds > 0 ? { ...hold, ms: Math.round(seconds * 1000) } : undefined)
+            }
           />
-        </label>
+        </div>
       )}
       {hold?.mode === 'stable' && (
         <label className="w-28">

@@ -34,6 +34,7 @@ import {
   Button,
   EmptyState,
   ErrorBox,
+  FormSaveBar,
   Input,
   LIST_ROW,
   SECTION_BODY,
@@ -79,6 +80,13 @@ import { useTranslation } from 'react-i18next'
 const STATS_WINDOW_MS = 60 * 60 * 1000
 const STATS_REFRESH_MS = 20_000
 const DEFAULT_HEADROOM = 0.4
+
+/** The typed cap: empty or not positive means unlimited. */
+function parseMaxCameras(text: string): number | null {
+  const raw = text.trim()
+  const parsed = raw === '' ? null : Number.parseInt(raw, 10)
+  return parsed !== null && parsed > 0 ? parsed : null
+}
 
 interface ShareNode extends WeightSliderNode {
   readonly isOnline: boolean
@@ -127,6 +135,8 @@ export function ClusterLoadBalancingTab({
   })
   const setMaxCameras = usePipelineOrchestratorSetAgentMaxCameras({ onSuccess: invalidate })
   const rebalance = usePipelineOrchestratorRebalance()
+  // A cap typed in the list stays a draft until Save; Discard drops it.
+  const [maxDrafts, setMaxDrafts] = useState<Readonly<Record<string, string>>>({})
 
   const [suggestRequested, setSuggestRequested] = useState(false)
   const source = effective?.source
@@ -152,6 +162,22 @@ export function ClusterLoadBalancingTab({
         }
       })
   }, [nodes, settingsQuery.data])
+
+  const maxCamerasDirty = shareNodes.filter(
+    (node) =>
+      maxDrafts[node.id] !== undefined && parseMaxCameras(maxDrafts[node.id]) !== node.maxCameras,
+  )
+  const saveMaxCameras = async (): Promise<void> => {
+    await Promise.all(
+      maxCamerasDirty.map((node) =>
+        setMaxCameras.mutateAsync({
+          agentNodeId: node.id,
+          maxCameras: parseMaxCameras(maxDrafts[node.id]),
+        }),
+      ),
+    )
+    setMaxDrafts({})
+  }
 
   const nameOf = (nodeId: string): string => nodes.find((n) => n.id === nodeId)?.name ?? nodeId
   const cameraName = cameraNamer((camerasQuery.data ?? []).map((c) => ({ id: c.id, name: c.name })))
@@ -360,7 +386,7 @@ export function ClusterLoadBalancingTab({
                     type="number"
                     min={1}
                     placeholder="∞"
-                    defaultValue={node.maxCameras ?? ''}
+                    value={maxDrafts[node.id] ?? String(node.maxCameras ?? '')}
                     aria-label={t(
                       'pipeline.clusterLoadBalancingTab.maxConcurrentSessionsFor',
                       'Max concurrent sessions for {{name}}',
@@ -368,18 +394,20 @@ export function ClusterLoadBalancingTab({
                     )}
                     className="w-20 text-right"
                     disabled={setMaxCameras.isPending}
-                    onBlur={(e) => {
-                      const raw = e.target.value.trim()
-                      const parsed = raw === '' ? null : Number.parseInt(raw, 10)
-                      const next = parsed !== null && parsed > 0 ? parsed : null
-                      if (next !== node.maxCameras) {
-                        setMaxCameras.mutate({ agentNodeId: node.id, maxCameras: next })
-                      }
+                    onChange={(e) => {
+                      const text = e.target.value
+                      setMaxDrafts((prev) => ({ ...prev, [node.id]: text }))
                     }}
                   />
                 </li>
               ))}
             </ul>
+            <FormSaveBar
+              pendingCount={maxCamerasDirty.length}
+              saving={setMaxCameras.isPending}
+              onSave={() => void saveMaxCameras()}
+              onDiscard={() => setMaxDrafts({})}
+            />
             <p className={`${LIST_ROW} ${TEXT_HINT} border-t border-border`}>
               {t(
                 'pipeline.clusterLoadBalancingTab.aHardCapOnThe',

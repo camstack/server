@@ -18,6 +18,7 @@ import {
   FormField,
   IconButton,
   Input,
+  DurationPartsInput,
 } from '@camstack/ui-library'
 import { ArrowDown, ArrowUp, ListVideo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
@@ -31,6 +32,7 @@ import {
 } from './remote-config-model'
 import { SourceDialog, type TransmitterOption } from './SourceDialog'
 import { issueText } from './source-text'
+import { useDurationLabels } from '../../lib/use-duration-labels'
 
 export interface SourcesPanelProps {
   readonly config: RemoteConfig
@@ -73,6 +75,7 @@ export function SourcesPanel({
   transmitters,
 }: SourcesPanelProps): ReactNode {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const [editing, setEditing] = useState<Editing>(null)
   const issues = useMemo(() => sourceIssues(config), [config])
   const last = config.sources.length - 1
@@ -200,14 +203,15 @@ export function SourcesPanel({
               })
         }
       >
-        <Input
-          type="number"
-          inputMode="numeric"
-          className="w-32"
-          value={Number.isNaN(config.stepDelayMs) ? '' : config.stepDelayMs}
-          state={issues.stepDelay === null ? 'default' : 'error'}
-          onChange={(e) => onChange((prev) => setStepDelay(prev, e.target.valueAsNumber))}
-          data-testid="source-step-delay"
+        <DurationPartsInput
+          aria-label={t('remote.sources.stepDelay')}
+          seconds={Number.isNaN(config.stepDelayMs) ? 0 : config.stepDelayMs / 1000}
+          fractionalSeconds
+          min={REMOTE_STEP_DELAY_MIN_MS / 1000}
+          max={REMOTE_STEP_DELAY_MAX_MS / 1000}
+          labels={durationLabels}
+          testIdPrefix="source-step-delay"
+          onChange={(seconds) => onChange((prev) => setStepDelay(prev, Math.round(seconds * 1000)))}
         />
       </FormField>
       {editing !== null && (

@@ -13,7 +13,7 @@ import {
   REACH_RETRY_INTERVAL_S,
   REACH_RETRY_MAX_S,
 } from '@camstack/types'
-import { Button, Input, Select, Switch, Textarea } from '@camstack/ui-library'
+import { Button, Input, Select, Switch, Textarea, DurationPartsInput } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
@@ -35,6 +35,7 @@ import {
   setHeaderValue,
   wholeNumber,
 } from './reach-step-model'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 /** Shown as written: how a step reads a variable of the run. */
 const VAR_SLOT_EXAMPLE = '{{vars.name}}'
@@ -51,6 +52,7 @@ function methodOf(value: string): AutomationHttpRequestStep['method'] {
 
 export function HttpRequestFields({ index, step, onChange }: HttpRequestFieldsProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const at = String(index)
   const expect = step.expect
   const rows = headerRows(step.headers)
@@ -77,19 +79,18 @@ export function HttpRequestFields({ index, step, onChange }: HttpRequestFieldsPr
             onChange={(e) => onChange({ ...step, url: e.target.value })}
           />
         </label>
-        <label className="w-32">
+        <div>
           <PickerLabel>{t('automation.reach.timeout', 'Timeout (s)')}</PickerLabel>
-          <Input
-            data-testid={`http-timeout-${at}`}
-            type="number"
+          <DurationPartsInput
+            aria-label={t('automation.reach.timeout', 'Timeout (s)')}
+            seconds={step.timeoutSeconds}
             min={1}
             max={HTTP_TIMEOUT_MAX_S}
-            value={String(step.timeoutSeconds)}
-            onChange={(e) =>
-              onChange({ ...step, timeoutSeconds: wholeNumber(e.target.value) ?? 1 })
-            }
+            labels={durationLabels}
+            testIdPrefix={`http-timeout-${at}`}
+            onChange={(seconds) => onChange({ ...step, timeoutSeconds: Math.max(1, seconds) })}
           />
-        </label>
+        </div>
       </div>
 
       <div className="space-y-1">
@@ -244,18 +245,17 @@ export function HttpRequestFields({ index, step, onChange }: HttpRequestFieldsPr
       </div>
 
       <div className="flex flex-wrap items-end gap-2">
-        <label className="w-44">
+        <div>
           <PickerLabel>{t('automation.reach.retry', 'Keep trying for (s)')}</PickerLabel>
-          <Input
-            data-testid={`http-retry-${at}`}
-            type="number"
-            min={1}
+          <DurationPartsInput
+            aria-label={t('automation.reach.retry', 'Keep trying for (s)')}
+            seconds={step.retryUntilSeconds ?? 0}
             max={REACH_RETRY_MAX_S}
-            placeholder={t('automation.reach.retryOnce', 'once')}
-            value={step.retryUntilSeconds === undefined ? '' : String(step.retryUntilSeconds)}
-            onChange={(e) => onChange(httpRetry(step, wholeNumber(e.target.value)))}
+            labels={durationLabels}
+            testIdPrefix={`http-retry-${at}`}
+            onChange={(seconds) => onChange(httpRetry(step, seconds > 0 ? seconds : undefined))}
           />
-        </label>
+        </div>
         <label className="w-44">
           <PickerLabel>{t('automation.reach.saveAs', 'Save result as')}</PickerLabel>
           <Input

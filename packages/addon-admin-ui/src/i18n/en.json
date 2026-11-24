@@ -8352,7 +8352,7 @@
       "targetType": "Target type",
       "stopDelay": "Stop delay (s)",
       "disappearDelay": "Disappear delay (s)",
-      "note": "Settings save on blur. Vendor support varies — Reolink honours all three; Hikvision honours target type + stop delay only (disappear delay is accepted but ignored at firmware push)."
+      "note": "Vendor support varies — Reolink honours all three; Hikvision honours target type + stop delay only (disappear delay is accepted but ignored at firmware push)."
     },
     "deviceSelectField": {
       "all": "All",

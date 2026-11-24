@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A table row's destructive action (DataTable column render gets table.destructive) now confirms, then shows the row as pending until it settles; useConfirm() takes an optional async action that keeps its dialog open with a spinner and shows a failure inside it; new useDestructiveAction hook
 - Device table: a device type with no inline control now leaves its cell empty instead of showing a dash
 - DurationInput: hours, minutes, seconds and milliseconds fields over a value stored in ms or s; settings forms render it for a duration field
+- Autotrack, scene settings and the home-return delay now save with Save / Discard instead of on blur, delays are entered as hours, minutes and seconds, and a grid cell's source is picked with the device picker
 
 ## [1.2.499] - 2026-11-22
 

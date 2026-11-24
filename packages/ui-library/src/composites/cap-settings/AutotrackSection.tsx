@@ -16,11 +16,13 @@
  */
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import { Crosshair, Loader2, AlertCircle } from 'lucide-react'
 import type { PtzAutotrackSettings } from '@camstack/types'
 import { useDeviceAutotrack } from '../../hooks/use-device-autotrack'
 import { WidgetPanel } from '../widget-panel'
+import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { FormSaveBar } from '../form-save-bar'
 
 interface AutotrackSectionProps {
   readonly deviceId: number
@@ -32,28 +34,37 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
     Number.isFinite(deviceId) ? deviceId : null,
   )
 
-  // Local copy of the form values — initialised from `status` and
-  // edited freely until blur fires the cap setSettings call. Keeping
-  // an uncontrolled local state means the 5s polling refresh doesn't
-  // overwrite typed (but-not-yet-saved) values mid-edit.
+  // Local copy of the form values — initialised from `status` and edited
+  // freely until Save sends the changed ones through the cap's setSettings.
+  // The 5 s polling refresh never overwrites a typed, not yet saved value.
   const [draft, setDraft] = useState<PtzAutotrackSettings>({
     targetType: '',
     stopDelaySeconds: 30,
     disappearDelaySeconds: 15,
   })
-  // Sync from status into draft only when the operator isn't actively
-  // editing — otherwise typing would race the poll.
-  const [editing, setEditing] = useState(false)
+  // The draft follows the server only while it is untouched.
+  const synced = useRef<PtzAutotrackSettings | null>(null)
   useEffect(() => {
-    if (editing) return
-    const s = status?.currentSettings
-    if (!s) return
-    setDraft({
-      targetType: s.targetType,
-      stopDelaySeconds: s.stopDelaySeconds,
-      disappearDelaySeconds: s.disappearDelaySeconds,
-    })
-  }, [status, editing])
+    const stored = status?.currentSettings
+    if (!stored) return
+    const previous = synced.current
+    setDraft((current) =>
+      previous === null || sameSettings(current, previous) ? { ...stored } : current,
+    )
+    synced.current = { ...stored }
+  }, [status])
+
+  const stored = status?.currentSettings
+  const patch: Partial<PtzAutotrackSettings> = {
+    ...(stored && draft.targetType !== stored.targetType ? { targetType: draft.targetType } : {}),
+    ...(stored && draft.stopDelaySeconds !== stored.stopDelaySeconds
+      ? { stopDelaySeconds: draft.stopDelaySeconds }
+      : {}),
+    ...(stored && draft.disappearDelaySeconds !== stored.disappearDelaySeconds
+      ? { disappearDelaySeconds: draft.disappearDelaySeconds }
+      : {}),
+  }
+  const pendingCount = Object.keys(patch).length
 
   const panelIcon = <Crosshair className="h-3.5 w-3.5 text-foreground-subtle" />
 
@@ -120,15 +131,7 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
             </span>
             <Select
               value={draft.targetType}
-              onFocus={() => setEditing(true)}
               onChange={(e) => setDraft((d) => ({ ...d, targetType: e.target.value }))}
-              onBlur={() => {
-                setEditing(false)
-                const current = status?.currentSettings?.targetType ?? ''
-                if (draft.targetType !== current) {
-                  void setSettings({ targetType: draft.targetType })
-                }
-              }}
               disabled={isPending}
               className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
             >
@@ -141,71 +144,57 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
           </label>
         )}
 
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className="text-[10px] font-medium text-foreground-subtle">
             {t('uiLibrary.autotrack.stopDelay', 'Stop delay (s)')}
           </span>
-          <input
-            type="number"
+          <DurationPartsInput
+            seconds={draft.stopDelaySeconds}
             min={0}
             max={300}
-            value={draft.stopDelaySeconds}
-            onFocus={() => setEditing(true)}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                stopDelaySeconds: Number(e.target.value) || 0,
-              }))
-            }
-            onBlur={() => {
-              setEditing(false)
-              const current = status?.currentSettings?.stopDelaySeconds ?? 30
-              if (draft.stopDelaySeconds !== current) {
-                void setSettings({ stopDelaySeconds: draft.stopDelaySeconds })
-              }
-            }}
             disabled={isPending}
-            className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+            aria-label={t('uiLibrary.autotrack.stopDelay', 'Stop delay (s)')}
+            onChange={(seconds) => setDraft((d) => ({ ...d, stopDelaySeconds: seconds }))}
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className="text-[10px] font-medium text-foreground-subtle">
             {t('uiLibrary.autotrack.disappearDelay', 'Disappear delay (s)')}
           </span>
-          <input
-            type="number"
+          <DurationPartsInput
+            seconds={draft.disappearDelaySeconds}
             min={0}
             max={300}
-            value={draft.disappearDelaySeconds}
-            onFocus={() => setEditing(true)}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                disappearDelaySeconds: Number(e.target.value) || 0,
-              }))
-            }
-            onBlur={() => {
-              setEditing(false)
-              const current = status?.currentSettings?.disappearDelaySeconds ?? 15
-              if (draft.disappearDelaySeconds !== current) {
-                void setSettings({
-                  disappearDelaySeconds: draft.disappearDelaySeconds,
-                })
-              }
-            }}
             disabled={isPending}
-            className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+            aria-label={t('uiLibrary.autotrack.disappearDelay', 'Disappear delay (s)')}
+            onChange={(seconds) => setDraft((d) => ({ ...d, disappearDelaySeconds: seconds }))}
           />
-        </label>
+        </div>
       </div>
 
       <p className="px-2 text-[9.5px] text-foreground-subtle leading-snug italic">
         {t(
           'uiLibrary.autotrack.note',
-          'Settings save on blur. Vendor support varies — Reolink honours all three; Hikvision honours target type + stop delay only (disappear delay is accepted but ignored at firmware push).',
+          'Vendor support varies — Reolink honours all three; Hikvision honours target type + stop delay only (disappear delay is accepted but ignored at firmware push).',
         )}
       </p>
+      <FormSaveBar
+        pendingCount={pendingCount}
+        saving={isPending}
+        onSave={() => void setSettings(patch)}
+        onDiscard={() => {
+          if (stored) setDraft({ ...stored })
+        }}
+      />
     </WidgetPanel>
+  )
+}
+
+function sameSettings(a: PtzAutotrackSettings, b: PtzAutotrackSettings): boolean {
+  return (
+    a.targetType === b.targetType &&
+    a.stopDelaySeconds === b.stopDelaySeconds &&
+    a.disappearDelaySeconds === b.disappearDelaySeconds
   )
 }

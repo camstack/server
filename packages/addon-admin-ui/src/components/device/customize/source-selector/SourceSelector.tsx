@@ -18,6 +18,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
+  DurationPartsInput,
 } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -60,6 +61,7 @@ import {
   sourceSearchRequires,
 } from './source-selector-model'
 import { siblingSuggestions } from './source-selector-siblings'
+import { useDurationLabels } from '../../../../lib/use-duration-labels'
 
 export type { EventPickedRow }
 
@@ -207,6 +209,7 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
 
 function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
+  const durationLabels = useDurationLabels()
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
     () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
@@ -313,18 +316,17 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         {props.shape === 'pulse' && (
           <>
             <EventEdgeField edges={props.edges} edge={props.edge} onChange={props.onEdgeChange} />
-            <label className="flex flex-col gap-1 text-[11px] text-foreground">
+            <div className="flex flex-col gap-1 text-[11px] text-foreground">
               {t('customize.event.debounce')}
-              <Input
-                type="number"
+              <DurationPartsInput
                 aria-label={t('customize.event.debounce')}
-                value={Number.isFinite(props.debounceSec) ? props.debounceSec : 0}
-                onChange={(event) => {
-                  const next = Number(event.target.value)
-                  if (Number.isFinite(next) && next >= 0) props.onDebounceSecChange(next)
-                }}
+                seconds={Number.isFinite(props.debounceSec) ? props.debounceSec : 0}
+                fractionalSeconds
+                min={0}
+                labels={durationLabels}
+                onChange={(seconds) => props.onDebounceSecChange(seconds)}
               />
-            </label>
+            </div>
           </>
         )}
         {props.shape === 'span' && (

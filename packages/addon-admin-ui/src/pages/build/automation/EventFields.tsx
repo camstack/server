@@ -16,7 +16,7 @@
 
 import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@camstack/types'
 import { BecomesOperatorSchema, holdOf } from '@camstack/types'
-import { Input, Select } from '@camstack/ui-library'
+import { Input, Select, DurationPartsInput } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
 import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'
@@ -24,6 +24,7 @@ import type { AutomationDevice } from './automation-data'
 import { HoldFields } from './HoldFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type ScalarValue, ScalarValueInput } from './ValueInput'
+import { useDurationLabels } from '../../../lib/use-duration-labels'
 
 type DeviceEventLeaf = Extract<AutomationLeaf, { kind: 'device-event' }>
 type ScheduleLeaf = Extract<AutomationLeaf, { kind: 'schedule' }>
@@ -138,6 +139,7 @@ export function DeviceBecomesFields({
   onChange,
 }: DeviceBecomesFieldsProps) {
   const { t } = useTranslation()
+  const durationLabels = useDurationLabels()
   const selection: FieldSelection = {
     deviceId: trigger.deviceId,
     cap: trigger.cap,
@@ -281,35 +283,31 @@ export function DeviceBecomesFields({
         }}
       />
 
-      <label className="w-28">
+      <div>
         <PickerLabel>{t('automation.triggerEditor.debounceS', 'Debounce (s)')}</PickerLabel>
-        <Input
-          type="number"
+        <DurationPartsInput
+          aria-label={t('automation.triggerEditor.debounceS', 'Debounce (s)')}
+          seconds={(trigger.debounceMs ?? 0) / 1000}
+          fractionalSeconds
           min={0}
-          value={trigger.debounceMs === undefined ? '' : String(trigger.debounceMs / 1000)}
-          placeholder="0"
-          onChange={(e) =>
+          labels={durationLabels}
+          testIdPrefix="trigger-debounce"
+          onChange={(seconds) =>
             onChange(
               buildBecomesLeaf(selection, {
                 ...options,
-                debounceMs: toMs(e.target.value),
+                debounceMs: seconds > 0 ? Math.round(seconds * 1000) : undefined,
               }),
             )
           }
         />
-      </label>
+      </div>
     </>
   )
 }
 
 /** Seconds on screen, milliseconds in the recipe. An empty box means the knob is
  *  not set at all, which is not the same as zero. */
-function toMs(raw: string): number | undefined {
-  if (raw.trim() === '') return undefined
-  const seconds = Number(raw)
-  if (Number.isNaN(seconds) || seconds < 0) return undefined
-  return Math.round(seconds * 1000)
-}
 
 interface DeviceEventFieldsProps {
   readonly leaf: DeviceEventLeaf

@@ -33,6 +33,7 @@ import {
   Card,
   ErrorBox,
   Input,
+  DeviceValuePicker,
   Select,
   useDeviceManagerListAll,
   useSystem,
@@ -63,7 +64,6 @@ import {
   type NcSimulateCaveat,
   type NcSimulateFormState,
   type NcSimulateResult,
-  parseOptionalNumberInput,
   parseSimulateResult,
   parseSimulateTrigger,
   peekSimulatePrefill,
@@ -75,6 +75,8 @@ import { Trans, useTranslation } from 'react-i18next'
 /** The addon hosting the notification centre — where the tester lives. */
 const NC_ADDON_ID = 'pipeline-analytics'
 const NC_TEST_ACTION = 'nc.injectTestEvent'
+
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
 
 export function NotificationSimulatePage() {
   const { t } = useTranslation()
@@ -282,26 +284,20 @@ export function NotificationSimulatePage() {
         {/* ── Camera ───────────────────────────────────────────── */}
         <div>
           <label className={LABEL_CLASS}>{t('system.notificationSimulate.camera', 'Camera')}</label>
-          <Select
-            data-testid="simulate-camera"
-            value={form.deviceId === null ? '' : String(form.deviceId)}
-            options={[
-              {
-                value: '',
-                label:
-                  cameras.length === 0
-                    ? t('system.notificationSimulate.loadingCameras', 'Loading cameras…')
-                    : t('system.notificationSimulate.pickACamera', '— pick a camera —'),
-              },
-              ...cameras.map((c) => ({ value: String(c.id), label: c.name })),
-            ]}
-            onChange={(e) => {
-              const next = parseOptionalNumberInput(e.target.value)
+          <DeviceValuePicker
+            pick="device"
+            noun="camera"
+            fixedTypes={CAMERA_TYPES}
+            recentKey="notification-simulate-camera"
+            testId="simulate-camera"
+            value={form.deviceId === null ? null : { deviceId: form.deviceId }}
+            onChange={(picked) => {
+              const next = picked === null ? null : picked.deviceId
               // Changing the camera invalidates its zones and its event kinds —
               // both are per-device catalogues, so a carried-over id would be a
               // value the new camera does not have and could never match.
               patch({
-                deviceId: next ?? null,
+                deviceId: next,
                 zones: [],
                 crossingZoneId: '',
                 sensorKind: '',

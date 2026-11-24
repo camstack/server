@@ -34,7 +34,7 @@
  * camera picker, `?edit=<deviceId>` for the editor). Create and edit share the
  * editor on purpose: it already owns the draw / name / create flow.
  */
-import type { SceneMonitor } from '@camstack/types'
+import { DeviceType, type SceneMonitor } from '@camstack/types'
 import {
   Badge,
   Button,
@@ -47,7 +47,7 @@ import {
   humanDuration,
   ItemFormDialog,
   SceneMonitorEditor,
-  Select,
+  DeviceValuePicker,
   statusLine,
   TABLE_SCROLL_MAX_H,
   useDataTableFilter,
@@ -90,6 +90,8 @@ function parseDeviceId(raw: string): number | null {
   const n = Number(raw)
   return Number.isFinite(n) && n > 0 ? n : null
 }
+
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
 
 export function ScenesPage() {
   const { t } = useTranslation()
@@ -300,14 +302,16 @@ export function ScenesPage() {
               'A scene lives on one camera. Pick the one that can see the thing.',
             )}
           </p>
-          <Select
-            value={pickerCamera === null ? '' : String(pickerCamera)}
-            onChange={(e) => setPickerCamera(Number(e.target.value))}
-            aria-label={t('scenes.camera', 'Camera')}
-            options={cameras.map((c) => ({
-              value: String(c.deviceId),
-              label: c.deviceName,
-            }))}
+          <DeviceValuePicker
+            pick="device"
+            noun="camera"
+            fixedTypes={CAMERA_TYPES}
+            clearable={false}
+            testId="scenes-camera-picker-device"
+            value={pickerCamera === null ? null : { deviceId: pickerCamera }}
+            onChange={(picked) => {
+              if (picked !== null) setPickerCamera(picked.deviceId)
+            }}
           />
         </ItemFormDialog>
       ) : null}

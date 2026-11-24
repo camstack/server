@@ -412,6 +412,7 @@ function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandR
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-1">
               {t('uiLibrary.recordingBands.postBuffer', 'Post-buffer')}
+              {/* ui-check-ok: empty means the default buffer; DurationPartsInput always holds a value, so it cannot express unset */}
               <input
                 type="number"
                 min={0}

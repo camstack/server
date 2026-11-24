@@ -34,6 +34,8 @@ import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useState } from 'react'
+import { DurationPartsInput } from '../duration-parts-input/DurationPartsInput'
+import { FormSaveBar } from '../form-save-bar'
 import type { UsePTZResult } from '../../hooks/use-ptz'
 
 interface HomePresetPickerProps {
@@ -48,6 +50,8 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
   const { homePreset, presets, setHomePreset, captureHomeHere, homeReturn, setHomeReturn, busy } =
     controls
   const [saving, setSaving] = useState(false)
+  // The idle-return delay is a draft until Save; null = untouched (follows the camera).
+  const [afterDraft, setAfterDraft] = useState<number | null>(null)
 
   // Not loaded yet: say nothing rather than claim "none" — an unanswered read
   // must not look like a configured absence (D315).
@@ -128,24 +132,31 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
           {/* The delay stays editable while the behaviour is OFF: the camera
               keeps it either way, and clearing it on disable would lose a
               setting the operator chose. */}
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="text-[10px] font-medium text-foreground-subtle">
               {t('uiLibrary.homePresetPicker.after', 'After (s)')}
             </span>
-            <input
-              type="number"
+            <DurationPartsInput
+              seconds={afterDraft ?? homeReturn.seconds}
               min={0}
               max={3600}
-              defaultValue={homeReturn.seconds}
               disabled={disabled}
-              onBlur={(e) => {
-                const next = Number(e.target.value)
-                if (!Number.isFinite(next) || Math.round(next) === homeReturn.seconds) return
-                run(() => setHomeReturn(homeReturn.enabled, Math.round(next)))
-              }}
-              className={SELECT_CLASS}
+              aria-label={t('uiLibrary.homePresetPicker.after', 'After (s)')}
+              onChange={setAfterDraft}
             />
-          </label>
+          </div>
+          <FormSaveBar
+            pendingCount={
+              afterDraft !== null && Math.round(afterDraft) !== homeReturn.seconds ? 1 : 0
+            }
+            saving={saving}
+            onSave={() => {
+              if (afterDraft === null) return
+              run(() => setHomeReturn(homeReturn.enabled, Math.round(afterDraft)))
+              setAfterDraft(null)
+            }}
+            onDiscard={() => setAfterDraft(null)}
+          />
         </div>
       )}
 
