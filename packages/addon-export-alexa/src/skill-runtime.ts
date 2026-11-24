@@ -692,6 +692,7 @@ export class SkillRuntime {
         ctx: this.ctx,
         logger: this.ctx.logger,
         listExposed: () => this.exposedDevices,
+        egressPrewarm: this.egressPrewarm ?? undefined,
       },
       ptzPreset: {
         ctx: this.ctx,

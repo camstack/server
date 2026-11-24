@@ -21,13 +21,14 @@ interface LogLine {
   readonly level: string
   readonly message: string
   readonly tags: unknown
+  readonly reason?: unknown
 }
 
 function makeLogger(lines: LogLine[]): IScopedLogger {
   const at =
     (level: string) =>
-    (message: string, ctx?: { tags?: unknown }): void => {
-      lines.push({ level, message, tags: ctx?.tags })
+    (message: string, ctx?: { tags?: unknown; meta?: { reason?: unknown } }): void => {
+      lines.push({ level, message, tags: ctx?.tags, reason: ctx?.meta?.reason })
     }
   const logger = {
     info: at('info'),
@@ -254,5 +255,62 @@ describe('LwaEventGateway doorbell press', () => {
     const g = gatewayWith((id) => warmed.push(id))
     await g.press()
     expect(warmed).toEqual([DEVICE_ID])
+  })
+})
+
+describe('AlexaEgressPrewarm: offer-triggered warm and release reason', () => {
+  function make(opts?: { live?: boolean }) {
+    const lines: LogLine[] = []
+    const broker = makeBroker()
+    const prewarm = new AlexaEgressPrewarm({
+      api: broker.api,
+      logger: makeLogger(lines),
+      listExposed: () => EXPOSED,
+      hasLiveSession: () => opts?.live === true,
+      holdMs: 30_000,
+    })
+    return { prewarm, broker, lines }
+  }
+  const releaseReason = (lines: LogLine[]): unknown =>
+    lines.find((l) => l.message === 'alexa egress prewarm: hold released')?.reason
+
+  it('an offer acquires the egress', async () => {
+    const { prewarm, broker } = make()
+    await prewarm.onOffer(DEVICE_ID)
+    expect(broker.acquires).toHaveLength(1)
+  })
+
+  it('an offer does not double-start while a doorbell hold is pending', async () => {
+    const { prewarm, broker } = make()
+    await prewarm.onPress(DEVICE_ID)
+    await prewarm.onOffer(DEVICE_ID)
+    expect(broker.acquires).toHaveLength(1)
+  })
+
+  it('the timer release says no session arrived', async () => {
+    const { prewarm, broker, lines } = make()
+    await prewarm.onOffer(DEVICE_ID)
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(broker.releases).toEqual(['pk-1'])
+    expect(releaseReason(lines)).toBe('no session arrived')
+  })
+
+  it('an attached session releases the hold at once with that reason', async () => {
+    const { prewarm, broker, lines } = make()
+    await prewarm.onOffer(DEVICE_ID)
+    await prewarm.onSession(DEVICE_ID, 'attached')
+    expect(broker.releases).toEqual(['pk-1'])
+    expect(releaseReason(lines)).toBe('session attached')
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(broker.releases).toEqual(['pk-1'])
+  })
+
+  it('a session that settles while the acquire is in flight still releases once', async () => {
+    const { prewarm, broker, lines } = make()
+    const warming = prewarm.onOffer(DEVICE_ID)
+    await prewarm.onSession(DEVICE_ID, 'attached')
+    await warming
+    expect(broker.releases).toEqual(['pk-1'])
+    expect(releaseReason(lines)).toBe('session attached')
   })
 })

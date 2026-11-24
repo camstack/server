@@ -16,6 +16,7 @@
  */
 
 import type { HeldEgressHandle } from '../egress/egress-handle-reaper.js'
+import type { AlexaEgressPrewarmPort } from '../egress/alexa-egress-prewarm.js'
 import { resolveAlexaSourceProfile } from '../egress/alexa-source-profile.js'
 import type { AddonApi, AddonContext, IScopedLogger, WebrtcStreamTarget } from '@camstack/types'
 import { z } from 'zod'
@@ -50,6 +51,16 @@ export interface RtcSessionContext {
    * stream id for `webrtcSession.handleOffer`.
    */
   readonly listExposed: () => readonly ExposedDeviceEntry[]
+  /**
+   * The doorbell pre-warm. An offer starts (or joins) the same hold a press
+   * does, so the transcode spawns while the session scores its source.
+   */
+  readonly egressPrewarm?: AlexaEgressPrewarmPort
+}
+
+/** `a=ice-pwd:` is the one secret an SDP carries; everything else is kept. */
+export function redactSdpSecrets(sdp: string): string {
+  return sdp.replace(/^a=ice-pwd:.*$/gim, 'a=ice-pwd:<redacted>')
 }
 
 /**
@@ -165,6 +176,14 @@ export async function handleInitiateSessionWithOffer(
     return errorEnvelope(header, 'INVALID_DIRECTIVE', 'offer.value is empty')
   }
 
+  // Start the egress transcode NOW: it spawns in parallel with the source
+  // scoring and the answer work below instead of after them. Fire and forget;
+  // the pre-warm never throws and its hold is settled by the session below.
+  if (deps.egressPrewarm) void deps.egressPrewarm.onOffer(deviceId)
+  log.debug('alexa rtc-session: SDP offer', {
+    meta: { sdp: redactSdpSecrets(sdpOffer) },
+  })
+
   const api: AddonApi = deps.ctx.api
   const exposedEntry = deps.listExposed().find((e) => e.deviceId === deviceId)
   const sourceProfile = await resolveAlexaSourceProfile({
@@ -236,6 +255,7 @@ export async function handleInitiateSessionWithOffer(
       },
     })
     derivedTarget = { kind: 'cam-stream', camStreamId: picked.camStreamId }
+    if (deps.egressPrewarm) void deps.egressPrewarm.onSession(deviceId, 'bypassed-transcode')
   } else {
     // Route the session through THE ffmpeg primitive
     // (`streamBroker.acquireEgressTranscode`, D67) so Alexa's encode — H.264
@@ -257,6 +277,8 @@ export async function handleInitiateSessionWithOffer(
       })
       egressPipelineKey = acquired.pipelineKey
       EGRESS_HANDLES.set(egressHandleKey(deviceId, sessionId), acquired.pipelineKey)
+      // The session holds the child itself now; the pre-warm's hold is done.
+      if (deps.egressPrewarm) void deps.egressPrewarm.onSession(deviceId, 'attached')
       derivedTarget = { kind: 'cam-stream', camStreamId: acquired.camStreamId }
     } catch (err) {
       log.warn(
@@ -325,6 +347,9 @@ export async function handleInitiateSessionWithOffer(
         kind: 'alexa',
         sessionId,
       },
+    })
+    log.debug('alexa rtc-session: SDP answer', {
+      meta: { sdp: redactSdpSecrets(result.sdpAnswer) },
     })
     log.info('alexa rtc-session: AnswerGenerated', {
       meta: {

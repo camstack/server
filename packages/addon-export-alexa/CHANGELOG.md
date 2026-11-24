@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa live view starts the video transcode as soon as the Echo's offer arrives (faster answer), and each session logs its SDP offer and answer at debug level with the ICE password redacted
+
 ## [1.2.207] - 2026-11-24
 
 ### Changed
