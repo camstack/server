@@ -697,7 +697,7 @@
       "need": "Enter a time of day or a daily window (a clock time, sunrise / sunset ± minutes, a range over midnight, Day / Night, weekdays)",
       "admin": "`TimeWindowInput` (value is a `TimeWindow`; shows the schema refusals inline; `siteHasNoLocation` disables sun choices with a reason) and `TimeSpecInput` for one moment (`allowDate` for a one-off date); a settings form declares it as `type: 'time-window'`",
       "viewer": "—",
-      "notes": "A raw `Input type=\"time\"` plus a sun select, or a hand-written from / to row, is what it replaced. A schedule stored in another shape (notification schedule, scheduler profile, recording bands) is not this window and is not edited with it"
+      "notes": "A raw `Input type=\"time\"` plus a sun select, or a hand-written from / to row, is what it replaced. A notification schedule window and a recording band keep their stored shape (numeric days, minutes or `HH:MM`) and are edited with `clockOnly` (two clock times and the weekdays) through the lossless adapters `timeWindowOfNcWindow` / `ncWindowOfTimeWindow` and `timeWindowOfBand` / `bandOfTimeWindow`; a value they cannot store answers `null` and the editor keeps the stored one"
     },
     {
       "need": "Live camera video",
@@ -1797,6 +1797,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
       "summary": "produced + imported − exported + discharged − charged. The storage counters are both absent only for a system without storage (no contribution); a system with storage needs both, and one known alone is an unknown bala…"
+    },
+    {
+      "name": "bandOfTimeWindow",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/stored-clock-range.ts",
+      "summary": "The editor boundary between two STORED clock ranges and `TimeWindowInput`'s value. Neither stored shape changes: a notification schedule window (`days` 0-6, `startMinute`, `endMinute`) and a recording band (`days` 0-6…"
     },
     {
       "name": "BarSeries",
@@ -13225,6 +13232,13 @@
       "summary": "NavigationPanel — the `navigation` cap's own panel (`host/navigation-panel`): a drive pad, the data-driven action and sound buttons, the fill light."
     },
     {
+      "name": "ncWindowOfTimeWindow",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/stored-clock-range.ts",
+      "summary": "The editor boundary between two STORED clock ranges and `TimeWindowInput`'s value. Neither stored shape changes: a notification schedule window (`days` 0-6, `startMinute`, `endMinute`) and a recording band (`days` 0-6…"
+    },
+    {
       "name": "nearestRangeHandle",
       "kind": "function",
       "area": "composites",
@@ -20455,6 +20469,12 @@
           "doc": "Offer \"On a date\" (one local date and time). Default false: a daily window cannot use it."
         },
         {
+          "name": "allowSun",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer \"At a sun event\". Default true; false for a stored shape that holds only clock times."
+        },
+        {
           "name": "siteHasNoLocation",
           "type": "boolean",
           "optional": true,
@@ -20518,6 +20538,12 @@
           "doc": "Offer the weekday chips and the whole-day choice. Default true."
         },
         {
+          "name": "clockOnly",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Only what a stored clock range can hold: two clock times and the weekdays. No whole-day choice, no Day / Night presets, no sun times, and no"
+        },
+        {
           "name": "siteHasNoLocation",
           "type": "boolean",
           "optional": true,
@@ -20536,6 +20562,20 @@
           "doc": "Prefix of the test ids: `<p>-fields`, `<p>-from`, `<p>-to`, `<p>-wraps`, `<p>-no-days`, `<p>-errors`."
         }
       ]
+    },
+    {
+      "name": "timeWindowOfBand",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/stored-clock-range.ts",
+      "summary": "An empty band day list (every day) is an absent value day list."
+    },
+    {
+      "name": "timeWindowOfNcWindow",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/time-window-input/stored-clock-range.ts",
+      "summary": "The editor boundary between two STORED clock ranges and `TimeWindowInput`'s value. Neither stored shape changes: a notification schedule window (`days` 0-6, `startMinute`, `endMinute`) and a recording band (`days` 0-6…"
     },
     {
       "name": "TimezoneSelector",

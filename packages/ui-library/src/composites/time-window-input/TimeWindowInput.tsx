@@ -35,6 +35,11 @@ export interface TimeWindowInputProps {
   readonly presets?: boolean
   /** Offer the weekday chips and the whole-day choice. Default true. */
   readonly weekdays?: boolean
+  /**
+   * Only what a stored clock range can hold: two clock times and the weekdays. No whole-day choice,
+   * no Day / Night presets, no sun times, and no mode select (it would have one option).
+   */
+  readonly clockOnly?: boolean
   /** The site has no location: sun choices are disabled with a reason. */
   readonly siteHasNoLocation?: boolean
   readonly disabled?: boolean
@@ -64,6 +69,7 @@ export function TimeWindowInput({
   onChange,
   presets = true,
   weekdays = true,
+  clockOnly = false,
   siteHasNoLocation = false,
   disabled = false,
   testIdPrefix = 'time-window',
@@ -72,11 +78,13 @@ export function TimeWindowInput({
   const mode = modeOfWindow(value)
   const between = value.between
   const days = selectedDays(value)
-  const offered: readonly TimeWindowMode[] = [
-    ...(weekdays ? (['whole-day'] as const) : []),
-    'between',
-    ...(presets ? (['day', 'night'] as const) : []),
-  ]
+  const offered: readonly TimeWindowMode[] = clockOnly
+    ? ['between']
+    : [
+        ...(weekdays ? (['whole-day'] as const) : []),
+        'between',
+        ...(presets ? (['day', 'night'] as const) : []),
+      ]
   // A stored value this field does not OFFER (a whole-day window under `weekdays={false}`, a
   // preset under `presets={false}`) keeps its option, so the select names what is stored.
   const modes: readonly TimeWindowMode[] = offered.includes(mode) ? offered : [mode, ...offered]
@@ -95,26 +103,28 @@ export function TimeWindowInput({
   return (
     <div className="flex w-full flex-col gap-2" data-testid={`${testIdPrefix}-fields`}>
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-        <label>
-          <span className="mb-1 block text-xs font-medium text-foreground-muted">
-            {t('uiLibrary.timeWindow.windowLabel', 'Time of day')}
-          </span>
-          <Select
-            wrapperClassName="relative w-40"
-            aria-label={t('uiLibrary.timeWindow.windowLabel', 'Time of day')}
-            disabled={disabled}
-            value={mode}
-            options={modes.map((m) => ({
-              value: m,
-              label: t(MODE_LABEL[m][0], MODE_LABEL[m][1]),
-              disabled: siteHasNoLocation && (m === 'day' || m === 'night') && mode !== m,
-            }))}
-            onChange={(e) => {
-              const next = modes.find((m) => m === e.target.value)
-              if (next !== undefined && next !== mode) onChange(withWindowMode(value, next))
-            }}
-          />
-        </label>
+        {!clockOnly && (
+          <label>
+            <span className="mb-1 block text-xs font-medium text-foreground-muted">
+              {t('uiLibrary.timeWindow.windowLabel', 'Time of day')}
+            </span>
+            <Select
+              wrapperClassName="relative w-40"
+              aria-label={t('uiLibrary.timeWindow.windowLabel', 'Time of day')}
+              disabled={disabled}
+              value={mode}
+              options={modes.map((m) => ({
+                value: m,
+                label: t(MODE_LABEL[m][0], MODE_LABEL[m][1]),
+                disabled: siteHasNoLocation && (m === 'day' || m === 'night') && mode !== m,
+              }))}
+              onChange={(e) => {
+                const next = modes.find((m) => m === e.target.value)
+                if (next !== undefined && next !== mode) onChange(withWindowMode(value, next))
+              }}
+            />
+          </label>
+        )}
         {between !== undefined && (
           <>
             <div>
@@ -126,6 +136,7 @@ export function TimeWindowInput({
                 testId={`${testIdPrefix}-from`}
                 disabled={disabled}
                 siteHasNoLocation={siteHasNoLocation}
+                allowSun={!clockOnly}
                 value={editableWindowEnd(between.from)}
                 onChange={(end) => {
                   if (end.kind !== 'date') onChange(withWindowEnd(value, 'from', end))
@@ -141,6 +152,7 @@ export function TimeWindowInput({
                 testId={`${testIdPrefix}-to`}
                 disabled={disabled}
                 siteHasNoLocation={siteHasNoLocation}
+                allowSun={!clockOnly}
                 value={editableWindowEnd(between.to)}
                 onChange={(end) => {
                   if (end.kind !== 'date') onChange(withWindowEnd(value, 'to', end))

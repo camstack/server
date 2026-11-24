@@ -21,6 +21,7 @@ import {
   type NcSchedule,
   type NcScheduleWindow,
   type NcSummarySendTime,
+  type TimeWindow,
 } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 
@@ -32,7 +33,14 @@ import {
   WEEKDAY_CHOICES,
 } from './notification-system-event-delivery'
 import { useTranslation } from 'react-i18next'
-import { Button, Checkbox, Input } from '@camstack/ui-library'
+import {
+  Button,
+  Checkbox,
+  Input,
+  ncWindowOfTimeWindow,
+  TimeWindowInput,
+  timeWindowOfNcWindow,
+} from '@camstack/ui-library'
 
 export type ScheduleFieldMode = 'windows' | 'times'
 
@@ -48,14 +56,6 @@ interface ScheduleFieldProps {
   readonly defaultMinute?: number
   /** Shown when there are no windows (default: rule-firing copy). */
   readonly emptyHint?: string
-}
-
-function minutesToHhmm(minute: number): string {
-  return hhmmOf(minute)
-}
-
-function hhmmToMinutes(value: string): number {
-  return minuteOfHhmm(value)
 }
 
 function newWindow(): NcScheduleWindow {
@@ -258,28 +258,20 @@ interface ScheduleWindowRowProps {
 
 function ScheduleWindowRow({ window: win, onChange, onRemove }: ScheduleWindowRowProps) {
   const { t } = useTranslation()
-  const toggleDay = (day: number): void => {
-    const next = win.days.includes(day) ? win.days.filter((d) => d !== day) : [...win.days, day]
-    if (next.length === 0) return // schema requires ≥1 day
-    onChange({ ...win, days: next })
+  const setWindow = (next: TimeWindow): void => {
+    // A draft the schedule cannot store (the last day released) keeps the stored window.
+    const stored = ncWindowOfTimeWindow(next)
+    if (stored !== null) onChange(stored)
   }
   return (
     <div className="space-y-1.5 rounded-md border border-border p-2">
-      <div className="flex items-center gap-2 text-xs">
-        <Input
-          type="time"
-          value={minutesToHhmm(win.startMinute)}
-          onChange={(e) => onChange({ ...win, startMinute: hhmmToMinutes(e.target.value) })}
-          className="rounded-md border border-border bg-background px-1 py-0.5"
+      <div className="flex items-start gap-2 text-xs">
+        <TimeWindowInput
+          clockOnly
+          value={timeWindowOfNcWindow(win)}
+          onChange={setWindow}
+          testIdPrefix="schedule-window"
         />
-        <span className="text-foreground-subtle">→</span>
-        <Input
-          type="time"
-          value={minutesToHhmm(win.endMinute)}
-          onChange={(e) => onChange({ ...win, endMinute: hhmmToMinutes(e.target.value) })}
-          className="rounded-md border border-border bg-background px-1 py-0.5"
-        />
-        <span className="flex-1" />
         <Button
           variant="unstyled"
           type="button"
@@ -290,7 +282,6 @@ function ScheduleWindowRow({ window: win, onChange, onRemove }: ScheduleWindowRo
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <WeekdayToggles days={win.days} onToggle={toggleDay} />
     </div>
   )
 }

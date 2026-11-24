@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every duration in automations, notifications, templates and device settings is typed in hours, minutes, seconds or milliseconds with the same input; nothing already saved changes.
 - The automation time condition and the scheduler point time use the shared time input; Day / Night can now be picked from the condition's time-of-day list.
 - The API explorer lists the apps capabilities under Integrations
+- The notification schedule window rows use the shared time-window input; stored schedules are unchanged
 
 ## [1.2.739] - 2026-11-24
 

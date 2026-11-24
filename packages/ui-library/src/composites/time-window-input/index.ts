@@ -10,3 +10,10 @@ export {
   type TimeWindowMode,
   type TimeWindowRange,
 } from './time-window-model.js'
+export {
+  bandOfTimeWindow,
+  ncWindowOfTimeWindow,
+  timeWindowOfBand,
+  timeWindowOfNcWindow,
+  type StoredBandRange,
+} from './stored-clock-range.js'

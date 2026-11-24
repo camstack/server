@@ -26,6 +26,8 @@ export interface TimeSpecInputProps {
   readonly onChange: (next: TimeSpec) => void
   /** Offer "On a date" (one local date and time). Default false: a daily window cannot use it. */
   readonly allowDate?: boolean
+  /** Offer "At a sun event". Default true; false for a stored shape that holds only clock times. */
+  readonly allowSun?: boolean
   /** The site has no location: sun choices are disabled and say why. */
   readonly siteHasNoLocation?: boolean
   /** Names the group, and prefixes each control's accessible name ("From: Time"). */
@@ -47,6 +49,7 @@ export function TimeSpecInput({
   value,
   onChange,
   allowDate = false,
+  allowSun = true,
   siteHasNoLocation = false,
   label,
   disabled = false,
@@ -65,11 +68,15 @@ export function TimeSpecInput({
       value: 'clock',
       label: t('uiLibrary.timeWindow.kind.clock', 'At a time'),
     },
-    {
-      value: 'sun',
-      label: t('uiLibrary.timeWindow.kind.sun', 'At a sun event'),
-      disabled: siteHasNoLocation,
-    },
+    ...(allowSun
+      ? [
+          {
+            value: 'sun',
+            label: t('uiLibrary.timeWindow.kind.sun', 'At a sun event'),
+            disabled: siteHasNoLocation,
+          },
+        ]
+      : []),
     ...(allowDate
       ? [
           {
@@ -86,20 +93,22 @@ export function TimeSpecInput({
       data-testid={testId}
       className={className ?? 'flex flex-wrap items-center gap-2'}
     >
-      <Select
-        wrapperClassName="relative w-40"
-        aria-label={label}
-        disabled={disabled}
-        value={value.kind}
-        options={kindOptions}
-        onChange={(e) => {
-          const kind = e.target.value
-          if ((kind === 'clock' || kind === 'sun' || kind === 'date') && kind !== value.kind) {
-            setOffsetDraft(null)
-            onChange(SEED[kind])
-          }
-        }}
-      />
+      {kindOptions.length > 1 && (
+        <Select
+          wrapperClassName="relative w-40"
+          aria-label={label}
+          disabled={disabled}
+          value={value.kind}
+          options={kindOptions}
+          onChange={(e) => {
+            const kind = e.target.value
+            if ((kind === 'clock' || kind === 'sun' || kind === 'date') && kind !== value.kind) {
+              setOffsetDraft(null)
+              onChange(SEED[kind])
+            }
+          }}
+        />
+      )}
       {value.kind === 'clock' && (
         <Input
           type="time"

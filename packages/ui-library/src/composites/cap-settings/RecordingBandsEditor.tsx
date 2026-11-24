@@ -8,6 +8,8 @@ import {
   type RecordingObjectTriggerClass,
 } from '@camstack/types'
 import { DurationInput } from '../duration-input/DurationInput'
+import { bandOfTimeWindow, timeWindowOfBand } from '../time-window-input/stored-clock-range'
+import { TimeWindowInput } from '../time-window-input/TimeWindowInput'
 import { DeviceValuePicker } from '../device-value-picker/DeviceValuePicker'
 import { deviceIdsOf, pickedFromDeviceIds } from '../device-value-picker/device-id-values'
 import { FieldShell } from '../device-value-picker/device-value-form-fields'
@@ -16,7 +18,7 @@ import {
   DEFAULT_EVENTS_BAND_BUFFER_SEC,
   RECORDING_AUDIO_TRIGGER_OFFERED_DBFS,
 } from '@camstack/types'
-import type { RecordingBand, RecordingBandMode } from '@camstack/types'
+import type { RecordingBand, RecordingBandMode, TimeWindow } from '@camstack/types'
 import {
   batteryFloorWithNoRecording,
   emptyBand,
@@ -29,28 +31,6 @@ interface RecordingBandsEditorProps {
   readonly onChange: (bands: RecordingBand[]) => void
   /** Present when the host knows the camera — enables the sensor picker on events bands. */
   readonly sensorContext?: RecordingSensorContext
-}
-
-/** Weekday chips in display order (Mon→Sun); value is `Date.getDay()` (0=Sun). */
-const WEEKDAY_VALUES: readonly number[] = [1, 2, 3, 4, 5, 6, 0]
-
-function weekdayLabel(t: UiTextFn, value: number): string {
-  switch (value) {
-    case 1:
-      return t('uiLibrary.recordingBands.mon', 'Mon')
-    case 2:
-      return t('uiLibrary.recordingBands.tue', 'Tue')
-    case 3:
-      return t('uiLibrary.recordingBands.wed', 'Wed')
-    case 4:
-      return t('uiLibrary.recordingBands.thu', 'Thu')
-    case 5:
-      return t('uiLibrary.recordingBands.fri', 'Fri')
-    case 6:
-      return t('uiLibrary.recordingBands.sat', 'Sat')
-    default:
-      return t('uiLibrary.recordingBands.sun', 'Sun')
-  }
 }
 
 const BAND_MODE_VALUES: readonly RecordingBandMode[] = ['continuous', 'events']
@@ -198,13 +178,10 @@ function numOrUndef(value: string): number | undefined {
 
 function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandRowProps) {
   const t = useUiText()
-  const toggleDay = (value: number): void => {
-    // An empty `days` means "every day" to the band engine, and every chip
-    // reads ON. Materialize the full week before toggling so the first click
-    // DESELECTS one day instead of isolating it.
-    const current = band.days.length === 0 ? WEEKDAY_VALUES : band.days
-    const days = current.includes(value) ? current.filter((d) => d !== value) : [...current, value]
-    onChange({ days })
+  const setWindow = (next: TimeWindow): void => {
+    // A draft the stored band cannot hold (the last day released) keeps the previous band.
+    const range = bandOfTimeWindow(next)
+    if (range !== null) onChange(range)
   }
   const setBattery = (patch: { min?: number | undefined; max?: number | undefined }): void => {
     const next = { ...band.battery, ...patch }
@@ -217,22 +194,13 @@ function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandR
 
   return (
     <div className="space-y-1.5 rounded-md border border-border p-2">
+      <TimeWindowInput
+        clockOnly
+        value={timeWindowOfBand(band)}
+        onChange={setWindow}
+        testIdPrefix="recording-band-window"
+      />
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <input
-          type="time"
-          aria-label={t('uiLibrary.recordingBands.start', 'Band start')}
-          value={band.start}
-          onChange={(e) => onChange({ start: e.target.value })}
-          className="rounded-md border border-border bg-background px-1 py-0.5"
-        />
-        <span className="text-foreground-subtle">→</span>
-        <input
-          type="time"
-          aria-label={t('uiLibrary.recordingBands.end', 'Band end')}
-          value={band.end}
-          onChange={(e) => onChange({ end: e.target.value })}
-          className="rounded-md border border-border bg-background px-1 py-0.5"
-        />
         {showBattery ? (
           <span className="flex items-center gap-1">
             <span className="text-foreground-subtle">
@@ -314,31 +282,10 @@ function BandRow({ band, onChange, onRemove, sensorContext, showBattery }: BandR
           type="button"
           onClick={onRemove}
           aria-label={t('uiLibrary.recordingBands.remove', 'Remove band')}
-          className="text-foreground-subtle hover:text-red-500"
+          className="text-foreground-subtle hover:text-danger"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        {WEEKDAY_VALUES.map((day) => {
-          const on = band.days.length === 0 || band.days.includes(day)
-          return (
-            <button
-              key={day}
-              type="button"
-              onClick={() => toggleDay(day)}
-              className={`rounded px-1.5 py-0.5 text-[10px] ${on ? 'bg-primary text-primary-foreground' : 'bg-surface-hover text-foreground-subtle'}`}
-            >
-              {weekdayLabel(t, day)}
-            </button>
-          )
-        })}
-        {band.days.length === 0 ? (
-          <span className="self-center text-[10px] text-foreground-subtle">
-            {t('uiLibrary.recordingBands.everyDay', 'every day')}
-          </span>
-        ) : null}
       </div>
 
       {band.mode === 'events' ? (
