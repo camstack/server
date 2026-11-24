@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.170] - 2026-11-24
+
 ### Changed
 
 - A shutter that goes unreachable or comes back is now written to the log with its device.
