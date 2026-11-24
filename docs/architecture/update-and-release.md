@@ -531,6 +531,29 @@ had no hub to receive a fix from.
   the hub's auto-update settings only pace the hub's notifications and do not reach agents.
 - Containers are in scope: closures are applied in a container by the data-root swap.
 
+## A registry install is pinned to the tested third-party versions (#681)
+
+`@camstack/server` ships `closure-pins.json`: every third-party package of its
+production closure (the server, its addons, `sdk`, `types`, `ui-library`) at the
+exact version the repo lockfile tested, no `@camstack/*` entry.
+`scripts/gen-closure-pins.mjs` writes it from `prepack`, so `npm pack`, `npm
+publish` and `camstack deploy --closure` all carry it; the file is git-ignored,
+so a commit cannot hold pins that disagree with the lockfile. A name the closure
+resolves to more than one version is left out (an override is by name).
+
+`RootUpdateService` reads it before a REGISTRY install (`npm pack
+@camstack/server@<target>` into a temp dir, then `package/closure-pins.json`)
+and writes it as `overrides` into the staging `package.json`. A target without
+the file, or a failed pack, installs unpinned as before and logs `closure
+install unpinned`. The dev-uploads branch does not read it.
+
+Why not an `npm-shrinkwrap.json` inside the server: npm honours `overrides` only
+in the ROOT project, and a shrinkwrap in a dependency nests the whole tree under
+`node_modules/@camstack/server/` and installs none of the `@camstack/*` addons
+it does not list. Measured: pinned `@trpc/server` 11.18.0 at the root with the
+addons beside it, unpinned 11.31.0. Not covered yet: the Docker image
+(`npm install @camstack/server@latest` in a bare dir) and the desktop install.
+
 ## Migrations survive a version jump (D1014)
 
 A node that jumps versions runs every migration it missed on the NEW code, so a migration may use

@@ -302,7 +302,8 @@ describe('stall and ceiling are not retried', () => {
   async function attempts(execNpm: NpmExecFn, version: string): Promise<number> {
     let calls = 0
     const wrapped: NpmExecFn = async (args, opts) => {
-      calls += 1
+      // The closure-pins `npm pack` is not an install attempt.
+      if (args[0] === 'install') calls += 1
       return execNpm(args, opts)
     }
     await service(wrapped).applyServerUpdate({ version })

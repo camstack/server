@@ -131,3 +131,4 @@ scratchpad/
 # Local editor and agent state (not part of the public tree).
 .cursor/
 server/backend/system/
+server/backend/closure-pins.json

@@ -74,6 +74,7 @@ import {
   ELECTRON_APP_VERSION_ENV,
   type WrapperProbeReadings,
 } from './wrapper-identity.js'
+import { fetchClosurePins, withClosureOverrides } from './closure-pins.js'
 import { seedStagingFromCurrent } from './closure-stage-seed.js'
 import { assertInstalledClosureTree } from './closure-tree-check.js'
 import {
@@ -1192,6 +1193,7 @@ export class RootUpdateService {
       } else if (source === 'seeded') {
         await seedStagingFromCurrent(currentDir(rootDir), stagingDir)
         this.stampClosureManifest(stagingDir)
+        await this.pinClosure(stagingDir, target, registry)
         await this.execNpm(
           [...installArgs, `${this.spec.packageName}@${target}`, ...buildNpmRegistryArgs(registry)],
           { cwd: stagingDir, timeoutMs: NPM_INSTALL_CEILING_MS },
@@ -1207,6 +1209,7 @@ export class RootUpdateService {
           ),
           'utf-8',
         )
+        await this.pinClosure(stagingDir, target, registry)
         await this.execNpm(
           [...installArgs, `${this.spec.packageName}@${target}`, ...buildNpmRegistryArgs(registry)],
           { cwd: stagingDir, timeoutMs: NPM_INSTALL_CEILING_MS },
@@ -1272,6 +1275,49 @@ export class RootUpdateService {
       await fs.promises.rm(stagingDir, { recursive: true, force: true }).catch(() => undefined)
       throw err
     }
+  }
+
+  /**
+   * Registry installs only: write the target's `closure-pins.json` as the
+   * staging manifest's `overrides`, so every third-party package installs at
+   * the version the release was tested with (#681). A target that ships none
+   * (an older server), or a pack that fails, installs unpinned as before —
+   * and says so. The dev-uploads branch does not call this.
+   */
+  private async pinClosure(
+    stagingDir: string,
+    target: string,
+    registry: string | undefined,
+  ): Promise<void> {
+    const manifestPath = path.join(stagingDir, 'package.json')
+    const raw: unknown = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+    if (!isJsonObject(raw)) return
+    let pins: Awaited<ReturnType<typeof fetchClosurePins>> = null
+    try {
+      pins = await fetchClosurePins(
+        this.execNpm,
+        this.spec.packageName,
+        target,
+        buildNpmRegistryArgs(registry),
+      )
+    } catch (error) {
+      this.logger.warn('closure pins could not be read', {
+        tags: this.logTags,
+        meta: {
+          targetVersion: target,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    }
+    this.logger.info(pins === null ? 'closure install unpinned' : 'closure install pinned', {
+      tags: this.logTags,
+      meta: { targetVersion: target, pins: pins === null ? 0 : Object.keys(pins).length },
+    })
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify(withClosureOverrides(raw, pins), null, 2),
+      'utf-8',
+    )
   }
 
   /**

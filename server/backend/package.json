@@ -18,6 +18,7 @@
     "system/assets",
     "system/package.json",
     "scripts/closure-postinstall.mjs",
+    "closure-pins.json",
     ".env.example",
     "THIRD_PARTY_MODELS.md",
     "README.md",
@@ -44,6 +45,7 @@
     "./system/assets/*": "./system/assets/*"
   },
   "scripts": {
+    "prepack": "node ../../scripts/gen-closure-pins.mjs",
     "build": "node ../../scripts/sync-system-into-server.mjs && ../../scripts/tsc7 -p tsconfig.build.json && tsup && node scripts/copy-closure-patches.mjs",
     "postinstall": "node scripts/closure-postinstall.mjs",
     "dev": "npx concurrently -n server,ui -c blue,magenta \"CAMSTACK_RESTART_TOUCH_FILE=src/launcher.ts tsx watch --env-file=.env --ignore=./camstack-data --ignore=../../packages/core/dist --ignore=../../packages/sdk/dist --ignore=../../packages/ui-library/dist src/launcher.ts\" \"cd ../../packages/addon-admin-ui && npx vite --port 3001\"",
