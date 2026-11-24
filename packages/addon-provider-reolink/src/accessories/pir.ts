@@ -31,13 +31,17 @@ import {
   DeviceType,
   hydrateSchema,
   type SwitchStatus,
-  sleep,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
 import { buildPirPayload, isBaichuan400 } from './pir-payload.js'
-import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
+import {
+  AccessoryKind,
+  isParentSleepingBattery,
+  type ReolinkAccessoryHost,
+  reolinkAccessoryBaseSchema,
+} from './base.js'
 
 export const pirAccessorySchema = reolinkAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.PirSensor),
@@ -79,12 +83,6 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
   readonly features: readonly DeviceFeature[] = []
 
   private lastSetAtMs = 0
-  /** Becomes `true` after the first successful `refreshFromFirmware`
-   *  round-trip. Used by `onProbe` to decide whether the boot-time
-   *  sleep-gate should force a wake (no cached state) or skip
-   *  (already-have-state path). Mirrors the Reolink mobile app's
-   *  one-shot wake-and-fetch on launch. */
-  private hasFetchedFromFirmware = false
 
   constructor(
     ctx: DeviceContext,
@@ -183,7 +181,6 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
         meta: { firmwareEnabled: state.enabled, channel: this.channel },
       })
       this.refreshSwitchFromExternal(state)
-      this.hasFetchedFromFirmware = true
     } catch (err) {
       this.ctx.logger.warn('pir refresh FAILED — slice stays at cold-start seed', {
         tags: { deviceId: this.id },
@@ -193,60 +190,22 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
   }
 
   /**
-   * Kernel-driven probe — runs at device construction (addon boot,
-   * device add). For battery cams currently asleep we have two
-   * cases:
-   *
-   *   1. **First-time probe (no cached state yet)** — force a one-shot
-   *      wake + fetch. Mirrors the Reolink mobile app's launch
-   *      behaviour: the app wakes the cam once at startup so the
-   *      operator sees a populated UI. Without this, an aggressive
-   *      sleep timeout (~14s after boot on Argus / battery doorbell
-   *      firmwares) can put the cam back to sleep before the
-   *      kernel's initial probe pass completes — the slice never
-   *      gets populated, the kernel's retry chain exhausts after 5
-   *      attempts, and the operator sees an empty PIR switch state
-   *      until they manually wake the cam.
-   *   2. **Subsequent probes (slice already populated)** — skip the
-   *      fetch. A Baichuan poll on a sleeping camera returns 400,
-   *      drains the battery, and would clobber the cached value
-   *      anyway. The parent's `alignAuxDevicesState('wake')` path
-   *      (simpleEvent `awake` push or sleep-poll backstop)
-   *      refreshes us when the cam wakes naturally.
-   *
-   * Wired cams + already-awake battery cams take the normal path.
+   * Kernel-driven probe. On a sleeping battery camera it does nothing: no
+   * login, no wake (the login IS the wake, #666), not even for an accessory
+   * with no cached state. The persisted slices stand in, and the parent's
+   * `alignAuxDevicesState('wake')` (the wake transition, or the scheduled
+   * window's authorised wake) refreshes this accessory the next time the
+   * camera is up for its own reasons.
    */
   override async onProbe(): Promise<void> {
-    const isSleepingBattery =
-      this.parent.isBatteryCam?.() === true && this.parent.isSleeping?.() === true
-    if (isSleepingBattery) {
-      if (this.hasFetchedFromFirmware) {
-        this.ctx.logger.debug(
-          'pir onProbe skipped — parent battery cam is sleeping (have cached state)',
-          {
-            tags: { deviceId: this.id },
-          },
-        )
-        return
-      }
-      // First-time probe: wake the cam to fetch initial state.
-      // Best-effort — if wake fails we still proceed with the fetch
-      // (ensureApi's login flow itself nudges the cam awake on
-      // most firmwares). Mirrors `wakeForIntercom` in the parent
-      // camera class (waitAfterWakeMs:2000 + 1s settle).
-      this.ctx.logger.info('pir onProbe forcing wake — initial probe with no cached state', {
-        tags: { deviceId: this.id },
-      })
-      try {
-        const api = await this.api
-        await api.wakeUp(this.channel, { waitAfterWakeMs: 2000 })
-        await sleep(1000)
-      } catch (err) {
-        this.ctx.logger.warn('pir wake before initial probe failed — proceeding anyway', {
-          tags: { deviceId: this.id },
-          meta: { error: err instanceof Error ? err.message : String(err) },
-        })
-      }
+    if (isParentSleepingBattery(this.parent)) {
+      // No login, no wake (#666): the login IS the wake. Serve the persisted
+      // state; the parent's wake transition refreshes this accessory.
+      this.ctx.logger.info(
+        'pir onProbe skipped — parent battery cam is sleeping (serving persisted state)',
+        { tags: { deviceId: this.id } },
+      )
+      return
     }
     await this.refreshFromFirmware()
   }

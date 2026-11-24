@@ -12012,10 +12012,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *  populated during `onProbe()`; falls back to false when the probe
    *  hasn't completed yet. */
   isBatteryCam(): boolean {
-    const fp = this.runtimeState.getCapState<{
-      flags?: Record<string, unknown>
-    }>('feature-probe')
-    return fp?.flags?.['hasBattery'] === true
+    // The constructor-set `isBattery` (the same one the parent's own sleep
+    // gates read), NOT the `feature-probe` slice: a battery camera asleep at
+    // boot never seeds that slice, so every accessory probed straight through
+    // its sleep gate and woke the camera (#666, device 640).
+    return this.isBattery
   }
 
   /** Implements `ReolinkAccessoryHost.isSleeping`. Reads the canonical

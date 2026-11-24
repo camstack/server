@@ -124,6 +124,18 @@ export interface ReolinkAccessoryHost {
   registerAccessoryChild?(ref: ReolinkAccessoryRef): void
 }
 
+/**
+ * True when the parent is a battery camera that is asleep right now. The one
+ * question every accessory probe / revalidation asks BEFORE it reaches
+ * `ensureApi()`: on a sleeping battery camera the login itself is the wake.
+ * It reads the parent's own `isBattery` + `sleeping` (no second copy).
+ */
+export function isParentSleepingBattery(
+  parent: Pick<ReolinkAccessoryHost, 'isBatteryCam' | 'isSleeping'>,
+): boolean {
+  return parent.isBatteryCam?.() === true && parent.isSleeping?.() === true
+}
+
 /** Lib's Baichuan API — typed indirectly to avoid a hard dep on
  *  the lib in this file (kind-specific subclasses cast to the
  *  concrete shape they need). */

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reolink streams self-heal with nodelink-js 0.13.2: a silent wired camera recovers in place, a sleeping battery camera is not re-woken by the recovery.
 - A battery camera's scheduled-refresh stamp and attempt count now survive a restart and later battery reads, so a restart no longer wakes a camera the window already served or gave up on.
 - A scheduled refresh of a battery camera no longer wakes it for the email-config read when it fell asleep mid-refresh, and every proactive wake now logs which action asked for it.
+- A battery camera that is asleep is no longer woken by its siren, floodlight or PIR accessory when the addon restarts: they serve their saved state and refresh on the next wake.
 
 ### Fixed
 

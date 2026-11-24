@@ -44,13 +44,17 @@ import {
   sirenIdleStatus,
   sirenPlayChoices,
   sirenTriggeredStatus,
-  sleep,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
 import { assertAccessoryAbility } from './ability-guard.js'
-import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
+import {
+  AccessoryKind,
+  isParentSleepingBattery,
+  type ReolinkAccessoryHost,
+  reolinkAccessoryBaseSchema,
+} from './base.js'
 import {
   buildReolinkSirenOptions,
   DEFAULT_SECONDS_PER_PLAY,
@@ -122,12 +126,6 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
   private lastSetAtMs = 0
   /** Clears the `siren` slice when a timed activation runs out. */
   private sirenTimer: ReturnType<typeof setTimeout> | null = null
-  /** Becomes `true` after the first successful
-   *  `refreshMotionTriggerFromFirmware` round-trip. Used by `onProbe`
-   *  to decide whether the boot-time sleep-gate should force a wake
-   *  (no cached state) or skip (already-have-state path). Mirrors the
-   *  Reolink mobile app's one-shot wake-and-fetch on launch. */
-  private hasFetchedFromFirmware = false
 
   constructor(
     ctx: DeviceContext,
@@ -177,56 +175,35 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
   // immediately after triggering.
 
   /**
-   * Kernel-driven probe (Phase 4). Runs on every device construction
-   * + addon restart. Pulls the actual motion-trigger enable state
-   * from the camera so the slice reflects firmware truth. The switch
-   * (manual fire) cap is intentionally NOT refreshed — Reolink's
-   * `getSiren` returns OFF as soon as the audio task ends.
-   *
-   * Sleeping battery cam:
-   *   1. **First-time probe (no cached state yet)** — force a one-shot
-   *      wake + fetch so the operator sees a populated UI at launch.
-   *      Mirrors the Reolink mobile app: at app launch it wakes the
-   *      cam once to fetch initial state. Without this, an aggressive
-   *      sleep timeout (~14s) can return the cam to sleep before the
-   *      kernel finishes its initial probe pass — the retry chain
-   *      exhausts and the slice never populates.
-   *   2. **Subsequent probes (slice already populated)** — skip. A
-   *      poll on a sleeping camera returns 400 and drains the
-   *      battery. The parent's `alignAuxDevicesState('wake')` path
-   *      (simpleEvent `awake` push or sleep-poll backstop) refreshes
-   *      us when the cam wakes naturally.
+   * Kernel-driven probe. On a sleeping battery camera it does nothing: no
+   * login, no wake (the login IS the wake, #666), not even for an accessory
+   * with no cached state. The persisted slices stand in, and the parent's
+   * `alignAuxDevicesState('wake')` (the wake transition, or the scheduled
+   * window's authorised wake) refreshes this accessory the next time the
+   * camera is up for its own reasons.
    */
   override async onProbe(): Promise<void> {
-    const isSleepingBattery =
-      this.parent.isBatteryCam?.() === true && this.parent.isSleeping?.() === true
-    if (isSleepingBattery) {
-      if (this.hasFetchedFromFirmware) {
-        this.ctx.logger.debug(
-          'siren onProbe skipped — parent battery cam is sleeping (have cached state)',
-          {
-            tags: { deviceId: this.id },
-          },
-        )
-        return
-      }
-      // First-time probe: wake the cam to fetch initial state.
-      // Best-effort — if wake fails we still proceed with the fetch.
-      // Mirrors `wakeForIntercom` in the parent camera class
-      // (waitAfterWakeMs:2000 + 1s settle).
-      this.ctx.logger.info('siren onProbe forcing wake — initial probe with no cached state', {
-        tags: { deviceId: this.id },
-      })
-      try {
-        const api = await this.api
-        await api.wakeUp(this.channel, { waitAfterWakeMs: 2000 })
-        await sleep(1000)
-      } catch (err) {
-        this.ctx.logger.warn('siren wake before initial probe failed — proceeding anyway', {
-          tags: { deviceId: this.id },
-          meta: { error: err instanceof Error ? err.message : String(err) },
-        })
-      }
+    if (isParentSleepingBattery(this.parent)) {
+      // No login, no wake (#666): the login IS the wake. Serve the persisted
+      // state; the parent's wake transition refreshes this accessory.
+      this.ctx.logger.info(
+        'siren onProbe skipped — parent battery cam is sleeping (serving persisted state)',
+        { tags: { deviceId: this.id } },
+      )
+      return
+    }
+    await this.refreshMotionTriggerFromFirmware()
+  }
+
+  /** The cap read's revalidation: never logs in to a sleeping battery camera
+   *  (#666) — the read is served from the persisted slice. */
+  private async revalidateMotionTrigger(): Promise<void> {
+    if (isParentSleepingBattery(this.parent)) {
+      this.ctx.logger.debug(
+        'siren motion-trigger revalidation skipped — parent battery cam is sleeping',
+        { tags: { deviceId: this.id } },
+      )
+      return
     }
     await this.refreshMotionTriggerFromFirmware()
   }
@@ -265,7 +242,6 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
         lastChangedAt,
         lastFetchedAt: Date.now(),
       })
-      this.hasFetchedFromFirmware = true
 
       // Mirror `typeScheduleList` → `motionSirenDetectType` so the
       // Settings form reflects firmware truth (operator changed
@@ -491,7 +467,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       runtimeState: this.runtimeState,
       cap: motionTriggerCapability,
       ownDeviceId: this.id,
-      refresh: () => this.refreshMotionTriggerFromFirmware(),
+      refresh: () => this.revalidateMotionTrigger(),
       staleMs: STALE_MS,
       empty: (): MotionTriggerStatus => ({ enabled: false, lastChangedAt: 0 }),
     })
