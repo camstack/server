@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9246 source files · 250 units claimed by at least one document (9215 files).**
+**257 units · 9247 source files · 250 units claimed by at least one document (9216 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -170,6 +170,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli` | 6 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
+| `packages/types/src/time` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md` | — |
 | `packages/types/src/vendor-login-proxy` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md` | — |
 | `packages/addon-admin-ui/src/modules` | 5 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/access` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0767-an-alexa-link-reaches-only-what-the-linking-user-may-reach.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +4 more, 2 ADRs | 2026-08-26 |
@@ -180,7 +181,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli/src/host-check` | 5 | `tooling` | `architecture/assisted-setup-mcp.md` _(covers)_, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md` | 2026-11-21 |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-11-12 |
 | `packages/types/src/schemas` | 5 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |
-| `packages/types/src/time` | 5 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md` | — |
 | `packages/addon-admin-ui` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +4 more | 2026-11-11 |
 | `packages/addon-admin-ui/src/test-setup` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/detection-sensors` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0772-alexa-detection-sensors-are-motionsensor-endpoints-fed-by-tracks-and-reconciled.md`, `decisions/adr-0778-alexa-detection-sensor-classes-are-chosen-per-camera-from-what-its-pipeline-produces-default-none.md`, +5 more, 2 ADRs | 2026-08-26 |

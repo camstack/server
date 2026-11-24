@@ -5,7 +5,7 @@
  * evaluator, {@link judgeTimeWindow}, through this adapter.
  */
 import { type TimeSite, type TimeSpec, type WeekdayKey, weekdayKeyOfIndex } from './time-spec.js'
-import { type TimeWindow, judgeTimeWindow } from './time-window.js'
+import { type TimeWindow, isWithinTimeWindow } from './time-window.js'
 
 const MINUTES_PER_DAY = 1440
 const MINUTES_PER_HOUR = 60
@@ -61,7 +61,7 @@ export function isWithinClockRange(
   atMs: number,
   site: TimeSite,
 ): boolean {
-  return judgeTimeWindow(clockRangeWindow(days, startMinute, endMinute), atMs, site).inside
+  return isWithinTimeWindow(clockRangeWindow(days, startMinute, endMinute), atMs, site)
 }
 
 let hostZone: string | undefined

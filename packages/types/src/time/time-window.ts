@@ -25,6 +25,7 @@ import {
   occurrenceOn,
   weekdayOfLocalDate,
 } from './time-spec.js'
+import { type FlipBoundary, nextVerdictFlip } from './time-window-flip.js'
 
 /** A named daily window, resolved to a sun range: `night` is sunset to sunrise, `day` the reverse. */
 export const TimeWindowPresetSchema = z.enum(['day', 'night'])
@@ -168,84 +169,49 @@ function insideOnWallClock(
   return (listed(today) && minute >= start) || (listed(addDays(today, -1)) && minute < end)
 }
 
-const MS_PER_MINUTE = 60_000
-const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE
-const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
-/** How far ahead a clock window's next flip is looked for: the lookahead days plus a day's slack. */
-const WALL_CLOCK_HORIZON_HOURS = (LOOKAHEAD_DAYS + 1) * 24 + 2
-
-/**
- * Instants within the horizon at which the wall clock jumps (a DST change). The
- * zone's offset is only visible through the wall clock, so it is sampled hourly
- * and the jump located to the minute.
- */
-function clockJumpsAfter(fromMs: number, site: TimeSite): number[] {
-  const jumps: number[] = []
-  const origin = Math.floor(fromMs / MS_PER_MINUTE) * MS_PER_MINUTE
-  const drift = (a: number, b: number): number => {
-    const wall = localMinuteOfDay(b, site.timeZone) - localMinuteOfDay(a, site.timeZone)
-    const elapsed = Math.round((b - a) / MS_PER_MINUTE)
-    return (((wall - elapsed) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
-  }
-  for (let h = 0; h < WALL_CLOCK_HORIZON_HOURS; h += 1) {
-    const a = origin + h * MS_PER_HOUR
-    const b = a + MS_PER_HOUR
-    if (drift(a, b) === 0) continue
-    let lo = a
-    let hi = b
-    while (hi - lo > MS_PER_MINUTE) {
-      const mid = Math.floor((lo + hi) / 2 / MS_PER_MINUTE) * MS_PER_MINUTE
-      if (drift(a, mid) === 0) lo = mid
-      else hi = mid
-    }
-    jumps.push(hi)
-  }
-  return jumps
-}
-
-/**
- * The first instant after `nowMs` at which {@link insideOnWallClock} gives a
- * different answer, or null when it never does within the horizon. The verdict
- * only changes where the wall clock reads a boundary minute, or where it jumps,
- * so those are the only instants asked — and they are asked of the SAME
- * judgement, never a second copy of the rule.
- */
+/** The first instant after `nowMs` the clock window's verdict flips; null for a sun or date window. */
 function nextWallClockFlip(window: TimeWindow, nowMs: number, site: TimeSite): number | null {
   const between = window.between
   if (between === undefined || between.from.kind !== 'clock' || between.to.kind !== 'clock') {
     return null
   }
-  const verdictAt = (t: number): boolean | null =>
-    insideOnWallClock(window, t, localDateOf(t, site.timeZone), site)
-  const current = verdictAt(nowMs)
   const today = localDateOf(nowMs, site.timeZone)
-  const candidates = new Set<number>(clockJumpsAfter(nowMs, site))
-  const specs: TimeSpec[] = [between.from, between.to, MIDNIGHT]
-  for (let offset = -1; offset <= LOOKAHEAD_DAYS + 1; offset += 1) {
-    for (const spec of specs) {
-      const base = occurrenceOn(spec, addDays(today, offset), site)
-      if (base === null || spec.kind !== 'clock') continue
-      // A repeated hour reads the same minute on both sides of the first occurrence.
-      for (const t of [base - MS_PER_HOUR, base, base + MS_PER_HOUR]) {
-        if (localMinuteOfDay(t, site.timeZone) === spec.hh * MINUTES_PER_HOUR + spec.mm) {
-          candidates.add(t)
-        }
-      }
-    }
-  }
-  const ordered = [...candidates].filter((t) => t > nowMs).sort((a, b) => a - b)
-  return ordered.find((t) => verdictAt(t) !== current) ?? null
+  const boundaryOf = (spec: TimeSpec, minuteOfDay: number): FlipBoundary => ({
+    minuteOfDay,
+    baseOn: (dayOffset) => occurrenceOn(spec, addDays(today, dayOffset), site),
+  })
+  return nextVerdictFlip({
+    nowMs,
+    timeZone: site.timeZone,
+    lookaheadDays: LOOKAHEAD_DAYS,
+    boundaries: [
+      boundaryOf(between.from, between.from.hh * MINUTES_PER_HOUR + between.from.mm),
+      boundaryOf(between.to, between.to.hh * MINUTES_PER_HOUR + between.to.mm),
+      boundaryOf(MIDNIGHT, 0),
+    ],
+    verdictAt: (t) => insideOnWallClock(window, t, localDateOf(t, site.timeZone), site),
+  })
 }
 
 /** Is `nowMs` inside the window. False when the window cannot be placed on the site (never a guess). */
 export function isWithinTimeWindow(window: TimeWindow, nowMs: number, site: TimeSite): boolean {
-  return judgeTimeWindow(window, nowMs, site).inside
+  return judge(window, nowMs, site, false).inside
 }
 
+/** The full judgement, including the next change. Costlier than {@link isWithinTimeWindow}: ask only when the boundary is needed. */
 export function judgeTimeWindow(
   rawWindow: TimeWindow,
   nowMs: number,
   site: TimeSite,
+): TimeWindowJudgement {
+  return judge(rawWindow, nowMs, site, true)
+}
+
+function judge(
+  rawWindow: TimeWindow,
+  nowMs: number,
+  site: TimeSite,
+  withWallClockNext: boolean,
 ): TimeWindowJudgement {
   const window = expandTimeWindowPreset(rawWindow)
   const blocked = unresolvable(window, site)
@@ -260,18 +226,20 @@ export function judgeTimeWindow(
   const today = localDateOf(nowMs, site.timeZone)
   let inside = false
   let next: number | null = null
-  for (let offset = -1; offset <= LOOKAHEAD_DAYS; offset += 1) {
-    const interval = intervalStartingOn(window, addDays(today, offset), site)
-    if (interval === null) continue
-    if (interval.start <= nowMs && nowMs < interval.end) inside = true
-    for (const boundary of [interval.start, interval.end]) {
-      if (boundary > nowMs && (next === null || boundary < next)) next = boundary
-    }
-  }
   const wallClock = insideOnWallClock(window, nowMs, today, site)
   if (wallClock !== null) {
+    // A clock window is judged on the wall clock alone; the instant search is skipped.
     inside = wallClock
-    next = nextWallClockFlip(window, nowMs, site)
+    next = withWallClockNext ? nextWallClockFlip(window, nowMs, site) : null
+  } else {
+    for (let offset = -1; offset <= LOOKAHEAD_DAYS; offset += 1) {
+      const interval = intervalStartingOn(window, addDays(today, offset), site)
+      if (interval === null) continue
+      if (interval.start <= nowMs && nowMs < interval.end) inside = true
+      for (const boundary of [interval.start, interval.end]) {
+        if (boundary > nowMs && (next === null || boundary < next)) next = boundary
+      }
+    }
   }
   if (window.between === undefined) {
     // A whole-day window is re-judged every local midnight, whether or not the day changes membership.
