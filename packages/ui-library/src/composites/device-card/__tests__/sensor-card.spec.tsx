@@ -5,47 +5,43 @@
  * which devices it draws (a sensor with something to set keeps the hero card);
  * and the corner's "since".
  */
-import {
-  DeviceType,
-  type HeroModel,
-  type HeroRow,
-  temperatureMeasurement,
-} from "@camstack/types";
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { defaultUiText } from "../../../contexts/ui-text";
-import { buildModel } from "../../hero-model/__tests__/fixtures";
-import { plugFixtures } from "../__fixtures__/plug";
-import { sensorFixtures } from "../__fixtures__/sensor";
-import { ConnectedSensorCard } from "../connected/ConnectedSensorCard";
-import { measurementSinceText } from "../connected/measurement-since";
-import { sensorMeasurementOf } from "../scenes/sensor/model";
-import { SensorCard } from "../scenes/sensor/SensorCard";
+import { DeviceType, type HeroModel, type HeroRow, temperatureMeasurement } from '@camstack/types'
+import { cleanup, render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defaultUiText } from '../../../contexts/ui-text'
+import { buildModel } from '../../hero-model/__tests__/fixtures'
+import { plugFixtures } from '../__fixtures__/plug'
+import { readingOf } from '../__fixtures__/pie-readings'
+import { sensorFixtures } from '../__fixtures__/sensor'
+import { ConnectedSensorCard } from '../connected/ConnectedSensorCard'
+import { measurementSinceText } from '../connected/measurement-since'
+import { sensorMeasurementOf } from '../scenes/sensor/model'
+import { SensorCard } from '../scenes/sensor/SensorCard'
 
-const MINUTE_MS = 60_000;
-const NOW = Date.UTC(2026, 10, 13, 12, 0, 0);
+const MINUTE_MS = 60_000
+const NOW = Date.UTC(2026, 10, 13, 12, 0, 0)
 
 const hub = vi.hoisted(() => ({
-  status: "success" as "pending" | "success" | "error",
+  status: 'success' as 'pending' | 'success' | 'error',
   model: null as HeroModel | null,
-}));
+}))
 
-vi.mock("../../../generated/system-hooks", () => ({
+vi.mock('../../../generated/system-hooks', () => ({
   useHeroLayoutGetHeroModel: () => ({
     status: hub.status,
     data: hub.model,
     refetch: () => {},
   }),
   useDeviceManagerGetDevice: () => ({ data: undefined }),
-}));
-vi.mock("../../hero-model/use-hero-live-refresh", () => ({
+}))
+vi.mock('../../hero-model/use-hero-live-refresh', () => ({
   useHeroLiveRefresh: () => {},
-}));
-vi.mock("../connected/SensorTrend", () => ({ SensorTrend: () => null }));
-vi.mock("../connected/use-card-common", () => ({
+}))
+vi.mock('../connected/SensorTrend', () => ({ SensorTrend: () => null }))
+vi.mock('../connected/use-card-common', () => ({
   useCardCommon: () => {
-    const common = plugFixtures(0)[0]?.model.common;
-    if (common === undefined) throw new Error("no plug fixture");
+    const common = plugFixtures(0)[0]?.model.common
+    if (common === undefined) throw new Error('no plug fixture')
     return {
       common: {
         ...common,
@@ -61,137 +57,126 @@ vi.mock("../connected/use-card-common", () => ({
       implements: () => true,
       fail: () => {},
       succeed: () => {},
-    };
+    }
   },
-}));
+}))
 
-const T0 = 1_700_000_000_000;
+const T0 = 1_700_000_000_000
 const powerSensor = (): HeroModel =>
-  buildModel(DeviceType.Sensor, ["power-meter"], {
-    "power-meter": { power: 1221, lastFetchedAt: T0 },
-  });
-const twoReadings = (): HeroModel =>
-  buildModel(DeviceType.Sensor, ["temperature-sensor", "humidity-sensor"], {
-    "temperature-sensor": { temperature: 21, lastFetchedAt: T0 },
-    "humidity-sensor": { humidity: 50, lastFetchedAt: T0 },
-  });
+  buildModel(DeviceType.Sensor, ['power-meter'], {
+    'power-meter': { power: 1221, lastFetchedAt: T0 },
+  })
+/** Device 5598: a motion sensor that also reads the light, as the model sends it. */
+const motionAndLight = (): HeroModel => ({
+  ...powerSensor(),
+  measurement: undefined,
+  measurements: [
+    readingOf('motion', { value: 'Active', tone: 'primary' }),
+    readingOf('illuminance', { value: '142', number: 142, unit: 'lx' }),
+  ],
+})
+/** A sensor with a setting the operator can change keeps the full hero card. */
+const settableSensor = (): HeroModel => ({ ...powerSensor(), rows: [SETTABLE] })
 const SETTABLE: HeroRow = {
-  id: "contact",
-  icon: "plug",
+  id: 'contact',
+  icon: 'plug',
   status: null,
   controls: [
     {
-      kind: "number",
-      id: "offset",
-      label: { en: "Offset", it: "Offset" },
+      kind: 'number',
+      id: 'offset',
+      label: { en: 'Offset', it: 'Offset' },
       value: 0,
       step: null,
-      unit: "°C",
-      call: { cap: "temperature-sensor", method: "setOffset", args: {} },
-      valueArg: "offset",
+      unit: '°C',
+      call: { cap: 'temperature-sensor', method: 'setOffset', args: {} },
+      valueArg: 'offset',
     },
   ],
-};
+}
 
 beforeEach(() => {
-  hub.status = "success";
-  hub.model = null;
-});
-afterEach(cleanup);
+  hub.status = 'success'
+  hub.model = null
+})
+afterEach(cleanup)
 
-describe("every sensor fixture renders through the shell", () => {
+describe('every sensor fixture renders through the shell', () => {
   for (const f of sensorFixtures(NOW)) {
     it(f.id, () => {
-      render(<SensorCard model={f.model} orientation={f.orientation} />);
-      const values = screen.getAllByTestId("dc-reading-value");
-      expect(values).toHaveLength(1);
-      expect(values[0]?.textContent).toBe(f.model.reading.value);
-      expect(
-        within(screen.getByTestId("dc-state")).getByText(f.model.state.label),
-      ).toBeTruthy();
-      expect(screen.queryByTestId("dc-measurement-fx") !== null).toBe(
-        f.model.visual !== null,
-      );
-    });
+      render(<SensorCard model={f.model} orientation={f.orientation} />)
+      const values = screen.getAllByTestId('dc-reading-value')
+      expect(values).toHaveLength(1)
+      expect(values[0]?.textContent).toBe(f.model.reading.value)
+      expect(within(screen.getByTestId('dc-state')).getByText(f.model.state.label)).toBeTruthy()
+      expect(screen.queryByTestId('dc-measurement-fx') !== null).toBe(f.model.visual !== null)
+    })
   }
-});
+})
 
-describe("which device the sensor card draws", () => {
-  const temp = temperatureMeasurement(48, null);
-  it("one measurement and nothing to set", () => {
-    expect(
-      sensorMeasurementOf({ measurement: temp, rows: [], gated: [] }),
-    ).toBe(temp);
-  });
-  it("no measurement: the hero card", () => {
-    expect(sensorMeasurementOf({ rows: [], gated: [] })).toBeNull();
-  });
-  it("a row the operator can set keeps the hero card, unless it is gated", () => {
-    const rows = [SETTABLE];
-    expect(
-      sensorMeasurementOf({ measurement: temp, rows, gated: [] }),
-    ).toBeNull();
-    expect(
-      sensorMeasurementOf({ measurement: temp, rows, gated: ["contact"] }),
-    ).toBe(temp);
-  });
-});
+describe('which device the sensor card draws', () => {
+  const temp = temperatureMeasurement(48, null)
+  it('one measurement and nothing to set', () => {
+    expect(sensorMeasurementOf({ measurement: temp, rows: [], gated: [] })).toBe(temp)
+  })
+  it('no measurement: the hero card', () => {
+    expect(sensorMeasurementOf({ rows: [], gated: [] })).toBeNull()
+  })
+  it('a row the operator can set keeps the hero card, unless it is gated', () => {
+    const rows = [SETTABLE]
+    expect(sensorMeasurementOf({ measurement: temp, rows, gated: [] })).toBeNull()
+    expect(sensorMeasurementOf({ measurement: temp, rows, gated: ['contact'] })).toBe(temp)
+  })
+})
 
-describe("the corner says since when", () => {
+describe('the corner says since when', () => {
   it('a held state reads the shell duration; a read value reads "ago"; never observed reads nothing', () => {
     const held = measurementSinceText(
-      { since: NOW - 12 * MINUTE_MS, sinceKind: "changed" },
+      { since: NOW - 12 * MINUTE_MS, sinceKind: 'changed' },
       defaultUiText,
       NOW,
-    );
-    expect(held).toMatch(/12/);
-    expect(held).not.toMatch(/ago/);
-    expect(
-      measurementSinceText(
-        { since: null, sinceKind: "changed" },
-        defaultUiText,
-        NOW,
-      ),
-    ).toBe(null);
-    expect(
-      measurementSinceText(
-        { since: 1, sinceKind: "changed" },
-        defaultUiText,
-        NOW,
-      ),
-    ).toBeNull();
-  });
-});
+    )
+    expect(held).toMatch(/12/)
+    expect(held).not.toMatch(/ago/)
+    expect(measurementSinceText({ since: null, sinceKind: 'changed' }, defaultUiText, NOW)).toBe(
+      null,
+    )
+    expect(measurementSinceText({ since: 1, sinceKind: 'changed' }, defaultUiText, NOW)).toBeNull()
+  })
+})
 
-describe("the connected sensor card", () => {
-  it("draws the model measurement in the shared card and reports it drawn", () => {
-    hub.model = powerSensor();
-    const drawn = vi.fn();
-    render(
-      <ConnectedSensorCard
-        deviceId={1}
-        fallback={<p>hero</p>}
-        onDrawn={drawn}
-      />,
-    );
-    expect(screen.getByTestId("dc-sensor").getAttribute("data-quantity")).toBe(
-      "power",
-    );
-    expect(screen.queryByText("hero")).toBeNull();
-    expect(drawn).toHaveBeenCalledWith(true);
-  });
-  it("falls back for a device that is not a simple sensor, and on an error", () => {
-    hub.model = twoReadings();
-    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />);
-    expect(screen.getByText("hero")).toBeTruthy();
-    cleanup();
-    hub.status = "error";
-    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />);
-    expect(screen.getByText("hero")).toBeTruthy();
-  });
-  it("draws the placeholder while the model loads", () => {
-    hub.status = "pending";
-    render(<ConnectedSensorCard deviceId={1} placeholder={<p>loading</p>} />);
-    expect(screen.getByText("loading")).toBeTruthy();
-  });
-});
+describe('the connected sensor card', () => {
+  it('draws the model measurement in the shared card and reports it drawn', () => {
+    hub.model = powerSensor()
+    const drawn = vi.fn()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} onDrawn={drawn} />)
+    expect(screen.getByTestId('dc-sensor').getAttribute('data-quantity')).toBe('power')
+    expect(screen.queryByText('hero')).toBeNull()
+    expect(drawn).toHaveBeenCalledWith(true)
+  })
+  it('falls back for a device that is not a simple sensor, and on an error', () => {
+    hub.model = settableSensor()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByText('hero')).toBeTruthy()
+    cleanup()
+    hub.status = 'error'
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByText('hero')).toBeTruthy()
+  })
+  it('device 5598 (motion + light) is drawn as a two-wedge pie, not the legacy hero', () => {
+    hub.model = motionAndLight()
+    const drawn = vi.fn()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} onDrawn={drawn} />)
+    expect(screen.queryByText('hero')).toBeNull()
+    expect(screen.getByTestId('dc-sensor-pie').getAttribute('data-wedges')).toBe('2')
+    expect(
+      screen.getAllByTestId('dc-pie-wedge').map((w) => w.getAttribute('data-quantity')),
+    ).toEqual(['motion', 'illuminance'])
+    expect(drawn).toHaveBeenCalledWith(true)
+  })
+  it('draws the placeholder while the model loads', () => {
+    hub.status = 'pending'
+    render(<ConnectedSensorCard deviceId={1} placeholder={<p>loading</p>} />)
+    expect(screen.getByText('loading')).toBeTruthy()
+  })
+})

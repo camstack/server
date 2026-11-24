@@ -9,7 +9,7 @@ import type { HeroProps } from './HeroRegistry'
  * The card renders ↑■↓ buttons, % open, and position/tilt sliders
  * (sliders gated on CoverPositionable / CoverTilt features). Trpc is
  * sourced via `useSystem().trpcClient` — the same pattern used by
- * SwitchHero / LightHero / SensorHero.
+ * SwitchHero / LightHero.
  */
 export function CoverHero({ deviceId, features }: HeroProps): ReactElement {
   const system = useSystem()

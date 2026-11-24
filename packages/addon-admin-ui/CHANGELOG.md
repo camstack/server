@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The timed run's one-tap duration moved from the device settings page to the control next to the start button; its strings follow.
 - Customize tab: linked cameras are rows of the one customizations table (add through a dialog, unlink with a confirm); events get an active switch and a confirmed remove; a link-stamped row offers Unlink; a power-source row's Edit opens the link dialog; a second quick save no longer fails on a stale version
+- A container's device page no longer shows an Actions tab; a motion sensor with a light reading opens the new readings card instead of the legacy view.
 
 ## [1.2.744] - 2026-11-24
 

@@ -25,6 +25,7 @@ export type CapCardKind =
   | 'image'
   | 'notifier'
   | 'gateway'
+  | 'container'
   | 'workload'
 
 const BY_TYPE: Readonly<
@@ -50,6 +51,8 @@ const BY_TYPE: Readonly<
   // The bridge box has no cap of its own: its card is its reachability, its
   // facts and whichever of `reboot` / `device-admin-link` it binds.
   [DeviceType.Gateway]: { cap: null, kind: 'gateway' },
+  // A container holds other devices: its card counts them, it binds no cap of its own.
+  [DeviceType.Container]: { cap: null, kind: 'container' },
   [DeviceType.Workload]: { cap: 'workload', kind: 'workload' },
 }
 

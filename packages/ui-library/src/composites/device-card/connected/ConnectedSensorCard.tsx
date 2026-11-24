@@ -1,6 +1,7 @@
 import type { HeroMeasurement } from '@camstack/types'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
+import { MeasuredPieCard } from './MeasuredPieCard'
 import {
   useDeviceManagerGetDevice,
   useHeroLayoutGetHeroModel,
@@ -13,11 +14,8 @@ import {
 } from '../../hero-model/measurement-display'
 import { useHeroLiveRefresh } from '../../hero-model/use-hero-live-refresh'
 import type { CardOrientation } from '../shell/model'
-import {
-  measurementVisual,
-  type SensorCardModel,
-  sensorMeasurementOf,
-} from '../scenes/sensor/model'
+import { measurementVisual, type SensorCardModel } from '../scenes/sensor/model'
+import { type SensorLayout, sensorLayoutOf } from '../scenes/sensor/pie-model'
 import { SensorCard } from '../scenes/sensor/SensorCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { measurementSinceText } from './measurement-since'
@@ -26,8 +24,8 @@ import { useCardCommon } from './use-card-common'
 
 export interface ConnectedSensorCardProps extends ConnectedCardProps {
   /**
-   * Drawn when the device is not a simple sensor (its hero model has no single
-   * measurement) or the model could not be read. Nothing while it is loading.
+   * Drawn when the device is not a sensor card (its hero model has no measurement,
+   * or a row to set) or the model could not be read. Nothing while it is loading.
    */
   readonly fallback?: ReactNode
   /** Drawn while the model loads (default nothing). */
@@ -37,8 +35,9 @@ export interface ConnectedSensorCardProps extends ConnectedCardProps {
 }
 
 /**
- * A sensor that measures one thing (#514), drawn from the hero model's
- * `measurement` — the same reading the row shows — inside the shared card.
+ * A sensor drawn from the hero model's measurements inside the shared card: one
+ * reading is the single-measurement scene (#514), two or more the pie
+ * (`sensorLayoutOf` decides, from the count alone).
  */
 export function ConnectedSensorCard({
   deviceId,
@@ -51,23 +50,36 @@ export function ConnectedSensorCard({
 }: ConnectedSensorCardProps): ReactNode {
   const model = useHeroLayoutGetHeroModel({ deviceId, canActuate })
   useHeroLiveRefresh(deviceId, model.refetch)
-  const measurement =
+  const layout: SensorLayout | null =
     model.status === 'pending' || model.status === 'error' || model.data === null
       ? null
-      : sensorMeasurementOf(model.data)
+      : sensorLayoutOf(model.data)
   // The measured card reports `true`. A settled fallback has no child to report
   // it, and pending is still the placeholder — not a card.
   useEffect(() => {
     if (model.status === 'pending') return
-    if (measurement === null) onDrawn?.(false)
-  }, [measurement, model.status, onDrawn])
+    if (layout === null) onDrawn?.(false)
+  }, [layout, model.status, onDrawn])
   if (model.status === 'pending') return placeholder
-  if (measurement === null) return fallback
+  if (layout === null) return fallback
+  if (layout.kind === 'pie') {
+    return (
+      <MeasuredPieCard
+        deviceId={deviceId}
+        canActuate={canActuate}
+        shown={layout.shown}
+        hidden={layout.hidden}
+        showName={showName}
+        {...(orientation === undefined ? {} : { orientation })}
+        {...(onDrawn === undefined ? {} : { onDrawn })}
+      />
+    )
+  }
   return (
     <MeasuredSensorCard
       deviceId={deviceId}
       canActuate={canActuate}
-      measurement={measurement}
+      measurement={layout.measurement}
       showName={showName}
       {...(orientation === undefined ? {} : { orientation })}
       {...(onDrawn === undefined ? {} : { onDrawn })}

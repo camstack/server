@@ -11257,7 +11257,14 @@
         "start": "{{hours}} h ago",
         "now": "now"
       },
-      "onMotionUnknown": "On motion: not read from the camera yet"
+      "onMotionUnknown": "On motion: not read from the camera yet",
+      "container": {
+        "unknown": "Counting…",
+        "summary": "{{online}} of {{total}} online",
+        "online": "Online",
+        "offline": "Offline",
+        "lowBattery": "Low battery"
+      }
     },
     "language": "en",
     "measurement": {
@@ -11629,6 +11636,20 @@
         "sat": "Sat",
         "sun": "Sun"
       }
+    },
+    "sensorPie": {
+      "quantity": {
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "power": "Power",
+        "contact": "Contact",
+        "motion": "Motion",
+        "illuminance": "Light",
+        "text": "State"
+      },
+      "updated": "Updated · {{ago}}",
+      "readings": "Readings",
+      "noHistory": "No history is kept for this reading."
     }
   },
   "helpers": {

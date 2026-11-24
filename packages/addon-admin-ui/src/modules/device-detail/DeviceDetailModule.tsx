@@ -153,7 +153,7 @@ function ModuleBody(
 }
 
 /**
- * A simple sensor (one measurement, nothing to set) in the shared card; any
+ * A simple sensor (one or several readings, nothing to set) in the shared card; any
  * other device in the layout-A hero card.
  */
 function SensorBody(

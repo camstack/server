@@ -33,6 +33,8 @@ const presence = vi.hoisted(() => ({
     },
   },
   transitions: 'pending' as 'pending' | 'present' | 'absent' | 'unknown',
+  // What this device binds; a container binds no device-transitions.
+  bound: ['device-transitions'] as readonly string[],
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -48,6 +50,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetRole: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerSetDisplay: () => ({ mutateAsync: vi.fn() }),
     useSystem: () => ({ trpcClient: {} }),
+    useDeviceManagerGetBindings: () => ({
+      status: 'success' as const,
+      data: { deviceId: 7, entries: presence.bound.map((capName) => ({ capName })) },
+    }),
     useDeviceSeriesList: () => presence.series,
     useCapabilityPresence: (cap: string) =>
       cap === 'device-transitions' ? presence.transitions : 'unknown',
@@ -149,6 +155,7 @@ describe('DeviceQuickDetail modal', () => {
   beforeEach(() => {
     presence.series = { presence: 'pending', list: { status: 'pending' } }
     presence.transitions = 'pending'
+    presence.bound = ['device-transitions']
     hero.drawn = true
     auth.isAdmin = true
   })
@@ -186,6 +193,14 @@ describe('DeviceQuickDetail modal', () => {
     openModal()
     fireEvent.click(screen.getByRole('tab', { name: 'Actions' }))
     expect(screen.getByTestId('actions-pane')).toBeTruthy()
+  })
+
+  it('a container shows no Actions tab even though the cap exists on the cluster', () => {
+    presence.transitions = 'present'
+    presence.bound = ['device-status']
+    renderModal()
+    openModal()
+    expect(screen.queryByRole('tab', { name: 'Actions' })).toBeNull()
   })
 
   it('shows the viewer detail on Detail: the model card alone, in the bare frame, no History tab', () => {

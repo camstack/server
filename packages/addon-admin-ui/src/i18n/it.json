@@ -11279,7 +11279,14 @@
         "start": "{{hours}} h fa",
         "now": "ora"
       },
-      "onMotionUnknown": "Al movimento: non ancora letto dalla camera"
+      "onMotionUnknown": "Al movimento: non ancora letto dalla camera",
+      "container": {
+        "unknown": "Conteggio…",
+        "summary": "{{online}} di {{total}} online",
+        "online": "Online",
+        "offline": "Offline",
+        "lowBattery": "Batteria scarica"
+      }
     },
     "language": "it",
     "measurement": {
@@ -11651,6 +11658,20 @@
         "sat": "Sab",
         "sun": "Dom"
       }
+    },
+    "sensorPie": {
+      "quantity": {
+        "temperature": "Temperatura",
+        "humidity": "Umidità",
+        "power": "Potenza",
+        "contact": "Contatto",
+        "motion": "Movimento",
+        "illuminance": "Luce",
+        "text": "Stato"
+      },
+      "updated": "Aggiornato · {{ago}}",
+      "readings": "Letture",
+      "noHistory": "Nessuna cronologia per questa lettura."
     }
   },
   "helpers": {

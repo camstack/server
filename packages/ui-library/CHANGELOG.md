@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The timed run is one compact control on every card and row of a device that supports it: the one-tap duration is edited next to the start button, and the row no longer squeezes it.
 - Device lists no longer trap the page scroll when the parent gives them no height; the formula input shows suggestions only while focused
+- A sensor with several readings (motion and light, temperature and humidity…) is one card: a pie with a wedge per reading that breathes when active, with a +N wedge past six; a container card counts its devices online, offline and low on battery.
 
 ## [1.2.503] - 2026-11-24
 

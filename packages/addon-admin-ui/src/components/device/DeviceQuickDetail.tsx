@@ -29,6 +29,7 @@ import {
   DialogTitle,
   useCapabilityPresence,
   useDeviceLabelById,
+  useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
   useDeviceSeriesList,
 } from '@camstack/ui-library'
@@ -41,6 +42,7 @@ import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { DeviceHeroCard, type DeviceHeroCardDevice } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
 import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
+import { actionsTabVisible, DEVICE_TRANSITIONS_CAP } from './actions-tab'
 import { historyTabVisible } from './history-tab'
 import { isDeviceExportSection } from './tabs/device-export-tab'
 
@@ -110,7 +112,12 @@ function DeviceQuickDetailModal({
   const { user } = useAuth()
   const series = useDeviceSeriesList(deviceId)
   const hasHistory = historyTabVisible(series.presence, series.list)
-  const hasActions = useCapabilityPresence('device-transitions') === 'present'
+  const transitions = useCapabilityPresence(DEVICE_TRANSITIONS_CAP)
+  const bindings = useDeviceManagerGetBindings({ deviceId }, { enabled: deviceId > 0 })
+  const hasActions = actionsTabVisible(transitions, {
+    status: bindings.status,
+    entries: bindings.data?.entries ?? [],
+  })
   const tab: QuickTabId =
     (pickedTab === 'history' && !hasHistory) || (pickedTab === 'actions' && !hasActions)
       ? 'info'

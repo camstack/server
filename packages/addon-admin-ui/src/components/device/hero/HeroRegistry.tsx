@@ -127,6 +127,10 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // Workload (VM, container, LXC, app, host): ControlHero renders the
   // registry-backed WorkloadCardHero (state, declared controls, resources).
   [DeviceType.Workload]: ControlHero,
+  // Gateway / heat pump: the shell cards draw them when their caps are bound; this is
+  // the detail fallback when those reads fail, so they never land on the empty hero.
+  [DeviceType.Gateway]: ControlHero,
+  [DeviceType.HeatPump]: ControlHero,
 }
 
 /**

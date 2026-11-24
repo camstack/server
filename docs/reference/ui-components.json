@@ -4163,7 +4163,7 @@
       "name": "connectedCardKindOf",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
+      "file": "packages/ui-library/src/composites/device-card/connected/connected-card-kind.ts",
       "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. Power is always the `switch` cap (D1042): a switch is a plug, or a heater / a fan / an on/off light by its role; a light and a fan nee…"
     },
     {
@@ -4172,6 +4172,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
       "summary": "The climate card of a real device: its `climate-control` slice, its `heating-valve` slice, or both. A valve that only reports still draws."
+    },
+    {
+      "name": "ConnectedContainerCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedContainerCard.tsx",
+      "summary": "A container: the count of its child devices, online / offline / low battery. Reachability is the child's own `online`; the level is read from its `battery` slice, and a level that could not be read stays unknown, neve…"
     },
     {
       "name": "ConnectedControlCard",
@@ -4367,14 +4374,14 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSensorCard.tsx",
-      "summary": "A sensor that measures one thing (#514), drawn from the hero model's `measurement` — the same reading the row shows — inside the shared card.",
+      "summary": "A sensor drawn from the hero model's measurements inside the shared card: one reading is the single-measurement scene (#514), two or more the pie (`sensorLayoutOf` decides, from the count alone).",
       "propsExtends": ["ConnectedCardProps"],
       "props": [
         {
           "name": "fallback",
           "type": "ReactNode",
           "optional": true,
-          "doc": "Drawn when the device is not a simple sensor (its hero model has no single measurement) or the model could not be read. Nothing while it is "
+          "doc": "Drawn when the device is not a sensor card (its hero model has no measurement, or a row to set) or the model could not be read. Nothing whil"
         },
         {
           "name": "placeholder",
@@ -4541,6 +4548,39 @@
       ]
     },
     {
+      "name": "ContainerCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/container/ContainerCard.tsx",
+      "summary": "A device that holds others: how many of them are online, offline and low on battery.",
+      "props": [
+        {
+          "name": "model",
+          "type": "ContainerCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "CardCommonActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ContainerChildrenProvider",
       "kind": "component",
       "area": "composites",
@@ -4567,6 +4607,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/container-primary.ts",
       "summary": "Project a raw child row onto the pure resolver's shape."
+    },
+    {
+      "name": "containerCountsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/container/container-model.ts",
+      "summary": "The children split into online / offline / low battery. An unknown level is never low."
     },
     {
       "name": "ContainerPrimaryHero",

@@ -155,6 +155,69 @@ const SPECS: Readonly<Record<number, Spec>> = {
     quantity: 'frequency',
     slices: { 'numeric-sensor': { value: 49.9, lastFetchedAt: NOW - MINUTE } },
   },
+  1520: {
+    name: 'Hallway motion',
+    type: 'sensor',
+    role: 'motion-sensor',
+    // Two readings on one device (the pie): motion first (the role), then the light.
+    slices: {
+      motion: { detected: true, lastDetectedAt: NOW - 3 * MINUTE, autoClearAfterMs: null },
+      'ambient-light-sensor': { illuminance: 142, lastFetchedAt: NOW - 2 * MINUTE },
+    },
+  },
+  1521: {
+    name: 'Nursery climate',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    slices: {
+      'temperature-sensor': { temperature: 21.5, lastFetchedAt: NOW - 2 * MINUTE },
+      'humidity-sensor': { humidity: 48, lastFetchedAt: NOW - 2 * MINUTE },
+      'ambient-light-sensor': { lastFetchedAt: NOW - 2 * MINUTE },
+    },
+    caps: ['temperature-sensor', 'humidity-sensor', 'ambient-light-sensor'],
+  },
+  1522: {
+    name: 'Workshop multisensor',
+    type: 'sensor',
+    role: 'motion-sensor',
+    slices: {
+      motion: { detected: false, lastDetectedAt: NOW - 40 * MINUTE, autoClearAfterMs: null },
+      'temperature-sensor': { temperature: 18.2, lastFetchedAt: NOW - 2 * MINUTE },
+      'humidity-sensor': { humidity: 61, lastFetchedAt: NOW - 2 * MINUTE },
+      'ambient-light-sensor': { illuminance: 320, lastFetchedAt: NOW - 2 * MINUTE },
+      'power-meter': { power: 85, lastFetchedAt: NOW - 2 * MINUTE },
+      contact: { entryOpen: false, lastChangedAt: NOW - 90 * MINUTE },
+      'enum-sensor': { value: 'Eco', lastFetchedAt: NOW - 2 * MINUTE },
+    },
+  },
+  1530: {
+    name: 'Garden bridge',
+    type: 'container',
+    role: '',
+    slices: {},
+  },
+  1531: {
+    name: 'Garden gate contact',
+    type: 'sensor',
+    role: 'contact-sensor',
+    parentDeviceId: 1530,
+    slices: { contact: { entryOpen: false, lastChangedAt: NOW - 20 * MINUTE } },
+  },
+  1532: {
+    name: 'Garden shed temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    parentDeviceId: 1530,
+    offline: true,
+    slices: { 'temperature-sensor': { temperature: 9, lastFetchedAt: NOW - 5 * 60 * MINUTE } },
+  },
+  1533: {
+    name: 'Garden path motion',
+    type: 'sensor',
+    role: 'motion-sensor',
+    parentDeviceId: 1530,
+    slices: { motion: { detected: false, lastDetectedAt: null, autoClearAfterMs: null } },
+  },
 }
 
 const IDS = Object.keys(SPECS).map(Number)
