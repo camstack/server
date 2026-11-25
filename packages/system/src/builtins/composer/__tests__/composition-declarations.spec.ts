@@ -81,6 +81,36 @@ describe('WithdrawalGate — a device leaves only when two applies agree (D49)',
   })
 })
 
+describe('WithdrawalGate — an explicitly retired block leaves at once (#704)', () => {
+  const d1 = declarationFor(INPUT)
+  const d2 = declarationFor({ ...INPUT, blockId: 'b2' })
+
+  it('withdraws a retired block on the FIRST apply that omits it, with no second apply', () => {
+    const gate = new WithdrawalGate(recordingLogger().logger, deviceIdOf)
+    gate.filter([d1, d2])
+    expect(gate.filter([d1], new Set(['composed-b2'])).map((d) => d.stableId)).toEqual([
+      'composed-b1',
+    ])
+    // and it stays withdrawn: nothing keeps it for a later apply
+    expect(gate.filter([d1]).map((d) => d.stableId)).toEqual(['composed-b1'])
+  })
+  it('a block that is merely missing, not retired, is still held for a second apply', () => {
+    const gate = new WithdrawalGate(recordingLogger().logger, deviceIdOf)
+    gate.filter([d1, d2])
+    expect(gate.filter([d1], new Set(['composed-b9'])).map((d) => d.stableId)).toEqual([
+      'composed-b1',
+      'composed-b2',
+    ])
+  })
+  it('the retirement line carries the numeric id of the device', () => {
+    const rec = recordingLogger()
+    const gate = new WithdrawalGate(rec.logger, deviceIdOf)
+    gate.filter([d1, d2])
+    gate.filter([d1], new Set(['composed-b2']))
+    expect(rec.lines.map((l) => [l.level, l.extras?.tags?.['deviceId']])).toEqual([['info', 902]])
+  })
+})
+
 describe('WithdrawalGate seeded from the persisted rows — a restart is not a miss (D49)', () => {
   const d1 = declarationFor(INPUT)
   const ROWS = [

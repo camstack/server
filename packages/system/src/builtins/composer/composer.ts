@@ -569,6 +569,7 @@ export class Composer {
     }
     const declarations = this.gate.filter(
       planned.flatMap((p) => (p.declaration === null ? [] : [p.declaration])),
+      new Set((input.retiredBlockIds ?? []).map((id) => composedDeviceStableId(id))),
     )
     const rebuildErrors = await this.composed.rebuildShapes(planned, (blockId) => {
       const previous = this.live.get(blockId)

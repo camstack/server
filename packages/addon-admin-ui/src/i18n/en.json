@@ -2487,7 +2487,9 @@
         "title": "Helper",
         "function": "Function",
         "members": "Members"
-      }
+      },
+      "notFoundHint": "Its composition no longer exists, so nothing here can be edited. Delete the device to clear what is left of it.",
+      "deleteOrphan": "Delete this device"
     },
     "identity": {
       "title": "Identity",

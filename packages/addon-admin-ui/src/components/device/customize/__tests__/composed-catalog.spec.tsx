@@ -47,6 +47,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useCoreBlocksGetCapLinks: () => ({ status: 'pending', data: undefined, error: null }),
     useCoreBlocksGetComposition: () => compositionRead.current,
     useCoreBlocksUpdateComposition: mutation,
+    useDeviceManagerRemove: mutation,
     useCoreBlocksListComposableCaps: () => composable.current,
     useDeviceManagerGetBindings: () => ({
       status: 'success',

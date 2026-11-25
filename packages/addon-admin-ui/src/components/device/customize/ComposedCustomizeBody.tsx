@@ -9,10 +9,14 @@ import {
 } from '@camstack/types'
 import {
   Badge,
+  Button,
   ErrorBox,
+  useConfirm,
+  useDeviceManagerRemove,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
 } from '@camstack/ui-library'
+import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
@@ -42,6 +46,13 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     { enabled: blockId !== null },
   )
   const update = useCoreBlocksUpdateComposition()
+  const confirm = useConfirm()
+  const queryClient = useQueryClient()
+  const removeDevice = useDeviceManagerRemove({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
+    },
+  })
   const [editing, setEditing] = useState(false)
   // Hooks run before any early return: the facts are read for the device whatever the block says.
   const facts = useCustomizeFacts(device, null)
@@ -76,7 +87,36 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   }
   const view = read.data.view
   if (view === null) {
-    return <p className="text-xs text-foreground-subtle">{t('customize.composed.notFound')}</p>
+    // The block is gone but the device row is not: nothing here can be edited, so the way out
+    // is the device's own removal (the same call the device page's Delete makes).
+    return (
+      <div className="flex flex-col gap-2" data-testid="composed-orphan">
+        <p className="text-xs text-foreground-subtle">{t('customize.composed.notFound')}</p>
+        <p className="text-xs text-foreground-subtle">{t('customize.composed.notFoundHint')}</p>
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={removeDevice.isPending}
+            data-testid="composed-orphan-delete"
+            onClick={() =>
+              void confirm({
+                title: t('deviceDetail.delete', 'Delete "{{name}}"?', { name: device.name }),
+                message: t(
+                  'deviceDetail.thisWillRemoveTheDevice',
+                  'This will remove the device and all its settings. This action cannot be undone.',
+                ),
+                confirmLabel: t('common.delete', 'Delete'),
+                variant: 'danger',
+                action: () => removeDevice.mutateAsync({ deviceId: device.id }),
+              })
+            }
+          >
+            {t('customize.composed.deleteOrphan')}
+          </Button>
+        </div>
+      </div>
+    )
   }
   const composition = coreBlockComposition(view.block)
   if (composition === null) {

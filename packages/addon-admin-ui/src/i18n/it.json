@@ -2562,7 +2562,9 @@
         "title": "Helper",
         "function": "Funzione",
         "members": "Membri"
-      }
+      },
+      "notFoundHint": "La sua composizione non esiste più, quindi qui non si può modificare nulla. Elimina il dispositivo per ripulire ciò che ne resta.",
+      "deleteOrphan": "Elimina questo dispositivo"
     },
     "identity": {
       "title": "Identità",

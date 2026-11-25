@@ -116,13 +116,30 @@ export class WithdrawalGate {
     ])
   }
 
-  filter(current: readonly DeviceDeclaration[]): readonly DeviceDeclaration[] {
+  /**
+   * `retired` holds the stableIds of blocks the operator deleted (D49 does not
+   * apply: that is not an inference from a read). They leave on this apply.
+   */
+  filter(
+    current: readonly DeviceDeclaration[],
+    retired: ReadonlySet<string> = new Set(),
+  ): readonly DeviceDeclaration[] {
     const present = new Map(current.map((d) => [d.stableId, d]))
     const kept: DeviceDeclaration[] = []
     const misses = new Map<string, number>()
     for (const [stableId, declaration] of this.known) {
       if (present.has(stableId)) continue
       const count = (this.misses.get(stableId) ?? 0) + 1
+      if (retired.has(stableId)) {
+        // The operator's delete named this block (the store read was the delete
+        // itself, not a guess): nothing needs a second apply to agree, and none
+        // would come — a delete schedules no further pass.
+        this.logger.info('a composition was deleted — its device is withdrawn now', {
+          tags: this.tagsOf(stableId),
+          meta: { stableId },
+        })
+        continue
+      }
       if (count < WITHDRAWAL_CONFIRMATIONS) {
         this.logger.warn(
           'a composition vanished from one apply — its device is kept until a second apply agrees',

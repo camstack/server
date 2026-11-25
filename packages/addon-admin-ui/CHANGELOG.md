@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Locations: the unassigned table's accessories column header no longer shows the raw {{count}} template
+- A composed device whose composition is gone offers Delete this device on its Customize tab instead of a dead end.
 
 ## [1.2.745] - 2026-11-24
 
