@@ -2370,6 +2370,11 @@ export class RecordingController {
     }
   }
 
+  /** The cameras with at least one attached profile right now. */
+  recordingDeviceIds(): readonly number[] {
+    return [...this.active.keys()]
+  }
+
   /**
    * Pids of every ffmpeg this controller started and has not seen exit —
    * the live writers and the ones still being torn down. Never reaped by the

@@ -1216,6 +1216,18 @@ export class SegmentHourLedger implements FootageArchive {
     return marked
   }
 
+  /**
+   * Hours of this camera a writer reported a loss against in this process —
+   * the per-camera share of the census' `refusedWriterHours`, for the periodic
+   * availability line.
+   */
+  refusedHoursOf(deviceId: number): number {
+    const prefix = `${deviceId}|`
+    let hours = 0
+    for (const key of this.refusedWriterHours) if (key.startsWith(prefix)) hours += 1
+    return hours
+  }
+
   /** One write: the row as held, flagged sealed. Serialised on its key so it
    *  cannot land over an append that read the row before it.
    *

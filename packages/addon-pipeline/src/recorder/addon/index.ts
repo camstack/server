@@ -150,6 +150,7 @@ import { renderClip, renderGif } from './footage-render.js'
 import { GhostLocationSweeper } from './ghost-location-sweep.js'
 import { runAdoptionCatchUp } from './hour-adoption-catchup.js'
 import { HourAdoptionSweeper } from './hour-adoption-sweep.js'
+import { AVAILABILITY_REPORT_INTERVAL_MS, reportAvailability } from './availability-report.js'
 import { LedgerWalkReconciler } from './ledger-walk-reconcile.js'
 import { type LocationCapacity, readLocationCapacity } from './location-capacity.js'
 import { LocationRefresher } from './location-refresh.js'
@@ -396,6 +397,11 @@ const HOUR_ADOPTION_RESUME_MS = 5 * 60_000
 /** An adoption pass longer than this is reported with its duration. Bounded
  *  work (512 hour listings, paced) — minutes is normal, an hour is not. */
 const HOUR_ADOPTION_SLOW_AFTER_MS = 10 * 60_000
+/** The first availability line: after boot hydration and the first attach
+ *  have settled, so it describes the node and not its start-up. */
+const AVAILABILITY_REPORT_FIRST_RUN_DELAY_MS = 5 * 60_000
+/** At most 24 cached hour reads per camera: a pass this long met a stalled array. */
+const AVAILABILITY_REPORT_SLOW_AFTER_MS = 60_000
 /** What the per-volume usage row reports when the hour ledger is unavailable:
  *  nothing measured, rather than a total counted off a partial RAM index. */
 const EMPTY_ARCHIVE_ACCOUNTING: Accounting = {
@@ -670,6 +676,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    *  the storage record no longer has. Armed in `onHubReachable`. */
   private ghostLocationPass: PeriodicPassHandle | null = null
   private hourAdoptionPass: PeriodicPassHandle | null = null
+  /** The 30-minute per-camera availability line (planning#721). */
+  private availabilityReportPass: PeriodicPassHandle | null = null
   private hourAdoptionResume: ReturnType<typeof setTimeout> | undefined
   /** Reversible migration pause lease; never reflected in RecordingConfig. */
   private storageMigrationLeaseId: string | null = null
@@ -1960,6 +1968,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     this.ghostLocationPass = null
     this.hourAdoptionPass?.stop()
     this.hourAdoptionPass = null
+    this.availabilityReportPass?.stop()
+    this.availabilityReportPass = null
     this.exportEngine = null
     this.recordingProvider = null
   }
@@ -2543,6 +2553,35 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
         heapProbe: this.heapProbe,
         run: async () => {
           await sweeper.sweep()
+        },
+        logger: this.ctx.logger,
+      })
+    }
+
+    // The availability line (planning#721): per recording camera, what a
+    // reader is served for the last 24 h next to what the ledger accounts
+    // for — `warn` when they disagree. Read-only, and the only line that
+    // states the READER's side.
+    if (this.availabilityReportPass === null) {
+      this.availabilityReportPass = startPeriodicPass({
+        name: 'availability-report',
+        intervalMs: AVAILABILITY_REPORT_INTERVAL_MS,
+        firstRunDelayMs: AVAILABILITY_REPORT_FIRST_RUN_DELAY_MS,
+        slowAfterMs: AVAILABILITY_REPORT_SLOW_AFTER_MS,
+        run: async () => {
+          await reportAvailability({
+            devices: () => this.controller?.recordingDeviceIds() ?? [],
+            ledgerHours: () => {
+              const ledger = this.segmentHours
+              return ledger !== null && ledger.isComplete() ? ledger.snapshot() : null
+            },
+            refusedHours: (deviceId) => this.segmentHours?.refusedHoursOf(deviceId) ?? null,
+            servedProfile: (deviceId) => this.calendar.servedProfileFor(deviceId),
+            readerSegments: async (deviceId, profile, hourStartMs) =>
+              (await this.calendar.segmentsOf(deviceId, profile, hourStartMs, true)).length,
+            logger: this.ctx.logger,
+            now: () => Date.now(),
+          })
         },
         logger: this.ctx.logger,
       })

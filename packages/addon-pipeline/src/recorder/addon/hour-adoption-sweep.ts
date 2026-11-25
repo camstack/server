@@ -39,7 +39,7 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import { errMsg } from '@camstack/types'
-import { type RecordingsLocation, locationMayBeRead } from './roots.js'
+import { type RecordingsLocation, locationForHydratedProfile, locationMayBeRead } from './roots.js'
 import { WALK_HOUR_BATCH, WALK_LIVE_TAIL_HOURS } from './ledger-walk-reconcile.js'
 import { type WalkedHourOutcome, hourStartMs } from './segment-hour-ledger.js'
 
@@ -59,6 +59,32 @@ export const ADOPTION_MAX_HOURS_PER_PASS = 512
 /** The profile trees a camera directory is allowed to have. Everything else
  *  under it (`events/`, the retired `strips/`) has no hour tree worth probing. */
 const PROFILES = ['high', 'mid', 'low'] as const
+
+/**
+ * The profile trees a location OWNS on its root (planning#721).
+ *
+ * The stock `recordings` and `recordingsLow` locations share one physical
+ * root: `high` / `mid` belong to `recordings`, `low` to `recordingsLow`. A
+ * pass runs once per location ID, so walking every tree under the root made
+ * the `recordingsLow` pass adopt every closed `high` hour a second time, under
+ * its own id — a second durable row for footage another location already
+ * accounts for. The owner is decided by the rule a hydrate attributes a tree
+ * with ({@link locationForHydratedProfile}), over the aliases that can be READ:
+ * an alias whose own pass would refuse owns nothing, so its trees fall to the
+ * alias that will actually walk them.
+ */
+export function adoptableProfiles(
+  location: RecordingsLocation,
+  locations: readonly RecordingsLocation[],
+): readonly string[] {
+  const aliases = locations.filter(
+    (candidate) => candidate.root === location.root && locationMayBeRead(candidate),
+  )
+  if (aliases.length <= 1) return PROFILES
+  return PROFILES.filter(
+    (profile) => locationForHydratedProfile(aliases, profile).id === location.id,
+  )
+}
 
 /** The one ledger call this pass is allowed to make. Structural, so a future
  *  edit cannot reach a FORGET from here without changing this type. */
@@ -177,7 +203,8 @@ export class HourAdoptionSweeper {
   constructor(private readonly deps: HourAdoptionSweepDeps) {}
 
   async sweep(request: HourAdoptionSweepRequest): Promise<HourAdoptionSweepReport> {
-    const location = this.deps.locations().find((candidate) => candidate.id === request.locationId)
+    const locations = this.deps.locations()
+    const location = locations.find((candidate) => candidate.id === request.locationId)
     if (location === undefined) return this.refusedReport(request.locationId, 'location-unknown')
     if (!locationMayBeRead(location)) return this.refusedReport(location.id, 'location-unreadable')
     const ledger = this.deps.ledger()
@@ -189,6 +216,7 @@ export class HourAdoptionSweeper {
       return this.refusedReport(location.id, 'no-ledger')
     }
 
+    const profiles = adoptableProfiles(location, locations)
     const liveTailFrom = hourStartMs(this.deps.now()) - (WALK_LIVE_TAIL_HOURS - 1) * HOUR_MS
     const maxHours = this.deps.maxHours ?? ADOPTION_MAX_HOURS_PER_PASS
     const resume = this.cursor
@@ -204,7 +232,7 @@ export class HourAdoptionSweeper {
     let bounded = false
     let last: string | null = null
 
-    for await (const candidate of this.candidates(location, () => {
+    for await (const candidate of this.candidates(location, profiles, () => {
       listingErrors += 1
     })) {
       if (resume !== null && candidate.rel <= resume) continue
@@ -316,6 +344,7 @@ export class HourAdoptionSweeper {
    */
   private async *candidates(
     location: RecordingsLocation,
+    profiles: readonly string[],
     onError: () => void,
   ): AsyncGenerator<HourCandidate> {
     const devices = await this.list(location.root, onError)
@@ -323,7 +352,7 @@ export class HourAdoptionSweeper {
       const deviceId = Number(device)
       if (!Number.isSafeInteger(deviceId)) continue
       const present = new Set(await this.list(`${location.root}/${device}`, onError))
-      for (const profile of PROFILES) {
+      for (const profile of profiles) {
         if (!present.has(profile)) continue
         const base = `${device}/${profile}`
         for (const year of inCursorOrder(
