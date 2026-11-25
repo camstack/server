@@ -229,6 +229,60 @@ describe('RecordedFeeder.seek', () => {
     feeder.dispose()
   })
 
+  it('seek-ready reports the prefix burst: AU count, first-AU keyframe, burst duration', async () => {
+    const logs: Array<{ msg: string; data: Record<string, unknown> }> = []
+    const feeder = new RecordedFeeder({
+      deviceId: 104,
+      profile: 'low',
+      locate: async () => ({ kind: 'segment', startMs: 5000, durMs: 10_000, bytes: 180_000 }),
+      readGop: async () => ({ gopStartMs: 5000, gopDurMs: 4000, bytes: new Uint8Array([9]) }),
+      readBytes: async () => new Uint8Array([1, 2, 3]),
+      demux: async () => [AU(0, true), AU(40), AU(80), AU(5000)],
+      sink: { pushAccessUnit: () => {} },
+      onState: () => {},
+      onPosition: () => {},
+      onLog: (msg, data) => logs.push({ msg, data }),
+    })
+    await feeder.seek(5100)
+    const ready = logs.find((l) => l.msg === 'recorded:seek-ready')
+    expect(ready?.data.prefixAus).toBe(3)
+    expect(ready?.data.prefixFirstKeyframe).toBe(true)
+    expect(typeof ready?.data.prefixBurstMs).toBe('number')
+    feeder.dispose()
+  })
+
+  it('a land is followed by one seek-pli line: PLIs asked, refused, honoured', async () => {
+    vi.useFakeTimers()
+    try {
+      const logs: Array<{ msg: string; data: Record<string, unknown> }> = []
+      let reading = { received: 4, suppressed: 0, refused: 0 }
+      const feeder = new RecordedFeeder({
+        deviceId: 104,
+        profile: 'low',
+        locate: async () => ({ kind: 'segment', startMs: 5000, durMs: 10_000, bytes: 180_000 }),
+        readGop: async () => ({ gopStartMs: 5000, gopDurMs: 4000, bytes: new Uint8Array([9]) }),
+        readBytes: async () => new Uint8Array([1, 2, 3]),
+        demux: async () => [AU(0, true), AU(40), AU(80)],
+        sink: { pushAccessUnit: () => {} },
+        onState: () => {},
+        onPosition: () => {},
+        pliProbe: () => reading,
+        onLog: (msg, data) => logs.push({ msg, data }),
+      })
+      await feeder.seek(5100)
+      expect(logs.some((l) => l.msg === 'recorded:seek-pli')).toBe(false)
+      // Three PLIs arrive after the land, all refused (recorded owns the track).
+      reading = { received: 7, suppressed: 0, refused: 3 }
+      await vi.advanceTimersByTimeAsync(10_000)
+      const pli = logs.filter((l) => l.msg === 'recorded:seek-pli')
+      expect(pli).toHaveLength(1)
+      expect(pli[0]?.data).toMatchObject({ pliReceived: 3, pliRefused: 3, honoured: false })
+      feeder.dispose()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('a cache-hit land still re-reads the file — the 8 s playback stall', async () => {
     // After a drag the session cache holds demuxed AUs, not the raw .m4s.
     // seek() paints from the cache (firstFrame ~hundreds of ms) then loadAus

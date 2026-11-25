@@ -53,6 +53,9 @@ function pliSession(): Harness {
     lastPliResendAt: 0,
     lastRecordedPliLogAt: 0,
     recordedPliRefusedSinceLog: 0,
+    pliReceivedTotal: 0,
+    pliSuppressedTotal: 0,
+    pliRefusedTotal: 0,
     activeRtpReplay: null,
     lastKeyframeNals: [Buffer.from('live-idr')],
     rtpRebasePending: false,
@@ -114,6 +117,22 @@ describe('AdaptiveSession PLI while recorded owns the track', () => {
       const first = lines[0]
       if (first === undefined) throw new Error('no refusal line')
       expect((first[1] as { tags: { deviceId: number } }).tags.deviceId).toBe(103)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('pliReading tells received, cooldown-suppressed and refused PLIs apart', () => {
+    const { session } = pliSession()
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(2_000_000)
+      session.setLiveFeedGate(true)
+      firePli(session) // refused
+      firePli(session) // inside the cooldown: suppressed
+      vi.advanceTimersByTime(600)
+      firePli(session) // refused
+      expect(session.pliReading()).toEqual({ received: 3, suppressed: 1, refused: 2 })
     } finally {
       vi.useRealTimers()
     }

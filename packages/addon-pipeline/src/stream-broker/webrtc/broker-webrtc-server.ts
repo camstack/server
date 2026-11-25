@@ -2624,6 +2624,7 @@ export class BrokerWebrtcServer {
           demuxAudio,
           audioClockRateHz: opusSession ? 48000 : 8000,
           sink: audioSink,
+          pliProbe: () => session.pliReading(),
           onState: (t) => {
             // `t` is the full transition — from/to/reason/seekToken/dragId —
             // not a naked string. Logging every field is the whole point of

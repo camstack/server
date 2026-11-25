@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Recorded playback logs why the picture freezes after a seek (prefix burst shape, viewer PLI after the land)
+
 ## [1.2.684] - 2026-11-25
 
 ### Changed

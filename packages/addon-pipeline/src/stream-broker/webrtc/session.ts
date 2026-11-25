@@ -50,6 +50,7 @@ import { errMsg, type EncodeProfile, type WebrtcStreamTarget } from '@camstack/t
 import { WEBRTC_FALLBACK_PROFILE } from './webrtc-fallback-profile.js'
 import { SendHistory, type SendHistoryReader } from './delivery-meter.js'
 import { ADAPTIVE_DELIVERY_CONFIG } from './adaptive-config.js'
+import type { PliReading } from '../recorded/recorded-feeder.js'
 import { RembWatch } from './climb-capacity.js'
 import { InboundStunProbe } from './inbound-stun-probe.js'
 
@@ -939,6 +940,11 @@ export class AdaptiveSession {
   private static readonly RECORDED_PLI_LOG_INTERVAL_MS = 10_000
   private lastRecordedPliLogAt = 0
   private recordedPliRefusedSinceLog = 0
+  /** Cumulative PLI/FIR accounting, read by the recorded feeder to say whether
+   *  a freeze after a land was ever answered (`pliReading`). */
+  private pliReceivedTotal = 0
+  private pliSuppressedTotal = 0
+  private pliRefusedTotal = 0
 
   /**
    * Per-session H.265 RTP repacketizer (lazy-init). The H.265 path
@@ -2750,9 +2756,22 @@ export class AdaptiveSession {
     )
   }
 
+  /** Cumulative PLI/FIR counts: received, dropped by the resend cooldown, refused while recorded owns the track. */
+  pliReading(): PliReading {
+    return {
+      received: this.pliReceivedTotal,
+      suppressed: this.pliSuppressedTotal,
+      refused: this.pliRefusedTotal,
+    }
+  }
+
   private handlePli(): void {
     const now = Date.now()
-    if (now - this.lastPliResendAt < AdaptiveSession.PLI_RESEND_COOLDOWN_MS) return
+    this.pliReceivedTotal += 1
+    if (now - this.lastPliResendAt < AdaptiveSession.PLI_RESEND_COOLDOWN_MS) {
+      this.pliSuppressedTotal += 1
+      return
+    }
     this.lastPliResendAt = now
 
     // Recorded playback owns the track (D42). Both recoveries below replay
@@ -2765,6 +2784,7 @@ export class AdaptiveSession {
     // during recorded playback. The recorded feeder's next keyframe is the
     // recovery; the refusal is logged, never silent.
     if (this.liveFeedGated) {
+      this.pliRefusedTotal += 1
       this.logRecordedPliRefusal(now)
       return
     }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Recorded playback logs why the picture freezes after a seek (keyframes decoded, PLI/NACK, loss, time to first decode)
+
 ## [1.2.506] - 2026-11-25
 
 ### Changed

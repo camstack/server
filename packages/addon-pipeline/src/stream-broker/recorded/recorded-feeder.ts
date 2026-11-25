@@ -204,6 +204,12 @@ export interface RecordedFeederDeps {
    * effect. Pushes, parks and tick failures now log through here.
    */
   onLog?(msg: string, data: Record<string, unknown>): void
+  /**
+   * Optional: the viewer session's cumulative PLI/FIR counts. Present ⇒ each
+   * land is followed by one `recorded:seek-pli` line saying whether the viewer
+   * asked for a keyframe within {@link PLI_WATCH_MS} and whether one was sent.
+   */
+  readonly pliProbe?: () => PliReading
 }
 
 const SEGMENT_TIMEOUT_MS = 8000
@@ -808,6 +814,37 @@ interface LoadedAus {
 /** How the seek prefix was obtained — the land-stall question. */
 type SeekPrefixSource = 'cache' | 'gop' | 'whole' | 'none'
 
+/** What one prefix burst put on the wire (instrumentation only). */
+interface PrefixStats {
+  /** Access units pushed. */
+  readonly aus: number
+  /** Whether the first pushed AU is an IDR — the decoder cannot start without one. */
+  readonly firstKeyframe: boolean
+  /** First to last AU written, ms. */
+  readonly burstMs: number
+}
+
+const NO_PREFIX: PrefixStats = { aus: 0, firstKeyframe: false, burstMs: 0 }
+
+/** How long after a land the feeder watches for the viewer's PLI/FIR. */
+const PLI_WATCH_MS = 10_000
+
+/** Cumulative PLI/FIR accounting of the viewer session the feeder writes to. */
+export interface PliReading {
+  readonly received: number
+  /** Dropped by the resend cooldown. */
+  readonly suppressed: number
+  /** Refused because recorded playback owns the track: nothing was sent. */
+  readonly refused: number
+}
+
+interface PliWatch {
+  readonly dragId: string | undefined
+  readonly baseline: PliReading
+  readonly startedAt: number
+  readonly timer: ReturnType<typeof setTimeout>
+}
+
 type PlayCensusReason = 'tick' | 'stall' | 'stop'
 
 interface PlayCensusWindow {
@@ -860,6 +897,7 @@ export class RecordedFeeder {
   /** Playback rate: 0 (paused) or a continuous factor in [0.25, 8]. */
   private rate = 1
   private disposed = false
+  private pliWatch: PliWatch | null = null
   private seekToken = 0
   private advanceToken = 0
   private cursorMs = 0
@@ -1117,6 +1155,7 @@ export class RecordedFeeder {
     let loadMs = 0
     let firstFrameMs = 0
     const token = ++this.seekToken
+    this.flushPliWatch()
     // The scrub gesture this call COMMITS, when it is a commit — the caller
     // (a `scrubCommit` control message) passes the same id it gave
     // `beginScrub`. Undefined for a plain seek/playRecorded. Captured once so
@@ -1300,6 +1339,7 @@ export class RecordedFeeder {
       let stateAnnounced = false
       let reusedWhole: { video: AccessUnit[]; bytes: Uint8Array } | null = null
       let prefixSource: SeekPrefixSource = 'none'
+      let prefixStats: PrefixStats = NO_PREFIX
       if (this.deps.readGop) {
         const cached = this.scrubCache.covering(this.deps.profile, landMs)
         let fragment: StepSegment
@@ -1331,7 +1371,7 @@ export class RecordedFeeder {
           durMs: fragment.durMs,
           bytes: loc.bytes,
         }
-        this.feedPrefix(fragmentLoc, fragment.aus, landMs)
+        prefixStats = this.feedPrefix(fragmentLoc, fragment.aus, landMs)
         prefixFed = true
         gopFirst = true
         firstFrameMs = performance.now() - seekStartedAt
@@ -1447,7 +1487,7 @@ export class RecordedFeeder {
 
       // Prefix burst: IDR → requested epoch (always at least the first AU).
       // Sets cursorMs to the (clamped) requested epoch + the step state.
-      if (!prefixFed) this.feedPrefix(loc, loaded.video, landMs)
+      if (!prefixFed) prefixStats = this.feedPrefix(loc, loaded.video, landMs)
       if (gopFirst) {
         // Replace the temporary GOP step state with the complete segment once
         // it is ready. A step command queued during the seek can now move
@@ -1491,12 +1531,14 @@ export class RecordedFeeder {
           firstFrameMs,
           state: 'paused',
           prefixSource,
+          prefix: prefixStats,
           reusedWhole: reusedWhole !== null,
           readMs: loaded.readMs,
           demuxMs: loaded.demuxMs,
           bytes: loaded.bytes,
           loadAusMs: Math.round(loadAusMs),
         })
+        this.armPliWatch(dragId)
         // The operator is now sitting on this frame — fill the window around
         // it while they decide where to go next (idle warm, paced).
         this.startIdleWarm(this.cursorMs)
@@ -1524,12 +1566,14 @@ export class RecordedFeeder {
         firstFrameMs,
         state: 'playing',
         prefixSource,
+        prefix: prefixStats,
         reusedWhole: reusedWhole !== null,
         readMs: loaded.readMs,
         demuxMs: loaded.demuxMs,
         bytes: loaded.bytes,
         loadAusMs: Math.round(loadAusMs),
       })
+      this.armPliWatch(dragId)
       const firstFullAu = loaded.video[0]
       const resumeAfterPtsMs = gopFirst
         ? firstFullAu
@@ -1611,6 +1655,7 @@ export class RecordedFeeder {
     readonly firstFrameMs: number
     readonly state: 'paused' | 'playing'
     readonly prefixSource: SeekPrefixSource
+    readonly prefix: PrefixStats
     readonly reusedWhole: boolean
     readonly readMs: number
     readonly demuxMs: number
@@ -1627,11 +1672,49 @@ export class RecordedFeeder {
       loadMs: Math.round(fields.loadMs),
       firstFrameMs: Math.round(fields.firstFrameMs),
       prefixSource: fields.prefixSource,
+      prefixAus: fields.prefix.aus,
+      prefixFirstKeyframe: fields.prefix.firstKeyframe,
+      prefixBurstMs: Math.round(fields.prefix.burstMs),
       reusedWhole: fields.reusedWhole,
       readMs: Math.round(fields.readMs),
       demuxMs: Math.round(fields.demuxMs),
       bytes: fields.bytes,
       loadAusMs: Math.round(fields.loadAusMs),
+    })
+  }
+
+  /** Start watching the viewer's PLI/FIR for {@link PLI_WATCH_MS} after a land. */
+  private armPliWatch(dragId: string | undefined): void {
+    const probe = this.deps.pliProbe
+    if (!probe) return
+    this.flushPliWatch()
+    this.pliWatch = {
+      dragId,
+      baseline: probe(),
+      startedAt: performance.now(),
+      timer: setTimeout(() => this.flushPliWatch(), PLI_WATCH_MS),
+    }
+  }
+
+  /** Log the watch (once) and clear it: window end, a newer seek, or dispose. */
+  private flushPliWatch(): void {
+    const watch = this.pliWatch
+    const probe = this.deps.pliProbe
+    if (!watch || !probe) return
+    this.pliWatch = null
+    clearTimeout(watch.timer)
+    const now = probe()
+    const received = now.received - watch.baseline.received
+    const refused = now.refused - watch.baseline.refused
+    const suppressed = now.suppressed - watch.baseline.suppressed
+    this.deps.onLog?.('recorded:seek-pli', {
+      dragId: watch.dragId,
+      windowMs: Math.round(performance.now() - watch.startedAt),
+      pliReceived: received,
+      pliRefused: refused,
+      pliSuppressed: suppressed,
+      // A keyframe was actually sent in answer to at least one request.
+      honoured: received - refused - suppressed > 0,
     })
   }
 
@@ -3434,7 +3517,11 @@ export class RecordedFeeder {
    * guarantees `aus[0]` is the segment's params-fused IDR, so the prefix always
    * starts at a keyframe.
    */
-  private feedPrefix(loc: LocatedSegment, aus: AccessUnit[], requestedEpochMs: number): void {
+  private feedPrefix(
+    loc: LocatedSegment,
+    aus: AccessUnit[],
+    requestedEpochMs: number,
+  ): PrefixStats {
     // Upper bound is durMs − 1: `startMs + durMs` is exclusive (already in the
     // inter-segment crack) and would gap-freeze the next seek(cursorMs).
     const clampedEpoch = Math.min(
@@ -3446,7 +3533,7 @@ export class RecordedFeeder {
     if (!first) {
       this.lastFedVideoIdx = -1
       this.cursorMs = clampedEpoch
-      return
+      return NO_PREFIX
     }
     const offsetMs = requestedEpochMs - loc.startMs
     let lastIdx = 0 // at least the first AU, even when the epoch precedes it
@@ -3455,13 +3542,16 @@ export class RecordedFeeder {
       if (au && au.ptsMs - first.ptsMs <= offsetMs) lastIdx = i
       else break
     }
+    const burstStart = performance.now()
     for (let i = 0; i <= lastIdx; i++) {
       const au = aus[i]
       if (au) this.deps.sink.pushAccessUnit(au.data, this.clock.stamp(au.ptsMs), au.codec)
     }
+    const burstMs = performance.now() - burstStart
     this.clockHasAdvanced = true
     this.lastFedVideoIdx = lastIdx
     this.cursorMs = clampedEpoch
+    return { aus: lastIdx + 1, firstKeyframe: first.keyframe, burstMs }
   }
 
   /**
@@ -3938,6 +4028,7 @@ export class RecordedFeeder {
     // A drag abandoned by goLive/profile change still owes its aggregate: a
     // drag that produced no line reads exactly like a drag that never ran.
     if (this.scrubbing) this.emitDragEnd()
+    this.flushPliWatch()
     this.disposed = true
     this.seekToken++
     this.advanceToken++

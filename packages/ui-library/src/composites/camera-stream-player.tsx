@@ -24,6 +24,14 @@ import {
   type InboundReading,
 } from './client-network-sample'
 import { buildPeerConnectionConfig } from './peer-connection-config'
+import {
+  type InboundVideoCounters,
+  LAND_FIRST_DECODE_TIMEOUT_MS,
+  LandWatch,
+  isLandMessage,
+  readInboundVideo,
+  recoveryDeltas,
+} from './playback-stats'
 import { StreamDebugOverlay } from './stream-debug/stream-debug-overlay.js'
 import {
   deriveWebrtcDebugStats,
@@ -1491,6 +1499,9 @@ export function CameraStreamPlayer({
         // no `onControlChannel` consumer is wired (plain live player).
         if (onControlChannelRef.current) {
           const control = pc.createDataChannel('camstack-control')
+          control.addEventListener('message', (ev) => {
+            if (isLandMessage(ev.data)) markLandRef.current()
+          })
           onControlChannelRef.current(control)
         }
 
@@ -1802,6 +1813,9 @@ export function CameraStreamPlayer({
         // after a downgrade. Guarded → live-only consumers are unaffected.
         if (onControlChannelRef.current) {
           const control = pc.createDataChannel('camstack-control')
+          control.addEventListener('message', (ev) => {
+            if (isLandMessage(ev.data)) markLandRef.current()
+          })
           onControlChannelRef.current(control)
         }
 
@@ -2420,7 +2434,10 @@ export function CameraStreamPlayer({
     freeze: number
     ct: number
     ts: number
+    inbound: InboundVideoCounters | null
   } | null>(null)
+  const landWatchRef = useRef(new LandWatch())
+  const markLandRef = useRef<() => void>(() => {})
   useEffect(() => {
     if (!onPlaybackStats) {
       pbPrev.current = null
@@ -2465,6 +2482,7 @@ export function CameraStreamPlayer({
             jbEmitted = s.jitterBufferEmittedCount ?? 0
           }
         })
+        const inbound = readInboundVideo(report)
         const ct = video?.currentTime ?? 0
         const now = Date.now()
         const prev = pbPrev.current
@@ -2481,9 +2499,12 @@ export function CameraStreamPlayer({
             dCtMs: Math.round((ct - prev.ct) * 1000), // playback clock advance (stall → ~0)
             dtMs: now - prev.ts,
             readyState: video?.readyState ?? -1,
+            // Why the picture freezes after a land: keyframes decoded, the
+            // receiver's recovery requests, loss, buffer depth of THIS window.
+            ...(inbound && prev.inbound ? recoveryDeltas(prev.inbound, inbound) : {}),
           })
         }
-        pbPrev.current = { recv, dec, drop, freeze, ct, ts: now }
+        pbPrev.current = { recv, dec, drop, freeze, ct, ts: now, inbound }
       } catch {
         /* transient — keep last */
       }
@@ -2493,6 +2514,55 @@ export function CameraStreamPlayer({
       void tick()
     }, 5000)
     return () => clearInterval(id)
+  }, [onPlaybackStats])
+
+  // A land (the server's playing/paused state) starts a 250 ms poll that stops
+  // at the first decoded frame: `msToFirstDecode` separates "frames arrive but
+  // the decoder waits for an IDR" from "decoding resumed at once".
+  useEffect(() => {
+    if (!onPlaybackStats) {
+      markLandRef.current = () => {}
+      return
+    }
+    const watch = landWatchRef.current
+    let poll: ReturnType<typeof setInterval> | null = null
+    const stop = (): void => {
+      if (poll !== null) clearInterval(poll)
+      poll = null
+    }
+    const sample = async (): Promise<InboundVideoCounters | null> => {
+      const pc = pcRef.current
+      if (!pc) return null
+      try {
+        return readInboundVideo(await pc.getStats())
+      } catch {
+        return null
+      }
+    }
+    markLandRef.current = () => {
+      stop()
+      void sample().then((base) => {
+        watch.mark(Date.now(), base?.framesDecoded ?? 0)
+        poll = setInterval(() => {
+          void sample().then((cur) => {
+            if (!cur) return
+            const done = watch.observe(
+              Date.now(),
+              cur.framesDecoded,
+              cur.keyFramesDecoded,
+              LAND_FIRST_DECODE_TIMEOUT_MS,
+            )
+            if (!done) return
+            stop()
+            onPlaybackStats({ event: 'land-first-decode', ...done })
+          })
+        }, 250)
+      })
+    }
+    return () => {
+      stop()
+      markLandRef.current = () => {}
+    }
   }, [onPlaybackStats])
 
   useEffect(() => {
