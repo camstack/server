@@ -154,4 +154,19 @@ describe('DeviceHistoryView lanes', () => {
     fireEvent.click(screen.getByTestId('dc-history-points-all'))
     expect(screen.getByTestId('dc-history-points').textContent).toContain('Points 6/6')
   })
+
+  it('seriesKeys narrows the view to those series only (one reading, not the whole set)', () => {
+    gate.series = [
+      ...SERIES,
+      info('cap:motion.detected', { kind: 'boolean', displayName: 'Motion' }),
+    ]
+    render(<DeviceHistoryView deviceId={1} seriesKeys={['cap:motion.detected']} />)
+    const keys = screen
+      .getAllByTestId('chart')
+      .flatMap((c) => (c.getAttribute('data-series') ?? '').split(','))
+    expect(keys).toEqual(['cap:motion.detected'])
+    expect(screen.getAllByTestId('bands')[0]?.getAttribute('data-rows')).toBe(
+      'cap:motion:state:cap:motion.detected:',
+    )
+  })
 })

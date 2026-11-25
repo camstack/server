@@ -54,6 +54,8 @@ export interface DeviceHistoryViewProps {
   readonly deviceId: number
   /** A fixed window with no window controls (the Live Stats tab's last day). */
   readonly fixedWindow?: Exclude<HistoryWindowId, 'custom'>
+  /** Only these series (`cap:<cap>.<field>`): one reading's history, not the device's whole set. */
+  readonly seriesKeys?: readonly string[]
   /** In-app navigation (react-router); default a page load under the mount. */
   readonly onNavigate?: (path: string) => void
 }
@@ -76,6 +78,7 @@ function refsOf(deviceId: number, spec: HistoryChartSpec): readonly HistorySerie
 export function DeviceHistoryView({
   deviceId,
   fixedWindow,
+  seriesKeys,
   onNavigate,
 }: DeviceHistoryViewProps): JSX.Element {
   const t = useUiText()
@@ -108,8 +111,16 @@ export function DeviceHistoryView({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
 
   const sections = useMemo<readonly HistorySection[]>(
-    () => (list.status === 'ok' ? groupDeviceSeries(list.data, humanizeName) : []),
-    [list],
+    () =>
+      list.status === 'ok'
+        ? groupDeviceSeries(
+            seriesKeys === undefined
+              ? list.data
+              : list.data.filter((s) => seriesKeys.includes(s.key)),
+            humanizeName,
+          )
+        : [],
+    [list, seriesKeys],
   )
   // Points the chip row switched off (every point starts on).
   const [pointsOff, setPointsOff] = useState<ReadonlySet<string>>(new Set())
