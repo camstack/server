@@ -1389,7 +1389,7 @@
       "resetInput": "Ripristina input",
       "curl": "curl",
       "copy": "Copia",
-      "curlHint": "Imposta prima CAMSTACK_TOKEN con un token API. Gli input viaggiano nell'involucro superjson.",
+      "curlHint": "Imposta prima CAMSTACK_API_TOKEN con un token API (una credenziale per HTTP grezzo, non un login). Gli input viaggiano nell'involucro superjson.",
       "inputSchema": "Schema dell'input",
       "schemaUnavailable": "Impossibile mostrare lo schema dell'input: {{error}}",
       "invalidJson": "JSON non valido: {{error}}",

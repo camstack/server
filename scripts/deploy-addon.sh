@@ -15,9 +15,9 @@ ADDON_PATH=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --server) SERVER_ARGS=(--server "$2"); shift 2 ;;
-    --token|--token-file)
+    --token|--token-file) # removed-flag:begin
       echo "Error: $1 was removed. Run 'camstack login <host>' once, interactively; every tool then uses that session." >&2
-      exit 1
+      exit 1 # removed-flag:end
       ;;
     --help|-h)
       echo "Usage: $0 [--server URL] [path-to-addon]"

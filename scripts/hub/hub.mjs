@@ -62,12 +62,14 @@ function takeFlag(argv, name) {
 }
 
 const argv = process.argv.slice(2)
+// removed-flag:begin
 if (argv.includes('--token-file') || argv.includes('--token')) {
   console.error(
     '--token / --token-file were removed: run `camstack login <host>` once, interactively; every tool then uses that session and renews it.',
   )
   process.exit(1)
 }
+// removed-flag:end
 const serverFlag = takeFlag(argv, '--server')
 const [method, route, rawInput] = argv
 

@@ -70,6 +70,23 @@ describe('check-single-client-login', () => {
   it('skips comment lines and the files that refuse the removed flags', () => {
     expect(rules('scripts/x.ts', ' * CAMSTACK_TOKEN was removed')).toEqual([])
     expect(rules('scripts/x.sh', '# --token was removed')).toEqual([])
-    expect(rules('scripts/hub/hub.mjs', "argv.includes('--token')")).toEqual([])
+  })
+
+  it('hub.mjs and deploy-addon.sh may name a removed flag only inside the refusal', () => {
+    const refusal = [
+      '// removed-flag:begin',
+      "if (argv.includes('--token')) {",
+      '}',
+      '// removed-flag:end',
+    ]
+    expect(rules('scripts/hub/hub.mjs', refusal.join('\n'))).toEqual([])
+    expect(rules('scripts/hub/hub.mjs', "x = argv.includes('--token')")).toContain('token-option')
+    const after = [...refusal, "argv.includes('--token')"].join('\n')
+    expect(rules('scripts/hub/hub.mjs', after)).toContain('token-option')
+    expect(rules('scripts/deploy-addon.sh', '--token) # removed-flag:begin')).toEqual([])
+    expect(rules('scripts/deploy-addon.sh', 'curl --token "$T"')).toContain('token-option')
+    // the marker means nothing in another file
+    const other = "// removed-flag:line\nargv.includes('--token')"
+    expect(rules('scripts/other.mjs', other)).toContain('token-option')
   })
 })

@@ -13,6 +13,15 @@ import * as path from 'node:path'
  * needs `@camstack/types`, a vite build). It reads the session file itself, the
  * same `~/.camstack/<host>_<port>.json` the CLI writes. It does not renew an
  * expired session: any `camstack` command does, and this one says so.
+ *
+ * KEEP IN SYNC with develop, which owns the format:
+ *   - `normalizeHub`    <- packages/develop/src/hub/hub-address.ts `normalizeHubAddress`
+ *   - `slugForServer`   <- packages/develop/src/hub/session-store.ts `slugForServer`
+ *   - `isSessionBlob`   <- session-store.ts `isSessionFile`
+ *   - `jwtExpiry`       <- packages/develop/src/hub/credentials.ts `jwtExpiryMs`
+ *   - ordering          <- session-store.ts `listSessionEntries` (recency, then mtime)
+ * `__tests__/resolve-config.parity.spec.ts` imports develop in the TEST only and
+ * compares each pair on a table of inputs.
  */
 export interface ResolvedDeployConfig {
   readonly server: string
@@ -34,39 +43,138 @@ interface SavedSession {
   readonly token: string
   readonly expiresAt?: number
   readonly lastUsedAt?: number
-  readonly createdAt?: number
+  readonly createdAt: number
 }
 
-const DEFAULT_PORT = '4443'
+interface SessionEntry {
+  readonly session: SavedSession
+  readonly mtime: number
+}
+
+const DEFAULT_PORT = 4443
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function readSession(file: string): SavedSession | null {
+export function isSessionBlob(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  if (typeof value['server'] !== 'string') return false
+  if (typeof value['username'] !== 'string') return false
+  if (typeof value['token'] !== 'string') return false
+  if (typeof value['tokenId'] !== 'string') return false
+  if (typeof value['createdAt'] !== 'number') return false
+  if (!Array.isArray(value['scopes'])) return false
+  if (value['isAdmin'] !== undefined && typeof value['isAdmin'] !== 'boolean') return false
+  if (value['refreshToken'] !== undefined && typeof value['refreshToken'] !== 'string') return false
+  if (value['expiresAt'] !== undefined && typeof value['expiresAt'] !== 'number') return false
+  return true
+}
+
+function toSession(value: unknown): SavedSession | null {
+  if (!isRecord(value) || !isSessionBlob(value)) return null
+  const { server, token, createdAt, expiresAt, lastUsedAt } = value
+  if (typeof server !== 'string' || typeof token !== 'string' || typeof createdAt !== 'number') {
+    return null
+  }
+  return {
+    server,
+    token,
+    createdAt,
+    ...(typeof expiresAt === 'number' ? { expiresAt } : {}),
+    ...(typeof lastUsedAt === 'number' ? { lastUsedAt } : {}),
+  }
+}
+
+function readEntry(file: string): SessionEntry | null {
   try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(file, 'utf8'))
-    if (!isRecord(parsed)) return null
-    const { server, token, expiresAt, lastUsedAt, createdAt } = parsed
-    if (typeof server !== 'string' || typeof token !== 'string' || token === '') return null
-    return {
-      server,
-      token,
-      ...(typeof expiresAt === 'number' ? { expiresAt } : {}),
-      ...(typeof lastUsedAt === 'number' ? { lastUsedAt } : {}),
-      ...(typeof createdAt === 'number' ? { createdAt } : {}),
-    }
+    const session = toSession(JSON.parse(fs.readFileSync(file, 'utf8')))
+    if (session === null) return null
+    return { session, mtime: fs.statSync(file).mtimeMs }
   } catch {
     return null
   }
 }
 
-/** `host[:port]` or an https URL → `{ url, slug }` as the CLI names the session file. */
-function hubKey(input: string): { readonly url: string; readonly slug: string } {
-  const withScheme = /^https?:\/\//i.test(input) ? input : `https://${input}`
-  const u = new URL(withScheme)
-  const port = u.port === '' ? DEFAULT_PORT : u.port
-  return { url: `https://${u.hostname}:${port}`, slug: `${u.hostname}_${port}` }
+/** The JWT `exp` claim in ms, or undefined. */
+export function jwtExpiry(token: string): number | undefined {
+  const parts = token.split('.')
+  if (parts.length !== 3) return undefined
+  try {
+    const raw = (parts[1] ?? '').replace(/-/g, '+').replace(/_/g, '/')
+    const padded = raw.padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
+    const json: unknown = JSON.parse(Buffer.from(padded, 'base64').toString('utf8'))
+    if (!isRecord(json) || Array.isArray(json)) return undefined
+    const exp = json['exp']
+    return typeof exp === 'number' ? exp * 1000 : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function parsePort(raw: string | undefined, input: string): number {
+  if (raw === undefined) return DEFAULT_PORT
+  const port = Number.parseInt(raw, 10)
+  if (port < 1 || port > 65535) {
+    throw new Error(`"${input}": port ${raw} is out of range (1-65535).`)
+  }
+  return port
+}
+
+/**
+ * `https://<host>:<port>`: default port 4443, an explicit `:443` stays 443,
+ * `http://` and other schemes refused.
+ */
+export function normalizeHub(input: string): string {
+  const trimmed = input.trim()
+  if (trimmed === '') throw new Error('The hub address is empty.')
+  const scheme = /^([a-z][a-z0-9+.-]*):\/\//i.exec(trimmed)
+  if (scheme) {
+    const name = (scheme[1] ?? '').toLowerCase()
+    if (name === 'http') {
+      throw new Error(
+        `"${trimmed}": the hub API is https. Use https://<host>:${DEFAULT_PORT} (or just <host>).`,
+      )
+    }
+    if (name !== 'https') {
+      throw new Error(`"${trimmed}": unsupported scheme "${name}", the hub API is https.`)
+    }
+  }
+  const rest = scheme ? trimmed.slice(scheme[0].length) : trimmed
+  const authority = rest.split(/[/?#]/, 1)[0] ?? ''
+  if (authority === '' || authority.includes('@')) {
+    throw new Error(`"${trimmed}" is not a hub address (expected host[:port]).`)
+  }
+  let host: string
+  let port: number
+  const bracketed = /^\[([^\]]+)\](?::(\d+))?$/.exec(authority)
+  if (bracketed) {
+    host = `[${bracketed[1]}]`
+    port = parsePort(bracketed[2], trimmed)
+  } else if ((authority.match(/:/g) ?? []).length >= 2) {
+    host = `[${authority}]`
+    port = DEFAULT_PORT
+  } else {
+    const plain = /^([^:]+)(?::(\d+))?$/.exec(authority)
+    if (!plain) throw new Error(`"${trimmed}" is not a hub address.`)
+    host = plain[1] ?? ''
+    port = parsePort(plain[2], trimmed)
+  }
+  let hostname: string
+  try {
+    hostname = new URL(`https://${host}`).hostname
+  } catch {
+    throw new Error(`"${trimmed}": "${host}" is not a valid host name or address.`)
+  }
+  return `https://${hostname}:${port}`
+}
+
+/** The session file's name for a server URL. */
+export function slugForServer(serverUrl: string): string {
+  return serverUrl
+    .replace(/^https?:\/\//, '')
+    .replace(/[:/?#]+/g, '_')
+    .replace(/_+$/, '')
 }
 
 function mostRecentSession(dir: string): SavedSession | null {
@@ -76,15 +184,15 @@ function mostRecentSession(dir: string): SavedSession | null {
   } catch {
     return null
   }
-  let best: SavedSession | null = null
+  const entries: SessionEntry[] = []
   for (const name of names) {
     if (!name.endsWith('.json')) continue
-    const s = readSession(path.join(dir, name))
-    if (s === null) continue
-    const stamp = s.lastUsedAt ?? s.createdAt ?? 0
-    if (best === null || stamp > (best.lastUsedAt ?? best.createdAt ?? 0)) best = s
+    const e = readEntry(path.join(dir, name))
+    if (e !== null) entries.push(e)
   }
-  return best
+  const recency = (e: SessionEntry): number => e.session.lastUsedAt ?? e.session.createdAt
+  entries.sort((a, b) => recency(b) - recency(a) || b.mtime - a.mtime)
+  return entries[0]?.session ?? null
 }
 
 function notLoggedIn(server: string | undefined): Error {
@@ -100,15 +208,15 @@ export function resolveDeployConfig(inputs: ResolveInputs): ResolvedDeployConfig
   let session: SavedSession | null
   let target: string | undefined
   if (typed !== undefined && typed !== '') {
-    const key = hubKey(typed)
-    target = key.url
-    session = readSession(path.join(dir, `${key.slug}.json`))
+    target = normalizeHub(typed)
+    session = readEntry(path.join(dir, `${slugForServer(target)}.json`))?.session ?? null
   } else {
     session = mostRecentSession(dir)
   }
   if (session === null) throw notLoggedIn(target)
   const now = inputs.now ?? Date.now()
-  if (session.expiresAt !== undefined && session.expiresAt <= now) {
+  const expiresAt = session.expiresAt ?? jwtExpiry(session.token)
+  if (expiresAt !== undefined && expiresAt <= now) {
     throw new Error(
       `The saved session for ${session.server} has expired. Run any \`camstack\` command against it (it renews itself) or \`camstack login ${session.server}\`.`,
     )

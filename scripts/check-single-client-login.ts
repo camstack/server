@@ -55,10 +55,18 @@ const AGENT_JOIN_FILES: ReadonlySet<string> = new Set([
 const REMOVED_ALLOWED: ReadonlySet<string> = new Set([
   'packages/cli/src/commands/removed-token-flags.ts',
   'packages/cli/src/commands/login-legacy-flags.ts',
-  'scripts/hub/hub.mjs',
-  'scripts/deploy-addon.sh',
   'scripts/check-single-client-login.ts',
   'scripts/check-no-token-file-lookup.ts',
+])
+
+/**
+ * Files that are real client commands but refuse a removed flag in one place:
+ * the flag may be named only on `removed-flag:line` or between `removed-flag:begin`
+ * and `removed-flag:end`. A token flag anywhere else in the file still fails.
+ */
+const REMOVED_REGION_FILES: ReadonlySet<string> = new Set([
+  'scripts/hub/hub.mjs',
+  'scripts/deploy-addon.sh',
 ])
 
 const ENV_TOKEN = /\bCAMSTACK_TOKEN\b|\bCAMSTACK_HUB_TOKEN\w*|\bCAMSTACK_\w*TOKEN_FILE\b/
@@ -102,12 +110,18 @@ export function findSingleLoginViolations(
   const found: SingleLoginFinding[] = []
   const agentFile = AGENT_JOIN_FILES.has(file)
   let inAgentRegion = false
-  const removed = REMOVED_ALLOWED.has(file)
+  const refusalFile = REMOVED_REGION_FILES.has(file)
+  let inRefusal = false
   const inScripts = file.startsWith('scripts/')
   source.split('\n').forEach((text, i) => {
     if (agentFile && text.includes('agent-join:begin')) inAgentRegion = true
     if (agentFile && text.includes('agent-join:end')) inAgentRegion = false
+    if (refusalFile && text.includes('removed-flag:begin')) inRefusal = true
+    if (refusalFile && text.includes('removed-flag:end')) inRefusal = false
     const agent = agentFile && (inAgentRegion || text.includes('agent-join:line'))
+    const removed =
+      REMOVED_ALLOWED.has(file) ||
+      (refusalFile && (inRefusal || text.includes('removed-flag:line')))
     if (isCommentLine(text)) return
     const add = (rule: Rule): void => {
       found.push({ file, line: i + 1, rule, text: text.trim() })
