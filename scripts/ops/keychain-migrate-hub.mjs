@@ -8,7 +8,7 @@
 //
 // It talks to the hub's admin API with the operator's OWN session: run
 // `camstack login <host>` once as an admin (the shared resolver renews it;
-// --token-file is an explicit override only). Every write goes through the product's normal OPERATOR write
+// no other credential exists). Every write goes through the product's normal OPERATOR write
 // paths, which store a sent secret in the keychain and leave a marker:
 //   addon settings    addonSettings.updateScopedSettings
 //   device configs    deviceManager.persistConfig      (unstamped = operator)
@@ -49,7 +49,7 @@
 //
 //   node scripts/ops/keychain-migrate-hub.mjs
 //        [plan|backup|apply|import-system|mqtt|verify|plaintext-backups]
-//        [--hub https://<hub-host>:4443] [--token-file <file>]
+//        [--hub https://<hub-host>:4443]
 //        [--state scratchpad/keychain-migration-state.json] [--json]
 //
 // Exit codes: 0 done · 1 refused / something left to do · 2 a read failed
@@ -554,11 +554,9 @@ async function main() {
       : path.resolve('scratchpad/keychain-migration-state.json')
   // The hub serves a self-signed certificate.
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-  // The operator's `camstack login` session (admin), via the shared resolver;
-  // --token-file is an explicit override only.
+  // The operator's `camstack login` session (admin), via the shared resolver.
   const auth = await resolveHubAuth({
     server: hub,
-    ...(typeof args['token-file'] === 'string' ? { tokenFile: args['token-file'] } : {}),
   })
   const call = makeClient(hub, auth.token)
   const state = readState(stateFile)

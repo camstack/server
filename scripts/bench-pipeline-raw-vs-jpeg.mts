@@ -24,14 +24,13 @@
  * has any spare capacity to harvest.
  *
  * Env:
- *   CAMSTACK_SERVER  https://localhost:4443
- *   CAMSTACK_USER    admin
- *   CAMSTACK_PASS    admin
+ *   CAMSTACK_SERVER  hub address (default: the `camstack login` session's hub)
  *   AGENT_NODE_ID    hub  (cluster node to target)
  *   FIXTURE_PATH     test-output/bench/sample-1080p.jpg
  *
  * Exit 0 on success.
  */
+import { resolveHubAuth } from './hub/credentials.mjs'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
 import superjson from 'superjson'
 import WebSocket from 'ws'
@@ -46,9 +45,12 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 const ITERATIONS = Number.parseInt(process.argv[2] ?? '200', 10)
 const PARALLEL = Number.parseInt(process.argv[3] ?? '4', 10)
 const SWEEP = process.argv[4] === '1' || process.argv[4] === 'sweep'
-const SERVER = process.env.CAMSTACK_SERVER ?? 'https://localhost:4443'
-const USERNAME = process.env.CAMSTACK_USER ?? 'admin'
-const PASSWORD = process.env.CAMSTACK_PASS ?? 'admin'
+// The `camstack login` session is the only credential (D1101): log in once with
+// `camstack login <host>`; nothing here asks for a password.
+const hubAuth = await resolveHubAuth(
+  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+)
+const SERVER = hubAuth.server
 const NODE_ID = process.env.AGENT_NODE_ID ?? 'hub'
 const FIXTURE = path.resolve(process.env.FIXTURE_PATH ?? 'test-output/bench/sample-1080p.jpg')
 
@@ -63,15 +65,7 @@ const sharp = sharpMod as unknown as (
 ) => sharpMod.Sharp
 
 async function login(): Promise<string> {
-  const res = await fetch(`${SERVER}/trpc/auth.login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ json: { username: USERNAME, password: PASSWORD } }),
-  })
-  const body = (await res.json()) as { result?: { data?: { json?: { token?: string } } } }
-  const token = body?.result?.data?.json?.token
-  if (!token) throw new Error(`login failed: ${JSON.stringify(body)}`)
-  return token
+  return hubAuth.token
 }
 
 type TrpcClient = ReturnType<typeof createTRPCClient<AppRouter>>

@@ -17,9 +17,15 @@
  * Sweep: cameras × concurrency × model. We hold batchMode=list (winner
  * of the previous bench) constant for all configs.
  */
+import { resolveHubAuth } from './hub/credentials.mjs'
 import { readFileSync, statSync } from 'node:fs'
 
-const SERVER = 'https://localhost:4443'
+// The `camstack login` session is the only credential (D1101): log in once with
+// `camstack login <host>`; nothing here asks for a password.
+const hubAuth = await resolveHubAuth(
+  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+)
+const SERVER = hubAuth.server
 const IMAGE_PATH =
   '/Users/<local-user>/Documents/Git/camstack/camstack-server/test-output/annotated_persons-cars-animal.jpg'
 const DURATION_S = 10
@@ -105,16 +111,8 @@ const ignoreTls = (): typeof globalThis.fetch => {
   return globalThis.fetch
 }
 
-async function login(fetchFn: typeof globalThis.fetch): Promise<string> {
-  const r = await fetchFn(`${SERVER}/trpc/auth.login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ json: { username: 'admin', password: 'admin' } }),
-  })
-  const j = (await r.json()) as JsonRpcResult<{ readonly token: string }>
-  const tok = j.result?.data?.json?.token
-  if (!tok) throw new Error('login failed: ' + JSON.stringify(j))
-  return tok
+async function login(_fetchFn: typeof globalThis.fetch): Promise<string> {
+  return hubAuth.token
 }
 
 async function trpcPost<T>(

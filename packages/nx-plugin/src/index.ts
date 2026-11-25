@@ -8,7 +8,7 @@
  * programmatically (e.g. a CI tool that wraps `packAddon` +
  * `uploadAddon` without going through Nx).
  */
-export { resolveDeployConfig, parseRc } from './lib/resolve-config.js'
+export { resolveDeployConfig } from './lib/resolve-config.js'
 export type { ResolvedDeployConfig, ResolveInputs } from './lib/resolve-config.js'
 export { packAddon } from './lib/pack-addon.js'
 export type { PackResult } from './lib/pack-addon.js'

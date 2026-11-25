@@ -4,26 +4,21 @@
  *
  * Subscribes to detection.result events and logs per-phase timing.
  */
+import { resolveHubAuth } from './hub/credentials.mjs'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
 import superjson from 'superjson'
 import WebSocket from 'ws'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-const SERVER = 'https://localhost:4443'
+// The `camstack login` session is the only credential (D1101): `camstack login <host>` once.
+const hubAuth = await resolveHubAuth(
+  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+)
+const SERVER = hubAuth.server
 const DEVICE_ID = process.argv[2] || 'dev_0003'
 const SAMPLE_COUNT = parseInt(process.argv[3] || '30', 10)
 
-// ── Login ──
-const loginRes = await fetch(`${SERVER}/trpc/auth.login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ json: { username: 'admin', password: 'admin' } }),
-})
-const token = (await loginRes.json())?.result?.data?.json?.token
-if (!token) {
-  console.error('Login failed')
-  process.exit(1)
-}
+const token = hubAuth.token
 
 // ── tRPC WS client ──
 const ws = createWSClient({

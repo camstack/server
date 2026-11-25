@@ -3,16 +3,16 @@
  * Smoke test for the unified `System` class.
  *
  * Walks through the public API surface against a live local server:
- *   1. Construct + login
+ *   1. Construct with the `camstack login` session token
  *   2. init() warm-boot
  *   3. listDevices() / getDevice() — exercise mirror + binding propagation
  *   4. system.<systemCap>.<method>() — call a known cluster-wide cap
  *   5. close()
  *
  * Configure via env:
- *   - SMOKE_URL  (default: https://localhost:4443)
- *   - SMOKE_USER (default: admin)
- *   - SMOKE_PASS (default: admin)
+ *   - SMOKE_URL  hub address (default: the `camstack login` session's hub)
+ *
+ * The credential is the `camstack login` session (D1101): no password here.
  *
  * Run: npx tsx scripts/smoke-system.ts
  *
@@ -23,16 +23,13 @@
  * import this script from production code.
  */
 
+import { resolveHubAuth } from './hub/credentials.mjs'
 import { System } from '../packages/sdk/dist/index.js'
 import { createDeviceProxy } from '../packages/types/dist/index.js'
 
 // Local dev server uses a self-signed cert — disable TLS verification
 // for the duration of the smoke run. Only valid for localhost.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-
-const SERVER_URL = process.env.SMOKE_URL ?? 'https://localhost:4443'
-const USERNAME = process.env.SMOKE_USER ?? 'admin'
-const PASSWORD = process.env.SMOKE_PASS ?? 'admin'
 
 const log = (msg: string): void => {
   console.log(`[smoke-system] ${msg}`)
@@ -44,24 +41,18 @@ const fail = (msg: string): never => {
 }
 
 async function main(): Promise<void> {
-  log(`server: ${SERVER_URL}`)
+  const auth = await resolveHubAuth(process.env.SMOKE_URL ? { server: process.env.SMOKE_URL } : {})
+  log(`server: ${auth.server}`)
 
   // The SDK auto-detects browser vs node — force HTTP mode so the
   // smoke test runs against a node process without a `window` global.
   // (The SDK still chooses HTTP under node by default; explicit here
   // for documentation.)
   const system = new System({
-    serverUrl: SERVER_URL,
+    serverUrl: auth.server,
+    token: auth.token,
     useWebSocket: false,
   })
-
-  // 1) Login
-  log('auth.login …')
-  const loginResult = await system.login(USERNAME, PASSWORD)
-  if (typeof loginResult.token !== 'string' || loginResult.token.length === 0) {
-    fail(`login returned no token (${JSON.stringify(loginResult)})`)
-  }
-  log(`auth.login OK (token prefix=${loginResult.token.slice(0, 12)}…)`)
 
   // 2) getMe
   const me = await system.getMe()

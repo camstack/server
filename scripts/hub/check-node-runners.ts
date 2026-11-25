@@ -15,7 +15,7 @@
  * Read-only, through the hub's admin API (`hub.mjs`). `--server <host>` is
  * REQUIRED; `--node <id>` selects an agent (default: the hub itself).
  *
- * Usage: npx tsx scripts/hub/check-node-runners.ts --server <host> [--node <id>] --expect-version <v> [--token-file <f>]
+ * Usage: npx tsx scripts/hub/check-node-runners.ts --server <host> [--node <id>] --expect-version <v>
  * Exit:  0 all runners up on the expected version; 1 a finding; 2 bad usage / hub unreachable.
  */
 import { type HubCall, hubMjsCall } from './hub-call.js'
@@ -123,7 +123,7 @@ async function main(argv: readonly string[]): Promise<number> {
   const node = valueOf('--node')
   let findings: RunnerFindings
   try {
-    findings = await checkNodeRunners(hubMjsCall(server, valueOf('--token-file')), node, expect)
+    findings = await checkNodeRunners(hubMjsCall(server), node, expect)
   } catch (err: unknown) {
     console.error(
       `could not read the node status: ${err instanceof Error ? err.message : String(err)}`,

@@ -37,8 +37,7 @@
  * No hub address lives in this file. The hub is `CAMSTACK_HUB_URL`, or the
  * gitignored `scratchpad/.hub`; with neither, `--live` refuses by name. The
  * token is the operator's `camstack login` session through the shared resolver
- * (`scripts/hub/credentials.mjs`); `CAMSTACK_HUB_TOKEN_FILE` is an explicit
- * override only. The hub serves a self-signed certificate, so the
+ * (`scripts/hub/credentials.mjs`), and nothing else. The hub serves a self-signed certificate, so the
  * connection skips verification exactly as hub.mjs does, but scoped to this
  * script's own dispatcher rather than the whole process.
  *
@@ -275,10 +274,9 @@ export function decodeVectorBase64(b64: string): readonly number[] | null {
 
 const IDENTITY_INDEX = 'identity-arcface'
 
-/** Where the hub is, and the explicit token override when the operator named one. */
+/** Where the hub is. The credential is the login session, resolved separately. */
 export interface HubConnection {
   readonly hubUrl: string
-  readonly tokenFile?: string
 }
 
 export interface HubConnectionSources {
@@ -290,7 +288,7 @@ export interface HubConnectionSources {
 }
 
 /**
- * The hub URL and token file, from the operator's environment or the
+ * The hub URL, from the operator's environment or the
  * gitignored scratchpad — never from this file, which is public (D651).
  */
 export function resolveHubConnection(sources: HubConnectionSources): HubConnection {
@@ -303,17 +301,12 @@ export function resolveHubConnection(sources: HubConnectionSources): HubConnecti
       'no hub URL: set CAMSTACK_HUB_URL (e.g. https://<hub-host>:4443) or write it to scratchpad/.hub (gitignored)',
     )
   }
-  const tokenFromEnv = sources.env['CAMSTACK_HUB_TOKEN_FILE']?.trim()
-  return {
-    hubUrl: hubUrl.replace(/\/+$/, ''),
-    ...(tokenFromEnv !== undefined && tokenFromEnv !== '' ? { tokenFile: tokenFromEnv } : {}),
-  }
+  return { hubUrl: hubUrl.replace(/\/+$/, '') }
 }
 
 /** The shared resolver's contract (`scripts/hub/credentials.mjs`); injectable for the spec. */
 export type ResolveHubAuth = (opts: {
   readonly server?: string
-  readonly tokenFile?: string
 }) => Promise<{ readonly server: string; readonly token: string }>
 
 /** Hub address + bearer for `--live`: the token is never read from a file here. */
@@ -321,10 +314,7 @@ export async function authenticateHub(
   hub: HubConnection,
   resolveAuth: ResolveHubAuth,
 ): Promise<{ readonly hubUrl: string; readonly token: string }> {
-  const auth = await resolveAuth({
-    server: hub.hubUrl,
-    ...(hub.tokenFile !== undefined ? { tokenFile: hub.tokenFile } : {}),
-  })
+  const auth = await resolveAuth({ server: hub.hubUrl })
   return { hubUrl: auth.server, token: auth.token }
 }
 

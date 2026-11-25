@@ -1,18 +1,13 @@
-// Generic tRPC caller against YOUR hub — through the shared credential chain.
+// Generic tRPC caller against YOUR hub, through the `camstack login` session.
 //
 // Usage: node scripts/hub/hub.mjs <GET|POST> <path> '<json>'   ('-' as the JSON reads it from stdin)
-//        node scripts/hub/hub.mjs --token-file <f> <GET|POST> <path> '<json>'
 //        node scripts/hub/hub.mjs --server <url> ...
 //
-// No password, no login, no certificate bypass (D835). ONE token format; only the
-// permissions differ. Run `camstack login <host>` once: every tool uses that session
-// (~/.camstack/<host>.json), renewed automatically when it is about to expire, and a
-// 401 renews it once and retries once. The chain (`@camstack/develop`,
-// packages/develop/src/hub):
-//   1. --token-file <f>        an explicit override only (a bare token or a session file)
-//   2. $CAMSTACK_TOKEN
-//   3. the `camstack login` session
-// This script never looks for a token file of its own.
+// No password, no login, no certificate bypass, no token flag (D1101). Run
+// `camstack login <host>` once, interactively: every tool uses that session
+// (~/.camstack/<host>_<port>.json), renewed automatically when it is about to expire,
+// and a 401 renews it once and retries once. A headless service is logged in once and
+// then refreshes unattended. `--token-file` and $CAMSTACK_TOKEN were removed.
 //
 // --server takes a host, host:port or https URL (normalised by the shared
 // normalizeHubAddress in @camstack/develop; port defaults to 4443).
@@ -67,7 +62,12 @@ function takeFlag(argv, name) {
 }
 
 const argv = process.argv.slice(2)
-const tokenFile = takeFlag(argv, '--token-file')
+if (argv.includes('--token-file') || argv.includes('--token')) {
+  console.error(
+    '--token / --token-file were removed: run `camstack login <host>` once, interactively; every tool then uses that session and renews it.',
+  )
+  process.exit(1)
+}
 const serverFlag = takeFlag(argv, '--server')
 const [method, route, rawInput] = argv
 
@@ -78,7 +78,7 @@ if (method === 'login') {
   process.exit(1)
 }
 if ((method !== 'GET' && method !== 'POST') || !route) {
-  console.error("usage: hub.mjs [--token-file <f>] [--server <host>] <GET|POST> <path> '<json>'")
+  console.error("usage: hub.mjs [--server <host>] <GET|POST> <path> '<json>'")
   process.exit(1)
 }
 
@@ -98,14 +98,12 @@ let credentials
 try {
   credentials = await resolveFreshCredentials({
     server: hub.url,
-    ...(tokenFile ? { tokenFile } : {}),
     loadSession,
   })
 } catch (err) {
   console.error(err instanceof MissingCredentialsError ? err.message : String(err))
   process.exit(1)
 }
-if (credentials.warning) console.error(`warning: ${credentials.warning}`)
 
 const client = createHubClient({
   baseUrl: hub.url,

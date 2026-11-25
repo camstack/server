@@ -14,6 +14,7 @@
  *
  * Usage: npx tsx scripts/probe-motion-latency.mts [durationSec=30]
  */
+import { resolveHubAuth } from './hub/credentials.mjs'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
 import superjson from 'superjson'
 import WebSocket from 'ws'
@@ -22,18 +23,15 @@ import type { AppRouter } from '@camstack/types'
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 const DURATION_SEC = Number.parseInt(process.argv[2] ?? '30', 10)
-const SERVER = process.env.CAMSTACK_SERVER ?? 'https://localhost:4443'
+// The `camstack login` session is the only credential (D1101): log in once with
+// `camstack login <host>`; nothing here asks for a password.
+const hubAuth = await resolveHubAuth(
+  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+)
+const SERVER = hubAuth.server
 
 async function login(): Promise<string> {
-  const res = await fetch(`${SERVER}/trpc/auth.login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ json: { username: 'admin', password: 'admin' } }),
-  })
-  const body = (await res.json()) as { result?: { data?: { json?: { token?: string } } } }
-  const token = body?.result?.data?.json?.token
-  if (!token) throw new Error(`login failed: ${JSON.stringify(body)}`)
-  return token
+  return hubAuth.token
 }
 
 function envMs(ts: unknown): number {

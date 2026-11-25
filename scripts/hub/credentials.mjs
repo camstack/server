@@ -1,15 +1,15 @@
 // The ONE credential doorway for operator scripts (scripts/hub/hub.mjs is the other
-// face of it). A script never opens a token file of its own: it asks for
-// `resolveHubAuth()` and gets a bearer from the shared chain in `@camstack/develop`
-// (packages/develop/src/hub/session-refresh.ts):
-//   --token-file (explicit override only) -> $CAMSTACK_TOKEN -> the `camstack login`
-//   session in ~/.camstack/<host>.json, renewed automatically when it is about to expire.
+// face of it). A script never opens a token file of its own and never logs in with a
+// password: it asks for `resolveHubAuth()` and gets a bearer from the `camstack login`
+// session in ~/.camstack/<host>_<port>.json, renewed automatically when it is about to
+// expire (packages/develop/src/hub/session-refresh.ts). Nothing else is a credential
+// (D1101): no token flag, no token file, no environment token.
 //
-// Setup, once per hub:  camstack login <host>
+// Setup, once per hub, interactively:  camstack login <host>
 //
 // Usage in a script:
 //   import { resolveHubAuth } from '../hub/credentials.mjs'
-//   const { server, token } = await resolveHubAuth({ server: args.server, tokenFile: args['token-file'] })
+//   const { server, token } = await resolveHubAuth({ server: args.server })
 //
 // Needs the develop package built once: `npm run build -w packages/develop`.
 import { fileURLToPath } from 'node:url'
@@ -27,10 +27,10 @@ async function loadDevelop() {
 }
 
 /**
- * @param {{ server?: string, tokenFile?: string }} [opts] both are explicit
- *   overrides; with neither, the address comes from $CAMSTACK_HUB_URL /
- *   scratchpad/.hub-url / the session and the token from the session.
- * @returns {Promise<{ server: string, token: string, tier: 'admin' | 'protected', source: string }>}
+ * @param {{ server?: string }} [opts] an explicit hub ADDRESS; without it the address
+ *   comes from $CAMSTACK_HUB_URL / scratchpad/.hub-url / the session. The token always
+ *   comes from the session.
+ * @returns {Promise<{ server: string, token: string, tier: 'admin' | 'protected', source: 'session' }>}
  */
 export async function resolveHubAuth(opts = {}) {
   const develop = await loadDevelop()
@@ -46,10 +46,8 @@ export async function resolveHubAuth(opts = {}) {
   }
   const credentials = await develop.resolveFreshCredentials({
     server: hub.url,
-    ...(opts.tokenFile ? { tokenFile: opts.tokenFile } : {}),
     loadSession: develop.loadSession,
   })
-  if (credentials.warning) console.error(`warning: ${credentials.warning}`)
   return {
     server: hub.url,
     token: credentials.token,

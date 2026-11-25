@@ -208,8 +208,8 @@ describe('resolveHubConnection — no hub address lives in the repo', () => {
       readFile: () => null,
     })
     expect(c.hubUrl).toBe('https://hub.example:4443')
-    // No implicit token file: the session is the credential.
-    expect(c.tokenFile).toBeUndefined()
+    // The session is the only credential.
+    expect(c).toEqual({ hubUrl: 'https://hub.example:4443' })
   })
 
   it('falls back to a gitignored scratchpad/.hub file', () => {
@@ -227,17 +227,17 @@ describe('resolveHubConnection — no hub address lives in the repo', () => {
     ).toThrow(/CAMSTACK_HUB_URL/)
   })
 
-  it('takes the token file from CAMSTACK_HUB_TOKEN_FILE when set', () => {
+  it('ignores CAMSTACK_HUB_TOKEN_FILE: the session is the only credential (D1101)', () => {
     const c = resolveHubConnection({
       env: { CAMSTACK_HUB_URL: 'https://h:1', CAMSTACK_HUB_TOKEN_FILE: '/elsewhere/.tok' },
       repoRoot: '/repo',
       readFile: () => null,
     })
-    expect(c.tokenFile).toBe('/elsewhere/.tok')
+    expect(c).toEqual({ hubUrl: 'https://h:1' })
   })
 
   it('the token comes from the shared resolver (the session), never from a file read here', async () => {
-    const asked: { server?: string; tokenFile?: string }[] = []
+    const asked: { server?: string }[] = []
     const auth = await authenticateHub({ hubUrl: 'https://h:1' }, async (opts) => {
       asked.push(opts)
       return { server: 'https://h:1', token: 'session-jwt' }
@@ -246,15 +246,6 @@ describe('resolveHubConnection — no hub address lives in the repo', () => {
     expect(auth).toEqual({ hubUrl: 'https://h:1', token: 'session-jwt' })
     const src = readFileSync(path.join(here, '..', 'face-threshold-calibration.ts'), 'utf8')
     expect(src).not.toMatch(/\.tok\b|admin-token/)
-  })
-
-  it('an explicit CAMSTACK_HUB_TOKEN_FILE is passed through as an override only', async () => {
-    const asked: { server?: string; tokenFile?: string }[] = []
-    await authenticateHub({ hubUrl: 'https://h:1', tokenFile: '/x/t' }, async (opts) => {
-      asked.push(opts)
-      return { server: 'https://h:1', token: 't' }
-    })
-    expect(asked).toEqual([{ server: 'https://h:1', tokenFile: '/x/t' }])
   })
 
   it('the script source carries no IP address', () => {

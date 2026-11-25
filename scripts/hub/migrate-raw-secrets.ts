@@ -16,7 +16,6 @@
  *
  *   npx tsx scripts/hub/migrate-raw-secrets.ts --server <host>           # dry run
  *   npx tsx scripts/hub/migrate-raw-secrets.ts --server <host> --apply
- *   (optional) --token-file <f>
  *
  * Dry run by default. Idempotent: a second `--apply` finds nothing raw. Exits 1
  * when, after the run, any row is still raw or any marker does not resolve.
@@ -115,7 +114,6 @@ export function allVerified(results: readonly OwnerResult[]): boolean {
 
 export interface CliArgs {
   readonly server: string
-  readonly tokenFile: string | null
   readonly apply: boolean
 }
 
@@ -128,20 +126,16 @@ export function parseArgs(argv: readonly string[]): CliArgs | string {
   if (server === null || server.length === 0) {
     return 'refusing to run: --server <host> is REQUIRED (this script never picks a hub for you)'
   }
-  return { server, tokenFile: valueOf('--token-file'), apply: argv.includes('--apply') }
+  return { server, apply: argv.includes('--apply') }
 }
 
 /** One call to the real hub, through hub.mjs; the input goes on STDIN. */
 export type HubCall = (route: string, input: unknown) => Promise<unknown>
 
 /** The real hub, through hub.mjs, with the HTTP method of the route (query = GET, mutation = POST). */
-export function hubMjsCall(
-  server: string,
-  tokenFile: string | null,
-  method: 'GET' | 'POST',
-): HubCall {
+export function hubMjsCall(server: string, method: 'GET' | 'POST'): HubCall {
   const script = path.join(import.meta.dirname ?? __dirname, 'hub.mjs')
-  const extra = ['--server', server, ...(tokenFile === null ? [] : ['--token-file', tokenFile])]
+  const extra = ['--server', server]
   return (route, input) =>
     new Promise((resolve, reject) => {
       const child = spawn('node', [script, ...extra, method, route, '-'], {
@@ -167,8 +161,8 @@ export function hubMjsCall(
     })
 }
 
-export function hubMjsMutate(server: string, tokenFile: string | null): HubMutate {
-  return { mutate: hubMjsCall(server, tokenFile, 'POST') }
+export function hubMjsMutate(server: string): HubMutate {
+  return { mutate: hubMjsCall(server, 'POST') }
 }
 
 async function main(): Promise<void> {
@@ -180,7 +174,7 @@ async function main(): Promise<void> {
   console.log(
     args.apply ? 'APPLY: moving plaintext secrets into the keychain' : 'DRY RUN: nothing changes',
   )
-  const results = await runMigration(hubMjsMutate(args.server, args.tokenFile), args.apply)
+  const results = await runMigration(hubMjsMutate(args.server), args.apply)
   for (const r of results) console.log(formatResult(r, args.apply))
   if (!allVerified(results)) {
     console.error(

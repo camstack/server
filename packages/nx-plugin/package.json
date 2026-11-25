@@ -50,6 +50,7 @@
     "migrations": ""
   },
   "dependencies": {
+    "@camstack/develop": "*",
     "form-data": "^4.0.0"
   },
   "peerDependencies": {

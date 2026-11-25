@@ -62,8 +62,8 @@
  *
  * Environment: `MCE_NODE` (default `agent-a`), `MCE_MODEL` (default
  * `yolov9m-320-int8`), `MCE_MINAREA`, `MCE_THRESHOLD`, `MCE_ANALYSIS_W`,
- * `MCE_HUB` and `MCE_TOKEN_FILE` (explicit overrides only: the hub comes from
- * `CAMSTACK_HUB_URL` / `scratchpad/.hub-url` / the session and the token from the
+ * `MCE_HUB` (an explicit hub address; otherwise it comes from
+ * `CAMSTACK_HUB_URL` / `scratchpad/.hub-url` / the session; the token is the
  * `camstack login` session, through scripts/hub/credentials.mjs).
  *
  * `MCE_NODE`/`MCE_MODEL` are NOT a property of the camera: the session
@@ -449,10 +449,8 @@ let hubAuth: HubAuth | null = null
 /** The session through the shared resolver; called once, at the start of `main`. */
 async function connectHub(): Promise<void> {
   const server = process.env['MCE_HUB']
-  const tokenFile = process.env['MCE_TOKEN_FILE']
   hubAuth = await resolveHubAuth({
     ...(server ? { server } : {}),
-    ...(tokenFile ? { tokenFile } : {}),
   })
 }
 

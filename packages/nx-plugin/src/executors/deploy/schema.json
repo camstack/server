@@ -7,12 +7,8 @@
   "properties": {
     "server": {
       "type": "string",
-      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, ~/.camstackrc, then http://localhost:4443.",
+      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, then the hub of the `camstack login` session.",
       "examples": ["http://localhost:4443"]
-    },
-    "token": {
-      "type": "string",
-      "description": "Auth token (Bearer). Prefer leaving this unset and reading from $CAMSTACK_TOKEN or ~/.camstackrc — don't bake secrets into project.json."
     },
     "skipBuild": {
       "type": "boolean",
@@ -28,10 +24,6 @@
       "type": "boolean",
       "default": false,
       "description": "Keep the .tgz after a successful upload (default: delete). Useful for archive/audit."
-    },
-    "rcPath": {
-      "type": "string",
-      "description": "Override the rc file path (default: $HOME/.camstackrc)."
     }
   },
   "required": []

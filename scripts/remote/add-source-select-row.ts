@@ -6,7 +6,6 @@
  *
  *   npx tsx scripts/remote/add-source-select-row.ts --server <host>                         # dry run (default)
  *   npx tsx scripts/remote/add-source-select-row.ts --server <host> --apply --backup <file>
- *   (optional) --token-file <f>
  *
  * `--apply` first writes the ORIGINAL payloads of the templates it will change
  * to `--backup <file>` (JSON) and refuses to run without it. Reaches the hub
@@ -26,7 +25,6 @@ interface TemplateRow {
 
 export interface CliArgs {
   readonly server: string
-  readonly tokenFile: string | null
   readonly apply: boolean
   readonly backup: string | null
 }
@@ -41,7 +39,7 @@ export function parseArgs(argv: readonly string[]): CliArgs | string {
   const apply = argv.includes('--apply')
   const backup = valueOf('--backup')
   if (apply && backup === null) return 'refusing to run: --apply needs --backup <file>'
-  return { server, tokenFile: valueOf('--token-file'), apply, backup }
+  return { server, apply, backup }
 }
 
 function isRow(value: unknown): value is TemplateRow {
@@ -124,7 +122,9 @@ export async function applyPlan(
       }
     } catch (err: unknown) {
       failed += 1
-      log(`FAILED  ${p.row.id} "${p.row.name}": ${err instanceof Error ? err.message : String(err)}`)
+      log(
+        `FAILED  ${p.row.id} "${p.row.name}": ${err instanceof Error ? err.message : String(err)}`,
+      )
     }
   }
   return { updated, failed }
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
     console.error(args)
     process.exit(1)
   }
-  const hub = hubMjsCall(args.server, args.tokenFile)
+  const hub = hubMjsCall(args.server)
   const planned = await planTemplates(hub)
   for (const p of planned) console.log(describe(p))
   const todo = planned.filter((p) => p.plan.status === 'insert')

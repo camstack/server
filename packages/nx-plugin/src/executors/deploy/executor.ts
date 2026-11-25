@@ -10,7 +10,7 @@ import { uploadAddon } from '../../lib/upload-addon.js'
  * Nx executor: pack + push an addon to a running CamStack hub.
  *
  * Steps:
- *   1. Resolve server + token from (options → env → ~/.camstackrc → defaults)
+ *   1. Resolve server + token from (the `camstack login` session; the address from options → $CAMSTACK_SERVER)
  *   2. Run `npm pack --json` in the project's source dir → .tgz
  *   3. POST the tarball to `${server}/api/addons/upload`
  *   4. Delete the .tgz unless `keepTarball` is set
@@ -56,10 +56,8 @@ export default async function deployExecutor(
     )
   }
 
-  const { server, token } = resolveDeployConfig({
-    server: options.server,
-    token: options.token,
-    rcPath: options.rcPath,
+  const { server, token } = await resolveDeployConfig({
+    ...(options.server !== undefined ? { server: options.server } : {}),
   })
 
   console.info(`[deploy] packing ${projectName}…`)

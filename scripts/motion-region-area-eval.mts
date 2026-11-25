@@ -61,8 +61,8 @@
  *   npx tsx scripts/motion-region-area-eval.mts gt <ground-truth.json> <recall.jsonl ...>
  *
  * Hub access: the `camstack login` session through the shared resolver
- * (scripts/hub/credentials.mjs). Environment: `MRA_HUB` and `MRA_TOKEN_FILE` are
- * explicit overrides only, `MRA_PROFILE` (default `high`), `MRA_FPS`
+ * (scripts/hub/credentials.mjs). Environment: `MRA_HUB` is an
+ * explicit hub address, `MRA_PROFILE` (default `high`), `MRA_FPS`
  * (default 4 — the `motionFps` schema default).
  *
  * The measurement this produced: `docs/benchmarks/motion-region-area.md`.
@@ -138,10 +138,8 @@ let hubAuth: HubAuth | null = null
 /** The session through the shared resolver; called once, at the start of `main`. */
 async function connectHub(): Promise<void> {
   const server = process.env['MRA_HUB']
-  const tokenFile = process.env['MRA_TOKEN_FILE']
   hubAuth = await resolveHubAuth({
     ...(server ? { server } : {}),
-    ...(tokenFile ? { tokenFile } : {}),
   })
 }
 

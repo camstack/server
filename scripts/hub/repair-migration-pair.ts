@@ -7,7 +7,7 @@
  * wrong way.
  *
  *   npx tsx scripts/hub/repair-migration-pair.ts --server <host> --a <id> --b <id>
- *        [--location-a <name|none>] [--location-b <name|none>] [--token-file <f>] [--apply]
+ *        [--location-a <name|none>] [--location-b <name|none>] [--apply]
  *
  * - Secrets: `deviceManager.repairMigrationSecrets` re-points each number's
  *   markers at its OWN scope and exchanges the keychain values (admin only,
@@ -24,7 +24,6 @@ import { type HubCall, hubMjsCall } from './hub-call.js'
 
 export interface RepairArgs {
   readonly server: string
-  readonly tokenFile: string | null
   readonly apply: boolean
   readonly a: number
   readonly b: number
@@ -54,7 +53,6 @@ export function parseArgs(argv: readonly string[]): RepairArgs | string {
   }
   return {
     server,
-    tokenFile: valueOf('--token-file'),
     apply: argv.includes('--apply'),
     a,
     b,
@@ -138,7 +136,7 @@ async function main(): Promise<void> {
     process.exit(2)
   }
   console.log(args.apply ? 'APPLY: repairing the pair' : 'DRY RUN: nothing changes')
-  for (const line of await runRepair(hubMjsCall(args.server, args.tokenFile), args)) {
+  for (const line of await runRepair(hubMjsCall(args.server), args)) {
     console.log(line)
   }
 }

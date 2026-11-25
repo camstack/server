@@ -3,7 +3,7 @@
     "deploy": {
       "implementation": "./dist/executors/deploy/executor",
       "schema": "./dist/executors/deploy/schema.json",
-      "description": "Pack the addon (via `npm pack`) and upload the resulting tarball to a running CamStack hub via /api/addons/upload. Honors CAMSTACK_SERVER + CAMSTACK_TOKEN env vars and ~/.camstackrc for defaults."
+      "description": "Pack the addon (via `npm pack`) and upload the resulting tarball to a running CamStack hub via /api/addons/upload. Authenticates with the `camstack login` session (the only credential); the address may come from CAMSTACK_SERVER."
     }
   }
 }

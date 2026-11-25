@@ -11,7 +11,7 @@
  *
  * Auth / hub: the `camstack login` session through the shared resolver
  * (scripts/hub/credentials.mjs, same chain as scripts/hub/hub.mjs); run
- * `camstack login <host>` once. --server / --token-file are explicit overrides.
+ * `camstack login <host>` once. --server names the hub address.
  *
  * Usage:
  *   node scripts/bench-detector-latency-column.mjs \
@@ -55,7 +55,6 @@ function hasFlag(name) {
 
 const { server: HUB, token: TOK } = await resolveHubAuth({
   server: arg('server') ?? undefined,
-  tokenFile: arg('token-file') ?? undefined,
 })
 const NODE = arg('node')
 const DEVICE = arg('device')

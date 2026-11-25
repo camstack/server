@@ -33,9 +33,9 @@ export function hubInvocation(
 }
 
 /** The real hub, through hub.mjs; the input goes on STDIN (argv has a size limit). */
-export function hubMjsCall(server: string, tokenFile: string | null): HubCall {
+export function hubMjsCall(server: string): HubCall {
   const script = path.join(import.meta.dirname ?? __dirname, 'hub.mjs')
-  const extra = ['--server', server, ...(tokenFile === null ? [] : ['--token-file', tokenFile])]
+  const extra = ['--server', server]
   const call = (method: 'GET' | 'POST', route: string, input: unknown): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const { args, stdin } = hubInvocation(extra, method, route, input)

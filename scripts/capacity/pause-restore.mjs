@@ -34,7 +34,6 @@
  *
  * Options:
  *   --server <url>       hub base URL   (default https://camstack.<local-user>.top)
- *   --token-file <path>  explicit token override (default: the `camstack login` session)
  *   --manifest <path>    manifest file  (default scripts/capacity/.pause-manifest.json)
  *   --max-minutes <n>    hard pause bound stamped into the manifest (default 45)
  *   --apply              actually mutate; otherwise print what WOULD happen
@@ -54,7 +53,6 @@ function opt(name, dflt) {
   return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : dflt
 }
 const APPLY = argv.includes('--apply')
-const TOKEN_FILE = opt('token-file', undefined)
 const MANIFEST = opt('manifest', join(HERE, '.pause-manifest.json'))
 const MAX_MINUTES = Number(opt('max-minutes', '45'))
 const SCOPE = opt('scope', '')
@@ -65,7 +63,7 @@ const REAPPLY_AFTER_POLLS = 5 // re-send the patch if not converged by then (dro
 
 if (!['pause', 'restore', 'verify'].includes(command ?? '')) {
   console.error(
-    'usage: pause-restore.mjs <pause|restore|verify> [--scope fleet|node:<id>] [--apply] [--server url] [--token-file path]',
+    'usage: pause-restore.mjs <pause|restore|verify> [--scope fleet|node:<id>] [--apply] [--server url]',
   )
   process.exit(2)
 }
@@ -74,7 +72,6 @@ if (!['pause', 'restore', 'verify'].includes(command ?? '')) {
 // The `camstack login` session through the shared resolver (renewed when it is about to expire).
 const { server: SERVER, token } = await resolveHubAuth({
   server: opt('server', undefined),
-  ...(TOKEN_FILE ? { tokenFile: TOKEN_FILE } : {}),
 })
 async function trpc(method, path, input) {
   const url =

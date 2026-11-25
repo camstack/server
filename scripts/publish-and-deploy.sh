@@ -27,8 +27,8 @@
 #   ./scripts/publish-and-deploy.sh --node <id> | --cluster # forward to camstack deploy
 #
 # Deploy target resolution mirrors `camstack deploy` defaults: cached
-# session file (`camstack login` first), falling back to env vars
-# `CAMSTACK_SERVER` / `CAMSTACK_TOKEN`.
+# session file (`camstack login` first), which is the only credential; the
+# address may also come from `CAMSTACK_SERVER`.
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 

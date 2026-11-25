@@ -36,7 +36,7 @@ function hub(answer: unknown): { hub: HubMutate; calls: Array<[string, unknown]>
 describe('migrate-raw-secrets', () => {
   it('refuses to pick a hub', () => {
     expect(parseArgs([])).toContain('--server')
-    expect(parseArgs(['--server', 'h'])).toEqual({ server: 'h', tokenFile: null, apply: false })
+    expect(parseArgs(['--server', 'h'])).toEqual({ server: 'h', apply: false })
     expect(parseArgs(['--server', 'h', '--apply'])).toMatchObject({ apply: true })
   })
 

@@ -4,7 +4,7 @@
  * a plain string in the live settings database?
  *
  *   npx tsx scripts/hub/scan-raw-secrets.ts --server <host>
- *   (optional) --token-file <f>  --max-rows <n>  --page <n>  --pause-ms <n>  --json
+ *   (optional) --max-rows <n>  --page <n>  --pause-ms <n>  --json
  *
  * It walks EVERY table the hub lists (`storageAdmin.listTables`) through the read
  * API (`settingsStore.query`, paged, ordered by id) and reports, per finding,
@@ -274,7 +274,6 @@ export function formatReport(report: ScanReport): string[] {
 
 export interface CliArgs {
   readonly server: string
-  readonly tokenFile: string | null
   readonly json: boolean
   readonly options: ScanOptions
 }
@@ -304,7 +303,6 @@ export function parseArgs(argv: readonly string[]): CliArgs | string {
   if (page < 1) return '--page must be at least 1'
   return {
     server,
-    tokenFile: valueOf('--token-file'),
     json: argv.includes('--json'),
     options: { maxRows, page, pauseMs },
   }
@@ -316,7 +314,7 @@ async function main(): Promise<void> {
     console.error(args)
     process.exit(2)
   }
-  const report = await scanHub(hubMjsCall(args.server, args.tokenFile, 'GET'), args.options)
+  const report = await scanHub(hubMjsCall(args.server, 'GET'), args.options)
   if (args.json) console.log(JSON.stringify(report, null, 2))
   else for (const line of formatReport(report)) console.log(line)
   if (report.findings.length > 0) process.exit(1)

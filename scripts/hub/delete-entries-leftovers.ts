@@ -5,7 +5,7 @@
  *
  *   npx tsx scripts/hub/delete-entries-leftovers.ts --server <host>           # dry run
  *   npx tsx scripts/hub/delete-entries-leftovers.ts --server <host> --apply
- *   (optional) --token-file <f>  --dreame-integration <id>   (default int_0009)
+ *   (optional) --dreame-integration <id>   (default int_0009)
  *
  * C10: before deleting `provider-dreame.brokers`, confirms the dreame integration
  * (default `int_0009`) holds a keychain MARKER for `password` and that the marker
@@ -179,7 +179,6 @@ export async function deleteEntriesLeftovers(
 
 export interface CliArgs {
   readonly server: string
-  readonly tokenFile: string | null
   readonly apply: boolean
   readonly dreameIntegrationId: string
 }
@@ -196,7 +195,6 @@ export function parseArgs(argv: readonly string[]): CliArgs | string {
   const dreame = valueOf('--dreame-integration')
   return {
     server,
-    tokenFile: valueOf('--token-file'),
     apply: argv.includes('--apply'),
     dreameIntegrationId: dreame === null || dreame.length === 0 ? DREAME_INTEGRATION_ID : dreame,
   }
@@ -224,7 +222,7 @@ async function main(): Promise<void> {
       ? 'APPLY: deleting entries-census X addon-settings rows'
       : 'DRY RUN: counts only, nothing deleted',
   )
-  const outcome = await deleteEntriesLeftovers(hubMjsCall(args.server, args.tokenFile), {
+  const outcome = await deleteEntriesLeftovers(hubMjsCall(args.server), {
     apply: args.apply,
     dreameIntegrationId: args.dreameIntegrationId,
     log: (line) => console.log(line),
