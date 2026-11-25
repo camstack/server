@@ -167,3 +167,51 @@ describe('acquireSessionDecodeRestreamFrom (detection dial intent)', () => {
     expect(result?.source.restreamUrl).toBe('rtsp://127.0.0.1:8554/tok-abc/muted')
   })
 })
+
+describe('acquireSessionDecodeRestreamFrom (unknown source codec)', () => {
+  it('falls back to h264 EXPLICITLY: one warn per (device, stream), tagged with the deviceId', async () => {
+    const fake = makeFakeApi()
+    fake.getStreamWithCodec.mockResolvedValue({
+      url: 'rtsp://127.0.0.1:8554/tok-abc/muted',
+      videoCodec: null,
+      audioCodec: 'none',
+      resolution: { width: 640, height: 360 },
+      transcoded: false,
+      encoder: 'copy',
+      pipelineKey: 'pk-104-high-copy',
+    })
+    const logger = mockLogger()
+    const params = { deviceId: 104, streamId: 'main', tag: 'session-decode:detect:104' }
+
+    const first = await acquireSessionDecodeRestreamFrom(fake.api, logger, params)
+    await acquireSessionDecodeRestreamFrom(fake.api, logger, params)
+
+    expect(first?.source.codec).toBe('h264')
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('source codec unknown'),
+      expect.objectContaining({ tags: { deviceId: 104 } }),
+    )
+  })
+
+  it('a known H265 source dials h265 and warns nothing', async () => {
+    const fake = makeFakeApi()
+    fake.getStreamWithCodec.mockResolvedValue({
+      url: 'rtsp://127.0.0.1:8554/tok-abc/muted',
+      videoCodec: 'H265',
+      audioCodec: 'none',
+      resolution: { width: 640, height: 360 },
+      transcoded: false,
+      encoder: 'copy',
+      pipelineKey: 'pk',
+    })
+    const logger = mockLogger()
+    const r = await acquireSessionDecodeRestreamFrom(fake.api, logger, {
+      deviceId: 104,
+      streamId: 'main',
+      tag: 't',
+    })
+    expect(r?.source.codec).toBe('h265')
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
+})

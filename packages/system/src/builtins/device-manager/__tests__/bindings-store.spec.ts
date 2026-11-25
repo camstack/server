@@ -112,6 +112,7 @@ async function setupAddon(): Promise<{
   ctx: { kernel: Record<string, unknown> }
   store: FakeSettingsStore
   settings: FakeSettings
+  logger: IScopedLogger
   reads: { getCalls: () => number; queryCalls: () => number; countCalls: () => number }
 }> {
   const addon = new DeviceManagerAddon()
@@ -119,10 +120,11 @@ async function setupAddon(): Promise<{
   const reads = countingReadsOf(store)
   const settings = makeSettings()
   const records = await makeRecordsAccessForOwner('device-manager')
+  const logger = makeLogger()
   const ctx = {
     api: { settingsStore: reads.api },
     id: 'device-manager',
-    logger: makeLogger(),
+    logger,
     eventBus: makeEventBus(),
     addonConfig: {},
     dataDir: '/tmp',
@@ -136,6 +138,7 @@ async function setupAddon(): Promise<{
     ctx,
     store,
     settings,
+    logger,
     reads: { getCalls: reads.getCalls, queryCalls: reads.queryCalls, countCalls: reads.countCalls },
   }
 }
@@ -145,6 +148,7 @@ describe('device-manager bindings store', () => {
   let ctx: { kernel: Record<string, unknown> }
   let store: FakeSettingsStore
   let settings: FakeSettings
+  let logger: IScopedLogger
   let reads: { getCalls: () => number; queryCalls: () => number; countCalls: () => number }
 
   beforeEach(async () => {
@@ -153,6 +157,7 @@ describe('device-manager bindings store', () => {
     ctx = result.ctx
     store = result.store
     settings = result.settings
+    logger = result.logger
     reads = result.reads
   })
 
@@ -318,7 +323,6 @@ describe('device-manager bindings store', () => {
     capRegistry.registerWrapper('motion-detection', 'motion-wasm', { defaultActive: true })
     ctx.kernel.capabilityRegistry = capRegistry
     await seedDeviceRow(store, { deviceId: 3, type: 'event-emitter' })
-    const logger = (ctx as unknown as { logger: IScopedLogger }).logger
     const skipLines = (): number =>
       vi
         .mocked(logger.debug)

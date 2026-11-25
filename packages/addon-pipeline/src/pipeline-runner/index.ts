@@ -904,6 +904,41 @@ export interface AcquireSessionDecodeRestreamParams {
   readonly detectionIntent?: boolean
 }
 
+/** (device, stream) pairs whose unknown codec was already warned about, per logger. */
+const unknownDecodeCodecWarned = new WeakMap<IScopedLogger, Set<string>>()
+
+/**
+ * The decode worker's codec for a dial. The broker reports `null` when the
+ * source's codec was never measured (D393). The worker needs a decoder up
+ * front, so for an unknown codec this keeps H.264 as an EXPLICIT fallback — not
+ * a measured fact — and says so once per (device, stream).
+ */
+function decodeCodecFor(
+  videoCodec: 'H264' | 'H265' | null,
+  logger: IScopedLogger,
+  deviceId: number,
+  streamId: string,
+): 'h264' | 'h265' {
+  if (videoCodec !== null) return videoCodec === 'H265' ? 'h265' : 'h264'
+  let warned = unknownDecodeCodecWarned.get(logger)
+  if (!warned) {
+    warned = new Set()
+    unknownDecodeCodecWarned.set(logger, warned)
+  }
+  const key = `${deviceId}|${streamId}`
+  if (!warned.has(key)) {
+    warned.add(key)
+    logger.warn(
+      'session-decode: source codec unknown — dialing the decoder as h264 (fallback, not measured)',
+      {
+        tags: { deviceId },
+        meta: { streamId },
+      },
+    )
+  }
+  return 'h264'
+}
+
 /**
  * Acquire the broker's COMPRESSED passthrough restream for one camStream and
  * wrap it as a {@link VideoFrameSource} the decode worker can dial. Mirrors
@@ -953,7 +988,7 @@ export async function acquireSessionDecodeRestreamFrom(
     },
     pin,
   )
-  const codec = rtpSource.videoCodec === 'H265' ? 'h265' : 'h264'
+  const codec = decodeCodecFor(rtpSource.videoCodec, logger, deviceId, streamId)
   // The broker returns the video-only (`/muted`) restream for `audio: 'none'`.
   // A detection dial rewrites that to the detection-intent variant so the
   // restreamer serves it the join burst — the dial URL is the only channel the

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detection no longer stops for hours when the node's best inference device turns out to be absent or failed: the node default moves to the next usable device, a camera elected onto a healthy device is never gated on the failed one, detail steps keep their elected device across a motion re-attach, and a camera with no usable device says so once instead of on every frame
 - WebRTC live sessions start from the latest keyframe once DTLS connects, a push-queue overflow never leaves video starting mid-GOP, and a session whose peer is already closed stops waiting for DTLS immediately
 - A copy-passthrough stream with an unknown codec is now reported as unknown instead of H264 and warned once per camera stream; the repeated session-id-reused warning is now debug
+- A detection decode dial on a source with an unknown codec now says so (one warn per camera stream) instead of silently assuming h264
 
 ## [1.2.686] - 2026-11-25
 

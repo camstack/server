@@ -1,7 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { AmcrestCamera } from '../amcrest-camera.js'
 import { readEncodeFacts } from '../encode-facts.js'
 
 const P = 'MainFormat[0]'
@@ -34,10 +32,8 @@ describe('readEncodeFacts — every stream fact as read, never defaulted (planni
       bitrateKbps: 4096,
       level: null,
     })
-    // Level is never in a Dahua Encode table: reported absent, with the reason.
-    expect(facts.missing).toEqual([
-      `level: ${P}.Video.Level absent or unparsable in the Encode table`,
-    ])
+    // Level is never in a Dahua Encode table: null, and not reported as missing.
+    expect(facts.missing).toEqual([])
   })
 
   it('names each fact the table did not carry, with the key, and never invents a value', () => {
@@ -55,18 +51,75 @@ describe('readEncodeFacts — every stream fact as read, never defaulted (planni
   })
 })
 
-describe('amcrest stream catalog logging', () => {
-  const here = dirname(fileURLToPath(import.meta.url))
-  const source = readFileSync(resolve(here, '../amcrest-camera.ts'), 'utf8')
-  const body = source.slice(source.indexOf('private async buildStreamCatalog'))
+interface LoggedLine {
+  readonly msg: string
+  readonly opts: { tags?: unknown; meta?: Record<string, unknown> } | undefined
+}
 
-  it('logs the encode facts at info and a read failure at warn, both tagged with the deviceId', () => {
-    expect(body).toMatch(
-      /logger\.info\('amcrest: stream catalog encode facts',\s*\{\s*tags: \{ deviceId: this\.id \}/,
-    )
-    expect(body).toMatch(
-      /logger\.warn\(\s*'amcrest: stream-catalog encode read failed[^']*',\s*\{\s*tags: \{ deviceId: this\.id \}/,
-    )
-    expect(body).not.toMatch(/logger\.debug\('amcrest: stream-catalog encode enrichment failed/)
+/** Drive the real `buildStreamCatalog` with a fake client, borrowing the prototype methods it uses. */
+async function buildCatalog(getEncodeConfig: () => Promise<Map<string, string>>) {
+  const info: LoggedLine[] = []
+  const warn: LoggedLine[] = []
+  const log = (into: LoggedLine[]) => (msg: string, opts?: LoggedLine['opts']) => {
+    into.push({ msg, opts })
+  }
+  const subject = {
+    id: 108,
+    channel: 1,
+    config: { get: (k: string) => (k === 'host' ? '192.0.2.10' : 'x') },
+    published: new Map<string, unknown>(),
+    ctx: { logger: { info: log(info), warn: log(warn), debug: vi.fn() } },
+    ensureClient: () => ({ getEncodeConfig }),
+    buildRtspUrl: (subtype: 0 | 1) =>
+      AmcrestCamera.prototype['buildRtspUrl'].call(subject, subtype),
+  }
+  const catalog = await AmcrestCamera.prototype['buildStreamCatalog'].call(subject)
+  return { catalog, info, warn }
+}
+
+describe('amcrest stream catalog logging (behavioural)', () => {
+  it('logs one info line with every fact read per stream, tagged with the deviceId', async () => {
+    const table = new Map<string, string>([
+      ['MainFormat[0].Video.Compression', 'H.265'],
+      ['MainFormat[0].Video.Profile', 'Main'],
+      ['MainFormat[0].Video.Width', '2560'],
+      ['MainFormat[0].Video.Height', '1440'],
+      ['MainFormat[0].Video.FPS', '20'],
+      ['MainFormat[0].Video.GOP', '40'],
+      ['MainFormat[0].Video.BitRate', '4096'],
+      ['ExtraFormat[0].Video.Compression', 'H.264'],
+    ])
+    const { catalog, info, warn } = await buildCatalog(async () => table)
+
+    expect(warn).toEqual([])
+    expect(info).toHaveLength(1)
+    expect(info[0]?.opts?.tags).toEqual({ deviceId: 108 })
+    const meta = info[0]?.opts?.meta as {
+      main: { codecRaw: string; profile: string; gop: number; fps: number; missing: string[] }
+      sub: { codecRaw: string; missing: string[] }
+    }
+    expect(meta.main).toMatchObject({
+      codecRaw: 'H.265',
+      profile: 'Main',
+      gop: 40,
+      fps: 20,
+      missing: [],
+    })
+    expect(meta.sub.codecRaw).toBe('H.264')
+    expect(meta.sub.missing.some((m) => m.startsWith('gop:'))).toBe(true)
+    expect(catalog[0]).toMatchObject({ codec: 'h265', fps: 20 })
+  })
+
+  it('warns with the reason when the Encode read fails, URLs still served', async () => {
+    const { catalog, info, warn } = await buildCatalog(async () => {
+      throw new Error('digest auth 401')
+    })
+
+    expect(info).toEqual([])
+    expect(warn).toHaveLength(1)
+    expect(warn[0]?.opts?.tags).toEqual({ deviceId: 108 })
+    expect(warn[0]?.opts?.meta).toEqual({ reason: 'digest auth 401' })
+    expect(catalog.map((d) => d.camStreamId)).toEqual(['main', 'sub'])
+    expect(catalog[0]?.codec).toBeUndefined()
   })
 })

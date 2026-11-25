@@ -7,7 +7,7 @@
 export interface AmcrestEncodeFacts {
   readonly codecRaw: string | null
   readonly profile: string | null
-  /** Dahua's Encode table carries no level key; reported absent, never guessed. */
+  /** Dahua's Encode table carries no level key: always null, and not counted as `missing`. */
   readonly level: string | null
   readonly width: number | null
   readonly height: number | null
@@ -51,7 +51,7 @@ export function readEncodeFacts(
     bitrateKbps: 'BitRate',
   }
   const missing = (Object.keys(facts) as Array<keyof typeof facts>)
-    .filter((name) => facts[name] === null)
+    .filter((name) => name !== 'level' && facts[name] === null)
     .map((name) => `${name}: ${key(sourceKeys[name])} absent or unparsable in the Encode table`)
   return { ...facts, missing }
 }
