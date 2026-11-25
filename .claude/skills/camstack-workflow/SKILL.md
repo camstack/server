@@ -105,7 +105,7 @@ Cursor also has `.cursor/rules/camstack-model-routing.mdc` (always on).
 | 2 | Design | an approved design; viewer layout co-designed | `superpowers:brainstorming` or §2 |
 | 3 | Plan | a plan carrying the repo checklist | `superpowers:writing-plans` + §3 |
 | 4 | Build | a discriminating test that failed first, then the real build | `superpowers:test-driven-development`, `camstack-server-change`, `camstack-addon`, `camstack-capability`, `camstack-secrets`, `camstack-ui` |
-| 5 | Verify | test + build output, live proof by toggling, UI shots | `superpowers:verification-before-completion`, `camstack-diagnose`, `camstack-ui` |
+| 5 | Verify | reviewer `LAND`, then public docs / internal docs / MCP aligned; test + build output, live proof by toggling, UI shots | `superpowers:verification-before-completion`, `camstack-diagnose`, `camstack-ui` |
 | 6 | Document | docs true, `docs:check` green, ADR only for a real choice | `camstack-docs` |
 | 7 | Ship | committed to main with explicit paths; published/deployed and named | `camstack-publish-ci`, `camstack-hub-image-deploy`, `camstack-addon` |
 | 8 | Report | what changed, the evidence, what is still open | §8 |
@@ -216,6 +216,16 @@ here:
   change that merges or replaces flows also gets its per-case inventory
   (adoption, adoption + scan, hub, manual, …) checked on the dev hub before it
   is labelled `status: to test`.
+
+- **Right after `LAND`, before merge: docs and MCP alignment** (operator
+  2026-11-25). Every reviewed change is checked, in the same piece of work,
+  for: the PUBLIC docs (`camstack/docs`, operator-facing, no D-numbers) when
+  the operator sees a difference; the internal docs (`camstack-docs`, §6);
+  and the MCP tools (`camstack-dev` / `camstack-ops`, `packages/develop`,
+  `../planning/tools/mcp-dev`) when the change adds or alters something a
+  tool reads, exports or should expose — extend the tool so it stays
+  aligned. Write "none needed" with the reason when nothing applies; the
+  report names what was updated.
 
 - **Test output**, run fresh, with the counts. A worker shows
   `npm run test:related` over its changed files and edited specs, plus
