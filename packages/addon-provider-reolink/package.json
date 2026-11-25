@@ -114,7 +114,7 @@
     "publish:npm": "npm publish --access public"
   },
   "dependencies": {
-    "@apocaliss92/nodelink-js": "^0.14.1"
+    "@apocaliss92/nodelink-js": "^0.14.2"
   },
   "peerDependencies": {
     "@camstack/types": "*",

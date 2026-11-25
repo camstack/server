@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A stream that stalls because one packet never arrived is now logged with the missing packet and how long media was withheld
+
 ## [1.2.262] - 2026-11-25
 
 ### Changed
