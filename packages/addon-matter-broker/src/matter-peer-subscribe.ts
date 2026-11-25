@@ -9,6 +9,7 @@
  */
 
 import { Seconds } from '@matter/general'
+import { Subscribe } from '@matter/protocol'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterAttributeReport } from './matter-controller.js'
 import {
@@ -105,14 +106,18 @@ export function subscribableFromPeer(
     onOffline: (handler) => listenLifecycle(peer, 'offline', handler),
     subscribe: async (handlers) => {
       await disableAutoSubscribe(peer, nodeId, logger)
+      // `Subscribe()` builds the `attributeRequests` / `eventRequests` lists the
+      // library counts; the raw `attributes` / `events` options are not read.
       const request = {
+        ...Subscribe({
+          attributes: [{}],
+          events: [{}],
+          keepSubscriptions: false,
+          fabricFilter: true,
+          minIntervalFloor: Seconds(SUBSCRIPTION_MIN_INTERVAL_S),
+          maxIntervalCeiling: Seconds(SUBSCRIPTION_MAX_INTERVAL_S),
+        }),
         sustain: true,
-        keepSubscriptions: false,
-        fabricFilter: true,
-        attributes: [{}],
-        events: [{}],
-        minIntervalFloor: Seconds(SUBSCRIPTION_MIN_INTERVAL_S),
-        maxIntervalCeiling: Seconds(SUBSCRIPTION_MAX_INTERVAL_S),
         bootstrapWithRead: true,
         updated: async (update: unknown) => {
           // The result is a one-shot stream: read it once, split by kind.

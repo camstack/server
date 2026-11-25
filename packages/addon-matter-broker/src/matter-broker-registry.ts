@@ -1,6 +1,7 @@
 import { errMsg, type IScopedLogger, isInstanceOn } from '@camstack/types'
 import {
   MatterIntegrationManager,
+  sameConnection,
   type MatterBrokerInfo,
   type MatterControllerFactory,
 } from './matter-integration-manager.js'
@@ -178,6 +179,20 @@ export class MatterBrokerRegistry {
   async updateEntry(id: string, connection: MatterConnection): Promise<MatterBrokerEntry> {
     const mgr = this.#managers.get(id)
     if (!mgr) throw new Error(`MatterBrokerRegistry: unknown broker id "${id}"`)
+    const current = mgr.getConnection()
+    this.#logger.info('MatterBrokerRegistry: updateEntry restarts the controller', {
+      tags: { brokerId: id },
+      meta: {
+        sameConnection: sameConnection(connection, current),
+        threadDatasetChanged: connection.threadDataset !== current.threadDataset,
+        wifiSsidChanged: connection.wifiSsid !== current.wifiSsid,
+        wifiPasswordChanged: connection.wifiPassword !== current.wifiPassword,
+        reconcileIntervalMs: {
+          from: current.reconcileIntervalMs,
+          to: connection.reconcileIntervalMs,
+        },
+      },
+    })
     await mgr.applyConnection(connection)
     const info = mgr.getInfo()
     return { id, name: info.name, connection }

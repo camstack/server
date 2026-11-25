@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fixed Matter attribute subscriptions failing with 'at least one must be specified'; a second fabric that cannot bind the shared port now logs one plain line
+
+## [0.2.177] - 2026-11-25
+
+### Changed
+
 - Matter devices now subscribe to their attributes again; the functions a paired device reports are read and logged.
 
 ## [0.2.176] - 2026-11-25

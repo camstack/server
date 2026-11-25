@@ -20,10 +20,36 @@ function recordingLogger(warns: WarnLine[]): IScopedLogger {
   return logger
 }
 
+/**
+ * Like the real `ClientInteraction.subscribe`: it counts only the request
+ * lists `Subscribe()` builds (`attributeRequests`, `eventRequests`), not the
+ * raw `attributes` / `events` option names, and throws when both are empty.
+ */
+function strictSubscribe(requests: unknown[]): (request: unknown) => Promise<unknown> {
+  return async (request) => {
+    requests.push(request)
+    const lists = isRecord(request) ? request : {}
+    const attributes = lists['attributeRequests']
+    const events = lists['eventRequests']
+    const count =
+      (Array.isArray(attributes) ? attributes.length : 0) +
+      (Array.isArray(events) ? events.length : 0)
+    if (count === 0) {
+      throw new Error('When subscribing to attributes and events, at least one must be specified.')
+    }
+    return { close: async () => undefined }
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 /** A peer whose `stateOf` view is read-only, like matter.js's immutable view. */
 function peerWithReadOnlyNetwork(
   options: { readonly setStateOfThrows: boolean },
   calls: unknown[][],
+  requests: unknown[] = [],
 ): Record<string, unknown> {
   const readOnlyView = new Proxy(
     { autoSubscribe: true },
@@ -40,7 +66,7 @@ function peerWithReadOnlyNetwork(
       calls.push(args)
       if (options.setStateOfThrows) throw new Error('transaction failed')
     },
-    interaction: { subscribe: async () => ({ close: async () => undefined }) },
+    interaction: { subscribe: strictSubscribe(requests) },
   }
 }
 
@@ -66,5 +92,23 @@ describe('subscribableFromPeer', () => {
     )
     await expect(peer?.subscribe(HANDLERS)).resolves.toBeDefined()
     expect(warns).toHaveLength(1)
+  })
+
+  it('sends a request the library can count, with the sustained-subscription options', async () => {
+    const requests: unknown[] = []
+    const peer = subscribableFromPeer(
+      peerWithReadOnlyNetwork({ setStateOfThrows: false }, [], requests),
+      '1',
+    )
+    await peer?.subscribe(HANDLERS)
+    expect(requests).toHaveLength(1)
+    expect(requests[0]).toMatchObject({
+      sustain: true,
+      bootstrapWithRead: true,
+      keepSubscriptions: false,
+      isFabricFiltered: true,
+      attributeRequests: [{}],
+      eventRequests: [{}],
+    })
   })
 })

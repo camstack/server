@@ -201,6 +201,15 @@ export class MatterIntegrationManager {
       this.#status = 'error'
       this.#error = errMsg(err)
       this.#lastCheckedAt = Date.now()
+      const port = boundPortFrom(this.#error)
+      if (port !== null) {
+        // One line, no stack: a second fabric of this addon cannot share the port.
+        this.#logger.warn(
+          `MatterIntegrationManager: fabric ${this.#id} not started: another fabric of this addon already holds port ${port}`,
+          { tags: { brokerId: this.#id }, meta: { port } },
+        )
+        return
+      }
       this.#logger.warn('MatterIntegrationManager: controller start failed', {
         tags: { brokerId: this.#id },
         meta: { error: errMsg(err) },
@@ -294,6 +303,12 @@ export class MatterIntegrationManager {
     }
     return this.#controller
   }
+}
+
+/** The port of a `Cannot bind {::}:<port>` failure, or null for any other error. */
+export function boundPortFrom(message: string): string | null {
+  const match = /Cannot bind .*:(\d+)/.exec(message)
+  return match?.[1] ?? null
 }
 
 /** True when two connections are the "same" (no controller rebuild needed). */
