@@ -163,7 +163,10 @@ export class MatterSubscriptionSupervisor {
         },
       })
     } catch (err: unknown) {
-      this.#log(peer.nodeId, 'subscribe-failed', { error: errMsg(err) })
+      this.#log(peer.nodeId, 'subscribe-failed', {
+        error: errMsg(err),
+        errStack: err instanceof Error ? err.stack : undefined,
+      })
       const current = this.#slots.get(peer.nodeId)
       if (current === undefined || current.generation !== generation) return
       current.phase = 'subscribe-failed'

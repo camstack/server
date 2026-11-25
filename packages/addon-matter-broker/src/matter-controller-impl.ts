@@ -223,7 +223,7 @@ export class MatterJsController implements MatterController {
     for (const peer of server.listPeers()) {
       const view = this.#viewPeer(peer)
       if (view === null) continue
-      const subscribable = subscribableFromPeer(peer, view.id)
+      const subscribable = subscribableFromPeer(peer, view.id, this.#logger)
       if (subscribable === null) {
         this.#logger.warn('MatterJsController: peer has no attribute subscription', {
           tags: { brokerId: this.#options.brokerId },

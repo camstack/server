@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import {
   BaseDeviceProvider,
   brokerCapability,
@@ -34,12 +33,12 @@ import { cascadeRemoveDevicesForBroker } from './matter-broker-device-cascade.js
 import { setBrokerDevicesOnline, type OfflineTarget } from './matter-broker-offline.js'
 import { matterCommands, matterNodes } from './matter-gateway.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
-import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import {
-  MatterNodeDevice,
-  matterEndpointEntrySchema,
-  type MatterEndpointEntry,
-} from './devices/matter-node-device.js'
+  mappableEndpoints,
+  NodeEndpointReporter,
+  reconcileNodeEndpoints,
+} from './matter-node-reconcile.js'
+import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
 import {
   type MatterBrokerBody,
   type MatterConnectionBody,
@@ -78,6 +77,12 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   }
 
   private registry: MatterBrokerRegistry | null = null
+  private endpointReporterInstance: NodeEndpointReporter | null = null
+
+  private get endpointReporter(): NodeEndpointReporter {
+    this.endpointReporterInstance ??= new NodeEndpointReporter(this.ctx.logger)
+    return this.endpointReporterInstance
+  }
   private brokerStore: MatterBrokerStore | null = null
   private instances: RecordIntegrationInstances<MatterConnectionBody> | null = null
   private accountInstances: RecordIntegrationInstances<MatterBrokerBody> | null = null
@@ -304,46 +309,34 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return `matter:${brokerId}:${nodeId}`
   }
 
-  // ── additive endpoint reconcile ────────────────────────────────────────
-
-  /**
-   * Re-derive every adopted node Container's `endpoints[]` from the live node
-   * inventory. When an endpoint set changed, re-persist it via the generic
-   * `applyDerivedSpec` (kernel re-runs `getAccessoryChildren()` → spawns new
-   * endpoint children + removes orphaned ones). Best-effort; never throws.
-   */
+  /** Re-derive every adopted node Container's endpoints from the live inventory. */
   private async reconcileNodeEndpoints(
     brokerId: string,
     nodes: readonly MatterNodeSnapshot[],
   ): Promise<void> {
-    try {
-      const reg = this.ctx.kernel.deviceRegistry
-      const devices = this.ctx.kernel.devices
-      if (!reg || !devices) return
-      const byNode = new Map<string, MatterNodeSnapshot>()
-      for (const n of nodes) byNode.set(n.nodeId, n)
-
-      for (const d of reg.getAllForAddon(this.addonId)) {
-        if (d.parentDeviceId !== null) continue
-        const cfg = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
-        if (cfg['system'] !== 'matter' || cfg['brokerId'] !== brokerId) continue
-        const node = byNode.get(String(cfg['nodeId']))
-        if (node === undefined) continue
-
-        const nextEndpoints = mappableEndpoints(node)
-        const current = Array.isArray(cfg['endpoints']) ? cfg['endpoints'] : []
-        if (endpointsEqual(current, nextEndpoints)) continue
-
-        await devices.applyDerivedSpec(d.id, { config: { endpoints: nextEndpoints } })
-        this.ctx.logger.info('Matter: node endpoints reconciled', {
-          meta: { brokerId, deviceId: d.id, endpointCount: nextEndpoints.length },
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.warn('Matter: node endpoint reconcile failed', {
-        meta: { brokerId, error: errMsg(err) },
-      })
-    }
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return
+    await reconcileNodeEndpoints(
+      {
+        logger: this.ctx.logger,
+        reporter: this.endpointReporter,
+        loadAdopted: async () => {
+          const out: { id: number; config: Record<string, unknown> }[] = []
+          for (const d of reg.getAllForAddon(this.addonId)) {
+            if (d.parentDeviceId !== null) continue
+            const config = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
+            out.push({ id: d.id, config })
+          }
+          return out
+        },
+        applyEndpoints: async (deviceId, endpoints) => {
+          await devices.applyDerivedSpec(deviceId, { config: { endpoints } })
+        },
+      },
+      brokerId,
+      nodes,
+    )
   }
 
   /** Emit an inbound attribute report on the bus as a `broker.message` event. */
@@ -479,43 +472,4 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     if (!this.registry) throw new Error('Matter broker addon not initialised')
     return this.registry
   }
-}
-
-/** Reduce a node snapshot to its mappable endpoint entries (skip cap-less ones). */
-function mappableEndpoints(node: MatterNodeSnapshot): MatterEndpointEntry[] {
-  const out: MatterEndpointEntry[] = []
-  for (const endpoint of node.endpoints) {
-    const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {
-      deviceTypeIds: endpoint.deviceTypeIds ?? [],
-      attributes: endpoint.attributes ?? [],
-    })
-    if (mapping.capabilities.length === 0) continue
-    out.push({
-      endpointId: endpoint.endpointId,
-      clusterIds: [...endpoint.clusterIds],
-      deviceTypeIds: [...(endpoint.deviceTypeIds ?? [])],
-      attributes: [...(endpoint.attributes ?? [])],
-    })
-  }
-  return out
-}
-
-/**
- * Structural equality of two persisted endpoint lists. An entry persisted before
- * the Descriptor device types / attribute keys were read differs from the live
- * one, so the node re-derives its children (a lock gains its door contact and
- * events; a leak detector stops being a door contact).
- */
-function endpointsEqual(a: readonly unknown[], b: readonly MatterEndpointEntry[]): boolean {
-  const parsed = z.array(matterEndpointEntrySchema).safeParse(a)
-  if (!parsed.success || parsed.data.length !== b.length) return false
-  const key = (e: MatterEndpointEntry): string =>
-    JSON.stringify([
-      e.endpointId,
-      [...e.clusterIds].sort((x, y) => x - y),
-      [...e.deviceTypeIds].sort((x, y) => x - y),
-      [...e.attributes].sort(),
-    ])
-  const current = new Set(parsed.data.map(key))
-  return b.every((entry) => current.has(key(entry)))
 }

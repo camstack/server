@@ -9,6 +9,7 @@
  */
 
 import { Seconds } from '@matter/general'
+import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterAttributeReport } from './matter-controller.js'
 import {
   collectAttributeReports,
@@ -50,19 +51,26 @@ function listenLifecycle(
   }
 }
 
-/** Stop matter.js's own wildcard subscription so this addon owns the session. */
-function disableAutoSubscribe(peer: Record<string, unknown>): void {
-  const stateOf = peer['stateOf']
-  if (typeof stateOf !== 'function') return
-  let network: unknown
+/**
+ * Stop matter.js's own wildcard subscription so this addon owns the session.
+ * `stateOf` is a read-only view (writing it throws ReadOnlyError); the writable
+ * path is `setStateOf`, a transaction on the behavior. A failure is logged and
+ * never aborts the subscribe: our own sustained subscription must still run.
+ */
+async function disableAutoSubscribe(
+  peer: Record<string, unknown>,
+  nodeId: string,
+  logger: IScopedLogger | undefined,
+): Promise<void> {
+  const setStateOf = peer['setStateOf']
+  if (typeof setStateOf !== 'function') return
   try {
-    network = Reflect.apply(stateOf, peer, ['network'])
-  } catch {
-    return
-  }
-  if (!isRecord(network)) return
-  if ('autoSubscribe' in network) {
-    network['autoSubscribe'] = false
+    await Promise.resolve(Reflect.apply(setStateOf, peer, ['network', { autoSubscribe: false }]))
+  } catch (err: unknown) {
+    logger?.warn('Matter: could not turn off the library auto-subscribe', {
+      tags: { addonId: 'matter-broker' },
+      meta: { nodeId, error: errMsg(err) },
+    })
   }
 }
 
@@ -81,7 +89,11 @@ function subscriptionFrom(result: unknown): MatterPeerSubscription {
  * Build a subscribable view of a commissioned peer, or null when the peer has
  * no `interaction.subscribe` (nothing to attach — the caller logs that).
  */
-export function subscribableFromPeer(peer: unknown, nodeId: string): MatterSubscribablePeer | null {
+export function subscribableFromPeer(
+  peer: unknown,
+  nodeId: string,
+  logger?: IScopedLogger,
+): MatterSubscribablePeer | null {
   if (!isRecord(peer)) return null
   const interaction = peer['interaction']
   if (!isRecord(interaction) || typeof interaction['subscribe'] !== 'function') return null
@@ -92,7 +104,7 @@ export function subscribableFromPeer(peer: unknown, nodeId: string): MatterSubsc
     onOnline: (handler) => listenLifecycle(peer, 'online', handler),
     onOffline: (handler) => listenLifecycle(peer, 'offline', handler),
     subscribe: async (handlers) => {
-      disableAutoSubscribe(peer)
+      await disableAutoSubscribe(peer, nodeId, logger)
       const request = {
         sustain: true,
         keepSubscriptions: false,
