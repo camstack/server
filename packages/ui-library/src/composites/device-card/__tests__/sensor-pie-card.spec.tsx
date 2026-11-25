@@ -97,6 +97,46 @@ describe('SensorPieCard', () => {
     expect(onOverflow).toHaveBeenCalledOnce()
   })
 
+  it('the selected wedge is highlighted in its own quantity colour and the others dim', () => {
+    render(
+      <SensorPieCard
+        model={model([reading('a'), reading('b', { quantity: 'humidity' })])}
+        selectedId="b"
+        detail={<p>chart</p>}
+      />,
+    )
+    const [a, b] = screen.getAllByTestId('dc-pie-wedge')
+    expect(b?.getAttribute('data-selected')).toBe('true')
+    expect(b?.getAttribute('aria-pressed')).toBe('true')
+    expect(b?.querySelector(':scope > path')?.getAttribute('class')).toContain('stroke-info')
+    expect(a?.getAttribute('class')).toContain('opacity-40')
+    expect(b?.getAttribute('class')).not.toContain('opacity-40')
+    expect(screen.getByTestId('dc-pie-detail').textContent).toBe('chart')
+  })
+
+  it('Enter and Space select a wedge from the keyboard', () => {
+    const onSelect = vi.fn()
+    render(<SensorPieCard model={model([reading('a'), reading('b')])} onSelect={onSelect} />)
+    const [a, b] = screen.getAllByTestId('dc-pie-wedge')
+    fireEvent.keyDown(a as Element, { key: 'Enter' })
+    fireEvent.keyDown(b as Element, { key: ' ' })
+    expect(onSelect.mock.calls).toEqual([['a'], ['b']])
+  })
+
+  it('no two quantities that appear together share a wedge colour, and each wedge has its own edge', () => {
+    const together = ['temperature', 'humidity', 'illuminance', 'motion', 'contact'] as const
+    render(<SensorPieCard model={model(together.map((q) => reading(q, { quantity: q })))} />)
+    const paths = screen
+      .getAllByTestId('dc-pie-wedge')
+      .map((w) => w.querySelector(':scope > path')?.getAttribute('class') ?? '')
+    const fills = paths.map((c) => /fill-([a-z-]+)\//.exec(c)?.[1])
+    expect(new Set(fills).size).toBe(together.length)
+    for (const c of paths) {
+      expect(c).toMatch(/fill-[a-z-]+\/(2|3|4)\d/)
+      expect(c).not.toContain('stroke-border')
+    }
+  })
+
   it('a tap on a wedge reports its reading', () => {
     const onSelect = vi.fn()
     render(<SensorPieCard model={model([reading('a'), reading('b')])} onSelect={onSelect} />)

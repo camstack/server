@@ -206,6 +206,21 @@ describe('the connected sensor card', () => {
     fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[0] as Element)
     expect(screen.getByTestId('dc-pie-no-history')).toBeTruthy()
   })
+  it('selecting a wedge draws its chart inline in the card, with no modal; selecting it again hides it', () => {
+    hub.model = motionAndLight()
+    hub.history = { charts: 'FULL HISTORY', events: null }
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.queryByTestId('dc-pie-detail')).toBeNull()
+    const [motion] = screen.getAllByTestId('dc-pie-wedge')
+    fireEvent.click(motion as Element)
+    const detail = screen.getByTestId('dc-pie-detail')
+    expect(screen.getByTestId('dc-sensor-pie').contains(detail)).toBe(true)
+    expect(within(detail).getByText('FULL HISTORY')).toBeTruthy()
+    expect(document.querySelector('dialog[open], [role="dialog"]')).toBeNull()
+    fireEvent.click(motion as Element)
+    expect(screen.queryByTestId('dc-pie-detail')).toBeNull()
+    expect(screen.queryByText('FULL HISTORY')).toBeNull()
+  })
   it('draws the placeholder while the model loads', () => {
     hub.status = 'pending'
     render(<ConnectedSensorCard deviceId={1} placeholder={<p>loading</p>} />)

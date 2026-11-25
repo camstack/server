@@ -20,7 +20,6 @@ import {
 } from '../../hero-model/measurement-display'
 import { useRoleDisplayDefaults } from '../../device-item/role-display-defaults-context'
 import { CardReadings } from '../parts/Readings'
-import { ReadingValue } from '../parts/ReadingValue'
 import { readingStateOf } from '../scenes/sensor/pie-model'
 import { type PieReading, SensorPieCard } from '../scenes/sensor/SensorPieCard'
 import type { CardOrientation } from '../shell/model'
@@ -47,9 +46,6 @@ function quantityLabel(t: UiTextFn, quantity: HeroMeasurementQuantity): string {
       return t('uiLibrary.sensorPie.quantity.text', 'State')
   }
 }
-
-/** Whether the reading keeps a series of its own (motion and contact do not). */
-const hasOwnSeries = (m: HeroMeasurement): boolean => m.historyKey !== null && m.reading !== null
 
 /** Two readings of one quantity would share a key: the index keeps them apart. */
 const idOf = (m: HeroMeasurement, index: number): string => `${m.quantity}-${String(index)}`
@@ -118,8 +114,6 @@ export function MeasuredPieCard({
   const picked = shown.findIndex((m, i) => idOf(m, i) === selected)
   const pickedMeasurement = picked < 0 ? undefined : shown[picked]
   const fullHistory = card.common.history?.charts ?? null
-  const fullHistoryShown =
-    pickedMeasurement !== undefined && !hasOwnSeries(pickedMeasurement) && fullHistory !== null
 
   return (
     <>
@@ -138,18 +132,10 @@ export function MeasuredPieCard({
         }}
         actions={card.actions}
         showName={showName}
-        onSelect={setSelected}
-        onOverflow={() => setListOpen(true)}
-        {...(orientation === undefined ? {} : { orientation })}
-      />
-      <Dialog
-        open={pickedMeasurement !== undefined}
-        onOpenChange={(open) => {
-          if (!open) setSelected(null)
-        }}
-      >
-        <DialogContent width={fullHistoryShown ? 'xl' : 'sm'} scroll="body">
-          {pickedMeasurement === undefined ? null : (
+        selectedId={pickedMeasurement === undefined ? null : selected}
+        onSelect={(id) => setSelected((current) => (current === id ? null : id))}
+        detail={
+          pickedMeasurement === undefined ? null : (
             <ReadingHistory
               deviceId={deviceId}
               fullHistory={fullHistory}
@@ -158,9 +144,11 @@ export function MeasuredPieCard({
               subject={subject}
               since={measurementSinceText(pickedMeasurement, t)}
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          )
+        }
+        onOverflow={() => setListOpen(true)}
+        {...(orientation === undefined ? {} : { orientation })}
+      />
       <Dialog open={listOpen} onOpenChange={setListOpen}>
         <DialogContent width="sm">
           <DialogHeader>
@@ -221,26 +209,16 @@ function ReadingHistory({
       />
     )
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{quantityLabel(t, measurement.quantity)}</DialogTitle>
-      </DialogHeader>
-      <DialogBody>
-        <div className="flex flex-col items-center gap-4" data-testid="dc-pie-history">
-          <ReadingValue
-            icon={measurement.icon}
-            value={text.value}
-            unit={text.unit}
-            text={measurement.quantity === 'text' || measurement.quantity === 'contact'}
-          />
-          {since === null ? null : <span className="text-xs text-foreground-muted">{since}</span>}
-          {trend ?? fullHistory ?? (
-            <span className="text-xs text-foreground-muted" data-testid="dc-pie-no-history">
-              {t('uiLibrary.sensorPie.noHistory', 'No history is kept for this reading.')}
-            </span>
-          )}
-        </div>
-      </DialogBody>
-    </>
+    <div className="flex w-full flex-col items-center gap-2" data-testid="dc-pie-history">
+      <span className="text-sm font-medium text-foreground">
+        {quantityLabel(t, measurement.quantity)}
+      </span>
+      {since === null ? null : <span className="text-xs text-foreground-muted">{since}</span>}
+      {trend ?? fullHistory ?? (
+        <span className="text-xs text-foreground-muted" data-testid="dc-pie-no-history">
+          {t('uiLibrary.sensorPie.noHistory', 'No history is kept for this reading.')}
+        </span>
+      )}
+    </div>
   )
 }

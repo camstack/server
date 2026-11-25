@@ -1,5 +1,5 @@
 import type { HeroMeasurementQuantity } from '@camstack/types'
-import { type KeyboardEvent, type ReactElement, useId } from 'react'
+import { type KeyboardEvent, type ReactElement, type ReactNode, useId } from 'react'
 import { cn } from '../../../../lib/cn'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from '../../shell/model'
@@ -40,24 +40,44 @@ export interface SensorPieCardProps {
   readonly onSelect?: (id: string) => void
   /** The "+N" wedge was tapped: the full readings list. */
   readonly onOverflow?: () => void
+  /** The reading whose wedge is highlighted (the others dim); `null` = none. */
+  readonly selectedId?: string | null
+  /** Drawn inline below the pie, inside the card: the selected reading's chart. */
+  readonly detail?: ReactNode
 }
 
-/** What tints a wedge and colours its motion: the quantity's theme token. */
+/**
+ * What tints a wedge and colours its edge: the quantity's theme token, ONE per
+ * quantity (literal classes, so Tailwind sees them). Motion takes the series
+ * violet because the brand orange reads as the warning amber next to it; the warm
+ * pair that remains (power, illuminance) rarely sits on one sensor.
+ */
 const WEDGE_FILL: Readonly<Record<HeroMeasurementQuantity, string>> = {
-  temperature: 'fill-danger/15',
-  humidity: 'fill-info/15',
-  illuminance: 'fill-warning/15',
-  power: 'fill-warning/15',
-  motion: 'fill-primary/15',
-  contact: 'fill-success/15',
-  text: 'fill-foreground-muted/15',
+  temperature: 'fill-danger/25 stroke-danger/60',
+  humidity: 'fill-info/25 stroke-info/60',
+  illuminance: 'fill-warning/25 stroke-warning/60',
+  power: 'fill-primary/25 stroke-primary/60',
+  motion: 'fill-chart-series-f/25 stroke-chart-series-f/60',
+  contact: 'fill-success/25 stroke-success/60',
+  text: 'fill-foreground-muted/25 stroke-foreground-muted/60',
 }
+/** The selected wedge: a stronger tint and a full-colour edge, still its own quantity's. */
+const WEDGE_FILL_SELECTED: Readonly<Record<HeroMeasurementQuantity, string>> = {
+  temperature: 'fill-danger/45 stroke-danger',
+  humidity: 'fill-info/45 stroke-info',
+  illuminance: 'fill-warning/45 stroke-warning',
+  power: 'fill-primary/45 stroke-primary',
+  motion: 'fill-chart-series-f/45 stroke-chart-series-f',
+  contact: 'fill-success/45 stroke-success',
+  text: 'fill-foreground-muted/45 stroke-foreground-muted',
+}
+/** Colours the quantity's motion (it draws in `currentColor`). */
 const WEDGE_FX_TEXT: Readonly<Record<HeroMeasurementQuantity, string>> = {
   temperature: 'text-danger',
   humidity: 'text-info',
   illuminance: 'text-warning',
-  power: 'text-warning',
-  motion: 'text-primary',
+  power: 'text-primary',
+  motion: 'text-chart-series-f',
   contact: 'text-success',
   text: 'text-foreground-muted',
 }
@@ -149,10 +169,20 @@ interface WedgeProps {
   readonly count: number
   readonly reading: PieReading
   readonly clipId: string
+  readonly selected: boolean
+  readonly dimmed: boolean
   readonly onSelect: ((id: string) => void) | undefined
 }
 
-function Wedge({ wedge, count, reading, clipId, onSelect }: WedgeProps): ReactElement {
+function Wedge({
+  wedge,
+  count,
+  reading,
+  clipId,
+  selected,
+  dimmed,
+  onSelect,
+}: WedgeProps): ReactElement {
   const { centroid: at } = wedge
   const tap = (): void => onSelect?.(reading.id)
   return (
@@ -160,10 +190,16 @@ function Wedge({ wedge, count, reading, clipId, onSelect }: WedgeProps): ReactEl
       data-testid="dc-pie-wedge"
       data-quantity={reading.quantity}
       data-state={reading.state}
+      data-selected={selected ? 'true' : undefined}
       role="button"
+      aria-pressed={selected}
       tabIndex={0}
       aria-label={`${reading.label} ${reading.value}${reading.unit === null ? '' : ` ${reading.unit}`}`}
-      className={cn('dc-pie-wedge cursor-pointer', WEDGE_FX_TEXT[reading.quantity])}
+      className={cn(
+        'dc-pie-wedge cursor-pointer transition-opacity',
+        WEDGE_FX_TEXT[reading.quantity],
+        dimmed && 'opacity-40',
+      )}
       onClick={tap}
       onKeyDown={onKey(tap)}
     >
@@ -175,10 +211,12 @@ function Wedge({ wedge, count, reading, clipId, onSelect }: WedgeProps): ReactEl
         className={cn(
           reading.state === 'empty'
             ? 'fill-surface stroke-foreground-subtle dc-pie-empty'
-            : cn(WEDGE_FILL[reading.quantity], 'stroke-border'),
+            : selected
+              ? WEDGE_FILL_SELECTED[reading.quantity]
+              : WEDGE_FILL[reading.quantity],
           reading.state === 'active' && 'dc-pie-breathe',
         )}
-        strokeWidth={1.5}
+        strokeWidth={selected ? 3 : 1.5}
       />
       {reading.state === 'active' ? (
         <g clipPath={`url(#${clipId})`}>
@@ -214,7 +252,7 @@ function Wedge({ wedge, count, reading, clipId, onSelect }: WedgeProps): ReactEl
  * tinted by its quantity, its value, unit and short name at the wedge's centre. A
  * reading that is on or alarming breathes, with its quantity's motion clipped
  * inside the wedge; one with no data is a dashed wedge with a "—". Tapping a
- * wedge opens that reading's history; a sixth "+N" wedge opens the full list.
+ * wedge highlights it (the others dim) and draws its history below the pie; a sixth "+N" wedge opens the full list.
  */
 export function SensorPieCard({
   model,
@@ -223,6 +261,8 @@ export function SensorPieCard({
   showName = true,
   onSelect,
   onOverflow,
+  selectedId = null,
+  detail = null,
 }: SensorPieCardProps): ReactElement {
   const uid = useId()
   const hasOverflow = model.overflow.length > 0
@@ -245,7 +285,7 @@ export function SensorPieCard({
           <div
             data-testid="dc-sensor-pie"
             data-wedges={count}
-            className="relative flex w-full items-center justify-center"
+            className="relative flex w-full flex-col items-center justify-center gap-3"
           >
             <style>{SENSOR_PIE_CSS}</style>
             {model.updated === null ? null : (
@@ -278,6 +318,8 @@ export function SensorPieCard({
                     count={count}
                     reading={reading}
                     clipId={`${uid}-w${String(i)}`}
+                    selected={reading.id === selectedId}
+                    dimmed={selectedId !== null && reading.id !== selectedId}
                     onSelect={onSelect}
                   />
                 )
@@ -290,6 +332,11 @@ export function SensorPieCard({
                 />
               ) : null}
             </svg>
+            {detail === null ? null : (
+              <div data-testid="dc-pie-detail" className="flex w-full flex-col items-center gap-3">
+                {detail}
+              </div>
+            )}
           </div>
         ),
       }}
