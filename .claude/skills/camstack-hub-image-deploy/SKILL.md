@@ -68,7 +68,7 @@ node packages/cli/dist/cli.js deploy --closure -s <hub-url>
 #
 # If apply returns 403 Forbidden (a non-admin login): upload may still have
 # succeeded — `camstack login <host>` as an admin once, then hub.mjs uses that
-# session (refreshed automatically; --token-file is an explicit override only):
+# session (refreshed automatically; see the hub-access skill):
 node scripts/hub/hub.mjs POST serverManagement.applyServerUpdate \
   '{"version":"<base>-dev.<epoch>"}'
 # Timeout / 502 / 524 = restart in progress (success). Poll until runningVersion matches:

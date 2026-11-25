@@ -67,7 +67,7 @@ camstack login                   # cached session; the hub URL: scratchpad/.hub-
 ```
 
 Hub auth for the harness: same as `camstack-diagnose` — run
-`camstack login <host>` once (as an admin); every tool uses that session. The hub
+`camstack login <host>` once (as an admin); every tool uses that session (skill `hub-access`). The hub
 URL: `scratchpad/.hub-url` (gitignored) or `CAMSTACK_HUB_URL`. Never commit tokens.
 
 **WebGPU / AMD notes (D823):** each WebGPU model is one OS child

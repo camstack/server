@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- camstack deploy, deploy-server, dev, watch, cluster-update, mcp and login no longer accept --token or --token-file; log in once with camstack login.
+
 ## [1.2.241] - 2026-11-24
 
 ### Changed

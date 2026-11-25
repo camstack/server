@@ -28,6 +28,11 @@ const SKILL_FILES: readonly { id: string; file: string; title: string }[] = [
     title: 'Architecture pointers for plugin authors',
   },
   {
+    id: 'hub-access',
+    file: 'hub-access.md',
+    title: 'Reach a hub: the one login every client tool uses',
+  },
+  {
     id: 'track-review',
     file: 'track-review.md',
     title: 'Review wrong-class tracks and curate the re-training set',

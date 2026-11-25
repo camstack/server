@@ -4,7 +4,7 @@
 
 # Decisions
 
-1066 architecture decision records. One file per decision, never
+1067 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -820,7 +820,7 @@ that rots.
 | D832 | [TypeScript 7 is the type authority; TypeScript 6 only as a JS-API library](adr-0832-typescript-7-is-the-type-authority-typescript-6-only-as-a-js-api-library.md) | ✅ accepted | 2026-10-13 |
 | D833 | [Type checking is its own CI step, out of build](adr-0833-type-checking-is-its-own-ci-step-out-of-build.md) | ✅ accepted | 2026-10-13 |
 | D834 | [isolatedDeclarations for sdk, ui-library, system; not @camstack/types](adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md) | ✅ accepted | 2026-10-13 |
-| D835 | [Hub credentials and TLS trust live in @camstack/develop — one chain for the CLI, hub.mjs and the ops MCP; a pinned CA, never a password or a certificate bypass](adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md) | ✅ accepted | 2026-10-13 |
+| D835 | [Hub credentials and TLS trust live in @camstack/develop — one chain for the CLI, hub.mjs and the ops MCP; a pinned CA, never a password or a certificate bypass](adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md) | ↩︎ superseded | 2026-10-13 |
 | D836 | [A cluster mutation from the developer MCP exists only behind --allow-mutations and a dry run whose one-shot token is bound to the exact arguments](adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md) | ✅ accepted | 2026-10-13 |
 | D837 | [The public skill pack is the canonical text of a skill and a repo skill is an overlay that points at it](adr-0837-the-public-skill-pack-is-the-canonical-text-and-a-repo-skill-is-an-overlay-that-points-at-it.md) | ✅ accepted | 2026-10-13 |
 | D838 | [Clients find a hub over mDNS of its HTTPS endpoint; mesh discovery stays retired (D826)](adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md) | ✅ accepted | 2026-10-13 |
@@ -1080,6 +1080,7 @@ that rots.
 | D1098 | [Every Customize kind is one typed spec, seen and removable from both sides](adr-1098-every-customize-kind-is-one-typed-spec-seen-from-both-sides.md) | ✅ accepted | 2026-11-24 |
 | D1099 | [A device is unknown until its integration is ready; offline is concluded only after](adr-1099-device-unknown-until-integration-ready.md) | 💭 proposed | 2026-11-24 |
 | D1100 | [A device liveness notification is sent only after the new state held for 90 s](adr-1100-device-liveness-90s-stability-window.md) | ✅ accepted | 2026-11-25 |
+| D1101 | [A client tool authenticates to a hub through the camstack login session and nothing else](adr-1101-one-client-login.md) | ✅ accepted (supersedes D835) | 2026-11-25 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

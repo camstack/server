@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Removed
 
-- connectHub accepts an explicit token, used by the track review MCP for CAMSTACK_HUB_TOKEN.
+- Every hub tool authenticates through the camstack login session only: --token, --token-file and CAMSTACK_TOKEN were removed; the new hub-access skill says how.
 
 ## [0.1.58] - 2026-11-23
 

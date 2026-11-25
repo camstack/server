@@ -16,19 +16,17 @@ MCP, the same hub methods can be called by hand; the order below still holds.
 
 ## 0. Configure the MCP
 
-The simplest setup is to run `camstack login <host>` once as an admin: the MCP
-uses that saved session (renewed automatically) for the hub address, the
-credential and the TLS pin, exactly like `camstack deploy`. The environment
-variables below are optional overrides and win over the session.
+The credential is the `camstack login` session, and only that: log in once
+(`camstack login <host>`), see the `hub-access` skill. The server reads two
+optional environment variables, both addresses or paths and never a secret.
 
 | Variable | Meaning |
 | --- | --- |
-| `CAMSTACK_HUB_URL` | Hub address (`https://hub.local:4443`; a bare host is completed to the default port). |
-| `CAMSTACK_HUB_TOKEN_FILE` | Path to a file holding ONE token, mode 0600 (preferred). `CAMSTACK_HUB_TOKEN` also works but leaks into process listings. |
+| `CAMSTACK_HUB_URL` | Hub address (`https://hub.local:4443`; a bare host is completed to the default port). Without it the session's own hub is used. |
 | `CAMSTACK_HUB_CA_FILE` | PEM of the hub's CA or pinned certificate, for a self-signed hub. |
 
 TLS verification is never turned off: a certificate error is fixed by naming the
-CA, not by disabling the check. Triage and frame need a normal token;
+CA, not by disabling the check. Triage and frame work with any login;
 **apply and the confirmed origin backfill need an admin login** and are refused
 up front, before any hub call, when the credential is not admin. Tokens are never printed.
 
@@ -36,7 +34,6 @@ up front, before any hub call, when the credential is not admin. Tokens are neve
 { "mcpServers": { "camstack-develop": {
   "command": "npx", "args": ["@camstack/mcp-develop"],
   "env": { "CAMSTACK_HUB_URL": "https://hub.local:4443",
-           "CAMSTACK_HUB_TOKEN_FILE": "/home/me/.camstack/review.token",
            "CAMSTACK_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
 ```
 

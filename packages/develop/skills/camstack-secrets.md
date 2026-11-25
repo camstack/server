@@ -84,10 +84,10 @@ own secrets), D798 (an addon reads its own settings resolved).
   `packages/addon-cloudflare/src/tunnel/cloudflared-invocation.ts`.
 - A URL with embedded credentials is a secret on argv too: build it for the
   child from a file or a pipe the child reads, never from a string you log.
-- Client-side developer tooling is different: the `camstack` CLI's
-  `$CAMSTACK_TOKEN` / `--token-file` and `scripts/hub/hub.mjs`'s credential chain
-  (`--token-file`, then the `camstack login` session) are a developer's own credentials on their own machine,
-  not server-side secrets.
+- Client-side developer tooling is different: it holds no secret of its own.
+  The `camstack` CLI, `scripts/hub/hub.mjs` and the MCPs read the one
+  `camstack login` session — there is no token flag, file or variable (see the
+  `hub-access` skill).
 
 ## 5. Logs, fixtures, the repository
 

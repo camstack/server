@@ -31,7 +31,7 @@ node packages/cli/dist/cli.js deploy --closure -s <hub-url> --cluster # hub + ag
   `server-root/dev-uploads/` — never on npm.
 - A non-admin session 403s on `applyServerUpdate`: `camstack login <host>` as an
   admin once; every tool (CLI, `hub.mjs`, MCP) uses that session and refreshes it.
-  `--token-file` is an explicit override only; no tool looks for a token file.
+  There is no token flag, file or variable (`hub-access` skill).
 - Enumerate agents (`nodes.topology`); never a remembered list. After apply,
   poll `getServerPackageStatus` until `runningVersion` matches and
   `updateState: idle` — `/health` 200 is not proof.

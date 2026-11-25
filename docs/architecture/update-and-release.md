@@ -204,10 +204,9 @@ The CLI's `-n` flag is the **working** channel for agent addon deploys.
 
 Auth comes from the login session at `~/.camstack/<host>.json`, created by
 `camstack login` — every hub command (`deploy`, `deploy-server`, `dev`, `watch`)
-picks it up for the target server with no flags. Resolution, first hit wins:
-`--token`, `--token-file <path>` (a bare token or a copied session file, for
-scripts/CI), `$CAMSTACK_TOKEN`, the cached session. A 401/403 says which source
-was rejected (a cached session: run `camstack login` again).
+picks it up for the target server with no flags. The session is the only
+credential (D1101; skill `hub-access`): there is no token flag or variable. A
+401/403 means: run `camstack login` again.
 
 To find every stale addon after a rebase — compare installed vs workspace mtime:
 

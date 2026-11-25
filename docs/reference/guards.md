@@ -4,12 +4,12 @@
 
 # Guards
 
-263 repository guards: 258 in `scripts/`,
+264 repository guards: 259 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (251)
+## Enforced by CI checks (252)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -230,6 +230,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-settings-help-length.ts` | Provider settings help-text guard — a settings field explains only what an operator cannot read off its label. |
 | `scripts/check-settings-key-has-reader.ts` | Settings-key guard — a form must not offer a knob that writes a store NOBODY READS. |
 | `scripts/check-silent-observation-drop.ts` | Silent-observation-drop guard — enforcement for D237 (docs/decisions/adr-0237-a-verification-must-be-able-to-say-unknown.md). |
+| `scripts/check-single-client-login.ts` | A client tool reaches a hub through ONE credential: the `camstack login` session (D1101). Every other way is retired, and anything that depended on one was migrated, not exempted. |
 | `scripts/check-single-composition-creator.ts` | One caller of `createComposition` outside tests (D1004). |
 | `scripts/check-single-copy-layout.ts` | Single-copy layout guard — enforcement step 3 of D45 (docs/decisions/adr-0045). |
 | `scripts/check-single-prebuffer-knob.ts` | There is ONE prebuffer configuration, and it lives in one file. |

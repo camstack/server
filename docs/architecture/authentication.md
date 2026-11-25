@@ -309,10 +309,10 @@ permissions differs (an admin session can do everything). Run
 and `expiresAt` in `~/.camstack/<host>_<port>.json` (0600). The CLI, `scripts/hub/hub.mjs`,
 the operator scripts (`scripts/hub/credentials.mjs`) and the MCP all resolve the
 credential through `resolveCredentials` / `resolveFreshCredentials`
-(`packages/develop/src/hub`): explicit `--token` / `--token-file`, then `$CAMSTACK_TOKEN`,
-then that session. No tool looks for a token file of its own (guard
-`check-no-token-file-lookup`): `--token-file` is an explicit override and names no
-default path. A session with less than 60 s left is renewed over HTTP with
+(`packages/develop/src/hub`): that session, and nothing else (D1101): `--token`,
+`--token-file` and `$CAMSTACK_TOKEN` were removed, and a removed flag fails with a
+message that says `camstack login`. Guards `check-single-client-login` and
+`check-no-token-file-lookup`; the how-to is the `hub-access` skill. A session with less than 60 s left is renewed over HTTP with
 `auth.refreshSession` before use, and a 401 renews it once and retries once; a
 refusal says `run camstack login`. The permission tier is read from the token's
 CLAIMS (an admin JWT is admin); a token whose claims it cannot read is

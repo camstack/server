@@ -229,8 +229,8 @@ camstack deploy packages/addon-<name> -n <nodeId>     # to one agent — one nod
 camstack deploy packages/addon-<name> --no-verify     # then poll /health yourself (below)
 ```
 
-Auth comes from `camstack login` (cached per server) or `--token` /
-`--token-file` / `$CAMSTACK_TOKEN`; `-s <url>` names the hub. Full reference:
+Auth is the `camstack login` session (one login per hub, see the `hub-access`
+skill) and nothing else; `-s <url>` names the hub. Full reference:
 `docs/architecture/update-and-release.md` §"Deploying an addon during
 development", which also has the stale-addon detector to run after a rebase.
 

@@ -42,8 +42,8 @@ node scripts/hub/hub.mjs GET  nodes.topology                 # all three: the `c
 `camstack-ops` MCP (`packages/develop/src/hub`, D835): one token format, only the
 permissions differ (admin = everything). **Run `camstack login <host>` once; every
 tool uses that session** (`~/.camstack/<host>.json`, refreshed automatically, a 401
-refreshes once and retries). `--token-file` is an explicit override only; no tool
-looks for a token file of its own. It never logs in with a password and never turns TLS
+refreshes once and retries). There is no token flag, file or variable (D1101); see
+the `hub-access` skill. It never logs in with a password and never turns TLS
 off: trust a self-signed hub by saving its PEM to `~/.camstack/<host>.ca.pem`
 (the error prints the command). The hub URL comes from `--server`,
 `$CAMSTACK_HUB_URL`, the gitignored `scratchpad/.hub-url` (one line) or the

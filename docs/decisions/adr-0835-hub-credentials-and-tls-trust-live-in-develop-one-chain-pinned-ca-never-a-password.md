@@ -1,7 +1,7 @@
 ---
 id: D835
 title: Hub credentials and TLS trust live in @camstack/develop — one chain for the CLI, hub.mjs and the ops MCP; a pinned CA, never a password or a certificate bypass
-status: accepted
+status: superseded
 date: 2026-10-13
 supersedes:
 applies-to:

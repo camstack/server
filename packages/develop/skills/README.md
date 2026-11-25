@@ -9,6 +9,7 @@ third-party use (no private hostnames, no hub-specific ops).
 | `camstack-addon` | [camstack-addon.md](./camstack-addon.md) | New or extended addon |
 | `camstack-capability` | [camstack-capability.md](./camstack-capability.md) | New or changed `*.cap.ts` |
 | `camstack-secrets` | [camstack-secrets.md](./camstack-secrets.md) | Password / token / key fields |
+| `hub-access` | [hub-access.md](./hub-access.md) | Reach a hub: `camstack login`, the one credential |
 | `camstack-docs` | [camstack-docs.md](./camstack-docs.md) | Generated vs prose docs |
 | `architecture` | [architecture.md](./architecture.md) | Plugin-author architecture pointers |
 | `track-review` | [track-review.md](./track-review.md) | Find wrong-class tracks, curate the re-training set (`track_review_*` MCP tools) |
