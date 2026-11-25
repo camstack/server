@@ -185,6 +185,20 @@ function isTailscaleIpv6(address: string): boolean {
  *
  * @param interfaces injected for testing; defaults to `os.networkInterfaces()`.
  */
+/**
+ * Why a pre-DTLS wait must stop NOW instead of running its full deadline: the
+ * peer connection is already failed/closed (the client tore the session down,
+ * or ICE gave up). `null` = keep waiting.
+ */
+export function dtlsWaitAbortReason(
+  connectionState: string | undefined,
+  iceConnectionState: string | undefined,
+): 'peer-closed' | 'peer-failed' | null {
+  if (connectionState === 'closed' || iceConnectionState === 'closed') return 'peer-closed'
+  if (connectionState === 'failed' || iceConnectionState === 'failed') return 'peer-failed'
+  return null
+}
+
 export function getTailscaleHostAddresses(
   interfaces: NetworkInterfaceMap = networkInterfaces(),
 ): readonly string[] {
@@ -2172,7 +2186,12 @@ export class AdaptiveSession {
       const deadline = Date.now() + 10_000
       // Observe DTLS transitions while polling (werift exposes only `state`).
       let prevDtls = dtlsTransport.state
-      while (dtlsTransport.state !== 'connected' && Date.now() < deadline && !this.closed) {
+      while (
+        dtlsTransport.state !== 'connected' &&
+        Date.now() < deadline &&
+        !this.closed &&
+        dtlsWaitAbortReason(this.pc?.connectionState, this.pc?.iceConnectionState) === null
+      ) {
         if (this.debug && dtlsTransport.state !== prevDtls) {
           this.logger.info('DTLS state (client-offer)', {
             meta: {
@@ -2213,15 +2232,23 @@ export class AdaptiveSession {
     // the broker releases the source subscription too.
     const dtlsState = this.videoSender?.dtlsTransport?.state
     if (dtlsState !== 'connected') {
-      this.logger.warn('client-offer: DTLS never connected — closing session', {
-        meta: {
-          phase: 'session',
-          sessionId: this.sessionId,
-          deviceId: this.deviceId,
-          dtls: dtlsState ?? 'unknown',
-          forceRelayOnly: this.forceRelayOnly,
+      const abortReason = dtlsWaitAbortReason(this.pc?.connectionState, this.pc?.iceConnectionState)
+      this.logger.warn(
+        abortReason === null
+          ? 'client-offer: DTLS never connected — closing session'
+          : 'client-offer: peer went away before DTLS connected — closing session',
+        {
+          tags: { deviceId: this.deviceId },
+          meta: {
+            reason: abortReason ?? 'dtls-timeout',
+            phase: 'session',
+            sessionId: this.sessionId,
+            deviceId: this.deviceId,
+            dtls: dtlsState ?? 'unknown',
+            forceRelayOnly: this.forceRelayOnly,
+          },
         },
-      })
+      )
       void this.close()
       return
     }

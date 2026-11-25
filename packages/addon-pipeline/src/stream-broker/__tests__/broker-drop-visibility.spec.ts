@@ -151,8 +151,8 @@ describe('WebRTC push frame source', () => {
     close()
 
     // 121 queued → purge back to 60 = 61 frames discarded, once, reported.
-    // No keyframe anywhere in the window, so the cut is the plain bound.
-    expect(dropped).toEqual([61])
+    // No keyframe anywhere: the plain-bound cut plus the leftover mid-GOP video.
+    expect(dropped).toEqual([121])
   })
 
   /**
@@ -198,5 +198,34 @@ describe('WebRTC push frame source', () => {
     expect(first.done).toBe(false)
     expect(first.value?.type).toBe('video')
     expect(first.value?.type === 'video' && first.value.frame.isKeyframe).toBe(true)
+  })
+})
+
+describe('WebRTC push frame source - keyframe-aligned start (planning#730)', () => {
+  const vid = (i: number, key: boolean) =>
+    ({
+      type: 'video',
+      frame: { data: Buffer.from([i]), codec: 'H264', isKeyframe: key, timestampMicros: i },
+    }) as const
+
+  it('starts from the LATEST queued keyframe, not a stale backlog', async () => {
+    const { source, pushFrame, close } = createPushFrameSource()
+    for (let i = 0; i < 30; i++) pushFrame(vid(i, i === 0 || i === 20))
+    const first = await source.next()
+    close()
+    expect(first.value?.type === 'video' && first.value.frame.data[0]).toBe(20)
+  })
+
+  it('a purge with no keyframe leaves no mid-GOP video and waits for the next IDR', async () => {
+    const { source, pushFrame, close } = createPushFrameSource()
+    for (let i = 0; i < 125; i++) pushFrame(vid(i % 200, false))
+    pushFrame(vid(200, false))
+    pushFrame(vid(201, true))
+    pushFrame(vid(202, false))
+    const first = await source.next()
+    const second = await source.next()
+    close()
+    expect(first.value?.type === 'video' && first.value.frame.data[0]).toBe(201)
+    expect(second.value?.type === 'video' && second.value.frame.data[0]).toBe(202)
   })
 })

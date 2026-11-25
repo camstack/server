@@ -1711,6 +1711,7 @@ export class BrokerWebrtcServer {
       if (now - lastFrameDropLogMs < FRAME_DROP_LOG_INTERVAL_MS) return
       lastFrameDropLogMs = now
       sessionLogger.warn('webrtc push queue overflow — encoded frames dropped', {
+        tags: { deviceId },
         meta: {
           brokerId,
           frames: framesDroppedSinceLog,
@@ -4228,9 +4229,32 @@ export function createPushFrameSource(
   const queue: MediaFrame[] = []
   let resolve: ((value: IteratorResult<MediaFrame>) => void) | null = null
   let done = false
+  // Set by a purge that found no keyframe, and by a first pull that found none
+  // queued: video P-frames are useless until the next IDR, so they are dropped.
+  let awaitKeyframe = false
+  let firstPull = true
+
+  const isVideoKey = (f: MediaFrame | undefined): boolean =>
+    f?.type === 'video' && f.frame.isKeyframe
+
+  /** Drop every queued VIDEO frame (audio stays): the queue then starts clean. */
+  const dropQueuedVideo = (): number => {
+    let removed = 0
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i]?.type === 'video') {
+        queue.splice(i, 1)
+        removed += 1
+      }
+    }
+    return removed
+  }
 
   const pushFrame = (mf: MediaFrame): void => {
     if (done) return
+    if (awaitKeyframe && mf.type === 'video') {
+      if (!mf.frame.isKeyframe) return
+      awaitKeyframe = false
+    }
     if (resolve) {
       const r = resolve
       resolve = null
@@ -4251,6 +4275,12 @@ export function createPushFrameSource(
           }
         }
         queue.splice(0, cut)
+        if (!keyframeAligned) {
+          // The window would start mid-GOP: keep no video at all and wait for
+          // the next IDR rather than hand the viewer undecodable P-frames.
+          cut += dropQueuedVideo()
+          awaitKeyframe = true
+        }
         onFramesDropped?.(cut, keyframeAligned)
       }
     }
@@ -4268,6 +4298,23 @@ export function createPushFrameSource(
   const source: FrameSource = (async function* () {
     try {
       while (true) {
+        if (firstPull) {
+          // The first pull is the moment the transport is up (DTLS connected):
+          // start from the LATEST queued keyframe, not from a stale backlog.
+          firstPull = false
+          let last = -1
+          for (let i = queue.length - 1; i >= 0; i--) {
+            if (isVideoKey(queue[i])) {
+              last = i
+              break
+            }
+          }
+          if (last > 0) queue.splice(0, last)
+          else if (last < 0 && queue.length > 0) {
+            dropQueuedVideo()
+            awaitKeyframe = true
+          }
+        }
         const item = queue.shift()
         if (item) {
           yield item
