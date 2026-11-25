@@ -9,7 +9,8 @@ import { deriveHmEntitySpecs } from './hm-entity-spec.js'
  * only on the first spawn. The derived config is therefore re-applied here, the
  * same way the other providers re-derive a persisted shape
  * (`applyDerivedSpec`): the kernel merges the patch and rebuilds the live
- * instance, so the constructor sees `battery` and registers the cap.
+ * instance, so the constructor sees `battery` and registers the cap. The same
+ * pass REMOVES `battery` from a non-primary child of an earlier release.
  */
 
 export interface BatteryMigrationArgs {
@@ -33,13 +34,19 @@ export async function migrateBatteryConfig(args: BatteryMigrationArgs): Promise<
     (candidate) => candidate.key === args.specKey,
   )
   const derived = spec?.config['capabilities']
-  if (!namesBattery(derived)) return false
+  if (!Array.isArray(derived)) return false
   const persisted = await args.devices.loadConfig(args.deviceId)
-  if (namesBattery(persisted['capabilities'])) return false
+  const gains = namesBattery(derived)
+  if (namesBattery(persisted['capabilities']) === gains) return false
   await args.devices.applyDerivedSpec(args.deviceId, { config: { capabilities: derived } })
-  args.logger.info('Homematic child gained the battery capability', {
-    tags: { deviceId: args.deviceId },
-    meta: { address: args.hmDevice.address, key: args.specKey },
-  })
+  args.logger.info(
+    gains
+      ? 'Homematic child gained the battery capability'
+      : 'Homematic child lost the battery capability (not the primary child)',
+    {
+      tags: { deviceId: args.deviceId },
+      meta: { address: args.hmDevice.address, key: args.specKey },
+    },
+  )
   return true
 }

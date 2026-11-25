@@ -1,3 +1,4 @@
+import { hmPrimaryChildKeys } from './hm-primary-child.js'
 import { DeviceRole, DeviceType } from '@camstack/types'
 import type { HmChannel, HmCustomEntity, HmDevice } from 'nodehomematic'
 import { mapHmDeviceChannels } from '../homematic-mapping.js'
@@ -8,7 +9,7 @@ import {
   type HmDerivedEntity,
 } from '../homematic-diagnostics-mapping.js'
 import { HM_BATTERY_CAP } from './hm-battery.js'
-import { ACTUATOR_CAP_NAMES, keyEventVocabulary } from './hm-cold-start.js'
+import { ACTUATOR_CAP_NAMES, channelIndexFromAddress, keyEventVocabulary } from './hm-cold-start.js'
 
 /**
  * SHARED per-entity derivation — the single source of truth for which functional
@@ -224,14 +225,39 @@ function deriveUpdateSpec(
   ]
 }
 
+function hostsBattery(spec: HmEntitySpec): boolean {
+  return spec.key.startsWith('act-') || spec.key.startsWith('sensor-')
+}
+
+function hostChannelIndex(spec: HmEntitySpec): number {
+  const suffix = channelIndexFromAddress(spec.key.slice(spec.key.indexOf('-') + 1))
+  const parsed = suffix === null ? Number.NaN : Number(suffix)
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER
+}
+
+/** Actuators before sensors, then the lowest channel index, then the key. */
+function compareHosts(a: HmEntitySpec, b: HmEntitySpec): number {
+  const kind = Number(a.key.startsWith('sensor-')) - Number(b.key.startsWith('sensor-'))
+  if (kind !== 0) return kind
+  const channel = hostChannelIndex(a) - hostChannelIndex(b)
+  return channel !== 0 ? channel : a.key.localeCompare(b.key)
+}
+
 /**
- * A battery-operated device's sensor and actuator children host the `battery`
- * cap (the event emitter and the container do not): the card of the device the
- * operator looks at shows the battery, fed from the maintenance channel.
+ * With several battery-hosting children (sensor and actuator children; the event
+ * emitter and the container do not host) the battery sits on ONE: the primary
+ * child ({@link hmPrimaryChildKeys}) when it hosts, else the first host in a
+ * fixed order (actuators first, then channel index, then key) so it never hops
+ * with the facade's entity order. One hosting child keeps it.
  */
+function batteryHostKey(functional: readonly HmEntitySpec[]): string | null {
+  const hosts = functional.filter(hostsBattery).toSorted(compareHosts)
+  const primary = hmPrimaryChildKeys(functional).find((key) => hosts.some((h) => h.key === key))
+  return primary ?? hosts[0]?.key ?? null
+}
+
+/** Adds the `battery` cap to a host spec (the card shows it, fed from the maintenance channel). */
 function withBatteryCap(spec: HmEntitySpec): HmEntitySpec {
-  const hosts = spec.key.startsWith('act-') || spec.key.startsWith('sensor-')
-  if (!hosts) return spec
   const capabilities = [...spec.capabilities, HM_BATTERY_CAP]
   return { ...spec, capabilities, config: { ...spec.config, capabilities: [...capabilities] } }
 }
@@ -261,8 +287,9 @@ export function deriveHmEntitySpecs(
     ...deriveActuatorSpecs(customEntities, device.type),
     ...deriveSensorAndEventSpecs(device),
   ]
+  const batteryKey = isBatteryOperatedDevice(device) ? batteryHostKey(functional) : null
   return [
-    ...(isBatteryOperatedDevice(device) ? functional.map(withBatteryCap) : functional),
+    ...functional.map((spec) => (spec.key === batteryKey ? withBatteryCap(spec) : spec)),
     ...deriveDiagnosticSpecs(device, device.address),
     ...deriveUpdateSpec(device),
   ]

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A battery-operated Homematic device with several functional children shows its battery on the main child only; the duplicate on other children is removed on the next reconcile.
+
 ## [1.2.214] - 2026-11-25
 
 ### Changed

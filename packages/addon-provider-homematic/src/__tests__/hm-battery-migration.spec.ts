@@ -5,7 +5,7 @@
  * re-apply the derived capabilities so such a child gains the cap.
  */
 import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
-import type { Homematic } from 'nodehomematic'
+import type { Homematic, HmCustomEntity } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmContainerDevice } from '../devices/hm-container-device.js'
 import { HmSensorDevice } from '../devices/hm-sensor-device.js'
@@ -29,6 +29,30 @@ function motionSensor() {
         index: 1,
         type: 'MOTIONDETECTOR_TRANSCEIVER',
         dataPoints: [hmDataPoint({ parameter: 'MOTION', type: 'BOOL', value: false })],
+      },
+      {
+        address: `${ADDRESS}:0`,
+        index: 0,
+        type: 'MAINTENANCE',
+        dataPoints: [
+          hmDataPoint({ parameter: 'LOW_BAT', type: 'BOOL', value: false }),
+          hmDataPoint({ parameter: 'UNREACH', type: 'BOOL', value: false }),
+        ],
+      },
+    ],
+  })
+}
+
+function thermostat() {
+  return hmDevice({
+    address: ADDRESS,
+    type: 'HmIP-eTRV-C',
+    channels: [
+      {
+        address: `${ADDRESS}:1`,
+        index: 1,
+        type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+        dataPoints: [],
       },
       {
         address: `${ADDRESS}:0`,
@@ -132,6 +156,80 @@ function makeCtx(
 beforeEach(() => {
   homematicFacades.clear()
   registerFacade()
+})
+
+const THERMO_CAPS = ['climate-control', 'battery']
+
+function climateEntity(): HmCustomEntity {
+  return {
+    kind: 'climate',
+    device: ADDRESS,
+    channel: `${ADDRESS}:1`,
+    name: 'Thermostat',
+    writable: true,
+    hasEvents: true,
+  } as unknown as HmCustomEntity
+}
+
+describe('a non-primary child loses a battery persisted by the earlier release', () => {
+  const sensorCaps = ['temperature-sensor', 'humidity-sensor']
+
+  function useThermostat(): void {
+    homematicFacades.clear()
+    const stub = {
+      on: () => () => undefined,
+      devices: () => [thermostat()],
+      customEntities: () => [climateEntity()],
+    }
+    homematicFacades.set(INTEGRATION_ID, stub as unknown as Homematic)
+  }
+
+  function makeThermoDevices(persistedBySensor: readonly string[]): DevicesStub {
+    const applied: DevicesStub['applied'] = []
+    const api = {
+      getChildren: async () => [
+        { id: CHILD_ID, stableId: `hm:${INTEGRATION_ID}:${ADDRESS}-sensor-${ADDRESS}:1` },
+        { id: CHILD_ID + 1, stableId: `hm:${INTEGRATION_ID}:${ADDRESS}-act-${ADDRESS}:1` },
+      ],
+      loadConfig: async (id: number) => ({
+        capabilities: id === CHILD_ID ? [...persistedBySensor] : [...THERMO_CAPS],
+      }),
+      applyDerivedSpec: async (deviceId: number, derived: { config?: Record<string, unknown> }) => {
+        applied.push({ deviceId, config: derived.config })
+      },
+    }
+    return { applied, api: api as unknown as DeviceContext['devices'] }
+  }
+
+  async function reconcile(devices: DevicesStub): Promise<void> {
+    const container = new HmContainerDevice(
+      makeCtx(
+        CONTAINER_ID,
+        DeviceType.Container,
+        null,
+        { address: ADDRESS, integrationId: INTEGRATION_ID },
+        devices.api,
+      ),
+    )
+    await container.onActivate()
+    await container.removeDevice()
+  }
+
+  it('strips battery from the sensor child, leaves the primary actuator alone', async () => {
+    useThermostat()
+    const devices = makeThermoDevices([...sensorCaps, 'battery'])
+    await reconcile(devices)
+    expect(devices.applied).toHaveLength(1)
+    expect(devices.applied[0]?.deviceId).toBe(CHILD_ID)
+    expect(devices.applied[0]?.config?.['capabilities']).toEqual(sensorCaps)
+  })
+
+  it('is idempotent: a sensor already without battery is not re-applied', async () => {
+    useThermostat()
+    const devices = makeThermoDevices(sensorCaps)
+    await reconcile(devices)
+    expect(devices.applied).toHaveLength(0)
+  })
 })
 
 describe('an already-adopted child gains battery', () => {

@@ -114,7 +114,8 @@ describe('deriveHmEntitySpecs', () => {
     // Actuator (climate) from the custom entity.
     const act = byKey.get(`act-${ADDR}:1`)
     expect(act?.deviceType).toBe(DeviceType.Climate)
-    // A LOW_BAT device: its functional child also hosts the battery cap (#709).
+    // A LOW_BAT device with two functional children: the battery sits on the
+    // primary one only (#709), here the actuator.
     expect(act?.capabilities).toEqual(['climate-control', 'battery'])
     expect(act?.config['channel']).toBe(`${ADDR}:1`)
     expect(act?.config['kind']).toBe('climate')
@@ -122,7 +123,8 @@ describe('deriveHmEntitySpecs', () => {
     // Sensor child (temperature + humidity) from the HEATING channel.
     const sensor = byKey.get(`sensor-${ADDR}:1`)
     expect(sensor?.deviceType).toBe(DeviceType.Sensor)
-    expect(sensor?.capabilities).toEqual(['temperature-sensor', 'humidity-sensor', 'battery'])
+    expect(sensor?.capabilities).toEqual(['temperature-sensor', 'humidity-sensor'])
+    expect(sensor?.config['capabilities']).not.toContain('battery')
 
     // Diagnostics from MAINTENANCE — voltage carries provenance + unit + role.
     const voltage = byKey.get('maint-voltage')
@@ -201,5 +203,34 @@ describe('deriveHmEntitySpecs', () => {
       expect(spec.config['integrationId']).toBeUndefined()
       expect(spec.config['address']).toBeUndefined()
     }
+  })
+
+  describe('which child hosts the battery', () => {
+    /** One boundary cast: the library's entity types carry runtime fields the derivation never reads. */
+    function entity(kind: 'switch' | 'climate', channel: number): HmCustomEntity {
+      return { kind, device: ADDR, channel: `${ADDR}:${channel}` } as unknown as HmCustomEntity
+    }
+
+    function batteryKeys(entities: readonly HmCustomEntity[]): readonly string[] {
+      return deriveHmEntitySpecs(makeBatteryThermostat(), entities)
+        .filter((s) => s.capabilities.includes('battery'))
+        .map((s) => s.key)
+    }
+
+    it('a single sensor child keeps the battery', () => {
+      expect(batteryKeys([])).toEqual([`sensor-${ADDR}:1`])
+    })
+
+    it('the primary relay hosts it, in either entity order', () => {
+      const relays = [entity('switch', 2), entity('switch', 1)]
+      expect(batteryKeys(relays)).toEqual([`act-${ADDR}:1`])
+      expect(batteryKeys(relays.toReversed())).toEqual([`act-${ADDR}:1`])
+    })
+
+    it('without a primary the same actuator hosts it whatever the facade order', () => {
+      const climates = [entity('climate', 2), entity('climate', 1)]
+      expect(batteryKeys(climates)).toEqual([`act-${ADDR}:1`])
+      expect(batteryKeys(climates.toReversed())).toEqual([`act-${ADDR}:1`])
+    })
   })
 })
