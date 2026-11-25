@@ -13,8 +13,9 @@
  *     a script never logs in with a password, it reads the session.
  *
  * NOT refused: the agent JOIN token. It is a node's identity at first pairing,
- * not a client login, so `agent.ts` (and its usage text in `main.ts`),
- * `dev-cluster.sh` and `dev-agent-only.sh` keep `--token` / `CAMSTACK_HUB_TOKEN`.
+ * not a client login, so `agent.ts`, the `camstack agent` usage text in `main.ts`,
+ * `dev-cluster.sh` and `dev-agent-only.sh` keep `--token` / `CAMSTACK_HUB_TOKEN`
+ * on lines marked `agent-join:line` / between `agent-join:begin` and `agent-join:end`.
  *
  * A file that exists to REFUSE a removed flag names it (`REMOVED_ALLOWED`).
  * Comment-only lines are skipped. Textual; specs are not scanned.
@@ -37,10 +38,15 @@ const SKIP_DIRS = new Set(['dist', 'node_modules', '__tests__', '__mocks__', 'ge
 const SOURCE_RE = /\.(?:ts|tsx|mts|cts|js|mjs|cjs|sh)$/
 const NON_RUNTIME_RE = /\.(?:spec|test)\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/
 
-/** Node identity, not a client login. */
+/**
+ * Node identity, not a client login. Only these files may carry the agent join
+ * token, and only on lines marked `agent-join:line` or between `agent-join:begin`
+ * and `agent-join:end`: a client command in the same file that regains
+ * `--token` or `CAMSTACK_TOKEN` outside a marker still fails.
+ */
 const AGENT_JOIN_FILES: ReadonlySet<string> = new Set([
   'packages/cli/src/commands/agent.ts',
-  'packages/cli/src/main.ts', // the `camstack agent --token` usage text
+  'packages/cli/src/main.ts',
   'scripts/dev-cluster.sh',
   'scripts/dev-agent-only.sh',
 ])
@@ -94,10 +100,14 @@ export function findSingleLoginViolations(
   source: string,
 ): readonly SingleLoginFinding[] {
   const found: SingleLoginFinding[] = []
-  const agent = AGENT_JOIN_FILES.has(file)
+  const agentFile = AGENT_JOIN_FILES.has(file)
+  let inAgentRegion = false
   const removed = REMOVED_ALLOWED.has(file)
   const inScripts = file.startsWith('scripts/')
   source.split('\n').forEach((text, i) => {
+    if (agentFile && text.includes('agent-join:begin')) inAgentRegion = true
+    if (agentFile && text.includes('agent-join:end')) inAgentRegion = false
+    const agent = agentFile && (inAgentRegion || text.includes('agent-join:line'))
     if (isCommentLine(text)) return
     const add = (rule: Rule): void => {
       found.push({ file, line: i + 1, rule, text: text.trim() })

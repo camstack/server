@@ -82,7 +82,7 @@ for i in $(seq 1 "$AGENT_COUNT"); do
   AGENT_NAME="dev-agent-${i}"
   AGENT_DATA="${HUB_DATA}-agent-${i}"
 
-  COMMANDS+=("sleep 3 && CAMSTACK_MODE=agent CAMSTACK_HUB_URL=wss://127.0.0.1:${HUB_PORT}/agent CAMSTACK_HUB_TOKEN=${DEV_TOKEN} CAMSTACK_AGENT_NAME=${AGENT_NAME} CAMSTACK_DATA=${AGENT_DATA} node server/backend/dist/main.js")
+  COMMANDS+=("sleep 3 && CAMSTACK_MODE=agent CAMSTACK_HUB_URL=wss://127.0.0.1:${HUB_PORT}/agent CAMSTACK_HUB_TOKEN=${DEV_TOKEN} CAMSTACK_AGENT_NAME=${AGENT_NAME} CAMSTACK_DATA=${AGENT_DATA} node server/backend/dist/main.js")  # agent-join:line
   NAMES="${NAMES},agent-${i}"
   CONCURRENTLY_ARGS+=(--prefix-colors "green")
 done

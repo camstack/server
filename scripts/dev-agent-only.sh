@@ -17,7 +17,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # Defaults
 HUB_IP="127.0.0.1"
 HUB_PORT="${CAMSTACK_PORT:-4443}"
-TOKEN="${CAMSTACK_HUB_TOKEN:-dev-local}"
+TOKEN="${CAMSTACK_HUB_TOKEN:-dev-local}"  # agent-join:line
 AGENT_NAME=""
 AGENT_DATA="camstack-data-agent"
 
@@ -32,7 +32,7 @@ while [[ $# -gt 0 ]]; do
       HUB_PORT="$2"
       shift 2
       ;;
-    --token)
+    --token)  # agent-join:line
       TOKEN="$2"
       shift 2
       ;;
@@ -70,6 +70,7 @@ if [ ! -f server/backend/dist/main.js ]; then
   npm run build 2>/dev/null
 fi
 
+# agent-join:begin
 exec env \
   CAMSTACK_MODE=agent \
   CAMSTACK_HUB_URL="wss://${HUB_IP}:${HUB_PORT}/agent" \
@@ -77,3 +78,4 @@ exec env \
   CAMSTACK_AGENT_NAME="${AGENT_NAME}" \
   CAMSTACK_DATA="${AGENT_DATA}" \
   node server/backend/dist/main.js
+# agent-join:end

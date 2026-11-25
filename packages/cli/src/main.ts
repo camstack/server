@@ -128,7 +128,7 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'Required:',
           '  --hub <ip>             Hub server IP address',
-          '  --token <token>        Authentication token',
+          '  --token <token>        Authentication token', // agent-join:line
           '',
           'Optional:',
           '  --name <name>          Agent name (default: hostname-arch)',

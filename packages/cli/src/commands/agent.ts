@@ -23,7 +23,7 @@ export function buildAgentEnv(opts: AgentOptions): Record<string, string> {
     // value. So `camstack agent` set a variable no one reads and booted a HUB.
     CAMSTACK_ROLE: 'agent',
     CAMSTACK_HUB_URL: `ws://${opts.hub}:${hubPort}/agent`,
-    CAMSTACK_HUB_TOKEN: opts.token,
+    CAMSTACK_HUB_TOKEN: opts.token, // agent-join:line
     CAMSTACK_AGENT_NAME: agentName,
   }
 }
@@ -44,7 +44,7 @@ export async function runAgent(args: readonly string[]): Promise<void> {
     throw new Error('--hub is required (e.g. --hub 192.168.10.10)')
   }
   if (typeof values.token !== 'string' || values.token.length === 0) {
-    throw new Error('--token is required')
+    throw new Error('--token is required') // agent-join:line
   }
   const opts: AgentOptions = {
     hub: values.hub,

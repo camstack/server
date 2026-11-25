@@ -56,7 +56,7 @@ export default async function deployExecutor(
     )
   }
 
-  const { server, token } = await resolveDeployConfig({
+  const { server, token } = resolveDeployConfig({
     ...(options.server !== undefined ? { server: options.server } : {}),
   })
 

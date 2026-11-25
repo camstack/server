@@ -33,12 +33,38 @@ describe('check-single-client-login', () => {
     expect(rules('packages/cli/src/commands/login.ts', line)).toEqual([])
   })
 
-  it('leaves the agent join token alone', () => {
+  it('leaves the agent join token alone, only where it is marked', () => {
     const line = 'HUB_TOKEN="$CAMSTACK_HUB_TOKEN" camstack agent --token "$HUB_TOKEN"'
-    expect(rules('scripts/dev-cluster.sh', line)).toEqual([])
-    expect(rules('scripts/dev-agent-only.sh', line)).toEqual([])
-    expect(rules('packages/cli/src/commands/agent.ts', line)).toEqual([])
-    expect(rules('scripts/other.sh', line)).toContain('env-token')
+    const marked = `${line}  # agent-join:line`
+    expect(rules('scripts/dev-cluster.sh', marked)).toEqual([])
+    expect(rules('scripts/dev-agent-only.sh', marked)).toEqual([])
+    expect(rules('packages/cli/src/commands/agent.ts', `${line} // agent-join:line`)).toEqual([])
+    const region = ['# agent-join:begin', line, '# agent-join:end'].join('\n')
+    expect(rules('scripts/dev-agent-only.sh', region)).toEqual([])
+    // the marker means nothing in a file that is not an agent join file
+    expect(rules('scripts/other.sh', marked)).toContain('env-token')
+  })
+
+  it('a client command in an agent file that regains a token still fails', () => {
+    const agentUsage = "'  --token <token>        Authentication token', // agent-join:line"
+    expect(rules('packages/cli/src/main.ts', agentUsage)).toEqual([])
+    expect(rules('packages/cli/src/main.ts', "'  --token <token>   deploy token',")).toContain(
+      'token-option',
+    )
+    expect(rules('packages/cli/src/main.ts', "process.env['CAMSTACK_TOKEN']")).toContain(
+      'env-token',
+    )
+    // the region closes: a line after `agent-join:end` is a client line again
+    const after = [
+      '// agent-join:begin',
+      "'--token <t>'",
+      '// agent-join:end',
+      "'--token <t>'",
+    ].join('\n')
+    expect(rules('packages/cli/src/main.ts', after)).toHaveLength(1)
+    expect(
+      rules('scripts/dev-cluster.sh', 'curl -H "Authorization: Bearer $CAMSTACK_TOKEN"'),
+    ).toContain('env-token')
   })
 
   it('skips comment lines and the files that refuse the removed flags', () => {
