@@ -262,7 +262,7 @@ export function AppLayout() {
   // searchable; there is no separate hand-written list to fall out of sync.
   const embeddedByViewer = useMemo(() => isEmbeddedByViewer(), [])
   // Chromeless only after the shell's `hello` (D1096): its drawer is then the only navigation.
-  const { chromeless } = useAppShell()
+  const { chromeless, search: shellSearch } = useAppShell()
   const navSections = useMemo(
     () => buildNavSections({ t, isAdmin, embeddedByViewer }),
     [t, isAdmin, embeddedByViewer],
@@ -649,6 +649,15 @@ export function AppLayout() {
           {/* Post-login passkey adoption nudge — renders only for users
             with ZERO enrolled passkeys (and an installed user-passkeys
             provider); dismissal persists ~30 days per user. */}
+          {chromeless && (
+            <GlobalSearch
+              floating
+              compact={false}
+              request={shellSearch}
+              navSections={navSections}
+              addonPages={addonPages}
+            />
+          )}
           <PasskeyEnrollmentPrompt />
           <ServerNamePrompt />
           <CriticalAlertsOnLoadPanel />

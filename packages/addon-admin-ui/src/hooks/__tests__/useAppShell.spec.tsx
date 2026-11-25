@@ -8,6 +8,12 @@ import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { useAppShell } from '../useAppShell'
 
+const setMode = vi.hoisted(() => vi.fn())
+vi.mock('@camstack/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+  return { ...actual, useThemeMode: () => ({ setMode }) }
+})
+
 interface FakeParent {
   readonly postMessage: ReturnType<typeof vi.fn>
 }
@@ -15,11 +21,12 @@ interface FakeParent {
 const HELLO = { camstack: 'app-bridge', v: 1, type: 'hello' } as const
 
 function Probe() {
-  const { chromeless } = useAppShell()
+  const { chromeless, search } = useAppShell()
   const location = useLocation()
   return (
     <div>
       <span data-testid="chromeless">{chromeless ? 'yes' : 'no'}</span>
+      <span data-testid="search">{search === null ? '-' : `${search.id}:${search.query}`}</span>
       <span data-testid="path">{location.pathname}</span>
     </div>
   )
@@ -46,6 +53,7 @@ let shell: FakeParent
 
 beforeEach(() => {
   shell = { postMessage: vi.fn() }
+  setMode.mockClear()
   Object.defineProperty(window, 'parent', { value: shell, configurable: true })
 })
 
@@ -122,5 +130,56 @@ describe('useAppShell inside the native webview', () => {
     deliver(JSON.stringify(HELLO), { source: null, origin: '' })
     expect(screen.getByTestId('chromeless').textContent).toBe('yes')
     expect(post).toHaveBeenCalledWith(expect.stringContaining('"type":"ready"'))
+  })
+})
+
+describe('useAppShell navigate paths', () => {
+  it.each([
+    '//evil.example/x',
+    '/\\evil.example',
+    'https://evil.example/',
+    'system/addons',
+  ])('refuses %s', (path) => {
+    mount()
+    deliver({ ...HELLO, type: 'navigate', path }, { source: shell, origin: window.location.origin })
+    expect(screen.getByTestId('path').textContent).toBe('/devices')
+  })
+})
+
+describe('useAppShell search and theme', () => {
+  it('hands the shell search to the page, a repeat as a new request', () => {
+    mount()
+    const from = { source: shell, origin: window.location.origin }
+    deliver({ ...HELLO, type: 'search', query: 'garage' }, from)
+    expect(screen.getByTestId('search').textContent).toBe('1:garage')
+    deliver({ ...HELLO, type: 'search', query: 'garage' }, from)
+    expect(screen.getByTestId('search').textContent).toBe('2:garage')
+  })
+
+  it('ignores a search from another origin', () => {
+    mount()
+    deliver(
+      { ...HELLO, type: 'search', query: 'garage' },
+      { source: shell, origin: 'https://other.example.com' },
+    )
+    expect(screen.getByTestId('search').textContent).toBe('-')
+  })
+
+  it('applies the shell theme through the theme API', () => {
+    mount()
+    deliver(
+      { ...HELLO, type: 'theme', mode: 'light' },
+      { source: shell, origin: window.location.origin },
+    )
+    expect(setMode).toHaveBeenCalledWith('light')
+  })
+
+  it('ignores a theme from another origin', () => {
+    mount()
+    deliver(
+      { ...HELLO, type: 'theme', mode: 'light' },
+      { source: shell, origin: 'https://other.example.com' },
+    )
+    expect(setMode).not.toHaveBeenCalled()
   })
 })

@@ -69,6 +69,14 @@ function decode(raw: unknown): unknown {
   }
 }
 
+/**
+ * A router path the shell may send: one leading `/`. `//host` (protocol-relative),
+ * `/\\host` and anything else is refused, so a navigate can never leave the app.
+ */
+export function isShellPath(path: string): boolean {
+  return path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\')
+}
+
 /** The shell message this event is, or `null` when it is not one from the shell. */
 export function acceptShellMessage(
   event: ShellEventLike,
@@ -79,7 +87,9 @@ export function acceptShellMessage(
   const fromNativeInjection = endpoint.native && event.source === null && event.origin === ''
   if (!fromFrameParent && !fromNativeInjection) return null
   const parsed = ShellToAppMessageSchema.safeParse(decode(event.data))
-  return parsed.success ? parsed.data : null
+  if (!parsed.success) return null
+  if (parsed.data.type === 'navigate' && !isShellPath(parsed.data.path)) return null
+  return parsed.data
 }
 
 /** Send to the shell, or `null` when this page has no shell to talk to. */

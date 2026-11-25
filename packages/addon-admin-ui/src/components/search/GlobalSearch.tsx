@@ -58,9 +58,23 @@ interface GlobalSearchProps {
   /** Fired after a result is selected — lets AppLayout close the mobile
    *  drawer, mirroring every other sidebar nav action. */
   readonly onNavigated?: () => void
+  /**
+   * Chromeless admin (D1096): there is no sidebar to host the box, so it floats at
+   * the top of the page and renders nothing until the shell asks for a search.
+   */
+  readonly floating?: boolean
+  /** A search the shell asked for: opens the panel with this text; a new `id` re-opens it. */
+  readonly request?: { readonly id: number; readonly query: string } | null
 }
 
-export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: GlobalSearchProps) {
+export function GlobalSearch({
+  navSections,
+  addonPages,
+  compact,
+  onNavigated,
+  floating = false,
+  request = null,
+}: GlobalSearchProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -164,6 +178,14 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
   useEffect(() => {
     if (panelOpen) inputRef.current?.focus()
   }, [panelOpen])
+
+  const requestId = request?.id
+  const requestQuery = request?.query
+  useEffect(() => {
+    if (requestId === undefined) return
+    setQuery(requestQuery ?? '')
+    setPanelOpen(true)
+  }, [requestId, requestQuery])
 
   const closePanel = useCallback(() => {
     setPanelOpen(false)
@@ -325,6 +347,20 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
         )}
     </div>
   )
+
+  // Chromeless: the same input and results, floated at the top, only while a
+  // shell-requested search is open.
+  if (floating) {
+    if (!panelOpen) return null
+    return (
+      <div
+        ref={containerRef}
+        className="fixed inset-x-2 top-[calc(env(safe-area-inset-top)+0.5rem)] z-50 mx-auto max-w-[26rem]"
+      >
+        {inputBlock}
+      </div>
+    )
+  }
 
   if (!compact) {
     return (

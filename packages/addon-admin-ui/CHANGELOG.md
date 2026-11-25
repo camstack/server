@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A notification rule button has an Ask for confirmation switch: the notification opens a confirmation page and the Action runs only after you confirm
 - The admin UI hides its own sidebar and top bar when the viewer shell greets it, follows the shell's navigation and reports its page back; standalone it is unchanged
+- Inside the viewer shell the admin UI follows the shell's search and theme, and refuses a navigation that leaves the app
 
 ## [1.2.751] - 2026-11-25
 
