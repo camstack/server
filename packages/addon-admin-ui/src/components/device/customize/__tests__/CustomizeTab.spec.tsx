@@ -188,6 +188,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useCoreBlocksCreateComposition: mutation(vi.fn(async () => ({}))),
     useCoreBlocksUpdateComposition: mutation(vi.fn(async () => ({}))),
     useCoreBlocksDelete: mutation(deleteMutate),
+    // The orphan branch's "Delete this device" (#704); not under test here.
+    useDeviceManagerRemove: mutation(vi.fn(async () => ({}))),
     useCapabilityPresence: () => composerPresence.current,
     useConfirm: () => confirmMock,
     // The Identity section (Task 8) writes the existing authorities; not under test here.
