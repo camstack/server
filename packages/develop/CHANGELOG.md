@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.59] - 2026-11-25
+
 ### Removed
 
 - Every hub tool authenticates through the camstack login session only: --token, --token-file and CAMSTACK_TOKEN were removed; the new hub-access skill says how.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.755] - 2026-11-25
+
 ### Changed
 
 - The API explorer's generated curl now reads the API token from $CAMSTACK_API_TOKEN, so it cannot be mistaken for the removed client login variable.

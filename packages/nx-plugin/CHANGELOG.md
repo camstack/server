@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.37] - 2026-11-25
+
 ### Removed
 
 - The deploy executor authenticates with the camstack login session; the token option, CAMSTACK_TOKEN and ~/.camstackrc were removed.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.33] - 2026-11-25
+
 ### Changed
 
 - Track review tools now use the saved camstack login session (hub address, credential, TLS) when no CAMSTACK_HUB_* variables are set, and refuse the write tools up front without an admin login.
