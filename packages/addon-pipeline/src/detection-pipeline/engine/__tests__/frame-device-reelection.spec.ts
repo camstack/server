@@ -101,6 +101,7 @@ describe('nextUsableDefaultDevice', () => {
         currentKey: 'openvino:gpu',
         poolKeyOf,
         failed: (key) => key === 'openvino:gpu' || key === 'openvino:npu',
+        allowed: () => true,
       }),
     ).toBe('cpu')
   })
@@ -112,8 +113,21 @@ describe('nextUsableDefaultDevice', () => {
         currentKey: 'openvino:gpu',
         poolKeyOf,
         failed: (key) => key === 'openvino:gpu' || key === 'cpu:cpu',
+        allowed: () => true,
       }),
     ).toBeNull()
+  })
+
+  it('a healthy candidate nobody enabled is passed over', () => {
+    expect(
+      nextUsableDefaultDevice({
+        candidates: ['openvino:gpu', 'edgetpu:usb', 'cpu'],
+        currentKey: 'openvino:gpu',
+        poolKeyOf,
+        failed: () => false,
+        allowed: (candidate) => candidate !== 'edgetpu:usb',
+      }),
+    ).toBe('cpu')
   })
 })
 

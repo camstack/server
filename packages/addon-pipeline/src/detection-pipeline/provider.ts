@@ -89,7 +89,10 @@ import {
 } from './engine/benchmark-pools.js'
 import { placedModelsOf } from './engine/coral-cocompiled-set.js'
 import { BACKEND_TO_POOL_RUNTIME, EngineFactory } from './engine/engine-factory.js'
-import { nextUsableDefaultDevice } from './engine/default-device-rederivation.js'
+import {
+  isCpuClassDeviceKey,
+  nextUsableDefaultDevice,
+} from './engine/default-device-rederivation.js'
 import { FrameReelectionNotes, routeLiveFrameDevice } from './engine/frame-device-reelection.js'
 import { IdlePoolReaper } from './engine/idle-pool-reaper.js'
 import {
@@ -346,6 +349,14 @@ class ModelLoadRefusedError extends Error {
 }
 
 /** One in-flight model load, and the failure generation it produced. */
+/** The default a re-derivation left (planning#720), and where it went. */
+interface DisplacedDefault {
+  /** The default to go back to once its device is usable again. */
+  readonly engine: PipelineEngineChoice
+  /** The device key the default moved onto — its pool keeps that key on the way back. */
+  readonly movedTo: string
+}
+
 interface ModelLoadFlight {
   readonly work: Promise<void>
   readonly generation: number | null
@@ -1278,6 +1289,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const top = devices.find((d) => d.available) ?? devices[0]
     this.currentEngine = top ? resolveDeviceEngine(top.key) : ONNX_FLOOR
     this.defaultDeviceCandidates = devices.filter((d) => d.available).map((d) => d.key)
+    this.displacedDefault = null
     this.log.info('Derived node-default engine (local kernel)', {
       meta: {
         deviceKey: top?.key ?? 'onnx:cpu(floor)',
@@ -2554,6 +2566,18 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // for the rest of its session. Replays pin and refuse (D54), and a
     // measurement (`sessionId`: the capacity ramp, a batch) asked for THAT
     // device: only a camera's live dispatch re-elects.
+    // A camera's live dispatch names only a device the operator left enabled
+    // (a benchmark or a replay may name any): that is the opt-in a default
+    // re-derivation honours.
+    if (
+      input.deviceKey !== undefined &&
+      isRuntime &&
+      input.replay !== true &&
+      input.deviceId !== undefined &&
+      input.sessionId === undefined
+    ) {
+      this.routedDeviceKeys.add(input.deviceKey)
+    }
     this.rederiveDefaultEngineIfFailed(input.deviceId)
     const liveDeviceKey =
       isRuntime &&
@@ -4607,6 +4631,104 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
   private defaultDeviceCandidates: readonly string[] = []
 
   /**
+   * Device keys the orchestrator has routed a dispatch to on this node. It
+   * only ever names a device the operator left enabled (its merged
+   * per-device map), so this is the operator's opt-in as the executor
+   * already receives it — no second copy of the stored map, no addon import.
+   */
+  private readonly routedDeviceKeys = new Set<string>()
+
+  /** The default a re-derivation moved off, and the key it moved onto. */
+  private displacedDefault: DisplacedDefault | null = null
+
+  /** Re-read the node's present devices, best first, from the local kernel. */
+  private async refreshDefaultDeviceCandidates(): Promise<void> {
+    let hardware: KernelInferenceHardware | null = null
+    try {
+      hardware = (await this.addonCtx?.kernel?.inferenceEngine?.resolveHardware()) ?? null
+    } catch {
+      // Resolver unavailable: the enumeration below still names the CPU floor.
+    }
+    const env = runtimeEnvFromProcess(hardware ? toProbedHardware(hardware) : null)
+    this.defaultDeviceCandidates = enumerateInferenceDevices(envToHardwareInfo(env))
+      .filter((d) => d.available)
+      .map((d) => d.key)
+  }
+
+  /**
+   * Whether the default may move onto `candidate` by itself: a CPU-class pool
+   * (the fallback every node has), or an accelerator the orchestrator has
+   * already routed work to here. An accelerator nobody enabled — a Coral the
+   * operator switched off, a device never elected — is never picked.
+   */
+  private defaultMayMoveTo(candidate: string): boolean {
+    if (isCpuClassDeviceKey(candidate)) return true
+    const poolKey = deviceKeyOf(resolveDeviceEngine(candidate))
+    for (const routed of this.routedDeviceKeys) {
+      if (routed === candidate || deviceKeyOf(resolveDeviceEngine(routed)) === poolKey) return true
+    }
+    return false
+  }
+
+  /**
+   * Swap the default engine. A pool `next` already runs is ADOPTED (one
+   * device, one pool); the outgoing default pool is disposed, or — when its
+   * device is healthy and `keepOutgoingAs` names it — kept as that device's
+   * pool, since cameras elected onto it are still being served by it.
+   */
+  private swapDefaultEngine(
+    nextEngine: PipelineEngineChoice,
+    keepOutgoingAs: string | null,
+  ): boolean {
+    const retired = this.engineFactory
+    let adopted: EngineFactory | null = null
+    for (const [key, factory] of [...this.factoriesByDevice]) {
+      if (!enginesEqual(resolveDeviceEngine(key), nextEngine)) continue
+      this.factoriesByDevice.delete(key)
+      this.deviceReaper.cancel(key)
+      if (adopted === null && factory.isReady()) adopted = factory
+      else void factory.dispose().catch(() => undefined)
+    }
+    this.currentEngine = nextEngine
+    this.engineFactory = adopted
+    this.executor = null
+    if (retired) {
+      if (keepOutgoingAs !== null && retired.isReady()) {
+        this.factoriesByDevice.set(keepOutgoingAs, retired)
+        this.deviceReaper.touch(keepOutgoingAs)
+      } else void retired.dispose().catch(() => undefined)
+    }
+    return adopted !== null
+  }
+
+  /**
+   * Move the default BACK to the device a re-derivation left, once that
+   * device is usable again (re-armed by the operator). Without this a node
+   * stayed on its fallback until a restart, long after the accelerator the
+   * operator chose had come back.
+   */
+  private restoreDisplacedDefaultIfRecovered(deviceId: number | undefined): void {
+    const displaced = this.displacedDefault
+    if (displaced === null) return
+    const home = deviceKeyOf(displaced.engine)
+    if (this.deviceLiveness.isFailed(home)) return
+    const from = deviceKeyOf(this.currentEngine)
+    this.displacedDefault = null
+    if (from === home) return
+    const adoptedRunningPool = this.swapDefaultEngine(displaced.engine, displaced.movedTo)
+    this.log.info('node-default inference device usable again — default moved back to it', {
+      ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+      meta: { from, to: home, reason: 're-armed', adoptedRunningPool },
+    })
+    this.startProvisioningForCurrentEngine()
+    void this.recomputeConfigIssues().catch((err: unknown) => {
+      this.log.warn('config-issue recompute failed after default restore', {
+        meta: { error: errMsg(err) },
+      })
+    })
+  }
+
+  /**
    * Move the node default off a terminally failed device (planning#720).
    *
    * A device marked failed or absent is never used, for any step — and the
@@ -4621,6 +4743,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * a dispatch resolves its steps, since the default's format decides them.
    */
   private rederiveDefaultEngineIfFailed(deviceId: number | undefined): void {
+    this.restoreDisplacedDefaultIfRecovered(deviceId)
     const from = deviceKeyOf(this.currentEngine)
     if (!this.deviceLiveness.isFailed(from)) return
     const next = nextUsableDefaultDevice({
@@ -4628,29 +4751,23 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       currentKey: from,
       poolKeyOf: (candidate) => deviceKeyOf(resolveDeviceEngine(candidate)),
       failed: (key) => this.deviceLiveness.isFailed(key),
+      allowed: (candidate) => this.defaultMayMoveTo(candidate),
     })
     if (next === null) return
-    const nextEngine = resolveDeviceEngine(next)
-    const retired = this.engineFactory
-    let adopted: EngineFactory | null = null
-    for (const [key, factory] of [...this.factoriesByDevice]) {
-      if (!enginesEqual(resolveDeviceEngine(key), nextEngine)) continue
-      this.factoriesByDevice.delete(key)
-      this.deviceReaper.cancel(key)
-      if (adopted === null && factory.isReady()) adopted = factory
-      else void factory.dispose().catch(() => undefined)
+    // The FIRST default left is the one to go back to: a chain of failures
+    // (gpu → npu → cpu) returns to the gpu, not to the npu.
+    this.displacedDefault = {
+      engine: this.displacedDefault?.engine ?? this.currentEngine,
+      movedTo: next,
     }
-    this.currentEngine = nextEngine
-    this.engineFactory = adopted
-    this.executor = null
-    if (retired) void retired.dispose().catch(() => undefined)
+    const adoptedRunningPool = this.swapDefaultEngine(resolveDeviceEngine(next), null)
     this.log.warn('node-default inference device failed — default re-derived to the next usable', {
       ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
       meta: {
         from,
         to: next,
         reason: this.deviceLiveness.unusableReason(from)?.lastError ?? null,
-        adoptedRunningPool: adopted !== null,
+        adoptedRunningPool,
         rearm: 'pipelineExecutor.rearmInferenceDevice',
       },
     })
@@ -4836,6 +4953,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // The models refused on this device by name (D653) are re-armed with it.
     const rearmedModels = this.loadGovernor.rearm(input.deviceKey)
     const rearmed = rearmedDevice || rearmedModels > 0
+    this.restoreDisplacedDefaultIfRecovered(undefined)
     this.log.info('inference device re-armed by operator', {
       meta: { deviceKey: input.deviceKey, rearmed, rearmedModels },
     })
@@ -5132,6 +5250,12 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       this.executor = null
     }
     this.currentEngine = input.engine
+    // An operator-set default can fail like a derived one: the list it would
+    // be re-derived from is read NOW, not left as whatever boot last saw
+    // (empty when the auto derivation never ran), and a default displaced
+    // earlier is no longer the one to go back to.
+    this.displacedDefault = null
+    await this.refreshDefaultDeviceCandidates()
     await this.ensureEngineFactory()
     return { success: true }
   }

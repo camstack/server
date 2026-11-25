@@ -20,13 +20,31 @@ export interface NextDefaultDeviceInput {
   readonly poolKeyOf: (candidate: string) => string
   /** Terminally failed, under either spelling of its key. */
   readonly failed: (deviceKey: string) => boolean
+  /**
+   * Whether the default may move onto this candidate without the operator's
+   * word. The hardware probe lists every device that is PRESENT; which of them
+   * are in use is the operator's choice (an accelerator can be switched off,
+   * and a CPU-class pool is opt-in for balanced work). The default never
+   * elects a device nobody chose.
+   */
+  readonly allowed: (candidate: string) => boolean
 }
 
-/** The first candidate that is not the current default and not failed, or `null`. */
+/**
+ * A CPU-class key (`cpu`, `openvino:cpu`): the always-available fallback a
+ * node falls to when no accelerator may serve — never an accelerator an
+ * operator has to enable first.
+ */
+export function isCpuClassDeviceKey(deviceKey: string): boolean {
+  return deviceKey === 'cpu' || deviceKey.endsWith(':cpu')
+}
+
+/** The first candidate that is allowed, not the current default and not failed, or `null`. */
 export function nextUsableDefaultDevice(input: NextDefaultDeviceInput): string | null {
   for (const candidate of input.candidates) {
     const poolKey = input.poolKeyOf(candidate)
     if (poolKey === input.currentKey) continue
+    if (!input.allowed(candidate)) continue
     if (input.failed(candidate) || input.failed(poolKey)) continue
     return candidate
   }

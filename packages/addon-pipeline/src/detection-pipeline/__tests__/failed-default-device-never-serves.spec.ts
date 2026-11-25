@@ -187,6 +187,13 @@ async function tinyJpeg(): Promise<Uint8Array> {
   return new Uint8Array(buf)
 }
 
+const RAW = {
+  data: new Uint8Array(16 * 16 * 3),
+  width: 16,
+  height: 16,
+  format: 'rgb' as const,
+  timestamp: 1,
+}
 const ROOT: readonly PipelineStepInput[] = [
   { addonId: 'object-detection', enabled: true, children: [] },
 ]
@@ -275,5 +282,91 @@ describe('a failed default device', () => {
     expect(said).toHaveLength(1)
     expect(said[0]!.tags).toEqual({ deviceId: 7 })
     expect(said[0]!.meta).toMatchObject({ deviceKey: 'openvino:gpu', state: 'failed' })
+  })
+
+  it('never moves onto an accelerator nobody enabled — a Coral beside a failed GPU', () => {
+    const h = harness(['openvino:gpu', 'edgetpu:usb', 'cpu'])
+    h.provider['deviceLiveness'].recordAbsent('openvino:gpu', 'no-gpu-device', 'no GPU')
+    h.provider['rederiveDefaultEngineIfFailed'](7)
+    const rederived = h.lines.filter((l) => l.message.startsWith('node-default inference device'))
+    expect(rederived).toHaveLength(1)
+    expect(rederived[0]!.meta).toMatchObject({ from: 'openvino:gpu', to: 'cpu' })
+    expect(deviceKeyOf(h.provider['currentEngine'])).toBe(deviceKeyOf(resolveDeviceEngine('cpu')))
+  })
+
+  it('moves onto an accelerator the orchestrator already routed a camera to', async () => {
+    const h = harness(['openvino:gpu', 'edgetpu:usb', 'cpu'])
+    const coral = makePool(captureLogger(h.lines), 'edgetpu:usb', false)
+    h.provider['factoriesByDevice'].set('edgetpu:usb', coral.factory)
+    // The live dispatch that names the Coral is the operator's opt-in.
+    await h.provider
+      .runPipeline({
+        steps: ROOT,
+        frame: RAW,
+        deviceId: 7,
+        deviceKey: 'edgetpu:usb',
+        plane: 'frame',
+      })
+      .catch(() => undefined)
+    h.provider['deviceLiveness'].recordAbsent('openvino:gpu', 'no-gpu-device', 'no GPU')
+    h.provider['rederiveDefaultEngineIfFailed'](7)
+    expect(deviceKeyOf(h.provider['currentEngine'])).toBe(
+      deviceKeyOf(resolveDeviceEngine('edgetpu:usb')),
+    )
+  })
+
+  it('a benchmark that names a device is not an opt-in', async () => {
+    const h = harness(['openvino:gpu', 'edgetpu:usb', 'cpu'])
+    const coral = makePool(captureLogger(h.lines), 'edgetpu:usb', false)
+    h.provider['factoriesByDevice'].set('edgetpu:usb', coral.factory)
+    await h.provider
+      .runPipeline({
+        steps: ROOT,
+        frame: RAW,
+        deviceId: 7,
+        deviceKey: 'edgetpu:usb',
+        sessionId: 'bench-1',
+        plane: 'frame',
+      })
+      .catch(() => undefined)
+    h.provider['deviceLiveness'].recordAbsent('openvino:gpu', 'no-gpu-device', 'no GPU')
+    h.provider['rederiveDefaultEngineIfFailed'](7)
+    expect(deviceKeyOf(h.provider['currentEngine'])).toBe(deviceKeyOf(resolveDeviceEngine('cpu')))
+  })
+
+  it('an operator-set default that fails is re-derived from a list read when it was set', async () => {
+    // The auto derivation never ran: the list is empty, as on a node whose
+    // default was only ever set by hand.
+    const h = harness([])
+    h.provider['currentEngine'] = resolveDeviceEngine('cpu')
+    h.provider['ensureEngineFactory'] = async () => undefined
+    await h.provider.spinEngine({ engine: resolveDeviceEngine('openvino:gpu') })
+    expect(h.provider['defaultDeviceCandidates']).toContain('cpu')
+
+    h.provider['deviceLiveness'].recordAbsent('openvino:gpu', 'no-gpu-device', 'no GPU')
+    h.provider['rederiveDefaultEngineIfFailed'](7)
+    expect(deviceKeyOf(h.provider['currentEngine'])).toBe(deviceKeyOf(resolveDeviceEngine('cpu')))
+  })
+
+  it('moves back to the original default when it is re-armed, and says why', async () => {
+    const h = harness(['openvino:gpu', 'cpu'])
+    h.provider['deviceLiveness'].recordAbsent('openvino:gpu', 'no-gpu-device', 'no GPU')
+    h.provider['rederiveDefaultEngineIfFailed'](7)
+    expect(h.provider['engineFactory']).toBe(h.cpu.factory)
+
+    await h.provider.rearmInferenceDevice({ deviceKey: 'openvino:gpu' })
+
+    expect(deviceKeyOf(h.provider['currentEngine'])).toBe('openvino:gpu')
+    const back = h.lines.filter((l) => l.message.startsWith('node-default inference device usable'))
+    expect(back).toHaveLength(1)
+    expect(back[0]!.meta).toMatchObject({ to: 'openvino:gpu', reason: 're-armed' })
+    // The fallback pool keeps serving the cameras elected onto it: kept, not disposed.
+    expect(h.provider['factoriesByDevice'].get('cpu')).toBe(h.cpu.factory)
+    expect(h.cpu.disposed()).toBe(0)
+    // And a second re-arm moves nothing.
+    await h.provider.rearmInferenceDevice({ deviceKey: 'openvino:gpu' })
+    expect(
+      h.lines.filter((l) => l.message.startsWith('node-default inference device usable')),
+    ).toHaveLength(1)
   })
 })

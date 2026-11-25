@@ -3,6 +3,7 @@
  * is usable says so once per change, not once per frame.
  */
 import { describe, expect, it } from 'vitest'
+import { InferenceDeviceUnusableError } from '../../detection-pipeline/engine/inference-device-liveness.js'
 import { InferenceRefusalNotes, inferenceDeviceRefusalOf } from '../inference-refusal-notes.js'
 
 const GPU_FAILED =
@@ -19,6 +20,23 @@ describe('inferenceDeviceRefusalOf', () => {
         'rpc failed: inference device "edgetpu:usb" is backoff after 1 pool death(s): hung',
       ),
     ).toEqual({ deviceKey: 'edgetpu:usb', state: 'backoff' })
+  })
+
+  it('reads the sentence the REAL executor error writes, in both states', () => {
+    for (const state of ['failed', 'backoff'] as const) {
+      const error = new InferenceDeviceUnusableError({
+        deviceKey: 'openvino:gpu',
+        state,
+        since: 1,
+        deaths: 3,
+        lastError: 'no-gpu-device: OpenVINO sees no supported GPU',
+      })
+      // As it crosses the cap boundary: the message, with a transport prefix.
+      expect(inferenceDeviceRefusalOf(`runPipeline failed: ${error.message}`)).toEqual({
+        deviceKey: 'openvino:gpu',
+        state,
+      })
+    }
   })
 
   it('any other fault is not a refusal', () => {
