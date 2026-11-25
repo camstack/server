@@ -106,8 +106,28 @@ export interface LivenessCancelled {
   readonly flip: NcLivenessState
 }
 
+/**
+ * What the device directory says about a flip's device RIGHT NOW (planning#726):
+ * `speak` - a first-level device, the flip may be announced; `accessory` - it
+ * hangs off another device, liveness is not its fact; `unknown` - the warm
+ * directory has no such id; `unplaced` - the directory has not loaded yet, so
+ * it cannot answer either way.
+ */
+export type LivenessJudgement = 'speak' | 'accessory' | 'unknown' | 'unplaced'
+
+/** A flip dropped because the device is not a first-level device the directory knows. */
+export interface LivenessDirectoryDrop {
+  readonly subject: string
+  readonly flip: NcLivenessState
+  readonly reason: 'accessory' | 'unknown-device'
+}
+
 export interface DeviceLivenessHoldoffOptions {
   readonly delayMs?: number
+  /** Judges a flip's device against the directory, no I/O. Absent = every flip speaks. */
+  readonly judge?: (event: NcIncomingEvent) => LivenessJudgement
+  /** Called when a flip is dropped because of its judgement (logged by the owner). */
+  readonly onDirectoryDrop?: (event: NcIncomingEvent, info: LivenessDirectoryDrop) => void
   /** Called when a pending flip is cancelled by its own reversal (logged by the owner). */
   readonly onSuppressed?: (event: NcIncomingEvent, info: LivenessSuppressed) => void
   readonly schedule?: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
@@ -126,7 +146,13 @@ export class DeviceLivenessHoldoff {
   private readonly notReady = new Set<string>()
   /** The latest flip that arrived while its subject was not ready, armed at {@link markReady}. */
   private readonly parked = new Map<string, NcIncomingEvent>()
+  /** Flips for a device the directory cannot place yet; judged when it loads ({@link releaseDirectoryParked}). */
+  private readonly awaitingDirectory = new Map<string, NcIncomingEvent>()
   private readonly delayMs: number
+  private readonly judge: ((event: NcIncomingEvent) => LivenessJudgement) | undefined
+  private readonly onDirectoryDrop:
+    | ((event: NcIncomingEvent, info: LivenessDirectoryDrop) => void)
+    | undefined
   private readonly schedule: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
   private readonly cancel: (id: ReturnType<typeof setTimeout>) => void
   private readonly onSuppressed:
@@ -141,6 +167,8 @@ export class DeviceLivenessHoldoff {
     this.schedule = options.schedule ?? setTimeout
     this.cancel = options.cancel ?? clearTimeout
     this.onSuppressed = options.onSuppressed
+    this.judge = options.judge
+    this.onDirectoryDrop = options.onDirectoryDrop
   }
 
   /** A deleted subject: no timer may fire for it, and nothing about it is kept. */
@@ -154,6 +182,53 @@ export class DeviceLivenessHoldoff {
     this.stateSince.delete(subject)
     this.notReady.delete(subject)
     this.parked.delete(subject)
+    this.awaitingDirectory.delete(subject)
+  }
+
+  /**
+   * The device is an accessory (or unknown): whatever flip waits for it - on
+   * its timer, parked for its integration or for the directory - is dropped.
+   * Returns the flip that was waiting, `null` when none was.
+   */
+  cancelFlip(subject: string): LivenessCancelled | null {
+    const held =
+      this.pending.get(subject) ?? this.parked.get(subject) ?? this.awaitingDirectory.get(subject)
+    const heldKind = held?.subject.systemEvent?.kind
+    const timer = this.timers.get(subject)
+    if (timer !== undefined) this.cancel(timer)
+    this.timers.delete(subject)
+    this.pending.delete(subject)
+    this.parked.delete(subject)
+    this.awaitingDirectory.delete(subject)
+    this.departedAt.delete(subject)
+    return heldKind !== undefined ? { subject, flip: livenessStateOfKind(heldKind) } : null
+  }
+
+  /**
+   * The directory has loaded: judge every flip parked for it. A first-level
+   * device is armed now (the full window starts here); an accessory or an id
+   * the directory does not know is dropped, said through `onDirectoryDrop`.
+   */
+  releaseDirectoryParked(): void {
+    const waiting = [...this.awaitingDirectory.entries()]
+    this.awaitingDirectory.clear()
+    for (const [subject, incoming] of waiting) {
+      if (this.dropByJudgement(subject, incoming)) continue
+      this.arm(subject, incoming)
+    }
+  }
+
+  /** Drops the flip when the directory says it is not for a first-level device. */
+  private dropByJudgement(subject: string, incoming: NcIncomingEvent): boolean {
+    const verdict = this.judge?.(incoming) ?? 'speak'
+    if (verdict !== 'accessory' && verdict !== 'unknown') return false
+    const kind = incoming.subject.systemEvent?.kind
+    this.onDirectoryDrop?.(incoming, {
+      subject,
+      flip: kind !== undefined ? livenessStateOfKind(kind) : 'offline',
+      reason: verdict === 'accessory' ? 'accessory' : 'unknown-device',
+    })
+    return true
   }
 
   /**
@@ -238,7 +313,15 @@ export class DeviceLivenessHoldoff {
    * A real ledger flip. Starts / resets the trailing timer. `delayMs` replaces
    * the default delay for THIS arm only (a node's planned-update grace).
    */
-  arm(subject: string, incoming: NcIncomingEvent, delayMs?: number): 'armed' | 'parked' {
+  arm(
+    subject: string,
+    incoming: NcIncomingEvent,
+    delayMs?: number,
+  ): 'armed' | 'parked' | 'awaiting-directory' {
+    if (this.judge?.(incoming) === 'unplaced') {
+      this.awaitingDirectory.set(subject, incoming)
+      return 'awaiting-directory'
+    }
     if (this.notReady.has(subject)) {
       this.parked.set(subject, incoming)
       return 'parked'
@@ -268,6 +351,7 @@ export class DeviceLivenessHoldoff {
     this.pending.clear()
     this.departedAt.clear()
     this.parked.clear()
+    this.awaitingDirectory.clear()
   }
 
   /**
@@ -312,6 +396,16 @@ export class DeviceLivenessHoldoff {
     if (incoming === undefined) return
     const kind = incoming.subject.systemEvent?.kind
     if (kind === undefined) return
+    // The directory is read AGAIN at the moment of speaking: it may have
+    // warmed, or placed the device as an accessory, since the flip armed.
+    if (this.judge?.(incoming) === 'unplaced') {
+      this.awaitingDirectory.set(subject, incoming)
+      return
+    }
+    if (this.dropByJudgement(subject, incoming)) {
+      this.departedAt.delete(subject)
+      return
+    }
     const state = livenessStateOfKind(kind)
     if (this.lastNotified.get(subject) === state) return
     this.lastNotified.set(subject, state)

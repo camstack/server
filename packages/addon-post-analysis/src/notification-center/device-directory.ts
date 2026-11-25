@@ -341,6 +341,11 @@ export interface NcDeviceDirectoryDeps {
    * is simply absent — never present with an invented type.
    */
   readonly listDevices: () => Promise<readonly NcDeviceIdentity[]>
+  /**
+   * Told ONCE, right after the first completed read - what a flip parked for a
+   * cold directory waits for (planning#726). In-memory state, never a timer.
+   */
+  readonly onWarm?: () => void
 }
 
 /**
@@ -475,6 +480,7 @@ export class NcDeviceDirectory {
             cameras: [...next.values()].filter((d) => isCameraIdentity(d)).length,
           },
         })
+        this.deps.onWarm?.()
       }
       return next.size > 0 ? 'answered' : 'empty'
     } catch (err) {

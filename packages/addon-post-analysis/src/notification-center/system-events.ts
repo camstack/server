@@ -304,13 +304,23 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     }
     if (isDeviceLivenessKind(observation.kind)) {
       if (dropSwitchedOff(host, system)) return
-      if (holdoff.arm(observation.subject, incoming) === 'parked') {
+      const armed = holdoff.arm(observation.subject, incoming)
+      if (armed === 'parked') {
         host.logger.info('liveness flip held — the integration has not answered', {
           tags: incoming.log().tags,
           meta: {
             subject: observation.subject,
             kind: observation.kind,
             reason: 'integration-not-ready',
+          },
+        })
+      } else if (armed === 'awaiting-directory') {
+        host.logger.info('liveness flip held — the device directory has not loaded', {
+          tags: incoming.log().tags,
+          meta: {
+            subject: observation.subject,
+            kind: observation.kind,
+            reason: 'directory-cold',
           },
         })
       }
@@ -343,7 +353,19 @@ function holdUntilIntegrationAnswers(
   dropped: NcDiscardedSystemEvent,
 ): void {
   const deviceId = dropped.tags['deviceId']
-  if (dropped.meta['reason'] !== 'integration-not-ready' || typeof deviceId !== 'number') return
+  if (typeof deviceId !== 'number') return
+  if (dropped.meta['reason'] === 'accessory') {
+    // The directory has since placed the device as an accessory: a flip held
+    // from before it could (planning#726) must not be announced at +90 s.
+    const gone = host.livenessHoldoff.cancelFlip(`device:${deviceId}`)
+    if (gone === null) return
+    host.logger.info('liveness flip cancelled - the device is an accessory', {
+      tags: { deviceId },
+      meta: { subject: gone.subject, flip: gone.flip, reason: 'accessory' },
+    })
+    return
+  }
+  if (dropped.meta['reason'] !== 'integration-not-ready') return
   const cancelled = host.livenessHoldoff.markNotReady(`device:${deviceId}`)
   if (cancelled === null) return
   host.logger.info('liveness flip cancelled — the integration has not answered', {

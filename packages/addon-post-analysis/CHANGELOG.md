@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A hub restart no longer sends a group 'devices offline' for accessories: an offline from a cold device directory is held until the directory loads, and an accessory or unknown device is dropped when it would be announced
+
 ## [1.2.730] - 2026-11-25
 
 ### Changed

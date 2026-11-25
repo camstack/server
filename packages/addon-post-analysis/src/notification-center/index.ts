@@ -75,7 +75,12 @@ import { type AudioSample, AudioWatcher } from './audio-rule-matcher.js'
 import { type NcAlarmActionDeps } from './nc-actions.js'
 import { clipRetentionSecFor, deriveClipRetentionAsks } from './clip-retention-ask.js'
 import { downscaleJpeg, NcConfirmGate } from './confirm-gate.js'
-import { deviceDisplayName, NcDeviceDirectory, type NcDeviceIdentity } from './device-directory.js'
+import {
+  deviceDisplayName,
+  isAccessoryIdentity,
+  NcDeviceDirectory,
+  type NcDeviceIdentity,
+} from './device-directory.js'
 import { listNcDeviceData } from './device-data-removal.js'
 import { NcDeviceMuteStore } from './device-mute-store.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
@@ -122,6 +127,7 @@ import {
 import {
   DEVICE_LIVENESS_HOLDOFF_MS,
   DeviceLivenessHoldoff,
+  type LivenessJudgement,
   type LivenessTiming,
   NODE_LIVENESS_HOLDOFF_MS,
   STREAM_LIVENESS_HOLDOFF_MS,
@@ -1074,6 +1080,14 @@ export class NotificationCenter implements NcEventConsumer {
       // Production: 90 s. Vitest: 0 so existing suites keep asserting
       // immediate flips. An explicit `livenessHoldoffMs` always wins.
       delayMs: deps.livenessHoldoffMs ?? (process.env.VITEST ? 0 : DEVICE_LIVENESS_HOLDOFF_MS),
+      // Read at CALL time: the directory is built below this (planning#726).
+      judge: (event) => this.judgeLivenessDevice(event),
+      onDirectoryDrop: (event, info) => {
+        this.logger.info('liveness flip dropped - not a first-level device the directory knows', {
+          tags: event.log().tags,
+          meta: { subject: info.subject, flip: info.flip, reason: info.reason },
+        })
+      },
       onSuppressed: (event, info) => {
         this.logger.info('liveness flip suppressed — reverted within window', {
           tags: event.log().tags,
@@ -1144,6 +1158,7 @@ export class NotificationCenter implements NcEventConsumer {
     })
     this.deviceDirectory = new NcDeviceDirectory({
       logger: this.logger.child('device-directory'),
+      onWarm: () => this.livenessHoldoff.releaseDirectoryParked(),
       listDevices:
         deps.listDeviceIdentities ??
         (async (): Promise<readonly NcDeviceIdentity[]> => {
@@ -2887,6 +2902,16 @@ export class NotificationCenter implements NcEventConsumer {
 
   private pressLocalPanel(panel: NcAlarmPanelPort, origin: NcRuleFireRef | undefined): boolean {
     return runPressLocalPanel(this.alarmArmHost(), panel, origin)
+  }
+
+  /** What the directory says about the device a liveness flip is for - no I/O (planning#726). */
+  private judgeLivenessDevice(event: NcIncomingEvent): LivenessJudgement {
+    const deviceId = event.subject.systemEvent?.deviceId
+    if (deviceId === undefined) return 'speak'
+    if (!this.deviceDirectory.isWarm()) return 'unplaced'
+    const identity = this.deviceDirectory.get(deviceId)
+    if (identity === undefined) return 'unknown'
+    return isAccessoryIdentity(identity) ? 'accessory' : 'speak'
   }
 
   /** Loads a never-loaded device directory once, bounded, before a device is worded. */
