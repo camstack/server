@@ -1780,3 +1780,12 @@ An embedded app talks to the shell over the `app-bridge` `postMessage` envelope
 (`packages/types/src/app-bridge.ts`, exported from `@camstack/types/client`;
 `parseAppBridgeMessage` returns the typed message or `null`) and goes chromeless
 only after the shell's `hello`. Labels are i18n keys with an English fallback.
+
+The admin UI's end of the bridge is `useAppShell` (`packages/addon-admin-ui/src/hooks/useAppShell.ts`)
+over `lib/app-shell-bridge.ts`. `AppLayout` drops its sidebar, mobile drawer and
+top bar once `hello` arrives; framed without a hello, or standalone, the chrome
+stays. It sends `ready` on mount and `path` on every route change, routes a
+`navigate`, and accepts a message only from its framing parent on its own origin
+(web) or from the shell's script injection (native WebView); it posts back to its
+own origin, never `*`. The nav the drawer shows is the `app-source` manifest, built
+from the same table as the sidebar (`buildAdminNavManifest`, parity spec).

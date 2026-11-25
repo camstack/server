@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9287 source files · 250 units claimed by at least one document (9256 files).**
+**257 units · 9289 source files · 250 units claimed by at least one document (9258 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -39,7 +39,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +43 more, 11 ADRs | 2026-11-02 |
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
 | `packages/types/src/composition` | 71 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +24 more | 2026-11-08 |
-| `packages/addon-admin-ui/src/lib` | 68 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
+| `packages/addon-admin-ui/src/lib` | 69 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-pipeline/src/pipeline-runner` | 65 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +46 more, 14 ADRs | 2026-11-21 |
 | `packages/addon-pipeline/src/detection-pipeline` | 63 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +53 more, 5 ADRs | 2026-10-24 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
@@ -93,10 +93,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-terminal` | 22 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-07-26-terminal-session-design.md`, +3 more, 2 ADRs | 2026-11-16 |
 | `packages/types/src/utils` | 22 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/ui-library/src/lib` | 22 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-11-02 |
+| `packages/addon-admin-ui/src/hooks` | 21 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +8 more | 2026-11-11 |
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-provider-tuya` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, 1 ADR | 2026-11-08 |
 | `packages/cli/src/commands` | 21 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/assisted-setup-mcp.md` _(covers)_, +4 more | 2026-11-21 |
-| `packages/addon-admin-ui/src/hooks` | 20 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +8 more | 2026-11-11 |
 | `packages/addon-benchmark` | 20 | `tooling` | `architecture/benchmark.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, `decisions/adr-0792-the-benchmark-page-is-node-benchmark-image-and-audio-and-the-session-replay-is-deleted.md`, +3 more | 2026-11-21 |
 | `packages/addon-export-hap/src/hksv` | 20 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +10 more, 2 ADRs | 2026-09-29 |
 | `packages/addon-provider-wyze` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |

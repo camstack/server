@@ -44,6 +44,7 @@ import { describeConnectionHealth } from '../lib/connection-health'
 import { saveLastLocation } from '../lib/last-location'
 import { ReleaseIdentityFooter } from '../components/release-identity-footer'
 import { hubPath } from '../lib/mount'
+import { useAppShell } from '../hooks/useAppShell'
 import { isEmbeddedByViewer } from '../lib/viewer-embed'
 import { buildNavSections, type NavItem, resolveAddonPageIcon } from '../lib/nav-items'
 import type { AddonPageInfo } from './AddonPageLoader'
@@ -260,6 +261,8 @@ export function AppLayout() {
   // lib/nav-items.ts. A page added here shows up in the sidebar AND is
   // searchable; there is no separate hand-written list to fall out of sync.
   const embeddedByViewer = useMemo(() => isEmbeddedByViewer(), [])
+  // Chromeless only after the shell's `hello` (D1096): its drawer is then the only navigation.
+  const { chromeless } = useAppShell()
   const navSections = useMemo(
     () => buildNavSections({ t, isAdmin, embeddedByViewer }),
     [t, isAdmin, embeddedByViewer],
@@ -583,7 +586,7 @@ export function AppLayout() {
       <div aria-hidden="true" className="h-[env(safe-area-inset-top)] shrink-0 bg-surface" />
       <div className="flex min-h-0 flex-1">
         {/* Desktop sidebar — collapses to icons-only when `compact` */}
-        {!isMobile && (
+        {!chromeless && !isMobile && (
           <aside
             className={`flex flex-col border-r border-border bg-surface shrink-0 transition-[width] duration-150 ease-out ${
               compact ? 'w-12' : 'w-48'
@@ -594,7 +597,7 @@ export function AppLayout() {
         )}
 
         {/* Mobile drawer */}
-        {isMobile && (
+        {!chromeless && isMobile && (
           <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width="w-64">
             {sidebarContent}
           </MobileDrawer>
@@ -651,7 +654,7 @@ export function AppLayout() {
           <CriticalAlertsOnLoadPanel />
 
           {/* Mobile top bar */}
-          {isMobile && (
+          {!chromeless && isMobile && (
             <header
               data-debug-header=""
               className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface"
