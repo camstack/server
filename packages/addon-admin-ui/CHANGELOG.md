@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Locations: the unassigned table's accessories column header no longer shows the raw {{count}} template
+
 ## [1.2.745] - 2026-11-24
 
 ### Changed

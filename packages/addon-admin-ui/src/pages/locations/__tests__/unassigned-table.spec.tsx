@@ -152,6 +152,12 @@ describe('unassigned table — assignment', () => {
     expect(location).toBe('Kitchen')
   })
 
+  it('the accessories column header is a label, never the raw count template', () => {
+    renderTable(vi.fn())
+    expect(screen.getByRole('columnheader', { name: /Accessories in tow/ })).toBeTruthy()
+    expect(document.body.textContent).not.toContain('{{count}}')
+  })
+
   it('the selection bar totals the accessories the bulk assign will move', () => {
     renderTable(vi.fn())
     fireEvent.click(screen.getByLabelText('Select Camera Hall'))

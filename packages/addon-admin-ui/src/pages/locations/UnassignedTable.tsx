@@ -199,7 +199,7 @@ export function UnassignedTable({
     {
       mobile: 'hidden',
       key: 'followers',
-      header: t('locations.unassignedTable.accessoriesInTowCount', 'Accessories in tow'),
+      header: t('locations.unassignedTable.accessoriesInTow', 'Accessories in tow'),
       align: 'right',
       sortValue: (device) => followers.get(device.id) ?? 0,
       render: (device) => (
