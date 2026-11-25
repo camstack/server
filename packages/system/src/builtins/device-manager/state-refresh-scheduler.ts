@@ -104,10 +104,19 @@ interface DeviceSchedule {
   /**
    * No read of the device has settled since it registered (D1099): the
    * provider has not answered yet, so its state is unknown rather than
-   * offline. A full-push device is never read, so it never waits.
+   * offline. A full-push device is never read, so what settles it is its
+   * integration's first state report after the (re)start (or the bound below).
    */
   awaitingFirstRead: boolean
+  /** A full-push device's bound: a dead integration is still concluded offline. */
+  firstReportBound: Timer | null
 }
+
+/**
+ * The longest a full-push integration may stay silent after a (re)start before
+ * it counts as having answered (D1099): past it, a dead integration is reported.
+ */
+export const FULL_PUSH_FIRST_REPORT_BOUND_MS = 120_000
 
 interface GroupState {
   readonly key: string
@@ -173,10 +182,31 @@ export class StateRefreshScheduler {
     this.armBurst(target.deviceId, device)
   }
 
-  /** A state report reached the mirror for `deviceId` (push or read). */
-  onReport(deviceId: number): void {
+  /**
+   * A state report reached the mirror for `deviceId` (push or read). The first
+   * state of a full-push device (any cap but its own liveness, which is the
+   * claim being judged) is its answer. Only THAT device settles: its siblings'
+   * cache replay is still on its way, and their held offline must not be
+   * released before it (the integration stays awaiting until each one answered
+   * or the bound passed).
+   */
+  onReport(deviceId: number, capName?: string): void {
     const device = this.devices.get(deviceId)
     if (device === undefined) return
+    if (
+      device.awaitingFirstRead &&
+      device.entry.policy.push === 'full' &&
+      capName !== undefined &&
+      capName !== 'device-status'
+    ) {
+      this.deps.logger.info(
+        'state refresh: first state from the push integration, device answered',
+        {
+          tags: { deviceId },
+        },
+      )
+      this.settleFirstRead([deviceId])
+    }
     const now = Date.now()
     device.lastReportAt = now
     const group = this.groups.get(groupKeyOf(device.entry))
@@ -208,7 +238,10 @@ export class StateRefreshScheduler {
   dispose(): void {
     this.disposed = true
     this.unsubscribe()
-    for (const device of this.devices.values()) this.cancelFollowUps(device)
+    for (const device of this.devices.values()) {
+      this.cancelFollowUps(device)
+      this.clearFirstReportBound(device)
+    }
     for (const group of this.groups.values()) this.clearGroupTimers(group)
     this.devices.clear()
     this.groups.clear()
@@ -224,6 +257,7 @@ export class StateRefreshScheduler {
     for (const [deviceId, device] of this.devices) {
       if (current.has(deviceId)) continue
       this.cancelFollowUps(device)
+      this.clearFirstReportBound(device)
       this.devices.delete(deviceId)
     }
     const reconnected = new Set<string>()
@@ -241,8 +275,10 @@ export class StateRefreshScheduler {
           burst: [],
           pushWindow: null,
           failures: 0,
-          awaitingFirstRead: entry.policy.push !== 'full',
+          awaitingFirstRead: true,
+          firstReportBound: null,
         })
+        if (entry.policy.push === 'full') this.armFirstReportBound(entry.deviceId)
       } else {
         if (effectiveRefreshIntervalMs(existing.entry.policy) !== interval)
           existing.dueAt = now + interval
@@ -459,6 +495,28 @@ export class StateRefreshScheduler {
     }, PUSH_CONFIRM_WINDOW_MS)
   }
 
+  private clearFirstReportBound(device: DeviceSchedule): void {
+    if (device.firstReportBound !== null) clearTimeout(device.firstReportBound)
+    device.firstReportBound = null
+  }
+
+  private armFirstReportBound(deviceId: number): void {
+    const device = this.devices.get(deviceId)
+    if (device === undefined || this.disposed) return
+    device.firstReportBound = setTimeout(() => {
+      device.firstReportBound = null
+      if (this.disposed || !device.awaitingFirstRead) return
+      this.deps.logger.info(
+        'state refresh: no first state from the push integration within the bound',
+        {
+          tags: { deviceId },
+          meta: { boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS },
+        },
+      )
+      this.settleFirstRead([deviceId])
+    }, FULL_PUSH_FIRST_REPORT_BOUND_MS)
+  }
+
   private cancelFollowUps(device: DeviceSchedule): void {
     for (const timer of device.burst) clearTimeout(timer)
     device.burst = []
@@ -586,6 +644,7 @@ export class StateRefreshScheduler {
       const device = this.devices.get(deviceId)
       if (device === undefined || !device.awaitingFirstRead) continue
       device.awaitingFirstRead = false
+      this.clearFirstReportBound(device)
       ready.push(deviceId)
     }
     if (ready.length > 0) this.deps.onFirstReadSettled?.(ready)

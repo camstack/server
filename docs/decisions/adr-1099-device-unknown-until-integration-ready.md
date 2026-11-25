@@ -87,9 +87,25 @@ Nothing in the pipeline could say "not yet known".
   (server closure), and consumers that render reachability (UI, exports) must
   learn to show it; the admin UI is not changed by this record.
 
+- **Full-push integrations are gated too** (planning#690, the 07:18Z restart of
+  ~45 Home Assistant devices). A `push: 'full'` device is never read, so it
+  awaits from registration until its FIRST state report (any cap but
+  `device-status`) — that device alone settles — or until
+  `FULL_PUSH_FIRST_REPORT_BOUND_MS` (120 s), after which a dead integration is
+  concluded offline as before. The integration stays awaiting while any of its
+  devices has not settled, so a sibling's held offline is not released ahead of
+  its own cache replay. The integration key is ONE source, the device's
+  `meta.integrationId` (`int_0019`), for the policy (`haRefreshPolicy`) and for
+  the mirror (`noteIntegration`); the broker id was a different key and the
+  group never matched. A Home Assistant container reports `unknown` until its
+  first child state; unknown to online is not a transition. An `unknown: true`
+  slice is never held as an offline.
+
 ## Enforcement
 
 Specs in `packages/system/src/builtins/device-manager/__tests__/device-unknown-until-ready.spec.ts`
 (restart -> unknown -> ready -> offline/online, a missed readiness push is
 reconciled) and in the notification-center intake spec (an `unknown` slice is
-not a liveness claim). Review only for the rest.
+not a liveness claim), and `device-unknown-full-push.spec.ts` (the 07:18Z
+shape: offline writes then a replay 40 s later reach no consumer; a silent
+integration is offline after the bound). Review only for the rest.

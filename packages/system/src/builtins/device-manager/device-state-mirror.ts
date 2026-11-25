@@ -282,7 +282,8 @@ export class DeviceStateMirror {
     slice: Record<string, unknown>,
   ): Record<string, unknown> | null {
     const awaiting = this.isAwaiting(deviceId)
-    if (!awaiting || slice['online'] !== false) {
+    // An `unknown` slice is itself the "not answered yet" claim, never an offline.
+    if (!awaiting || slice['online'] !== false || slice['unknown'] === true) {
       this.deferredOffline.delete(deviceId)
       return slice
     }

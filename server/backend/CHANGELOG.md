@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Deleting a device now retires the composition it owned and removes it from the linked triggers that named it
+- A Home Assistant restart no longer announces a burst of device offline then online notifications: push integrations are held as unknown until their first state arrives.
 
 ## [1.2.952] - 2026-11-25
 

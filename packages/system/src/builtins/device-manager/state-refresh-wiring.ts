@@ -48,7 +48,7 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
       if (applied.length > 0) deps.onOfflineApplied?.(applied)
     },
   })
-  deps.mirror.setReportTap((deviceId) => scheduler.onReport(deviceId))
+  deps.mirror.setReportTap((deviceId, capName) => scheduler.onReport(deviceId, capName))
   deps.mirror.setReadinessGate({
     deviceAwaiting: (deviceId) => scheduler.isAwaitingFirstRead(deviceId),
     integrationAwaiting: (key) => scheduler.isIntegrationAwaitingFirstRead(key),
