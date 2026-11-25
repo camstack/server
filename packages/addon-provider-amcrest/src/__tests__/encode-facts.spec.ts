@@ -94,19 +94,13 @@ describe('amcrest stream catalog logging (behavioural)', () => {
     expect(warn).toEqual([])
     expect(info).toHaveLength(1)
     expect(info[0]?.opts?.tags).toEqual({ deviceId: 108 })
-    const meta = info[0]?.opts?.meta as {
-      main: { codecRaw: string; profile: string; gop: number; fps: number; missing: string[] }
-      sub: { codecRaw: string; missing: string[] }
-    }
-    expect(meta.main).toMatchObject({
-      codecRaw: 'H.265',
-      profile: 'Main',
-      gop: 40,
-      fps: 20,
-      missing: [],
+    expect(info[0]?.opts?.meta).toMatchObject({
+      main: { codecRaw: 'H.265', profile: 'Main', gop: 40, fps: 20, missing: [] },
+      sub: {
+        codecRaw: 'H.264',
+        missing: expect.arrayContaining([expect.stringMatching(/^gop:/)]),
+      },
     })
-    expect(meta.sub.codecRaw).toBe('H.264')
-    expect(meta.sub.missing.some((m) => m.startsWith('gop:'))).toBe(true)
     expect(catalog[0]).toMatchObject({ codec: 'h265', fps: 20 })
   })
 
