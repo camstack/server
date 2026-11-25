@@ -13755,7 +13755,18 @@
     "create": "Create",
     "back": "Back",
     "pickTitle": "Choose: {{slot}}",
-    "pickConfirm": "Use this entity"
+    "pickConfirm": "Use this entity",
+    "multiReading": {
+      "label": "Multi-reading sensor",
+      "description": "One new sensor that carries a reading from each device you pick (at least two): temperature, humidity, light. Its card draws them as a pie.",
+      "name": "Multi-reading sensor",
+      "slot": {
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "illuminance": "Light"
+      }
+    },
+    "nothingPicked": "Pick at least two readings to create the sensor."
   },
   "schedulers": {
     "activeWhen": {

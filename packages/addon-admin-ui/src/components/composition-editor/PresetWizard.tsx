@@ -143,6 +143,11 @@ export function PresetWizard({ preset, saving, onSave, onBack }: PresetWizardPro
           {t('preset.missing', { slots: missing.map((s) => t(s.labelKey)).join(', ') })}
         </p>
       )}
+      {composition === null && missing.length === 0 && (
+        <p className="text-[11px] text-foreground-muted" data-testid="preset-nothing-picked">
+          {t('preset.nothingPicked')}
+        </p>
+      )}
       {composition !== null && (
         <section className="flex flex-col gap-1" data-testid="preset-preview">
           <h3 className="text-xs font-medium text-foreground">{t('preset.preview')}</h3>

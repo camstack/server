@@ -13777,7 +13777,18 @@
     "create": "Crea",
     "back": "Indietro",
     "pickTitle": "Scegli: {{slot}}",
-    "pickConfirm": "Usa questa entita'"
+    "pickConfirm": "Usa questa entita'",
+    "multiReading": {
+      "label": "Sensore multi-lettura",
+      "description": "Un nuovo sensore che porta una lettura da ciascun dispositivo scelto (almeno due): temperatura, umidità, luce. La sua scheda le disegna come un grafico a torta.",
+      "name": "Sensore multi-lettura",
+      "slot": {
+        "temperature": "Temperatura",
+        "humidity": "Umidità",
+        "illuminance": "Luce"
+      }
+    },
+    "nothingPicked": "Scegli almeno due letture per creare il sensore."
   },
   "schedulers": {
     "activeWhen": {

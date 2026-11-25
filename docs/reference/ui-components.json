@@ -17588,6 +17588,13 @@
       "summary": "Registry InlineControl for Sensor and Presence device types."
     },
     {
+      "name": "sensorLayoutOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/sensor/pie-model.ts",
+      "summary": "The layout of a sensor, or `null` when it is not drawn as a sensor card: no reading, or a row the operator can still set (a sensor with controls keeps the full hero card, which draws them)."
+    },
+    {
       "name": "sensorMeasurementOf",
       "kind": "function",
       "area": "composites",

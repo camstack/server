@@ -6,7 +6,10 @@
  */
 import {
   type Composition,
+  type CompositionFieldsFeature,
   type CompositionSourceRef,
+  DeviceRole,
+  DeviceType,
   type PetFountainCadenceSources,
   type PetFountainPumpCycleSources,
   petFountainFromEntitiesComposition,
@@ -123,7 +126,91 @@ function cycleOf(picks: PresetPicks): PetFountainPumpCycleSources | null | 'part
     : 'partial'
 }
 
-export const COMPOSITION_PRESETS: readonly CompositionPreset[] = [PET_FOUNTAIN]
+/**
+ * One reading a multi-reading sensor can carry: the slot, the measuring cap it
+ * becomes and that cap's field. Only the quantities the sensor card draws as a
+ * pie wedge are here (temperature, humidity, illuminance). The cap's field is
+ * in the quantity's base unit, so the unit travels with the cap, never as a
+ * number of its own.
+ */
+interface ReadingKind {
+  readonly key: string
+  readonly cap: string
+  readonly field: string
+  readonly role: DeviceRole
+}
+
+const READING_KINDS: readonly ReadingKind[] = [
+  {
+    key: 'temperature',
+    cap: 'temperature-sensor',
+    field: 'temperature',
+    role: DeviceRole.TemperatureSensor,
+  },
+  {
+    key: 'humidity',
+    cap: 'humidity-sensor',
+    field: 'humidity',
+    role: DeviceRole.HumiditySensor,
+  },
+  {
+    key: 'illuminance',
+    cap: 'ambient-light-sensor',
+    field: 'illuminance',
+    role: DeviceRole.AmbientLightSensor,
+  },
+]
+
+function readingFeature(kind: ReadingKind, source: CompositionSourceRef): CompositionFieldsFeature {
+  return {
+    kind: 'fields',
+    cap: kind.cap,
+    fields: {
+      [kind.field]: {
+        kind: 'from',
+        source,
+        cap: kind.cap,
+        fieldPath: kind.field,
+      },
+      lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+    },
+  }
+}
+
+/** The fewest readings the sensor card draws as a pie. */
+const MIN_READINGS = 2
+
+const MULTI_READING_SENSOR: CompositionPreset = {
+  id: 'multi-reading-sensor',
+  labelKey: 'preset.multiReading.label',
+  descriptionKey: 'preset.multiReading.description',
+  nameKey: 'preset.multiReading.name',
+  // Every reading is optional on its own (a group of one); fewer than two builds nothing.
+  slots: READING_KINDS.map((kind) => ({
+    key: kind.key,
+    labelKey: `preset.multiReading.slot.${kind.key}`,
+    expectedCap: kind.cap,
+    optionalGroup: kind.key,
+  })),
+  build: (picks) => {
+    const picked = READING_KINDS.flatMap((kind) => {
+      const source = pick(picks, kind.key)
+      return source === undefined ? [] : [{ kind, source }]
+    })
+    // One reading is a single-reading card, not a pie: a multi-reading sensor needs two.
+    const lead = picked[0]
+    if (lead === undefined || picked.length < MIN_READINGS) return null
+    return {
+      target: { kind: 'new', type: DeviceType.Sensor, role: lead.kind.role },
+      features: picked.map(({ kind, source }) => readingFeature(kind, source)),
+    }
+  },
+}
+
+export const COMPOSITION_PRESETS: readonly CompositionPreset[] = [
+  PET_FOUNTAIN,
+  MULTI_READING_SENSOR,
+]
 
 export function presetById(id: string | null): CompositionPreset | null {
   return id === null ? null : (COMPOSITION_PRESETS.find((preset) => preset.id === id) ?? null)
