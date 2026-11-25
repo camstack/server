@@ -32,3 +32,12 @@ export function resolveSelectedInstanceId(
 export function integrationDetailUrl(addonId: string, instanceId?: string): string {
   return integrationPageHref(addonId, instanceId)
 }
+
+/** Where the operator lands after a device is removed: its integration's page, else the list. */
+export function removedDeviceDestination(
+  integration: { readonly addonId: string; readonly id: string } | null,
+): string {
+  return integration?.id
+    ? integrationDetailUrl(integration.addonId, integration.id)
+    : '/integrations'
+}

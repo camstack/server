@@ -11,7 +11,9 @@ import {
   Badge,
   Button,
   ErrorBox,
+  resolveDeviceIntegration,
   useConfirm,
+  useIntegrationsList,
   useDeviceManagerRemove,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
@@ -19,6 +21,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { removedDeviceDestination } from '../../../lib/integration-instance-selection'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
 import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
@@ -48,9 +52,16 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   const update = useCoreBlocksUpdateComposition()
   const confirm = useConfirm()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { data: integrations } = useIntegrationsList(undefined)
+  const resolution = resolveDeviceIntegration(device, integrations)
+  const integration = resolution.kind === 'resolved' ? resolution.integration : null
   const removeDevice = useDeviceManagerRemove({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
+      // The device page of a removed device has nothing left to show: leave it, as its own
+      // Delete does.
+      navigate(removedDeviceDestination(integration))
     },
   })
   const [editing, setEditing] = useState(false)

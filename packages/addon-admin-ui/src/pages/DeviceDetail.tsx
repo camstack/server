@@ -114,7 +114,10 @@ import { useAuth } from '../contexts/auth-context'
 import { useDeviceChildren } from '../hooks/useDevice'
 import { authedDownload } from '../lib/authed-media.js'
 import { CUSTOMIZE_TAB_ID } from '../lib/customization-routes'
-import { integrationDetailUrl } from '../lib/integration-instance-selection'
+import {
+  integrationDetailUrl,
+  removedDeviceDestination,
+} from '../lib/integration-instance-selection'
 import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
 import { formatNumeric } from '@camstack/ui-library'
 
@@ -612,11 +615,7 @@ export function DeviceDetailPage() {
   const deleteMutation = useDeviceManagerRemove({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-      navigate(
-        integration?.id
-          ? integrationDetailUrl(integration.addonId, integration.id)
-          : '/integrations',
-      )
+      navigate(removedDeviceDestination(integration))
     },
   })
 

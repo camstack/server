@@ -129,7 +129,6 @@ export class WithdrawalGate {
     const misses = new Map<string, number>()
     for (const [stableId, declaration] of this.known) {
       if (present.has(stableId)) continue
-      const count = (this.misses.get(stableId) ?? 0) + 1
       if (retired.has(stableId)) {
         // The operator's delete named this block (the store read was the delete
         // itself, not a guess): nothing needs a second apply to agree, and none
@@ -140,6 +139,7 @@ export class WithdrawalGate {
         })
         continue
       }
+      const count = (this.misses.get(stableId) ?? 0) + 1
       if (count < WITHDRAWAL_CONFIRMATIONS) {
         this.logger.warn(
           'a composition vanished from one apply — its device is kept until a second apply agrees',
