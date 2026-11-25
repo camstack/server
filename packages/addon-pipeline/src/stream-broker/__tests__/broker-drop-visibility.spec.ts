@@ -240,4 +240,52 @@ describe('WebRTC push frame source - keyframe-aligned start (planning#730)', () 
     close()
     expect(first.value?.type === 'video' && first.value.frame.data[0]).toBe(2)
   })
+
+  const aud = (i: number) =>
+    ({
+      type: 'audio',
+      frame: {
+        data: Buffer.from([i]),
+        codec: 'Opus',
+        sampleRate: 48000,
+        channels: 2,
+        timestampMicros: i,
+      },
+    }) as const
+
+  it('audio pushed while waiting for the IDR is dropped, after an empty first pull', async () => {
+    const { source, pushFrame, close } = createPushFrameSource()
+    const pending = source.next()
+    await Promise.resolve()
+    pushFrame(aud(7))
+    pushFrame(vid(2, true))
+    const first = await pending
+    close()
+    expect(first.value?.type).toBe('video')
+    expect(first.value?.type === 'video' && first.value.frame.isKeyframe).toBe(true)
+  })
+
+  it('audio pushed after a no-keyframe purge is dropped until the IDR', async () => {
+    const { source, pushFrame, close } = createPushFrameSource()
+    // Consume the first pull (a keyframe) so the purge below runs on a live queue.
+    pushFrame(vid(0, true))
+    await source.next()
+    for (let i = 1; i < 130; i++) pushFrame(vid(i % 200, false))
+    pushFrame(aud(9))
+    pushFrame(vid(201, true))
+    const first = await source.next()
+    close()
+    expect(first.value?.type).toBe('video')
+    expect(first.value?.type === 'video' && first.value.frame.isKeyframe).toBe(true)
+  })
+
+  it('an audio-only source (video rides RTP) is never gated on a keyframe', async () => {
+    const { source, pushFrame, close } = createPushFrameSource(undefined, () => false)
+    const pending = source.next()
+    await Promise.resolve()
+    pushFrame(aud(7))
+    const first = await pending
+    close()
+    expect(first.value?.type).toBe('audio')
+  })
 })

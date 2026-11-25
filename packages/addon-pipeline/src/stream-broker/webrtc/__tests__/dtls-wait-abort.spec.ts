@@ -14,7 +14,10 @@ describe('dtlsWaitAbortReason (planning#730)', () => {
 })
 
 /** Drives the REAL `startFeedingWhenDtlsReady` on a prototype-only session. */
-async function runWait(peer: { connectionState: string; iceConnectionState: string }) {
+async function runWait(
+  peer: { connectionState: string; iceConnectionState: string },
+  path: 'client-offer' | 'server-offer' = 'client-offer',
+) {
   const warn = vi.fn()
   const close = vi.fn(async () => {})
   const startFeedingFrames = vi.fn()
@@ -32,7 +35,13 @@ async function runWait(peer: { connectionState: string; iceConnectionState: stri
     startFeedingFrames,
   })
   const started = Date.now()
-  await AdaptiveSession.prototype['startFeedingWhenDtlsReady'].call(session)
+  // The client-offer entry point feeds on success; the server-offer path
+  // (handleAnswer) calls the same shared wait directly.
+  if (path === 'client-offer') {
+    await AdaptiveSession.prototype['startFeedingWhenDtlsReady'].call(session)
+  } else {
+    await AdaptiveSession.prototype['awaitDtlsOrClose'].call(session, 'server-offer')
+  }
   return { warn, close, startFeedingFrames, elapsedMs: Date.now() - started }
 }
 
@@ -52,5 +61,19 @@ describe('client-offer DTLS wait (planning#730)', () => {
     const r = await runWait({ connectionState: 'failed', iceConnectionState: 'failed' })
     expect(r.elapsedMs).toBeLessThan(2_000)
     expect(r.warn.mock.calls[0]?.[1].meta.reason).toBe('peer-failed')
+  })
+
+  it('the server-offer path closes a peer that went away instead of feeding it', async () => {
+    const r = await runWait(
+      { connectionState: 'closed', iceConnectionState: 'closed' },
+      'server-offer',
+    )
+    expect(r.elapsedMs).toBeLessThan(2_000)
+    expect(r.close).toHaveBeenCalledTimes(1)
+    expect(r.startFeedingFrames).not.toHaveBeenCalled()
+    const [msg, ctx] = r.warn.mock.calls[0] ?? []
+    expect(msg).toContain('server-offer')
+    expect(ctx.tags).toEqual({ deviceId: 42 })
+    expect(ctx.meta.reason).toBe('peer-closed')
   })
 })

@@ -1703,30 +1703,33 @@ export class BrokerWebrtcServer {
       pushFrame,
       close: closeSource,
       forEachQueued: forEachQueuedFrame,
-    } = createPushFrameSource((count, keyframeAligned) => {
-      framesDroppedSinceLog += count
-      purgesSinceLog += 1
-      if (!keyframeAligned) unalignedPurgesSinceLog += 1
-      const now = Date.now()
-      if (now - lastFrameDropLogMs < FRAME_DROP_LOG_INTERVAL_MS) return
-      lastFrameDropLogMs = now
-      sessionLogger.warn('webrtc push queue overflow — encoded frames dropped', {
-        tags: { deviceId },
-        meta: {
-          brokerId,
-          frames: framesDroppedSinceLog,
-          purges: purgesSinceLog,
-          // A purge that could not find a keyframe leaves the retained window
-          // starting mid-GOP: the viewer sees nothing until the next IDR. That
-          // is the one shape worth chasing, so it is counted separately.
-          purgesWithoutKeyframe: unalignedPurgesSinceLog,
-          windowMs: FRAME_DROP_LOG_INTERVAL_MS,
-        },
-      })
-      framesDroppedSinceLog = 0
-      purgesSinceLog = 0
-      unalignedPurgesSinceLog = 0
-    })
+    } = createPushFrameSource(
+      (count, keyframeAligned) => {
+        framesDroppedSinceLog += count
+        purgesSinceLog += 1
+        if (!keyframeAligned) unalignedPurgesSinceLog += 1
+        const now = Date.now()
+        if (now - lastFrameDropLogMs < FRAME_DROP_LOG_INTERVAL_MS) return
+        lastFrameDropLogMs = now
+        sessionLogger.warn('webrtc push queue overflow — encoded frames dropped', {
+          tags: { deviceId },
+          meta: {
+            brokerId,
+            frames: framesDroppedSinceLog,
+            purges: purgesSinceLog,
+            // A purge that could not find a keyframe leaves the retained window
+            // starting mid-GOP: the viewer sees nothing until the next IDR. That
+            // is the one shape worth chasing, so it is counted separately.
+            purgesWithoutKeyframe: unalignedPurgesSinceLog,
+            windowMs: FRAME_DROP_LOG_INTERVAL_MS,
+          },
+        })
+        framesDroppedSinceLog = 0
+        purgesSinceLog = 0
+        unalignedPurgesSinceLog = 0
+      },
+      () => !useRtpRepacketizer && session?.needsTranscode !== true,
+    )
 
     // Subscribe to broker's encoded packets. Both H.264 and H.265 use
     // the same direct path — the session handles codec-specific RTP
@@ -4214,11 +4217,25 @@ const PUSH_QUEUE_KEEP = 60
  * window then began at whatever P-frame happened to land there and the first
  * decodable picture was the NEXT IDR — a whole keyframe interval of black out
  * of a purge that was meant to be the recovery. So the cut is the SMALLEST one
- * that both respects the bound and lands on a keyframe; with no keyframe in
- * range it falls back to the plain bound, which is exactly the old behaviour.
+ * that both respects the bound and lands on a keyframe. With no keyframe in
+ * range the whole queue is dropped (audio too, so it cannot play ahead of the
+ * picture) and every frame is refused until the next IDR: the queue never
+ * starts mid-GOP.
+ *
+ * **The first pull starts at the latest queued keyframe.** The first pull is
+ * the moment the transport is up (DTLS connected); everything older is a stale
+ * backlog and is dropped. With no queued keyframe (empty, audio-only, P-only)
+ * the source waits for the next IDR, again dropping audio until then.
  */
 export function createPushFrameSource(
   onFramesDropped?: (count: number, keyframeAligned: boolean) => void,
+  /**
+   * Whether VIDEO rides this source. An RTP-repacketizing or transcoding
+   * session pushes audio only (video travels by RTP), so the keyframe gate must
+   * stay off or it would drop that audio forever. Read lazily, per decision:
+   * `needsTranscode` settles only after the answer.
+   */
+  carriesVideo: () => boolean = () => true,
 ): {
   source: FrameSource
   pushFrame: (frame: MediaFrame) => void
@@ -4248,8 +4265,10 @@ export function createPushFrameSource(
 
   const pushFrame = (mf: MediaFrame): void => {
     if (done) return
-    if (awaitKeyframe && mf.type === 'video') {
-      if (!mf.frame.isKeyframe) return
+    if (awaitKeyframe && carriesVideo()) {
+      // Until the next IDR nothing is decodable, and audio delivered now would
+      // play ahead of the picture: drop it with the P-frames.
+      if (mf.type !== 'video' || !mf.frame.isKeyframe) return
       awaitKeyframe = false
     }
     if (resolve) {
@@ -4272,7 +4291,7 @@ export function createPushFrameSource(
           }
         }
         queue.splice(0, cut)
-        if (!keyframeAligned) {
+        if (!keyframeAligned && carriesVideo()) {
           // The window would start mid-GOP: keep no video at all and wait for
           // the next IDR rather than hand the viewer undecodable P-frames.
           cut += queue.length
@@ -4308,7 +4327,7 @@ export function createPushFrameSource(
             }
           }
           if (last > 0) queue.splice(0, last)
-          else if (last < 0) {
+          else if (last < 0 && carriesVideo()) {
             // Empty, audio-only or P-only: nothing decodable yet, so the next
             // video frame must be a keyframe whatever arrives first.
             dropQueued()

@@ -169,6 +169,20 @@ function isTailscaleIpv6(address: string): boolean {
 }
 
 /**
+ * Why a pre-DTLS wait must stop NOW instead of running its full deadline: the
+ * peer connection is already failed/closed (the client tore the session down,
+ * or ICE gave up). `null` = keep waiting.
+ */
+export function dtlsWaitAbortReason(
+  connectionState: string | undefined,
+  iceConnectionState: string | undefined,
+): 'peer-closed' | 'peer-failed' | null {
+  if (connectionState === 'closed' || iceConnectionState === 'closed') return 'peer-closed'
+  if (connectionState === 'failed' || iceConnectionState === 'failed') return 'peer-failed'
+  return null
+}
+
+/**
  * Enumerate the host's network interfaces and return any Tailscale
  * overlay addresses — IPv4 in 100.64.0.0/10 (CGNAT) and IPv6 in
  * fd7a::/16 (ULA). Loopback/internal interfaces are skipped.
@@ -185,20 +199,6 @@ function isTailscaleIpv6(address: string): boolean {
  *
  * @param interfaces injected for testing; defaults to `os.networkInterfaces()`.
  */
-/**
- * Why a pre-DTLS wait must stop NOW instead of running its full deadline: the
- * peer connection is already failed/closed (the client tore the session down,
- * or ICE gave up). `null` = keep waiting.
- */
-export function dtlsWaitAbortReason(
-  connectionState: string | undefined,
-  iceConnectionState: string | undefined,
-): 'peer-closed' | 'peer-failed' | null {
-  if (connectionState === 'closed' || iceConnectionState === 'closed') return 'peer-closed'
-  if (connectionState === 'failed' || iceConnectionState === 'failed') return 'peer-failed'
-  return null
-}
-
 export function getTailscaleHostAddresses(
   interfaces: NetworkInterfaceMap = networkInterfaces(),
 ): readonly string[] {
@@ -1733,52 +1733,9 @@ export class AdaptiveSession {
     }
 
     // Wait for DTLS to connect before feeding — sendRtp silently drops if DTLS not ready
-    const dtlsTransport = this.videoSender?.dtlsTransport
-    if (dtlsTransport && dtlsTransport.state !== 'connected') {
-      this.logger.debug('Waiting for DTLS...', {
-        meta: { phase: 'session', sessionId: this.sessionId, current: dtlsTransport.state },
-      })
-      const deadline = Date.now() + 10_000
-      // Track DTLS state transitions while we poll — werift's typed surface
-      // exposes only `state` (no onStateChange), so the wait loop doubles as
-      // the transition observer. Each change is logged when debug is on.
-      let prevDtls = dtlsTransport.state
-      while (dtlsTransport.state !== 'connected' && Date.now() < deadline) {
-        if (this.debug && dtlsTransport.state !== prevDtls) {
-          this.logger.info('DTLS state', {
-            meta: {
-              phase: 'session',
-              sessionId: this.sessionId,
-              deviceId: this.deviceId,
-              from: prevDtls,
-              to: dtlsTransport.state,
-            },
-          })
-          prevDtls = dtlsTransport.state
-        }
-        await new Promise<void>((r) => setTimeout(r, 100))
-      }
-      if (this.debug && dtlsTransport.state !== prevDtls) {
-        this.logger.info('DTLS state', {
-          meta: {
-            phase: 'session',
-            sessionId: this.sessionId,
-            deviceId: this.deviceId,
-            from: prevDtls,
-            to: dtlsTransport.state,
-          },
-        })
-      }
-      this.logger.debug('DTLS wait complete', {
-        meta: {
-          phase: 'session',
-          sessionId: this.sessionId,
-          state: dtlsTransport.state,
-          waitedSec: (10000 - (deadline - Date.now())) / 1000,
-        },
-      })
-    }
+    if (!(await this.awaitDtlsOrClose('server-offer'))) return
 
+    const dtlsTransport = this.videoSender?.dtlsTransport
     this.logger.debug('Answer set, feeding started', {
       meta: {
         phase: 'session',
@@ -2181,6 +2138,17 @@ export class AdaptiveSession {
    * (10s) so a never-connecting session doesn't leak the wait forever.
    */
   private async startFeedingWhenDtlsReady(): Promise<void> {
+    if (!(await this.awaitDtlsOrClose('client-offer'))) return
+    this.startFeedingFrames()
+  }
+
+  /**
+   * Wait (bounded) for the video DTLS transport, stopping at once when the
+   * session is closed or the peer is already failed/closed. Returns true when
+   * feeding may start. When DTLS never connected the session is CLOSED (a
+   * transport that drops every packet is a zombie) with the reason logged.
+   */
+  private async awaitDtlsOrClose(path: 'client-offer' | 'server-offer'): Promise<boolean> {
     const dtlsTransport = this.videoSender?.dtlsTransport
     if (dtlsTransport && dtlsTransport.state !== 'connected') {
       const deadline = Date.now() + 10_000
@@ -2193,7 +2161,7 @@ export class AdaptiveSession {
         dtlsWaitAbortReason(this.pc?.connectionState, this.pc?.iceConnectionState) === null
       ) {
         if (this.debug && dtlsTransport.state !== prevDtls) {
-          this.logger.info('DTLS state (client-offer)', {
+          this.logger.info(`DTLS state (${path})`, {
             meta: {
               phase: 'session',
               sessionId: this.sessionId,
@@ -2207,7 +2175,7 @@ export class AdaptiveSession {
         await new Promise<void>((r) => setTimeout(r, 100))
       }
       if (this.debug && dtlsTransport.state !== prevDtls) {
-        this.logger.info('DTLS state (client-offer)', {
+        this.logger.info(`DTLS state (${path})`, {
           meta: {
             phase: 'session',
             sessionId: this.sessionId,
@@ -2217,11 +2185,11 @@ export class AdaptiveSession {
           },
         })
       }
-      this.logger.debug('client-offer DTLS wait complete', {
+      this.logger.debug(`${path} DTLS wait complete`, {
         meta: { phase: 'session', sessionId: this.sessionId, state: dtlsTransport.state },
       })
     }
-    if (this.closed) return
+    if (this.closed) return false
     // If DTLS never reached "connected" within the deadline, sendRtp would
     // silently drop every packet and the session would sit forever as a
     // zombie — the broker keeps reading source RTP, the feed loop keeps
@@ -2235,8 +2203,8 @@ export class AdaptiveSession {
       const abortReason = dtlsWaitAbortReason(this.pc?.connectionState, this.pc?.iceConnectionState)
       this.logger.warn(
         abortReason === null
-          ? 'client-offer: DTLS never connected — closing session'
-          : 'client-offer: peer went away before DTLS connected — closing session',
+          ? `${path}: DTLS never connected — closing session`
+          : `${path}: peer went away before DTLS connected — closing session`,
         {
           tags: { deviceId: this.deviceId },
           meta: {
@@ -2250,9 +2218,9 @@ export class AdaptiveSession {
         },
       )
       void this.close()
-      return
+      return false
     }
-    this.startFeedingFrames()
+    return true
   }
 
   /** Add a remote (client) ICE candidate — trickle ICE client→server. */
