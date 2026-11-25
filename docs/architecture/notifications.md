@@ -2316,6 +2316,8 @@ the camera's outage. The system-event
 subject is `stream:<deviceId>`; a multi-stream event renders the unprofiled sentence.
 The centre then holds each accepted `stream-offline` for its own short window (`STREAM_LIVENESS_HOLDOFF_MS`, 15 s; the device window is 90 s, D1100, but a stream's offline has already waited the broker's 120 s stale window): a return inside it sends neither the offline nor the online.
 
+A device liveness flip also waits for its integration (D1100, planning#718): an `unknown` `device-status` slice cancels the device's pending flip and parks any later one (`markNotReady` / `markReady` in `liveness-holdoff.ts`); the next answered slice arms it, comparing the live state with the last notified one. The log lines are `liveness flip cancelled` / `held` / `released`, each tagged with the `deviceId`.
+
 ## An alert reaches a phone only through a rule ([D890](../decisions/adr-0890-the-alert-centre-notifies-nothing-an-alert-reaches-a-phone-only-through-a-system-event-rule.md), 2026-10-21)
 
 The hub alert centre (`packages/system/src/builtins/alerts`) sends nothing: no

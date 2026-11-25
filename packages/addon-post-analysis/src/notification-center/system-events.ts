@@ -14,7 +14,7 @@ import { NcDeviceDirectory } from './device-directory.js'
 import { NcPruneLedger } from './device-prune-ledger.js'
 import { NcDeletedSubjectPruner } from './device-prune-runner.js'
 import { NcDeviceStateCache } from './device-state-cache.js'
-import type { NcIncomingEvent } from './event-intake.js'
+import type { NcDiscardedSystemEvent, NcIncomingEvent } from './event-intake.js'
 import type { NcSystemEventSubject } from './rule-engine.js'
 import {
   discardedSystemEvent,
@@ -211,6 +211,7 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
         tags: dropped.tags,
         meta: { category: dropped.category, ...dropped.meta },
       })
+      holdUntilIntegrationAnswers(host, dropped)
     }
     return
   }
@@ -230,6 +231,19 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     system.nodeId !== undefined &&
     host.plannedUpdates.isPlanned(system.nodeId, host.now())
   const observation = system !== undefined ? ledgeredLiveness(system) : null
+  // An ANSWERED status slice is the integration speaking: release a flip parked
+  // while it had not (the arm below then judges live against notified).
+  if (
+    event.category === 'device.state-changed' &&
+    system !== undefined &&
+    isDeviceLivenessKind(system.kind) &&
+    host.livenessHoldoff.markReady(system.subject)
+  ) {
+    host.logger.info('liveness flip released — the integration answered', {
+      tags: incoming.log().tags,
+      meta: { subject: system.subject, kind: system.kind },
+    })
+  }
   if (observation !== null) {
     const accepted = host.liveness.acceptedOf(observation.subject)
     const verdict = host.liveness.observe(
@@ -290,7 +304,16 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     }
     if (isDeviceLivenessKind(observation.kind)) {
       if (dropSwitchedOff(host, system)) return
-      holdoff.arm(observation.subject, incoming)
+      if (holdoff.arm(observation.subject, incoming) === 'parked') {
+        host.logger.info('liveness flip held — the integration has not answered', {
+          tags: incoming.log().tags,
+          meta: {
+            subject: observation.subject,
+            kind: observation.kind,
+            reason: 'integration-not-ready',
+          },
+        })
+      }
       return
     }
   } else if (
@@ -308,6 +331,29 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     }
   }
   host.consumeEvent(incoming)
+}
+
+/**
+ * A status slice dropped as `unknown` (the provider has not answered): the
+ * device's pending flip is stale and nothing arms for it until an answered
+ * slice arrives (planning#718). Said, not silent (D391).
+ */
+function holdUntilIntegrationAnswers(
+  host: SystemEventsHost,
+  dropped: NcDiscardedSystemEvent,
+): void {
+  const deviceId = dropped.tags['deviceId']
+  if (dropped.meta['reason'] !== 'integration-not-ready' || typeof deviceId !== 'number') return
+  const cancelled = host.livenessHoldoff.markNotReady(`device:${deviceId}`)
+  if (cancelled === null) return
+  host.logger.info('liveness flip cancelled — the integration has not answered', {
+    tags: { deviceId },
+    meta: {
+      subject: cancelled.subject,
+      flip: cancelled.flip,
+      reason: 'integration-not-ready',
+    },
+  })
 }
 
 /**

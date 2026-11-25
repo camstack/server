@@ -99,6 +99,13 @@ export interface LivenessSuppressed {
   readonly elapsedMs: number
 }
 
+/** A pending flip dropped because its integration said it has not answered. */
+export interface LivenessCancelled {
+  readonly subject: string
+  /** The state that was waiting to be announced. */
+  readonly flip: NcLivenessState
+}
+
 export interface DeviceLivenessHoldoffOptions {
   readonly delayMs?: number
   /** Called when a pending flip is cancelled by its own reversal (logged by the owner). */
@@ -115,6 +122,10 @@ export class DeviceLivenessHoldoff {
   private readonly departedAt = new Map<string, number>()
   /** When the last notified state began, per subject. */
   private readonly stateSince = new Map<string, number>()
+  /** Subjects whose integration has not answered: nothing may arm for them (planning#718). */
+  private readonly notReady = new Set<string>()
+  /** The latest flip that arrived while its subject was not ready, armed at {@link markReady}. */
+  private readonly parked = new Map<string, NcIncomingEvent>()
   private readonly delayMs: number
   private readonly schedule: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
   private readonly cancel: (id: ReturnType<typeof setTimeout>) => void
@@ -141,6 +152,41 @@ export class DeviceLivenessHoldoff {
     this.departedAt.delete(subject)
     this.lastNotified.delete(subject)
     this.stateSince.delete(subject)
+    this.notReady.delete(subject)
+    this.parked.delete(subject)
+  }
+
+  /**
+   * The subject's integration has not answered (an `unknown` status slice).
+   * A flip waiting on its timer was judged against a state nobody confirmed:
+   * it is cancelled and returned so the owner can say so. Until
+   * {@link markReady}, `arm` parks instead of arming.
+   */
+  markNotReady(subject: string): LivenessCancelled | null {
+    this.notReady.add(subject)
+    this.parked.delete(subject)
+    const held = this.pending.get(subject)
+    const heldKind = held?.subject.systemEvent?.kind
+    const timer = this.timers.get(subject)
+    if (timer !== undefined) this.cancel(timer)
+    this.timers.delete(subject)
+    this.pending.delete(subject)
+    this.departedAt.delete(subject)
+    return heldKind !== undefined ? { subject, flip: livenessStateOfKind(heldKind) } : null
+  }
+
+  /**
+   * The integration answered. A flip parked meanwhile is armed now, so the
+   * comparison is the LIVE state against the last NOTIFIED one and the full
+   * window starts at the answer. Returns whether one was armed.
+   */
+  markReady(subject: string): boolean {
+    if (!this.notReady.delete(subject)) return false
+    const parked = this.parked.get(subject)
+    this.parked.delete(subject)
+    if (parked === undefined) return false
+    this.arm(subject, parked)
+    return true
   }
 
   /** The seeded (or last delivered) state — a bounce back to this is silence. */
@@ -192,9 +238,13 @@ export class DeviceLivenessHoldoff {
    * A real ledger flip. Starts / resets the trailing timer. `delayMs` replaces
    * the default delay for THIS arm only (a node's planned-update grace).
    */
-  arm(subject: string, incoming: NcIncomingEvent, delayMs?: number): void {
+  arm(subject: string, incoming: NcIncomingEvent, delayMs?: number): 'armed' | 'parked' {
+    if (this.notReady.has(subject)) {
+      this.parked.set(subject, incoming)
+      return 'parked'
+    }
     const delay = delayMs ?? this.delayMs
-    if (this.revertsPending(subject, incoming)) return
+    if (this.revertsPending(subject, incoming)) return 'armed'
     this.pending.set(subject, incoming)
     this.trackDeparture(subject, incoming)
     const existing = this.timers.get(subject)
@@ -202,13 +252,14 @@ export class DeviceLivenessHoldoff {
     if (delay <= 0) {
       this.timers.delete(subject)
       this.fire(subject)
-      return
+      return 'armed'
     }
     const id = this.schedule(() => {
       this.timers.delete(subject)
       this.fire(subject)
     }, delay)
     this.timers.set(subject, id)
+    return 'armed'
   }
 
   dispose(): void {
@@ -216,6 +267,7 @@ export class DeviceLivenessHoldoff {
     this.timers.clear()
     this.pending.clear()
     this.departedAt.clear()
+    this.parked.clear()
   }
 
   /**

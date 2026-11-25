@@ -32,6 +32,21 @@ at unknown instead of a false offline. Node liveness keeps its own 60 s window, 
 15 s one: a stream's offline already waited the broker's 120 s stale window,
 so 90 s on top would announce it about 210 s late.
 
+## Restart (planning#718)
+
+A restart left two holes in the window. A pending flip survived an `unknown`
+status slice, because the intake gate dropped that slice without telling the
+hold-off (a sensor still offline was announced online), and boot flapping
+armed flips against a baseline nobody had confirmed (one grouped "35 devices
+online"). Now an `unknown` slice for a device cancels its pending flip and
+marks it not ready: while not ready a flip is parked, never armed, and no timer
+waits for readiness (D3). The next ANSWERED status slice releases the parked
+flip, so the live state is compared with the last notified one and the full
+window starts at the answer; a state equal to the notified one sends nothing.
+Cancel, park and release each log with `tags: { deviceId }` and the reason
+`integration-not-ready`. A device that is really back online after the boot
+and holds the window is still announced.
+
 ## Consequences
 
 This replaces the 15 s device hold-off of 2026-11-24 (a constant, no earlier
