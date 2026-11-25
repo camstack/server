@@ -1,8 +1,8 @@
 /**
- * How an MCP server reaches a hub: the CLI's own credential chain, nothing
- * else (D835). `--token-file`, then the `camstack login` session, renewed
- * automatically. No `$CAMSTACK_TOKEN`: a secret does not travel through the
- * environment. TLS is pinned or the system store, never switched off.
+ * How an MCP server reaches a hub: the `camstack login` session, renewed
+ * automatically, and nothing else (D1101). No token flag, no token file, no
+ * credential in the environment. TLS is pinned or the system store, never
+ * switched off.
  *
  * Shared by `camstack mcp` and the private operator MCP so there is one chain.
  */
@@ -21,10 +21,6 @@ import { resolveHubUrl } from '../hub/hub-url.js'
 export interface HubConnectOptions {
   /** A checkout whose `scratchpad/.hub-url` may name the hub (the CLI passes its cwd). */
   readonly workspaceRoot: string
-  /** `--token-file` of the MCP entry. */
-  readonly tokenFile?: string
-  /** An explicit token the caller already holds (the review MCP's `CAMSTACK_HUB_TOKEN`); beats the file. */
-  readonly token?: string
   /** `--server` of the MCP entry. */
   readonly server?: string
   readonly env?: Readonly<Record<string, string | undefined>>
@@ -60,7 +56,7 @@ export interface HubConnection {
   /**
    * Who this connection acts as, stated to the caller so a reused saved
    * session is never silent: "using saved session <user>@<hub>, scope <x>".
-   * Absent or null for a token file (that source is already explicit).
+   * Null when no saved session is recorded for the hub.
    */
   readonly actingAs?: string | null
 }
@@ -105,8 +101,6 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
   const tls = resolveHubTls(hub.url, env, dir)
   const credentials = await resolveFreshCredentials({
     server: hub.url,
-    ...(options.token ? { token: options.token } : {}),
-    ...(options.tokenFile ? { tokenFile: options.tokenFile } : {}),
     env: { CAMSTACK_SERVER: hub.url },
     loadSession: (server) => loadSession(server, dir),
     ...(dir ? { dir } : {}),

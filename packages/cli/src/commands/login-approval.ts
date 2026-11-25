@@ -6,8 +6,8 @@
  * short code SEPARATELY (the URL never carries the code). The operator opens
  * the admin UI where they are already signed in, types the code and approves.
  * The CLI polls with a secret it holds only in memory; on approval the hub
- * answers with a normal refreshable session, saved 0600 exactly like
- * `login-token-file.ts`. No password, no token and no secret is ever printed.
+ * answers with a normal refreshable session, saved 0600 like an interactive login.
+ No password, no token and no secret is ever printed.
  */
 import { spawn } from 'node:child_process'
 import { normalizeHubAddress, saveSession, type SessionFile } from '@camstack/develop'
@@ -35,8 +35,8 @@ const PollSchema = z.object({
 })
 
 /** The fallback named when the approval cannot finish. */
-export const TOKEN_FILE_HINT =
-  'Run it again, or sign in without a browser: `camstack login <host> --token-file <path>` (a chmod 600 file).'
+export const RETRY_LOGIN_HINT =
+  'Run `camstack login <host>` again; approve the new code in the admin UI.'
 
 export interface ApprovalRequest {
   readonly server: string
@@ -217,6 +217,6 @@ export async function loginWithApproval(opts: ApprovalLoginOptions): Promise<App
   }
   throw new ApprovalFailedError(
     'expired',
-    `The sign-in code expired before it was approved. ${TOKEN_FILE_HINT}`,
+    `The sign-in code expired before it was approved. ${RETRY_LOGIN_HINT}`,
   )
 }

@@ -39,7 +39,7 @@ export function sessionLoginCommand(
  * short code, the operator approves it in the admin UI at `/approve`.
  */
 export const BROWSER_LOGIN_HINT =
-  'No keyboard? `camstack login <host> --browser` prints a code to approve in the admin UI; `--token-file <path>` is the headless fallback.'
+  'No keyboard? `camstack login <host> --browser` prints a code to approve in the admin UI. A headless service is logged in once, interactively; its session then refreshes unattended.'
 
 /** The hub answered 401/403 to an admin-tier credential. */
 export function adminRejectedHint(command: string = sessionLoginCommand()): string {

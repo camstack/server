@@ -1,3 +1,7 @@
+import {
+  assertNoRemovedTokenFlags,
+  REMOVED_TOKEN_FLAG_OPTIONS,
+} from './commands/removed-token-flags.js'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -14,7 +18,6 @@ import {
   legacyLoginFlagWarnings,
 } from './commands/login-legacy-flags.js'
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth.js'
-import { loginWithTokenFile } from './commands/login-token-file.js'
 import { loginWithApproval } from './commands/login-approval.js'
 import {
   loadSession,
@@ -96,8 +99,8 @@ function printGlobalHelp(commands: readonly CommandSpec[]): void {
 
 /** Shared by every hub-talking command's help: where the token comes from. */
 const TOKEN_RESOLUTION_HELP = [
-  'Token resolution (first hit wins): --token, --token-file, $CAMSTACK_TOKEN,',
-  '  then the session cached by `camstack login` for the target server.',
+  'Auth: the session cached by `camstack login <host>` for the target server (renewed',
+  '  automatically). There is no token flag or file: a headless service logs in once.',
 ].join('\n')
 
 function buildCommands(): readonly CommandSpec[] {
@@ -156,9 +159,6 @@ function buildCommands(): readonly CommandSpec[] {
           '                         https://hub.local, [fe80::1]:4443. Port defaults to 4443, scheme is',
           '                         https (http:// is refused). Example: camstack login 192.0.2.20',
           '',
-          '      --token-file <path>  No TTY / automation: read a token from a file readable only by you',
-          '                           (chmod 600; a looser file is refused), check it against the hub and',
-          '                           cache the session. A token is never taken from argv or the environment.',
           '      --browser            Sign in by approving in the admin UI: prints a URL and a short code,',
           '                           you approve where you are already signed in. The default when stdin',
           '                           is not a TTY. No password or token is typed or printed.',
@@ -261,8 +261,6 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'Target options (addon and --closure):',
           '  -s, --server <host>      Hub URL (default: $CAMSTACK_SERVER, then the cached session)',
-          '  -t, --token <token>     Auth token override',
-          '      --token-file <path> Read the token from a file (bare token or a ~/.camstack session file)',
           '  -n, --node <id>         Target one agent. Mutually exclusive with --cluster',
           '  -c, --cluster           Every online agent (and hub for addons; hub then agents for --closure)',
           '',
@@ -283,8 +281,6 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'Options:',
           '  -s, --server <host>     Hub URL',
-          '  -t, --token <token>    Auth token override',
-          '      --token-file <path> Read the token from a file',
           '  -n, --node <id>        Propagate+apply on this agent. Mutually exclusive with --cluster/--all',
           '  -c, --cluster          Propagate+apply on every online agent',
           '      --all              Legacy alias of --cluster',
@@ -307,8 +303,6 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'Options:',
           '  -s, --server <host>         Server URL (default: cached session)',
-          '  -t, --token <token>        Auth token override',
-          '      --token-file <path>    Read the token from a file',
           '  -n, --node <id>            Push to a specific node',
           '  -c, --cluster              Push to hub + every online agent',
           '      --no-build             Skip `npm run build`',
@@ -344,8 +338,6 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'Target options:',
           '  -s, --server <host>        Server URL (default: cached session)',
-          '  -t, --token <token>       Auth token override',
-          '      --token-file <path>   Read the token from a file',
           '  -n, --node <id>           Push to a specific node',
           '  -c, --cluster             Push to hub + every online agent',
           '',
@@ -429,6 +421,7 @@ function parseSubcommandArgs(
     allowPositionals,
     strict: true,
   })
+  assertNoRemovedTokenFlags(parsed.values)
   return {
     values: parsed.values as Record<string, string | boolean | undefined>,
     positionals: parsed.positionals,
@@ -444,7 +437,7 @@ async function runLogin(args: readonly string[]): Promise<void> {
       username: { type: 'string', short: 'u' },
       password: { type: 'string', short: 'p' },
       'token-name': { type: 'string' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       browser: { type: 'boolean' },
       open: { type: 'boolean' },
       // Removed (D895), still parsed so an old script does not abort: each one
@@ -471,23 +464,6 @@ async function runLogin(args: readonly string[]): Promise<void> {
     console.warn('--namespace is ignored: hubs are found over mDNS, not the mesh channel.')
   }
   for (const warning of legacyLoginFlagWarnings(parsed.values)) console.warn(warning)
-  const tokenFile = stringOpt(parsed.values, 'token-file')
-  if (tokenFile !== undefined) {
-    // Non-interactive: the token comes from a 0600 file, never argv or env.
-    try {
-      const done = await loginWithTokenFile({
-        tokenFile,
-        ...(explicitServer ? { server: explicitServer } : {}),
-      })
-      console.log(
-        `[camstack] Logged in to ${done.server} as ${done.username} (${done.isAdmin ? 'admin' : 'not admin'}). Session cached at ${done.sessionFile}`,
-      )
-    } catch (err) {
-      console.error(`[camstack] ${err instanceof Error ? err.message : String(err)}`)
-      process.exitCode = 1
-    }
-    return
-  }
   const wantsBrowser =
     parsed.values['browser'] === true ||
     (!process.stdin.isTTY &&
@@ -587,8 +563,7 @@ async function runDeploy(args: readonly string[]): Promise<void> {
     args,
     {
       server: { type: 'string', short: 's' },
-      token: { type: 'string', short: 't' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       node: { type: 'string', short: 'n' },
       cluster: { type: 'boolean', short: 'c' },
       closure: { type: 'boolean' },
@@ -659,8 +634,7 @@ async function runDeployServer(args: readonly string[]): Promise<void> {
     args,
     {
       server: { type: 'string', short: 's' },
-      token: { type: 'string', short: 't' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       node: { type: 'string', short: 'n' },
       cluster: { type: 'boolean', short: 'c' },
       all: { type: 'boolean' },
@@ -680,25 +654,20 @@ async function runDeployServer(args: readonly string[]): Promise<void> {
 const DEFAULT_SERVER_URL = 'https://localhost:4443'
 
 /**
- * `--token` / `--token-file` / $CAMSTACK_TOKEN / cached session → credentials
- * (see `commands/credentials.ts`). A missing token exits 1 with the
+ * The cached `camstack login` session → credentials
+ * (see `@camstack/develop` `resolveFreshCredentials`). A missing token exits 1 with the
  * "run `camstack login`" guidance instead of a stack-ish failure line.
  */
 async function resolveCommandCredentials(
   values: Record<string, string | boolean | undefined>,
 ): Promise<ResolvedCredentials> {
   const server = stringOpt(values, 'server')
-  const token = stringOpt(values, 'token')
-  const tokenFile = stringOpt(values, 'token-file')
   try {
     const creds = await resolveFreshCredentials({
       ...(server ? { server } : {}),
-      ...(token ? { token } : {}),
-      ...(tokenFile ? { tokenFile } : {}),
       loadSession,
       transport: cliHubTransport,
     })
-    if (creds.warning) console.error(`[camstack] Warning: ${creds.warning}`)
     if (creds.source === 'session' && creds.server) touchSession(creds.server)
     return creds
   } catch (err) {

@@ -138,15 +138,6 @@ describe('session refresh', () => {
     expect(seen).toHaveLength(0)
   })
 
-  it('never refreshes an explicit token', async () => {
-    session(NOW - 1000)
-    const seen: HubTransportRequest[] = []
-    const expired = jwt({ exp: 1 })
-    const r = await resolveFreshCredentials({ ...inputs(rotating(seen)), token: expired })
-    expect(r).toMatchObject({ source: 'flag', token: expired })
-    expect(seen).toHaveLength(0)
-  })
-
   it('a 401 refreshes once and retries once', async () => {
     session(NOW + 3_000_000)
     const old = loadSession(SERVER, dir)!.token
@@ -212,14 +203,14 @@ describe('the permission tier comes from claims, never from a prefix', () => {
       seen.push(req)
       return { status: 200, text: JSON.stringify({ ok: true, isAdmin }) }
     }
-  const base = { env: {}, now: NOW, loadSession: () => null }
+  const opaqueSession = { server: SERVER, token: 'opaque_opaque' }
+  const base = { env: {}, now: NOW, loadSession: () => opaqueSession }
 
   it('an opaque legacy token is classified by asking the hub (whoami)', async () => {
     const seen: HubTransportRequest[] = []
     const admin = await resolveFreshCredentials({
       ...base,
       server: SERVER,
-      token: 'opaque_opaque',
       transport: whoami(true, seen),
     })
     expect(admin.tier).toBe('admin')
@@ -227,7 +218,6 @@ describe('the permission tier comes from claims, never from a prefix', () => {
     const user = await resolveFreshCredentials({
       ...base,
       server: SERVER,
-      token: 'opaque_opaque',
       transport: whoami(false),
     })
     expect(user.tier).toBe('protected')
@@ -238,14 +228,13 @@ describe('the permission tier comes from claims, never from a prefix', () => {
     await resolveFreshCredentials({
       ...base,
       server: SERVER,
-      token: jwt({ isAdmin: true }),
+      loadSession: () => ({ server: SERVER, token: jwt({ isAdmin: true }) }),
       transport: whoami(false, seen),
     })
     expect(seen).toHaveLength(0)
     const down = await resolveFreshCredentials({
       ...base,
       server: SERVER,
-      token: 'opaque_opaque',
       transport: async () => {
         throw new Error('ECONNREFUSED')
       },

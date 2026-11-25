@@ -120,10 +120,10 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
       { id: 'ca', label: 'Hub CA pinned', status: 'unknown', detail: NO_HUB },
       {
         id: 'session',
-        label: 'Session or token file',
+        label: 'Login session',
         status: 'fail',
         detail: outcome.message,
-        fix: `${outcome.action}; without a TTY: camstack login <host> --token-file <path-to-0600-file>`,
+        fix: `${outcome.action}; without a TTY: log in once with camstack login <host> --browser, the session then refreshes unattended`,
       },
       { id: 'scope', label: 'Token scope', status: 'unknown', detail: 'no credential to inspect' },
       await versionCheck(deps),
@@ -184,7 +184,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
 
   checks.push({
     id: 'session',
-    label: 'Session or token file',
+    label: 'Login session',
     status: 'ok',
     detail: `usable credential from ${connection.source}${connection.actingAs ? ` (${connection.actingAs})` : ''}`,
   })

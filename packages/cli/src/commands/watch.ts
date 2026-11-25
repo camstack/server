@@ -12,6 +12,7 @@
  * All three share the initial deploy step (the server-side install
  * already calls `reloadPackages()` which restarts the addon).
  */
+import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './removed-token-flags.js'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import * as clack from '@clack/prompts'
@@ -98,8 +99,7 @@ export async function runWatch(args: readonly string[]): Promise<void> {
     args: [...args],
     options: {
       server: { type: 'string', short: 's' },
-      token: { type: 'string', short: 't' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       node: { type: 'string', short: 'n' },
       cluster: { type: 'boolean', short: 'c' },
       'no-build': { type: 'boolean' },
@@ -116,13 +116,10 @@ export async function runWatch(args: readonly string[]): Promise<void> {
   const addonArg = positionals[0] ?? '.'
   const credentialInputs = {
     ...(typeof values.server === 'string' ? { server: values.server } : {}),
-    ...(typeof values.token === 'string' ? { token: values.token } : {}),
-    ...(typeof values['token-file'] === 'string' ? { tokenFile: values['token-file'] } : {}),
     loadSession,
     transport: cliHubTransport,
   }
   const creds = await resolveFreshCredentials(credentialInputs)
-  if (creds.warning) console.error(`[camstack watch] Warning: ${creds.warning}`)
   if (creds.source === 'session' && creds.server) touchSession(creds.server)
   const serverUrl = creds.server
   const token = creds.token

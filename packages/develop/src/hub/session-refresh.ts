@@ -7,8 +7,6 @@
  *    (`auth.refreshSession`), the rotation is saved, and the caller carries on.
  *    A refusal (or nothing to renew with) is a {@link MissingCredentialsError}
  *    that says to run `camstack login`.
- *  - An explicit `--token` / `--token-file` / `$CAMSTACK_TOKEN` is never
- *    touched: it is what the operator handed over.
  *  - The permission tier is read from the token's CLAIMS; a token with no
  *    readable claims is classified by asking the hub (`whoami`), never by its
  *    prefix.

@@ -1,3 +1,7 @@
+import {
+  assertNoRemovedTokenFlags,
+  REMOVED_TOKEN_FLAG_OPTIONS,
+} from '../commands/removed-token-flags.js'
 import { parseArgs } from 'node:util'
 import { tryConnectHub } from '@camstack/develop'
 import { hubRequest } from '../http/hub-http.js'
@@ -16,7 +20,7 @@ async function probeHub(server: string): Promise<HubProbe> {
   }
 }
 
-/** `camstack mcp doctor [-s <host>] [--token-file <p>] [--json]`; the exit code is 1 on a failing check. */
+/** `camstack mcp doctor [-s <host>] [--json]`; the exit code is 1 on a failing check. */
 export async function runDoctorCommand(
   args: readonly string[],
   cliVersion: string,
@@ -25,14 +29,14 @@ export async function runDoctorCommand(
     args: [...args],
     options: {
       server: { type: 'string', short: 's' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       json: { type: 'boolean' },
     },
     allowPositionals: false,
     strict: true,
   })
+  assertNoRemovedTokenFlags(parsed.values)
   const server = parsed.values.server
-  const tokenFile = parsed.values['token-file']
   const checks = await runDoctorChecks({
     cliVersion,
     nodeVersion: process.version,
@@ -40,7 +44,6 @@ export async function runDoctorCommand(
       tryConnectHub({
         workspaceRoot: process.cwd(),
         ...(server ? { server } : {}),
-        ...(tokenFile ? { tokenFile } : {}),
       }),
     probeHub,
     fetch: (url, init) => fetch(url, init),

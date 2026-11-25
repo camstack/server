@@ -4,6 +4,7 @@
  *   npm i -g camstack
  *   claude mcp add camstack -- camstack mcp
  */
+import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './/removed-token-flags.js'
 import { parseArgs } from 'node:util'
 import { DEFAULT_TOOLSETS, parseToolsets, TOOLSET_NAMES } from '../mcp/toolsets.js'
 
@@ -21,14 +22,13 @@ export function mcpHelp(): string {
     `  --toolsets <list>     Comma list of: ${TOOLSET_NAMES.join(', ')}`,
     `                        (default: ${DEFAULT_TOOLSETS.join(',')})`,
     '  -s, --server <host>   Hub to use instead of the cached login session',
-    '      --token-file <p>  Read an explicit token from a file',
     '      --no-docs-fetch   Use the setup steps bundled in this CLI; never read them',
     '                        from the docs site (an offline or filtered network)',
     '',
     'Diagnose: `camstack mcp doctor` checks, read-only, Node >= 24, the hub, its pinned CA,',
-    'the session or token file, the token scope (admin or not) and the CLI version, each',
+    'the session, the token scope (admin or not) and the CLI version, each',
     'ok / fail / unknown with a fix hint. It never prints a token.',
-    'No TTY (CI, a service): `camstack login <host> --token-file <path>` with a chmod 600 file.',
+    'No TTY (CI, a service): log in once, interactively (`camstack login <host>`); the session then refreshes unattended.',
     'Update: `camstack mcp update <version>|--latest` (installer layout only) stages the version, runs',
     '`mcp doctor --json` on it, then switches the active one atomically; `camstack mcp rollback` undoes it.',
     'Your login sessions in ~/.camstack are never touched. Other installs get instructions.',
@@ -55,12 +55,13 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
     options: {
       toolsets: { type: 'string' },
       server: { type: 'string', short: 's' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       'no-docs-fetch': { type: 'boolean' },
     },
     allowPositionals: false,
     strict: true,
   })
+  assertNoRemovedTokenFlags(parsed.values)
   const selection = parseToolsets(parsed.values.toolsets)
   if (!selection.ok) {
     process.stderr.write(`camstack mcp: ${selection.error}\n`)
@@ -73,7 +74,6 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
     cliVersion,
     toolsets: selection.toolsets,
     ...(parsed.values.server ? { server: parsed.values.server } : {}),
-    ...(parsed.values['token-file'] ? { tokenFile: parsed.values['token-file'] } : {}),
     ...(parsed.values['no-docs-fetch'] === true ? { noDocsFetch: true } : {}),
   })
 }

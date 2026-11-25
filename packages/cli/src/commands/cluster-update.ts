@@ -5,6 +5,7 @@
  * the same job the admin UI "Update all" and the MCP `ops_update_apply` start.
  * The sequence runs on the hub; this command drives nothing itself.
  */
+import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './removed-token-flags.js'
 import { parseArgs } from 'node:util'
 import { tryConnectHub, type HubClient } from '@camstack/develop'
 import {
@@ -116,7 +117,6 @@ export const CLUSTER_UPDATE_HELP = [
   '      --no-backup         Skip the backup (explicit opt-out)',
   '  -y, --yes               Do not ask for confirmation',
   '  -s, --server <host>     Hub URL (default: cached session)',
-  '      --token-file <path> Read the token from a file',
 ].join('\n')
 
 export async function runClusterUpdate(rawArgs: readonly string[]): Promise<void> {
@@ -128,18 +128,18 @@ export async function runClusterUpdate(rawArgs: readonly string[]): Promise<void
       'no-backup': { type: 'boolean' },
       yes: { type: 'boolean', short: 'y' },
       server: { type: 'string', short: 's' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
     },
     strict: true,
     allowPositionals: false,
   })
+  assertNoRemovedTokenFlags(values)
   const print = (line: string): void => {
     process.stdout.write(`${line}\n`)
   }
   const outcome = await tryConnectHub({
     workspaceRoot: process.cwd(),
     ...(values.server !== undefined ? { server: values.server } : {}),
-    ...(values['token-file'] !== undefined ? { tokenFile: values['token-file'] } : {}),
   })
   if (!outcome.ok) {
     print(`${outcome.message}; ${outcome.action}`)

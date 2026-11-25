@@ -54,7 +54,7 @@ export { extendAddon } from './scaffold/extend.js'
 export { listSkills, readSkill, resolveSkillsDir } from './skills.js'
 
 // Hub access — the one credential chain, session cache, address and TLS trust
-// shared by the CLI, scripts/hub/hub.mjs and the operator MCP (D835).
+// shared by the CLI, scripts/hub/hub.mjs and the operator MCP (D1101).
 export {
   authRejectedHint,
   credentialTier,
@@ -62,7 +62,6 @@ export {
   jwtExpiryMs,
   jwtPayloadIsAdmin,
   MissingCredentialsError,
-  readTokenFile,
   resolveCredentials,
   withAuthHint,
 } from './hub/credentials.js'
@@ -72,7 +71,6 @@ export type {
   CredentialSource,
   CredentialTier,
   ResolvedCredentials,
-  TokenFileContents,
 } from './hub/credentials.js'
 export {
   clearSession,

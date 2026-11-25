@@ -108,8 +108,6 @@ export interface CliMcpOptions {
   readonly toolsets: readonly Toolset[]
   /** `--server`: the hub to use instead of the cached session's. */
   readonly server?: string
-  /** `--token-file`: an explicit override for a token you were handed. */
-  readonly tokenFile?: string
   /** `--no-docs-fetch`: never read the onboarding steps from the docs site. */
   readonly noDocsFetch?: boolean
 }
@@ -120,7 +118,6 @@ function sessionHub(options: CliMcpOptions): HubProvider {
     tryConnectHub({
       workspaceRoot: process.cwd(),
       ...(options.server ? { server: options.server } : {}),
-      ...(options.tokenFile ? { tokenFile: options.tokenFile } : {}),
     })
 }
 

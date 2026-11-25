@@ -1,34 +1,22 @@
 /**
  * Credential resolution shared by every hub-talking tool: the CLI commands
- * (`deploy`, `deploy-server`, `dev`, `watch`), `scripts/hub/hub.mjs` and the
- * private operator MCP (`@camstack/mcp-dev`). One chain, no copy (D835).
+ * (`deploy`, `dev`, `watch`, `mcp` ...), `scripts/hub/hub.mjs` and the MCP
+ * servers. One mechanism, no copy (D1101, which retires the D835 overrides).
  *
- * `camstack login` caches the login JWT in `~/.camstack/<host>.json` (0600);
- * every command picks that session up on its own, so a terminal that ran
- * `login` once needs no further flags.
+ * A client reaches a hub in exactly ONE way: the `camstack login` session
+ * cached in `~/.camstack/<host>_<port>.json` (0600), renewed unattended by
+ * `session-refresh.ts`. There is no flag, no token file and no environment
+ * variable that carries a credential. A headless service logs in once, then
+ * the session refreshes itself.
  *
- * ONE token format; only the SET OF PERMISSIONS differs (admin = everything).
- * Nothing here looks for a specific token file or prefix.
- *
- * Token precedence (first hit wins):
- *   1. `--token <token>`        - explicit one-off
- *   2. `--token-file <path>`    - an explicit override: a bare token, or a session
- *                                 file in the `~/.camstack/<host>.json` format
- *   3. `$CAMSTACK_TOKEN`        - still read by the CLI; ops tools pass an env
- *                                 without it (no secret through the environment)
- *   4. the cached session       - `camstack login`, refreshed automatically
- *                                 (`session-refresh.ts`)
- *
- * A password is never an input: nothing here logs in.
- *
- * Server precedence: `--server`, `$CAMSTACK_SERVER`, the token file's
- * `server` (session-format files only), the cached session's `server`.
- * The caller applies its own default when none of these is set.
+ * Server precedence (an ADDRESS, never a credential): `--server`,
+ * `$CAMSTACK_SERVER`, the cached session's `server`. The caller applies its
+ * own default when none of these is set.
  */
-import * as fs from 'node:fs'
 import { normalizeHubAddress } from './hub-address.js'
 
-export type CredentialSource = 'flag' | 'token-file' | 'env' | 'session'
+/** Where a credential came from. The login session is the only source. */
+export type CredentialSource = 'session'
 
 /** What a credential may reach locally before the hub validates every call. */
 export type CredentialTier = 'admin' | 'protected'
@@ -79,8 +67,6 @@ export interface ResolvedCredentials {
   readonly token: string
   readonly source: CredentialSource
   readonly tier: CredentialTier
-  /** A non-fatal note for stderr (e.g. a world-readable token file). */
-  readonly warning?: string
   /** Set when the tier came from a hub lookup that FAILED: `tier` is then only a floor, not an answer. */
   readonly tierLookupFailure?: string
 }
@@ -98,17 +84,9 @@ export interface CachedSessionLike {
 
 export interface CredentialInputs {
   readonly server?: string
-  readonly token?: string
-  readonly tokenFile?: string
   readonly env?: Readonly<Record<string, string | undefined>>
   /** The session lookup — `loadSession` from `auth.ts`, injectable for tests. */
   readonly loadSession: (server?: string) => CachedSessionLike | null
-}
-
-export interface TokenFileContents {
-  readonly token: string
-  readonly server?: string
-  readonly warning?: string
 }
 
 /** No token could be resolved from any source. The message tells the operator what to do. */
@@ -117,116 +95,31 @@ export class MissingCredentialsError extends Error {
     super(
       [
         reason ? `${reason} (${server ?? 'any hub'}).` : `Not logged in to ${server ?? 'any hub'}.`,
-        `  Run \`camstack login ${server ?? '<host>'}\` once: every tool uses that session`,
-        '  (the saved session renews itself). --token-file is an explicit',
-        '  override only, for a token you were handed.',
+        `  Run \`camstack login ${server ?? '<host>'}\` once, interactively: every tool uses that session`,
+        '  and the saved session renews itself, so a headless service is logged in once.',
       ].join('\n'),
     )
     this.name = 'MissingCredentialsError'
   }
 }
 
-const GROUP_OR_OTHER_BITS = 0o077
-
-/**
- * Read a token file: a single bare token, or a JSON session file
- * (`{ "server": "...", "token": "..." }`, extra fields ignored).
- */
-export function readTokenFile(filePath: string): TokenFileContents {
-  let raw: string
-  let mode: number
-  try {
-    raw = fs.readFileSync(filePath, 'utf8')
-    mode = fs.statSync(filePath).mode
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err)
-    throw new Error(`Cannot read token file ${filePath}: ${reason}`, {
-      cause: err,
-    })
-  }
-  const warning =
-    process.platform !== 'win32' && (mode & GROUP_OR_OTHER_BITS) !== 0
-      ? `Token file ${filePath} is readable by other users — run \`chmod 600 ${filePath}\`.`
-      : undefined
-  const parsed = parseTokenFile(raw.trim(), filePath)
-  return warning ? { ...parsed, warning } : parsed
-}
-
-function parseTokenFile(content: string, filePath: string): TokenFileContents {
-  if (content.length === 0) throw new Error(`Token file ${filePath} is empty.`)
-  if (content.startsWith('{')) return parseSessionJson(content, filePath)
-  if (/\s/.test(content)) {
-    throw new Error(`Token file ${filePath} must hold exactly one token (found several lines).`)
-  }
-  return { token: content }
-}
-
-function parseSessionJson(content: string, filePath: string): TokenFileContents {
-  let json: unknown
-  try {
-    json = JSON.parse(content)
-  } catch {
-    throw new Error(`Token file ${filePath} looks like JSON but does not parse.`)
-  }
-  if (json === null || typeof json !== 'object') {
-    throw new Error(`Token file ${filePath}: expected a JSON object with a "token" field.`)
-  }
-  const token: unknown = Reflect.get(json, 'token')
-  const server: unknown = Reflect.get(json, 'server')
-  if (typeof token !== 'string' || token.length === 0) {
-    throw new Error(`Token file ${filePath}: the JSON has no string "token" field.`)
-  }
-  return typeof server === 'string' && server.length > 0 ? { token, server } : { token }
-}
-
-interface PickedToken {
-  readonly token: string
-  readonly source: CredentialSource
-  readonly sessionIsAdmin?: boolean
-}
-
 /** Resolve `{server, token}` for a hub command. Throws {@link MissingCredentialsError}. */
 export function resolveCredentials(inputs: CredentialInputs): ResolvedCredentials {
   const env = inputs.env ?? process.env
-  const file = inputs.tokenFile ? readTokenFile(inputs.tokenFile) : null
   const typed = inputs.server ?? env['CAMSTACK_SERVER']
-  const targeted = typed ? normalizeHubAddress(typed) : file?.server
+  const targeted = typed ? normalizeHubAddress(typed) : undefined
   const session = inputs.loadSession(targeted)
   const server = targeted ?? session?.server
-  const picked = pickToken(inputs.token, file, env['CAMSTACK_TOKEN'], session)
-  if (!picked) throw new MissingCredentialsError(server)
-  const warning = file?.warning
-  const tier = credentialTier(picked.token, {
-    ...(picked.sessionIsAdmin === true ? { sessionIsAdmin: true } : {}),
+  if (!session) throw new MissingCredentialsError(server)
+  const tier = credentialTier(session.token, {
+    ...(session.isAdmin === true ? { sessionIsAdmin: true } : {}),
   })
-  return warning ? { server, ...picked, tier, warning } : { server, ...picked, tier }
-}
-
-function pickToken(
-  flag: string | undefined,
-  file: TokenFileContents | null,
-  envToken: string | undefined,
-  session: CachedSessionLike | null,
-): PickedToken | null {
-  if (flag) return { token: flag, source: 'flag' }
-  if (file) return { token: file.token, source: 'token-file' }
-  if (envToken) return { token: envToken, source: 'env' }
-  if (session) {
-    return {
-      token: session.token,
-      source: 'session',
-      ...(session.isAdmin === true ? { sessionIsAdmin: true } : {}),
-    }
-  }
-  return null
+  return { server, token: session.token, source: 'session', tier }
 }
 
 const REJECTION_ADVICE: Readonly<Record<CredentialSource, string>> = {
-  session: 'The hub rejected the cached session (revoked or expired). Run `camstack login` again.',
-  'token-file':
-    'The hub rejected the token from the token file (revoked, expired or lacking scope) — ask the operator who issued it for a new one.',
-  env: 'The hub rejected $CAMSTACK_TOKEN (revoked, expired or lacking scope).',
-  flag: 'The hub rejected the --token value (revoked, expired or lacking scope).',
+  session:
+    'The hub rejected the cached session (revoked or expired). Run `camstack login <host>` again.',
 }
 
 /**

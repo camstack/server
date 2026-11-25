@@ -9,7 +9,7 @@ describe('login hints', () => {
     ]) {
       expect(hint).toContain(BROWSER_LOGIN_HINT)
       expect(hint).toContain('--browser')
-      expect(hint).toContain('--token-file')
+      expect(hint).not.toContain('--token-file')
     }
   })
 })

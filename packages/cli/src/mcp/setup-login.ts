@@ -75,7 +75,7 @@ export async function loginWaitTool(
       pendingByServer.delete(key)
       return {
         status: 'expired',
-        next: 'Call setup_login again, or sign in without a browser: camstack login <host> --token-file <path>.',
+        next: 'Call setup_login again, or run camstack login <host> --browser in a terminal.',
       }
     }
     intervalSec = outcome.intervalSec

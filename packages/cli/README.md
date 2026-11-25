@@ -16,6 +16,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 ## MCP: doctor, token files, restarts
 
-- `camstack mcp doctor` is a read-only check of Node (>= 24), the hub, its pinned CA, the session or token file, the token scope (admin or not) and the CLI version against npm. Each line is ok / fail / unknown with a fix hint, and no token is ever printed.
-- `camstack login <host> --token-file <path>` logs in without a TTY: the token comes from a file only you can read (`chmod 600`; a looser file is refused), is checked against the hub and cached like the interactive login. A token is never accepted through argv or the environment.
+- `camstack mcp doctor` is a read-only check of Node (>= 24), the hub, its pinned CA, the login session, the token scope (admin or not) and the CLI version against npm. Each line is ok / fail / unknown with a fix hint, and no token is ever printed.
+- Every command reaches a hub through the `camstack login <host>` session, and nothing else: `--token`, `--token-file` and `$CAMSTACK_TOKEN` were removed (a removed flag fails with a message that says so). A headless service is logged in once, interactively (`--browser` prints a code to approve in the admin UI); the session then refreshes unattended.
 - MCP clients such as OpenCode keep running the old `camstack mcp` process: restart them after the CLI updates.

@@ -105,14 +105,14 @@ describe('camstack login by browser approval', () => {
     expect(fs.readdirSync(dir)).toEqual([])
   })
 
-  it('an expiry (401 on poll) fails with the token-file hint', async () => {
+  it('an expiry (401 on poll) asks to log in again', async () => {
     replies = [
       begin(Date.now() + 300_000),
       { status: 401, body: { error: { json: { message: 'gone' } } } },
     ]
     const err = await run().promise.catch((e: unknown) => e)
     expect(err).toBeInstanceOf(ApprovalFailedError)
-    expect(String((err as Error).message)).toContain('--token-file')
+    expect(String((err as Error).message)).toContain('camstack login')
     expect(fs.readdirSync(dir)).toEqual([])
   })
 })

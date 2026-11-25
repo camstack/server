@@ -54,8 +54,7 @@ describe('describeSavedSession — a reused saved login is stated, never silent'
       'using saved session admin@h.test, scope admin',
     )
   })
-  it('says nothing for a token file or when there is no session', () => {
-    expect(describeSavedSession('token-file', session, 'https://h.test')).toBeNull()
+  it('says nothing when there is no session', () => {
     expect(describeSavedSession('session', null, 'https://h.test')).toBeNull()
   })
 })

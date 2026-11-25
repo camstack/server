@@ -26,6 +26,7 @@
  * watch is gated runtime — if it throws we fall back to top-level only
  * and log a hint.
  */
+import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './removed-token-flags.js'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
@@ -111,8 +112,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
     args: [...args],
     options: {
       server: { type: 'string', short: 's' },
-      token: { type: 'string', short: 't' },
-      'token-file': { type: 'string' },
+      ...REMOVED_TOKEN_FLAG_OPTIONS,
       node: { type: 'string', short: 'n' },
       cluster: { type: 'boolean', short: 'c' },
       'watch-path': { type: 'string', short: 'w' },
@@ -124,6 +124,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
     strict: true,
     allowPositionals: true,
   })
+  assertNoRemovedTokenFlags(values)
 
   const addonArg = positionals[0] ?? '.'
   const addonDir = resolveAddonDir(addonArg)
@@ -131,13 +132,10 @@ export async function runDev(args: readonly string[]): Promise<void> {
   // Resolve auth same way as the push command (`credentials.ts`).
   const credentialInputs = {
     ...(typeof values.server === 'string' ? { server: values.server } : {}),
-    ...(typeof values.token === 'string' ? { token: values.token } : {}),
-    ...(typeof values['token-file'] === 'string' ? { tokenFile: values['token-file'] } : {}),
     loadSession,
     transport: cliHubTransport,
   }
   const creds = await resolveFreshCredentials(credentialInputs)
-  if (creds.warning) console.error(`[camstack dev] Warning: ${creds.warning}`)
   if (creds.source === 'session' && creds.server) touchSession(creds.server)
   const serverUrl = creds.server
   const token = creds.token
