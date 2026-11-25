@@ -411,3 +411,59 @@ describe('HaContainerDevice.persistChildLayout (childLayout I/O + best-effort sw
     expect(ctx.api.deviceManager.setChildLayout.mutate).toHaveBeenCalled()
   })
 })
+
+describe('HaContainerDevice liveness is unknown until a child state is seen (D1099)', () => {
+  type Handler = (event: { data: unknown }) => void
+
+  function containerWithBus() {
+    const ctx = buildCtx({
+      system: 'homeassistant',
+      brokerId: 'broker-abc',
+      haDeviceId: 'ha-dev-live',
+      entities: [
+        { entityId: 'sensor.a', deviceType: DeviceType.Sensor, capabilities: ['enum-sensor'] },
+      ],
+    })
+    let handler: Handler | null = null
+    ;(ctx.eventBus as unknown as { subscribe: unknown }).subscribe = vi.fn(
+      (_filter: unknown, h: Handler) => {
+        handler = h
+        return () => {}
+      },
+    )
+    const device = new HaContainerDevice(ctx)
+    const status = () =>
+      device.runtimeState.getCapState<{ online: boolean; unknown?: true }>('device-status')
+    const push = (state: string): void =>
+      handler?.({
+        data: {
+          brokerId: 'broker-abc',
+          key: 'sensor.a',
+          payload: { entity_id: 'sensor.a', state },
+        },
+      })
+    return { device, status, push }
+  }
+
+  it('reports unknown, not offline, before any child state', async () => {
+    const { device, status } = containerWithBus()
+    await device.onActivate()
+    expect(status()).toMatchObject({ online: false, unknown: true })
+  })
+
+  it('the first reachable child answers it: online, and the unknown marker is gone', async () => {
+    const { device, status, push } = containerWithBus()
+    await device.onActivate()
+    push('on')
+    expect(status()).toMatchObject({ online: true })
+    expect(status()?.unknown).toBeUndefined()
+  })
+
+  it('a first child state that is unreachable answers offline (an answer, not a transition)', async () => {
+    const { device, status, push } = containerWithBus()
+    await device.onActivate()
+    push('unavailable')
+    expect(status()).toMatchObject({ online: false })
+    expect(status()?.unknown).toBeUndefined()
+  })
+})

@@ -21,14 +21,20 @@ export type HaRefreshContext = Pick<DeviceContext, 'registerNativeCap'>
 
 export interface HaStateRefreshTarget {
   readonly ctx: HaRefreshContext
-  readonly brokerId: string
+  /**
+   * The integration instance the device belongs to (`meta.integrationId`, e.g.
+   * `int_0019`) — the SAME key the device-manager's readiness gate groups the
+   * device's status writes under (D1099). The broker id is only the fallback of
+   * a legacy row that carries none.
+   */
+  readonly integrationId: string
   /** Re-apply the broker's cached state of this device's entity. */
   readonly reapplyCachedState: () => Promise<void>
 }
 
-export function haRefreshPolicy(brokerId: string): StateRefreshPolicy {
+export function haRefreshPolicy(integrationId: string): StateRefreshPolicy {
   return {
-    integrationId: brokerId,
+    integrationId,
     minIntervalMs: HA_MIN_REFRESH_INTERVAL_MS,
     batch: false,
     push: 'full',
@@ -44,6 +50,6 @@ export function registerHaStateRefresh(target: HaStateRefreshTarget): void {
     resubscribe: async () => ({ ok: true }),
   }
   target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: haRefreshPolicy(target.brokerId),
+    stateRefresh: haRefreshPolicy(target.integrationId),
   })
 }

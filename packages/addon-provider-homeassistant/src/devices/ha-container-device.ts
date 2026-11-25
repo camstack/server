@@ -211,6 +211,9 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
    *  `online` is recomputed as `any value === true`. */
   private readonly entityReachable = new Map<string, boolean>()
 
+  /** False until the first child state arrived: the container's liveness is `unknown` (D1099). */
+  private statusAnswered = false
+
   /** Disposer for the cap event-bus listener that derives `online` from the
    *  availability of every child entity. */
   private availabilityEventUnsub: (() => void) | null = null
@@ -244,7 +247,13 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
     // true; a broker disconnect (A2) marks every child — and this container —
     // offline. The availability listener + subscription are wired in onActivate
     // (post-registration).
-    this.online = false
+    // D1099: before any child state is seen the container's liveness is UNKNOWN,
+    // not offline. `online: false` is only the placeholder the marker qualifies.
+    this.runtimeState.setCapState('device-status', {
+      online: false,
+      unknown: true,
+      lastChangedAt: Date.now(),
+    })
     // The device-level `battery` cap is NATIVE on the container when — and only
     // when — the physical device actually carries a battery entity. Its slice
     // is derived in `attachAvailabilityListener` from the same `broker.message`
@@ -330,8 +339,23 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
         break
       }
     }
+    if (!this.statusAnswered) {
+      // The first child state ANSWERS the unknown: unknown to online (or offline)
+      // is not a transition, so it is written as an answer, logged apart.
+      this.statusAnswered = true
+      this.ctx.logger.info('ha-container liveness answered (first child state)', {
+        tags: { deviceId: this.id },
+        meta: { online: anyReachable, entityCount: this.entityIds.size },
+      })
+      this.runtimeState.setCapState('device-status', {
+        online: anyReachable,
+        lastChangedAt: Date.now(),
+      })
+      return
+    }
     if (this.online !== anyReachable) {
       this.ctx.logger.info('ha-container online transition (derived from children)', {
+        tags: { deviceId: this.id },
         meta: { online: anyReachable, entityCount: this.entityIds.size },
       })
       this.markOnline(anyReachable)

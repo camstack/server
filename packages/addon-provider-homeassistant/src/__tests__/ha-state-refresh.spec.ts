@@ -14,7 +14,7 @@ interface Registration {
   readonly options: { readonly stateRefresh?: Record<string, unknown> } | undefined
 }
 
-function makeCover(cached: unknown) {
+function makeCover(cached: unknown, integrationId?: string) {
   const registrations: Registration[] = []
   let runtimeStateRef: IDeviceRuntimeState | null = null
   const getState = vi.fn(async () => cached)
@@ -28,6 +28,7 @@ function makeCover(cached: unknown) {
       location: null,
       disabled: false,
       addonId: 'ha',
+      ...(integrationId !== undefined ? { integrationId } : {}),
       metadata: {},
     },
     persistedConfig: {
@@ -121,6 +122,13 @@ describe('HA entity device-state-refresh (D1062)', () => {
       push: 'full',
       batch: false,
     })
+  })
+
+  it('groups under the device integrationId (the key the readiness gate uses), not the broker id', async () => {
+    const { device, registrations } = makeCover(OPEN, 'int_0019')
+    await device.onActivate()
+    const reg = registrations.find((r) => r.cap.name === deviceStateRefreshCapability.name)
+    expect(reg?.options?.stateRefresh).toMatchObject({ integrationId: 'int_0019' })
   })
 
   it('a refresh re-applies the broker cached state to the device', async () => {
