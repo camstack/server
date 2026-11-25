@@ -143,7 +143,7 @@ export interface CardCommon {
   /** Null on every optional block means: the device does not declare it. */
   readonly power: CardPower | null
   /** `label` replaces the bare percent (a feeder's "Backup 40%"). */
-  readonly battery: { readonly level: number; readonly label?: string } | null
+  readonly battery: CardBattery | null
   readonly supply: CardSupply | null
   /** The device's active faults (the `error` cap); absent or empty draws no row. */
   readonly faults?: readonly CardFault[]
@@ -190,6 +190,19 @@ export interface CardState {
   readonly label: string
   readonly since: string | null
   readonly tone: CardTone
+}
+
+/**
+ * The device's own battery. `level` is null while only a voltage is known;
+ * `binary` marks a low/ok source whose level is a coarse stand-in, so the
+ * corner draws the state, never a percentage. `voltage` (V) rides beside it.
+ */
+export interface CardBattery {
+  readonly level: number | null
+  readonly binary?: boolean
+  readonly voltage?: number | null
+  /** Replaces the bare percent (a feeder's "Backup 40%"). */
+  readonly label?: string
 }
 
 /** Battery levels under this are drawn as a warning. */

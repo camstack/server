@@ -2776,6 +2776,13 @@
       "summary": "The device card's ONE icon vocabulary: glyph name -> Lucide component. Shell, parts and scenes name a glyph; nothing under `device-card/` imports `lucide-react` (or draws an emoji) outside this file — the guard `scrip…"
     },
     {
+      "name": "cardBattery",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-card-common.tsx",
+      "summary": "The shell's battery block from the device's `battery` slice. A voltage alone is enough to draw it (level stays null); a slice with neither a level nor a voltage is not yet known and draws nothing."
+    },
+    {
       "name": "CardButton",
       "kind": "component",
       "area": "composites",
@@ -15577,7 +15584,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/use-card-common.tsx",
-      "summary": "Reachability as the device reports it. A device whose `device-status` has not answered is unknown: neither drawn as online nor blocked as offline."
+      "summary": "The shell's data for a REAL device, read from the caps that already own each fact: `device-status` (reachable), `power-meter`, `battery`, `consumables`, `power-source` (the switch upstream) and `remote`. A block is nu…"
     },
     {
       "name": "readHistory",

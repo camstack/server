@@ -2,6 +2,12 @@ import { type Context, createContext, type ReactElement, type ReactNode, useCont
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { Button } from '../../../primitives/button'
+import { formatNumeric } from '../../../lib/format-numeric'
+import {
+  BATTERY_BADGE_LOW_KEY,
+  BATTERY_BADGE_NORMAL_KEY,
+  binaryBatteryIsLow,
+} from '../../binary-battery'
 import { CardIcon } from '../parts/CardIcon'
 import { KeyValue } from '../parts/KeyValue'
 import { BATTERY_LOW_PERCENT, type CardPower, type CardState, type CardTone } from './model'
@@ -162,15 +168,33 @@ export function PowerCorner({ power }: { readonly power: CardPower }): ReactElem
 /** Bottom-left: the device's own battery. */
 export function BatteryCorner({
   level,
+  binary = false,
+  voltage = null,
   label,
   shifted = false,
 }: {
-  readonly level: number
+  /** Null: only a voltage is known — no state is drawn, never a flat 0 %. */
+  readonly level: number | null
+  /** A low/ok source: `level` is a stand-in, so the state is named, not the percent. */
+  readonly binary?: boolean
+  /** Volts, drawn beside the state when known. */
+  readonly voltage?: number | null
   readonly label?: string
   /** The motion corner holds the corner's start: the battery sits beside it. */
   readonly shifted?: boolean
 }): ReactElement {
-  const low = level < BATTERY_LOW_PERCENT
+  const t = useUiText()
+  const low = level !== null && (binary ? binaryBatteryIsLow(level) : level < BATTERY_LOW_PERCENT)
+  const state =
+    label ??
+    (level === null
+      ? null
+      : binary
+        ? low
+          ? t(BATTERY_BADGE_LOW_KEY, 'Low')
+          : t(BATTERY_BADGE_NORMAL_KEY, 'Normal')
+        : `${Math.round(level)}%`)
+  const volts = voltage === null ? null : `${formatNumeric(voltage, 1)} V`
   return (
     <Corner
       place="bl"
@@ -182,7 +206,9 @@ export function BatteryCorner({
       )}
     >
       <CardIcon glyph={low ? 'batteryLow' : 'battery'} className="h-3.5 w-3.5 text-success" />
-      {label ?? `${Math.round(level)}%`}
+      {state}
+      {state !== null && volts !== null ? <span aria-hidden="true">·</span> : null}
+      {volts}
     </Corner>
   )
 }

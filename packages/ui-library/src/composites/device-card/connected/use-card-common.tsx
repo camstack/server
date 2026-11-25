@@ -29,6 +29,7 @@ import { useDeviceProviderLabelsWith } from '../../device-picker/device-provider
 import { DeviceHistoryView } from '../../device-history/DeviceHistoryView'
 import { useDeviceSeriesList } from '../../device-history/use-device-history'
 import type {
+  CardBattery,
   CardCommon,
   CardCommonActions,
   CardConsumable,
@@ -90,6 +91,32 @@ export interface BindingMethods {
  * Reachability as the device reports it. A device whose `device-status` has
  * not answered is unknown: neither drawn as online nor blocked as offline.
  */
+/**
+ * The shell's battery block from the device's `battery` slice. A voltage
+ * alone is enough to draw it (level stays null); a slice with neither a level
+ * nor a voltage is not yet known and draws nothing.
+ */
+export function cardBattery(
+  slice:
+    | {
+        readonly level: number | null
+        readonly binary?: boolean
+        readonly voltage?: number | null
+      }
+    | null
+    | undefined,
+): CardBattery | null {
+  if (slice === null || slice === undefined) return null
+  const level = typeof slice.level === 'number' ? slice.level : null
+  const voltage = typeof slice.voltage === 'number' ? slice.voltage : null
+  if (level === null && voltage === null) return null
+  return {
+    level,
+    ...(slice.binary === true ? { binary: true } : {}),
+    ...(voltage === null ? {} : { voltage }),
+  }
+}
+
 export function reachabilityOf(status: { readonly online: boolean } | undefined): boolean | null {
   return status === undefined ? null : status.online
 }
@@ -228,7 +255,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     readOnly: !canActuate,
     notice,
     power,
-    battery: typeof battery?.level === 'number' ? { level: battery.level } : null,
+    battery: cardBattery(battery),
     supply:
       supply.data?.linked === true
         ? {

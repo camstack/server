@@ -263,6 +263,8 @@ export function DeviceCard({
         <BatteryCorner
           shifted={motion !== null && !wide}
           level={common.battery.level}
+          {...(common.battery.binary === undefined ? {} : { binary: common.battery.binary })}
+          {...(common.battery.voltage === undefined ? {} : { voltage: common.battery.voltage })}
           {...(common.battery.label === undefined ? {} : { label: common.battery.label })}
         />
       )}
