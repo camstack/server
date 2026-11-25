@@ -4237,16 +4237,13 @@ export function createPushFrameSource(
   const isVideoKey = (f: MediaFrame | undefined): boolean =>
     f?.type === 'video' && f.frame.isKeyframe
 
-  /** Drop every queued VIDEO frame (audio stays): the queue then starts clean. */
-  const dropQueuedVideo = (): number => {
-    let removed = 0
-    for (let i = queue.length - 1; i >= 0; i--) {
-      if (queue[i]?.type === 'video') {
-        queue.splice(i, 1)
-        removed += 1
-      }
-    }
-    return removed
+  /**
+   * Drop the whole queue, audio included: video is undecodable without its
+   * keyframe, and audio older than the first kept keyframe would play ahead of
+   * the picture (A/V skew).
+   */
+  const dropQueued = (): void => {
+    queue.length = 0
   }
 
   const pushFrame = (mf: MediaFrame): void => {
@@ -4278,7 +4275,8 @@ export function createPushFrameSource(
         if (!keyframeAligned) {
           // The window would start mid-GOP: keep no video at all and wait for
           // the next IDR rather than hand the viewer undecodable P-frames.
-          cut += dropQueuedVideo()
+          cut += queue.length
+          dropQueued()
           awaitKeyframe = true
         }
         onFramesDropped?.(cut, keyframeAligned)
@@ -4310,8 +4308,10 @@ export function createPushFrameSource(
             }
           }
           if (last > 0) queue.splice(0, last)
-          else if (last < 0 && queue.length > 0) {
-            dropQueuedVideo()
+          else if (last < 0) {
+            // Empty, audio-only or P-only: nothing decodable yet, so the next
+            // video frame must be a keyframe whatever arrives first.
+            dropQueued()
             awaitKeyframe = true
           }
         }

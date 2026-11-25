@@ -228,4 +228,16 @@ describe('WebRTC push frame source - keyframe-aligned start (planning#730)', () 
     expect(first.value?.type === 'video' && first.value.frame.data[0]).toBe(201)
     expect(second.value?.type === 'video' && second.value.frame.data[0]).toBe(202)
   })
+
+  it('an EMPTY queue at the first pull still waits for a keyframe (no mid-GOP start)', async () => {
+    const { source, pushFrame, close } = createPushFrameSource()
+    const pending = source.next()
+    // The generator has run its first pull and parked: P-frames must not reach it.
+    await Promise.resolve()
+    pushFrame(vid(1, false))
+    pushFrame(vid(2, true))
+    const first = await pending
+    close()
+    expect(first.value?.type === 'video' && first.value.frame.data[0]).toBe(2)
+  })
 })
