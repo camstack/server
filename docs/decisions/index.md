@@ -4,7 +4,7 @@
 
 # Decisions
 
-1065 architecture decision records. One file per decision, never
+1066 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1069,6 +1069,7 @@ that rots.
 | D1087 | [A switch toggle is one default method, installed where every native provider is registered](adr-1087-a-switch-toggle-is-one-default-method.md) | ✅ accepted | 2026-11-13 |
 | D1088 | [Every device fault is announced with its tier, and the operator's filters decide who hears it](adr-1088-every-device-fault-is-announced-and-the-operator-decides-who-hears-it.md) | ✅ accepted | 2026-11-22 |
 | D1089 | [A room and a tag are records with an id; everything else references the id](adr-1089-a-room-and-a-tag-are-records-with-an-id-and-everything-else-references-the-id.md) | ✅ accepted (supersedes D1054) | 2026-11-22 |
+| D1090 | [An external point is a device with a location; an integration may adopt what it discovers on its own](adr-1090-an-external-point-is-a-device-with-a-location-and-an-integration-may-adopt-what-it-discovers-on-its-own.md) | ✅ accepted | 2026-11-25 |
 | D1091 | [On a phone a table folds by column role and never scrolls sideways](adr-1091-on-a-phone-a-table-folds-by-column-role-and-never-scrolls-sideways.md) | ✅ accepted | 2026-11-22 |
 | D1092 | [On for a time" is a hold outside the run, and only what it turned on is turned off](adr-1092-on-for-a-time-is-a-hold-outside-the-run-and-only-what-it-turned-on-is-turned-off.md) | ✅ accepted | 2026-11-22 |
 | D1093 | [A migration keeps each number's secrets and location on that number](adr-1093-a-migration-keeps-secrets-and-location-on-their-own-number.md) | ✅ accepted | 2026-11-23 |
