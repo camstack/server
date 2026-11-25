@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.957] - 2026-11-25
+
 ### Changed
 
 - A restart no longer announces polled climates or composed devices offline then online: every integration's devices stay unknown until their first answer (bounded at 2 minutes).
