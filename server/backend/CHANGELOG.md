@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.952] - 2026-11-25
+
 ### Changed
 
 - Deleting a composition now removes its device in the same step, instead of leaving it behind until another change.

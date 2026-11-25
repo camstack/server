@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.721] - 2026-11-25
+
 ### Changed
 
 - The hub serves viewer 1.0.734: new top bar, quick grid wall in the camera screen, live no longer freezes after PiP.
