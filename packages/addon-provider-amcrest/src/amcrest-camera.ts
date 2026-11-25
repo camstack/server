@@ -27,6 +27,7 @@ import type {
   StreamProfilePatch,
   StreamSourceEntry,
 } from '@camstack/types'
+import { type AmcrestEncodeFacts, readEncodeFacts } from './encode-facts.js'
 import {
   BaseDevice,
   buildDeviceAdminUrl,
@@ -1002,29 +1003,38 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     try {
       const client = this.ensureClient()
       const encode = await client.getEncodeConfig()
+      const main = readEncodeFacts(encode, 'MainFormat[0]')
+      const sub = readEncodeFacts(encode, 'ExtraFormat[0]')
       const enrich = (
         desc: CamStreamDescriptor,
-        formatKey: 'MainFormat' | 'ExtraFormat',
+        facts: AmcrestEncodeFacts,
       ): CamStreamDescriptor => {
-        const prefix = `${formatKey}[0]`
-        const codec = mapAmcrestCodec(encode.get(`${prefix}.Video.Compression`) ?? null)
-        const width = parseIntOrUndefined(encode.get(`${prefix}.Video.Width`))
-        const height = parseIntOrUndefined(encode.get(`${prefix}.Video.Height`))
-        const fps = parseIntOrUndefined(encode.get(`${prefix}.Video.FPS`))
+        const codec = mapAmcrestCodec(facts.codecRaw)
         return {
           ...desc,
           ...(codec ? { codec } : {}),
-          ...(width !== undefined && height !== undefined ? { resolution: { width, height } } : {}),
-          ...(fps !== undefined ? { fps } : {}),
+          ...(facts.width !== null && facts.height !== null
+            ? { resolution: { width: facts.width, height: facts.height } }
+            : {}),
+          ...(facts.fps !== null ? { fps: facts.fps } : {}),
         }
       }
-      descriptors[0] = enrich(descriptors[0]!, 'MainFormat')
-      descriptors[1] = enrich(descriptors[1]!, 'ExtraFormat')
-    } catch (err) {
-      this.ctx.logger.debug('amcrest: stream-catalog encode enrichment failed (URLs still valid)', {
+      descriptors[0] = enrich(descriptors[0]!, main)
+      descriptors[1] = enrich(descriptors[1]!, sub)
+      // One line per catalog fetch: everything read per stream, and what was
+      // missing and why (planning#727).
+      this.ctx.logger.info('amcrest: stream catalog encode facts', {
         tags: { deviceId: this.id },
-        meta: { error: err instanceof Error ? err.message : String(err) },
+        meta: { main, sub },
       })
+    } catch (err) {
+      this.ctx.logger.warn(
+        'amcrest: stream-catalog encode read failed — codec/resolution/fps unknown (URLs still valid)',
+        {
+          tags: { deviceId: this.id },
+          meta: { reason: err instanceof Error ? err.message : String(err) },
+        },
+      )
     }
 
     this.published.clear()
