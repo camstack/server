@@ -94,12 +94,16 @@ function liveness(deviceId: number, online: boolean): SystemEvent {
   )
 }
 
+let sliceSeq = 0
 function statusSlice(deviceId: number, slice: Record<string, unknown>): SystemEvent {
-  return createEvent(
-    'device.state-changed',
-    { type: 'device', id: deviceId },
-    { deviceId, capName: 'device-status', slice },
-  )
+  sliceSeq += 1
+  return {
+    id: `status-${deviceId}-${sliceSeq}`,
+    timestamp: new Date(Date.now()),
+    source: { type: 'device', id: deviceId },
+    category: 'device.state-changed',
+    data: { deviceId, capName: 'device-status', slice },
+  }
 }
 
 function unknownSlice(deviceId: number): SystemEvent {
