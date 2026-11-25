@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.752] - 2026-11-25
+
 ### Changed
 
 - A notification rule button has an Ask for confirmation switch: the notification opens a confirmation page and the Action runs only after you confirm

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.729] - 2026-11-25
+
 ### Changed
 
 - The confirmation page of a notification button now names the device instead of showing its numeric id
