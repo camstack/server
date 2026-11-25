@@ -39,7 +39,7 @@ import {
   type CommissionProgress,
   CommissionPhase,
 } from './matter-commission-progress.js'
-import { reclaimStaleFabricLock } from './matter-storage-lock.js'
+import { reclaimStaleFabricLock, recordFabricOwner } from './matter-storage-lock.js'
 import { subscribableFromPeer } from './matter-peer-subscribe.js'
 import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
 
@@ -303,12 +303,14 @@ export class MatterJsController implements MatterController {
 
   async #openProductionServer(): Promise<MatterFabricServer> {
     const environment = this.#buildEnvironment()
-    await reclaimStaleFabricLock({
+    const lock = {
       fabricDir: join(this.#options.dataDir, this.#options.brokerId),
       brokerId: this.#options.brokerId,
       selfPid: process.pid,
       logger: this.#logger,
-    })
+    }
+    await reclaimStaleFabricLock(lock)
+    await recordFabricOwner(lock)
     const server = await ServerNode.create({
       environment,
       id: this.#options.brokerId,

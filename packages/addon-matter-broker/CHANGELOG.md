@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Matter fabric no longer stays locked after a container restart; refused publishes now say why in the log.
+
 ## [0.2.175] - 2026-11-24
 
 ### Changed

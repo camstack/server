@@ -371,6 +371,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return buildMatterBrokerProvider({
       registry: this.requireRegistry(),
       getBrokers: () => this.activeBrokers,
+      logger: this.ctx.logger,
     })
   }
 

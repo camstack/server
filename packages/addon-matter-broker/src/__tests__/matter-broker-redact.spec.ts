@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { IScopedLogger } from '@camstack/types'
 import { buildMatterBrokerProvider } from '../matter-broker-provider.js'
 import type { MatterBrokerEntry } from '../config.js'
 
@@ -13,6 +14,15 @@ const ENTRY: MatterBrokerEntry = {
   },
 }
 
+const QUIET: IScopedLogger = {
+  debug: () => undefined,
+  info: () => undefined,
+  warn: () => undefined,
+  error: () => undefined,
+  child: () => QUIET,
+  withTags: () => QUIET,
+}
+
 describe('Matter broker settings redact fabric secrets', () => {
   it('returns threadDataset and wifiPassword empty on getBrokerConfig', async () => {
     const provider = buildMatterBrokerProvider({
@@ -23,6 +33,7 @@ describe('Matter broker settings redact fabric secrets', () => {
         getCommissionProgress: () => null,
       },
       getBrokers: () => [ENTRY],
+      logger: QUIET,
     })
 
     const config = await provider.getBrokerConfig({ id: 'matter_001' })

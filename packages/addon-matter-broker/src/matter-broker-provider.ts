@@ -1,4 +1,4 @@
-import { type IBrokerProvider } from '@camstack/types'
+import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/types'
 import { publicMatterConnection } from './config.js'
 import type { MatterBrokerEntry } from './config.js'
 import type { MatterBrokerRegistry } from './matter-broker-registry.js'
@@ -10,6 +10,7 @@ export interface MatterBrokerProviderDeps {
     'size' | 'connectedCount' | 'commissionNode' | 'getCommissionProgress'
   >
   readonly getBrokers: () => readonly MatterBrokerEntry[]
+  readonly logger: IScopedLogger
 }
 
 /**
@@ -20,7 +21,7 @@ export interface MatterBrokerProviderDeps {
  * `wifiPassword` are redacted on config reads. Fabric keys stay in matter.js storage.
  */
 export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrokerProvider {
-  const { registry, getBrokers } = deps
+  const { registry, getBrokers, logger } = deps
 
   const owns = (id: string): boolean => getBrokers().some((b) => b.id === id)
 
@@ -39,14 +40,32 @@ export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrok
      * runs the controller's `commissionNode`. Other actions are a TODO.
      */
     publish: async ({ brokerId, target, payload }) => {
-      if (!owns(brokerId)) throw new Error(`matter: unknown broker ${brokerId}`)
+      if (!owns(brokerId)) {
+        logger.warn('matter publish refused: this addon does not own that broker', {
+          tags: { brokerId },
+          meta: { reason: 'unknown-broker' },
+        })
+        throw new Error(`matter: unknown broker ${brokerId}`)
+      }
       const action = typeof target['action'] === 'string' ? target['action'] : undefined
       if (action === 'commissionNode') {
         const code = pairingCodeFromPayload(payload)
         // Fail fast on a malformed code before touching the controller.
-        parsePairingCode(code)
+        try {
+          parsePairingCode(code)
+        } catch (err: unknown) {
+          logger.warn('matter publish refused: the pairing code does not parse', {
+            tags: { brokerId },
+            meta: { reason: 'invalid-pairing-code', error: errMsg(err) },
+          })
+          throw err
+        }
         return registry.commissionNode(brokerId, code)
       }
+      logger.warn('matter publish refused: unsupported action', {
+        tags: { brokerId },
+        meta: { reason: 'unsupported-action', action: action ?? '(none)' },
+      })
       throw new Error(`matter: unsupported publish action '${action ?? '(none)'}'`)
     },
 
