@@ -223,7 +223,8 @@ export class RemoteEncodedSourceBroker {
     const source: StreamSource = {
       type: 'rtsp',
       url: rtpSource.url,
-      videoCodec: rtpSource.videoCodec,
+      // `null` = the owner never measured the codec: left undefined, the broker detects it.
+      videoCodec: rtpSource.videoCodec ?? undefined,
     }
 
     const brokerId = `${deviceId}/${profile}`

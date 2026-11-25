@@ -690,3 +690,46 @@ describe('TranscodePipelineManager — audio:none gets the video-only (muted) re
     expect(muted.pipelineKey).not.toBe(full.pipelineKey)
   })
 })
+
+describe('TranscodePipelineManager — an unknown source codec stays unknown (planning#727)', () => {
+  beforeEach(() => {
+    trace = { spawnArgs: [], registered: [], unregistered: [] }
+  })
+
+  function unknownCodecManager(warns: Array<{ msg: string; tags?: unknown }>) {
+    const logger: IScopedLogger = {
+      ...makeLogger(),
+      warn: (msg: string, ctx?: { tags?: unknown }) => {
+        warns.push({ msg, tags: ctx?.tags })
+      },
+    }
+    return makeManager({
+      streams: [streamFixture({ camStreamId: 'native:main', codec: undefined })],
+      profileSource: () => 'native:main',
+      restream: () => ({
+        url: 'rtsp://127.0.0.1:8554/main',
+        mutedUrl: 'rtsp://127.0.0.1:8554/main/muted',
+      }),
+      logger,
+    })
+  }
+
+  it('video:copy on a codec-less source reports videoCodec null, never H264', async () => {
+    const warns: Array<{ msg: string; tags?: unknown }> = []
+    const mgr = unknownCodecManager(warns)
+    const src = await mgr.acquire({ deviceId: 1, video: 'copy', audio: 'copy', profile: 'high' })
+    expect(src.videoCodec).toBeNull()
+    expect(src.transcoded).toBe(false)
+  })
+
+  it('warns once per (device, stream), tagged with the deviceId, not on every acquire', async () => {
+    const warns: Array<{ msg: string; tags?: unknown }> = []
+    const mgr = unknownCodecManager(warns)
+    for (let i = 0; i < 5; i += 1) {
+      await mgr.acquire({ deviceId: 1, video: 'copy', audio: 'none', profile: 'high' })
+      await mgr.acquire({ deviceId: 1, video: 'copy', audio: 'copy', profile: 'high' })
+    }
+    expect(warns).toHaveLength(1)
+    expect(warns[0]?.tags).toEqual({ deviceId: 1 })
+  })
+})

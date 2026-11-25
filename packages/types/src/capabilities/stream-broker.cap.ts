@@ -333,7 +333,9 @@ export const RtpSourceSchema = z.object({
    * sentry counterpart.
    */
   sentryUrl: z.string().nullable().optional(),
-  videoCodec: z.enum(['H264', 'H265']),
+  /** `null` = the source's codec was never measured (catalog carried none). It is
+   *  never defaulted to H264: a consumer that must proceed decides explicitly (D393). */
+  videoCodec: z.enum(['H264', 'H265']).nullable(),
   audioCodec: z.string(),
   resolution: z.object({
     width: z.number().int().positive(),

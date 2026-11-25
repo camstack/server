@@ -6665,7 +6665,7 @@ Enum: `"correct" \| "wrong" \| "wrong-label"`
 
 - `url`: `string`
 - `sentryUrl?`: `string \| null`
-- `videoCodec`: `"H264" \| "H265"`
+- `videoCodec`: `"H264" \| "H265" \| null`
 - `audioCodec`: `string`
 - `resolution`: `{ width: number; height: number }`
 - `transcoded`: `boolean`

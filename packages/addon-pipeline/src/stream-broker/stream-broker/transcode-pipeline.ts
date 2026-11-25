@@ -253,16 +253,8 @@ export class TranscodePipelineManager {
         outputArgs.length === 0 &&
         resMatchesTarget)
     if (wantsPassthrough) {
-      if (sourceCodec === null) {
-        this.logger.warn(
-          'copy-passthrough requested but source codec is unknown — reporting H264',
-          {
-            tags: { deviceId: input.deviceId },
-            meta: { deviceId: input.deviceId, camStreamId: sourceStream.camStreamId },
-          },
-        )
-      }
-      const passVideoCodec: 'H264' | 'H265' = sourceCodec ?? 'H264'
+      if (sourceCodec === null) this.warnUnknownCopyCodec(input.deviceId, sourceStream.camStreamId)
+      const passVideoCodec: 'H264' | 'H265' | null = sourceCodec
       // `audio: 'none'` takes the VIDEO-ONLY (`/muted`) restream, and that
       // suffix buys it TWO things: no audio, and the LIVE-EDGE join rule. They
       // used to be one predicate (`RtspSession.isMuted()`); since D525 they are
@@ -758,6 +750,19 @@ export class TranscodePipelineManager {
       return null
     }
     return withSentryIntent(url)
+  }
+
+  /** Streams whose unknown codec was already reported; one warn per session. */
+  private readonly unknownCopyCodecWarned = new Set<string>()
+
+  private warnUnknownCopyCodec(deviceId: number, camStreamId: string): void {
+    const key = `${deviceId}|${camStreamId}`
+    if (this.unknownCopyCodecWarned.has(key)) return
+    this.unknownCopyCodecWarned.add(key)
+    this.logger.warn(
+      'copy-passthrough requested but source codec is unknown — reporting it as unknown (null)',
+      { tags: { deviceId }, meta: { deviceId, camStreamId } },
+    )
   }
 
   private async shareOrCreatePassthroughAsync(

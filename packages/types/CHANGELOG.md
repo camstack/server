@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- RtpSource.videoCodec is nullable: an unmeasured codec stays unknown
+
 ## [1.2.634] - 2026-11-25
 
 ### Changed

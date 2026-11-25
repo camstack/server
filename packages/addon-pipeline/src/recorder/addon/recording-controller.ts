@@ -2638,7 +2638,8 @@ export class RecordingController {
         rtspUrl,
         outDir,
         segmentSeconds,
-        videoCodec: source.videoCodec,
+        // `null` = codec never measured: omitted, so the writer applies no HEVC tag.
+        videoCodec: source.videoCodec ?? undefined,
         consumerTag,
       },
       {

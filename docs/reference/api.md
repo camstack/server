@@ -4860,7 +4860,7 @@
 
 ### `stream-broker` → `streamBroker.*`
 
-- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:473`
+- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:475`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IStreamBrokerProvider`
