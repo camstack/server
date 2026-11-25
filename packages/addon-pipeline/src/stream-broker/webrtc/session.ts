@@ -821,6 +821,8 @@ export class AdaptiveSession {
    * this flag is only the state the broker reads. Wired in the broker-server task.
    */
   private liveFeedGated = false
+  /** True while the transcode leg is dropping live video under the gate (log-once state). */
+  private transcodeLegGateLogged = false
   /**
    * Set whenever the source feeding the video track switches (live↔recorded).
    * The next outgoing packet (on either path) calls `replaceRTP` so werift
@@ -3408,7 +3410,32 @@ export class AdaptiveSession {
         if (au === null) return
         this.sourceMediaSeen = true
         const nals = au.nals.map((n) => Buffer.from(n))
+        // Kept while gated too: a PLI is refused during recorded (`handlePli`),
+        // and the first PLI after the gate opens should replay a fresh live IDR.
         if (au.keyframe) this.lastKeyframeNals = nals.map((n) => Buffer.from(n))
+        // Recorded owns the track. This leg is the ONLY live video writer of a
+        // transcoding session (the source-RTP forwarder returns on
+        // `needsTranscode` before its gate), so it carries the gate itself:
+        // 2026-11-25 camera 590 kept writing live frames over recorded AUs and
+        // the client decoded nothing. The framer above already consumed the
+        // packet, so its state stays coherent for the moment live resumes.
+        if (this.liveFeedGated) {
+          if (!this.transcodeLegGateLogged) {
+            this.transcodeLegGateLogged = true
+            this.logger.info('recorded: live transcode video GATED (dropping live video)', {
+              tags: { deviceId: this.deviceId },
+              meta: { phase: 'session', sessionId: this.sessionId, deviceId: this.deviceId },
+            })
+          }
+          return
+        }
+        if (this.transcodeLegGateLogged) {
+          this.transcodeLegGateLogged = false
+          this.logger.info('recorded: live transcode video UNGATED (forwarding live video again)', {
+            tags: { deviceId: this.deviceId },
+            meta: { phase: 'session', sessionId: this.sessionId, deviceId: this.deviceId },
+          })
+        }
         // One picture, one RTP timestamp. Send-time rather than capture-time —
         // see `sendRtpTimestamp` for why capture-time stamps produced ~80 ms of
         // receiver jitter over the overlay and a PLI storm.

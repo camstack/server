@@ -8,7 +8,7 @@
  * purpose." Every holder must release on its OWN failure paths — including the
  * one where the acquire raced the close.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { EncodedPacket } from '@camstack/types'
 
 import { AdaptiveSession } from '../session.js'
@@ -288,5 +288,58 @@ describe('AdaptiveSession transcode leg — prewarmed at the answer', () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 20))
     expect(acquires).toEqual([])
     await session.close()
+  })
+})
+
+/**
+ * Recorded owns the track. On a transcoding session the leg callback is the
+ * only live video writer — the source-RTP forwarder returns on
+ * `needsTranscode` before its gate — so the gate has to hold here.
+ * 2026-11-25, camera 590: live frames kept landing on the track during
+ * recorded playback and the client decoded nothing.
+ */
+describe('AdaptiveSession transcode leg — recorded owns the track', () => {
+  const SPS = Buffer.from([0x67, 0x42, 0x00, 0x1f])
+  const PPS = Buffer.from([0x68, 0xce, 0x3c, 0x80])
+  const IDR = Buffer.from([0x65, 0x88, 0x84, 0x00])
+  const START = Buffer.from([0, 0, 0, 1])
+  const idrPacket: EncodedPacket = {
+    type: 'video',
+    data: Buffer.concat([START, SPS, START, PPS, START, IDR]),
+    pts: 0,
+    dts: 0,
+    keyframe: true,
+    codec: 'h264',
+  }
+
+  async function attachedHarness() {
+    const h = makeSession()
+    const writes: number[] = []
+    // The prototype is untyped on purpose: the writer is private.
+    vi.spyOn(Object.getPrototypeOf(h.session), 'writeVideoNals').mockImplementation(() => {
+      writes.push(1)
+    })
+    h.session.startFeedingFrames()
+    await until(() => h.spy.attached, 'the leg to attach')
+    return { ...h, writes }
+  }
+
+  it('writes live leg frames when ungated', async () => {
+    const h = await attachedHarness()
+    h.spy.emit(idrPacket)
+    expect(h.writes).toHaveLength(1)
+    await h.session.close()
+  })
+
+  it('writes NO leg frame while gated, and resumes when the gate opens', async () => {
+    const h = await attachedHarness()
+    h.session.setLiveFeedGate(true)
+    h.spy.emit(idrPacket)
+    h.spy.emit(idrPacket)
+    expect(h.writes).toHaveLength(0)
+    h.session.setLiveFeedGate(false)
+    h.spy.emit(idrPacket)
+    expect(h.writes).toHaveLength(1)
+    await h.session.close()
   })
 })
