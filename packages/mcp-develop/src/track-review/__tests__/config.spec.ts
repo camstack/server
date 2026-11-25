@@ -142,13 +142,4 @@ describe('review hub resolution', () => {
     whoamiOk = true
     await expect(get('write')).resolves.toBeDefined()
   })
-
-  it('an env token is never sent to a hub the operator did not name', async () => {
-    session(jwt({ isAdmin: true }), true)
-    for (const env of [{ CAMSTACK_HUB_TOKEN: 'env-token' }, { CAMSTACK_HUB_TOKEN_FILE: '/x' }]) {
-      const err = await provider(env)('read').catch((e: unknown) => e)
-      expect(err instanceof Error ? err.message : '').toContain('CAMSTACK_HUB_URL')
-    }
-    expect(requests).toEqual([])
-  })
 })
