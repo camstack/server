@@ -30,6 +30,8 @@ import {
   reexpandAutomationInstance,
   type AutomationRecipe,
   type CoreBlock,
+  COMPOSER_ADDON_ID,
+  type RecordKindHandle,
   type DeviceDataEntry,
   type DeviceRemovedInput,
   type DeviceRemovedResult,
@@ -39,36 +41,92 @@ import {
   type UnitResolver,
 } from '@camstack/types'
 import { isGeneratedCode } from './automation-template-instances.js'
+import type { ComposedDeviceRowBody } from './record-kinds.js'
 
-/** `deviceId → composition block id`, grown from reads that SAW the device. */
-export class ComposedDeviceIndex {
-  private readonly byDevice = new Map<number, string>()
+/** One composer device as a slim listing answers it. */
+export interface ComposedDeviceRow {
+  readonly id: number
+  readonly stableId: string
+}
 
-  learn(rows: readonly { readonly id: number; readonly stableId: string }[]): void {
-    for (const row of rows) {
-      if (!row.stableId.startsWith(COMPOSED_DEVICE_STABLE_ID_PREFIX)) continue
-      this.byDevice.set(row.id, row.stableId.slice(COMPOSED_DEVICE_STABLE_ID_PREFIX.length))
-    }
+/**
+ * `deviceId → composition block id`, grown ONLY from reads that SAW the device
+ * (never from absence, D865) and durable, so a tombstone resolves its owner
+ * after any restart.
+ */
+export interface ComposedDeviceStore {
+  learn(rows: readonly ComposedDeviceRow[]): Promise<void>
+  blockOf(deviceId: number): Promise<string | null>
+  forget(deviceId: number): Promise<void>
+  entries(): Promise<readonly (readonly [number, string])[]>
+}
+
+function blockIdOfStable(stableId: string): string | null {
+  return stableId.startsWith(COMPOSED_DEVICE_STABLE_ID_PREFIX)
+    ? stableId.slice(COMPOSED_DEVICE_STABLE_ID_PREFIX.length)
+    : null
+}
+
+/** The mapping in memory only — for specs; production uses {@link recordsComposedDevices}. */
+export function memoryComposedDevices(
+  byDevice: Map<number, string> = new Map(),
+): ComposedDeviceStore {
+  return {
+    learn: async (rows) => {
+      for (const row of rows) {
+        const blockId = blockIdOfStable(row.stableId)
+        if (blockId !== null) byDevice.set(row.id, blockId)
+      }
+    },
+    blockOf: async (deviceId) => byDevice.get(deviceId) ?? null,
+    forget: async (deviceId) => {
+      byDevice.delete(deviceId)
+    },
+    entries: async () => [...byDevice],
   }
+}
 
-  blockOf(deviceId: number): string | null {
-    return this.byDevice.get(deviceId) ?? null
-  }
-
-  forget(deviceId: number): void {
-    this.byDevice.delete(deviceId)
-  }
-
-  entries(): readonly (readonly [number, string])[] {
-    return [...this.byDevice]
+/** The mapping in core-blocks' own record kind. */
+export function recordsComposedDevices(
+  kind: RecordKindHandle<ComposedDeviceRowBody>,
+): ComposedDeviceStore {
+  return {
+    learn: async (rows) => {
+      for (const row of rows) {
+        const blockId = blockIdOfStable(row.stableId)
+        if (blockId === null) continue
+        const known = await kind.get(String(row.id))
+        if (known?.data.blockId !== blockId) {
+          await kind.put({ id: String(row.id), data: { blockId } })
+        }
+      }
+    },
+    blockOf: async (deviceId) => (await kind.get(String(deviceId)))?.data.blockId ?? null,
+    forget: async (deviceId) => {
+      await kind.delete(String(deviceId))
+    },
+    entries: async () => {
+      const out: (readonly [number, string])[] = []
+      let cursor: string | undefined
+      do {
+        const page = await kind.query({
+          ...(cursor === undefined ? {} : { cursor }),
+        })
+        for (const row of page.records) out.push([Number(row.id), row.data.blockId])
+        cursor = page.nextCursor ?? undefined
+      } while (cursor !== undefined)
+      return out
+    },
   }
 }
 
 export interface CoreBlocksRemovalDeps {
   readonly blocks: () => readonly CoreBlock[]
-  readonly composed: ComposedDeviceIndex
+  readonly composed: ComposedDeviceStore
   /** The operator's delete path: records, claims, `retireComposition`. */
   readonly removeBlock: (blockId: string, existing: CoreBlock) => Promise<void>
+  /** Release a retired composition's claims when its block is already gone (a delete that failed half way). */
+  readonly retireClaims: (blockId: string) => Promise<void>
   /** The ordinary block update: compile gate, store, converge. */
   readonly saveCode: (blockId: string, code: string) => Promise<void>
   readonly logger: IScopedLogger
@@ -139,7 +197,10 @@ export function createCoreBlocksRemovalHook(
     if (!prepared.ok) throw new Error(prepared.error)
     await deps.saveCode(
       ref.block.id,
-      generateAutomationBlock({ name: ref.block.name, recipe: prepared.recipe }),
+      generateAutomationBlock({
+        name: ref.block.name,
+        recipe: prepared.recipe,
+      }),
     )
   }
 
@@ -150,18 +211,40 @@ export function createCoreBlocksRemovalHook(
       let automationsDeleted = 0
       let automationsUnlinked = 0
 
-      const ownedId = deps.composed.blockOf(deviceId)
+      let unresolved = false
+      const ownedId = await deps.composed.blockOf(deviceId)
       if (ownedId !== null) {
         const owned = deps.blocks().find((b) => b.id === ownedId) ?? null
-        if (owned !== null) {
-          await deps.removeBlock(owned.id, owned)
-          compositions += 1
-          deps.logger.info('core-blocks: retired the composition of a deleted device', {
-            tags: { deviceId },
-            meta: { blockId: owned.id },
-          })
+        try {
+          if (owned !== null) {
+            await deps.removeBlock(owned.id, owned)
+            compositions += 1
+          } else {
+            // Gone from the store already (an operator delete, or a delete that failed
+            // half way): the claims are released again, idempotently.
+            await deps.retireClaims(ownedId)
+          }
+        } catch (error: unknown) {
+          deps.logger.warn(
+            "core-blocks: a deleted device's composition was not fully retired — kept for the retry",
+            {
+              tags: { deviceId },
+              meta: { blockId: ownedId, error: errorText(error) },
+            },
+          )
+          throw error
         }
-        deps.composed.forget(deviceId)
+        deps.logger.info('core-blocks: retired the composition of a deleted device', {
+          tags: { deviceId },
+          meta: { blockId: ownedId },
+        })
+        await deps.composed.forget(deviceId)
+      } else if (input.providerAddonId === COMPOSER_ADDON_ID) {
+        unresolved = true
+        deps.logger.warn(
+          'core-blocks: a composed device was deleted but no composition is known for it — retried on the next pass',
+          { tags: { deviceId } },
+        )
       }
 
       for (const ref of linkedTriggers(deps.blocks())) {
@@ -177,18 +260,28 @@ export function createCoreBlocksRemovalHook(
         const referencesSource =
           ref.sources !== null && ref.sources.some((s) => sourceDeviceIds(s).includes(deviceId))
         if (!targetGone && !referencesSource) continue
+        if (!isGeneratedCode(ref.block.code, ref.recipe)) {
+          deps.logger.warn(
+            'core-blocks: a trigger still names a deleted device and was left as it is (hand-edited)',
+            { tags: { deviceId }, meta: { blockId } },
+          )
+          continue
+        }
         if (targetGone || (kept !== null && kept.length === 0)) {
           await deps.removeBlock(blockId, ref.block)
           automationsDeleted += 1
           deps.logger.info('core-blocks: deleted a trigger with nothing left to act on', {
             tags: { deviceId },
-            meta: { blockId, reason: targetGone ? 'target-deleted' : 'last-source-deleted' },
+            meta: {
+              blockId,
+              reason: targetGone ? 'target-deleted' : 'last-source-deleted',
+            },
           })
           continue
         }
-        if (kept === null || !isGeneratedCode(ref.block.code, ref.recipe)) {
+        if (kept === null) {
           deps.logger.warn(
-            'core-blocks: a trigger still lists a deleted device and was left as it is (hand-edited or unreadable)',
+            'core-blocks: a trigger still lists a deleted device and was left as it is (unreadable)',
             { tags: { deviceId }, meta: { blockId } },
           )
           continue
@@ -207,6 +300,9 @@ export function createCoreBlocksRemovalHook(
           })
           throw error
         }
+      }
+      if (unresolved) {
+        throw new Error(`core-blocks: no composition is known for composed device ${deviceId}`)
       }
       return {
         counts: {
@@ -229,7 +325,7 @@ export function createCoreBlocksRemovalHook(
       for (const [deviceId, count] of counts) {
         if (deviceId > 0) out.push({ store: 'automations', deviceId, count })
       }
-      for (const [deviceId] of deps.composed.entries()) {
+      for (const [deviceId] of await deps.composed.entries()) {
         out.push({ store: 'compositions', deviceId, count: 1 })
       }
       return out

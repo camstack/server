@@ -84,7 +84,7 @@ import {
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
 import { CapLinksService } from './cap-links.js'
-import { ComposedDeviceIndex, createCoreBlocksRemovalHook } from './device-removal.js'
+import { createCoreBlocksRemovalHook, recordsComposedDevices } from './device-removal.js'
 import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
@@ -135,6 +135,8 @@ import { extractSettingsSchema } from './extract-settings-schema.js'
  * tripped, a spawn that never landed. D8: events may be dropped, so the
  * reconcile is what makes the outcome eventually true.
  */
+/** How long after the last DeviceRegistered the composed devices are read again. */
+const REMOVAL_LEARN_DEBOUNCE_MS = 2_000
 const CONVERGE_INTERVAL_MS = 15_000
 
 /** Where block packages are materialised, under this node's data root. */
@@ -1126,7 +1128,9 @@ export class CoreBlocksAddon extends BaseAddon {
     return new CapLinksService({
       blocks: () => (store.isLoaded() ? store.list() : null),
       refOfDevice: async (deviceId) => {
-        const found = await requireApi().deviceManager.getDevice.query({ deviceId })
+        const found = await requireApi().deviceManager.getDevice.query({
+          deviceId,
+        })
         return found === null ? null : { addonId: found.addonId, stableId: found.stableId }
       },
       deviceIdOf: (ref) => this.deviceIdOfRef(ref),
@@ -1215,20 +1219,30 @@ export class CoreBlocksAddon extends BaseAddon {
    * device-manager's tombstones at start and periodically.
    */
   private armDeviceRemoval(): IDeviceRemovalHookProvider {
-    const composed = new ComposedDeviceIndex()
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('core-blocks needs ctx.records on the hub')
+    const composed = recordsComposedDevices(records.kind(coreBlocksRecordKinds['composed-devices']))
+    const log = this.ctx.logger.child('device-removal')
     const learn = async (): Promise<void> => {
       const api = this.ctx.api
-      if (!api) return
+      if (!api) {
+        log.warn(
+          'composed devices not read — no ctx.api on this node, the removal mapping is stale',
+        )
+        return
+      }
       try {
-        composed.learn(
+        await composed.learn(
           await api.deviceManager.listAll.query({
             addonId: COMPOSER_ADDON_ID,
             projection: 'slim',
           }),
         )
       } catch (error: unknown) {
-        this.ctx.logger.warn('core-blocks: composed devices unreadable, the removal index kept', {
-          meta: { error: error instanceof Error ? error.message : String(error) },
+        log.warn('composed devices unreadable, the stored removal mapping kept', {
+          meta: {
+            error: error instanceof Error ? error.message : String(error),
+          },
         })
       }
     }
@@ -1237,19 +1251,53 @@ export class CoreBlocksAddon extends BaseAddon {
       blocks: () => store.list(),
       composed,
       removeBlock: (blockId, existing) => this.removeBlock(blockId, existing),
+      retireClaims: (blockId) => this.retireClaimsOf(blockId),
       saveCode: (blockId, code) => this.saveGeneratedCode(blockId, code),
-      logger: this.ctx.logger.child('device-removal'),
+      logger: log,
     })
-    this.subscribe({ category: EventCategory.DeviceRegistered }, () => void learn())
-    void learn()
-    this.ctx.addDisposer(
-      armRemovalReconcile({
+    // A burst of registrations (boot) is ONE read, a moment after the last one.
+    let pending: ReturnType<typeof setTimeout> | null = null
+    this.subscribe({ category: EventCategory.DeviceRegistered }, () => {
+      if (pending !== null) clearTimeout(pending)
+      pending = setTimeout(() => {
+        pending = null
+        void learn()
+      }, REMOVAL_LEARN_DEBOUNCE_MS)
+      pending.unref?.()
+    })
+    // The mapping is read BEFORE the first reconcile pass, so a tombstone of a
+    // device deleted while this addon was down finds its owner.
+    let disarm: (() => void) | null = null
+    let disposed = false
+    void learn().finally(() => {
+      if (disposed) return
+      disarm = armRemovalReconcile({
         api: this.ctx.api,
         logger: this.ctx.logger,
         remove: (input) => hook.onDeviceRemoved(input),
-      }),
-    )
+      })
+    })
+    this.ctx.addDisposer(() => {
+      disposed = true
+      if (pending !== null) clearTimeout(pending)
+      disarm?.()
+    })
     return hook
+  }
+
+  /** Release the claims of a composition whose block is already gone; throws when one stays. */
+  private async retireClaimsOf(blockId: string): Promise<void> {
+    if (this.supervisor === null) {
+      throw new Error(`core-blocks: no supervisor runs here — the claims of "${blockId}" stay`)
+    }
+    const unreleased = await this.supervisor.retireComposition(blockId)
+    if (unreleased.length > 0) {
+      throw new Error(
+        `core-blocks: the claims of "${blockId}" were not released — ${unreleased
+          .map((c) => `${c.capName} on device ${c.deviceId}: ${c.error}`)
+          .join('; ')}`,
+      )
+    }
   }
 
   /**

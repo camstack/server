@@ -7,12 +7,21 @@ import {
   linkedTriggerParamsOf,
   linkedTriggerValues,
   readRecipeLiteral,
+  createRecordsAccess,
   type CoreBlock,
+  type IDeviceRemovalHookProvider,
   type LinkedTriggerSource,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { ComposedDeviceIndex, createCoreBlocksRemovalHook } from '../device-removal.js'
-import { recordingLogger } from './fixtures.js'
+import {
+  createCoreBlocksRemovalHook,
+  memoryComposedDevices,
+  recordsComposedDevices,
+  type ComposedDeviceStore,
+} from '../device-removal.js'
+import { coreBlocksRecordKinds } from '../record-kinds.js'
+import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
+import { recordingLogger, type RecordingLogger } from './fixtures.js'
 
 function block(id: string, name: string, code: string): CoreBlock {
   return {
@@ -30,7 +39,13 @@ function block(id: string, name: string, code: string): CoreBlock {
 }
 
 function motion(deviceId: number): LinkedTriggerSource {
-  return { kind: 'device-becomes', deviceId, cap: 'motion', fieldPath: 'detected', becomes: true }
+  return {
+    kind: 'device-becomes',
+    deviceId,
+    cap: 'motion',
+    fieldPath: 'detected',
+    becomes: true,
+  }
 }
 
 function trigger(id: string, target: number, sources: readonly LinkedTriggerSource[]): CoreBlock {
@@ -39,19 +54,41 @@ function trigger(id: string, target: number, sources: readonly LinkedTriggerSour
   const made = instantiateAutomationTemplate(
     LINKED_TRIGGER_TEMPLATE_ID,
     payload,
-    linkedTriggerValues({ targetDeviceId: target, action: 'on', sources: [...sources] }),
+    linkedTriggerValues({
+      targetDeviceId: target,
+      action: 'on',
+      sources: [...sources],
+    }),
   )
   if (!made.ok) throw new Error('setup: the trigger does not expand')
   const name = `trigger ${id}`
   return block(id, name, generateAutomationBlock({ name, recipe: made.recipe }))
 }
 
-function world(initial: CoreBlock[]) {
-  const blocks = [...initial]
+interface RemovalWorld {
+  readonly hook: IDeviceRemovalHookProvider
+  readonly removed: string[]
+  readonly retired: string[]
+  readonly saved: Map<string, string>
+  readonly composed: ComposedDeviceStore
+  readonly log: RecordingLogger
+  readonly blocks: CoreBlock[]
+  /** Makes the next `removeBlock` delete the block and then fail, as a half-done delete would. */
+  failNextRemove(): void
+}
+
+function world(
+  initial: CoreBlock[],
+  mapping: Map<number, string> = new Map(),
+  all: CoreBlock[] = [...initial],
+): RemovalWorld {
+  const blocks = all
   const removed: string[] = []
+  const retired: string[] = []
   const saved = new Map<string, string>()
-  const composed = new ComposedDeviceIndex()
+  const composed = memoryComposedDevices(mapping)
   const log = recordingLogger()
+  let failing = false
   const hook = createCoreBlocksRemovalHook({
     blocks: () => blocks,
     composed,
@@ -59,6 +96,13 @@ function world(initial: CoreBlock[]) {
       removed.push(blockId)
       const at = blocks.findIndex((b) => b.id === blockId)
       if (at >= 0) blocks.splice(at, 1)
+      if (failing) {
+        failing = false
+        throw new Error('claims not released')
+      }
+    },
+    retireClaims: async (blockId) => {
+      retired.push(blockId)
     },
     saveCode: async (blockId, code) => {
       saved.set(blockId, code)
@@ -68,15 +112,32 @@ function world(initial: CoreBlock[]) {
     },
     logger: log.logger,
   })
-  return { hook, removed, saved, composed, log, blocks }
+  return {
+    hook,
+    removed,
+    retired,
+    saved,
+    composed,
+    log,
+    blocks,
+    failNextRemove: () => {
+      failing = true
+    },
+  }
 }
 
 const INPUT = { deviceId: 32, deletedAt: 1, providerAddonId: 'x' }
+const COMPOSED_INPUT = {
+  deviceId: 32,
+  deletedAt: 1,
+  providerAddonId: 'composer',
+}
+const COMPOSED_ROW = [{ id: 32, stableId: `${COMPOSED_DEVICE_STABLE_ID_PREFIX}comp-1` }]
 
 describe('core-blocks device-removal-hook', () => {
   it('retires the composition that owns the deleted device, through the delete path', async () => {
     const w = world([block('comp-1', 'Composition', 'export default () => {}')])
-    w.composed.learn([{ id: 32, stableId: `${COMPOSED_DEVICE_STABLE_ID_PREFIX}comp-1` }])
+    await w.composed.learn([{ id: 32, stableId: `${COMPOSED_DEVICE_STABLE_ID_PREFIX}comp-1` }])
     const result = await w.hook.onDeviceRemoved(INPUT)
     expect(w.removed).toEqual(['comp-1'])
     expect(result.counts['compositions']).toBe(1)
@@ -121,5 +182,65 @@ describe('core-blocks device-removal-hook', () => {
     await w.hook.onDeviceRemoved(INPUT)
     expect(w.removed).toEqual([])
     expect(w.saved.size).toBe(0)
+  })
+
+  it('a tombstone processed BEFORE the mapping is known is not applied, and retires once it is', async () => {
+    const w = world([block('comp-1', 'Composition', 'export default () => {}')])
+    await expect(w.hook.onDeviceRemoved(COMPOSED_INPUT)).rejects.toThrow(/no composition is known/)
+    expect(w.removed).toEqual([])
+    expect(w.log.lines.some((l) => l.level === 'warn' && l.extras?.tags?.deviceId === 32)).toBe(
+      true,
+    )
+    await w.composed.learn(COMPOSED_ROW)
+    await w.hook.onDeviceRemoved(COMPOSED_INPUT)
+    expect(w.removed).toEqual(['comp-1'])
+  })
+
+  it('a restart keeps the mapping: a fresh hook over the persisted mapping retires the owner', async () => {
+    const persisted = new Map<number, string>()
+    const before = world([block('comp-1', 'Composition', 'export default () => {}')], persisted)
+    await before.composed.learn(COMPOSED_ROW)
+    const after = world([], persisted, [block('comp-1', 'Composition', 'export default () => {}')])
+    await after.hook.onDeviceRemoved(COMPOSED_INPUT)
+    expect(after.removed).toEqual(['comp-1'])
+  })
+
+  it('a delete that fails half way keeps the mapping and the retry releases the claims', async () => {
+    const w = world([block('comp-1', 'Composition', 'export default () => {}')])
+    await w.composed.learn(COMPOSED_ROW)
+    w.failNextRemove()
+    await expect(w.hook.onDeviceRemoved(COMPOSED_INPUT)).rejects.toThrow(/claims not released/)
+    expect(await w.composed.blockOf(32)).toBe('comp-1')
+    await w.hook.onDeviceRemoved(COMPOSED_INPUT)
+    expect(w.retired).toEqual(['comp-1'])
+    expect(await w.composed.blockOf(32)).toBeNull()
+  })
+
+  it('never deletes a hand-edited trigger, even when its target is the deleted device', async () => {
+    const edited = trigger('t1', 32, [motion(8)])
+    const w = world([{ ...edited, code: `${edited.code}\n// edited by hand\n` }])
+    await w.hook.onDeviceRemoved(INPUT)
+    expect(w.removed).toEqual([])
+    expect(w.log.lines.some((l) => l.level === 'warn' && l.extras?.tags?.deviceId === 32)).toBe(
+      true,
+    )
+  })
+
+  it('the persisted mapping survives in the records kind', async () => {
+    const w = makeRecordsWorld()
+    await w.provider.init()
+    const records = createRecordsAccess({
+      owner: 'core-blocks',
+      transport: w.transportFor('core-blocks'),
+      secrets: null,
+    })
+    await records.declare(coreBlocksRecordKinds)
+    const store = recordsComposedDevices(records.kind(coreBlocksRecordKinds['composed-devices']))
+    await store.learn([...COMPOSED_ROW, { id: 40, stableId: 'other-1' }])
+    expect(await store.blockOf(32)).toBe('comp-1')
+    expect(await store.blockOf(40)).toBeNull()
+    expect(await store.entries()).toEqual([[32, 'comp-1']])
+    await store.forget(32)
+    expect(await store.blockOf(32)).toBeNull()
   })
 })

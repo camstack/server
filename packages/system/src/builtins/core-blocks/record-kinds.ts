@@ -165,7 +165,28 @@ export const TimedRunRowBodySchema: z.ZodType<TimedRunRowBody> = z.object({
   actuator: z.enum(['switch', 'pet-fountain']),
 })
 
+/**
+ * Which composition block owns a composed device. Row id = the deviceId; the
+ * device-removal hook resolves the owner of a tombstone from it, because the
+ * tombstone carries no stableId and the device is gone from the registry (#706).
+ */
+export type ComposedDeviceRowBody = { readonly blockId: string }
+export const ComposedDeviceRowBodySchema: z.ZodType<ComposedDeviceRowBody> = z.object({
+  blockId: z.string(),
+})
+
 const _coreBlocksRecordKinds = defineRecordKinds({
+  'composed-devices': {
+    schema: ComposedDeviceRowBodySchema,
+    class: 'config',
+    writeTrigger:
+      'a read of the composer devices saw a composed device (boot, device registered); the removal hook deletes it with the device',
+    device: 'none',
+    at: 'none',
+    retention: {
+      none: 'the device-removal hook deletes the row once the composition is retired',
+    },
+  },
   'timed-runs': {
     schema: TimedRunRowBodySchema,
     class: 'config',
@@ -242,7 +263,9 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     device: 'none',
     at: 'none',
     indexes: [{ name: 'kind', fields: ['kind'] }],
-    retention: { none: 'operator delete only; a template a device still uses is refused' },
+    retention: {
+      none: 'operator delete only; a template a device still uses is refused',
+    },
     maxDataBytes: 256 * 1024,
   },
   tags: {
@@ -272,6 +295,7 @@ const _coreBlocksRecordKinds = defineRecordKinds({
 }) satisfies IsolatedRecordKinds
 
 export type CoreBlocksRecordKindsMap = {
+  readonly 'composed-devices': DefinedRecordKind<z.ZodType<ComposedDeviceRowBody>>
   readonly 'timed-runs': DefinedRecordKind<z.ZodType<TimedRunRowBody>>
   readonly blocks: DefinedRecordKind<z.ZodType<CoreBlockRowBody>>
   readonly runs: DefinedRecordKind<z.ZodType<RunsRowBody>>
