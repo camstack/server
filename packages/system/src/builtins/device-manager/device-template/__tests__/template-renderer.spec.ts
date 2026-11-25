@@ -29,14 +29,18 @@ const resolver: DeviceTemplateResolver = {
 }
 
 let renderer: DeviceTemplateRenderer
-beforeAll(() => {
+beforeAll(async () => {
   renderer = new DeviceTemplateRenderer({
     workerPath: WORKER,
     workerExecArgv: ['--import', 'tsx'],
     budgetMs: 2000,
     now: () => NOW,
   })
-})
+  // The renderer spawns its worker thread lazily, on the first render: a tsx loader plus the template
+  // engine, seconds on a loaded host. Pay it here so no test's timing depends on being first.
+  const warm = await renderer.render('{{ 1 }}', resolver)
+  if (!warm.ok) throw new Error(`warm-up render refused: ${warm.refusal.message}`)
+}, 30_000)
 afterAll(() => renderer.dispose())
 
 async function text(source: string): Promise<string> {
