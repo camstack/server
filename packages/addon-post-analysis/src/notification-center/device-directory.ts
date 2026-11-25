@@ -342,7 +342,7 @@ export interface NcDeviceDirectoryDeps {
    */
   readonly listDevices: () => Promise<readonly NcDeviceIdentity[]>
   /**
-   * Told ONCE, right after the first completed read - what a flip parked for a
+   * Told ONCE, right after the first NON-EMPTY answer (an empty read is not an answer) - what a flip parked for a
    * cold directory waits for (planning#726). In-memory state, never a timer.
    */
   readonly onWarm?: () => void
@@ -433,6 +433,12 @@ export class NcDeviceDirectory {
     return [...this.devices.values()]
   }
 
+  /** Has a refresh ever ANSWERED with devices (planning#726: an empty read is not warm)?
+   *  Distinct from {@link isWarm}, which also counts an empty first read. */
+  hasAnswered(): boolean {
+    return this.answered > 0
+  }
+
   /** Has a refresh ever succeeded? A cold directory notifies about nothing. */
   isWarm(): boolean {
     return this.loadedOnce
@@ -468,6 +474,7 @@ export class NcDeviceDirectory {
       this.devices = next
       if (next.size > 0) {
         this.answered += 1
+        if (this.answered === 1) this.deps.onWarm?.()
         this.previousAnswer = this.latestAnswer
         this.latestAnswer = new Set(next.keys())
       }
@@ -480,7 +487,6 @@ export class NcDeviceDirectory {
             cameras: [...next.values()].filter((d) => isCameraIdentity(d)).length,
           },
         })
-        this.deps.onWarm?.()
       }
       return next.size > 0 ? 'answered' : 'empty'
     } catch (err) {

@@ -1083,9 +1083,20 @@ export class NotificationCenter implements NcEventConsumer {
       // Read at CALL time: the directory is built below this (planning#726).
       judge: (event) => this.judgeLivenessDevice(event),
       onDirectoryDrop: (event, info) => {
-        this.logger.info('liveness flip dropped - not a first-level device the directory knows', {
+        this.logger.info('liveness flip dropped - not announced', {
           tags: event.log().tags,
           meta: { subject: info.subject, flip: info.flip, reason: info.reason },
+        })
+      },
+      onDirectoryRelease: (event, info) => {
+        this.logger.info('liveness flip released - it waited for the device directory', {
+          tags: event.log().tags,
+          meta: {
+            subject: info.subject,
+            flip: info.flip,
+            reason: info.reason,
+            heldMs: info.heldMs,
+          },
         })
       },
       onSuppressed: (event, info) => {
@@ -2908,10 +2919,9 @@ export class NotificationCenter implements NcEventConsumer {
   private judgeLivenessDevice(event: NcIncomingEvent): LivenessJudgement {
     const deviceId = event.subject.systemEvent?.deviceId
     if (deviceId === undefined) return 'speak'
-    if (!this.deviceDirectory.isWarm()) return 'unplaced'
-    const identity = this.deviceDirectory.get(deviceId)
-    if (identity === undefined) return 'unknown'
-    return isAccessoryIdentity(identity) ? 'accessory' : 'speak'
+    if (!this.deviceDirectory.hasAnswered()) return 'unplaced'
+    // An id the directory cannot place SPEAKS: unknown is never an accessory.
+    return isAccessoryIdentity(this.deviceDirectory.get(deviceId)) ? 'accessory' : 'speak'
   }
 
   /** Loads a never-loaded device directory once, bounded, before a device is worded. */

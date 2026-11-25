@@ -108,18 +108,29 @@ export interface LivenessCancelled {
 
 /**
  * What the device directory says about a flip's device RIGHT NOW (planning#726):
- * `speak` - a first-level device, the flip may be announced; `accessory` - it
- * hangs off another device, liveness is not its fact; `unknown` - the warm
- * directory has no such id; `unplaced` - the directory has not loaded yet, so
- * it cannot answer either way.
+ * `speak` - the flip may be announced (a first-level device, OR an id the warm
+ * directory cannot place: unknown is never evidence of an accessory);
+ * `accessory` - it hangs off another device, liveness is not its fact;
+ * `unplaced` - the directory has not answered yet, so it cannot say either way.
  */
-export type LivenessJudgement = 'speak' | 'accessory' | 'unknown' | 'unplaced'
+export type LivenessJudgement = 'speak' | 'accessory' | 'unplaced'
 
-/** A flip dropped because the device is not a first-level device the directory knows. */
+/** A flip dropped without being announced, because of the directory. */
 export interface LivenessDirectoryDrop {
   readonly subject: string
   readonly flip: NcLivenessState
-  readonly reason: 'accessory' | 'unknown-device'
+  /** `accessory`: the directory placed it so. `forgotten` / `disposed`: it was parked and the subject went away. */
+  readonly reason: 'accessory' | 'forgotten' | 'disposed'
+}
+
+/** A flip parked for the directory, now let go. */
+export interface LivenessDirectoryRelease {
+  readonly subject: string
+  readonly flip: NcLivenessState
+  /** `directory-warm`: it answered, the full window starts. `bound`: it never did, the flip speaks. */
+  readonly reason: 'directory-warm' | 'bound'
+  /** Ms the flip waited for the directory. */
+  readonly heldMs: number
 }
 
 export interface DeviceLivenessHoldoffOptions {
@@ -128,6 +139,8 @@ export interface DeviceLivenessHoldoffOptions {
   readonly judge?: (event: NcIncomingEvent) => LivenessJudgement
   /** Called when a flip is dropped because of its judgement (logged by the owner). */
   readonly onDirectoryDrop?: (event: NcIncomingEvent, info: LivenessDirectoryDrop) => void
+  /** Called when a parked flip is released, by the directory warming or by the bound. */
+  readonly onDirectoryRelease?: (event: NcIncomingEvent, info: LivenessDirectoryRelease) => void
   /** Called when a pending flip is cancelled by its own reversal (logged by the owner). */
   readonly onSuppressed?: (event: NcIncomingEvent, info: LivenessSuppressed) => void
   readonly schedule?: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
@@ -147,7 +160,12 @@ export class DeviceLivenessHoldoff {
   /** The latest flip that arrived while its subject was not ready, armed at {@link markReady}. */
   private readonly parked = new Map<string, NcIncomingEvent>()
   /** Flips for a device the directory cannot place yet; judged when it loads ({@link releaseDirectoryParked}). */
-  private readonly awaitingDirectory = new Map<string, NcIncomingEvent>()
+  private readonly awaitingDirectory = new Map<string, { event: NcIncomingEvent; since: number }>()
+  /** The bound on that wait: a directory that never warms must not silence a real outage. */
+  private readonly directoryTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  private readonly onDirectoryRelease:
+    | ((event: NcIncomingEvent, info: LivenessDirectoryRelease) => void)
+    | undefined
   private readonly delayMs: number
   private readonly judge: ((event: NcIncomingEvent) => LivenessJudgement) | undefined
   private readonly onDirectoryDrop:
@@ -169,6 +187,7 @@ export class DeviceLivenessHoldoff {
     this.onSuppressed = options.onSuppressed
     this.judge = options.judge
     this.onDirectoryDrop = options.onDirectoryDrop
+    this.onDirectoryRelease = options.onDirectoryRelease
   }
 
   /** A deleted subject: no timer may fire for it, and nothing about it is kept. */
@@ -182,7 +201,23 @@ export class DeviceLivenessHoldoff {
     this.stateSince.delete(subject)
     this.notReady.delete(subject)
     this.parked.delete(subject)
+    this.discardAwaiting(subject, 'forgotten')
+  }
+
+  /** Removes a flip parked for the directory without announcing it, and says so. */
+  private discardAwaiting(subject: string, reason: 'forgotten' | 'disposed'): void {
+    const waiting = this.awaitingDirectory.get(subject)
+    this.clearDirectoryTimer(subject)
     this.awaitingDirectory.delete(subject)
+    const kind = waiting?.event.subject.systemEvent?.kind
+    if (waiting === undefined || kind === undefined) return
+    this.onDirectoryDrop?.(waiting.event, { subject, flip: livenessStateOfKind(kind), reason })
+  }
+
+  private clearDirectoryTimer(subject: string): void {
+    const timer = this.directoryTimers.get(subject)
+    if (timer !== undefined) this.cancel(timer)
+    this.directoryTimers.delete(subject)
   }
 
   /**
@@ -192,41 +227,72 @@ export class DeviceLivenessHoldoff {
    */
   cancelFlip(subject: string): LivenessCancelled | null {
     const held =
-      this.pending.get(subject) ?? this.parked.get(subject) ?? this.awaitingDirectory.get(subject)
+      this.pending.get(subject) ??
+      this.parked.get(subject) ??
+      this.awaitingDirectory.get(subject)?.event
     const heldKind = held?.subject.systemEvent?.kind
     const timer = this.timers.get(subject)
     if (timer !== undefined) this.cancel(timer)
     this.timers.delete(subject)
     this.pending.delete(subject)
     this.parked.delete(subject)
+    this.clearDirectoryTimer(subject)
     this.awaitingDirectory.delete(subject)
     this.departedAt.delete(subject)
     return heldKind !== undefined ? { subject, flip: livenessStateOfKind(heldKind) } : null
   }
 
   /**
-   * The directory has loaded: judge every flip parked for it. A first-level
-   * device is armed now (the full window starts here); an accessory or an id
-   * the directory does not know is dropped, said through `onDirectoryDrop`.
+   * The directory has answered: judge every flip parked for it. A device it
+   * places as an accessory is dropped; every other one (first-level, or an id
+   * it does not know) is armed now and the full window starts here.
    */
   releaseDirectoryParked(): void {
     const waiting = [...this.awaitingDirectory.entries()]
-    this.awaitingDirectory.clear()
-    for (const [subject, incoming] of waiting) {
-      if (this.dropByJudgement(subject, incoming)) continue
-      this.arm(subject, incoming)
+    for (const [subject, { event, since }] of waiting) {
+      this.clearDirectoryTimer(subject)
+      this.awaitingDirectory.delete(subject)
+      if (this.dropByJudgement(subject, event)) continue
+      this.reportRelease(subject, event, since, 'directory-warm')
+      this.arm(subject, event)
     }
   }
 
-  /** Drops the flip when the directory says it is not for a first-level device. */
+  private reportRelease(
+    subject: string,
+    event: NcIncomingEvent,
+    since: number,
+    reason: 'directory-warm' | 'bound',
+  ): void {
+    const kind = event.subject.systemEvent?.kind
+    if (kind === undefined) return
+    this.onDirectoryRelease?.(event, {
+      subject,
+      flip: livenessStateOfKind(kind),
+      reason,
+      heldMs: Math.max(0, Date.now() - since),
+    })
+  }
+
+  /** The bound passed and the directory never answered: the flip speaks as a first-level one. */
+  private releaseByBound(subject: string): void {
+    this.directoryTimers.delete(subject)
+    const waiting = this.awaitingDirectory.get(subject)
+    this.awaitingDirectory.delete(subject)
+    if (waiting === undefined) return
+    this.reportRelease(subject, waiting.event, waiting.since, 'bound')
+    this.trackDeparture(subject, waiting.event)
+    this.deliver(subject, waiting.event)
+  }
+
+  /** Drops the flip when the directory places its device as an accessory. */
   private dropByJudgement(subject: string, incoming: NcIncomingEvent): boolean {
-    const verdict = this.judge?.(incoming) ?? 'speak'
-    if (verdict !== 'accessory' && verdict !== 'unknown') return false
+    if (this.judge?.(incoming) !== 'accessory') return false
     const kind = incoming.subject.systemEvent?.kind
     this.onDirectoryDrop?.(incoming, {
       subject,
       flip: kind !== undefined ? livenessStateOfKind(kind) : 'offline',
-      reason: verdict === 'accessory' ? 'accessory' : 'unknown-device',
+      reason: 'accessory',
     })
     return true
   }
@@ -319,7 +385,7 @@ export class DeviceLivenessHoldoff {
     delayMs?: number,
   ): 'armed' | 'parked' | 'awaiting-directory' {
     if (this.judge?.(incoming) === 'unplaced') {
-      this.awaitingDirectory.set(subject, incoming)
+      this.parkForDirectory(subject, incoming, delayMs ?? this.delayMs)
       return 'awaiting-directory'
     }
     if (this.notReady.has(subject)) {
@@ -345,13 +411,29 @@ export class DeviceLivenessHoldoff {
     return 'armed'
   }
 
+  /** Parks a flip for a directory that has not answered, bounded by `boundMs` (then it speaks). */
+  private parkForDirectory(subject: string, incoming: NcIncomingEvent, boundMs: number): void {
+    const held = this.awaitingDirectory.get(subject)
+    this.clearDirectoryTimer(subject)
+    this.awaitingDirectory.set(subject, { event: incoming, since: held?.since ?? Date.now() })
+    if (boundMs <= 0) {
+      this.releaseByBound(subject)
+      return
+    }
+    this.directoryTimers.set(
+      subject,
+      this.schedule(() => this.releaseByBound(subject), boundMs),
+    )
+  }
+
   dispose(): void {
+    for (const subject of [...this.awaitingDirectory.keys()])
+      this.discardAwaiting(subject, 'disposed')
     for (const id of this.timers.values()) this.cancel(id)
     this.timers.clear()
     this.pending.clear()
     this.departedAt.clear()
     this.parked.clear()
-    this.awaitingDirectory.clear()
   }
 
   /**
@@ -397,15 +479,19 @@ export class DeviceLivenessHoldoff {
     const kind = incoming.subject.systemEvent?.kind
     if (kind === undefined) return
     // The directory is read AGAIN at the moment of speaking: it may have
-    // warmed, or placed the device as an accessory, since the flip armed.
-    if (this.judge?.(incoming) === 'unplaced') {
-      this.awaitingDirectory.set(subject, incoming)
-      return
-    }
+    // placed the device as an accessory since the flip armed. (A cold
+    // directory cannot reach here: `arm` parks that flip, and a directory that
+    // has answered stays answered.)
     if (this.dropByJudgement(subject, incoming)) {
       this.departedAt.delete(subject)
       return
     }
+    this.deliver(subject, incoming)
+  }
+
+  private deliver(subject: string, incoming: NcIncomingEvent): void {
+    const kind = incoming.subject.systemEvent?.kind
+    if (kind === undefined) return
     const state = livenessStateOfKind(kind)
     if (this.lastNotified.get(subject) === state) return
     this.lastNotified.set(subject, state)
