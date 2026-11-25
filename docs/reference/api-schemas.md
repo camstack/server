@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1140 shared schemas.**
+**1144 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -64,6 +64,10 @@ Enum: `"off" \| "latest" \| "beta" \| "inherit"`
 
 Enum: `"device" \| "integration"`
 
+### `AdoptedBySchema`
+
+Enum: `"operator" \| "auto"`
+
 ### `AdoptionAdoptInputSchema`
 
 - `integrationId`: `string`
@@ -97,22 +101,46 @@ Enum: `"device" \| "integration"`
 
 ### `AdoptionListCandidatesOutputSchema`
 
-- `candidates`: `({ childNativeId: string; name: string; type: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "vehicle" \| "energy-system" \| "workload"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; mac?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]`
+- `candidates`: `({ childNativeId: string; name: string; type: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "vehicle" \| "energy-system" \| "workload"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; mac?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "price-per-volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]`
 - `totalCount`: `number`
 - `page`: `number`
 - `pageSize`: `number`
+
+### `AdoptionRecordSchema`
+
+- `addonId`: `string`
+- `integrationId`: `string`
+- `childNativeId`: `string`
+- `filter?`: `string`
+- `deviceId`: `number`
+- `adoptedBy`: `AdoptedBySchema`
+- `adoptedAt`: `number`
+- `adoptionState`: `AdoptionStateSchema`
+- `withdrawnSince`: `number \| null`
+- `missedDiscoveries`: `number`
+- `lastMissAt`: `number \| null`
+- `released`: `boolean`
 
 ### `AdoptionReleaseInputSchema`
 
 - `integrationId`: `string`
 - `camDeviceId`: `number`
 
+### `AdoptionStateSchema`
+
+Enum: `"offered" \| "withdrawn"`
+
 ### `AdoptionStatusSchema`
 
+- `defaultAdoptMode?`: `AdoptModeSchema`
 - `lastDiscoveryAt`: `number \| null`
 - `candidateCount`: `number`
 - `adoptedCount`: `number`
 - `lastError`: `string \| null`
+
+### `AdoptModeSchema`
+
+Enum: `"manual" \| "auto"`
 
 ### `AgentLoadSummarySchema`
 
@@ -1811,7 +1839,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `metadata?`: `Record<string, unknown> \| null`
 - `identifiers?`: `{ mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } }`
 - `attachedIdentifiers?`: `{ mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } }`
-- `sourceInfo?`: `{ id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }`
+- `sourceInfo?`: `{ id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "price-per-volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }`
 - `integrationId?`: `string`
 - `linkDeviceId?`: `number \| null`
 - `primaryChildEntityId?`: `string \| null`
@@ -1978,7 +2006,7 @@ Enum: `"open" \| "closed"`
 - `label`: `string`
 - `reading`: `string \| null`
 - `unit?`: `string \| null`
-- `quantity?`: `"temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"`
+- `quantity?`: `"temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "price-per-volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"`
 
 ### `DiagnosticIdSchema`
 
@@ -2036,7 +2064,7 @@ Enum: `"online" \| "sleeping" \| "offline" \| "unknown"`
 
 - `id`: `string`
 - `addonId`: `string`
-- `candidate`: `{ stableId: string; type: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "vehicle" \| "energy-system" \| "workload"; suggestedName: string; prefilledConfig: Record<string, unknown>; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; alreadyOnboarded?: boolean; onboardedDeviceId?: number; onboardedName?: string; setupIntegration?: boolean; parentStableId?: string; selectable?: boolean; needsParams?: string[] }`
+- `candidate`: `{ stableId: string; type: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "vehicle" \| "energy-system" \| "workload"; suggestedName: string; prefilledConfig: Record<string, unknown>; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "price-per-volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; alreadyOnboarded?: boolean; onboardedDeviceId?: number; onboardedName?: string; setupIntegration?: boolean; parentStableId?: string; selectable?: boolean; needsParams?: string[] }`
 - `firstSeenAt`: `number`
 - `lastSeenAt`: `number`
 - `dismissed`: `boolean`

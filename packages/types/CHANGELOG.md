@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Prices per volume (EUR/L, ct/L) are a reading quantity, so a fuel price can be stored and converted
+- Device adoption has an adopt mode (manual or auto), an adopted-by record and an offered or withdrawn state
+
 ## [1.2.633] - 2026-11-25
 
 ### Changed

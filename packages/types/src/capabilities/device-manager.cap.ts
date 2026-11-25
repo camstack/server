@@ -57,6 +57,8 @@ import {
   ResyncInputSchema as AdoptionResyncInputSchema,
   ResyncResultSchema as AdoptionResyncResultSchema,
   AdoptionStatusSchema,
+  AdoptModeSchema,
+  AdoptionRecordSchema,
 } from './device-adoption.cap.js'
 import {
   DeviceSummarySchema,
@@ -2017,6 +2019,40 @@ export const deviceManagerCapability = {
       z.object({ jobId: z.string() }),
       z.object({ cancelled: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /**
+     * The adopt mode of an integration instance (D1090): the operator's stored
+     * choice, else the default its provider declares, else `manual`. `stored`
+     * says which — a UI shows "default" until a person has chosen. The
+     * declared default is learned from the instance's refresh answer, so after
+     * a restart it reads `manual` until the first refresh.
+     */
+    adoptionGetMode: method(
+      z.object({ addonId: z.string(), integrationId: z.string() }),
+      z.object({ adoptMode: AdoptModeSchema, stored: z.boolean() }),
+      { auth: 'admin' },
+    ),
+
+    /** Store the adopt mode of an integration instance; applied after each refresh. */
+    adoptionSetMode: method(
+      z.object({
+        addonId: z.string(),
+        integrationId: z.string(),
+        adoptMode: AdoptModeSchema,
+      }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /**
+     * What the device manager knows about the adopted candidates of an
+     * integration: who adopted each, and whether the source still offers it.
+     */
+    adoptionListRecords: method(
+      z.object({ addonId: z.string(), integrationId: z.string().optional() }),
+      z.array(AdoptionRecordSchema).readonly(),
+      { auth: 'admin' },
     ),
 
     /**

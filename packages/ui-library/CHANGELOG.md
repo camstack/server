@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated hooks for the device manager's adopt mode and adoption records
+
 ## [1.2.507] - 2026-11-25
 
 ### Changed

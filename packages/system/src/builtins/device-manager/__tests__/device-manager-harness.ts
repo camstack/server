@@ -26,7 +26,7 @@ import type {
   SecretsAccess,
   SystemEvent,
 } from '@camstack/types'
-import { CAMERA_SWITCH_ORDER, type CameraSwitchId } from '@camstack/types'
+import { CAMERA_SWITCH_ORDER, type CameraSwitchId, type RecordsAccess } from '@camstack/types'
 import { vi } from 'vitest'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
@@ -178,6 +178,8 @@ export interface SetupOptions {
    * the addon installs must be the one every lookup goes through.
    */
   readonly capabilityRegistry?: ICapabilityRegistry
+  /** Wrap the real records the addon runs on, to make one kind fail on demand. */
+  readonly wrapRecords?: (records: RecordsAccess) => RecordsAccess
   readonly eventBus?: IEventBus
   readonly localNodeId?: string
   /** The keychain handle the addon's `ctx.secrets` is (D864 removal clean-up). */
@@ -288,7 +290,8 @@ export async function setup(opts: SetupOptions = {}): Promise<Harness> {
   const logger = makeLogger()
   const settingsStore = opts.persisted?.settingsStore ?? (await makeSettingsStoreApi())
   const settingsStoreApi = settingsStore.api
-  const records = await makeRecordsAccessForOwner('device-manager')
+  const baseRecords = await makeRecordsAccessForOwner('device-manager')
+  const records = opts.wrapRecords !== undefined ? opts.wrapRecords(baseRecords) : baseRecords
 
   const switchCalls: SwitchCall[] = []
   const priorOff = new Map<number, readonly CameraSwitchId[]>()

@@ -3,12 +3,16 @@
  */
 import { z } from 'zod'
 import {
+  AdoptionRecordSchema,
+  AdoptModeSchema,
   DeviceTombstoneSchema,
   DiscoveryProposalBodySchema,
   IdentityLinkBodySchema,
   RoomBodySchema,
   ZoneBodySchema,
   defineRecordKinds,
+  type AdoptionRecord,
+  type AdoptMode,
   type DefinedRecordKind,
   type DiscoveryProposalBody,
   type IdentityLinkBody,
@@ -24,7 +28,43 @@ const _deviceTombstoneBody: z.ZodType<DeviceTombstoneBody> = DeviceTombstoneSche
 })
 export const DeviceTombstoneBodySchema: z.ZodType<DeviceTombstoneBody> = _deviceTombstoneBody
 
+/** The adopt mode an operator stored for one integration instance (D1090). */
+export interface AdoptionModeBody {
+  readonly addonId: string
+  readonly integrationId: string
+  readonly adoptMode: AdoptMode
+}
+const AdoptionModeBodySchema: z.ZodType<AdoptionModeBody> = z.object({
+  addonId: z.string(),
+  integrationId: z.string(),
+  adoptMode: AdoptModeSchema,
+})
+const AdoptionRecordBodySchema: z.ZodType<AdoptionRecord> = AdoptionRecordSchema
+
 const _deviceManagerRecordKinds = defineRecordKinds({
+  'adoption-records': {
+    schema: AdoptionRecordBodySchema,
+    class: 'config',
+    writeTrigger:
+      'an adoption job lands a candidate (who adopted it); after each discovery refresh the miss counter, `adoptionState` and `withdrawnSince` move; `adoptionRelease` marks it released (D1090)',
+    device: 'none',
+    at: 'none',
+    indexes: [],
+    retention: {
+      none: 'a record lives with its device; a released or removed device keeps it as the marker auto-adopt must not re-adopt, until an explicit adopt replaces it',
+    },
+  },
+  'adoption-modes': {
+    schema: AdoptionModeBodySchema,
+    class: 'config',
+    writeTrigger: '`adoptionSetMode` stores the adopt mode of one integration instance (D1090)',
+    device: 'none',
+    at: 'none',
+    indexes: [],
+    retention: {
+      none: 'an operator choice lives until the operator changes it',
+    },
+  },
   tombstones: {
     schema: DeviceTombstoneBodySchema,
     class: 'ledger',
@@ -91,6 +131,8 @@ const _deviceManagerRecordKinds = defineRecordKinds({
 }) satisfies IsolatedRecordKinds
 
 export type DeviceManagerRecordKindsMap = {
+  readonly 'adoption-records': DefinedRecordKind<z.ZodType<AdoptionRecord>>
+  readonly 'adoption-modes': DefinedRecordKind<z.ZodType<AdoptionModeBody>>
   readonly tombstones: DefinedRecordKind<z.ZodType<DeviceTombstoneBody>>
   readonly 'discovery-proposals': DefinedRecordKind<z.ZodType<DiscoveryProposalBody>>
   readonly 'identity-links': DefinedRecordKind<z.ZodType<IdentityLinkBody>>

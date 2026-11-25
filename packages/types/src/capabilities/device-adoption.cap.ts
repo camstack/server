@@ -205,7 +205,71 @@ export const GetCandidateInputSchema = z.object({
   childNativeId: z.string(),
 })
 
+/**
+ * How an integration instance turns its discovered candidates into devices.
+ * `manual` (the default) adopts only what the operator picks; `auto` has the
+ * DEVICE MANAGER adopt every candidate that is not adopted and not tombstoned
+ * after each discovery refresh (D1090). A provider can declare `auto` as the
+ * instance default (`AdoptionStatus.defaultAdoptMode`) but never adopts itself.
+ */
+export const AdoptModeSchema = z.enum(['manual', 'auto'])
+export type AdoptMode = z.infer<typeof AdoptModeSchema>
+
+/** Who started the adoption of a device: a person's pick, or the `auto` mode. */
+export const AdoptedBySchema = z.enum(['operator', 'auto'])
+export type AdoptedBy = z.infer<typeof AdoptedBySchema>
+
+/**
+ * Whether the source still lists an adopted device. `withdrawn` means the
+ * source ANSWERED (3 confirmed discoveries in a row) and no longer lists it —
+ * distinct from offline. The device is kept with its history (D1090). Only
+ * candidates adopted without a filter are counted; one adopted under a filter
+ * keeps its state.
+ */
+export const AdoptionStateSchema = z.enum(['offered', 'withdrawn'])
+export type AdoptionState = z.infer<typeof AdoptionStateSchema>
+
+/**
+ * What the device manager remembers about one adopted candidate (D1090): who
+ * adopted it, whether the source still offers it, and since when it does not.
+ * One row per (addonId, integrationId, childNativeId, filter).
+ */
+export const AdoptionRecordSchema = z.object({
+  addonId: z.string(),
+  integrationId: z.string(),
+  childNativeId: z.string(),
+  /** The granularity the candidate was adopted under; absent = the default `devices`. */
+  filter: z.string().optional(),
+  /** The parent CamStack device the adoption created. */
+  deviceId: z.number().int().nonnegative(),
+  adoptedBy: AdoptedBySchema,
+  adoptedAt: z.number().int().nonnegative(),
+  adoptionState: AdoptionStateSchema,
+  /** When the device became `withdrawn`; null while `offered`. */
+  withdrawnSince: z.number().int().nonnegative().nullable(),
+  /** Consecutive counted discoveries that did not list the candidate. */
+  missedDiscoveries: z.number().int().nonnegative(),
+  /** When the last miss was counted; null while none is. */
+  lastMissAt: z.number().int().nonnegative().nullable(),
+  /** The operator released the device through `adoptionRelease`. */
+  released: z.boolean(),
+})
+export type AdoptionRecord = z.infer<typeof AdoptionRecordSchema>
+
+/** Confirmed discoveries without a candidate before its device is `withdrawn`. */
+export const ADOPTION_WITHDRAW_AFTER_MISSES = 3
+
+/**
+ * A miss counts only when this long has passed since the candidate's last
+ * COUNTED miss, so pressing Refresh three times in a row withdraws nothing
+ * (10 minutes).
+ */
+export const ADOPTION_MISS_MIN_SPACING_MS = 10 * 60 * 1000
+
 export const AdoptionStatusSchema = z.object({
+  /** The instance default a provider declares; the device manager applies it
+   *  only when the operator has not stored a mode. Omitted = `manual`. */
+  defaultAdoptMode: AdoptModeSchema.optional(),
   /** Last refresh timestamp (ms epoch) — null when never refreshed. */
   lastDiscoveryAt: z.number().int().nonnegative().nullable(),
   /** Count of candidates in the discovery cache. */

@@ -39,6 +39,7 @@ const DIMENSION_QUANTITY: Readonly<Record<UnitDimension, ReadingQuantity>> = {
   mass: 'mass',
   percentage: 'percentage',
   volume: 'volume',
+  'price-per-volume': 'price-per-volume',
   duration: 'duration',
   information: 'information',
   angle: 'angle',

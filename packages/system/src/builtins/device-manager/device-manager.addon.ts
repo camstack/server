@@ -47,6 +47,8 @@ import {
   SECRET_CLEAR,
 } from '@camstack/types'
 import { purgeRetiredSettingsRows } from '../sqlite-storage/retired-settings-keys.js'
+import { AdoptionAutopilot } from './adoption-autopilot.js'
+import { RecordsAdoptionLedger } from './adoption-ledger.js'
 import { AdoptionJobEngine } from './adoption-job-engine.js'
 import { installClaimedStatusOverlay } from './claimed-status-overlay.js'
 import {
@@ -207,6 +209,8 @@ export class DeviceManagerAddon extends BaseAddon {
 
   /** Background adoption jobs — lazily constructed (needs `ctx.logger`). */
   private adoptionJobEngine: AdoptionJobEngine | null = null
+  /** Adopt mode, who-adopted records and `withdrawn` marking (D1090); built in onInitialize. */
+  private adoptionAutopilotImpl: AdoptionAutopilot | null = null
   /**
    * ONE removal fence for this process, shared by the provider context and the
    * adoption-job engine.
@@ -260,6 +264,12 @@ export class DeviceManagerAddon extends BaseAddon {
   private get providerHost(): ProviderHost {
     const capabilityRegistry = (): ICapabilityRegistry | undefined => this.capabilityRegistry
     const fieldClaims = (): FieldClaimsIndex => this.fieldClaims
+    const autopilot = (): AdoptionAutopilot => {
+      if (!this.adoptionAutopilotImpl) {
+        throw new Error('DeviceManagerAddon: adoption autopilot accessed before onInitialize')
+      }
+      return this.adoptionAutopilotImpl
+    }
     return {
       ctx: this.ctx,
       get capabilityRegistry(): ICapabilityRegistry | undefined {
@@ -286,6 +296,9 @@ export class DeviceManagerAddon extends BaseAddon {
       requireDeviceProvider: (addonId) => this.requireDeviceProvider(addonId),
       requireDeviceAdoptionProvider: (addonId) => this.requireDeviceAdoptionProvider(addonId),
       adoptionJobs: this.adoptionJobsImpl,
+      get adoptionAutopilot(): AdoptionAutopilot {
+        return autopilot()
+      },
     }
   }
 
@@ -302,6 +315,10 @@ export class DeviceManagerAddon extends BaseAddon {
         // The SAME fence `allocateDeviceId` consults — a job is the operator's
         // own action and must not be refused by it.
         removalFence: this.removalFence,
+        // Who adopted each device is the device manager's record (D1090).
+        onAdopted: async (adopted) => {
+          await this.adoptionAutopilotImpl?.recordAdopted(adopted)
+        },
       })
     }
     return this.adoptionJobEngine
@@ -758,6 +775,14 @@ export class DeviceManagerAddon extends BaseAddon {
       tag: (id) => tagNames.nameOf(id),
     })
     const tombstones = DeviceTombstoneStore.of(records, this.ctx.logger.child('tombstones'))
+    this.adoptionAutopilotImpl = new AdoptionAutopilot({
+      ledger: RecordsAdoptionLedger.of(records),
+      jobs: this.adoptionJobsImpl,
+      resolveProvider: (addonId) => this.requireDeviceAdoptionProvider(addonId),
+      tombstones: async () =>
+        new Map((await tombstones.listSince(0)).map((t) => [t.deviceId, t.deletedAt])),
+      logger: this.ctx.logger.child('adoption'),
+    })
     // Identity links (D1063): read once, then kept by the reconciler, which
     // runs after the seed below and on every identity change the index reports.
     const identityLinksStore = IdentityLinksStore.of(records)
@@ -1165,6 +1190,9 @@ export class DeviceManagerAddon extends BaseAddon {
       adoptionListJobs: (input) => queries.adoptionListJobs(pctx, input),
       adoptionCancelJob: (input) => queries.adoptionCancelJob(pctx, input),
       adoptionResync: (input) => queries.adoptionResync(pctx, input),
+      adoptionGetMode: (input) => queries.adoptionGetMode(pctx, input),
+      adoptionSetMode: (input) => queries.adoptionSetMode(pctx, input),
+      adoptionListRecords: (input) => queries.adoptionListRecords(pctx, input),
 
       // ── Aggregated network discovery coordinator ─────────────────────────
       discoveryProviders: async () => {

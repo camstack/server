@@ -1133,6 +1133,15 @@ export const useDeviceManagerAdoptionListJobs: typeof trpc.deviceManager.adoptio
 /** Generated alias around `trpc.deviceManager.adoptionCancelJob.useMutation`. */
 export const useDeviceManagerAdoptionCancelJob: typeof trpc.deviceManager.adoptionCancelJob.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.adoptionCancelJob.useMutation)
 
+/** Generated alias around `trpc.deviceManager.adoptionGetMode.useQuery`. */
+export const useDeviceManagerAdoptionGetMode: typeof trpc.deviceManager.adoptionGetMode.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.adoptionGetMode.useQuery)
+
+/** Generated alias around `trpc.deviceManager.adoptionSetMode.useMutation`. */
+export const useDeviceManagerAdoptionSetMode: typeof trpc.deviceManager.adoptionSetMode.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.adoptionSetMode.useMutation)
+
+/** Generated alias around `trpc.deviceManager.adoptionListRecords.useQuery`. */
+export const useDeviceManagerAdoptionListRecords: typeof trpc.deviceManager.adoptionListRecords.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.adoptionListRecords.useQuery)
+
 /** Generated alias around `trpc.deviceManager.adoptionResync.useMutation`. */
 export const useDeviceManagerAdoptionResync: typeof trpc.deviceManager.adoptionResync.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.adoptionResync.useMutation)
 

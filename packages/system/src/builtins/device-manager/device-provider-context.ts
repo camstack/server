@@ -22,6 +22,7 @@ import type {
   InferProvider,
 } from '@camstack/types'
 import { deviceProviderCapability } from '@camstack/types'
+import type { AdoptionAutopilot } from './adoption-autopilot.js'
 import type { AdoptionJobEngine } from './adoption-job-engine.js'
 import type { RoomStore } from './room-store.js'
 import type { BindingsDeps } from './device-bindings-store.js'
@@ -102,6 +103,8 @@ export interface ProviderHost {
   requireDeviceAdoptionProvider(addonId: string): Promise<IDeviceAdoptionProvider>
   /** Background adoption jobs — the deadline-free form of `adoptionAdopt`. */
   readonly adoptionJobs: AdoptionJobEngine
+  /** Adopt mode, who-adopted records and `withdrawn` marking (D1090). */
+  readonly adoptionAutopilot: AdoptionAutopilot
 }
 
 /**

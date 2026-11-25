@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1555 of 1558 methods.
+ * Coverage: 1558 of 1561 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -315,12 +315,15 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.adoptDevice": "Adopt a discovered device via the device-provider capability.",
   "deviceManager.adoptionAdopt": "Adopt one or more discovered candidates via the device-adoption provider.",
   "deviceManager.adoptionCancelJob": "Cooperative cancel: the in-flight candidate finishes, the rest never start.",
+  "deviceManager.adoptionGetMode": "The adopt mode of an integration instance (D1090): the operator's stored choice, else the default its provider declares, else manual. stored says which — a UI shows \"default\" until a person has chosen. The declared default is learned from the instance's refresh answer, so after a restart it reads manual until the first refresh.",
   "deviceManager.adoptionListCandidateFilters": "List candidate filter chips for an integration via its device-adoption provider — addonId-routed via the collection pin.",
   "deviceManager.adoptionListCandidates": "List adoption candidates for an integration via its device-adoption provider.",
   "deviceManager.adoptionListJobs": "Adoption jobs for an integration, newest first. This is the answer to \"which of my 25 landed?\" — results carries one entry per candidate, every one of them in a named bucket.",
+  "deviceManager.adoptionListRecords": "What the device manager knows about the adopted candidates of an integration: who adopted each, and whether the source still offers it.",
   "deviceManager.adoptionRefresh": "Trigger a discovery refresh on the integration's device-adoption provider.",
   "deviceManager.adoptionRelease": "Release an adopted parent device via the device-adoption provider.",
   "deviceManager.adoptionResync": "Re-sync a device with its source via the device-adoption provider of the device's OWNING addon (resolved from camDeviceId). Unlike the singleton device-adoption.resync, this routes to the correct integration so a Dreame / Matter / … device never hits another integration's provider.",
+  "deviceManager.adoptionSetMode": "Store the adopt mode of an integration instance; applied after each refresh.",
   "deviceManager.adoptionStartJob": "Start a background adoption and return its jobId immediately. The job adopts ONE candidate per provider call, so no single request can exceed the transport deadline, and it skips candidates that are already adopted — which makes re-submitting a batch after a timeout safe and silent rather than a wall of duplicate-stableId errors.",
   "deviceManager.allocateDeviceId": "Reserve (or re-resolve) a progressive numeric id for (addonId, stableId). Idempotent: returns the existing id if one is already persisted for the pair. Callers invoke this before registerDevice so the live IDevice can bind id at construction time through DeviceContext.id.",
   "deviceManager.applyInitialMeta": "Batched meta pre-seed — applies every provided field to the device's meta row in ONE settings round-trip (one lock acquisition, one deviceMeta write) and emits one DeviceMetaChanged event per field that was supplied. Each field carries the SAME semantics as its individual setter (setName / setLocation / setType / setIntegrationId / setLinkDeviceId / setRole) — omitted fields are left untouched; null clears location / linkDeviceId / role. Idempotent. Used by the kernel's spawnAccessoryChild flow to collapse the per-child meta pre-seed (4-6 individual setter calls) into one, which is the dominant cost when reconciling a many-entity container.",

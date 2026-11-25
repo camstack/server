@@ -43,6 +43,7 @@ export type UnitDimension =
   | 'mass'
   | 'percentage'
   | 'volume'
+  | 'price-per-volume'
   | 'duration'
   | 'information'
   | 'angle'
@@ -155,6 +156,10 @@ export const UNIT_TABLE: Readonly<Record<string, UnitSpec>> = {
   L: { dimension: 'volume', factor: 1, offset: 0 },
   mL: { dimension: 'volume', factor: 0.001, offset: 0 },
   gal: { dimension: 'volume', factor: 3.785411784, offset: 0 },
+
+  // ── price-per-volume (canonical •EUR/L) ──
+  'EUR/L': { dimension: 'price-per-volume', factor: 1, offset: 0 },
+  'ct/L': { dimension: 'price-per-volume', factor: 0.01, offset: 0 },
 
   // ── duration (canonical •s). Media position uses ms and stays on this scale. ──
   s: { dimension: 'duration', factor: 1, offset: 0 },

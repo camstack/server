@@ -595,8 +595,18 @@ export {
 } from './device-admin-link-url.js'
 // Generic device-adoption cap.
 export {
+  ADOPTION_MISS_MIN_SPACING_MS,
+  ADOPTION_WITHDRAW_AFTER_MISSES,
   AdoptInputSchema as AdoptionAdoptInputSchema,
+  type AdoptedBy,
+  AdoptedBySchema,
   type AdoptionFilter,
+  type AdoptionRecord,
+  AdoptionRecordSchema,
+  type AdoptionState,
+  AdoptionStateSchema,
+  type AdoptMode,
+  AdoptModeSchema,
   AdoptionFilterSchema,
   type AdoptionStatus,
   AdoptionStatusSchema,

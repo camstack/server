@@ -6713,6 +6713,60 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionCancelJob(methodInput as any)
       }),
+    adoptionGetMode: adminProcedure
+      .input(deviceManagerCapability.methods.adoptionGetMode.input.loose())
+      .output(deviceManagerCapability.methods.adoptionGetMode.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.adoptionGetMode(methodInput as any)
+      }),
+    adoptionSetMode: adminProcedure
+      .input(deviceManagerCapability.methods.adoptionSetMode.input.loose())
+      .output(deviceManagerCapability.methods.adoptionSetMode.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.adoptionSetMode(methodInput as any)
+      }),
+    adoptionListRecords: adminProcedure
+      .input(deviceManagerCapability.methods.adoptionListRecords.input.loose())
+      .output(deviceManagerCapability.methods.adoptionListRecords.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.adoptionListRecords(methodInput as any)
+      }),
     adoptionResync: adminProcedure
       .input(deviceManagerCapability.methods.adoptionResync.input.loose())
       .output(deviceManagerCapability.methods.adoptionResync.output)

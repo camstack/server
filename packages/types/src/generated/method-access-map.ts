@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1558 method paths across 219 capabilities.
+ * Coverage: 1561 method paths across 219 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -331,12 +331,15 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.adoptDevice': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.adoptionAdopt': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.adoptionCancelJob': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.adoptionGetMode': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.adoptionListCandidateFilters': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.adoptionListCandidates': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.adoptionListJobs': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceManager.adoptionListRecords': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.adoptionRefresh': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.adoptionRelease': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.adoptionResync': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.adoptionSetMode': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.adoptionStartJob': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.allocateDeviceId': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.applyInitialMeta': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

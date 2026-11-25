@@ -1237,7 +1237,20 @@ export async function adoptionRefresh(
 ): ReturnType<IDeviceManagerProvider['adoptionRefresh']> {
   const { addonId, integrationId } = input
   const adoptionProvider = await pctx.host.requireDeviceAdoptionProvider(addonId)
-  return adoptionProvider.refresh({ integrationId })
+  const status = await adoptionProvider.refresh({ integrationId })
+  // Auto-adopt and `withdrawn` marking run on the answered refresh (D1090),
+  // DETACHED: a slow or hung `listCandidates` must not hold the operator's
+  // Refresh, which returns as soon as the provider answered. The pass logs its
+  // own outcome and never throws.
+  pctx.host.adoptionAutopilot
+    .afterRefresh({ addonId, integrationId, status })
+    .catch((err: unknown) => {
+      pctx.host.ctx.logger.warn('adoption: post-refresh pass failed, nothing changes', {
+        tags: { addonId },
+        meta: { integrationId, error: errMsg(err) },
+      })
+    })
+  return status
 }
 
 export async function adoptionAdopt(
@@ -1250,7 +1263,26 @@ export async function adoptionAdopt(
   // `allocateDeviceId` itself, and that is the call the fence refuses. The
   // lookup stays outside the window so a missing provider does not suspend
   // the fence for the wait.
-  return pctx.removalFence.runUnfenced(() => adoptionProvider.adopt(rest))
+  const result = await pctx.removalFence.runUnfenced(() => adoptionProvider.adopt(rest))
+  for (const entry of result.adopted) {
+    try {
+      await pctx.host.adoptionAutopilot.recordAdopted({
+        addonId,
+        integrationId: rest.integrationId,
+        childNativeId: entry.childNativeId,
+        parentDeviceId: entry.parentDeviceId,
+        adoptedBy: 'operator',
+        ...(rest.filter !== undefined ? { filter: rest.filter } : {}),
+      })
+    } catch (err) {
+      // The device exists; losing who adopted it must not fail the operator's call.
+      pctx.host.ctx.logger.warn('adoption: could not record who adopted the device', {
+        tags: { deviceId: entry.parentDeviceId, addonId },
+        meta: { childNativeId: entry.childNativeId, error: errMsg(err) },
+      })
+    }
+  }
+  return result
 }
 
 export async function adoptionRelease(
@@ -1259,7 +1291,37 @@ export async function adoptionRelease(
 ): ReturnType<IDeviceManagerProvider['adoptionRelease']> {
   const { addonId, ...rest } = input
   const adoptionProvider = await pctx.host.requireDeviceAdoptionProvider(addonId)
-  return adoptionProvider.release(rest)
+  await adoptionProvider.release(rest)
+  try {
+    await pctx.host.adoptionAutopilot.markReleased(addonId, rest.camDeviceId)
+  } catch (err) {
+    // Released either way; the operator's call keeps its outcome.
+    pctx.host.ctx.logger.warn('adoption: could not record the release', {
+      tags: { deviceId: rest.camDeviceId, addonId },
+      meta: { error: errMsg(err) },
+    })
+  }
+}
+
+export async function adoptionGetMode(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['adoptionGetMode']>[0],
+): ReturnType<IDeviceManagerProvider['adoptionGetMode']> {
+  return pctx.host.adoptionAutopilot.effectiveMode(input.addonId, input.integrationId)
+}
+
+export async function adoptionSetMode(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['adoptionSetMode']>[0],
+): ReturnType<IDeviceManagerProvider['adoptionSetMode']> {
+  await pctx.host.adoptionAutopilot.setMode(input.addonId, input.integrationId, input.adoptMode)
+}
+
+export async function adoptionListRecords(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['adoptionListRecords']>[0],
+): ReturnType<IDeviceManagerProvider['adoptionListRecords']> {
+  return pctx.host.adoptionAutopilot.listRecords(input.addonId, input.integrationId)
 }
 
 // ── Background adoption jobs ─────────────────────────────────────────

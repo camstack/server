@@ -43,6 +43,7 @@
  */
 
 import type {
+  AdoptedBy,
   AdoptionCandidateResult,
   AdoptionJob,
   AdoptionOutcome,
@@ -87,7 +88,23 @@ export interface AdoptResult {
   }[]
 }
 
+/** One candidate this engine adopted — handed to {@link AdoptionJobEngineDeps.onAdopted}. */
+export interface AdoptedCandidate {
+  readonly addonId: string
+  readonly integrationId: string
+  readonly childNativeId: string
+  readonly parentDeviceId: number
+  readonly adoptedBy: AdoptedBy
+  readonly filter?: string
+}
+
 export interface AdoptionJobEngineDeps {
+  /**
+   * Called once per candidate that landed, so the device manager can record who
+   * adopted it (D1090). A throw is logged and never fails the job: the device
+   * exists either way.
+   */
+  readonly onAdopted?: (adopted: AdoptedCandidate) => Promise<void>
   /** Resolve the integration's adoption provider for an `addonId` pin. */
   resolveProvider(addonId: string): Promise<AdoptionJobProvider>
   readonly logger: IScopedLogger
@@ -119,6 +136,8 @@ export interface StartAdoptionJobInput {
   readonly filter?: string
   readonly importLocations?: boolean
   readonly perCandidate?: Record<string, { name?: string; hiddenChildIds?: string[] }>
+  /** Who started the job; omitted = a person's pick. The `auto` mode passes `auto`. */
+  readonly adoptedBy?: AdoptedBy
 }
 
 /** How many finished jobs are kept per (addonId, integrationId). */
@@ -384,6 +403,31 @@ export class AdoptionJobEngine {
     }
   }
 
+  private async recordAdopted(
+    job: MutableJob,
+    input: StartAdoptionJobInput,
+    childNativeId: string,
+    parentDeviceId: number,
+  ): Promise<void> {
+    const onAdopted = this.deps.onAdopted
+    if (onAdopted === undefined) return
+    try {
+      await onAdopted({
+        addonId: job.addonId,
+        integrationId: job.integrationId,
+        childNativeId,
+        parentDeviceId,
+        adoptedBy: input.adoptedBy ?? 'operator',
+        ...(input.filter !== undefined ? { filter: input.filter } : {}),
+      })
+    } catch (err) {
+      this.deps.logger.warn('adoption job: could not record who adopted the device', {
+        tags: { deviceId: parentDeviceId, addonId: job.addonId },
+        meta: { jobId: job.jobId, childNativeId, error: errMsg(err) },
+      })
+    }
+  }
+
   private async adoptOne(
     job: MutableJob,
     provider: AdoptionJobProvider,
@@ -435,6 +479,7 @@ export class AdoptionJobEngine {
         accessoryCount: entry.accessoryDeviceIds.length,
         error: null,
       })
+      await this.recordAdopted(job, input, childNativeId, entry.parentDeviceId)
       this.deps.logger.info('adoption job: candidate adopted', {
         tags: { deviceId: entry.parentDeviceId, addonId: job.addonId },
         meta: {
