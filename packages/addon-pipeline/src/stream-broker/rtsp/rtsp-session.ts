@@ -126,6 +126,8 @@ export class RtspSession {
    *  Reset by any successful write — the bound is CONSECUTIVE misses. */
   private missedKeyframes = 0
 
+  private closeNotified = false
+
   constructor(
     private readonly socket: Socket,
     sdp: string,
@@ -147,11 +149,11 @@ export class RtspSession {
 
     socket.on('close', () => {
       this.closed = true
-      this.onClose?.()
+      this.notifyClosed()
     })
     socket.on('error', () => {
       this.closed = true
-      this.onClose?.()
+      this.notifyClosed()
     })
   }
 
@@ -482,6 +484,13 @@ export class RtspSession {
     } catch {
       /* already closed */
     }
+    this.notifyClosed()
+  }
+
+  /** The owner's close callback runs once, however many paths end the session. */
+  private notifyClosed(): void {
+    if (this.closeNotified) return
+    this.closeNotified = true
     this.onClose?.()
   }
 

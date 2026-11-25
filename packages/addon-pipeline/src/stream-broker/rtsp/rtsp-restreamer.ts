@@ -1610,6 +1610,16 @@ export class RtspRestreamer {
   }
 
   removeSession(sessionId: string): void {
+    // Idempotent: a second teardown of the same id (socket `error` then
+    // `close`) must not log, detach or change the count again — it would
+    // hide a session whose own teardown never ran (planning#711).
+    if (!this.sessions.has(sessionId)) {
+      this.logger?.debug('RTSP session already removed', {
+        tags: { deviceId: this.deviceId },
+        meta: { streamName: this.streamName, total: this.sessions.size },
+      })
+      return
+    }
     this.abortReplay(sessionId)
     this.sessions.delete(sessionId)
     this.pendingKeyframe.delete(sessionId)

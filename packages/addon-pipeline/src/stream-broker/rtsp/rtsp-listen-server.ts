@@ -42,6 +42,13 @@ export type BrokerPrestreamOpener = () => () => void
 /** How long a DESCRIBE waits for the broker to dial upstream and parse the SDP. */
 export const SDP_WAIT_MS = 3000
 
+/**
+ * How long an added session may stay short of PLAY before it is closed. A session
+ * counts as demand from `addSession`, and demand dials the camera: one that never
+ * plays must not hold a battery camera awake (planning#711).
+ */
+export const PLAY_DEADLINE_MS = 30_000
+
 /** The numeric device id a broker id (`<deviceId>/<stream>`) belongs to, or undefined. */
 function deviceIdOfBroker(brokerId: string | undefined): number | undefined {
   const head = Number((brokerId ?? '').split('/')[0])
@@ -83,6 +90,12 @@ export class RtspListenServer {
 
   private logger: IScopedLogger | null = null
   private sdpWaitMs = SDP_WAIT_MS
+  private playDeadlineMs = PLAY_DEADLINE_MS
+
+  /** Shorten the PLAY deadline (tests only). */
+  setPlayDeadlineMs(ms: number): void {
+    this.playDeadlineMs = ms
+  }
 
   /** Shorten the DESCRIBE SDP wait (tests only). */
   setSdpWaitMs(ms: number): void {
@@ -410,10 +423,23 @@ export class RtspListenServer {
       socket.destroy()
       return
     }
+    // The client may have left while the SDP was awaited. A session built on a
+    // closed socket never hears a `close` (it fired before the listener was
+    // attached) and would sit in the map as demand for ever.
+    if (socket.destroyed) {
+      releaseOnce()
+      this.logger?.info('RTSP client left before the session was created', {
+        tags: { deviceId: deviceIdOfBroker(brokerId) },
+        meta: { brokerId },
+      })
+      return
+    }
+    let playDeadline: ReturnType<typeof setTimeout> | null = null
     const session = new RtspSession(
       socket,
       sdp,
       () => {
+        if (playDeadline) clearTimeout(playDeadline)
         restreamer.removeSession(session.getSessionId())
         releaseOnce()
       },
@@ -421,6 +447,15 @@ export class RtspListenServer {
       declaration,
     )
     restreamer.addSession(session)
+    playDeadline = setTimeout(() => {
+      if (session.isPlaying()) return
+      this.logger?.info('RTSP session never reached PLAY: closed', {
+        tags: { deviceId: deviceIdOfBroker(brokerId) },
+        meta: { brokerId, sessionId: session.getSessionId(), deadlineMs: this.playDeadlineMs },
+      })
+      session.close()
+    }, this.playDeadlineMs)
+    playDeadline.unref()
 
     // The session now holds demand (`getSessionCount() > 0`) — drop the
     // DESCRIBE-window warm-up so it doesn't double as a phantom encoded
