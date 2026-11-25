@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.506] - 2026-11-25
+
 ### Changed
 
 - The device card battery corner shows the low/ok state of a binary battery source and its voltage (for example 2.9 V) beside it.

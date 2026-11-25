@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.684] - 2026-11-25
+
 ### Changed
 
 - Fixed an RTSP restream session that stayed open after its client left, which kept a battery camera awake for tens of minutes; a session that never reaches PLAY is now closed after 30 s
