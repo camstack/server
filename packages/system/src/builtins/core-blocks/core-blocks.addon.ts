@@ -17,6 +17,9 @@
 
 import * as path from 'node:path'
 import {
+  armRemovalReconcile,
+  deviceRemovalHookCapability,
+  type IDeviceRemovalHookProvider,
   type AddonApi,
   ALL_CAPABILITY_DEFINITIONS,
   BaseAddon,
@@ -81,6 +84,7 @@ import {
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
 import { CapLinksService } from './cap-links.js'
+import { ComposedDeviceIndex, createCoreBlocksRemovalHook } from './device-removal.js'
 import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
@@ -324,6 +328,7 @@ export class CoreBlocksAddon extends BaseAddon {
     this.supervisor = this.buildSupervisor()
     this.supervisor?.start(CONVERGE_INTERVAL_MS)
     this.armLinkContributions()
+    const removalHook = this.armDeviceRemoval()
 
     this.ctx.logger.info('core-blocks ready', {
       meta: {
@@ -335,6 +340,7 @@ export class CoreBlocksAddon extends BaseAddon {
     })
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
+      { capability: deviceRemovalHookCapability, provider: removalHook },
       {
         capability: integrationInstancesCapability,
         provider: this.requireBlocksInstances().toProvider(),
@@ -1201,6 +1207,49 @@ export class CoreBlocksAddon extends BaseAddon {
     } else {
       this.convergeSoon()
     }
+  }
+
+  /**
+   * The `device-removal-hook` (D865, #706): a deleted device retires the composition
+   * it owned and drops itself from the triggers that name it. Caught up from
+   * device-manager's tombstones at start and periodically.
+   */
+  private armDeviceRemoval(): IDeviceRemovalHookProvider {
+    const composed = new ComposedDeviceIndex()
+    const learn = async (): Promise<void> => {
+      const api = this.ctx.api
+      if (!api) return
+      try {
+        composed.learn(
+          await api.deviceManager.listAll.query({
+            addonId: COMPOSER_ADDON_ID,
+            projection: 'slim',
+          }),
+        )
+      } catch (error: unknown) {
+        this.ctx.logger.warn('core-blocks: composed devices unreadable, the removal index kept', {
+          meta: { error: error instanceof Error ? error.message : String(error) },
+        })
+      }
+    }
+    const store = this.requireStore()
+    const hook = createCoreBlocksRemovalHook({
+      blocks: () => store.list(),
+      composed,
+      removeBlock: (blockId, existing) => this.removeBlock(blockId, existing),
+      saveCode: (blockId, code) => this.saveGeneratedCode(blockId, code),
+      logger: this.ctx.logger.child('device-removal'),
+    })
+    this.subscribe({ category: EventCategory.DeviceRegistered }, () => void learn())
+    void learn()
+    this.ctx.addDisposer(
+      armRemovalReconcile({
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        remove: (input) => hook.onDeviceRemoved(input),
+      }),
+    )
+    return hook
   }
 
   /**

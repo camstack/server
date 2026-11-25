@@ -178,7 +178,7 @@ Singleton or collection providers, addressed without a device.
 | `device-history` | 14 | — | — | — | — | `device-history` |
 | `device-manager` | 115 | — | — | — | — | `device-manager` |
 | `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
-| `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` |
+| `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` `core-blocks` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
 | `display-palette` | 3 | — | — | — | — | `pipeline-orchestrator` |
 | `embedding-encoder` | 4 | — | — | — | ✓ | `embedding-encoder` |

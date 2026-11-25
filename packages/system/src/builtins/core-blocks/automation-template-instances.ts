@@ -70,7 +70,7 @@ const EDITED_BY_HAND_DETAIL =
   'the code was edited by hand, so the template no longer updates it; convert it to a free automation or create it again from the template'
 
 /** True when the block's code is still exactly what the generator wrote. */
-function isGeneratedCode(code: string, recipe: AutomationRecipe): boolean {
+export function isGeneratedCode(code: string, recipe: AutomationRecipe): boolean {
   const stamped = recipe.template?.codeHash
   return stamped !== undefined && instanceCodeHash(code) === stamped
 }
