@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
 import {
+  prepareFabricStorage,
   reclaimStaleFabricLock,
   recordFabricOwner,
   startTicksOf,
@@ -29,7 +30,10 @@ function logger(lines: LogLine[]): IScopedLogger {
   return l
 }
 
-function fakeFs(files: Record<string, string>): {
+function fakeFs(
+  files: Record<string, string>,
+  mtimes: Record<string, number> = {},
+): {
   fs: StorageLockFs
   removed: string[]
   written: Record<string, string>
@@ -47,6 +51,11 @@ function fakeFs(files: Record<string, string>): {
       },
       writeText: async (path, content) => {
         written[path] = content
+      },
+      mtimeMs: async (path) => {
+        const value = mtimes[path]
+        if (value === undefined) throw new Error('ENOENT')
+        return value
       },
       remove: async (path) => {
         removed.push(path)
@@ -110,13 +119,41 @@ describe('reclaimStaleFabricLock', () => {
     expect(removed).toHaveLength(2)
   })
 
-  it('reclaims a live pid when no owner identity was ever recorded', async () => {
-    const { fs } = fakeFs({
+  // No owner record: boot time 1_000 s, a tick is 10 ms, so start 5000 ticks = 1_050 s.
+  const unrecorded = (lockMtimeMs: number) =>
+    fakeFs(
+      {
+        [`${DIR}/matter.pid`]: '263 abcd',
+        '/proc/263/stat': stat(263, '5000'),
+        '/proc/268/stat': stat(268, '9000'),
+        '/proc/stat': 'cpu 1 2 3\nbtime 1000\n',
+        '/proc/sys/kernel/random/boot_id': BOOT,
+      },
+      { [`${DIR}/matter.pid`]: lockMtimeMs },
+    )
+
+  it('no record: a live pid that started AFTER the lock was written cannot be its writer', async () => {
+    const { fs, removed } = unrecorded(1_040_000)
+    expect(await reclaimStaleFabricLock({ ...base, logger: logger([]), fs })).toBe('removed')
+    expect(removed).toHaveLength(2)
+  })
+
+  it('no record: a live pid that started BEFORE the lock was written is kept, with a warning', async () => {
+    const lines: LogLine[] = []
+    const { fs, removed } = unrecorded(1_060_000)
+    expect(await reclaimStaleFabricLock({ ...base, logger: logger(lines), fs })).toBe('kept')
+    expect(removed).toEqual([])
+    expect(lines.some((l) => l.level === 'warn')).toBe(true)
+  })
+
+  it('no record: a dead pid is left to matter.js, which takes a dead owner over', async () => {
+    const { fs, removed } = fakeFs({
       [`${DIR}/matter.pid`]: '263 abcd',
-      '/proc/263/stat': stat(263, '1000'),
+      '/proc/268/stat': stat(268, '9000'),
       '/proc/sys/kernel/random/boot_id': BOOT,
     })
-    expect(await reclaimStaleFabricLock({ ...base, logger: logger([]), fs })).toBe('removed')
+    expect(await reclaimStaleFabricLock({ ...base, logger: logger([]), fs })).toBe('none')
+    expect(removed).toEqual([])
   })
 
   it('keeps the lock when the recorded owner is the same live process, and says so', async () => {
@@ -170,5 +207,30 @@ describe('recordFabricOwner', () => {
     })
     expect(outcome).toBe('kept')
     expect(removed).toEqual([])
+  })
+})
+
+describe('prepareFabricStorage', () => {
+  it('a kept lock throws and leaves the live owner record untouched', async () => {
+    const { fs, written } = fakeFs({
+      [`${DIR}/matter.pid`]: '263 abcd',
+      [`${DIR}/camstack-owner.json`]: owner(263, '1000'),
+      '/proc/263/stat': stat(263, '1000'),
+      '/proc/268/stat': stat(268, '9000'),
+      '/proc/sys/kernel/random/boot_id': BOOT,
+    })
+    await expect(prepareFabricStorage({ ...base, logger: logger([]), fs })).rejects.toThrow(
+      'held by another live process',
+    )
+    expect(written).toEqual({})
+  })
+
+  it('a free storage records this process as its owner', async () => {
+    const { fs, written } = fakeFs({
+      '/proc/268/stat': stat(268, '9000'),
+      '/proc/sys/kernel/random/boot_id': BOOT,
+    })
+    await prepareFabricStorage({ ...base, logger: logger([]), fs })
+    expect(Object.keys(written)).toEqual([`${DIR}/camstack-owner.json`])
   })
 })

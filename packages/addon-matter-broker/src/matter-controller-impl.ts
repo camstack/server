@@ -39,7 +39,7 @@ import {
   type CommissionProgress,
   CommissionPhase,
 } from './matter-commission-progress.js'
-import { reclaimStaleFabricLock, recordFabricOwner } from './matter-storage-lock.js'
+import { prepareFabricStorage } from './matter-storage-lock.js'
 import { subscribableFromPeer } from './matter-peer-subscribe.js'
 import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
 
@@ -309,8 +309,7 @@ export class MatterJsController implements MatterController {
       selfPid: process.pid,
       logger: this.#logger,
     }
-    await reclaimStaleFabricLock(lock)
-    await recordFabricOwner(lock)
+    await prepareFabricStorage(lock)
     const server = await ServerNode.create({
       environment,
       id: this.#options.brokerId,
