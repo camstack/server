@@ -50,10 +50,22 @@ function nonBlank(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function namesHub(env: Env): boolean {
+  return (
+    nonBlank(env['CAMSTACK_HUB_URL']) !== undefined ||
+    nonBlank(env['CAMSTACK_SERVER']) !== undefined
+  )
+}
+
 async function connect(options: ReviewHubOptions): Promise<ConnectedReviewHub> {
   const env = options.env ?? process.env
   const token = nonBlank(env['CAMSTACK_HUB_TOKEN'])
   const tokenFile = nonBlank(env['CAMSTACK_HUB_TOKEN_FILE'])
+  if ((token !== undefined || tokenFile !== undefined) && !namesHub(env)) {
+    throw new HubConfigError(
+      `A token is set but no hub is named: set CAMSTACK_HUB_URL (a token is never sent to a hub you did not name).\n${REMEDY}`,
+    )
+  }
   try {
     const connection = await connectHub({
       workspaceRoot: options.workspaceRoot ?? process.cwd(),
@@ -87,10 +99,20 @@ export function createReviewHubProvider(
       if (pending === attempt) pending = undefined
       throw err
     }
-    if (access === 'write' && connected.connection.tier !== 'admin') {
-      throw new HubConfigError(
-        `This operation writes to the hub and needs an admin login. ${adminCredentialHint()}`,
-      )
+    const unconfirmed = connected.connection.tierLookupFailure
+    // A tier the hub could not confirm is not a verdict: never keep it, the next call asks again.
+    if (unconfirmed !== undefined && pending === attempt) pending = undefined
+    if (access === 'write') {
+      if (unconfirmed !== undefined) {
+        throw new HubConfigError(
+          `could not confirm the credential's tier (${unconfirmed}); try again.`,
+        )
+      }
+      if (connected.connection.tier !== 'admin') {
+        throw new HubConfigError(
+          `This operation writes to the hub and needs an admin login. ${adminCredentialHint()}`,
+        )
+      }
     }
     return connected.hub
   }

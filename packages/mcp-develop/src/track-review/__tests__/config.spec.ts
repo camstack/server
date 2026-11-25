@@ -117,4 +117,54 @@ describe('review hub resolution', () => {
     expect(JSON.stringify(reply)).toMatch(/admin/i)
     expect(requests).toEqual([])
   })
+
+  it('inline CAMSTACK_HUB_TOKEN wins over CAMSTACK_HUB_TOKEN_FILE', async () => {
+    const file = path.join(dir, 'tok')
+    fs.writeFileSync(file, 'file-token\n', { mode: 0o600 })
+    const hub = await provider({
+      CAMSTACK_HUB_URL: HUB,
+      CAMSTACK_HUB_TOKEN: 'inline-token',
+      CAMSTACK_HUB_TOKEN_FILE: file,
+    })('read')
+    await hub.listCameras().catch(() => undefined)
+    expect(sentHeaders()).toContain('inline-token')
+    expect(sentHeaders()).not.toContain('file-token')
+  })
+
+  it('a read tool works with a non-admin session', async () => {
+    session(jwt({ isAdmin: false }), false)
+    const hub = await provider()('read')
+    await hub.listCameras().catch(() => undefined)
+    expect(requests).toHaveLength(1)
+  })
+
+  it('a failed whoami refuses with the tier message, is not cached, and is retried', async () => {
+    session('opaque-token', false)
+    let whoamiOk = false
+    const flaky: HubTransport = async (req) => {
+      requests.push(req)
+      if (req.url.endsWith('/api/auth/whoami')) {
+        return whoamiOk
+          ? { status: 200, text: JSON.stringify({ isAdmin: true }) }
+          : { status: 500, text: 'boom' }
+      }
+      return { status: 200, text: JSON.stringify({ result: { data: [] } }) }
+    }
+    const get = createReviewHubProvider({ env: {}, sessionDir: dir, transport: flaky })
+    const err = await get('write').catch((e: unknown) => e)
+    const message = err instanceof Error ? err.message : ''
+    expect(message).toContain("could not confirm the credential's tier")
+    expect(message).not.toContain('needs an admin login')
+    whoamiOk = true
+    await expect(get('write')).resolves.toBeDefined()
+  })
+
+  it('an env token is never sent to a hub the operator did not name', async () => {
+    session(jwt({ isAdmin: true }), true)
+    for (const env of [{ CAMSTACK_HUB_TOKEN: 'env-token' }, { CAMSTACK_HUB_TOKEN_FILE: '/x' }]) {
+      const err = await provider(env)('read').catch((e: unknown) => e)
+      expect(err instanceof Error ? err.message : '').toContain('CAMSTACK_HUB_URL')
+    }
+    expect(requests).toEqual([])
+  })
 })

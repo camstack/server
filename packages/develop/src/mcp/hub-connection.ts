@@ -54,6 +54,8 @@ export interface HubConnection {
   readonly tls: HubTlsConfig
   readonly client: HubClient
   readonly adminHint: string | null
+  /** Why the tier could not be confirmed with the hub (then `tier` is not a verdict); absent otherwise. */
+  readonly tierLookupFailure?: string
   readonly loginCommand: string
   /**
    * Who this connection acts as, stated to the caller so a reused saved
@@ -137,6 +139,9 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
     tls,
     client,
     adminHint,
+    ...(credentials.tierLookupFailure !== undefined
+      ? { tierLookupFailure: credentials.tierLookupFailure }
+      : {}),
     loginCommand,
     actingAs: describeSavedSession(credentials.source, loadSession(hub.url, dir), hub.url),
   }

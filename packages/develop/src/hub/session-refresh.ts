@@ -168,12 +168,18 @@ function needsRefresh(session: SessionFile, now: number): boolean {
   return expiresAt !== undefined && expiresAt - now < REFRESH_SKEW_MS
 }
 
-/** Ask the hub who a token with no readable claims is. Any failure means "not admin". */
+interface HubTier {
+  readonly tier: 'admin' | 'protected'
+  /** Why the lookup could not answer; absent when the hub answered. */
+  readonly failure?: string
+}
+
+/** Ask the hub who a token with no readable claims is. A failed lookup is `protected` WITH a failure reason. */
 async function tierFromHub(
   server: string,
   token: string,
   opts: FreshCredentialInputs,
-): Promise<'admin' | 'protected'> {
+): Promise<HubTier> {
   const transport = opts.transport ?? nodeHubTransport
   try {
     const res = await transport({
@@ -184,13 +190,15 @@ async function tierFromHub(
       maxBytes: 64 * 1024,
       tls: opts.tls ?? resolveHubTls(server, process.env, opts.dir ?? defaultSessionDir()),
     })
-    if (res.status < 200 || res.status >= 300) return 'protected'
+    if (res.status < 200 || res.status >= 300) {
+      return { tier: 'protected', failure: `whoami answered HTTP ${res.status}` }
+    }
     const body: unknown = JSON.parse(res.text)
     return body !== null && typeof body === 'object' && Reflect.get(body, 'isAdmin') === true
-      ? 'admin'
-      : 'protected'
-  } catch {
-    return 'protected'
+      ? { tier: 'admin' }
+      : { tier: 'protected' }
+  } catch (err) {
+    return { tier: 'protected', failure: err instanceof Error ? err.message : String(err) }
   }
 }
 
@@ -228,9 +236,11 @@ export async function resolveFreshCredentials(
     }
   }
   if (creds.tier === 'protected' && jwtClaims(creds.token) === null && creds.server !== undefined) {
+    const looked = await tierFromHub(creds.server, creds.token, inputs)
     return {
       ...creds,
-      tier: await tierFromHub(creds.server, creds.token, inputs),
+      tier: looked.tier,
+      ...(looked.failure !== undefined ? { tierLookupFailure: looked.failure } : {}),
     }
   }
   return creds

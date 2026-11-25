@@ -81,6 +81,8 @@ export interface ResolvedCredentials {
   readonly tier: CredentialTier
   /** A non-fatal note for stderr (e.g. a world-readable token file). */
   readonly warning?: string
+  /** Set when the tier came from a hub lookup that FAILED: `tier` is then only a floor, not an answer. */
+  readonly tierLookupFailure?: string
 }
 
 export interface CachedSessionLike {
