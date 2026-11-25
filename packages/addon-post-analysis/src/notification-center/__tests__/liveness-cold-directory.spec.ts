@@ -268,7 +268,14 @@ describe('node and stream hold-offs do not wait for the device directory (planni
       createEvent(
         'stream.offline',
         { type: 'device', id: STREAM_DEVICE },
-        { deviceId: STREAM_DEVICE, profile: 'high', reason: 'stale-timeout' },
+        {
+          deviceId: STREAM_DEVICE,
+          profile: 'high',
+          reason: 'stale-timeout',
+          brokerId: 'broker-1',
+          sourceType: 'rtsp',
+          lastPacketAt: 0,
+        },
       ),
     )
     await vi.advanceTimersByTimeAsync(1_000)
