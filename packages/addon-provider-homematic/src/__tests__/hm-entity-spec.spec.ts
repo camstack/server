@@ -114,7 +114,8 @@ describe('deriveHmEntitySpecs', () => {
     // Actuator (climate) from the custom entity.
     const act = byKey.get(`act-${ADDR}:1`)
     expect(act?.deviceType).toBe(DeviceType.Climate)
-    expect(act?.capabilities).toEqual(['climate-control'])
+    // A LOW_BAT device: its functional child also hosts the battery cap (#709).
+    expect(act?.capabilities).toEqual(['climate-control', 'battery'])
     expect(act?.config['channel']).toBe(`${ADDR}:1`)
     expect(act?.config['kind']).toBe('climate')
 

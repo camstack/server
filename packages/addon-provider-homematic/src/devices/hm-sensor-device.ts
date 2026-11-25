@@ -15,6 +15,7 @@ import {
   registerTemperatureCap,
 } from '../homematic-sensor-caps.js'
 import { COLD_MOTION } from './hm-cold-start.js'
+import { HM_BATTERY_CAP, decodeBatteryPush, registerChildBatteryCap } from './hm-battery.js'
 import { changeStamp, type HmValueOrigin } from './hm-change-stamp.js'
 
 /** Sensor child config: the source channel + the cap(s) it registers. */
@@ -61,6 +62,13 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
         case 'motion':
           this.registerMotionCap()
           break
+        case HM_BATTERY_CAP:
+          this.readsMaintenanceBattery = registerChildBatteryCap(
+            this.ctx,
+            this.runtimeState,
+            this.resolveHmDevice(),
+          )
+          break
         default:
           this.ctx.logger.debug('HmSensorDevice: cap not wired', {
             meta: { cap, address: this.address, channel: this.channel },
@@ -82,6 +90,7 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
   private handleValueChanged(event: ValueChangedEvent, origin: HmValueOrigin): void {
     const now = event.ts || Date.now()
     const { parameter, value } = event
+    if (this.readsMaintenanceBattery) decodeBatteryPush(this.runtimeState, parameter, value, now)
     if (this.caps.has('motion') && parameter === 'MOTION' && typeof value === 'boolean') {
       const prev = this.runtimeState.getCapState<MotionStatus>('motion') ?? COLD_MOTION
       // `lastDetectedAt` is motion's CHANGE stamp: a replayed `true` is a

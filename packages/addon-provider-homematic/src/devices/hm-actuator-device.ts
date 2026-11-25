@@ -27,11 +27,14 @@ import {
 } from '../homematic-decode.js'
 import { COLD_CLIMATE, COLD_COVER, COLD_LOCK, COLD_SWITCH } from './hm-cold-start.js'
 import { changeStamp, stampForOrigin, type HmValueOrigin } from './hm-change-stamp.js'
+import { HM_BATTERY_CAP, decodeBatteryPush, registerChildBatteryCap } from './hm-battery.js'
 
 /** Actuator child config: the owning channel + the custom-entity kind. */
 export const hmActuatorSchema = hmChildSchema.extend({
   channel: z.string().min(1).describe('Custom-entity channel address'),
   kind: z.enum(['switch', 'cover', 'light', 'lock', 'climate']),
+  /** Carries `battery` when the device is battery operated (the control cap is `kind`). */
+  capabilities: z.array(z.string()).optional(),
 })
 
 export type HmActuatorConfig = z.infer<typeof hmActuatorSchema>
@@ -59,6 +62,13 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     super(ctx, hmActuatorSchema)
     this.kind = this.config.values.kind
     this.registerActuatorCap()
+    if (this.config.values.capabilities?.includes(HM_BATTERY_CAP) === true) {
+      this.readsMaintenanceBattery = registerChildBatteryCap(
+        this.ctx,
+        this.runtimeState,
+        this.resolveHmDevice(),
+      )
+    }
     this.attachValueChangedListener((event, origin) => this.handleValueChanged(event, origin))
   }
 
@@ -229,9 +239,10 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
    */
   protected override readsForeignDatapoint(channel: HmChannel, parameter: string): boolean {
     return (
-      this.registeredCap === 'climate-control' &&
-      parameter === 'STATE' &&
-      HmActuatorDevice.isFloorDirect(channel)
+      super.readsForeignDatapoint(channel, parameter) ||
+      (this.registeredCap === 'climate-control' &&
+        parameter === 'STATE' &&
+        HmActuatorDevice.isFloorDirect(channel))
     )
   }
 
@@ -252,6 +263,7 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     const now = event.ts || Date.now()
     const { parameter, value } = event
     const cap = this.registeredCap
+    if (this.readsMaintenanceBattery) decodeBatteryPush(this.runtimeState, parameter, value, now)
     if (cap === 'switch' && parameter === 'STATE' && typeof value === 'boolean') {
       const prev = this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH
       const lastChangedAt = changeStamp(origin, now, prev.lastChangedAt, prev.on === value)

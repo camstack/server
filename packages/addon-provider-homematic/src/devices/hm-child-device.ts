@@ -3,6 +3,7 @@ import type { HmChannel, HmDevice, Homematic, ValueChangedEvent } from 'nodehome
 import { z } from 'zod'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import type { HmValueOrigin } from './hm-change-stamp.js'
+import { isBatteryDatapoint } from './hm-battery.js'
 
 /**
  * Persisted config every Homematic accessory CHILD carries. `address` is the
@@ -244,9 +245,16 @@ export abstract class HmChildDevice<
    * floor-heating relay channel (the heat demand); every other parameter of
    * that channel stays foreign.
    */
-  protected readsForeignDatapoint(_channel: HmChannel, _parameter: string): boolean {
-    return false
+  protected readsForeignDatapoint(channel: HmChannel, parameter: string): boolean {
+    return this.readsMaintenanceBattery && isBatteryDatapoint(channel, parameter)
   }
+
+  /**
+   * Set by a child that hosts the `battery` cap: it then also reads LOW_BAT /
+   * OPERATING_VOLTAGE from the device's MAINTENANCE channel (channel 0),
+   * which no functional entity owns.
+   */
+  protected readsMaintenanceBattery = false
 
   private readsForeignEvent(event: ValueChangedEvent): boolean {
     const channel = this.resolveHmDevice()?.channels.find((c) => c.address === event.channel)

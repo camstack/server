@@ -67,6 +67,15 @@ function isBooleanDataPoint(dp: HmDataPoint): boolean {
 }
 
 /**
+ * A device is battery-operated when its MAINTENANCE channel carries `LOW_BAT`:
+ * mains devices may still declare an `OPERATING_VOLTAGE` with no reading.
+ */
+export function isBatteryOperatedDevice(device: Pick<HmDevice, 'channels'>): boolean {
+  const channel = findMaintenanceChannel(device)
+  return channel !== undefined && findParam(channel, 'LOW_BAT') !== undefined
+}
+
+/**
  * Map a device's MAINTENANCE channel to its diagnostic derived entities.
  * Emits one entity per recognised datapoint; returns `[]` when there is no
  * MAINTENANCE channel or no recognised datapoints. Entities are emitted even

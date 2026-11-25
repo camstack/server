@@ -3,9 +3,11 @@ import type { HmChannel, HmCustomEntity, HmDevice } from 'nodehomematic'
 import { mapHmDeviceChannels } from '../homematic-mapping.js'
 import {
   mapFirmwareUpdate,
+  isBatteryOperatedDevice,
   mapMaintenanceChannel,
   type HmDerivedEntity,
 } from '../homematic-diagnostics-mapping.js'
+import { HM_BATTERY_CAP } from './hm-battery.js'
 import { ACTUATOR_CAP_NAMES, keyEventVocabulary } from './hm-cold-start.js'
 
 /**
@@ -223,6 +225,18 @@ function deriveUpdateSpec(
 }
 
 /**
+ * A battery-operated device's sensor and actuator children host the `battery`
+ * cap (the event emitter and the container do not): the card of the device the
+ * operator looks at shows the battery, fed from the maintenance channel.
+ */
+function withBatteryCap(spec: HmEntitySpec): HmEntitySpec {
+  const hosts = spec.key.startsWith('act-') || spec.key.startsWith('sensor-')
+  if (!hosts) return spec
+  const capabilities = [...spec.capabilities, HM_BATTERY_CAP]
+  return { ...spec, capabilities, config: { ...spec.config, capabilities: [...capabilities] } }
+}
+
+/**
  * Structural subset of `HmDevice` {@link deriveHmEntitySpecs} reads. A `Pick`
  * keeps the signature tight while staying compatible with live `HmDevice`
  * instances, the adoption `HmDiscoverable`, and test fixtures — no call-site cast.
@@ -243,9 +257,12 @@ export function deriveHmEntitySpecs(
   device: HmEntitySpecSource,
   customEntities: readonly HmCustomEntity[],
 ): readonly HmEntitySpec[] {
-  return [
+  const functional = [
     ...deriveActuatorSpecs(customEntities, device.type),
     ...deriveSensorAndEventSpecs(device),
+  ]
+  return [
+    ...(isBatteryOperatedDevice(device) ? functional.map(withBatteryCap) : functional),
     ...deriveDiagnosticSpecs(device, device.address),
     ...deriveUpdateSpec(device),
   ]
