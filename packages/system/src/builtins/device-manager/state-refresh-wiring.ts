@@ -38,6 +38,9 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
     holdRemainingMs: (deviceId) => deps.mirror.holdRemainingMs(deviceId),
     refresh: deps.refresh,
     resubscribe: deps.resubscribe,
+    onSilentPastBound: (deviceId) => {
+      if (deps.mirror.concludeOfflineAfterSilence(deviceId)) deps.onOfflineApplied?.([deviceId])
+    },
     onFirstReadSettled: (deviceIds) => {
       // The devices that settled themselves, then every device held through an
       // integration whose first read just settled (the gate is re-read).

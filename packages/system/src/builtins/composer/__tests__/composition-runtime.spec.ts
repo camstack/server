@@ -1,3 +1,4 @@
+import { FULL_PUSH_FIRST_REPORT_BOUND_MS } from '../../device-manager/state-refresh-scheduler.js'
 import {
   type ClaimOutcome,
   type CompositionFieldPlan,
@@ -32,7 +33,10 @@ const [T1, T2, T3] = ROOM_EXAMPLE_TEMPERATURE_SOURCES
 const [M1, M2] = ROOM_EXAMPLE_MOTION_SOURCES
 const k = (source: typeof T1, cap: string, fieldPath: string) =>
   compositionReadKey({ source: source!, cap, fieldPath })
-const fresh = (value: number | boolean | null): SourceReading => ({ state: 'fresh', value })
+const fresh = (value: number | boolean | null): SourceReading => ({
+  state: 'fresh',
+  value,
+})
 
 let now: number
 let readings: Map<string, SourceReading>
@@ -100,7 +104,12 @@ function statefulDoorbellPlan(withExplode = false) {
               ? 'rose(active, changedAt, 2000) / explode'
               : 'rose(active, changedAt)',
             bindings: {
-              active: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'detected' },
+              active: {
+                kind: 'from',
+                source: M1,
+                cap: 'motion',
+                fieldPath: 'detected',
+              },
               changedAt: {
                 kind: 'from',
                 source: M1,
@@ -149,7 +158,11 @@ describe('start', () => {
         cap: 'temperature-sensor',
         values: { temperature: 21.3, lastFetchedAt: 995_000 },
       },
-      { op: 'seed', cap: 'binary', values: { on: true, lastChangedAt: 1_000_000 } },
+      {
+        op: 'seed',
+        cap: 'binary',
+        values: { on: true, lastChangedAt: 1_000_000 },
+      },
     ])
     expect(target.availability).toEqual([true])
     expect(timer.armedAt).toBe(880_000 + 300_001)
@@ -187,7 +200,10 @@ describe('start', () => {
       {
         op: 'seed',
         cap: 'doorbell',
-        values: { lastPressedAt: initialLastPressedAt, pressCountSinceStart: 2 },
+        values: {
+          lastPressedAt: initialLastPressedAt,
+          pressCountSinceStart: 2,
+        },
       },
     ])
 
@@ -219,8 +235,18 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
               kind: 'expression',
               expr: 'rose(active, changedAt)',
               bindings: {
-                active: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'detected' },
-                changedAt: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'lastDetectedAt' },
+                active: {
+                  kind: 'from',
+                  source: M1,
+                  cap: 'motion',
+                  fieldPath: 'detected',
+                },
+                changedAt: {
+                  kind: 'from',
+                  source: M1,
+                  cap: 'motion',
+                  fieldPath: 'lastDetectedAt',
+                },
               },
             },
             pressCountSinceStart: {
@@ -356,7 +382,10 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
     now = 1_790_587_991_000
     readings.delete(k(M1, 'motion', 'detected'))
     readings.delete(k(M1, 'motion', 'lastDetectedAt'))
-    runtime = makeStatefulDoorbellRuntime({ lastPressedAt: restored, pressCountSinceStart: 2 })
+    runtime = makeStatefulDoorbellRuntime({
+      lastPressedAt: restored,
+      pressCountSinceStart: 2,
+    })
     runtime.start()
 
     now += 4_000
@@ -365,13 +394,18 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
     runtime.onSourcesChanged(new Set([compositionSliceKey(M1!, 'motion')]))
     expect(emitted).toEqual([])
     for (const write of target.writes)
-      expect(write.values).toMatchObject({ lastPressedAt: restored, pressCountSinceStart: 2 })
+      expect(write.values).toMatchObject({
+        lastPressedAt: restored,
+        pressCountSinceStart: 2,
+      })
 
     // The doorbell then idles and rings for real: that press counts.
     sourceAnswers(now + 1_000)
     press(now + 5_000)
     expect(emitted).toHaveLength(1)
-    expect(target.writes.at(-1)?.values).toMatchObject({ lastPressedAt: now - 100 })
+    expect(target.writes.at(-1)?.values).toMatchObject({
+      lastPressedAt: now - 100,
+    })
   })
 
   // Review M1: the runtime's own write comes back from the hub as a state
@@ -391,7 +425,9 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
     })
     runtime.start()
     press(now + 1_000)
-    expect(target.writes.at(-1)?.values).toMatchObject({ pressCountSinceStart: 1 })
+    expect(target.writes.at(-1)?.values).toMatchObject({
+      pressCountSinceStart: 1,
+    })
 
     const before = probeReads
     runtime.onSourcesChanged(new Set([compositionSliceKey(SELF, 'doorbell')]))
@@ -429,7 +465,11 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
 
     runtime.start()
     expect(target.writes).toEqual([
-      { op: 'seed', cap: 'doorbell', values: { lastPressedAt: null, pressCountSinceStart: 0 } },
+      {
+        op: 'seed',
+        cap: 'doorbell',
+        values: { lastPressedAt: null, pressCountSinceStart: 0 },
+      },
     ])
     expect(hubReads.some((r) => r.startsWith(compositionSourceKey(SELF)))).toBe(false)
 
@@ -664,7 +704,10 @@ describe('D670 — state-derived events', () => {
     now = EDGE_BASE
     readings.set(k(M1, 'motion', 'detected'), fresh(false))
     readings.set(k(M1, 'motion', 'lastDetectedAt'), fresh(EDGE_BASE - 100))
-    runtime = makeStatefulDoorbellRuntime({ lastPressedAt: restored, pressCountSinceStart: 2 })
+    runtime = makeStatefulDoorbellRuntime({
+      lastPressedAt: restored,
+      pressCountSinceStart: 2,
+    })
     runtime.start()
     const afterStart = target.writes.length
 
@@ -700,7 +743,10 @@ describe('D670 — state-derived events', () => {
     readings.set(k(M1, 'motion', 'lastDetectedAt'), fresh(EDGE_BASE - 100))
     runtime.onSourcesChanged(new Set([compositionSliceKey(M1!, 'motion')]))
     for (const write of target.writes.slice(beforeRecovery))
-      expect(write.values).toMatchObject({ lastPressedAt: restored, pressCountSinceStart: 2 })
+      expect(write.values).toMatchObject({
+        lastPressedAt: restored,
+        pressCountSinceStart: 2,
+      })
     expect(emitted).toEqual([])
 
     // The next real press still counts.
@@ -709,7 +755,9 @@ describe('D670 — state-derived events', () => {
     readings.set(k(M1, 'motion', 'lastDetectedAt'), fresh(EDGE_BASE + 1_000))
     runtime.onSourcesChanged(new Set([compositionSliceKey(M1!, 'motion')]))
     expect(emitted).toHaveLength(1)
-    expect(target.writes.at(-1)?.values).toMatchObject({ lastPressedAt: EDGE_BASE + 1_000 })
+    expect(target.writes.at(-1)?.values).toMatchObject({
+      lastPressedAt: EDGE_BASE + 1_000,
+    })
   })
 
   it('a GONE source is not held: the field is unavailable (D393)', () => {
@@ -858,7 +906,12 @@ describe('D670 — state-derived events', () => {
         kind: 'expression',
         expr: 'rose(active, changedAt)',
         bindings: {
-          active: { kind: 'from', source: motion, cap: 'motion', fieldPath: 'detected' },
+          active: {
+            kind: 'from',
+            source: motion,
+            cap: 'motion',
+            fieldPath: 'detected',
+          },
           changedAt: {
             kind: 'from',
             source: motion,
@@ -1088,7 +1141,13 @@ function windowedFetchPlan(): readonly CompositionFieldPlan[] {
     f.path === 'lastFetchedAt'
       ? {
           ...f,
-          reads: [{ source: T1!, cap: 'temperature-sensor', fieldPath: 'lastFetchedAt' }],
+          reads: [
+            {
+              source: T1!,
+              cap: 'temperature-sensor',
+              fieldPath: 'lastFetchedAt',
+            },
+          ],
           source: {
             kind: 'expression',
             expr: 'within(f1, 400000)',
@@ -1109,6 +1168,7 @@ function windowedFetchPlan(): readonly CompositionFieldPlan[] {
 function runtimeWith(
   fields: readonly CompositionFieldPlan[],
   read?: SourceReader,
+  holdBoot = false,
 ): CompositionRuntime {
   return new CompositionRuntime({
     blockId: 'b-room',
@@ -1128,6 +1188,7 @@ function runtimeWith(
     now: () => now,
     timer,
     logger: log.logger,
+    holdBoot,
   })
 }
 
@@ -1369,7 +1430,10 @@ describe('fix round 2', () => {
 describe('a target that reports an enqueued write did not land (D663, S5)', () => {
   it('a thrown RPC makes the cap write-pending by name; the next pass re-writes the WHOLE cap', () => {
     runtime.start()
-    target.failAsync('temperature-sensor', { kind: 'threw', error: 'hub down' })
+    target.failAsync('temperature-sensor', {
+      kind: 'threw',
+      error: 'hub down',
+    })
     expect(runtime.state().fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'unavailable',
       value: null,
@@ -1393,7 +1457,11 @@ describe('a target that reports an enqueued write did not land (D663, S5)', () =
 
   it('a refusal is escalated by its hub code, and a deadline pass retries it', () => {
     runtime.start()
-    target.failAsync('binary', { kind: 'refused', code: 'not-claimed', message: 'claim lost' })
+    target.failAsync('binary', {
+      kind: 'refused',
+      code: 'not-claimed',
+      message: 'claim lost',
+    })
     expect(runtime.state().fields.find((f) => f.path === 'on')?.reason).toContain('not-claimed')
     const warned = log.lines.filter((l) => l.message.includes('refused a write'))
     expect(warned).toHaveLength(1)
@@ -1418,7 +1486,10 @@ describe('a target that reports an enqueued write did not land (D663, S5)', () =
   })
 })
 
-const DAYS_SOURCE = { addonId: 'provider-homeassistant', stableId: 'ha:desiccant-days' } as const
+const DAYS_SOURCE = {
+  addonId: 'provider-homeassistant',
+  stableId: 'ha:desiccant-days',
+} as const
 const DAYS = {
   kind: 'from',
   source: DAYS_SOURCE,
@@ -1442,13 +1513,19 @@ function consumablesPlan(): readonly CompositionFieldPlan[] {
         items: {
           filter: {
             label: 'Filter',
-            fields: { status: { kind: 'expression', expr: '"ok"', bindings: {} } },
+            fields: {
+              status: { kind: 'expression', expr: '"ok"', bindings: {} },
+            },
           },
           desiccant: {
             label: 'Desiccant',
             fields: {
               'remaining.value': DAYS,
-              'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
+              'remaining.kind': {
+                kind: 'expression',
+                expr: '"duration"',
+                bindings: {},
+              },
               status: {
                 kind: 'expression',
                 expr: 'd <= 0 ? "replace" : "ok"',
@@ -1532,11 +1609,18 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
 
   it('a nullable item leaf that goes unavailable is written null inside its item', () => {
     runtime.start()
-    readings.set(daysKey(), { state: 'unavailable', reason: 'sensor offline', fatal: false })
+    readings.set(daysKey(), {
+      state: 'unavailable',
+      reason: 'sensor offline',
+      fatal: false,
+    })
     runtime.onSourcesChanged(new Set([compositionSliceKey(DAYS_SOURCE, 'numeric-sensor')]))
     const last = target.writes.at(-1)
     expect(last?.values['items']).toEqual([
-      expect.objectContaining({ key: 'desiccant', remaining: { value: null, kind: 'duration' } }),
+      expect.objectContaining({
+        key: 'desiccant',
+        remaining: { value: null, kind: 'duration' },
+      }),
       expect.objectContaining({ key: 'filter' }),
     ])
     expect(target.availability).toEqual([true])
@@ -1551,7 +1635,11 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
       ),
     )
     runtime.start()
-    readings.set(daysKey(), { state: 'unavailable', reason: 'sensor offline', fatal: false })
+    readings.set(daysKey(), {
+      state: 'unavailable',
+      reason: 'sensor offline',
+      fatal: false,
+    })
     runtime.onSourcesChanged(new Set([compositionSliceKey(DAYS_SOURCE, 'numeric-sensor')]))
     runtime.onSourcesChanged(new Set([compositionSliceKey(DAYS_SOURCE, 'numeric-sensor')]))
     expect(target.writes.filter((w) => 'items' in w.values)).toHaveLength(1)
@@ -1560,7 +1648,10 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
     expect(held).toHaveLength(1)
     expect(held[0]?.extras).toMatchObject({
       tags: { deviceId: 1901 },
-      meta: { cap: 'consumables', missing: ['items[desiccant].remaining.value'] },
+      meta: {
+        cap: 'consumables',
+        missing: ['items[desiccant].remaining.value'],
+      },
     })
   })
 })
@@ -1596,7 +1687,11 @@ describe('a `release` field whose source is unavailable is handed back (D663, S1
     runtime.onSourcesChanged(new Set([motion()]))
     expect(target.withholds).toEqual([{ cap: 'binary', fields: ['on'] }])
     expect(runtime.state().released).toEqual([
-      { cap: 'binary', path: 'on', reason: expect.stringContaining('unreachable') },
+      {
+        cap: 'binary',
+        path: 'on',
+        reason: expect.stringContaining('unreachable'),
+      },
     ])
     expect(runtime.state().fields.find((f) => f.path === 'on')).toMatchObject({
       state: 'unavailable',
@@ -1607,7 +1702,12 @@ describe('a `release` field whose source is unavailable is handed back (D663, S1
     const line = log.lines.find((l) => l.extras?.meta?.['direction'] === 'released')
     expect(line?.extras).toMatchObject({
       tags: { deviceId: 1901 },
-      meta: { blockId: 'b-room', cap: 'binary', field: 'on', direction: 'released' },
+      meta: {
+        blockId: 'b-room',
+        cap: 'binary',
+        field: 'on',
+        direction: 'released',
+      },
     })
     // The same released set is not re-sent on a pass that changes nothing.
     runtime.onSourcesChanged(new Set([motion()]))
@@ -1640,7 +1740,11 @@ describe('a `release` field whose source is unavailable is handed back (D663, S1
     expect(target.writes.length).toBe(writes)
     expect(runtime.state().released).toEqual([])
     expect(runtime.state().held).toEqual([
-      { cap: 'binary', path: 'on', reason: expect.stringContaining('read failed') },
+      {
+        cap: 'binary',
+        path: 'on',
+        reason: expect.stringContaining('read failed'),
+      },
     ])
     readings.set(k(M1, 'motion', 'detected'), UNREACHABLE)
     runtime.onSourcesChanged(new Set([motion()]))
@@ -1752,7 +1856,9 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
     runtime = ownedRuntime(api, releasePlan())
     runtime.start()
     await settle()
-    expect(binaryClaims(api).at(-1)?.[0]).toMatchObject({ fields: ['on', 'lastChangedAt'] })
+    expect(binaryClaims(api).at(-1)?.[0]).toMatchObject({
+      fields: ['on', 'lastChangedAt'],
+    })
     readings.set(k(M1, 'motion', 'detected'), UNREACHABLE)
     runtime.onSourcesChanged(new Set([motion()]))
     await settle()
@@ -1770,7 +1876,11 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
   it('I-3: a TERMINAL refusal (owned-by-other) stops the cap for good — one claim RPC, however many source events follow; state names it', async () => {
     vi.mocked(api.claimFields).mockImplementation(async (input) =>
       input.capName === 'binary'
-        ? { ok: false, code: 'owned-by-other', message: 'binary is owned by blk-9' }
+        ? {
+            ok: false,
+            code: 'owned-by-other',
+            message: 'binary is owned by blk-9',
+          }
         : CLAIM_OK,
     )
     runtime = ownedRuntime(api, roomPlan())
@@ -1804,7 +1914,11 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
   it('a TRANSIENT refusal (migration-in-flight) stays pending and is retried on the next pass', async () => {
     vi.mocked(api.claimFields)
       .mockResolvedValueOnce(CLAIM_OK)
-      .mockResolvedValueOnce({ ok: false, code: 'migration-in-flight', message: 'row moving' })
+      .mockResolvedValueOnce({
+        ok: false,
+        code: 'migration-in-flight',
+        message: 'row moving',
+      })
       .mockResolvedValue(CLAIM_OK)
     runtime = ownedRuntime(api, roomPlan())
     runtime.start()
@@ -1870,5 +1984,69 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
     expect(api.releaseClaim).not.toHaveBeenCalled()
     const released = log.lines.filter((l) => l.extras?.meta?.['direction'] === 'released')
     expect(released.map((l) => l.extras?.meta?.['flaps'])).toEqual([1, 2])
+  })
+})
+
+describe('a boot never flips the device offline then online (planning#710)', () => {
+  const answerEverything = (answered: ReadonlyMap<string, SourceReading>): void => {
+    for (const [key, reading] of answered) readings.set(key, reading)
+    runtime.onSourcesChanged(
+      new Set([
+        temperature(),
+        compositionSliceKey(M1!, 'motion'),
+        compositionSliceKey(M2!, 'motion'),
+      ]),
+    )
+  }
+
+  it('sources that have not answered yet keep the device unknown; their first answer makes it available', () => {
+    const answered = new Map(readings)
+    readings.clear()
+    runtime = runtimeWith(roomPlan(), undefined, true)
+    runtime.start()
+    expect(target.availability).toEqual([])
+    expect(
+      log.lines.some(
+        (l) => l.message.includes('stays unknown') && l.extras?.tags?.deviceId === target.id,
+      ),
+    ).toBe(true)
+    answerEverything(answered)
+    expect(target.availability).toEqual([true])
+  })
+
+  it('a source that never answers is unknown before the bound and offline after it, by the one timer', () => {
+    readings.clear()
+    runtime = runtimeWith(roomPlan(), undefined, true)
+    runtime.start()
+    expect(timer.armedAt).toBe(now + FULL_PUSH_FIRST_REPORT_BOUND_MS)
+    now += FULL_PUSH_FIRST_REPORT_BOUND_MS - 1
+    timer.trigger()
+    expect(target.availability).toEqual([])
+    now += 1
+    timer.trigger()
+    expect(target.availability).toEqual([false])
+  })
+
+  it('a source that reports the cap before the field exists is not yet known, not confirmed offline', () => {
+    const answered = new Map(readings)
+    readings.clear()
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), {
+      state: 'unavailable',
+      reason: 'the field is absent or not a scalar',
+      fatal: false,
+      confirmed: true,
+    })
+    runtime = runtimeWith(roomPlan(), undefined, true)
+    runtime.start()
+    expect(target.availability).toEqual([])
+    answerEverything(answered)
+    expect(target.availability).toEqual([true])
+  })
+
+  it('a rebuilt runtime (no boot hold) keeps the previous behaviour: offline at once', () => {
+    readings.clear()
+    runtime = runtimeWith(roomPlan(), undefined, false)
+    runtime.start()
+    expect(target.availability).toEqual([false])
   })
 })

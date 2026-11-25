@@ -67,6 +67,11 @@ export interface StateRefreshSchedulerDeps {
    * through {@link StateRefreshScheduler.isAwaitingFirstRead}.
    */
   readonly onFirstReadSettled?: (deviceIds: readonly number[]) => void
+  /**
+   * The bound passed on a device whose every read failed: the provider is
+   * silent, so the consumer concludes it offline, once (planning#710).
+   */
+  readonly onSilentPastBound?: (deviceId: number) => void
 }
 
 type Timer = ReturnType<typeof setTimeout>
@@ -104,17 +109,18 @@ interface DeviceSchedule {
   /**
    * No read of the device has settled since it registered (D1099): the
    * provider has not answered yet, so its state is unknown rather than
-   * offline. A full-push device is never read, so what settles it is its
-   * integration's first state report after the (re)start (or the bound below).
+   * offline. What settles it is the first read that ANSWERED, the integration's
+   * first state report after the (re)start (a full-push device is never read),
+   * or the bound below. A failed read settles nothing.
    */
   awaitingFirstRead: boolean
-  /** A full-push device's bound: a dead integration is still concluded offline. */
+  /** The device's bound: a dead integration is still concluded offline. */
   firstReportBound: Timer | null
 }
 
 /**
- * The longest a full-push integration may stay silent after a (re)start before
- * it counts as having answered (D1099): past it, a dead integration is reported.
+ * The longest an integration may stay silent after a (re)start before it counts
+ * as having answered (D1099): past it, a dead integration is reported.
  */
 export const FULL_PUSH_FIRST_REPORT_BOUND_MS = 120_000
 
@@ -216,18 +222,10 @@ export class StateRefreshScheduler {
   onReport(deviceId: number, capName?: string): void {
     const device = this.devices.get(deviceId)
     if (device === undefined) return
-    if (
-      device.awaitingFirstRead &&
-      device.entry.policy.push === 'full' &&
-      capName !== undefined &&
-      !FRAMEWORK_STATE_CAPS.has(capName)
-    ) {
-      this.deps.logger.info(
-        'state refresh: first state from the push integration, device answered',
-        {
-          tags: { deviceId },
-        },
-      )
+    if (device.awaitingFirstRead && capName !== undefined && !FRAMEWORK_STATE_CAPS.has(capName)) {
+      this.deps.logger.info('state refresh: first state from the integration, device answered', {
+        tags: { deviceId },
+      })
       this.settleFirstRead([deviceId])
     }
     const now = Date.now()
@@ -298,7 +296,7 @@ export class StateRefreshScheduler {
           awaitingFirstRead: true,
           firstReportBound: null,
         })
-        if (entry.policy.push === 'full') this.armFirstReportBound(entry.deviceId)
+        this.armFirstReportBound(entry.deviceId)
       } else {
         if (effectiveRefreshIntervalMs(existing.entry.policy) !== interval)
           existing.dueAt = now + interval
@@ -528,14 +526,13 @@ export class StateRefreshScheduler {
     device.firstReportBound = setTimeout(() => {
       device.firstReportBound = null
       if (this.disposed || !device.awaitingFirstRead) return
-      this.deps.logger.info(
-        'state refresh: no first state from the push integration within the bound',
-        {
-          tags: { deviceId },
-          meta: { boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS },
-        },
-      )
+      this.deps.logger.info('state refresh: no first state from the integration within the bound', {
+        tags: { deviceId },
+        meta: { boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS },
+      })
+      const failedReads = device.failures > 0
       this.settleFirstRead([deviceId])
+      if (failedReads) this.deps.onSilentPastBound?.(deviceId)
     }, FULL_PUSH_FIRST_REPORT_BOUND_MS)
   }
 
@@ -640,6 +637,10 @@ export class StateRefreshScheduler {
       .then(async () => {
         await this.deps.refresh(route, deviceIds, reason)
         this.noteSuccess(deviceIds)
+        // A read that ANSWERED is the first state. A FAILED one is not: the
+        // integration may still be starting (unknown, never offline); the
+        // state report or the bound settles it.
+        this.settleFirstRead(deviceIds)
       })
       .catch((err: unknown) => this.noteFailure(deviceIds, reason, err))
       .finally(() => {
@@ -647,7 +648,6 @@ export class StateRefreshScheduler {
           const device = this.devices.get(deviceId)
           if (device !== undefined && device.inFlight === settled) device.inFlight = null
         }
-        this.settleFirstRead(deviceIds)
       })
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
@@ -669,8 +669,9 @@ export class StateRefreshScheduler {
   }
 
   /**
-   * A read settled (a failed first read is an answer too: the integration is
-   * unreachable). The devices it covered stop awaiting and the consumer is told.
+   * A read answered, a state report arrived or the bound passed (a failed read
+   * settles nothing: unknown is not offline). The devices stop awaiting and the
+   * consumer is told.
    */
   private settleFirstRead(deviceIds: readonly number[]): void {
     const ready: number[] = []

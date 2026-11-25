@@ -33,6 +33,7 @@ import {
   coverCapability,
   type DeviceConstructor,
   type DeviceContext,
+  type DeviceStatus,
   type DeviceStatusOwnership,
   DeviceFeature,
   DeviceType,
@@ -134,6 +135,8 @@ export class ComposedDevice
   private extraCaps: ReadonlySet<string> = new Set()
   /** Whether this device's tank is also a `water` consumable (derived, never bound). */
   private readonly derivesWater: boolean
+  /** Whether this device writes its own `device-status` (an engine-hosted row does not). */
+  private readonly ownsStatus: boolean
   /** The `consumables` items the composition last wrote — the derived water item is added to these. */
   private composedItems: readonly ConsumableItem[] = []
 
@@ -160,8 +163,10 @@ export class ComposedDevice
     type: DeviceType,
     caps: readonly CapabilityDefinition[],
     deviceStatus: DeviceStatusOwnership = 'own',
+    startStatus: 'unknown' | 'offline' = 'unknown',
   ) {
     super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type, deviceStatus })
+    this.ownsStatus = deviceStatus === 'own'
     this.derivesWater = type === DeviceType.PetFountain
     // Motion's `isDetected` is a slice answer (D944): the group reads `detected`.
     // Switch fans a command out. Every other composed cap stays an empty native;
@@ -193,8 +198,15 @@ export class ComposedDevice
       })
     }
     // NOT presumed reachable: available only once the runtime has seeded every cap.
+    // Until the runtime's first verdict the status is UNKNOWN, never offline — a
+    // boot that flips offline then online is notified as a real outage (D1099).
+    // A withdrawn block's placeholder has no runtime: it is offline at once.
     // (A no-op on an engine-hosted row: the engine writes its status.)
-    this.markOnline(false)
+    if (startStatus === 'offline') this.markOnline(false)
+    else if (this.ownsStatus) {
+      const held: DeviceStatus = { online: false, lastChangedAt: Date.now(), unknown: true }
+      this.runtimeState.setCapState('device-status', held)
+    }
   }
 
   /**
@@ -467,6 +479,13 @@ export class ComposedDevice
   }
 
   setAvailable(available: boolean): void {
+    // The first verdict answers an unknown status even when it equals the placeholder.
+    const current = this.runtimeState.getCapState<DeviceStatus>('device-status')
+    if (this.ownsStatus && current?.unknown === true) {
+      const answered: DeviceStatus = { online: available, lastChangedAt: Date.now() }
+      this.runtimeState.setCapState('device-status', answered)
+      return
+    }
     this.markOnline(available)
   }
 
@@ -509,7 +528,7 @@ export class EngineHostedComposedDevice extends ComposedDevice {
 
 export class ComposedPlaceholderDevice extends ComposedDevice {
   constructor(ctx: DeviceContext) {
-    super(ctx, ctx.deviceMeta.type, [])
+    super(ctx, ctx.deviceMeta.type, [], 'own', 'offline')
   }
 }
 

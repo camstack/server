@@ -107,6 +107,24 @@ Nothing in the pipeline could say "not yet known".
   hero shows no offline badge, the composer reads no value. The container's
   first `markOnline`, either way, ends `unknown`.
 
+**Amendment (planning#710, 2026-11-25): every integration, not only full-push.**
+The 09:03Z restart flipped five Gree climates (polled) offline then online 20 s
+later, each notified. A polled device's FIRST READ THAT FAILED used to count as
+an answer ("the integration is unreachable"); it no longer does. A device that
+a scheduler schedules stays awaiting until a read ANSWERED, its first state
+report (any integration mode), or the same bound (120 s, armed for every
+device, not only full-push). A failed read settles nothing; a real first
+offline (an answered read, or a report) is applied and notifies. A composed
+(Composer) device starts `unknown` (never `offline`); the FIRST runtime of a
+block after a process start holds it unknown while its sources start up (a
+field not yet reported, a first read not answered, a cap not seeded), for at
+most the same 120 s bound, measured from the runtime's start and decided by the
+runtime's one deadline timer. A block failure or a refused write applies at
+once; a rebuilt runtime (block edit) and the withdrawn-block placeholder are
+offline as before. A scheduled device whose every read failed and that wrote
+nothing is concluded offline once when the bound passes.
+A device no scheduler schedules (no refresh policy) is not covered.
+
 ## Enforcement
 
 Specs in `packages/system/src/builtins/device-manager/__tests__/device-unknown-until-ready.spec.ts`
@@ -115,3 +133,5 @@ reconciled) and in the notification-center intake spec (an `unknown` slice is
 not a liveness claim), and `device-unknown-full-push.spec.ts` (the 07:18Z
 shape: offline writes then a replay 40 s later reach no consumer; a silent
 integration is offline after the bound). Review only for the rest.
+
+Specs for the amendment: `device-unknown-polled.spec.ts`, `composed-device-boot-status.spec.ts`, and the `planning#710` block of `composition-runtime.spec.ts`.

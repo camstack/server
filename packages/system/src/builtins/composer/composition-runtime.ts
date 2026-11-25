@@ -75,6 +75,7 @@ import type {
   DeadlineTimer,
   TargetAsyncFailure,
 } from './composition-target.js'
+import { FULL_PUSH_FIRST_REPORT_BOUND_MS } from '../device-manager/state-refresh-scheduler.js'
 import { type AssemblerEntry, assembleSlice } from './slice-assembler.js'
 import {
   fieldRecords,
@@ -132,6 +133,12 @@ export interface CompositionRuntimeDeps {
   readonly now: () => number
   readonly timer: DeadlineTimer
   readonly logger: IScopedLogger
+  /**
+   * The FIRST runtime of this block since the process started (D1099): the
+   * device stays unknown while its sources are still starting up, for at most
+   * the scheduler's first-report bound. A rebuild (a block edit) leaves it off.
+   */
+  readonly holdBoot?: boolean
 }
 
 export interface CompositionRuntimeState {
@@ -167,6 +174,10 @@ export class CompositionRuntime {
   private readonly startedAtMs: number
   private seeded: ReadonlySet<string> = new Set()
   private available: boolean | null = null
+  /** The boot hold ends at this instant (D1099); `null` once decided or when there is none. */
+  private holdUntil: number | null = null
+  /** The boot hold is logged once per runtime. */
+  private startHoldLogged = false
   private failure: string | null = null
   private disabledReason: string | null = null
   private stopped = false
@@ -189,6 +200,7 @@ export class CompositionRuntime {
 
   constructor(private readonly deps: CompositionRuntimeDeps) {
     this.startedAtMs = deps.now()
+    if (deps.holdBoot === true) this.holdUntil = this.startedAtMs + FULL_PUSH_FIRST_REPORT_BOUND_MS
     this.records = fieldRecords(deps.fields, deps.initialByCap, deps.lookupCap, deps.pulseSeeds)
     deps.target.onAsyncFailure?.((cap, failure) => this.onTargetWriteFailed(cap, failure))
     const eventContext = {
@@ -763,6 +775,37 @@ export class CompositionRuntime {
       unseeded.length === 0 &&
       writePending.length === 0
     if (available === this.available) return
+    // Boot (D1099): never yet decided, nothing failed, and the bound is not
+    // spent — a source is still starting up, a first read has not answered, a
+    // cap is not seeded yet, a field is not reported yet. The device stays
+    // unknown rather than flipping offline then online; a failure or a refused
+    // write is an answer and applies at once. Past the bound the next pass
+    // decides normally (the one deadline timer is armed for it, see
+    // `armDeadline`).
+    if (
+      !available &&
+      this.holdUntil !== null &&
+      this.deps.now() < this.holdUntil &&
+      this.available === null &&
+      this.failure === null &&
+      this.disabledReason === null &&
+      writePending.length === 0
+    ) {
+      if (!this.startHoldLogged) {
+        this.startHoldLogged = true
+        this.deps.logger.info('composed device stays unknown — its sources are still starting up', {
+          tags: { deviceId: this.deps.target.id },
+          meta: {
+            blockId: this.deps.blockId,
+            blocking,
+            unseeded,
+            boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS,
+          },
+        })
+      }
+      return
+    }
+    this.holdUntil = null
     // The mirror moves only once the target took it: a throw is retried next pass.
     this.deps.target.setAvailable(available)
     this.available = available
@@ -816,6 +859,10 @@ export class CompositionRuntime {
         ? [r.outcome.deadline]
         : [],
     )
+    // The boot hold's end is one more deadline (D3: no new timer): without it a
+    // source that stays silent would leave no pass to decide after the bound.
+    if (this.holdUntil !== null && (after === null || this.holdUntil > after))
+      deadlines.push(this.holdUntil)
     if (deadlines.length === 0) {
       this.deps.timer.disarm()
       return
@@ -836,6 +883,7 @@ export class CompositionRuntime {
         )
         .map((r) => fieldKey(r.plan))
       if (due.length > 0) this.pass(due, 'deadline')
+      else this.updateAvailability()
     })
   }
 

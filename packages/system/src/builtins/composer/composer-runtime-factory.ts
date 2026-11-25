@@ -73,6 +73,17 @@ export function writerFor(
   })
 }
 
+/** The blocks that already had a runtime in this process, per composer (its tracker): a rebuild is not a boot. */
+const startedBlocks = new WeakMap<SourceTracker, Set<string>>()
+
+function isFirstRuntimeOfBlock(tracker: SourceTracker, blockId: string): boolean {
+  const seen = startedBlocks.get(tracker) ?? new Set<string>()
+  startedBlocks.set(tracker, seen)
+  if (seen.has(blockId)) return false
+  seen.add(blockId)
+  return true
+}
+
 export function newCompositionRuntime(
   deps: RuntimeFactoryDeps,
   p: PlannedBlock,
@@ -106,6 +117,7 @@ export function newCompositionRuntime(
       ),
     isOwnRead: (read) => compositionSourceKey(read.source) === ownKey && !nativeCaps.has(read.cap),
     now: deps.now,
+    holdBoot: isFirstRuntimeOfBlock(deps.tracker, p.block.id),
     timer: deps.newTimer(),
     logger: deps.logger.child('runtime'),
   })

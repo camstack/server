@@ -273,6 +273,25 @@ export class DeviceStateMirror {
   }
 
   /**
+   * planning#710: the bound passed and every read of the device failed — the
+   * provider is silent, so the device is concluded offline, ONCE. A held offline
+   * the bound just released already made the slice offline: nothing to add.
+   * Returns whether the mirror changed.
+   */
+  concludeOfflineAfterSilence(deviceId: number): boolean {
+    const current = this.stateMirror.get(deviceId)?.get('device-status')
+    if (current !== undefined && current['online'] === false && current['unknown'] !== true)
+      return false
+    this.ctx.logger.info('offline applied — the integration never answered within the bound', {
+      tags: { deviceId },
+    })
+    return this.applySingleCapUpdate(deviceId, 'device-status', {
+      online: false,
+      lastChangedAt: Date.now(),
+    })
+  }
+
+  /**
    * D1099: an `online: false` for a device whose integration has not answered
    * yet is not a fact. Keep the last known `online`, mark the slice `unknown`,
    * remember the offline and say so (D391). An `online: true` is an answer.

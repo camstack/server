@@ -32,7 +32,11 @@ const ONLINE = { online: true, lastChangedAt: 1_000 }
 function setup(options: { refreshFails?: boolean } = {}) {
   const h = harness()
   const policies = new StateRefreshPolicyRegistry()
-  policies.set('in-process', { deviceId: 7, addonId: 'provider-x', policy: POLICY })
+  policies.set('in-process', {
+    deviceId: 7,
+    addonId: 'provider-x',
+    policy: POLICY,
+  })
   const stop = startStateRefresh({
     mirror: h.mirror,
     logger: noopLogger,
@@ -57,7 +61,10 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
   it('an offline before the first read is unknown, not offline, and is logged with the device', () => {
     const { h, stop } = setup()
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: true, unknown: true })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: true,
+      unknown: true,
+    })
     const line = h.logs.find((l) => l.message.includes('has not answered yet'))
     expect(line?.extras).toMatchObject({ tags: { deviceId: 7 } })
     stop()
@@ -66,7 +73,11 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
   it('an offline with NO prior slice writes nothing: no invented online:true (D315, D393)', async () => {
     const h = harness()
     const policies = new StateRefreshPolicyRegistry()
-    policies.set('in-process', { deviceId: 7, addonId: 'provider-x', policy: POLICY })
+    policies.set('in-process', {
+      deviceId: 7,
+      addonId: 'provider-x',
+      policy: POLICY,
+    })
     const stop = startStateRefresh({
       mirror: h.mirror,
       logger: noopLogger,
@@ -78,7 +89,9 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
     expect(h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)).toBe(false)
     expect(h.mirror.capSlice(7, 'device-status')).toBeNull()
     await vi.advanceTimersByTimeAsync(15_001)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: false,
+    })
     stop()
   })
 
@@ -92,20 +105,32 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
     stop()
   })
 
-  it('a failed first read is an answer too: the device goes offline', async () => {
+  it('a failed first read is NOT an answer (planning#710): the offline stays held until the bound', async () => {
     const { h, stop } = setup({ refreshFails: true })
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
     await vi.advanceTimersByTimeAsync(15_001)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: true,
+      unknown: true,
+    })
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: false,
+    })
     stop()
   })
 
   it('an online before ready is an answer: the held offline is dropped', async () => {
     const { h, stop } = setup()
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
-    h.mirror.applySingleCapUpdate(7, 'device-status', { online: true, lastChangedAt: 3_000 })
+    h.mirror.applySingleCapUpdate(7, 'device-status', {
+      online: true,
+      lastChangedAt: 3_000,
+    })
     await vi.advanceTimersByTimeAsync(15_001)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: true })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: true,
+    })
     stop()
   })
 
@@ -113,14 +138,18 @@ describe('restart -> unknown -> ready -> online/offline (D1099)', () => {
     const { h, stop } = setup()
     await vi.advanceTimersByTimeAsync(15_001)
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: false,
+    })
     stop()
   })
 
   it('a device no scheduler governs is not gated', () => {
     const { h, stop } = setup()
     h.mirror.applySingleCapUpdate(99, 'device-status', OFFLINE)
-    expect(h.mirror.capSlice(99, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(99, 'device-status')).toMatchObject({
+      online: false,
+    })
     stop()
   })
 })
@@ -135,11 +164,15 @@ describe('a lost readiness push is reconciled (D8, D49)', () => {
       integrationAwaiting: () => false,
     })
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ unknown: true })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      unknown: true,
+    })
 
     awaiting.delete(7) // the scheduler settled; releaseDeferredOffline was never called
     h.mirror.applySingleCapUpdate(8, 'device-status', ONLINE)
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: false,
+    })
   })
 
   it('reconcileReadiness releases on its own', () => {
@@ -153,7 +186,9 @@ describe('a lost readiness push is reconciled (D8, D49)', () => {
     h.mirror.applySingleCapUpdate(7, 'device-status', OFFLINE)
     awaiting.delete(7)
     expect(h.mirror.reconcileReadiness()).toEqual([7])
-    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(7, 'device-status')).toMatchObject({
+      online: false,
+    })
   })
 })
 
@@ -198,7 +233,9 @@ describe('an HA-shaped integration: the policy sits on the broker, the storm is 
     for (const id of CHILDREN) h.mirror.applySingleCapUpdate(id, 'device-status', OFFLINE)
     expect(offlineEmitted(h)).toBe(0)
     for (const id of CHILDREN) {
-      expect(h.mirror.capSlice(id, 'device-status')).toMatchObject({ unknown: true })
+      expect(h.mirror.capSlice(id, 'device-status')).toMatchObject({
+        unknown: true,
+      })
     }
     stop()
   })
@@ -206,11 +243,20 @@ describe('an HA-shaped integration: the policy sits on the broker, the storm is 
   it('after the broker read, a child still unanswered is offline; one that answered stays online', async () => {
     const { h, stop } = broker()
     for (const id of CHILDREN) h.mirror.applySingleCapUpdate(id, 'device-status', OFFLINE)
-    h.mirror.applySingleCapUpdate(13, 'device-status', { online: true, lastChangedAt: 4_000 })
+    h.mirror.applySingleCapUpdate(13, 'device-status', {
+      online: true,
+      lastChangedAt: 4_000,
+    })
     await vi.advanceTimersByTimeAsync(15_001)
-    expect(h.mirror.capSlice(11, 'device-status')).toMatchObject({ online: false })
-    expect(h.mirror.capSlice(12, 'device-status')).toMatchObject({ online: false })
-    expect(h.mirror.capSlice(13, 'device-status')).toMatchObject({ online: true })
+    expect(h.mirror.capSlice(11, 'device-status')).toMatchObject({
+      online: false,
+    })
+    expect(h.mirror.capSlice(12, 'device-status')).toMatchObject({
+      online: false,
+    })
+    expect(h.mirror.capSlice(13, 'device-status')).toMatchObject({
+      online: true,
+    })
     expect(offlineEmitted(h)).toBe(2)
     stop()
   })
@@ -219,7 +265,9 @@ describe('an HA-shaped integration: the policy sits on the broker, the storm is 
     const { h, stop } = broker()
     h.mirror.noteIntegration(14, integrationGroupKey('provider-ha', 'ha-2'))
     h.mirror.applySingleCapUpdate(14, 'device-status', OFFLINE)
-    expect(h.mirror.capSlice(14, 'device-status')).toMatchObject({ online: false })
+    expect(h.mirror.capSlice(14, 'device-status')).toMatchObject({
+      online: false,
+    })
     stop()
   })
 })
