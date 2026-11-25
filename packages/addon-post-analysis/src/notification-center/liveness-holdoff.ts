@@ -25,11 +25,14 @@ import type { NcIncomingEvent } from './event-intake.js'
 import type { NcLivenessState } from './liveness-ledger.js'
 
 /**
- * Fifteen seconds (operator 2026-11-24): each provider already confirms a
- * device's state before it flips it, so the centre only has to swallow the
- * restart flap of a plugin, which settles within seconds.
+ * Ninety seconds (planning#714, D1100 supersedes the 15 s of 2026-11-24): the
+ * D1099 gate holds a device `unknown` only on the restart paths wired into
+ * it; agent-hosted runners, hub-main in-process addons and crash respawns
+ * still flap a device offline then online (a gateway back after 15 s, sensors
+ * and climates within seconds). This window is the catch-all. It stays under
+ * the 120 s D1099 bound. A fixed constant, not an operator knob.
  */
-export const DEVICE_LIVENESS_HOLDOFF_MS = 15_000
+export const DEVICE_LIVENESS_HOLDOFF_MS = 90_000
 
 /**
  * Stream offline / online ride the device window: a stream that drops and
@@ -83,8 +86,21 @@ function livenessStateOfKind(kind: string): NcLivenessState {
   return kind.endsWith('-offline') ? 'offline' : 'online'
 }
 
+/** A flip that returned to the notified state before its window ended. */
+export interface LivenessSuppressed {
+  readonly subject: string
+  /** The state that was held and then abandoned. */
+  readonly flip: NcLivenessState
+  /** The notified (or seeded) state the subject returned to. */
+  readonly revertedTo: NcLivenessState
+  /** Ms between the first departure and the return. */
+  readonly elapsedMs: number
+}
+
 export interface DeviceLivenessHoldoffOptions {
   readonly delayMs?: number
+  /** Called when a pending flip is cancelled by its own reversal (logged by the owner). */
+  readonly onSuppressed?: (event: NcIncomingEvent, info: LivenessSuppressed) => void
   readonly schedule?: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
   readonly cancel?: (id: ReturnType<typeof setTimeout>) => void
 }
@@ -100,6 +116,9 @@ export class DeviceLivenessHoldoff {
   private readonly delayMs: number
   private readonly schedule: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
   private readonly cancel: (id: ReturnType<typeof setTimeout>) => void
+  private readonly onSuppressed:
+    | ((event: NcIncomingEvent, info: LivenessSuppressed) => void)
+    | undefined
 
   constructor(
     private readonly flush: (event: NcIncomingEvent, timing: LivenessTiming) => void,
@@ -108,6 +127,18 @@ export class DeviceLivenessHoldoff {
     this.delayMs = options.delayMs ?? DEVICE_LIVENESS_HOLDOFF_MS
     this.schedule = options.schedule ?? setTimeout
     this.cancel = options.cancel ?? clearTimeout
+    this.onSuppressed = options.onSuppressed
+  }
+
+  /** A deleted subject: no timer may fire for it, and nothing about it is kept. */
+  forget(subject: string): void {
+    const timer = this.timers.get(subject)
+    if (timer !== undefined) this.cancel(timer)
+    this.timers.delete(subject)
+    this.pending.delete(subject)
+    this.departedAt.delete(subject)
+    this.lastNotified.delete(subject)
+    this.stateSince.delete(subject)
   }
 
   /** The seeded (or last delivered) state — a bounce back to this is silence. */
@@ -161,6 +192,7 @@ export class DeviceLivenessHoldoff {
    */
   arm(subject: string, incoming: NcIncomingEvent, delayMs?: number): void {
     const delay = delayMs ?? this.delayMs
+    if (this.revertsPending(subject, incoming)) return
     this.pending.set(subject, incoming)
     this.trackDeparture(subject, incoming)
     const existing = this.timers.get(subject)
@@ -182,6 +214,32 @@ export class DeviceLivenessHoldoff {
     this.timers.clear()
     this.pending.clear()
     this.departedAt.clear()
+  }
+
+  /**
+   * The subject came back to the state it was last notified in while a flip
+   * away from it was still waiting: both are cancelled, nothing is sent.
+   */
+  private revertsPending(subject: string, incoming: NcIncomingEvent): boolean {
+    const kind = incoming.subject.systemEvent?.kind
+    const held = this.pending.get(subject)
+    const heldKind = held?.subject.systemEvent?.kind
+    if (kind === undefined || held === undefined || heldKind === undefined) return false
+    const state = livenessStateOfKind(kind)
+    if (this.lastNotified.get(subject) !== state) return false
+    const timer = this.timers.get(subject)
+    if (timer !== undefined) this.cancel(timer)
+    this.timers.delete(subject)
+    this.pending.delete(subject)
+    const departed = this.departedAt.get(subject) ?? held.subject.timestamp
+    this.departedAt.delete(subject)
+    this.onSuppressed?.(incoming, {
+      subject,
+      flip: livenessStateOfKind(heldKind),
+      revertedTo: state,
+      elapsedMs: Math.max(0, incoming.subject.timestamp - departed),
+    })
+    return true
   }
 
   private trackDeparture(subject: string, incoming: NcIncomingEvent): void {

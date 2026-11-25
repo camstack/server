@@ -1071,9 +1071,20 @@ export class NotificationCenter implements NcEventConsumer {
       if (incoming !== null) this.consumeEvent(incoming)
     })
     this.livenessHoldoff = new DeviceLivenessHoldoff((event) => this.consumeEvent(event), {
-      // Production: 5 min. Vitest: 0 so existing suites keep asserting
+      // Production: 90 s. Vitest: 0 so existing suites keep asserting
       // immediate flips. An explicit `livenessHoldoffMs` always wins.
       delayMs: deps.livenessHoldoffMs ?? (process.env.VITEST ? 0 : DEVICE_LIVENESS_HOLDOFF_MS),
+      onSuppressed: (event, info) => {
+        this.logger.info('liveness flip suppressed — reverted within window', {
+          tags: event.log().tags,
+          meta: {
+            subject: info.subject,
+            flip: info.flip,
+            revertedTo: info.revertedTo,
+            elapsedMs: info.elapsedMs,
+          },
+        })
+      },
     })
     this.nodeLivenessHoldoff = new DeviceLivenessHoldoff(
       (event, timing) => this.consumeNodeLiveness(event, timing),
@@ -1606,6 +1617,9 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get livenessHoldoff() {
         return self.livenessHoldoff
+      },
+      get streamLivenessHoldoff() {
+        return self.streamLivenessHoldoff
       },
       get logger() {
         return self.logger
@@ -2668,6 +2682,9 @@ export class NotificationCenter implements NcEventConsumer {
       kindDeps: () => self.kindDeps(),
       get liveness() {
         return self.liveness
+      },
+      get livenessHoldoff() {
+        return self.livenessHoldoff
       },
       get plannedUpdateReturns() {
         return self.plannedUpdateReturns

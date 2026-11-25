@@ -66,6 +66,7 @@ export interface BootLifecycleHost {
   readonly livenessHoldoff: DeviceLivenessHoldoff
   readonly logger: IScopedLogger
   readonly nodeLivenessHoldoff: DeviceLivenessHoldoff
+  readonly streamLivenessHoldoff: DeviceLivenessHoldoff
   readonly plannedUpdateReturns: NcPlannedUpdateReturn
   noteInertGroupedRules(): void
   readonly now: () => number
@@ -412,6 +413,7 @@ export async function stop(host: BootLifecycleHost): Promise<void> {
   host.addonUpdates.dispose()
   host.livenessHoldoff.dispose()
   host.nodeLivenessHoldoff.dispose()
+  host.streamLivenessHoldoff.dispose()
   host.plannedUpdateReturns.dispose()
   // Clearing this is also what STOPS the boot back-fill: it checks the flag
   // between phases, so a shutdown that lands mid-hydration abandons the rest

@@ -18,6 +18,7 @@ import type { NcBuildEntriesExtras } from './evaluate-and-enqueue.js'
 import type { NcEventOrigin, NcIncomingEvent } from './event-intake.js'
 import { discardedLivenessEvent } from './event-intake.js'
 import { NcLivenessLedger } from './liveness-ledger.js'
+import type { DeviceLivenessHoldoff } from './liveness-holdoff.js'
 import type { NcPlannedUpdateReturn } from './planned-update-return.js'
 import { OccupancyStore } from './occupancy-store.js'
 import type { NcOutboxEnqueueInput } from './outbox.js'
@@ -53,6 +54,7 @@ export interface BootHydrationHost {
   readonly evaluationActive: boolean
   kindDeps(): DurableKindDeps
   readonly liveness: NcLivenessLedger
+  readonly livenessHoldoff: DeviceLivenessHoldoff
   readonly plannedUpdateReturns: NcPlannedUpdateReturn
   readonly logger: IScopedLogger
   readonly now: () => number
@@ -256,6 +258,7 @@ export async function removeDeviceData(
       logger: host.logger,
       evictMirrors: (id) => {
         host.liveness.evictDevice(id)
+        host.livenessHoldoff.forget(`device:${id}`)
         host.alertStore.evictDevice(id)
         host.stateSummary.evictDevice(id)
         host.occupancyStore.evictDevice(id)

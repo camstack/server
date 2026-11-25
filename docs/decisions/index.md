@@ -4,7 +4,7 @@
 
 # Decisions
 
-1064 architecture decision records. One file per decision, never
+1065 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1078,6 +1078,7 @@ that rots.
 | D1097 | [A timed run is offered on every device that has a switch, through the one wrapper](adr-1097-a-timed-run-is-offered-on-every-device-that-has-a-switch.md) | ✅ accepted | 2026-11-24 |
 | D1098 | [Every Customize kind is one typed spec, seen and removable from both sides](adr-1098-every-customize-kind-is-one-typed-spec-seen-from-both-sides.md) | ✅ accepted | 2026-11-24 |
 | D1099 | [A device is unknown until its integration is ready; offline is concluded only after](adr-1099-device-unknown-until-integration-ready.md) | 💭 proposed | 2026-11-24 |
+| D1100 | [A device liveness notification is sent only after the new state held for 90 s](adr-1100-device-liveness-90s-stability-window.md) | ✅ accepted | 2026-11-25 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:
