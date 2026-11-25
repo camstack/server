@@ -68,8 +68,10 @@ Home, Home Assistant) is added as a second admin, not reset.
 3. The hub must reach the Thread mesh over IPv6. A Thread border router
    advertises the mesh prefix in a router advertisement route; a container
    ignores it unless the kernel accepts route information. Set
-   `net.ipv6.conf.<interface>.accept_ra_rt_info_max_plen=64` on the hub
-   container (and `accept_ra=2` when the host forwards). Without the route
+   `net.ipv6.conf.default.accept_ra_rt_info_max_plen=64` on the hub
+   container (and `accept_ra=2` when the host forwards). Docker refuses the
+   interface-named form (`net.ipv6.conf.eth0.…`); `default` is inherited by
+   `eth0`. Without the route
    the share code is accepted and the node never answers.
 
 A node that is unreachable is shown offline. It is never shown with its last
