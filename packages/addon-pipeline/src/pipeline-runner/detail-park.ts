@@ -74,6 +74,22 @@ export interface ParkedDetailEntry {
   readonly timer: ReturnType<typeof setTimeout>
 }
 
+/**
+ * Does a new attachment supersede what a soft detach parked?
+ *
+ * Only an attachment that carries a step tree of its own does. When an
+ * on-motion session closes, the orchestrator soft-detaches the camera and
+ * re-attaches it at once for its MOTION WATCH — no steps, no elected device.
+ * That attach names no detail work, so it has nothing to supersede the park
+ * with: purging on it ended every park ~80 ms after it began, and a dispatch
+ * already in flight lost its elected device and ran on the node default pool.
+ */
+export function attachSupersedesPark(
+  steps: readonly PipelineStepInputOutput[] | undefined,
+): boolean {
+  return steps !== undefined && steps.length > 0
+}
+
 /** Is this park still within its grace window at `nowMs`? */
 export function isParkedDetailFresh(parked: ParkedDetailState, nowMs: number): boolean {
   return nowMs - parked.parkedAt <= DETAIL_PARK_GRACE_MS

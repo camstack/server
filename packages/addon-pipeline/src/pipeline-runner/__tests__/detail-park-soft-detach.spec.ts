@@ -310,6 +310,32 @@ describe('detail state parks across a soft detach (not-attached refusal fix)', (
     await expect(dispatchDetail(handle)).rejects.toThrow(/not-attached/)
   })
 
+  // planning#720, CPU-only node: an on-motion session closes, the runner soft
+  // detaches (park), and ~80 ms later the orchestrator re-attaches the camera
+  // for its MOTION WATCH — no steps, no elected device. That attach used to
+  // purge the park, so 288 late dispatches were refused in a week and the ones
+  // already in flight lost their elected device and landed on the default pool.
+  it('(5) a motion-watch re-attach (no steps, no device) keeps the park: late detail work still resolves, on the ELECTED device', async () => {
+    await attach(makeConfig({ deviceKey: 'cpu' }))
+    const handle = makeFrameHandle()
+    const tile = makeTileRequester()
+    asInternals(addon).nativeCropRegistry.register(handle, tile, DEVICE_ID)
+
+    await addon.detachCamera({ deviceId: DEVICE_ID })
+    await attach(makeConfig({ detectionMode: 'disabled', pipelineEnabled: false, steps: [] }))
+
+    await vi.advanceTimersByTimeAsync(4_000)
+    const result = await dispatchDetail(handle)
+
+    expect(result?.details.length).toBeGreaterThan(0)
+    expect(runPipelineMock).toHaveBeenCalledTimes(1)
+    expect(runPipelineMock.mock.calls[0]![0]).toMatchObject({ deviceKey: 'cpu', plane: 'full' })
+
+    // Still bounded by the same grace, and a re-attach WITH steps supersedes it.
+    await vi.advanceTimersByTimeAsync(GRACE_MS)
+    expect(asInternals(addon).parkedDetail.size).toBe(0)
+  })
+
   it('(4) parked state cannot leak: cleared when the grace elapses, on re-attach, and on shutdown', async () => {
     // Grace elapse clears the entry (unref timer).
     await attach()

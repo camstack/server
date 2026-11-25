@@ -89,6 +89,7 @@ import {
 } from './engine/benchmark-pools.js'
 import { placedModelsOf } from './engine/coral-cocompiled-set.js'
 import { BACKEND_TO_POOL_RUNTIME, EngineFactory } from './engine/engine-factory.js'
+import { nextUsableDefaultDevice } from './engine/default-device-rederivation.js'
 import { FrameReelectionNotes, routeLiveFrameDevice } from './engine/frame-device-reelection.js'
 import { IdlePoolReaper } from './engine/idle-pool-reaper.js'
 import {
@@ -1276,6 +1277,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const devices = enumerateInferenceDevices(envToHardwareInfo(env))
     const top = devices.find((d) => d.available) ?? devices[0]
     this.currentEngine = top ? resolveDeviceEngine(top.key) : ONNX_FLOOR
+    this.defaultDeviceCandidates = devices.filter((d) => d.available).map((d) => d.key)
     this.log.info('Derived node-default engine (local kernel)', {
       meta: {
         deviceKey: top?.key ?? 'onnx:cpu(floor)',
@@ -2552,6 +2554,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // for the rest of its session. Replays pin and refuse (D54), and a
     // measurement (`sessionId`: the capacity ramp, a batch) asked for THAT
     // device: only a camera's live dispatch re-elects.
+    this.rederiveDefaultEngineIfFailed(input.deviceId)
     const liveDeviceKey =
       isRuntime &&
       input.replay !== true &&
@@ -2624,7 +2627,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const appliesCameraGates = isRuntime || input.replay === true
 
     // Ensure engine factory is initialized (do NOT require global steps — benchmark uses explicit steps)
-    await this.ensureEngineFactory()
+    await this.ensureDefaultPoolUnlessServedElsewhere(dispatchDeviceKey)
     // The engine is the node's own, always (D646). A benchmark used to send
     // `input.engine` and have it honoured by re-pointing `this.currentEngine`,
     // `this.engineFactory` and `this.executor` for the length of the call —
@@ -2672,7 +2675,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         ? await this.benchmarkPools.acquire(deviceKeyOf(dispatchEngine), dispatchEngine)
         : dispatchDeviceKey
           ? await this.resolveDeviceFactory(dispatchDeviceKey)
-          : this.engineFactory!
+          : await this.defaultPoolFactory()
     // `needsPoolUpdate`, never `isLoadedWithModel`: a step whose model is
     // already warm can still owe the pool a retuned decode setting (D214).
     const needed = enabledSteps.filter((s) => dispatchFactory.needsPoolUpdate(s))
@@ -3482,7 +3485,17 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     }
     const joined = perPool.get(setKey)
     const flight =
-      joined ?? this.issueModelLoad(pool, perPool, setKey, steps, factory, format, deviceKey)
+      joined ??
+      this.issueModelLoad(
+        pool,
+        perPool,
+        setKey,
+        steps,
+        factory,
+        format,
+        deviceKey,
+        context.deviceId,
+      )
     try {
       await flight.work
     } catch (err) {
@@ -3584,6 +3597,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     factory: EngineFactory | null,
     format: ModelFormat,
     deviceKey: string,
+    deviceId: number | undefined,
   ): ModelLoadFlight {
     const previous = this.modelLoadTail.get(pool) ?? Promise.resolve()
     const flight: { work: Promise<void>; generation: number | null } = {
@@ -3606,7 +3620,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         })
         await factory!.loadAdditional(needed)
       } catch (err) {
-        flight.generation = this.recordModelLoadFailure(pool, deviceKey, models, err)
+        flight.generation = this.recordModelLoadFailure(pool, deviceKey, models, err, deviceId)
         throw err
       }
       this.loadGovernor.recordSuccess(pool, deviceKey, models)
@@ -3627,6 +3641,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     deviceKey: string,
     models: readonly string[],
     err: unknown,
+    deviceId: number | undefined,
   ): number {
     // Charged to the model the error names, never to the whole set (D657).
     const named = failedModelOf(err)
@@ -3636,7 +3651,10 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       // The runtime does not see this device at all: down with its named reason,
       // not a model that failed to compile (every retry would fail the same way).
       this.deviceLiveness.recordAbsent(deviceKey, err.reason, errMsg(err))
+      // Tagged with the camera whose dispatch found it out, when there is one:
+      // without the tag the line is absent from that camera's own log.
       this.log.error('inference device ABSENT — the runtime enumerates no such device', {
+        ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
         meta: {
           deviceKey,
           reason: err.reason,
@@ -3644,6 +3662,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
           rearm: 'pipelineExecutor.rearmInferenceDevice',
         },
       })
+      this.rederiveDefaultEngineIfFailed(deviceId)
     }
     const poolModel = err instanceof StepVariantLoadError ? err.poolModel : null
     let generation = 0
@@ -3908,6 +3927,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // (npu→our v9, gpu→v9) and its `format` picks the format build (tflite→ssd).
     // Precedence: deviceKey (live/orchestrator routing) > node.
     // Same capability gate + node-local fallback as `runPipeline` (cam-101).
+    this.rederiveDefaultEngineIfFailed(input.deviceId)
     const dispatchResolution = this.resolveStepsForDispatch({
       steps: input.steps,
       deviceKey: input.deviceKey,
@@ -3965,7 +3985,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
 
     // Bootstrap on the existing executor singleton — same code path as
     // benchmark's `runPipeline`. Models are loaded if missing.
-    await this.ensureEngineFactory()
+    await this.ensureDefaultPoolUnlessServedElsewhere(dispatchDeviceKey)
 
     // Phase 2 multi-device: route to the device's pool when a deviceKey
     // survived the capability gate.
@@ -4364,7 +4384,9 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // `openvino:npu`), so it gets the SAME liveness gate and the SAME budget —
     // keyed on the device it actually is, which is also the key the balancer
     // knows it by. Nothing about "default" makes a corpse serveable.
-    const defaultDeviceKey = deviceKeyOf(this.currentEngine)
+    this.rederiveDefaultEngineIfFailed(undefined)
+    const defaultEngine = this.currentEngine
+    const defaultDeviceKey = deviceKeyOf(defaultEngine)
     this.refuseIfDeviceUnusable(defaultDeviceKey)
     if (this.engineFactory) {
       if (this.engineFactory.isReady()) return
@@ -4432,6 +4454,14 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       // `if (this.engineFactory) return` above — treats a non-null field as
       // "the pool is callable", so assigning before the await is what turned a
       // 1-3.5 s spawn into a burst of destroyed frames.
+      if (this.currentEngine !== defaultEngine) {
+        // The default was re-derived while this pool was starting: it belongs
+        // to a device that is no longer the default, so it is never published.
+        await factory.dispose().catch(() => undefined)
+        throw new Error(
+          `node-default pool for ${defaultDeviceKey} superseded while starting — the default was re-derived`,
+        )
+      }
       this.engineFactory = factory
       return factory
     })()
@@ -4539,6 +4569,17 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
             },
           },
         )
+      } else if (note.kind === 'no-alternative' && note.deviceKey === undefined) {
+        this.log.warn('no usable inference device on this node — frames refused', {
+          ...tags,
+          meta: {
+            deviceKey: note.from.deviceKey,
+            state: note.from.state,
+            deaths: note.from.deaths,
+            lastError: note.from.lastError,
+            rearm: 'pipelineExecutor.rearmInferenceDevice',
+          },
+        })
       } else if (note.kind === 'no-alternative') {
         this.log.warn('elected inference device unusable and no other pool here — frames refused', {
           ...tags,
@@ -4557,6 +4598,96 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       }
     }
     return routing.deviceKey
+  }
+
+  /**
+   * The node's enumerated device keys, best first — what `resolveAutoEngine`
+   * chose the default from, kept so the default can move down the same list.
+   */
+  private defaultDeviceCandidates: readonly string[] = []
+
+  /**
+   * Move the node default off a terminally failed device (planning#720).
+   *
+   * A device marked failed or absent is never used, for any step — and the
+   * default pool is where every dispatch with no device key lands (a detail
+   * step of a camera whose session just closed, a capability fallback). So
+   * when the default's own device is failed, the default becomes the next
+   * usable device of the node. The pool that device already runs is ADOPTED:
+   * one device, one pool. With no usable device left the default stays, and
+   * every dispatch on it is refused by name.
+   *
+   * Cheap and idempotent (one map read when nothing is failed): called before
+   * a dispatch resolves its steps, since the default's format decides them.
+   */
+  private rederiveDefaultEngineIfFailed(deviceId: number | undefined): void {
+    const from = deviceKeyOf(this.currentEngine)
+    if (!this.deviceLiveness.isFailed(from)) return
+    const next = nextUsableDefaultDevice({
+      candidates: this.defaultDeviceCandidates,
+      currentKey: from,
+      poolKeyOf: (candidate) => deviceKeyOf(resolveDeviceEngine(candidate)),
+      failed: (key) => this.deviceLiveness.isFailed(key),
+    })
+    if (next === null) return
+    const nextEngine = resolveDeviceEngine(next)
+    const retired = this.engineFactory
+    let adopted: EngineFactory | null = null
+    for (const [key, factory] of [...this.factoriesByDevice]) {
+      if (!enginesEqual(resolveDeviceEngine(key), nextEngine)) continue
+      this.factoriesByDevice.delete(key)
+      this.deviceReaper.cancel(key)
+      if (adopted === null && factory.isReady()) adopted = factory
+      else void factory.dispose().catch(() => undefined)
+    }
+    this.currentEngine = nextEngine
+    this.engineFactory = adopted
+    this.executor = null
+    if (retired) void retired.dispose().catch(() => undefined)
+    this.log.warn('node-default inference device failed — default re-derived to the next usable', {
+      ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+      meta: {
+        from,
+        to: next,
+        reason: this.deviceLiveness.unusableReason(from)?.lastError ?? null,
+        adoptedRunningPool: adopted !== null,
+        rearm: 'pipelineExecutor.rearmInferenceDevice',
+      },
+    })
+    this.startProvisioningForCurrentEngine()
+    void this.recomputeConfigIssues().catch((err: unknown) => {
+      this.log.warn('config-issue recompute failed after default re-derive', {
+        meta: { error: errMsg(err) },
+      })
+    })
+  }
+
+  /**
+   * Bring the default pool up, unless this dispatch is served by ANOTHER
+   * device's pool and the default device is unusable. The default pool's state
+   * is not a gate on a frame it does not serve: that gate refused every frame
+   * elected onto a healthy device for as long as the default was failed.
+   */
+  private async ensureDefaultPoolUnlessServedElsewhere(
+    dispatchDeviceKey: string | undefined,
+  ): Promise<void> {
+    try {
+      await this.ensureEngineFactory()
+    } catch (err) {
+      const servedElsewhere =
+        dispatchDeviceKey !== undefined &&
+        !enginesEqual(resolveDeviceEngine(dispatchDeviceKey), this.currentEngine)
+      if (err instanceof InferenceDeviceUnusableError && servedElsewhere) return
+      throw err
+    }
+  }
+
+  /** The default pool, built if it is not up. Throws when its device is unusable. */
+  private async defaultPoolFactory(): Promise<EngineFactory> {
+    await this.ensureEngineFactory()
+    const factory = this.engineFactory
+    if (factory === null) throw new Error('node-default pool is not initialised')
+    return factory
   }
 
   private refuseIfDeviceUnusable(deviceKey: string): void {

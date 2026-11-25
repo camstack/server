@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { InferenceDeviceUnhealthy } from '../inference-device-liveness.js'
+import { nextUsableDefaultDevice } from '../default-device-rederivation.js'
 import { FrameReelectionNotes, routeLiveFrameDevice } from '../frame-device-reelection.js'
 
 const usbBackoff: InferenceDeviceUnhealthy = {
@@ -69,6 +70,50 @@ describe('routeLiveFrameDevice', () => {
         unusable: unusable([usbBackoff]),
       }),
     ).toEqual({ kind: 'as-elected', deviceKey: undefined })
+  })
+
+  // planning#720: a frame with no elected device and an unusable default pool
+  // has nowhere to go on this node — a routing of its own, so the camera says
+  // it once instead of failing every frame without a line.
+  it('no elected device and an unusable default pool is no-alternative', () => {
+    const gpuFailed: InferenceDeviceUnhealthy = {
+      ...usbBackoff,
+      deviceKey: 'openvino:gpu',
+      state: 'failed',
+    }
+    expect(
+      routeLiveFrameDevice({
+        requestedDeviceKey: undefined,
+        defaultDeviceKey: 'openvino:gpu',
+        unusable: unusable([gpuFailed]),
+      }),
+    ).toEqual({ kind: 'no-alternative', deviceKey: undefined, from: gpuFailed })
+  })
+})
+
+describe('nextUsableDefaultDevice', () => {
+  const poolKeyOf = (candidate: string): string => (candidate === 'cpu' ? 'cpu:cpu' : candidate)
+
+  it('moves down the enumerated list, past the current default and every failed device', () => {
+    expect(
+      nextUsableDefaultDevice({
+        candidates: ['openvino:npu', 'openvino:gpu', 'cpu'],
+        currentKey: 'openvino:gpu',
+        poolKeyOf,
+        failed: (key) => key === 'openvino:gpu' || key === 'openvino:npu',
+      }),
+    ).toBe('cpu')
+  })
+
+  it('a device failed under its pool key is skipped too, and nothing left is null', () => {
+    expect(
+      nextUsableDefaultDevice({
+        candidates: ['openvino:gpu', 'cpu'],
+        currentKey: 'openvino:gpu',
+        poolKeyOf,
+        failed: (key) => key === 'openvino:gpu' || key === 'cpu:cpu',
+      }),
+    ).toBeNull()
   })
 })
 

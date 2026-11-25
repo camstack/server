@@ -37,13 +37,22 @@ export type LiveFrameDeviceRouting =
     }
   | {
       readonly kind: 'no-alternative'
-      readonly deviceKey: string
+      /** The key the frame asked for; `undefined` when it asked for the default pool. */
+      readonly deviceKey: string | undefined
       readonly from: InferenceDeviceUnhealthy
     }
 
 export function routeLiveFrameDevice(input: LiveFrameDeviceInput): LiveFrameDeviceRouting {
   const requested = input.requestedDeviceKey
-  if (requested === undefined) return { kind: 'as-elected', deviceKey: undefined }
+  if (requested === undefined) {
+    // A frame with no elected device runs on the default pool: when that pool
+    // is unusable there is nowhere else on this node, and the camera says so
+    // once instead of failing every frame without a line of its own.
+    const defaultUnusable = input.unusable(input.defaultDeviceKey)
+    return defaultUnusable === null
+      ? { kind: 'as-elected', deviceKey: undefined }
+      : { kind: 'no-alternative', deviceKey: undefined, from: defaultUnusable }
+  }
   const from = input.unusable(requested)
   if (from === null) return { kind: 'as-elected', deviceKey: requested }
   if (requested === input.defaultDeviceKey || input.unusable(input.defaultDeviceKey) !== null) {

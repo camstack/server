@@ -228,7 +228,9 @@ import {
 } from './capacity/capacity-schemas.js'
 import { startStallSampler } from './capacity/stall-sampler.js'
 import { CropConventionSource } from './crop-convention-source.js'
+import { InferenceRefusalNotes, inferenceDeviceRefusalOf } from './inference-refusal-notes.js'
 import {
+  attachSupersedesPark,
   buildDetailHandleExpiredError,
   buildDetailNotAttachedError,
   DETAIL_PARK_GRACE_MS,
@@ -1122,6 +1124,8 @@ export default class PipelineRunnerAddon
    * shutdown.
    */
   private readonly parkedDetail = new Map<number, ParkedDetailEntry>()
+  /** Per camera, the unusable-device refusal last logged (once per change). */
+  private readonly inferenceRefusals = new InferenceRefusalNotes()
   private nodeId = 'unknown'
   private metricsSnapshotTimer: ReturnType<typeof setInterval> | null = null
   private runtimeInfoTimer: ReturnType<typeof setInterval> | null = null
@@ -2842,9 +2846,10 @@ export default class PipelineRunnerAddon
       detailSteps: deriveDetailSteps(config.steps),
     }
     this.attached.set(config.deviceId, attachment)
-    // The live attachment supersedes any detail state parked by a previous
-    // soft detach — `resolveDetailChildSteps` must answer from THIS config now.
-    this.dropParkedDetail(config.deviceId)
+    // A live attachment that carries a step tree supersedes any detail state
+    // parked by a previous soft detach — `resolveDetailChildSteps` answers from
+    // THIS config now. A motion-watch attach (no steps) leaves the park alone.
+    if (attachSupersedesPark(config.steps)) this.dropParkedDetail(config.deviceId)
 
     runner.registerCamera(config.deviceId, {
       detectionMode: config.detectionMode,
@@ -4523,8 +4528,14 @@ export default class PipelineRunnerAddon
       return findMatchingDetailSteps(parked.steps, parentClassName, tryGetStepDefinition, filter)
     }
     const steps = attachment.config.steps
-    if (!steps) return []
-    return findMatchingDetailSteps(steps, parentClassName, tryGetStepDefinition, filter)
+    if (!attachSupersedesPark(steps)) {
+      // Attached for its motion watch only: the session that just closed still
+      // answers from its park, for the same grace as a detached camera.
+      const parked = this.freshParkedDetail(deviceId)
+      if (!parked?.steps) return []
+      return findMatchingDetailSteps(parked.steps, parentClassName, tryGetStepDefinition, filter)
+    }
+    return findMatchingDetailSteps(steps ?? [], parentClassName, tryGetStepDefinition, filter)
   }
 
   /**
@@ -6010,6 +6021,28 @@ export default class PipelineRunnerAddon
         })
         return null
       }
+      // No usable inference device for this camera's frames: the same
+      // sentence on every frame until the device is usable again, so it is
+      // said once per change (17 641 identical lines in a day, planning#720).
+      const refusal = inferenceDeviceRefusalOf(msg)
+      if (refusal !== null) {
+        if (this.inferenceRefusals.refused(deviceId, refusal)) {
+          log.error(
+            'runInference refused — inference device unusable; frames dropped until it is usable',
+            {
+              meta: {
+                error: msg,
+                nodeId: this.nodeId,
+                refusedDeviceKey: refusal.deviceKey,
+                state: refusal.state,
+                deviceKey: camConfig?.deviceKey ?? null,
+                steps: dispatchSteps.map((s) => s.addonId).join(','),
+              },
+            },
+          )
+        }
+        return null
+      }
       log.error('runInference failed', {
         meta: {
           error: msg,
@@ -6029,6 +6062,11 @@ export default class PipelineRunnerAddon
       return null
     }
     if (result === null) return null
+    if (this.inferenceRefusals.served(deviceId)) {
+      log.info('runInference resumed — the inference device serves this camera again', {
+        meta: { nodeId: this.nodeId, deviceKey: camConfig?.deviceKey ?? null },
+      })
+    }
     // Whether the package step LOOKED at this frame — only the governor's
     // decision above knows, and post-analysis needs it to tell an empty
     // doormat from a frame nobody asked about (D687).

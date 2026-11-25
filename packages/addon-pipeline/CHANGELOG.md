@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Recorded playback no longer mixes the live picture in when the stream is re-encoded for the device.
 - Recordings: the hourly repair no longer files a camera's high-quality hours a second time under the low-quality storage location when both share a disk, and every 30 minutes each recording camera logs what the timeline will show for the last 24 hours next to what the archive holds, with a warning when they disagree
+- Detection no longer stops for hours when the node's best inference device turns out to be absent or failed: the node default moves to the next usable device, a camera elected onto a healthy device is never gated on the failed one, detail steps keep their elected device across a motion re-attach, and a camera with no usable device says so once instead of on every frame
 
 ## [1.2.685] - 2026-11-25
 
