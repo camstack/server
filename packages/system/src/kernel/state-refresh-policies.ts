@@ -51,9 +51,13 @@ export function childStateRefreshEntries(
 /** Told after every change, with the whole current set. */
 export type StateRefreshPolicyListener = () => void
 
+/** Told, in-process, which devices' runner the hub is about to stop for a restart. */
+export type StateRefreshRegateListener = (deviceIds: readonly number[]) => void
+
 export class StateRefreshPolicyRegistry {
   private readonly bySource = new Map<string, Map<number, StateRefreshPolicyEntry>>()
   private readonly listeners = new Set<StateRefreshPolicyListener>()
+  private readonly regateListeners = new Set<StateRefreshRegateListener>()
 
   /** Record (or replace) one device's policy from `source`. */
   set(source: string, entry: StateRefreshPolicyEntry): void {
@@ -104,6 +108,31 @@ export class StateRefreshPolicyRegistry {
       if (found !== undefined) return found
     }
     return undefined
+  }
+
+  /**
+   * The hub is stopping the runner behind `source` (a hub-initiated stop of a
+   * runner on this node: stop/restart/restartAll, which uninstall and
+   * applyServerUpdate use): its devices await an answer again and, when the
+   * source is then replaced with nothing, their integration is tombstoned
+   * (planning#713). In-memory; the new runner's registration, or a bounded hold
+   * (the D1099 bound), resolves it. NOT gated, on purpose: a crash respawn (a
+   * crashed runner writes no teardown offline, and a real offline must show).
+   * Gaps: runners hosted on an agent, hub-main in-process addons, and the
+   * broker shutdown `stopped()`.
+   */
+  regateSource(source: string): void {
+    const deviceIds = [...(this.bySource.get(source)?.keys() ?? [])]
+    if (deviceIds.length === 0) return
+    for (const listener of this.regateListeners) listener(deviceIds)
+  }
+
+  /** Listen to {@link regateSource}. */
+  subscribeRegate(listener: StateRefreshRegateListener): () => void {
+    this.regateListeners.add(listener)
+    return () => {
+      this.regateListeners.delete(listener)
+    }
   }
 
   subscribe(listener: StateRefreshPolicyListener): () => void {

@@ -52,6 +52,10 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
     },
   })
   deps.mirror.setReportTap((deviceId, capName) => scheduler.onReport(deviceId, capName))
+  deps.mirror.setIntegrationTap({
+    note: (deviceId, key) => scheduler.noteRowIntegration(deviceId, key),
+    forget: (deviceId) => scheduler.forgetDevice(deviceId),
+  })
   deps.mirror.setReadinessGate({
     deviceAwaiting: (deviceId) => scheduler.isAwaitingFirstRead(deviceId),
     integrationAwaiting: (key) => scheduler.isIntegrationAwaitingFirstRead(key),
@@ -60,6 +64,7 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
   return () => {
     uninstall()
     deps.mirror.setReportTap(null)
+    deps.mirror.setIntegrationTap(null)
     deps.mirror.setReadinessGate(null)
     scheduler.dispose()
   }

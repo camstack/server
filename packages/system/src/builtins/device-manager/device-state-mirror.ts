@@ -125,6 +125,12 @@ export type SliceReportTap = (deviceId: number, capName: string) => void
  * (D1099): for a device that carries its own refresh policy, and for an
  * integration (`addonId::integrationId`) whose policy sits on its gateway.
  */
+/** The scheduler's side of the row's integration key (planning#713). */
+export interface IntegrationTap {
+  note(deviceId: number, key: string): void
+  forget(deviceId: number): void
+}
+
 export interface ReadinessGate {
   deviceAwaiting(deviceId: number): boolean
   integrationAwaiting(key: string): boolean
@@ -132,6 +138,16 @@ export interface ReadinessGate {
 
 export class DeviceStateMirror {
   private reportTap: SliceReportTap | null = null
+  /** Told which integration a device's row names, so the scheduler groups under the SAME key (planning#713). */
+  private integrationTap: IntegrationTap | null = null
+  /**
+   * Devices whose `device-status` is still only the construction seed (planning#713):
+   * the mirror kept the prior reading under it (or stored the seed), and the
+   * driver has not answered. Once the integration is ready, the ones still here
+   * become a plain `online: true` — the behaviour of a driver that never calls
+   * `markOnline`.
+   */
+  private readonly presumedStatus = new Set<number>()
   private readinessGate: ReadinessGate | null = null
   /**
    * `online: false` writes held back because the device's integration was not
@@ -226,6 +242,12 @@ export class DeviceStateMirror {
   /** Record which integration a device belongs to (read from its row by the device-manager). */
   noteIntegration(deviceId: number, key: string): void {
     this.integrationKeys.set(deviceId, key)
+    this.integrationTap?.note(deviceId, key)
+  }
+
+  /** Set once by the wiring: the scheduler learns the row's integration key. */
+  setIntegrationTap(tap: IntegrationTap | null): void {
+    this.integrationTap = tap
   }
 
   /** Whether {@link noteIntegration} has already been told this device's integration. */
@@ -253,12 +275,29 @@ export class DeviceStateMirror {
       const held = this.deferredOffline.get(deviceId)
       if (held === undefined) continue
       this.deferredOffline.delete(deviceId)
+      this.presumedStatus.delete(deviceId)
       this.ctx.logger.info('offline applied — the integration answered its first read', {
         tags: { deviceId },
       })
       if (this.applySingleCapUpdate(deviceId, 'device-status', held)) changed.push(deviceId)
     }
+    for (const deviceId of deviceIds) {
+      if (this.releasePresumed(deviceId)) changed.push(deviceId)
+    }
     return changed
+  }
+
+  /** The integration is ready and the driver never answered: the presumption becomes a plain online. */
+  private releasePresumed(deviceId: number): boolean {
+    if (!this.presumedStatus.has(deviceId) || this.isAwaiting(deviceId)) return false
+    this.presumedStatus.delete(deviceId)
+    this.ctx.logger.info('online applied — the integration is ready and the driver said nothing', {
+      tags: { deviceId },
+    })
+    return this.applySingleCapUpdate(deviceId, 'device-status', {
+      online: true,
+      lastChangedAt: Date.now(),
+    })
   }
 
   /**
@@ -268,7 +307,9 @@ export class DeviceStateMirror {
    */
   reconcileReadiness(): number[] {
     if (this.readinessGate === null) return []
-    const ready = [...this.deferredOffline.keys()].filter((id) => !this.isAwaiting(id))
+    const ready = [...new Set([...this.deferredOffline.keys(), ...this.presumedStatus])].filter(
+      (id) => !this.isAwaiting(id),
+    )
     return this.releaseDeferredOffline(ready)
   }
 
@@ -301,6 +342,9 @@ export class DeviceStateMirror {
     slice: Record<string, unknown>,
   ): Record<string, unknown> | null {
     const awaiting = this.isAwaiting(deviceId)
+    if (slice['unknown'] === true && slice['online'] === true)
+      return this.gatePresumed(deviceId, slice, awaiting)
+    this.presumedStatus.delete(deviceId)
     // An `unknown` slice is itself the "not answered yet" claim, never an offline.
     if (!awaiting || slice['online'] !== false || slice['unknown'] === true) {
       this.deferredOffline.delete(deviceId)
@@ -315,6 +359,39 @@ export class DeviceStateMirror {
     // No prior reading: nothing is written, so no placeholder `online` is
     // invented (D315, D393). The slice stays absent until the integration answers.
     if (prior === undefined || typeof prior['online'] !== 'boolean') return null
+    const lastChangedAt =
+      typeof prior['lastChangedAt'] === 'number' ? prior['lastChangedAt'] : Date.now()
+    return { online: prior['online'], lastChangedAt, unknown: true }
+  }
+
+  /**
+   * planning#713: the construction seed (`online: true, unknown: true`) is a
+   * presumption. Awaiting the integration, it never overwrites a prior reading
+   * (the prior `online` stays, marked unknown) and clears no held offline; it
+   * is remembered so a driver that never answers ends plain online once the
+   * integration is ready. A device whose integration is not awaited keeps the
+   * old behaviour: the seed is a plain online.
+   */
+  private gatePresumed(
+    deviceId: number,
+    slice: Record<string, unknown>,
+    awaiting: boolean,
+  ): Record<string, unknown> {
+    if (!awaiting) {
+      this.presumedStatus.delete(deviceId)
+      this.deferredOffline.delete(deviceId)
+      return { online: true, lastChangedAt: slice['lastChangedAt'] }
+    }
+    this.presumedStatus.add(deviceId)
+    const prior = this.stateMirror.get(deviceId)?.get('device-status')
+    if (prior === undefined || typeof prior['online'] !== 'boolean') return slice
+    this.ctx.logger.info(
+      'presumed online not applied — a prior reading stands until the integration answers',
+      {
+        tags: { deviceId },
+        meta: { priorOnline: prior['online'] },
+      },
+    )
     const lastChangedAt =
       typeof prior['lastChangedAt'] === 'number' ? prior['lastChangedAt'] : Date.now()
     return { online: prior['online'], lastChangedAt, unknown: true }
@@ -636,6 +713,11 @@ export class DeviceStateMirror {
     this.seeded.delete(deviceId)
     this.rowRead.delete(deviceId)
     this.seedRefusalLogged.delete(deviceId)
+    // planning#713: nothing of the readiness gate may outlive the device.
+    this.presumedStatus.delete(deviceId)
+    this.integrationKeys.delete(deviceId)
+    this.deferredOffline.delete(deviceId)
+    this.integrationTap?.forget(deviceId)
   }
 
   /** The device's row was read in this process — the precondition of every row write (D677). */

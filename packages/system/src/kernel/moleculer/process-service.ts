@@ -27,6 +27,7 @@ import {
   runnerHeapFlags,
   runnerRssBudgetMb,
 } from './runner-heap-flags.js'
+import { childRefreshSource, getStateRefreshPolicyRegistry } from '../state-refresh-policies.js'
 import { applyRunnerNativeAllocator } from './runner-native-allocator.js'
 import {
   defaultProcessGroupOps,
@@ -255,6 +256,27 @@ function createProcessService(
     )
     return result
   }
+  /**
+   * The ONE way the hub stops a runner on this node (stop/restart/restartAll,
+   * which uninstall and applyServerUpdate use): the runner's devices await their
+   * integration again BEFORE the SIGTERM, so what it writes while it tears down
+   * (a link closing, `markOnline(false)`) is held, and the integration stays
+   * gated, as a bounded hold, after the runner's policies left (planning#713).
+   * A crash respawn is NOT gated, on purpose: a crashed runner writes no
+   * teardown offline and a real offline must show. Gaps: agent-hosted runners,
+   * hub-main in-process addons, and `stopped()` (broker shutdown).
+   */
+  function terminateRunnerChild(runnerId: string, child: ChildProcess): void {
+    try {
+      getStateRefreshPolicyRegistry().regateSource(childRefreshSource(runnerId))
+    } catch (err) {
+      capturedBroker?.logger.warn(
+        `[${runnerId}] re-gating the runner's devices before its stop failed: ${String(err)}`,
+      )
+    }
+    child.kill('SIGTERM')
+  }
+
   /** Resolve a lookup name (runnerId or hosted addonId) to its runnerId, or null. */
   function resolveRunnerName(lookupName: string): string | null {
     if (processes.has(lookupName)) return lookupName
@@ -779,7 +801,7 @@ function createProcessService(
               target.child.signalCode !== null
             target.state = 'stopped'
             if (!alreadyDead) {
-              target.child.kill('SIGTERM')
+              terminateRunnerChild(name, target.child)
               // Wait for exit with timeout
               await new Promise<void>((resolve) => {
                 const timer = setTimeout(() => {
@@ -847,7 +869,7 @@ function createProcessService(
             // Stop then respawn
             target.state = 'stopped'
             if (!alreadyDead) {
-              target.child.kill('SIGTERM')
+              terminateRunnerChild(name, target.child)
               await new Promise<void>((resolve) => {
                 const timer = setTimeout(() => {
                   target.child.kill('SIGKILL')
@@ -975,7 +997,7 @@ function createProcessService(
                   entry.child.signalCode !== null
                 if (!alreadyDead) {
                   entry.state = 'stopped'
-                  entry.child.kill('SIGTERM')
+                  terminateRunnerChild(name, entry.child)
                   await new Promise<void>((resolve) => {
                     const timer = setTimeout(() => {
                       entry.child.kill('SIGKILL')

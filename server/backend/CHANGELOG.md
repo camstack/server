@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device persisted offline no longer flips online at boot, and an offline a runner writes while the hub stops it (stop, restart, update) is held until the new runner answers, for at most 120 s; integrations are grouped under one key
+
 ## [1.2.959] - 2026-11-25
 
 ### Changed

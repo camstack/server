@@ -44,6 +44,8 @@ export interface StateRefreshPolicySource {
   entries(): readonly StateRefreshPolicyEntry[]
   get(deviceId: number): StateRefreshPolicyEntry | undefined
   subscribe(listener: () => void): () => void
+  /** The hub is stopping these devices' runner to restart it (planning#713). */
+  subscribeRegate?(listener: (deviceIds: readonly number[]) => void): () => void
 }
 
 export interface StateRefreshSchedulerDeps {
@@ -94,6 +96,11 @@ export function failureBackoffMs(intervalMs: number, failures: number): number {
 
 interface DeviceSchedule {
   entry: StateRefreshPolicyEntry
+  /**
+   * The group this device is scheduled under: the row's integration key once the
+   * mirror told it (ONE source with the mirror, planning#713), else the policy's.
+   */
+  groupKey: string
   /** The device's own due time (a non-batching integration only). */
   dueAt: number
   lastReportAt: number
@@ -116,6 +123,22 @@ interface DeviceSchedule {
   awaitingFirstRead: boolean
   /** The device's bound: a dead integration is still concluded offline. */
   firstReportBound: Timer | null
+  /**
+   * The hub is stopping the runner behind the device (planning#713): what the
+   * dying runner reports is not an answer. A device that leaves while it is set
+   * is TOMBSTONED, and a new registration is a new schedule.
+   */
+  stopping: boolean
+}
+
+/**
+ * A stopped runner's integration, remembered after its devices left the
+ * scheduler (planning#713). The integration awaits until it registers again
+ * (normal boot gating takes over) or the bound passes.
+ */
+interface Tombstone {
+  readonly deviceIds: Set<number>
+  readonly timer: Timer
 }
 
 /**
@@ -164,7 +187,7 @@ export function integrationGroupKey(addonId: string, integrationId: string): str
   return `${addonId}::${integrationId}`
 }
 
-function groupKeyOf(entry: StateRefreshPolicyEntry): string {
+function policyKeyOf(entry: StateRefreshPolicyEntry): string {
   return integrationGroupKey(entry.addonId, entry.policy.integrationId)
 }
 
@@ -177,12 +200,173 @@ export class StateRefreshScheduler {
   private readonly groups = new Map<string, GroupState>()
   /** The latest connection epoch seen per integration, kept while its group is gone. */
   private readonly epochs = new Map<string, number>()
+  /** The integration key each device's ROW states, told by the mirror (planning#713). */
+  private readonly rowKeys = new Map<number, string>()
+  /** Integrations whose runner the hub stopped, by group key (planning#713). */
+  private readonly tombstones = new Map<string, Tombstone>()
+  /** The group key each tombstoned device was scheduled under. */
+  private readonly tombstoned = new Map<number, string>()
   private readonly unsubscribe: () => void
+  private readonly unsubscribeRegate: () => void
   private disposed = false
 
   constructor(private readonly deps: StateRefreshSchedulerDeps) {
     this.unsubscribe = deps.policies.subscribe(() => this.reconcile())
+    this.unsubscribeRegate =
+      deps.policies.subscribeRegate?.((deviceIds) => this.regate(deviceIds)) ?? (() => undefined)
     this.reconcile()
+  }
+
+  /** The group a device's schedule belongs to. */
+  private keyOf(device: DeviceSchedule): string {
+    return device.groupKey
+  }
+
+  private resolveKey(deviceId: number, entry: StateRefreshPolicyEntry): string {
+    return this.rowKeys.get(deviceId) ?? policyKeyOf(entry)
+  }
+
+  /**
+   * The mirror learned the integration a device's ROW names. That is the one
+   * key (planning#713): the scheduled devices of its group move under it in one
+   * step (a batch integration is never split in two groups), and a policy that
+   * named the integration differently is logged, so the two can never silently
+   * disagree again. Nothing else is rebuilt or re-armed.
+   */
+  noteRowIntegration(deviceId: number, rowKey: string): void {
+    if (this.disposed || this.rowKeys.get(deviceId) === rowKey) return
+    this.rowKeys.set(deviceId, rowKey)
+    const device = this.devices.get(deviceId)
+    if (device === undefined) return
+    const policyKey = policyKeyOf(device.entry)
+    if (policyKey !== rowKey) {
+      this.deps.logger.warn(
+        'state refresh: the policy integration key differs from the device row — grouped under the row key',
+        { tags: { deviceId }, meta: { policyKey, rowKey } },
+      )
+    }
+    if (device.groupKey === rowKey) return
+    this.regroup(device.groupKey, rowKey)
+    if (this.ungateSettledGroups()) this.deps.onFirstReadSettled?.([])
+  }
+
+  /** The device's row is gone: forget what was learned from it. */
+  forgetDevice(deviceId: number): void {
+    this.rowKeys.delete(deviceId)
+  }
+
+  /**
+   * Move the devices of group `from` whose row agrees (or has not spoken) under
+   * `to`, merging with a group already there. Only these two groups are touched.
+   */
+  private regroup(from: string, to: string): void {
+    const old = this.groups.get(from)
+    if (old === undefined) return
+    const moving = [...old.devices].filter((id) => (this.rowKeys.get(id) ?? to) === to)
+    if (moving.length === 0) return
+    for (const id of moving) {
+      const device = this.devices.get(id)
+      if (device !== undefined) device.groupKey = to
+      old.devices.delete(id)
+    }
+    const target = this.groups.get(to)
+    if (target === undefined) {
+      this.groups.set(to, {
+        key: to,
+        devices: new Set(moving),
+        dueAt: old.dueAt,
+        intervalMs: old.intervalMs,
+        scheduleTimer: null,
+        heartbeatTimer: null,
+        lastReportAt: old.lastReportAt,
+        gated: old.gated,
+      })
+    } else {
+      for (const id of moving) target.devices.add(id)
+      target.gated = target.gated || old.gated
+    }
+    if (old.devices.size === 0) {
+      this.clearGroupTimers(old)
+      this.groups.delete(from)
+    } else {
+      this.armSchedule(from)
+    }
+    this.armSchedule(to)
+    this.armHeartbeat(to)
+  }
+
+  /**
+   * The hub is stopping the runner behind these devices (ANY stop: an update, a
+   * respawn, an uninstall; planning#713). What the dying runner writes while it
+   * tears down is not a fact: its devices stop counting reports as answers and
+   * await again; once the runner's source is replaced with nothing the devices
+   * leave, and their integration is TOMBSTONED (see {@link Tombstone}) so the
+   * late offline is still held.
+   */
+  private regate(deviceIds: readonly number[]): void {
+    if (this.disposed) return
+    for (const deviceId of deviceIds) {
+      const device = this.devices.get(deviceId)
+      if (device === undefined) continue
+      this.deps.logger.info(
+        'state refresh: the runner is being stopped, the device awaits its integration again',
+        { tags: { deviceId } },
+      )
+      device.stopping = true
+      device.awaitingFirstRead = true
+      this.clearFirstReportBound(device)
+      this.armFirstReportBound(deviceId)
+      const group = this.groups.get(this.keyOf(device))
+      if (group !== undefined) group.gated = true
+    }
+  }
+
+  private tombstone(deviceId: number, key: string): void {
+    const previous = this.tombstones.get(key)
+    // One timer per key; a newer stop re-arms a full bound (planning#713).
+    if (previous !== undefined) clearTimeout(previous.timer)
+    const entry: Tombstone = {
+      deviceIds: previous?.deviceIds ?? new Set<number>(),
+      timer: setTimeout(() => this.expireTombstone(key), FULL_PUSH_FIRST_REPORT_BOUND_MS),
+    }
+    entry.deviceIds.add(deviceId)
+    this.tombstones.set(key, entry)
+    this.tombstoned.set(deviceId, key)
+    this.deps.logger.info(
+      'state refresh: the stopped runner left, its integration stays awaiting until it registers again or the bound',
+      { tags: { deviceId }, meta: { group: key } },
+    )
+  }
+
+  /** The integration registered again: normal boot gating takes over for this device. */
+  private untombstone(deviceId: number): void {
+    const key = this.tombstoned.get(deviceId)
+    if (key === undefined) return
+    this.tombstoned.delete(deviceId)
+    const entry = this.tombstones.get(key)
+    if (entry === undefined) return
+    entry.deviceIds.delete(deviceId)
+    if (entry.deviceIds.size > 0) return
+    clearTimeout(entry.timer)
+    this.tombstones.delete(key)
+  }
+
+  /** The runner did not come back within the bound: held offlines are released the normal way. */
+  private expireTombstone(key: string): void {
+    const entry = this.tombstones.get(key)
+    if (entry === undefined || this.disposed) return
+    this.tombstones.delete(key)
+    for (const deviceId of entry.deviceIds) {
+      this.tombstoned.delete(deviceId)
+      this.deps.logger.info(
+        'state refresh: the stopped runner did not come back within the bound',
+        {
+          tags: { deviceId },
+          meta: { boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS, group: key },
+        },
+      )
+    }
+    this.deps.onFirstReadSettled?.([])
   }
 
   /** The command follow-up (awaited by the D1022 seams; never throws). */
@@ -206,7 +390,7 @@ export class StateRefreshScheduler {
     await this.runRefresh([target.deviceId], 'command', COMMAND_WAIT_BOUND_MS)
     if (!policy.batch) {
       device.dueAt = Date.now() + effectiveRefreshIntervalMs(policy)
-      this.armSchedule(groupKeyOf(device.entry))
+      this.armSchedule(this.keyOf(device))
     }
     this.armBurst(target.deviceId, device)
   }
@@ -222,7 +406,12 @@ export class StateRefreshScheduler {
   onReport(deviceId: number, capName?: string): void {
     const device = this.devices.get(deviceId)
     if (device === undefined) return
-    if (device.awaitingFirstRead && capName !== undefined && !FRAMEWORK_STATE_CAPS.has(capName)) {
+    if (
+      device.awaitingFirstRead &&
+      !device.stopping &&
+      capName !== undefined &&
+      !FRAMEWORK_STATE_CAPS.has(capName)
+    ) {
       this.deps.logger.info('state refresh: first state from the integration, device answered', {
         tags: { deviceId },
       })
@@ -230,7 +419,7 @@ export class StateRefreshScheduler {
     }
     const now = Date.now()
     device.lastReportAt = now
-    const group = this.groups.get(groupKeyOf(device.entry))
+    const group = this.groups.get(this.keyOf(device))
     if (group !== undefined) group.lastReportAt = now
   }
 
@@ -240,7 +429,7 @@ export class StateRefreshScheduler {
    * ask at any time; a device it does not schedule is never awaiting.
    */
   isAwaitingFirstRead(deviceId: number): boolean {
-    return this.devices.get(deviceId)?.awaitingFirstRead === true
+    return this.devices.get(deviceId)?.awaitingFirstRead === true || this.tombstoned.has(deviceId)
   }
 
   /**
@@ -250,20 +439,25 @@ export class StateRefreshScheduler {
    * child devices that carry no policy of their own are judged through it.
    */
   isIntegrationAwaitingFirstRead(key: string): boolean {
-    return this.groups.get(key)?.gated === true
+    return this.groups.get(key)?.gated === true || this.tombstones.has(key)
   }
 
   dispose(): void {
     this.disposed = true
     this.unsubscribe()
+    this.unsubscribeRegate()
     for (const device of this.devices.values()) {
       this.cancelFollowUps(device)
       this.clearFirstReportBound(device)
     }
     for (const group of this.groups.values()) this.clearGroupTimers(group)
+    for (const entry of this.tombstones.values()) clearTimeout(entry.timer)
+    this.tombstones.clear()
+    this.tombstoned.clear()
     this.devices.clear()
     this.groups.clear()
     this.epochs.clear()
+    this.rowKeys.clear()
   }
 
   // ── reconcile ────────────────────────────────────────────────────
@@ -277,6 +471,7 @@ export class StateRefreshScheduler {
       this.cancelFollowUps(device)
       this.clearFirstReportBound(device)
       this.devices.delete(deviceId)
+      if (device.stopping) this.tombstone(deviceId, device.groupKey)
     }
     const reconnected = new Set<string>()
     for (const entry of current.values()) {
@@ -285,6 +480,7 @@ export class StateRefreshScheduler {
       if (existing === undefined) {
         this.devices.set(entry.deviceId, {
           entry,
+          groupKey: this.resolveKey(entry.deviceId, entry),
           dueAt: now + interval,
           lastReportAt: now,
           lastCommandAt: 0,
@@ -295,14 +491,26 @@ export class StateRefreshScheduler {
           failures: 0,
           awaitingFirstRead: true,
           firstReportBound: null,
+          stopping: false,
         })
+        this.untombstone(entry.deviceId)
         this.armFirstReportBound(entry.deviceId)
       } else {
         if (effectiveRefreshIntervalMs(existing.entry.policy) !== interval)
           existing.dueAt = now + interval
+        // The runner registered again before the old connection's close emptied
+        // its source (a close ignored as superseded): a new entry is the new
+        // runner, so what it reports counts again (planning#713).
+        if (existing.stopping && entry !== existing.entry) {
+          existing.stopping = false
+          this.clearFirstReportBound(existing)
+          this.armFirstReportBound(entry.deviceId)
+          this.untombstone(entry.deviceId)
+        }
         existing.entry = entry
+        existing.groupKey = this.resolveKey(entry.deviceId, entry)
       }
-      if (this.noteEpoch(entry)) reconnected.add(groupKeyOf(entry))
+      if (this.noteEpoch(entry)) reconnected.add(this.resolveKey(entry.deviceId, entry))
     }
     this.rebuildGroups(now)
     if (this.ungateSettledGroups()) this.deps.onFirstReadSettled?.([])
@@ -328,7 +536,7 @@ export class StateRefreshScheduler {
   private noteEpoch(entry: StateRefreshPolicyEntry): boolean {
     const epoch = entry.policy.connectionEpoch
     if (epoch === undefined) return false
-    const key = groupKeyOf(entry)
+    const key = this.resolveKey(entry.deviceId, entry)
     const previous = this.epochs.get(key)
     this.epochs.set(key, epoch)
     return previous !== undefined && epoch !== previous
@@ -337,7 +545,7 @@ export class StateRefreshScheduler {
   private rebuildGroups(now: number): void {
     const members = new Map<string, Set<number>>()
     for (const [deviceId, device] of this.devices) {
-      const key = groupKeyOf(device.entry)
+      const key = this.keyOf(device)
       const set = members.get(key) ?? new Set<number>()
       set.add(deviceId)
       members.set(key, set)
@@ -531,6 +739,7 @@ export class StateRefreshScheduler {
         meta: { boundMs: FULL_PUSH_FIRST_REPORT_BOUND_MS },
       })
       const failedReads = device.failures > 0
+      device.stopping = false
       this.settleFirstRead([deviceId])
       if (failedReads) this.deps.onSilentPastBound?.(deviceId)
     }, FULL_PUSH_FIRST_REPORT_BOUND_MS)
@@ -677,7 +886,8 @@ export class StateRefreshScheduler {
     const ready: number[] = []
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
-      if (device === undefined || !device.awaitingFirstRead) continue
+      // A dying runner's answer is not one (planning#713); only the bound ends it.
+      if (device === undefined || !device.awaitingFirstRead || device.stopping) continue
       device.awaitingFirstRead = false
       this.clearFirstReportBound(device)
       ready.push(deviceId)
@@ -703,7 +913,7 @@ export class StateRefreshScheduler {
       device.failures = 0
       const intervalMs = effectiveRefreshIntervalMs(device.entry.policy)
       if (!device.entry.policy.batch) device.dueAt = now + intervalMs
-      keys.add(groupKeyOf(device.entry))
+      keys.add(this.keyOf(device))
     }
     for (const key of keys) {
       const group = this.groups.get(key)
@@ -741,7 +951,7 @@ export class StateRefreshScheduler {
       if (scheduled && !device.entry.policy.batch) {
         device.dueAt = Math.max(device.dueAt, now + retryInMs)
       }
-      keys.add(groupKeyOf(device.entry))
+      keys.add(this.keyOf(device))
       this.deps.logger.warn('state refresh failed', {
         tags: { deviceId },
         meta: {

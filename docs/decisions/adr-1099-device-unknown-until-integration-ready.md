@@ -125,6 +125,47 @@ offline as before. A scheduled device whose every read failed and that wrote
 nothing is concluded offline once when the bound passes.
 A device no scheduler schedules (no refresh policy) is not covered.
 
+**Amendment (planning#713, 2026-11-25): one key, a stopping runner, a presumed seed.**
+Three holes survived the first two amendments.
+(A) The scheduler grouped a device by its policy's `integrationId` while the
+mirror keyed it by the row's `meta.integrationId`; they never matched for Gree
+(`gree:<mac>` against `int_0011`). The mirror now tells the scheduler the row key
+(`noteIntegration` -> `noteRowIntegration`) and the device is grouped under it,
+so there is ONE key; a policy that named the integration differently is logged
+as a warning with `tags: { deviceId }`. Every other provider policy
+(esphome, dreame, mqtt-ha: `brokerId`; wyze: account id or `wyze-<mac>`; vesync,
+ecowitt: their integration id; reachability: `stableId`) is covered by the same
+rule, whatever it named.
+(B) A hub-initiated stop of a runner on this node (`process.stop`, `restart`,
+`restartAll`, which uninstall and applyServerUpdate use) goes through one helper
+that re-gates the runner's devices before the SIGTERM
+(`StateRefreshPolicyRegistry.regateSource` -> scheduler `regate`): they stop
+counting reports as answers and await again. When the disconnect then empties
+the runner's source (`replaceSource(..., [])`) the scheduler leaves a TOMBSTONE
+for the integration: the group stays awaiting and the mirror holds the late
+teardown offline (a closed link -> `markOnline(false)`). The tombstone ends when
+the integration registers again (normal boot gating takes over) or at the 120 s
+bound (a bounded hold, the same bound as above), when the held offlines are
+released through the normal path (so an uninstall resolves too). A new
+registration also ends `stopping` when the old connection's close was ignored as
+superseded, and a second stop of the same key re-arms a full bound. In-memory,
+no event gates (D3, D49). A crash respawn is NOT gated, on purpose: a crashed
+runner writes no teardown offline, and a real offline must show. Gaps: runners
+hosted on an agent (their policies register in the agent process, which the hub
+scheduler does not read), hub-main in-process addons, and the broker shutdown
+`stopped()`. Chosen over dropping device-status writes of a runner already told
+to shut down: the hub cannot tell a teardown write from a real late one, and the
+held-offline path already logs and bounds it.
+(C) The `BaseDevice` construction seed is a PRESUMPTION: `{ online: true,
+unknown: true }`. While the integration awaits, the mirror never lets it
+overwrite a prior reading (the prior `online` stays, marked `unknown`) and it
+clears no held offline; `markOnline` ends `unknown` even when the value is
+unchanged; once the integration is ready a slice still presumed becomes a plain
+`online: true` (a driver that never calls `markOnline`, accessory children). A
+device whose integration is not awaited keeps the old behaviour (plain online).
+
+Specs: `device-unknown-restart-holes.spec.ts`, `base-device-presumed-status.spec.ts`.
+
 ## Enforcement
 
 Specs in `packages/system/src/builtins/device-manager/__tests__/device-unknown-until-ready.spec.ts`

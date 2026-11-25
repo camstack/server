@@ -335,7 +335,15 @@ export abstract class BaseDevice<
     // never-managed devices — permanently OFFLINE once `listAll` surfaces
     // the real cap-state online flag instead of a hardcoded `true`.
     if (!this.statusIsExternal) {
-      const seed: DeviceStatus = { online: true, lastChangedAt: Date.now() }
+      // `unknown: true` (planning#713): the seed is a PRESUMPTION, never an
+      // answer. The hub keeps a prior reading under it while the integration
+      // has not answered, and turns it into a plain `online: true` once the
+      // integration is ready and the driver never said anything.
+      const seed: DeviceStatus = {
+        online: true,
+        lastChangedAt: Date.now(),
+        unknown: true,
+      }
       this.runtimeState.setCapState('device-status', seed)
     }
 
@@ -402,8 +410,17 @@ export abstract class BaseDevice<
    * override to gate side effects on the transition.
    */
   markOnline(online: boolean): void {
-    if (this.statusIsExternal || this.online === online) return
-    const next: DeviceStatus = { online, lastChangedAt: Date.now() }
+    if (this.statusIsExternal) return
+    // An unchanged value still ENDS the presumption (planning#713): the driver
+    // has now said it, so the slice must lose its `unknown` marker.
+    const prior = this.runtimeState.getCapState<DeviceStatus>('device-status')
+    const presumed = prior?.unknown === true
+    if (this.online === online && !presumed) return
+    const unchanged = prior !== undefined && prior.online === online
+    const next: DeviceStatus = {
+      online,
+      lastChangedAt: unchanged ? prior.lastChangedAt : Date.now(),
+    }
     this.runtimeState.setCapState('device-status', next)
   }
 

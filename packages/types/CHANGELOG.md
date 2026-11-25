@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device's construction status is marked as a presumption (unknown) until its driver reports
+
 ## [1.2.632] - 2026-11-25
 
 ### Changed
