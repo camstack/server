@@ -7,13 +7,14 @@ import { boundPortFrom, MatterIntegrationManager } from '../matter-integration-m
 interface Line {
   readonly level: string
   readonly message: string
+  readonly meta: unknown
 }
 
 function recordingLogger(lines: Line[]): IScopedLogger {
   const at =
     (level: string) =>
-    (message: string): void => {
-      lines.push({ level, message })
+    (message: string, ctx?: { readonly meta?: unknown }): void => {
+      lines.push({ level, message, meta: ctx?.meta })
     }
   const logger: IScopedLogger = {
     debug: at('debug'),
@@ -55,11 +56,12 @@ function failingController(message: string): MatterController {
 
 describe('a fabric that cannot bind the shared port', () => {
   it('reads the port out of the bind error', () => {
-    expect(boundPortFrom('Cannot bind {::}:5540')).toBe('5540')
+    expect(boundPortFrom('Cannot bind {::}:5540 because port is already in use')).toBe('5540')
+    expect(boundPortFrom('Cannot bind to {::}:5540 (code EACCES)')).toBeNull()
     expect(boundPortFrom('something else')).toBeNull()
   })
 
-  it('logs once, with the fabric id and the plain reason', async () => {
+  async function startWith(message: string): Promise<{ lines: Line[]; status: string }> {
     const lines: Line[] = []
     const manager = new MatterIntegrationManager({
       id: 'matter_001',
@@ -71,13 +73,28 @@ describe('a fabric that cannot bind the shared port', () => {
       onDisconnected: () => undefined,
       onNodesChanged: () => undefined,
       onAttributeReport: () => undefined,
-      makeController: () => failingController('Cannot bind {::}:5540'),
+      makeController: () => failingController(message),
     })
     await manager.start()
+    return { lines, status: manager.getInfo().status }
+  }
+
+  it('logs once, with the fabric id and the plain reason', async () => {
+    const { lines, status } = await startWith(
+      'Cannot bind {::}:5540 because port is already in use',
+    )
     const warns = lines.filter((l) => l.level === 'warn')
     expect(warns).toHaveLength(1)
     expect(warns[0]?.message).toContain('matter_001')
     expect(warns[0]?.message).toContain('another fabric of this addon already holds port 5540')
-    expect(manager.getInfo().status).toBe('error')
+    expect(status).toBe('error')
+  })
+
+  it('keeps the real message, with its code, for any other bind failure', async () => {
+    const { lines } = await startWith('Cannot bind to {::}:5540 (code EACCES)')
+    const warns = lines.filter((l) => l.level === 'warn')
+    expect(warns).toHaveLength(1)
+    expect(warns[0]?.message).not.toContain('already holds')
+    expect(JSON.stringify(warns[0]?.meta)).toContain('code EACCES')
   })
 })

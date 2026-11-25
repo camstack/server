@@ -305,9 +305,13 @@ export class MatterIntegrationManager {
   }
 }
 
-/** The port of a `Cannot bind {::}:<port>` failure, or null for any other error. */
+/**
+ * The port of matter.js's address-in-use failure
+ * (`Cannot bind {::}:<port> because port is already in use`), or null for any
+ * other error — including `Cannot bind to … (code EACCES)`, which keeps its code.
+ */
 export function boundPortFrom(message: string): string | null {
-  const match = /Cannot bind .*:(\d+)/.exec(message)
+  const match = /^Cannot bind \S+:(\d+) because port is already in use/.exec(message)
   return match?.[1] ?? null
 }
 
