@@ -1786,7 +1786,10 @@ export class BrokerWebrtcServer {
     const requestedSessionId = opts.sessionId
     if (requestedSessionId !== undefined && this.sessions.has(requestedSessionId)) {
       const stale = this.sessions.get(requestedSessionId)!
-      sessionLogger.warn(
+      // The expected recovery for a client retry / adaptive re-offer, not a
+      // fault: debug, so it no longer shows as a warning on every session open
+      // (planning#731). The stale session is still closed below.
+      sessionLogger.debug(
         'Session id reused by client retry — closing stale session before re-creating',
         {
           meta: { sessionId: requestedSessionId, brokerId: stale.brokerId },

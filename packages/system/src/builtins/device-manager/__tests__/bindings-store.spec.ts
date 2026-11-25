@@ -14,6 +14,8 @@ import {
   DeviceType,
   EventCategory,
   type IEventBus,
+  motionDetectionCapability,
+  snapshotCapability,
   type IScopedLogger,
   type SystemEvent,
 } from '@camstack/types'
@@ -307,6 +309,28 @@ describe('device-manager bindings store', () => {
     // And the sweep is not silently empty — the assertion above would pass on
     // two empty lists.
     expect(all.flatMap((row) => row.entries).length).toBeGreaterThan(0)
+  })
+
+  it('logs a skipped default wrapper once per (device, reason), again only when the set changes (planning#731)', async () => {
+    const capRegistry = new CapabilityRegistry(makeLogger())
+    capRegistry.declareCapability(motionDetectionCapability)
+    capRegistry.declareCapability(snapshotCapability)
+    capRegistry.registerWrapper('motion-detection', 'motion-wasm', { defaultActive: true })
+    ctx.kernel.capabilityRegistry = capRegistry
+    await seedDeviceRow(store, { deviceId: 3, type: 'event-emitter' })
+    const logger = (ctx as unknown as { logger: IScopedLogger }).logger
+    const skipLines = (): number =>
+      vi
+        .mocked(logger.debug)
+        .mock.calls.filter(([msg]) => String(msg).includes('default wrappers skipped')).length
+
+    for (let i = 0; i < 5; i += 1) await addon.getBindings({ deviceId: 3 })
+    expect(skipLines()).toBe(1)
+
+    // The skipped set changed: that is a state change and is logged again.
+    capRegistry.registerWrapper('snapshot', 'core/snapshot', { defaultActive: true })
+    for (let i = 0; i < 5; i += 1) await addon.getBindings({ deviceId: 3 })
+    expect(skipLines()).toBe(2)
   })
 
   it('getAllBindings reads the persisted wrapper activations ONCE — not once per device', async () => {

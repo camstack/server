@@ -16,6 +16,7 @@ import type {
   CapabilityDefinition,
   DeviceBindingEntry,
   ICapabilityRegistry,
+  IScopedLogger,
 } from '@camstack/types'
 import {
   COMPOSER_ADDON_ID,
@@ -244,6 +245,32 @@ export function resolveRemoteNativeCapFromRegistry(
     }
   }
   return null
+}
+
+/** Last skipped set logged per (device, reason), per logger — a skip is logged
+ *  when it first appears or its content changes, never on every repeat read. */
+const lastSkipLogged = new WeakMap<IScopedLogger, Map<string, string>>()
+
+function logSkipOnChange(
+  logger: IScopedLogger,
+  deviceId: number,
+  reason: string,
+  skipped: readonly string[],
+  extra: Readonly<Record<string, unknown>>,
+): void {
+  let seen = lastSkipLogged.get(logger)
+  if (!seen) {
+    seen = new Map()
+    lastSkipLogged.set(logger, seen)
+  }
+  const key = `${deviceId}|${reason}`
+  const signature = [...skipped].sort().join(',')
+  if (seen.get(key) === signature) return
+  seen.set(key, signature)
+  logger.debug(`getBindings: default wrappers skipped — ${reason}`, {
+    tags: { deviceId },
+    meta: { ...extra, skipped },
+  })
 }
 
 /**
@@ -663,19 +690,18 @@ async function resolveBindingsForDevice(
       })
       seenCaps.add(capName)
     }
-    // A silently skipped bind reads as "the cap was never a candidate". Say so
-    // once per call, at debug, tagged so it is answerable per-camera.
+    // A silently skipped bind reads as "the cap was never a candidate". Say so,
+    // at debug, tagged so it is answerable per-camera — but only when the
+    // (device, reason) state CHANGED: this resolver runs on every aggregate read,
+    // and the same unchanged skip repeated 57 times in 40 s for one camera
+    // (planning#731).
     if (skippedForType.length > 0) {
-      deps.ctx.logger.debug('getBindings: default wrappers skipped — deviceTypes mismatch', {
-        tags: { deviceId },
-        meta: { deviceType, skipped: skippedForType },
+      logSkipOnChange(deps.ctx.logger, deviceId, 'deviceTypes mismatch', skippedForType, {
+        deviceType,
       })
     }
     if (skippedSystem.length > 0) {
-      deps.ctx.logger.debug('getBindings: default wrappers skipped — system scope', {
-        tags: { deviceId },
-        meta: { skipped: skippedSystem },
-      })
+      logSkipOnChange(deps.ctx.logger, deviceId, 'system scope', skippedSystem, {})
     }
   }
 
