@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.262] - 2026-11-25
+
 ### Changed
 
 - Reolink: an awake camera that drops its connection (D2C_DISC) is redialled after a short capped backoff instead of a long wait, so recording resumes sooner.
