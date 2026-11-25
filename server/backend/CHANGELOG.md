@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.954] - 2026-11-25
+
 ### Changed
 
 - A Home Assistant restart no longer announces a burst of device offline then online notifications: push integrations are held as unknown until their first state arrives.

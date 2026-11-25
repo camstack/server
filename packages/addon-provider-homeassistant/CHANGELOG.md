@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.704] - 2026-11-25
+
 ### Changed
 
 - Home Assistant devices and containers report unknown, not offline, until their first state arrives after a restart.
