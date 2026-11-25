@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.632] - 2026-11-25
+
 ### Changed
 
 - A notification rule button can require a confirmation: the tap opens a confirm page and only its confirm runs the Action

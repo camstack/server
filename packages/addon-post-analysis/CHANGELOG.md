@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.728] - 2026-11-25
+
 ### Changed
 
 - A notification button set to ask for confirmation opens a confirm page first; a background tap can no longer run it, so one accidental tap never unlocks a door
