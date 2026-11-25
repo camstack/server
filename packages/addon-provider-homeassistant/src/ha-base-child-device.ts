@@ -184,7 +184,10 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
     // only when a command was not confirmed by a push.
     registerHaStateRefresh({
       ctx: this.ctx,
-      integrationId: this.ctx.deviceMeta.integrationId ?? this.brokerId,
+      brokerId: this.brokerId,
+      integrationId: this.ctx.deviceMeta.integrationId,
+      deviceId: this.id,
+      logger: this.ctx.logger,
       reapplyCachedState: () => this.reapplyCachedState(),
     })
     // device-admin-link — a child / standalone device IS one HA entity, so its

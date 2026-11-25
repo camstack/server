@@ -49,7 +49,8 @@ export function ControlHero({
   const [motionBusy, setMotionBusy] = useState(false)
   // Default ONLINE until the slice lands — never flash the badge during
   // initial load; only an explicit `online: false` surfaces it.
-  const isOffline = status !== undefined && status.online === false
+  // An `unknown` slice (D1099) is not yet answered, never offline.
+  const isOffline = status !== undefined && status.online === false && status.unknown !== true
   const offlineSince = isOffline ? status.lastChangedAt : null
 
   return (

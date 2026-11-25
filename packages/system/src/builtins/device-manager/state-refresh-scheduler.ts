@@ -128,7 +128,30 @@ interface GroupState {
   scheduleTimer: Timer | null
   heartbeatTimer: Timer | null
   lastReportAt: number
+  /**
+   * The integration just (re)appeared and has not answered yet (D1099): its
+   * siblings' offline is held. Set once, when the group is created (hub boot,
+   * or the integration's runner came back with no settled entries); cleared
+   * when no device of it awaits any more and NEVER set again — a device
+   * hot-added to a settled integration gates only itself.
+   */
+  gated: boolean
 }
+
+/**
+ * The caps the FRAMEWORK writes on a device while it registers and activates,
+ * before the provider has said anything about the entity: the liveness claim
+ * under judgement, the `feature-probe` seed / `onProbe` stamp, and the
+ * `device-admin-link` answer. A report of one of these is never a full-push
+ * device's first state (D1099); only a cap the provider's own state path
+ * writes is. One named set — a new framework seed is added here, and the
+ * real-activation spec of the Home Assistant child fails until it is.
+ */
+export const FRAMEWORK_STATE_CAPS: ReadonlySet<string> = new Set([
+  'device-status',
+  'feature-probe',
+  'device-admin-link',
+])
 
 /** The key one integration instance is scheduled under: `addonId::integrationId`. */
 export function integrationGroupKey(addonId: string, integrationId: string): string {
@@ -197,7 +220,7 @@ export class StateRefreshScheduler {
       device.awaitingFirstRead &&
       device.entry.policy.push === 'full' &&
       capName !== undefined &&
-      capName !== 'device-status'
+      !FRAMEWORK_STATE_CAPS.has(capName)
     ) {
       this.deps.logger.info(
         'state refresh: first state from the push integration, device answered',
@@ -229,10 +252,7 @@ export class StateRefreshScheduler {
    * child devices that carry no policy of their own are judged through it.
    */
   isIntegrationAwaitingFirstRead(key: string): boolean {
-    for (const device of this.devices.values()) {
-      if (device.awaitingFirstRead && groupKeyOf(device.entry) === key) return true
-    }
-    return false
+    return this.groups.get(key)?.gated === true
   }
 
   dispose(): void {
@@ -287,6 +307,7 @@ export class StateRefreshScheduler {
       if (this.noteEpoch(entry)) reconnected.add(groupKeyOf(entry))
     }
     this.rebuildGroups(now)
+    if (this.ungateSettledGroups()) this.deps.onFirstReadSettled?.([])
     for (const key of reconnected) {
       this.deps.logger.info('state refresh: integration reconnected, reading every device', {
         meta: { group: key },
@@ -341,6 +362,7 @@ export class StateRefreshScheduler {
           scheduleTimer: null,
           heartbeatTimer: null,
           lastReportAt: now,
+          gated: true,
         })
       } else {
         existing.devices = devices
@@ -634,6 +656,18 @@ export class StateRefreshScheduler {
     await settled
   }
 
+  /** Open every gated integration none of whose devices awaits any more; whether any opened. */
+  private ungateSettledGroups(): boolean {
+    let opened = false
+    for (const group of this.groups.values()) {
+      if (!group.gated) continue
+      if ([...group.devices].some((id) => this.devices.get(id)?.awaitingFirstRead)) continue
+      group.gated = false
+      opened = true
+    }
+    return opened
+  }
+
   /**
    * A read settled (a failed first read is an answer too: the integration is
    * unreachable). The devices it covered stop awaiting and the consumer is told.
@@ -647,7 +681,8 @@ export class StateRefreshScheduler {
       this.clearFirstReportBound(device)
       ready.push(deviceId)
     }
-    if (ready.length > 0) this.deps.onFirstReadSettled?.(ready)
+    const ungated = this.ungateSettledGroups()
+    if (ready.length > 0 || ungated) this.deps.onFirstReadSettled?.(ready)
   }
 
   /**

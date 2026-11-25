@@ -13,7 +13,7 @@ import { z } from 'zod'
 
 /** The one field read off the `device-status` slice (its wire output is
  *  untyped here). */
-const OnlineSchema = z.object({ online: z.boolean() })
+const OnlineSchema = z.object({ online: z.boolean(), unknown: z.literal(true).optional() })
 
 export type AlexaConnectivity = 'OK' | 'UNREACHABLE'
 
@@ -24,7 +24,11 @@ export async function readConnectivity(
 ): Promise<AlexaConnectivity> {
   try {
     const parsed = OnlineSchema.safeParse(await api.deviceStatus.getStatus.query({ deviceId }))
-    return parsed.success && !parsed.data.online ? 'UNREACHABLE' : 'OK'
+    // `unknown` (D1099) is the provider not having answered since a restart:
+    // not a claim of unreachability, so it answers OK like a failed read does.
+    return parsed.success && !parsed.data.online && parsed.data.unknown !== true
+      ? 'UNREACHABLE'
+      : 'OK'
   } catch (err) {
     logger.debug('alexa: device-status unreadable — reporting connectivity OK', {
       tags: { deviceId },

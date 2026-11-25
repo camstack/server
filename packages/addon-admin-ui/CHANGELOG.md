@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device page no longer shows the offline badge for a device whose state is not yet known after a restart.
+
 ## [1.2.746] - 2026-11-25
 
 ### Changed

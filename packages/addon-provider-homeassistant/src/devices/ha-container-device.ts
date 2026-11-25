@@ -329,6 +329,21 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
     this.availabilityEventUnsub = typeof unsub === 'function' ? unsub : null
   }
 
+  /**
+   * The FIRST answer ends `unknown` (D1099) whatever it says: unknown to online
+   * is not a transition, and unknown to offline (a broker that dropped before
+   * any child was seen) is a real answer, never a stuck `unknown: true`. Every
+   * later call is the base behaviour.
+   */
+  override markOnline(online: boolean): void {
+    if (this.statusAnswered) {
+      super.markOnline(online)
+      return
+    }
+    this.statusAnswered = true
+    this.runtimeState.setCapState('device-status', { online, lastChangedAt: Date.now() })
+  }
+
   /** Recompute `online` as "any child entity currently reachable". `markOnline`
    *  no-ops when the value is unchanged, so this is churn-free. */
   private recomputeOnline(): void {
@@ -339,21 +354,7 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
         break
       }
     }
-    if (!this.statusAnswered) {
-      // The first child state ANSWERS the unknown: unknown to online (or offline)
-      // is not a transition, so it is written as an answer, logged apart.
-      this.statusAnswered = true
-      this.ctx.logger.info('ha-container liveness answered (first child state)', {
-        tags: { deviceId: this.id },
-        meta: { online: anyReachable, entityCount: this.entityIds.size },
-      })
-      this.runtimeState.setCapState('device-status', {
-        online: anyReachable,
-        lastChangedAt: Date.now(),
-      })
-      return
-    }
-    if (this.online !== anyReachable) {
+    if (!this.statusAnswered || this.online !== anyReachable) {
       this.ctx.logger.info('ha-container online transition (derived from children)', {
         tags: { deviceId: this.id },
         meta: { online: anyReachable, entityCount: this.entityIds.size },

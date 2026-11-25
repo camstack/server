@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa reports a device whose state is not yet known after a restart as reachable, not unreachable.
+
 ## [1.2.208] - 2026-11-24
 
 ### Changed

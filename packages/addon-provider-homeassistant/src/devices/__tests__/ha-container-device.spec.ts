@@ -466,4 +466,12 @@ describe('HaContainerDevice liveness is unknown until a child state is seen (D10
     expect(status()).toMatchObject({ online: false })
     expect(status()?.unknown).toBeUndefined()
   })
+
+  it('a broker disconnect before any child state ends in a real offline answer, not a stuck unknown', async () => {
+    const { device, status } = containerWithBus()
+    await device.onActivate()
+    device.markOnline(false)
+    expect(status()).toMatchObject({ online: false })
+    expect(status()?.unknown).toBeUndefined()
+  })
 })

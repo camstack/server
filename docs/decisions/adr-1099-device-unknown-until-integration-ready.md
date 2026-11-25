@@ -75,8 +75,9 @@ Nothing in the pipeline could say "not yet known".
 - A device whose integration is down for real stays `unknown` until the first
   read settles — at most one declared refresh interval after registration —
   and is then offline plus the 15 s hold-off.
-- A later adoption under a running integration re-holds its siblings: the new
-  device awaits its first read, and so does its group until that read settles.
+- A later adoption under a running integration gates only ITSELF: an
+  integration is gated once, when it (re)appears (hub boot, or its runner came
+  back with no settled entries), and never again for a device added to it.
 - The `unknown` slice is persisted like any `device-status` slice (restored at
   boot as the last known `online` plus the marker); the next answer replaces it.
 - A legacy row with no `meta.integrationId` on itself or its parent stays
@@ -89,8 +90,10 @@ Nothing in the pipeline could say "not yet known".
 
 - **Full-push integrations are gated too** (planning#690, the 07:18Z restart of
   ~45 Home Assistant devices). A `push: 'full'` device is never read, so it
-  awaits from registration until its FIRST state report (any cap but
-  `device-status`) — that device alone settles — or until
+  awaits from registration until its FIRST state report (a cap the
+  provider's own state path writes: never the named `FRAMEWORK_STATE_CAPS`,
+  i.e. `device-status`, the `feature-probe` seed / `onProbe` stamp and
+  `device-admin-link`, which the framework writes at activation) — that device alone settles — or until
   `FULL_PUSH_FIRST_REPORT_BOUND_MS` (120 s), after which a dead integration is
   concluded offline as before. The integration stays awaiting while any of its
   devices has not settled, so a sibling's held offline is not released ahead of
@@ -99,7 +102,10 @@ Nothing in the pipeline could say "not yet known".
   the mirror (`noteIntegration`); the broker id was a different key and the
   group never matched. A Home Assistant container reports `unknown` until its
   first child state; unknown to online is not a transition. An `unknown: true`
-  slice is never held as an offline.
+  slice is never held as an offline, and it is no claim of absence for any
+  reader: Alexa answers connectivity `OK` (as for a failed read), the device
+  hero shows no offline badge, the composer reads no value. The container's
+  first `markOnline`, either way, ends `unknown`.
 
 ## Enforcement
 

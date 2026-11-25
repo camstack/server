@@ -9,6 +9,7 @@
 import {
   deviceStateRefreshCapability,
   type DeviceContext,
+  type IScopedLogger,
   type InferNativeProvider,
   type StateRefreshPolicy,
 } from '@camstack/types'
@@ -21,13 +22,15 @@ export type HaRefreshContext = Pick<DeviceContext, 'registerNativeCap'>
 
 export interface HaStateRefreshTarget {
   readonly ctx: HaRefreshContext
+  readonly brokerId: string
   /**
-   * The integration instance the device belongs to (`meta.integrationId`, e.g.
-   * `int_0019`) — the SAME key the device-manager's readiness gate groups the
-   * device's status writes under (D1099). The broker id is only the fallback of
-   * a legacy row that carries none.
+   * The device's own `meta.integrationId` (e.g. `int_0019`) — the SAME key the
+   * device-manager's readiness gate groups the device's status writes under
+   * (D1099); `undefined` on a legacy row that carries none.
    */
-  readonly integrationId: string
+  readonly integrationId: string | undefined
+  readonly deviceId: number
+  readonly logger: IScopedLogger
   /** Re-apply the broker's cached state of this device's entity. */
   readonly reapplyCachedState: () => Promise<void>
 }
@@ -41,6 +44,20 @@ export function haRefreshPolicy(integrationId: string): StateRefreshPolicy {
   }
 }
 
+/**
+ * The one place the policy's integration key is derived. A legacy row with no
+ * `integrationId` falls back to the broker id, which the readiness gate never
+ * matches (the device stays ungated): said once, with the device.
+ */
+export function haPolicyIntegrationId(target: HaStateRefreshTarget): string {
+  if (target.integrationId !== undefined) return target.integrationId
+  target.logger.warn(
+    'state refresh: the device row carries no integrationId, grouping under the broker id (the readiness gate will not cover it)',
+    { tags: { deviceId: target.deviceId }, meta: { brokerId: target.brokerId } },
+  )
+  return target.brokerId
+}
+
 export function registerHaStateRefresh(target: HaStateRefreshTarget): void {
   const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
     refresh: async () => {
@@ -50,6 +67,6 @@ export function registerHaStateRefresh(target: HaStateRefreshTarget): void {
     resubscribe: async () => ({ ok: true }),
   }
   target.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
-    stateRefresh: haRefreshPolicy(target.integrationId),
+    stateRefresh: haRefreshPolicy(haPolicyIntegrationId(target)),
   })
 }

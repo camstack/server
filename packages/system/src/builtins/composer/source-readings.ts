@@ -161,6 +161,8 @@ export function valueAtPath(slice: Readonly<Record<string, unknown>>, path: stri
 }
 
 export function onlineOf(slice: Readonly<Record<string, unknown>>): boolean | null {
+  // `unknown: true` (D1099) is "the provider has not answered yet": no reading.
+  if (slice['unknown'] === true) return null
   const online = slice['online']
   return typeof online === 'boolean' ? online : null
 }
