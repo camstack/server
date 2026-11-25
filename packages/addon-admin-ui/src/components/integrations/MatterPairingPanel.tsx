@@ -22,6 +22,13 @@ import { Loader2 } from 'lucide-react'
 /** The broker kind this dialog commissions into (this dialog IS the Matter flow). */
 const MATTER_BROKER_KIND = 'matter'
 
+/**
+ * The addon that owns the Matter `broker` provider. `broker` is a collection cap: a call without
+ * an addon id goes to whichever broker addon the hub picks (mqtt-broker once answered a
+ * commissioning with "not supported").
+ */
+const MATTER_BROKER_ADDON_ID = 'matter-broker'
+
 const PHASES = ['discovering', 'pase', 'commissioning', 'done'] as const
 
 type Phase = (typeof PHASES)[number] | 'failed' | 'idle'
@@ -101,7 +108,11 @@ export function MatterPairingPanel({
   const busy =
     view.phase === 'discovering' || view.phase === 'pase' || view.phase === 'commissioning'
   const progress = useBrokerGetState(
-    { brokerId: brokerId ?? '', key: 'commission' },
+    {
+      addonId: MATTER_BROKER_ADDON_ID,
+      brokerId: brokerId ?? '',
+      key: 'commission',
+    },
     { enabled: brokerId !== null && busy, refetchInterval: busy ? 400 : false },
   )
 
@@ -121,6 +132,7 @@ export function MatterPairingPanel({
     setView({ phase: 'discovering', failure: null, message: null })
     publish.mutate(
       {
+        addonId: MATTER_BROKER_ADDON_ID,
         brokerId,
         target: { action: 'commissionNode' },
         payload: { pairingCode: code.trim() },

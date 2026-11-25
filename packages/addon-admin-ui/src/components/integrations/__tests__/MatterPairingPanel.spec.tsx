@@ -22,11 +22,14 @@ interface ReportedPhase {
 }
 
 const harness = vi.hoisted(() => {
-  const box: { state: ReportedPhase | null; brokers: { id: string; usable: boolean }[] } = {
+  const box: {
+    state: ReportedPhase | null
+    brokers: { id: string; usable: boolean }[]
+  } = {
     state: null,
     brokers: [{ id: 'matter_001', usable: true }],
   }
-  return { publish: vi.fn(), box }
+  return { publish: vi.fn(), getState: vi.fn(), box }
 })
 
 vi.mock('@camstack/ui-library', async () => {
@@ -42,7 +45,10 @@ vi.mock('@camstack/ui-library', async () => {
       error: null,
     }),
     useBrokerPublish: () => ({ mutate: harness.publish, isPending: false }),
-    useBrokerGetState: () => ({ data: harness.box.state }),
+    useBrokerGetState: (...args: unknown[]) => {
+      harness.getState(...args)
+      return { data: harness.box.state }
+    },
   }
 })
 
@@ -50,7 +56,9 @@ function renderDialog(
   onCommissioned: () => void = vi.fn(),
   brokerId: string | null = 'matter_001',
 ): ReactElement {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return (
     <QueryClientProvider client={client}>
       <Dialog open>
@@ -67,7 +75,9 @@ function renderDialog(
 }
 
 function pasteAndSubmit(code: string): void {
-  fireEvent.change(screen.getByLabelText('Pairing code'), { target: { value: code } })
+  fireEvent.change(screen.getByLabelText('Pairing code'), {
+    target: { value: code },
+  })
   fireEvent.click(screen.getByRole('button', { name: 'Add device' }))
 }
 
@@ -85,10 +95,25 @@ describe('MatterPairingPanel', () => {
     pasteAndSubmit('34970112332')
     expect(harness.publish).toHaveBeenCalledWith(
       {
+        addonId: 'matter-broker',
         brokerId: 'matter_001',
         target: { action: 'commissionNode' },
         payload: { pairingCode: '34970112332' },
       },
+      expect.any(Object),
+    )
+  })
+
+  it('addresses the commissioning state read to the matter-broker addon too', () => {
+    harness.getState.mockReset()
+    harness.publish.mockImplementation(() => undefined)
+    render(renderDialog())
+    expect(harness.getState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addonId: 'matter-broker',
+        brokerId: 'matter_001',
+        key: 'commission',
+      }),
       expect.any(Object),
     )
   })
@@ -116,7 +141,9 @@ describe('MatterPairingPanel', () => {
     harness.box.brokers = []
     try {
       render(renderDialog(vi.fn(), 'matter_001'))
-      fireEvent.change(screen.getByLabelText('Pairing code'), { target: { value: '34970112332' } })
+      fireEvent.change(screen.getByLabelText('Pairing code'), {
+        target: { value: '34970112332' },
+      })
       expect(screen.getByRole('button', { name: 'Add device' }).hasAttribute('disabled')).toBe(true)
     } finally {
       harness.box.brokers = [{ id: 'matter_001', usable: true }]
