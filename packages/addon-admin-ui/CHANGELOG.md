@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.753] - 2026-11-25
+
 ### Fixed
 
 - Adding a Matter device by pairing code now reaches the Matter addon instead of the first broker addon, which refused it.

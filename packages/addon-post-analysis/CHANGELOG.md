@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.730] - 2026-11-25
+
 ### Changed
 
 - A restart no longer announces devices as back online while their integration has not answered yet.
