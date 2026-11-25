@@ -35,11 +35,13 @@ import type { NcLivenessState } from './liveness-ledger.js'
 export const DEVICE_LIVENESS_HOLDOFF_MS = 90_000
 
 /**
- * Stream offline / online ride the device window: a stream that drops and
- * returns within it sends nothing. One source — the operator asked for "the
- * same window" as a device.
+ * Stream offline / online keep their own short window (D1100): a stream's
+ * offline already waited out the broker's 120 s stale window before it
+ * reached the centre, so stacking the 90 s device window on it would announce
+ * a dead stream ~210 s late. A stream that drops and returns within it sends
+ * nothing.
  */
-export const STREAM_LIVENESS_HOLDOFF_MS = DEVICE_LIVENESS_HOLDOFF_MS
+export const STREAM_LIVENESS_HOLDOFF_MS = 15_000
 
 /** Grace before a node offline (or its recovery) is announced — see the docblock. */
 export const NODE_LIVENESS_HOLDOFF_MS = 60_000

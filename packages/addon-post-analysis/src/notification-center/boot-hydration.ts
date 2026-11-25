@@ -55,6 +55,7 @@ export interface BootHydrationHost {
   kindDeps(): DurableKindDeps
   readonly liveness: NcLivenessLedger
   readonly livenessHoldoff: DeviceLivenessHoldoff
+  readonly streamLivenessHoldoff: DeviceLivenessHoldoff
   readonly plannedUpdateReturns: NcPlannedUpdateReturn
   readonly logger: IScopedLogger
   readonly now: () => number
@@ -259,6 +260,7 @@ export async function removeDeviceData(
       evictMirrors: (id) => {
         host.liveness.evictDevice(id)
         host.livenessHoldoff.forget(`device:${id}`)
+        host.streamLivenessHoldoff.forget(`stream:${id}`)
         host.alertStore.evictDevice(id)
         host.stateSummary.evictDevice(id)
         host.occupancyStore.evictDevice(id)
