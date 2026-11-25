@@ -48,6 +48,30 @@ describe('BatteryCorner', () => {
   })
 })
 
+describe('BatteryCorner icon tone', () => {
+  function iconClass(): string {
+    const icon = screen.getByTestId('dc-battery').querySelector('svg')
+    return icon?.getAttribute('class') ?? ''
+  }
+
+  it('low is the danger tone, never success', () => {
+    render(<BatteryCorner level={15} binary />)
+    expect(iconClass()).toContain('text-danger')
+    expect(iconClass()).not.toContain('text-success')
+  })
+
+  it('ok is the success tone', () => {
+    render(<BatteryCorner level={100} binary />)
+    expect(iconClass()).toContain('text-success')
+  })
+
+  it('a voltage with no level is muted, neither success nor danger', () => {
+    render(<BatteryCorner level={null} voltage={3.1} />)
+    expect(iconClass()).toContain('text-foreground-muted')
+    expect(iconClass()).not.toContain('text-success')
+  })
+})
+
 describe('cardBattery', () => {
   it('keeps a voltage-only slice and a binary flag, drops an unknown one', () => {
     expect(cardBattery({ level: null, voltage: 3.1 })).toEqual({ level: null, voltage: 3.1 })

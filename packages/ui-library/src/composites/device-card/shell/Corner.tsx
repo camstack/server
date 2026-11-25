@@ -205,7 +205,13 @@ export function BatteryCorner({
         shifted && 'left-11',
       )}
     >
-      <CardIcon glyph={low ? 'batteryLow' : 'battery'} className="h-3.5 w-3.5 text-success" />
+      <CardIcon
+        glyph={low ? 'batteryLow' : 'battery'}
+        className={cn(
+          'h-3.5 w-3.5',
+          low ? 'text-danger' : level === null ? 'text-foreground-muted' : 'text-success',
+        )}
+      />
       {state}
       {state !== null && volts !== null ? <span aria-hidden="true">·</span> : null}
       {volts}
