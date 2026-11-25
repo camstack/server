@@ -380,6 +380,7 @@ jobs:
             scripts/check-host-externals-identical.ts \
             scripts/check-requires-declared.ts \
             scripts/check-no-token-file-lookup.ts \
+            scripts/check-single-client-login.ts \
             scripts/check-no-legacy-token-prefix.ts \
             scripts/check-slab-writes-held.ts \
             scripts/check-secret-files-owner-only.ts \

@@ -9,7 +9,7 @@
  * the operator had just logged into. Every hub-talking tool now asks the one
  * resolver (`resolveCredentials` / `resolveFreshCredentials` in
  * `packages/develop/src/hub/`, or `scripts/hub/credentials.mjs` for a script);
- * `--token-file` is an explicit override and names no default path.
+ * `--token-file` no longer exists (D1101, `check-single-client-login`).
  *
  * Scope: `scripts/`, `tests/e2e/` and the CLI / develop sources,
  * excluding specs and this file. Comment-only lines are skipped. Textual.
@@ -83,7 +83,7 @@ function main(): number {
   console.error(
     'check-no-token-file-lookup: ask the shared resolver (resolveFreshCredentials / ' +
       'scripts/hub/credentials.mjs); the `camstack login` session is the credential, ' +
-      '--token-file is an explicit override with no default path',
+      'there is no token-file override (D1101)',
   )
   return 1
 }
