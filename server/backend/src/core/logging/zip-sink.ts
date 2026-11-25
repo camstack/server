@@ -46,6 +46,7 @@ export class ZipSink implements DownloadSink {
   private uncompressed = 0
   private compressed = 0
   private innerFull = false
+  private releaseHold: (() => void) | null = null
 
   constructor(
     private readonly inner: DownloadSink,
@@ -62,6 +63,11 @@ export class ZipSink implements DownloadSink {
     this.deflate.on('drain', () => this.events.emit('drain'))
     this.deflate.on('end', () => this.finish())
     this.deflate.on('error', (err) => this.inner.destroy(err))
+    // The client left: stop compressing and drop the drain listener on the closed socket.
+    this.inner.on('close', () => {
+      this.releaseHold?.()
+      this.deflate.destroy()
+    })
   }
 
   get destroyed(): boolean {
@@ -105,12 +111,17 @@ export class ZipSink implements DownloadSink {
   private holdForInner(): void {
     this.innerFull = true
     this.deflate.pause()
-    const resume = (): void => {
+    const release = (): void => {
       this.inner.off('drain', resume)
+      this.releaseHold = null
+    }
+    const resume = (): void => {
+      release()
       this.innerFull = false
       this.deflate.resume()
       this.events.emit('drain')
     }
+    this.releaseHold = release
     this.inner.on('drain', resume)
   }
 

@@ -15,11 +15,14 @@ class MemorySink implements DownloadSink {
   destroyed = false
   ended = false
   writableLength = 0
-  constructor(private readonly accept: boolean) {}
+  constructor(
+    private readonly accept: boolean,
+    private readonly autoDrain = true,
+  ) {}
   write(chunk: Uint8Array): boolean {
     this.chunks.push(Buffer.from(chunk))
     // A slow socket: it refuses the write now and drains a tick later.
-    if (!this.accept) setImmediate(() => this.events.emit('drain'))
+    if (!this.accept && this.autoDrain) setImmediate(() => this.events.emit('drain'))
     return this.accept
   }
   end(): void {
@@ -94,6 +97,18 @@ describe('ZipSink', () => {
     zip.end()
     await ended(inner)
     expect(readBack(inner.bytes()).data.toString('utf8')).toBe(text.repeat(200))
+  })
+
+  it('on a client abort while held, drops the drain listener and stops compressing', async () => {
+    const inner = new MemorySink(false, false)
+    const zip = new ZipSink(inner, 'logs.ndjson', new Date())
+    zip.write(Buffer.from('x'.repeat(100_000)))
+    zip.end()
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(inner.events.listenerCount('drain')).toBe(1)
+    inner.events.emit('close')
+    expect(inner.events.listenerCount('drain')).toBe(0)
+    expect(() => zip.write(Buffer.from('more'))).not.toThrow()
   })
 
   it('reports the inner sink as destroyed and forwards destroy', () => {

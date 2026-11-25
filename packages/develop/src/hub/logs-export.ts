@@ -129,7 +129,11 @@ export function zipEntryStream(file: string): Readable {
     fs.readSync(fd, header, 0, header.length, local)
     const start = local + 30 + header.readUInt16LE(26) + header.readUInt16LE(28)
     const raw = fs.createReadStream(file, { start, end: start + compressed - 1 })
-    return compressed === 0 ? raw : raw.pipe(zlib.createInflateRaw())
+    if (compressed === 0) return raw
+    const inflate = zlib.createInflateRaw()
+    // A truncated download must fail the read, never leave it waiting.
+    raw.on('error', (err) => inflate.destroy(err))
+    return raw.pipe(inflate)
   } finally {
     fs.closeSync(fd)
   }
