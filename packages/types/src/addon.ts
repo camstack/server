@@ -81,6 +81,7 @@ export {
 export type { PipelineStepInputOutput } from './capabilities/pipeline-step-input.js'
 export { defineRecordKinds } from './records/record-kind.js'
 export { addonPagesSourceCapability } from './capabilities/addon-pages-source.cap.js'
+export { appSourceCapability } from './capabilities/app-source.cap.js'
 // Schema-free list the transport uses to strip spoofable caller stamps (D28).
 export {
   CALLER_STAMPED_CAPABILITIES,

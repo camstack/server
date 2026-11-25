@@ -8,15 +8,14 @@
  * orchestration through `ctx.api` — no engine state. Its one store is the
  * accuracy evaluation's record kinds (`record-kinds.ts`).
  */
-import {
-  type AddonApi,
-  type AddonInitResult,
-  type AddonPageDeclaration,
-  type FrameResult,
-  type IAddonPageProvider,
-  appSourceCapability,
+import type {
+  AddonApi,
+  AddonInitResult,
+  AddonPageDeclaration,
+  FrameResult,
+  IAddonPageProvider,
 } from '@camstack/types'
-import { BaseAddon, addonPagesSourceCapability } from '@camstack/types/addon'
+import { BaseAddon, addonPagesSourceCapability, appSourceCapability } from '@camstack/types/addon'
 import type { z } from 'zod'
 import { createBenchmarkAppSourceProvider } from './app-source.js'
 import { benchmarkActions, type BenchmarkActions } from './benchmark-actions.js'

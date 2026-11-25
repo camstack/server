@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - RtpSource.videoCodec is nullable: an unmeasured codec stays unknown
+- appSourceCapability is exported from the light @camstack/types/addon entry
 
 ## [1.2.634] - 2026-11-25
 
