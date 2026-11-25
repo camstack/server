@@ -11,13 +11,14 @@ import {
 } from './collect.js'
 import { backfillOrigins } from './backfill.js'
 import { clampImageBytes, fetchTrackFrame } from './frame.js'
+import type { ReviewAccess } from './config.js'
 import type { ReviewHub } from './hub-api.js'
 import { buildPlan, VerdictSchema } from './plan.js'
 import { DEFAULT_TRIAGE_OPTIONS, triageTracks, type TriageOptions } from './triage.js'
 import { loadTrainingMembership } from './training.js'
 
 export interface TrackReviewDeps {
-  readonly getHub: () => ReviewHub
+  readonly getHub: (access?: ReviewAccess) => ReviewHub | Promise<ReviewHub>
   readonly now: () => number
   readonly random: () => number
 }
@@ -94,14 +95,14 @@ export function registerTrackReviewTools(server: McpServer, deps: TrackReviewDep
             : {}),
           ...(args.minScore !== undefined ? { minScore: args.minScore } : {}),
         }
-        const collected = await collectTracks(deps.getHub(), {
+        const collected = await collectTracks(await deps.getHub(), {
           hours: clampHours(args.hours),
           now: deps.now(),
           ...(args.deviceIds !== undefined ? { deviceIds: args.deviceIds } : {}),
           ...(args.classes !== undefined ? { classes: args.classes } : {}),
         })
         const excludeInTraining = args.excludeInTraining !== false
-        const training = await loadTrainingMembership(deps.getHub())
+        const training = await loadTrainingMembership(await deps.getHub())
         const result = triageTracks(
           collected.tracks,
           options,
@@ -148,7 +149,7 @@ export function registerTrackReviewTools(server: McpServer, deps: TrackReviewDep
     (args) =>
       guarded(async () => {
         const frame = await fetchTrackFrame(
-          deps.getHub(),
+          await deps.getHub(),
           args.deviceId,
           args.trackId,
           clampImageBytes(args.maxBytes),
@@ -203,11 +204,15 @@ export function registerTrackReviewTools(server: McpServer, deps: TrackReviewDep
     },
     (args) =>
       guarded(async () => {
-        const result = await applyPlan(deps.getHub(), args.plan, {
-          confirm: args.confirm,
-          collectionName: args.collectionName,
-          overwrite: args.overwrite === true,
-        })
+        const result = await applyPlan(
+          await deps.getHub(args.confirm ? 'write' : 'read'),
+          args.plan,
+          {
+            confirm: args.confirm,
+            collectionName: args.collectionName,
+            overwrite: args.overwrite === true,
+          },
+        )
         return {
           content: [json(result)],
           ...(result.refused !== undefined ? { isError: true } : {}),
@@ -225,11 +230,14 @@ export function registerTrackReviewTools(server: McpServer, deps: TrackReviewDep
     },
     (args) =>
       guarded(async () => {
-        const result = await backfillOrigins(deps.getHub(), {
-          confirm: args.confirm === true,
-          ...(args.collectionName !== undefined ? { collectionName: args.collectionName } : {}),
-          ...(args.frameIds !== undefined ? { frameIds: args.frameIds } : {}),
-        })
+        const result = await backfillOrigins(
+          await deps.getHub(args.confirm === true ? 'write' : 'read'),
+          {
+            confirm: args.confirm === true,
+            ...(args.collectionName !== undefined ? { collectionName: args.collectionName } : {}),
+            ...(args.frameIds !== undefined ? { frameIds: args.frameIds } : {}),
+          },
+        )
         return {
           content: [json(result)],
           ...(result.refused !== undefined ? { isError: true } : {}),

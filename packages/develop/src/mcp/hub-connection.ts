@@ -23,6 +23,8 @@ export interface HubConnectOptions {
   readonly workspaceRoot: string
   /** `--token-file` of the MCP entry. */
   readonly tokenFile?: string
+  /** An explicit token the caller already holds (the review MCP's `CAMSTACK_HUB_TOKEN`); beats the file. */
+  readonly token?: string
   /** `--server` of the MCP entry. */
   readonly server?: string
   readonly env?: Readonly<Record<string, string | undefined>>
@@ -101,6 +103,7 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
   const tls = resolveHubTls(hub.url, env, dir)
   const credentials = await resolveFreshCredentials({
     server: hub.url,
+    ...(options.token ? { token: options.token } : {}),
     ...(options.tokenFile ? { tokenFile: options.tokenFile } : {}),
     env: { CAMSTACK_SERVER: hub.url },
     loadSession: (server) => loadSession(server, dir),

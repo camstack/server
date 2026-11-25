@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- connectHub accepts an explicit token, used by the track review MCP for CAMSTACK_HUB_TOKEN.
+
 ## [0.1.58] - 2026-11-23
 
 ### Changed

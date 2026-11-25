@@ -23,8 +23,7 @@ import {
   validateAddon,
   whoProvides,
 } from '@camstack/develop'
-import { resolveReviewHub } from './track-review/config.js'
-import type { ReviewHub } from './track-review/hub-api.js'
+import { createReviewHubProvider } from './track-review/config.js'
 import { registerTrackReviewTools } from './track-review/register.js'
 
 function text(value: unknown): { content: { type: 'text'; text: string }[] } {
@@ -218,11 +217,7 @@ export function registerDevelopTools(
     },
   )
 
-  let cachedHub: ReviewHub | undefined
-  function reviewHub(): ReviewHub {
-    cachedHub ??= resolveReviewHub()
-    return cachedHub
-  }
+  const reviewHub = createReviewHubProvider()
 
   if (!(options.trackReview ?? options.only === undefined)) return
   registerTrackReviewTools(server, {

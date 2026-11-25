@@ -39,14 +39,15 @@ Hub methods used (`pipelineAnalytics.*` unless noted): `deviceManager.listAll`,
 
 ### Configuration
 
+Run `camstack login <host>` once (admin account for the write tools): the tools use that saved session, address and TLS pin included. The variables below are optional overrides and win over the session.
+
 | Variable | Meaning |
 | --- | --- |
 | `CAMSTACK_HUB_URL` | Hub address, e.g. `https://hub.local:4443`. |
 | `CAMSTACK_HUB_TOKEN_FILE` | File holding one token (preferred). `CAMSTACK_HUB_TOKEN` also works. |
 | `CAMSTACK_HUB_CA_FILE` | PEM of the hub's CA / pinned certificate for a self-signed hub. |
 
-TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin token;
-the hub's refusal is shown as-is. Tokens never appear in output.
+TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin login; a non-admin credential is refused up front, before any hub call. Tokens never appear in output.
 
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->

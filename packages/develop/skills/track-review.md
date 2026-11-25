@@ -16,7 +16,10 @@ MCP, the same hub methods can be called by hand; the order below still holds.
 
 ## 0. Configure the MCP
 
-The server reads three environment variables. Nothing else, no flags.
+The simplest setup is to run `camstack login <host>` once as an admin: the MCP
+uses that saved session (renewed automatically) for the hub address, the
+credential and the TLS pin, exactly like `camstack deploy`. The environment
+variables below are optional overrides and win over the session.
 
 | Variable | Meaning |
 | --- | --- |
@@ -26,8 +29,8 @@ The server reads three environment variables. Nothing else, no flags.
 
 TLS verification is never turned off: a certificate error is fixed by naming the
 CA, not by disabling the check. Triage and frame need a normal token;
-**apply needs admin permissions** and shows the hub's own refusal if the token
-lacks it. Tokens are never printed.
+**apply and the confirmed origin backfill need an admin login** and are refused
+up front, before any hub call, when the credential is not admin. Tokens are never printed.
 
 ```json
 { "mcpServers": { "camstack-develop": {
