@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import type { HmValueOrigin } from './hm-change-stamp.js'
 import { isBatteryDatapoint } from './hm-battery.js'
+import { migrateBatteryConfig } from './hm-battery-migration.js'
 
 /**
  * Persisted config every Homematic accessory CHILD carries. `address` is the
@@ -348,7 +349,52 @@ export abstract class HmChildDevice<
     }
   }
 
+  /** Unsubscribe of the standalone battery-config watch. */
+  private batteryWatchUnsub: (() => void) | null = null
+
+  /**
+   * A STANDALONE entity (no container to re-derive it) adopted before the
+   * battery cap existed keeps `capabilities` without `battery`. Once the CCU
+   * lists the device, re-apply the derived capabilities; the kernel rebuilds
+   * this instance, whose constructor then registers the cap. Accessory children
+   * are migrated by their container instead.
+   */
+  protected watchBatteryConfig(): void {
+    const persisted = this.ctx.persistedConfig ?? {}
+    const key = persisted['hmEntityKey']
+    if (this.ctx.parentDeviceId !== null || typeof key !== 'string') return
+    if (this.integrationId === undefined) return
+    const run = (): void => {
+      void this.migrateStandaloneBattery(key).catch((err: unknown) => {
+        this.ctx.logger.warn('Homematic battery config migration failed', {
+          tags: { deviceId: this.id },
+          meta: { address: this.address, error: err instanceof Error ? err.message : String(err) },
+        })
+      })
+    }
+    this.batteryWatchUnsub = homematicFacades.onSnapshot(this.integrationId, run)
+    run()
+  }
+
+  private async migrateStandaloneBattery(key: string): Promise<void> {
+    const hmDevice = this.resolveHmDevice()
+    if (hmDevice === null) return
+    const custom =
+      this.facade?.customEntities().filter((entity) => entity.device === this.address) ?? []
+    const changed = await migrateBatteryConfig({
+      devices: this.ctx.devices,
+      logger: this.ctx.logger,
+      hmDevice,
+      customEntities: custom,
+      deviceId: this.id,
+      specKey: key,
+    })
+    if (changed) this.batteryWatchUnsub?.()
+  }
+
   override async removeDevice(): Promise<void> {
+    this.batteryWatchUnsub?.()
+    this.batteryWatchUnsub = null
     for (const unsub of [this.valueChangedUnsub, ...this.seedTriggerUnsubs]) {
       if (!unsub) continue
       try {

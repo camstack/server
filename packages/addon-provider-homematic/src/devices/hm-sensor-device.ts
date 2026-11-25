@@ -42,6 +42,7 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
     this.caps = new Set(this.config.values.capabilities)
     this.registerSensorCaps()
     this.attachValueChangedListener((event, origin) => this.handleValueChanged(event, origin))
+    this.watchBatteryConfig()
   }
 
   private registerSensorCaps(): void {

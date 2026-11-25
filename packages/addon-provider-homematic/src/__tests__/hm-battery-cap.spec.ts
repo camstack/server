@@ -7,6 +7,7 @@
 import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
 import type { Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { resetBatterySkipLog } from '../devices/hm-battery.js'
 import { HmSensorDevice } from '../devices/hm-sensor-device.js'
 import { deriveHmEntitySpecs } from '../devices/hm-entity-spec.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
@@ -150,6 +151,7 @@ function maintEvent(parameter: string, value: boolean | number): ValueChangedEve
 }
 
 beforeEach(() => {
+  resetBatterySkipLog()
   homematicFacades.clear()
 })
 
@@ -218,5 +220,14 @@ describe('HmSensorDevice battery', () => {
     expect(h.registered).not.toContain('battery')
     expect(h.warnings).toHaveLength(1)
     expect(h.warnings[0]?.extras).toMatchObject({ tags: { deviceId: DEVICE_ID } })
+  })
+
+  it('logs the skipped binding once per device, not on every rebuild', () => {
+    const { facade } = makeFacade(false)
+    homematicFacades.set(INTEGRATION_ID, facade)
+    const h = makeCtx(['motion', 'battery'])
+    new HmSensorDevice(h.ctx)
+    new HmSensorDevice(h.ctx)
+    expect(h.warnings).toHaveLength(1)
   })
 })

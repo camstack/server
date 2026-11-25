@@ -46,6 +46,14 @@ export function isBatteryDatapoint(channel: HmChannel, parameter: string): boole
   )
 }
 
+/** Devices whose skipped binding was already logged. */
+const skipLogged = new Set<number>()
+
+/** Forget which skipped bindings were logged (a test seam). */
+export function resetBatterySkipLog(): void {
+  skipLogged.clear()
+}
+
 /**
  * Register the `battery` cap on a functional child when its device is battery
  * operated. Returns whether it registered. A device that cannot be resolved yet
@@ -59,6 +67,9 @@ export function registerChildBatteryCap(
   hmDevice: HmDevice | null,
 ): boolean {
   if (hmDevice !== null && !isBatteryOperatedDevice(hmDevice)) {
+    // Once per device: the child is constructed again on every rebuild.
+    if (skipLogged.has(ctx.id)) return false
+    skipLogged.add(ctx.id)
     ctx.logger.warn('Homematic battery binding skipped: no LOW_BAT on the maintenance channel', {
       tags: { deviceId: ctx.id },
       meta: { address: hmDevice.address },

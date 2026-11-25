@@ -70,6 +70,7 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       )
     }
     this.attachValueChangedListener((event, origin) => this.handleValueChanged(event, origin))
+    this.watchBatteryConfig()
   }
 
   private get actuatorChannel(): string {

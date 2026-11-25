@@ -23,6 +23,7 @@ import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
 import { channelIndexFromAddress } from './hm-cold-start.js'
 import { actuatorNameWrite, legacyActuatorName, multiActuatorChildName } from './hm-child-name.js'
 import { hmPrimaryChildKeys, preferenceToStamp } from './hm-primary-child.js'
+import { migrateBatteryConfig } from './hm-battery-migration.js'
 
 /**
  * Persisted config for a Homematic Container (the parent of one physical CCU
@@ -299,10 +300,35 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     try {
       await this.stampPrimaryPreference(hmDevice)
       await this.refreshActuatorNames(hmDevice)
+      await this.migrateChildBattery(hmDevice)
     } catch (err: unknown) {
       this.ctx.logger.warn('HmContainerDevice: could not refresh derived child meta', {
         tags: { deviceId: this.id },
         meta: { address: this.address, error: errMsg(err) },
+      })
+    }
+  }
+
+  /**
+   * Children adopted before the battery cap existed persist `capabilities`
+   * without it, and the kernel persists an accessory spec only on first spawn:
+   * re-apply the derived capabilities so such a child gains `battery`.
+   */
+  private async migrateChildBattery(hmDevice: HmDevice): Promise<void> {
+    const devices = this.ctx.devices
+    const custom =
+      this.facade?.customEntities()?.filter((entity) => entity.device === this.address) ?? []
+    const children = await devices.getChildren(this.id)
+    for (const spec of deriveHmEntitySpecs(hmDevice, custom)) {
+      const child = children.find((candidate) => candidate.stableId.endsWith(`-${spec.key}`))
+      if (child === undefined) continue
+      await migrateBatteryConfig({
+        devices,
+        logger: this.ctx.logger,
+        hmDevice,
+        customEntities: custom,
+        deviceId: child.id,
+        specKey: spec.key,
       })
     }
   }

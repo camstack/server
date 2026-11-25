@@ -122,7 +122,7 @@ describe('deriveHmEntitySpecs', () => {
     // Sensor child (temperature + humidity) from the HEATING channel.
     const sensor = byKey.get(`sensor-${ADDR}:1`)
     expect(sensor?.deviceType).toBe(DeviceType.Sensor)
-    expect(sensor?.capabilities).toEqual(['temperature-sensor', 'humidity-sensor'])
+    expect(sensor?.capabilities).toEqual(['temperature-sensor', 'humidity-sensor', 'battery'])
 
     // Diagnostics from MAINTENANCE — voltage carries provenance + unit + role.
     const voltage = byKey.get('maint-voltage')

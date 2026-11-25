@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A battery-operated Homematic device now shows its battery state (ok/low) and operating voltage on the device itself, not only as a separate voltage sensor.
+- Devices adopted before the battery state existed gain it on the next reconcile, without re-adopting
 
 ## [1.2.213] - 2026-11-22
 
