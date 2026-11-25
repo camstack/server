@@ -3509,18 +3509,6 @@
     "groupWithin": {
       "seconds": "Raggruppa notifiche entro (s)",
       "hint": "0 invia ogni notifica subito. Due o più nella finestra diventano un riepilogo."
-    },
-    "toGroup": {
-      "action": "Converti in gruppo",
-      "failed": "La regola non è stata convertita",
-      "message": "Viene creato un gruppo di notificatori chiamato \"{{name}}\" con i {{count}} notificatori di questa regola, e la regola consegna a quel gruppo.",
-      "lost": "Queste impostazioni per notificatore non vengono mantenute:",
-      "notCarried": {
-        "template": "modello del messaggio",
-        "priority": "priorità",
-        "attachment-kind": "tipo di allegato",
-        "params": "parametri del notificatore"
-      }
     }
   },
   "ruleScope": {

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9289 source files · 250 units claimed by at least one document (9258 files).**
+**257 units · 9287 source files · 250 units claimed by at least one document (9256 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -26,7 +26,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/pipeline-analytics` | 479 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 254 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +246 more, 41 ADRs | 2026-11-21 |
 | `packages/addon-post-analysis/src/notification-center` | 230 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +98 more, 27 ADRs | 2026-11-12 |
-| `packages/addon-admin-ui/src/pages` | 211 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +59 more, 8 ADRs | 2026-11-16 |
+| `packages/addon-admin-ui/src/pages` | 209 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +59 more, 8 ADRs | 2026-11-16 |
 | `packages/addon-pipeline/src/stream-broker` | 194 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +63 more, 21 ADRs | 2026-11-12 |
 | `packages/system/src/kernel` | 181 | `alerts-and-health`, `capabilities`, `detection-execution`, `device-model`, `kernel`, `storage`, `transport`, `update-and-release` | `architecture/overview.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +105 more, 21 ADRs | 2026-11-02 |
 | `packages/addon-pipeline/src/recorder` | 115 | `recorder` | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +77 more, 10 ADRs | 2026-11-12 |

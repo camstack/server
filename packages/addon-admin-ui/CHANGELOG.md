@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The 'Convert to group' button on notification rules is removed; create a notifier group and pick it in a rule.
+
 ## [1.2.749] - 2026-11-25
 
 ### Changed

@@ -574,7 +574,6 @@ export function NotificationRulesPage({
     t,
     onDuplicate: (rule) => openEditor({ ...rule, id: '', name: `${rule.name} (copy)` }),
     onConfirmDelete: (rule) => deleteRule.mutate(rule.id),
-    onRulesChanged: () => void rulesQuery.refetch(),
     ...(onSimulateRule ? { onTest: onSimulateRule } : {}),
     lastRunOf: (ruleId) => ruleLastRunCell(lastRuns, ruleId),
     ...(onOpenHistory ? { onOpenHistory } : {}),

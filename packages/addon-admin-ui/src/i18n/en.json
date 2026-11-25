@@ -3434,18 +3434,6 @@
     "groupWithin": {
       "seconds": "Group notifications within (s)",
       "hint": "0 sends each notification immediately. Two or more in the window become one summary."
-    },
-    "toGroup": {
-      "action": "Convert to group",
-      "failed": "The rule was not converted",
-      "message": "A notifier group named \"{{name}}\" is created with the {{count}} notifiers of this rule, and the rule delivers to that group.",
-      "lost": "These per-notifier settings are not kept:",
-      "notCarried": {
-        "template": "message template",
-        "priority": "priority",
-        "attachment-kind": "attachment type",
-        "params": "notifier parameters"
-      }
     }
   },
   "ruleScope": {
