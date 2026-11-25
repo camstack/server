@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.686] - 2026-11-25
+
 ### Changed
 
 - Recorded playback no longer mixes the live picture in when the stream is re-encoded for the device.

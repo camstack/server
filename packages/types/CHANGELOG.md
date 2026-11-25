@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.634] - 2026-11-25
+
 ### Changed
 
 - Prices per volume (EUR/L, ct/L) are a reading quantity, so a fuel price can be stored and converted

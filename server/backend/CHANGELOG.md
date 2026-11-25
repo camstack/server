@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.962] - 2026-11-25
+
 ### Changed
 
 - The device manager API exposes the adopt mode and adoption records of an integration

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.177] - 2026-11-25
+
 ### Changed
 
 - Matter devices now subscribe to their attributes again; the functions a paired device reports are read and logged.
