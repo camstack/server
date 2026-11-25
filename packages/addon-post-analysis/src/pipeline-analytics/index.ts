@@ -1886,6 +1886,7 @@ export default class PipelineAnalyticsAddon
         secret,
         logger: this.ctx.logger.child('nc-actions'),
         run: (grant) => center.runGrantedAction(grant),
+        deviceName: (deviceId) => center.deviceNameOf(deviceId),
       })
       const served =
         (await this.ctx.dataPlane?.serve({

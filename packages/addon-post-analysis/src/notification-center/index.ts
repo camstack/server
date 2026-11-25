@@ -907,6 +907,18 @@ export class NotificationCenter implements NcEventConsumer {
     return this.actionTokens
   }
 
+  /**
+   * A device's name from the in-memory directory, for a page that must name it
+   * (the confirm page of a button). `undefined` when the directory has no name:
+   * the caller decides what to show, never a placeholder from here.
+   */
+  deviceNameOf(deviceId: number): string | undefined {
+    const identity = this.deviceDirectory.get(deviceId)
+    return identity !== undefined && identity.name.trim().length > 0
+      ? deviceDisplayName(identity, deviceId)
+      : undefined
+  }
+
   async runGrantedAction(grant: NcActionGrant): Promise<void> {
     return runRunGrantedAction(this.grantedActionsHost(), grant)
   }

@@ -171,6 +171,19 @@ export function validateRuleActions(
   return problems
 }
 
+/**
+ * Turn a button's confirmation page on or off. Off DROPS the field instead of
+ * writing `false`, so a rule that never asked for confirmation stays byte-for-byte
+ * what it was.
+ */
+export function setButtonConfirm(
+  button: NcRuleNotificationButton,
+  on: boolean,
+): NcRuleNotificationButton {
+  const { confirm: _drop, ...rest } = button
+  return on ? { ...rest, confirm: true } : rest
+}
+
 export function newButton(index: number, actionId: string): NcRuleNotificationButton {
   return {
     id: `action-${String(index + 1)}`,

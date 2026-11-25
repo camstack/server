@@ -41,6 +41,8 @@ export interface NcActionPlaneDeps {
   readonly secret: string
   readonly logger: IScopedLogger
   readonly run: NcRunActionRunner
+  /** A device's name when it is known; the confirm page falls back to the id. */
+  readonly deviceName?: (deviceId: number) => string | undefined
   readonly now?: () => number
 }
 
@@ -241,11 +243,13 @@ export class NcActionPlane {
       // A confirm button: the tap only SHOWS the question, naming the button.
       if (peeked.ok && peeked.grant.kind === 'run-action' && peeked.grant.confirm === true) {
         const label = escapeHtml(peeked.grant.label ?? peeked.grant.actionId)
+        const name = this.deps.deviceName?.(peeked.grant.deviceId)
+        const device = escapeHtml(name ?? `device ${peeked.grant.deviceId}`)
         this.sendBody(
           res,
           200,
           'text/html; charset=utf-8',
-          confirmPage(url, `Run "${label}" on device ${peeked.grant.deviceId}?`),
+          confirmPage(url, `Run "${label}" on ${device}?`),
         )
         return
       }

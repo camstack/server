@@ -395,7 +395,8 @@
       "noActionsYet": "There are no Actions yet. Create one on the Actions page — a rule or a button runs an Action, it does not define its own steps.",
       "createActionHint": "Opens the Actions page in a new tab. Reopen the list here afterwards.",
       "presetAlarm": "Trigger the alarm",
-      "presetAlarmHint": "Presses the alarm panel. The panel's entry delay still runs, and a disarm during it cancels the alarm."
+      "presetAlarmHint": "Presses the alarm panel. The panel's entry delay still runs, and a disarm during it cancels the alarm.",
+      "askForConfirmation": "Ask for confirmation"
     },
     "notificationRuleColumns": {
       "rule": "Rule",

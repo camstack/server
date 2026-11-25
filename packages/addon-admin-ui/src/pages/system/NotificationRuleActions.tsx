@@ -9,7 +9,7 @@
 
 import type { ActionEntry, NcRuleNotificationButton } from '@camstack/types'
 import type { ReactNode } from 'react'
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, Input, Select, Switch } from '@camstack/ui-library'
 import { AlertTriangle, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { TRIGGER_ALARM_PRESET } from '../build/actions/action-draft'
@@ -22,6 +22,7 @@ import {
   type NcHookKey,
   type NcRuleActionsFormState,
   newButton,
+  setButtonConfirm,
   validateRuleActions,
 } from './notification-rule-actions'
 
@@ -383,6 +384,13 @@ function ButtonRow({
       >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
+      <div className="basis-full">
+        <Switch
+          checked={button.confirm === true}
+          onCheckedChange={(on) => onChange(setButtonConfirm(button, on))}
+          label={t('system.notificationRuleActions.askForConfirmation', 'Ask for confirmation')}
+        />
+      </div>
     </div>
   )
 }

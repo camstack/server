@@ -4,37 +4,41 @@
  * Action. One accidental tap on a push notification must never unlock a door.
  */
 
-import type { ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import { IncomingMessage, ServerResponse } from 'node:http'
+import { Socket } from 'node:net'
 import { describe, expect, it, vi } from 'vitest'
+import { mergeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcActionPlane } from '../action-plane.js'
 import { NcActionTokenRegistry, type NcRunActionGrant, signActionToken } from '../action-token.js'
 
 const SECRET = 'per-install'
 const NOW = 1_000
 
-interface Captured {
-  status: number
-  body: string
-}
-
-function fakeRes(): { res: ServerResponse; captured: Captured } {
-  const captured: Captured = { status: 0, body: '' }
-  const res = {
-    writeHead: (status: number) => {
-      captured.status = status
-    },
-    end: (body: string) => {
-      captured.body = body
-    },
+/** A real response whose writes are kept instead of sent. */
+class CapturingResponse extends ServerResponse {
+  status = 0
+  body = ''
+  override writeHead(statusCode: number): this {
+    this.status = statusCode
+    return this
   }
-  // The handler uses only writeHead/end; documented type boundary.
-  return { res: res as unknown as ServerResponse, captured }
+  override end(chunk?: unknown): this {
+    this.body = typeof chunk === 'string' ? chunk : ''
+    return this
+  }
 }
 
-function loggerWith(warn: ReturnType<typeof vi.fn>): IScopedLogger {
-  const noop = vi.fn()
-  return { info: noop, warn, error: noop, debug: noop } as unknown as IScopedLogger
+/** A real request carrying only what the plane reads: the url and the method. */
+function requestOf(url: string, method: 'GET' | 'POST'): IncomingMessage {
+  const req = new IncomingMessage(new Socket())
+  req.url = url
+  req.method = method
+  return req
+}
+
+function fakeRes(): { res: CapturingResponse; captured: CapturingResponse } {
+  const res = new CapturingResponse(requestOf('/', 'GET'))
+  return { res, captured: res }
 }
 
 const grant = (over: Partial<NcRunActionGrant> = {}): NcRunActionGrant => ({
@@ -52,15 +56,20 @@ const grant = (over: Partial<NcRunActionGrant> = {}): NcRunActionGrant => ({
 const baseUrl = (): string =>
   `/addon/x/nc-action/tok1?exp=${NOW + 60_000}&sig=${signActionToken(SECRET, 'tok1', NOW + 60_000)}`
 
-function setup(g: NcRunActionGrant, run: () => Promise<void>) {
+function setup(
+  g: NcRunActionGrant,
+  run: () => Promise<void>,
+  deviceName?: (deviceId: number) => string | undefined,
+) {
   const registry = new NcActionTokenRegistry(() => NOW)
   registry.put(g)
   const warn = vi.fn()
   const plane = new NcActionPlane({
     registry,
     secret: SECRET,
-    logger: loggerWith(warn),
+    logger: mergeSilentLogger({ warn }),
     run,
+    ...(deviceName !== undefined ? { deviceName } : {}),
     now: () => NOW,
   })
   return { registry, plane, warn }
@@ -73,7 +82,7 @@ describe('a confirm button asks on a page before it runs', () => {
     const run = vi.fn(() => Promise.resolve())
     const { plane, registry } = setup(confirmGrant, run)
     const { res, captured } = fakeRes()
-    await plane.handler({ url: baseUrl(), method: 'GET' } as never, res)
+    await plane.handler(requestOf(baseUrl(), 'GET'), res)
     expect(captured.status).toBe(200)
     expect(captured.body).toContain('Unlock door')
     expect(captured.body).toContain('method="post"')
@@ -81,11 +90,46 @@ describe('a confirm button asks on a page before it runs', () => {
     expect(registry.peek('tok1').ok).toBe(true)
   })
 
+  it('the confirm page names the device, not its numeric id', async () => {
+    const { plane } = setup(
+      confirmGrant,
+      vi.fn(() => Promise.resolve()),
+      (id) => (id === 101 ? 'Front gate' : undefined),
+    )
+    const { res, captured } = fakeRes()
+    await plane.handler(requestOf(baseUrl(), 'GET'), res)
+    expect(captured.body).toContain('Unlock door')
+    expect(captured.body).toContain('Front gate')
+    expect(captured.body).not.toContain('101')
+  })
+
+  it('the confirm page falls back to the id only when the name is unknown', async () => {
+    const { plane } = setup(
+      confirmGrant,
+      vi.fn(() => Promise.resolve()),
+      () => undefined,
+    )
+    const { res, captured } = fakeRes()
+    await plane.handler(requestOf(baseUrl(), 'GET'), res)
+    expect(captured.body).toContain('device 101')
+  })
+
+  it('a device name is escaped on the page', async () => {
+    const { plane } = setup(
+      confirmGrant,
+      vi.fn(() => Promise.resolve()),
+      () => '<b>Gate</b>',
+    )
+    const { res, captured } = fakeRes()
+    await plane.handler(requestOf(baseUrl(), 'GET'), res)
+    expect(captured.body).toContain('&lt;b&gt;Gate&lt;/b&gt;')
+  })
+
   it('a background POST (no confirm=1) is refused: nothing runs, token kept, device logged', async () => {
     const run = vi.fn(() => Promise.resolve())
     const { plane, registry, warn } = setup(confirmGrant, run)
     const { res } = fakeRes()
-    await plane.handler({ url: baseUrl(), method: 'POST' } as never, res)
+    await plane.handler(requestOf(baseUrl(), 'POST'), res)
     expect(run).not.toHaveBeenCalled()
     expect(registry.peek('tok1').ok).toBe(true)
     expect(warn).toHaveBeenCalledWith(
@@ -98,11 +142,11 @@ describe('a confirm button asks on a page before it runs', () => {
     const run = vi.fn(() => Promise.resolve())
     const { plane } = setup(confirmGrant, run)
     const first = fakeRes()
-    await plane.handler({ url: `${baseUrl()}&confirm=1`, method: 'POST' } as never, first.res)
+    await plane.handler(requestOf(`${baseUrl()}&confirm=1`, 'POST'), first.res)
     expect(run).toHaveBeenCalledTimes(1)
     expect(first.captured.body).toContain('Done')
     const second = fakeRes()
-    await plane.handler({ url: `${baseUrl()}&confirm=1`, method: 'POST' } as never, second.res)
+    await plane.handler(requestOf(`${baseUrl()}&confirm=1`, 'POST'), second.res)
     expect(run).toHaveBeenCalledTimes(1)
     expect(second.captured.body).toContain('Already done')
   })
@@ -111,7 +155,7 @@ describe('a confirm button asks on a page before it runs', () => {
     const run = vi.fn(() => Promise.resolve())
     const { plane } = setup(grant(), run)
     const { res } = fakeRes()
-    await plane.handler({ url: baseUrl(), method: 'GET' } as never, res)
+    await plane.handler(requestOf(baseUrl(), 'GET'), res)
     expect(run).toHaveBeenCalledTimes(1)
   })
 })
