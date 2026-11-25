@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.177] - 2026-11-25
-
 ### Changed
 
 - Fixed Matter attribute subscriptions failing with 'at least one must be specified'; a second fabric that cannot bind the shared port now logs one plain line
