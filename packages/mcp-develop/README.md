@@ -44,10 +44,9 @@ Run `camstack login <host>` once (admin account for the write tools): the tools 
 | Variable | Meaning |
 | --- | --- |
 | `CAMSTACK_HUB_URL` | Hub address, e.g. `https://hub.local:4443`. |
-| `CAMSTACK_HUB_TOKEN_FILE` | File holding one token (preferred). `CAMSTACK_HUB_TOKEN` also works. |
 | `CAMSTACK_HUB_CA_FILE` | PEM of the hub's CA / pinned certificate for a self-signed hub. |
 
-TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin login; a non-admin credential is refused up front, before any hub call. Tokens never appear in output.
+The credential is the `camstack login` session, and only that: no token variable is read (see the `hub-access` skill). TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin login; a non-admin credential is refused up front, before any hub call. Tokens never appear in output.
 
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->

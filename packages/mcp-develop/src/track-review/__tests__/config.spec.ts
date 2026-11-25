@@ -63,34 +63,31 @@ describe('review hub resolution', () => {
     expect(sentHeaders()).toContain('sess-token')
   })
 
-  it('(b) a token file resolves', async () => {
+  it('(b) CAMSTACK_HUB_TOKEN and CAMSTACK_HUB_TOKEN_FILE are ignored: the session is sent', async () => {
+    session('sess-token', true)
     const file = path.join(dir, 'tok')
     fs.writeFileSync(file, 'file-token\n', { mode: 0o600 })
     const hub = await provider({
       CAMSTACK_HUB_URL: HUB,
+      CAMSTACK_HUB_TOKEN: 'env-token',
       CAMSTACK_HUB_TOKEN_FILE: file,
     })('read')
     await hub.listCameras().catch(() => undefined)
-    expect(sentHeaders()).toContain('file-token')
+    expect(sentHeaders()).toContain('sess-token')
+    expect(sentHeaders()).not.toContain('env-token')
+    expect(sentHeaders()).not.toContain('file-token')
   })
 
-  it('(c) env wins over a cached session', async () => {
-    session('sess-token', true)
-    const hub = await provider({
+  it('(d) with no session, env tokens do not help and the error names camstack login', async () => {
+    const err = await provider({
       CAMSTACK_HUB_URL: HUB,
       CAMSTACK_HUB_TOKEN: 'env-token',
-    })('read')
-    await hub.listCameras().catch(() => undefined)
-    expect(sentHeaders()).toContain('env-token')
-    expect(sentHeaders()).not.toContain('sess-token')
-  })
-
-  it('(d) with nothing, the error names camstack login and the token file', async () => {
-    const err = await provider({ CAMSTACK_HUB_URL: HUB })('read').catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(Error)
+    })('read').catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(HubConfigError)
     const message = err instanceof Error ? err.message : ''
     expect(message).toContain('camstack login')
-    expect(message).toContain('CAMSTACK_HUB_TOKEN_FILE')
+    expect(message).not.toContain('CAMSTACK_HUB_TOKEN_FILE')
+    expect(requests).toEqual([])
   })
 
   it('(e) a non-admin session is refused by the write tools before any hub call', async () => {
@@ -116,19 +113,6 @@ describe('review hub resolution', () => {
     })
     expect(JSON.stringify(reply)).toMatch(/admin/i)
     expect(requests).toEqual([])
-  })
-
-  it('inline CAMSTACK_HUB_TOKEN wins over CAMSTACK_HUB_TOKEN_FILE', async () => {
-    const file = path.join(dir, 'tok')
-    fs.writeFileSync(file, 'file-token\n', { mode: 0o600 })
-    const hub = await provider({
-      CAMSTACK_HUB_URL: HUB,
-      CAMSTACK_HUB_TOKEN: 'inline-token',
-      CAMSTACK_HUB_TOKEN_FILE: file,
-    })('read')
-    await hub.listCameras().catch(() => undefined)
-    expect(sentHeaders()).toContain('inline-token')
-    expect(sentHeaders()).not.toContain('file-token')
   })
 
   it('a read tool works with a non-admin session', async () => {

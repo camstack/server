@@ -2,9 +2,8 @@
  * How the review tools find their hub: the shared `@camstack/develop` chain
  * (`connectHub`), the same one `camstack deploy` and `scripts/hub/hub.mjs` use.
  * Hub address: `CAMSTACK_HUB_URL`, the scratchpad file, else the cached
- * `camstack login` session. Credential: `CAMSTACK_HUB_TOKEN`, then
- * `CAMSTACK_HUB_TOKEN_FILE`, then the login session (renewed when about to
- * expire). TLS is never disabled — a self-signed hub is trusted by naming its
+ * `camstack login` session. Credential: the login session, and only that
+ * (D1101; renewed when about to expire): no token variable is read. TLS is never disabled — a self-signed hub is trusted by naming its
  * CA (`CAMSTACK_HUB_CA_FILE`) or saving it next to the session.
  *
  * A token is never printed, logged or returned.
@@ -42,36 +41,14 @@ interface ConnectedReviewHub {
   readonly connection: HubConnection
 }
 
-const REMEDY =
-  'Run `camstack login <host>` (admin account for the write tools), or set CAMSTACK_HUB_TOKEN_FILE to a file holding one token.'
-
-function nonBlank(value: string | undefined): string | undefined {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : undefined
-}
-
-function namesHub(env: Env): boolean {
-  return (
-    nonBlank(env['CAMSTACK_HUB_URL']) !== undefined ||
-    nonBlank(env['CAMSTACK_SERVER']) !== undefined
-  )
-}
+const REMEDY = 'Run `camstack login <host>` (admin account for the write tools).'
 
 async function connect(options: ReviewHubOptions): Promise<ConnectedReviewHub> {
   const env = options.env ?? process.env
-  const token = nonBlank(env['CAMSTACK_HUB_TOKEN'])
-  const tokenFile = nonBlank(env['CAMSTACK_HUB_TOKEN_FILE'])
-  if ((token !== undefined || tokenFile !== undefined) && !namesHub(env)) {
-    throw new HubConfigError(
-      `A token is set but no hub is named: set CAMSTACK_HUB_URL (a token is never sent to a hub you did not name).\n${REMEDY}`,
-    )
-  }
   try {
     const connection = await connectHub({
       workspaceRoot: options.workspaceRoot ?? process.cwd(),
       env,
-      ...(token !== undefined ? { token } : {}),
-      ...(tokenFile !== undefined ? { tokenFile } : {}),
       ...(options.sessionDir !== undefined ? { sessionDir: options.sessionDir } : {}),
       ...(options.transport !== undefined ? { transport: options.transport } : {}),
     })
