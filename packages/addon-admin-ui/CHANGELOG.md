@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.748] - 2026-11-25
+
 ### Changed
 
 - Multi-reading sensor card: wedges are easier to tell apart, and a tapped wedge shows its chart inline below the pie

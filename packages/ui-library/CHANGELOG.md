@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.505] - 2026-11-25
+
 ### Changed
 
 - Sensor pie card: each quantity's wedge has its own clearly visible colour and edge (motion is now violet), and tapping a wedge highlights it and shows its chart below the pie instead of a dialog
