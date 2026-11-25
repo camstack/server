@@ -30,7 +30,7 @@ this column exists to stop.
 | `auth-webauthn` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
 | `autotrack` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `ptz-autotrack` |
 | `backup-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `backup` |
-| `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` |
+| `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` `app-source` |
 | `bosch-home-connect` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `dishwasher` `integration-instances` `running-state` |
 | `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `heat-pump-control` `heat-pump-status` `integration-instances` `water-heater` |
 | `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
@@ -62,7 +62,7 @@ this column exists to stop.
 | `loki-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `log-destination` |
 | `matter-broker` | `@camstack/addon-matter-broker` | providers | own runner | `hub-only` | — | multiple | `broker` `device-adoption` `device-provider` `integration-instances` |
 | `metrics-native` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `metrics-provider` |
-| `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `custom-model-registry` `model-convert` `node-removal-hook` |
+| `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `app-source` `custom-model-registry` `model-convert` `node-removal-hook` |
 | `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
 | `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `mqtt-broker` |
 | `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `integration-instances` `notification-output` |
@@ -80,7 +80,7 @@ this column exists to stop.
 | `provider-gree` | `@camstack/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` `integration-instances` |
 | `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `board-key-source` `broker` `calendar-source` `device-adoption` `humidifier` `image` `integration-instances` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
-| `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `addon-widgets-source` `device-adoption` `device-provider` `integration-instances` |
+| `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `addon-widgets-source` `app-source` `device-adoption` `device-provider` `integration-instances` |
 | `provider-kia` | `@camstack/addon-provider-kia` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-mqtt-ha` | `@camstack/addon-provider-mqtt-ha` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-onvif` | `@camstack/addon-provider-onvif` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |

@@ -19,6 +19,7 @@ import type {
 } from '@camstack/types'
 import {
   addonPagesSourceCapability,
+  appSourceCapability,
   BaseAddon,
   type ConfigUISchema,
   nodePin,
@@ -52,6 +53,7 @@ import {
   type UpsertNameOrigin,
 } from './model-registry.js'
 import { createNodeRemovalHook } from './node-removal.js'
+import { createModelStudioAppSourceProvider } from './app-source.js'
 import { optionalImportName } from './display-name.js'
 import {
   buildPlusCatalogCatalogDescriptor,
@@ -353,6 +355,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
         provider: buildModelConvertProvider(this.makeConvertDeps()),
       },
       { capability: addonPagesSourceCapability, provider: pagesProvider },
+      { capability: appSourceCapability, provider: createModelStudioAppSourceProvider() },
     ]
 
     if (isHub) {

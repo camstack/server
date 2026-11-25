@@ -8,15 +8,17 @@
  * orchestration through `ctx.api` — no engine state. Its one store is the
  * accuracy evaluation's record kinds (`record-kinds.ts`).
  */
-import type {
-  AddonApi,
-  AddonInitResult,
-  AddonPageDeclaration,
-  FrameResult,
-  IAddonPageProvider,
+import {
+  type AddonApi,
+  type AddonInitResult,
+  type AddonPageDeclaration,
+  type FrameResult,
+  type IAddonPageProvider,
+  appSourceCapability,
 } from '@camstack/types'
 import { BaseAddon, addonPagesSourceCapability } from '@camstack/types/addon'
 import type { z } from 'zod'
+import { createBenchmarkAppSourceProvider } from './app-source.js'
 import { benchmarkActions, type BenchmarkActions } from './benchmark-actions.js'
 import { benchmarkRecordKinds } from './record-kinds.js'
 /**
@@ -91,7 +93,10 @@ export class BenchmarkAddon extends BaseAddon {
     }
 
     return {
-      providers: [{ capability: addonPagesSourceCapability, provider }],
+      providers: [
+        { capability: addonPagesSourceCapability, provider },
+        { capability: appSourceCapability, provider: createBenchmarkAppSourceProvider() },
+      ],
       customActions: benchmarkActions,
       actionHandlers: {
         runPipelineTest: async (input) => this.runPipelineTest(input),

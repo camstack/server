@@ -155,7 +155,7 @@ Singleton or collection providers, addressed without a device.
 | `addons` | 32 | — | — | — | — | — |
 | `admin-ui` | 2 | — | — | — | ✓ | `admin-ui` `agent-ui` |
 | `alerts` | 7 | — | — | — | — | `alert-center` |
-| `app-source` | 1 | — | — | — | ✓ | `admin-ui` `pipeline-orchestrator` |
+| `app-source` | 1 | — | — | — | ✓ | `admin-ui` `benchmark` `model-studio` `pipeline-orchestrator` `provider-homematic` |
 | `apps` | 2 | — | — | — | — | `apps-aggregator` |
 | `audio-analyzer` | 7 | — | — | — | — | `audio-analyzer` |
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |

@@ -49,6 +49,9 @@
         "capabilities": [
           {
             "name": "addon-pages-source"
+          },
+          {
+            "name": "app-source"
           }
         ],
         "pages": [

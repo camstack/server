@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Its page is now also an admin-only app in the viewer shell drawer (the same page, offered through app-source).
+
 ## [1.2.316] - 2026-11-22
 
 ### Changed

@@ -1,6 +1,7 @@
 import {
   type AddonInitResult,
   addonPagesSourceCapability,
+  appSourceCapability,
   addonWidgetsSourceCapability,
   BaseDeviceProvider,
   bestLocationMatch,
@@ -30,6 +31,7 @@ import {
   type SystemEvent,
 } from '@camstack/types'
 import { z } from 'zod'
+import { createHomematicAppSourceProvider } from './app-source.js'
 import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuDeviceStateHandlers } from './ccu/ccu-device-state-actions.js'
@@ -177,6 +179,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         {
           capability: addonPagesSourceCapability,
           provider: this.buildPagesProvider(),
+        },
+        {
+          capability: appSourceCapability,
+          provider: createHomematicAppSourceProvider(),
         },
         {
           capability: addonWidgetsSourceCapability,

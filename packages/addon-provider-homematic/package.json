@@ -63,6 +63,9 @@
             "name": "addon-pages-source"
           },
           {
+            "name": "app-source"
+          },
+          {
             "name": "addon-widgets-source"
           }
         ],
