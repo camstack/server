@@ -11,6 +11,8 @@
  */
 import * as fs from 'node:fs'
 import * as readline from 'node:readline'
+import type { Readable } from 'node:stream'
+import * as zlib from 'node:zlib'
 import { z } from 'zod'
 import type { HubDownloader } from './hub-download.js'
 
@@ -40,6 +42,8 @@ export const LogsExportArgsSchema = z.object({
     .regex(/^[A-Za-z0-9._-]{1,80}$/)
     .optional(),
   maxMegabytes: z.number().int().positive().max(HARD_LOGS_EXPORT_MAX_MB).optional(),
+  /** Ask the hub for the export as one .zip (the file is then `<name>.zip`). Filtered or not. */
+  zip: z.boolean().optional(),
 })
 
 export type LogsExportArgs = z.infer<typeof LogsExportArgsSchema>
@@ -58,6 +62,7 @@ export function logsExportUrl(args: LogsExportArgs, now: number): string {
   if (until !== undefined) params.set('until', String(until))
   if (args.level) params.set('level', args.level)
   if (args.provider) params.set('source', args.provider)
+  if (args.zip === true) params.set('zip', '1')
   const query = params.toString()
   return query.length > 0 ? `${LOGS_EXPORT_URL_PATH}?${query}` : LOGS_EXPORT_URL_PATH
 }
@@ -96,9 +101,44 @@ function bump(counts: Map<string, number>, key: string | undefined): void {
   counts.set(key, (counts.get(key) ?? 0) + 1)
 }
 
-/** Read the downloaded NDJSON once, line by line, into a bounded summary. */
+const ZIP_END_SIGNATURE = 0x06054b50
+const ZIP_CENTRAL_SIGNATURE = 0x02014b50
+const ZIP_END_MAX_BYTES = 22 + 0xffff
+
+/**
+ * The inflated bytes of the single entry of the .zip the hub wrote, streamed
+ * from the file: the end record and the central directory say where the entry
+ * sits, so nothing is held in memory.
+ */
+export function zipEntryStream(file: string): Readable {
+  const fd = fs.openSync(file, 'r')
+  try {
+    const size = fs.fstatSync(fd).size
+    const tail = Buffer.alloc(Math.min(size, ZIP_END_MAX_BYTES))
+    fs.readSync(fd, tail, 0, tail.length, size - tail.length)
+    const end = tail.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]))
+    if (end < 0 || tail.readUInt32LE(end) !== ZIP_END_SIGNATURE) throw new Error('not a ZIP file')
+    const directory = tail.readUInt32LE(end + 16)
+    const central = Buffer.alloc(46)
+    fs.readSync(fd, central, 0, central.length, directory)
+    if (central.readUInt32LE(0) !== ZIP_CENTRAL_SIGNATURE)
+      throw new Error('ZIP directory is damaged')
+    const compressed = central.readUInt32LE(20)
+    const local = central.readUInt32LE(42)
+    const header = Buffer.alloc(30)
+    fs.readSync(fd, header, 0, header.length, local)
+    const start = local + 30 + header.readUInt16LE(26) + header.readUInt16LE(28)
+    const raw = fs.createReadStream(file, { start, end: start + compressed - 1 })
+    return compressed === 0 ? raw : raw.pipe(zlib.createInflateRaw())
+  } finally {
+    fs.closeSync(fd)
+  }
+}
+
+/** Read the downloaded NDJSON (or the NDJSON inside its .zip) once, line by line, into a bounded summary. */
 export async function summarizeLogsExport(
   file: string,
+  options: { readonly zip?: boolean } = {},
 ): Promise<Omit<LogsExportSummary, 'path' | 'bytes' | 'next'>> {
   const levels = new Map<string, number>()
   const devices = new Map<string, number>()
@@ -107,7 +147,8 @@ export async function summarizeLogsExport(
   let newest: string | null = null
   let oldest: string | null = null
   let truncated = false
-  const reader = readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity })
+  const input = options.zip === true ? zipEntryStream(file) : fs.createReadStream(file)
+  const reader = readline.createInterface({ input, crlfDelay: Infinity })
   for await (const text of reader) {
     if (text.trim().length === 0) continue
     const parsed = ExportedLineSchema.safeParse(JSON.parse(text))
@@ -150,5 +191,5 @@ export async function downloadLogsExport(
 ): Promise<LogsExportDownload> {
   const maxBytes = (args.maxMegabytes ?? DEFAULT_LOGS_EXPORT_MAX_MB) * 1024 * 1024
   const { bytes } = await download(logsExportUrl(args, at.getTime()), dest, maxBytes)
-  return { bytes, ...(await summarizeLogsExport(dest)) }
+  return { bytes, ...(await summarizeLogsExport(dest, { zip: args.zip === true })) }
 }

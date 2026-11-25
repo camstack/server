@@ -5,6 +5,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import * as zlib from 'node:zlib'
 import type { HubDownloader } from '@camstack/develop'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { McpContext } from '../mcp/context.js'
@@ -32,6 +33,30 @@ const BODY = [
 ]
   .map((o) => JSON.stringify(o))
   .join('\n')
+
+/** A one-entry classic ZIP, the shape the hub's `zip=1` export writes. */
+function zipOf(name: string, text: string): Buffer {
+  const data = zlib.deflateRawSync(Buffer.from(text, 'utf8'))
+  const nameBytes = Buffer.from(name, 'utf8')
+  const local = Buffer.alloc(30)
+  local.writeUInt32LE(0x04034b50, 0)
+  local.writeUInt16LE(8, 8)
+  local.writeUInt16LE(nameBytes.length, 26)
+  const central = Buffer.alloc(46)
+  central.writeUInt32LE(0x02014b50, 0)
+  central.writeUInt16LE(8, 10)
+  central.writeUInt32LE(data.length, 20)
+  central.writeUInt32LE(text.length, 24)
+  central.writeUInt16LE(nameBytes.length, 28)
+  const directory = Buffer.concat([central, nameBytes])
+  const end = Buffer.alloc(22)
+  end.writeUInt32LE(0x06054b50, 0)
+  end.writeUInt16LE(1, 8)
+  end.writeUInt16LE(1, 10)
+  end.writeUInt32LE(directory.length, 12)
+  end.writeUInt32LE(30 + nameBytes.length + data.length, 16)
+  return Buffer.concat([local, nameBytes, data, directory, end])
+}
 
 describe('opsLogsExport', () => {
   let dir = ''
@@ -67,6 +92,30 @@ describe('opsLogsExport', () => {
     expect(out.path.startsWith(path.join(dir, 'logs'))).toBe(true)
     expect(fs.existsSync(out.path)).toBe(true)
     expect(JSON.stringify(out)).not.toContain('tok-should-never-appear')
+  })
+
+  it('exports the whole log with no component and no device selected', async () => {
+    const ctx = withDownloader(fakeHub({}).ctx)
+    const out = await opsLogsExport(ctx, {}, () => NOW)
+    expect(out).toMatchObject({ status: 'ok', lines: 3 })
+    expect(urls).toEqual(['/api/logs/export'])
+  })
+
+  it('zip asks the hub for a .zip, keeps the .zip on disk and summarises the NDJSON inside', async () => {
+    const downloader = (): HubDownloader => async (urlPath, destFile) => {
+      urls.push(urlPath)
+      const archive = zipOf('logs.ndjson', `${BODY}\n`)
+      fs.writeFileSync(destFile, archive)
+      return { bytes: archive.length }
+    }
+    const ctx: McpContext = { ...fakeHub({}).ctx, downloader, exportDir: dir }
+    const out = await opsLogsExport(ctx, { components: ['cam-a'], zip: true }, () => NOW)
+    expect(out).toMatchObject({ status: 'ok', lines: 3, truncated: true })
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(urls).toEqual(['/api/logs/export?components=cam-a&zip=1'])
+    expect(out.path.endsWith('.zip')).toBe(true)
+    expect(out.devices).toEqual({ '7': 2, '8': 1 })
+    expect(out.next).toContain('unzip')
   })
 
   it('refuses a non-admin credential without downloading', async () => {

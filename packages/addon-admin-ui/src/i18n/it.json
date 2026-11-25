@@ -11505,7 +11505,7 @@
     },
     "logExport": {
       "title": "Esporta i log",
-      "hint": "Scarica un file NDJSON, una riga per voce con i suoi tag. Lascia vuoto un filtro per includere tutto.",
+      "hint": "Scarica un file NDJSON, una riga per voce con i suoi tag. Lascia vuoti componenti e dispositivi per esportare l'intero log di sistema.",
       "source": "Sorgente log",
       "sourcesLoading": "Lettura delle sorgenti log…",
       "unreadableNoReason": "Questa destinazione invia soltanto le righe.",
@@ -11525,7 +11525,8 @@
       "reachDays_one": "Indietro di {{count}} giorno",
       "reachDays_other": "Indietro di {{count}} giorni",
       "sourcesFailed": "Impossibile leggere le sorgenti dei log",
-      "sourcesFailedHint": "L'esportazione usa la sorgente log predefinita."
+      "sourcesFailedHint": "L'esportazione usa la sorgente log predefinita.",
+      "zip": "Esporta come ZIP"
     },
     "clipSourceLanes": {
       "count_one": "{{count}} clip",

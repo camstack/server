@@ -37,6 +37,16 @@ describe('logExportQuery', () => {
     expect(url.searchParams.get('since')).toBe(String(NOW - 24 * 3_600_000))
   })
 
+  it('asks for the ZIP only when the box is ticked, filtered or not', () => {
+    expect(logExportQuery({ components: [], deviceIds: [], rangeHours: 6, zip: true }, NOW)).toBe(
+      '?zip=1',
+    )
+    expect(
+      logExportQuery({ components: ['a'], deviceIds: [], rangeHours: 6, zip: false }, NOW),
+    ).toBe('?components=a')
+    expect(logExportFileName(NOW, true)).toBe('camstack-logs-2026-11-15T12-00-00-000Z.zip')
+  })
+
   it('only the offered ranges are accepted, and the file is NDJSON', () => {
     expect(isLogExportRange(6)).toBe(true)
     expect(isLogExportRange(5)).toBe(false)

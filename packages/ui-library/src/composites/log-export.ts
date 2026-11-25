@@ -19,6 +19,8 @@ export interface LogExportSelection {
   readonly rangeHours: LogExportRangeHours
   /** A readable `log-destination` addon id; absent = the hub's default. */
   readonly source?: string | undefined
+  /** Download the export as one .zip holding the NDJSON. */
+  readonly zip?: boolean | undefined
 }
 
 export function isLogExportRange(value: number): value is LogExportRangeHours {
@@ -35,12 +37,13 @@ export function logExportQuery(selection: LogExportSelection, now: number): stri
   if (selection.source !== undefined && selection.source !== '') {
     params.set('source', selection.source)
   }
+  if (selection.zip === true) params.set('zip', '1')
   const query = params.toString()
   return query.length > 0 ? `?${query}` : ''
 }
 
-export function logExportFileName(now: number): string {
-  return `camstack-logs-${new Date(now).toISOString().replace(/[:.]/g, '-')}.ndjson`
+export function logExportFileName(now: number, zip = false): string {
+  return `camstack-logs-${new Date(now).toISOString().replace(/[:.]/g, '-')}.${zip ? 'zip' : 'ndjson'}`
 }
 
 /** What a `LogStream` is looking at, as the export dialog's starting point. */

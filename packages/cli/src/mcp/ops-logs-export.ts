@@ -1,7 +1,7 @@
 /**
  * `ops_logs_export` (#570): the Logs page export from the public MCP. It reuses
  * the hub's `GET /api/logs/export` route and the same defaults (everything,
- * the last six hours) through `@camstack/develop`, writes one NDJSON file under
+ * the last six hours) through `@camstack/develop`, writes one NDJSON file (or, with `zip`, one .zip holding it) under
  * `~/.camstack/exports/logs/` (0600) and answers with a bounded summary.
  */
 import * as fs from 'node:fs'
@@ -37,7 +37,7 @@ export async function opsLogsExport(
     const at = now()
     const stem = args.name ?? `logs-${at.toISOString().replace(/[:.]/g, '-')}`
     const dir = path.join(ctx.exportDir ?? path.join(defaultSessionDir(), 'exports'), 'logs')
-    const dest = path.join(dir, `${stem}.ndjson`)
+    const dest = path.join(dir, `${stem}.${args.zip === true ? 'zip' : 'ndjson'}`)
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
     const download =
       ctx.downloader?.(connection) ??
@@ -52,7 +52,10 @@ export async function opsLogsExport(
         status: 'ok',
         path: dest,
         ...done,
-        next: 'One JSON object per line (newest first): grep/jq the file; tags.deviceId names the camera.',
+        next:
+          args.zip === true
+            ? 'A .zip holding one NDJSON file (one JSON object per line, newest first): unzip -p <path> | grep/jq; tags.deviceId names the camera.'
+            : 'One JSON object per line (newest first): grep/jq the file; tags.deviceId names the camera.',
       }
     } catch (err) {
       return { status: 'refused', reason: `logs export failed: ${reasonOf(err)}` }

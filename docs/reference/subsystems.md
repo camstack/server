@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9300 source files · 1304 file(s) in no subsystem.**
+**31 subsystems · 9301 source files · 1304 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -48,7 +48,7 @@ commits. A generated page may not.
 | Remote access and networking | 77 | `architecture/network.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +22 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 228 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, +65 more, 1 ADR | 2026-11-08 | ⚠️ |
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +45 more | 2026-10-13 | ⚠️ |
-| Logging and log shipping | 44 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
+| Logging and log shipping | 45 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1905 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +181 more, 15 ADRs | 2026-11-16 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +23 more, 7 ADRs | 2026-11-16 | ⚠️ |
@@ -288,7 +288,7 @@ Where a log line goes — the scoped logger every addon is injected with, and th
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/logging/**`, `packages/types/src/logging/**`, `packages/system/src/builtins/console-logging/**`, `packages/system/src/builtins/winston-logging/**`, `packages/system/src/builtins/loki-logging/**`, `server/backend/src/core/logging/**`
-- **Files**: 44 (44 claimed by some document)
+- **Files**: 45 (45 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ LLM runtimes and AI actions

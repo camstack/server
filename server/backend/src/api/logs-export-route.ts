@@ -19,11 +19,13 @@ import type { FastifyInstance } from 'fastify'
 import {
   exportLogEntries,
   exportSourceOf,
+  exportZipOf,
   LOG_EXPORT_MAX_ENTRIES,
   type LogExportRequest,
   parseLogExportRequest,
   toNdjsonLine,
 } from '../core/logging/log-export.js'
+import { ZipSink } from '../core/logging/zip-sink.js'
 import { DEFAULT_LOG_SOURCE, RING_LOG_SOURCE, readLogHistory } from '../core/logging/log-history.js'
 import {
   BACKUP_DOWNLOAD_DRAIN_GRACE_MS,
@@ -139,9 +141,9 @@ export async function collectLogExport(args: CollectLogExportArgs): Promise<LogE
   return { status: 'completed', lines, bytes, truncated }
 }
 
-function attachmentName(request: LogExportRequest): string {
+function attachmentStem(request: LogExportRequest): string {
   const stamp = new Date(request.until).toISOString().replace(/[:.]/g, '-')
-  return `camstack-logs-${stamp}.ndjson`
+  return `camstack-logs-${stamp}`
 }
 
 export function registerLogsExportRoute(
@@ -190,23 +192,26 @@ export function registerLogsExportRoute(
         void provider?.cancelRead?.({ requestId: last }).catch(() => undefined)
     }
 
+    const zip = exportZipOf(request.query)
+    const stem = attachmentStem(exportRequest)
     reply.hijack()
     reply.raw.writeHead(200, {
-      'content-type': 'application/x-ndjson; charset=utf-8',
-      'content-disposition': `attachment; filename="${attachmentName(exportRequest)}"`,
+      'content-type': zip ? 'application/zip' : 'application/x-ndjson; charset=utf-8',
+      'content-disposition': `attachment; filename="${stem}.${zip ? 'zip' : 'ndjson'}"`,
       'cache-control': 'no-store',
     })
     reply.raw.on('close', onClose)
     const startedAt = now()
     const result = await collectLogExport({
       entries: exportLogEntries({ request: exportRequest, read, signal: aborter.signal }),
-      sink: reply.raw,
+      sink: zip ? new ZipSink(reply.raw, `${stem}.ndjson`, new Date(now())) : reply.raw,
       ...(options.maxEntries !== undefined ? { maxEntries: options.maxEntries } : {}),
       ...(options.graceMs !== undefined ? { graceMs: options.graceMs } : {}),
     })
     reply.raw.off('close', onClose)
     const meta = {
       ...result,
+      zip,
       source: sourceId,
       components: exportRequest.components,
       deviceIds: exportRequest.deviceIds,

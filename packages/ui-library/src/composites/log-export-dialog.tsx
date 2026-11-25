@@ -14,6 +14,7 @@ import { useAddonsList } from '../generated/system-hooks'
 import { hubPath } from '../lib/hub-mount'
 import { Badge } from '../primitives/badge'
 import { Button } from '../primitives/button'
+import { Checkbox } from '../primitives/checkbox'
 import {
   Dialog,
   DialogBody,
@@ -91,6 +92,7 @@ export function LogExportDialog({
   const [deviceIds, setDeviceIds] = useState<number[]>([...initial.deviceIds])
   const [rangeHours, setRangeHours] = useState<LogExportRangeHours>(LOG_EXPORT_DEFAULT_RANGE_HOURS)
   const [sourceChoice, setSourceChoice] = useState<string | undefined>(undefined)
+  const [zip, setZip] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -122,11 +124,11 @@ export function LogExportDialog({
     try {
       const blob = await (fetchBlob ?? defaultFetchBlob)(
         `${hubPath('/api/logs/export')}${logExportQuery(
-          { components, deviceIds, rangeHours: effectiveRange, source },
+          { components, deviceIds, rangeHours: effectiveRange, source, zip },
           now,
         )}`,
       )
-      saveBlob(blob, logExportFileName(now))
+      saveBlob(blob, logExportFileName(now, zip))
       onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -145,7 +147,7 @@ export function LogExportDialog({
           <p className="text-sm text-foreground-muted">
             {t(
               'uiLibrary.logExport.hint',
-              'Downloads one NDJSON file, one line per entry with its tags. Leave a filter empty to include everything.',
+              'Downloads one NDJSON file, one line per entry with its tags. Leave the components and devices empty to export the whole system log.',
             )}
           </p>
           <fieldset className="space-y-1" data-testid="log-export-sources">
@@ -277,6 +279,15 @@ export function LogExportDialog({
               </p>
             )}
           </div>
+          <label className="flex items-start gap-2 text-sm text-foreground">
+            <Checkbox
+              className="mt-0.5"
+              checked={zip}
+              onChange={(e) => setZip(e.target.checked)}
+              data-testid="log-export-zip"
+            />
+            <span>{t('uiLibrary.logExport.zip', 'Export as ZIP')}</span>
+          </label>
           {error !== null && (
             <ErrorBox
               title={t('uiLibrary.logExport.failed', 'The export failed')}

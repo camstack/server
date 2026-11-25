@@ -4,6 +4,7 @@
  * deviceId kept, a cap that says it capped, and one log line per export.
  */
 
+import * as zlib from 'node:zlib'
 import type { ILogDestination, LogReadEntry, LogReadQuery } from '@camstack/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -52,6 +53,22 @@ interface Logged {
   readonly level: 'info' | 'warn'
   readonly message: string
   readonly meta: Record<string, unknown>
+}
+
+/** Read the one entry of a classic ZIP through its central directory. */
+function unzipSingle(zip: Buffer): { name: string; text: string; crc: number } {
+  const eocd = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]))
+  expect(eocd).toBeGreaterThan(-1)
+  const dir = zip.readUInt32LE(eocd + 16)
+  expect(zip.readUInt32LE(dir)).toBe(0x02014b50)
+  const crc = zip.readUInt32LE(dir + 16)
+  const compressed = zip.readUInt32LE(dir + 20)
+  const nameLength = zip.readUInt16LE(dir + 28)
+  const name = zip.subarray(dir + 46, dir + 46 + nameLength).toString('utf8')
+  const local = zip.readUInt32LE(dir + 42)
+  const dataStart = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28)
+  const text = zlib.inflateRawSync(zip.subarray(dataStart, dataStart + compressed)).toString('utf8')
+  return { name, text, crc }
 }
 
 describe('GET /api/logs/export', () => {
@@ -129,6 +146,45 @@ describe('GET /api/logs/export', () => {
       expect.objectContaining({ level: 'info', message: 'log export completed' }),
     ])
     expect(logged[0]?.meta).toMatchObject({ status: 'completed', lines: 3, truncated: false })
+  })
+
+  it('exports the whole log with no component and no device selected', async () => {
+    const res = await app.inject({
+      url: `${LOGS_EXPORT_PATH}?since=${String(NOW - 24 * 60 * MIN)}`,
+      headers: { authorization: `Bearer ${ADMIN}` },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.trim().split('\n')).toHaveLength(3)
+    expect(reads).toHaveLength(1)
+    expect(reads[0]?.fromAddonId).toBeUndefined()
+    expect(reads[0]?.deviceId).toBeUndefined()
+  })
+
+  it('zip=1 answers one .zip whose entry is the same NDJSON as the plain export', async () => {
+    const plain = await app.inject({
+      url: `${LOGS_EXPORT_PATH}?components=a`,
+      headers: { authorization: `Bearer ${ADMIN}` },
+    })
+    const res = await app.inject({
+      url: `${LOGS_EXPORT_PATH}?components=a&zip=1`,
+      headers: { authorization: `Bearer ${ADMIN}` },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-type']).toBe('application/zip')
+    expect(res.headers['content-disposition']).toMatch(/filename="camstack-logs-.*\.zip"/)
+    const entry = unzipSingle(res.rawPayload)
+    expect(entry.name).toMatch(/^camstack-logs-.*\.ndjson$/)
+    expect(entry.text).toBe(plain.body)
+    expect(entry.crc).toBe(zlib.crc32(Buffer.from(plain.body, 'utf8')))
+    expect(logged[1]?.meta).toMatchObject({ status: 'completed', zip: true })
+  })
+
+  it('zip=1 on the unfiltered export holds every line', async () => {
+    const res = await app.inject({
+      url: `${LOGS_EXPORT_PATH}?zip=1`,
+      headers: { authorization: `Bearer ${ADMIN}` },
+    })
+    expect(unzipSingle(res.rawPayload).text.trim().split('\n')).toHaveLength(3)
   })
 
   it('component and device filters reach the source; every line keeps its deviceId tag', async () => {

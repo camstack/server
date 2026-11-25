@@ -38,6 +38,8 @@ const RawExportQuerySchema = z.object({
   until: z.string().regex(/^\d+$/).optional(),
   level: LevelSchema.optional(),
   source: z.string().min(1).max(200).optional(),
+  /** `1` / `true`: the download is one .zip holding the NDJSON. */
+  zip: z.enum(['1', 'true']).optional(),
 })
 
 export type RawLogExportQuery = z.input<typeof RawExportQuerySchema>
@@ -96,6 +98,12 @@ export function parseLogExportRequest(raw: unknown, now: number): ParsedLogExpor
 export function exportSourceOf(raw: unknown): string | undefined {
   const parsed = RawExportQuerySchema.safeParse(raw)
   return parsed.success ? parsed.data.source : undefined
+}
+
+/** Whether the query asked for the export as a ZIP archive. */
+export function exportZipOf(raw: unknown): boolean {
+  const parsed = RawExportQuerySchema.safeParse(raw)
+  return parsed.success && parsed.data.zip !== undefined
 }
 
 export type LogPageReader = (query: LogReadQuery) => Promise<LogReadResult>

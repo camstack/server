@@ -134,7 +134,7 @@ export function registerOpsTools(
 
   server.tool(
     'ops_logs_export',
-    'The Logs page export: logs of chosen components (addonIds) and/or devices over a time range, as one NDJSON file under ~/.camstack/exports/logs/ (tags kept, deviceId included). Default everything over the last 6 hours. Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Needs an admin `camstack login`.',
+    'The Logs page export: logs of chosen components (addonIds) and/or devices over a time range, as one NDJSON file under ~/.camstack/exports/logs/ (tags kept, deviceId included). Omit components and deviceIds to export the whole system log. Default everything over the last 6 hours. `zip: true` saves it as one .zip instead (compressed by the hub; the summary still describes the lines). Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Needs an admin `camstack login`.',
     LogsExportArgsSchema.shape,
     async (args): Promise<ToolTextResult> =>
       text(await opsLogsExport(ctx, LogsExportArgsSchema.parse(args))),

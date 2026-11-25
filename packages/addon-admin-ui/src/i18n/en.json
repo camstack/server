@@ -11483,7 +11483,7 @@
     },
     "logExport": {
       "title": "Export logs",
-      "hint": "Downloads one NDJSON file, one line per entry with its tags. Leave a filter empty to include everything.",
+      "hint": "Downloads one NDJSON file, one line per entry with its tags. Leave the components and devices empty to export the whole system log.",
       "source": "Log source",
       "sourcesLoading": "Reading the log sources…",
       "unreadableNoReason": "This destination only ships lines.",
@@ -11503,7 +11503,8 @@
       "reachDays_one": "Back {{count}} day",
       "reachDays_other": "Back {{count}} days",
       "sourcesFailed": "The log sources could not be read",
-      "sourcesFailedHint": "The export falls back to the default log source."
+      "sourcesFailedHint": "The export falls back to the default log source.",
+      "zip": "Export as ZIP"
     },
     "clipSourceLanes": {
       "count_one": "{{count}} clip",

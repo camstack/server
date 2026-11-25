@@ -73,6 +73,26 @@ describe('LogExportDialog', () => {
     expect(String(calls[0]?.[0])).toContain('source=loki-logging')
   })
 
+  it('exports everything with no filter, and as a ZIP only when the box is ticked', async () => {
+    const fetchBlob = vi.fn(async () => new Blob(['x']))
+    render(
+      <LogExportDialog
+        initial={{ components: [], deviceIds: [], source: undefined }}
+        onClose={vi.fn()}
+        fetchBlob={fetchBlob}
+      />,
+    )
+    fireEvent.click(screen.getByText('Download'))
+    await waitFor(() => expect(fetchBlob).toHaveBeenCalledTimes(1))
+    const calls: unknown[][] = fetchBlob.mock.calls
+    expect(String(calls[0]?.[0])).not.toContain('zip=')
+    expect(String(calls[0]?.[0])).not.toContain('components=')
+    fireEvent.click(screen.getByTestId('log-export-zip'))
+    fireEvent.click(screen.getByText('Download'))
+    await waitFor(() => expect(fetchBlob).toHaveBeenCalledTimes(2))
+    expect(String(calls[1]?.[0])).toContain('zip=1')
+  })
+
   it('shows an error box when the sources could not be read, and says what happens', () => {
     state.isError = true
     state.data = undefined

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The log export can now be downloaded as a .zip (zip=1), filtered or for the whole system log.
+
 ## [1.2.963] - 2026-11-25
 
 ### Changed
