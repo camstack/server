@@ -54,6 +54,10 @@ export interface NcRunActionGrant extends NcActionGrantBase {
   readonly ruleName: string
   /** The Action to run (`actions.run`). Must exist in the Actions list; the minter checks. */
   readonly runActionId: string
+  /** The button's label, shown on the confirm page. Set with `confirm`. */
+  readonly label?: string
+  /** The tap opens a confirm page; only a POST with `confirm=1` claims the token. */
+  readonly confirm?: true
 }
 
 /**

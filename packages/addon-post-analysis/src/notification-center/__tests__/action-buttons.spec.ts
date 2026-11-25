@@ -34,6 +34,25 @@ describe('buildActionButtons', () => {
     ])
   })
 
+  it('a confirm button is navigate mode and tells the minter to ask first', () => {
+    const asked: (string | undefined)[] = []
+    const out = buildActionButtons({
+      actions: actions({
+        buttons: [
+          { id: 'open', label: 'Unlock', actionId: 'open-gate-id', confirm: true },
+          { id: 'plain', label: 'Plain', actionId: 'open-gate-id' },
+        ],
+      }),
+      knownActionIds: known,
+      mintUrl: (i) => {
+        asked.push(i.confirm?.label)
+        return `url://${i.actionId}`
+      },
+    })
+    expect(out.map((b) => b.mode)).toEqual(['navigate', 'background'])
+    expect(asked).toEqual(['Unlock', undefined])
+  })
+
   it('drops a button whose actionId is unknown', () => {
     const out = buildActionButtons({
       actions: actions({ buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] }),
@@ -42,10 +61,7 @@ describe('buildActionButtons', () => {
     })
     expect(out).toEqual([])
     expect(
-      unresolvableButtons(
-        actions({ buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] }),
-        known,
-      ),
+      unresolvableButtons(actions({ buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] }), known),
     ).toEqual(['x→typo'])
   })
 

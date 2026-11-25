@@ -19,12 +19,7 @@
  * the token's job and the operator's decision — see `action-token.ts`.
  */
 
-import type {
-  AlarmArmMode,
-  NcRule,
-  NcRuleActions,
-  NotificationAction,
-} from '@camstack/types'
+import type { AlarmArmMode, NcRule, NcRuleActions, NotificationAction } from '@camstack/types'
 import { NC_DEFAULT_SNOOZE_MINUTES, NC_SNOOZE_MAX_MINUTES } from '@camstack/types'
 import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 
@@ -32,6 +27,8 @@ import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 export type NcActionUrlMinter = (input: {
   readonly runActionId: string
   readonly actionId: string
+  /** Set for a button that asks for confirmation on a page before it runs. */
+  readonly confirm?: { readonly label: string }
 }) => string
 
 export interface BuildActionButtonsInput {
@@ -65,11 +62,16 @@ export function buildActionButtons(input: BuildActionButtonsInput): readonly Not
     out.push({
       id: button.id,
       label: button.label,
-      url: input.mintUrl({ runActionId: button.actionId, actionId: button.id }),
+      url: input.mintUrl({
+        runActionId: button.actionId,
+        actionId: button.id,
+        ...(button.confirm === true ? { confirm: { label: button.label } } : {}),
+      }),
       // Background POST — same as snooze/arm. An Action that opens a browser
       // tab (Zentik NAVIGATE) costs more attention than the notification itself;
       // Zentik supports BACKGROUND_CALL and every other NC button already uses it.
-      mode: 'background',
+      // A confirm button is the exception: the tap must OPEN the confirm page.
+      mode: button.confirm === true ? 'navigate' : 'background',
       ...(button.icon !== undefined ? { icon: button.icon } : {}),
       ...(button.destructive !== undefined ? { destructive: button.destructive } : {}),
     })
@@ -91,9 +93,7 @@ export function unresolvableButtons(
   if (actions === undefined) return []
   const buttons = actions.buttons ?? []
   if (buttons.length === 0) return []
-  return buttons
-    .filter((b) => !knownActionIds.has(b.actionId))
-    .map((b) => `${b.id}→${b.actionId}`)
+  return buttons.filter((b) => !knownActionIds.has(b.actionId)).map((b) => `${b.id}→${b.actionId}`)
 }
 
 // ── Snooze buttons ──────────────────────────────────────────────────

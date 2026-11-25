@@ -854,6 +854,9 @@ export const NcRuleNotificationButtonSchema = z.object({
   actionId: NcActionIdSchema,
   icon: NotificationActionIconSchema.optional(),
   destructive: z.boolean().optional(),
+  /** Ask for confirmation on a page before the Action runs; the tap opens the
+   *  page, and only the page's confirm runs it. */
+  confirm: z.boolean().optional(),
 })
 export type NcRuleNotificationButton = z.infer<typeof NcRuleNotificationButtonSchema>
 

@@ -297,7 +297,7 @@ export async function mintButtons(
           knownActionIds: host.actionCatalog.knownIds(),
           // Synchronous by contract, so the pure builder stays pure: the id
           // is minted here and the URL is filled in below.
-          mintUrl: ({ runActionId, actionId }) => {
+          mintUrl: ({ runActionId, actionId, confirm }) => {
             const id = randomUUID()
             drafts.push({
               id,
@@ -308,6 +308,7 @@ export async function mintButtons(
                 ruleId: input.ruleId,
                 ruleName: input.ruleName,
                 runActionId,
+                ...(confirm !== undefined ? { confirm: true as const, label: confirm.label } : {}),
                 deviceId: input.deviceId,
                 actionId,
                 targetId: input.targetId,

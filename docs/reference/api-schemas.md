@@ -4794,6 +4794,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `actionId`: `string`
 - `icon?`: `NotificationActionIconSchema`
 - `destructive?`: `boolean`
+- `confirm?`: `boolean`
 
 ### `NcRulePatchSchema`
 
