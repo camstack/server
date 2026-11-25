@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.953] - 2026-11-25
+
 ### Changed
 
 - Deleting a device now retires the composition it owned and removes it from the linked triggers that named it
