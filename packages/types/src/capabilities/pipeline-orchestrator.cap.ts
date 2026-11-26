@@ -9,6 +9,12 @@ import {
   AutoTunePlanSchema,
 } from '../pipeline/auto-tune/plan-schemas.js'
 import {
+  ClusterDetectionDefaultsSchema,
+  DetectionDefaultsApplyInputSchema,
+  DetectionDefaultsApplyResultSchema,
+  DetectionDefaultsPlanSchema,
+} from '../pipeline/detection-defaults/cluster-defaults.js'
+import {
   EffectiveSharesSchema,
   LoadBalancingSharesInputSchema,
   PlacementStatsInputSchema,
@@ -1519,6 +1525,36 @@ export const pipelineOrchestratorCapability = {
       GetNodeCapacityVerdictInputSchema,
       z.array(NodeCapacityVerdictSchema).readonly(),
       { auth: 'admin' },
+    ),
+    /**
+     * Cluster detection defaults (D1104) — PLAN. What a camera follows for
+     * `detectionStreamProfile` / `detectionFps` when the operator pinned
+     * nothing on it: the rule-v1 recommendation (judged on the weakest node that
+     * serves cameras; an unmeasured dimension is null), the cluster default
+     * stored now, and the cameras that pin either field themselves (count +
+     * ids; the apply never touches them). Writes nothing; never automatic.
+     */
+    planDetectionDefaults: method(z.object({}), DetectionDefaultsPlanSchema, { auth: 'admin' }),
+    /**
+     * Cluster detection defaults (D1104) — APPLY the plan the operator
+     * confirmed. Recomputes the plan and answers `stale` (with the fresh plan)
+     * when its hash is not `planHash`. Writes the CLUSTER default only — never a
+     * camera's own setting. A null recommended dimension is left as stored.
+     */
+    applyDetectionDefaults: method(
+      DetectionDefaultsApplyInputSchema,
+      DetectionDefaultsApplyResultSchema,
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Cluster detection defaults (D1104) — set or clear the stored default by
+     * hand. A field left out is cleared (the code constant applies again).
+     * Never touches a camera's own setting.
+     */
+    setClusterDetectionDefaults: method(
+      ClusterDetectionDefaultsSchema,
+      ClusterDetectionDefaultsSchema,
+      { kind: 'mutation', auth: 'admin' },
     ),
     /** Node benchmark — delete one result; Auto tune and the shares stop reading it. */
     deleteNodeBenchmarkResult: method(

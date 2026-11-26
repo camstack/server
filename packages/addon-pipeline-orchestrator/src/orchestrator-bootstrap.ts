@@ -740,6 +740,7 @@ export async function buildOrchestratorControllers(
     topology,
     getAssignment: (deviceId) => ledger.getAssignment(deviceId),
     deviceSettingsSchema: () => deps.deviceSettingsSchema(),
+    readClusterDetectionDefaults: () => settingsStore.readClusterDetectionDefaults(),
     deviceHasOnboardMotionCap: (deviceId) => deps.deviceHasOnboardMotionCap(deviceId),
     deviceHasActivitySignalCap: (deviceId) => deps.deviceHasActivitySignalCap(deviceId),
     deviceHasNativeObjectDetectionCap: (deviceId) =>

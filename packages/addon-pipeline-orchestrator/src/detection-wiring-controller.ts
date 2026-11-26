@@ -372,6 +372,7 @@ export class DetectionWiringController {
         deviceId,
         raw,
         flat,
+        clusterDefaults: await this.deps.settingsStore.readClusterDetectionDefaults(),
         features,
         hasOnboardMotion,
         hasActivitySignal,

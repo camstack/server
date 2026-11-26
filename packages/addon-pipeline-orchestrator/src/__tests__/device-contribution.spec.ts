@@ -9,6 +9,7 @@
  */
 import {
   type AddonContext,
+  type ClusterDetectionDefaults,
   EventCategory,
   type IEventBus,
   type IScopedLogger,
@@ -103,11 +104,14 @@ function makeAddon() {
     hasPackageZone: async () => false,
     logger,
   })
+  // The stored cluster detection default (D1104); a test sets `.current`.
+  const cluster: { current: ClusterDetectionDefaults } = { current: {} }
   internals.deviceConfig = new DeviceConfigContributions({
     ctx: () => ctx as unknown as AddonContext,
     topology: internals.topology,
     getAssignment: (deviceId) => internals.ledger!.getAssignment(deviceId),
     deviceSettingsSchema: () => internals.deviceSettingsSchema(),
+    readClusterDetectionDefaults: async () => cluster.current,
     deviceHasOnboardMotionCap: (deviceId) => internals.deviceHasOnboardMotionCap(deviceId),
     deviceHasActivitySignalCap: (deviceId) =>
       internals.deviceHasActivitySignalCap?.(deviceId) ?? Promise.resolve(false),
@@ -131,7 +135,7 @@ function makeAddon() {
       throw new Error('clearOnSettingsChange not used in this harness')
     },
   })
-  return { addon, store, emit, ctx }
+  return { addon, store, emit, ctx, cluster }
 }
 
 describe('PipelineOrchestratorAddon — device-settings contribution', () => {
@@ -174,6 +178,41 @@ describe('PipelineOrchestratorAddon — device-settings contribution', () => {
     // not the old hand-written section, not the cap's Motion field.
     expect(fields.filter((f) => f.key === 'detectionSources')).toEqual([])
     expect(contribution!.sections.map((s) => s.id)).not.toContain('detection-sources')
+  })
+
+  it('an unset camera shows the CLUSTER detection default, not the schema constant (D1104)', async () => {
+    const { addon, cluster } = makeAddon()
+    cluster.current = { detectionStreamProfile: 'low', detectionFps: 5 }
+    const contribution = await addon.getDeviceSettingsContribution({ deviceId: CAM_ID })
+    const fields = contribution!.sections.flatMap((s) => s.fields)
+    const valueOf = (key: string): unknown =>
+      (fields.find((f) => f.key === key) as { value?: unknown } | undefined)?.value
+    expect(valueOf('detectionStreamProfile')).toBe('low')
+    expect(valueOf('detectionFps')).toBe(5)
+  })
+
+  it('a camera that pinned a value keeps showing its own over the cluster default', async () => {
+    const { addon, cluster, store } = makeAddon()
+    cluster.current = { detectionStreamProfile: 'low', detectionFps: 5 }
+    store[CAM_ID] = { detectionStreamProfile: 'mid', detectionFps: 12 }
+    const contribution = await addon.getDeviceSettingsContribution({ deviceId: CAM_ID })
+    const fields = contribution!.sections.flatMap((s) => s.fields)
+    const valueOf = (key: string): unknown =>
+      (fields.find((f) => f.key === key) as { value?: unknown } | undefined)?.value
+    expect(valueOf('detectionStreamProfile')).toBe('mid')
+    expect(valueOf('detectionFps')).toBe(12)
+  })
+
+  it('saving an UNRELATED camera field leaves the detection profile and fps UNSET (D1104)', async () => {
+    const { addon, store, cluster } = makeAddon()
+    cluster.current = { detectionStreamProfile: 'low', detectionFps: 5 }
+    // Opening the form (which displays the cluster default) and then saving
+    // another field must not freeze the default into the camera.
+    await addon.getDeviceSettingsContribution({ deviceId: CAM_ID })
+    await addon.applyDeviceSettingsPatch({ deviceId: CAM_ID, patch: { motionFps: 8 } })
+    expect(store[CAM_ID]).toEqual({ motionFps: 8 })
+    expect(store[CAM_ID]).not.toHaveProperty('detectionStreamProfile')
+    expect(store[CAM_ID]).not.toHaveProperty('detectionFps')
   })
 
   it('live contribution is null when there is no assignment for the device', async () => {

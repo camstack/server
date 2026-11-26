@@ -31,6 +31,7 @@
  */
 import type {
   AddonApi,
+  ClusterDetectionDefaults,
   AddonContext,
   AgentPipelineSettings,
   CameraPipelineConfig,
@@ -40,7 +41,12 @@ import type {
   IScopedLogger,
   PipelineSchema,
 } from '@camstack/types'
-import { cameraScopedStepSettings, errMsg, sleep } from '@camstack/types'
+import {
+  cameraScopedStepSettings,
+  ClusterDetectionDefaultsSchema,
+  errMsg,
+  sleep,
+} from '@camstack/types'
 import type { ZodType } from 'zod'
 import type { CameraStepLayer } from './apply-device-provisioning.js'
 import {
@@ -143,6 +149,8 @@ const PIPELINE_EXECUTOR_CAP = 'pipeline-executor'
 
 /** The addon-store key of the cluster step switches (D1065). */
 export const CLUSTER_STEP_MODES_KEY = 'clusterStepModes'
+/** The cluster default for what a camera follows when it pinned nothing (D1104). */
+export const CLUSTER_DETECTION_DEFAULTS_KEY = 'clusterDetectionDefaults'
 
 /** A skip an operator switch caused (D1065), as opposed to a missing build. */
 function isSwitchSkip(reason: SkipReason): boolean {
@@ -435,6 +443,28 @@ export class PipelineSettingsStore {
         ...rest,
         ...(Object.keys(layer).length > 0 ? { stepSettings: layer } : {}),
       })
+    })
+  }
+
+  // ── Cluster detection defaults (D1104) ────────────────────────────────
+
+  private clusterDetectionDefaultsState(): DurableState<ClusterDetectionDefaults> {
+    return this.deps.state<ClusterDetectionDefaults>(
+      CLUSTER_DETECTION_DEFAULTS_KEY,
+      ClusterDetectionDefaultsSchema,
+      {},
+    )
+  }
+
+  /** The stored cluster detection default; an absent field = the code constant applies. */
+  async readClusterDetectionDefaults(): Promise<ClusterDetectionDefaults> {
+    return await this.clusterDetectionDefaultsState().get()
+  }
+
+  /** Replace the stored cluster default (a field left out is cleared). Never touches a camera. */
+  async writeClusterDetectionDefaults(defaults: ClusterDetectionDefaults): Promise<void> {
+    await this.blobWriteLock.run(CLUSTER_DETECTION_DEFAULTS_KEY, async () => {
+      await this.clusterDetectionDefaultsState().update(() => defaults)
     })
   }
 

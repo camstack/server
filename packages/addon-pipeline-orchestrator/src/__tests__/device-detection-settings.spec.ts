@@ -99,6 +99,7 @@ describe('resolveDetectionSettings — motionSources default ladder', () => {
       deviceId: 1,
       raw: {},
       flat: baseFlat,
+      clusterDefaults: {},
       features: [],
       hasOnboardMotion: false,
       hasActivitySignal: false,
@@ -193,6 +194,7 @@ describe('resolveDetectionSettings — the device-activity default', () => {
       deviceId: 102,
       raw: {},
       flat: baseFlat,
+      clusterDefaults: {},
       features: [],
       hasOnboardMotion: false,
       hasActivitySignal: false,
@@ -259,6 +261,7 @@ describe('resolveDetectionSettings — activityDetectionFps', () => {
       deviceId: 102,
       raw: {},
       flat: { ...baseFlat, ...flat },
+      clusterDefaults: {},
       features: [],
       hasOnboardMotion: false,
       hasActivitySignal: true,
@@ -324,6 +327,7 @@ describe('resolveDetectionSettings — other operator-wins → profile → fallb
     return {
       deviceId: 7,
       raw: {},
+      clusterDefaults: {},
       flat: baseFlat,
       features: [],
       hasOnboardMotion: false,
@@ -496,6 +500,7 @@ describe('resolveDetectionSettings — audioStreamPick', () => {
       deviceId: 1,
       raw,
       flat,
+      clusterDefaults: {},
       features: [],
       hasOnboardMotion: false,
       hasActivitySignal: false,
@@ -684,6 +689,7 @@ describe('resolveDetectionSettings — detectionSources', () => {
     return resolveDetectionSettings({
       deviceId: 1,
       raw,
+      clusterDefaults: {},
       flat: {
         motionSources: ['analyzer'],
         motionStreamProfile: 'high',
@@ -716,6 +722,7 @@ describe('resolveDetectionSettings — detectionSources', () => {
       resolveDetectionSettings({
         deviceId: 1,
         raw: {},
+        clusterDefaults: {},
         flat: {
           motionSources: ['analyzer'],
           motionStreamProfile: 'high',
@@ -754,5 +761,72 @@ describe('resolveDetectionSettings — detectionSources', () => {
 
   it('an explicitly EMPTY pick survives — a camera with no root detector is a legal choice', () => {
     expect(sourcesFor({ detectionSources: [] })).toEqual([])
+  })
+})
+
+// ── cluster detection defaults (D1104): camera explicit > cluster > constant ──
+
+describe('resolveDetectionSettings — cluster detection defaults', () => {
+  const flat: Record<string, unknown> = {
+    motionSources: ['analyzer'],
+    motionStreamProfile: 'low',
+    detectionStreamProfile: 'high', // the code constant, hydrated
+    motionFps: 4,
+    detectionFps: 10, // the code constant, hydrated
+    motionCooldownMs: 30_000,
+    occupancyRecheckSec: 5,
+    occupancyRecheckFrames: 3,
+  }
+  const input = (
+    raw: Record<string, unknown>,
+    clusterDefaults: ResolveDetectionSettingsInput['clusterDefaults'],
+  ): ResolveDetectionSettingsInput => ({
+    deviceId: 1,
+    raw,
+    flat: { ...flat, ...raw },
+    clusterDefaults,
+    features: [],
+    hasOnboardMotion: false,
+    hasActivitySignal: false,
+    pipelineEnabled: true,
+    motionDetectionEnabled: true,
+  })
+
+  it('an unset camera follows the cluster default', () => {
+    const r = resolveDetectionSettings(
+      input({}, { detectionStreamProfile: 'low', detectionFps: 5 }),
+    )
+    expect(r.detectionStreamProfile).toBe('low')
+    expect(r.detectionFps).toBe(5)
+  })
+
+  it('an explicit camera value beats the cluster default', () => {
+    const r = resolveDetectionSettings(
+      input(
+        { detectionStreamProfile: 'mid', detectionFps: 8 },
+        { detectionStreamProfile: 'low', detectionFps: 5 },
+      ),
+    )
+    expect(r.detectionStreamProfile).toBe('mid')
+    expect(r.detectionFps).toBe(8)
+  })
+
+  it('no cluster default: the code constant applies', () => {
+    const r = resolveDetectionSettings(input({}, {}))
+    expect(r.detectionStreamProfile).toBe('high')
+    expect(r.detectionFps).toBe(10)
+  })
+
+  it('a legacy persisted fps of 0 is unset, so it follows the cluster default', () => {
+    const r = resolveDetectionSettings(input({ detectionFps: 0 }, { detectionFps: 5 }))
+    expect(r.detectionFps).toBe(5)
+  })
+
+  it('each field resolves independently', () => {
+    const r = resolveDetectionSettings(
+      input({ detectionFps: 12 }, { detectionStreamProfile: 'low', detectionFps: 5 }),
+    )
+    expect(r.detectionFps).toBe(12)
+    expect(r.detectionStreamProfile).toBe('low')
   })
 })

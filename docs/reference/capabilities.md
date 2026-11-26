@@ -215,7 +215,7 @@ Singleton or collection providers, addressed without a device.
 | `oauth-integration` | 1 | — | — | — | ✓ | `export-alexa` `export-google` `homeassistant-export` |
 | `osd-manager` | 12 | — | — | — | — | `osd-manager` |
 | `pipeline-executor` | 30 | — | — | — | — | `detection-pipeline` |
-| `pipeline-orchestrator` | 70 | — | — | — | — | `pipeline-orchestrator` |
+| `pipeline-orchestrator` | 73 | — | — | — | — | `pipeline-orchestrator` |
 | `pipeline-runner` | 18 | — | — | — | — | `pipeline-runner` |
 | `plate-gallery` | 18 | — | — | — | — | `pipeline-analytics` |
 | `platform-probe` | 5 | — | — | — | — | `platform-probe` |

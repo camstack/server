@@ -15527,6 +15527,30 @@ export function createCapRouter_pipelineOrchestrator(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getNodeCapacityVerdict(input as any)
       }),
+    planDetectionDefaults: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.planDetectionDefaults.input.loose())
+      .output(pipelineOrchestratorCapability.methods.planDetectionDefaults.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.planDetectionDefaults(input as any)
+      }),
+    applyDetectionDefaults: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.applyDetectionDefaults.input.loose())
+      .output(pipelineOrchestratorCapability.methods.applyDetectionDefaults.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.applyDetectionDefaults(input as any)
+      }),
+    setClusterDetectionDefaults: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.setClusterDetectionDefaults.input.loose())
+      .output(pipelineOrchestratorCapability.methods.setClusterDetectionDefaults.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setClusterDetectionDefaults(input as any)
+      }),
     deleteNodeBenchmarkResult: adminProcedure
       .input(pipelineOrchestratorCapability.methods.deleteNodeBenchmarkResult.input.loose())
       .output(pipelineOrchestratorCapability.methods.deleteNodeBenchmarkResult.output)

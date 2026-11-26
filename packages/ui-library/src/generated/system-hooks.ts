@@ -2849,6 +2849,15 @@ export const usePipelineOrchestratorListNodeBenchmarkResults: typeof trpc.pipeli
 /** Generated alias around `trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery`. */
 export const usePipelineOrchestratorGetNodeCapacityVerdict: typeof trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getNodeCapacityVerdict.useQuery)
 
+/** Generated alias around `trpc.pipelineOrchestrator.planDetectionDefaults.useQuery`. */
+export const usePipelineOrchestratorPlanDetectionDefaults: typeof trpc.pipelineOrchestrator.planDetectionDefaults.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.planDetectionDefaults.useQuery)
+
+/** Generated alias around `trpc.pipelineOrchestrator.applyDetectionDefaults.useMutation`. */
+export const usePipelineOrchestratorApplyDetectionDefaults: typeof trpc.pipelineOrchestrator.applyDetectionDefaults.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.applyDetectionDefaults.useMutation)
+
+/** Generated alias around `trpc.pipelineOrchestrator.setClusterDetectionDefaults.useMutation`. */
+export const usePipelineOrchestratorSetClusterDetectionDefaults: typeof trpc.pipelineOrchestrator.setClusterDetectionDefaults.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.setClusterDetectionDefaults.useMutation)
+
 /** Generated alias around `trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation`. */
 export const usePipelineOrchestratorDeleteNodeBenchmarkResult: typeof trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.deleteNodeBenchmarkResult.useMutation)
 

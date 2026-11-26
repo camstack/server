@@ -44,10 +44,13 @@ import type {
   Zone,
 } from '@camstack/types'
 import {
+  type ClusterDetectionDefaults,
+  CamProfileSchema,
   DeviceFeature,
   DetectionSourcesSchema,
   MotionSourcesSchema,
   RunnerCameraDeviceUIFields,
+  resolveDetectionDefault,
   resolveDeviceProfile,
 } from '@camstack/types'
 import { DEVICE_ACTIVITY_SOURCE } from './device-activity-source.js'
@@ -66,6 +69,11 @@ export interface ResolveDetectionSettingsInput {
   readonly deviceId: number
   readonly raw: Record<string, unknown>
   readonly flat: Record<string, unknown>
+  /**
+   * The cluster default for the fields a camera may leave unset (D1104). Read
+   * per resolve from the orchestrator settings; `{}` = no cluster default.
+   */
+  readonly clusterDefaults: ClusterDetectionDefaults
   readonly features: readonly string[]
   readonly hasOnboardMotion: boolean
   /**
@@ -144,6 +152,18 @@ function numberOrDefault(flat: Record<string, unknown>, key: string): number {
   return typeof dflt === 'number' ? dflt : 0
 }
 
+/** The camera's OWN stored detection fps; a legacy `0` ("native rate") is unset. */
+function explicitDetectionFps(raw: Record<string, unknown>): number | undefined {
+  const v = raw['detectionFps']
+  return typeof v === 'number' && v > 0 ? v : undefined
+}
+
+/** The camera's OWN stored detection stream profile, when it stored one. */
+function explicitDetectionProfile(raw: Record<string, unknown>): CamProfile | undefined {
+  const parsed = CamProfileSchema.safeParse(raw['detectionStreamProfile'])
+  return parsed.success ? parsed.data : undefined
+}
+
 /**
  * Frames per second a `device-activity` session is allowed, when the operator
  * has not picked a value.
@@ -209,6 +229,7 @@ export function resolveDetectionSettings(
     deviceId,
     raw,
     flat,
+    clusterDefaults,
     features,
     hasOnboardMotion,
     hasActivitySignal,
@@ -311,6 +332,7 @@ export function resolveDetectionSettings(
   // This default is the EFFECTIVE one: `flat` is hydrated from the schema this
   // addon contributes, and the value the runner receives is the one resolved
   // here — so flipping it ships with an orchestrator deploy, no train.
+  const explicitProfile = explicitDetectionProfile(raw)
   const userOccupancyRecheckEnabled = raw['occupancyRecheckEnabled']
   const occupancyRecheckEnabled: boolean =
     typeof userOccupancyRecheckEnabled === 'boolean' ? userOccupancyRecheckEnabled : true
@@ -344,9 +366,21 @@ export function resolveDetectionSettings(
     // detection entirely for the device — strictly worse than the
     // pre-existing pass-through behavior this preserves.
     motionStreamProfile: mustString(flat, deviceId, 'motionStreamProfile') as CamProfile,
-    detectionStreamProfile: mustString(flat, deviceId, 'detectionStreamProfile') as CamProfile,
+    // The ONE place the detection stream profile and rate are resolved
+    // (D1104): the camera's own stored value > the cluster default > the
+    // schema constant already hydrated into `flat`. A camera that stored
+    // nothing stays unset and follows the cluster default.
+    detectionStreamProfile: resolveDetectionDefault<CamProfile>(
+      explicitProfile,
+      clusterDefaults.detectionStreamProfile,
+      mustString(flat, deviceId, 'detectionStreamProfile') as CamProfile,
+    ),
     motionFps: numberOrDefault(flat, 'motionFps'),
-    detectionFps: numberOrDefault(flat, 'detectionFps'),
+    detectionFps: resolveDetectionDefault<number>(
+      explicitDetectionFps(raw),
+      clusterDefaults.detectionFps,
+      numberOrDefault(flat, 'detectionFps'),
+    ),
     activityDetectionFps: activityFps(flat),
     motionCooldownMs: numberOrDefault(flat, 'motionCooldownMs'),
     maxSessionHoldMs: numberOrDefault(flat, 'maxSessionHoldMs'),

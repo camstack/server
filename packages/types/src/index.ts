@@ -2722,6 +2722,8 @@ export {
 // hardware facts x the measured latency table x demand — see
 // `pipeline/auto-tune/recommend.ts`.
 export * from './pipeline/auto-tune/index.js'
+// Cluster detection defaults (D1104): the rule v1 recommender + the stored default.
+export * from './pipeline/detection-defaults/index.js'
 // Load balancing (D748): share placement of detection sessions.
 export * from './pipeline/load-balancing/index.js'
 export * from './pipeline/health-digest/schemas.js'

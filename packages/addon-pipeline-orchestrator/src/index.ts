@@ -45,6 +45,9 @@ import type {
   AddonInitResult,
   AgentLoadSummary,
   AutoTuneApplyResult,
+  ClusterDetectionDefaults,
+  DetectionDefaultsApplyResult,
+  DetectionDefaultsPlan,
   AutoTunePlan,
   CapacitySource,
   CurrentPool,
@@ -248,6 +251,7 @@ import { pipelineOrchestratorWidgets } from './widget-catalog.js'
 import { ZoneRulesProvider } from './zone-rules-provider.js'
 import { ZonesProvider } from './zones-provider.js'
 import { AutoTuneService } from './auto-tune/auto-tune-service.js'
+import { DetectionDefaultsService } from './detection-defaults-service.js'
 import { SessionPlacementStats } from './session-placement-stats.js'
 import { HEALTH_DIGEST_INTERVAL_MS } from './health-digest.js'
 import { HealthDigestTick, type CameraMetricsMirror } from './health-digest-tick.js'
@@ -380,6 +384,7 @@ export default class PipelineOrchestratorAddon
   /** Where the shares come from (D750); `auto` before init. */
   private readShareSource: () => ShareSource = () => DEFAULT_SHARE_SOURCE
   private autoTuneService: AutoTuneService | null = null
+  private detectionDefaultsService: DetectionDefaultsService | null = null
   private effectiveSharesService: EffectiveSharesService | null = null
   /** The node benchmark lifecycle (D791); null before init. */
   protected nodeBenchmark: NodeBenchmarkService | null = null
@@ -2821,6 +2826,62 @@ export default class PipelineOrchestratorAddon
     // New models change each node's capacity: the automatic shares follow (D750).
     if (result.kind === 'applied') this.noteShareChange('auto-tune-applied')
     return result
+  }
+
+  // ── Cluster detection defaults (D1104) ────────────────────────────────
+
+  private detectionDefaults(): DetectionDefaultsService {
+    if (this.detectionDefaultsService !== null) return this.detectionDefaultsService
+    const store = this.settingsStore!
+    this.detectionDefaultsService = new DetectionDefaultsService({
+      nodeIds: () => [...new Set(['hub', ...this.topology!.collectRunnerNodeIds()])].toSorted(),
+      readNodeDevices: (nodeId) => this.getNodeInferenceDevices({ nodeId }),
+      readHardware: async (nodeId) => {
+        const api = this.ctx.api
+        if (!api) return null
+        return nodeId === this.localNodeId
+          ? api.platformProbe.getHardware.query()
+          : api.platformProbe.getHardware.query({ nodeId })
+      },
+      camerasByNode: () => {
+        const counts = new Map<string, number>()
+        for (const a of this.ledger!.listAssignments()) {
+          counts.set(a.agentNodeId, (counts.get(a.agentNodeId) ?? 0) + 1)
+        }
+        return counts
+      },
+      readDecode: async (nodeId) => {
+        const [verdict] = await this.getNodeCapacityVerdict({ nodeId })
+        return verdict?.decode ?? null
+      },
+      readCameraStores: async () => {
+        const settings = this.ctx.settings
+        if (!settings) return new Map()
+        return await settings.readDeviceStoreBatch(await settings.listDeviceStoreIds())
+      },
+      readClusterDefaults: () => store.readClusterDetectionDefaults(),
+      writeClusterDefaults: async (defaults) => {
+        await store.writeClusterDetectionDefaults(defaults)
+      },
+      onApplied: () => this.placement!.redispatchAllActiveCameras('detection-defaults-changed'),
+    })
+    return this.detectionDefaultsService
+  }
+
+  async planDetectionDefaults(): Promise<DetectionDefaultsPlan> {
+    return this.detectionDefaults().plan()
+  }
+
+  async applyDetectionDefaults(input: {
+    readonly planHash: string
+  }): Promise<DetectionDefaultsApplyResult> {
+    return this.detectionDefaults().apply(input)
+  }
+
+  async setClusterDetectionDefaults(
+    input: ClusterDetectionDefaults,
+  ): Promise<ClusterDetectionDefaults> {
+    return this.detectionDefaults().set(input)
   }
 
   // ── Effective shares (D750) ──────────────────────────────────────────

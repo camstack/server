@@ -34,6 +34,7 @@
 import type {
   AddonContext,
   CameraDetectionSource,
+  ClusterDetectionDefaults,
   ConfigSectionWithValues,
   ConfigUISchema,
   ConfigUISchemaWithValues,
@@ -73,6 +74,8 @@ export interface DeviceConfigContributionsDeps {
   readonly deviceHasActivitySignalCap: (deviceId: number) => Promise<boolean>
   /** `this.deviceHasNativeObjectDetectionCap(deviceId)` — stays on index.ts. */
   readonly deviceHasNativeObjectDetectionCap: (deviceId: number) => Promise<boolean>
+  /** The stored cluster detection default (D1104) — what an unset camera follows. */
+  readonly readClusterDetectionDefaults: () => Promise<ClusterDetectionDefaults>
   /** `this.resolveGlobalStore()` — the `BaseAddon` protected store reader. */
   readonly resolveGlobalStore: () => Promise<Record<string, unknown>>
   /** `this.globalSettings = settings` — the addon's in-memory settings snapshot. */
@@ -197,10 +200,25 @@ export class DeviceConfigContributions {
     // both the displayed default AND the runtime call line up.
     const hasOnboardMotion = await this.deps.deviceHasOnboardMotionCap(input.deviceId)
     const hasActivitySignal = await this.deps.deviceHasActivitySignalCap(input.deviceId)
+    // The form hydrates from device-store ∪ schema-default; an unset camera
+    // follows the CLUSTER default (D1104), so the form shows that value, not
+    // the schema constant. Display only: nothing is written back unless the
+    // operator edits the field, and the stored camera stays unset.
+    const cluster = await this.deps.readClusterDetectionDefaults()
+    const rawWithClusterDefaults: Record<string, unknown> = {
+      ...(cluster.detectionStreamProfile !== undefined &&
+      raw['detectionStreamProfile'] === undefined
+        ? { detectionStreamProfile: cluster.detectionStreamProfile }
+        : {}),
+      ...(cluster.detectionFps !== undefined && raw['detectionFps'] === undefined
+        ? { detectionFps: cluster.detectionFps }
+        : {}),
+      ...raw,
+    }
     const rawWithDefaults =
       raw['motionSources'] === undefined && (hasOnboardMotion || hasActivitySignal)
         ? {
-            ...raw,
+            ...rawWithClusterDefaults,
             // The SAME ladder `resolveDetectionSettings` runs, mirrored so the
             // form shows the sources that are actually live. A device that
             // reports its own activity carries `device-activity` here for the
@@ -211,7 +229,7 @@ export class DeviceConfigContributions {
               ...(hasActivitySignal ? ['device-activity'] : []),
             ],
           }
-        : raw
+        : rawWithClusterDefaults
 
     // L2.5 redesign: the legacy `pipeline-editor` ConfigField contribution
     // is removed — the per-camera pipeline surface now lives on the

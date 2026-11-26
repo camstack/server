@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A time can be set as day or night plus minutes after it began (a new 'phase' time kind), and a day/night window can be judged on a light sensor reading
+- Cluster detection defaults: rule-v1 recommender and plan/apply contract for the detection stream profile and rate
 
 ## [1.2.636] - 2026-11-26
 

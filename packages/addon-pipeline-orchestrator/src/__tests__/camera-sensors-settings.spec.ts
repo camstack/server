@@ -110,6 +110,7 @@ function makeContributions() {
     topology,
     getAssignment: () => null,
     deviceSettingsSchema: () => null,
+    readClusterDetectionDefaults: async () => ({}),
     deviceHasOnboardMotionCap: async () => true,
     deviceHasActivitySignalCap: async () => false,
     deviceHasNativeObjectDetectionCap: async () => false,
