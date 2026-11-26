@@ -10,6 +10,11 @@ Package `camstack` on npm.
 
 - Node.js >=24.
 
+## Documentation
+
+- [docs/architecture/assisted-setup-mcp.md](https://github.com/camstack/server/blob/main/docs/architecture/assisted-setup-mcp.md)
+- [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 <!-- readme:generated:end -->

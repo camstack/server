@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-gree` on npm.
 ## What it provides
 
 - **Gree** (`provider-gree`): Adopt Gree (and compatible) air conditioners over local UDP — climate-control + fan-control, no cloud. Category: providers.
-  - Capabilities: `device-provider`.
+  - Capabilities: `device-provider`, `integration-instances`.
 
 ## Configuration
 

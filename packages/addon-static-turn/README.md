@@ -9,7 +9,7 @@ Package `@camstack/addon-static-turn` on npm.
 ## What it provides
 
 - **TURN Server** (`static-turn`): Category: networking.
-  - Capabilities: `turn-provider`.
+  - Capabilities: `turn-provider`, `integration-instances`.
 
 ## Configuration
 

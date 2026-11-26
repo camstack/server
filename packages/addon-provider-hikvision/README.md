@@ -43,7 +43,7 @@ Package `@camstack/addon-provider-hikvision` on npm.
 ## What it provides
 
 - **Hikvision** (`provider-hikvision`): Hikvision ISAPI camera/NVR provider — discovers RTSP streams, captures snapshots, parses the alarm event stream. Category: providers.
-  - Capabilities: `device-provider`, `stream-params`, `recording-onboard`, `motion-zones`, `privacy-mask`, `day-night`, `image-settings`, `failure-contribution`, `videoclips`.
+  - Capabilities: `device-provider`, `integration-instances`, `stream-params`, `recording-onboard`, `motion-zones`, `privacy-mask`, `day-night`, `image-settings`, `failure-contribution`, `videoclips`.
 
 ## Configuration
 

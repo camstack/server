@@ -9,7 +9,7 @@ Package `@camstack/addon-export-hap` on npm.
 ## What it provides
 
 - **HomeKit Export** (`export-hap`): Publishes exposed CamStack devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code. Category: exports.
-  - Capabilities: `device-export`, `videoclips`.
+  - Capabilities: `device-export`, `videoclips`, `integration-instances`.
 
 ## Requirements
 

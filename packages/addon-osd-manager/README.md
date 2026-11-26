@@ -13,7 +13,7 @@ Package `@camstack/addon-osd-manager` on npm.
 
 ## Requirements
 
-- Placement: hub-only.
+- Placement: hub-only (runner group `integrations`).
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

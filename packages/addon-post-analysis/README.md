@@ -11,7 +11,7 @@ Package `@camstack/addon-post-analysis` on npm.
 - **Embedding Encoder** (`embedding-encoder`): ONNX-Runtime image-embedding encoder. Produces semantic vectors from detection crops for similarity search + scene-state tracking. Category: analytics.
   - Capabilities: `embedding-encoder`.
 - **Pipeline Analytics** (`pipeline-analytics`): Zone analytics + audio metrics aggregator. Consumes pipeline events to surface per-camera zone counters and audio-level histograms. Category: analytics.
-  - Capabilities: `device-removal-hook`, `pipeline-analytics`, `notification-rules`, `zone-analytics`, `audio-metrics`, `addon-widgets-source`, `face-gallery`, `plate-gallery`, `scene-monitor`, `failure-contribution`, `storage-occupancy`.
+  - Capabilities: `device-removal-hook`, `pipeline-analytics`, `notification-rules`, `zone-analytics`, `audio-metrics`, `addon-widgets-source`, `face-gallery`, `plate-gallery`, `scene-monitor`, `failure-contribution`, `storage-occupancy`, `integration-instances`.
 
 ## Requirements
 

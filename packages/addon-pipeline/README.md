@@ -45,8 +45,8 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - [docs/architecture/data-planes.md](https://github.com/camstack/server/blob/main/docs/architecture/data-planes.md)
 - [docs/architecture/detection-execution.md](https://github.com/camstack/server/blob/main/docs/architecture/detection-execution.md)
+- [docs/architecture/notifications.md](https://github.com/camstack/server/blob/main/docs/architecture/notifications.md)
 - [docs/architecture/load-ledger.md](https://github.com/camstack/server/blob/main/docs/architecture/load-ledger.md)
-- [docs/architecture/benchmark.md](https://github.com/camstack/server/blob/main/docs/architecture/benchmark.md)
 - [packages/addon-pipeline/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-pipeline/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.

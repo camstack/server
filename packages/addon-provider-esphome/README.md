@@ -58,8 +58,8 @@ Package `@camstack/addon-provider-esphome` on npm.
 
 ## What it provides
 
-- **ESPHome** (`provider-esphome`): Connect to an ESPHome board over its native API and adopt its switches, lights, covers, buttons, sensors, numbers and selects. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`.
+- **ESPHome** (`provider-esphome`): Connect to the ESPHome boards of an integration over their native API and adopt each board with its switches, lights, covers, buttons, sensors, numbers and selects. Category: providers.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Requirements
 
@@ -68,6 +68,7 @@ Package `@camstack/addon-provider-esphome` on npm.
 
 ## Documentation
 
+- [docs/addons/addon-provider-esphome.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-esphome.md)
 - [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.

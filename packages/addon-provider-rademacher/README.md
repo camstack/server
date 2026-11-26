@@ -8,8 +8,8 @@ Package `@camstack/addon-provider-rademacher` on npm.
 
 ## What it provides
 
-- **Rademacher** (`provider-rademacher`): Adopt a Rademacher HomePilot / Start2Smart hub over the local network and its roller shutters (positional cover). Category: providers.
-  - Capabilities: `device-provider`.
+- **Rademacher** (`provider-rademacher`): Adopt a Rademacher HomePilot / Start2Smart hub (as a Gateway device) and its roller shutters, from an integration over the local network. Category: providers.
+  - Capabilities: `device-provider`, `device-adoption`, `integration-instances`.
 
 ## Configuration
 
@@ -17,8 +17,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Connection**
 
-- Hub: Name
-- Connection: Hub host / IP, Password (optional), Poll interval (ms), API base path (optional)
+- HomePilot hub: Hub host / IP, Password (optional), Poll interval (ms), API base path (optional)
 
 ## Requirements
 

@@ -9,7 +9,7 @@ Package `@camstack/addon-ai` on npm.
 ## What it provides
 
 - **AI** (`ai`): LLM profiles (cloud, LAN, managed local models) + per-node managed llama.cpp runtimes. Category: analytics.
-  - Capabilities: `llm`, `llm-runtime`.
+  - Capabilities: `llm`, `integration-instances`, `llm-runtime`, `node-removal-hook`.
 
 ## Requirements
 

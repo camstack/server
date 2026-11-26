@@ -8,8 +8,8 @@ Package `@camstack/addon-provider-ecowitt` on npm.
 
 ## What it provides
 
-- **Ecowitt** (`provider-ecowitt`): Adopt Ecowitt weather-station gateways and their sensors over the local network (poll or push). Category: providers.
-  - Capabilities: `device-provider`.
+- **Ecowitt** (`provider-ecowitt`): Add an Ecowitt weather-station gateway as an integration (local poll or push) and adopt its Gateway device, group containers and sensors. Category: providers.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`, `weather-station`.
 
 ## Configuration
 
@@ -17,7 +17,6 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Connection**
 
-- Gateway: Name
 - Transport: Transport
 - Local poll settings: Gateway host / IP, HTTP port, Password (optional), Poll interval (ms)
 - Push listener settings: Listen port, Bind host (optional)

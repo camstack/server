@@ -9,7 +9,7 @@ Package `@camstack/addon-pipeline-orchestrator` on npm.
 ## What it provides
 
 - **Pipeline Orchestrator** (`pipeline-orchestrator`): Hub-side camera-to-agent load balancer with L1 manual affinity, L2 capacity, and L3 hardware-aware dispatch. Category: pipeline.
-  - Capabilities: `pipeline-orchestrator`, `camera-pipeline-config`, `zones`, `zone-rules`, `addon-widgets-source`, `viewer-ui`, `display-palette`.
+  - Capabilities: `pipeline-orchestrator`, `camera-pipeline-config`, `zones`, `zone-rules`, `addon-widgets-source`, `viewer-ui`, `app-source`, `display-palette`, `node-removal-hook`.
 
 ## Requirements
 

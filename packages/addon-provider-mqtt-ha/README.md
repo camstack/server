@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-mqtt-ha` on npm.
 ## What it provides
 
 - **MQTT Discovery** (`provider-mqtt-ha`): Import devices from Home Assistant MQTT discovery (homeassistant/+/+/config) via a configured MQTT broker. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`.
+  - Capabilities: `device-provider`, `device-adoption`, `integration-instances`.
 
 ## Configuration
 
@@ -17,7 +17,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Addon settings**
 
-- MQTT broker: Broker link
+- MQTT broker: Broker link, MQTT broker
 
 ## Requirements
 

@@ -8,12 +8,13 @@ Package `@camstack/addon-provider-unifi` on npm.
 
 ## What it provides
 
-- **UniFi Network** (`provider-unifi`): Adopt a UniFi Network controller over the local network: infra devices (switches / APs / gateways) as containers exposing per-port PoE, restart, LED and CPU/temp/clients sensors, plus network clients as presence. Cameras are not in scope. Category: providers.
-  - Capabilities: `device-provider`.
+- **UniFi Network** (`provider-unifi`): Add a UniFi Network controller as an integration (the connection and credentials are its settings); it adopts each console as the workload Host (with restart and its admin link), infra devices (switches / APs / gateways) as hosts exposing per-port PoE, restart, LED and CPU/temp/clients sensors, plus network clients as presence. Cameras are not in scope. Category: providers.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Requirements
 
 - Placement: hub-only.
+- Python: UniFi Network installs `python/requirements.txt` into its own environment.
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

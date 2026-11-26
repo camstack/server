@@ -10,8 +10,8 @@ Package `@camstack/addon-provider-velux` on npm.
 
 ## What it provides
 
-- **Velux** (`provider-velux`): Adopt a Velux KLF-200 gateway over the local network and its windows / roller shutters (positional cover). Category: providers.
-  - Capabilities: `device-provider`.
+- **Velux** (`provider-velux`): Adopt a Velux KLF-200 gateway, its windows with rain sensor and its roller shutters, from an integration over the local network. Category: providers.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Configuration
 
@@ -19,8 +19,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Connection**
 
-- Gateway: Name
-- Connection: Gateway host / IP, Password
+- KLF-200 gateway: Gateway, Gateway host / IP, Password
 
 ## Requirements
 

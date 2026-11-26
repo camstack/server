@@ -47,7 +47,7 @@ Package `@camstack/addon-provider-enpal` on npm.
 ## What it provides
 
 - **Enpal** (`provider-enpal`): Add an Enpal solar box as an integration (its own web-page channel, InfluxDB or the device page) and adopt its equipment: photovoltaic, battery, grid, house and heat pump. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Configuration
 
@@ -62,6 +62,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
+- Python: Enpal installs `python/requirements.txt` into its own environment.
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

@@ -9,7 +9,7 @@ Package `@camstack/addon-model-studio` on npm.
 ## What it provides
 
 - **Model Studio** (`model-studio`): Register, manipulate and distribute custom detection models. Category: system.
-  - Capabilities: `custom-model-registry`, `model-convert`, `addon-pages-source`.
+  - Capabilities: `custom-model-registry`, `model-convert`, `node-removal-hook`, `addon-pages-source`, `app-source`.
 
 ## Requirements
 

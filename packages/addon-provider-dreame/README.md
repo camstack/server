@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-dreame` on npm.
 ## What it provides
 
 - **Dreame** (`provider-dreame`): Adopt Dreame robot vacuums and lawn mowers via the Dreamehome cloud. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `consumables`, `navigation`, `recording-signal`, `running-state`.
+  - Capabilities: `device-provider`, `device-adoption`, `consumables`, `navigation`, `recording-signal`, `running-state`, `error`, `integration-instances`.
 
 ## Configuration
 
@@ -19,7 +19,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Dreamehome account: Email / username, Password
 - Region: Region
-- Advanced: Poll fallback interval (ms, 0 = disabled)
+- Advanced: State refresh interval (ms, 0 = device default)
 
 **Per-device settings**
 

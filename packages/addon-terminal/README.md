@@ -9,7 +9,7 @@ Package `@camstack/addon-terminal` on npm.
 ## What it provides
 
 - **Terminal** (`terminal`): Interactive terminal sessions on any cluster node. Operators explicitly create virtual-camera instances from administrator-configured profile templates. Category: system.
-  - Capabilities: `terminal-session`.
+  - Capabilities: `terminal-session`, `integration-instances`.
 
 ## Requirements
 

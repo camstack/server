@@ -8,8 +8,8 @@ Package `@camstack/server` on npm.
 
 ## Documentation
 
-- [docs/architecture/transport.md](https://github.com/camstack/server/blob/main/docs/architecture/transport.md)
 - [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+- [docs/architecture/transport.md](https://github.com/camstack/server/blob/main/docs/architecture/transport.md)
 - [docs/architecture/addon-lifecycle.md](https://github.com/camstack/server/blob/main/docs/architecture/addon-lifecycle.md)
 - [docs/architecture/capabilities.md](https://github.com/camstack/server/blob/main/docs/architecture/capabilities.md)
 - [server/backend/AGENTS.md](https://github.com/camstack/server/blob/main/server/backend/AGENTS.md)

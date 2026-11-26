@@ -10,8 +10,8 @@ Package `@camstack/types` on npm.
 
 - [docs/architecture/notifications.md](https://github.com/camstack/server/blob/main/docs/architecture/notifications.md)
 - [docs/architecture/capabilities.md](https://github.com/camstack/server/blob/main/docs/architecture/capabilities.md)
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
 - [docs/architecture/detection-execution.md](https://github.com/camstack/server/blob/main/docs/architecture/detection-execution.md)
-- [docs/architecture/ffmpeg.md](https://github.com/camstack/server/blob/main/docs/architecture/ffmpeg.md)
 - [packages/types/AGENTS.md](https://github.com/camstack/server/blob/main/packages/types/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.

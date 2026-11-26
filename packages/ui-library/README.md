@@ -9,8 +9,8 @@ Package `@camstack/ui-library` on npm.
 ## Documentation
 
 - [docs/architecture/ui.md](https://github.com/camstack/server/blob/main/docs/architecture/ui.md)
-- [docs/ui/conventions.md](https://github.com/camstack/server/blob/main/docs/ui/conventions.md)
 - [docs/ui/admin-patterns.md](https://github.com/camstack/server/blob/main/docs/ui/admin-patterns.md)
+- [docs/ui/conventions.md](https://github.com/camstack/server/blob/main/docs/ui/conventions.md)
 - [docs/ui/common-components.md](https://github.com/camstack/server/blob/main/docs/ui/common-components.md)
 - [packages/ui-library/AGENTS.md](https://github.com/camstack/server/blob/main/packages/ui-library/AGENTS.md)
 

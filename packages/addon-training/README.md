@@ -11,7 +11,7 @@ Package `@camstack/addon-training` on npm.
 - **Training** (`training`): Fine-tune the root detector on your own annotated frames in a GPU cloud you choose, compare it with the model you run, and register it in Model Studio only when you say so. Category: system.
   - Capabilities: `training`, `addon-pages-source`.
 - **Modal** (`training-modal`): Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token. Category: system.
-  - Capabilities: `training-provider`.
+  - Capabilities: `training-provider`, `integration-instances`.
 
 ## Requirements
 

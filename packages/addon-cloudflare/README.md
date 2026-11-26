@@ -9,9 +9,9 @@ Package `@camstack/addon-cloudflare` on npm.
 ## What it provides
 
 - **Cloudflare Tunnel** (`cloudflare-tunnel`): Category: networking.
-  - Capabilities: `network-access`.
+  - Capabilities: `network-access`, `integration-instances`.
 - **Cloudflare TURN** (`cloudflare-turn`): Category: networking.
-  - Capabilities: `turn-provider`.
+  - Capabilities: `turn-provider`, `integration-instances`.
 
 ## Configuration
 
@@ -28,6 +28,10 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: hub-only (runner group `net-access`).
 - A CamStack hub. An agent is used only where the placement above allows it.
+
+## Documentation
+
+- [docs/architecture/network.md](https://github.com/camstack/server/blob/main/docs/architecture/network.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

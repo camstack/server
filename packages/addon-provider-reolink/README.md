@@ -9,23 +9,24 @@ Package `@camstack/addon-provider-reolink` on npm.
 ## What it provides
 
 - **Reolink** (`provider-reolink`): Native Baichuan protocol connection to Reolink cameras — direct Annex-B push, no RTSP intermediary. Category: providers.
-  - Capabilities: `device-provider`, `stream-params`, `recording-onboard`, `motion-zones`, `privacy-mask`, `log-channels`, `failure-contribution`, `stream-signals`, `videoclips`.
+  - Capabilities: `device-provider`, `integration-instances`, `stream-params`, `recording-onboard`, `motion-zones`, `privacy-mask`, `log-channels`, `failure-contribution`, `stream-signals`, `videoclips`, `device-adoption`, `device-removal-hook`.
 
 ## Configuration
 
 Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
 
-**Addon settings**
+**Connection**
 
-- Battery-cam Motion (Email/SMTP Push): Enable Email Push Server, Camera-facing host, SMTP Port, Virtual Domain
-- Email Push Authentication: Require AUTH, Auth Username, Auth Password
-- Battery-cam Motion (HaCfg Webhook): Enable HaCfg Webhook Server, Camera-facing host, HTTP Port, Bind host
+- NVR / Home Hub connection: Port, Hub IP, Username, Password, RTSP port
+- NVR / Home Hub debug: General debug logs, Socket trace categories
+- Camera mailbox: Camera mailbox
 
 **Adding a device**
 
 - Camera: Name
 - Credentials: Username, Password
-- Connection: Connection mode, Host (IP / hostname / UID), Port, Device UID
+- Connection: Connection mode, UDP discovery, Host (IP / hostname / UID), Port, Device UID
+- Events: Auto-configure event push on add
 
 **Per-device settings**
 
@@ -37,17 +38,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - Image: Brightness, Contrast, Saturation, Hue, Sharpness
 - Advanced (ISP): Day/Night mode, Exposure
 - IR + status LED: IR LED, IR brightness, Status LED, Doorbell LED
-- and 12 more sections
-
-## Fully local battery cameras
-
-A battery camera runs with no Reolink cloud: the control channel goes straight to the camera over UDP and motion arrives by mail to the hub. Verified on 2026-11-23 with an Argus-class camera on its own VLAN with internet blocked: it was added on a second hub in 15 s, then streamed and recorded locally. The relay failed as expected.
-
-- Add it with **UDP discovery: Local only (direct to the camera IP)**. The default Auto races every method and settles on the Reolink relay when the direct one gets no answer; the connect log line names the path (`udpDiscoveryMethod=local-direct` or `relay`).
-- Camera on another subnet or VLAN: allow **UDP from the camera to the hub on any port**, not only return traffic. The camera answers direct discovery (UDP 2015 on its IP) from a source port the firewall does not see as a reply, and the session then runs on new ports. Without that rule the log shows `local discovery timeout ... replies=0` and Auto falls back to the relay. A `kernel-chosen source IP ... NOT in the same subnet` warning is harmless once the rule exists.
-- Then block the camera's internet. Keep DNS and NTP if the camera uses them.
-- Motion: set **Preferred sleep-push path** to Email/SMTP only and allow the camera to reach the hub's SMTP port (TCP 2525 by default).
-- Changing the connection mode, UID or UDP discovery method of an existing camera drops the cached client and any login still dialling the old path, so the next dial uses the new settings.
+- and 14 more sections
 
 ## Requirements
 
@@ -59,7 +50,6 @@ A battery camera runs with no Reolink cloud: the control channel goes straight t
 
 - [docs/addons/addon-provider-reolink.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-reolink.md)
 - [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
-- [docs/architecture/ui.md](https://github.com/camstack/server/blob/main/docs/architecture/ui.md)
 - [packages/addon-provider-reolink/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-provider-reolink/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.

@@ -9,7 +9,7 @@ Package `@camstack/addon-benchmark` on npm.
 ## What it provides
 
 - **Benchmark** (`benchmark`): Node benchmark, image and audio inspection. Category: system.
-  - Capabilities: `addon-pages-source`.
+  - Capabilities: `addon-pages-source`, `app-source`.
 
 ## Requirements
 

@@ -8,7 +8,7 @@ Package `@camstack/addon-provider-unraid` on npm.
 
 ## What it provides
 
-- **Unraid** (`provider-unraid`): Add an Unraid server as an integration over its local GraphQL API and adopt it as a Gateway beside the server itself as a workload host (with its array, disks and notifications), and one workload device per Docker container and VM, each with its own state, controls and power switch. Category: providers.
+- **Unraid** (`provider-unraid`): Add an Unraid server as an integration over its local GraphQL API and adopt the server itself as a workload Host (with its WebGUI link, array, disks and notifications), and one workload device per Docker container and VM, each with its own state, controls and power switch. Category: providers.
   - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Configuration

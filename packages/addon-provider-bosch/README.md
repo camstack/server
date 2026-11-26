@@ -9,15 +9,16 @@ Package `@camstack/addon-provider-bosch` on npm.
 ## What it provides
 
 - **Bosch Smart Home** (`bosch-shc`): Adopt Bosch Smart Home Controller (SHC) devices via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`.
+  - Capabilities: `device-provider`, `device-adoption`, `integration-instances`.
 - **Bosch Home Connect** (`bosch-home-connect`): Adopt Bosch Home Connect appliances via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `dishwasher`, `consumables`, `running-state`.
+  - Capabilities: `device-provider`, `device-adoption`, `integration-instances`, `dishwasher`, `consumables`, `running-state`.
 - **Bosch HomeCom** (`bosch-homecom`): Adopt Bosch HomeCom climate and water-heating devices via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `climate-control`, `water-heater`.
+  - Capabilities: `device-provider`, `device-adoption`, `integration-instances`, `climate-control`, `water-heater`, `heat-pump-status`, `heat-pump-control`.
 
 ## Requirements
 
 - Placement: hub-only.
+- Python: Bosch HomeCom installs `python/requirements.txt` into its own environment.
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

@@ -9,13 +9,13 @@ Package `@camstack/addon-auth` on npm.
 ## What it provides
 
 - **OpenID Connect** (`auth-oidc`): Standards-compliant OIDC authentication. Configure issuer URL + client credentials to enable SSO via Google, Microsoft, Okta, Keycloak, etc. In-process on hub root — pure HTTP/JWT, no native deps. Category: system.
-  - Capabilities: `auth-provider`, `addon-routes`, `login-method`, `integration-instances` (the OIDC providers, kind `oidc-provider`).
+  - Capabilities: `auth-provider`, `addon-routes`, `login-method`, `integration-instances`.
 - **Passkey** (`auth-webauthn`): Phishing-resistant passwordless 2FA via the WebAuthn standard. Users enroll a passkey (Touch ID, Windows Hello, YubiKey, …) and authenticate with the browser's native prompt — no codes to type. Category: system.
   - Capabilities: `user-passkeys`, `addon-widgets-source`, `login-method`.
 
 ## Requirements
 
-- Placement: default placement (runner group `auth`).
+- Placement: hub-only (runner group `auth`).
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

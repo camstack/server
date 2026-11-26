@@ -9,7 +9,7 @@ Package `@camstack/addon-export-alexa` on npm.
 ## What it provides
 
 - **Alexa Export** (`export-alexa`): Hub-side OAuth provider + Smart Home directive handler. Pairs with a user-owned AWS Lambda that forwards Alexa directives to this addon. Skeleton: AcceptGrant + Discovery implemented; CameraStream / RTC / Doorbell push in next dispatch. Category: exports.
-  - Capabilities: `device-export`, `addon-routes`, `oauth-integration`.
+  - Capabilities: `device-export`, `addon-routes`, `oauth-integration`, `integration-instances`.
 
 ## Requirements
 

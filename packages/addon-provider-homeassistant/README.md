@@ -9,9 +9,9 @@ Package `@camstack/addon-provider-homeassistant` on npm.
 ## What it provides
 
 - **Home Assistant** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket. Category: messaging.
-  - Capabilities: `broker`, `device-adoption`, `vacuum-control`, `lawn-mower-control`, `running-state`, `valve`, `humidifier`, `water-heater`, `weather`, `image`, `update`, `notification-output`, `addon-routes`, `calendar-source`.
+  - Capabilities: `broker`, `integration-instances`, `board-key-source`, `device-adoption`, `vacuum-control`, `lawn-mower-control`, `running-state`, `valve`, `humidifier`, `water-heater`, `weather`, `image`, `update`, `notification-output`, `addon-routes`, `calendar-source`.
 - **Home Assistant Export** (`homeassistant-export`): Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value. Category: exports.
-  - Capabilities: `device-export`, `addon-routes`, `oauth-integration`.
+  - Capabilities: `device-export`, `addon-routes`, `oauth-integration`, `integration-instances`.
 
 ## Configuration
 
@@ -19,16 +19,15 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Addon settings**
 
-- Calendars to import: Calendars
 - Home Assistant broker: Brokers are managed separately
 - Home Assistant connection: Auth mode, HA base URL, Long-lived access token, Supervisor token
-- Home Assistant instances: No brokers
-- Connection: per Home Assistant instance, the hub address role its image links use (Internal, or Public endpoint)
 - Advanced: Reconcile interval (s)
+- Home Assistant target: Name, Home Assistant connection, Image links
 
 ## Requirements
 
-- Placement: hub-only.
+- Home Assistant: hub-only.
+- Home Assistant Export: hub-only (runner group `integrations`).
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

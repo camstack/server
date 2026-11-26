@@ -9,15 +9,11 @@ Package `@camstack/addon-matter-broker` on npm.
 ## What it provides
 
 - **Matter** (`matter-broker`): Own a Matter fabric and broker commissioned Matter nodes into CamStack (commission via QR / pairing code; map endpoints to typed device caps). Category: providers.
-  - Capabilities: `device-provider`, `broker`, `device-adoption`.
+  - Capabilities: `device-provider`, `broker`, `integration-instances`, `device-adoption`.
 
 ## Configuration
 
 Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
-
-**Addon settings**
-
-- Matter fabric: Fabrics are managed separately
 
 **Connection**
 

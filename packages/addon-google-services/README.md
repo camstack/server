@@ -9,7 +9,7 @@ Package `@camstack/addon-google-services` on npm.
 ## What it provides
 
 - **Google** (`google-services`): Google brokers (OAuth2 accounts): Calendar as calendar-source, Gmail send as smtp-provider. Category: messaging.
-  - Capabilities: `broker`, `calendar-source`, `smtp-provider`, `addon-routes`.
+  - Capabilities: `broker`, `integration-instances`, `calendar-source`, `smtp-provider`, `addon-routes`.
 
 ## Configuration
 
@@ -20,7 +20,6 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - Google brokers: Steps, Setup
 - Google OAuth client: Client ID, Client secret
 - Gmail send: From address, From display name (optional)
-- Calendars to import: Calendars
 
 ## Requirements
 

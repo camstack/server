@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-amcrest` on npm.
 ## What it provides
 
 - **Amcrest** (`provider-amcrest`): Amcrest/Dahua CGI camera provider — discovers RTSP streams, captures snapshots, and configures PTZ / image / day-night over HTTP digest auth. Category: providers.
-  - Capabilities: `device-provider`, `stream-params`, `motion-zones`, `privacy-mask`, `day-night`, `image-settings`, `recording-onboard`, `videoclips`.
+  - Capabilities: `device-provider`, `integration-instances`, `stream-params`, `motion-zones`, `privacy-mask`, `day-night`, `image-settings`, `recording-onboard`, `videoclips`.
 
 ## Configuration
 

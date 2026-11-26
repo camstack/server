@@ -9,7 +9,7 @@ Package `@camstack/addon-tailscale` on npm.
 ## What it provides
 
 - **Tailscale** (`tailscale-client`): Category: networking.
-  - Capabilities: `mesh-network`, `network-access`.
+  - Capabilities: `mesh-network`, `network-access`, `integration-instances`.
 - **Tailscale Funnel** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale addon to be installed and joined first. Category: networking.
   - Capabilities: `network-access`.
 
@@ -30,6 +30,10 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: hub-only (runner group `net-access`).
 - A CamStack hub. An agent is used only where the placement above allows it.
+
+## Documentation
+
+- [docs/architecture/network.md](https://github.com/camstack/server/blob/main/docs/architecture/network.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
