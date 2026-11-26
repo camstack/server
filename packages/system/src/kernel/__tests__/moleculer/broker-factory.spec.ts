@@ -1,22 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import * as net from 'node:net'
 import type { Service } from 'moleculer'
 import { createBroker } from '../../moleculer/broker-factory.js'
 
-async function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer()
-    srv.unref()
-    srv.on('error', reject)
-    srv.listen(0, () => {
-      const addr = srv.address()
-      if (addr && typeof addr === 'object') {
-        const port = addr.port
-        srv.close(() => resolve(port))
-      } else reject(new Error('no address'))
-    })
-  })
-}
+// Port 0: the OS assigns the reader's port atomically at bind. A pre-picked "free" port
+// (bind, close, reuse) can be taken by another worker in between.
+const EPHEMERAL_PORT = 0
 
 describe('createBroker', () => {
   const brokers: Array<{ stop: () => Promise<void> }> = []
@@ -26,8 +14,7 @@ describe('createBroker', () => {
   })
 
   it('creates a hub broker with TCP transporter', async () => {
-    const port = await findFreePort()
-    const broker = createBroker({ nodeID: 'hub-test', mode: 'hub', tcpPort: port })
+    const broker = createBroker({ nodeID: 'hub-test', mode: 'hub', tcpPort: EPHEMERAL_PORT })
     brokers.push(broker)
     await broker.start()
     expect(broker.nodeID).toBe('hub-test')
@@ -78,11 +65,10 @@ describe('createBroker', () => {
 
   it('installs the given middlewares (the D802 mesh gate)', async () => {
     const seen: string[] = []
-    const port = await findFreePort()
     const broker = createBroker({
       nodeID: 'hub-mw',
       mode: 'hub',
-      tcpPort: port,
+      tcpPort: EPHEMERAL_PORT,
       middlewares: [
         {
           name: 'probe',

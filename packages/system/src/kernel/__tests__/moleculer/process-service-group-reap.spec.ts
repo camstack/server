@@ -552,6 +552,11 @@ describe.skipIf(process.platform === 'win32')(
             `after ${Date.now() - killedAt} ms`,
         )
       })
+      // The service respawns the SIGKILLed runner after its crash backoff. Wait for that
+      // respawn here, so afterAll's stop reaps it: left to race afterAll, the successor
+      // started after the fixture dir was removed ("Cannot find module runner-fixture.cjs")
+      // and its grandchildren outlived the file.
+      await waitFor(() => runners.length === 2, 10_000, 'crash respawn of the killed runner')
     })
   },
 )
