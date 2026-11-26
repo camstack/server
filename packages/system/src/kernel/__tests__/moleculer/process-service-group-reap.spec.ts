@@ -22,7 +22,7 @@ import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
 import { ServiceBroker } from 'moleculer'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createProcessService } from '../../moleculer/process-service.js'
 import {
   defaultProcessGroupOps,
@@ -80,7 +80,7 @@ async function waitFor(
   const deadline = Date.now() + timeoutMs
   while (!(await pred())) {
     if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`)
-    await sleep(400)
+    await sleep(50)
   }
 }
 
@@ -143,6 +143,7 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     groups: ProcessGroupOps,
     platform: NodeJS.Platform,
     log: string[] = [],
+    onStopped?: () => void,
   ) {
     const spawned: { child: FakeChild; opts: cp.SpawnOptions }[] = []
     // Every harness its own pid range: the owned-group registry is process-wide, and two
@@ -163,9 +164,20 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
       return child as unknown as cp.ChildProcess
     }
     const broker = new ServiceBroker({ nodeID: nodeId, transporter: 'Fake', logger: false })
-    broker.createService(
-      createProcessService(nodeId, tmpDir, { spawnFn, processGroups: groups, platform }),
-    )
+    const schema = createProcessService(nodeId, tmpDir, {
+      spawnFn,
+      processGroups: groups,
+      platform,
+    })
+    const stopped = schema.stopped
+    broker.createService({
+      ...schema,
+      stopped(this: unknown) {
+        onStopped?.()
+        if (typeof stopped === 'function') return stopped.call(this)
+        return undefined
+      },
+    })
     return { broker, spawned, log }
   }
 
@@ -281,18 +293,26 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
       ignoresTerm: false,
       listGate: listGate.promise,
     })
-    const h = harness('hub-pg-shutdown-backoff', groups, 'linux')
+    const stoppedRan = gate()
+    const h = harness('hub-pg-shutdown-backoff', groups, 'linux', [], stoppedRan.open)
     await h.broker.start()
     await h.broker.call('$process.spawnRunner', {
       runnerId: 'cam',
       addons: [{ addonId: 'cam', addonDir: '/tmp/cam' }],
     })
-    crash(h.spawned[0]!.child, 'SIGKILL')
-    // The 500 ms timer fires and its callback holds the runner lock, waiting on the reap.
-    await sleep(700)
-    expect(h.spawned.length, 'pre-stop').toBe(1)
+    // Fire the 500 ms crash-backoff timer by hand: its callback then takes the runner
+    // lock and blocks on the reap (the list gate is closed).
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    try {
+      crash(h.spawned[0]!.child, 'SIGKILL')
+      await vi.advanceTimersByTimeAsync(500)
+    } finally {
+      vi.useRealTimers()
+    }
+    expect(h.spawned.length, 'respawned before the reap finished').toBe(1)
     const stopping = h.broker.stop()
-    await sleep(400)
+    // stopped() has run once the service reports it (probe below).
+    await stoppedRan.promise
     listGate.open()
     await stopping
     await sleep(100)
