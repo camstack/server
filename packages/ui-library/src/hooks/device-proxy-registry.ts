@@ -27,6 +27,8 @@ interface BindingEntry {
   binding: DeviceBinding | null
   observers: number
   inflight: boolean
+  /** A binding-changed event landed while a fetch was in flight. */
+  dirty: boolean
   readonly listeners: Set<() => void>
 }
 
@@ -54,21 +56,54 @@ function createRegistry(trpc: UseDeviceProxyTrpc): DeviceProxyRegistry {
 
   // Type boundary (same as `useDeviceProxy`): the vanilla tRPC client is
   // structurally the AddonApi the slice source expects.
-  const stateSource = createLazyTrpcSource(trpc as Parameters<typeof createDeviceProxy>[0])
+  const sliceApi = trpc as Parameters<typeof createDeviceProxy>[0]
+
+  // The lazy source keeps a per-key cache that outlives its bridge. When the
+  // last watcher leaves, a fresh source replaces it so a remount starts cold
+  // (and refreshes) and the cache never grows for the client's lifetime.
+  let inner = createLazyTrpcSource(sliceApi)
+  let watchers = 0
+  const stateSource: SliceHandleSource = {
+    read: (deviceId, capName) => inner.read(deviceId, capName),
+    refresh: (deviceId, capName) => inner.refresh(deviceId, capName),
+    write: (deviceId, capName, slice) => inner.write(deviceId, capName, slice),
+    watch(deviceId, capName, cb) {
+      watchers += 1
+      const unwatch = inner.watch(deviceId, capName, cb)
+      let released = false
+      return () => {
+        if (released) return
+        released = true
+        unwatch()
+        watchers -= 1
+        if (watchers === 0) inner = createLazyTrpcSource(sliceApi)
+      }
+    },
+  }
 
   const refetch = async (deviceId: number): Promise<void> => {
     const entry = entries.get(deviceId)
-    if (!entry || entry.inflight) return
+    if (!entry) return
+    if (entry.inflight) {
+      // The running read may predate this change: run once more after it.
+      entry.dirty = true
+      return
+    }
     entry.inflight = true
     try {
-      const next = await trpc.deviceManager.getBindings.query({ deviceId })
-      // The entry may have been dropped (or replaced) while the query ran.
-      if (entries.get(deviceId) !== entry) return
-      entry.binding = next
-      for (const cb of entry.listeners) cb()
-    } catch {
-      // A transient failure leaves the previous binding in place so active
-      // subscriptions are not torn down.
+      do {
+        entry.dirty = false
+        try {
+          const next = await trpc.deviceManager.getBindings.query({ deviceId })
+          // The entry may have been dropped (or replaced) while the query ran.
+          if (entries.get(deviceId) !== entry) return
+          entry.binding = next
+          for (const cb of entry.listeners) cb()
+        } catch {
+          // A transient failure leaves the previous binding in place so
+          // active subscriptions are not torn down.
+        }
+      } while (entry.dirty && entries.get(deviceId) === entry)
     } finally {
       entry.inflight = false
     }
@@ -100,6 +135,7 @@ function createRegistry(trpc: UseDeviceProxyTrpc): DeviceProxyRegistry {
         binding: null,
         observers: 0,
         inflight: false,
+        dirty: false,
         listeners: new Set(),
       }
       if (!existing) entries.set(deviceId, entry)

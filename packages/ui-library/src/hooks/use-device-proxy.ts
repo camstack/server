@@ -168,9 +168,9 @@ export function useDeviceStateSlice<T>(handle: StateSliceHandle<T> | undefined):
  * Use the manual pair when:
  *   - you also need the proxy's cap method bag (`dev.zones?.addZone(...)`)
  *   - you want to share the proxy across multiple slice reads with a
- *     single binding fetch (the combinator calls useDeviceProxy
- *     internally, which dedups bindings via React Query in practice
- *     but spawns one extra subscription per call site)
+ *     single binding observer (the combinator calls useDeviceProxy
+ *     internally; bindings and subscriptions are shared per client, so
+ *     an extra call site costs no extra fetch or subscription)
  *
  * Use the combinator when reading just one slice — most common case.
  */
