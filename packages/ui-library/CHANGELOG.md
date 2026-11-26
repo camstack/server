@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.509] - 2026-11-26
+
 ### Changed
 
 - The Export logs dialog has an Export as ZIP checkbox, and its hint says an empty selection exports the whole system log.

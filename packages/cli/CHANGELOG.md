@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.243] - 2026-11-26
+
 ### Changed
 
 - The ops_logs_export tool takes zip: true to save the logs export as a .zip.

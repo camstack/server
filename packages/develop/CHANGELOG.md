@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.60] - 2026-11-26
+
 ### Changed
 
 - The logs export tool takes zip: true to save the export as a .zip and still summarises the lines inside.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.178] - 2026-11-26
+
 ### Changed
 
 - The stream catalog logs every encode fact it read per stream (codec, profile, resolution, fps, GOP, bitrate) and warns with the reason when the read fails

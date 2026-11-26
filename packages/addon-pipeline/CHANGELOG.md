@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.688] - 2026-11-26
+
 ### Changed
 
 - WebRTC live sessions start from the latest keyframe once DTLS connects, a push-queue overflow never leaves video starting mid-GOP, and a session whose peer is already closed stops waiting for DTLS immediately
