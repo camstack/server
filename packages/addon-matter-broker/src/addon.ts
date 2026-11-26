@@ -330,6 +330,10 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
           }
           return out
         },
+        markEndpointsRead: (deviceId) => {
+          const device = reg.getById(deviceId)
+          if (device instanceof MatterNodeDevice) device.markEndpointsRead()
+        },
         applyEndpoints: async (deviceId, endpoints) => {
           await devices.applyDerivedSpec(deviceId, { config: { endpoints } })
         },

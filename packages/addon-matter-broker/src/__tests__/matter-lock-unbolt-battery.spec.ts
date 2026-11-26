@@ -193,6 +193,30 @@ describe('the node answers a complete read only when it can stand behind it', ()
     expect(suffixes(answer)).toEqual(['1', '2'])
   })
 
+  it('re-stamps the probe strictly forward on every agreeing re-read, so the shrink gate sees a later probe', () => {
+    const slices = new Map<string, unknown>()
+    const node = nodeOver(mappableEndpoints(LOCK_AND_POWER))
+    Object.defineProperty(node, 'runtimeState', {
+      value: {
+        getCapState: (cap: string) => slices.get(cap),
+        setCapState: (cap: string, value: unknown) => slices.set(cap, value),
+      },
+    })
+    const stamp = (): number => {
+      const slice = slices.get('feature-probe')
+      const at =
+        typeof slice === 'object' && slice !== null ? Reflect.get(slice, 'lastProbedAt') : 0
+      return typeof at === 'number' ? at : 0
+    }
+    slices.set('feature-probe', { flags: {}, lastProbedAt: 1_000 })
+    node.markEndpointsRead()
+    const first = stamp()
+    node.markEndpointsRead()
+    const second = stamp()
+    expect(first).toBeGreaterThan(1_000)
+    expect(second).toBeGreaterThan(first)
+  })
+
   it('is unknown when the node is offline or its endpoints were not read', () => {
     matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: false }])
     expect(nodeOver(mappableEndpoints(LOCK_AND_POWER)).getAccessoryChildren()).toMatchObject({

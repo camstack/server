@@ -213,6 +213,8 @@ export interface ReconcileDeps {
   readonly reporter: NodeEndpointReporter
   readonly loadAdopted: () => Promise<readonly AdoptedNodeConfig[]>
   readonly applyEndpoints: (deviceId: number, endpoints: MatterEndpointEntry[]) => Promise<void>
+  /** A successful re-read agreed with the persisted list: advance the node's probe stamp. */
+  readonly markEndpointsRead: (deviceId: number) => void
 }
 
 /**
@@ -243,7 +245,10 @@ export async function reconcileNodeEndpoints(
 
       const { entries: nextEndpoints, fold } = planEndpoints(node)
       const current = Array.isArray(cfg['endpoints']) ? cfg['endpoints'] : []
-      if (endpointsEqual(current, nextEndpoints)) continue
+      if (endpointsEqual(current, nextEndpoints)) {
+        if (node.online && node.endpoints.length > 0) deps.markEndpointsRead(d.id)
+        continue
+      }
 
       if (fold.kind !== 'none') {
         deps.logger.info(

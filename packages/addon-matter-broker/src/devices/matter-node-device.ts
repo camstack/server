@@ -8,6 +8,7 @@ import {
   type AccessoryChildrenAnswer,
   type AccessoryChildSpec,
   type DeviceContext,
+  type FeatureProbeStatus,
   type IDevice,
   resyncCapability,
   resyncThroughAdoption,
@@ -115,6 +116,30 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
       return accessoryChildrenUnknown('persisted endpoints not yet reconciled with the node', specs)
     }
     return accessoryChildrenComplete(specs)
+  }
+
+  /**
+   * The node's endpoints were re-read successfully and agree with the persisted
+   * list. Re-stamps `feature-probe.lastProbedAt` (strictly forward): the kernel
+   * reconciles the children again on that write, and its shrink gate prunes a
+   * child no longer listed only on a read of a LATER probe (D49). Without this
+   * the stamp is written once, at registration, and a retired child is deferred
+   * forever.
+   */
+  markEndpointsRead(): void {
+    const current = this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')
+    const base: FeatureProbeStatus = current ?? {
+      flags: {},
+      deviceType: null,
+      model: null,
+      channelCount: null,
+      lastProbedAt: 0,
+      lastFetchedAt: 0,
+    }
+    this.runtimeState.setCapState('feature-probe', {
+      ...base,
+      lastProbedAt: Math.max(Date.now(), base.lastProbedAt + 1),
+    })
   }
 
   private derivedChildren(): AccessoryChildSpec[] {

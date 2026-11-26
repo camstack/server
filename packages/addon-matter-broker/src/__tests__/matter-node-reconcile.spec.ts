@@ -35,18 +35,24 @@ const LOCK_NODE: MatterNodeSnapshot = { ...EMPTY_NODE, endpoints: [LOCK_ENDPOINT
 function harness(config: Record<string, unknown>): {
   deps: ReconcileDeps
   infos: InfoLine[]
+  stamped: number[]
   applied: Array<{ id: number; endpoints: MatterEndpointEntry[] }>
 } {
   const infos: InfoLine[] = []
+  const stamped: number[] = []
   const applied: Array<{ id: number; endpoints: MatterEndpointEntry[] }> = []
   const logger = loggerInto(infos)
   return {
     infos,
+    stamped,
     applied,
     deps: {
       logger,
       reporter: new NodeEndpointReporter(logger),
       loadAdopted: async () => [{ id: 6017, config }],
+      markEndpointsRead: (id) => {
+        stamped.push(id)
+      },
       applyEndpoints: async (id, endpoints) => {
         applied.push({ id, endpoints })
       },
@@ -108,5 +114,30 @@ describe('NodeEndpointReporter empty-cluster warning', () => {
     expect(warns).toHaveLength(1)
     expect(warns[0]?.tags).toEqual({ deviceId: 6017 })
     expect(JSON.stringify(warns[0]?.meta)).toContain('"endpointId":1')
+  })
+})
+
+describe('reconcileNodeEndpoints probe stamp (drives the kernel shrink gate)', () => {
+  const LOCK_ENTRY = { ...LOCK_ENDPOINT, attributes: [] }
+  const adopted = { ...ADOPTED, endpoints: [LOCK_ENTRY] }
+
+  it('stamps on a successful re-read that agrees with the persisted list, every time', async () => {
+    const h = harness(adopted)
+    await reconcileNodeEndpoints(h.deps, 'b1', [LOCK_NODE])
+    await reconcileNodeEndpoints(h.deps, 'b1', [LOCK_NODE])
+    expect(h.stamped).toEqual([6017, 6017])
+    expect(h.applied).toEqual([])
+  })
+
+  it('does not stamp while the list is being changed, offline, or with no endpoints read', async () => {
+    const changed = harness(ADOPTED)
+    await reconcileNodeEndpoints(changed.deps, 'b1', [LOCK_NODE])
+    expect(changed.stamped).toEqual([])
+    const offline = harness(adopted)
+    await reconcileNodeEndpoints(offline.deps, 'b1', [{ ...LOCK_NODE, online: false }])
+    expect(offline.stamped).toEqual([])
+    const unread = harness(adopted)
+    await reconcileNodeEndpoints(unread.deps, 'b1', [{ ...LOCK_NODE, endpoints: [] }])
+    expect(unread.stamped).toEqual([])
   })
 })
