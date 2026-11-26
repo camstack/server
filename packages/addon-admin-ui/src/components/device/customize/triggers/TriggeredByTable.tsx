@@ -5,6 +5,7 @@
  * automation made from the built-in linked-trigger template; this section is
  * the only place such an automation is created, changed or deleted.
  */
+import { useConfirmRemove } from '../use-confirm-remove'
 import {
   builtinAutomationTemplate,
   ON_FOR_MAX_SECONDS,
@@ -117,6 +118,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const [draft, setDraft] = useState<TriggerDraft>(EMPTY_DRAFT)
   /** The one dialog: absent, a new trigger, or the row being edited. */
   const [dialog, setDialog] = useState<TriggerDialogState | null>(null)
+  const confirmRemove = useConfirmRemove()
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
   const instances = useCoreBlocksListTemplateInstances({
@@ -399,9 +401,10 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     else if (open?.kind === 'edit') editTrigger(open.row, result)
   }
 
-  const unlink = (row: TriggerTableRow): void => {
+  const unlink = async (row: TriggerTableRow): Promise<void> => {
     const instance = instanceOf(row.blockId)
     if (instance === undefined) return
+    if (!(await confirmRemove(row.name ?? `#${String(row.deviceId)}`, false))) return
     setDraft((d) => withRemoval(d, instance, withoutRow(instance, row.deviceId)))
   }
 
@@ -471,7 +474,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
                       if (instance !== undefined) setDraft((d) => withEnabled(d, instance, enabled))
                     }}
                     onEdit={() => setDialog({ kind: 'edit', row: r })}
-                    onRemove={() => unlink(r)}
+                    onRemove={() => void unlink(r)}
                   />
                 )
               }}

@@ -7,7 +7,7 @@ import {
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { DeviceFleetProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider, DeviceFleetProvider } from '@camstack/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
 
@@ -218,7 +218,11 @@ vi.mock('../../source-selector/SourceSelector', () => ({
 const { TriggeredByTable } = await import('../TriggeredByTable')
 
 function wrap(node: ReactNode): ReactNode {
-  return <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={new QueryClient()}>
+      <ConfirmDialogProvider>{node}</ConfirmDialogProvider>
+    </QueryClientProvider>
+  )
 }
 
 /** The section's own Save: nothing is written until it is pressed. */
@@ -298,6 +302,11 @@ describe('TriggeredByTable', () => {
   it('removing the only source deletes the automation only when saved', async () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
+    // The remove asks first, naming the source; nothing is dropped until it is confirmed.
+    const ask = await screen.findByRole('dialog')
+    expect(ask.textContent).toContain('Pulsante studio')
+    fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(remove).not.toHaveBeenCalled()
     pressSave()
     await waitFor(() =>
@@ -419,9 +428,12 @@ describe('TriggeredByTable', () => {
     })
   })
 
-  it('Discard drops every pending edit without a write, and the stored row is back', () => {
+  it('Discard drops every pending edit without a write, and the stored row is back', async () => {
     render(wrap(<TriggeredByTable device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
+    const ask = await screen.findByRole('dialog')
+    fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
+    await waitFor(() => expect(screen.queryByText('Pulsante studio')).toBeNull())
     expect(screen.queryByText('Pulsante studio')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /^Discard$/i }))
     expect(screen.getByText('Pulsante studio')).toBeTruthy()

@@ -211,9 +211,8 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     owner: {
       row: { present: { component: TriggerRowCard } },
       dialog: { present: { component: TriggerDialog } },
-      // The row has a remove button (`TriggerRowCard` `onRemove`, unlink in `TriggeredByTable`);
-      // the gap is only that it asks for no `useConfirmRemove` confirmation.
-      remove: gap('remove', 2),
+      // The row's remove asks `useConfirmRemove` first, then drops the row from the draft.
+      remove: CONFIRM_REMOVE,
       enabled: { present: { control: TriggerRowCard } },
     },
     linkedSide: gap('linkedSide', 3),

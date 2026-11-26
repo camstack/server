@@ -35,7 +35,7 @@ const EXPECTED_GAPS: Readonly<Record<CustomizeKind, readonly string[]>> = {
   'cap-link': ['dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
   'linked-devices': [],
   'linked-actions': ['discriminant:2', 'dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
-  'triggered-by': ['remove:2', 'linkedSide:3'],
+  'triggered-by': ['linkedSide:3'],
 }
 
 describe('Customize registry (D1098 phase 1)', () => {
