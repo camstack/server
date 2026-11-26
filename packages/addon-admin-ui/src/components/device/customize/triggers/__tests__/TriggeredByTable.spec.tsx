@@ -439,7 +439,8 @@ describe('TriggeredByTable', () => {
     fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
     await waitFor(() => expect(screen.queryByText('Pulsante studio')).toBeNull())
     expect(screen.queryByText('Pulsante studio')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: /^Discard$/i }))
+    // The bar follows the section's pending count a render later than the row leaves.
+    fireEvent.click(await screen.findByRole('button', { name: /^Discard$/i }))
     expect(screen.getByText('Pulsante studio')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull()
     for (const fn of [create, update, remove, setEnabled]) expect(fn).not.toHaveBeenCalled()

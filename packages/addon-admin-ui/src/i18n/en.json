@@ -9489,7 +9489,10 @@
       "noLocation": "No location",
       "noRoom": "No room",
       "parentDetail": "in {{parent}}",
-      "shownOfSingle": "{{shown}} of {{total}} shown"
+      "shownOfSingle": "{{shown}} of {{total}} shown",
+      "nounAction": "action",
+      "pluralActions": "actions",
+      "actionNotFound": "{{id}} — action not found"
     },
     "deviceFilterBar": {
       "groupBy": "Group by",

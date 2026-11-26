@@ -9511,7 +9511,10 @@
       "noLocation": "Nessuna posizione",
       "noRoom": "Nessuna stanza",
       "parentDetail": "in {{parent}}",
-      "shownOfSingle": "{{shown}} di {{total}} mostrati"
+      "shownOfSingle": "{{shown}} di {{total}} mostrati",
+      "nounAction": "azione",
+      "pluralActions": "azioni",
+      "actionNotFound": "{{id}} — azione non trovata"
     },
     "deviceFilterBar": {
       "groupBy": "Raggruppa per",
