@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Export logs dialog strings: Export as ZIP and the whole-log hint (en, it).
+
 ## [1.2.755] - 2026-11-25
 
 ### Changed
 
 - The API explorer's generated curl now reads the API token from $CAMSTACK_API_TOKEN, so it cannot be mistaken for the removed client login variable.
-- Export logs dialog strings: Export as ZIP and the whole-log hint (en, it).
 
 ## [1.2.754] - 2026-11-25
 
@@ -226,14 +229,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customize: a Source device picker above a capability's readings fills every reading the chosen device exposes at once (power meter: power, energy, voltage, current); each reading can still be overridden.
 ### Changed
 
-
 ## [1.2.727] - 2026-11-21
 
 ### Changed
 
 - An Alexa link with paused proactive updates and an unknown link status have their own labels in the export panel
 ### Changed
-
 
 ## [1.2.726] - 2026-11-21
 
@@ -268,7 +269,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-
 ## [1.2.722] - 2026-11-20
 
 ### Changed
@@ -286,7 +286,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The notification rule editor can switch off the alert's own action button on a rule that fires on an alert.
 
 ### Changed
-
 
 ## [1.2.720] - 2026-11-20
 

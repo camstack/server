@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The logs export tool takes zip: true to save the export as a .zip and still summarises the lines inside.
+
 ## [0.1.59] - 2026-11-25
 
 ### Removed
@@ -14,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every hub tool authenticates through the camstack login session only: --token, --token-file and CAMSTACK_TOKEN were removed; the new hub-access skill says how.
 
 ### Changed
-
-- The logs export tool takes zip: true to save the export as a .zip and still summarises the lines inside.
 
 ## [0.1.58] - 2026-11-23
 
