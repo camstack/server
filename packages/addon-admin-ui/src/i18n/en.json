@@ -11608,7 +11608,8 @@
       "kind": {
         "clock": "At a time",
         "sun": "At a sun event",
-        "date": "On a date"
+        "date": "On a date",
+        "phase": "After day or night starts"
       },
       "time": "Time",
       "date": "Date and time",
@@ -11640,6 +11641,12 @@
         "fri": "Fri",
         "sat": "Sat",
         "sun": "Sun"
+      },
+      "phaseEvent": "Day or night",
+      "phaseOffset": "Minutes after it starts",
+      "phase": {
+        "day": "Day",
+        "night": "Night"
       }
     },
     "sensorPie": {

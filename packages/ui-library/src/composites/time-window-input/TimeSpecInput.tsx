@@ -180,7 +180,7 @@ export function TimeSpecInput({
             <Select
               wrapperClassName="relative w-40"
               disabled={disabled}
-              aria-label={named(t('uiLibrary.timeWindow.phase', 'Day or night'))}
+              aria-label={named(t('uiLibrary.timeWindow.phaseEvent', 'Day or night'))}
               value={value.phase}
               options={PHASES.map((phase) => ({
                 value: phase,

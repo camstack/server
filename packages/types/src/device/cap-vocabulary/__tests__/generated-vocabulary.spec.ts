@@ -85,6 +85,8 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   // D1096: the apps a shell lists, and the per-provider source the aggregator reads.
   'app-source',
   'apps',
+  // D1103: the cluster's day/night authority (sun or a light sensor).
+  'daylight-phase',
 ]
 
 /**
