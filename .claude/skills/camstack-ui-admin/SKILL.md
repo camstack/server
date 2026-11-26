@@ -127,9 +127,10 @@ Every editable form, table or inline editor keeps a dirty state and writes only
 on an explicit Save; Discard reverts to the server state (`FormSaveBar`). No
 mutation from `onBlur` / `onChange` / `onCheckedChange` / a per-row toggle on a
 settings surface. Exceptions: live device controls, one-shot action buttons,
-toggles explicitly documented as instant. Guard `check-ui-save-discard` +
-`scripts/ui-save-discard-allowlist.json` (a new hit fails; a fixed one must be
-removed from the list).
+toggles explicitly documented as instant (a `// save-discard: <reason>` comment
+on the handler). Guard `check-ui-save-discard` + `scripts/ui-save-discard-allowlist.json`
+(a new hit fails; a fixed one must be removed from the list). The guard sees change / blur / input handlers (`onBlur`, `onChange`, `onInput`, `onCheckedChange`, `onValueChange`) that reach a mutation. A row toggle wired through `onClick` or a prop callback is covered by review, not by the guard. `ui:check`
+keeps its `commit-on-blur` rule.
 
 ## Verify
 

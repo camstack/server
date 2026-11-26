@@ -63,7 +63,12 @@ export function Tabs() { return <T onValueChange={(id) => replace((p) => p)} /> 
       anchor: hits[0]?.anchor ?? '',
       reason: 'known violation — planning#675 sweep',
     }
-    expect(judge(hits, [entry])).toEqual({ unlisted: [], stale: [], badReasons: [] })
+    expect(judge(hits, [entry])).toEqual({
+      unlisted: [],
+      stale: [],
+      badReasons: [],
+      missingMarker: [],
+    })
     expect(judge(hits, []).unlisted).toHaveLength(1)
   })
 
@@ -72,5 +77,62 @@ export function Tabs() { return <T onValueChange={(id) => replace((p) => p)} /> 
     const v = judge([], [entry])
     expect(v.stale).toEqual([entry])
     expect(v.badReasons).toEqual([entry])
+  })
+
+  it('flags a destructured or aliased mutate from any use*() hook', () => {
+    const hits = findHits([
+      file(`export function Row() {
+  const { mutate: save } = useFoo()
+  const { mutateAsync } = useBar()
+  return <><input onBlur={() => save(1)} /><input onInput={() => mutateAsync(2)} /></>
+}`),
+    ])
+    expect(hits.map((h) => h.anchor)).toEqual(['Row/onBlur/inline#1', 'Row/onInput/inline#1'])
+  })
+
+  it('flags the result of a save-shaped hook called from a handler, not useFormSaveController', () => {
+    const hits = findHits([
+      file(`export function Row() {
+  const save = useQuickDetailSave()
+  const tpl = useTemplateSave()
+  const boot = useSaveBootstrapForm()
+  const ctl = useFormSaveController()
+  return <><a onChange={() => save(1)} /><b onChange={() => tpl(1)} />
+  <c onChange={() => boot(1)} /><d onChange={() => ctl(1)} /></>
+}`),
+    ])
+    expect(hits.map((h) => h.anchor)).toEqual([
+      'Row/onChange/inline#1',
+      'Row/onChange/inline#2',
+      'Row/onChange/inline#3',
+    ])
+  })
+
+  it('scopes parameter shadowing to the enclosing function, not the file', () => {
+    const hits = findHits([
+      file(`function replace(mutate: (p: string) => void): void { mutate('x') }
+export function Row() {
+  const { mutate } = useFoo()
+  return <input onChange={() => mutate(1)} />
+}`),
+    ])
+    expect(hits.map((h) => h.anchor)).toEqual(['Row/onChange/inline#1'])
+  })
+
+  it('requires a save-discard comment for live control / documented instant entries', () => {
+    const bare = findHits([file('export const A = () => <input onBlur={() => m.mutate()} />')])
+    const marked = findHits([
+      file(`export const A = () => (
+  // save-discard: switch turns the light on
+  <input onBlur={() => m.mutate()} />
+)`),
+    ])
+    for (const reason of ['live control', 'documented instant']) {
+      const e = (hs: typeof bare) => ({ file: F, anchor: hs[0]?.anchor ?? '', reason })
+      expect(judge(bare, [e(bare)]).missingMarker).toHaveLength(1)
+      expect(judge(marked, [e(marked)]).missingMarker).toEqual([])
+    }
+    const known = { file: F, anchor: bare[0]?.anchor ?? '', reason: 'one-shot' }
+    expect(judge(bare, [known]).missingMarker).toEqual([])
   })
 })

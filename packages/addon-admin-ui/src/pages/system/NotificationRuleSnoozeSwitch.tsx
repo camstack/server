@@ -119,6 +119,7 @@ export function NotificationRuleSnoozeSwitch({
       <Switch
         checked={active.length > 0}
         disabled={!rule.enabled || open.isPending || end.isPending}
+        // save-discard: instant by design — the switch opens or ends a snooze window (see the file docblock)
         onCheckedChange={(next) => (next ? open.mutate() : end.mutate(active))}
         aria-label={t('notificationRules.snooze.aria', 'snooze {{name}}').replaceAll(
           '{{name}}',

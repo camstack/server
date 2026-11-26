@@ -107,7 +107,7 @@
   {
     "file": "packages/addon-admin-ui/src/pages/system/NotificationRuleSnoozeSwitch.tsx",
     "anchor": "NotificationRuleSnoozeSwitch/onCheckedChange/inline#1",
-    "reason": "one-shot"
+    "reason": "documented instant"
   },
   {
     "file": "packages/addon-admin-ui/src/pages/system/NotificationTexts.tsx",

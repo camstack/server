@@ -33,10 +33,12 @@ server state. Use `FormSaveBar` (`useFormSaveController`). No mutation fires fro
 
 Allowed exceptions, listed explicitly: a live device control (a switch that
 turns on a light), a one-shot action button, and a toggle documented as instant
-(with that documentation next to it). `scripts/check-ui-save-discard.ts`
-refuses a new mutation from an `onBlur` / `onChange` / `onCheckedChange` /
-`onValueChange` handler; the existing ones are listed with a reason in
+(with a `// save-discard: <reason>` comment on the handler).
+`scripts/check-ui-save-discard.ts` refuses a new mutation from those handlers;
+the existing ones are listed with a reason in
 `scripts/ui-save-discard-allowlist.json` and shrink as the sweep fixes them.
+The guard sees change / blur / input handlers (`onBlur`, `onChange`, `onInput`, `onCheckedChange`, `onValueChange`) that reach a mutation. A row toggle wired through `onClick` or a prop callback is covered by review, not by the guard. The `ui:check` rule `commit-on-blur` (a
+per-file regex, onBlur only) stays beside it as the fast hint.
 
 ## The local tools
 

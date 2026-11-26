@@ -4,21 +4,29 @@
  *
  * What it checks: in every UI `.tsx` (every `.tsx` under `packages/<pkg>/src`,
  * which covers `ui-library`, `addon-admin-ui` and the addon pages; specs
- * excluded) an `onBlur` / `onChange` / `onCheckedChange` / `onValueChange` JSX
- * handler must not reach a mutation: a `mutate(` / `mutateAsync(` call (bare
- * or on any object), or a call of a variable bound from a `use…Mutation(`
- * hook. The handler is the inline function, or the same-file function it
- * names; calls inside it to other same-file functions are followed (a handler
- * that calls `commit()` which mutates is a hit).
+ * excluded) an `onBlur` / `onChange` / `onInput` / `onCheckedChange` /
+ * `onValueChange` JSX handler must not reach a mutation. A mutation is:
+ *   - a `mutate(` / `mutateAsync(` call, bare or on any object (a bare name
+ *     that is a parameter of an enclosing function is a local callback, not a
+ *     mutation);
+ *   - a destructured or aliased one, `const { mutate: save } = useFoo()`;
+ *   - a call of the result of a save-shaped hook,
+ *     `const save = useQuickDetailSave()` -> `save(v)`: any `use\w*(Save|Mutation)\w*`
+ *     (today `useQuickDetailSave`, `useTemplateSave`, `useSaveBootstrapForm`,
+ *     `usePtzSavePreset`, `useCameraGridLayoutSaveLayout`,
+ *     `usePipelineAnalyticsSaveRetrainAnnotations`, `useSetTrackFlagsMutation`,
+ *     `useDeleteTracksMutation`, `useSystemMutation`; not `useFormSaveController`,
+ *     which is the draft controller).
+ * The handler is the inline function, or the same-file function it names;
+ * calls inside it to other same-file functions are followed.
  *
- * What it does NOT check: a write through `useDeviceCommand` / a one-shot
- * command hook (the allowed live controls, not mutations here), a handler
- * imported from another file, or a write hidden behind a prop callback. Those
- * are review items.
+ * What it does NOT see: a row toggle wired through `onClick` or a prop
+ * callback, a handler imported from another file, a write through
+ * `useDeviceCommand` / a one-shot command hook. Those are covered by review.
  *
- * Why a script and not a `ui:check` rule: the legacy `commit-on-blur` rule is
- * a per-file regex with no way to record a reviewed exception, and the sweep
- * needs a checked-in per-hit classification. This guard parses with the
+ * Why a script beside `ui:check`: its `commit-on-blur` rule (a per-file regex
+ * in `scripts/ui/lib/ui-check.ts`, onBlur only, no way to record a reviewed
+ * exception) stays as the fast per-file hint; this guard parses with the
  * TypeScript API and compares every hit with
  * `scripts/ui-save-discard-allowlist.json`.
  *
@@ -27,7 +35,9 @@
  * survives edits) + `reason`, one of `live control`, `one-shot`,
  * `documented instant`, or `known violation — planning#675 sweep`. A hit with
  * no entry fails; an entry with no hit (fixed, renamed, moved) fails as stale
- * — delete it. New code uses `FormSaveBar`.
+ * — delete it. A `live control` / `documented instant` entry also needs a
+ * `// save-discard: <reason>` comment on the handler's line or up to 3 lines
+ * above it. New code uses `FormSaveBar`.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
@@ -59,17 +69,27 @@ export interface Hit {
   readonly file: string
   readonly anchor: string
   readonly line: number
+  /** A `// save-discard: <reason>` comment sits on the handler's line or just above it. */
+  readonly marker: boolean
 }
 
 export interface Verdict {
   readonly unlisted: readonly Hit[]
   readonly stale: readonly AllowEntry[]
   readonly badReasons: readonly AllowEntry[]
+  /** `live control` / `documented instant` entries whose handler has no `// save-discard:` comment. */
+  readonly missingMarker: readonly AllowEntry[]
 }
 
-const HANDLER_ATTRS = new Set(['onBlur', 'onChange', 'onCheckedChange', 'onValueChange'])
+const HANDLER_ATTRS = new Set(['onBlur', 'onChange', 'onInput', 'onCheckedChange', 'onValueChange'])
 const MUTATION_NAMES = new Set(['mutate', 'mutateAsync'])
-const MUTATION_HOOK = /^use\w*Mutation$/
+/** A hook whose RESULT is a write: `useQuickDetailSave`, `useTemplateSave`, `useSaveBootstrapForm`, `useSetTrackFlagsMutation`, `useSystemMutation`, … (`useFormSaveController` is the draft controller, not a write). */
+const SAVE_HOOK = /^use\w*(?:Save|Mutation)\w*$/
+const NOT_A_WRITE_HOOK = new Set(['useFormSaveController'])
+/** Reasons that claim the handler is allowed to act at once; the source must say so next to it. */
+export const MARKER_REASONS: readonly string[] = ['live control', 'documented instant']
+const MARKER = /(?:\/\/|\/\*)\s*save-discard:\s*\S/
+const MARKER_LINES_ABOVE = 3
 const SKIP_DIRS = new Set(['dist', 'node_modules', '.git', 'coverage', 'generated', '__tests__'])
 const MAX_FOLLOW_DEPTH = 4
 
@@ -106,18 +126,34 @@ function unwrapCallback(init: ts.Expression): FnNode | undefined {
 interface FileIndex {
   readonly functions: Map<string, FnNode>
   readonly mutationVars: Set<string>
-  /** Names declared as a function parameter somewhere in the file: a bare `mutate(` on one is a local callback, not a mutation. */
-  readonly paramNames: Set<string>
 }
 
 function indexFile(sf: ts.SourceFile): FileIndex {
   const functions = new Map<string, FnNode>()
   const mutationVars = new Set<string>()
-  const paramNames = new Set<string>()
   const visit = (node: ts.Node): void => {
-    if (ts.isParameter(node) && ts.isIdentifier(node.name)) paramNames.add(node.name.text)
     if (ts.isFunctionDeclaration(node) && node.name !== undefined && node.body !== undefined) {
       functions.set(node.name.text, node)
+    }
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer !== undefined &&
+      ts.isObjectBindingPattern(node.name) &&
+      ts.isCallExpression(node.initializer)
+    ) {
+      const callee = calleeName(node.initializer)
+      if (callee !== undefined && callee.startsWith('use')) {
+        for (const el of node.name.elements) {
+          const source = el.propertyName ?? el.name
+          if (
+            ts.isIdentifier(source) &&
+            ts.isIdentifier(el.name) &&
+            MUTATION_NAMES.has(source.text)
+          ) {
+            mutationVars.add(el.name.text)
+          }
+        }
+      }
     }
     if (
       ts.isVariableDeclaration(node) &&
@@ -128,13 +164,25 @@ function indexFile(sf: ts.SourceFile): FileIndex {
       if (fn !== undefined) functions.set(node.name.text, fn)
       if (ts.isCallExpression(node.initializer)) {
         const callee = calleeName(node.initializer)
-        if (callee !== undefined && MUTATION_HOOK.test(callee)) mutationVars.add(node.name.text)
+        if (callee !== undefined && SAVE_HOOK.test(callee) && !NOT_A_WRITE_HOOK.has(callee)) {
+          mutationVars.add(node.name.text)
+        }
       }
     }
     ts.forEachChild(node, visit)
   }
   visit(sf)
-  return { functions, mutationVars, paramNames }
+  return { functions, mutationVars }
+}
+
+/** Is `name` a parameter of a function enclosing `node`? Then a bare call of it is a local callback. */
+function isShadowedByParameter(node: ts.Node, name: string): boolean {
+  for (let cur: ts.Node | undefined = node.parent; cur !== undefined; cur = cur.parent) {
+    if (isFn(cur) && cur.parameters.some((p) => ts.isIdentifier(p.name) && p.name.text === name)) {
+      return true
+    }
+  }
+  return false
 }
 
 function reachesMutation(
@@ -151,13 +199,13 @@ function reachesMutation(
       if (name !== undefined) {
         if (
           MUTATION_NAMES.has(name) &&
-          !(ts.isIdentifier(node.expression) && index.paramNames.has(name))
+          !(ts.isIdentifier(node.expression) && isShadowedByParameter(node, name))
         ) {
           found = true
           return
         }
         if (ts.isIdentifier(node.expression)) {
-          if (index.mutationVars.has(name)) {
+          if (index.mutationVars.has(name) && !isShadowedByParameter(node, name)) {
             found = true
             return
           }
@@ -228,7 +276,9 @@ export function findHits(files: readonly SourceFile[]): Hit[] {
           const n = (ordinals.get(key) ?? 0) + 1
           ordinals.set(key, n)
           const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1
-          hits.push({ file: rel, anchor: `${key}#${n}`, line })
+          const lines = text.split('\n')
+          const window = lines.slice(Math.max(0, line - 1 - MARKER_LINES_ABOVE), line).join('\n')
+          hits.push({ file: rel, anchor: `${key}#${n}`, line, marker: MARKER.test(window) })
         }
       }
       ts.forEachChild(node, visit)
@@ -247,6 +297,11 @@ export function judge(hits: readonly Hit[], allowlist: readonly AllowEntry[]): V
     unlisted: hits.filter((h) => !allowed.has(keyOf(h.file, h.anchor))),
     stale: allowlist.filter((e) => !seen.has(keyOf(e.file, e.anchor))),
     badReasons: allowlist.filter((e) => !reasons.includes(e.reason)),
+    missingMarker: allowlist.filter(
+      (e) =>
+        MARKER_REASONS.includes(e.reason) &&
+        hits.some((h) => keyOf(h.file, h.anchor) === keyOf(e.file, e.anchor) && !h.marker),
+    ),
   }
 }
 
@@ -298,7 +353,7 @@ function main(): void {
   }
   const allowlist = parseAllowlist(readFileSync(ALLOWLIST_PATH, 'utf-8'))
   const v = judge(hits, allowlist)
-  if (v.unlisted.length + v.stale.length + v.badReasons.length === 0) {
+  if (v.unlisted.length + v.stale.length + v.badReasons.length + v.missingMarker.length === 0) {
     console.log(
       `check-ui-save-discard: ${files.length} UI files, ${hits.length} mutation-on-edit handlers, all in the allowlist`,
     )
@@ -321,6 +376,12 @@ function main(): void {
   if (v.badReasons.length > 0) {
     console.error(`check-ui-save-discard: reason must be one of: ${ALLOWED_REASONS.join(' | ')}`)
     for (const e of v.badReasons) console.error(`  ${e.file}  ${e.anchor}  "${e.reason}"`)
+  }
+  if (v.missingMarker.length > 0) {
+    console.error(
+      'check-ui-save-discard: a "live control" / "documented instant" entry needs a `// save-discard: <reason>` comment on or just above the handler:',
+    )
+    for (const e of v.missingMarker) console.error(`  ${e.file}  ${e.anchor}`)
   }
   process.exit(1)
 }
