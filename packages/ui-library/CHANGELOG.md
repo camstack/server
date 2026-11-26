@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.514] - 2026-11-26
+
 ### Changed
 
 - Heat pump activity follows the compressor state the gateway reports when it gives one

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.728] - 2026-11-26
+
 ### Changed
 
 - Viewer 1.0.738: Account holds certificate, tokens, sessions, passkeys and this device; servers added and removed from the menu's server sheet.

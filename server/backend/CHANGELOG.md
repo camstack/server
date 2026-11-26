@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.969] - 2026-11-26
+
 ### Changed
 
 - Heat pump control gains set circuit control type, set circuit target temperature and set hot-water level temperature
