@@ -239,7 +239,7 @@ writer; a hand-authored marker does not.
    `SensorEvent` is persisted and no NC rule can fire. `numeric-sensor` on a
    non-camera composite hits this. It deserves the log line the design asks for
    rather than silence — not built.
-7. **Deliberately deferred:** agent placement (Phase 7), the recipe/visual editor
+7. **Deliberately deferred:** the recipe/visual editor
    (Phase 6, mockup-gated, another agent's), device customization (deferred in
    full by the operator).
 

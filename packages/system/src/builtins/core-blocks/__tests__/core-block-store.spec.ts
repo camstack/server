@@ -29,10 +29,7 @@ let store: CoreBlockStore
 
 beforeEach(async () => {
   store = await loadedStore()
-  await store.create(
-    { name: 'One', code: 'export default () => {}', enabled: true, placement: 'hub' },
-    'u1',
-  )
+  await store.create({ name: 'One', code: 'export default () => {}', enabled: true }, 'u1')
 })
 
 describe('setStatus', () => {
@@ -64,14 +61,6 @@ describe('setStatus', () => {
   })
 })
 
-describe('enabledFor', () => {
-  it('returns only the enabled blocks placed on that node', async () => {
-    await store.update('b1', { placement: 'agent-a' })
-    expect(store.enabledFor('hub')).toEqual([])
-    expect(store.enabledFor('agent-a')).toHaveLength(1)
-  })
-})
-
 const ROOM = roomCompositionExample({
   temperatureSources: ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   motionSources: ROOM_EXAMPLE_MOTION_SOURCES,
@@ -79,7 +68,7 @@ const ROOM = roomCompositionExample({
 })
 
 describe('compositions', () => {
-  it('are stored hub-placed with no code, never running on creation', async () => {
+  it('are stored with no code, never running on creation', async () => {
     const s = await loadedStore()
     const block = await s.createComposition(
       { name: 'Room', enabled: true, composition: ROOM },
@@ -87,12 +76,11 @@ describe('compositions', () => {
     )
     expect(block).toMatchObject({
       code: '',
-      placement: 'hub',
       status: 'stopped',
       source: { kind: 'composition' },
     })
   })
-  it('refuse a code, placement or integration patch by name', async () => {
+  it('refuse a code or integration patch by name', async () => {
     const s = await loadedStore()
     const block = await s.createComposition(
       { name: 'Room', enabled: true, composition: ROOM },
@@ -101,11 +89,9 @@ describe('compositions', () => {
     await expect(s.update(block.id, { code: 'export default () => {}' })).rejects.toThrow(
       'is a composition',
     )
-    await expect(s.update(block.id, { placement: 'agent-a' })).rejects.toThrow('is a composition')
     await expect(s.update(block.id, { integrationId: 'int_other' })).rejects.toThrow(
       'is a composition',
     )
-    expect(s.get(block.id)).toMatchObject({ placement: 'hub' })
   })
   it('refuse a rename through update — it would bypass the expectedUpdatedAt check — but keep the enabled switch (D62)', async () => {
     const s = await loadedStore()
@@ -187,9 +173,9 @@ describe('isLoaded', () => {
     }
     const s = new CoreBlockStore({ blocks: kind, logger: log.logger })
     await s.load()
-    await expect(
-      s.create({ name: 'x', code: '', enabled: true, placement: 'hub' }, 'u1'),
-    ).rejects.toThrow('has not loaded')
+    await expect(s.create({ name: 'x', code: '', enabled: true }, 'u1')).rejects.toThrow(
+      'has not loaded',
+    )
     await expect(
       s.createComposition({ name: 'Room', enabled: true, composition: ROOM }, 'u1'),
     ).rejects.toThrow('has not loaded')
@@ -207,14 +193,12 @@ describe('isLoaded', () => {
         data: {
           name: 'x',
           enabled: true,
-          placement: 'hub',
           updatedAt: 1,
           block: {
             id: `r${i}`,
             name: 'x',
             code: '',
             enabled: true,
-            placement: 'hub',
             createdAt: 1,
             updatedAt: 1,
             createdBy: 'u',
@@ -271,18 +255,16 @@ describe('unreadable rows', () => {
   ): {
     name: string
     enabled: boolean
-    placement: string
     updatedAt: number
     block: Record<string, unknown>
   } {
-    return { name, enabled: true, placement: 'hub', updatedAt: 5, block }
+    return { name, enabled: true, updatedAt: 5, block }
   }
   const valid = {
     id: 'c1',
     name: 'Room',
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 5,
     createdBy: 'u1',
@@ -312,6 +294,21 @@ describe('unreadable rows', () => {
     expect(s.unreadableCompositions()).toEqual([
       { id: 'c2', name: 'Broken', error: expect.stringContaining('source.composition') },
     ])
+  })
+
+  it('a row stored with the retired placement field loads, and the field is gone on read', async () => {
+    const { store: s, records } = await coreBlockRecordsHarness(logger, {
+      now: () => 1_000,
+      newId: () => 'b1',
+    })
+    const kind = records.kind(coreBlocksRecordKinds.blocks)
+    await kind.put({
+      id: 'c1',
+      data: row({ ...valid, placement: 'agent-a' }),
+    })
+    await s.load()
+    expect(s.list().map((b) => b.id)).toEqual(['c1'])
+    expect(s.get('c1')).not.toHaveProperty('placement')
   })
 
   it('a row whose source kind cannot be read at all is held too — it may be a composition', async () => {

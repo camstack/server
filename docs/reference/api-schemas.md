@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1146 shared schemas.**
+**1145 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1481,16 +1481,10 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `files?`: `CoreBlockFilesSchema`
 - `entry?`: `string`
 - `enabled`: `boolean`
-- `placement`: `CoreBlockPlacementSchema`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
 - `tags?`: `string[]`
 - `tagIds?`: `string[]`
-
-### `CoreBlockPlacementSchema`
-
-- `"hub"`
-- `string`
 
 ### `CoreBlockSchema`
 
@@ -1499,7 +1493,6 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `files?`: `CoreBlockFilesSchema`
 - `entry?`: `string`
 - `enabled`: `boolean`
-- `placement`: `CoreBlockPlacementSchema`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
 - `tags?`: `string[]`
@@ -3808,11 +3801,11 @@ Enum: `"guardrail" \| "model"`
 
 - `state`: `LockStateSchema`
 - `codeRequired?`: `boolean \| null`
-- `lastChangedAt`: `number`
+- `lastChangedAt`: `number \| null`
 
 ### `LockStateSchema`
 
-Enum: `"locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed" \| "door-open"`
+Enum: `"unknown" \| "locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed" \| "door-open"`
 
 ### `LogChannelApplyResultSchema`
 

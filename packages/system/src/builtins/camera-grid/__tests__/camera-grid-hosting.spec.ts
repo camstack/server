@@ -52,7 +52,6 @@ function gridBlock(
     name,
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 77,
     createdBy: 'test',

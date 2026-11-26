@@ -36,14 +36,13 @@ import {
   DisclosureChevron,
   Input,
   LogStream,
-  NodePicker,
   useConfirm,
   useSystem,
   useThemeMode,
   Select,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, Code2, Loader2, RotateCw, ScrollText } from 'lucide-react'
+import { CheckCircle2, Code2, Loader2, RotateCw, ScrollText } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
   CodeEditor,
@@ -89,14 +88,6 @@ export interface BlockEditorProps {
   readonly onQuickEdit?: () => void
 }
 
-/**
- * Execution is hub-only today, and the addon says so by marking a block placed
- * elsewhere `failed`. Saying it here as well is not duplication: an operator who
- * discovers the limit from a red badge has already saved something that cannot
- * run.
- */
-const HUB = 'hub'
-
 export function BlockEditor({
   existing,
   typeDefs,
@@ -129,7 +120,6 @@ export function BlockEditor({
   const [files, setFiles] = useState<Record<string, string>>(initialFiles.files)
   const [entry, setEntry] = useState(initialFiles.entry)
   const [activeFile, setActiveFile] = useState(initialFiles.entry)
-  const [placement, setPlacement] = useState(existing?.placement ?? HUB)
   const [integrationId, setIntegrationId] = useState(existing?.integrationId ?? '')
   const [diagnostics, setDiagnostics] = useState<readonly EditorDiagnostic[]>([])
   const [showLogs, setShowLogs] = useState(false)
@@ -173,7 +163,6 @@ export function BlockEditor({
     JSON.stringify(files) !== JSON.stringify(stored.files) ||
     entry !== stored.entry ||
     name.trim() !== existing.name ||
-    placement !== existing.placement ||
     (integrationId.trim() === '' ? undefined : integrationId.trim()) !== existing.integrationId
 
   const save = (): void => {
@@ -183,7 +172,6 @@ export function BlockEditor({
       files,
       entry,
       enabled: existing?.enabled ?? true,
-      placement,
       // Tags are set in Quick edit; a save of the code carries them as stored.
       ...(existing?.tags === undefined ? {} : { tags: existing.tags }),
       ...(integrationId.trim() !== '' ? { integrationId: integrationId.trim() } : {}),
@@ -435,26 +423,6 @@ export function BlockEditor({
           </Select>
         </label>
       )}
-
-      <div>
-        <NodePicker
-          selectedNodeId={placement}
-          onSelect={setPlacement}
-          label={t('build.blockEditor.runsOn', 'Runs on')}
-          alwaysShow
-        />
-        {placement !== HUB && (
-          <p className="mt-2 flex items-start gap-2 text-xs text-warning">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span>
-              <Trans
-                i18nKey="build.blockEditor.hubOnlyWarning"
-                components={{ strong: <strong /> }}
-              />
-            </span>
-          </p>
-        )}
-      </div>
 
       {/* Editor only here. Logs open UNDER the Logs button at the bottom —
             stacking them under the editor put them between code and settings

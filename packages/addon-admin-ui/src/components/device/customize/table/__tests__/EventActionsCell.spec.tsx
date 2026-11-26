@@ -55,7 +55,6 @@ const STATE = resolveCustomization({
         name: 'customize:provider-hikvision/cam-1',
         code: '',
         enabled: true,
-        placement: 'hub',
         createdAt: 1,
         updatedAt: 1,
         createdBy: 'admin',

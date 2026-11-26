@@ -282,9 +282,7 @@ export class BlockSupervisor {
     const blocks = this.deps.store.list()
     // Only CODE blocks get a runner of their own. A composition goes to the
     // composer (below); a recipe is refused by name.
-    const mine = blocks.filter(
-      (b) => b.enabled && this.isPlacedHere(b) && coreBlockSourceKind(b) === 'code',
-    )
+    const mine = blocks.filter((b) => b.enabled && coreBlockSourceKind(b) === 'code')
     const snapshots = await this.deps.host.list()
     const runners = new Map(
       snapshots
@@ -292,21 +290,9 @@ export class BlockSupervisor {
         .filter((pair): pair is readonly [string, BlockRunnerSnapshot] => pair[0] !== null),
     )
 
-    // 1. An enabled block somebody put on a node that runs no supervisor is
-    //    not idle — nothing anywhere will start it. Say so.
-    for (const block of blocks) {
-      if (!block.enabled || this.isPlacedHere(block)) continue
-      await this.report(
-        block.id,
-        'failed',
-        `no core-block supervisor runs on "${block.placement}" — this block is not running anywhere. ` +
-          `Move it to "${this.deps.nodeId}" to run it.`,
-      )
-    }
-
-    // 2. Tear down every block runner that should not be up: disabled, moved,
-    //    or deleted outright (the store knows nothing about it, so its own
-    //    runner name is the only handle on it).
+    // Tear down every block runner that should not be up: disabled, no longer
+    // a code block, or deleted outright (the store knows nothing about it, so
+    // its own runner name is the only handle on it).
     const wanted = new Set(mine.map((b) => b.id))
     for (const [blockId, runner] of runners) {
       if (wanted.has(blockId)) continue
@@ -368,7 +354,7 @@ export class BlockSupervisor {
     // composition live and re-claim its devices.
     const compositions = this.deps.store.list().flatMap((block) => {
       const composition = coreBlockComposition(block)
-      return composition !== null && this.isPlacedHere(block) ? [{ block, composition }] : []
+      return composition !== null ? [{ block, composition }] : []
     })
     // An unreadable composition is NOT absent: it is sent every pass, so its
     // device is held and its failure named (D49).
@@ -508,7 +494,7 @@ export class BlockSupervisor {
   ): ComposerApplyInput {
     const compositions = this.deps.store.list().flatMap((block) => {
       const composition = coreBlockComposition(block)
-      return composition !== null && this.isPlacedHere(block) ? [{ block, composition }] : []
+      return composition !== null ? [{ block, composition }] : []
     })
     return {
       integrationId: this.deps.integrationId(),
@@ -628,14 +614,10 @@ export class BlockSupervisor {
     await this.deps.store.setStatus(blockId, status, error)
   }
 
-  private isPlacedHere(block: CoreBlock): boolean {
-    return block.placement === this.deps.nodeId
-  }
-
   private stopReason(blockId: string): string {
     const block = this.deps.store.get(blockId)
     if (block === null) return 'deleted'
     if (!block.enabled) return 'disabled'
-    return `moved to "${block.placement}"`
+    return 'not a code block'
   }
 }

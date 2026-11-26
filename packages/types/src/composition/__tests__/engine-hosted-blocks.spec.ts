@@ -30,7 +30,6 @@ function block(id: string, helper: HelperSpec, enabled = true): CoreBlock {
     name: `block ${id}`,
     code: '',
     enabled,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 42,
     createdBy: 'test',

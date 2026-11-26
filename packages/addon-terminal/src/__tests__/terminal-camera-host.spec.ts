@@ -47,7 +47,6 @@ function terminalBlock(id: string, terminalId = TERMINAL_ID): CoreBlock {
     name: `block ${id}`,
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 5,
     createdBy: 'test',

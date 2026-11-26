@@ -2,7 +2,7 @@
  * What each Build section writes when Quick edit changes only the name and the
  * tags. Every builder starts from the stored item and replaces those two fields,
  * so the save carries everything else untouched — a rename never drops a step,
- * a point, a file or a placement.
+ * a point or a file.
  */
 import {
   type ActionEntry,
@@ -27,7 +27,6 @@ export function blockQuickEditInput(block: CoreBlock, next: QuickEditValues): Co
     ...(block.files === undefined ? {} : { files: block.files }),
     ...(block.entry === undefined ? {} : { entry: block.entry }),
     enabled: block.enabled,
-    placement: block.placement,
     ...(block.integrationId === undefined ? {} : { integrationId: block.integrationId }),
     ...(block.settingsSchema === undefined ? {} : { settingsSchema: block.settingsSchema }),
     tags: [...next.tags],

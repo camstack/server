@@ -293,7 +293,6 @@ export function ScriptsTab({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="truncate font-medium">{block.name}</span>
                 <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
-                <Badge variant="info">{block.placement}</Badge>
                 {edited !== null && (
                   <span className="text-xs text-foreground-subtle">
                     {t('common.edited', { when: edited })}

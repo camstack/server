@@ -207,7 +207,6 @@ export function AutomationsTab({
           ...(block.tags === undefined ? {} : { tags: block.tags }),
           code: ejectRecipeFromCode(block.code),
           enabled: block.enabled,
-          placement: block.placement,
           ...(block.integrationId === undefined ? {} : { integrationId: block.integrationId }),
         },
       }),

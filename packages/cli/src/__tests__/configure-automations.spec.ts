@@ -292,7 +292,7 @@ describe('configure_automation_save', () => {
     expect(done.status).toBe('executed')
     const create = calls.find((c) => c.path === 'coreBlocks.create')
     expect(create?.input).toMatchObject({
-      block: { name: 'Morning', enabled: true, placement: 'hub' },
+      block: { name: 'Morning', enabled: true },
     })
   })
 

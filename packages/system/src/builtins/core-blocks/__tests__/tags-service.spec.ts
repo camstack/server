@@ -157,7 +157,6 @@ async function world(
       name: 'Marked block',
       code: 'export default () => {}',
       enabled: true,
-      placement: 'hub',
       tags: [' Garden ', 'garden', 'Solo'],
     },
     'u1',

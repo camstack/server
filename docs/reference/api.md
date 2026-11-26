@@ -2254,7 +2254,7 @@
 
 ### `core-blocks` → `coreBlocks.*`
 
-- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:447`
+- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:436`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ICoreBlocksProvider`
@@ -2264,7 +2264,7 @@
 | list | `coreBlocks.list` | query | admin | `{}` | `{ blocks: CoreBlockSchema[] }` |
 | get | `coreBlocks.get` | query | admin | `{ blockId: string }` | `{ block: CoreBlockSchema \| null }` |
 | create | `coreBlocks.create` | mutation | admin | `{ block: CoreBlockInputSchema }` | `{ block: CoreBlockSchema }` |
-| update | `coreBlocks.update` | mutation | admin | `{ blockId: string; block: { name?: string; code?: string; files?: CoreBlockFilesSchema; entry?: string; enabled?: boolean; placement?: CoreBlockPlacementSchema; integrationId?: string; settingsSchema?: <custom>; tags?: string[]; tagIds?: string[] }; expectedUpdatedAt?: number }` | `{ block: CoreBlockSchema }` |
+| update | `coreBlocks.update` | mutation | admin | `{ blockId: string; block: { name?: string; code?: string; files?: CoreBlockFilesSchema; entry?: string; enabled?: boolean; integrationId?: string; settingsSchema?: <custom>; tags?: string[]; tagIds?: string[] }; expectedUpdatedAt?: number }` | `{ block: CoreBlockSchema }` |
 | delete | `coreBlocks.delete` | mutation | admin | `{ blockId: string; expectedUpdatedAt?: number }` | `{ success: true }` |
 | setEnabled | `coreBlocks.setEnabled` | mutation | admin | `{ blockId: string; enabled: boolean; expectedUpdatedAt?: number }` | `{ block: CoreBlockSchema }` |
 | restart | `coreBlocks.restart` | mutation | admin | `{ blockId: string }` | `{ block: CoreBlockSchema }` |
@@ -3403,7 +3403,7 @@
 
 ### `lock-control` → `lockControl.*`
 
-- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:92`
+- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:98`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lock`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILockControlProvider`

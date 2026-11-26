@@ -46,7 +46,6 @@ const read = (b: BlockStore['server']) => ({
             name: 'customize:provider-homeassistant/ha:feeder',
             code: '',
             enabled: true,
-            placement: 'hub',
             createdAt: 1,
             updatedAt: b.updatedAt,
             createdBy: 'admin',

@@ -21,7 +21,6 @@ const SCRIPT = {
   name: 'Garage door watcher',
   code: 'export default (ctx) => () => {}\n',
   enabled: true,
-  placement: 'hub',
   createdAt: NOW - 86_400_000,
   updatedAt: NOW - 7_200_000,
   createdBy: 'admin',

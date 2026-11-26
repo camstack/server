@@ -28,7 +28,6 @@ function linked(id: string, params: LinkedTriggerParams, enabled = true): CoreBl
       recipe: made.recipe,
     }),
     enabled,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 1,
     createdBy: 'test',

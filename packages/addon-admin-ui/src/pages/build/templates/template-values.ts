@@ -29,9 +29,6 @@ import {
 } from '@camstack/types'
 import { prepareRecipeUnits } from '../automation/recipe-units'
 
-/** Blocks run on the hub only: an automation offers no placement choice. */
-const HUB = 'hub'
-
 function scalarDefault(input: TemplateScalarInput): TemplateScalarValue | undefined {
   switch (input.kind) {
     case 'number':
@@ -252,7 +249,6 @@ function blockOf(name: string, recipe: AutomationRecipe, enabled: boolean): Inst
         name,
         code: generateAutomationBlock({ name, recipe: prepared.recipe }),
         enabled,
-        placement: HUB,
       },
     }
   } catch (error: unknown) {

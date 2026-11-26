@@ -65,6 +65,6 @@ describe('TemplateInstanceEditor', () => {
     mount(onSave, { delay: 60 })
     fireEvent.click(screen.getByTestId('template-instance-save'))
     expect(onSave).toHaveBeenCalledTimes(1)
-    expect(onSave.mock.calls[0]?.[0]).toMatchObject({ name: 'Lamp', placement: 'hub' })
+    expect(onSave.mock.calls[0]?.[0]).toMatchObject({ name: 'Lamp' })
   })
 })

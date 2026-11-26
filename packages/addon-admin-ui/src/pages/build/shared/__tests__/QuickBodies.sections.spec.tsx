@@ -100,7 +100,6 @@ const BLOCK: CoreBlock = {
   name: 'Garden script',
   code: '// not a recipe',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'u',
@@ -110,9 +109,8 @@ const BLOCK: CoreBlock = {
 }
 
 describe('ScriptQuickBody', () => {
-  it('shows placement, the recorded error and the logs of its own runner', () => {
+  it('shows the recorded error and the logs of its own runner', () => {
     render(wrap(<ScriptQuickBody block={BLOCK} />))
-    expect(screen.getByText('hub')).toBeTruthy()
     expect(screen.getAllByText('the code does not compile (line 3)').length).toBeGreaterThan(0)
     expect(screen.getByTestId('log-stream').textContent).toBe(coreBlockAddonId('b1'))
   })

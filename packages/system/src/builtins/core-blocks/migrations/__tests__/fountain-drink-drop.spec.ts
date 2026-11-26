@@ -88,7 +88,6 @@ function blockOf(id: string, name: string, composition: Composition, mark: strin
     name,
     code: '',
     enabled: mark !== 'off',
-    placement: 'hub',
     source: { kind: 'composition', composition },
     createdBy: `marker-${mark}`,
     createdAt: 10,
@@ -102,7 +101,6 @@ function rowBody(block: CoreBlock): CoreBlockRowBody {
   return {
     name: block.name,
     enabled: block.enabled,
-    placement: block.placement,
     updatedAt: block.updatedAt,
     block,
   }
@@ -131,7 +129,6 @@ beforeEach(async () => {
     name: 'Plain code',
     code: 'export default () => {}',
     enabled: true,
-    placement: 'hub',
     createdBy: 'marker-code',
     createdAt: 1,
     updatedAt: 2,

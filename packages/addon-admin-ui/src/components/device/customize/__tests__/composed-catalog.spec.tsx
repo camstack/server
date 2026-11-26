@@ -206,7 +206,6 @@ function readOf(type: string, helper: boolean): Read & { refetch: () => Promise<
           name: 'Built device',
           code: '',
           enabled: true,
-          placement: 'hub',
           createdAt: 1,
           updatedAt: 1,
           createdBy: 'admin',

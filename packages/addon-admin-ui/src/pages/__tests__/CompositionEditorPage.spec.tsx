@@ -17,7 +17,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
             name: 'customize:x',
             code: '',
             enabled: true,
-            placement: 'hub',
             createdAt: 1,
             updatedAt: 2,
             createdBy: 'a',

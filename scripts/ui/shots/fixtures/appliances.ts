@@ -539,7 +539,6 @@ const FILTER_VIEW = {
     name: 'customize:dishwasher-501',
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: NOW,
     createdBy: 'admin',

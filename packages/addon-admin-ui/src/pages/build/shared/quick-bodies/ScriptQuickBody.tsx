@@ -21,7 +21,6 @@ export function ScriptQuickBody({ block }: ScriptQuickBodyProps): ReactNode {
       key: t('build.quickModal.status', 'Status'),
       value: <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>,
     },
-    { key: t('build.quickModal.placement', 'Placement'), value: block.placement },
   ]
   return (
     <>

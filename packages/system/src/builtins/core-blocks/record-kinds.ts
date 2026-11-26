@@ -29,14 +29,12 @@ export const CORE_BLOCK_SETTINGS_COLLECTION = 'core-blocks:settings'
 export type CoreBlockRowBody = {
   readonly name: string
   readonly enabled: boolean
-  readonly placement: string
   readonly updatedAt: number
   readonly block: Record<string, unknown>
 }
 const _coreBlockRowBody: z.ZodType<CoreBlockRowBody> = z.object({
   name: z.string(),
   enabled: z.boolean(),
-  placement: z.string(),
   updatedAt: z.number(),
   block: z.record(z.string(), z.unknown()),
 })

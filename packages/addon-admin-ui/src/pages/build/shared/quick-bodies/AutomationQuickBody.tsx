@@ -47,7 +47,6 @@ export function AutomationQuickBody({ block }: AutomationQuickBodyProps): ReactN
       key: t('build.quickModal.status', 'Status'),
       value: <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>,
     },
-    { key: t('build.quickModal.placement', 'Placement'), value: block.placement },
   ]
   if (parsed.ok) {
     const trigger = triggerSummaryOf(parsed.recipe)

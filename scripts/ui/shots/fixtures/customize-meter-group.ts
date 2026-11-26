@@ -16,7 +16,6 @@ const VIEW = {
     name: 'customize:dryer-505',
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: NOW,
     createdBy: 'admin',

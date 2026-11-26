@@ -921,8 +921,6 @@ function blockNames(list: z.infer<typeof BlockListSchema>): readonly string[] {
   return (Array.isArray(list) ? list : list.blocks).map((b) => b.name)
 }
 
-const BLOCK_PLACEMENT = 'hub'
-
 export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomationArgs> {
   return {
     tool: SAVE_AUTOMATION_TOOL,
@@ -1004,7 +1002,6 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
           name: args.name,
           code,
           enabled: args.enabled,
-          placement: BLOCK_PLACEMENT,
         },
       })
       return { created: true, block: created }

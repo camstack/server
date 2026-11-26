@@ -77,7 +77,6 @@ const BLOCK = {
   name: 'Kitchen fountain',
   code: '',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'admin',

@@ -82,7 +82,6 @@ describe('a stored composition with commands, opened and saved untouched', () =>
             name: 'Kitchen fountain',
             code: '',
             enabled: true,
-            placement: 'hub',
             createdAt: 1,
             updatedAt: 7,
             createdBy: 'admin',

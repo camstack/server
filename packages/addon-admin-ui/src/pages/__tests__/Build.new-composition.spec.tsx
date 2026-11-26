@@ -94,7 +94,6 @@ function block(over: Partial<CoreBlock>): CoreBlock {
     name: 'Block',
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 1,
     createdBy: 'u',

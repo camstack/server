@@ -516,6 +516,9 @@
         "description": "Store and type-check user-authored TypeScript that owns devices with an addon's own ctx. Admin-only: a block is a plugin with no review step, so it is process-isolated when it runs. This slice stores and serves; execution is the runner.",
         "entry": "./dist/builtins/core-blocks/index.js",
         "protected": true,
+        "execution": {
+          "placement": "hub-only"
+        },
         "capabilities": [
           {
             "name": "device-removal-hook",

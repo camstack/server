@@ -6,13 +6,7 @@
  * A builtin because a block belongs to the kernel, not to an addon: it is user
  * code the node runs, and it must exist on every install with no opt-in step.
  *
- * **Execution is HUB-ONLY for now**, and that limit is loud rather than
- * implied: a block placed on any other node is reported `failed` with a message
- * naming the node, because an enabled block nothing runs must never look like
- * an idle one. The supervisor is already written per-node (`converge()` only
- * ever considers blocks placed on `nodeId`), so the agent case is an
- * implementation of `BlockProcessHost` plus a way to reach the hub's store —
- * not a redesign.
+ * Blocks run on the hub.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -850,7 +844,7 @@ export class CoreBlocksAddon extends BaseAddon {
    * Build the supervisor, or explain in one line why this node runs no blocks.
    *
    * Two ways to end up with none, and both are logged rather than inferred:
-   * this is not the hub (execution is hub-only for now), or the kernel exposed
+   * this is not the hub, or the kernel exposed
    * no cluster broker, which is the only door to `$process.*`.
    */
   private buildSupervisor(): BlockSupervisor | null {

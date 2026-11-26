@@ -167,12 +167,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
 // Monaco needs a real worker; the wiring around it is what matters here.
 interface MockEditorProps {
   readonly saveError: string | null
-  readonly onSave: (input: {
-    name: string
-    code: string
-    enabled: boolean
-    placement: string
-  }) => void
+  readonly onSave: (input: { name: string; code: string; enabled: boolean }) => void
   readonly onRestart?: () => void
 }
 vi.mock('../BlockEditor', () => ({
@@ -180,10 +175,7 @@ vi.mock('../BlockEditor', () => ({
     <div data-testid="editor">
       {saveError !== null && <span data-testid="save-error">{saveError}</span>}
       <span data-testid="editor-can-restart">{onRestart === undefined ? 'no' : 'yes'}</span>
-      <button
-        type="button"
-        onClick={() => onSave({ name: 'X', code: 'x', enabled: true, placement: 'hub' })}
-      >
+      <button type="button" onClick={() => onSave({ name: 'X', code: 'x', enabled: true })}>
         mock-save
       </button>
     </div>
@@ -197,7 +189,6 @@ const block = (over: Partial<CoreBlock> = {}): CoreBlock => ({
   name: 'Block',
   code: '',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'u',

@@ -63,7 +63,6 @@ export const CORE_BLOCKS_COLUMNS = [
   { name: 'id', type: 'TEXT' as const, primaryKey: true, notNull: true },
   { name: 'name', type: 'TEXT' as const, notNull: true },
   { name: 'enabled', type: 'BOOLEAN' as const, notNull: true },
-  { name: 'placement', type: 'TEXT' as const, notNull: true },
   { name: 'updatedAt', type: 'INTEGER' as const, notNull: true },
   /** The FULL block, Zod-validated on read; the scalars above are indexed
    *  projections for the list view. */
@@ -227,11 +226,6 @@ export class CoreBlockStore {
     return this.byId.get(blockId) ?? null
   }
 
-  /** Blocks that should be running here. The runner's input. */
-  enabledFor(nodeId: string): readonly CoreBlock[] {
-    return this.list().filter((b) => b.enabled && b.placement === nodeId)
-  }
-
   async create(input: CoreBlockInput, createdBy: string): Promise<CoreBlock> {
     this.requireLoaded()
     const now = this.now()
@@ -270,13 +264,12 @@ export class CoreBlockStore {
       codeChanged ||
       filesChanged ||
       entryChanged ||
-      (patch.placement !== undefined && patch.placement !== existing.placement) ||
       (patch.integrationId !== undefined && patch.integrationId !== existing.integrationId)
     if (fixed && coreBlockSourceKind(existing) !== 'code') {
       // Moving a composition off the hub would drop it from the composer's set
       // and withdraw its device; moving it back would mint a new id.
       throw new Error(
-        `core block "${existing.name}" is a composition — its code, placement and integration are fixed; edit it with updateComposition`,
+        `core block "${existing.name}" is a composition — its code and integration are fixed; edit it with updateComposition`,
       )
     }
     if (
@@ -345,7 +338,6 @@ export class CoreBlockStore {
     const block: CoreBlock = CoreBlockSchema.parse({
       name: input.name,
       enabled: input.enabled,
-      placement: 'hub',
       code: '',
       source: { kind: 'composition', composition: input.composition },
       id: this.newId(),
@@ -434,7 +426,6 @@ export class CoreBlockStore {
     const body: CoreBlockRowBody = {
       name: block.name,
       enabled: block.enabled,
-      placement: block.placement,
       updatedAt: block.updatedAt,
       block,
     }

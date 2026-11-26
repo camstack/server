@@ -58,8 +58,6 @@ import { prepareRecipeUnits } from './recipe-units'
 import { WhenTree } from './WhenTree'
 import { normalizeRecipe } from './when-ops'
 
-/** Blocks run on the hub only: an automation offers no placement choice. */
-const HUB = 'hub'
 const TRACES_POLL_MS = 5_000
 
 export interface AutomationEditorProps {
@@ -169,7 +167,6 @@ export function AutomationEditor({
       name: name.trim(),
       code: generated.code,
       enabled: existing?.enabled ?? true,
-      placement: HUB,
       // Tags are set in Quick edit; a save of the recipe carries them as stored.
       ...(existing?.tags === undefined ? {} : { tags: existing.tags }),
     })

@@ -18,7 +18,6 @@ function terminalBlock(id: string, name: string, terminalId: string): CoreBlock 
     name,
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 2,
     createdBy: 'test',

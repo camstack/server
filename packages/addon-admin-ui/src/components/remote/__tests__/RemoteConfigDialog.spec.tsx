@@ -432,7 +432,6 @@ describe('RemoteConfigDialog', () => {
         name: 'Built TV',
         code: '',
         enabled: true,
-        placement: 'hub',
         source: { kind: 'composition', composition },
         createdBy: 'u1',
         createdAt: 1,

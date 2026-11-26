@@ -8,7 +8,6 @@ export function viewOf(composition: Composition, updatedAt = 1_790_000_000_000):
       name: 'customize:test',
       code: '',
       enabled: true,
-      placement: 'hub',
       createdAt: 1,
       updatedAt,
       createdBy: 'admin',

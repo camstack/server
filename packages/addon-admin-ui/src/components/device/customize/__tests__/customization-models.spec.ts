@@ -44,7 +44,6 @@ function view(composition: Composition, updatedAt = 1_790_000_000_000): Composit
       name: 'customize:provider-homeassistant/ha:device:petkit-fresh-element-3',
       code: '',
       enabled: true,
-      placement: 'hub',
       createdAt: 1,
       updatedAt,
       createdBy: 'admin',

@@ -38,7 +38,6 @@ const VIEW = {
     name: 'customize:washer-505',
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: NOW,
     createdBy: 'admin',

@@ -59,7 +59,6 @@ const block = (
   name,
   code: generateAutomationBlock({ name, recipe: RECIPE(minutes) }),
   enabled,
-  placement: 'hub',
   createdAt: NOW - 86_400_000,
   updatedAt: NOW - updatedAgo,
   createdBy: 'admin',

@@ -54,7 +54,6 @@ describe('CoreBlockStore multi-file', () => {
       {
         name: 'Multi',
         enabled: true,
-        placement: 'hub',
         files: {
           'main.ts': 'import { n } from "./lib.ts"\nexport default () => n',
           'lib.ts': 'export const n = 2',
@@ -75,7 +74,6 @@ describe('CoreBlockStore multi-file', () => {
       {
         name: 'Multi',
         enabled: true,
-        placement: 'hub',
         files: { 'main.ts': 'export default () => 1', 'lib.ts': 'export const x = 1' },
       },
       'u1',

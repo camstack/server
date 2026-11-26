@@ -45,7 +45,6 @@ function makeBlock(over: Partial<CoreBlock> = {}): CoreBlock {
     name: 'Block One',
     code: 'export default () => {}',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 1,
     createdBy: 'u1',
@@ -253,18 +252,6 @@ describe('converge — the ways a block does not run', () => {
     expect(store.statusWrites).toEqual([
       { blockId: 'b1', status: 'failed', error: 'the block does not compile: Unexpected token }' },
     ])
-  })
-
-  it('marks a block placed on another node failed, with a message naming the node', async () => {
-    // The failure this whole feature exists to avoid: an enabled block that
-    // nothing anywhere is running, reported as if it were merely idle.
-    store.setBlocks([makeBlock({ placement: 'agent-a' })])
-    await makeSupervisor().converge()
-
-    expect(host.spawned).toEqual([])
-    const write = store.statusWrites.at(-1)
-    expect(write?.status).toBe('failed')
-    expect(write?.error).toContain('agent-a')
   })
 
   it('reports a spawn that threw, instead of leaving the block "starting" forever', async () => {
@@ -539,7 +526,7 @@ describe('composition blocks', () => {
     const inner = records.kind(coreBlocksRecordKinds.blocks)
     await inner.put({
       id: stored.id,
-      data: { name: stored.name, enabled: true, placement: 'hub', updatedAt: 1, block: stored },
+      data: { name: stored.name, enabled: true, updatedAt: 1, block: stored },
     })
     let left = 2
     const kind = {
@@ -590,14 +577,13 @@ describe('composition blocks', () => {
     const kind = records.kind(coreBlocksRecordKinds.blocks)
     await kind.put({
       id: stored.id,
-      data: { name: stored.name, enabled: true, placement: 'hub', updatedAt: 1, block: stored },
+      data: { name: stored.name, enabled: true, updatedAt: 1, block: stored },
     })
     await kind.put({
       id: 'c2',
       data: {
         name: 'Broken',
         enabled: true,
-        placement: 'hub',
         updatedAt: 1,
         block: { ...stored, id: 'c2', source: { kind: 'composition', composition: { bogus: 1 } } },
       },

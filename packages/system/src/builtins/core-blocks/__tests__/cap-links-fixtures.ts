@@ -34,7 +34,6 @@ export function block(id: string, composition: Composition, updatedAt = 1): Core
     name: `Custom ${id}`,
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt,
     createdBy: 'u',

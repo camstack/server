@@ -39,7 +39,6 @@ const BLOCK: CoreBlock = {
   name: 'Feed',
   code: '// not a recipe',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'u',

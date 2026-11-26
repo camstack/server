@@ -42,7 +42,6 @@ function block(id: string, composition: Composition, updatedAt = 1, createdBy = 
     name: `Custom ${id}`,
     code: '',
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt,
     createdBy,

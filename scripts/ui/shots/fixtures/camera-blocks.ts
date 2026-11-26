@@ -17,7 +17,6 @@ const block = (id: string, name: string, helper: unknown) => ({
   name,
   code: '',
   enabled: true,
-  placement: 'hub',
   createdAt: NOW - 86_400_000,
   updatedAt: NOW - 3_600_000,
   createdBy: 'admin',

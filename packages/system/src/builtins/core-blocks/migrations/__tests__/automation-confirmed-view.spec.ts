@@ -49,7 +49,6 @@ function blockOf(id: string, name: string, code: string): CoreBlock {
     name,
     code,
     enabled: true,
-    placement: 'hub',
     createdBy: `marker-${id}`,
     createdAt: 1,
     updatedAt: 2,
@@ -62,7 +61,6 @@ function rowBody(block: CoreBlock): CoreBlockRowBody {
   return {
     name: block.name,
     enabled: block.enabled,
-    placement: block.placement,
     updatedAt: block.updatedAt,
     block,
   }

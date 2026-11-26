@@ -133,7 +133,6 @@ function blockOf(id: string, composition: LegacyHelperComposition, mark: string)
     name: `name-${id}`,
     code: '',
     enabled: mark !== 'off',
-    placement: 'hub',
     source: { kind: 'composition', composition: composition.plain },
     createdBy: `marker-${mark}`,
     createdAt: 10,
@@ -146,7 +145,6 @@ function blockOf(id: string, composition: LegacyHelperComposition, mark: string)
     body: {
       name: base.name,
       enabled: base.enabled,
-      placement: base.placement,
       updatedAt: base.updatedAt,
       block: { ...base, source: { kind: 'composition', composition: composition.stored } },
     },

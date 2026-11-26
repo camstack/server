@@ -222,7 +222,6 @@ const HUB_MONITOR_BLOCK = {
   name: 'Hub monitor',
   code: '',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 2,
   createdBy: 'test',

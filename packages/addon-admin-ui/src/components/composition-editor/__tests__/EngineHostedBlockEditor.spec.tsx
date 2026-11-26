@@ -115,7 +115,6 @@ function cameraView(helper: unknown, deviceId: number | null): unknown {
       name: 'Hub monitor',
       code: '',
       enabled: true,
-      placement: 'hub',
       createdAt: 1,
       updatedAt: 77,
       createdBy: 'test',

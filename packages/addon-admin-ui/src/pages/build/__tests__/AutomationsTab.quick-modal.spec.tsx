@@ -15,7 +15,6 @@ const BLOCK: CoreBlock = {
   name: 'Feed the dog',
   code: 'const AUTOMATION_RECIPE = {}\nexport default 1\n',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'u',

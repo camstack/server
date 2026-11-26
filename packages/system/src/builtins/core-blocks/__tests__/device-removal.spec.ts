@@ -29,7 +29,6 @@ function block(id: string, name: string, code: string): CoreBlock {
     name,
     code,
     enabled: true,
-    placement: 'hub',
     createdAt: 1,
     updatedAt: 1,
     createdBy: 'test',

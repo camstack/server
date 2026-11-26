@@ -16,7 +16,6 @@ const SCRIPT = {
   name: 'Garden watering helper',
   code: 'export const litres = 12\n',
   enabled: true,
-  placement: 'hub',
   createdAt: NOW - 86_400_000,
   updatedAt: NOW - 3_600_000,
   createdBy: 'admin',

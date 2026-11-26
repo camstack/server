@@ -30,7 +30,6 @@ const BLOCK: CoreBlock = {
   files: { 'main.ts': 'MARKED_FILE_A', 'util.ts': 'MARKED_FILE_B' },
   entry: 'main.ts',
   enabled: false,
-  placement: 'node-marked',
   integrationId: 'integration-marked',
   tags: ['Old'],
   createdAt: 1,
@@ -49,7 +48,6 @@ describe('blockQuickEditInput', () => {
     expect(input.files).toEqual({ 'main.ts': 'MARKED_FILE_A', 'util.ts': 'MARKED_FILE_B' })
     expect(input.entry).toBe('main.ts')
     expect(input.enabled).toBe(false)
-    expect(input.placement).toBe('node-marked')
     expect(input.integrationId).toBe('integration-marked')
   })
 })
@@ -139,7 +137,6 @@ describe('automationQuickEditInput', () => {
     expect(input.files).toEqual({ 'main.ts': 'MARKED_FILE_A', 'util.ts': 'MARKED_FILE_B' })
     expect(input.entry).toBe('main.ts')
     expect(input.enabled).toBe(false)
-    expect(input.placement).toBe('node-marked')
     expect(input.integrationId).toBe('integration-marked')
   })
 
@@ -153,7 +150,6 @@ describe('automationQuickEditInput', () => {
     const input = automationQuickEditInput(unreadable, NEXT)
     expect(input.code).toBe('export default HAND_WRITTEN')
     expect(input.name).toBe('Renamed')
-    expect(input.placement).toBe('node-marked')
     expect(input.enabled).toBe(false)
   })
 })

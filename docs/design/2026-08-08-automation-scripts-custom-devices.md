@@ -614,7 +614,7 @@ Scripts                                    2 not running          [ + New script
    ↑ broken rows sort first, and "N not running" is in the header — the existing
      rules in `core-block-status.ts`, unchanged.
 
-Edit: Garage light follower                       placement [ hub ▾ ]  ● Running
+Edit: Garage light follower                                          ● Running
 ┌─────────────────────────────────────────────┬────────────────────────────────┐
 │ 1  export default (ctx) => {                │  Logs — core-block-b7f2        │
 │ 2    const off = ctx.eventBus.on(…)         │  12:04:11 info  started        │
@@ -901,7 +901,7 @@ Same three-part rhythm, different nouns: **sources → caps → methods**.
 
 ```
 New custom device                                                [ Save ] [ Cancel ]
-Name [ Front door ]   type [ Sensor ▾ ]   role [ contact-sensor ▾ ]   placement [ hub ▾ ]
+Name [ Front door ]   type [ Sensor ▾ ]   role [ contact-sensor ▾ ]
 
   ┌ FROM ────────────────────────────────────────────────────────────────┐
   │  gate    = 102 · Gate contact                                  [⋯]   │
@@ -1096,7 +1096,7 @@ composed device from being fully equal to a vendor device:
   the device must be a camera or linked to one — otherwise no `SensorEvent` is
   persisted and no rule can ever fire for it. This is the most likely silent
   failure for a new composite, and it deserves a log line rather than silence.
-- Agent placement for blocks, behind the hub-only-provider fix.
+- Blocks run on the hub; running them elsewhere is not planned.
 - A provider-agnostic "add a device" surface, or `device-provider` on the block
   host so the existing dialog is inherited.
 

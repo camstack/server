@@ -15,14 +15,14 @@ const created = vi.fn()
 vi.mock('../build/automation/AutomationEditor', () => ({
   AutomationEditor: (props: {
     saveError: string | null
-    onSave: (input: { name: string; code: string; enabled: boolean; placement: string }) => void
+    onSave: (input: { name: string; code: string; enabled: boolean }) => void
     onCancel: () => void
   }) => (
     <div data-testid="automation-editor-stub">
       <button
         type="button"
         data-testid="stub-save"
-        onClick={() => props.onSave({ name: 'Feed', code: 'x', enabled: true, placement: 'hub' })}
+        onClick={() => props.onSave({ name: 'Feed', code: 'x', enabled: true })}
       />
       <button type="button" data-testid="stub-close" onClick={props.onCancel} />
       {props.saveError !== null && <p data-testid="stub-error">{props.saveError}</p>}

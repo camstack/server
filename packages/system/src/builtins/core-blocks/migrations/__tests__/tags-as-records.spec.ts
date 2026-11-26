@@ -29,7 +29,6 @@ async function legacyHub(): Promise<{ records: Records }> {
       name: 'Marked block',
       code: 'export default () => {}',
       enabled: true,
-      placement: 'hub',
       tags: [' Garden ', 'garden', 'Solo'],
     },
     'u1',

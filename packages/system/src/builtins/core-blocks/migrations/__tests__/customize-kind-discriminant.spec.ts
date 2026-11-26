@@ -76,7 +76,6 @@ function blockOf(id: string, mark: string, composition: Composition): CoreBlock 
     name: `name-${mark}`,
     code: '',
     enabled: true,
-    placement: 'hub',
     source: { kind: 'composition', composition },
     createdBy: `marker-${mark}`,
     createdAt: 10,
@@ -90,7 +89,6 @@ function rowBody(block: CoreBlock): CoreBlockRowBody {
   return {
     name: block.name,
     enabled: block.enabled,
-    placement: block.placement,
     updatedAt: block.updatedAt,
     block,
   }

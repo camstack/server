@@ -43,7 +43,6 @@ function block(id: string): CoreBlock {
     name: `name-${id}`,
     code: '',
     enabled: true,
-    placement: 'hub',
     source: { kind: 'composition', composition: COMPOSITION },
     createdBy: 'seed',
     createdAt: 10,
@@ -69,7 +68,6 @@ async function boot() {
     const data: CoreBlockRowBody = {
       name: b.name,
       enabled: b.enabled,
-      placement: b.placement,
       updatedAt: b.updatedAt,
       block: b,
     }

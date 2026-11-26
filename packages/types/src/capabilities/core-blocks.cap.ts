@@ -107,15 +107,6 @@ export function coreBlockIdFromAddonId(addonId: string): string | null {
   return rest.length > 0 ? rest : null
 }
 
-/** Where a block runs. The operator chooses — a block driving a device on an
- *  agent is the reason placement is not fixed to the hub. */
-export const CoreBlockPlacementSchema = z.union([
-  z.literal('hub'),
-  /** A specific node id. */
-  z.string().min(1),
-])
-export type CoreBlockPlacement = z.infer<typeof CoreBlockPlacementSchema>
-
 /** What a block's process is doing. Mirrors the addon runner's own lifecycle so
  *  a failing block reads the same way a failing addon does. `degraded` is a
  *  composition on an existing device with a field handed back to the native
@@ -162,7 +153,6 @@ export const CoreBlockInputFieldsSchema = z.object({
   /** Entry file inside `files`. Default {@link DEFAULT_CORE_BLOCK_ENTRY}. */
   entry: z.string().min(1).max(260).optional(),
   enabled: z.boolean(),
-  placement: CoreBlockPlacementSchema,
   /**
    * Integration the block's devices hang from. Absent = the system integration
    * blocks share. A block may declare its own instead.
@@ -260,7 +250,7 @@ export type CoreBlockSource = z.infer<typeof CoreBlockSourceSchema>
 export type CoreBlockSourceKind = CoreBlockSource['kind']
 
 /**
- * The client-authored half of a composition block. No `code`, no placement (hub-only; Phase 7).
+ * The client-authored half of a composition block. No `code`.
  *
  * `name`: REQUIRED for a `new` target — the block's name IS the device's name
  * (D659). ABSENT for an `existing` target — a customization has no name of its
@@ -283,7 +273,6 @@ export const CoreBlockSchema = z.object({
   files: CoreBlockFilesSchema.optional(),
   entry: z.string().min(1).max(260).optional(),
   enabled: z.boolean(),
-  placement: CoreBlockPlacementSchema,
   integrationId: z.string().optional(),
   settingsSchema: CoreBlockSettingsSchemaBridge.optional(),
   /** Operator tags (D1054). Absent = no tags. */

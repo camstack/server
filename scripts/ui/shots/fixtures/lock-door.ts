@@ -75,7 +75,6 @@ const linkBlock = (row: LockRow) =>
         name: row.lock.name,
         code: '',
         enabled: true,
-        placement: 'hub',
         createdAt: 1,
         updatedAt: 1,
         createdBy: 'admin',

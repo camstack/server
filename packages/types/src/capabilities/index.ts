@@ -292,8 +292,6 @@ export {
   type CoreBlockInput,
   CoreBlockInputFieldsSchema,
   CoreBlockInputSchema,
-  type CoreBlockPlacement,
-  CoreBlockPlacementSchema,
   CoreBlockSchema,
   type CoreBlockSource,
   type CoreBlockSourceKind,

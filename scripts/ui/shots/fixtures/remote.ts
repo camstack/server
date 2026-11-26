@@ -74,7 +74,6 @@ const TV_CUSTOMIZATION = {
       name: 'customize:tv',
       code: '',
       enabled: true,
-      placement: 'hub',
       createdAt: 1,
       updatedAt: 1_700_000_000_000,
       createdBy: 'admin',

@@ -18,7 +18,6 @@ const block = (over: Partial<CoreBlock> = {}): CoreBlock => ({
   name: 'Block',
   code: 'export default () => () => {}',
   enabled: true,
-  placement: 'hub',
   createdAt: 1,
   updatedAt: 1,
   createdBy: 'u',
