@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The image device's full-view dialog shows a single close button
+- A device list row is one line with the main control; the timed run moved out of the row (still in the device page and the phone swipe tray)
+
 ## [1.2.514] - 2026-11-26
 
 ### Changed
 
 - Heat pump activity follows the compressor state the gateway reports when it gives one
-- The image device's full-view dialog shows a single close button
-- A device list row is one line with the main control; the timed run moved out of the row (still in the device page and the phone swipe tray)
 
 ## [1.2.513] - 2026-11-26
 
