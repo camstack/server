@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Viewer 1.0.738: Account holds certificate, tokens, sessions, passkeys and this device; servers added and removed from the menu's server sheet.
+- Viewer 1.0.739: recorded playback shows detection boxes, motion, occupancy and audio level.
 
 ## [1.2.727] - 2026-11-26
 
