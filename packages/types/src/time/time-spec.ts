@@ -5,7 +5,10 @@
  *  - `clock` — a wall-clock time every day (`07:30`), read in the site's zone;
  *  - `sun`   — a sun event (`sunrise`, `sunset`, `dawn`, `dusk`) plus or minus
  *    up to twelve hours, from the site's coordinates;
- *  - `date`  — one local date and time (`2026-12-24T18:00`), once.
+ *  - `date`  — one local date and time (`2026-12-24T18:00`), once;
+ *  - `phase` — N minutes after the day or the night BEGAN, as the daylight
+ *    phase authority says (the sun by default, or a light sensor). Its moment
+ *    is read from the site each time, never fixed once.
  *
  * A site is a place and its IANA zone ({@link TimeSite}). Every function here
  * is pure: the zone arithmetic uses `Intl`, no date library.
@@ -16,6 +19,7 @@
  * FIRST occurrence.
  */
 import { z } from 'zod'
+import type { DaylightPhaseReading } from './daylight-phase.js'
 import { CIVIL_TWILIGHT_ALTITUDE_DEG, SUNRISE_ALTITUDE_DEG, sunCrossings } from './solar.js'
 
 export const SunEventSchema = z.enum(['sunrise', 'sunset', 'dawn', 'dusk'])
@@ -41,6 +45,13 @@ export const TimeSpecSchema = z.discriminatedUnion('kind', [
     /** `YYYY-MM-DDTHH:mm`, site-local. */
     local: z.string().regex(LOCAL_DATE_TIME, 'expected YYYY-MM-DDTHH:mm'),
   }),
+  z.object({
+    kind: z.literal('phase'),
+    /** The phase whose start this names: `night` begins at dusk or when the sensor goes dark. */
+    phase: z.enum(['day', 'night']),
+    /** Minutes AFTER that phase began. */
+    offsetMin: z.number().int().min(0).max(720),
+  }),
 ])
 export type TimeSpec = z.infer<typeof TimeSpecSchema>
 
@@ -65,6 +76,12 @@ export interface TimeSite {
    * event cannot be placed on this site and a caller must not read one.
    */
   readonly zoneOnly?: true
+  /**
+   * The daylight phase the authority reports. A `sensor` reading decides a
+   * `preset` window and a `phase` spec; absent (or a `sun` reading) the sun
+   * does, exactly as before.
+   */
+  readonly phase?: DaylightPhaseReading
 }
 
 /**
@@ -219,6 +236,27 @@ export function occurrenceOn(spec: TimeSpec, localDate: string, site: TimeSite):
       const at = spec.event === 'sunrise' || spec.event === 'dawn' ? crossings.rise : crossings.set
       return at + spec.offsetMin * MINUTE_MS
     }
+    case 'phase': {
+      const sensor = site.phase?.source === 'sensor' ? site.phase : undefined
+      if (sensor !== undefined) {
+        // The sensor's transition is the only one known: the other phase, or a moment already
+        // past the day it fell on, has no occurrence until the authority reports a new one.
+        if (sensor.phase !== spec.phase) return null
+        const at = sensor.since + spec.offsetMin * MINUTE_MS
+        return localDateOf(at, site.timeZone) === localDate ? at : null
+      }
+      // No sensor reading: the sun is the fallback — night begins at sunset, day at sunrise.
+      if (site.zoneOnly === true) return null
+      return occurrenceOn(
+        {
+          kind: 'sun',
+          event: spec.phase === 'night' ? 'sunset' : 'sunrise',
+          offsetMin: spec.offsetMin,
+        },
+        localDate,
+        site,
+      )
+    }
   }
 }
 
@@ -296,6 +334,13 @@ export function validateTimeSpecForSite(spec: TimeSpec, reading: SiteReading): T
       ok: false,
       reason: 'sun-needs-site-location',
       message: `a ${spec.event} time needs the site location, and none is set — set it in Settings, or use a clock time`,
+    }
+  }
+  if (spec.kind === 'phase' && site === null) {
+    return {
+      ok: false,
+      reason: 'sun-needs-site-location',
+      message: `a ${spec.phase}-relative time falls back to the sun when the light sensor cannot be read, so it needs the site location, and none is set — set it in Settings, or use a clock time`,
     }
   }
   return { ok: true, site }

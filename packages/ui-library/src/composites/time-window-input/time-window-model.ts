@@ -16,8 +16,8 @@ export const ALL_WEEKDAYS: readonly WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 
 export const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']
 
 export type TimeWindowRange = NonNullable<TimeWindow['between']>
-/** One end of a daily window: a clock time or a sun event (a one-date spec cannot bound it). */
-export type TimeWindowEnd = Extract<TimeSpec, { kind: 'clock' | 'sun' }>
+/** One end of a daily window: a clock time, a sun event or a day/night start (a one-date spec cannot bound it). */
+export type TimeWindowEnd = Extract<TimeSpec, { kind: 'clock' | 'sun' | 'phase' }>
 export type TimeWindowEndKey = 'from' | 'to'
 
 /** What an operator picks as "the window": a whole day, two times, or a named sun range. */
@@ -92,9 +92,9 @@ export function withWindowEnd(
 
 /** A blank end of one kind. */
 export function seedWindowEnd(kind: TimeWindowEnd['kind']): TimeWindowEnd {
-  return kind === 'sun'
-    ? { kind: 'sun', event: 'sunset', offsetMin: 0 }
-    : { kind: 'clock', hh: 12, mm: 0 }
+  if (kind === 'sun') return { kind: 'sun', event: 'sunset', offsetMin: 0 }
+  if (kind === 'phase') return { kind: 'phase', phase: 'night', offsetMin: 0 }
+  return { kind: 'clock', hh: 12, mm: 0 }
 }
 
 /** The end as the input edits it; a one-date spec (which a daily window refuses) reads as a blank clock time. */
@@ -111,13 +111,10 @@ export function windowWrapsMidnight(window: TimeWindow): boolean {
   return between.to.hh * 60 + between.to.mm <= between.from.hh * 60 + between.from.mm
 }
 
-/** Does the window name a sun time (a preset, or a sun end)? */
+/** Does the window name a sun time (a preset, a sun end, or a day/night start, which falls back to the sun)? */
 export function windowUsesSun(window: TimeWindow): boolean {
-  return (
-    window.preset !== undefined ||
-    window.between?.from.kind === 'sun' ||
-    window.between?.to.kind === 'sun'
-  )
+  const reads = (end: TimeSpec | undefined): boolean => end?.kind === 'sun' || end?.kind === 'phase'
+  return window.preset !== undefined || reads(window.between?.from) || reads(window.between?.to)
 }
 
 /** `HH:MM` of a clock time, as an `<input type="time">` reads it. */

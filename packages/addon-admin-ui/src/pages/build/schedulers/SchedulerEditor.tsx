@@ -171,7 +171,11 @@ export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: Schedu
       const label =
         p.at.kind === 'sun'
           ? `${t(`schedulers.sun.${p.at.event}`, p.at.event)} ${p.at.offsetMin >= 0 ? '+' : ''}${String(p.at.offsetMin)} (${minuteText(minute)})`
-          : clockText(p.at.hh, p.at.mm)
+          : p.at.kind === 'phase'
+            ? `${t(`schedulers.phase.${p.at.phase}`, p.at.phase)} +${String(p.at.offsetMin)} (${minuteText(minute)})`
+            : p.at.kind === 'clock'
+              ? clockText(p.at.hh, p.at.mm)
+              : minuteText(minute)
       return [
         {
           id: p.id,

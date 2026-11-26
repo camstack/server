@@ -25,6 +25,7 @@ import {
   occurrenceOn,
   weekdayOfLocalDate,
 } from './time-spec.js'
+import { type DaylightPhaseReading, PHASE_RECHECK_MS, sensorPhaseOf } from './daylight-phase.js'
 import { type FlipBoundary, nextVerdictFlip } from './time-window-flip.js'
 
 /** A named daily window, resolved to a sun range: `night` is sunset to sunrise, `day` the reverse. */
@@ -122,9 +123,11 @@ function addDays(localDate: string, days: number): string {
 function unresolvable(window: TimeWindow, site: TimeSite): string | null {
   if (!isKnownTimeZone(site.timeZone))
     return `the site time zone "${site.timeZone}" is not a known IANA zone`
+  const readsSensor = sensorPhaseOf(site) !== undefined
+  const needsSun = (end: TimeSpec): boolean =>
+    end.kind === 'sun' || (end.kind === 'phase' && !readsSensor)
   const sun =
-    window.between !== undefined &&
-    (window.between.from.kind === 'sun' || window.between.to.kind === 'sun')
+    window.between !== undefined && (needsSun(window.between.from) || needsSun(window.between.to))
   if (sun && site.zoneOnly === true) {
     return 'a sun time needs the site location, and none is set'
   }
@@ -223,12 +226,49 @@ export function judgeTimeWindow(
   return judge(rawWindow, nowMs, site, true)
 }
 
+/**
+ * A `day` / `night` preset while a sensor decides the phase: inside exactly while the phase
+ * matches (days name the local day it BEGAN on). The next change cannot be predicted, so the
+ * caller is asked to judge again within {@link PHASE_RECHECK_MS}.
+ */
+function judgePresetOnSensor(
+  window: TimeWindow,
+  preset: TimeWindowPreset,
+  sensor: DaylightPhaseReading,
+  nowMs: number,
+  site: TimeSite,
+): TimeWindowJudgement {
+  if (!isKnownTimeZone(site.timeZone)) {
+    return {
+      inside: false,
+      unknown: true,
+      nextChangeAtMs: null,
+      why: `cannot be judged: the site time zone "${site.timeZone}" is not a known IANA zone`,
+    }
+  }
+  const listed =
+    window.days === undefined ||
+    window.days.includes(weekdayOfLocalDate(localDateOf(sensor.since, site.timeZone)))
+  const inside = sensor.phase === preset && listed
+  const days = window.days === undefined ? '' : ` on ${window.days.join(', ')}`
+  return {
+    inside,
+    unknown: false,
+    nextChangeAtMs: nowMs + PHASE_RECHECK_MS,
+    why: `${inside ? 'inside' : 'outside'} the ${preset}${days} (light sensor)`,
+  }
+}
+
 function judge(
   rawWindow: TimeWindow,
   nowMs: number,
   site: TimeSite,
   withWallClockNext: boolean,
 ): TimeWindowJudgement {
+  const sensor = sensorPhaseOf(site)
+  if (rawWindow.preset !== undefined && sensor !== undefined) {
+    return judgePresetOnSensor(rawWindow, rawWindow.preset, sensor, nowMs, site)
+  }
   const window = expandTimeWindowPreset(rawWindow)
   const blocked = unresolvable(window, site)
   if (blocked !== null) {

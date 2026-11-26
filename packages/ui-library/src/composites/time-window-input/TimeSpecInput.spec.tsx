@@ -119,3 +119,42 @@ describe('TimeSpecInput', () => {
     ).toBe('true')
   })
 })
+
+describe('TimeSpecInput phase', () => {
+  it('offers the phase kind and seeds night + 0', () => {
+    const onChange = vi.fn()
+    render(<TimeSpecInput label="At" value={{ kind: 'clock', hh: 7, mm: 0 }} onChange={onChange} />)
+    fireEvent.click(screen.getByRole('combobox', { name: 'At' }))
+    fireEvent.click(screen.getByRole('option', { name: 'After day or night starts' }))
+    expect(last(onChange)).toEqual({ kind: 'phase', phase: 'night', offsetMin: 0 })
+  })
+
+  it('shows the phase and its minutes, and never stores a negative offset', () => {
+    const onChange = vi.fn()
+    render(
+      <TimeSpecInput
+        label="At"
+        value={{ kind: 'phase', phase: 'night', offsetMin: 30 }}
+        onChange={onChange}
+      />,
+    )
+    const offset = screen.getByLabelText(/^At: Minutes after/)
+    expect(offset).toHaveProperty('value', '30')
+    fireEvent.change(offset, { target: { value: '45' } })
+    expect(last(onChange)).toEqual({ kind: 'phase', phase: 'night', offsetMin: 45 })
+    fireEvent.change(offset, { target: { value: '-5' } })
+    expect(last(onChange)).toEqual({ kind: 'phase', phase: 'night', offsetMin: 0 })
+  })
+
+  it('does not offer the phase when sun times are not (a stored clock-only shape)', () => {
+    render(
+      <TimeSpecInput
+        label="At"
+        allowSun={false}
+        value={{ kind: 'clock', hh: 7, mm: 0 }}
+        onChange={vi.fn()}
+      />,
+    )
+    expect(screen.queryByRole('combobox', { name: 'At' })).toBeNull()
+  })
+})

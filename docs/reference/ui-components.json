@@ -20528,6 +20528,12 @@
           "doc": "Offer \"At a sun event\". Default true; false for a stored shape that holds only clock times."
         },
         {
+          "name": "allowPhase",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer \"After day / night starts\" (N minutes after the daylight phase began). Default: follows `allowSun`."
+        },
+        {
           "name": "siteHasNoLocation",
           "type": "boolean",
           "optional": true,
