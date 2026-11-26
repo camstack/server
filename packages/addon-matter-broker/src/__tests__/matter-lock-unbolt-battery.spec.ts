@@ -4,19 +4,43 @@
  * is folded into the node's functional child, which carries the battery fed by
  * that endpoint's reports.
  */
-import { DeviceFeature, DeviceType } from '@camstack/types'
+import {
+  DeviceFeature,
+  DeviceType,
+  type AccessoryChildrenAnswer,
+  type AccessoryChildSpec,
+  type IScopedLogger,
+} from '@camstack/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { MatterCommandInvocation, MatterNodeSnapshot } from '../matter-controller.js'
 import { matterCommands, matterNodes } from '../matter-gateway.js'
 import { MatterAttributeId } from '../matter-attr-decode.js'
 import { MatterClusterId } from '../matter-cluster-mapping.js'
 import { readNodeEndpoints } from '../matter-endpoint-introspect.js'
-import { endpointsEqual, mappableEndpoints, planEndpoints } from '../matter-node-reconcile.js'
+import {
+  endpointsEqual,
+  mappableEndpoints,
+  NodeEndpointReporter,
+  planEndpoints,
+} from '../matter-node-reconcile.js'
 import { MatterNodeDevice, matterNodeSchema } from '../devices/matter-node-device.js'
 import { MatterEndpointDevice } from '../devices/matter-endpoint-device.js'
 import { activeEndpoint } from './matter-device-fixture.js'
 
 const UNBOLTING_BIT = 0x1000
+
+function first(specs: readonly AccessoryChildSpec[]): AccessoryChildSpec {
+  const [spec] = specs
+  if (spec === undefined) throw new Error('no child spec')
+  return spec
+}
+
+/** The specs of a children answer, whichever form (plain, complete, unknown + known). */
+function childrenOf(answer: AccessoryChildrenAnswer): readonly AccessoryChildSpec[] {
+  if (Array.isArray(answer)) return answer
+  if ('kind' in answer) return answer.kind === 'complete' ? answer.children : (answer.known ?? [])
+  return []
+}
 
 function behaviorClass(clusterId: number): unknown {
   return class {
@@ -96,12 +120,12 @@ describe('PowerSource-only endpoint is folded into the functional child', () => 
       },
     })
     Object.defineProperty(node, 'id', { value: 6017 })
-    const specs = node.getAccessoryChildren()
+    const specs = childrenOf(node.getAccessoryChildren())
     expect(specs).toHaveLength(1)
-    expect(specs[0].meta.type).toBe(DeviceType.Lock)
-    expect(specs[0].config.capabilities).toContain('battery')
-    expect(specs[0].config.powerSourceEndpointId).toBe(2)
-    expect(specs[0].config.lockUnbolting).toBe(true)
+    expect(first(specs).meta.type).toBe(DeviceType.Lock)
+    expect(first(specs).config.capabilities).toContain('battery')
+    expect(first(specs).config.powerSourceEndpointId).toBe(2)
+    expect(first(specs).config.lockUnbolting).toBe(true)
   })
 })
 
@@ -134,6 +158,88 @@ async function lockWith(extraConfig: Record<string, unknown>) {
   return { fx, sent, call }
 }
 
+describe('the node answers a complete read only when it can stand behind it', () => {
+  const nodeOver = (entries: ReturnType<typeof mappableEndpoints>) => {
+    const node = Object.create(MatterNodeDevice.prototype)
+    Object.defineProperty(node, 'config', {
+      value: {
+        values: matterNodeSchema.parse({ brokerId: 'b1', nodeId: '1', endpoints: entries }),
+      },
+    })
+    Object.defineProperty(node, 'brokerId', { value: 'b1' })
+    Object.defineProperty(node, 'nodeId', { value: '1' })
+    Object.defineProperty(node, 'id', { value: 6017 })
+    return node
+  }
+  /** The node as adopted BEFORE the fold: lock and battery each had a child (6018, 6019). */
+  const OLD_ENTRIES = [
+    { endpointId: 1, clusterIds: [0x0101], deviceTypeIds: [10], attributes: [] },
+    { endpointId: 2, clusterIds: [29, 47], deviceTypeIds: [0x11], attributes: [] },
+  ]
+  const suffixes = (answer: ReturnType<typeof MatterNodeDevice.prototype.getAccessoryChildren>) =>
+    childrenOf(answer).map((s) => s.stableIdSuffix)
+
+  it('is complete, without the folded endpoint, once the persisted list matches the live read', () => {
+    matterNodes.setNodes('b1', [LOCK_AND_POWER])
+    const answer = nodeOver(mappableEndpoints(LOCK_AND_POWER)).getAccessoryChildren()
+    expect(answer).toMatchObject({ kind: 'complete' })
+    expect(suffixes(answer)).toEqual(['1'])
+  })
+
+  it('is unknown while the persisted list still holds the old battery child', () => {
+    matterNodes.setNodes('b1', [LOCK_AND_POWER])
+    const answer = nodeOver(OLD_ENTRIES).getAccessoryChildren()
+    expect(answer).toMatchObject({ kind: 'unknown' })
+    expect(suffixes(answer)).toEqual(['1', '2'])
+  })
+
+  it('is unknown when the node is offline or its endpoints were not read', () => {
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: false }])
+    expect(nodeOver(mappableEndpoints(LOCK_AND_POWER)).getAccessoryChildren()).toMatchObject({
+      kind: 'unknown',
+    })
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, endpoints: [] }])
+    expect(nodeOver(mappableEndpoints(LOCK_AND_POWER)).getAccessoryChildren()).toMatchObject({
+      kind: 'unknown',
+    })
+    matterNodes.setNodes('b1', null)
+    expect(nodeOver(mappableEndpoints(LOCK_AND_POWER)).getAccessoryChildren()).toMatchObject({
+      kind: 'unknown',
+    })
+  })
+})
+
+describe('the reporter warns, with the deviceId, when the DoorLock FeatureMap is unreadable', () => {
+  const warnings: Array<{ message: string; tags: unknown }> = []
+  const logger: IScopedLogger = {
+    debug: () => undefined,
+    info: () => undefined,
+    warn: (message: string, extra?: { tags?: unknown }) => {
+      warnings.push({ message, tags: extra?.tags })
+    },
+    error: () => undefined,
+    child: () => logger,
+    withTags: () => logger,
+  }
+
+  it('tags the line with the node device id', () => {
+    warnings.length = 0
+    const unreadable: MatterNodeSnapshot = {
+      ...LOCK_AND_POWER,
+      endpoints: [{ endpointId: 1, clusterIds: [0x0101], deviceTypeIds: [10] }],
+    }
+    new NodeEndpointReporter(logger).report('b1', unreadable, 6017)
+    const line = warnings.find((w) => w.message.includes('FeatureMap could not be read'))
+    expect(line?.tags).toEqual({ deviceId: 6017 })
+  })
+
+  it('stays silent when the map was read', () => {
+    warnings.length = 0
+    new NodeEndpointReporter(logger).report('b1', LOCK_AND_POWER, 6017)
+    expect(warnings.filter((w) => w.message.includes('FeatureMap'))).toEqual([])
+  })
+})
+
 describe('a restored child takes the node entry list, not its spawn-time config', () => {
   /** The child spec a parent with these CURRENT entries derives for endpoint 1. */
   function lockSpecFor(entries: ReturnType<typeof mappableEndpoints>) {
@@ -144,9 +250,9 @@ describe('a restored child takes the node entry list, not its spawn-time config'
       },
     })
     Object.defineProperty(node, 'id', { value: 6017 })
-    const spec = node
-      .getAccessoryChildren()
-      .find((s: { stableIdSuffix: string }) => s.stableIdSuffix === '1')
+    const spec = childrenOf(node.getAccessoryChildren()).find(
+      (s: { stableIdSuffix: string }) => s.stableIdSuffix === '1',
+    )
     if (spec === undefined) throw new Error('no lock spec')
     return spec
   }

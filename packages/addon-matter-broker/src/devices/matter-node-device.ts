@@ -3,6 +3,9 @@ import {
   BaseDevice,
   DeviceFeature,
   DeviceType,
+  accessoryChildrenComplete,
+  accessoryChildrenUnknown,
+  type AccessoryChildrenAnswer,
   type AccessoryChildSpec,
   type DeviceContext,
   type IDevice,
@@ -10,6 +13,7 @@ import {
   resyncThroughAdoption,
 } from '@camstack/types'
 import { matterNodes } from '../matter-gateway.js'
+import { endpointsEqual, mappableEndpoints } from '../matter-node-reconcile.js'
 import { endpointLabel, mapMatterEndpointToCamStack } from '../matter-cluster-mapping.js'
 import { MatterEndpointDevice } from './matter-endpoint-device.js'
 
@@ -94,7 +98,26 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
     await super.removeDevice()
   }
 
-  override getAccessoryChildren(): readonly AccessoryChildSpec[] {
+  /**
+   * A COMPLETE read only when the node is online and the persisted endpoint list
+   * agrees with the snapshot read from the live node: that is the one answer the
+   * kernel's shrink gate may prune a no-longer-listed child on (two agreeing
+   * reads, D49). Offline, unread, or a persisted list not yet reconciled with the
+   * snapshot is unknown: children are still spawned, none is pruned.
+   */
+  override getAccessoryChildren(): AccessoryChildrenAnswer {
+    const specs = this.derivedChildren()
+    const live = matterNodes.getNode(this.brokerId, this.nodeId)
+    if (live === null || !live.online || live.endpoints.length === 0) {
+      return accessoryChildrenUnknown('matter node offline or its endpoints not read', specs)
+    }
+    if (!endpointsEqual(this.config.values.endpoints, mappableEndpoints(live))) {
+      return accessoryChildrenUnknown('persisted endpoints not yet reconciled with the node', specs)
+    }
+    return accessoryChildrenComplete(specs)
+  }
+
+  private derivedChildren(): AccessoryChildSpec[] {
     const specs: AccessoryChildSpec[] = []
     for (const endpoint of this.config.values.endpoints) {
       const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {

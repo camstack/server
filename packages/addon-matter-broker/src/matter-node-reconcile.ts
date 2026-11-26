@@ -66,7 +66,7 @@ export function planEndpoints(node: MatterNodeSnapshot): EndpointPlan {
  * not a device — but only when that is unambiguous: exactly one functional
  * endpoint and exactly one battery-only endpoint. Otherwise every endpoint stays
  * its own child. The orphaned child of an install adopted before the fold is
- * retired by the kernel's accessory prune (a second agreeing read), never here.
+ * retired by the kernel's shrink gate (D49): MatterNodeDevice answers a COMPLETE read once the persisted list agrees with the live snapshot, and the child is pruned after a second agreeing read on a later probe, never here.
  */
 function foldPowerSource(
   entries: MatterEndpointEntry[],
