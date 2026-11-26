@@ -8,6 +8,7 @@ import type { DeviceInfo } from '@camstack/types'
 import { useFanPresetsGetPresets, useRemoteGetConfig, useTemplateList } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useConfigDraft } from '../config/config-draft'
 import type { CustomizeRowSpec } from './customize-rows'
 
 export interface ConfigRowProps {
@@ -70,10 +71,12 @@ interface DeviceProps {
 function RemoteValue({ device }: DeviceProps): ReactNode {
   const { t } = useTranslation()
   const config = useRemoteGetConfig({ deviceId: device.id })
+  const kept = useConfigDraft()?.remote ?? null
   if (config.status === 'error') return <Unread reason={config.error?.message ?? null} />
   if (config.data === undefined) return <Checking />
-  const count = Object.keys(config.data.bindings).length
-  if (count === 0 && config.data.layoutTemplateId == null) {
+  const shown = kept ?? config.data
+  const count = Object.keys(shown.bindings).length
+  if (count === 0 && shown.layoutTemplateId == null) {
     return <Text muted>{t('customize.table.notConfigured')}</Text>
   }
   return <Text>{t('customize.table.commandsCount', { count })}</Text>
@@ -84,9 +87,10 @@ function RemoteSource({ device }: DeviceProps): ReactNode {
   const { t } = useTranslation()
   const config = useRemoteGetConfig({ deviceId: device.id })
   const templates = useTemplateList({ kind: 'remote' })
+  const kept = useConfigDraft()?.remote ?? null
   if (config.status === 'error') return <Unread reason={config.error?.message ?? null} />
   if (config.data === undefined) return <Checking />
-  const id = config.data.layoutTemplateId
+  const id = (kept ?? config.data).layoutTemplateId
   if (id == null) return <Text muted>{t('remote.dialog.noTemplate')}</Text>
   if (templates.status === 'error') return <Unread reason={templates.error?.message ?? null} />
   const name = (templates.data ?? []).find((row) => row.id === id)?.name ?? null
@@ -97,10 +101,12 @@ function RemoteSource({ device }: DeviceProps): ReactNode {
 function FanValue({ device }: DeviceProps): ReactNode {
   const { t } = useTranslation()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
+  const kept = useConfigDraft()?.fanPresets ?? null
   if (presets.status === 'error') return <Unread reason={presets.error?.message ?? null} />
   if (presets.data === undefined) return <Checking />
-  if (presets.data.length === 0) return <Text muted>{t('customize.table.noPresets')}</Text>
-  return <Text>{t('customize.table.presetsCount', { count: presets.data.length })}</Text>
+  const shown = kept ?? presets.data
+  if (shown.length === 0) return <Text muted>{t('customize.table.noPresets')}</Text>
+  return <Text>{t('customize.table.presetsCount', { count: shown.length })}</Text>
 }
 
 /**
@@ -110,8 +116,9 @@ function FanValue({ device }: DeviceProps): ReactNode {
 function FanSource({ device }: DeviceProps): ReactNode {
   const { t } = useTranslation()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
+  const kept = useConfigDraft()?.fanPresets ?? null
   if (presets.status === 'error') return <Unread reason={presets.error?.message ?? null} />
   if (presets.data === undefined) return <Checking />
-  if (presets.data.length === 0) return <Text muted>{t('customize.table.noSource')}</Text>
+  if ((kept ?? presets.data).length === 0) return <Text muted>{t('customize.table.noSource')}</Text>
   return <Text>{device.name}</Text>
 }

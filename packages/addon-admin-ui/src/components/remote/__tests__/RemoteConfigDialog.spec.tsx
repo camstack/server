@@ -1,13 +1,5 @@
 import { selectOption } from '@camstack/ui-library/testing'
-import {
-  composedDeviceStableId,
-  CompositionSchema,
-  CoreBlockSchema,
-  type DeviceInfo,
-  EMPTY_REMOTE_CONFIG,
-  mediaPlayerExtensionCommands,
-  type RemoteConfig,
-} from '@camstack/types'
+import { type DeviceInfo, EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -17,14 +9,10 @@ import '../../../i18n'
 const TV = 901
 const BOARD = 902
 
-const setConfig = vi.fn(async (_input: { deviceId: number; config: RemoteConfig }) => ({
-  status: 'saved' as const,
-}))
+const onKeep = vi.fn((_config: RemoteConfig) => undefined)
 const updateTemplate = vi.fn(async (_input: { id: string; name: string; payload: unknown }) => ({
   status: 'saved' as const,
 }))
-const updateBlock = vi.fn(async (_input: unknown) => ({}))
-let blockView: unknown = null
 const sendCommand = vi.fn(async () => ({ status: 'sent' as const, sends: 1 }))
 let storedConfig: RemoteConfig = EMPTY_REMOTE_CONFIG
 let savedCommands: readonly string[] = []
@@ -58,12 +46,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
         commands: savedCommands.map((role) => ({ role, custom: false })),
       },
     }),
-    useCoreBlocksGetComposition: () => ({
-      status: 'success',
-      data: { state: 'loaded', view: blockView },
-    }),
-    useCoreBlocksUpdateComposition: () => ({ mutateAsync: updateBlock, isPending: false }),
-    useRemoteSetConfig: () => ({ mutateAsync: setConfig, isPending: false }),
     useRemoteSendCommand: () => ({ mutateAsync: sendCommand }),
     useTemplateList: () => ({ data: [TEMPLATE] }),
     useTemplateUpdate: () => ({ mutateAsync: updateTemplate, isPending: false }),
@@ -129,34 +111,31 @@ function renderDialog(device: DeviceInfo = DEVICE): void {
   render(
     <MemoryRouter>
       <QueryClientProvider client={new QueryClient()}>
-        <RemoteConfigDialog device={device} open onClose={vi.fn()} />
+        <RemoteConfigDialog device={device} open onKeep={onKeep} onClose={vi.fn()} />
       </QueryClientProvider>
     </MemoryRouter>,
   )
 }
 
 beforeEach(() => {
-  setConfig.mockClear()
-  updateBlock.mockClear()
+  onKeep.mockClear()
   updateTemplate.mockClear()
-  blockView = null
   sendCommand.mockClear()
   storedConfig = { ...EMPTY_REMOTE_CONFIG, layoutTemplateId: 'tpl-tv' }
   savedCommands = []
 })
 
 describe('RemoteConfigDialog', () => {
-  it('saves a binding made with the command picker', async () => {
+  it('keeps a binding made with the command picker in the draft, writing nothing', async () => {
     renderDialog()
     pick('a')
     fireEvent.click(screen.getByTestId('bind-power'))
     fireEvent.click(screen.getByTestId('pick-command'))
     fireEvent.click(screen.getByTestId('remote-save'))
-    await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
-    const sent = setConfig.mock.calls[0]?.[0]
-    expect(sent?.deviceId).toBe(TV)
-    expect(sent?.config.layoutTemplateId).toBe('tpl-tv')
-    expect(sent?.config.bindings['power']?.action).toEqual({
+    expect(onKeep).toHaveBeenCalledTimes(1)
+    const sent = onKeep.mock.calls[0]?.[0]
+    expect(sent?.layoutTemplateId).toBe('tpl-tv')
+    expect(sent?.bindings['power']?.action).toEqual({
       kind: 'cap',
       deviceId: TV,
       cap: 'switch',
@@ -195,8 +174,8 @@ describe('RemoteConfigDialog', () => {
     selectOption(screen.getByTestId('binding-other'), 'volume_up')
     expect(screen.getByTestId('transmitter-volume_up')).toBeTruthy()
     fireEvent.click(screen.getByTestId('remote-save'))
-    await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
-    const config = setConfig.mock.calls[0]?.[0].config
+    expect(onKeep).toHaveBeenCalledTimes(1)
+    const config = onKeep.mock.calls[0]?.[0]
     expect(config?.defaultTransmitterId).toBe(BOARD)
     expect(Object.keys(config?.bindings ?? {}).toSorted()).toEqual(
       ['power_off', 'power_on', 'volume_up'].toSorted(),
@@ -391,7 +370,7 @@ describe('RemoteConfigDialog', () => {
       expect(updateTemplate).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'tpl-tv', name: 'Television' }),
       )
-      expect(setConfig).not.toHaveBeenCalled()
+      expect(onKeep).not.toHaveBeenCalled()
       pick('b')
       expect(screen.getByTestId('summary-mute').textContent).not.toMatch(/^Not bound/)
     })
@@ -401,7 +380,7 @@ describe('RemoteConfigDialog', () => {
       render(
         <MemoryRouter>
           <QueryClientProvider client={new QueryClient()}>
-            <RemoteConfigDialog device={DEVICE} open onClose={onClose} />
+            <RemoteConfigDialog device={DEVICE} open onKeep={onKeep} onClose={onClose} />
           </QueryClientProvider>
         </MemoryRouter>,
       )
@@ -413,80 +392,29 @@ describe('RemoteConfigDialog', () => {
     })
   })
 
-  describe('on a built (composed) media player', () => {
-    const BLOCK_ID = 'blk-tv'
-    const BUILT = {
-      id: TV,
-      name: 'Built TV',
-      type: 'media-player',
-      stableId: composedDeviceStableId(BLOCK_ID),
-    } as unknown as DeviceInfo
-
-    function nakedView(features: readonly unknown[]) {
-      const composition = CompositionSchema.parse({
-        target: { kind: 'new', type: 'media-player' },
-        features,
-      })
-      const block = CoreBlockSchema.parse({
-        id: BLOCK_ID,
-        name: 'Built TV',
-        code: '',
-        enabled: true,
-        source: { kind: 'composition', composition },
-        createdBy: 'u1',
-        createdAt: 1,
-        updatedAt: 7,
-        status: 'stopped',
-        lastChangedAt: 1,
-      })
-      return { block, state: null }
+  it('shows the draft configuration instead of the stored one, and Test follows what is stored', async () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: { action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' } },
+      },
     }
-
-    async function saveWithBinding(): Promise<void> {
-      renderDialog(BUILT)
-      pick('a')
-      fireEvent.click(screen.getByTestId('bind-power'))
-      fireEvent.click(screen.getByTestId('pick-command'))
-      fireEvent.click(screen.getByTestId('remote-save'))
-      await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
+    savedCommands = ['power']
+    const kept: RemoteConfig = {
+      ...storedConfig,
+      bindings: {
+        power: { action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOff' } },
+      },
     }
-
-    it('gives a naked player the media-player commands, every one served by the remote', async () => {
-      blockView = nakedView([])
-      await saveWithBinding()
-      await waitFor(() => expect(updateBlock).toHaveBeenCalledTimes(1))
-      const sent = updateBlock.mock.calls[0]?.[0] as {
-        blockId: string
-        expectedUpdatedAt: number
-        block: { composition: { features: { cap: string; commands?: unknown }[] } }
-      }
-      expect(sent.blockId).toBe(BLOCK_ID)
-      expect(sent.expectedUpdatedAt).toBe(7)
-      const feature = sent.block.composition.features.find((f) => f.cap === 'media-player')
-      expect(feature?.commands).toEqual(mediaPlayerExtensionCommands())
-    })
-
-    it('leaves a player that already serves media-player commands alone', async () => {
-      blockView = nakedView([
-        {
-          kind: 'fields',
-          cap: 'media-player',
-          fields: {},
-          commands: mediaPlayerExtensionCommands(),
-        },
-      ])
-      await saveWithBinding()
-      expect(updateBlock).not.toHaveBeenCalled()
-    })
-  })
-
-  it('never rewrites a block for a native device', async () => {
-    renderDialog()
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <RemoteConfigDialog device={DEVICE} open kept={kept} onKeep={onKeep} onClose={vi.fn()} />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
     pick('a')
-    fireEvent.click(screen.getByTestId('bind-power'))
-    fireEvent.click(screen.getByTestId('pick-command'))
-    fireEvent.click(screen.getByTestId('remote-save'))
-    await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
-    expect(updateBlock).not.toHaveBeenCalled()
+    // The draft binds power differently from what is stored: the stored command is not the one tested.
+    expect((screen.getByTestId('test-power') as HTMLButtonElement).disabled).toBe(true)
   })
 })

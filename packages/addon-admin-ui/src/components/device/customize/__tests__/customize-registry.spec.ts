@@ -31,7 +31,7 @@ const EXPECTED_GAPS: Readonly<Record<CustomizeKind, readonly string[]>> = {
   'follow-switch': ['linkedSide:3'],
   'keyed-items': ['linkedSide:3'],
   event: ['linkedSide:3'],
-  'config-extension': ['dialog:2', 'remove:2', 'linkedSide:3'],
+  'config-extension': ['linkedSide:3'],
   'cap-link': ['linkedSide:3'],
   'linked-devices': [],
   'linked-actions': ['linkedSide:3'],
@@ -106,11 +106,11 @@ describe('Customize registry (D1098 phase 2b): one owner shape for every kind', 
     expect(stamp.present.field).toBe('expectedUpdatedAt')
   })
 
-  it('only follow-switch may skip the dialog and the remove', () => {
+  it('only follow-switch and config-extension may skip the dialog or the remove', () => {
     const skipping = CUSTOMIZE_KINDS.filter((kind) => {
       const { owner } = CUSTOMIZE_REGISTRY[kind]
       return 'notNeeded' in owner.dialog || 'notNeeded' in owner.remove
     })
-    expect(skipping).toEqual(['follow-switch'])
+    expect(skipping).toEqual(['follow-switch', 'config-extension'])
   })
 })

@@ -1,4 +1,5 @@
 import {
+  type DeviceInfo,
   DeviceType,
   linkedTriggerParamsOf,
   linkedTriggerValues,
@@ -10,6 +11,7 @@ import type { ReactNode } from 'react'
 import { ConfirmDialogProvider, DeviceFleetProvider } from '@camstack/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
+import { MemoryRouter } from 'react-router-dom'
 import { CustomizeDraftProvider } from '../../customize-draft'
 
 const LIGHT = {
@@ -216,15 +218,43 @@ vi.mock('../../source-selector/SourceSelector', () => ({
     )
   },
 }))
-const { TriggeredByTable } = await import('../TriggeredByTable')
+const { TriggerButtons, TriggerItem, TriggerSource, TriggerValue } = await import(
+  '../TriggerRowCells'
+)
+const { useTriggeredBy } = await import('../useTriggeredBy')
+
+/** The rows as the Customize table lays them out: one cell each, plus the "+ Add" entry and the dialog. */
+function Harness({ device }: { readonly device: DeviceInfo }): ReactNode {
+  const state = useTriggeredBy(device)
+  return (
+    <div>
+      {state.lines.map((line, i) => (
+        <div key={`${line.kind}-${String(i)}`} data-testid="line">
+          <TriggerItem line={line} />
+          <TriggerValue line={line} />
+          <TriggerSource line={line} state={state} />
+          <TriggerButtons line={line} state={state} />
+        </div>
+      ))}
+      {state.canAdd && (
+        <button type="button" onClick={state.openAdd}>
+          Add trigger
+        </button>
+      )}
+      {state.dialog}
+    </div>
+  )
+}
 
 function wrap(node: ReactNode): ReactNode {
   return (
-    <QueryClientProvider client={new QueryClient()}>
-      <ConfirmDialogProvider>
-        <CustomizeDraftProvider order={['triggers']}>{node}</CustomizeDraftProvider>
-      </ConfirmDialogProvider>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        <ConfirmDialogProvider>
+          <CustomizeDraftProvider order={['triggers']}>{node}</CustomizeDraftProvider>
+        </ConfirmDialogProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   )
 }
 
@@ -258,9 +288,9 @@ beforeEach(() => {
   for (const fn of [create, update, remove, setEnabled]) fn.mockClear()
 })
 
-describe('TriggeredByTable', () => {
+describe('Triggered by rows', () => {
   it('shows the stored trigger as one row: source, event and parts, action', () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     expect(screen.getByText('Pulsante studio')).toBeTruthy()
     expect(screen.getByText(/PRESS_SHORT/)).toBeTruthy()
     expect(screen.getByText(/1, 2/)).toBeTruthy()
@@ -269,19 +299,19 @@ describe('TriggeredByTable', () => {
   it('is absent on a device nothing can command and that has no trigger', () => {
     instances.current = { status: 'success', data: { instances: [] } }
     capsOf.current = new Map()
-    const { container } = render(wrap(<TriggeredByTable device={LIGHT} />))
+    const { container } = render(wrap(<Harness device={LIGHT} />))
     expect(container.textContent).toBe('')
   })
 
   it('does not claim "none" while the triggers have not answered', () => {
     instances.current = { status: 'pending' }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     expect(screen.queryByText(/None/i)).toBeNull()
     expect(screen.getByRole('status')).toBeTruthy()
   })
 
   it('offers only event-emitting devices that are not already a source, and creates one automation per pick', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
     const offered = offeredToPicker.current as {
       value: readonly { deviceId: number }[]
@@ -303,7 +333,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('removing the only source deletes the automation only when saved', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
     // The remove asks first, naming the source; nothing is dropped until it is confirmed.
     const ask = await screen.findByRole('dialog')
@@ -320,7 +350,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('changing the action writes only the code, so the fields it does not own stay on the block', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('combobox', {
         name: /Action when Pulsante studio fires/i,
@@ -338,7 +368,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('choosing "On for" holds the device on for five minutes, written with the same partial update', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('combobox', {
         name: /Action when Pulsante studio fires/i,
@@ -360,7 +390,7 @@ describe('TriggeredByTable', () => {
       status: 'success',
       data: { instances: [MOTION_HOLD] },
     }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     expect(screen.getByText('Motion detected')).toBeTruthy()
     const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
     expect(minutes).toHaveProperty('value', '5')
@@ -380,7 +410,7 @@ describe('TriggeredByTable', () => {
       status: 'success',
       data: { instances: [MOTION_HOLD] },
     }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
     fireEvent.change(minutes, { target: { value: '0' } })
     fireEvent.blur(minutes)
@@ -395,7 +425,7 @@ describe('TriggeredByTable', () => {
       data: { instances: [MOTION_HOLD] },
     }
     // A siren may be held on for ten minutes at most.
-    render(wrap(<TriggeredByTable device={{ ...LIGHT, role: 'siren' }} />))
+    render(wrap(<Harness device={{ ...LIGHT, role: 'siren' }} />))
     const minutes = screen.getByTestId('trigger-on-for-hall:14-minutes')
     fireEvent.change(minutes, { target: { value: '30' } })
     fireEvent.blur(minutes)
@@ -409,7 +439,7 @@ describe('TriggeredByTable', () => {
       [5767, ['switch']],
       [13, ['motion']],
     ])
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
     fireEvent.click(screen.getByText('pick-13'))
     saveDialog()
@@ -433,7 +463,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('Discard drops every pending edit without a write, and the stored row is back', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
     const ask = await screen.findByRole('dialog')
     fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
@@ -447,7 +477,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('the active switch is a pending change too, written as one setEnabled on Save', async () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('switch', { name: /Active/i }))
     expect(setEnabled).not.toHaveBeenCalled()
     pressSave()
@@ -467,7 +497,7 @@ describe('TriggeredByTable', () => {
         instances: [{ ...LIVE, blockId: 'zz', name: 'Strano', values: { target: 5767 } }],
       },
     }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     expect(screen.getByRole('alert').textContent).toContain('Strano')
   })
 
@@ -491,7 +521,7 @@ describe('TriggeredByTable', () => {
     render(
       wrap(
         <DeviceFleetProvider devices={fleet}>
-          <TriggeredByTable device={LIGHT} />
+          <Harness device={LIGHT} />
         </DeviceFleetProvider>,
       ),
     )
@@ -522,7 +552,7 @@ describe('TriggeredByTable', () => {
       }),
     }
     instances.current = { status: 'success', data: { instances: [perPart] } }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('button', {
         name: /Edit the trigger from .*Pulsante studio/i,
@@ -553,7 +583,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('an edit saved without touching anything is not a change', () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('button', {
         name: /Edit the trigger from .*Pulsante studio/i,
@@ -565,7 +595,7 @@ describe('TriggeredByTable', () => {
   })
 
   it('Add and Edit open the same single dialog, with the common SourceSelector inside', () => {
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(screen.getByRole('button', { name: /Add trigger/i }))
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
     expect(screen.getByTestId('source-selector-stub')).toBeTruthy()
@@ -616,7 +646,7 @@ describe('TriggeredByTable', () => {
         ],
       },
     }
-    render(wrap(<TriggeredByTable device={LIGHT} />))
+    render(wrap(<Harness device={LIGHT} />))
     fireEvent.click(
       screen.getByRole('button', {
         name: /Edit the trigger from .*Pulsante studio/i,
@@ -636,7 +666,7 @@ describe('TriggeredByTable', () => {
       render(
         wrap(
           <DeviceFleetProvider devices={FLEET}>
-            <TriggeredByTable device={LIGHT} />
+            <Harness device={LIGHT} />
           </DeviceFleetProvider>,
         ),
       )

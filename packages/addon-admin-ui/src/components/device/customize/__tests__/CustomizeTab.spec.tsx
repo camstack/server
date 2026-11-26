@@ -248,6 +248,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceCapSlice: () => undefined,
     // The linked-devices table calls its hooks on every device (gated by `enabled`); unanswered here.
     // The extension rows read their own configuration; unanswered here.
+    useRemoteSetConfig: mutation(vi.fn(async () => ({ status: 'saved' }))),
+    useFanPresetsSetPresets: mutation(vi.fn(async () => ({ status: 'saved' }))),
     useRemoteGetConfig: () => ({ ...remoteConfig.current, error: null }),
     useTemplateList: () => ({ ...remoteTemplates.current, error: null }),
     useFanPresetsGetPresets: () => ({
@@ -305,12 +307,54 @@ vi.mock('../../../remote/RemoteConfigDialog', () => ({
   RemoteConfigDialog: () => <div data-testid="remote-editor" />,
 }))
 
-// The "Triggered by" section has its own spec; here it is only proved mounted.
-vi.mock('../triggers/TriggeredByTable', () => ({
-  TriggeredByTable: (p: { device: { id: number } }) => (
-    <div data-testid="triggered-by" data-device={p.device.id} />
-  ),
-}))
+// The "Triggered by" rows have their own spec (`useTriggeredBy.spec`); here they are only proved to be
+// rows of the Customize table, for the device it customizes.
+const triggers = vi.hoisted((): { current: 'none' | 'some' } => ({ current: 'none' }))
+vi.mock('../triggers/useTriggeredBy', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../triggers/useTriggeredBy')>()
+  return {
+    ...actual,
+    useTriggeredBy: (target: {
+      readonly id: number
+    }): import('../triggers/useTriggeredBy').TriggeredByState => ({
+      lines:
+        triggers.current === 'none'
+          ? []
+          : [
+              { kind: 'triggerSection' },
+              {
+                kind: 'triggerEntry',
+                row: {
+                  key: `b:${target.id}`,
+                  blockId: 'b',
+                  deviceId: 12,
+                  action: 'toggle',
+                  capability: 'switch',
+                  onForSeconds: null,
+                  activeWindow: null,
+                  activeWhen: null,
+                  enabled: true,
+                  flagged: false,
+                  filter: { kind: 'custom' },
+                  name: `Pulsante for ${target.id}`,
+                  detail: null,
+                  type: 'button',
+                },
+              },
+            ],
+      canAdd: false,
+      busy: false,
+      maxOnForSeconds: 60,
+      openAdd: () => undefined,
+      openEdit: () => undefined,
+      setAction: () => undefined,
+      setOnFor: () => undefined,
+      setEnabled: () => undefined,
+      unlink: () => undefined,
+      dialog: null,
+    }),
+  }
+})
 
 const { CustomizeTab } = await import('../CustomizeTab')
 
@@ -382,6 +426,7 @@ const PRESENT: Query = {
 }
 
 beforeEach(() => {
+  triggers.current = 'none'
   device.current = FEEDER
   deviceRead.current = { status: 'success' }
   integrations.current = undefined
@@ -465,10 +510,20 @@ describe('CustomizeTab — what it may claim (D315)', () => {
     expect(screen.queryByText(/Reading this device's customization/)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Remove customization' })).toBeNull()
   })
-  it('carries the "Triggered by" section for the device it customizes', () => {
+  it('carries the "Triggered by" rows of the device it customizes, inside the one table', () => {
+    triggers.current = 'some'
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
     renderTab()
     const id = device.current?.['id']
-    expect(screen.getByTestId('triggered-by').getAttribute('data-device')).toBe(String(id))
+    const table = screen.getByTestId('customize-table')
+    expect(within(table).getByText('Triggered by')).toBeTruthy()
+    expect(within(table).getByText(`Pulsante for ${String(id)}`)).toBeTruthy()
+    // No section card of its own beside the table.
+    expect(screen.queryByRole('heading', { name: 'Triggered by' })).toBeNull()
   })
 
   it('a present customization shows its block status', () => {
@@ -1153,7 +1208,7 @@ describe('CustomizeTab — event and extension rows carry a value and a source',
   })
 })
 
-describe('CustomizeTab — linked devices stay a camera table, outside Customize', () => {
+describe('CustomizeTab — linked devices are rows of the camera Customize table', () => {
   const slot = {
     status: 'success' as const,
     data: [
@@ -1168,11 +1223,12 @@ describe('CustomizeTab — linked devices stay a camera table, outside Customize
       },
     ],
   }
-  it('a camera renders the linked-devices table outside the Customize table', () => {
+  it('a camera lists its linked devices as rows of the Customize table, with no card of its own', () => {
     device.current = CAMERA
     composable.current = { status: 'success', data: { caps: [] } }
     bindings.current = { status: 'success', data: { entries: [] } }
     linkedSlots.current = slot
+    triggers.current = 'some'
     customization.current = {
       status: 'success',
       data: { state: 'loaded', view: null },
@@ -1180,13 +1236,15 @@ describe('CustomizeTab — linked devices stay a camera table, outside Customize
     }
     renderTab()
     const table = screen.getByTestId('customize-table')
-    expect(table.textContent).not.toMatch(/Linked devices/)
+    // Triggers and linked devices are both rows of the one table; no other section card exists.
+    expect(within(table).getByText(/Pulsante for/)).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Triggered by' })).toBeNull()
+    expect(table.textContent).toMatch(/Linked devices/)
     expect(screen.queryByTestId('customize-manage-linked-devices')).toBeNull()
-    const heading = screen.getByRole('heading', { name: 'Linked devices' })
-    expect(table.contains(heading)).toBe(false)
-    expect(screen.getByText('Porch light')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Linked devices' })).toBeNull()
+    expect(within(table).getByText('Porch light')).toBeTruthy()
   })
-  it('a non-camera shows no linked-devices table', () => {
+  it('a non-camera shows no linked-devices rows', () => {
     device.current = FEEDER
     composable.current = { status: 'success', data: { caps: [] } }
     bindings.current = { status: 'success', data: { entries: [] } }

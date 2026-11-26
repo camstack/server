@@ -135,7 +135,37 @@ vi.mock('../../source-selector/SourceSelectorDevicesDialog', () => ({
     ) : null
   },
 }))
-const { LinkedDevicesTable } = await import('../LinkedDevicesTable')
+const {
+  hostsLinkedDevices,
+  LinkedDeviceButtons,
+  LinkedDeviceItem,
+  LinkedDeviceSource,
+  LinkedDeviceValue,
+  useLinkedDevices,
+} = await import('../LinkedDevicesRows')
+
+/** The rows as the Customize table lays them out: one cell each, plus the picker its "+ Add" opens. */
+function Harness({ device }: { readonly device: typeof CAMERA }): ReactNode {
+  const state = useLinkedDevices(device)
+  return (
+    <div>
+      {state.lines.map((line, i) => (
+        <div key={`${line.kind}-${String(i)}`} data-testid="line">
+          <LinkedDeviceItem line={line} />
+          <LinkedDeviceValue line={line} />
+          <LinkedDeviceSource line={line} state={state} />
+          <LinkedDeviceButtons line={line} state={state} />
+        </div>
+      ))}
+      {state.canAdd && (
+        <button type="button" onClick={state.openPicker}>
+          + Link
+        </button>
+      )}
+      {state.dialog}
+    </div>
+  )
+}
 
 function wrap(node: ReactNode): ReactNode {
   return (
@@ -168,36 +198,38 @@ beforeEach(() => {
   ]
 })
 
-describe('LinkedDevicesTable (spec U7)', () => {
-  it('only on an extension host (a container is never a pick)', () => {
-    const { container } = render(
-      wrap(<LinkedDevicesTable device={{ ...CAMERA, type: DeviceType.Container }} />),
-    )
-    expect(container.textContent).toBe('')
+describe('Linked devices rows (spec U7)', () => {
+  it('only an extension host lists them (a container is never a pick)', () => {
+    expect(hostsLinkedDevices(DeviceType.Camera)).toBe(true)
+    expect(hostsLinkedDevices(DeviceType.Container)).toBe(false)
+  })
+  it('a device whose slot is absent lists nothing', () => {
+    slots.current = { status: 'success', data: [] }
+    render(wrap(<Harness device={CAMERA} />))
+    expect(screen.queryAllByTestId('line')).toHaveLength(0)
+    expect(screen.queryByRole('button', { name: /Link/ })).toBeNull()
   })
   it('an unreachable owner is said with its reason — never "no links" (D315)', () => {
     slots.current = {
       status: 'success',
       data: [{ state: 'unreachable', addonId: 'device-manager', reason: 'timeout' }],
     }
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     expect(screen.getByRole('alert').textContent).toMatch(/timeout/)
   })
-  it('columns: device, type, controls (read-only Yes), on camera timeline; implied rows have no ✕', () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
-    for (const header of ['Device', 'Type', 'Controls with the camera', 'On camera timeline']) {
-      expect(screen.getByRole('columnheader', { name: header })).toBeTruthy()
-    }
-    expect(screen.getAllByText('Yes')).toHaveLength(3)
+  it('rows: device, type, timeline switch; implied rows have no ✕', () => {
+    render(wrap(<Harness device={CAMERA} />))
+    expect(screen.getByText('Linked devices')).toBeTruthy()
+    expect(screen.getAllByRole('switch')).toHaveLength(3)
     expect(screen.getByRole('button', { name: 'Remove Luce porch' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Remove Spotlight 1' })).toBeNull()
   })
   it('"Controls with the camera" is read-only and SAID in visible text, not only a header tooltip (task 8 L4)', () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     expect(screen.getByText("Every linked device's controls show with the camera")).toBeTruthy()
   })
   it('the timeline switch writes trackedDeviceIds through setSlot', async () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
@@ -214,7 +246,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
     )
   })
   it('✕ unlinks after a confirm and + Link appends the picks: two edits, ONE write on Save', async () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: 'Remove Sirena esterna' }))
     await waitFor(() => expect(screen.queryByText('Sirena esterna')).toBeNull())
     fireEvent.click(screen.getByRole('button', { name: /Link/ }))
@@ -230,7 +262,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
     })
   })
   it('Discard restores the stored list without a write', async () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: 'Remove Sirena esterna' }))
     await waitFor(() => expect(screen.queryByText('Sirena esterna')).toBeNull())
     fireEvent.click(await screen.findByRole('button', { name: /^Discard$/i }))
@@ -238,7 +270,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
     expect(setSlot).not.toHaveBeenCalled()
   })
   it('two consecutive Saves chain the stamp the refetch returned', async () => {
-    const { rerender } = render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    const { rerender } = render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
@@ -246,7 +278,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
     await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
     // The write's refetch lands with the new stamp.
     slots.current = { status: 'success', data: [{ ...SLOT, updatedAt: 777 }] }
-    rerender(wrap(<LinkedDevicesTable device={CAMERA} />))
+    rerender(wrap(<Harness device={CAMERA} />))
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
@@ -258,26 +290,26 @@ describe('LinkedDevicesTable (spec U7)', () => {
   // The picker is mocked here: the real guarantee is that `AssignmentCandidate` has no field for
   // the owner's `suggested` / `reason`, and `linkedCandidates` drops both (model spec).
   it('no "Suggested" text is rendered (spec U11)', () => {
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: /Link/ }))
     expect(screen.queryByText(/Suggested|same location/)).toBeNull()
   })
   it('a pending slot read says Checking — never an empty table (D315)', () => {
     slots.current = { status: 'pending' }
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     expect(screen.getByRole('status').textContent).toMatch(/Checking/)
     expect(screen.queryByRole('button', { name: /Link/ })).toBeNull()
   })
   it('a declined confirm unlinks nothing', async () => {
     confirmAnswer.current = false
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: 'Remove Sirena esterna' }))
     await new Promise((r) => setTimeout(r, 0))
     expect(setSlot).not.toHaveBeenCalled()
   })
   it("the owner's refusal is shown by name (D391)", async () => {
     setSlot.mockRejectedValueOnce(new Error('linked-devices: device 701 is a container'))
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
@@ -286,13 +318,12 @@ describe('LinkedDevicesTable (spec U7)', () => {
     // A refused save keeps the draft and the bar.
     expect(screen.getByRole('button', { name: /^Save$/i })).toBeTruthy()
   })
-  it('an owner that reports no opt-in list gets no timeline column — never a write it cannot keep (review M1)', () => {
+  it('an owner that reports no opt-in list gets no timeline switch — never a write it cannot keep (review M1)', () => {
     slots.current = {
       status: 'success',
       data: [{ ...SLOT, value: { slot: 'linked-devices', deviceIds: [701, 702] } }],
     }
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
-    expect(screen.queryByRole('columnheader', { name: 'On camera timeline' })).toBeNull()
+    render(wrap(<Harness device={CAMERA} />))
     expect(screen.queryByRole('switch')).toBeNull()
   })
   it('a stored opt-in whose device is no longer linked is shown and can be untracked (review M2)', async () => {
@@ -305,7 +336,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
         },
       ],
     }
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     expect(screen.getByText('Cancello')).toBeTruthy()
     expect(screen.getByText(/no longer linked/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Remove Cancello' })).toBeNull()
@@ -328,7 +359,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
           release = () => resolve({ applied: true, reload: 'none' })
         }),
     )
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
@@ -371,7 +402,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
         reason: null,
       },
     ]
-    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    render(wrap(<Harness device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: /Link/ }))
     await waitFor(() => expect(offeredToPicker.current).toMatchObject({ kind: 'known' }))
     const offered = offeredToPicker.current

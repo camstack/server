@@ -10,6 +10,7 @@ import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@camstack/types'
 import type { ComponentType, ReactNode } from 'react'
 import { FanPresetsExtensionCard } from '../../../fan-presets/FanPresetsExtensionCard'
 import { RemoteConfigDialog } from '../../../remote/RemoteConfigDialog'
+import { useConfigDraft } from './config-draft'
 
 export interface ConfigCardProps {
   readonly device: DeviceInfo
@@ -19,8 +20,18 @@ export interface ConfigEditorProps extends ConfigCardProps {
   readonly onClose: () => void
 }
 
-function RemoteEditor({ device, onClose }: ConfigEditorProps): ReactNode {
-  return <RemoteConfigDialog device={device} open onClose={onClose} />
+/** The remote's modal: its confirm hands the configuration to the tab's draft, the tab's Save writes it. */
+export function RemoteEditor({ device, onClose }: ConfigEditorProps): ReactNode {
+  const draft = useConfigDraft()
+  return (
+    <RemoteConfigDialog
+      device={device}
+      open
+      kept={draft?.remote ?? null}
+      onKeep={(config) => draft?.setRemote(device, config)}
+      onClose={onClose}
+    />
+  )
 }
 
 const CONFIG_EDITORS: Readonly<Record<string, ComponentType<ConfigEditorProps>>> = {

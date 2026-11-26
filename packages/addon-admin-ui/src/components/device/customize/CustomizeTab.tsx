@@ -3,7 +3,7 @@
  * (D663). It stores nothing: the assignment cards merge a feature into the
  * block, identity writes the authorities that already exist, links are the
  * D648 slot. What it claims about the block is one of five answered states
- * (D315). Order: identity, status, the one table, then a camera's linked-devices table.
+ * (D315). Order: identity, status, the one table (linked devices, linked actions and triggers are rows of it).
  */
 import {
   COMPOSER_ADDON_ID,
@@ -24,8 +24,7 @@ import { type CustomizationState, currentComposition } from './customization-rea
 import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
-import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
-import { TriggeredByTable } from './triggers/TriggeredByTable'
+import { ConfigDraftProvider } from './config/config-draft'
 import { CustomizeDraftProvider, useDraftSection } from './customize-draft'
 import { useDraftCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
@@ -40,10 +39,17 @@ const DRAFT_ORDER: readonly string[] = [
   'linked-cameras',
   'linked-actions',
   'triggers',
+  'config-remote',
+  'config-fan-presets',
 ]
 
 /** A composed device writes its own composition at once; what hangs off it still waits for Save. */
-const COMPOSED_DRAFT_ORDER: readonly string[] = ['linked-actions', 'triggers']
+const COMPOSED_DRAFT_ORDER: readonly string[] = [
+  'linked-actions',
+  'triggers',
+  'config-remote',
+  'config-fan-presets',
+]
 
 export interface CustomizeTabProps {
   readonly deviceId: number
@@ -79,14 +85,18 @@ export function CustomizeTab({ deviceId }: CustomizeTabProps): ReactNode {
   const body =
     device.addonId === COMPOSER_ADDON_ID ? (
       <CustomizeDraftProvider key={device.id} order={COMPOSED_DRAFT_ORDER}>
-        <ComposedCustomizeBody device={device} />
+        <ConfigDraftProvider>
+          <ComposedCustomizeBody device={device} />
+        </ConfigDraftProvider>
       </CustomizeDraftProvider>
     ) : (
       <CustomizeDraftProvider key={device.id} order={DRAFT_ORDER}>
-        <CustomizeBody
-          device={device}
-          target={{ addonId: device.addonId, stableId: device.stableId }}
-        />
+        <ConfigDraftProvider>
+          <CustomizeBody
+            device={device}
+            target={{ addonId: device.addonId, stableId: device.stableId }}
+          />
+        </ConfigDraftProvider>
       </CustomizeDraftProvider>
     )
   return (
@@ -144,8 +154,6 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      <ExtensionSlotSections device={device} />
-      <TriggeredByTable device={device} />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 /**
- * The ROOM's same-location suggestions belong to the Linked devices table alone
+ * The ROOM's same-location suggestions belong to the Linked devices rows alone
  * (D356: a link is what the operator picked). The Doorbell, Motion, Battery and
  * Consumables cards each used to read the room's suggestions and draw "N
  * suggested · <room>" beside their own Add — the operator found it on every
@@ -21,11 +21,11 @@ const KINDS = path.resolve(HERE, '../kinds')
 const read = (file: string): string => readFileSync(path.join(KINDS, file), 'utf8')
 
 describe('room suggestions on the Customize page', () => {
-  it('only the Linked devices table reads them', () => {
+  it('only the Linked devices rows read them', () => {
     const readers = readdirSync(KINDS)
       .filter((f) => f.endsWith('.tsx'))
       .filter((f) => read(f).includes('useRoomSuggestions'))
-    expect(readers).toEqual(['LinkedDevicesTable.tsx'])
+    expect(readers).toEqual(['LinkedDevicesRows.tsx'])
   })
 
   it.each([

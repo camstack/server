@@ -20,7 +20,7 @@ import { KeyedArrayItemDialog } from './keyed/KeyedArrayItemDialog'
 import { EventPulseDialog } from './event/EventPulseDialog'
 import { LinkedActionItem } from './kinds/LinkedActionsCard'
 import { LinkedCameraItem } from './kinds/LinkedCamerasRows'
-import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
+import { LinkedDeviceItem, useLinkedDevices } from './kinds/LinkedDevicesRows'
 import { OverrideFieldRow } from './override-row/OverrideFieldRow'
 import { FollowSwitchToggle } from './scalar/FollowSwitchToggle'
 import { ScalarOverrideDialog } from './scalar/ScalarOverrideDialog'
@@ -28,12 +28,13 @@ import { SourceSelectorActions } from './source-selector/SourceSelectorActions'
 import { SourceSelectorDevicesDialog } from './source-selector/SourceSelectorDevicesDialog'
 import { CapLinkDialog, CapLinkSourceCell } from './table/CapLinkRow'
 import { ConfigValueCell } from './table/ConfigRowCells'
+import { RemoteEditor } from './config/ConfigCustomizeList'
 import { EventActionsCell } from './table/EventRowCells'
 import { RowActiveSwitch } from './table/RowActiveSwitch'
 import { ScalarSourceCell } from './table/ScalarRowParts'
-import { TriggeredByTable } from './triggers/TriggeredByTable'
 import { TriggerDialog } from './triggers/TriggerDialog'
-import { TriggerRowCard } from './triggers/TriggerRowCard'
+import { TriggerButtons, TriggerItem } from './triggers/TriggerRowCells'
+import { useTriggeredBy } from './triggers/useTriggeredBy'
 import { useConfirmRemove } from './use-confirm-remove'
 
 /** The gap of piece `piece`, to be removed in `phase`. */
@@ -41,7 +42,9 @@ function gap<P extends CustomizePiece>(piece: P, phase: CustomizeGapPhase): Piec
   return { gap: { piece, phase } }
 }
 
-const COMPOSITION_STAMP = { present: { field: 'expectedUpdatedAt', plan: planCustomizationSave } }
+const COMPOSITION_STAMP = {
+  present: { field: 'expectedUpdatedAt', plan: planCustomizationSave },
+}
 /** The discriminant of a kind a fields feature stores under `customizeKind` (D1098). */
 function customizeKindDiscriminant(value: string) {
   return { present: { key: 'customizeKind', value } }
@@ -62,7 +65,10 @@ const SCALAR_DIALOG = { present: { component: ScalarOverrideDialog } }
 export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   'field-override': {
     kind: 'field-override',
-    storage: { shape: 'composition-feature', discriminant: FIELDS_DISCRIMINANT },
+    storage: {
+      shape: 'composition-feature',
+      discriminant: FIELDS_DISCRIMINANT,
+    },
     owner: {
       row: { present: { component: OverrideFieldRow } },
       dialog: { present: { component: ScalarOverrideDialog } },
@@ -128,7 +134,10 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'keyed-items': {
     kind: 'keyed-items',
-    storage: { shape: 'composition-feature', discriminant: FIELDS_DISCRIMINANT },
+    storage: {
+      shape: 'composition-feature',
+      discriminant: FIELDS_DISCRIMINANT,
+    },
     owner: {
       row: { present: { component: KeyedArrayCard } },
       dialog: { present: { component: KeyedArrayItemDialog } },
@@ -140,7 +149,10 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   event: {
     kind: 'event',
-    storage: { shape: 'composition-feature', discriminant: FIELDS_DISCRIMINANT },
+    storage: {
+      shape: 'composition-feature',
+      discriminant: FIELDS_DISCRIMINANT,
+    },
     owner: {
       row: { present: { component: EventActionsCell } },
       dialog: { present: { component: EventPulseDialog } },
@@ -152,12 +164,18 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'config-extension': {
     kind: 'config-extension',
-    storage: { shape: 'composition-feature', discriminant: FIELDS_DISCRIMINANT },
+    storage: {
+      shape: 'composition-feature',
+      discriminant: FIELDS_DISCRIMINANT,
+    },
     owner: {
       row: { present: { component: ConfigValueCell } },
-      // The editors (the remote modal, the fan presets card) own their writes in the owning capability.
-      dialog: gap('dialog', 2),
-      remove: gap('remove', 2),
+      // The remote's modal keeps its edit in the tab's draft (config-draft); the presets card edits its list in place.
+      dialog: { present: { component: RemoteEditor } },
+      remove: {
+        notNeeded:
+          'a configuration is edited, never removed; a preset inside the card is deleted through useConfirmRemove',
+      },
       enabled: {
         notTogglable:
           'the configuration lives in the owning capability, which stores no enabled flag',
@@ -189,15 +207,17 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       discriminant: { present: { key: 'slot', value: 'linked-devices' } },
     },
     owner: {
-      row: { present: { component: LinkedDevicesTable } },
+      row: { present: { component: LinkedDeviceItem } },
       dialog: { present: { component: SourceSelectorDevicesDialog } },
       remove: CONFIRM_REMOVE,
-      enabled: { notTogglable: 'a slot value lists linked devices and has no enabled flag' },
+      enabled: {
+        notTogglable: 'a slot value lists linked devices and has no enabled flag',
+      },
     },
     // The camera side: cameras that link this device, read from their slots.
     linkedSide: { present: { view: LinkedCameraItem } },
-    // The table reads `slot.updatedAt`, a save sends it as `expectedUpdatedAt`.
-    stamp: { present: { field: 'expectedUpdatedAt', plan: LinkedDevicesTable } },
+    // `useLinkedDevices` reads `slot.updatedAt`, a save sends it as `expectedUpdatedAt`.
+    stamp: { present: { field: 'expectedUpdatedAt', plan: useLinkedDevices } },
   },
   'linked-actions': {
     kind: 'linked-actions',
@@ -212,7 +232,9 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       row: { present: { component: LinkedActionItem } },
       dialog: { present: { component: SourceSelectorActions } },
       remove: CONFIRM_REMOVE,
-      enabled: { notTogglable: 'a link to an action is present or absent; it has no enabled flag' },
+      enabled: {
+        notTogglable: 'a link to an action is present or absent; it has no enabled flag',
+      },
     },
     linkedSide: gap('linkedSide', 3),
     stamp: { present: { field: 'expectedUpdatedAt', plan: LinkedActionItem } },
@@ -221,18 +243,20 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     kind: 'triggered-by',
     storage: {
       shape: 'automation',
-      discriminant: { present: { key: 'templateId', value: LINKED_TRIGGER_TEMPLATE_ID } },
+      discriminant: {
+        present: { key: 'templateId', value: LINKED_TRIGGER_TEMPLATE_ID },
+      },
     },
     owner: {
-      row: { present: { component: TriggerRowCard } },
+      row: { present: { component: TriggerItem } },
       dialog: { present: { component: TriggerDialog } },
       // The row's remove asks `useConfirmRemove` first, then drops the row from the draft.
       remove: CONFIRM_REMOVE,
-      enabled: { present: { control: TriggerRowCard } },
+      enabled: { present: { control: TriggerButtons } },
     },
     linkedSide: gap('linkedSide', 3),
-    // `TriggeredByTable` sends the stamp it read and chains the one each write returns.
-    stamp: { present: { field: 'expectedUpdatedAt', plan: TriggeredByTable } },
+    // `useTriggeredBy` sends the stamp it read and chains the one each write returns.
+    stamp: { present: { field: 'expectedUpdatedAt', plan: useTriggeredBy } },
   },
 }
 

@@ -26,8 +26,6 @@ import { removedDeviceDestination } from '../../../lib/integration-instance-sele
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
 import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
-import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
-import { TriggeredByTable } from './triggers/TriggeredByTable'
 import { CustomizeTable } from './table/CustomizeTable'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
@@ -198,8 +196,6 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      <ExtensionSlotSections device={device} />
-      <TriggeredByTable device={device} />
     </div>
   )
 }

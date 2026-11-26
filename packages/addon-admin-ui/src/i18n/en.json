@@ -2741,7 +2741,8 @@
       "removeFromCamera": "The link from {{camera}} to {{device}}",
       "camerasUnreadable": "Linked cameras could not be read: {{reason}}",
       "someFailed": "Not linked: {{failures}}",
-      "cameraOption": "Linked camera"
+      "cameraOption": "Linked camera",
+      "deviceOption": "Linked device"
     },
     "advancedLink": "Advanced — expression editor",
     "suggest": {
@@ -3105,7 +3106,8 @@
         "off": "Link switched off"
       },
       "unlink": "Unlink {{device}}",
-      "unlinkWhat": "The link to {{device}}, which added: {{features}}"
+      "unlinkWhat": "The link to {{device}}, which added: {{features}}",
+      "keep": "Keep"
     },
     "followSwitch": {
       "label": "Follow the device's switch",

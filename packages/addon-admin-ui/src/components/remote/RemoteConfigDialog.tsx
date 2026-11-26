@@ -1,10 +1,11 @@
 /**
  * The Remote extension's modal (D963, D964) on a media player: pick the layout
  * template, bind each role to an action, set the default transmitter, import a
- * SmartIR file. Nothing is saved until Save; Test sends the SAVED command.
+ * SmartIR file. Nothing is written here: "Keep" hands the edited configuration to
+ * the Customize tab's draft (the tab's Save writes it, planning#675). Test sends
+ * the SAVED command, so a role whose binding changed in the draft is not testable.
  */
 import {
-  coreBlockComposition,
   type DeviceInfo,
   type RemoteBindingAction,
   type RemoteConfig,
@@ -21,16 +22,12 @@ import {
   ErrorBox,
   FormField,
   Select,
-  useCoreBlocksGetComposition,
-  useCoreBlocksUpdateComposition,
   useDeviceManagerListDeviceIdsByCaps,
   useRemoteGetConfig,
   useRemoteListCommands,
   useRemoteSendCommand,
-  useRemoteSetConfig,
   useTemplateList,
 } from '@camstack/ui-library'
-import { useQueryClient } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useMemo, useState } from 'react'
@@ -38,7 +35,6 @@ import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../../pages/build/automation/automation-data'
 import { BindingPanel } from './BindingPanel'
 import { deviceLabel } from './binding-summary'
-import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { FlipperIrdbPanel } from './FlipperIrdbPanel'
 import { layoutOf, RemoteGrid } from '@camstack/ui-library'
 import {
@@ -59,10 +55,20 @@ import { useTemplateSave } from './useTemplateSave'
 export interface RemoteConfigDialogProps {
   readonly device: DeviceInfo
   readonly open: boolean
+  /** The configuration the tab's draft holds, shown instead of the stored one. */
+  readonly kept?: RemoteConfig | null
+  /** The operator confirmed the edit: the tab's draft takes this configuration. */
+  readonly onKeep: (config: RemoteConfig) => void
   readonly onClose: () => void
 }
 
-export function RemoteConfigDialog({ device, open, onClose }: RemoteConfigDialogProps): ReactNode {
+export function RemoteConfigDialog({
+  device,
+  open,
+  kept = null,
+  onKeep,
+  onClose,
+}: RemoteConfigDialogProps): ReactNode {
   const { t } = useTranslation()
   const stored = useRemoteGetConfig({ deviceId: device.id }, { enabled: open })
   return (
@@ -88,7 +94,13 @@ export function RemoteConfigDialog({ device, open, onClose }: RemoteConfigDialog
             </DialogBody>
           </>
         ) : (
-          <DialogForm device={device} initial={stored.data} onClose={onClose} />
+          <DialogForm
+            device={device}
+            saved={stored.data}
+            initial={kept ?? stored.data}
+            onKeep={onKeep}
+            onClose={onClose}
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -97,7 +109,10 @@ export function RemoteConfigDialog({ device, open, onClose }: RemoteConfigDialog
 
 interface FormProps {
   readonly device: DeviceInfo
+  /** What the capability stores: Test sends this, so it decides which roles are testable. */
+  readonly saved: RemoteConfig
   readonly initial: RemoteConfig
+  readonly onKeep: (config: RemoteConfig) => void
   readonly onClose: () => void
 }
 
@@ -114,11 +129,9 @@ function describeResult(result: RemoteSendResult, t: TFunction): string {
   }
 }
 
-function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
+function DialogForm({ device, saved, initial, onKeep, onClose }: FormProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const queryClient = useQueryClient()
   const [config, setConfig] = useState<RemoteConfig>(initial)
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
   // The layout editor takes the dialog body over without closing the dialog; the
   // remote's own edits live in `config` and survive the round trip.
@@ -131,13 +144,6 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const transmitterIds = useDeviceManagerListDeviceIdsByCaps({
     capNames: [IR_CAP],
   })
-  const save = useRemoteSetConfig()
-  const blockId = composedBlockIdOf(device)
-  const block = useCoreBlocksGetComposition(
-    { blockId: blockId ?? '' },
-    { enabled: blockId !== null },
-  )
-  const updateBlock = useCoreBlocksUpdateComposition()
   const send = useRemoteSendCommand()
 
   const transmitters = useMemo(() => {
@@ -147,9 +153,18 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const template = (templates.data ?? []).find((r) => r.id === config.layoutTemplateId)
   const layout = template === undefined ? null : layoutOf(template.payload)
   const roles = useMemo(() => bindableRoles(layout, config), [layout, config])
+  // A role is testable when the capability stores its command AND the draft still binds it as stored.
   const savedRoles = useMemo(
-    () => new Set((commands.data?.commands ?? []).map((c) => c.role)),
-    [commands.data],
+    () =>
+      new Set(
+        (commands.data?.commands ?? [])
+          .map((c) => c.role)
+          .filter(
+            (role) =>
+              JSON.stringify(config.bindings[role]) === JSON.stringify(saved.bindings[role]),
+          ),
+      ),
+    [commands.data, config.bindings, saved.bindings],
   )
   const roleName = (role: BindableRole): string =>
     role.name ??
@@ -160,40 +175,6 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const offLayout = roles.filter((r) => !r.inLayout)
   const check = checkForSave(config)
   const bound = useMemo(() => new Set(Object.keys(config.bindings)), [config.bindings])
-
-  /** A built player has no media-player cap until the remote gives it one (D1004). */
-  const attachMediaPlayerFeature = async (): Promise<void> => {
-    const view = block.data?.state === 'loaded' ? block.data.view : null
-    if (blockId === null || view === null) return
-    const composition = coreBlockComposition(view.block)
-    const next = composition === null ? null : withMediaPlayerExtension(composition)
-    if (next === null) return
-    await updateBlock.mutateAsync({
-      blockId,
-      expectedUpdatedAt: view.block.updatedAt,
-      block: { composition: next },
-    })
-  }
-
-  const doSave = async (): Promise<void> => {
-    if (check.config === null) return
-    setSaveError(null)
-    try {
-      const result = await save.mutateAsync({
-        deviceId: device.id,
-        config: check.config,
-      })
-      if (result.status === 'refused') {
-        setSaveError(result.detail)
-        return
-      }
-      await attachMediaPlayerFeature()
-      await queryClient.invalidateQueries({ queryKey: [['remote']] })
-      onClose()
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : String(err))
-    }
-  }
 
   const doTest = async (role: string): Promise<void> => {
     try {
@@ -391,22 +372,21 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
             {t('remote.dialog.incomplete', { count: check.incomplete.length })}
           </p>
         )}
-        {saveError !== null && (
-          <p role="alert" className="text-xs text-danger">
-            {saveError}
-          </p>
-        )}
       </DialogBody>
       <DialogFooter>
         <Button variant="ghost" onClick={onClose}>
           {t('common.cancel')}
         </Button>
         <Button
-          disabled={check.config === null || save.isPending}
-          onClick={() => void doSave()}
+          disabled={check.config === null}
+          onClick={() => {
+            if (check.config === null) return
+            onKeep(check.config)
+            onClose()
+          }}
           data-testid="remote-save"
         >
-          {t('common.save')}
+          {t('customize.table.keep')}
         </Button>
       </DialogFooter>
     </>

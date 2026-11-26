@@ -87,6 +87,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useConfirm: () => vi.fn(async () => true),
     // The extension rows read their own configuration; unanswered here.
     useRemoteGetConfig: () => pending,
+    useRemoteSetConfig: mutation,
+    useFanPresetsSetPresets: mutation,
     useTemplateList: () => pending,
     useFanPresetsGetPresets: () => pending,
     useDeviceExtensionListSlots: () => ({
@@ -120,10 +122,26 @@ vi.mock('../../../fan-presets/FanPresetsExtensionCard', () => ({
   FanPresetsExtensionCard: () => <div data-testid="config-card-fan-presets" />,
 }))
 
-// The "Triggered by" section reads its own data and has its own spec.
-vi.mock('../triggers/TriggeredByTable', () => ({
-  TriggeredByTable: () => null,
-}))
+// The "Triggered by" rows read their own data and have their own spec.
+vi.mock('../triggers/useTriggeredBy', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../triggers/useTriggeredBy')>()
+  return {
+    ...actual,
+    useTriggeredBy: (): import('../triggers/useTriggeredBy').TriggeredByState => ({
+      lines: [],
+      canAdd: false,
+      busy: false,
+      maxOnForSeconds: 60,
+      openAdd: () => undefined,
+      openEdit: () => undefined,
+      setAction: () => undefined,
+      setOnFor: () => undefined,
+      setEnabled: () => undefined,
+      unlink: () => undefined,
+      dialog: null,
+    }),
+  }
+})
 
 const { ComposedCustomizeBody } = await import('../ComposedCustomizeBody')
 

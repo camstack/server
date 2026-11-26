@@ -2816,7 +2816,8 @@
       "removeFromCamera": "Il collegamento da {{camera}} a {{device}}",
       "camerasUnreadable": "Impossibile leggere le telecamere collegate: {{reason}}",
       "someFailed": "Non collegate: {{failures}}",
-      "cameraOption": "Telecamera collegata"
+      "cameraOption": "Telecamera collegata",
+      "deviceOption": "Dispositivo collegato"
     },
     "advancedLink": "Avanzate — editor delle espressioni",
     "suggest": {
@@ -3180,7 +3181,8 @@
         "off": "Collegamento disattivato"
       },
       "unlink": "Scollega {{device}}",
-      "unlinkWhat": "Il collegamento a {{device}}, che ha aggiunto: {{features}}"
+      "unlinkWhat": "Il collegamento a {{device}}, che ha aggiunto: {{features}}",
+      "keep": "Mantieni"
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",

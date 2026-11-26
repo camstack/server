@@ -3,22 +3,17 @@
  * authored (a name and the fan-control state it sets, D1034), with add,
  * edit and delete. They are listed as actions, so Alexa, HomeKit and Home
  * Assistant offer them without more setup. It claims "no presets" only from a
- * read that answered.
+ * read that answered. Every edit changes the tab's draft list (planning#675):
+ * the tab's Save writes it, Discard restores what the fan stores.
  */
 import type { DeviceInfo, FanPreset } from '@camstack/types'
-import {
-  Badge,
-  Button,
-  IconButton,
-  useConfirm,
-  useFanPresetsGetPresets,
-  useFanPresetsSetPresets,
-} from '@camstack/ui-library'
-import { useQueryClient } from '@tanstack/react-query'
+import { Badge, Button, IconButton, useFanPresetsGetPresets } from '@camstack/ui-library'
 import { Fan, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
+import { useConfigDraft } from '../device/customize/config/config-draft'
+import { useConfirmRemove } from '../device/customize/use-confirm-remove'
 import { FanPresetDialog } from './FanPresetDialog'
 import { newPresetId, presetFieldCount, removePreset, upsertPreset } from './fan-presets-model'
 
@@ -28,27 +23,19 @@ export interface FanPresetsExtensionCardProps {
 
 export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps): ReactNode {
   const { t } = useTranslation()
-  const confirm = useConfirm()
-  const queryClient = useQueryClient()
+  const confirmRemove = useConfirmRemove()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
+  const draft = useConfigDraft()
   const [editing, setEditing] = useState<FanPreset | null>(null)
-  const [refusal, setRefusal] = useState<string | null>(null)
-  const save = useFanPresetsSetPresets({
-    onSuccess: (result) => {
-      if (result.status === 'refused') {
-        setRefusal(result.detail)
-        return
-      }
-      setRefusal(null)
-      setEditing(null)
-      void queryClient.invalidateQueries({ queryKey: [['fanPresets']] })
-      void queryClient.invalidateQueries({ queryKey: [['actions']] })
-    },
-  })
-  const stored = presets.data
+  // What the card shows: the draft list when the operator edited one, else what the fan stores.
+  const stored = draft?.fanPresets ?? presets.data
 
-  const saveList = (list: readonly FanPreset[]): void =>
-    save.mutate({ deviceId: device.id, presets: [...list] })
+  // An edit that lands back on the stored list is no edit: the draft is dropped.
+  const keepList = (list: readonly FanPreset[]): void =>
+    draft?.setFanPresets(
+      device,
+      JSON.stringify(list) === JSON.stringify(presets.data) ? null : list,
+    )
 
   return (
     <CustomizeCard
@@ -109,17 +96,8 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
                   name: preset.name,
                 })}
                 onClick={() => {
-                  void confirm({
-                    title: t('fanPresets.card.deleteTitle', 'Delete this preset?'),
-                    message: t(
-                      'fanPresets.card.deleteMessage',
-                      '{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it.',
-                      { name: preset.name },
-                    ),
-                    confirmLabel: t('common.delete', 'Delete'),
-                    variant: 'danger',
-                  }).then((accepted) => {
-                    if (accepted) saveList(removePreset(stored, preset.id))
+                  void confirmRemove(preset.name, false).then((accepted) => {
+                    if (accepted) keepList(removePreset(stored, preset.id))
                   })
                 }}
               />
@@ -132,13 +110,13 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
           fanId={device.id}
           draft={editing}
           others={stored}
-          saving={save.isPending}
-          error={refusal ?? save.error?.message ?? null}
-          onSave={(preset) => saveList(upsertPreset(stored, preset))}
-          onClose={() => {
+          saving={false}
+          error={null}
+          onSave={(preset) => {
+            keepList(upsertPreset(stored, preset))
             setEditing(null)
-            setRefusal(null)
           }}
+          onClose={() => setEditing(null)}
         />
       )}
     </CustomizeCard>
