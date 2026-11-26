@@ -362,6 +362,67 @@ export const heatPumpControlCapability = {
         },
       ],
     }),
+    /** Set how a heating circuit is regulated (`controlType` on the status circuit lists the values). */
+    setCircuitControlType: method(z.object({ deviceId, circuitId, controlType: mode }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'heatPump.circuitControlType',
+          label: t('Set circuit control type', 'Imposta il tipo di regolazione del circuito'),
+          phrase: t(
+            'Set the control type of {circuitId} on {device} to {controlType}',
+            'Imposta il tipo di regolazione di {circuitId} su {device} a {controlType}',
+          ),
+          icon: 'sliders-horizontal',
+          openArgs: [
+            HEATING_CIRCUIT,
+            {
+              key: 'controlType',
+              label: t('Control type', 'Tipo di regolazione'),
+              offer: { kind: 'text' },
+            },
+          ],
+        },
+      ],
+    }),
+    /** Set the target temperature a heating circuit holds now (the same write as its climate child). */
+    setCircuitTargetTemp: method(z.object({ deviceId, circuitId, temp }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'heatPump.circuitTargetTemp',
+          label: t('Set circuit target temperature', 'Imposta la temperatura target del circuito'),
+          phrase: t(
+            'Set the target temperature of {circuitId} on {device} to {temp}',
+            'Imposta la temperatura target di {circuitId} su {device} a {temp}',
+          ),
+          icon: 'thermometer',
+          openArgs: [HEATING_CIRCUIT, TEMP_ARG],
+        },
+      ],
+    }),
+    /** Set the temperature one hot water level (low / high / eco) heats to. */
+    setDhwLevelTemp: method(z.object({ deviceId, circuitId, level: mode, temp }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'heatPump.dhwLevelTemp',
+          label: t(
+            'Set hot water level temperature',
+            'Imposta la temperatura del livello acqua calda',
+          ),
+          phrase: t(
+            'Set level {level} of hot water {circuitId} on {device} to {temp}',
+            "Imposta il livello {level} dell'acqua calda {circuitId} su {device} a {temp}",
+          ),
+          icon: 'thermometer-sun',
+          openArgs: [HOT_WATER_CIRCUIT, LEVEL_ARG, TEMP_ARG],
+        },
+      ],
+    }),
   },
   vocabulary: {
     noun: t('Heat pump settings', 'Impostazioni pompa di calore'),

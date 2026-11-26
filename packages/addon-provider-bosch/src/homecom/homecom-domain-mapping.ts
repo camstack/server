@@ -42,6 +42,7 @@ const MODE_MAP: Record<string, HvacMode> = {
   cool: 'cool',
   Auto: 'auto',
   auto: 'auto',
+  clock: 'auto',
   dry: 'dry',
   Dry: 'dry',
   fanOnly: 'fan_only',
@@ -50,6 +51,11 @@ const MODE_MAP: Record<string, HvacMode> = {
 
 function mapHvacMode(raw: string): HvacMode {
   return MODE_MAP[raw] ?? 'off'
+}
+
+/** The HVAC mode of a gateway token, or null when the token names none. */
+export function hvacModeOf(raw: string): HvacMode | null {
+  return MODE_MAP[raw] ?? null
 }
 
 /** PointT `allowedValues` mapped onto HVAC modes, in the order the device listed them. */

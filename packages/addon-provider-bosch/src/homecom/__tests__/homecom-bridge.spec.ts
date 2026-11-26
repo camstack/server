@@ -62,6 +62,49 @@ describe('HomeCom bridge - the answer contract', () => {
     expect(await bridge.read(TARGET)).toEqual(k40Reading())
   })
 
+  it('reads the new heat-source, solar and zone fields, and defaults them for an older worker', async () => {
+    const full = {
+      ...k40Reading(),
+      heatSource: {
+        ...k40Reading().heatSource,
+        workingTimeS: 7200,
+        heatDemand: 'ch',
+        compressorRunning: true,
+      },
+      solarCircuits: [
+        {
+          id: 'sc1',
+          collectorTemp: 70,
+          tankTemp: 50,
+          tankBottomTemp: 40,
+          maxCylinderTemp: 60,
+          yieldKwh: 12,
+        },
+      ],
+    }
+    const bridge = createHomeComBridge({
+      pythonPath: process.execPath,
+      scriptPath: recordingWorker({ ok: true, reading: full }).file,
+    })
+    expect(await bridge.read(TARGET)).toMatchObject({
+      heatSource: { workingTimeS: 7200, heatDemand: 'ch', compressorRunning: true },
+      solarCircuits: [{ id: 'sc1', yieldKwh: 12 }],
+    })
+
+    const { solarCircuits, zones, ...older } = k40Reading()
+    const { workingTimeS, heatDemand, compressorRunning, ...heatSource } = older.heatSource
+    expect([solarCircuits, zones, workingTimeS, heatDemand, compressorRunning]).toBeDefined()
+    const oldBridge = createHomeComBridge({
+      pythonPath: process.execPath,
+      scriptPath: recordingWorker({ ok: true, reading: { ...older, heatSource } }).file,
+    })
+    expect(await oldBridge.read(TARGET)).toMatchObject({
+      solarCircuits: [],
+      zones: [],
+      heatSource: { workingTimeS: null, heatDemand: null, compressorRunning: null },
+    })
+  })
+
   it('names a malformed answer as a protocol failure, with a stderr tail', async () => {
     const file = script(`process.stderr.write('Traceback: boom'); process.stdout.write('not json')`)
     const bridge = createHomeComBridge({

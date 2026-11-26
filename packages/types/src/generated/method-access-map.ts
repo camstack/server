@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1567 method paths across 220 capabilities.
+ * Coverage: 1570 method paths across 220 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -564,12 +564,15 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'heatPumpControl.setAdditionalHeaterMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setAwayMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitComfortSetpoint': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitControlType': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitEcoSetpoint': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitHeatCoolMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitMaxFlowTemp': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitOperationMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setCircuitSummerWinter': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitTargetTemp': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setDhwChargeDuration': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setDhwLevelTemp': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setDhwOperationMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setDhwTemperatureLevel': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'heatPumpControl.setHolidayMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,

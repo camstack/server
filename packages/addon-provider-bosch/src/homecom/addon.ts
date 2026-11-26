@@ -369,6 +369,10 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
         if (kind === 'heating-circuit' && circuitId) {
           config['circuitId'] = circuitId
         }
+        // A zone child names its zone in its own key, so it never reads as a heating circuit.
+        if (kind === 'zone' && circuitId) {
+          config['zoneId'] = circuitId
+        }
         const stableId = this.generateStableId(type, config)
         const DeviceClass = this.deviceClasses[type]
         if (!DeviceClass) throw new Error(`homecom adopt: unsupported type ${type}`)

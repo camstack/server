@@ -4873,6 +4873,103 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
       },
+      {
+        id: 'heatPump.circuitControlType',
+        method: 'setCircuitControlType',
+        label: { en: 'Set circuit control type', it: 'Imposta il tipo di regolazione del circuito' },
+        phrase: {
+          en: 'Set the control type of {circuitId} on {device} to {controlType}',
+          it: 'Imposta il tipo di regolazione di {circuitId} su {device} a {controlType}',
+        },
+        icon: 'sliders-horizontal',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          {
+            key: 'controlType',
+            label: { en: 'Control type', it: 'Tipo di regolazione' },
+            offer: { kind: 'text' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.circuitTargetTemp',
+        method: 'setCircuitTargetTemp',
+        label: {
+          en: 'Set circuit target temperature',
+          it: 'Imposta la temperatura target del circuito',
+        },
+        phrase: {
+          en: 'Set the target temperature of {circuitId} on {device} to {temp}',
+          it: 'Imposta la temperatura target di {circuitId} su {device} a {temp}',
+        },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.dhwLevelTemp',
+        method: 'setDhwLevelTemp',
+        label: {
+          en: 'Set hot water level temperature',
+          it: 'Imposta la temperatura del livello acqua calda',
+        },
+        phrase: {
+          en: 'Set level {level} of hot water {circuitId} on {device} to {temp}',
+          it: 'Imposta il livello {level} dell\'acqua calda {circuitId} su {device} a {temp}',
+        },
+        icon: 'thermometer-sun',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Hot water circuit', it: 'Circuito acqua calda' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'dhw' },
+            },
+          },
+          { key: 'level', label: { en: 'Level', it: 'Livello' }, offer: { kind: 'text' } },
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
     ],
   },
   'energy-system': { scope: 'device', noun: { en: 'Energy system', it: 'Sistema energetico' } },

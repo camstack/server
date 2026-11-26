@@ -8886,6 +8886,48 @@ export function createCapRouter_heatPumpControl(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startExtraHotWater(methodInput as any)
       }),
+    setCircuitControlType: protectedProcedure
+      .input(heatPumpControlCapability.methods.setCircuitControlType.input.loose())
+      .output(heatPumpControlCapability.methods.setCircuitControlType.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'heat-pump-control',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setCircuitControlType(methodInput as any)
+      }),
+    setCircuitTargetTemp: protectedProcedure
+      .input(heatPumpControlCapability.methods.setCircuitTargetTemp.input.loose())
+      .output(heatPumpControlCapability.methods.setCircuitTargetTemp.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'heat-pump-control',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setCircuitTargetTemp(methodInput as any)
+      }),
+    setDhwLevelTemp: protectedProcedure
+      .input(heatPumpControlCapability.methods.setDhwLevelTemp.input.loose())
+      .output(heatPumpControlCapability.methods.setDhwLevelTemp.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'heat-pump-control',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setDhwLevelTemp(methodInput as any)
+      }),
   })
 }
 

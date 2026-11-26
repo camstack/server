@@ -52,6 +52,12 @@ function heating(id: string, label: string): HeatPumpCircuit {
     temperatureLevel: null,
     chargeDuration: null,
     extraHotWater: null,
+    levelTemperatures: null,
+    controlType: null,
+    tankBottomTemp: null,
+    maxCylinderTemp: null,
+    yieldKwh: null,
+    deviceId: null,
   }
 }
 
@@ -88,6 +94,10 @@ const SLICE: HeatPumpStatus = {
   energy: { thermalKwh: null, electricalKwh: null },
   waterPressureBar: 1.8,
   starts: 494,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
   lastFetchedAt: 1,
 }
 

@@ -372,6 +372,102 @@ def test_a_setting_carries_the_gateway_step():
     assert setting_of(env(21, type="floatValue"))["step"] is None
 
 
+def test_heat_source_status_facts_are_read_in_base_units():
+    device = k40_device()
+    device["heat_sources"]["totalWorkingTime"] = env(120, type="floatValue", unitOfMeasure="min")
+    device["heat_sources"]["actualHeatDemand"] = {"id": "/x", "type": "arrayData",
+                                                  "values": ["dhw"], "allowedValues": ["", "ch", "dhw", "frost"]}
+    device["heat_sources"]["compressorStatus"] = env("on")
+    source = normalize_reading(device, extras())["heatSource"]
+    assert source["workingTimeS"] == 7200
+    assert source["heatDemand"] == "dhw"
+    assert source["compressorRunning"] is True
+    assert source["heatPumpType"] == "air_water"
+
+
+def test_heat_demand_empty_list_is_idle_and_a_refused_one_is_unknown():
+    idle = k40_device()
+    idle["heat_sources"]["actualHeatDemand"] = {"id": "/x", "type": "arrayData", "values": [],
+                                                "allowedValues": ["", "ch", "dhw", "frost"]}
+    assert normalize_reading(idle, extras())["heatSource"]["heatDemand"] == "idle"
+    refused = k40_device()
+    refused["heat_sources"]["actualHeatDemand"] = FORBIDDEN
+    refused["heat_sources"]["totalWorkingTime"] = FORBIDDEN
+    refused["heat_sources"]["compressorStatus"] = FORBIDDEN
+    source = normalize_reading(refused, extras())["heatSource"]
+    assert source["heatDemand"] is None
+    assert source["workingTimeS"] is None
+    assert source["compressorRunning"] is None
+
+
+def test_a_working_time_of_an_unknown_unit_is_unknown():
+    device = k40_device()
+    device["heat_sources"]["totalWorkingTime"] = env(5, type="floatValue", unitOfMeasure="fortnights")
+    assert normalize_reading(device, extras())["heatSource"]["workingTimeS"] is None
+
+
+def test_solar_circuits_carry_temperatures_and_the_yield_converted_to_kwh():
+    device = k40_device()
+    device["solar_circuits"] = [{
+        "id": "/solarCircuits/sc1",
+        "collectorTemperature": env(2.4, type="floatValue", unitOfMeasure="C"),
+        "solarYield": env(1500, type="floatValue", unitOfMeasure="Wh"),
+        "dhwTankTemperature": env(48, type="floatValue", unitOfMeasure="C"),
+        "dhwTankBottomTemperature": env(31.5, type="floatValue", unitOfMeasure="C"),
+        "maxCylinderTemperature": env(60, type="floatValue", unitOfMeasure="C"),
+    }]
+    solar = normalize_reading(device, extras())["solarCircuits"]
+    assert solar == [{
+        "id": "sc1", "collectorTemp": 2.4, "tankTemp": 48, "tankBottomTemp": 31.5,
+        "maxCylinderTemp": 60, "yieldKwh": 1.5,
+    }]
+
+
+def test_a_solar_yield_without_a_known_unit_is_unknown_and_no_solar_is_an_empty_list():
+    device = k40_device()
+    device["solar_circuits"] = [{"id": "/solarCircuits/sc1", "solarYield": env(7, type="floatValue")}]
+    assert normalize_reading(device, extras())["solarCircuits"][0]["yieldKwh"] is None
+    assert normalize_reading(k40_device(), extras())["solarCircuits"] == []
+
+
+def test_a_heating_circuit_keeps_its_control_type_with_the_allowed_values():
+    device = k40_device()
+    device["heating_circuits"][0]["controlType"] = env(
+        "wdcsimplified", allowedValues=["wdcoptimized", "wdcsimplified", "ISRC", "vbh"], writeable=1)
+    hc1 = normalize_reading(device, extras())["heatingCircuits"][0]
+    assert hc1["controlType"]["value"] == "wdcsimplified"
+    assert hc1["controlType"]["allowed"] == ["wdcoptimized", "wdcsimplified", "ISRC", "vbh"]
+    assert normalize_reading(k40_device(), extras())["heatingCircuits"][0]["controlType"] is None
+
+
+def test_a_zone_keeps_its_mode_temperatures_and_manual_setpoint_and_a_refused_zone_is_dropped():
+    device = k40_device()
+    device["zones"] = [
+        {"id": "/zones/configuration",
+         "userMode": env("manual", allowedValues=["manual", "clock"], writeable=1),
+         "tempSetpoint": env(21, type="floatValue"),
+         "temperatureActual": env(20.5, type="floatValue"),
+         "manualTemperatureHeating": env(21, type="floatValue", minValue=5, maxValue=30,
+                                         stepSize=0.5, writeable=1)},
+        {"id": "/zones/other", "userMode": FORBIDDEN, "tempSetpoint": FORBIDDEN,
+         "temperatureActual": FORBIDDEN, "manualTemperatureHeating": FORBIDDEN},
+    ]
+    zones = normalize_reading(device, extras())["zones"]
+    assert [z["id"] for z in zones] == ["configuration"]
+    assert zones[0]["userMode"]["allowed"] == ["manual", "clock"]
+    assert zones[0]["currentTemp"] == 20.5
+    assert zones[0]["setpointTemp"] == 21
+    assert zones[0]["manualTemp"]["min"] == 5
+    assert normalize_reading(k40_device(), extras())["zones"] == []
+
+
+def test_the_worker_knows_the_control_type_and_zone_writes():
+    base = {"token": "t", "gatewayId": "g", "deviceType": "k40", "action": "write"}
+    for op in ("hcControlType", "zoneUserMode", "zoneManualTemp"):
+        write = {"op": op, "circuitId": "hc1", "value": 1}
+        assert parse_request(json.dumps({**base, "write": write}))["write"]["op"] == op
+
+
 def test_the_request_is_validated_before_the_library_loads():
     good = {"token": "t", "gatewayId": "g", "deviceType": "k40", "action": "read"}
     assert parse_request(json.dumps(good))["action"] == "read"

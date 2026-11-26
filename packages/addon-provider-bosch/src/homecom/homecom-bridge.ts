@@ -47,6 +47,8 @@ const HeatingCircuitSchema = z.object({
   comfortSetpoint: MaybeSetting,
   ecoSetpoint: MaybeSetting,
   maxFlowTemp: MaybeSetting,
+  /** `controlType` (e.g. weather-compensated vs room-controlled); null when not answered. */
+  controlType: MaybeSetting.default(null),
 })
 export type HomeComBridgeHeatingCircuit = z.infer<typeof HeatingCircuitSchema>
 
@@ -62,6 +64,27 @@ const DhwCircuitSchema = z.object({
   temperatureLevels: z.record(z.string(), SettingSchema),
 })
 export type HomeComBridgeDhwCircuit = z.infer<typeof DhwCircuitSchema>
+
+/** A solar circuit (`sc1`); every field null when the gateway did not answer it. */
+const SolarCircuitSchema = z.object({
+  id: z.string(),
+  collectorTemp: z.number().nullable(),
+  tankTemp: z.number().nullable(),
+  tankBottomTemp: z.number().nullable(),
+  maxCylinderTemp: z.number().nullable(),
+  yieldKwh: z.number().nullable(),
+})
+export type HomeComBridgeSolarCircuit = z.infer<typeof SolarCircuitSchema>
+
+/** A zone with at least one readable value (the worker drops a zone it was refused entirely). */
+const ZoneSchema = z.object({
+  id: z.string(),
+  userMode: MaybeSetting,
+  setpointTemp: z.number().nullable(),
+  currentTemp: z.number().nullable(),
+  manualTemp: MaybeSetting,
+})
+export type HomeComBridgeZone = z.infer<typeof ZoneSchema>
 
 /**
  * One GET of a heat-pump-only heat-source resource: `refused` (403/500) still proves a heat
@@ -89,6 +112,12 @@ const ReadingSchema = z.object({
     outdoorTemp: z.number().nullable(),
     thermalKwh: z.number().nullable(),
     electricalKwh: z.number().nullable(),
+    /** Total compressor working time in seconds; null when refused. */
+    workingTimeS: z.number().nullable().default(null),
+    /** `idle | ch | dhw | frost`; null when the gateway refused the resource. */
+    heatDemand: z.enum(['idle', 'ch', 'dhw', 'frost']).nullable().default(null),
+    /** The compressor status as a boolean; null when refused or an unknown token. */
+    compressorRunning: z.boolean().nullable().default(null),
   }),
   system: z.object({
     away: MaybeSetting,
@@ -98,6 +127,8 @@ const ReadingSchema = z.object({
   }),
   heatingCircuits: z.array(HeatingCircuitSchema),
   dhwCircuits: z.array(DhwCircuitSchema),
+  solarCircuits: z.array(SolarCircuitSchema).default([]),
+  zones: z.array(ZoneSchema).default([]),
   /** Asked only when the bulk read left the heat-pump type unknown; path → outcome. */
   heatSourceProbe: z.record(z.string(), ProbeOutcomeSchema).default({}),
   /** The notifications; null when the read was refused or failed (never `[]` for that). */
@@ -128,6 +159,8 @@ export class HomeComBridgeError extends Error {
 type CircuitTextOp =
   | 'hcOperationMode'
   | 'hcHeatCoolMode'
+  | 'hcControlType'
+  | 'zoneUserMode'
   | 'hcSuWiSwitchMode'
   | 'dhwOperationMode'
   | 'dhwTemperatureLevel'
@@ -138,6 +171,7 @@ type CircuitNumberOp =
   | 'hcComfortSetpoint'
   | 'hcEcoSetpoint'
   | 'hcMaxFlowTemp'
+  | 'zoneManualTemp'
   | 'dhwChargeDuration'
 export type HomeComSystemOp = 'awayMode' | 'silentMode' | 'additionalHeaterMode' | 'holidayMode'
 

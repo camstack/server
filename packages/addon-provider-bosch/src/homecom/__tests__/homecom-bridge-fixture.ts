@@ -33,6 +33,9 @@ export function k40Reading(): HomeComBridgeReading {
       outdoorTemp: 7.5,
       thermalKwh: null,
       electricalKwh: null,
+      workingTimeS: null,
+      heatDemand: 'idle',
+      compressorRunning: null,
     },
     system: {
       away: setting('off', { allowed: ['on', 'off'], writeable: true }),
@@ -62,6 +65,7 @@ export function k40Reading(): HomeComBridgeReading {
         comfortSetpoint: null,
         ecoSetpoint: null,
         maxFlowTemp: setting(60, { min: 30, max: 60, writeable: true }),
+        controlType: null,
       },
     ],
     dhwCircuits: [
@@ -88,6 +92,8 @@ export function k40Reading(): HomeComBridgeReading {
         },
       },
     ],
+    solarCircuits: [],
+    zones: [],
     heatSourceProbe: {},
     faults: [],
   }

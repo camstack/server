@@ -43,12 +43,12 @@ twice.
 4. **The COP is computed at read time and never stored**: thermal over electrical
    power, only when both are known and the unit draws power. It is a pure function
    of the slice (`heatPumpInstantCop`); no field of the cap holds it.
-5. **History goes through the cap's `history` block** (D850, D917). `circuits[]` is
-   declared with `items` (key `id`, label `label`), which gives one series per
-   circuit; the power and temperatures are gauges, the circuit mode an enum
-   (D896), the energy totals lifetime counters whose kWh per period is computed at
-   read time (D944). A value another device already records is not given a second
-   series.
+5. **History goes through the cap's `history` block** (D850, D917). The power and
+   temperatures are gauges, the energy totals and the working time lifetime counters
+   whose kWh per period is computed at read time (D944), the heat demand an enum
+   (D896). A circuit has no series here: its temperature and mode are recorded by
+   the climate or water-heater child that owns them, and a value another device
+   already records is not given a second series.
 6. **The hero** (D1023) shows the compressor scene, every circuit as a row with its
    label and icon, the power as pills (the COP pill only when it is known), and a
    "System" group with one segmented control per mode. Rows gain an optional
@@ -75,3 +75,18 @@ twice.
 `check-cap-history-declared` (the `history` block), `check-method-tiers`,
 `check-export-coverage`, `check-capability-union-complete` (codegen), the specs of
 the cap's schema, of the hero contribution and of the HomeCom mapping.
+
+> **Amended 2026-11-26 (planning#741, batch B).** (1) Every circuit is one projection of
+> the gateway reading and carries `deviceId`, the registry id of the child that owns it
+> (a climate child by `config.circuitId`, the water heater for the first hot-water
+> circuit; null when it has none); its `label` is that child's registry name, never a
+> second name. (2) The solar circuit (`sc1`) is a circuit of kind `solar`, not a child:
+> collector temperature as `currentTemp`, plus `tankBottomTemp`, `maxCylinderTemp`
+> (read-only) and `yieldKwh`. (3) The status gains `workingTime`, `heatDemand`,
+> `heatSourceType` and `compressorRunning` (null while the gateway refuses them, D393).
+> (4) `heat-pump-control` gains `setCircuitControlType`, `setCircuitTargetTemp` (the
+> same write the climate child uses) and `setDhwLevelTemp`, each refused outside the
+> allowed values or min/max the gateway reported. (5) A zone with a readable value is
+> adopted as a climate child (`zone:<id>`, `config.zoneId`), read and written through
+> the same bridge zone. (6) `heatPumpHourAverage` turns the last step of a lifetime kWh
+> counter into the average power of that hour, for gateways that publish no power.

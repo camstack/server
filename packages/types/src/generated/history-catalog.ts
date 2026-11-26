@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 53 caps with series (167 series), 36 caps answered `'none'`.
+ * 53 caps with series (169 series), 36 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -117,6 +117,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'temperatures.outdoor': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Outdoor' },
     'energy.thermalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Thermal energy' },
     'energy.electricalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Electrical energy' },
+    'workingTime': { kind: 'counter', unit: 's', displayName: 'Working time' },
+    'heatDemand': { kind: 'enum', displayName: 'Heat demand', values: ['idle', 'ch', 'dhw', 'frost'] },
   },
   'heating-valve': {
     'position': { kind: 'gauge', unit: '%', deadband: 1 },
@@ -292,7 +294,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
 
 /**
  * Keyed-array series (D917), projected from every `history.items` block:
- * 2 caps (6 item fields). The item key is the series SCOPE;
+ * 1 caps (3 item fields). The item key is the series SCOPE;
  * the series key is `cap:<capName>.<path>[].<field>`.
  */
 export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItems>> = {
@@ -304,16 +306,6 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
       'level': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Level' },
       'status': { kind: 'enum', displayName: 'Status', values: ['ok', 'low', 'empty', 'full', 'replace'] },
       'remaining.value': { kind: 'gauge', deadband: 1, displayName: 'Remaining' },
-    },
-  },
-  'heat-pump-status': {
-    path: 'circuits',
-    key: 'id',
-    label: 'label',
-    fields: {
-      'currentTemp': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Temperature' },
-      'targetTemp': { kind: 'gauge', unit: '°C', minIntervalMs: 0, displayName: 'Setpoint' },
-      'mode': { kind: 'enum', displayName: 'Mode' },
     },
   },
 }

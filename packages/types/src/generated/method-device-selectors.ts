@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 656 methods carry a device reference, of which
+ * Coverage: 659 methods carry a device reference, of which
  * 206 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -257,12 +257,15 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'heatPumpControl.setAdditionalHeaterMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setAwayMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitComfortSetpoint': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitControlType': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitEcoSetpoint': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitHeatCoolMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitMaxFlowTemp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitOperationMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setCircuitSummerWinter': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitTargetTemp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setDhwChargeDuration': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setDhwLevelTemp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setDhwOperationMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setDhwTemperatureLevel': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatPumpControl.setHolidayMode': [{ name: "deviceId", form: "single", optional: false }] as const,

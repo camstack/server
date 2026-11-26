@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**220 capabilities · 1567 methods.**
+**220 capabilities · 1570 methods.**
 
 ## Method index
 
@@ -565,6 +565,9 @@
 | `heatPumpControl.setDhwTemperatureLevel` | mutation | protected | heat-pump-control |
 | `heatPumpControl.setDhwChargeDuration` | mutation | protected | heat-pump-control |
 | `heatPumpControl.startExtraHotWater` | mutation | protected | heat-pump-control |
+| `heatPumpControl.setCircuitControlType` | mutation | protected | heat-pump-control |
+| `heatPumpControl.setCircuitTargetTemp` | mutation | protected | heat-pump-control |
+| `heatPumpControl.setDhwLevelTemp` | mutation | protected | heat-pump-control |
 | `heatPumpStatus.getStatus` | query | protected | heat-pump-status (auto) |
 | `heatingValve.getStatus` | query | protected | heating-valve (auto) |
 | `heroLayout.getHeroModel` | query | protected | hero-layout |
@@ -3081,10 +3084,13 @@
 | setDhwTemperatureLevel | `heatPumpControl.setDhwTemperatureLevel` | mutation | protected | `{ deviceId: number; circuitId: string; level: string }` | `void` |
 | setDhwChargeDuration | `heatPumpControl.setDhwChargeDuration` | mutation | protected | `{ deviceId: number; circuitId: string; minutes: number }` | `void` |
 | startExtraHotWater | `heatPumpControl.startExtraHotWater` | mutation | protected | `{ deviceId: number; circuitId: string }` | `void` |
+| setCircuitControlType | `heatPumpControl.setCircuitControlType` | mutation | protected | `{ deviceId: number; circuitId: string; controlType: string }` | `void` |
+| setCircuitTargetTemp | `heatPumpControl.setCircuitTargetTemp` | mutation | protected | `{ deviceId: number; circuitId: string; temp: number }` | `void` |
+| setDhwLevelTemp | `heatPumpControl.setDhwLevelTemp` | mutation | protected | `{ deviceId: number; circuitId: string; level: string; temp: number }` | `void` |
 
 ### `heat-pump-status` → `heatPumpStatus.*`
 
-- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:183`
+- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:287`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `heat-pump`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHeatPumpStatusProvider`

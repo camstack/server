@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1145 shared schemas.**
+**1146 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3024,6 +3024,7 @@ Enum: `"heating" \| "dhw" \| "cooling" \| "solar"`
 ### `HeatPumpCircuitSchema`
 
 - `id`: `string`
+- `deviceId`: `number \| null`
 - `kind`: `HeatPumpCircuitKindSchema`
 - `label`: `string`
 - `icon`: `<custom>`
@@ -3040,6 +3041,15 @@ Enum: `"heating" \| "dhw" \| "cooling" \| "solar"`
 - `temperatureLevel`: `HeatPumpOptionSettingSchema \| null`
 - `chargeDuration`: `HeatPumpRangeSettingSchema \| null`
 - `extraHotWater`: `boolean \| null`
+- `levelTemperatures`: `Record<string, HeatPumpRangeSettingSchema> \| null`
+- `controlType`: `HeatPumpOptionSettingSchema \| null`
+- `tankBottomTemp`: `number \| null`
+- `maxCylinderTemp`: `number \| null`
+- `yieldKwh`: `number \| null`
+
+### `HeatPumpDemandSchema`
+
+Enum: `"idle" \| "ch" \| "dhw" \| "frost"`
 
 ### `HeatPumpEnergySchema`
 
@@ -3073,6 +3083,10 @@ Enum: `"heating" \| "dhw" \| "cooling" \| "solar"`
 - `energy`: `HeatPumpEnergySchema`
 - `waterPressureBar`: `number \| null`
 - `starts`: `number \| null`
+- `workingTime`: `number \| null`
+- `heatDemand`: `HeatPumpDemandSchema \| null`
+- `heatSourceType`: `string \| null`
+- `compressorRunning`: `boolean \| null`
 - `lastFetchedAt`: `number`
 
 ### `HeatPumpSystemSchema`

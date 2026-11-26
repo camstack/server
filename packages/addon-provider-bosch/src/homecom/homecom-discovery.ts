@@ -39,6 +39,7 @@ export function homeComDeviceType(kind: HomeComDiscoverableDevice['kind']): Devi
 function shapeOf(kind: HomeComDiscoverableDevice['kind']): CandidateShape {
   switch (kind) {
     case 'heating-circuit':
+    case 'zone':
       return { type: DeviceType.Climate, caps: ['climate-control'] }
     case 'dhw':
       return { type: DeviceType.WaterHeater, caps: ['water-heater'] }

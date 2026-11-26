@@ -7,14 +7,18 @@ fault is `None`, never `0` (D393).
 Output shape (camelCase, every key always present):
 
   heatSource: { heatPumpType, supplyTemp, returnTemp, modulationPct, pressureBar, starts,
-                outdoorTemp, thermalKwh, electricalKwh }
+                outdoorTemp, thermalKwh, electricalKwh, workingTimeS, heatDemand,
+                compressorRunning }
   system:     { away, silent, additionalHeater, holiday }            # Setting | None
   heatingCircuits: [ { id, name, operationMode, heatCoolMode, currentSuWiMode, suWiSwitchMode,
                        roomTemp, humidity, currentRoomSetpoint, manualRoomSetpoint,
-                       coolingRoomSetpoint, comfortSetpoint, ecoSetpoint, maxFlowTemp } ]
+                       coolingRoomSetpoint, comfortSetpoint, ecoSetpoint, maxFlowTemp,
+                       controlType } ]
   dhwCircuits:     [ { id, operationMode, actualTemp, currentTemperatureLevel, charge,
                        chargeDuration, singleChargeSetpoint, currentSetpoint,
                        temperatureLevels: { <level>: Setting } } ]
+  solarCircuits:   [ { id, collectorTemp, tankTemp, tankBottomTemp, maxCylinderTemp, yieldKwh } ]
+  zones:           [ { id, userMode, setpointTemp, currentTemp, manualTemp } ]   # answered ones only
   heatSourceProbe: { <path>: "answered" | "refused" | "absent" | "transient" }
 
 Setting = { value: str | number | None, min, max, allowed: [str], writeable: bool | None,
@@ -169,6 +173,62 @@ def _electrical_kwh(consumption: Any) -> Optional[float]:
     return compressor + eheater
 
 
+_DURATION_UNITS_S = {"s": 1.0, "sec": 1.0, "min": 60.0, "minutes": 60.0, "h": 3600.0, "hours": 3600.0}
+_ENERGY_UNITS_KWH = {"wh": 0.001, "kwh": 1.0}
+DEMAND_KINDS = ("dhw", "ch", "frost")
+_RUNNING = ("on", "running", "active", "start", "started")
+_STOPPED = ("off", "stopped", "stop", "inactive", "idle")
+
+
+def _unit_of(raw: Any) -> Optional[str]:
+    envelope = envelope_of(raw)
+    unit = envelope.get("unitOfMeasure") if envelope is not None else None
+    return unit.strip().lower() if isinstance(unit, str) else None
+
+
+def working_time_seconds(raw: Any) -> Optional[float]:
+    """The total working time in seconds. A unit the table does not know is unknown (D393)."""
+    value = number_of(raw)
+    factor = _DURATION_UNITS_S.get(_unit_of(raw) or "")
+    return None if value is None or factor is None else value * factor
+
+
+def energy_kwh(raw: Any) -> Optional[float]:
+    """An energy reading in kWh: `Wh` and `kWh` are converted, any other unit is unknown."""
+    value = number_of(raw)
+    factor = _ENERGY_UNITS_KWH.get(_unit_of(raw) or "")
+    return None if value is None or factor is None else value * factor
+
+
+def heat_demand_of(raw: Any) -> Optional[str]:
+    """`dhw` / `ch` / `frost`, `idle` for the empty answer, None when the read was refused."""
+    envelope = envelope_of(raw)
+    if envelope is None:
+        return None
+    listed = (
+        _string_list(envelope.get("values"))
+        if "values" in envelope
+        else [envelope["value"]] if isinstance(envelope.get("value"), str) else []
+    )
+    for kind in DEMAND_KINDS:
+        if kind in listed:
+            return kind
+    return "idle"
+
+
+def compressor_running_of(raw: Any) -> Optional[bool]:
+    """Whether the compressor runs: a word the gateway uses for on/off, or a number above 0."""
+    envelope = envelope_of(raw)
+    if envelope is None:
+        return None
+    value = envelope.get("value")
+    if isinstance(value, str):
+        word = value.strip().lower()
+        return True if word in _RUNNING else False if word in _STOPPED else None
+    number = number_of(raw)
+    return None if number is None else number > 0
+
+
 def normalize_heat_source(
     heat_sources: Any, outdoor: Any, aggregate_starts: Any = None
 ) -> Dict[str, Any]:
@@ -184,6 +244,9 @@ def normalize_heat_source(
         "outdoorTemp": number_of(outdoor if outdoor not in (None, {}) else hs.get("outdoorTemp")),
         "thermalKwh": emon_part(consumption, "outputProduced"),
         "electricalKwh": _electrical_kwh(consumption),
+        "workingTimeS": working_time_seconds(hs.get("totalWorkingTime")),
+        "heatDemand": heat_demand_of(hs.get("actualHeatDemand")),
+        "compressorRunning": compressor_running_of(hs.get("compressorStatus")),
     }
 
 
@@ -278,6 +341,7 @@ def normalize_heating_circuit(ref: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "comfortSetpoint": setting_of(ref.get("temperatureLevelComfort2")),
         "ecoSetpoint": setting_of(ref.get("temperatureLevelEco")),
         "maxFlowTemp": setting_of(ref.get("maxFlowTemp")),
+        "controlType": setting_of(ref.get("controlType")),
     }
 
 
@@ -309,6 +373,36 @@ def normalize_dhw_circuit(
     }
 
 
+def normalize_solar_circuit(ref: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    circuit_id = _ref_id(ref)
+    if circuit_id is None:
+        return None
+    return {
+        "id": circuit_id,
+        "collectorTemp": number_of(ref.get("collectorTemperature")),
+        "tankTemp": number_of(ref.get("dhwTankTemperature")),
+        "tankBottomTemp": number_of(ref.get("dhwTankBottomTemperature")),
+        "maxCylinderTemp": number_of(ref.get("maxCylinderTemperature")),
+        "yieldKwh": energy_kwh(ref.get("solarYield")),
+    }
+
+
+def normalize_zone(ref: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """A zone; None when the gateway refused every one of its resources (nothing to show)."""
+    zone_id = _ref_id(ref)
+    if zone_id is None:
+        return None
+    zone = {
+        "id": zone_id,
+        "userMode": setting_of(ref.get("userMode")),
+        "setpointTemp": number_of(ref.get("tempSetpoint")),
+        "currentTemp": number_of(ref.get("temperatureActual"), ROOM_TEMP_RANGE),
+        "manualTemp": setting_of(ref.get("manualTemperatureHeating")),
+    }
+    answered = any(value is not None for key, value in zone.items() if key != "id")
+    return zone if answered else None
+
+
 def _refs(raw: Any) -> List[Dict[str, Any]]:
     if not isinstance(raw, list):
         return []
@@ -332,6 +426,8 @@ def normalize_reading(
         normalize_dhw_circuit(ref, durations.get(_ref_id(ref) or ""), charges.get(_ref_id(ref) or ""))
         for ref in _refs(device.get("dhw_circuits"))
     ]
+    solar = [normalize_solar_circuit(ref) for ref in _refs(device.get("solar_circuits"))]
+    zones = [normalize_zone(ref) for ref in _refs(device.get("zones"))]
     return {
         "heatSource": normalize_heat_source(
             device.get("heat_sources"), device.get("outdoor_temp"), more.get("aggregateStarts")
@@ -344,6 +440,8 @@ def normalize_reading(
         },
         "heatingCircuits": [c for c in heating if c is not None],
         "dhwCircuits": [c for c in dhw if c is not None],
+        "solarCircuits": [c for c in solar if c is not None],
+        "zones": [z for z in zones if z is not None],
         "heatSourceProbe": _probe_map(more.get("heatSourceProbe")),
         "faults": normalize_notifications(more.get("notifications")),
     }

@@ -95,6 +95,12 @@ WRITES: Dict[str, WriteCall] = {
     "dhwChargeDuration": lambda c, d, w: c.async_set_dhw_charge_duration(
         d, _circuit(w), _scalar(w)
     ),
+    "hcControlType": lambda c, d, w: c.async_put_hc_control_type(d, _circuit(w), _scalar(w)),
+    # A zone is addressed by its id (`configuration`), carried as `circuitId`.
+    "zoneUserMode": lambda c, d, w: c.async_set_zone_user_mode(d, _circuit(w), _scalar(w)),
+    "zoneManualTemp": lambda c, d, w: c.async_set_zone_manual_temp_heating(
+        d, _circuit(w), _scalar(w)
+    ),
     "awayMode": lambda c, d, w: c.async_put_away_mode(d, _scalar(w)),
     "silentMode": lambda c, d, w: c.async_put_silent_mode(d, _scalar(w)),
     "additionalHeaterMode": lambda c, d, w: c.async_put_additional_heater_mode(d, _scalar(w)),

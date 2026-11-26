@@ -1,11 +1,13 @@
 import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-client.js'
 import type { HomeComHeatingCircuit } from './homecom-domain-mapping.js'
 import { gatewayDeviceName } from '@camstack/types'
+import { zoneNativeId } from './homecom-zone.js'
 
 export interface HomeComDiscoverableDevice {
   readonly nativeId: string
   readonly name: string
-  readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump' | 'gateway'
+  readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump' | 'gateway' | 'zone'
+  /** The gateway id of the heating circuit, or of the zone for a `zone` row. */
   readonly circuitId?: string
   /**
    * Set only on a heat-pump pick: one climate child per circuit and the hot
@@ -119,6 +121,16 @@ function circuitDiscoverable(circuit: HomeComHeatingCircuit): HomeComDiscoverabl
   }
 }
 
+/** A zone with a readable value; one zone is the "Zone configuration", several are told apart. */
+function zoneDiscoverable(zoneId: string, only: boolean): HomeComDiscoverableDevice {
+  return {
+    nativeId: zoneNativeId(zoneId),
+    name: only ? 'Zone configuration' : `Zone ${zoneId}`,
+    kind: 'zone',
+    circuitId: zoneId,
+  }
+}
+
 function dhwDiscoverable(name: string): HomeComDiscoverableDevice {
   return { nativeId: 'dhw:0', name, kind: 'dhw' }
 }
@@ -129,10 +141,14 @@ function dhwDiscoverable(name: string): HomeComDiscoverableDevice {
  */
 export function buildDiscoverables(snapshot: HomeComSystemSnapshot): HomeComDiscoverableDevice[] {
   const circuits = snapshot.circuits.map(circuitDiscoverable)
+  const zones = (snapshot.bridge?.zones ?? []).map((zone, _i, all) =>
+    zoneDiscoverable(zone.id, all.length === 1),
+  )
   if (snapshot.heatPump !== undefined) {
     const children = [
       ...circuits,
       ...(snapshot.dhw === null ? [] : [dhwDiscoverable(HOMECOM_HOT_WATER_CHILD_NAME)]),
+      ...zones,
     ]
     return [
       gatewayDiscoverable(snapshot),

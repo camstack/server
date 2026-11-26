@@ -1,16 +1,20 @@
+import { DeviceType } from '@camstack/types'
 import type {
   HeatPumpCircuit,
   HeatPumpCircuitKind,
+  HeatPumpDemand,
   HeatPumpOptionSetting,
   HeatPumpRangeSetting,
   HeatPumpStatus,
   HeatPumpSystem,
+  IconKey,
 } from '@camstack/types'
 import type {
   HomeComBridgeDhwCircuit,
   HomeComBridgeFault,
   HomeComBridgeHeatingCircuit,
   HomeComBridgeReading,
+  HomeComBridgeSolarCircuit,
   HomeComBridgeSetting,
   HomeComBridgeWrite,
   HomeComSystemOp,
@@ -28,7 +32,7 @@ export type HomeComHeatPumpSetting = HomeComBridgeSetting
 
 export interface HomeComHeatPumpCircuitReading {
   readonly id: string
-  readonly kind: 'hc' | 'dhw'
+  readonly kind: 'hc' | 'dhw' | 'solar'
   readonly currentTemp: number | null
   readonly targetTemp: number | null
   readonly operationMode: HomeComHeatPumpSetting | null
@@ -40,6 +44,26 @@ export interface HomeComHeatPumpCircuitReading {
   readonly level: HomeComHeatPumpSetting | null
   readonly chargeDuration: HomeComHeatPumpSetting | null
   readonly charge: HomeComHeatPumpSetting | null
+  readonly controlType: HomeComHeatPumpSetting | null
+  /** Hot water: the temperature each level heats to; null on every other circuit. */
+  readonly levels: Readonly<Record<string, HomeComHeatPumpSetting>> | null
+  readonly tankBottomTemp: number | null
+  readonly maxCylinderTemp: number | null
+  readonly yieldKwh: number | null
+}
+
+/** One registry child of the heat-pump device, as the identity lookup reads it. */
+export interface HeatPumpChildInfo {
+  readonly id: number
+  readonly name: string
+  readonly type: string
+  readonly config: Readonly<Record<string, unknown>>
+}
+
+/** The registry child that owns a circuit: its id and its registry name. */
+export interface HeatPumpCircuitIdentity {
+  readonly deviceId: number
+  readonly label: string
 }
 
 export interface HomeComHeatPumpReading {
@@ -63,6 +87,10 @@ export interface HomeComHeatPumpReading {
   readonly electricalKwh: number | null
   readonly pressureBar: number | null
   readonly starts: number | null
+  /** Total working time of the heat source, seconds. */
+  readonly workingTimeS: number | null
+  readonly heatDemand: HeatPumpDemand | null
+  readonly compressorRunning: boolean | null
   /** The gateway notifications; null when the read was refused or failed (D393). */
   readonly faults: readonly HomeComBridgeFault[] | null
 }
@@ -119,6 +147,11 @@ function hcReading(hc: HomeComBridgeHeatingCircuit): HomeComHeatPumpCircuitReadi
     level: null,
     chargeDuration: null,
     charge: null,
+    controlType: hc.controlType,
+    levels: null,
+    tankBottomTemp: null,
+    maxCylinderTemp: null,
+    yieldKwh: null,
   }
 }
 
@@ -137,13 +170,45 @@ function dhwReading(dhw: HomeComBridgeDhwCircuit): HomeComHeatPumpCircuitReading
     level: dhw.currentTemperatureLevel,
     chargeDuration: dhw.chargeDuration,
     charge: dhw.charge,
+    controlType: null,
+    levels: dhw.temperatureLevels,
+    tankBottomTemp: null,
+    maxCylinderTemp: null,
+    yieldKwh: null,
+  }
+}
+
+function solarReading(sc: HomeComBridgeSolarCircuit): HomeComHeatPumpCircuitReading {
+  return {
+    id: sc.id,
+    kind: 'solar',
+    currentTemp: sc.collectorTemp,
+    targetTemp: null,
+    operationMode: null,
+    heatCoolMode: null,
+    summerWinter: null,
+    comfort: null,
+    eco: null,
+    maxFlow: null,
+    level: null,
+    chargeDuration: null,
+    charge: null,
+    controlType: null,
+    levels: null,
+    tankBottomTemp: sc.tankBottomTemp,
+    maxCylinderTemp: sc.maxCylinderTemp,
+    yieldKwh: sc.yieldKwh,
   }
 }
 
 export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPumpReading {
   const hs = bridge.heatSource
   return {
-    circuits: [...bridge.heatingCircuits.map(hcReading), ...bridge.dhwCircuits.map(dhwReading)],
+    circuits: [
+      ...bridge.heatingCircuits.map(hcReading),
+      ...bridge.dhwCircuits.map(dhwReading),
+      ...bridge.solarCircuits.map(solarReading),
+    ],
     heatPumpType: hs.heatPumpType,
     heatSourceRefused: Object.values(bridge.heatSourceProbe).some(
       (outcome) => outcome === 'answered' || outcome === 'refused',
@@ -160,6 +225,9 @@ export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPu
     electricalKwh: hs.electricalKwh,
     pressureBar: hs.pressureBar,
     starts: hs.starts,
+    workingTimeS: hs.workingTimeS,
+    heatDemand: hs.heatDemand,
+    compressorRunning: hs.compressorRunning,
     faults: bridge.faults,
   }
 }
@@ -186,11 +254,37 @@ function offersCooling(setting: HomeComHeatPumpSetting | null): boolean {
   return setting.allowed.some((allowed) => COOLING_VALUES.includes(allowed))
 }
 
+/**
+ * Which registry child owns which circuit: a climate child names its circuit in
+ * `config.circuitId`; the water heater child is the first hot-water circuit's. The circuit
+ * keeps no copy of the child's values, only its id and name.
+ */
+export function circuitIdentitiesFrom(
+  children: readonly HeatPumpChildInfo[],
+  circuits: readonly HomeComHeatPumpCircuitReading[],
+): ReadonlyMap<string, HeatPumpCircuitIdentity> {
+  const found = new Map<string, HeatPumpCircuitIdentity>()
+  const firstDhw = circuits.find((c) => c.kind === 'dhw')
+  for (const circuit of circuits) {
+    const child = children.find((c) => {
+      if (circuit.kind === 'hc')
+        return c.type === DeviceType.Climate && c.config['circuitId'] === circuit.id
+      return circuit.kind === 'dhw' && circuit === firstDhw && c.type === DeviceType.WaterHeater
+    })
+    if (child !== undefined) found.set(circuit.id, { deviceId: child.id, label: child.name })
+  }
+  return found
+}
+
 // ── mapping to the cap slice ────────────────────────────────────────────
 
-export function heatPumpStatusFrom(reading: HomeComHeatPumpReading, now: number): HeatPumpStatus {
+export function heatPumpStatusFrom(
+  reading: HomeComHeatPumpReading,
+  now: number,
+  identities: ReadonlyMap<string, HeatPumpCircuitIdentity> = new Map(),
+): HeatPumpStatus {
   return {
-    circuits: reading.circuits.map(circuitOf),
+    circuits: reading.circuits.map((c) => circuitOf(c, identities.get(c.id))),
     system: {
       silent: optionOf(reading.silent),
       away: optionOf(reading.away),
@@ -215,17 +309,33 @@ export function heatPumpStatusFrom(reading: HomeComHeatPumpReading, now: number)
     },
     waterPressureBar: reading.pressureBar,
     starts: reading.starts,
+    workingTime: reading.workingTimeS,
+    heatDemand: reading.heatDemand,
+    heatSourceType: reading.heatPumpType,
+    compressorRunning: reading.compressorRunning,
     lastFetchedAt: now,
   }
 }
 
-function circuitOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuit {
+const CIRCUIT_ICONS: Readonly<Record<HeatPumpCircuitKind, IconKey>> = {
+  heating: 'flame',
+  cooling: 'snowflake',
+  dhw: 'droplets',
+  solar: 'sun',
+}
+
+function circuitOf(
+  c: HomeComHeatPumpCircuitReading,
+  identity: HeatPumpCircuitIdentity | undefined,
+): HeatPumpCircuit {
   const kind = kindOf(c)
   return {
     id: c.id,
+    deviceId: identity?.deviceId ?? null,
     kind,
-    label: labelOf(c),
-    icon: kind === 'dhw' ? 'droplets' : kind === 'cooling' ? 'snowflake' : 'flame',
+    // The child's registry name when the circuit has one: there is no second name.
+    label: identity?.label ?? labelOf(c),
+    icon: CIRCUIT_ICONS[kind],
     currentTemp: c.currentTemp,
     targetTemp: c.targetTemp,
     mode: modeValue(c.operationMode),
@@ -239,17 +349,27 @@ function circuitOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuit {
     temperatureLevel: optionOf(c.level),
     chargeDuration: rangeOf(c.chargeDuration),
     extraHotWater: c.charge === null ? null : textOf(c.charge) === 'start',
+    levelTemperatures:
+      c.levels === null
+        ? null
+        : Object.fromEntries(Object.entries(c.levels).map(([level, s]) => [level, rangeOf(s)])),
+    controlType: optionOf(c.controlType),
+    tankBottomTemp: c.tankBottomTemp,
+    maxCylinderTemp: c.maxCylinderTemp,
+    yieldKwh: c.yieldKwh,
   }
 }
 
 function kindOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuitKind {
   if (c.kind === 'dhw') return 'dhw'
+  if (c.kind === 'solar') return 'solar'
   const mode = textOf(c.heatCoolMode)
   return mode !== null && COOLING_VALUES.includes(mode) ? 'cooling' : 'heating'
 }
 
 function labelOf(c: HomeComHeatPumpCircuitReading): string {
   const n = c.id.replace(/^\D+/, '')
+  if (c.kind === 'solar') return n === '1' || n === '' ? 'Solar' : `Solar ${n}`
   if (c.kind === 'dhw') return n === '1' || n === '' ? 'Hot water' : `Hot water ${n}`
   return n === '' ? 'Heating circuit' : `Heating circuit ${n}`
 }
@@ -273,6 +393,8 @@ function optionOf(s: HomeComHeatPumpSetting | null): HeatPumpOptionSetting | nul
   return { value: modeValue(s), allowed: [...s.allowed] }
 }
 
+function rangeOf(s: HomeComHeatPumpSetting): HeatPumpRangeSetting
+function rangeOf(s: HomeComHeatPumpSetting | null): HeatPumpRangeSetting | null
 function rangeOf(s: HomeComHeatPumpSetting | null): HeatPumpRangeSetting | null {
   if (s === null) return null
   return { value: numberValue(s), min: s.min, max: s.max, step: s.step }
@@ -382,6 +504,40 @@ export function circuitOptionWrite(
     op: CIRCUIT_OPTION_OPS[which],
     circuitId,
     value: acceptedOption(circuit[which], `${circuitId} ${which}`, mode),
+  }
+}
+
+export function circuitControlTypeWrite(
+  reading: HomeComHeatPumpReading,
+  circuitId: string,
+  controlType: string,
+): HomeComBridgeWrite {
+  const circuit = requireCircuit(reading, circuitId, 'hc')
+  return {
+    op: 'hcControlType',
+    circuitId,
+    value: acceptedOption(circuit.controlType, `${circuitId} control type`, controlType),
+  }
+}
+
+export function dhwLevelTempWrite(
+  reading: HomeComHeatPumpReading,
+  circuitId: string,
+  level: string,
+  temp: number,
+): HomeComBridgeWrite {
+  const circuit = requireCircuit(reading, circuitId, 'dhw')
+  const setting = circuit.levels?.[level]
+  if (setting === undefined) {
+    throw new HomeComHeatPumpRefusalError(
+      `HomeCom heat pump: ${circuitId} has no level "${level}" to set a temperature on`,
+    )
+  }
+  return {
+    op: 'dhwLevelTemp',
+    circuitId,
+    level,
+    value: acceptedRange(setting, `${circuitId} ${level} temperature`, temp),
   }
 }
 

@@ -10,17 +10,23 @@ import {
 import { homeComFaultReading } from '../homecom-faults.js'
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
+import { bridgeSetpointWrite } from '../homecom-bridge-snapshot.js'
 import {
+  circuitControlTypeWrite,
+  circuitIdentitiesFrom,
   circuitOptionWrite,
   circuitRangeWrite,
   dhwChargeDurationWrite,
+  dhwLevelTempWrite,
+  type HeatPumpChildInfo,
+  type HeatPumpCircuitIdentity,
   dhwOptionWrite,
   extraHotWaterWrite,
   heatPumpStatusFrom,
   systemModeWrite,
   type HomeComHeatPumpReading,
 } from '../homecom-heat-pump.js'
-import type { HomeComBridgeWrite } from '../homecom-bridge.js'
+import type { HomeComBridgeReading, HomeComBridgeWrite } from '../homecom-bridge.js'
 
 export const homeComHeatPumpSchema = z.object({
   nativeId: z.string().min(1),
@@ -31,6 +37,21 @@ export const homeComHeatPumpSchema = z.object({
 
 const STATUS_CAP = 'heat-pump-status'
 
+/** The children are looked up beside the poll, at most this often. */
+const IDENTITY_MIN_INTERVAL_MS = 15_000
+
+function sameIdentities(
+  a: ReadonlyMap<string, HeatPumpCircuitIdentity>,
+  b: ReadonlyMap<string, HeatPumpCircuitIdentity>,
+): boolean {
+  if (a.size !== b.size) return false
+  for (const [id, identity] of a) {
+    const other = b.get(id)
+    if (other?.deviceId !== identity.deviceId || other.label !== identity.label) return false
+  }
+  return true
+}
+
 const COLD_START: HeatPumpStatus = {
   circuits: [],
   system: { silent: null, away: null, additionalHeater: null, holiday: null },
@@ -39,6 +60,10 @@ const COLD_START: HeatPumpStatus = {
   energy: { thermalKwh: null, electricalKwh: null },
   waterPressureBar: null,
   starts: null,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
   lastFetchedAt: 0,
 }
 
@@ -54,6 +79,11 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   private stopStateRefresh: (() => void) | null = null
   /** True while the gateway has no heat-pump reading, so the log marks the transitions only. */
   #noReading = false
+  /** The registry child of each circuit, looked up beside the poll (never copied values). */
+  #identities: ReadonlyMap<string, HeatPumpCircuitIdentity> = new Map()
+  #identitiesAt = 0
+  #identitiesInFlight = false
+  #identitiesFailed = false
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComHeatPumpSchema.parse(ctx.persistedConfig ?? {})
@@ -113,8 +143,47 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
         },
       )
     }
-    this.runtimeState.setCapState(STATUS_CAP, heatPumpStatusFrom(reading, Date.now()))
+    this.runtimeState.setCapState(
+      STATUS_CAP,
+      heatPumpStatusFrom(reading, Date.now(), this.#identities),
+    )
     this.publishFaults(reading.faults)
+    this.refreshIdentities(reading)
+  }
+
+  /**
+   * Looks up the children of this device and, when the answer moves a circuit's id or name,
+   * publishes the slice again. A failed lookup leaves the ids as they were, said once.
+   */
+  private refreshIdentities(reading: HomeComHeatPumpReading): void {
+    const now = Date.now()
+    if (this.#identitiesInFlight || now - this.#identitiesAt < IDENTITY_MIN_INTERVAL_MS) return
+    this.#identitiesInFlight = true
+    this.#identitiesAt = now
+    this.loadChildren()
+      .then((children) => {
+        this.#identitiesFailed = false
+        const next = circuitIdentitiesFrom(children, reading.circuits)
+        if (!sameIdentities(this.#identities, next)) {
+          this.#identities = next
+          this.refreshFromSnapshot()
+        }
+      })
+      .catch((error: unknown) => {
+        if (this.#identitiesFailed) return
+        this.#identitiesFailed = true
+        this.ctx.logger.warn('HomeCom heat pump: the children could not be listed', {
+          tags: { deviceId: this.ctx.id },
+          meta: { error: error instanceof Error ? error.message : String(error) },
+        })
+      })
+      .finally(() => {
+        this.#identitiesInFlight = false
+      })
+  }
+
+  private async loadChildren(): Promise<readonly HeatPumpChildInfo[]> {
+    return this.ctx.api.deviceManager.getChildren.query({ parentDeviceId: this.ctx.id })
   }
 
   /** A refused or failed notifications read is unknown, never "no fault" (D393). */
@@ -139,11 +208,24 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
     return reading
   }
 
+  private requireBridge(): HomeComBridgeReading {
+    const bridge = homeComConnections.getSnapshot(this.#brokerId)?.bridge
+    if (bridge === undefined) throw new Error('HomeCom heat pump: no bridge reading yet')
+    return bridge
+  }
+
   /** Validate against the reading, send, then re-read so the slice shows what the gateway holds. */
-  private async apply(
-    build: (reading: HomeComHeatPumpReading) => HomeComBridgeWrite,
-  ): Promise<void> {
-    const write = build(this.requireReading())
+  private apply(build: (reading: HomeComHeatPumpReading) => HomeComBridgeWrite): Promise<void> {
+    return this.send(() => build(this.requireReading()))
+  }
+
+  /** The same, for a write the climate child shares and builds from the bridge reading. */
+  private applyBridge(build: (bridge: HomeComBridgeReading) => HomeComBridgeWrite): Promise<void> {
+    return this.send(() => build(this.requireBridge()))
+  }
+
+  private async send(buildWrite: () => HomeComBridgeWrite): Promise<void> {
+    const write = buildWrite()
     const client = this.requireClient()
     await client.writeHeatPump([write])
     this.ctx.logger.info('HomeCom heat pump: value written', {
@@ -202,6 +284,12 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
         this.apply((r) => dhwOptionWrite(r, circuitId, 'level', level)),
       setDhwChargeDuration: ({ circuitId, minutes }) =>
         this.apply((r) => dhwChargeDurationWrite(r, circuitId, minutes)),
+      setCircuitControlType: ({ circuitId, controlType }) =>
+        this.apply((r) => circuitControlTypeWrite(r, circuitId, controlType)),
+      setCircuitTargetTemp: ({ circuitId, temp }) =>
+        this.applyBridge((b) => bridgeSetpointWrite(b, circuitId, temp)),
+      setDhwLevelTemp: ({ circuitId, level, temp }) =>
+        this.apply((r) => dhwLevelTempWrite(r, circuitId, level, temp)),
       startExtraHotWater: ({ circuitId }) =>
         this.apply((r) => {
           const write = extraHotWaterWrite(r, circuitId)

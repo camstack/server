@@ -36,6 +36,12 @@ const CIRCUIT: HeatPumpCircuit = {
   temperatureLevel: null,
   chargeDuration: null,
   extraHotWater: null,
+  levelTemperatures: null,
+  controlType: null,
+  tankBottomTemp: null,
+  maxCylinderTemp: null,
+  yieldKwh: null,
+  deviceId: null,
 }
 
 const DHW: HeatPumpCircuit = {
@@ -63,6 +69,10 @@ const HEAT_PUMP: HeatPumpStatus = {
   energy: { thermalKwh: null, electricalKwh: null },
   waterPressureBar: 1.6,
   starts: null,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
   lastFetchedAt: 0,
 }
 

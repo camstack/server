@@ -10009,7 +10009,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
-      "summary": "What the pump is doing: idle when the compressor (else the electrical draw) says it is not running; otherwise the kind of the active circuit. The cap reports no defrost, so the card never invents one."
+      "summary": "What the pump is doing: idle when the compressor status the gateway reports (else the modulation, else the electrical draw) says it is not running; otherwise the kind of the active circuit. The cap reports no defrost,…"
     },
     {
       "name": "HeatPumpCard",

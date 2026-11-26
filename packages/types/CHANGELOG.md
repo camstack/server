@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Heat pump status gains working time, heat demand, heat source type, compressor state, a solar circuit entry and each circuit's device id; new controls set a circuit's control type, target temperature and hot-water level temperature; the per-circuit history series is gone (the climate and water-heater children keep theirs)
+
 ## [1.2.639] - 2026-11-26
 
 ### Changed

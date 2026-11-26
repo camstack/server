@@ -150,6 +150,9 @@ describe('the HomeCom gateway as an adoption pick', () => {
         electricalKwh: null,
         pressureBar: null,
         starts: null,
+        workingTimeS: null,
+        heatDemand: null,
+        compressorRunning: null,
         faults: [],
       },
     })

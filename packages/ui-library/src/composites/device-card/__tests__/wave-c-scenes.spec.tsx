@@ -53,6 +53,12 @@ const CIRCUIT: HeatPumpCircuit = {
   temperatureLevel: null,
   chargeDuration: null,
   extraHotWater: null,
+  levelTemperatures: null,
+  controlType: null,
+  tankBottomTemp: null,
+  maxCylinderTemp: null,
+  yieldKwh: null,
+  deviceId: null,
 }
 const DHW: HeatPumpCircuit = {
   ...CIRCUIT,
@@ -71,6 +77,10 @@ const PUMP: HeatPumpStatus = {
   energy: { thermalKwh: null, electricalKwh: null },
   waterPressureBar: null,
   starts: null,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
   lastFetchedAt: 0,
 }
 const WATER: WaterHeaterStatus = {
@@ -105,6 +115,14 @@ describe('heat pump model', () => {
         power: { ...PUMP.power, electricalW: 900 },
       }),
     ).toBe('cool')
+  })
+
+  it('trusts the compressor status the gateway reports over the modulation', () => {
+    const active = { ...PUMP, circuits: [{ ...DHW, active: true }] }
+    const modulating = { ...active, power: { ...PUMP.power, compressorPct: 40 } }
+    expect(heatPumpActivityOf({ ...modulating, compressorRunning: false })).toBe('idle')
+    expect(heatPumpActivityOf({ ...modulating, compressorRunning: true })).toBe('dhw')
+    expect(heatPumpActivityOf({ ...active, compressorRunning: true })).toBe('dhw')
   })
 
   it('offers only declared, choosable system modes, in a fixed order', () => {

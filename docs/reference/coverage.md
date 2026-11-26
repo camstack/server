@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9330 source files · 251 units claimed by at least one document (9308 files).**
+**257 units · 9331 source files · 251 units claimed by at least one document (9309 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -61,7 +61,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-bosch/src/home-connect` | 39 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +2 more | 2026-11-26 |
 | `packages/addon-provider-unifi` | 39 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md`, +2 more | 2026-11-26 |
 | `packages/addon-provider-enpal` | 38 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-26 |
-| `packages/addon-provider-bosch/src/homecom` | 36 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +4 more | 2026-11-26 |
+| `packages/addon-provider-bosch/src/homecom` | 37 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +4 more | 2026-11-26 |
 | `packages/addon-provider-esphome` | 36 | `device-providers` | `addons/addon-provider-esphome.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md`, +4 more | 2026-11-26 |
 | `packages/types/src/pipeline` | 36 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +30 more, 2 ADRs | 2026-11-21 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +14 more, 2 ADRs | 2026-10-21 |

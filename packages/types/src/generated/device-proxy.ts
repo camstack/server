@@ -759,6 +759,9 @@ export function createDeviceProxy(
     setDhwTemperatureLevel: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwTemperatureLevel', 'mutation', input, undefined, options),
     setDhwChargeDuration: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwChargeDuration', 'mutation', input, undefined, options),
     startExtraHotWater: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'startExtraHotWater', 'mutation', input, undefined, options),
+    setCircuitControlType: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitControlType', 'mutation', input, undefined, options),
+    setCircuitTargetTemp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitTargetTemp', 'mutation', input, undefined, options),
+    setDhwLevelTemp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwLevelTemp', 'mutation', input, undefined, options),
   }
 
   const heatPumpStatusInterface = {

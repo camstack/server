@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { heatPumpInstantCop, HeatPumpStatusSchema } from '@camstack/types'
+import { DeviceType, heatPumpInstantCop, HeatPumpStatusSchema } from '@camstack/types'
 import {
+  circuitControlTypeWrite,
+  circuitIdentitiesFrom,
   circuitOptionWrite,
   circuitRangeWrite,
   dhwChargeDurationWrite,
+  dhwLevelTempWrite,
   dhwOptionWrite,
   extraHotWaterWrite,
   hasSystemDevice,
@@ -259,5 +262,154 @@ describe('HomeCom heat pump batch A (planning#741)', () => {
     }))
     expect(systemModeWrite(r, 'holiday', 'off')).toEqual({ op: 'holidayMode', value: '' })
     expect(systemModeWrite(r, 'holiday', 'hm1')).toEqual({ op: 'holidayMode', value: 'hm1' })
+  })
+})
+
+describe('HomeCom heat pump batch B (planning#741)', () => {
+  const identities = new Map([
+    ['hc1', { deviceId: 5631, label: 'Living room' }],
+    ['dhw1', { deviceId: 5633, label: 'Boiler' }],
+  ])
+
+  it('maps working time, heat demand, heat source type and the compressor from the heat source', () => {
+    const status = heatPumpStatusFrom(
+      reading((r) => ({
+        ...r,
+        heatSource: {
+          ...r.heatSource,
+          workingTimeS: 36_000,
+          heatDemand: 'dhw',
+          compressorRunning: true,
+        },
+      })),
+      1,
+    )
+    expect(status).toMatchObject({
+      workingTime: 36_000,
+      heatDemand: 'dhw',
+      heatSourceType: 'air_water',
+      compressorRunning: true,
+    })
+    expect(HeatPumpStatusSchema.safeParse(status).success).toBe(true)
+  })
+
+  it('keeps an unanswered working time, demand and compressor null', () => {
+    const status = heatPumpStatusFrom(
+      reading((r) => ({
+        ...r,
+        heatSource: { ...r.heatSource, heatDemand: null },
+      })),
+      1,
+    )
+    expect(status.workingTime).toBeNull()
+    expect(status.heatDemand).toBeNull()
+    expect(status.compressorRunning).toBeNull()
+  })
+
+  it('adds the solar circuit as a circuit entry with its collector, tank limit and yield', () => {
+    const status = heatPumpStatusFrom(
+      reading((r) => ({
+        ...r,
+        solarCircuits: [
+          {
+            id: 'sc1',
+            collectorTemp: 72.5,
+            tankTemp: 48,
+            tankBottomTemp: 41,
+            maxCylinderTemp: 60,
+            yieldKwh: 1234.5,
+          },
+        ],
+      })),
+      1,
+    )
+    const solar = status.circuits.find((c) => c.id === 'sc1')
+    expect(solar).toMatchObject({
+      kind: 'solar',
+      label: 'Solar',
+      currentTemp: 72.5,
+      tankBottomTemp: 41,
+      maxCylinderTemp: 60,
+      yieldKwh: 1234.5,
+      deviceId: null,
+      operationMode: null,
+    })
+    expect(HeatPumpStatusSchema.safeParse(status).success).toBe(true)
+  })
+
+  it('carries the control type, and the temperature of each hot-water level', () => {
+    const status = heatPumpStatusFrom(
+      reading((r) => ({
+        ...r,
+        heatingCircuits: r.heatingCircuits.map((c) => ({
+          ...c,
+          controlType: setting('wdcoptimized', {
+            allowed: ['wdcoptimized', 'ISRC'],
+            writeable: true,
+          }),
+        })),
+      })),
+      1,
+    )
+    const [hc, dhw] = status.circuits
+    expect(hc?.controlType).toEqual({ value: 'wdcoptimized', allowed: ['wdcoptimized', 'ISRC'] })
+    expect(dhw?.levelTemperatures).toEqual({
+      eco: { value: 51, min: 30, max: 60, step: null },
+    })
+  })
+
+  it('names the registry child that owns a circuit, and takes its name as the label', () => {
+    const [hc, dhw] = heatPumpStatusFrom(reading(), 1, identities).circuits
+    expect(hc).toMatchObject({ deviceId: 5631, label: 'Living room' })
+    expect(dhw).toMatchObject({ deviceId: 5633, label: 'Boiler' })
+    const [bare] = heatPumpStatusFrom(reading(), 1).circuits
+    expect(bare).toMatchObject({ deviceId: null, label: 'Heating circuit 1' })
+  })
+
+  it('writes the control type and the level temperature, refusing outside what the gateway allows', () => {
+    const r = reading((x) => ({
+      ...x,
+      heatingCircuits: x.heatingCircuits.map((c) => ({
+        ...c,
+        controlType: setting('wdcoptimized', {
+          allowed: ['wdcoptimized', 'ISRC'],
+          writeable: true,
+        }),
+      })),
+    }))
+    expect(circuitControlTypeWrite(r, 'hc1', 'ISRC')).toEqual({
+      op: 'hcControlType',
+      circuitId: 'hc1',
+      value: 'ISRC',
+    })
+    expect(() => circuitControlTypeWrite(r, 'hc1', 'nope')).toThrow(/not an accepted value/)
+    expect(() => circuitControlTypeWrite(reading(), 'hc1', 'ISRC')).toThrow(/not available/)
+
+    expect(dhwLevelTempWrite(r, 'dhw1', 'eco', 55)).toEqual({
+      op: 'dhwLevelTemp',
+      circuitId: 'dhw1',
+      level: 'eco',
+      value: 55,
+    })
+    expect(() => dhwLevelTempWrite(r, 'dhw1', 'eco', 65)).toThrow(/outside/)
+    expect(() => dhwLevelTempWrite(r, 'dhw1', 'high', 55)).toThrow(/no level/)
+    expect(() => dhwLevelTempWrite(r, 'dhw9', 'eco', 55)).toThrow(/no dhw circuit/)
+  })
+
+  it('maps registry children onto circuits: a climate child by its circuit, the water heater to the first hot-water circuit', () => {
+    const circuits = reading().circuits
+    const found = circuitIdentitiesFrom(
+      [
+        { id: 5631, name: 'Living room', type: DeviceType.Climate, config: { circuitId: 'hc1' } },
+        { id: 5632, name: 'Elsewhere', type: DeviceType.Climate, config: { circuitId: 'hc9' } },
+        { id: 5633, name: 'Boiler', type: DeviceType.WaterHeater, config: {} },
+        { id: 5634, name: 'Other', type: DeviceType.Climate, config: {} },
+      ],
+      circuits,
+    )
+    expect([...found]).toEqual([
+      ['hc1', { deviceId: 5631, label: 'Living room' }],
+      ['dhw1', { deviceId: 5633, label: 'Boiler' }],
+    ])
   })
 })

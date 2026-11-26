@@ -150,14 +150,15 @@ export function heatPumpSystemModes(
 }
 
 /**
- * What the pump is doing: idle when the compressor (else the electrical draw)
- * says it is not running; otherwise the kind of the active circuit. The cap
+ * What the pump is doing: idle when the compressor status the gateway reports (else the
+ * modulation, else the electrical draw) says it is not running; otherwise the kind of the active circuit. The cap
  * reports no defrost, so the card never invents one.
  */
 export function heatPumpActivityOf(status: HeatPumpStatus): HeatPumpActivity {
   const { compressorPct, electricalW } = status.power
   const running =
-    compressorPct !== null ? compressorPct > 0 : electricalW !== null ? electricalW > 0 : null
+    status.compressorRunning ??
+    (compressorPct !== null ? compressorPct > 0 : electricalW !== null ? electricalW > 0 : null)
   const active = status.circuits.find((c) => c.active === true)
   if (running === false || (running === null && active === undefined)) return 'idle'
   if (active?.kind === 'dhw') return 'dhw'

@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1564 of 1567 methods.
+ * Coverage: 1567 of 1570 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -548,12 +548,15 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "heatPumpControl.setAdditionalHeaterMode": "off / manual / auto.",
   "heatPumpControl.setAwayMode": "off / on.",
   "heatPumpControl.setCircuitComfortSetpoint": "Set a circuit's comfort temperature.",
+  "heatPumpControl.setCircuitControlType": "Set how a heating circuit is regulated (controlType on the status circuit lists the values).",
   "heatPumpControl.setCircuitEcoSetpoint": "Set a circuit's eco temperature.",
   "heatPumpControl.setCircuitHeatCoolMode": "Set a circuit to heating or cooling.",
   "heatPumpControl.setCircuitMaxFlowTemp": "Set a circuit's maximum flow temperature.",
   "heatPumpControl.setCircuitOperationMode": "Set the operation mode of a heating circuit.",
   "heatPumpControl.setCircuitSummerWinter": "Set a circuit's summer or winter mode.",
+  "heatPumpControl.setCircuitTargetTemp": "Set the target temperature a heating circuit holds now (the same write as its climate child).",
   "heatPumpControl.setDhwChargeDuration": "Set how many minutes a hot water charge runs.",
+  "heatPumpControl.setDhwLevelTemp": "Set the temperature one hot water level (low / high / eco) heats to.",
   "heatPumpControl.setDhwOperationMode": "Set the operation mode of the domestic hot water circuit.",
   "heatPumpControl.setDhwTemperatureLevel": "Set the hot water temperature level of a circuit.",
   "heatPumpControl.setHolidayMode": "off / hm1 .. hm8 (the programmes the gateway lists).",

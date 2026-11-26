@@ -14,11 +14,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { HomeComHeatPumpDevice } from '../devices/homecom-heat-pump-device.js'
 import type { HomeComApiClient, HomeComSystemSnapshot } from '../homecom-api-client.js'
 import { homeComConnections } from '../homecom-gateway.js'
-import type { HomeComHeatPumpReading } from '../homecom-heat-pump.js'
+import type { HomeComBridgeReading } from '../homecom-bridge.js'
+import { k40Reading, setting } from './homecom-bridge-fixture.js'
+import { heatPumpReadingFrom, type HomeComHeatPumpReading } from '../homecom-heat-pump.js'
 
 type Provider = Record<string, (input: Record<string, unknown>) => Promise<unknown>>
 
-function rig() {
+function rig(api: unknown = {}) {
   const providers: Record<string, Provider> = {}
   const refreshPolicies: unknown[] = []
   let runtime: IDeviceRuntimeState | null = null
@@ -68,7 +70,7 @@ function rig() {
         }
       },
     ),
-    api: {},
+    api,
     logger,
   } as unknown as DeviceContext
   return { ctx, providers, logger, refreshPolicies }
@@ -98,11 +100,18 @@ const READING: HomeComHeatPumpReading = {
   electricalKwh: null,
   pressureBar: null,
   starts: null,
+  workingTimeS: null,
+  heatDemand: null,
+  compressorRunning: null,
   faults: [],
 }
 
-function snapshot(heatPump: HomeComHeatPumpReading | undefined): HomeComSystemSnapshot {
+function snapshot(
+  heatPump: HomeComHeatPumpReading | undefined,
+  bridge?: HomeComBridgeReading,
+): HomeComSystemSnapshot {
   return {
+    ...(bridge === undefined ? {} : { bridge }),
     gateway: { gatewayId: 'g1', name: 'K40', model: 'K40' },
     circuits: [],
     dhw: null,
@@ -131,11 +140,15 @@ function client(fetchSystem: HomeComApiClient['fetchSystem']): HomeComApiClient 
   }
 }
 
-function connect(heatPump: HomeComHeatPumpReading | undefined, api: HomeComApiClient) {
+function connect(
+  heatPump: HomeComHeatPumpReading | undefined,
+  api: HomeComApiClient,
+  bridge?: HomeComBridgeReading,
+) {
   homeComConnections.set('int-1', {
     gatewayId: 'g1',
     client: api,
-    snapshot: snapshot(heatPump),
+    snapshot: snapshot(heatPump, bridge),
     discoverables: [],
     refresh: async () => {
       homeComConnections.updateSnapshot('int-1', await api.fetchSystem())
@@ -289,6 +302,11 @@ describe('HomeComHeatPumpDevice', () => {
           level: null,
           chargeDuration: null,
           charge: null,
+          controlType: null,
+          levels: null,
+          tankBottomTemp: null,
+          maxCylinderTemp: null,
+          yieldKwh: null,
         },
       ],
     }
@@ -302,6 +320,98 @@ describe('HomeComHeatPumpDevice', () => {
     ])
     const blind = logger.info.mock.calls.find((c) => String(c[0]).includes('sent blind'))
     expect(blind?.[1]).toMatchObject({ tags: { deviceId: 9 } })
+    homeComConnections.clear()
+  })
+
+  it('names the registry child of each circuit, and says once when the lookup fails', async () => {
+    const getChildren = {
+      query: vi.fn(async () => [
+        { id: 5631, name: 'Living room', type: DeviceType.Climate, config: { circuitId: 'hc1' } },
+        { id: 5633, name: 'Boiler', type: DeviceType.WaterHeater, config: {} },
+      ]),
+    }
+    const { ctx, providers } = rig({ deviceManager: { getChildren } })
+    const bridge = k40Reading()
+    const withCircuits = { ...READING, circuits: heatPumpReadingFrom(bridge).circuits }
+    connect(
+      withCircuits,
+      client(async () => snapshot(withCircuits, bridge)),
+      bridge,
+    )
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    await providers['heat-pump-status']?.['getStatus']?.({})
+    await vi.waitFor(() => {
+      const slice = device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')
+      expect(slice?.circuits.map((c) => [c.id, c.deviceId, c.label])).toEqual([
+        ['hc1', 5631, 'Living room'],
+        ['dhw1', 5633, 'Boiler'],
+      ])
+    })
+    expect(getChildren.query).toHaveBeenCalledWith({ parentDeviceId: 9 })
+    await device.removeDevice()
+    homeComConnections.clear()
+  })
+
+  it('keeps the circuits without a device id, and logs it with the device tag, when the children cannot be listed', async () => {
+    const { ctx, logger } = rig({})
+    const bridge = k40Reading()
+    const withCircuits = { ...READING, circuits: heatPumpReadingFrom(bridge).circuits }
+    connect(
+      withCircuits,
+      client(async () => snapshot(withCircuits, bridge)),
+      bridge,
+    )
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    await vi.waitFor(() => {
+      const failed = logger.warn.mock.calls.filter((c) => String(c[0]).includes('children'))
+      expect(failed).toHaveLength(1)
+      expect(failed[0]?.[1]).toMatchObject({ tags: { deviceId: 9 } })
+    })
+    const slice = device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')
+    expect(slice?.circuits.every((c) => c.deviceId === null)).toBe(true)
+    await device.removeDevice()
+    homeComConnections.clear()
+  })
+
+  it('writes the new controls through the checked builders and the shared setpoint write', async () => {
+    const { ctx, providers } = rig()
+    const base = k40Reading()
+    const bridge: HomeComBridgeReading = {
+      ...base,
+      heatingCircuits: base.heatingCircuits.map((c) => ({
+        ...c,
+        controlType: setting('wdcoptimized', {
+          allowed: ['wdcoptimized', 'ISRC'],
+          writeable: true,
+        }),
+      })),
+    }
+    const hp = { ...READING, circuits: heatPumpReadingFrom(bridge).circuits }
+    const api = client(async () => snapshot(hp, bridge))
+    connect(hp, api, bridge)
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    const control = providers['heat-pump-control']
+    await control?.['setCircuitControlType']?.({ circuitId: 'hc1', controlType: 'ISRC' })
+    await control?.['setCircuitTargetTemp']?.({ circuitId: 'hc1', temp: 21 })
+    await control?.['setDhwLevelTemp']?.({ circuitId: 'dhw1', level: 'eco', temp: 55 })
+    expect(api.writeHeatPump).toHaveBeenNthCalledWith(1, [
+      { op: 'hcControlType', circuitId: 'hc1', value: 'ISRC' },
+    ])
+    expect(api.writeHeatPump).toHaveBeenNthCalledWith(2, [
+      { op: 'hcManualRoomSetpoint', circuitId: 'hc1', value: 21 },
+    ])
+    expect(api.writeHeatPump).toHaveBeenNthCalledWith(3, [
+      { op: 'dhwLevelTemp', circuitId: 'dhw1', level: 'eco', value: 55 },
+    ])
+    await expect(
+      control?.['setCircuitTargetTemp']?.({ circuitId: 'hc1', temp: 99 }),
+    ).rejects.toThrow(/outside/)
+    await expect(
+      control?.['setDhwLevelTemp']?.({ circuitId: 'dhw1', level: 'eco', temp: 99 }),
+    ).rejects.toThrow(/outside/)
     homeComConnections.clear()
   })
 })

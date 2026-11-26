@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 91 caps with 512 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 91 caps with 516 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -282,7 +282,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "gas": [{"path":"detected","valueType":"boolean"}],
   "group-active": [{"path":"active","valueType":"boolean"}],
   "group-status": [{"path":"included","valueType":"number"}, {"path":"excluded","valueType":"number"}, {"path":"total","valueType":"number"}],
-  "heat-pump-status": [{"path":"power.thermalW","valueType":"number"}, {"path":"power.electricalW","valueType":"number"}, {"path":"power.compressorPct","valueType":"number"}, {"path":"temperatures.supply","valueType":"number"}, {"path":"temperatures.return","valueType":"number"}, {"path":"temperatures.outdoor","valueType":"number"}, {"path":"energy.thermalKwh","valueType":"number"}, {"path":"energy.electricalKwh","valueType":"number"}, {"path":"waterPressureBar","valueType":"number"}, {"path":"starts","valueType":"number"}],
+  "heat-pump-status": [{"path":"power.thermalW","valueType":"number"}, {"path":"power.electricalW","valueType":"number"}, {"path":"power.compressorPct","valueType":"number"}, {"path":"temperatures.supply","valueType":"number"}, {"path":"temperatures.return","valueType":"number"}, {"path":"temperatures.outdoor","valueType":"number"}, {"path":"energy.thermalKwh","valueType":"number"}, {"path":"energy.electricalKwh","valueType":"number"}, {"path":"waterPressureBar","valueType":"number"}, {"path":"starts","valueType":"number"}, {"path":"workingTime","valueType":"number"}, {"path":"heatDemand","valueType":"enum","enumValues":["idle","ch","dhw","frost"]}, {"path":"heatSourceType","valueType":"string"}, {"path":"compressorRunning","valueType":"boolean"}],
   "heating-valve": [{"path":"position","valueType":"number"}],
   "humidifier": [{"path":"on","valueType":"boolean"}, {"path":"currentHumidity","valueType":"number"}, {"path":"targetHumidity","valueType":"number"}, {"path":"mode","valueType":"string"}, {"path":"action","valueType":"string"}, {"path":"minHumidity","valueType":"number"}, {"path":"maxHumidity","valueType":"number"}],
   "humidity-sensor": [{"path":"humidity","valueType":"number"}],
@@ -381,7 +381,7 @@ export const CAP_STATE_FIELD_PRESENCE: Readonly<
   "group-active": { "active": "required", "lastChangedAt": "required" },
   "group-commands": { "results": "required" },
   "group-status": { "excluded": "required", "included": "required", "total": "required" },
-  "heat-pump-status": { "circuits": "required", "energy": "required", "lastFetchedAt": "required", "power": "required", "starts": "required", "system": "required", "temperatures": "required", "waterPressureBar": "required" },
+  "heat-pump-status": { "circuits": "required", "compressorRunning": "required", "energy": "required", "heatDemand": "required", "heatSourceType": "required", "lastFetchedAt": "required", "power": "required", "starts": "required", "system": "required", "temperatures": "required", "waterPressureBar": "required", "workingTime": "required" },
   "heating-valve": { "lastFetchedAt": "required", "position": "required" },
   "humidifier": { "action": "required", "availableModes": "required", "currentHumidity": "required", "lastChangedAt": "required", "maxHumidity": "required", "minHumidity": "required", "mode": "required", "on": "required", "targetHumidity": "required" },
   "humidity-sensor": { "humidity": "required", "lastFetchedAt": "required" },
