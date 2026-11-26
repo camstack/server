@@ -385,11 +385,17 @@ def test_heat_source_status_facts_are_read_in_base_units():
     assert source["heatPumpType"] == "air_water"
 
 
-def test_heat_demand_empty_list_is_idle_and_a_refused_one_is_unknown():
+def test_heat_demand_idle_is_the_empty_token_only_and_a_refused_one_is_unknown():
     idle = k40_device()
-    idle["heat_sources"]["actualHeatDemand"] = {"id": "/x", "type": "arrayData", "values": [],
+    idle["heat_sources"]["actualHeatDemand"] = {"id": "/x", "type": "arrayData", "values": [""],
                                                 "allowedValues": ["", "ch", "dhw", "frost"]}
     assert normalize_reading(idle, extras())["heatSource"]["heatDemand"] == "idle"
+    # The explored gateway lists "" among the allowed values; an envelope that is merely empty
+    # is not proven to be that answer, so it stays unknown (D393).
+    empty = k40_device()
+    empty["heat_sources"]["actualHeatDemand"] = {"id": "/x", "type": "arrayData", "values": [],
+                                                 "allowedValues": ["", "ch", "dhw", "frost"]}
+    assert normalize_reading(empty, extras())["heatSource"]["heatDemand"] is None
     refused = k40_device()
     refused["heat_sources"]["actualHeatDemand"] = FORBIDDEN
     refused["heat_sources"]["totalWorkingTime"] = FORBIDDEN

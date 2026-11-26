@@ -81,6 +81,7 @@ const PUMP: HeatPumpStatus = {
   heatDemand: null,
   heatSourceType: null,
   compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 0,
 }
 const WATER: WaterHeaterStatus = {

@@ -5,6 +5,7 @@ import type {
   HeatPumpDemand,
   HeatPumpOptionSetting,
   HeatPumpRangeSetting,
+  HeatPumpHourAverage,
   HeatPumpStatus,
   HeatPumpSystem,
   IconKey,
@@ -282,6 +283,7 @@ export function heatPumpStatusFrom(
   reading: HomeComHeatPumpReading,
   now: number,
   identities: ReadonlyMap<string, HeatPumpCircuitIdentity> = new Map(),
+  hourAverage: HeatPumpHourAverage | null = null,
 ): HeatPumpStatus {
   return {
     circuits: reading.circuits.map((c) => circuitOf(c, identities.get(c.id))),
@@ -313,6 +315,7 @@ export function heatPumpStatusFrom(
     heatDemand: reading.heatDemand,
     heatSourceType: reading.heatPumpType,
     compressorRunning: reading.compressorRunning,
+    hourAverage,
     lastFetchedAt: now,
   }
 }

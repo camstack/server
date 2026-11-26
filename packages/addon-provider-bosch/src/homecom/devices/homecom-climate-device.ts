@@ -99,12 +99,10 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
   private refreshFromSnapshot(): void {
     if (this.#zoneId !== null) {
       const zone = this.zone()
-      this.runtimeState.setCapState(
-        CLIMATE_CAP,
-        zone === null
-          ? { ...COLD_START, lastFetchedAt: Date.now() }
-          : zoneClimateSlice(zone, Date.now()),
-      )
+      // No zone reading, or a zone whose mode the gateway refused, publishes nothing: the slice
+      // keeps its own `lastFetchedAt` and reads unknown, never `off` (D393).
+      const slice = zone === null ? null : zoneClimateSlice(zone, Date.now())
+      if (slice !== null) this.runtimeState.setCapState(CLIMATE_CAP, slice)
       return
     }
     const snapshot = homeComConnections.getSnapshot(this.#brokerId)

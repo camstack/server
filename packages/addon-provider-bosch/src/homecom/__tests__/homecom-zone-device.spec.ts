@@ -142,4 +142,18 @@ describe('HomeCom zone climate child (planning#741 B-zone)', () => {
     )
     homeComConnections.clear()
   })
+
+  it('publishes no slice, so the mode reads unknown, when the gateway refused the zone mode', async () => {
+    const { ctx } = rig()
+    connect(
+      snapshotWith({ ...ZONE, userMode: null, setpointTemp: null, manualTemp: null }),
+      vi.fn(async () => {}),
+    )
+    const device = new HomeComClimateDevice(ctx)
+    await device.onActivate()
+    expect(
+      device.runtimeState.getCapState<ClimateControlStatus>('climate-control')?.lastFetchedAt,
+    ).toBe(0)
+    homeComConnections.clear()
+  })
 })

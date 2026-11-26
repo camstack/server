@@ -2,8 +2,10 @@ import { z } from 'zod'
 import {
   BaseDevice,
   heatPumpControlCapability,
+  heatPumpHourAverages,
   heatPumpStatusCapability,
   type DeviceContext,
+  type HeatPumpCounterSample,
   type HeatPumpStatus,
   type InferNativeProvider,
 } from '@camstack/types'
@@ -40,6 +42,19 @@ const STATUS_CAP = 'heat-pump-status'
 /** The children are looked up beside the poll, at most this often. */
 const IDENTITY_MIN_INTERVAL_MS = 15_000
 
+/** Counter steps kept per device: enough for the last windows, bounded in memory. */
+const COUNTER_SAMPLES_KEPT = 24
+
+/** The samples with `value` appended when it is a new step of the counter (a repeat adds none). */
+function withCounterStep(
+  samples: readonly HeatPumpCounterSample[],
+  at: number,
+  value: number | null,
+): readonly HeatPumpCounterSample[] {
+  if (value === null || samples[samples.length - 1]?.value === value) return samples
+  return [...samples, { at, value }].slice(-COUNTER_SAMPLES_KEPT)
+}
+
 function sameIdentities(
   a: ReadonlyMap<string, HeatPumpCircuitIdentity>,
   b: ReadonlyMap<string, HeatPumpCircuitIdentity>,
@@ -64,6 +79,7 @@ const COLD_START: HeatPumpStatus = {
   heatDemand: null,
   heatSourceType: null,
   compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 0,
 }
 
@@ -84,6 +100,9 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   #identitiesAt = 0
   #identitiesInFlight = false
   #identitiesFailed = false
+  /** The lifetime kWh counters, one sample per new value, from which the hour average comes. */
+  #thermalSamples: readonly HeatPumpCounterSample[] = []
+  #electricalSamples: readonly HeatPumpCounterSample[] = []
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComHeatPumpSchema.parse(ctx.persistedConfig ?? {})
@@ -143,9 +162,17 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
         },
       )
     }
+    const now = Date.now()
+    this.#thermalSamples = withCounterStep(this.#thermalSamples, now, reading.thermalKwh)
+    this.#electricalSamples = withCounterStep(this.#electricalSamples, now, reading.electricalKwh)
     this.runtimeState.setCapState(
       STATUS_CAP,
-      heatPumpStatusFrom(reading, Date.now(), this.#identities),
+      heatPumpStatusFrom(
+        reading,
+        now,
+        this.#identities,
+        heatPumpHourAverages(this.#thermalSamples, this.#electricalSamples),
+      ),
     )
     this.publishFaults(reading.faults)
     this.refreshIdentities(reading)

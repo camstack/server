@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   heatPumpHourAverage,
   heatPumpHourAverageCop,
+  heatPumpHourAverages,
   type HeatPumpCounterSample,
 } from '../heat-pump-status.cap.js'
 
@@ -45,5 +46,28 @@ describe('heatPumpHourAverageCop', () => {
   it('is unknown when the thermal counter does not cover the electrical hour', () => {
     expect(heatPumpHourAverageCop([at(2, 500)], [at(0, 100), at(1, 102)])).toBeNull()
     expect(heatPumpHourAverageCop([at(0, 500), at(1, 509)], [at(0, 100)])).toBeNull()
+  })
+})
+
+describe('heatPumpHourAverages', () => {
+  it('gives both powers and the COP of the same window', () => {
+    expect(heatPumpHourAverages([at(0, 300), at(1, 310)], [at(0, 100), at(1, 102.5)])).toEqual({
+      thermalW: 10_000,
+      electricalW: 2500,
+      cop: 4,
+      fromAt: 0,
+      toAt: H,
+    })
+  })
+
+  it('is unknown without an electrical window, and keeps a thermal power it cannot cover unknown', () => {
+    expect(heatPumpHourAverages([at(0, 300), at(1, 310)], [at(0, 100)])).toBeNull()
+    expect(heatPumpHourAverages([], [at(0, 100), at(1, 102)])).toEqual({
+      thermalW: null,
+      electricalW: 2000,
+      cop: null,
+      fromAt: 0,
+      toAt: H,
+    })
   })
 })

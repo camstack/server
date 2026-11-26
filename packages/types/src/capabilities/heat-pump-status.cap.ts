@@ -126,6 +126,22 @@ export const HEAT_PUMP_DEMANDS = ['idle', 'ch', 'dhw', 'frost'] as const
 export const HeatPumpDemandSchema = z.enum(HEAT_PUMP_DEMANDS)
 export type HeatPumpDemand = z.infer<typeof HeatPumpDemandSchema>
 
+/**
+ * The average power and COP over the last step of the lifetime counters, for a gateway that
+ * publishes no live power. A MARKED average over `fromAt`..`toAt`, never a measurement: it sits
+ * beside `power`, not in it (D393).
+ */
+export const HeatPumpHourAverageSchema = z.object({
+  thermalW: z.number().nullable(),
+  electricalW: z.number().nullable(),
+  /** Thermal over electrical energy of the SAME window. Null when either is unknown. */
+  cop: z.number().nullable(),
+  /** Ms epoch of the window the average covers. */
+  fromAt: z.number(),
+  toAt: z.number(),
+})
+export type HeatPumpHourAverage = z.infer<typeof HeatPumpHourAverageSchema>
+
 export const HeatPumpStatusSchema = z.object({
   circuits: z.array(HeatPumpCircuitSchema),
   system: HeatPumpSystemSchema,
@@ -144,6 +160,8 @@ export const HeatPumpStatusSchema = z.object({
   heatSourceType: z.string().nullable(),
   /** Whether the compressor runs, when the gateway says so. Null = unknown. */
   compressorRunning: z.boolean().nullable(),
+  /** Average power and COP of the last counter step; null until two distinct counter values. */
+  hourAverage: HeatPumpHourAverageSchema.nullable(),
   /** Ms epoch when the slice was last read from the gateway. */
   lastFetchedAt: z.number(),
 })
@@ -245,6 +263,30 @@ export function heatPumpHourAverageCop(
   const end = counterAt(thermal, window.toAt)
   if (start === null || end === null || end < start) return null
   return heatPumpPeriodCop(end - start, window.deltaKwh)
+}
+
+/**
+ * The hour average of both powers and their COP from the two lifetime counters, over the window
+ * of the electrical one. Null while that window is unknown; a power whose counter does not cover
+ * the window stays null on its own.
+ */
+export function heatPumpHourAverages(
+  thermal: readonly HeatPumpCounterSample[],
+  electrical: readonly HeatPumpCounterSample[],
+): HeatPumpHourAverage | null {
+  const window = heatPumpHourWindow(electrical)
+  if (window === null) return null
+  const hours = (window.toAt - window.fromAt) / 3_600_000
+  const start = counterAt(thermal, window.fromAt)
+  const end = counterAt(thermal, window.toAt)
+  const thermalKwh = start === null || end === null || end < start ? null : end - start
+  return {
+    thermalW: thermalKwh === null ? null : (thermalKwh * 1000) / hours,
+    electricalW: (window.deltaKwh * 1000) / hours,
+    cop: heatPumpHourAverageCop(thermal, electrical),
+    fromAt: window.fromAt,
+    toAt: window.toAt,
+  }
 }
 
 const HEAT_PUMP_CUSTOMIZE_DEVICE_TYPES = [DeviceType.HeatPump] as const

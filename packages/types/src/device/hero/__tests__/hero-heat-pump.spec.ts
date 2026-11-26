@@ -98,6 +98,7 @@ const SLICE: HeatPumpStatus = {
   heatDemand: null,
   heatSourceType: null,
   compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 1,
 }
 

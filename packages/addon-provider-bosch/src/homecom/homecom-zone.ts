@@ -37,7 +37,16 @@ function zoneAsCircuit(zone: HomeComBridgeZone): HomeComHeatingCircuit {
   }
 }
 
-export function zoneClimateSlice(zone: HomeComBridgeZone, now: number): ClimateControlStatus {
+/**
+ * The zone's climate slice, or null while the gateway has not answered its mode: the cap has
+ * no "unknown" mode, so an unread mode is a slice that is NOT published (the previous one keeps
+ * its own `lastFetchedAt`), never `off` (D393).
+ */
+export function zoneClimateSlice(
+  zone: HomeComBridgeZone,
+  now: number,
+): ClimateControlStatus | null {
+  if (typeof zone.userMode?.value !== 'string') return null
   return climateSliceFromCircuit(zoneAsCircuit(zone), now)
 }
 

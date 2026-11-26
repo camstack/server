@@ -73,6 +73,7 @@ const HEAT_PUMP: HeatPumpStatus = {
   heatDemand: null,
   heatSourceType: null,
   compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 0,
 }
 

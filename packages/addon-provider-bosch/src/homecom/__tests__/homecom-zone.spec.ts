@@ -37,7 +37,18 @@ describe('HomeCom zone as a climate child (planning#741)', () => {
       lastFetchedAt: 5,
     })
     const clock = { ...ZONE, userMode: setting('clock', { allowed: ['manual', 'clock'] }) }
-    expect(zoneClimateSlice(clock, 5).mode).toBe('auto')
+    expect(zoneClimateSlice(clock, 5)?.mode).toBe('auto')
+  })
+
+  it('reads a zone whose mode was refused as unknown, never as off (D393)', () => {
+    const onlyTemperature: HomeComBridgeZone = {
+      id: 'zn1',
+      userMode: null,
+      setpointTemp: null,
+      currentTemp: 20.5,
+      manualTemp: null,
+    }
+    expect(zoneClimateSlice(onlyTemperature, 5)).toBeNull()
   })
 
   it('writes the mode through the token the zone lists, and refuses one it does not', () => {

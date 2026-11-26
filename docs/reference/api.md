@@ -3090,7 +3090,7 @@
 
 ### `heat-pump-status` → `heatPumpStatus.*`
 
-- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:287`
+- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:329`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `heat-pump`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHeatPumpStatusProvider`

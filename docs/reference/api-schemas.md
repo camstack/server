@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1146 shared schemas.**
+**1147 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3056,6 +3056,14 @@ Enum: `"idle" \| "ch" \| "dhw" \| "frost"`
 - `thermalKwh`: `number \| null`
 - `electricalKwh`: `number \| null`
 
+### `HeatPumpHourAverageSchema`
+
+- `thermalW`: `number \| null`
+- `electricalW`: `number \| null`
+- `cop`: `number \| null`
+- `fromAt`: `number`
+- `toAt`: `number`
+
 ### `HeatPumpOptionSettingSchema`
 
 - `value`: `string \| null`
@@ -3087,6 +3095,7 @@ Enum: `"idle" \| "ch" \| "dhw" \| "frost"`
 - `heatDemand`: `HeatPumpDemandSchema \| null`
 - `heatSourceType`: `string \| null`
 - `compressorRunning`: `boolean \| null`
+- `hourAverage`: `HeatPumpHourAverageSchema \| null`
 - `lastFetchedAt`: `number`
 
 ### `HeatPumpSystemSchema`

@@ -201,7 +201,8 @@ def energy_kwh(raw: Any) -> Optional[float]:
 
 
 def heat_demand_of(raw: Any) -> Optional[str]:
-    """`dhw` / `ch` / `frost`, `idle` for the empty answer, None when the read was refused."""
+    """`dhw` / `ch` / `frost`; `idle` only for the gateway's own empty token (`""`, listed in
+    its `allowedValues`); None when the read was refused or the answer names nothing."""
     envelope = envelope_of(raw)
     if envelope is None:
         return None
@@ -213,7 +214,8 @@ def heat_demand_of(raw: Any) -> Optional[str]:
     for kind in DEMAND_KINDS:
         if kind in listed:
             return kind
-    return "idle"
+    # A present-but-empty envelope is not proof of idle: only the explicit empty token is.
+    return "idle" if "" in listed else None
 
 
 def compressor_running_of(raw: Any) -> Optional[bool]:

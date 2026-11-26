@@ -375,6 +375,96 @@ describe('HomeComHeatPumpDevice', () => {
     homeComConnections.clear()
   })
 
+  it('keeps the circuit ids it already had when a later children lookup fails', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-26T10:00:00Z'))
+    try {
+      const getChildren = {
+        query: vi
+          .fn()
+          .mockResolvedValueOnce([
+            {
+              id: 5631,
+              name: 'Living room',
+              type: DeviceType.Climate,
+              config: { circuitId: 'hc1' },
+            },
+          ])
+          .mockRejectedValue(new Error('registry down')),
+      }
+      const { ctx, providers, logger } = rig({ deviceManager: { getChildren } })
+      const bridge = k40Reading()
+      const withCircuits = { ...READING, circuits: heatPumpReadingFrom(bridge).circuits }
+      connect(
+        withCircuits,
+        client(async () => snapshot(withCircuits, bridge)),
+        bridge,
+      )
+      const device = new HomeComHeatPumpDevice(ctx)
+      await device.onActivate()
+      const ids = () =>
+        device.runtimeState
+          .getCapState<HeatPumpStatus>('heat-pump-status')
+          ?.circuits.map((c) => [c.id, c.deviceId, c.label])
+      await vi.waitFor(() => expect(ids()?.[0]).toEqual(['hc1', 5631, 'Living room']))
+      vi.setSystemTime(new Date('2026-11-26T10:01:00Z'))
+      await providers['heat-pump-status']?.['getStatus']?.({})
+      await vi.waitFor(() => expect(getChildren.query).toHaveBeenCalledTimes(2))
+      await vi.waitFor(() => {
+        const failed = logger.warn.mock.calls.filter((c) => String(c[0]).includes('children'))
+        expect(failed).toHaveLength(1)
+        expect(failed[0]?.[1]).toMatchObject({ tags: { deviceId: 9 } })
+      })
+      expect(ids()?.[0]).toEqual(['hc1', 5631, 'Living room'])
+      await device.removeDevice()
+    } finally {
+      vi.useRealTimers()
+      homeComConnections.clear()
+    }
+  })
+
+  it('publishes the hour average of the lifetime counters, unknown until two distinct values', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-26T10:00:00Z'))
+    try {
+      const { ctx, providers } = rig()
+      const at = (thermalKwh: number, electricalKwh: number) => ({
+        ...READING,
+        thermalKwh,
+        electricalKwh,
+      })
+      let next = snapshot(at(310, 100))
+      connect(
+        at(300, 100),
+        client(async () => next),
+      )
+      const device = new HomeComHeatPumpDevice(ctx)
+      await device.onActivate()
+      const average = () =>
+        device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.hourAverage
+      expect(average()).toBeNull()
+      // The same electrical value an hour later is still one step: unknown, never 0 W.
+      vi.setSystemTime(new Date('2026-11-26T10:30:00Z'))
+      await providers['device-state-refresh']?.['refresh']?.({})
+      expect(average()).toBeNull()
+      vi.setSystemTime(new Date('2026-11-26T11:00:00Z'))
+      next = snapshot(at(310, 102.53))
+      await providers['device-state-refresh']?.['refresh']?.({})
+      const hour = average()
+      expect(hour?.electricalW).toBeCloseTo(2530, 6)
+      expect(hour?.thermalW).toBeCloseTo(10_000, 6)
+      expect(hour?.cop).toBeCloseTo(10 / 2.53, 6)
+      // The live power stays unknown: the average sits beside it, never in it.
+      expect(
+        device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.power.electricalW,
+      ).toBeNull()
+      await device.removeDevice()
+    } finally {
+      vi.useRealTimers()
+      homeComConnections.clear()
+    }
+  })
+
   it('writes the new controls through the checked builders and the shared setpoint write', async () => {
     const { ctx, providers } = rig()
     const base = k40Reading()

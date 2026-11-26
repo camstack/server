@@ -88,5 +88,8 @@ the cap's schema, of the hero contribution and of the HomeCom mapping.
 > same write the climate child uses) and `setDhwLevelTemp`, each refused outside the
 > allowed values or min/max the gateway reported. (5) A zone with a readable value is
 > adopted as a climate child (`zone:<id>`, `config.zoneId`), read and written through
-> the same bridge zone. (6) `heatPumpHourAverage` turns the last step of a lifetime kWh
-> counter into the average power of that hour, for gateways that publish no power.
+> the same bridge zone. (6) The status carries `hourAverage`, a marked average beside
+> `power` (never in it): the average thermal and electrical power and the COP over the last
+> step of the lifetime kWh counters (`heatPumpHourAverages`). The device keeps a bounded,
+> in-memory list of counter steps and publishes it; it is null until two distinct counter
+> values have been seen (and again after a restart), and the live `power` stays null.
