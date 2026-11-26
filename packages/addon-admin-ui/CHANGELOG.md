@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.757] - 2026-11-26
+
 ### Changed
 
 - Internal: the device Customize kinds are listed in one typed registry; no visible change
