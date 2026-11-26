@@ -6190,6 +6190,28 @@
       "clear": "Cancella",
       "wgs84DecimalDegreesDetectAsks": "Gradi decimali WGS84. Rileva interroga una sola volta un servizio pubblico di geo-IP e non sovrascrive un valore che hai digitato — cancellalo prima.",
       "detectedNear": "Rilevato vicino a {{place}}."
+    },
+    "daylight": {
+      "title": "Giorno e notte",
+      "readFailed": "Impossibile leggere la fase attuale.",
+      "loading": "Lettura della fase attuale…",
+      "now": "Adesso",
+      "unknown": "Sconosciuta",
+      "day": "Giorno",
+      "night": "Notte",
+      "noLocation": "La fonte è il sole e il sito non ha una posizione.",
+      "decidedBySensor": "Deciso dal sensore di luce",
+      "decidedBySun": "Deciso dal sole",
+      "fallback": "Risponde il sole al posto del sensore: {{reason}}",
+      "source": "Fonte",
+      "sourceSun": "Sole al sito",
+      "sourceSensor": "Sensore di luce",
+      "sensor": "Sensore",
+      "darkBelow": "Notte sotto",
+      "hysteresis": "Il giorno torna oltre",
+      "minDwell": "Una fase dura almeno",
+      "pickSensor": "Scegli il sensore di luce per salvare.",
+      "noLuxUnit": "L'unità di illuminamento non è disponibile."
     }
   },
   "secrets": {

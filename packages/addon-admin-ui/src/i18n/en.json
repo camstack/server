@@ -6115,6 +6115,28 @@
       "clear": "Clear",
       "wgs84DecimalDegreesDetectAsks": "WGS84 decimal degrees. Detect asks a public geo-IP service once and will not overwrite a value you typed — clear it first.",
       "detectedNear": "Detected near {{place}}."
+    },
+    "daylight": {
+      "title": "Day and night",
+      "readFailed": "The current phase could not be read.",
+      "loading": "Reading the current phase…",
+      "now": "Now",
+      "unknown": "Unknown",
+      "day": "Day",
+      "night": "Night",
+      "noLocation": "The sun is the source and the site has no location.",
+      "decidedBySensor": "Decided by the light sensor",
+      "decidedBySun": "Decided by the sun",
+      "fallback": "The sun answers instead of the sensor: {{reason}}",
+      "source": "Source",
+      "sourceSun": "Sun at the site",
+      "sourceSensor": "Light sensor",
+      "sensor": "Sensor",
+      "darkBelow": "Night below",
+      "hysteresis": "Day returns this far above",
+      "minDwell": "A phase lasts at least",
+      "pickSensor": "Pick the light sensor to save.",
+      "noLuxUnit": "The illuminance unit is not available."
     }
   },
   "secrets": {

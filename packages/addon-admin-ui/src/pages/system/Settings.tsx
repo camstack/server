@@ -14,6 +14,9 @@
  * The last group is per-user, not per-hub: Units (an account preference) and
  * a read-only list of the active keyboard shortcuts.
  *
+ * `DaylightPhaseCard` follows it: day or night, from the sun at that
+ * location or from a light sensor.
+ *
  * `SiteLocationCard` sits ABOVE that panel and is the one hand-written
  * section here: the site coordinates are a fact of the installation, not
  * of any addon, so they are not an addon setting to aggregate. It renders
@@ -25,6 +28,7 @@ import { useClusterNodes } from '@camstack/ui-library'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
+import { DaylightPhaseCard } from '../../components/settings/DaylightPhaseCard'
 import { HotkeysCard } from '../../components/settings/HotkeysCard'
 import { SiteLocationCard } from '../../components/settings/SiteLocationCard'
 import { UnitsSection } from '../../components/settings/UnitsSection'
@@ -38,6 +42,7 @@ export function SettingsPage() {
   return (
     <AdminPage embedded>
       <SiteLocationCard />
+      <DaylightPhaseCard />
       {isLoading ? (
         <div className="text-foreground-subtle text-sm py-12 text-center">
           {t('admin.system.settings.loadingHubTopology', 'Loading hub topology…')}

@@ -26,6 +26,7 @@ vi.mock('../../../components/AdminPage', () => ({
   AdminPage: ({ children }: { children: unknown }) => <div>{children as never}</div>,
 }))
 vi.mock('../../../components/settings/SiteLocationCard', () => ({ SiteLocationCard: () => null }))
+vi.mock('../../../components/settings/DaylightPhaseCard', () => ({ DaylightPhaseCard: () => null }))
 vi.mock('../../../components/settings/UnitsSection', () => ({ UnitsSection: () => null }))
 vi.mock('../../../components/settings/HotkeysCard', () => ({ HotkeysCard: () => null }))
 vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({

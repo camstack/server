@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- System settings has a Day and night card: choose the sun or a light sensor (with thresholds) as the source of day and night, and see the current phase and why.
+
 ## [1.2.759] - 2026-11-26
 
 ### Changed

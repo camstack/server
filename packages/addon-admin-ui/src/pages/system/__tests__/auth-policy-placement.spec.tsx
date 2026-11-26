@@ -42,6 +42,9 @@ vi.mock('../../../components/system/BootstrapSettingsForm', () => ({
   ),
 }))
 
+vi.mock('../../../components/settings/DaylightPhaseCard', () => ({
+  DaylightPhaseCard: () => null,
+}))
 vi.mock('../../../components/settings/SiteLocationCard', () => ({
   SiteLocationCard: () => null,
 }))
