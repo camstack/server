@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bundles viewer 1.0.740: app selector, playback audio and motion, grid motion switch, rotation fix.
+
 ## [1.2.728] - 2026-11-26
 
 ### Changed
