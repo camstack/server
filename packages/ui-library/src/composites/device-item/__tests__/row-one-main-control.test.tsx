@@ -29,7 +29,7 @@ vi.mock('../../device-controls/timed-run-row-control', () => ({
 }))
 
 import { DeviceItemActions } from '../actions'
-import type { DeviceItemDevice } from '../helpers'
+import type { DeviceItemDevice, VariantDefaults } from '../helpers'
 import { ContainerChildrenProvider } from '../container-children-context'
 import type { UseDeviceProxyTrpc } from '../../../hooks/use-device-proxy'
 
@@ -55,6 +55,17 @@ const trpc = {
     getDevice: { query: async () => null },
   },
 } as unknown as UseDeviceProxyTrpc // documented test-fake boundary: only the cap queries the row reads
+
+const flags: VariantDefaults = {
+  showIntegrationIcon: false,
+  showParentBadge: false,
+  showSnapshot: false,
+  showBattery: false,
+  showStableId: false,
+  showId: false,
+  showSwitchToggle: false,
+  showChildrenAccordion: false,
+}
 
 function makeDevice(type: string, extra: Partial<DeviceItemDevice> = {}): DeviceItemDevice {
   return {
@@ -90,6 +101,7 @@ describe('a list row draws one main control', () => {
           <DeviceItemActions
             trpc={trpc}
             device={makeDevice(type)}
+            flags={flags}
             controlPlacement={placement === 'table' ? 'table' : 'right'}
           />
         </Wrapper>,
@@ -107,6 +119,7 @@ describe('a list row draws one main control', () => {
           <DeviceItemActions
             trpc={trpc}
             device={makeDevice(DeviceType.Container, { id: 2, linkDeviceId: 9 })}
+            flags={flags}
           />
         </ContainerChildrenProvider>
       </Wrapper>,
@@ -117,7 +130,12 @@ describe('a list row draws one main control', () => {
   it("the phone tray's lead action still carries it", () => {
     render(
       <Wrapper>
-        <DeviceItemActions trpc={trpc} device={makeDevice(DeviceType.Switch)} part="lead" />
+        <DeviceItemActions
+          trpc={trpc}
+          device={makeDevice(DeviceType.Switch)}
+          flags={flags}
+          part="lead"
+        />
       </Wrapper>,
     )
     expect(screen.getByTestId('timed-run')).toBeTruthy()
