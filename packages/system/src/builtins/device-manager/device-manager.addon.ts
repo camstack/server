@@ -44,6 +44,9 @@ import {
   errMsg,
   EventCategory,
   ProviderRegistration,
+  jobSourceCapability,
+  type IJobSourceProvider,
+  type JobSourceEntry,
   SECRET_CLEAR,
 } from '@camstack/types'
 import { purgeRetiredSettingsRows } from '../sqlite-storage/retired-settings-keys.js'
@@ -310,6 +313,11 @@ export class DeviceManagerAddon extends BaseAddon {
   private get adoptionJobsImpl(): AdoptionJobEngine {
     if (!this.adoptionJobEngine) {
       this.adoptionJobEngine = new AdoptionJobEngine({
+        // The central `jobs` ledger (planning#719); reached through `ctx.api` like any other addon.
+        ledger: {
+          register: (input) => this.ctx.api.jobs.register.mutate(input),
+          update: (input) => this.ctx.api.jobs.update.mutate(input),
+        },
         resolveProvider: async (addonId) => this.requireDeviceAdoptionProvider(addonId),
         logger: this.ctx.logger,
         // The SAME fence `allocateDeviceId` consults — a job is the operator's
@@ -1475,12 +1483,27 @@ export class DeviceManagerAddon extends BaseAddon {
     return [
       { capability: deviceManagerCapability, provider },
       { capability: deviceStateCapability, provider: deviceStateProvider },
+      // The adoption engine's jobs, for the `jobs` ledger to reconcile, cancel and resolve (planning#719).
+      { capability: jobSourceCapability, provider: this.adoptionJobSource() },
       // The `linked-devices` extension slot (D648), over `_linkedDeviceIds`.
       {
         capability: deviceExtensionCapability,
         provider: createDeviceManagerExtensionProvider(pctx),
       },
     ]
+  }
+
+  private adoptionJobSource(): IJobSourceProvider {
+    const engine = this.adoptionJobsImpl
+    return {
+      getJobs: async ({ jobIds }) =>
+        jobIds.map((jobId): JobSourceEntry => {
+          const snap = engine.ledgerSnapshot(jobId)
+          return snap === null ? { jobId, unknown: true } : { jobId, snapshot: snap }
+        }),
+      cancelJob: async ({ jobId }) => ({ accepted: engine.cancelByLedgerId(jobId) }),
+      resolveResult: async ({ jobId }) => engine.ledgerResult(jobId),
+    }
   }
 
   private get removalCleanup(): RemovalCleanup {

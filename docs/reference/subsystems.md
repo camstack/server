@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9334 source files · 1305 file(s) in no subsystem.**
+**31 subsystems · 9341 source files · 1305 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,8 +25,8 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 137 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +101 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 115 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +62 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 357 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +283 more, 51 ADRs | 2026-11-26 | ✅ |
-| Device model and the provider contract | 192 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +88 more, 6 ADRs | 2026-11-26 | ✅ |
+| Capability system and codegen | 359 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +284 more, 51 ADRs | 2026-11-26 | ✅ |
+| Device model and the provider contract | 192 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +89 more, 6 ADRs | 2026-11-26 | ✅ |
 | Device providers (per vendor) | 1021 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-26 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 146 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-11-26 | ✅ |
@@ -47,7 +47,7 @@ commits. A generated page may not.
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 410 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +59 more, 20 ADRs | 2026-11-26 | ⚠️ |
 | Remote access and networking | 77 | `architecture/network.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +22 more | 2026-11-26 | ⚠️ |
 | Automations, blocks and declared devices | 232 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, +66 more, 1 ADR | 2026-11-26 | ⚠️ |
-| Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +45 more | 2026-10-13 | ⚠️ |
+| Alerts, liveness and system health | 62 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +46 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 45 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-11-26 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1916 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +182 more, 15 ADRs | 2026-11-26 | ✅ |
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 357 (356 claimed by some document)
+- **Files**: 359 (358 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract
@@ -279,7 +279,7 @@ What the operator sees when something breaks — the alert centre, liveness prob
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/alerts/**`, `packages/system/src/builtins/liveness-monitor/**`, `packages/system/src/builtins/native-metrics/**`, `packages/system/src/builtins/platform-probe/**`, `packages/system/src/builtins/system-config/**`, `packages/system/src/kernel/addon-health-monitor.ts`, `packages/system/src/kernel/event-plane-report.ts`, `packages/system/src/kernel/heap-spaces.ts`, `packages/system/src/kernel/heap-watch.ts`, `packages/types/src/health/**`, `packages/types/src/metrics/**`, `packages/types/src/process/**`
-- **Files**: 57 (57 claimed by some document)
+- **Files**: 62 (62 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Logging and log shipping

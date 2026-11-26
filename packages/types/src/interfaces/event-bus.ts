@@ -1,5 +1,6 @@
 import type { BulkUpdateState } from '../capabilities/addons.cap.js'
 import type { AlertEpisodePayload } from '../notification/alert-episode.js'
+import type { JobState } from '../capabilities/job-source.cap.js'
 import type { MotionRegion } from '../capabilities/motion-detection.cap.js'
 import type { DetectionSource } from '../capabilities/pipeline-analytics.cap.js'
 import type { CamProfile } from '../capabilities/schemas/streaming-shared.js'
@@ -961,6 +962,8 @@ export interface EventCatalog {
     readonly wrapperKind?: WrapperKind
   }
   'system.ready-state': SystemReadyStatePayload
+  /** A job in the `jobs` ledger changed state. A hint: the ledger is the authority. */
+  'jobs.changed': { jobId: string; state: JobState }
   /**
    * A liveness invariant of this node is false. `findingId` is stable across
    * ticks, so AlertCenter keys one persistent alert on it rather than raising

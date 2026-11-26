@@ -14492,7 +14492,8 @@
       "count": "elementi"
     },
     "group": {
-      "history": "Storico dispositivi"
+      "history": "Storico dispositivi",
+      "jobs": "Operazioni"
     },
     "invalid": {
       "not-a-number": "Inserisci un numero",

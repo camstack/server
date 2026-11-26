@@ -36,6 +36,7 @@ import type { fanPresetsCapability } from '../capabilities/fan-presets.cap.js'
 import type { heroLayoutCapability } from '../capabilities/hero-layout.cap.js'
 import type { integrationInstancesCapability } from '../capabilities/integration-instances.cap.js'
 import type { integrationsCapability } from '../capabilities/integrations.cap.js'
+import type { jobsCapability } from '../capabilities/jobs.cap.js'
 import type { keychainAdminCapability } from '../capabilities/keychain-admin.cap.js'
 import type { llmCapability } from '../capabilities/llm.cap.js'
 import type { localNetworkCapability } from '../capabilities/local-network.cap.js'
@@ -113,6 +114,7 @@ export interface SystemProxy {
   readonly heroLayout: Pick<InferProvider<typeof heroLayoutCapability>, 'getHeroModel' | 'getRowModels' | 'getLayout'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'listByAddon' | 'adoptInstanceRows' | 'update' | 'delete' | 'getAvailableTypes'>
+  readonly jobs: Pick<InferProvider<typeof jobsCapability>, 'register' | 'update' | 'list' | 'get' | 'getSummary' | 'cancel' | 'dismiss' | 'collect'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
@@ -567,6 +569,17 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     update: (input?: unknown) => dispatch('integrations', 'update', 'mutation', input),
     delete: (input?: unknown) => dispatch('integrations', 'delete', 'mutation', input),
     getAvailableTypes: (input?: unknown) => dispatch('integrations', 'getAvailableTypes', 'query', input),
+  }
+
+  const jobsInterface = {
+    register: (input?: unknown) => dispatch('jobs', 'register', 'mutation', input),
+    update: (input?: unknown) => dispatch('jobs', 'update', 'mutation', input),
+    list: (input?: unknown) => dispatch('jobs', 'list', 'query', input),
+    get: (input?: unknown) => dispatch('jobs', 'get', 'query', input),
+    getSummary: (input?: unknown) => dispatch('jobs', 'getSummary', 'query', input),
+    cancel: (input?: unknown) => dispatch('jobs', 'cancel', 'mutation', input),
+    dismiss: (input?: unknown) => dispatch('jobs', 'dismiss', 'mutation', input),
+    collect: (input?: unknown) => dispatch('jobs', 'collect', 'query', input),
   }
 
   const keychainAdminInterface = {
@@ -1155,6 +1168,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     heroLayout: heroLayoutInterface,
     integrationInstances: integrationInstancesInterface,
     integrations: integrationsInterface,
+    jobs: jobsInterface,
     keychainAdmin: keychainAdminInterface,
     llm: llmInterface,
     localNetwork: localNetworkInterface,

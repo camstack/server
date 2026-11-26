@@ -4845,3 +4845,22 @@ the inline steps of a hook become one Action named after the rule, rules and
 buttons are rebound; old rows are deleted after a verified second read).
 `scripts/check-nc-no-executor.ts` keeps a step vocabulary, an executor and the
 sequences record kind out of the centre.
+
+## Jobs: the ledger of long-running work ([D1105](../decisions/adr-1105-a-long-running-operation-is-a-job-in-one-per-user-ledger.md), 2026-11-26)
+
+The alert-center addon also hosts the `jobs` capability (`packages/system/src/builtins/alerts/jobs/`),
+separate from `alerts`: own record kinds `jobs` and `job-dismissals`. A producer
+declares `job-source` (`getJobs`, `cancelJob`, `resolveResult`), registers a job
+and reports state and progress; the first producer is the device-manager adoption
+engine (`unit: 'candidates'`, result link to the integration page).
+
+- A job has an owner and an audience. The owner sees it; an admin also sees an
+  `audience: 'admins'` job (automatic work, owner `system`). Nobody sees another
+  user's owner job.
+- `subject` carries `deviceId`, `nodeId` and `entity { kind, id }`; `jobs.list`
+  takes `states`, `includeDismissed`, `entity` and `limit`.
+- The `jobs.changed` event is a hint; read `list` / `get` / `getSummary`.
+- Reconcile asks the producer on its ready-state and for a stale job; a job is
+  marked `failed / interrupted` only after two reads agree.
+- Retention: `jobsRetentionDays` (30) and `jobsMaxPerOwner` (200), listed on the
+  retention page; running jobs are never pruned.

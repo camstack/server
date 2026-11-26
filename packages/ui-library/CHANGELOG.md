@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The image device's full-view dialog shows a single close button
 - A device list row is one line with the main control; the timed run moved out of the row (still in the device page and the phone swipe tray)
+- Regenerated system hooks for the new jobs capability
 
 ## [1.2.514] - 2026-11-26
 

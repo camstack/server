@@ -848,6 +848,12 @@ export enum EventCategory {
   /** A migration applied or a failure cleared; the Alert Center re-reads the ledger. */
   MigrationApplied = 'migration.applied',
 
+  /**
+   * A job in the `jobs` ledger changed state (planning#719). A HINT carrying
+   * `{jobId, state}` only, never the snapshot: the ledger is the authority.
+   */
+  JobChanged = 'jobs.changed',
+
   // Device extended
   DeviceUpdated = 'device.updated',
   /**

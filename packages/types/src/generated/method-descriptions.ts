@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1567 of 1570 methods.
+ * Coverage: 1570 of 1581 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -602,6 +602,9 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "irTransmitter.getInfo": "What the infrared transmitter supports.",
   "irTransmitter.learn": "Listen for an infrared code from a remote and return it.",
   "irTransmitter.send": "Transmit an infrared code, given as timings or a native code.",
+  "jobs.cancel": "Asks the producer to stop. The state changes only when the producer says so.",
+  "jobs.collect": "Where the finished job's output is shown, resolved by the producer; null = none.",
+  "jobs.dismiss": "Hide a job from this user's list. Per user; never touches the job.",
   "keychain.delete": "Remove the caller's refs. Unknown refs are ignored.",
   "keychain.deleteDeviceScope": "Delete every value scoped device/<deviceId>, whatever its owner (D864). Reserved to device-manager, on the device-removed path: a driver's device-scoped secret is not anybody's once the device is gone. Answers the refs removed (never values).",
   "keychain.getState": "Whether values can be served — the save path refuses a write while locked.",

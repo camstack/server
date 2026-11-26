@@ -4,7 +4,7 @@
 
 # Decisions
 
-1071 architecture decision records. One file per decision, never
+1072 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1084,6 +1084,7 @@ that rots.
 | D1102 | [Account and server data live in the shell, the avatar opens its drawer, and an app takes its session only by handoff](adr-1102-account-and-server-data-live-in-the-shell-the-avatar-opens-the-shell-drawer-and-an-app-takes-its-session-only-by-handoff.md) | ✅ accepted | 2026-11-25 |
 | D1103 | [One daylight-phase authority decides day or night; a sensor reading is a source, the sun is the fallback](adr-1103-daylight-phase-authority.md) | ✅ accepted | 2026-11-26 |
 | D1104 | [A camera's detection stream profile and rate follow a cluster default, set only by a confirmed plan](adr-1104-detection-profile-and-fps-follow-a-cluster-default-set-by-a-confirmed-plan.md) | ✅ accepted | 2026-11-26 |
+| D1105 | [A long-running operation is a job in one per-user ledger, owned by whoever started it](adr-1105-a-long-running-operation-is-a-job-in-one-per-user-ledger.md) | ✅ accepted | 2026-11-26 |
 | D1106 | [A list row is one line with the kind's main control; the timed run is not drawn in it](adr-1106-a-list-row-is-one-line-with-the-main-control-and-the-timed-run-is-not-drawn-in-it.md) | ✅ accepted | 2026-11-26 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 

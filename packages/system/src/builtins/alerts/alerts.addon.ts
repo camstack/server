@@ -5,6 +5,8 @@ import {
   alertEpisodePayload,
   alertsCapability,
   BaseAddon,
+  jobsCapability,
+  retentionSourceCapability,
   CORE_BLOCK_ADDON_PREFIX,
   createEvent,
   EventCategory,
@@ -35,6 +37,11 @@ import {
   type RestartCompletion,
 } from './cluster-state-alerts.js'
 import { alertCenterRecordKinds } from './record-kinds.js'
+import { randomUUID } from 'node:crypto'
+import { jobRecordKinds } from './jobs/job-records.js'
+import { JobStore } from './jobs/job-store.js'
+import { JobsProvider, type IJobProducerClient } from './jobs/jobs-provider.js'
+import { jobsRetentionKnobs, resolveJobRetention } from './jobs/jobs-retention-knobs.js'
 
 // ── Category → severity mapping ─────────────────────────────────────
 //
@@ -213,11 +220,16 @@ const RUNNER_NAME_LOOKUP_MS = 1500
 interface AlertCenterConfig {
   readonly maxAlerts: number
   readonly retentionDays: number
+  /** Jobs ledger retention (planning#719); read by the prune on write and listed by `retention-source`. */
+  readonly jobsRetentionDays: number
+  readonly jobsMaxPerOwner: number
 }
 
 const DEFAULT_CONFIG: AlertCenterConfig = {
   maxAlerts: 500,
   retentionDays: 30,
+  jobsRetentionDays: 30,
+  jobsMaxPerOwner: 200,
 }
 
 const EVENT_SOURCE = { type: 'addon', id: 'alert-center' } as const
@@ -301,7 +313,44 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       dismiss: (input: { alertId: string }) => this.dismiss(input.alertId),
     }
 
+    const registrations: ProviderRegistration[] = [
+      { capability: alertsCapability, provider: alertsProvider },
+    ]
     const unsubs: (() => void)[] = []
+    if (records !== undefined) {
+      await records.declare(jobRecordKinds)
+      const jobs = new JobsProvider({
+        store: JobStore.of(records),
+        producers: this.jobProducers(),
+        emitChanged: (jobId, state) => {
+          this.ctx.eventBus?.emit(
+            createEvent(EventCategory.JobChanged, EVENT_SOURCE, { jobId, state }),
+          )
+        },
+        retention: () => resolveJobRetention(this.config),
+        logger: this.ctx.logger,
+        now: () => Date.now(),
+        newId: () => `job-${randomUUID()}`,
+      })
+      registrations.push(
+        { capability: jobsCapability, provider: jobs.asProvider() },
+        {
+          capability: retentionSourceCapability,
+          provider: { listRetentionKnobs: async () => jobsRetentionKnobs(this.config) },
+        },
+      )
+      // A producer registering is the hint that its RAM may have been wiped (D3: no timers).
+      unsubs.push(
+        this.ctx.eventBus.subscribe({ category: 'system.ready-state' }, (event) => {
+          if (event.data.capName !== 'job-source' || event.data.state !== 'ready') return
+          void jobs.reconcileAll().catch((err: unknown) => {
+            this.ctx.logger.warn('job reconcile on producer registration failed', {
+              meta: { error: errMsg(err) },
+            })
+          })
+        }),
+      )
+    }
     for (const category of TRACKED_CATEGORIES) {
       const unsub = this.ctx.eventBus.subscribe(
         { category: category as KnownEventCategory },
@@ -326,7 +375,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     this.ctx.logger.info('Initialized', {
       meta: { trackedCategoriesCount: TRACKED_CATEGORIES.length },
     })
-    return [{ capability: alertsCapability, provider: alertsProvider }]
+    return registrations
   }
 
   protected async onShutdown(): Promise<void> {
@@ -341,10 +390,65 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
   }
 
   protected override scopedSettingsCapabilities(): readonly string[] {
-    return ['alerts']
+    return ['alerts', 'jobs']
+  }
+
+  /** `job-source` calls, each pinned to the producer addon (`ctx.api` is the only cross-addon layer). */
+  private jobProducers(): IJobProducerClient {
+    const api = (): NonNullable<typeof this.ctx.api> => {
+      if (this.ctx.api === undefined)
+        throw new Error('alert-center needs ctx.api to reach producers')
+      return this.ctx.api
+    }
+    return {
+      getJobs: (addonId, jobIds) => api().jobSource.getJobs.query({ addonId, jobIds: [...jobIds] }),
+      cancelJob: (addonId, jobId) => api().jobSource.cancelJob.mutate({ addonId, jobId }),
+      resolveResult: (addonId, jobId) => api().jobSource.resolveResult.query({ addonId, jobId }),
+    }
   }
 
   protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap === 'jobs') {
+      return this.schema({
+        sections: [
+          {
+            id: 'jobs',
+            title: 'Jobs',
+            titleKey: 'server:globalSettings.s_jobs.title',
+            description: 'How long finished background jobs stay in the list.',
+            descriptionKey: 'server:globalSettings.s_jobs.description',
+            columns: 1,
+            fields: [
+              this.field({
+                type: 'number',
+                key: 'jobsRetentionDays',
+                label: 'Finished jobs retention (days)',
+                labelKey: 'server:globalSettings.s_jobs.jobsRetentionDays.label',
+                description:
+                  'Finished jobs older than this are removed. Running jobs are never removed.',
+                descriptionKey: 'server:globalSettings.s_jobs.jobsRetentionDays.description',
+                min: 1,
+                max: 365,
+                step: 1,
+                default: 30,
+              }),
+              this.field({
+                type: 'number',
+                key: 'jobsMaxPerOwner',
+                label: 'Finished jobs kept per user',
+                labelKey: 'server:globalSettings.s_jobs.jobsMaxPerOwner.label',
+                description: 'Beyond this many, the oldest finished jobs of a user are removed.',
+                descriptionKey: 'server:globalSettings.s_jobs.jobsMaxPerOwner.description',
+                min: 1,
+                max: 5000,
+                step: 1,
+                default: 200,
+              }),
+            ],
+          },
+        ],
+      })
+    }
     if (cap !== 'alerts') return null
     return this.schema({
       sections: [

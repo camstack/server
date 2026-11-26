@@ -264,5 +264,19 @@
   "ir-transmitter.native-unsupported": "Il trasmettitore {{name}} non può inviare questo tipo di codice",
   "ir-transmitter.no-code": "Niente da inviare: indica un treno di impulsi o un codice nativo",
   "gallery.unknown-target": "Destinazione della galleria sconosciuta: {{id}}",
-  "gallery.unknown-sample": "Campione della galleria sconosciuto: {{id}}"
+  "gallery.unknown-sample": "Campione della galleria sconosciuto: {{id}}",
+  "globalSettings": {
+    "s_jobs": {
+      "title": "Operazioni",
+      "description": "Per quanto tempo le operazioni in background concluse restano nell'elenco.",
+      "jobsRetentionDays": {
+        "label": "Conservazione operazioni concluse (giorni)",
+        "description": "Le operazioni concluse più vecchie vengono rimosse. Quelle in corso mai."
+      },
+      "jobsMaxPerOwner": {
+        "label": "Operazioni concluse conservate per utente",
+        "description": "Oltre questo numero vengono rimosse le più vecchie di ogni utente."
+      }
+    }
+  }
 }

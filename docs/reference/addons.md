@@ -23,7 +23,7 @@ this column exists to stop.
 | `admin-ui` | `@camstack/addon-admin-ui` | system | own runner | `hub-only` | — | — | `admin-ui` `app-source` |
 | `agent-ui` | `@camstack/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
 | `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `integration-instances` `llm` `llm-runtime` `node-removal-hook` |
-| `alert-center` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `alerts` |
+| `alert-center` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `alerts` `jobs` `retention-source` |
 | `apps-aggregator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `apps` |
 | `audio-analyzer` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
 | `auth-oidc` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-routes` `auth-provider` `integration-instances` `login-method` |
@@ -45,7 +45,7 @@ this column exists to stop.
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
 | `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` `retention-source` |
-| `device-manager` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` |
+| `device-manager` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` `job-source` |
 | `embedding-encoder` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
 | `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
 | `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |

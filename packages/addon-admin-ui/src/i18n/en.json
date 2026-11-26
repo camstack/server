@@ -14470,7 +14470,8 @@
       "count": "items"
     },
     "group": {
-      "history": "Device history"
+      "history": "Device history",
+      "jobs": "Jobs"
     },
     "invalid": {
       "not-a-number": "Enter a number",

@@ -264,5 +264,19 @@
   "ir-transmitter.native-unsupported": "The transmitter {{name}} cannot send this kind of code",
   "ir-transmitter.no-code": "Nothing to send: give a pulse train or a native code",
   "gallery.unknown-target": "Unknown gallery target: {{id}}",
-  "gallery.unknown-sample": "Unknown gallery sample: {{id}}"
+  "gallery.unknown-sample": "Unknown gallery sample: {{id}}",
+  "globalSettings": {
+    "s_jobs": {
+      "title": "Jobs",
+      "description": "How long finished background jobs stay in the list.",
+      "jobsRetentionDays": {
+        "label": "Finished jobs retention (days)",
+        "description": "Finished jobs older than this are removed. Running jobs are never removed."
+      },
+      "jobsMaxPerOwner": {
+        "label": "Finished jobs kept per user",
+        "description": "Beyond this many, the oldest finished jobs of a user are removed."
+      }
+    }
+  }
 }

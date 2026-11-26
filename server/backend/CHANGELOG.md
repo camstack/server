@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added the jobs ledger: long-running work (adoption first) is tracked per user with progress, cancel and retention settings
+
 ## [1.2.969] - 2026-11-26
 
 ### Changed

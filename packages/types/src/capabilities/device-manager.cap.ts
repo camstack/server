@@ -2000,7 +2000,9 @@ export const deviceManagerCapability = {
     adoptionStartJob: method(
       AdoptionAdoptInputSchema.extend({ addonId: z.string() }),
       z.object({ jobId: z.string() }),
-      { kind: 'mutation', auth: 'admin' },
+      // `scoped`: the signed-in admin owns the job in the `jobs` ledger; an in-process caller
+      // (autopilot) carries none and the job belongs to `system`.
+      { kind: 'mutation', auth: 'admin', caller: 'scoped' },
     ),
 
     /**

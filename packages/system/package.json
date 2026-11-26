@@ -311,6 +311,12 @@
         "capabilities": [
           {
             "name": "alerts"
+          },
+          {
+            "name": "jobs"
+          },
+          {
+            "name": "retention-source"
           }
         ]
       },
@@ -434,6 +440,9 @@
           },
           {
             "name": "device-extension"
+          },
+          {
+            "name": "job-source"
           }
         ]
       },

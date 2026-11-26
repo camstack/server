@@ -58,6 +58,48 @@ export {
   AppRoleSchema,
   appSourceCapability,
 } from './app-source.cap.js'
+export type {
+  IJobSourceProvider,
+  JobFailure,
+  JobProgress,
+  JobResult,
+  JobSnapshot,
+  JobSourceEntry,
+  JobState,
+} from './job-source.cap.js'
+export {
+  JobFailureSchema,
+  JobProgressSchema,
+  JobResultSchema,
+  JobSnapshotSchema,
+  JobSourceEntrySchema,
+  JobStateSchema,
+  TERMINAL_JOB_STATES,
+  isTerminalJobState,
+  jobSourceCapability,
+} from './job-source.cap.js'
+export type {
+  IJobsProvider,
+  Job,
+  JobAudience,
+  JobCancelReason,
+  JobEntityRef,
+  JobRegisterInput,
+  JobSubject,
+  JobSummary,
+  JobUpdateInput,
+} from './jobs.cap.js'
+export {
+  JobAudienceSchema,
+  JobCancelReasonSchema,
+  JobEntityRefSchema,
+  JobRegisterInputSchema,
+  JobSchema,
+  JobSubjectSchema,
+  JobSummarySchema,
+  JobUpdateInputSchema,
+  jobsCapability,
+} from './jobs.cap.js'
 export type { AppInfo, AppNavBadge, IAppsAggregatorProvider } from './apps.cap.js'
 export { AppInfoSchema, AppNavBadgeSchema, appsCapability } from './apps.cap.js'
 export type { IAddonPagesAggregatorProvider } from './addon-pages.cap.js'
@@ -3772,6 +3814,8 @@ import type { addonPagesCapability } from './addon-pages.cap.js'
 import type { addonPagesSourceCapability } from './addon-pages-source.cap.js'
 import type { appSourceCapability } from './app-source.cap.js'
 import type { appsCapability } from './apps.cap.js'
+import type { jobSourceCapability } from './job-source.cap.js'
+import type { jobsCapability } from './jobs.cap.js'
 import type { addonRoutesCapability } from './addon-routes.cap.js'
 // ── Strongly-typed readiness registry ───────────────────────────────
 //
@@ -4042,6 +4086,8 @@ type AnyCapability =
   | typeof addonPagesSourceCapability
   | typeof appSourceCapability
   | typeof appsCapability
+  | typeof jobSourceCapability
+  | typeof jobsCapability
   | typeof addonWidgetsCapability
   | typeof addonWidgetsSourceCapability
   | typeof customModelRegistryCapability

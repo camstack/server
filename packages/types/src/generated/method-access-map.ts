@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1570 method paths across 220 capabilities.
+ * Coverage: 1581 method paths across 222 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -618,6 +618,17 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'irTransmitter.getInfo': { capName: "ir-transmitter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'irTransmitter.learn': { capName: "ir-transmitter", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'irTransmitter.send': { capName: "ir-transmitter", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'jobs.cancel': { capName: "jobs", capScope: "system", addonId: null, access: "create", role: "viewer" } as const,
+  'jobs.collect': { capName: "jobs", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'jobs.dismiss': { capName: "jobs", capScope: "system", addonId: null, access: "create", role: "viewer" } as const,
+  'jobs.get': { capName: "jobs", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'jobs.getSummary': { capName: "jobs", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'jobs.list': { capName: "jobs", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'jobs.register': { capName: "jobs", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'jobs.update': { capName: "jobs", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'jobSource.cancelJob': { capName: "job-source", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'jobSource.getJobs': { capName: "job-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'jobSource.resolveResult': { capName: "job-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'keychain.delete': { capName: "keychain", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'keychain.deleteDeviceScope': { capName: "keychain", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'keychain.getState': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1697,6 +1708,8 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "integrations",
   "intercom",
   "ir-transmitter",
+  "job-source",
+  "jobs",
   "keychain",
   "keychain-admin",
   "lawn-mower-control",
@@ -1984,6 +1997,8 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "hero-layout",
   "integration-instances",
   "integrations",
+  "job-source",
+  "jobs",
   "keychain",
   "keychain-admin",
   "llm",

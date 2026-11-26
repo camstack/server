@@ -1670,6 +1670,30 @@ export const useIrTransmitterLearn: typeof trpc.irTransmitter.learn.useMutation 
 /** Generated alias around `trpc.irTransmitter.getInfo.useQuery`. */
 export const useIrTransmitterGetInfo: typeof trpc.irTransmitter.getInfo.useQuery = /*#__PURE__*/ alias(() => trpc.irTransmitter.getInfo.useQuery)
 
+/** Generated alias around `trpc.jobs.register.useMutation`. */
+export const useJobsRegister: typeof trpc.jobs.register.useMutation = /*#__PURE__*/ alias(() => trpc.jobs.register.useMutation)
+
+/** Generated alias around `trpc.jobs.update.useMutation`. */
+export const useJobsUpdate: typeof trpc.jobs.update.useMutation = /*#__PURE__*/ alias(() => trpc.jobs.update.useMutation)
+
+/** Generated alias around `trpc.jobs.list.useQuery`. */
+export const useJobsList: typeof trpc.jobs.list.useQuery = /*#__PURE__*/ alias(() => trpc.jobs.list.useQuery)
+
+/** Generated alias around `trpc.jobs.get.useQuery`. */
+export const useJobsGet: typeof trpc.jobs.get.useQuery = /*#__PURE__*/ alias(() => trpc.jobs.get.useQuery)
+
+/** Generated alias around `trpc.jobs.getSummary.useQuery`. */
+export const useJobsGetSummary: typeof trpc.jobs.getSummary.useQuery = /*#__PURE__*/ alias(() => trpc.jobs.getSummary.useQuery)
+
+/** Generated alias around `trpc.jobs.cancel.useMutation`. */
+export const useJobsCancel: typeof trpc.jobs.cancel.useMutation = /*#__PURE__*/ alias(() => trpc.jobs.cancel.useMutation)
+
+/** Generated alias around `trpc.jobs.dismiss.useMutation`. */
+export const useJobsDismiss: typeof trpc.jobs.dismiss.useMutation = /*#__PURE__*/ alias(() => trpc.jobs.dismiss.useMutation)
+
+/** Generated alias around `trpc.jobs.collect.useQuery`. */
+export const useJobsCollect: typeof trpc.jobs.collect.useQuery = /*#__PURE__*/ alias(() => trpc.jobs.collect.useQuery)
+
 /** Generated alias around `trpc.keychainAdmin.status.useQuery`. */
 export const useKeychainAdminStatus: typeof trpc.keychainAdmin.status.useQuery = /*#__PURE__*/ alias(() => trpc.keychainAdmin.status.useQuery)
 

@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1147 shared schemas.**
+**1161 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3426,6 +3426,103 @@ Enum: `"ir" \| "rf"`
 - `ok`: `boolean`
 - `error`: `string \| null`
 - `medium`: `IrMediumSchema`
+
+### `JobAudienceSchema`
+
+Enum: `"owner" \| "admins"`
+
+### `JobCancelReasonSchema`
+
+Enum: `"not-found" \| "not-cancellable" \| "terminal" \| "not-allowed" \| "producer-refused" \| "producer-unreachable"`
+
+### `JobEntityRefSchema`
+
+- `kind`: `string`
+- `id`: `string`
+
+### `JobFailureSchema`
+
+- `reason`: `"error" \| "interrupted"`
+- `message`: `string`
+
+### `JobProgressSchema`
+
+- `done`: `number`
+- `total`: `number \| null`
+- `unit`: `string`
+
+### `JobRegisterInputSchema`
+
+- `kind`: `string`
+- `producerAddonId`: `string`
+- `ownerUserId`: `string`
+- `audience`: `JobAudienceSchema`
+- `subject?`: `JobSubjectSchema`
+- `titleKey`: `string`
+- `titleParams?`: `Record<string, string \| number> = {}`
+- `state?`: `"queued" \| "running" = "running"`
+- `progress?`: `JobProgressSchema \| null`
+- `cancellable`: `boolean`
+- `idempotencyKey`: `string`
+
+### `JobResultSchema`
+
+- `href`: `string`
+- `navigation?`: `"app" \| "server"`
+
+### `JobSchema`
+
+- `jobId`: `string`
+- `kind`: `string`
+- `producerAddonId`: `string`
+- `ownerUserId`: `string`
+- `audience`: `JobAudienceSchema`
+- `subject?`: `JobSubjectSchema`
+- `titleKey`: `string`
+- `titleParams`: `Record<string, string \| number>`
+- `state`: `JobStateSchema`
+- `failure`: `JobFailureSchema \| null`
+- `progress`: `JobProgressSchema \| null`
+- `cancellable`: `boolean`
+- `createdAt`: `number`
+- `updatedAt`: `number`
+- `lastConfirmedAt`: `number`
+- `finishedAt`: `number \| null`
+
+### `JobSnapshotSchema`
+
+- `state`: `JobStateSchema`
+- `failure`: `JobFailureSchema \| null`
+- `progress`: `JobProgressSchema \| null`
+- `cancellable`: `boolean`
+- `finishedAt`: `number \| null`
+
+### `JobSourceEntrySchema`
+
+- `{ jobId: string; snapshot: JobSnapshotSchema }`
+- `{ jobId: string; unknown: true }`
+
+### `JobStateSchema`
+
+Enum: `"queued" \| "running" \| "done" \| "failed" \| "cancelled"`
+
+### `JobSubjectSchema`
+
+- `deviceId?`: `number`
+- `nodeId?`: `string`
+- `entity?`: `JobEntityRefSchema`
+
+### `JobSummarySchema`
+
+- `running`: `number`
+- `unseenFinished`: `number \| null`
+
+### `JobUpdateInputSchema`
+
+- `jobId`: `string`
+- `state?`: `JobStateSchema`
+- `progress?`: `JobProgressSchema \| null`
+- `failure?`: `JobFailureSchema \| null`
 
 ### `KeychainAdminSecretSchema`
 

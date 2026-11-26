@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A device's children list now sits above the addon's custom sections on the device page
 
+### Added
+
+- Added the jobs retention group label
+
 ## [1.2.761] - 2026-11-26
 
 ### Changed

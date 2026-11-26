@@ -124,6 +124,8 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "integrations",
   "intercom",
   "ir-transmitter",
+  "job-source",
+  "jobs",
   "keychain",
   "keychain-admin",
   "lawn-mower-control",

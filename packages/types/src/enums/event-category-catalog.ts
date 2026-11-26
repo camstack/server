@@ -689,6 +689,7 @@ export const EVENT_CATEGORY_CATALOG: Readonly<Record<EventCategory, EventCategor
   ),
   [EventCategory.MigrationFailed]: e('system', 'Migration failed', 'Migrazione fallita'),
   [EventCategory.MigrationApplied]: e('system', 'Migration applied', 'Migrazione applicata'),
+  [EventCategory.JobChanged]: e('system', 'Job changed', 'Job modificato'),
   [EventCategory.DeviceUpdated]: e('devices', 'Device updated', 'Dispositivo aggiornato'),
   [EventCategory.DeviceOnline]: e('devices', 'Device online', 'Dispositivo online'),
   [EventCategory.DeviceOffline]: e('devices', 'Device offline', 'Dispositivo offline'),

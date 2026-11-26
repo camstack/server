@@ -1335,8 +1335,10 @@ export async function adoptionStartJob(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['adoptionStartJob']>[0],
 ): ReturnType<IDeviceManagerProvider['adoptionStartJob']> {
-  const { addonId, integrationId, childNativeIds, filter, importLocations, perCandidate } = input
+  const { addonId, integrationId, childNativeIds, filter, importLocations, perCandidate, caller } =
+    input
   return pctx.host.adoptionJobs.start({
+    ...(caller !== undefined ? { ownerUserId: caller.userId } : {}),
     addonId,
     integrationId,
     childNativeIds,

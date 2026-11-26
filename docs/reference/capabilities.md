@@ -4,7 +4,7 @@
 
 # Capabilities
 
-220 capability definitions in `packages/types/src/capabilities/`.
+222 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -138,7 +138,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (106)
+## System-scoped (108)
 
 Singleton or collection providers, addressed without a device.
 
@@ -190,6 +190,8 @@ Singleton or collection providers, addressed without a device.
 | `hero-layout` | 3 | — | — | — | — | `core-blocks` |
 | `integration-instances` | 9 | — | — | — | — | `ai` `auth-oidc` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `pipeline-analytics` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `terminal` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` `core-notifier` `core-blocks` |
 | `integrations` | 8 | — | — | — | — | — |
+| `job-source` | 3 | — | — | — | ✓ | `device-manager` |
+| `jobs` | 8 | — | — | — | — | `alert-center` |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
 | `llm` | 16 | — | — | — | — | `ai` |
@@ -225,7 +227,7 @@ Singleton or collection providers, addressed without a device.
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
 | `remote` | 6 | — | — | — | — | `core-blocks` |
 | `remote-layout-components` | 1 | — | — | — | — | `core-blocks` |
-| `retention-source` | 1 | — | — | — | ✓ | `device-history` |
+| `retention-source` | 1 | — | — | — | ✓ | `device-history` `alert-center` |
 | `schedulers` | 10 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |

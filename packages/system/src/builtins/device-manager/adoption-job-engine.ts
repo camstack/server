@@ -48,6 +48,10 @@ import type {
   AdoptionJob,
   AdoptionOutcome,
   IScopedLogger,
+  JobRegisterInput,
+  JobResult,
+  JobSnapshot,
+  JobUpdateInput,
 } from '@camstack/types'
 import { errMsg } from '@camstack/types'
 import type { RemovalFence } from './removal-fence.js'
@@ -98,7 +102,24 @@ export interface AdoptedCandidate {
   readonly filter?: string
 }
 
+/** The `jobs` capability calls this engine makes (planning#719); `ctx.api.jobs` satisfies it. */
+export interface AdoptionJobLedger {
+  register(input: JobRegisterInput): Promise<{ readonly jobId: string }>
+  update(input: JobUpdateInput): Promise<unknown>
+}
+
+/** The addon id this engine's jobs are registered under (the `job-source` provider). */
+export const ADOPTION_JOB_PRODUCER_ID = 'device-manager'
+export const ADOPTION_JOB_KIND = 'adoption'
+/** The ledger owner of a job nobody started by hand (autopilot). */
+export const SYSTEM_JOB_OWNER = 'system'
+
 export interface AdoptionJobEngineDeps {
+  /**
+   * The central `jobs` ledger. Absent = the engine runs exactly as before. A failure to reach it
+   * is logged and never fails the job: the engine stays the authority for what it is doing.
+   */
+  readonly ledger?: AdoptionJobLedger
   /**
    * Called once per candidate that landed, so the device manager can record who
    * adopted it (D1090). A throw is logged and never fails the job: the device
@@ -138,6 +159,8 @@ export interface StartAdoptionJobInput {
   readonly perCandidate?: Record<string, { name?: string; hiddenChildIds?: string[] }>
   /** Who started the job; omitted = a person's pick. The `auto` mode passes `auto`. */
   readonly adoptedBy?: AdoptedBy
+  /** The signed-in user who started it; absent for work nobody started by hand. */
+  readonly ownerUserId?: string
 }
 
 /** How many finished jobs are kept per (addonId, integrationId). */
@@ -163,6 +186,10 @@ interface MutableJob {
   finishedAt: number | null
   error: string | null
   cancelRequested: boolean
+  /** The id the `jobs` ledger gave this job; `null` until registered (or when it could not be). */
+  ledgerId: string | null
+  /** Ledger calls of this job, in order. */
+  ledgerChain: Promise<void>
   /** Resolves when the detached loop has settled. Test-only handle. */
   done: Promise<void>
 }
@@ -243,6 +270,8 @@ export class AdoptionJobEngine {
       finishedAt: null,
       error: null,
       cancelRequested: false,
+      ledgerId: null,
+      ledgerChain: Promise.resolve(),
       done: Promise.resolve(),
     }
     this.jobs.set(job.jobId, job)
@@ -251,6 +280,7 @@ export class AdoptionJobEngine {
       tags: { addonId: input.addonId },
       meta: { jobId: job.jobId, integrationId: input.integrationId, total: job.total },
     })
+    this.registerInLedger(job, input)
     // Detached on purpose — this is the whole point of the job.
     job.done = this.run(job, provider, input)
     return { jobId: job.jobId }
@@ -284,6 +314,95 @@ export class AdoptionJobEngine {
     return true
   }
 
+  /** What the producer says about a job the ledger knows by `ledgerId`; `null` = not ours. */
+  ledgerSnapshot(ledgerId: string): JobSnapshot | null {
+    const job = this.byLedgerId(ledgerId)
+    if (job === undefined) return null
+    return {
+      state: job.state,
+      failure: job.state === 'failed' ? { reason: 'error', message: job.error ?? 'failed' } : null,
+      progress: this.ledgerProgress(job),
+      cancellable: job.state === 'running',
+      finishedAt: job.finishedAt,
+    }
+  }
+
+  /** Cancel by the ledger's id (`job-source.cancelJob`). */
+  cancelByLedgerId(ledgerId: string): boolean {
+    const job = this.byLedgerId(ledgerId)
+    return job === undefined ? false : this.cancel(job.jobId)
+  }
+
+  /** Where the operator sees what the job did (`job-source.resolveResult`). */
+  ledgerResult(ledgerId: string): JobResult | null {
+    const job = this.byLedgerId(ledgerId)
+    if (job === undefined) return null
+    const instance = encodeURIComponent(job.integrationId)
+    return {
+      href: `/integrations/${encodeURIComponent(job.addonId)}?instance=${instance}&adoptJob=${encodeURIComponent(job.jobId)}`,
+      navigation: 'app',
+    }
+  }
+
+  private byLedgerId(ledgerId: string): MutableJob | undefined {
+    return [...this.jobs.values()].find((j) => j.ledgerId === ledgerId)
+  }
+
+  private ledgerProgress(job: MutableJob): { done: number; total: number; unit: string } {
+    return { done: snapshot(job).processed, total: job.total, unit: 'candidates' }
+  }
+
+  /** Queue one ledger call after the previous ones; a failure is logged, never thrown. */
+  private enqueueLedger(job: MutableJob, what: string, call: () => Promise<void>): void {
+    job.ledgerChain = job.ledgerChain.then(call).catch((err: unknown) => {
+      this.deps.logger.warn(`adoption job: ledger ${what} failed`, {
+        tags: { addonId: job.addonId },
+        meta: { jobId: job.jobId, error: errMsg(err) },
+      })
+    })
+  }
+
+  private registerInLedger(job: MutableJob, input: StartAdoptionJobInput): void {
+    const ledger = this.deps.ledger
+    if (ledger === undefined) return
+    const automatic = input.adoptedBy === 'auto' || input.ownerUserId === undefined
+    this.enqueueLedger(job, 'register', async () => {
+      const { jobId } = await ledger.register({
+        kind: ADOPTION_JOB_KIND,
+        producerAddonId: ADOPTION_JOB_PRODUCER_ID,
+        ownerUserId: automatic ? SYSTEM_JOB_OWNER : (input.ownerUserId ?? SYSTEM_JOB_OWNER),
+        audience: automatic ? 'admins' : 'owner',
+        titleKey: 'jobs.adoption.title',
+        titleParams: { addonId: job.addonId, integrationId: job.integrationId, total: job.total },
+        state: 'running',
+        progress: { done: 0, total: job.total, unit: 'candidates' },
+        cancellable: true,
+        idempotencyKey: job.jobId,
+      })
+      job.ledgerId = jobId
+    })
+  }
+
+  private pushLedger(job: MutableJob, terminal: boolean): void {
+    const ledger = this.deps.ledger
+    if (ledger === undefined) return
+    this.enqueueLedger(job, 'update', async () => {
+      if (job.ledgerId === null) return
+      await ledger.update({
+        jobId: job.ledgerId,
+        progress: this.ledgerProgress(job),
+        ...(terminal
+          ? {
+              state: job.state,
+              ...(job.state === 'failed'
+                ? { failure: { reason: 'error' as const, message: job.error ?? 'failed' } }
+                : {}),
+            }
+          : {}),
+      })
+    })
+  }
+
   /** Test-only: await the detached loop. Never called by production code. */
   async waitForTest(jobId: string): Promise<void> {
     await this.jobs.get(jobId)?.done
@@ -306,6 +425,7 @@ export class AdoptionJobEngine {
     try {
       const already = await this.alreadyAdopted(provider, input, job)
       for (const childNativeId of input.childNativeIds) {
+        this.pushLedger(job, false)
         if (job.cancelRequested) {
           job.results.push({
             childNativeId,
@@ -349,6 +469,8 @@ export class AdoptionJobEngine {
     } finally {
       job.currentChildNativeId = null
       job.finishedAt = this.now()
+      this.pushLedger(job, true)
+      await job.ledgerChain
       const s = snapshot(job)
       this.deps.logger.info('adoption job finished', {
         tags: { addonId: job.addonId },
