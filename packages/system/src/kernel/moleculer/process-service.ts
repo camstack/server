@@ -279,7 +279,6 @@ function createProcessService(
     child.kill('SIGTERM')
   }
 
-  /** Resolve a lookup name (runnerId or hosted addonId) to its runnerId, or null. */
   function clearBackoffTimer(runnerId: string): void {
     const timer = backoffTimers.get(runnerId)
     if (timer !== undefined) clearTimeout(timer)
@@ -293,6 +292,7 @@ function createProcessService(
     }
     return null
   }
+  /** Resolve a lookup name (runnerId or hosted addonId) to its runnerId, or null. */
   function resolveRunnerName(lookupName: string): string | null {
     if (processes.has(lookupName)) return lookupName
     for (const candidate of processes.values()) {
@@ -738,9 +738,14 @@ function createProcessService(
         // restart/stop for the same id. If one already re-created the entry
         // under the lock, skip — respawning again would orphan its child.
         void withRunnerLock(runnerId, async () => {
+          // A stop (or broker shutdown) that took the lock first already ended this
+          // backoff: its entry is gone from `backingOff`, so there is nothing to respawn.
+          if (backingOff.get(runnerId) !== entry) return
           // Reap BEFORE respawn: the successor must never co-exist with the dead
           // runner's children (28 orphan writers + 28 new ones, 2026-09-28).
           await groupReap
+          // The wait above can span a stop or broker shutdown: check again.
+          if (backingOff.get(runnerId) !== entry) return
           backingOff.delete(runnerId)
           if (processes.has(runnerId)) return
           const restarted = spawnRunner(runnerId, addons, env)
@@ -1122,6 +1127,10 @@ function createProcessService(
     },
 
     async stopped() {
+      // No pending crash respawn may outlive the broker (it would spawn after shutdown).
+      for (const timer of backoffTimers.values()) clearTimeout(timer)
+      backoffTimers.clear()
+      backingOff.clear()
       // Broker shutdown is the graceful hub/agent path: do not return to a caller
       // that may immediately `process.exit()` until every runner has exited and
       // its group has been reaped. The process-wide exit hook remains the hard,

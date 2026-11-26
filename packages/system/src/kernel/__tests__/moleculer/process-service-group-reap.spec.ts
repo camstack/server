@@ -80,7 +80,7 @@ async function waitFor(
   const deadline = Date.now() + timeoutMs
   while (!(await pred())) {
     if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`)
-    await sleep(50)
+    await sleep(400)
   }
 }
 
@@ -271,6 +271,46 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     expect(h.spawned.length).toBe(2)
     await h.broker.call('$process.stop', { name: 'cam' })
     await h.broker.stop()
+  })
+
+  it('a respawn already waiting on the reap does not spawn after broker shutdown (planning#739)', async () => {
+    const listGate = gate()
+    const groups = fakeGroups({
+      log: [],
+      members: [{ pid: 6101, command: 'ffmpeg' }],
+      ignoresTerm: false,
+      listGate: listGate.promise,
+    })
+    const h = harness('hub-pg-shutdown-backoff', groups, 'linux')
+    await h.broker.start()
+    await h.broker.call('$process.spawnRunner', {
+      runnerId: 'cam',
+      addons: [{ addonId: 'cam', addonDir: '/tmp/cam' }],
+    })
+    crash(h.spawned[0]!.child, 'SIGKILL')
+    // The 500 ms timer fires and its callback holds the runner lock, waiting on the reap.
+    await sleep(700)
+    expect(h.spawned.length, 'pre-stop').toBe(1)
+    const stopping = h.broker.stop()
+    await sleep(400)
+    listGate.open()
+    await stopping
+    await sleep(100)
+    expect(h.spawned.length, 'spawned a runner after the broker was stopped').toBe(1)
+  })
+
+  it('shutdown cancels a pending crash-backoff timer (planning#739)', async () => {
+    const groups = fakeGroups({ log: [], members: [], ignoresTerm: false })
+    const h = harness('hub-pg-shutdown-timer', groups, 'linux')
+    await h.broker.start()
+    await h.broker.call('$process.spawnRunner', {
+      runnerId: 'cam',
+      addons: [{ addonId: 'cam', addonDir: '/tmp/cam' }],
+    })
+    crash(h.spawned[0]!.child, 'SIGKILL')
+    await h.broker.stop()
+    await sleep(900)
+    expect(h.spawned.length, 'respawn timer survived shutdown').toBe(1)
   })
 
   it('an operator restart spawns the new runner only after the old group is reaped', async () => {
