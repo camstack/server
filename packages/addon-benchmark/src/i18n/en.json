@@ -196,5 +196,51 @@
     "title": "Benchmark {{node}}?",
     "reading": "Reading the preflight…",
     "confirm": "Start"
+  },
+  "defaults": {
+    "title": "Suggested defaults",
+    "intro": "The detection stream and rate that cameras without their own setting follow. Suggested from what each node serving cameras can decode. Nothing changes until you apply it.",
+    "colSetting": "Setting",
+    "colCurrent": "Now",
+    "colSuggested": "Suggested",
+    "profile": "Detection stream",
+    "fps": "Detection rate",
+    "fpsValue": "{{fps}} fps",
+    "builtIn": "built-in default",
+    "noSuggestion": "No suggestion",
+    "profileValue": {
+      "high": "High (main stream)",
+      "mid": "Medium",
+      "low": "Low (sub stream)"
+    },
+    "dimension": {
+      "stream-profile": "stream",
+      "fps": "rate"
+    },
+    "missing": {
+      "accelerator": "its accelerator is not known",
+      "decode-4k": "its 4K decode capacity was not measured"
+    },
+    "reason": {
+      "noServingNodes": "No node is serving cameras yet, so there is nothing to base a suggestion on.",
+      "cpuOnly": "Node {{node}} has no accelerator, so the {{dimension}} is kept light.",
+      "decode4k": "Node {{node}} decodes at most {{max}} 4K streams but serves {{cameras}} cameras, so the main stream is not suggested.",
+      "unknown": "Node {{node}}: no suggestion for the {{dimension}} because {{missing}}."
+    },
+    "overrides_one": "{{count}} camera keeps its own value and is not affected.",
+    "overrides_other": "{{count}} cameras keep their own value and are not affected.",
+    "overridesNone": "No camera sets its own value.",
+    "restartNote": "Applying restarts detection on every assigned camera.",
+    "apply": "Apply suggestion",
+    "applyTitle": "Apply the suggested defaults?",
+    "applyDescription": "The cluster default changes for cameras without their own value, and detection restarts on every assigned camera.",
+    "reset": "Reset to built-in defaults",
+    "resetTitle": "Reset to built-in defaults?",
+    "resetDescription": "The stored cluster default is cleared and detection restarts on every assigned camera.",
+    "stale": "The suggestion changed while you were looking. Review the new one and apply again.",
+    "applied": "Defaults applied.",
+    "nothingToApply": "No field has a suggestion, so there is nothing to apply.",
+    "loadError": "Could not load the suggestion: {{error}}",
+    "loading": "Reading the cluster..."
   }
 }

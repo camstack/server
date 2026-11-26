@@ -46,6 +46,7 @@ import {
   togglePhase,
   toggleStep,
 } from './plan-editor.js'
+import { SuggestedDefaultsCard } from './SuggestedDefaultsCard.js'
 
 type Trpc = AddonPageProps['trpc']
 type TFn = ReturnType<typeof useT>['t']
@@ -344,6 +345,7 @@ export function NodeBenchmarkSection({ trpc }: { readonly trpc: Trpc }): ReactNo
 
   return (
     <div className="space-y-3">
+      <SuggestedDefaultsCard trpc={trpc} />
       <SectionCard
         headingId="nb-node"
         title={t('node.title')}

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Benchmark page: a Suggested defaults card suggests the cluster detection stream profile and rate, applied only on confirmation
+
 ## [1.2.317] - 2026-11-26
 
 ### Changed

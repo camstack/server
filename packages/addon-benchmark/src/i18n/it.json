@@ -196,5 +196,51 @@
     "title": "Eseguire il benchmark di {{node}}?",
     "reading": "Lettura dei controlli preliminari…",
     "confirm": "Avvia"
+  },
+  "defaults": {
+    "title": "Impostazioni suggerite",
+    "intro": "Il flusso e la frequenza di rilevamento seguiti dalle telecamere senza un'impostazione propria. Suggeriti in base a ciò che ogni nodo con telecamere riesce a decodificare. Nulla cambia finché non lo applichi.",
+    "colSetting": "Impostazione",
+    "colCurrent": "Attuale",
+    "colSuggested": "Suggerito",
+    "profile": "Flusso di rilevamento",
+    "fps": "Frequenza di rilevamento",
+    "fpsValue": "{{fps}} fps",
+    "builtIn": "predefinito di sistema",
+    "noSuggestion": "Nessun suggerimento",
+    "profileValue": {
+      "high": "Alto (flusso principale)",
+      "mid": "Medio",
+      "low": "Basso (flusso secondario)"
+    },
+    "dimension": {
+      "stream-profile": "flusso",
+      "fps": "frequenza"
+    },
+    "missing": {
+      "accelerator": "il suo acceleratore non è noto",
+      "decode-4k": "la sua capacità di decodifica 4K non è stata misurata"
+    },
+    "reason": {
+      "noServingNodes": "Nessun nodo serve ancora telecamere: non c'è nulla su cui basare un suggerimento.",
+      "cpuOnly": "Il nodo {{node}} non ha acceleratori, quindi il {{dimension}} resta leggero.",
+      "decode4k": "Il nodo {{node}} decodifica al massimo {{max}} flussi 4K ma serve {{cameras}} telecamere: il flusso principale non è suggerito.",
+      "unknown": "Nodo {{node}}: nessun suggerimento per {{dimension}} perché {{missing}}."
+    },
+    "overrides_one": "{{count}} telecamera mantiene il proprio valore e non è interessata.",
+    "overrides_other": "{{count}} telecamere mantengono il proprio valore e non sono interessate.",
+    "overridesNone": "Nessuna telecamera imposta un valore proprio.",
+    "restartNote": "Applicare riavvia il rilevamento su tutte le telecamere assegnate.",
+    "apply": "Applica suggerimento",
+    "applyTitle": "Applicare le impostazioni suggerite?",
+    "applyDescription": "Il valore predefinito del cluster cambia per le telecamere senza un valore proprio e il rilevamento viene riavviato su tutte le telecamere assegnate.",
+    "reset": "Ripristina predefiniti di sistema",
+    "resetTitle": "Ripristinare i predefiniti di sistema?",
+    "resetDescription": "Il valore predefinito del cluster viene rimosso e il rilevamento viene riavviato su tutte le telecamere assegnate.",
+    "stale": "Il suggerimento è cambiato nel frattempo. Controlla il nuovo e applica di nuovo.",
+    "applied": "Impostazioni applicate.",
+    "nothingToApply": "Nessun campo ha un suggerimento: niente da applicare.",
+    "loadError": "Impossibile caricare il suggerimento: {{error}}",
+    "loading": "Lettura del cluster..."
   }
 }
