@@ -23,4 +23,4 @@ export class KeyedSerialiser {
 }
 
 /** The one serialiser of per-device settings-blob saves (linked devices and their backfill). */
-export const DEVICE_BLOB_SAVES = new KeyedSerialiser()
+export const DEVICE_BLOB_SAVES: KeyedSerialiser = new KeyedSerialiser()
