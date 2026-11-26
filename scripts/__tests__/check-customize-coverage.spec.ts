@@ -12,10 +12,12 @@ import {
   CUSTOMIZE_EVENT_SHAPES,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
 import { COMPOSITION_LINK_KINDS } from '../../packages/types/src/composition/composition-link-kinds.ts'
+import { CUSTOMIZE_KINDS } from '../../packages/addon-admin-ui/src/components/device/customize/customize-spec.ts'
 import { EXTENSION_SLOT_IDS } from '../../packages/types/src/generated/extension-slots.ts'
 import {
   type CoverageInput,
   customizeCoverageHits,
+  listKindFiles,
   listLinkSources,
   readRepoFile,
 } from '../lib/customize-coverage.ts'
@@ -31,6 +33,8 @@ const base: CoverageInput = {
   slotIds: EXTENSION_SLOT_IDS,
   linkKinds: COMPOSITION_LINK_KINDS,
   linkSources: listLinkSources(repoRoot),
+  customizeKinds: CUSTOMIZE_KINDS,
+  kindFiles: listKindFiles(repoRoot),
   i18nCapTitles: { en: caps, it: caps },
   read: (file) => readRepoFile(repoRoot, file),
 }
@@ -113,5 +117,33 @@ describe('customize coverage guard', () => {
       i18nCapTitles: { en: caps, it: caps.slice(1) },
     })
     expect(hits.map((hit) => hit.surface)).toEqual([`cap ${caps[0]}`])
+  })
+
+  it('a kind with no registry entry is a hit', () => {
+    const hits = customizeCoverageHits({ ...base, customizeKinds: [...CUSTOMIZE_KINDS, 'dimmer'] })
+    expect(hits.map((hit) => hit.surface)).toEqual(['customize kind dimmer'])
+  })
+
+  it('a Checkbox or a loose device picker in a kind folder is a hit, a comment is not', () => {
+    const file = 'packages/addon-admin-ui/src/components/device/customize/kinds/X.tsx'
+    const text = (body: string) => (path: string) => (path === file ? body : base.read(path))
+    const checkbox = customizeCoverageHits({
+      ...base,
+      kindFiles: [file],
+      read: text("import { Checkbox } from '@camstack/ui-library'"),
+    })
+    expect(checkbox.map((hit) => hit.surface)).toEqual([`kind folder ${file}`])
+    const picker = customizeCoverageHits({
+      ...base,
+      kindFiles: [file],
+      read: text('return <DevicePicker items={[]} />'),
+    })
+    expect(picker).toHaveLength(1)
+    const comment = customizeCoverageHits({
+      ...base,
+      kindFiles: [file],
+      read: text(' * a DevicePicker behind the SourceSelector'),
+    })
+    expect(comment).toEqual([])
   })
 })

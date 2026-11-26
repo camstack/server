@@ -19,7 +19,13 @@ import {
 } from '../packages/types/src/capabilities/customize-spec.ts'
 import { COMPOSITION_LINK_KINDS } from '../packages/types/src/composition/composition-link-kinds.ts'
 import { EXTENSION_SLOT_IDS } from '../packages/types/src/generated/extension-slots.ts'
-import { customizeCoverageHits, listLinkSources, readRepoFile } from './lib/customize-coverage.ts'
+import { CUSTOMIZE_KINDS } from '../packages/addon-admin-ui/src/components/device/customize/customize-spec.ts'
+import {
+  customizeCoverageHits,
+  listKindFiles,
+  listLinkSources,
+  readRepoFile,
+} from './lib/customize-coverage.ts'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -45,6 +51,8 @@ function main(): void {
     slotIds: EXTENSION_SLOT_IDS,
     linkKinds: COMPOSITION_LINK_KINDS,
     linkSources: listLinkSources(repoRoot),
+    customizeKinds: CUSTOMIZE_KINDS,
+    kindFiles: listKindFiles(repoRoot),
     i18nCapTitles: { en: capTitles('en'), it: capTitles('it') },
     read: (file) => readRepoFile(repoRoot, file),
   })
@@ -53,7 +61,8 @@ function main(): void {
     console.log(
       `✔ customize coverage: ${Object.keys(CAP_CUSTOMIZE_CATALOG).length} caps, ` +
         `${CUSTOMIZE_CARDINALITIES.length} cardinalities, ${EXTENSION_SLOT_IDS.length} slots, ` +
-        `${COMPOSITION_LINK_KINDS.length} link kinds, each with a renderer`,
+        `${COMPOSITION_LINK_KINDS.length} link kinds, each with a renderer; ` +
+        `${CUSTOMIZE_KINDS.length} registry kinds, no Checkbox or loose picker in a kind folder`,
     )
     return
   }

@@ -3,7 +3,7 @@
  * with named watt defaults, or linear scale.
  */
 import type { CustomizeCatalogTransform, DeviceType } from '@camstack/types'
-import { Checkbox, Input, Select } from '@camstack/ui-library'
+import { Input, Select, Switch } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScalarTransformKind } from './scalar-fit'
@@ -59,10 +59,11 @@ export function ScalarTransformControls({
       )}
       {value.kind === 'invert' || (control === 'invert' && value.kind !== 'threshold') ? (
         <label className="flex items-center gap-2 text-[11px] text-foreground">
-          <Checkbox
+          <Switch
             checked={value.kind === 'invert'}
-            onChange={(event) =>
-              onChange(event.target.checked ? { kind: 'invert' } : { kind: 'identity' })
+            aria-label={t('customize.scalar.invert')}
+            onCheckedChange={(checked) =>
+              onChange(checked ? { kind: 'invert' } : { kind: 'identity' })
             }
           />
           {t('customize.scalar.invert')}

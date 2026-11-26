@@ -15,6 +15,22 @@ const CUSTOMIZE_DIR = 'packages/addon-admin-ui/src/components/device/customize'
 export const CARDINALITY_RENDERER = `${CUSTOMIZE_DIR}/table/customize-rows.ts`
 export const SLOT_RENDERER = `${CUSTOMIZE_DIR}/kinds/ExtensionSlotSections.tsx`
 export const EVENT_CARD_DIR = `${CUSTOMIZE_DIR}/event`
+export const REGISTRY_FILE = `${CUSTOMIZE_DIR}/customize-registry.ts`
+/** The folders that draw a Customize kind (D1098): a kind is edited through the shared pieces only. */
+export const KIND_FOLDERS = [
+  'cards',
+  'config',
+  'event',
+  'formula',
+  'keyed',
+  'kinds',
+  'override-row',
+  'scalar',
+  'table',
+  'triggers',
+] as const
+/** A boolean is a library Switch and a device or source pick is a SourceSelector dialog. */
+export const FORBIDDEN_IN_KIND_FOLDERS = /\b(Checkbox|DevicePicker|DeviceValuePicker)\b/
 export const AUTHORITY_SOURCES = [
   `${CUSTOMIZE_DIR}/assignment-availability.ts`,
   `${CUSTOMIZE_DIR}/event/event-targets.ts`,
@@ -55,6 +71,10 @@ export interface CoverageInput {
   readonly linkKinds: readonly string[]
   /** Every `*-link.ts` module under `packages/types/src/composition/`, repo-relative. */
   readonly linkSources: readonly string[]
+  /** Every Customize kind (`CUSTOMIZE_KINDS`): each has an entry in the registry. */
+  readonly customizeKinds: readonly string[]
+  /** Source files (repo-relative) under the kind folders, specs excluded. */
+  readonly kindFiles: readonly string[]
   readonly i18nCapTitles: Readonly<Record<string, readonly string[]>>
   /** Reads a repo-relative file; null when it does not exist. */
   readonly read: (file: string) => string | null
@@ -132,6 +152,27 @@ export function customizeCoverageHits(input: CoverageInput): readonly CoverageHi
       )
     }
   }
+
+  const registry = input.read(REGISTRY_FILE)
+  for (const kind of input.customizeKinds) {
+    if (registry === null || !new RegExp(`^  '?${kind}'?: \\{`, 'm').test(registry)) {
+      miss(`customize kind ${kind}`, `no entry in ${REGISTRY_FILE}`)
+    }
+  }
+  for (const file of input.kindFiles) {
+    const text = input.read(file) ?? ''
+    const code = text
+      .split('\n')
+      .filter((line) => !/^\s*(\*|\/\/|\/\*)/.test(line))
+      .join('\n')
+    const found = FORBIDDEN_IN_KIND_FOLDERS.exec(code)
+    if (found !== null) {
+      miss(
+        `kind folder ${file}`,
+        `uses ${found[1]}: a boolean is the library Switch, a device or source pick is a SourceSelector dialog`,
+      )
+    }
+  }
   return hits
 }
 
@@ -142,6 +183,23 @@ export function listLinkSources(repoRoot: string): readonly string[] {
     .filter((name) => name.endsWith('-link.ts'))
     .map((name) => `${COMPOSITION_DIR}/${name}`)
     .sort()
+}
+
+export function listKindFiles(repoRoot: string): readonly string[] {
+  const out: string[] = []
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(path.join(repoRoot, dir), { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (entry.name !== '__tests__') walk(`${dir}/${entry.name}`)
+      } else if (/\.tsx?$/.test(entry.name)) {
+        out.push(`${dir}/${entry.name}`)
+      }
+    }
+  }
+  for (const folder of KIND_FOLDERS) {
+    if (existsSync(path.join(repoRoot, CUSTOMIZE_DIR, folder))) walk(`${CUSTOMIZE_DIR}/${folder}`)
+  }
+  return out.sort()
 }
 
 export function readRepoFile(repoRoot: string, file: string): string | null {
