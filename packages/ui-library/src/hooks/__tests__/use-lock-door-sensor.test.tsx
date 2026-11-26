@@ -23,6 +23,7 @@ const linked = {
         {
           kind: 'fields',
           cap: 'lock-control',
+          customizeKind: 'lock-door-sensor',
           fields: {
             state: {
               kind: 'expression',
