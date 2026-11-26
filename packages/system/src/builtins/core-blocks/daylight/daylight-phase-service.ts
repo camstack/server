@@ -43,7 +43,7 @@ import type { DaylightSettingsRowBody } from '../record-kinds.js'
  * hysteresis and dwell; a sensor gone for this long is no longer a measurement. A sensor that never
  * produced a verdict (nothing to hold) falls back to the sun at once.
  */
-export const SENSOR_HOLD_MS = 30 * 60_000
+export const SENSOR_HOLD_MS: number = 30 * 60_000
 
 /** The one settings row. */
 export const DAYLIGHT_SETTINGS_ROW_ID = 'settings'
