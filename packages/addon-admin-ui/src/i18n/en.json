@@ -2998,7 +2998,9 @@
       "addN_one": "Add {{count}} action",
       "addN_other": "Add {{count}} actions",
       "steps_one": "{{count}} step",
-      "steps_other": "{{count}} steps"
+      "steps_other": "{{count}} steps",
+      "nothingToLink": "Every action is already linked.",
+      "notRead": "The linked actions have not been read yet."
     },
     "table": {
       "title": "Customizations",
@@ -3094,7 +3096,13 @@
       "capLink": {
         "sourceDevice": "Source device",
         "projectHint": "The whole capability follows this device, not single values. Readings stored one by one below are refused.",
-        "referenceHint": "This device's own capability is read for the card; nothing is copied into this device."
+        "referenceHint": "This device's own capability is read for the card; nothing is copied into this device.",
+        "pickTitle": "Pick the source device",
+        "removeWhat": "The link to {{name}}",
+        "pick": "Use this device",
+        "none": "Not linked",
+        "gone": "Source device removed",
+        "off": "Link switched off"
       },
       "unlink": "Unlink {{device}}",
       "unlinkWhat": "The link to {{device}}, which added: {{features}}"

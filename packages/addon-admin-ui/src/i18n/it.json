@@ -3073,7 +3073,9 @@
       "addN_one": "Aggiungi {{count}} azione",
       "addN_other": "Aggiungi {{count}} azioni",
       "steps_one": "{{count}} passo",
-      "steps_other": "{{count}} passi"
+      "steps_other": "{{count}} passi",
+      "nothingToLink": "Ogni azione è già collegata.",
+      "notRead": "Le azioni collegate non sono ancora state lette."
     },
     "table": {
       "title": "Personalizzazioni",
@@ -3169,7 +3171,13 @@
       "capLink": {
         "sourceDevice": "Dispositivo sorgente",
         "projectHint": "Tutta la funzione segue questo dispositivo, non i singoli valori. Le letture salvate una per una qui sotto vengono rifiutate.",
-        "referenceHint": "La funzione di questo dispositivo viene letta dalla scheda; niente viene copiato in questo dispositivo."
+        "referenceHint": "La funzione di questo dispositivo viene letta dalla scheda; niente viene copiato in questo dispositivo.",
+        "pickTitle": "Scegli il dispositivo sorgente",
+        "removeWhat": "Il collegamento a {{name}}",
+        "pick": "Usa questo dispositivo",
+        "none": "Non collegato",
+        "gone": "Dispositivo sorgente rimosso",
+        "off": "Collegamento disattivato"
       },
       "unlink": "Scollega {{device}}",
       "unlinkWhat": "Il collegamento a {{device}}, che ha aggiunto: {{features}}"

@@ -220,3 +220,11 @@ describe('LinkedActionsCard', () => {
     expect(setLinks.mock.calls[1]?.[0]).toMatchObject({ expectedUpdatedAt: 400 })
   })
 })
+
+describe('sameIds', () => {
+  it('is order-insensitive: a reorder is not a change', async () => {
+    const { sameIds } = await import('../LinkedActionsCard')
+    expect(sameIds(['a', 'b'], ['b', 'a'])).toBe(true)
+    expect(sameIds(['a'], ['a', 'b'])).toBe(false)
+  })
+})

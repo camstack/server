@@ -13,6 +13,8 @@ import { createContext, type ReactNode, useContext, useEffect, useRef, useState 
 /** What a section hands the bar. `save` resolves to the refusal reason, or null when it wrote. */
 export interface DraftSection {
   readonly pendingCount: number
+  /** Names the section in the refusal the bar shows ("Triggered by: <reason>"). */
+  readonly label?: string
   readonly save: () => Promise<string | null>
   readonly discard: () => void
 }
@@ -70,7 +72,7 @@ export function CustomizeDraftProvider({
         if (section === undefined || section.pendingCount === 0) continue
         const reason = await section.save()
         if (reason !== null) {
-          setError(reason)
+          setError(section.label === undefined ? reason : `${section.label}: ${reason}`)
           return
         }
       }

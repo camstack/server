@@ -109,6 +109,7 @@ const capSlices = vi.hoisted((): { current: Record<string, unknown> } => ({
 const actionList = vi.hoisted((): { current: { readonly data?: unknown } } => ({
   current: { data: undefined },
 }))
+const setLinks = vi.hoisted(() => vi.fn(async (_input: unknown) => ({})))
 const actionLinks = vi.hoisted((): { current: { readonly data?: unknown } } => ({
   current: { data: undefined },
 }))
@@ -273,6 +274,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useActionsGetLinks: () => actionLinks.current,
     useActionsSetLinks: () => ({
       mutate: vi.fn(),
+      mutateAsync: setLinks,
       isPending: false,
       error: null,
     }),
@@ -401,6 +403,7 @@ beforeEach(() => {
   remoteConfig.current = { status: 'pending' }
   remoteTemplates.current = { status: 'pending' }
   deleteMutate.mockClear()
+  setLinks.mockClear()
   confirmMock.mockClear()
 })
 
@@ -1275,5 +1278,92 @@ describe('CustomizeTab — lists, plurals, linked actions', () => {
     expect(table.textContent).toMatch(/Movie night/)
     expect(table.textContent).toMatch(/Internal/)
     expect(screen.queryByTestId('linked-actions')).toBeNull()
+  })
+})
+
+describe('CustomizeTab — the one draft follows the device', () => {
+  const ACTIONS = [
+    { id: 'internal:feed', name: 'Feed the dog', readOnly: false, addonId: 'automation' },
+    { id: 'ha:movie', name: 'Movie night', readOnly: true, addonId: 'provider-homeassistant' },
+  ]
+  function arrange(deviceOf: typeof CAMERA): void {
+    device.current = deviceOf
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    actionList.current = { data: ACTIONS }
+    actionLinks.current = {
+      data: { deviceId: deviceOf.id, actionIds: ['internal:feed', 'ha:movie'], updatedAt: 9 },
+    }
+  }
+
+  it('a composed device keeps its linked actions in the draft: Save bar, then one write', async () => {
+    const composedCamera = { ...CAMERA, id: 4604, addonId: 'composer', stableId: 'composed-cam' }
+    arrange(composedCamera)
+    compositionRead.current = {
+      status: 'success',
+      data: {
+        state: 'loaded',
+        view: {
+          block: {
+            id: 'blk-cam',
+            name: 'Cam',
+            code: '',
+            enabled: true,
+            placement: 'hub',
+            createdAt: 1,
+            updatedAt: 1,
+            createdBy: 'admin',
+            status: 'running',
+            lastChangedAt: 1,
+            source: {
+              kind: 'composition',
+              composition: { target: { kind: 'new', type: 'camera' }, features: [] },
+            },
+          },
+          state: { kind: 'answered', state: { deviceId: 4604 } },
+        },
+      },
+      refetch: vi.fn(async () => undefined),
+    }
+    fleet.current = { status: 'success', data: [] }
+    renderTab()
+    fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Unlink Feed the dog' })).toBeNull(),
+    )
+    expect(setLinks).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: /^Save$/i }))
+    await waitFor(() =>
+      expect(setLinks).toHaveBeenCalledWith({
+        deviceId: 4604,
+        actionIds: ['ha:movie'],
+        expectedUpdatedAt: 9,
+      }),
+    )
+  })
+
+  it('a draft of device A is gone when the tab shows device B', async () => {
+    const other = { ...CAMERA, id: 104, stableId: 'r-104', name: 'Camera yard' }
+    arrange(CAMERA)
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    stubDialog()
+    const wrap = (id: number): ReactNode => (
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <CustomizeTab deviceId={id} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    const view = render(wrap(CAMERA.id))
+    fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
+    await screen.findByRole('button', { name: /^Save$/i })
+    arrange(other)
+    view.rerender(wrap(other.id))
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Save$/i })).toBeNull())
+    expect(screen.getByRole('button', { name: 'Unlink Feed the dog' })).toBeTruthy()
   })
 })

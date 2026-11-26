@@ -141,6 +141,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     commandCaps.kind === 'known' ? commandCapOf(commandCaps.value.get(device.id) ?? []) : null
   const saveRef = useRef<() => Promise<string | null>>(async () => null)
   useDraftSection('triggers', {
+    label: t('customize.triggers.title'),
     pendingCount: draftOps(stored, draft).length,
     save: () => saveRef.current(),
     discard: () => {

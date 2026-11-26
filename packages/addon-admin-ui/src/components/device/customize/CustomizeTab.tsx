@@ -41,6 +41,9 @@ const DRAFT_ORDER: readonly string[] = [
   'triggers',
 ]
 
+/** A composed device writes its own composition at once; what hangs off it still waits for Save. */
+const COMPOSED_DRAFT_ORDER: readonly string[] = ['linked-actions', 'triggers']
+
 export interface CustomizeTabProps {
   readonly deviceId: number
 }
@@ -74,9 +77,11 @@ export function CustomizeTab({ deviceId }: CustomizeTabProps): ReactNode {
   }
   const body =
     device.addonId === COMPOSER_ADDON_ID ? (
-      <ComposedCustomizeBody device={device} />
+      <CustomizeDraftProvider key={device.id} order={COMPOSED_DRAFT_ORDER}>
+        <ComposedCustomizeBody device={device} />
+      </CustomizeDraftProvider>
     ) : (
-      <CustomizeDraftProvider order={DRAFT_ORDER}>
+      <CustomizeDraftProvider key={device.id} order={DRAFT_ORDER}>
         <CustomizeBody
           device={device}
           target={{ addonId: device.addonId, stableId: device.stableId }}

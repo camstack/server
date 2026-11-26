@@ -104,6 +104,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
   const setSlot = useDeviceExtensionSetSlot()
   const commitRef = useRef<() => Promise<string | null>>(async () => null)
   useDraftSection('linked-devices', {
+    label: t('customize.linked.title'),
     pendingCount: draft === null ? 0 : 1,
     save: () => commitRef.current(),
     discard: () => {

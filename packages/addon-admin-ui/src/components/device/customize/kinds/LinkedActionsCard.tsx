@@ -74,8 +74,9 @@ export function isLinkedActionLine(line: { readonly kind: string }): line is Lin
   )
 }
 
-function sameIds(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((id, i) => id === b[i])
+/** Same actions, in any order: a reorder is not a change. */
+export function sameIds(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id))
 }
 
 export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
@@ -98,11 +99,13 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const available = entries.filter((entry) => !linkedIds.includes(entry.id))
   const ready = links.data !== undefined && actions.data !== undefined
   const stamp = links.data?.updatedAt
-  const write = (actionIds: readonly string[]): void => setPending(actionIds)
+  // An edit that lands back on the stored list is no edit: the draft is dropped.
+  const write = (actionIds: readonly string[]): void =>
+    setPending(sameIds(actionIds, storedIds) ? null : actionIds)
   // The one write: the stamp the list was read with; a record not read yet is not written (D1098).
   const commit = async (): Promise<string | null> => {
     if (pending === null) return null
-    if (stamp === undefined) return t('customize.triggers.notRead')
+    if (stamp === undefined) return t('customize.linkedActions.notRead')
     try {
       await save.mutateAsync({
         deviceId: device.id,
@@ -117,6 +120,7 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
     }
   }
   useDraftSection('linked-actions', {
+    label: t('customize.linkedActions.title'),
     pendingCount: pending === null || sameIds(pending, storedIds) ? 0 : 1,
     save: commit,
     discard: () => setPending(null),
