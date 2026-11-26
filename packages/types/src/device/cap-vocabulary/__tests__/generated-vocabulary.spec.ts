@@ -90,6 +90,9 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'apps',
   // D1103: the cluster's day/night authority (sun or a light sensor).
   'daylight-phase',
+  // planning#719 P1: the central jobs ledger and the per-addon source it reads.
+  'jobs',
+  'job-source',
 ]
 
 /**

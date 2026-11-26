@@ -265,18 +265,10 @@
   "ir-transmitter.no-code": "Nothing to send: give a pulse train or a native code",
   "gallery.unknown-target": "Unknown gallery target: {{id}}",
   "gallery.unknown-sample": "Unknown gallery sample: {{id}}",
-  "globalSettings": {
-    "s_jobs": {
-      "title": "Jobs",
-      "description": "How long finished background jobs stay in the list.",
-      "jobsRetentionDays": {
-        "label": "Finished jobs retention (days)",
-        "description": "Finished jobs older than this are removed. Running jobs are never removed."
-      },
-      "jobsMaxPerOwner": {
-        "label": "Finished jobs kept per user",
-        "description": "Beyond this many, the oldest finished jobs of a user are removed."
-      }
-    }
-  }
+  "globalSettings.s_jobs.title": "Jobs",
+  "globalSettings.s_jobs.description": "How long finished background jobs stay in the list.",
+  "globalSettings.s_jobs.jobsRetentionDays.label": "Finished jobs retention (days)",
+  "globalSettings.s_jobs.jobsRetentionDays.description": "Finished jobs older than this are removed. Running jobs are never removed.",
+  "globalSettings.s_jobs.jobsMaxPerOwner.label": "Finished jobs kept per user",
+  "globalSettings.s_jobs.jobsMaxPerOwner.description": "Beyond this many, the oldest finished jobs of a user are removed."
 }

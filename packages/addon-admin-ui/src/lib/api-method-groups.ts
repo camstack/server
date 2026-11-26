@@ -197,6 +197,8 @@ const ROUTERS_BY_GROUP: Readonly<Record<MappedGroupId, readonly string[]>> = {
     'calendarSource',
     'daylightPhase',
     'doNotDisturb',
+    'jobs',
+    'jobSource',
     'notificationOutput',
     'notificationRules',
     'notifications',
