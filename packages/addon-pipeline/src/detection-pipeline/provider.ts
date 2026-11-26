@@ -4425,7 +4425,8 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // ready handshake. See {@link engineFactoryInflight}.
     const inflight = this.engineFactoryInflight
     if (inflight) {
-      await inflight
+      // `null`: that start was superseded by a re-derivation — start again.
+      if ((await inflight) === null) await this.ensureEngineFactory()
       return
     }
 
@@ -4443,7 +4444,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // boot pre-warm (`warmPool`) skips (does not call this) before READY.
     // The invariant: until ready → no inference, surface state, never
     // crash-loop, never fall back to another runtime.
-    const creation = (async (): Promise<EngineFactory> => {
+    const creation = (async (): Promise<EngineFactory | null> => {
       await this.assertEngineReady()
       await this.ensureBackendDeps(this.currentEngine)
       const factory = new EngineFactory({
@@ -4482,19 +4483,28 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         // The default was re-derived while this pool was starting: it belongs
         // to a device that is no longer the default, so it is never published.
         await factory.dispose().catch(() => undefined)
-        throw new Error(
-          `node-default pool for ${defaultDeviceKey} superseded while starting — the default was re-derived`,
-        )
+        return null
       }
       this.engineFactory = factory
       return factory
     })()
 
     this.engineFactoryInflight = creation
+    let built: EngineFactory | null
     try {
-      await creation
+      built = await creation
     } finally {
       this.engineFactoryInflight = null
+    }
+    if (built === null) {
+      // The dispatch that waited on this start is not dropped: the default
+      // moved while the pool spun, so the start is repeated for the new
+      // default (bounded — a re-derivation walks a finite candidate list).
+      this.log.warn(
+        `node-default pool for ${defaultDeviceKey} superseded while starting — the default was re-derived, starting the new default`,
+        { meta: { from: defaultDeviceKey, to: deviceKeyOf(this.currentEngine) } },
+      )
+      await this.ensureEngineFactory()
     }
   }
 
@@ -4518,7 +4528,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * NOWHERE: a dead lock that read, for as long as it existed, as if this path
    * were already guarded.
    */
-  private engineFactoryInflight: Promise<EngineFactory> | null = null
+  private engineFactoryInflight: Promise<EngineFactory | null> | null = null
 
   /**
    * Get (or lazily build) the inference-pool factory for an explicit device
@@ -4637,6 +4647,21 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * already receives it — no second copy of the stored map, no addon import.
    */
   private readonly routedDeviceKeys = new Set<string>()
+
+  /**
+   * Drop the opt-in of a device whose pool is gone: an idle-evicted pool is
+   * what a disabled (or no longer elected) accelerator looks like here, and a
+   * default must never move onto it. A live dispatch routed there again
+   * re-records it.
+   */
+  private forgetRoutedDevice(deviceKey: string): void {
+    const poolKey = deviceKeyOf(resolveDeviceEngine(deviceKey))
+    for (const routed of [...this.routedDeviceKeys]) {
+      if (routed === deviceKey || deviceKeyOf(resolveDeviceEngine(routed)) === poolKey) {
+        this.routedDeviceKeys.delete(routed)
+      }
+    }
+  }
 
   /** The default a re-derivation moved off, and the key it moved onto. */
   private displacedDefault: DisplacedDefault | null = null
@@ -5079,6 +5104,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const factory = this.factoriesByDevice.get(deviceKey)
     if (!factory) return
     this.factoriesByDevice.delete(deviceKey)
+    this.forgetRoutedDevice(deviceKey)
     await factory.dispose()
     this.log.info('Idle device pool evicted', {
       meta: {
@@ -5279,6 +5305,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     await this.engineFactory.dispose()
     this.engineFactory = null
     this.executor = null
+    this.forgetRoutedDevice(deviceKeyOf(target))
     this.log.info('Engine killed', {
       meta: { ...target, force: input.force ?? false },
     })

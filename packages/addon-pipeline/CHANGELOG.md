@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A default inference pool that was replaced while it was starting no longer drops the frame that waited on it, and a disabled accelerator is no longer a candidate when the node default moves off a failed device
+
 ## [1.2.688] - 2026-11-26
 
 ### Changed
