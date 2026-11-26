@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9309 source files · 251 units claimed by at least one document (9287 files).**
+**257 units · 9310 source files · 251 units claimed by at least one document (9288 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/ui-library/src/composites` | 713 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +62 more, 3 ADRs | 2026-11-26 |
 | `packages/addon-admin-ui/src/components` | 710 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +89 more, 4 ADRs | 2026-11-26 |
-| `scripts` | 668 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +161 more, 14 ADRs | 2026-11-26 |
+| `scripts` | 669 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +161 more, 14 ADRs | 2026-11-26 |
 | `packages/system/src/builtins` | 552 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +221 more, 21 ADRs | 2026-11-26 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 479 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 254 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +248 more, 41 ADRs | 2026-11-26 |

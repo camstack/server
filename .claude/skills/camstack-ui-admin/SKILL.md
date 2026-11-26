@@ -121,6 +121,16 @@ their breakpoint (D43, `packages/ui-library/src/lib/responsive.ts`).
 `overflow-x-clip`, not `overflow-x-hidden`. A viewport-anchored overlay
 spells its offset with `env(safe-area-inset-*)`.
 
+## Edits save on request (planning#675)
+
+Every editable form, table or inline editor keeps a dirty state and writes only
+on an explicit Save; Discard reverts to the server state (`FormSaveBar`). No
+mutation from `onBlur` / `onChange` / `onCheckedChange` / a per-row toggle on a
+settings surface. Exceptions: live device controls, one-shot action buttons,
+toggles explicitly documented as instant. Guard `check-ui-save-discard` +
+`scripts/ui-save-discard-allowlist.json` (a new hit fails; a fixed one must be
+removed from the list).
+
 ## Verify
 
 - `npm run ui:check -- <touched files>` — 0 new findings.

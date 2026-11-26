@@ -364,6 +364,7 @@ jobs:
             scripts/check-no-hub-address-env.ts \
             scripts/check-no-provider-poll-loops.ts \
             scripts/check-no-ui-optimism.ts \
+            scripts/check-ui-save-discard.ts \
             scripts/check-no-hub-device-type.ts \
             scripts/check-no-config-yaml.ts \
             scripts/check-power-hint.ts \

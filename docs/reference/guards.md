@@ -4,12 +4,12 @@
 
 # Guards
 
-264 repository guards: 259 in `scripts/`,
+265 repository guards: 260 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (252)
+## Enforced by CI checks (253)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -257,6 +257,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-topology-is-a-diagram-not-a-lookup.ts` | Disproportionate-endpoint guard — `nodes.topology` draws the cluster DIAGRAM; it is not a lookup table. |
 | `scripts/check-tree-private-data.ts` | Tree scrub guard — house names, hosts, addresses, rooms and camera ids. |
 | `scripts/check-ui-catalogue-current.ts` | The committed UI catalogue (`docs/reference/ui-components.json`) is what the sources produce: ui-library exports and props, the need table, the colour tokens and — when the `camstack/` submodule is checked out — the viewer kit. |
+| `scripts/check-ui-save-discard.ts` | An editable settings surface writes only on an explicit Save (planning#675). |
 | `scripts/check-user-facing-decision-ids.ts` | User-facing decision-id guard — no `D550` / `ADR-0550` in text an operator reads. |
 | `scripts/check-videoclips-footage-owner.ts` | A clip source over RECORDED FOOTAGE is declared by the addon that owns the footage (D560). |
 | `scripts/check-viewer-build-carries-no-server.ts` | Viewer-build guard — the reduced product stays reduced, and owns its own name. |

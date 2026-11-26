@@ -24,6 +24,20 @@ these pages are what the procedure reads.
 | [viewer.md](viewer.md) | The viewer (React Native) kit, `tokens.ts`, sheets, the embed player, i18n, and the co-design rule |
 | [anti-patterns.md](anti-patterns.md) | The drift that exists today, measured, and what replaces each shape |
 
+## Edits save on request (planning#675)
+
+Any editable form, table or inline editor (admin-ui, ui-library, addon pages)
+keeps a dirty state and writes only on an explicit Save; Discard reverts to the
+server state. Use `FormSaveBar` (`useFormSaveController`). No mutation fires from
+`onBlur`, `onChange` or a per-row toggle on a settings surface.
+
+Allowed exceptions, listed explicitly: a live device control (a switch that
+turns on a light), a one-shot action button, and a toggle documented as instant
+(with that documentation next to it). `scripts/check-ui-save-discard.ts`
+refuses a new mutation from an `onBlur` / `onChange` / `onCheckedChange` /
+`onValueChange` handler; the existing ones are listed with a reason in
+`scripts/ui-save-discard-allowlist.json` and shrink as the sweep fixes them.
+
 ## The local tools
 
 None needs the MCP, a build or the network. All read the committed catalogue

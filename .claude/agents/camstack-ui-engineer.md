@@ -52,7 +52,9 @@ Hard rules:
 - Edits save through Save / Discard (`FormSaveBar`): a local draft, one Save,
   Discard restores the server state. Never a write from `onBlur` / `onChange`
   / a per-row control on a settings surface; only live device controls and
-  one-shot buttons act immediately.
+  one-shot buttons, and toggles explicitly documented as instant act
+  immediately (planning#675; guard `check-ui-save-discard`, which refuses a new
+  mutation from those handlers).
 - MUST-use pieces (table of rule ids in `camstack-ui` §3): `DataTable` (`raw-table`),
   `SourceSelector` / `DeviceValuePicker` for device picks (`device-select-lookalike`),
   `useConfirm` / `ConfirmActionButton` for destructive actions
