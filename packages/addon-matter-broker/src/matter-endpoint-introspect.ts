@@ -33,6 +33,25 @@ export interface MatterEndpointView {
   readonly deviceTypeIds: readonly number[]
   /** `"clusterId:attributeId"` of every recognised attribute the endpoint carries. */
   readonly attributeKeys: readonly string[]
+  /**
+   * DoorLock FeatureMap carries Unbolting (bit 12). `undefined` = the map could
+   * not be read (or no DoorLock): unknown, never "no".
+   */
+  readonly lockUnbolting?: boolean
+}
+
+/** DoorLock FeatureMap bit 12: the lock has a separate unbolt command. */
+const DOOR_LOCK_UNBOLTING_BIT = 0x1000
+
+/** Unbolting out of a numeric bitmap or a named-feature record; `undefined` = unreadable. */
+function unboltingOf(featureMap: unknown): boolean | undefined {
+  if (typeof featureMap === 'number') return (featureMap & DOOR_LOCK_UNBOLTING_BIT) !== 0
+  if (typeof featureMap === 'bigint') return (featureMap & BigInt(DOOR_LOCK_UNBOLTING_BIT)) !== 0n
+  if (isRecord(featureMap)) {
+    const named = featureMap['unbolting']
+    return typeof named === 'boolean' ? named : undefined
+  }
+  return undefined
 }
 
 /** A single attribute value read from an endpoint's behavior state. */
@@ -256,12 +275,16 @@ function collectEndpoint(endpoint: DynamicEndpoint, out: MatterEndpointView[]): 
   const clusterIds: number[] = []
   const attributes: MatterEndpointAttribute[] = []
   const attributeKeys: string[] = []
+  let lockUnbolting: boolean | undefined
 
   if (isRecord(supported)) {
     for (const [behaviorId, behaviorType] of Object.entries(supported)) {
       const clusterId = clusterIdOf(behaviorType)
       if (clusterId === null) continue
       clusterIds.push(clusterId)
+      if (clusterId === MatterClusterId.DoorLock) {
+        lockUnbolting = readLockUnbolting(endpoint, behaviorType)
+      }
       readBehaviorAttributes(endpoint, behaviorId, clusterId, attributes, attributeKeys)
     }
   }
@@ -277,8 +300,26 @@ function collectEndpoint(endpoint: DynamicEndpoint, out: MatterEndpointView[]): 
     attributes,
     deviceTypeIds: readDeviceTypeIds(endpoint),
     attributeKeys,
+    ...(lockUnbolting !== undefined ? { lockUnbolting } : {}),
   })
   for (const part of endpoint.parts) collectEndpoint(part, out)
+}
+
+/** The DoorLock feature map: the live attribute state first, the behavior's supported features second. */
+function readLockUnbolting(endpoint: DynamicEndpoint, behaviorType: unknown): boolean | undefined {
+  try {
+    const state = endpoint.stateOf('doorLock')
+    if (isRecord(state)) {
+      const fromState = unboltingOf(state['featureMap'])
+      if (fromState !== undefined) return fromState
+    }
+  } catch {
+    // fall through to the behavior's own declaration
+  }
+  if (!isRecordOrFunction(behaviorType)) return undefined
+  const cluster = Reflect.get(behaviorType, 'cluster')
+  if (!isRecordOrFunction(cluster)) return undefined
+  return unboltingOf(Reflect.get(cluster, 'supportedFeatures'))
 }
 
 function readBehaviorAttributes(

@@ -25,6 +25,8 @@ export interface DeviceFixture {
   readonly emitted: EmittedEvent[]
   readonly logs: LogLine[]
   readonly caps: string[]
+  /** The native provider registered per cap name. */
+  readonly providers: Map<string, object>
 }
 
 export interface FixtureOptions {
@@ -32,12 +34,15 @@ export interface FixtureOptions {
   readonly capabilities: readonly string[]
   readonly deviceTypeIds?: readonly number[]
   readonly endpointId?: number
+  /** Extra persisted endpoint config (lockUnbolting, powerSourceEndpointId …). */
+  readonly extraConfig?: Record<string, unknown>
 }
 
 export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFixture> {
   const emitted: EmittedEvent[] = []
   const logs: LogLine[] = []
   const caps: string[] = []
+  const providers = new Map<string, object>()
   let runtime: IDeviceRuntimeState | null = null
   const line =
     (level: LogLine['level']) =>
@@ -77,6 +82,7 @@ export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFix
       endpointId: options.endpointId ?? 1,
       deviceTypeIds: options.deviceTypeIds ?? [],
       capabilities: options.capabilities,
+      ...options.extraConfig,
     },
     initialRuntimeState: {},
     eventBus: {
@@ -90,8 +96,9 @@ export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFix
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
     },
-    registerNativeCap: (cap: { name: string; runtimeState?: unknown }) => {
+    registerNativeCap: (cap: { name: string; runtimeState?: unknown }, provider: object) => {
       caps.push(cap.name)
+      providers.set(cap.name, provider)
       if (cap.runtimeState && runtime) {
         runtime.installCapSchema(
           cap.name,
@@ -104,5 +111,5 @@ export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFix
   } as unknown as DeviceContext
   const device = new MatterEndpointDevice(ctx)
   await device.onActivate()
-  return { device, emitted, logs, caps }
+  return { device, emitted, logs, caps, providers }
 }

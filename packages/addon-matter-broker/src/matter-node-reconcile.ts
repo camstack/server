@@ -7,7 +7,7 @@
 import { z } from 'zod'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterNodeSnapshot } from './matter-controller.js'
-import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
+import { MatterClusterId, mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import {
   matterEndpointEntrySchema,
   type MatterEndpointEntry,
@@ -16,20 +16,51 @@ import {
 /** Reduce a node snapshot to its mappable endpoint entries (skip cap-less ones). */
 export function mappableEndpoints(node: MatterNodeSnapshot): MatterEndpointEntry[] {
   const out: MatterEndpointEntry[] = []
+  const batteryOnly: number[] = []
   for (const endpoint of node.endpoints) {
     const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {
       deviceTypeIds: endpoint.deviceTypeIds ?? [],
       attributes: endpoint.attributes ?? [],
     })
     if (mapping.capabilities.length === 0) continue
+    const isBatteryOnly = mapping.capabilities.every((cap) => cap === 'battery')
+    if (isBatteryOnly) batteryOnly.push(out.length)
     out.push({
       endpointId: endpoint.endpointId,
       clusterIds: [...endpoint.clusterIds],
       deviceTypeIds: [...(endpoint.deviceTypeIds ?? [])],
       attributes: [...(endpoint.attributes ?? [])],
+      ...(endpoint.lockUnbolting !== undefined ? { lockUnbolting: endpoint.lockUnbolting } : {}),
     })
   }
-  return out
+  return foldPowerSource(out, batteryOnly)
+}
+
+/**
+ * A PowerSource-only endpoint is the battery of the node's functional endpoint,
+ * not a device: it folds into the first functional entry that has no battery of
+ * its own (the entry then registers `battery`, fed by that endpoint's reports).
+ * With no such entry the battery endpoint stays its own child. The orphaned
+ * child of an install adopted before the fold is retired by the kernel's
+ * accessory prune (a second agreeing read), never by this function.
+ */
+function foldPowerSource(
+  entries: MatterEndpointEntry[],
+  batteryOnlyIndexes: readonly number[],
+): MatterEndpointEntry[] {
+  const sourceIndex = batteryOnlyIndexes[0]
+  if (sourceIndex === undefined) return entries
+  const targetIndex = entries.findIndex(
+    (entry, i) =>
+      !batteryOnlyIndexes.includes(i) && !entry.clusterIds.includes(MatterClusterId.PowerSource),
+  )
+  const source = entries[sourceIndex]
+  if (targetIndex < 0 || source === undefined) return entries
+  return entries.flatMap((entry, i) => {
+    if (i === sourceIndex) return []
+    if (i === targetIndex) return [{ ...entry, powerSourceEndpointId: source.endpointId }]
+    return [entry]
+  })
 }
 
 /**
@@ -46,6 +77,8 @@ export function endpointsEqual(a: readonly unknown[], b: readonly MatterEndpoint
       [...e.clusterIds].sort((x, y) => x - y),
       [...e.deviceTypeIds].sort((x, y) => x - y),
       [...e.attributes].sort(),
+      e.lockUnbolting ?? null,
+      e.powerSourceEndpointId ?? null,
     ])
   const current = new Set(parsed.data.map(key))
   return b.every((entry) => current.has(key(entry)))

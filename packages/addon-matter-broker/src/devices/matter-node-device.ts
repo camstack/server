@@ -21,6 +21,13 @@ export const matterEndpointEntrySchema = z.object({
   deviceTypeIds: z.array(z.number().int().nonnegative()).default([]),
   /** `"clusterId:attributeId"` of the recognised attributes the endpoint carries. */
   attributes: z.array(z.string()).default([]),
+  /** DoorLock FeatureMap carries Unbolting; absent = unknown (no Open). */
+  lockUnbolting: z.boolean().optional(),
+  /**
+   * A PowerSource-only endpoint folded into this entry: its attribute reports
+   * feed this child's `battery` cap and it spawns no child of its own.
+   */
+  powerSourceEndpointId: z.number().int().nonnegative().optional(),
 })
 export type MatterEndpointEntry = z.infer<typeof matterEndpointEntrySchema>
 
@@ -95,6 +102,10 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
         attributes: endpoint.attributes,
       })
       if (mapping.capabilities.length === 0) continue
+      const capabilities =
+        endpoint.powerSourceEndpointId !== undefined && !mapping.capabilities.includes('battery')
+          ? [...mapping.capabilities, 'battery']
+          : [...mapping.capabilities]
       const meta: AccessoryChildSpec['meta'] = {
         type: mapping.deviceType,
         name: endpointLabel(endpoint.endpointId, mapping.deviceType),
@@ -108,7 +119,11 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
         clusterIds: endpoint.clusterIds,
         deviceTypeIds: endpoint.deviceTypeIds,
         attributes: endpoint.attributes,
-        capabilities: [...mapping.capabilities],
+        capabilities,
+        ...(endpoint.lockUnbolting !== undefined ? { lockUnbolting: endpoint.lockUnbolting } : {}),
+        ...(endpoint.powerSourceEndpointId !== undefined
+          ? { powerSourceEndpointId: endpoint.powerSourceEndpointId }
+          : {}),
         system: 'matter',
         ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
       }

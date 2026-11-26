@@ -64,6 +64,10 @@ export const matterEndpointSchema = z.object({
   clusterIds: z.array(z.number().int().nonnegative()).default([]),
   deviceTypeIds: z.array(z.number().int().nonnegative()).default([]),
   attributes: z.array(z.string()).default([]),
+  /** DoorLock FeatureMap carries Unbolting; absent = unknown (no Open). */
+  lockUnbolting: z.boolean().optional(),
+  /** A folded PowerSource-only endpoint whose reports feed this child's battery. */
+  powerSourceEndpointId: z.number().int().nonnegative().optional(),
   capabilities: z.array(z.string()).default([]),
   system: z.literal('matter').optional(),
   integrationId: z.string().optional(),
@@ -163,6 +167,8 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   private readonly brokerId: string
   private readonly nodeId: string
   private readonly endpointId: number
+  private readonly powerSourceEndpointId: number | undefined
+  private readonly lockUnbolting: boolean
   private readonly caps: readonly MatterEndpointCap[]
   private readonly registeredCaps: Set<MatterEndpointCap> = new Set()
   private reportUnsub: (() => void) | null = null
@@ -181,6 +187,8 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.brokerId = persisted.brokerId
     this.nodeId = persisted.nodeId
     this.endpointId = persisted.endpointId
+    this.powerSourceEndpointId = persisted.powerSourceEndpointId
+    this.lockUnbolting = persisted.lockUnbolting === true
     this.caps = persisted.capabilities.filter(isKnownCap)
     this.booleanState = isLeakEndpoint({ deviceTypeIds: persisted.deviceTypeIds })
       ? 'flood'
@@ -194,7 +202,10 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
    * mandatory). A lock's PIN requirement is slice state (`codeRequired`, #459).
    */
   override get features(): readonly DeviceFeature[] {
-    return [...(this.caps.includes('cover') ? [DeviceFeature.CoverStoppable] : [])]
+    return [
+      ...(this.caps.includes('cover') ? [DeviceFeature.CoverStoppable] : []),
+      ...(this.caps.includes('lock-control') && this.lockUnbolting ? [DeviceFeature.LockOpen] : []),
+    ]
   }
 
   override async onActivate(): Promise<void> {
@@ -232,7 +243,12 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   /** Decode a live report into the owning cap's runtime-state slice. */
   private applyReport(brokerId: string, report: MatterAttributeReport): void {
     if (brokerId !== this.brokerId) return
-    if (report.nodeId !== this.nodeId || report.endpointId !== this.endpointId) return
+    if (report.nodeId !== this.nodeId) return
+    const fromFoldedPowerSource =
+      this.powerSourceEndpointId !== undefined &&
+      report.endpointId === this.powerSourceEndpointId &&
+      report.clusterId === MatterClusterId.PowerSource
+    if (report.endpointId !== this.endpointId && !fromFoldedPowerSource) return
     const decoded = decodeMatterAttribute({
       clusterId: report.clusterId,
       attributeId: report.attributeId,
@@ -465,7 +481,8 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
         await this.invokeLock('lockDoor', 'locking', code)
       },
       unlock: async ({ code }) => {
-        await this.invokeLock('unlockDoor', 'unlocking', code)
+        // A lock with a separate unbolt command: unlock = unbolt only, open = unlatch.
+        await this.invokeLock(this.lockUnbolting ? 'unboltDoor' : 'unlockDoor', 'unlocking', code)
       },
       open: async () => {
         await this.invokeLock('unlockDoor', 'unlocking', undefined)
@@ -481,7 +498,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
    * A PIN is forwarded on the command and nowhere else.
    */
   private async invokeLock(
-    commandName: 'lockDoor' | 'unlockDoor',
+    commandName: 'lockDoor' | 'unlockDoor' | 'unboltDoor',
     pending: 'locking' | 'unlocking',
     code: string | undefined,
   ): Promise<void> {

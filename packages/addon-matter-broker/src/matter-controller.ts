@@ -42,6 +42,8 @@ export interface MatterEndpointSnapshot {
    * on hardware with the matching feature).
    */
   readonly attributes?: readonly string[]
+  /** DoorLock FeatureMap carries Unbolting; absent = unknown. */
+  readonly lockUnbolting?: boolean
 }
 
 /** A single attribute report pushed from a commissioned node. */

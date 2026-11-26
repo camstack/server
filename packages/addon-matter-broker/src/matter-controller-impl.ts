@@ -405,6 +405,7 @@ export class MatterJsController implements MatterController {
       clusterIds: ep.clusterIds,
       deviceTypeIds: ep.deviceTypeIds,
       attributes: ep.attributeKeys,
+      ...(ep.lockUnbolting !== undefined ? { lockUnbolting: ep.lockUnbolting } : {}),
     }))
     return { nodeId: view.id, label: view.label, online: view.online, endpoints }
   }

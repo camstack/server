@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Matter: a commissioned lock's endpoints now report their server clusters, so its door lock and power source children appear
+- A Matter lock with the Unbolting feature now offers Open (unlock only unbolts, Open unlatches), and a battery reported on a separate power-source endpoint shows on the lock instead of as a 'Parts' device.
 
 ## [0.2.178] - 2026-11-25
 
