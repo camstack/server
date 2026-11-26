@@ -29,7 +29,11 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from homecom_normalize import normalize_reading, probe_outcome  # noqa: E402
+from homecom_normalize import (  # noqa: E402
+    normalize_reading,
+    notifications_from_response,
+    probe_outcome,
+)
 
 DEVICE_TYPES = ("k40", "k30", "icom")
 
@@ -168,11 +172,35 @@ async def _probe_heat_source(session: Any, token: str, gateway_id: str) -> Dict[
     return outcomes
 
 
+async def _read_notifications(session: Any, token: str, gateway_id: str) -> Any:
+    """GET the gateway's notifications directly: a refused or failed read is None, never [].
+
+    The library turns any failed read into an empty list, which would read as "no fault".
+    """
+    import aiohttp
+    from homecom_alt.const import BOSCHCOM_DOMAIN, BOSCHCOM_ENDPOINT_GATEWAYS
+
+    url = f"{BOSCHCOM_DOMAIN}{BOSCHCOM_ENDPOINT_GATEWAYS}{gateway_id}/resource/notifications"
+    try:
+        async with session.get(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=aiohttp.ClientTimeout(total=PROBE_TIMEOUT_S),
+        ) as resp:
+            if resp.status != 200:
+                return notifications_from_response(resp.status, None)
+            return notifications_from_response(resp.status, await resp.json(content_type=None))
+    except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as err:
+        print(f"[homecom_worker] notifications read failed: {type(err).__name__}", file=sys.stderr)
+        return None
+
+
 async def _read(
     client: Any, session: Any, token: str, gateway_id: str, device_type: str
 ) -> Dict[str, Any]:
     device = _as_dict(await client.async_update(gateway_id))
     extras: Dict[str, Any] = {
+        "notifications": await _read_notifications(session, token, gateway_id),
         "aggregateStarts": await _optional(client.async_get_hs_total_number_of_starts(gateway_id)),
     }
     if device_type != "icom":

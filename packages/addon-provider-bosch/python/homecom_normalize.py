@@ -17,7 +17,9 @@ Output shape (camelCase, every key always present):
                        temperatureLevels: { <level>: Setting } } ]
   heatSourceProbe: { <path>: "answered" | "refused" | "absent" | "transient" }
 
-Setting = { value: str | number | None, min, max, allowed: [str], writeable: bool | None }
+Setting = { value: str | number | None, min, max, allowed: [str], writeable: bool | None,
+            step: number | None }
+  faults:     [ { code, active, severity } ] | None   # None = the notifications read failed
 """
 from __future__ import annotations
 
@@ -116,6 +118,7 @@ def setting_of(raw: Any) -> Optional[Dict[str, Any]]:
         "max": _finite(envelope.get("maxValue")),
         "allowed": _string_list(envelope.get("allowedValues")),
         "writeable": _writeable(envelope.get("writeable")),
+        "step": _finite(envelope.get("stepSize")),
     }
 
 
@@ -203,6 +206,41 @@ def probe_outcome(status: int) -> str:
     return "transient"
 
 
+def notifications_from_response(status: int, body: Any) -> Optional[List[Any]]:
+    """The notification list of one direct GET, or None when it was not answered.
+
+    The library collapses a refused or failed read to `[]`, which reads as "no fault"; here
+    anything but a 200 carrying a list (bare, or under `values`) is unknown.
+    """
+    if status != 200:
+        return None
+    if isinstance(body, dict):
+        body = body.get("values")
+    return body if isinstance(body, list) else None
+
+
+def normalize_notifications(raw: Any) -> Optional[List[Dict[str, Any]]]:
+    """Gateway notifications as faults: code `dcd-ccd`, active unless `act` is `H` (history),
+    severity `error` when `dlv` is `8`, else `warning`. None stays None (unknown)."""
+    if not isinstance(raw, list):
+        return None
+    faults: List[Dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        dcd, ccd = item.get("dcd"), item.get("ccd")
+        if not isinstance(dcd, str) or not isinstance(ccd, str):
+            continue
+        faults.append(
+            {
+                "code": f"{dcd}-{ccd}",
+                "active": item.get("act") != "H",
+                "severity": "error" if str(item.get("dlv")) == "8" else "warning",
+            }
+        )
+    return faults
+
+
 def _probe_map(raw: Any) -> Dict[str, str]:
     if not isinstance(raw, dict):
         return {}
@@ -275,7 +313,8 @@ def normalize_reading(
     """`device` is the library's update dataclass as a dict; `extras` the separate reads.
 
     extras keys: `silentMode`, `additionalHeaterMode`, `aggregateStarts`,
-    `chargeDuration` ({ dhw id: payload }), `heatSourceProbe` ({ path: probe outcome }).
+    `chargeDuration` ({ dhw id: payload }), `heatSourceProbe` ({ path: probe outcome }),
+    `notifications` (the list of the direct read, or None when it was not answered).
     """
     more = extras or {}
     durations = more.get("chargeDuration") if isinstance(more.get("chargeDuration"), dict) else {}
@@ -297,4 +336,5 @@ def normalize_reading(
         "heatingCircuits": [c for c in heating if c is not None],
         "dhwCircuits": [c for c in dhw if c is not None],
         "heatSourceProbe": _probe_map(more.get("heatSourceProbe")),
+        "faults": normalize_notifications(more.get("notifications")),
     }

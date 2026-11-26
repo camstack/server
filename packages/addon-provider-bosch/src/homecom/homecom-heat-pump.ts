@@ -8,6 +8,7 @@ import type {
 } from '@camstack/types'
 import type {
   HomeComBridgeDhwCircuit,
+  HomeComBridgeFault,
   HomeComBridgeHeatingCircuit,
   HomeComBridgeReading,
   HomeComBridgeSetting,
@@ -62,6 +63,8 @@ export interface HomeComHeatPumpReading {
   readonly electricalKwh: number | null
   readonly pressureBar: number | null
   readonly starts: number | null
+  /** The gateway notifications; null when the read was refused or failed (D393). */
+  readonly faults: readonly HomeComBridgeFault[] | null
 }
 
 export type HeatPumpSystemMode = keyof HeatPumpSystem
@@ -157,6 +160,7 @@ export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPu
     electricalKwh: hs.electricalKwh,
     pressureBar: hs.pressureBar,
     starts: hs.starts,
+    faults: bridge.faults,
   }
 }
 
@@ -271,7 +275,7 @@ function optionOf(s: HomeComHeatPumpSetting | null): HeatPumpOptionSetting | nul
 
 function rangeOf(s: HomeComHeatPumpSetting | null): HeatPumpRangeSetting | null {
   if (s === null) return null
-  return { value: numberValue(s), min: s.min, max: s.max, step: null }
+  return { value: numberValue(s), min: s.min, max: s.max, step: s.step }
 }
 
 // ── writes ──────────────────────────────────────────────────────────────
@@ -339,14 +343,25 @@ const SYSTEM_OPS: Readonly<Record<HeatPumpSystemMode, HomeComSystemOp>> = {
   holiday: 'holidayMode',
 }
 
+/** The gateway lists "no holiday" as the empty value, not as `off`. */
+function holidayOffValue(
+  which: HeatPumpSystemMode,
+  setting: HomeComHeatPumpSetting | null,
+  mode: string,
+): string {
+  if (which !== 'holiday' || mode !== 'off' || setting === null) return mode
+  return !setting.allowed.includes('off') && setting.allowed.includes('') ? '' : mode
+}
+
 export function systemModeWrite(
   reading: HomeComHeatPumpReading,
   which: HeatPumpSystemMode,
   mode: string,
 ): HomeComBridgeWrite {
+  const setting = reading[which]
   return {
     op: SYSTEM_OPS[which],
-    value: acceptedOption(reading[which], `${which} mode`, mode),
+    value: acceptedOption(setting, `${which} mode`, holidayOffValue(which, setting, mode)),
   }
 }
 
@@ -427,9 +442,37 @@ export function extraHotWaterWrite(
   circuitId: string,
 ): HomeComBridgeWrite {
   const charge = requireCircuit(reading, circuitId, 'dhw').charge
+  // An unreadable charge (refused read) is not a read-only one: the PUT is still tried.
+  if (charge === null) return { op: 'dhwCharge', circuitId, value: 'start' }
   return {
     op: 'dhwCharge',
     circuitId,
     value: acceptedOption(charge, `${circuitId} extra hot water`, 'start'),
+  }
+}
+
+// ── climate presets: the gateway's away mode ────────────────────────────
+
+export interface HomeComClimatePresets {
+  readonly preset: string
+  readonly availablePresets: readonly string[]
+}
+
+/** `none` / `away` while the gateway answers its away mode; no preset at all otherwise. */
+export function climatePresetsFrom(away: HomeComHeatPumpSetting | null): HomeComClimatePresets {
+  if (away === null) return { preset: '', availablePresets: [] }
+  return { preset: away.value === 'on' ? 'away' : 'none', availablePresets: ['none', 'away'] }
+}
+
+export function awayPresetWrite(
+  away: HomeComHeatPumpSetting | null,
+  preset: string,
+): HomeComBridgeWrite {
+  if (preset !== 'away' && preset !== 'none') {
+    throw new HomeComHeatPumpRefusalError(`HomeCom climate: preset "${preset}" is not offered`)
+  }
+  return {
+    op: 'awayMode',
+    value: acceptedOption(away, 'away mode', preset === 'away' ? 'on' : 'off'),
   }
 }

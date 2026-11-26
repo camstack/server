@@ -212,3 +212,52 @@ describe('HomeCom heat pump discovery', () => {
     expect(picks.map((p) => p.nativeId)).toEqual(['gateway:0', 'hp:0'])
   })
 })
+
+describe('HomeCom heat pump batch A (planning#741)', () => {
+  it('starts extra hot water when the charge is unreadable, refuses when it is read-only', () => {
+    const unreadable = reading((r) => ({
+      ...r,
+      dhwCircuits: r.dhwCircuits.map((d) => ({ ...d, charge: null })),
+    }))
+    expect(extraHotWaterWrite(unreadable, 'dhw1')).toEqual({
+      op: 'dhwCharge',
+      circuitId: 'dhw1',
+      value: 'start',
+    })
+    const readOnly = reading((r) => ({
+      ...r,
+      dhwCircuits: r.dhwCircuits.map((d) => ({
+        ...d,
+        charge: setting('stop', { allowed: ['start', 'stop'], writeable: false }),
+      })),
+    }))
+    expect(() => extraHotWaterWrite(readOnly, 'dhw1')).toThrow(/read-only/)
+    expect(() => extraHotWaterWrite(unreadable, 'dhw9')).toThrow(/no dhw circuit/)
+  })
+
+  it('carries the gateway stepSize into a range, null when it gave none', () => {
+    const stepped = reading((r) => ({
+      ...r,
+      heatingCircuits: r.heatingCircuits.map((c) => ({
+        ...c,
+        maxFlowTemp: setting(60, { min: 30, max: 60, writeable: true, step: 0.5 }),
+        ecoSetpoint: setting(18, { min: 10, max: 25, writeable: true }),
+      })),
+    }))
+    const circuit = heatPumpStatusFrom(stepped, 1).circuits.find((c) => c.id === 'hc1')
+    expect(circuit?.maxFlowTemp?.step).toBe(0.5)
+    expect(circuit?.ecoSetpoint?.step).toBeNull()
+  })
+
+  it('writes holiday off as the empty value when the gateway lists the empty value', () => {
+    const r = reading((x) => ({
+      ...x,
+      system: {
+        ...x.system,
+        holiday: setting('', { allowed: ['', 'hm1', 'hm2'], writeable: true }),
+      },
+    }))
+    expect(systemModeWrite(r, 'holiday', 'off')).toEqual({ op: 'holidayMode', value: '' })
+    expect(systemModeWrite(r, 'holiday', 'hm1')).toEqual({ op: 'holidayMode', value: 'hm1' })
+  })
+})

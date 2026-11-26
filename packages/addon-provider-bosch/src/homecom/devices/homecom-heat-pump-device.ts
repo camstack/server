@@ -7,6 +7,7 @@ import {
   type HeatPumpStatus,
   type InferNativeProvider,
 } from '@camstack/types'
+import { homeComFaultReading } from '../homecom-faults.js'
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import {
@@ -70,6 +71,7 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
       integrationId: this.#brokerId,
       onSnapshot: () => this.refreshFromSnapshot(),
     })
+    this.registerErrorCap()
     this.registerStatusCap()
     this.registerControlCap()
     this.runtimeState.setCapState(STATUS_CAP, COLD_START)
@@ -99,6 +101,7 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
         ...COLD_START,
         lastFetchedAt: Date.now(),
       })
+      this.publishFaults(null)
       return
     }
     if (this.#noReading) {
@@ -111,6 +114,17 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
       )
     }
     this.runtimeState.setCapState(STATUS_CAP, heatPumpStatusFrom(reading, Date.now()))
+    this.publishFaults(reading.faults)
+  }
+
+  /** A refused or failed notifications read is unknown, never "no fault" (D393). */
+  private publishFaults(faults: HomeComHeatPumpReading['faults']): void {
+    this.publishError(homeComFaultReading(faults, Date.now())).catch((error: unknown) => {
+      this.ctx.logger.warn('HomeCom heat pump: the fault could not be published', {
+        tags: { deviceId: this.ctx.id },
+        meta: { error: error instanceof Error ? error.message : String(error) },
+      })
+    })
   }
 
   private requireClient() {

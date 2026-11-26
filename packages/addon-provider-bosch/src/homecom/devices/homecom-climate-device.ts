@@ -12,6 +12,7 @@ import {
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import { climateSliceFromCircuit } from '../homecom-domain-mapping.js'
+import { awayPresetWrite, climatePresetsFrom } from '../homecom-heat-pump.js'
 
 export const homeComClimateSchema = z.object({
   nativeId: z.string().min(1),
@@ -87,7 +88,12 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
       this.runtimeState.setCapState(CLIMATE_CAP, { ...COLD_START, lastFetchedAt: Date.now() })
       return
     }
-    this.runtimeState.setCapState(CLIMATE_CAP, climateSliceFromCircuit(circuit, Date.now()))
+    const presets = climatePresetsFrom(snapshot?.bridge?.system.away ?? null)
+    this.runtimeState.setCapState(CLIMATE_CAP, {
+      ...climateSliceFromCircuit(circuit, Date.now()),
+      preset: presets.preset,
+      availablePresets: [...presets.availablePresets],
+    })
   }
 
   private requireClient() {
@@ -111,8 +117,24 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
         await this.requireClient().setFanMode(this.#circuitId, fanMode)
         this.refreshFromSnapshot()
       },
-      setPreset: async () => {
-        throw new Error('HomeCom climate: presets not supported')
+      setPreset: async ({ preset }) => {
+        const away = homeComConnections.getSnapshot(this.#brokerId)?.bridge?.system.away ?? null
+        const client = this.requireClient()
+        await client.writeHeatPump([awayPresetWrite(away, preset)])
+        this.ctx.logger.info('HomeCom climate: preset written', {
+          tags: { deviceId: this.ctx.id },
+          meta: { preset },
+        })
+        try {
+          homeComConnections.updateSnapshot(this.#brokerId, await client.fetchSystem())
+        } catch (error) {
+          // The write went out: say the refresh failed, never that the write did.
+          this.ctx.logger.warn('HomeCom climate: preset written, the refresh failed', {
+            tags: { deviceId: this.ctx.id },
+            meta: { error: error instanceof Error ? error.message : String(error) },
+          })
+        }
+        this.refreshFromSnapshot()
       },
       setTarget: async ({ target }) => {
         await this.requireClient().setCircuitSetpoint(this.#circuitId, target)

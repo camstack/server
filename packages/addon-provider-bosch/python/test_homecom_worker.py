@@ -12,7 +12,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from homecom_normalize import normalize_reading, probe_outcome  # noqa: E402
+from homecom_normalize import (  # noqa: E402
+    normalize_notifications,
+    normalize_reading,
+    notifications_from_response,
+    probe_outcome,
+    setting_of,
+)
 from homecom_worker import WorkerError, parse_request  # noqa: E402
 
 FORBIDDEN = {}  # the library turns a 403/404 into an empty dict
@@ -141,7 +147,8 @@ def test_circuits_keep_their_settings_with_limits_and_allowed_values():
     assert [c["id"] for c in reading["heatingCircuits"]] == ["hc1", "hc2"]
     hc1 = reading["heatingCircuits"][0]
     assert hc1["operationMode"] == {"value": "manual", "min": None, "max": None,
-                                    "allowed": ["off", "manual", "auto"], "writeable": True}
+                                    "allowed": ["off", "manual", "auto"], "writeable": True,
+                                    "step": None}
     assert hc1["heatCoolMode"]["writeable"] is False
     assert hc1["manualRoomSetpoint"]["min"] == 5 and hc1["manualRoomSetpoint"]["max"] == 30
     assert hc1["maxFlowTemp"]["value"] == 60
@@ -218,6 +225,37 @@ def test_icom_aliases_are_read():
     assert reading["heatingCircuits"][0]["roomTemp"] == 20.5
     assert reading["dhwCircuits"][0]["chargeDuration"]["value"] == 90
     assert reading["dhwCircuits"][0]["currentSetpoint"]["value"] == 52
+
+
+def test_a_refused_notifications_read_is_unknown_never_an_empty_list():
+    body = {"values": [{"dcd": "A11", "ccd": "1010", "act": "A", "dlv": "8"}]}
+    assert notifications_from_response(403, body) is None
+    assert notifications_from_response(404, {}) is None
+    assert notifications_from_response(503, body) is None
+    assert notifications_from_response(200, "garbage") is None
+    assert notifications_from_response(200, {"values": []}) == []
+    assert normalize_notifications(None) is None
+    reading = normalize_reading(k40_device(), {**extras(), "notifications": None})
+    assert reading["faults"] is None
+
+
+def test_a_history_notification_is_not_an_active_fault():
+    history = normalize_notifications([{"dcd": "A11", "ccd": "1010", "act": "H"}])
+    assert history == [{"code": "A11-1010", "active": False, "severity": "warning"}]
+    live = normalize_notifications(
+        [{"dcd": "A11", "ccd": "1010", "act": "A", "dlv": "8"},
+         {"dcd": "H00", "ccd": "2", "act": "AH", "dlv": "4"}]
+    )
+    assert live == [
+        {"code": "A11-1010", "active": True, "severity": "error"},
+        {"code": "H00-2", "active": True, "severity": "warning"},
+    ]
+    assert normalize_notifications([{"ccd": "1"}, "x"]) == []
+
+
+def test_a_setting_carries_the_gateway_step():
+    assert setting_of(env(21, type="floatValue", stepSize=0.5))["step"] == 0.5
+    assert setting_of(env(21, type="floatValue"))["step"] is None
 
 
 def test_the_request_is_validated_before_the_library_loads():

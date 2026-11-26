@@ -24,6 +24,8 @@ const SettingSchema = z.object({
   max: z.number().nullable(),
   allowed: z.array(z.string()),
   writeable: z.boolean().nullable(),
+  /** The gateway's `stepSize`; null when it gave none. */
+  step: z.number().nullable().default(null),
 })
 export type HomeComBridgeSetting = z.infer<typeof SettingSchema>
 
@@ -68,6 +70,14 @@ export type HomeComBridgeDhwCircuit = z.infer<typeof DhwCircuitSchema>
 const ProbeOutcomeSchema = z.enum(['answered', 'refused', 'absent', 'transient'])
 export type HomeComBridgeProbeOutcome = z.infer<typeof ProbeOutcomeSchema>
 
+/** One gateway notification as a fault: `dcd-ccd`, still raised unless it is history. */
+const FaultSchema = z.object({
+  code: z.string(),
+  active: z.boolean(),
+  severity: z.enum(['warning', 'error']),
+})
+export type HomeComBridgeFault = z.infer<typeof FaultSchema>
+
 const ReadingSchema = z.object({
   heatSource: z.object({
     heatPumpType: z.string().nullable(),
@@ -90,6 +100,8 @@ const ReadingSchema = z.object({
   dhwCircuits: z.array(DhwCircuitSchema),
   /** Asked only when the bulk read left the heat-pump type unknown; path → outcome. */
   heatSourceProbe: z.record(z.string(), ProbeOutcomeSchema).default({}),
+  /** The notifications; null when the read was refused or failed (never `[]` for that). */
+  faults: z.array(FaultSchema).nullable().default(null),
 })
 export type HomeComBridgeReading = z.infer<typeof ReadingSchema>
 

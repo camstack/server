@@ -6,6 +6,7 @@
 import {
   type DeviceContext,
   DeviceType,
+  type ErrorStatus,
   type HeatPumpStatus,
   type IDeviceRuntimeState,
 } from '@camstack/types'
@@ -79,6 +80,7 @@ const holiday = {
   max: null,
   allowed: ['off', 'hm1'],
   writeable: true,
+  step: null,
 }
 const READING: HomeComHeatPumpReading = {
   circuits: [],
@@ -96,6 +98,7 @@ const READING: HomeComHeatPumpReading = {
   electricalKwh: null,
   pressureBar: null,
   starts: null,
+  faults: [],
 }
 
 function snapshot(heatPump: HomeComHeatPumpReading | undefined): HomeComSystemSnapshot {
@@ -218,5 +221,26 @@ describe('HomeComHeatPumpDevice', () => {
     await expect(providers['device-state-refresh']?.['refresh']?.({})).rejects.toThrow(
       /not connected/,
     )
+  })
+  it('publishes the gateway notifications on the error cap, unknown when they were not read', async () => {
+    const { ctx } = rig()
+    const raised: HomeComHeatPumpReading = {
+      ...READING,
+      faults: [{ code: 'A11-1010', active: true, severity: 'error' }],
+    }
+    connect(
+      { ...READING, faults: null },
+      client(async () => snapshot(raised)),
+    )
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    expect(device.runtimeState.getCapState<ErrorStatus>('error')?.active).toBeNull()
+    homeComConnections.updateSnapshot('int-1', snapshot(raised))
+    await Promise.resolve()
+    expect(device.runtimeState.getCapState<ErrorStatus>('error')).toMatchObject({
+      active: true,
+      code: 'A11-1010',
+    })
+    homeComConnections.clear()
   })
 })

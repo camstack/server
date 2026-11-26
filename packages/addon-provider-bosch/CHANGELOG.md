@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeCom heat pumps report gateway faults, start extra hot water when its state is unreadable, honour gateway step sizes, turn holiday off, and offer an away preset on heating circuits
+
 ## [0.1.64] - 2026-11-26
 
 ### Changed

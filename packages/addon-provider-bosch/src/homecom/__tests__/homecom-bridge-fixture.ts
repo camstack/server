@@ -16,6 +16,7 @@ export function setting(
     max: null,
     allowed: [],
     writeable: null,
+    step: null,
     ...extra,
   }
 }
@@ -88,5 +89,6 @@ export function k40Reading(): HomeComBridgeReading {
       },
     ],
     heatSourceProbe: {},
+    faults: [],
   }
 }

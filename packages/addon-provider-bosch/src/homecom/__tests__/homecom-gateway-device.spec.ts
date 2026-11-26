@@ -150,6 +150,7 @@ describe('the HomeCom gateway as an adoption pick', () => {
         electricalKwh: null,
         pressureBar: null,
         starts: null,
+        faults: [],
       },
     })
     expect(picks.map((p) => p.nativeId)).toEqual([HOMECOM_GATEWAY_NATIVE_ID, 'hp:0'])
