@@ -36,6 +36,11 @@ const NATIVE: HeatPumpStatus = HeatPumpStatusSchema.parse({
   energy: { thermalKwh: 100, electricalKwh: 321 },
   waterPressureBar: null,
   starts: null,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 1,
 })
 

@@ -57,6 +57,9 @@ const ADDED_ACTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> 
     'heatPump.dhwTemperatureLevel': 'setDhwTemperatureLevel',
     'heatPump.dhwChargeDuration': 'setDhwChargeDuration',
     'heatPump.extraHotWater': 'startExtraHotWater',
+    'heatPump.circuitControlType': 'setCircuitControlType',
+    'heatPump.circuitTargetTemp': 'setCircuitTargetTemp',
+    'heatPump.dhwLevelTemp': 'setDhwLevelTemp',
   },
 }
 

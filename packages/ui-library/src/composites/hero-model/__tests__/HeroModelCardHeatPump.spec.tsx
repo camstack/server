@@ -30,6 +30,12 @@ const circuit = (id: string, label: string) => ({
   temperatureLevel: null,
   chargeDuration: null,
   extraHotWater: null,
+  levelTemperatures: null,
+  controlType: null,
+  tankBottomTemp: null,
+  maxCylinderTemp: null,
+  yieldKwh: null,
+  deviceId: null,
 })
 
 const slice = (electricalW: number | null) => ({
@@ -45,6 +51,11 @@ const slice = (electricalW: number | null) => ({
   energy: { thermalKwh: null, electricalKwh: null },
   waterPressureBar: 1.8,
   starts: 494,
+  workingTime: null,
+  heatDemand: null,
+  heatSourceType: null,
+  compressorRunning: null,
+  hourAverage: null,
   lastFetchedAt: 1,
 })
 
