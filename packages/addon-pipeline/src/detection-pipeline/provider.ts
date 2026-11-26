@@ -4403,7 +4403,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * Does NOT require global steps — used by benchmark/test paths that provide their own steps.
    * If global steps exist, initializes with them. Otherwise, creates an empty pool.
    */
-  private async ensureEngineFactory(): Promise<void> {
+  private async ensureEngineFactory(supersededAttempts = 0): Promise<void> {
     // The node-default pool runs on a real accelerator too (on the hub,
     // `openvino:npu`), so it gets the SAME liveness gate and the SAME budget —
     // keyed on the device it actually is, which is also the key the balancer
@@ -4426,7 +4426,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const inflight = this.engineFactoryInflight
     if (inflight) {
       // `null`: that start was superseded by a re-derivation — start again.
-      if ((await inflight) === null) await this.ensureEngineFactory()
+      if ((await inflight) === null) await this.retrySupersededStart(supersededAttempts)
       return
     }
 
@@ -4504,8 +4504,24 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         `node-default pool for ${defaultDeviceKey} superseded while starting — the default was re-derived, starting the new default`,
         { meta: { from: defaultDeviceKey, to: deviceKeyOf(this.currentEngine) } },
       )
-      await this.ensureEngineFactory()
+      await this.retrySupersededStart(supersededAttempts, defaultDeviceKey)
     }
+  }
+
+  /** Hard cap on back-to-back superseded default starts (a flip-flopping default). */
+  private static readonly MAX_SUPERSEDED_STARTS = 3
+
+  private async retrySupersededStart(attempts: number, fromKey?: string): Promise<void> {
+    const next = attempts + 1
+    if (next >= DetectionPipelineProvider.MAX_SUPERSEDED_STARTS) {
+      const to = deviceKeyOf(this.currentEngine)
+      this.log.warn(
+        `node-default pool start superseded ${next} times — the default keeps moving, giving up`,
+        { meta: { from: fromKey ?? null, to } },
+      )
+      throw new Error(`node-default pool for ${to} superseded while starting ${next} times`)
+    }
+    await this.ensureEngineFactory(next)
   }
 
   /**

@@ -73,7 +73,37 @@ describe('routedDeviceKeys', () => {
   })
 })
 
+describe('killEngine', () => {
+  it('forgets the killed engine as a move target', async () => {
+    const provider = makeProvider([])
+    provider['routedDeviceKeys'].add('openvino:gpu')
+    provider['engineFactory'] = {
+      isReady: () => true,
+      dispose: async () => undefined,
+    } as EngineFactory
+    expect(provider['defaultMayMoveTo']('openvino:gpu')).toBe(true)
+    await provider.killEngine({ engine: resolveDeviceEngine('openvino:gpu') })
+    expect(provider['defaultMayMoveTo']('openvino:gpu')).toBe(false)
+  })
+})
+
 describe('a default pool superseded while starting', () => {
+  it('gives up after 3 starts when the default flips on every start', async () => {
+    const lines: LoggedLine[] = []
+    const provider = makeProvider(lines)
+    let starts = 0
+    vi.spyOn(EngineFactory.prototype, 'initialize').mockImplementation(async () => {
+      starts++
+      provider['currentEngine'] = resolveDeviceEngine(starts % 2 === 1 ? 'cpu' : 'openvino:gpu')
+    })
+    vi.spyOn(EngineFactory.prototype, 'dispose').mockResolvedValue(undefined)
+
+    await expect(provider['ensureEngineFactory']()).rejects.toThrow(/superseded while starting/)
+
+    expect(starts).toBe(3)
+    expect(lines.some((l) => l.level === 'warn' && l.message.includes('giving up'))).toBe(true)
+  })
+
   it('re-starts for the new default and serves the waiting dispatch', async () => {
     const lines: LoggedLine[] = []
     const provider = makeProvider(lines)
