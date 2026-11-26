@@ -723,17 +723,15 @@ export class TimelineSession {
 
   /**
    * Never a silent switch (D62 spirit): the client learns which tier it is
-   * watching whenever the pair changes — including the seek that gets the
-   * requested tier back. Sent only when the served tier is one the wire
-   * schema names; a session default outside the ladder is not reported.
+   * watching on the FIRST report — even when served equals requested, so it
+   * can label what it plays — and again whenever the pair changes, including
+   * the seek that gets the requested tier back. Sent only when the served
+   * tier is one the wire schema names; a session default outside the ladder
+   * is not reported.
    */
   private reportServedProfile(profile: string, requested: string): void {
     const key = `${profile}<${requested}`
     if (key === this.lastServedReport) return
-    if (profile === requested && this.lastServedReport === null) {
-      this.lastServedReport = key
-      return
-    }
     if (profile !== 'high' && profile !== 'mid' && profile !== 'low') return
     this.lastServedReport = key
     this.deps.session.sendControl(

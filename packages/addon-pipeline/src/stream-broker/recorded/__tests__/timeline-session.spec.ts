@@ -473,7 +473,27 @@ describe('TimelineSession — recorded profile fallback', () => {
     })
     await ts.handleControl({ t: 'playRecorded', deviceId: 99, epoch: 6_000, profile: 'low' })
     expect(built).toEqual(['low'])
-    expect(s.sent.map((raw) => JSON.parse(raw)).some((m) => m.t === 'servedProfile')).toBe(false)
+    // The first pair is always reported, even when served === requested.
+    expect(s.sent.map((raw) => JSON.parse(raw)).filter((m) => m.t === 'servedProfile')).toEqual([
+      { t: 'servedProfile', profile: 'low', requested: 'low' },
+    ])
+    ts.dispose()
+  })
+
+  it('the first report is sent when served === requested, a repeat of the pair is not, and a tier outside the ladder is never sent', async () => {
+    const s = makeSession()
+    const ts = new TimelineSession({
+      session: s,
+      deviceId: 99,
+      makeFeeder: () => fakeFeeder(),
+    })
+    const served = () => s.sent.map((raw) => JSON.parse(raw)).filter((m) => m.t === 'servedProfile')
+    await ts.handleControl({ t: 'playRecorded', deviceId: 99, epoch: 6_000, profile: 'mid' })
+    expect(served()).toEqual([{ t: 'servedProfile', profile: 'mid', requested: 'mid' }])
+    await ts.handleControl({ t: 'seek', epoch: 7_000 })
+    expect(served()).toHaveLength(1)
+    await ts.handleControl({ t: 'playRecorded', deviceId: 99, epoch: 8_000, profile: 'mid' })
+    expect(served()).toHaveLength(1)
     ts.dispose()
   })
 
