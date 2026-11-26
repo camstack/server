@@ -19,7 +19,7 @@ import {
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2, X } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AssignmentSection } from '../assignments/AssignmentSection'
 import {
@@ -32,6 +32,7 @@ import { suggestedCount } from '../assignments/room-suggestions'
 import { useRoomSuggestions } from '../assignments/use-room-suggestions'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
+import { useDraftSection } from '../customize-draft'
 import { useConfirmRemove } from '../use-confirm-remove'
 import { LinkedNameCell } from './LinkedNameCell'
 import {
@@ -41,6 +42,7 @@ import {
   linkedRows,
   linkedSlotOf,
   orphanTrackedIds,
+  slotForValue,
   slotRelationOf,
   withLinked,
   withoutLinked,
@@ -81,6 +83,8 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
+  // The edited list, held until the tab's Save (planning#675); null = what the server holds.
+  const [draft, setDraft] = useState<LinkedSlotValue | null>(null)
   const slots = useDeviceExtensionListSlots({ deviceId: device.id }, { enabled: true })
   const read = linkedSlotOf({
     status: slots.status,
@@ -88,14 +92,25 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
     error: errorMessage(slots.error) === null ? null : { message: errorMessage(slots.error) ?? '' },
   })
   const slotRef = read.kind === 'present' ? read.slot.slotRef : ''
+  const shownSlot =
+    read.kind === 'present' && draft !== null ? slotForValue(read.slot, draft, () => null) : null
   const shownIds =
     read.kind === 'present'
       ? [
-          ...linkedRows(read.slot, read.value).map((r) => r.deviceId),
-          ...orphanTrackedIds(read.slot, read.value),
+          ...linkedRows(shownSlot ?? read.slot, draft ?? read.value).map((r) => r.deviceId),
+          ...orphanTrackedIds(shownSlot ?? read.slot, draft ?? read.value),
         ]
       : []
   const setSlot = useDeviceExtensionSetSlot()
+  const commitRef = useRef<() => Promise<string | null>>(async () => null)
+  useDraftSection('linked-devices', {
+    pendingCount: draft === null ? 0 : 1,
+    save: () => commitRef.current(),
+    discard: () => {
+      setRefusal(null)
+      setDraft(null)
+    },
+  })
   const fleet = useCandidateDevices(read.kind === 'present' && (picking || shownIds.length > 0))
   // The room's suggestions are counted on the header, so the owner's candidates are read while it can add.
   const room = useRoomSuggestions(device.location, read.kind === 'present')
@@ -128,7 +143,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
     )
   }
 
-  const value = read.value
+  const value = draft ?? read.value
   const fleetById = new Map<number, CandidateDevice>(
     fleet.kind === 'known' ? fleet.value.map((d) => [d.id, d]) : [],
   )
@@ -143,9 +158,13 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
       orphan,
     }
   }
+  const rowSlot =
+    draft === null
+      ? read.slot
+      : slotForValue(read.slot, value, (id) => fleetById.get(id)?.name ?? null)
   const rows: readonly LinkedTableRow[] = [
-    ...linkedRows(read.slot, value).map((r) => named(r, false)),
-    ...orphanTrackedIds(read.slot, value).map((deviceId) =>
+    ...linkedRows(rowSlot, value).map((r) => named(r, false)),
+    ...orphanTrackedIds(rowSlot, value).map((deviceId) =>
       named({ deviceId, name: null, health: 'ok', implied: false, tracked: true }, true),
     ),
   ]
@@ -166,32 +185,34 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
               value: linkedCandidates(offered.data.candidates, fleetById, linkedIds),
             }
 
-  const write = async (next: LinkedSlotValue): Promise<void> => {
-    if (busy) {
-      setRefusal(t('customize.saveInFlight'))
-      return
-    }
+  const write = (next: LinkedSlotValue): void => setDraft(next)
+  /** The one write: the stamp the slot was read at, then the refetch that hands the next write its own. */
+  const commit = async (): Promise<string | null> => {
+    if (draft === null) return null
+    if (busy) return t('customize.saveInFlight')
     setBusy(true)
-    setRefusal(null)
     try {
       await setSlot.mutateAsync({
         deviceId: device.id,
         slotRef: read.slot.slotRef,
-        value: next,
+        value: draft,
         expectedUpdatedAt: read.slot.updatedAt,
       })
       await slots.refetch()
       await queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
+      setDraft(null)
+      return null
     } catch (err: unknown) {
-      setRefusal(err instanceof Error ? err.message : String(err))
+      return err instanceof Error ? err.message : String(err)
     } finally {
       setBusy(false)
     }
   }
+  commitRef.current = commit
   const unlink = async (row: LinkedTableRow): Promise<void> => {
     const name = row.name ?? `#${row.deviceId}`
     if (await confirmRemove(t('customize.linked.removeWhat', { name }), false)) {
-      await write(withoutLinked(value, row.deviceId))
+      write(withoutLinked(value, row.deviceId))
     }
   }
 
@@ -242,7 +263,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
                 aria-label={t('customize.linked.trackFor', {
                   name: r.name ?? r.deviceId,
                 })}
-                onCheckedChange={(next) => void write(withTracked(value, r.deviceId, next))}
+                onCheckedChange={(next) => write(withTracked(value, r.deviceId, next))}
               />
             ),
           } satisfies DeviceListColumn<LinkedTableRow>,
@@ -341,7 +362,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
         confirmLabel={(count) => t('customize.assign.addCount', { count })}
         onConfirm={(picked) => {
           setPicking(false)
-          void write(
+          write(
             withLinked(
               value,
               picked.map((c) => c.deviceId),

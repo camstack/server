@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
+import { CustomizeDraftProvider } from '../../customize-draft'
 
 const CAMERA = {
   id: 103,
@@ -24,6 +25,7 @@ const SLOT = {
   state: 'ok',
   slotRef: 'device-manager:linked-devices',
   slot: 'linked-devices',
+  updatedAt: 500,
   authority: 'device-manager:_linkedDeviceIds',
   activation: null,
   value: { slot: 'linked-devices', deviceIds: [701, 702], trackedDeviceIds: [702] },
@@ -136,7 +138,16 @@ vi.mock('../../source-selector/SourceSelectorDevicesDialog', () => ({
 const { LinkedDevicesTable } = await import('../LinkedDevicesTable')
 
 function wrap(node: ReactNode): ReactNode {
-  return <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={new QueryClient()}>
+      <CustomizeDraftProvider order={['linked-devices']}>{node}</CustomizeDraftProvider>
+    </QueryClientProvider>
+  )
+}
+
+/** The tab's one Save: nothing is written until it is pressed. */
+async function pressSave(): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name: /^Save$/i }))
 }
 
 beforeEach(() => {
@@ -190,33 +201,59 @@ describe('LinkedDevicesTable (spec U7)', () => {
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
+    // An edit is a draft: nothing is written until Save, which sends the stamp it read.
+    expect(setSlot).not.toHaveBeenCalled()
+    await pressSave()
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
         slotRef: 'device-manager:linked-devices',
         value: { slot: 'linked-devices', deviceIds: [701, 702], trackedDeviceIds: [702, 701] },
+        expectedUpdatedAt: 500,
       }),
     )
   })
-  it('✕ unlinks after a confirm, dropping the opt-in too; + Link appends the picks', async () => {
+  it('✕ unlinks after a confirm and + Link appends the picks: two edits, ONE write on Save', async () => {
     render(wrap(<LinkedDevicesTable device={CAMERA} />))
     fireEvent.click(screen.getByRole('button', { name: 'Remove Sirena esterna' }))
-    await waitFor(() =>
-      expect(setSlot).toHaveBeenCalledWith({
-        deviceId: 103,
-        slotRef: 'device-manager:linked-devices',
-        value: { slot: 'linked-devices', deviceIds: [701], trackedDeviceIds: [] },
-      }),
-    )
+    await waitFor(() => expect(screen.queryByText('Sirena esterna')).toBeNull())
     fireEvent.click(screen.getByRole('button', { name: /Link/ }))
     fireEvent.click(screen.getByRole('button', { name: 'pick-gate' }))
-    await waitFor(() =>
-      expect(setSlot).toHaveBeenLastCalledWith({
-        deviceId: 103,
-        slotRef: 'device-manager:linked-devices',
-        value: { slot: 'linked-devices', deviceIds: [701, 702, 703], trackedDeviceIds: [702] },
-      }),
+    expect(setSlot).not.toHaveBeenCalled()
+    await pressSave()
+    await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
+    expect(setSlot).toHaveBeenCalledWith({
+      deviceId: 103,
+      slotRef: 'device-manager:linked-devices',
+      value: { slot: 'linked-devices', deviceIds: [701, 703], trackedDeviceIds: [] },
+      expectedUpdatedAt: 500,
+    })
+  })
+  it('Discard restores the stored list without a write', async () => {
+    render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Sirena esterna' }))
+    await waitFor(() => expect(screen.queryByText('Sirena esterna')).toBeNull())
+    fireEvent.click(await screen.findByRole('button', { name: /^Discard$/i }))
+    expect(screen.getByText('Sirena esterna')).toBeTruthy()
+    expect(setSlot).not.toHaveBeenCalled()
+  })
+  it('two consecutive Saves chain the stamp the refetch returned', async () => {
+    const { rerender } = render(wrap(<LinkedDevicesTable device={CAMERA} />))
+    fireEvent.click(
+      screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
+    await pressSave()
+    await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
+    // The write's refetch lands with the new stamp.
+    slots.current = { status: 'success', data: [{ ...SLOT, updatedAt: 777 }] }
+    rerender(wrap(<LinkedDevicesTable device={CAMERA} />))
+    fireEvent.click(
+      screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
+    )
+    await pressSave()
+    await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(2))
+    expect(setSlot.mock.calls[0]?.[0]).toMatchObject({ expectedUpdatedAt: 500 })
+    expect(setSlot.mock.calls[1]?.[0]).toMatchObject({ expectedUpdatedAt: 777 })
   })
   // The picker is mocked here: the real guarantee is that `AssignmentCandidate` has no field for
   // the owner's `suggested` / `reason`, and `linkedCandidates` drops both (model spec).
@@ -244,7 +281,10 @@ describe('LinkedDevicesTable (spec U7)', () => {
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
+    await pressSave()
     expect((await screen.findByRole('alert')).textContent).toMatch(/is a container/)
+    // A refused save keeps the draft and the bar.
+    expect(screen.getByRole('button', { name: /^Save$/i })).toBeTruthy()
   })
   it('an owner that reports no opt-in list gets no timeline column — never a write it cannot keep (review M1)', () => {
     slots.current = {
@@ -270,11 +310,13 @@ describe('LinkedDevicesTable (spec U7)', () => {
     expect(screen.getByText(/no longer linked/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Remove Cancello' })).toBeNull()
     fireEvent.click(screen.getByRole('switch', { name: "Show Cancello on this camera's timeline" }))
+    await pressSave()
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
         slotRef: 'device-manager:linked-devices',
         value: { slot: 'linked-devices', deviceIds: [701, 702], trackedDeviceIds: [702] },
+        expectedUpdatedAt: 500,
       }),
     )
   })
@@ -290,6 +332,7 @@ describe('LinkedDevicesTable (spec U7)', () => {
     fireEvent.click(
       screen.getByRole('switch', { name: "Show Luce porch on this camera's timeline" }),
     )
+    await pressSave()
     await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
     expect(
       screen

@@ -4,10 +4,11 @@
  */
 import { DeviceType } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
+import { CustomizeDraftProvider } from '../../customize-draft'
 
 const CAMERA = {
   id: 103,
@@ -35,7 +36,8 @@ const ENTRIES = [
 ]
 
 const linkedIds = vi.hoisted((): { current: readonly string[] } => ({ current: [] }))
-const setLinks = vi.fn()
+const stamp = vi.hoisted((): { current: number } => ({ current: 321 }))
+const setLinks = vi.fn(async (_input: unknown) => ({}))
 const runAction = vi.fn()
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -44,14 +46,15 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     ...actual,
     useActionsList: () => ({ data: ENTRIES }),
     useActionsGetLinks: () => ({
-      data: { deviceId: 103, actionIds: linkedIds.current, updatedAt: 321 },
+      data: { deviceId: 103, actionIds: linkedIds.current, updatedAt: stamp.current },
+      refetch: vi.fn(async () => undefined),
     }),
-    useActionsSetLinks: () => ({ mutate: setLinks, isPending: false, error: null }),
+    useActionsSetLinks: () => ({ mutateAsync: setLinks, isPending: false, error: null }),
     useActionsRun: () => ({ mutate: runAction, isPending: false }),
   }
 })
 
-import { DataTable, type DataColumn } from '@camstack/ui-library'
+import { ConfirmDialogProvider, DataTable, type DataColumn } from '@camstack/ui-library'
 import {
   LinkedActionButtons,
   LinkedActionItem,
@@ -110,9 +113,18 @@ function renderCard() {
   const client = new QueryClient()
   return render(
     <QueryClientProvider client={client}>
-      <Rows />
+      <ConfirmDialogProvider>
+        <CustomizeDraftProvider order={['linked-actions']}>
+          <Rows />
+        </CustomizeDraftProvider>
+      </ConfirmDialogProvider>
     </QueryClientProvider>,
   )
+}
+
+/** The tab's one Save: nothing is written until it is pressed. */
+async function pressSave(): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name: /^Save$/i }))
 }
 
 describe('LinkedActionsCard', () => {
@@ -120,6 +132,7 @@ describe('LinkedActionsCard', () => {
     setLinks.mockClear()
     runAction.mockClear()
     linkedIds.current = []
+    stamp.current = 321
   })
 
   it('shows nothing linked until the operator picks', () => {
@@ -128,29 +141,82 @@ describe('LinkedActionsCard', () => {
     expect(setLinks).not.toHaveBeenCalled()
   })
 
-  it('links only the ticked actions, on top of the existing ones', () => {
+  it('links only the ticked actions, on top of the existing ones, written on Save', async () => {
     linkedIds.current = ['internal:feed']
     renderCard()
     fireEvent.click(screen.getByRole('button', { name: /^Add$/ }))
     fireEvent.click(screen.getByText('Movie night'))
     fireEvent.click(screen.getByRole('button', { name: 'Add 1 action' }))
-    expect(setLinks).toHaveBeenCalledWith({
-      deviceId: 103,
-      actionIds: ['internal:feed', 'ha:movie'],
-      expectedUpdatedAt: 321,
-    })
+    expect(setLinks).not.toHaveBeenCalled()
+    await pressSave()
+    await waitFor(() =>
+      expect(setLinks).toHaveBeenCalledWith({
+        deviceId: 103,
+        actionIds: ['internal:feed', 'ha:movie'],
+        expectedUpdatedAt: 321,
+      }),
+    )
   })
 
-  it('unlinks one action and runs another through this camera', () => {
+  it('unlink asks first, then is a draft: Discard brings the row back, Save writes it', async () => {
     linkedIds.current = ['internal:feed', 'internal:lock']
     renderCard()
     fireEvent.click(screen.getByRole('button', { name: 'Run Lock up' }))
     expect(runAction).toHaveBeenCalledWith({ actionId: 'internal:lock', deviceId: 103 })
     fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
-    expect(setLinks).toHaveBeenCalledWith({
-      deviceId: 103,
-      actionIds: ['internal:lock'],
-      expectedUpdatedAt: 321,
-    })
+    const ask = await screen.findByRole('dialog')
+    expect(ask.textContent).toContain('Feed the dog')
+    fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Unlink Feed the dog' })).toBeNull(),
+    )
+    expect(setLinks).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: /^Discard$/i }))
+    expect(screen.getByRole('button', { name: 'Unlink Feed the dog' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
+    fireEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: /remove/i }),
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Unlink Feed the dog' })).toBeNull(),
+    )
+    await pressSave()
+    await waitFor(() =>
+      expect(setLinks).toHaveBeenCalledWith({
+        deviceId: 103,
+        actionIds: ['internal:lock'],
+        expectedUpdatedAt: 321,
+      }),
+    )
+  })
+
+  it('a stale refusal keeps the draft and shows the reason; the next Save chains the new stamp', async () => {
+    linkedIds.current = ['internal:feed', 'internal:lock']
+    stamp.current = 321
+    setLinks.mockRejectedValueOnce(new Error('[stale-stamp] changed since you read it'))
+    const view = renderCard()
+    fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
+    fireEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: /remove/i }),
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Unlink Feed the dog' })).toBeNull(),
+    )
+    await pressSave()
+    expect((await screen.findAllByText(/stale-stamp/))[0]).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Unlink Feed the dog' })).toBeNull()
+    stamp.current = 400
+    view.rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <ConfirmDialogProvider>
+          <CustomizeDraftProvider order={['linked-actions']}>
+            <Rows />
+          </CustomizeDraftProvider>
+        </ConfirmDialogProvider>
+      </QueryClientProvider>,
+    )
+    await pressSave()
+    await waitFor(() => expect(setLinks).toHaveBeenCalledTimes(2))
+    expect(setLinks.mock.calls[1]?.[0]).toMatchObject({ expectedUpdatedAt: 400 })
   })
 })

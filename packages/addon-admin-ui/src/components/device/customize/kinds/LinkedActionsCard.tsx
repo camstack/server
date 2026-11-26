@@ -24,6 +24,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { Play, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
+import { useDraftSection } from '../customize-draft'
+import { useConfirmRemove } from '../use-confirm-remove'
 import { useTranslation } from 'react-i18next'
 
 export interface LinkedActionsState {
@@ -72,6 +74,10 @@ export function isLinkedActionLine(line: { readonly kind: string }): line is Lin
   )
 }
 
+function sameIds(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id, i) => id === b[i])
+}
+
 export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -83,16 +89,38 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const save = useActionsSetLinks({ onSuccess: refresh })
   const run = useActionsRun({ onSuccess: refresh })
   const entries: readonly ActionEntry[] = actions.data ?? []
-  const linkedIds: readonly string[] = links.data?.actionIds ?? []
+  const storedIds: readonly string[] = links.data?.actionIds ?? []
+  // The edited list, held until the tab's Save (planning#675); null = what the server holds.
+  const [pending, setPending] = useState<readonly string[] | null>(null)
+  const linkedIds: readonly string[] = pending ?? storedIds
+  const confirmRemove = useConfirmRemove()
   const rows = linkedIds.flatMap((id) => entries.filter((entry) => entry.id === id))
   const available = entries.filter((entry) => !linkedIds.includes(entry.id))
   const ready = links.data !== undefined && actions.data !== undefined
   const stamp = links.data?.updatedAt
-  const write = (actionIds: readonly string[]): void => {
-    // The stamp the list was read with; a record not read yet is not written (D1098).
-    if (stamp === undefined) return
-    save.mutate({ deviceId: device.id, actionIds: [...actionIds], expectedUpdatedAt: stamp })
+  const write = (actionIds: readonly string[]): void => setPending(actionIds)
+  // The one write: the stamp the list was read with; a record not read yet is not written (D1098).
+  const commit = async (): Promise<string | null> => {
+    if (pending === null) return null
+    if (stamp === undefined) return t('customize.triggers.notRead')
+    try {
+      await save.mutateAsync({
+        deviceId: device.id,
+        actionIds: [...pending],
+        expectedUpdatedAt: stamp,
+      })
+      await links.refetch()
+      setPending(null)
+      return null
+    } catch (err: unknown) {
+      return err instanceof Error ? err.message : String(err)
+    }
   }
+  useDraftSection('linked-actions', {
+    pendingCount: pending === null || sameIds(pending, storedIds) ? 0 : 1,
+    save: commit,
+    discard: () => setPending(null),
+  })
   const openPicker = (): void => {
     setDraft([])
     setPicking(true)
@@ -109,7 +137,12 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
     running: run.isPending,
     deviceName: device.name,
     openPicker,
-    unlink: (id) => write(linkedIds.filter((linked) => linked !== id)),
+    unlink: (id) => {
+      const name = entries.find((entry) => entry.id === id)?.name ?? id
+      void confirmRemove(name, false).then((ok) => {
+        if (ok) write(linkedIds.filter((linked) => linked !== id))
+      })
+    },
     run: (id) => run.mutate({ actionId: id, deviceId: device.id }),
     dialog: (
       <Dialog open={picking} onOpenChange={setPicking}>

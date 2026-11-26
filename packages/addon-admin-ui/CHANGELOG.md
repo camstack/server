@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Internal: the notification snooze switch is marked as an instant toggle for the new save-on-request check; no visible change
+- Customize: every edit on a device's Customize tab (fields, links, linked devices, linked actions, triggers) is held until the single Save bar (on a composed device, its own fields still save at once); Discard restores the saved state
 
 ## [1.2.757] - 2026-11-26
 

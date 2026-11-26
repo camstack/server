@@ -666,7 +666,7 @@ describe('CustomizeTab — the one table', () => {
 })
 
 describe('CustomizeTab — removal', () => {
-  it('removing the last card entry deletes the ONE block after confirm', async () => {
+  it('removing the last card entry deletes the ONE block after confirm and Save', async () => {
     composable.current = {
       status: 'success',
       data: { caps: [{ cap: 'battery' }] },
@@ -678,8 +678,12 @@ describe('CustomizeTab — removal', () => {
     }
     renderTab()
     fireEvent.click(screen.getByRole('button', { name: /^Remove/ }))
+    await waitFor(() => expect(confirmMock).toHaveBeenCalledTimes(1))
+    // The removal is a draft: nothing is written until the tab's Save.
+    const save = await screen.findByRole('button', { name: /^Save$/i })
+    expect(deleteMutate).not.toHaveBeenCalled()
+    fireEvent.click(save)
     await waitFor(() => expect(deleteMutate).toHaveBeenCalledWith({ blockId: 'blk-feeder' }))
-    expect(confirmMock).toHaveBeenCalledTimes(1)
   })
   it('a declined confirm deletes nothing', async () => {
     composable.current = {

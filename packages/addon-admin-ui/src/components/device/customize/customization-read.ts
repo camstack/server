@@ -41,6 +41,8 @@ export interface CustomizationNotLoaded {
 /** Answered: no composition customizes this device. */
 export interface CustomizationNone {
   readonly kind: 'none'
+  /** A composition the operator drafted and has not saved (the server has no block yet). */
+  readonly draft?: Composition
 }
 /** Answered: the ONE block that customizes this device (D663). */
 export interface CustomizationPresent {
@@ -84,5 +86,6 @@ export function resolveCustomization(query: CustomizationQueryView): Customizati
 }
 
 export function currentComposition(state: CustomizationState): Composition | null {
-  return state.kind === 'present' ? state.composition : null
+  if (state.kind === 'present') return state.composition
+  return state.kind === 'none' ? (state.draft ?? null) : null
 }

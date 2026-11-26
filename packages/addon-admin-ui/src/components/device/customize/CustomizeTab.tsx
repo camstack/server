@@ -26,11 +26,20 @@ import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
 import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
 import { TriggeredByTable } from './triggers/TriggeredByTable'
-import { useCustomization } from './use-customization'
+import { CustomizeDraftProvider, useDraftSection } from './customize-draft'
+import { useDraftCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
 import { ComposedCustomizeBody } from './ComposedCustomizeBody'
+
+/** The order Save writes the tab's sections in: the composition first, then what hangs off it. */
+const DRAFT_ORDER: readonly string[] = [
+  'composition',
+  'linked-devices',
+  'linked-actions',
+  'triggers',
+]
 
 export interface CustomizeTabProps {
   readonly deviceId: number
@@ -67,10 +76,12 @@ export function CustomizeTab({ deviceId }: CustomizeTabProps): ReactNode {
     device.addonId === COMPOSER_ADDON_ID ? (
       <ComposedCustomizeBody device={device} />
     ) : (
-      <CustomizeBody
-        device={device}
-        target={{ addonId: device.addonId, stableId: device.stableId }}
-      />
+      <CustomizeDraftProvider order={DRAFT_ORDER}>
+        <CustomizeBody
+          device={device}
+          target={{ addonId: device.addonId, stableId: device.stableId }}
+        />
+      </CustomizeDraftProvider>
     )
   return (
     <QuickDetailSaveProvider
@@ -94,7 +105,12 @@ interface CustomizeBodyProps {
 }
 
 function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
-  const handle = useCustomization(target)
+  const handle = useDraftCustomization(target)
+  useDraftSection('composition', {
+    pendingCount: handle.pendingCount,
+    save: handle.commit,
+    discard: handle.discard,
+  })
   const composer = useCapabilityPresence('composer')
   const { t } = useTranslation()
   const cameraSensors = useCameraSensors(device.id, device.type === DeviceType.Camera)

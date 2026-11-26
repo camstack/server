@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import { ConfirmDialogProvider, DeviceFleetProvider } from '@camstack/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
+import { CustomizeDraftProvider } from '../../customize-draft'
 
 const LIGHT = {
   id: 5767,
@@ -220,7 +221,9 @@ const { TriggeredByTable } = await import('../TriggeredByTable')
 function wrap(node: ReactNode): ReactNode {
   return (
     <QueryClientProvider client={new QueryClient()}>
-      <ConfirmDialogProvider>{node}</ConfirmDialogProvider>
+      <ConfirmDialogProvider>
+        <CustomizeDraftProvider order={['triggers']}>{node}</CustomizeDraftProvider>
+      </ConfirmDialogProvider>
     </QueryClientProvider>
   )
 }
@@ -308,6 +311,7 @@ describe('TriggeredByTable', () => {
     fireEvent.click(within(ask).getByRole('button', { name: /remove/i }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(remove).not.toHaveBeenCalled()
+    await screen.findByRole('button', { name: /^Save$/i })
     pressSave()
     await waitFor(() =>
       expect(remove).toHaveBeenCalledWith({ blockId: '4864c0cc', expectedUpdatedAt: 111 }),

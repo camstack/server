@@ -143,3 +143,66 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
     save,
   }
 }
+
+export interface DraftCustomizationHandle extends CustomizationHandle {
+  /** 1 when the draft differs from the server's block, else 0. */
+  readonly pendingCount: number
+  /** Writes the draft through the one write path; the refusal reason, or null once written. */
+  readonly commit: () => Promise<string | null>
+  readonly discard: () => void
+}
+
+interface PendingComposition {
+  readonly composition: Composition | null
+}
+
+/** The state the rows see: the server's, with the drafted composition laid over it. */
+function overlay(base: CustomizationState, draft: PendingComposition | null): CustomizationState {
+  if (draft === null) return base
+  if (base.kind === 'present') {
+    return draft.composition === null
+      ? { kind: 'none' }
+      : { kind: 'present', view: base.view, composition: draft.composition }
+  }
+  if (base.kind === 'none' && draft.composition !== null) {
+    return { kind: 'none', draft: draft.composition }
+  }
+  return base
+}
+
+/**
+ * `useCustomization` with the edits held as a draft (planning#675): `save(next)`
+ * only moves `next` into the draft (a plan the server could never take, such as
+ * a block not read yet, is refused at once); `commit` writes the draft once,
+ * with the stamp the block was read at, and a refusal such as `[stale-stamp]`
+ * keeps the draft. Rows read the draft through `state`, so two edits on one
+ * record become one write.
+ */
+export function useDraftCustomization(target: CompositionSourceRef): DraftCustomizationHandle {
+  const inner = useCustomization(target)
+  const [draft, setDraft] = useState<PendingComposition | null>(null)
+  const dirty =
+    draft !== null && planCustomizationSave(inner.state, draft.composition).kind !== 'noop'
+  const save = async (next: Composition | null): Promise<CustomizationSaveOutcome> => {
+    const plan = planCustomizationSave(inner.state, next)
+    if (plan.kind === 'refused') return { kind: 'refused', reason: plan.reason }
+    setDraft({ composition: next })
+    return { kind: 'saved' }
+  }
+  const commit = async (): Promise<string | null> => {
+    if (draft === null) return null
+    const outcome = await inner.save(draft.composition)
+    if (outcome.kind === 'refused') return outcome.reason
+    setDraft(null)
+    return null
+  }
+  return {
+    target,
+    state: overlay(inner.state, draft),
+    saving: inner.saving,
+    save,
+    pendingCount: dirty ? 1 : 0,
+    commit,
+    discard: () => setDraft(null),
+  }
+}

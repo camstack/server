@@ -5,6 +5,7 @@
  * automation made from the built-in linked-trigger template; this section is
  * the only place such an automation is created, changed or deleted.
  */
+import { useDraftSection } from '../customize-draft'
 import { useConfirmRemove } from '../use-confirm-remove'
 import {
   builtinAutomationTemplate,
@@ -20,7 +21,6 @@ import {
 import {
   DeviceList,
   deviceTypeMetaOf,
-  FormSaveBar,
   resolveDeviceLabel,
   useCoreBlocksCreate,
   useCoreBlocksDelete,
@@ -32,7 +32,7 @@ import {
   useUiText,
 } from '@camstack/ui-library'
 import { Zap } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EVENT_EMITTER_CAP } from '../../../../pages/build/automation/fired-model'
 import { expandInstance } from '../../../../pages/build/templates/template-values'
@@ -139,6 +139,15 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
 
   const capability =
     commandCaps.kind === 'known' ? commandCapOf(commandCaps.value.get(device.id) ?? []) : null
+  const saveRef = useRef<() => Promise<string | null>>(async () => null)
+  useDraftSection('triggers', {
+    pendingCount: draftOps(stored, draft).length,
+    save: () => saveRef.current(),
+    discard: () => {
+      setRefusal(null)
+      setDraft(EMPTY_DRAFT)
+    },
+  })
   // A device nothing can command shows the section only for triggers it already has.
   if (capability === null && !shown) return null
 
@@ -256,11 +265,8 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   }
 
   /** Every pending change, written once. A refusal keeps the draft and is shown. */
-  const saveAll = async (): Promise<void> => {
-    if (busy) {
-      setRefusal(t('customize.saveInFlight'))
-      return
-    }
+  const saveAll = async (): Promise<string | null> => {
+    if (busy) return t('customize.saveInFlight')
     setBusy(true)
     setRefusal(null)
     try {
@@ -301,13 +307,16 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
       }
       await instances.refetch()
       setDraft(EMPTY_DRAFT)
+      return null
     } catch (err: unknown) {
-      setRefusal(messageOf(err))
       await instances.refetch()
+      return messageOf(err)
     } finally {
       setBusy(false)
     }
   }
+
+  saveRef.current = saveAll
 
   const edit = (instance: TemplateInstance, params: LinkedTriggerParams | null): void => {
     if (params === null) {
@@ -484,15 +493,6 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
           )}
         </li>
       </AssignmentSection>
-      <FormSaveBar
-        pendingCount={ops.length}
-        saving={busy}
-        onSave={() => void saveAll()}
-        onDiscard={() => {
-          setRefusal(null)
-          setDraft(EMPTY_DRAFT)
-        }}
-      />
       {dialog !== null && (
         <TriggerDialog
           title={

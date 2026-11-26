@@ -80,6 +80,23 @@ export interface LinkedRow {
   readonly tracked: boolean
 }
 
+/**
+ * The slot as the table shows it while the list is a draft: the server's resolved sources kept
+ * for the ids still linked, and a source for each id the operator added and the server has not
+ * resolved yet (named by `nameOf`).
+ */
+export function slotForValue(
+  slot: ExtensionSlotState,
+  value: LinkedSlotValue,
+  nameOf: (deviceId: number) => string | null,
+): ExtensionSlotState {
+  const kept = slot.sources.filter((s) => value.deviceIds.includes(s.deviceId))
+  const added = value.deviceIds
+    .filter((id) => !slot.sources.some((s) => s.deviceId === id))
+    .map((id) => ({ deviceId: id, name: nameOf(id) ?? `#${String(id)}`, health: 'ok' as const }))
+  return { ...slot, sources: [...kept, ...added] }
+}
+
 export function linkedRows(slot: ExtensionSlotState, value: LinkedSlotValue): readonly LinkedRow[] {
   const tracked = value.trackedDeviceIds ?? []
   const row =
