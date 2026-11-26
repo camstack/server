@@ -216,7 +216,7 @@ describe('Linked cameras rows on a device a camera can link', () => {
     expect(screen.getByText('Camera garden')).toBeTruthy()
     expect(setSlot).not.toHaveBeenCalled()
     expect(fetchSlots).not.toHaveBeenCalledWith({ deviceId: 104 }, { staleTime: 0 })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 104,
@@ -247,7 +247,7 @@ describe('Linked cameras rows on a device a camera can link', () => {
     render(wrap(<Harness device={GATE} />))
     fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera shed' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toBeTruthy()
     expect(screen.getByText(/owner timed out/)).toBeTruthy()
     expect(setSlot).not.toHaveBeenCalled()
@@ -261,7 +261,7 @@ describe('Linked cameras rows on a device a camera can link', () => {
     fireEvent.click(remove)
     await waitFor(() => expect(screen.queryByText('Camera porch')).toBeNull())
     expect(setSlot).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
@@ -279,7 +279,7 @@ describe('Linked cameras rows on a device a camera can link', () => {
     await waitFor(() => expect(screen.queryByText('Camera porch')).toBeNull())
     // Another operator links 801 to the camera while the draft is open.
     freshSlots.current[103] = [slotOf([701, 702, 703, 801], [702])]
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
@@ -297,7 +297,7 @@ describe('Linked cameras rows on a device a camera can link', () => {
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera garden' }))
     fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera shed' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
     expect(await screen.findByText(/Camera shed: owner timed out/)).toBeTruthy()
   })
