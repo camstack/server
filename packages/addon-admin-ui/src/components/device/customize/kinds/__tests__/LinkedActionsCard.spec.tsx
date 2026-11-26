@@ -43,7 +43,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useActionsList: () => ({ data: ENTRIES }),
-    useActionsGetLinks: () => ({ data: { deviceId: 103, actionIds: linkedIds.current } }),
+    useActionsGetLinks: () => ({
+      data: { deviceId: 103, actionIds: linkedIds.current, updatedAt: 321 },
+    }),
     useActionsSetLinks: () => ({ mutate: setLinks, isPending: false, error: null }),
     useActionsRun: () => ({ mutate: runAction, isPending: false }),
   }
@@ -135,6 +137,7 @@ describe('LinkedActionsCard', () => {
     expect(setLinks).toHaveBeenCalledWith({
       deviceId: 103,
       actionIds: ['internal:feed', 'ha:movie'],
+      expectedUpdatedAt: 321,
     })
   })
 
@@ -144,6 +147,10 @@ describe('LinkedActionsCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Run Lock up' }))
     expect(runAction).toHaveBeenCalledWith({ actionId: 'internal:lock', deviceId: 103 })
     fireEvent.click(screen.getByRole('button', { name: 'Unlink Feed the dog' }))
-    expect(setLinks).toHaveBeenCalledWith({ deviceId: 103, actionIds: ['internal:lock'] })
+    expect(setLinks).toHaveBeenCalledWith({
+      deviceId: 103,
+      actionIds: ['internal:lock'],
+      expectedUpdatedAt: 321,
+    })
   })
 })

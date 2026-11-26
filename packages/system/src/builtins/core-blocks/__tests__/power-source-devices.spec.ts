@@ -22,6 +22,7 @@ const BLOCK = {
       features: [
         {
           kind: 'fields',
+          customizeKind: 'power-source',
           cap: 'power-source',
           fields: {
             switchOn: { kind: 'from', source: PORT_REF, cap: 'switch', fieldPath: 'on' },

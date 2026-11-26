@@ -30,6 +30,7 @@ function block(offSeconds?: number, stampedBy?: string) {
         features: [
           {
             kind: 'fields',
+            customizeKind: 'power-source',
             cap: 'power-source',
             ...(stampedBy === undefined ? {} : { contributedBy: { linkId: stampedBy } }),
             fields: {
@@ -90,6 +91,7 @@ function applianceBlock(plugIsActuator = false) {
           ...(plugIsActuator ? [actuator] : []),
           {
             kind: 'fields',
+            customizeKind: 'power-source',
             cap: 'power-source',
             fields: {
               switchOn: { kind: 'from', source: PLUG_REF, cap: 'switch', fieldPath: 'on' },

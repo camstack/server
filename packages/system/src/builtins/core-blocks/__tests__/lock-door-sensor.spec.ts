@@ -15,6 +15,7 @@ const block = {
       features: [
         {
           kind: 'fields',
+          customizeKind: 'lock-door-sensor',
           cap: 'lock-control',
           fields: {
             state: {

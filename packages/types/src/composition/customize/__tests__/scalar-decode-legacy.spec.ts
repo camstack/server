@@ -36,6 +36,7 @@ const legacyRunning: CompositionFieldsFeature = {
 
 const legacyPowerSource: CompositionFieldsFeature = {
   kind: 'fields',
+  customizeKind: 'power-source',
   cap: 'power-source',
   fields: {
     switchOn: { kind: 'from', source: PLUG, cap: 'switch', fieldPath: 'on' },
