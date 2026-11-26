@@ -13,8 +13,33 @@ import {
   type MatterEndpointEntry,
 } from './devices/matter-node-device.js'
 
+/** What the battery-endpoint fold decided for a node, for the reconcile's log line. */
+export type FoldDecision =
+  | { readonly kind: 'none' }
+  | {
+      readonly kind: 'folded'
+      readonly powerSourceEndpointId: number
+      readonly intoEndpointId: number
+    }
+  | {
+      readonly kind: 'kept-separate'
+      readonly reason: 'several-functional-endpoints' | 'several-battery-endpoints'
+      readonly functionalEndpoints: number
+      readonly batteryEndpoints: number
+    }
+
+export interface EndpointPlan {
+  readonly entries: MatterEndpointEntry[]
+  readonly fold: FoldDecision
+}
+
 /** Reduce a node snapshot to its mappable endpoint entries (skip cap-less ones). */
 export function mappableEndpoints(node: MatterNodeSnapshot): MatterEndpointEntry[] {
+  return planEndpoints(node).entries
+}
+
+/** The mappable entries plus what the PowerSource fold decided. */
+export function planEndpoints(node: MatterNodeSnapshot): EndpointPlan {
   const out: MatterEndpointEntry[] = []
   const batteryOnly: number[] = []
   for (const endpoint of node.endpoints) {
@@ -38,29 +63,52 @@ export function mappableEndpoints(node: MatterNodeSnapshot): MatterEndpointEntry
 
 /**
  * A PowerSource-only endpoint is the battery of the node's functional endpoint,
- * not a device: it folds into the first functional entry that has no battery of
- * its own (the entry then registers `battery`, fed by that endpoint's reports).
- * With no such entry the battery endpoint stays its own child. The orphaned
- * child of an install adopted before the fold is retired by the kernel's
- * accessory prune (a second agreeing read), never by this function.
+ * not a device — but only when that is unambiguous: exactly one functional
+ * endpoint and exactly one battery-only endpoint. Otherwise every endpoint stays
+ * its own child. The orphaned child of an install adopted before the fold is
+ * retired by the kernel's accessory prune (a second agreeing read), never here.
  */
 function foldPowerSource(
   entries: MatterEndpointEntry[],
   batteryOnlyIndexes: readonly number[],
-): MatterEndpointEntry[] {
+): EndpointPlan {
+  const batteryEndpoints = batteryOnlyIndexes.length
+  if (batteryEndpoints === 0) return { entries, fold: { kind: 'none' } }
+  const functionalIndexes = entries.flatMap((_, i) => (batteryOnlyIndexes.includes(i) ? [] : [i]))
   const sourceIndex = batteryOnlyIndexes[0]
-  if (sourceIndex === undefined) return entries
-  const targetIndex = entries.findIndex(
-    (entry, i) =>
-      !batteryOnlyIndexes.includes(i) && !entry.clusterIds.includes(MatterClusterId.PowerSource),
-  )
-  const source = entries[sourceIndex]
-  if (targetIndex < 0 || source === undefined) return entries
-  return entries.flatMap((entry, i) => {
-    if (i === sourceIndex) return []
-    if (i === targetIndex) return [{ ...entry, powerSourceEndpointId: source.endpointId }]
-    return [entry]
-  })
+  const targetIndex = functionalIndexes[0]
+  const source = sourceIndex === undefined ? undefined : entries[sourceIndex]
+  if (batteryEndpoints > 1 || functionalIndexes.length > 1) {
+    return {
+      entries,
+      fold: {
+        kind: 'kept-separate',
+        reason: batteryEndpoints > 1 ? 'several-battery-endpoints' : 'several-functional-endpoints',
+        functionalEndpoints: functionalIndexes.length,
+        batteryEndpoints,
+      },
+    }
+  }
+  const target = targetIndex === undefined ? undefined : entries[targetIndex]
+  if (
+    source === undefined ||
+    target === undefined ||
+    target.clusterIds.includes(MatterClusterId.PowerSource)
+  ) {
+    return { entries, fold: { kind: 'none' } }
+  }
+  return {
+    entries: entries.flatMap((entry, i) => {
+      if (i === sourceIndex) return []
+      if (i === targetIndex) return [{ ...entry, powerSourceEndpointId: source.endpointId }]
+      return [entry]
+    }),
+    fold: {
+      kind: 'folded',
+      powerSourceEndpointId: source.endpointId,
+      intoEndpointId: target.endpointId,
+    },
+  }
 }
 
 /**
@@ -118,6 +166,17 @@ export class NodeEndpointReporter {
     const serialised = JSON.stringify(inventory)
     if (this.#last.get(key) === serialised) return
     this.#last.set(key, serialised)
+    for (const endpoint of node.endpoints) {
+      if (!endpoint.clusterIds.includes(MatterClusterId.DoorLock)) continue
+      if (endpoint.lockUnbolting !== undefined) continue
+      this.#logger.warn(
+        'Matter: DoorLock FeatureMap could not be read — unknown, Open not offered',
+        {
+          tags: deviceId !== null ? { deviceId } : { addonId: 'matter-broker' },
+          meta: { brokerId, nodeId: node.nodeId, endpointId: endpoint.endpointId },
+        },
+      )
+    }
     for (const line of inventory) {
       if (line.deviceTypeIds.length === 0 || line.clusterIds.length > 0) continue
       this.#logger.warn('Matter: endpoint has device types but no server clusters', {
@@ -182,9 +241,18 @@ export async function reconcileNodeEndpoints(
       if (node === undefined) continue
       deps.reporter.report(brokerId, node, d.id)
 
-      const nextEndpoints = mappableEndpoints(node)
+      const { entries: nextEndpoints, fold } = planEndpoints(node)
       const current = Array.isArray(cfg['endpoints']) ? cfg['endpoints'] : []
       if (endpointsEqual(current, nextEndpoints)) continue
+
+      if (fold.kind !== 'none') {
+        deps.logger.info(
+          fold.kind === 'folded'
+            ? 'Matter: PowerSource endpoint folded into the functional endpoint'
+            : 'Matter: PowerSource endpoint kept as its own child (fold is ambiguous)',
+          { tags: { deviceId: d.id }, meta: { brokerId, nodeId: node.nodeId, ...fold } },
+        )
+      }
 
       await deps.applyEndpoints(d.id, nextEndpoints)
       deps.logger.info('Matter: node endpoints reconciled', {

@@ -131,7 +131,12 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
         stableIdSuffix: String(endpoint.endpointId),
         meta,
         config,
-        factory: (childCtx: DeviceContext): IDevice => new MatterEndpointDevice(childCtx),
+        factory: (childCtx: DeviceContext): IDevice =>
+          new MatterEndpointDevice(childCtx, {
+            capabilities,
+            lockUnbolting: endpoint.lockUnbolting,
+            powerSourceEndpointId: endpoint.powerSourceEndpointId,
+          }),
       })
     }
     return specs

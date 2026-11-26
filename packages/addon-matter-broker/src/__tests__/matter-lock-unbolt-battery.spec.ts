@@ -11,8 +11,9 @@ import { matterCommands, matterNodes } from '../matter-gateway.js'
 import { MatterAttributeId } from '../matter-attr-decode.js'
 import { MatterClusterId } from '../matter-cluster-mapping.js'
 import { readNodeEndpoints } from '../matter-endpoint-introspect.js'
-import { endpointsEqual, mappableEndpoints } from '../matter-node-reconcile.js'
+import { endpointsEqual, mappableEndpoints, planEndpoints } from '../matter-node-reconcile.js'
 import { MatterNodeDevice, matterNodeSchema } from '../devices/matter-node-device.js'
+import { MatterEndpointDevice } from '../devices/matter-endpoint-device.js'
 import { activeEndpoint } from './matter-device-fixture.js'
 
 const UNBOLTING_BIT = 0x1000
@@ -132,6 +133,103 @@ async function lockWith(extraConfig: Record<string, unknown>) {
   }
   return { fx, sent, call }
 }
+
+describe('a restored child takes the node entry list, not its spawn-time config', () => {
+  /** The child spec a parent with these CURRENT entries derives for endpoint 1. */
+  function lockSpecFor(entries: ReturnType<typeof mappableEndpoints>) {
+    const node = Object.create(MatterNodeDevice.prototype)
+    Object.defineProperty(node, 'config', {
+      value: {
+        values: matterNodeSchema.parse({ brokerId: 'b1', nodeId: '1', endpoints: entries }),
+      },
+    })
+    Object.defineProperty(node, 'id', { value: 6017 })
+    const spec = node
+      .getAccessoryChildren()
+      .find((s: { stableIdSuffix: string }) => s.stableIdSuffix === '1')
+    if (spec === undefined) throw new Error('no lock spec')
+    return spec
+  }
+
+  /** A row written before these facts existed: no lockUnbolting, no powerSourceEndpointId, no battery. */
+  async function restoredLock() {
+    const spec = lockSpecFor(mappableEndpoints(LOCK_AND_POWER))
+    const sent: MatterCommandInvocation[] = []
+    matterCommands.setDispatcher(async (_brokerId, invocation) => {
+      sent.push(invocation)
+    })
+    const fx = await activeEndpoint({
+      type: DeviceType.Lock,
+      capabilities: ['lock-control', 'event-emitter'],
+      deviceTypeIds: [10],
+      build: (ctx) => {
+        const device = spec.factory(ctx)
+        if (!(device instanceof MatterEndpointDevice)) throw new Error('not an endpoint device')
+        return device
+      },
+    })
+    return { fx, sent }
+  }
+
+  it('offers Open and unbolts although the old row says nothing', async () => {
+    const { fx, sent } = await restoredLock()
+    expect(fx.device.features).toContain(DeviceFeature.LockOpen)
+    const unlock: unknown = Reflect.get(fx.providers.get('lock-control') ?? {}, 'unlock')
+    if (typeof unlock !== 'function') throw new Error('no unlock')
+    await unlock({})
+    expect(sent.map((s) => s.commandName)).toEqual(['unboltDoor'])
+  })
+
+  it('registers the battery and routes the folded endpoint reports to it', async () => {
+    const { fx } = await restoredLock()
+    expect(fx.caps).toContain('battery')
+    matterNodes.recordAttribute('b1', {
+      nodeId: '1',
+      endpointId: 2,
+      clusterId: MatterClusterId.PowerSource,
+      attributeId: MatterAttributeId.BatPercentRemaining,
+      value: 100,
+    })
+    expect((await statusOf(fx.providers, 'battery'))['level']).toBe(50)
+  })
+})
+
+describe('the fold is taken only when it is unambiguous', () => {
+  const functional = (endpointId: number) => ({
+    endpointId,
+    clusterIds: [0x0101],
+    deviceTypeIds: [10],
+  })
+  const battery = (endpointId: number) => ({
+    endpointId,
+    clusterIds: [29, 47],
+    deviceTypeIds: [0x11],
+  })
+  const nodeWith = (endpoints: MatterNodeSnapshot['endpoints']): MatterNodeSnapshot => ({
+    ...LOCK_AND_POWER,
+    endpoints,
+  })
+
+  it('one functional + one battery endpoint folds', () => {
+    const plan = planEndpoints(nodeWith([functional(1), battery(2)]))
+    expect(plan.fold.kind).toBe('folded')
+    expect(plan.entries.map((e) => e.endpointId)).toEqual([1])
+  })
+  it('several functional endpoints keep the battery as its own child', () => {
+    const plan = planEndpoints(nodeWith([functional(1), functional(3), battery(2)]))
+    expect(plan.fold).toMatchObject({
+      kind: 'kept-separate',
+      reason: 'several-functional-endpoints',
+    })
+    expect(plan.entries.map((e) => e.endpointId)).toEqual([1, 3, 2])
+    expect(plan.entries.every((e) => e.powerSourceEndpointId === undefined)).toBe(true)
+  })
+  it('several battery endpoints stay separate', () => {
+    const plan = planEndpoints(nodeWith([functional(1), battery(2), battery(4)]))
+    expect(plan.fold).toMatchObject({ kind: 'kept-separate', reason: 'several-battery-endpoints' })
+    expect(plan.entries.map((e) => e.endpointId)).toEqual([1, 2, 4])
+  })
+})
 
 describe('lock child: Open feature and command mapping', () => {
   it('Unbolting: LockOpen is advertised, unlock = UnboltDoor, open = UnlockDoor', async () => {

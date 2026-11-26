@@ -75,6 +75,17 @@ export const matterEndpointSchema = z.object({
 
 export type MatterEndpointConfig = z.infer<typeof matterEndpointSchema>
 
+/**
+ * What the parent node derives for this child from its CURRENT endpoint entries,
+ * handed to the constructor by the spec factory. Overrides the child's own
+ * (possibly older) persisted config.
+ */
+export interface MatterEndpointDerivedFacts {
+  readonly capabilities: readonly string[]
+  readonly lockUnbolting?: boolean | undefined
+  readonly powerSourceEndpointId?: number | undefined
+}
+
 /** The cap set this device class knows how to register. */
 const KNOWN_CAPS: ReadonlySet<MatterEndpointCap> = new Set<MatterEndpointCap>([
   'switch',
@@ -181,15 +192,20 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   private eventSeq = 0
   private eventCount = 0
 
-  constructor(ctx: DeviceContext) {
+  constructor(ctx: DeviceContext, derived?: MatterEndpointDerivedFacts) {
     const persisted = matterEndpointSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, matterEndpointSchema, { type: ctx.deviceMeta.type })
     this.brokerId = persisted.brokerId
     this.nodeId = persisted.nodeId
     this.endpointId = persisted.endpointId
-    this.powerSourceEndpointId = persisted.powerSourceEndpointId
-    this.lockUnbolting = persisted.lockUnbolting === true
-    this.caps = persisted.capabilities.filter(isKnownCap)
+    // The parent node's CURRENT entry wins over this child's spawn-time config: a
+    // restored child keeps the config row it was first spawned with, and the
+    // endpoint facts (feature map, folded battery) arrived after that.
+    this.powerSourceEndpointId = derived
+      ? derived.powerSourceEndpointId
+      : persisted.powerSourceEndpointId
+    this.lockUnbolting = (derived ? derived.lockUnbolting : persisted.lockUnbolting) === true
+    this.caps = (derived ? derived.capabilities : persisted.capabilities).filter(isKnownCap)
     this.booleanState = isLeakEndpoint({ deviceTypeIds: persisted.deviceTypeIds })
       ? 'flood'
       : 'contact'

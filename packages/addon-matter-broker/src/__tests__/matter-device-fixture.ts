@@ -36,6 +36,8 @@ export interface FixtureOptions {
   readonly endpointId?: number
   /** Extra persisted endpoint config (lockUnbolting, powerSourceEndpointId …). */
   readonly extraConfig?: Record<string, unknown>
+  /** Build the device from the context (a parent spec factory); default: the class itself. */
+  readonly build?: (ctx: DeviceContext) => MatterEndpointDevice
 }
 
 export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFixture> {
@@ -109,7 +111,7 @@ export async function activeEndpoint(options: FixtureOptions): Promise<DeviceFix
     logger,
     api: { deviceState: { getCapSlice: { query: async () => null } } },
   } as unknown as DeviceContext
-  const device = new MatterEndpointDevice(ctx)
+  const device = options.build ? options.build(ctx) : new MatterEndpointDevice(ctx)
   await device.onActivate()
   return { device, emitted, logs, caps, providers }
 }
