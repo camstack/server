@@ -311,10 +311,9 @@ describe('ChildrenList — adopted devices lead', () => {
     expect(orderOf('Adopted devices')).toBeLessThan(orderOf('Diagnostics'))
   })
 
-  // THE CONTROL: an accessory box must NOT jump the sections. Those sections
-  // are how the device's author arranged its own parts, and a box of leftovers
-  // leading them would reorder every device that declares a layout.
-  it('leaves an accessories box after the sections, as before', () => {
+  // The children box leads for every kind, accessories included: the declared
+  // sections (a vendor's custom ones) follow it.
+  it('puts an accessories box ABOVE the declared sections', () => {
     childrenResult.current = {
       data: [child(2, 'voltage', 'Voltage'), child(3, 'plain', 'Plain')],
       isLoading: false,
@@ -330,7 +329,7 @@ describe('ChildrenList — adopted devices lead', () => {
     }
     render(<ChildrenList parentDeviceId={1} />)
     expect(screen.getByText('Accessories')).toBeDefined()
-    expect(orderOf('Diagnostics')).toBeLessThan(orderOf('Accessories'))
+    expect(orderOf('Accessories')).toBeLessThan(orderOf('Diagnostics'))
   })
 
   // With no sections there is nothing to lead, and the old single-box shape

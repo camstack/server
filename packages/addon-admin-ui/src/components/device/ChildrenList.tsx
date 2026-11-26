@@ -199,21 +199,13 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
     )
   }
 
-  // ADOPTED DEVICES LEAD; accessories keep their place.
-  //
-  // The sections are how the device's AUTHOR arranged the device's own parts,
-  // so a box of leftover accessories must not jump them. Adopted devices are a
-  // different thing entirely: separate devices the operator put under this one,
-  // and the reason they opened the page. On a container with several accessory
-  // sections they were pushed below all of them.
-  //
-  // The mixed case ("Children") counts as accessories: a box that contains part
-  // of the device is part of the device.
-  const adoptedLeads = hasAdopted && !hasAccessory && !hasParts
-
+  // THE CHILDREN LEAD, for every kind. The sections are how the device's
+  // author arranged its own parts (a vendor's custom sections); the box of
+  // children the operator came for (adopted devices, accessories, the primary
+  // and its parts) sits first, the declared sections follow, Disabled is last.
   return (
     <div className="space-y-2">
-      {adoptedLeads ? ungroupedBox : null}
+      {ungroupedBox}
       {grouped.sections.map((section) => (
         <ChildSectionAccordion
           key={section.title}
@@ -224,7 +216,6 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
           {section.children.map((c) => renderChildItem(c.id, c))}
         </ChildSectionAccordion>
       ))}
-      {adoptedLeads ? null : ungroupedBox}
       {disabledBox}
     </div>
   )

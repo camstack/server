@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Customize: linked cameras, the remote's bindings and fan presets are edited in the tab and written together on Save; triggered-by and linked devices are rows of the one Customize table
+- A device's children list now sits above the addon's custom sections on the device page
 
 ## [1.2.760] - 2026-11-26
 
