@@ -1389,6 +1389,10 @@ export class NotificationCenter implements NcEventConsumer {
         // constraint, and the reason there is no timelapse send path.
         enqueue: (rows) => this.outbox.enqueue(rows),
         getDeviceName: (deviceId) => deps.dispatcher.getDeviceName(deviceId),
+        // The dispatcher's own chain: a cold directory is warmed (bounded) and
+        // answers when the facts lookup throws at boot.
+        ensureDeviceNames: () => this.warmDeviceNames(),
+        directoryName: (deviceId) => this.deviceDirectory.get(deviceId)?.name.trim() || undefined,
       })
     }
     this.summaryRules = NcSummaryStore.of(deps.records, this.logger.child('summary'), deps.now)

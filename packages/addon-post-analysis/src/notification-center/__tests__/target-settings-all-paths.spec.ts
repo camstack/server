@@ -85,6 +85,7 @@ const PATHS: readonly Path[] = [
         ruleId: 'r',
         ruleName: 'Night',
         deviceId: 1,
+        deviceName: 'Garage',
         window: WINDOW,
         targets: TARGETS,
         priority: 2,

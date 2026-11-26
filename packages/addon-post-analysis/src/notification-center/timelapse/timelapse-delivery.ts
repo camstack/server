@@ -79,8 +79,8 @@ export interface TimelapseDeliveryInput {
   readonly ruleId: string
   readonly ruleName: string
   readonly deviceId: number
-  /** Display name, already resolved. Falls back to `camera <id>` when absent. */
-  readonly deviceName?: string
+  /** Display name, already resolved (never the id). */
+  readonly deviceName: string
   readonly window: ClosedWindow
   readonly targets: readonly NcRuleTarget[]
   /** Target ids the rule owner opted out of (same semantics as `NcRule`). */
@@ -134,7 +134,7 @@ export interface TimelapseDeliveryInput {
 /** What {@link timelapsePreviewText} needs, and no more. */
 export interface TimelapsePreviewTextInput {
   readonly deviceId: number
-  readonly deviceName?: string
+  readonly deviceName: string
   readonly ruleName?: string
   readonly window?: ClosedWindow
   /** The rule's caption. Absent ⇒ the default; `''` ⇒ no caption. */
@@ -157,7 +157,7 @@ function clockOf(atMs: number): string {
 export function timelapseTemplateVars(
   input: TimelapseDeliveryInput,
 ): Readonly<Record<string, string>> {
-  const deviceName = input.deviceName ?? `camera ${input.deviceId}`
+  const deviceName = input.deviceName
   return {
     device: deviceName,
     rule: input.ruleName,
@@ -240,7 +240,7 @@ function paramsFor(
  * only an ABSENT `text` falls back to {@link DEFAULT_TIMELAPSE_PREVIEW_TEXT}.
  */
 export function timelapsePreviewText(input: TimelapsePreviewTextInput): string {
-  const deviceName = input.deviceName ?? `camera ${input.deviceId}`
+  const deviceName = input.deviceName
   const vars: Record<string, string> = {
     device: deviceName,
     ...(input.ruleName !== undefined ? { rule: input.ruleName } : {}),

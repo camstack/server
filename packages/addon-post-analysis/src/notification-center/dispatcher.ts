@@ -126,6 +126,7 @@ import {
   deviceDisplayLabel,
   frozenDeviceLabel,
   genericDeviceName,
+  resolveDeviceDisplayName,
   type NcDeviceIdentity,
 } from './device-directory.js'
 import {
@@ -3848,11 +3849,7 @@ export async function notificationDeviceName(
     return NC_DEVICELESS_CAMERA_NAME
   }
   const displayDeviceId = systemEvent?.deviceId ?? subject.deviceId
-  return (
-    (await getDeviceName(displayDeviceId).catch(() => null)) ??
-    directoryName?.(displayDeviceId) ??
-    genericDeviceName(language)
-  )
+  return resolveDeviceDisplayName(displayDeviceId, getDeviceName, language, directoryName)
 }
 
 /**

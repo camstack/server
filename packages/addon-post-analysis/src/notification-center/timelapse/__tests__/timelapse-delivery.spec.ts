@@ -275,10 +275,6 @@ describe('buildTimelapseOutboxInputs', () => {
     expect(timelapsePreviewText({ deviceId: 1441, deviceName: 'retro', text: '' })).toBe('')
   })
 
-  it('falls back to `camera <id>` when no display name resolved', () => {
-    expect(timelapsePreviewText({ deviceId: 1441 })).toBe('Timelapse camera 1441')
-  })
-
   it('passes the rule priority and the per-target params through untouched', () => {
     const [row] = buildTimelapseOutboxInputs(
       makeInput({ priority: 5, targets: [{ targetId: 't1', params: { sound: 'gong' } }] }),

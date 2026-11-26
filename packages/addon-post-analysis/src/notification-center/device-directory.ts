@@ -278,6 +278,29 @@ export function genericDeviceName(language: DeviceLabelLanguage): string {
   return language === 'it' ? '(senza nome)' : '(unnamed)'
 }
 
+/**
+ * The ONE name chain for a device a notification words: the device facts
+ * lookup, then the directory's current name, then the localized unnamed label
+ * — never the id. A throwing lookup (device-manager not registered yet) falls
+ * through to the next step and is reported through `onLookupFailed`.
+ */
+export async function resolveDeviceDisplayName(
+  deviceId: number,
+  getDeviceName: ((deviceId: number) => Promise<string | null>) | undefined,
+  language: DeviceLabelLanguage,
+  directoryName?: NcDeviceNameResolver,
+  onLookupFailed?: (error: unknown) => void,
+): Promise<string> {
+  const fetched =
+    getDeviceName === undefined
+      ? null
+      : await getDeviceName(deviceId).catch((err: unknown) => {
+          onLookupFailed?.(err)
+          return null
+        })
+  return fetched ?? directoryName?.(deviceId) ?? genericDeviceName(language)
+}
+
 /** A frozen name counts only when it is real: blank, or the bare id an older intake froze, is not. */
 function isResolvedFrozenName(name: string | undefined, deviceId: number): name is string {
   if (name === undefined) return false

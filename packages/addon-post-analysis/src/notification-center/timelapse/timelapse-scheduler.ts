@@ -34,6 +34,11 @@
 
 import type { IScopedLogger, NcRuleTarget, TimelapseRule } from '@camstack/types'
 import { readTimelapseGeneratedAt } from '@camstack/types'
+import {
+  genericDeviceName,
+  resolveDeviceDisplayName,
+  type NcDeviceNameResolver,
+} from '../device-directory.js'
 import type { NcOutboxEnqueueInput } from '../outbox.js'
 import { NcTextCatalog } from '../text-catalog.js'
 import { buildTimelapseOutboxInputs, timelapsePreviewText } from './timelapse-delivery.js'
@@ -112,6 +117,10 @@ export interface TimelapseSchedulerDeps {
   readonly enqueue: (inputs: readonly NcOutboxEnqueueInput[]) => Promise<number>
   /** Display name for the body; best-effort. */
   readonly getDeviceName?: (deviceId: number) => Promise<string | null>
+  /** The device directory's current name — asked when `getDeviceName` has none. */
+  readonly directoryName?: NcDeviceNameResolver
+  /** Warm a cold device directory (bounded) before the name is resolved; never throws. */
+  readonly ensureDeviceNames?: () => Promise<void>
   /** Per-target opt-out set for this rule (mirrors `NcRule.disabledTargetIds`). */
   readonly disabledTargetIds?: (ruleId: string) => readonly string[]
   readonly settleMs?: number
@@ -385,7 +394,7 @@ export class TimelapseScheduler {
       // The display name is resolved BEFORE the render, not after: the preview
       // caption is `{{device}}` and the renderer is the thing that burns it in.
       // Resolving it afterwards would mean either a second render or a caption
-      // that says `camera 101`.
+      // that names no camera.
       const deviceName = await this.resolveDeviceName(deviceId)
       const outcome = await this.deps.render({
         ruleId: rule.id,
@@ -403,7 +412,7 @@ export class TimelapseScheduler {
         ...(rule.schedule.timezone !== undefined ? { timezone: rule.schedule.timezone } : {}),
         previewText: timelapsePreviewText({
           deviceId,
-          ...(deviceName !== null ? { deviceName } : {}),
+          deviceName,
           ruleName: rule.name,
           window,
           ...(rule.previewText !== undefined ? { text: rule.previewText } : {}),
@@ -420,7 +429,7 @@ export class TimelapseScheduler {
         ruleId: rule.id,
         ruleName: rule.name,
         deviceId,
-        ...(deviceName !== null ? { deviceName } : {}),
+        deviceName,
         window,
         targets: rule.targets as readonly NcRuleTarget[],
         ...(this.deps.disabledTargetIds !== undefined
@@ -489,9 +498,25 @@ export class TimelapseScheduler {
     return [...this.inFlight.values()]
   }
 
-  private async resolveDeviceName(deviceId: number): Promise<string | null> {
-    const get = this.deps.getDeviceName
-    if (get === undefined) return null
-    return get(deviceId).catch(() => null)
+  /** The camera's name for the words: facts lookup, directory, unnamed label — never the id. */
+  private async resolveDeviceName(deviceId: number): Promise<string> {
+    await this.deps.ensureDeviceNames?.()
+    const name = await resolveDeviceDisplayName(
+      deviceId,
+      this.deps.getDeviceName,
+      this.texts.language,
+      this.deps.directoryName,
+      (error) =>
+        this.deps.logger.warn('timelapse device name lookup failed', {
+          tags: { deviceId },
+          meta: { error: String(error) },
+        }),
+    )
+    if (name === genericDeviceName(this.texts.language)) {
+      this.deps.logger.warn('timelapse notification worded with the unnamed label', {
+        tags: { deviceId },
+      })
+    }
+    return name
   }
 }
