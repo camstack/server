@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.244] - 2026-11-26
+
 ### Changed
 
 - The automation tools no longer send a block placement; blocks run on the hub only

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.639] - 2026-11-26
+
 ### Changed
 
 - Core blocks no longer carry a placement: they run on the hub, and stored blocks that still hold one load unchanged

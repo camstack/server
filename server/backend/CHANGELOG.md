@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.968] - 2026-11-26
+
 ### Changed
 
 - Core blocks run only on the hub: agents no longer load the core-blocks addon.
