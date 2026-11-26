@@ -58,6 +58,13 @@ forever. The adoption engine is the first producer; its in-memory job stays the
 engine's own state and the ledger copy is best effort (a ledger failure is logged
 and never fails the work).
 
+**Known limit of P1: there is no retry.** A failed `register` or `update` is logged
+and dropped. If the terminal update never reaches the ledger (the `jobs` cap was
+down) and the engine later prunes that job from its own memory, the next reconcile
+no longer finds it on the producer and marks it `failed / interrupted`, although it
+finished `done`. The same gap loses a job whose `register` failed. Closing it needs
+a producer-side retry or an outbox; it is deliberately not part of P1.
+
 ## Enforcement
 
 `jobs-provider.spec.ts` (audience, idempotent register, terminal no-walk-back,

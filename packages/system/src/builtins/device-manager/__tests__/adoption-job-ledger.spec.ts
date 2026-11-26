@@ -106,21 +106,44 @@ describe('adoption engine as a jobs producer', () => {
     expect(rig.registered).toHaveLength(2)
   })
 
-  it('reports a failed job with its reason', async () => {
+  it('per-candidate failures are results: the job itself still ends done', async () => {
     const rig = makeLedger()
-    const broken: AdoptionJobProvider = {
-      listCandidates: async () => {
-        throw new Error('listing down')
-      },
-      adopt: async () => {
-        throw new Error('boom')
-      },
-    }
-    const engine = makeEngine(broken, rig.ledger)
+    const engine = makeEngine(makeProvider(new Set(['a', 'b', 'c'])), rig.ledger)
     const { jobId } = await engine.start({ ...START, ownerUserId: 'alice' })
     await engine.waitForTest(jobId)
-    // per-candidate failures are results, the job itself still ends `done`
+    expect(engine.get(jobId)?.state).toBe('done')
     expect(rig.updates.at(-1)?.state).toBe('done')
+    expect(rig.updates.at(-1)?.failure).toBeUndefined()
+  })
+
+  it('a job that itself breaks ends failed in the ledger with the error', async () => {
+    const rig = makeLedger()
+    // The job loop breaks outside any one candidate: the already-adopted log line throws.
+    const logger = makeLogger()
+    logger.info = vi.fn((message: string) => {
+      if (message.includes('already adopted')) throw new Error('log sink down')
+    })
+    const skipFirst: AdoptionJobProvider = {
+      listCandidates: async () => ({
+        candidates: [{ childNativeId: 'a', alreadyAdopted: true }],
+        totalCount: 1,
+      }),
+      adopt: async () => ({ adopted: [] }),
+    }
+    let n = 0
+    const engine = new AdoptionJobEngine({
+      resolveProvider: async () => skipFirst,
+      logger,
+      ledger: rig.ledger,
+      now: () => 1_000,
+      newId: () => `adopt-${(n += 1)}`,
+    })
+    const { jobId } = await engine.start({ ...START, ownerUserId: 'alice' })
+    await engine.waitForTest(jobId)
+    expect(engine.get(jobId)?.state).toBe('failed')
+    const last = rig.updates.at(-1)
+    expect(last?.state).toBe('failed')
+    expect(last?.failure).toEqual({ reason: 'error', message: 'log sink down' })
   })
 
   it('a ledger that cannot be reached never fails the adoption', async () => {

@@ -390,7 +390,8 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
   }
 
   protected override scopedSettingsCapabilities(): readonly string[] {
-    return ['alerts', 'jobs']
+    // `jobs` is hosted only with a records engine (see onInitialize); without one its knobs do not exist.
+    return this.ctxIfReady?.records !== undefined ? ['alerts', 'jobs'] : ['alerts']
   }
 
   /** `job-source` calls, each pinned to the producer addon (`ctx.api` is the only cross-addon layer). */
