@@ -51,7 +51,7 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
       if (applied.length > 0) deps.onOfflineApplied?.(applied)
     },
   })
-  deps.mirror.setReportTap((deviceId, capName) => scheduler.onReport(deviceId, capName))
+  deps.mirror.setReportTap((deviceId, capName, cold) => scheduler.onReport(deviceId, capName, cold))
   deps.mirror.setIntegrationTap({
     note: (deviceId, key) => scheduler.noteRowIntegration(deviceId, key),
     forget: (deviceId) => scheduler.forgetDevice(deviceId),

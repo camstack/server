@@ -97,3 +97,19 @@ every migrated provider (`MIGRATED`: VeSync). The scheduler spec
 (`state-refresh-scheduler.spec.ts`) and the seam specs
 (`command-follow-up-seams.spec.ts`, `transport/command-follow-up.spec.ts`)
 pin each rule above.
+
+## Amended
+
+A first read is answered only by a reading, for every provider. A slice still
+at its cap's construction placeholder (an explicit `lastChangedAt` or
+`lastUpdated` of 0) never settles it. This is a general change: the full-push
+providers (Dreo, ESPHome, Home Assistant, MQTT Home Assistant, Tuya) used to
+settle on their first non-framework slice even when it was a cold seed; they
+now wait for a real report or for the first-report bound.
+
+A policy may also name the cap that answers, with the optional `answersWith`:
+a sibling slice (a lock's folded battery) then does not settle the device. A
+policy without `answersWith` keeps the earlier rule, any non-cold,
+non-framework slice answers. A device that is still unanswered when the bound
+passes is concluded offline if its reads failed (an unreachable lock), and
+otherwise released without a verdict.

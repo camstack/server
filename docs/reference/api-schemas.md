@@ -3801,11 +3801,11 @@ Enum: `"guardrail" \| "model"`
 
 - `state`: `LockStateSchema`
 - `codeRequired?`: `boolean \| null`
-- `lastChangedAt`: `number \| null`
+- `lastChangedAt`: `number`
 
 ### `LockStateSchema`
 
-Enum: `"unknown" \| "locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed" \| "door-open"`
+Enum: `"locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed" \| "door-open"`
 
 ### `LogChannelApplyResultSchema`
 

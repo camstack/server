@@ -18,7 +18,10 @@ import {
   StateRefreshPolicyRegistry,
   type StateRefreshPolicyEntry,
 } from '../../../kernel/state-refresh-policies.js'
-import { StateRefreshScheduler } from '../state-refresh-scheduler.js'
+import {
+  FULL_PUSH_FIRST_REPORT_BOUND_MS,
+  StateRefreshScheduler,
+} from '../state-refresh-scheduler.js'
 import { startStateRefresh } from '../state-refresh-wiring.js'
 import {
   __resetCommandFollowUpRegistryForTests,
@@ -52,6 +55,8 @@ interface Rig {
   holdMs: number
   /** When set, a refresh reports this device's state as it lands. */
   readonly reportOnRefresh: boolean
+  /** Devices the scheduler concluded silent past the first-read bound. */
+  readonly silent: number[]
 }
 
 function logger(logs: LogLine[]): IScopedLogger {
@@ -77,11 +82,12 @@ const BASE: StateRefreshPolicy = {
   push: 'none',
 }
 
-function rig(options: { reportOnRefresh?: boolean } = {}): Rig {
+function rig(options: { reportOnRefresh?: boolean; failRefresh?: boolean } = {}): Rig {
   const policies = new StateRefreshPolicyRegistry()
   const calls: Call[] = []
   const logs: LogLine[] = []
   const holding = new Set<number>()
+  const silent: number[] = []
   const state = { refreshMs: 0, holdMs: 30_000 }
   // eslint-disable-next-line prefer-const -- assigned below, read by the closures
   let scheduler: StateRefreshScheduler
@@ -93,8 +99,10 @@ function rig(options: { reportOnRefresh?: boolean } = {}): Rig {
     refresh: async (_route, deviceIds, reason) => {
       calls.push({ kind: 'refresh', deviceIds, reason, at: Date.now() })
       if (state.refreshMs > 0) await new Promise((resolve) => setTimeout(resolve, state.refreshMs))
+      if (options.failRefresh === true) throw new Error('provider unreachable')
       if (options.reportOnRefresh === true) for (const id of deviceIds) scheduler.onReport(id)
     },
+    onSilentPastBound: (deviceId) => void silent.push(deviceId),
     resubscribe: async (route) => {
       calls.push({ kind: 'resubscribe', deviceIds: [route], at: Date.now() })
     },
@@ -118,6 +126,7 @@ function rig(options: { reportOnRefresh?: boolean } = {}): Rig {
       state.holdMs = ms
     },
     reportOnRefresh: options.reportOnRefresh === true,
+    silent,
   }
 }
 
@@ -514,6 +523,45 @@ describe('StateRefreshScheduler (D1062)', () => {
           }),
         }),
       )
+    })
+  })
+
+  describe('what answers a first read (D1099)', () => {
+    it('a cold seed does not settle the first read', async () => {
+      r = rig()
+      declare(r, 7)
+      await vi.advanceTimersByTimeAsync(1)
+      r.scheduler.onReport(7, 'lock-control', true)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(true)
+    })
+
+    it('a sibling slice does not settle a device that answers with another cap; its own slice does', async () => {
+      r = rig()
+      declare(r, 7, { answersWith: 'lock-control' })
+      await vi.advanceTimersByTimeAsync(1)
+      r.scheduler.onReport(7, 'battery', false)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(true)
+      r.scheduler.onReport(7, 'lock-control', false)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(false)
+    })
+
+    it('only sibling slices and failing reads: the bound ends the wait and concludes the device silent', async () => {
+      r = rig({ failRefresh: true })
+      declare(r, 7, { answersWith: 'lock-control' })
+      await vi.advanceTimersByTimeAsync(20_000)
+      r.scheduler.onReport(7, 'battery', false)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(true)
+      await vi.advanceTimersByTimeAsync(FULL_PUSH_FIRST_REPORT_BOUND_MS)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(false)
+      expect(r.silent).toEqual([7])
+    })
+
+    it('a device without answersWith settles on its first non-framework slice', async () => {
+      r = rig()
+      declare(r, 7)
+      await vi.advanceTimersByTimeAsync(1)
+      r.scheduler.onReport(7, 'battery', false)
+      expect(r.scheduler.isAwaitingFirstRead(7)).toBe(false)
     })
   })
 

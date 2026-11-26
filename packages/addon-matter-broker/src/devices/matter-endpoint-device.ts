@@ -5,6 +5,7 @@ import {
   brightnessCapability,
   colorCapability,
   lockControlCapability,
+  deviceStateRefreshCapability,
   coverCapability,
   registerPowerSwitch,
   climateControlCapability,
@@ -50,6 +51,9 @@ import {
   type MatterEndpointCap,
 } from '../matter-cluster-mapping.js'
 import { planDoorLockCommand } from '../matter-lock-command.js'
+
+/** The fastest the core re-reads a lock that has no LockState yet. */
+const LOCK_REFRESH_MIN_INTERVAL_MS = 15_000
 
 /**
  * Persisted config every Matter endpoint child carries. `nodeId`/`endpointId`
@@ -209,7 +213,13 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.booleanState = isLeakEndpoint({ deviceTypeIds: persisted.deviceTypeIds })
       ? 'flood'
       : 'contact'
-    this.online = matterNodes.getNode(this.brokerId, this.nodeId)?.online ?? true
+    // A lock keeps the base `device-status` PRESUMPTION (`unknown: true`) until
+    // its first LockState reading lands (`endLockPresumption`); a node the
+    // gateway already knows is unreachable is offline either way.
+    const nodeOnline = matterNodes.getNode(this.brokerId, this.nodeId)?.online
+    if (!this.caps.includes('lock-control') || nodeOnline === false) {
+      this.online = nodeOnline ?? true
+    }
     void this.updateSourceInfo({ id: `${this.nodeId}:${this.endpointId}`, system: 'matter' })
   }
 
@@ -223,6 +233,9 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       ...(this.caps.includes('lock-control') && this.lockUnbolting ? [DeviceFeature.LockOpen] : []),
     ]
   }
+
+  /** The first LockState reading (live or replayed from the gateway cache) arrived. */
+  private lockReadSeen = false
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
@@ -246,6 +259,23 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     // "locked") is a memory, not a fact, and must not be presented as one.
     this.presenceUnsub = matterNodes.onNodePresence((brokerId, nodeId, online) => {
       if (brokerId !== this.brokerId || nodeId !== this.nodeId) return
+      // A reachable node is not a lock reading: while the lock has no
+      // LockState, an online event must not end the presumption (an offline
+      // event always applies). Returning from offline restores the presumed
+      // status, not a plain `online: true`.
+      if (online && this.caps.includes('lock-control') && !this.lockReadSeen) {
+        this.ctx.logger.debug('Matter lock presence online ignored: no LockState read yet', {
+          tags: { deviceId: this.id },
+        })
+        if (this.online === false) {
+          this.runtimeState.setCapState('device-status', {
+            online: true,
+            lastChangedAt: Date.now(),
+            unknown: true,
+          })
+        }
+        return
+      }
       if (this.online !== online) this.markOnline(online)
     })
   }
@@ -300,6 +330,56 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     if (decoded.detail === 'battery-percent') this.batteryPercentSeen = true
     if (decoded.detail === 'battery-level-only' && this.batteryPercentSeen) return
     this.runtimeState.patchCapState(CAP_SLICE_NAME[decoded.cap], decoded.patch)
+    this.endLockPresumption(decoded.cap, decoded.patch)
+  }
+
+  /**
+   * The core's state refresh (D1062) for a lock: HOW to read, never WHEN. The
+   * read replays the gateway cache through the normal decode path; it answers
+   * only when a LockState is held. With none (cache empty, node unreachable)
+   * it FAILS, so the scheduler keeps the lock awaiting its first read (D1099)
+   * and the hub does not end the presumption with a plain `online: true`.
+   */
+  private registerLockStateRefresh(): void {
+    const provider: InferNativeProvider<typeof deviceStateRefreshCapability> = {
+      refresh: async () => {
+        if (!this.lockReadSeen) {
+          for (const cached of matterNodes.cachedAttributesOf(this.brokerId, this.nodeId)) {
+            this.applyReport(this.brokerId, cached.report, cached.recordedAt)
+          }
+        }
+        if (!this.lockReadSeen) {
+          throw new Error(
+            `matter lock ${this.nodeId}:${this.endpointId}: no LockState read yet — the lock stays awaiting its first read`,
+          )
+        }
+        return { ok: true }
+      },
+      resubscribe: async () => ({ ok: true }),
+    }
+    this.ctx.registerNativeCap(deviceStateRefreshCapability, provider, {
+      stateRefresh: {
+        integrationId: this.brokerId,
+        minIntervalMs: LOCK_REFRESH_MIN_INTERVAL_MS,
+        batch: false,
+        push: 'none',
+        answersWith: 'lock-control',
+      },
+    })
+  }
+
+  /**
+   * A lock's COLD seed (`unlocked`, stamp 0) is a placeholder the cap schema
+   * requires, not a reading. Until the first LockState lands the device keeps
+   * the base `device-status` PRESUMPTION (`unknown: true`, D1099); that first
+   * state ends it, with the node's real reachability (D393). Other caps keep
+   * the presumption the hub resolves on its own.
+   */
+  private endLockPresumption(cap: string, patch: Readonly<Record<string, unknown>>): void {
+    if (cap !== 'lock-control' || patch['state'] === undefined) return
+    if (this.lockReadSeen) return
+    this.lockReadSeen = true
+    this.markOnline(matterNodes.getNode(this.brokerId, this.nodeId)?.online ?? true)
   }
 
   /**
@@ -514,6 +594,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       },
     }
     this.ctx.registerNativeCap(lockControlCapability, provider)
+    this.registerLockStateRefresh()
     this.runtimeState.setCapState('lock-control', COLD)
   }
 

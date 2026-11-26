@@ -436,6 +436,71 @@ describe('attributes cached before the device activates are replayed into its sl
     expect(status['lastChangedAt']).toBe(RECORDED_AT)
   })
 
+  it('a lock with no LockState reading keeps its availability unknown until the first report (D1099)', async () => {
+    const { fx } = await lockWith({})
+    const before = fx.device.runtimeState.getCapState<{ online: boolean; unknown?: true }>(
+      'device-status',
+    )
+    expect(before?.unknown).toBe(true)
+    matterNodes.recordAttribute('b1', {
+      nodeId: '1',
+      endpointId: 1,
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 1,
+    })
+    const after = fx.device.runtimeState.getCapState<{ online: boolean; unknown?: true }>(
+      'device-status',
+    )
+    expect(after).toMatchObject({ online: true })
+    expect(after?.unknown).toBeUndefined()
+    expect((await statusOf(fx.providers, 'lock-control'))['state']).toBe('locked')
+  })
+
+  it('a node going offline then online before any LockState leaves the lock unknown', async () => {
+    const { fx } = await lockWith({})
+    type Status = { online: boolean; unknown?: true }
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: false }])
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: true }])
+    const status = fx.device.runtimeState.getCapState<Status>('device-status')
+    expect(status?.unknown).toBe(true)
+  })
+
+  it('a node already offline when the device is built reads offline', async () => {
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: false }])
+    const { fx } = await lockWith({})
+    matterNodes.setNodes('b1', [{ ...LOCK_AND_POWER, online: false }])
+    const status = fx.device.runtimeState.getCapState<{ online: boolean }>('device-status')
+    expect(status?.online).toBe(false)
+  })
+
+  it('the state refresh of a lock with no LockState fails, so the core keeps it awaiting its first read', async () => {
+    const { fx } = await lockWith({})
+    const refresh: unknown = Reflect.get(fx.providers.get('device-state-refresh') ?? {}, 'refresh')
+    if (typeof refresh !== 'function') throw new Error('no device-state-refresh on the lock')
+    await expect(refresh({ deviceId: 1, deviceIds: [1], reason: 'scheduled' })).rejects.toThrow(
+      /no LockState/,
+    )
+    const status = fx.device.runtimeState.getCapState<{ unknown?: true }>('device-status')
+    expect(status?.unknown).toBe(true)
+  })
+
+  it('the state refresh answers once a LockState is held, and ends the presumption', async () => {
+    const { fx } = await lockWith({})
+    const refresh: unknown = Reflect.get(fx.providers.get('device-state-refresh') ?? {}, 'refresh')
+    if (typeof refresh !== 'function') throw new Error('no device-state-refresh on the lock')
+    matterNodes.recordAttribute('b1', {
+      nodeId: '1',
+      endpointId: 1,
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 1,
+    })
+    await expect(refresh({ deviceId: 1, deviceIds: [1], reason: 'scheduled' })).resolves.toEqual({
+      ok: true,
+    })
+  })
+
   it('a switch cached as on reads on, stamped with the recorded time', async () => {
     recordThenAdvance(MatterClusterId.OnOff, 0, true)
     const fx = await activeEndpoint({ type: DeviceType.Switch, capabilities: ['switch'] })

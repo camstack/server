@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - After a restart a Matter device shows its last known state instead of a default.
+- A Matter lock stays 'status unknown' until its first lock reading arrives, and is re-read until one does, instead of being presented as online and unlocked.
 
 ## [0.2.180] - 2026-11-26
 

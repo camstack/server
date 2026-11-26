@@ -403,14 +403,16 @@ export class StateRefreshScheduler {
    * released before it (the integration stays awaiting until each one answered
    * or the bound passed).
    */
-  onReport(deviceId: number, capName?: string): void {
+  onReport(deviceId: number, capName?: string, cold = false): void {
     const device = this.devices.get(deviceId)
     if (device === undefined) return
     if (
       device.awaitingFirstRead &&
       !device.stopping &&
       capName !== undefined &&
-      !FRAMEWORK_STATE_CAPS.has(capName)
+      !cold &&
+      !FRAMEWORK_STATE_CAPS.has(capName) &&
+      (device.entry.policy.answersWith === undefined || device.entry.policy.answersWith === capName)
     ) {
       this.deps.logger.info('state refresh: first state from the integration, device answered', {
         tags: { deviceId },

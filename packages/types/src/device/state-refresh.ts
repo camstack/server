@@ -51,6 +51,12 @@ export const StateRefreshPolicySchema = z.object({
    * counter restarts with its process is still understood.
    */
   connectionEpoch: z.number().int().nonnegative().optional(),
+  /**
+   * The cap whose slice is this device's answer (D1099). When set, only that
+   * cap's non-cold slice settles the first read; a sibling slice (a lock's
+   * folded battery) does not. Absent: any non-framework slice answers.
+   */
+  answersWith: z.string().min(1).optional(),
 })
 export type StateRefreshPolicy = z.infer<typeof StateRefreshPolicySchema>
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Core blocks run only on the hub: agents no longer load the core-blocks addon.
+- A device's first state read is no longer answered by a placeholder value, so a device with no real reading yet stays 'status unknown' until one arrives or the wait runs out; a lock's battery no longer counts as the lock's own reading.
 
 ## [1.2.967] - 2026-11-26
 

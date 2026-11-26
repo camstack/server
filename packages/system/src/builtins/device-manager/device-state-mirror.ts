@@ -118,7 +118,15 @@ function errorMessage(err: unknown): string {
 }
 
 /** Told of every native slice a provider reported, changed or not (D1062 push health). */
-export type SliceReportTap = (deviceId: number, capName: string) => void
+export type SliceReportTap = (deviceId: number, capName: string, cold: boolean) => void
+
+/**
+ * A slice still at its cap's construction placeholder: its stamp is an explicit
+ * 0. A placeholder is not a reading, so it never answers a first read (D1099).
+ */
+export function isColdSeedSlice(slice: Readonly<Record<string, unknown>>): boolean {
+  return slice['lastChangedAt'] === 0 || slice['lastUpdated'] === 0
+}
 
 /**
  * Whether a provider has yet to answer its first read after registering
@@ -449,7 +457,7 @@ export class DeviceStateMirror {
    *   a SQLite commit.
    */
   applySingleCapUpdate(deviceId: number, capName: string, slice: Record<string, unknown>): boolean {
-    this.reportTap?.(deviceId, capName)
+    this.reportTap?.(deviceId, capName, isColdSeedSlice(slice))
     if (capName === 'device-status') {
       this.reconcileReadiness()
       const gated = this.gateDeviceStatus(deviceId, slice)
