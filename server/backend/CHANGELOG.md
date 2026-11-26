@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.966] - 2026-11-26
+
 ### Changed
 
 - The day/night phase can now follow a light sensor instead of the sun (dark threshold, hysteresis, minimum duration); scheduler points, automation guards and time windows read it, and fall back to the sun, logged with the reason, when the sensor cannot be read.

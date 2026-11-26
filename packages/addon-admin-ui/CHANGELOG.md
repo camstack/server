@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.758] - 2026-11-26
+
 ### Changed
 
 - Internal: the notification snooze switch is marked as an instant toggle for the new save-on-request check; no visible change
