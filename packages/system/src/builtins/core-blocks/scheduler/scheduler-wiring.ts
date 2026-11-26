@@ -60,6 +60,7 @@ export function hostOver(api: () => AddonApi | undefined): SchedulerHost {
   }
   return {
     readSite: async (): Promise<SiteReading> => need().system.getSiteLocation.query(),
+    readPhase: async () => (await need().daylightPhase.getPhase.query({})).phase,
     fetchSlice: (deviceId, cap) =>
       need().deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true }),
     fetchStableIds: async () => {

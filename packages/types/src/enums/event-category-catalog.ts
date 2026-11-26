@@ -403,6 +403,11 @@ export const EVENT_CATEGORY_CATALOG: Readonly<Record<EventCategory, EventCategor
     'Device state changed',
     'Stato dispositivo cambiato',
   ),
+  [EventCategory.DaylightPhaseChanged]: e(
+    'system',
+    'Day or night began',
+    'Inizio del giorno o della notte',
+  ),
   [EventCategory.DeviceCommandSettled]: e(
     'devices',
     'Device command settled',

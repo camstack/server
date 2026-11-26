@@ -41,6 +41,7 @@ import {
   type TimeSite,
   vocabActionIdFor,
   type AutomationWhen,
+  type DaylightPhaseReading,
 } from '@camstack/types'
 import { type DeviceTemplateDoor, stepRenderer } from '../device-template-door.js'
 import {
@@ -261,13 +262,27 @@ export class SchedulerEngine {
     this.schedulers = await this.deps.store.list()
     try {
       this.reading = await this.deps.host.readSite()
-      this.site = timeSiteOf(this.reading)
+      this.site = timeSiteOf(this.reading, await this.readPhase())
       this.siteKnown = true
     } catch (err: unknown) {
       if (!this.siteKnown) throw err
       this.deps.logger.warn('scheduler: the site could not be read — keeping the last one', {
         meta: { error: errorMessage(err) },
       })
+    }
+  }
+
+  /** The authority's phase; a failed read is the sun (logged), never a stale or invented one. */
+  private async readPhase(): Promise<DaylightPhaseReading | null> {
+    const read = this.deps.host.readPhase
+    if (read === undefined) return null
+    try {
+      return await read.call(this.deps.host)
+    } catch (err: unknown) {
+      this.deps.logger.warn('scheduler: the daylight phase could not be read — the sun answers', {
+        meta: { error: errorMessage(err) },
+      })
+      return null
     }
   }
 

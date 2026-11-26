@@ -114,3 +114,27 @@ export function sunPhaseAt(site: TimeSite, nowMs: number): DaylightPhaseReading 
   }
   return best
 }
+
+/**
+ * The site with the authority's phase attached. Only a `sensor` phase changes how a window or a
+ * time spec is judged, so a `sun` answer (or none) leaves the site exactly as it was.
+ */
+export function siteWithPhase(
+  site: TimeSite,
+  status: { readonly phase: DaylightPhaseReading | null } | null,
+): TimeSite {
+  const phase = status?.phase
+  return phase !== undefined && phase !== null && phase.source === 'sensor'
+    ? { ...site, phase }
+    : site
+}
+
+/** The numeric reading at a dotted field path of a device slice, or null when it is not a finite number. */
+export function sensorValueOf(slice: unknown, fieldPath: string): number | null {
+  let cursor: unknown = slice
+  for (const part of fieldPath.split('.')) {
+    if (cursor === null || typeof cursor !== 'object') return null
+    cursor = Reflect.get(cursor, part)
+  }
+  return typeof cursor === 'number' && Number.isFinite(cursor) ? cursor : null
+}

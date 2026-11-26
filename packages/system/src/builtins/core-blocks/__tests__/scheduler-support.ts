@@ -1,6 +1,7 @@
 /** A fake hub, fake clock and engine harness for the scheduler specs. */
 import {
   type CapCall,
+  type DaylightPhaseReading,
   DeviceType,
   createRecordsAccess,
   type AutomationRunTrace,
@@ -90,6 +91,8 @@ export interface Harness {
   /** When true, a write is accepted but the state does not follow (drift). */
   ignoreWrites: { value: boolean }
   site: { value: SiteReading | null }
+  /** The daylight authority's answer; null is the sun. */
+  phase: { value: DaylightPhaseReading | null }
   create(input: SchedulerInput): Promise<string>
   settle(): Promise<void>
   advanceTo(ms: number): Promise<void>
@@ -135,6 +138,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
   const calls: CapCall[] = []
   const ignoreWrites = { value: false }
   const site: { value: SiteReading | null } = { value: ROME }
+  const phase: { value: DaylightPhaseReading | null } = { value: null }
   const directory: DeviceDirectory = {
     listDeviceIdsByCaps: async () => devices.map((d) => d.id),
     listDevices: async (idsIn) => devices.filter((d) => idsIn.includes(d.id)),
@@ -145,6 +149,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
       if (site.value === null) throw new Error('no system cap yet')
       return site.value
     },
+    readPhase: async () => phase.value,
     fetchSlice: async (deviceId, cap) => slices.get(`${deviceId}|${cap}`) ?? {},
     fetchStableIds: async () => new Map(),
     invokeCap: async (call) => {
@@ -192,6 +197,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     devices,
     ignoreWrites,
     site,
+    phase,
     create: async (input) => (await store.create(input)).id,
     settle,
     advanceTo: (ms) => clock.advanceTo(ms, settle),

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1561 method paths across 219 capabilities.
+ * Coverage: 1564 method paths across 220 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -270,6 +270,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'dataStoreProvider.updateWhere': { capName: "data-store-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'dataStoreProvider.upsert': { capName: "data-store-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'dataStoreProvider.upsertMany': { capName: "data-store-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'daylightPhase.getPhase': { capName: "daylight-phase", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'daylightPhase.getSettings': { capName: "daylight-phase", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'daylightPhase.setSettings': { capName: "daylight-phase", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'dayNight.getOptions': { capName: "day-night", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'dayNight.getStatus': { capName: "day-night", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'dayNight.setSettings': { capName: "day-night", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
@@ -1638,6 +1641,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "data-store-provider",
   "database-snapshot",
   "day-night",
+  "daylight-phase",
   "decoder",
   "detection-pipeline",
   "device-admin-link",
@@ -1955,6 +1959,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "custom-model-registry",
   "data-store-provider",
   "database-snapshot",
+  "daylight-phase",
   "decoder",
   "device-adoption",
   "device-credentials",

@@ -74,6 +74,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "data-store-provider",
   "database-snapshot",
   "day-night",
+  "daylight-phase",
   "decoder",
   "detection-pipeline",
   "device-admin-link",

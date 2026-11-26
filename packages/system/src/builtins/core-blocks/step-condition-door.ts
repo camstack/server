@@ -18,6 +18,7 @@ import {
   evaluateStepCondition,
   hasTimeLeaves,
   siteFor,
+  siteWithPhase,
   stableIdMapOf,
   type TimeSite,
   zoneOnlySite,
@@ -51,7 +52,12 @@ export function conditionDoorOver(api: () => AddonApi | undefined): StepConditio
     if (hasTimeLeaves(when)) {
       try {
         const reading = await current.system.getSiteLocation.query()
-        site = siteFor(reading) ?? zoneOnlySite(reading.timeZone)
+        // an unreadable authority is the sun (it logs why); never a refusal of the guard
+        const phase = await Promise.resolve()
+          .then(() => current.daylightPhase.getPhase.query({}))
+          .then((status) => status.phase)
+          .catch(() => null)
+        site = siteWithPhase(siteFor(reading) ?? zoneOnlySite(reading.timeZone), { phase })
       } catch (error) {
         return {
           result: 'unknown',

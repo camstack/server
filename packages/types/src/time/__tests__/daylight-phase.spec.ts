@@ -3,6 +3,8 @@ import {
   type DaylightPhaseReading,
   type DaylightSensorSettings,
   advanceSensorPhase,
+  sensorValueOf,
+  siteWithPhase,
   sunPhaseAt,
 } from '../daylight-phase.js'
 import { type TimeSite, occurrenceOn } from '../time-spec.js'
@@ -77,5 +79,23 @@ describe('sunPhaseAt', () => {
 
   it('is null on a site without a location', () => {
     expect(sunPhaseAt({ lat: 0, lon: 0, timeZone: 'UTC', zoneOnly: true }, 1)).toBeNull()
+  })
+})
+
+describe('siteWithPhase and sensorValueOf', () => {
+  const site = { lat: 41.9, lon: 12.5, timeZone: 'Europe/Rome' }
+  it('attaches only a sensor phase; a sun answer or none leaves the site as it was', () => {
+    const sensor = { phase: 'night' as const, since: 1, source: 'sensor' as const }
+    expect(siteWithPhase(site, { phase: sensor }).phase).toEqual(sensor)
+    expect(siteWithPhase(site, { phase: { ...sensor, source: 'sun' } })).toBe(site)
+    expect(siteWithPhase(site, { phase: null })).toBe(site)
+    expect(siteWithPhase(site, null)).toBe(site)
+  })
+  it('reads a dotted numeric path, and nothing else', () => {
+    expect(sensorValueOf({ a: { b: 12 } }, 'a.b')).toBe(12)
+    expect(sensorValueOf({ a: { b: '12' } }, 'a.b')).toBeNull()
+    expect(sensorValueOf({ a: null }, 'a.b')).toBeNull()
+    expect(sensorValueOf({ a: Number.NaN }, 'a')).toBeNull()
+    expect(sensorValueOf(undefined, 'a')).toBeNull()
   })
 })

@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1145 shared schemas.**
+**1146 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1589,6 +1589,13 @@ Enum: `"settings" \| "events" \| "history"`
 - `engineId`: `string`
 - `kind`: `"relational" \| "vector"`
 - `displayName`: `string`
+
+### `DaylightStatusSchema`
+
+- `phase`: `{ phase: "day" \| "night"; since: number; source: "sun" \| "sensor" } \| null`
+- `configured`: `{ source: "sun" } \| { source: "sensor"; deviceId: number; cap: string; fieldPath: string; darkBelow: number; hysteresis: number; minDwellMin: number }`
+- `fallbackReason`: `string \| null`
+- `checkedAt`: `number`
 
 ### `DayNightModeSchema`
 

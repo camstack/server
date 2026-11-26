@@ -145,6 +145,12 @@ interface Options {
   ) => { ok: true; text: string } | { ok: false; reason: string }
   /** The device registry a domain target resolves against. */
   readonly registry?: FakeRegistry
+  /** What `daylightPhase.getPhase` answers (default: no authority, the sun). */
+  readonly daylight?: {
+    readonly phase: 'day' | 'night'
+    readonly since: number
+    readonly source: 'sun' | 'sensor'
+  }
   /** What `system.getSiteLocation` answers (default: Rome, located). */
   readonly site?: {
     readonly location: { latitude: number; longitude: number } | null
@@ -261,6 +267,9 @@ function start(block: BlockFn, options: Options = {}): Harness {
           query: async (q: { capNames: string[] }) =>
             options.registry?.directory.listDeviceIdsByCaps(q.capNames) ?? [],
         },
+      },
+      daylightPhase: {
+        getPhase: { query: async () => ({ phase: options.daylight ?? null }) },
       },
       system: {
         getSiteLocation: {
@@ -415,6 +424,20 @@ describe('a schedule time spec (D983)', () => {
     await settle(3 * 3_600_000 + 40 * 60_000) // 03:40Z, sunrise is 03:35Z -> +10 = 03:45Z
     expect(h.mutate).not.toHaveBeenCalled()
     await settle(10 * 60_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    h.stop()
+  })
+
+  it('a phase spec fires after the sensor transition the daylight authority reports', async () => {
+    vi.setSystemTime(new Date('2025-06-21T10:00:00Z'))
+    const block = await load(at({ kind: 'phase', phase: 'night', offsetMin: 30 }))
+    // The sensor night began at 12:00Z, long before the sun sets: it fires at 12:30Z.
+    const h = start(block, {
+      daylight: { phase: 'night', since: Date.parse('2025-06-21T12:00:00Z'), source: 'sensor' },
+    })
+    await settle(2 * 3_600_000 + 20 * 60_000) // 12:20Z
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(15 * 60_000) // 12:35Z
     expect(h.mutate).toHaveBeenCalledTimes(1)
     h.stop()
   })

@@ -11,6 +11,8 @@ import {
   type TagBody,
   TagStyleSchema,
   type TagStyle,
+  type DaylightSettings,
+  DaylightSettingsSchema,
   type Scheduler,
   SchedulerSchema,
   AutomationStateDocSchema,
@@ -104,6 +106,11 @@ export type SchedulerStateRowBody = { readonly processedUntil: number }
 export const SchedulerStateRowBodySchema: z.ZodType<SchedulerStateRowBody> = z.object({
   processedUntil: z.number(),
 })
+
+/** The daylight phase source (planning#736): ONE row, the cluster-wide setting. Row id = `settings`. */
+export type DaylightSettingsRowBody = DaylightSettings
+export const DaylightSettingsRowBodySchema: z.ZodType<DaylightSettingsRowBody> =
+  DaylightSettingsSchema
 
 /** The actions one camera links (D356: the operator picked them). Row id = the deviceId. */
 export type ActionLinksRowBody = { readonly actionIds: string[]; readonly updatedAt?: number }
@@ -249,6 +256,14 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     at: 'none',
     retention: { none: 'the row goes with its scheduler' },
   },
+  'daylight-settings': {
+    schema: DaylightSettingsRowBodySchema,
+    class: 'config',
+    writeTrigger: 'the operator sets the day/night source (daylight-phase.setSettings)',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'one row, replaced by the operator; absent means the sun' },
+  },
   'action-links': {
     schema: ActionLinksRowBodySchema,
     class: 'config',
@@ -304,6 +319,7 @@ export type CoreBlocksRecordKindsMap = {
   readonly actions: DefinedRecordKind<z.ZodType<ActionRowBody>>
   readonly schedulers: DefinedRecordKind<z.ZodType<SchedulerRowBody>>
   readonly 'scheduler-state': DefinedRecordKind<z.ZodType<SchedulerStateRowBody>>
+  readonly 'daylight-settings': DefinedRecordKind<z.ZodType<DaylightSettingsRowBody>>
   readonly 'action-links': DefinedRecordKind<z.ZodType<ActionLinksRowBody>>
   readonly templates: DefinedRecordKind<z.ZodType<TemplateRowBody>>
   readonly tags: DefinedRecordKind<z.ZodType<TagRowBody>>

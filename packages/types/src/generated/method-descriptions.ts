@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1558 of 1561 methods.
+ * Coverage: 1561 of 1564 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -254,6 +254,9 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "dataStoreProvider.updateWhere": "Apply data to every record matching filter, in one statement.",
   "dataStoreProvider.upsert": "Make a slot hold this row, and answer with the id the row HAS. The engine half of settings-store.upsert — read that docblock for why the store needed a slot that is not the primary key (D482).",
   "dataStoreProvider.upsertMany": "Upsert many records in ONE transaction; see the door's upsertMany.",
+  "daylightPhase.getPhase": "The phase now, when it began, and which source decided it.",
+  "daylightPhase.getSettings": "The configured source (and sensor, threshold, hysteresis, dwell).",
+  "daylightPhase.setSettings": "Change the source. A sensor that cannot be read is accepted: the sun answers and the status says why.",
   "dayNight.getOptions": "The camera's day/night modes and current settings.",
   "dayNight.getStatus": "The device's current status as reported by this capability; null when unknown.",
   "dayNight.setSettings": "Change the camera's day/night mode, sensitivity or switch delay.",

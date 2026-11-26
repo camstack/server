@@ -750,6 +750,7 @@ import {
   runWaitUntilBody,
   repeatLoopFields,
   siteFor,
+  siteWithPhase,
   validateTimeSpecForSite,
   zoneOnlySite,
 } from '@camstack/types'
@@ -1009,7 +1010,9 @@ ${
   async function refreshSite(): Promise<void> {
     try {
       const reading = await ctx.api.system.getSiteLocation.query()
-      site = siteFor(reading) ?? zoneOnlySite(reading.timeZone)
+      // the daylight authority's phase; an unreadable one is the sun (the authority logs why)
+      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch(() => null)
+      site = siteWithPhase(siteFor(reading) ?? zoneOnlySite(reading.timeZone), { phase })
     } catch (error) {
       ctx.logger.warn('site clock not refreshed — keeping the previous one', {
         error: error instanceof Error ? error.message : String(error),
@@ -1089,7 +1092,8 @@ ${
         ctx.logger.warn('schedule not armed: ' + checked.message, { leaf, reason: checked.reason })
         return null
       }
-      const site = checked.site ?? zoneOnlySite(reading.timeZone)
+      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch(() => null)
+      const site = siteWithPhase(checked.site ?? zoneOnlySite(reading.timeZone), { phase })
       const next = nextOccurrence(spec, Date.now(), site, days === undefined ? {} : { days })
       if (next === null) ctx.logger.info('schedule has no further occurrence', { leaf })
       return next

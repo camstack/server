@@ -3,7 +3,7 @@
  * clock the door fetches through `system.getSiteLocation`. Without the site it
  * read `unknown` and neither branch ran.
  */
-import type { AddonApi, AutomationWhen, SiteReading } from '@camstack/types'
+import type { AddonApi, AutomationWhen, DaylightPhaseReading, SiteReading } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { conditionDoorOver } from '../step-condition-door.js'
 
@@ -35,7 +35,10 @@ const SWITCH_ON: AutomationWhen = {
   value: true,
 }
 
-function apiOf(readSite: () => Promise<SiteReading>): {
+function apiOf(
+  readSite: () => Promise<SiteReading>,
+  phase: DaylightPhaseReading | null = null,
+): {
   api: AddonApi
   siteReads: () => number
 } {
@@ -49,6 +52,7 @@ function apiOf(readSite: () => Promise<SiteReading>): {
         },
       },
     },
+    daylightPhase: { getPhase: { query: async () => ({ phase }) } },
     deviceState: { getCapSlice: { query: async () => ({ on: true }) } },
     deviceManager: { listAll: { query: async () => [] } },
   }
@@ -98,5 +102,35 @@ describe('conditionDoorOver — a time-is guard', () => {
     const { api, siteReads } = apiOf(async () => ROME)
     expect((await conditionDoorOver(() => api)()(SWITCH_ON)).result).toBe('true')
     expect(siteReads()).toBe(0)
+  })
+
+  it('a night preset is true at midday while the daylight authority reads the sensor as dark', async () => {
+    const NIGHT_PRESET: AutomationWhen = { kind: 'time-is', preset: 'night' }
+    vi.useFakeTimers({ now: Date.parse('2026-03-10T11:00:00Z') })
+    const dark = apiOf(async () => ROME, {
+      phase: 'night',
+      since: Date.parse('2026-03-10T10:00:00Z'),
+      source: 'sensor',
+    })
+    expect((await conditionDoorOver(() => dark.api)()(NIGHT_PRESET)).result).toBe('true')
+    // The sun answer (no sensor reading) keeps midday a day.
+    const sun = apiOf(async () => ROME, null)
+    expect((await conditionDoorOver(() => sun.api)()(NIGHT_PRESET)).result).toBe('false')
+  })
+
+  it('judges on the sun when the daylight authority cannot be reached', async () => {
+    const NIGHT_PRESET: AutomationWhen = { kind: 'time-is', preset: 'night' }
+    vi.useFakeTimers({ now: Date.parse('2026-03-10T11:00:00Z') })
+    const { api } = apiOf(async () => ROME)
+    Object.assign(api, {
+      daylightPhase: {
+        getPhase: {
+          query: async () => {
+            throw new Error('authority down')
+          },
+        },
+      },
+    })
+    expect((await conditionDoorOver(() => api)()(NIGHT_PRESET)).result).toBe('false')
   })
 })

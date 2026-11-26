@@ -555,6 +555,9 @@
             "name": "timed-run"
           },
           {
+            "name": "daylight-phase"
+          },
+          {
             "name": "action-source"
           },
           {

@@ -21,6 +21,7 @@ import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { calendarsCapability } from '../capabilities/calendars.cap.js'
 import type { clusterUpdateCapability } from '../capabilities/cluster-update.cap.js'
 import type { coreBlocksCapability } from '../capabilities/core-blocks.cap.js'
+import type { daylightPhaseCapability } from '../capabilities/daylight-phase.cap.js'
 import type { decoderCapability } from '../capabilities/decoder.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
 import type { deviceCredentialsCapability } from '../capabilities/device-credentials.cap.js'
@@ -97,6 +98,7 @@ export interface SystemProxy {
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly clusterUpdate: Pick<InferProvider<typeof clusterUpdateCapability>, 'previewClusterUpdate' | 'startClusterUpdate' | 'getClusterUpdateJob'>
   readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listTemplateInstances' | 'listCompositions' | 'getCustomization' | 'migrateCapLinks' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
+  readonly daylightPhase: Pick<InferProvider<typeof daylightPhaseCapability>, 'getPhase' | 'getSettings' | 'setSettings'>
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
   readonly deviceCredentials: Pick<InferProvider<typeof deviceCredentialsCapability>, 'listDeviceCredentials' | 'startEnrollment' | 'revokeDeviceCredential' | 'getDeviceCertificateSettings' | 'setDeviceCertificateSettings' | 'deleteDeviceCredential' | 'getDeviceCaStatus' | 'renameDeviceCredential'>
@@ -347,6 +349,12 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     reportAutomationRun: (input?: unknown) => dispatch('coreBlocks', 'reportAutomationRun', 'mutation', input),
     getAutomationRunState: (input?: unknown) => dispatch('coreBlocks', 'getAutomationRunState', 'query', input),
     getTraces: (input?: unknown) => dispatch('coreBlocks', 'getTraces', 'query', input),
+  }
+
+  const daylightPhaseInterface = {
+    getPhase: (input?: unknown) => dispatch('daylightPhase', 'getPhase', 'query', input),
+    getSettings: (input?: unknown) => dispatch('daylightPhase', 'getSettings', 'query', input),
+    setSettings: (input?: unknown) => dispatch('daylightPhase', 'setSettings', 'mutation', input),
   }
 
   const decoderInterface = {
@@ -1129,6 +1137,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     calendars: calendarsInterface,
     clusterUpdate: clusterUpdateInterface,
     coreBlocks: coreBlocksInterface,
+    daylightPhase: daylightPhaseInterface,
     decoder: decoderInterface,
     deviceAdoption: deviceAdoptionInterface,
     deviceCredentials: deviceCredentialsInterface,

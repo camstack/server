@@ -4,7 +4,7 @@
 
 # Decisions
 
-1068 architecture decision records. One file per decision, never
+1069 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1082,6 +1082,7 @@ that rots.
 | D1100 | [A device liveness notification is sent only after the new state held for 90 s](adr-1100-device-liveness-90s-stability-window.md) | ✅ accepted | 2026-11-25 |
 | D1101 | [A client tool authenticates to a hub through the camstack login session and nothing else](adr-1101-one-client-login.md) | ✅ accepted (supersedes D835) | 2026-11-25 |
 | D1102 | [Account and server data live in the shell, the avatar opens its drawer, and an app takes its session only by handoff](adr-1102-account-and-server-data-live-in-the-shell-the-avatar-opens-the-shell-drawer-and-an-app-takes-its-session-only-by-handoff.md) | ✅ accepted | 2026-11-25 |
+| D1103 | [One daylight-phase authority decides day or night; a sensor reading is a source, the sun is the fallback](adr-1103-daylight-phase-authority.md) | ✅ accepted | 2026-11-26 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

@@ -4,7 +4,7 @@
 
 # Capabilities
 
-219 capability definitions in `packages/types/src/capabilities/`.
+220 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -138,7 +138,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (105)
+## System-scoped (106)
 
 Singleton or collection providers, addressed without a device.
 
@@ -171,6 +171,7 @@ Singleton or collection providers, addressed without a device.
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |
+| `daylight-phase` | 3 | — | — | — | — | `core-blocks` |
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
 | `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-kia` `provider-mqtt-ha` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |

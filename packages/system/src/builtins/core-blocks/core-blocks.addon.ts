@@ -15,6 +15,7 @@
  * not a redesign.
  */
 
+import { randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
   armRemovalReconcile,
@@ -40,6 +41,8 @@ import {
   integrationInstancesCapability,
   seedInstanceOnce,
   powerSourceCapability,
+  daylightPhaseCapability,
+  PHASE_RECHECK_MS,
   timedRunCapability,
   actionsCapability,
   schedulersCapability,
@@ -70,6 +73,7 @@ import {
 import type { RemoteDeviceStores } from './migrations/remote-config-migrations.js'
 import { isRecord, parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import { armTimedRuns, buildTimedRunService } from './timed-run/timed-run-wiring.js'
+import { DaylightPhaseService } from './daylight/daylight-phase-service.js'
 import type { TimedRunService } from './timed-run/timed-run-service.js'
 import {
   type BlockProcessHost,
@@ -82,6 +86,7 @@ import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
 import {
   armSchedulerEngine,
   buildSchedulersRuntime,
+  hostOver,
   type SchedulersRuntime,
 } from './scheduler/scheduler-wiring.js'
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
@@ -185,6 +190,11 @@ export class CoreBlocksAddon extends BaseAddon {
   private powerSource: PowerSourceService | null = null
   /** The timed-run provider (D993); its deadline timer is cancelled on shutdown. */
   private timedRun: TimedRunService | null = null
+  /** The daylight phase authority (planning#736); its bounded re-check timer dies with it. */
+  private daylight: {
+    readonly service: DaylightPhaseService
+    readonly timer: NodeJS.Timeout
+  } | null = null
   /** ONE composition API per process: its write queue is what keeps two saves from judging each other stale. */
   private compositionApi: CompositionApi | null = null
   /** The identity-link contributions (D1063); armed at boot. */
@@ -307,6 +317,8 @@ export class CoreBlocksAddon extends BaseAddon {
       isDisposed: () => this.disposed,
     })
 
+    this.daylight = this.buildDaylight(records, schedulers)
+
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
     this.transpiler = await loadTranspiler(this.ctx.logger)
@@ -364,6 +376,7 @@ export class CoreBlocksAddon extends BaseAddon {
       ...this.tagsRegistrations(),
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
       { capability: timedRunCapability, provider: timedRun },
+      { capability: daylightPhaseCapability, provider: this.requireDaylight() },
       // The built-in palette needs no store: it is served even when the remote is not.
       {
         capability: remoteLayoutComponentsCapability,
@@ -439,6 +452,47 @@ export class CoreBlocksAddon extends BaseAddon {
           (await requireApi().powerSource.getStatus.query({ deviceId })).switchSettable ?? null,
       },
     })
+  }
+
+  private requireDaylight(): DaylightPhaseService {
+    if (this.daylight === null) throw new Error('core-blocks: the daylight authority is not built')
+    return this.daylight.service
+  }
+
+  /**
+   * The daylight phase authority. A transition is announced as an event and the
+   * scheduler is re-judged (it reads `getPhase` itself, so a dropped event only
+   * delays it until the bounded re-check below, D8, D49).
+   */
+  private buildDaylight(
+    records: NonNullable<typeof this.ctx.records>,
+    schedulers: SchedulersRuntime,
+  ): NonNullable<typeof this.daylight> {
+    const host = hostOver(() => this.ctx.api)
+    const service = new DaylightPhaseService({
+      settings: records.kind(coreBlocksRecordKinds['daylight-settings']),
+      host: { readSite: host.readSite, fetchSlice: host.fetchSlice },
+      onTransition: (reading) => {
+        this.ctx.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'addon', id: 'core-blocks' },
+          category: EventCategory.DaylightPhaseChanged,
+          data: reading,
+        })
+        void schedulers.engine.reload()
+      },
+      logger: this.ctx.logger.child('daylight'),
+    })
+    this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+      const data = parseConfirmedStateChanged(event.data)
+      if (data !== null) void service.onDeviceState(data.deviceId, data.capName)
+    })
+    const timer = setInterval(() => void service.recheck(), PHASE_RECHECK_MS)
+    timer.unref()
+    // The first judgement (a baseline, and it loads the stored source) once the hub answers.
+    void service.recheck()
+    return { service, timer }
   }
 
   private buildPowerSource(): PowerSourceService {
@@ -778,6 +832,8 @@ export class CoreBlocksAddon extends BaseAddon {
     this.powerSource = null
     this.timedRun?.stop()
     this.timedRun = null
+    if (this.daylight !== null) clearInterval(this.daylight.timer)
+    this.daylight = null
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null

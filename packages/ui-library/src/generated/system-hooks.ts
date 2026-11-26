@@ -656,6 +656,15 @@ export const useCoverSetTiltPosition: typeof trpc.cover.setTiltPosition.useMutat
 /** Generated alias around `trpc.cover.getStatus.useQuery`. */
 export const useCoverGetStatus: typeof trpc.cover.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.cover.getStatus.useQuery)
 
+/** Generated alias around `trpc.daylightPhase.getPhase.useQuery`. */
+export const useDaylightPhaseGetPhase: typeof trpc.daylightPhase.getPhase.useQuery = /*#__PURE__*/ alias(() => trpc.daylightPhase.getPhase.useQuery)
+
+/** Generated alias around `trpc.daylightPhase.getSettings.useQuery`. */
+export const useDaylightPhaseGetSettings: typeof trpc.daylightPhase.getSettings.useQuery = /*#__PURE__*/ alias(() => trpc.daylightPhase.getSettings.useQuery)
+
+/** Generated alias around `trpc.daylightPhase.setSettings.useMutation`. */
+export const useDaylightPhaseSetSettings: typeof trpc.daylightPhase.setSettings.useMutation = /*#__PURE__*/ alias(() => trpc.daylightPhase.setSettings.useMutation)
+
 /** Generated alias around `trpc.dayNight.getOptions.useQuery`. */
 export const useDayNightGetOptions: typeof trpc.dayNight.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.dayNight.getOptions.useQuery)
 

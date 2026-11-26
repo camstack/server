@@ -16,6 +16,8 @@ import {
   type TimeSite,
   weekdayOfLocalDate,
   zoneOnlySite,
+  type DaylightPhaseReading,
+  siteWithPhase,
 } from '@camstack/types'
 
 /** `localDate` moved by `days`. */
@@ -29,8 +31,11 @@ export function addLocalDays(localDate: string, days: number): string {
  * location, else a zone-only one (a sun point then has no occurrence — it is
  * refused at save, this is the read side).
  */
-export function timeSiteOf(reading: SiteReading): TimeSite {
-  return siteFor(reading) ?? zoneOnlySite(reading.timeZone)
+export function timeSiteOf(
+  reading: SiteReading,
+  phase: DaylightPhaseReading | null = null,
+): TimeSite {
+  return siteWithPhase(siteFor(reading) ?? zoneOnlySite(reading.timeZone), { phase })
 }
 
 /** The instant a local day ends (the next local midnight). */

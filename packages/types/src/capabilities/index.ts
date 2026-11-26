@@ -2195,6 +2195,12 @@ export {
 } from './action-source.cap.js'
 export { type ISchedulersProvider, schedulersCapability } from './schedulers.cap.js'
 export {
+  type DaylightStatus,
+  DaylightStatusSchema,
+  daylightPhaseCapability,
+  type IDaylightPhaseProvider,
+} from './daylight-phase.cap.js'
+export {
   ACTION_RUN_MAX_MS,
   ACTION_RUN_TIMEOUT_MS,
   ACTION_RUN_TRANSPORT_MARGIN_MS,
@@ -3780,6 +3786,7 @@ import type { authProviderCapability } from './auth-provider.cap.js'
 import type { actionSourceCapability } from './action-source.cap.js'
 import type { actionsCapability } from './actions.cap.js'
 import type { schedulersCapability } from './schedulers.cap.js'
+import type { daylightPhaseCapability } from './daylight-phase.cap.js'
 import type { automationControlCapability } from './automation-control.cap.js'
 import type { backupCapability } from './backup.cap.js'
 import type { batteryCapability } from './battery.cap.js'
@@ -4105,6 +4112,7 @@ type AnyCapability =
   | typeof actionSourceCapability
   | typeof actionsCapability
   | typeof schedulersCapability
+  | typeof daylightPhaseCapability
   | typeof automationControlCapability
   | typeof motionTriggerCapability
   | typeof sirenCapability

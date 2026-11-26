@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 219 caps (114 device, 105 system).
+ * `*.cap.ts` (D1050): 220 caps (114 device, 106 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -5930,6 +5930,10 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   'database-snapshot': {
     scope: 'system',
     notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'daylight-phase': {
+    scope: 'system',
+    notOperatorFacing: 'the day/night phase authority — configured in System settings, not a device action',
   },
   'decoder': {
     scope: 'system',

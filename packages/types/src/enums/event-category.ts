@@ -502,6 +502,12 @@ export enum EventCategory {
    */
   DeviceStateChanged = 'device.state-changed',
   /**
+   * The daylight phase authority crossed day/night (planning#736). Payload:
+   * `DaylightPhaseChangedEvent` (`{ phase, since, source }`). Telemetry (D8): a
+   * consumer re-reads `daylight-phase.getPhase` rather than trusting this.
+   */
+  DaylightPhaseChanged = 'daylight.phase-changed',
+  /**
    * A device COMMAND (a vocabulary action, D920/D983) completed, as the hub's
    * command audit saw it (D1022, D1084): the call returned (`ok`) or threw
    * (`failed`). Never a device's own change, and never proof the device obeyed. Payload: `DeviceCommandSettledEvent`

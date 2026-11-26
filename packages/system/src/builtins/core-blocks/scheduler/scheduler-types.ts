@@ -1,5 +1,5 @@
 /** The seams the scheduler engine is built over, so a spec swaps the clock and the hub. */
-import type { CapCall, SiteReading } from '@camstack/types'
+import type { CapCall, DaylightPhaseReading, SiteReading } from '@camstack/types'
 
 export interface SchedulerClock {
   now(): number
@@ -34,6 +34,8 @@ export function createRealClock(): SchedulerClock {
 /** The hub as the engine sees it: the site, device state, and device calls. */
 export interface SchedulerHost {
   readSite(): Promise<SiteReading>
+  /** The daylight authority's phase; absent (or null) judges every window on the sun. */
+  readPhase?(): Promise<DaylightPhaseReading | null>
   fetchSlice(deviceId: number, cap: string): Promise<unknown>
   fetchStableIds(): Promise<ReadonlyMap<string, number>>
   invokeCap(call: CapCall): Promise<void>
