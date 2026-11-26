@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Heat pump activity follows the compressor state the gateway reports when it gives one
+- The image device's full-view dialog shows a single close button
 
 ## [1.2.513] - 2026-11-26
 

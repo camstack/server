@@ -13,7 +13,7 @@
  * usage so the row and hero never diverge.
  */
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ImageOff, ZoomIn, ZoomOut, RotateCcw, X } from 'lucide-react'
+import { ImageOff, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import type { ImageStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText } from '../../contexts/ui-text'
@@ -65,7 +65,8 @@ export function ImageDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent width="lg" className="max-w-5xl p-6">
-        <div className="flex items-center justify-between gap-2 mb-3">
+        {/* The close button is the dialog shell's own; a second one here doubled it. */}
+        <div className="flex items-center justify-between gap-2 mb-3 pr-10">
           <span className="truncate text-sm font-semibold text-foreground">{alt}</span>
           <div className="flex items-center gap-1">
             <ModalIconButton
@@ -91,12 +92,6 @@ export function ImageDetailModal({
               onClick={reset}
             >
               <RotateCcw className="h-4 w-4" />
-            </ModalIconButton>
-            <ModalIconButton
-              label={t('uiLibrary.imageControl.close', 'Close')}
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
             </ModalIconButton>
           </div>
         </div>

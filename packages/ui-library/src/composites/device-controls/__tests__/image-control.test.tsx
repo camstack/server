@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ImageInlineControl, ImageHeroCard } from '../image-control'
+import { ImageInlineControl, ImageHeroCard, ImageDetailModal } from '../image-control'
 
 let mockResult: { cap: unknown; slice: unknown; available: boolean }
 
@@ -71,5 +71,16 @@ describe('ImageHeroCard', () => {
     mockResult = { cap: undefined, slice: undefined, available: false }
     const { container } = render(<ImageHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('ImageDetailModal', () => {
+  it('has exactly one close button (the dialog shell own), not a second in the header', () => {
+    // jsdom has no <dialog> modal API.
+    HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement): void {
+      this.setAttribute('open', '')
+    }
+    render(<ImageDetailModal url={URL_OK} alt="Front Door" open onOpenChange={() => {}} />)
+    expect(screen.getAllByRole('button', { name: 'Close', hidden: true })).toHaveLength(1)
   })
 })
