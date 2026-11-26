@@ -15,10 +15,16 @@ applies-to:
   - packages/system/src/builtins/core-blocks/rename-composition-block.ts
   - packages/system/src/builtins/device-manager/device-meta-actions.ts
   - packages/system/src/builtins/core-blocks/composition-sources.ts
+  - packages/addon-admin-ui/src/components/device/customize/customize-registry.ts
+  - packages/addon-admin-ui/src/components/device/customize/customize-spec.ts
+  - packages/system/src/builtins/core-blocks/migrations/customize-kind-discriminant.ts
+  - packages/types/src/composition/legacy-customize-kind.ts
+  - packages/types/src/stale-stamp.ts
+  - packages/system/src/builtins/shared/serialise-per-key.ts
 covers:
   - packages/addon-provider-*/**
   - packages/system/src/builtins/device-manager/removal-cleanup.ts
-last-verified: 2026-11-08
+last-verified: 2026-11-26
 ---
 
 # The device model
@@ -521,6 +527,36 @@ capability gained by the host from other devices — with a `projects` cap and a
 `enabled` switch; none was ever implemented, and it was retired (D663, amends
 D648): a host that gains a capability from other devices is a composition or a
 customization (below), not a slot.
+
+## Customize kinds: one typed registry, a stored discriminant, a stamp on every write ([D1098](../decisions/adr-1098-every-customize-kind-is-one-typed-spec-seen-from-both-sides.md))
+
+Every kind on a device's Customize tab is one entry in `CUSTOMIZE_REGISTRY`
+(`packages/addon-admin-ui/src/components/device/customize/customize-registry.ts`),
+listed by `CUSTOMIZE_KINDS`. A kind not yet built into the registry is declared
+as a `gap{piece,phase}` rather than left out, so a missing kind is visible in
+the code and in the tests.
+
+Links of kind `power-source`, `lock-door-sensor` and `follow-switch` carry a
+stored `customizeKind` discriminant. The readers (`powerSourceLinkOfComposition`,
+`lockDoorLinkOfComposition`, `isRunningOptOut`) accept only that shape. Rows
+written before the discriminant are converted by the core-blocks migration
+`2026-11-26-customize-kind-discriminant` (sequence 9), which runs at core-blocks
+`onInitialize` and keeps its ledger in the owner store's own SQLite database.
+`legacyCustomizeKindsOf` logs a warning for any old shape still found, so a
+missed row is reported rather than read as "no link".
+
+Writes carry the stamp they read:
+
+- `ActionsStore.setLinks` requires `expectedUpdatedAt`;
+- `applyLinkedDevicesPatch` takes `_linkedDevicesUpdatedAt`;
+- core-blocks update, delete and setEnabled take an optional
+  `expectedUpdatedAt`; a write without one is logged as unchecked.
+
+A stale stamp is refused with `StaleStampError` (`packages/types/src/stale-stamp.ts`).
+Its message starts with `[stale-stamp]`, which survives the flattening of a cap
+error to its text. Each read, check and write runs as one step per record under
+`KeyedSerialiser` (`packages/system/src/builtins/shared/serialise-per-key.ts`),
+so two writes to one record cannot interleave.
 
 ## A remote: commands that outrank the native cap, at dispatch (D964)
 
