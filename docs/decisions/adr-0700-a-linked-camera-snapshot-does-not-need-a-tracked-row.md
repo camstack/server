@@ -8,7 +8,7 @@ applies-to:
   - packages/addon-post-analysis/src/pipeline-analytics/index.ts
   - packages/addon-post-analysis/src/notification-center/index.ts
   - packages/addon-post-analysis/src/notification-center/linked-stills.ts
-  - packages/addon-admin-ui/src/components/device/customize/kinds/LinkedDevicesTable.tsx
+  - packages/addon-admin-ui/src/components/device/customize/kinds/LinkedDevicesRows.tsx
 ---
 
 ## Context
