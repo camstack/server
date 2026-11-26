@@ -131,6 +131,10 @@ export default defineFixtures({
       if (cap === 'motion') return [422]
       return get('deviceManager.listDeviceIdsByCaps')(i)
     },
+    'tags.list': [],
+    'deviceHistory.listSeries': [],
+    'deviceManager.getLinkedDevicesBatch': (i: { deviceIds: readonly number[] }) =>
+      i.deviceIds.map((deviceId) => ({ deviceId, mode: 'manual', devices: [] })),
     // The camera in the fleet makes the page ask for its link slots.
     'deviceExtension.listSlots': [],
     'coreBlocks.listTemplateInstances': (i: { deviceId?: number }) => ({
