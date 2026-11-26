@@ -85,6 +85,19 @@ export class NodeEndpointReporter {
     const serialised = JSON.stringify(inventory)
     if (this.#last.get(key) === serialised) return
     this.#last.set(key, serialised)
+    for (const line of inventory) {
+      if (line.deviceTypeIds.length === 0 || line.clusterIds.length > 0) continue
+      this.#logger.warn('Matter: endpoint has device types but no server clusters', {
+        tags: deviceId !== null ? { deviceId } : { addonId: 'matter-broker' },
+        meta: {
+          brokerId,
+          nodeId: node.nodeId,
+          endpointId: line.endpointId,
+          deviceTypeIds: line.deviceTypeIds,
+          reason: 'no behavior with a cluster id and no Descriptor serverList in the peer state',
+        },
+      })
+    }
     this.#logger.info('Matter: node endpoints read', {
       tags: deviceId !== null ? { deviceId } : { addonId: 'matter-broker' },
       meta: {

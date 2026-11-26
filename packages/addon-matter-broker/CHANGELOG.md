@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Matter: a commissioned lock's endpoints now report their server clusters, so its door lock and power source children appear
+
 ## [0.2.178] - 2026-11-25
 
 ### Changed

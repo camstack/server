@@ -88,3 +88,25 @@ describe('reconcileNodeEndpoints', () => {
     expect(JSON.stringify(line?.meta)).toContain('"nodeId":"1"')
   })
 })
+
+describe('NodeEndpointReporter empty-cluster warning', () => {
+  it('warns, tagged with the deviceId, when an endpoint has device types but no clusters', () => {
+    const warns: InfoLine[] = []
+    const logger: IScopedLogger = {
+      ...loggerInto([]),
+      warn: (message: string, extra?: { tags?: unknown; meta?: unknown }) => {
+        warns.push({ message, tags: extra?.tags, meta: extra?.meta })
+      },
+    }
+    const node: MatterNodeSnapshot = {
+      nodeId: '1',
+      label: 'Lock',
+      online: true,
+      endpoints: [{ endpointId: 1, clusterIds: [], deviceTypeIds: [0x000a] }],
+    }
+    new NodeEndpointReporter(logger).report('b1', node, 6017)
+    expect(warns).toHaveLength(1)
+    expect(warns[0]?.tags).toEqual({ deviceId: 6017 })
+    expect(JSON.stringify(warns[0]?.meta)).toContain('"endpointId":1')
+  })
+})

@@ -122,12 +122,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+/**
+ * Like {@link isRecord} but also admits a function: a matter.js `Behavior.Type`
+ * is a CLASS, and its static `cluster` is read off the constructor.
+ */
+function isRecordOrFunction(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) || typeof value === 'function'
+}
+
 /** Read a finite numeric cluster id from a `Behavior.Type`'s `.cluster.id`. */
 function clusterIdOf(behaviorType: unknown): number | null {
-  if (!isRecord(behaviorType)) return null
-  const cluster = behaviorType['cluster']
-  if (!isRecord(cluster)) return null
-  const id = cluster['id']
+  if (!isRecordOrFunction(behaviorType)) return null
+  const cluster = Reflect.get(behaviorType, 'cluster')
+  if (!isRecordOrFunction(cluster)) return null
+  const id = Reflect.get(cluster, 'id')
   if (typeof id === 'number' && Number.isFinite(id)) return id
   if (typeof id === 'bigint') return Number(id)
   return null
@@ -257,6 +265,11 @@ function collectEndpoint(endpoint: DynamicEndpoint, out: MatterEndpointView[]): 
       readBehaviorAttributes(endpoint, behaviorId, clusterId, attributes, attributeKeys)
     }
   }
+  // The Descriptor serverList is the peer's own statement of what the endpoint
+  // serves; it covers a cluster whose behavior is not installed (yet).
+  for (const id of readServerList(endpoint)) {
+    if (!clusterIds.includes(id)) clusterIds.push(id)
+  }
 
   out.push({
     number: endpoint.number,
@@ -291,6 +304,25 @@ function readBehaviorAttributes(
     if (value !== undefined) attributeKeys.push(attributeKey(clusterId, attributeId))
     attributes.push({ clusterId, attributeId, value })
   }
+}
+
+/** The Descriptor `serverList` of an endpoint as plain numeric cluster ids. */
+function readServerList(endpoint: DynamicEndpoint): number[] {
+  let descriptor: unknown
+  try {
+    descriptor = endpoint.stateOf('descriptor')
+  } catch {
+    return []
+  }
+  if (!isRecord(descriptor)) return []
+  const list = descriptor['serverList']
+  if (!isIterable(list)) return []
+  const ids: number[] = []
+  for (const raw of list) {
+    if (typeof raw === 'number' && Number.isFinite(raw)) ids.push(raw)
+    else if (typeof raw === 'bigint') ids.push(Number(raw))
+  }
+  return ids
 }
 
 /**
