@@ -157,7 +157,7 @@ export function DeviceItemActions({
   // PTZ quick-action: a floating popover with the movement d-pad +
   // presets (NO auto-track — that lives in the device-detail panel).
   const showPtz = (device.features ?? []).includes('pan-tilt-zoom')
-  // A list row is ONE line with the kind's main control (D1105): the timed run is a
+  // A list row is ONE line with the kind's main control (D1106): the timed run is a
   // secondary control, so it is never drawn inline. It is the phone swipe tray's `lead`
   // action only; the device's own page and quick detail carry it.
   const timedRun =

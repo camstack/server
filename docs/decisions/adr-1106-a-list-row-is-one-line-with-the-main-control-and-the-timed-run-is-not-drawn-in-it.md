@@ -1,5 +1,5 @@
 ---
-id: D1105
+id: D1106
 title: A list row is one line with the kind's main control; the timed run is not drawn in it
 status: accepted
 date: 2026-11-26
@@ -24,7 +24,7 @@ A device list row is ONE line and draws only the kind's main control (a
 switch row: the toggle). A secondary control is never drawn inline in a row,
 for any kind: the timed run lives in the device page and the quick detail
 (the hero slot, D1023). The phone swipe tray keeps it as its `lead` action, off
-the row's line. D1027's row part is amended: the row no longer draws Run or
+the row's line. This record amends the row part of D1027 (it does not supersede it): the row no longer draws Run or
 Stop, and a container row does not draw its primary child's either; the hero
 slot stays the only source of a deadline, and the status line still ends with
 the time left. D993 (the cap, its limits, the deadline row) and D1097 (where

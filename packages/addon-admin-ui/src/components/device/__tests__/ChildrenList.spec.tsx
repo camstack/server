@@ -275,7 +275,7 @@ describe('ChildrenList — accordion header is interactive', () => {
  * when it holds accessories. "Children" (the mixed case) is treated as
  * accessories: a box that contains part of the device is part of the device.
  */
-describe('ChildrenList — adopted devices lead', () => {
+describe('ChildrenList — the children box leads', () => {
   beforeEach(() => {
     childrenResult.current = { data: undefined, isLoading: false, isError: false }
     parentResult.current = { data: undefined, isLoading: false, isError: false }

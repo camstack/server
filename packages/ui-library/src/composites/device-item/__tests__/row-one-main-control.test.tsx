@@ -1,5 +1,5 @@
 /**
- * A list row is ONE line with the kind's main control (D1118). The timed run is
+ * A list row is ONE line with the kind's main control (D1106). The timed run is
  * a secondary control: no row draws it inline, for any kind and for a
  * container's primary child alike. It stays reachable as the phone tray's
  * `lead` action, and the device page carries it.
@@ -54,7 +54,7 @@ const trpc = {
     getBindings: { query: async () => ({ deviceId: 0, entries: [] }) },
     getDevice: { query: async () => null },
   },
-} as unknown as UseDeviceProxyTrpc
+} as unknown as UseDeviceProxyTrpc // documented test-fake boundary: only the cap queries the row reads
 
 function makeDevice(type: string, extra: Partial<DeviceItemDevice> = {}): DeviceItemDevice {
   return {
@@ -80,6 +80,9 @@ describe('a list row draws one main control', () => {
   it.each([
     DeviceType.Switch,
     DeviceType.Light,
+    DeviceType.Cover,
+    DeviceType.Climate,
+    DeviceType.Lock,
   ])('a %s row draws no timed run inline, wide or narrow', (type) => {
     for (const placement of ['table', 'card'] as const) {
       const { unmount } = render(
