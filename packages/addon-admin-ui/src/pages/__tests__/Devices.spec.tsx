@@ -104,8 +104,11 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+const invalidations: Array<{ key: readonly unknown[]; categories: readonly string[] }> = []
 vi.mock('../../hooks/useEventInvalidation', () => ({
-  useEventInvalidation: () => undefined,
+  useEventInvalidation: (key: readonly unknown[], categories: readonly string[]) => {
+    invalidations.push({ key, categories })
+  },
 }))
 
 import { DevicesPage } from '../Devices'
@@ -129,6 +132,20 @@ describe('DevicesPage', () => {
     // reads `window.location`), so each test starts from a clean one.
     window.history.replaceState(null, '', '/devices')
     localStorage.clear()
+    invalidations.length = 0
+  })
+
+  it('online/offline invalidate only deviceManager.listAll, not the whole slice', () => {
+    render(renderPage())
+    const wholeSlice = invalidations.filter(
+      (i) => i.key.length === 1 && i.key[0] === 'deviceManager',
+    )
+    const wholeCategories = wholeSlice.flatMap((i) => [...i.categories])
+    expect(wholeCategories).not.toContain('device.online')
+    expect(wholeCategories).not.toContain('device.offline')
+    const narrow = invalidations.find((i) => i.categories.includes('device.online'))
+    expect(narrow?.key).toEqual([['deviceManager', 'listAll']])
+    expect(narrow?.categories).toContain('device.offline')
   })
 
   it('renders the device rows', () => {

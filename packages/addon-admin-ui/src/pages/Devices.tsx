@@ -50,15 +50,11 @@ export function DevicesPage(): ReactNode {
 
   useEventInvalidation(
     ['deviceManager'],
-    [
-      'device.registered',
-      'device.unregistered',
-      'device.online',
-      'device.offline',
-      'device.disabled',
-      'device.enabled',
-    ],
+    ['device.registered', 'device.unregistered', 'device.disabled', 'device.enabled'],
   )
+  // Online/offline only changes the list; do not refetch every other
+  // deviceManager query (per-device bindings, searches) on each flap.
+  useEventInvalidation([['deviceManager', 'listAll']], ['device.online', 'device.offline'])
   useEventInvalidation(
     ['integrations'],
     [

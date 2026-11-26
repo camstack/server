@@ -28,9 +28,10 @@
  * (`AddonPageProps.trpc`) — parametrized by a minimal vanilla tRPC
  * proxy shape (matches both at runtime).
  */
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import type { DeviceBinding, DeviceProxy } from '@camstack/types'
 import { createDeviceProxy } from '@camstack/types'
+import { getDeviceProxyRegistry } from './device-proxy-registry.js'
 
 /**
  * Reactive runtime-state read handle as exposed by the codegen
@@ -75,64 +76,33 @@ export interface UseDeviceProxyTrpc {
   }
 }
 
-const BINDING_CHANGED_CATEGORY = 'capability.binding-changed'
-
 /**
  * @returns the proxy, or `null` while bindings are still loading or
  * when `deviceId` is null. Re-rendered when bindings change.
+ *
+ * Bindings, the `binding-changed` subscription and the device-state source
+ * are shared per tRPC client (`device-proxy-registry.ts`): N proxies of N
+ * rows cost one `getBindings` per device and a constant number of
+ * subscriptions.
  */
 export function useDeviceProxy(
   trpc: UseDeviceProxyTrpc,
   deviceId: number | null,
 ): DeviceProxy | null {
-  const [binding, setBinding] = useState<DeviceBinding | null>(null)
+  const registry = getDeviceProxyRegistry(trpc)
+  const subscribe = useCallback(
+    (notify: () => void) =>
+      deviceId === null ? () => undefined : registry.observe(deviceId, notify),
+    [registry, deviceId],
+  )
+  const getSnapshot = useCallback(
+    () => (deviceId === null ? null : registry.read(deviceId)),
+    [registry, deviceId],
+  )
+  const binding = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
-  useEffect(() => {
-    if (deviceId === null) {
-      setBinding(null)
-      return
-    }
-    let cancelled = false
-
-    const refresh = async (): Promise<void> => {
-      try {
-        const next = await trpc.deviceManager.getBindings.query({ deviceId })
-        if (!cancelled) setBinding(next)
-      } catch {
-        // Binding fetch failures leave the previous proxy in place —
-        // a transient tRPC error shouldn't tear down active subscriptions.
-        if (!cancelled) setBinding((prev) => prev)
-      }
-    }
-
-    void refresh()
-
-    // Live invalidation on binding changes — wrapper toggles, cap
-    // (un)registrations etc. emit `capability.binding-changed` so we
-    // re-fetch and rebuild the proxy fields the device exposes.
-    const sub = trpc.live?.onEvent.subscribe(
-      { category: BINDING_CHANGED_CATEGORY },
-      {
-        onData: (evt) => {
-          const src = evt.data?.source
-          if (!src) {
-            void refresh()
-            return
-          }
-          if (src.type === 'device' && src.id === deviceId) void refresh()
-        },
-      },
-    )
-
-    return () => {
-      cancelled = true
-      sub?.unsubscribe()
-    }
-  }, [trpc, deviceId])
-
-  // The proxy is a thin closure over (trpc, binding) — rebuilding it
-  // on every render is cheap, but memoising keeps `===` identity stable
-  // for downstream effects/callbacks that depend on the proxy.
+  // The proxy is a thin closure over (trpc, binding) — memoised so `===`
+  // identity stays stable for downstream effects/callbacks.
   return useMemo(() => {
     if (!binding) return null
     return createDeviceProxy(
@@ -141,8 +111,9 @@ export function useDeviceProxy(
       // <cap>.<method>.{query|mutate|subscribe} surface).
       trpc as Parameters<typeof createDeviceProxy>[0],
       binding,
+      { stateSource: registry.stateSource },
     )
-  }, [trpc, binding])
+  }, [trpc, binding, registry])
 }
 
 /**
