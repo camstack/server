@@ -8,14 +8,17 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterAttributeReport, MatterEventReport } from './matter-controller.js'
 
-/** First wait after a dropped subscription. */
-export const SUBSCRIPTION_BACKOFF_INITIAL_MS = 1_000
+/** First wait before our own re-establishment of an offline node's subscription. */
+export const SUBSCRIPTION_BACKOFF_INITIAL_MS = 15_000
+/** Longest one subscribe attempt may take before it counts as failed. */
+export const SUBSCRIBE_ATTEMPT_TIMEOUT_MS = 90_000
+/** Every Nth retry of an unreachable node logs a summary at info. */
+export const SUBSCRIPTION_SUMMARY_EVERY = 10
 /** Cap so a sleepy Thread node cannot be hammered. */
 export const SUBSCRIPTION_BACKOFF_MAX_MS = 60_000
 
 export type SubscriptionPhase =
   | 'subscribed'
-  | 'closed'
   | 'offline'
   | 'online'
   | 'backing-off'
@@ -29,7 +32,6 @@ export interface MatterPeerSubscription {
 export interface MatterSubscriptionHandlers {
   onReport: (report: MatterAttributeReport) => void
   onEvent: (event: MatterEventReport) => void
-  onClosed: () => void
 }
 
 /** The structural peer surface the supervisor drives. Production adapts matter.js. */
@@ -61,6 +63,8 @@ interface Slot {
   subscription: MatterPeerSubscription | null
   unlisten: Array<() => void>
   generation: number
+  /** True while a subscribe attempt is in flight: never two per node. */
+  opening: boolean
   listening: boolean
   /** True while we are closing the subscription ourselves (stop / node gone). */
   dropping: boolean
@@ -110,9 +114,16 @@ export class MatterSubscriptionSupervisor {
       }
       slot.peer = peer
       const cameBack = slot.phase !== 'subscribed' && peer.online()
-      if (cameBack && slot.phase !== 'resubscribing') {
+      if (cameBack && !slot.opening) {
         slot.attempt = 0
         await this.#open(peer)
+      } else if (
+        !slot.opening &&
+        slot.timer === null &&
+        (slot.phase === 'offline' || slot.phase === 'subscribe-failed')
+      ) {
+        // Backstop: an offline slot always has a retry armed.
+        this.#schedule(peer.nodeId)
       }
     }
     for (const [nodeId, slot] of this.#slots) {
@@ -133,6 +144,7 @@ export class MatterSubscriptionSupervisor {
   async #open(peer: MatterSubscribablePeer): Promise<void> {
     if (this.#stopped) return
     const existing = this.#slots.get(peer.nodeId)
+    if (existing?.opening === true) return
     if (existing?.phase === 'subscribed' && existing.subscription !== null) return
     if (existing?.timer !== null && existing?.timer !== undefined) {
       clearTimeout(existing.timer)
@@ -143,12 +155,18 @@ export class MatterSubscriptionSupervisor {
     slot.peer = peer
     slot.generation = generation
     slot.phase = 'resubscribing'
+    slot.opening = true
     this.#slots.set(peer.nodeId, slot)
     this.#listen(slot)
-    this.#log(peer.nodeId, 'resubscribing')
+    this.#log(peer.nodeId, 'resubscribing', { attempt: slot.attempt }, this.#perAttempt(slot))
+    // Closing the previous sustained subscription restarts matter.js's own
+    // (15 s doubling to 1 h) schedule, so reopening is a fresh attempt.
+    const stale = slot.subscription
+    slot.subscription = null
+    if (stale !== null) await stale.close().catch(() => undefined)
     let subscription: MatterPeerSubscription
     try {
-      subscription = await peer.subscribe({
+      subscription = await this.#subscribeBounded(peer, {
         onReport: (report) => {
           if (report.value === undefined || report.value === null) return
           this.#onReport(report)
@@ -156,47 +174,47 @@ export class MatterSubscriptionSupervisor {
         onEvent: (event) => {
           this.#onEvent(event)
         },
-        onClosed: () => {
-          const current = this.#slots.get(peer.nodeId)
-          if (current === undefined || current.generation !== generation) return
-          this.#onClosed(peer.nodeId)
-        },
       })
     } catch (err: unknown) {
-      this.#log(peer.nodeId, 'subscribe-failed', {
-        error: errMsg(err),
-        errStack: err instanceof Error ? err.stack : undefined,
-      })
+      slot.opening = false
+      this.#log(
+        peer.nodeId,
+        'subscribe-failed',
+        {
+          error: errMsg(err),
+          errStack: err instanceof Error ? err.stack : undefined,
+          attempt: slot.attempt,
+        },
+        this.#perAttempt(slot),
+      )
       const current = this.#slots.get(peer.nodeId)
-      if (current === undefined || current.generation !== generation) return
+      if (current === undefined || current.generation !== generation || this.#stopped) return
       current.phase = 'subscribe-failed'
       this.#schedule(peer.nodeId)
       return
     }
+    slot.opening = false
     if (this.#stopped || this.#slots.get(peer.nodeId)?.generation !== generation) {
       await subscription.close().catch(() => undefined)
       return
     }
     slot.subscription = subscription
+    if (!peer.online()) {
+      // The sustained subscription exists but the node is unreachable: keep
+      // re-establishing on our own schedule until it answers.
+      slot.phase = 'offline'
+      this.#log(
+        peer.nodeId,
+        'offline',
+        { attempt: slot.attempt, outcome: 'still-offline' },
+        this.#perAttempt(slot),
+      )
+      this.#schedule(peer.nodeId)
+      return
+    }
     slot.phase = 'subscribed'
     slot.attempt = 0
     this.#log(peer.nodeId, 'subscribed')
-  }
-
-  #onClosed(nodeId: string): void {
-    const slot = this.#slots.get(nodeId)
-    if (slot === undefined || slot.dropping) return
-    if (slot.phase !== 'subscribed' && slot.phase !== 'resubscribing') return
-    slot.subscription = null
-    slot.phase = 'closed'
-    this.#log(nodeId, 'closed')
-    if (!slot.peer.online()) {
-      slot.phase = 'offline'
-      this.#log(nodeId, 'offline')
-      this.#onPresence(nodeId, false)
-      return
-    }
-    this.#schedule(nodeId)
   }
 
   #schedule(nodeId: string): void {
@@ -208,8 +226,8 @@ export class MatterSubscriptionSupervisor {
       SUBSCRIPTION_BACKOFF_INITIAL_MS * 2 ** slot.attempt,
     )
     slot.attempt += 1
-    slot.phase = 'backing-off'
-    this.#log(nodeId, 'backing-off', { delayMs: delay, attempt: slot.attempt })
+    if (slot.phase !== 'offline') slot.phase = 'backing-off'
+    this.#log(nodeId, 'backing-off', { delayMs: delay, attempt: slot.attempt }, false)
     slot.timer = setTimeout(() => {
       slot.timer = null
       void this.#open(slot.peer)
@@ -223,11 +241,12 @@ export class MatterSubscriptionSupervisor {
     slot.unlisten.push(
       slot.peer.onOffline(() => {
         const current = this.#slots.get(slot.peer.nodeId)
-        if (current === undefined) return
+        if (current === undefined || this.#stopped) return
         if (current.phase === 'offline') return
         current.phase = 'offline'
         this.#log(slot.peer.nodeId, 'offline')
         this.#onPresence(slot.peer.nodeId, false)
+        if (!current.opening) this.#schedule(slot.peer.nodeId)
       }),
     )
     slot.unlisten.push(
@@ -275,6 +294,7 @@ export class MatterSubscriptionSupervisor {
       subscription: null,
       unlisten: [],
       generation: 0,
+      opening: false,
       listening: false,
       dropping: false,
     }
@@ -286,12 +306,48 @@ export class MatterSubscriptionSupervisor {
     return { brokerId: this.#brokerId }
   }
 
-  #log(nodeId: string, phase: SubscriptionPhase, extra?: Record<string, unknown>): void {
+  /** The first attempt and every Nth retry are worth info; the rest is debug. */
+  #perAttempt(slot: Slot): boolean {
+    return slot.attempt === 0 || slot.attempt % SUBSCRIPTION_SUMMARY_EVERY === 0
+  }
+
+  /**
+   * One subscribe attempt, bounded: a `subscribe` that never settles is a
+   * failed attempt, and whatever it returns later is closed.
+   */
+  async #subscribeBounded(
+    peer: MatterSubscribablePeer,
+    handlers: MatterSubscriptionHandlers,
+  ): Promise<MatterPeerSubscription> {
+    const pending = peer.subscribe(handlers)
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const timeout = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), SUBSCRIBE_ATTEMPT_TIMEOUT_MS)
+      if (typeof timer.unref === 'function') timer.unref()
+    })
+    try {
+      const winner = await Promise.race([pending, timeout])
+      if (winner !== 'timeout') return winner
+      pending.then((late) => late.close()).catch(() => undefined)
+      throw new Error(`subscribe did not settle within ${SUBSCRIBE_ATTEMPT_TIMEOUT_MS} ms`)
+    } finally {
+      if (timer !== null) clearTimeout(timer)
+    }
+  }
+
+  #log(
+    nodeId: string,
+    phase: SubscriptionPhase,
+    extra?: Record<string, unknown>,
+    info = true,
+  ): void {
     const deviceId = this.#resolveDeviceId(nodeId)
-    this.#logger.info('Matter subscription state', {
+    const line = {
       tags: deviceId !== null ? { deviceId } : { brokerId: this.#brokerId },
       meta: { nodeId, phase, ...extra },
-    })
+    }
+    if (info) this.#logger.info('Matter subscription state', line)
+    else this.#logger.debug('Matter subscription state', line)
   }
 }
 

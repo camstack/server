@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9328 source files · 251 units claimed by at least one document (9306 files).**
+**257 units · 9329 source files · 251 units claimed by at least one document (9307 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -65,8 +65,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/pipeline` | 36 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +30 more, 2 ADRs | 2026-11-21 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +14 more, 2 ADRs | 2026-10-21 |
 | `packages/addon-provider-bosch/src/homecom` | 35 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +4 more | 2026-11-26 |
+| `packages/addon-matter-broker` | 34 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-09-29 |
 | `packages/addon-export-alexa` | 33 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +16 more, 3 ADRs | 2026-08-26 |
-| `packages/addon-matter-broker` | 33 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-09-29 |
 | `packages/ui-library/src/primitives` | 33 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +4 more | 2026-11-26 |
 | `packages/addon-provider-homematic` | 31 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-26 |
 | `packages/addon-provider-homematic/src/ui` | 31 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-26 |

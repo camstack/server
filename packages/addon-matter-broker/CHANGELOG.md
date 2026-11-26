@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After a restart a Matter device shows its last known state instead of a default.
 - A Matter lock stays 'status unknown' until its first lock reading arrives, and is re-read until one does, instead of being presented as online and unlocked.
+- A Matter node that dropped offline is now re-subscribed every 15 to 60 seconds, and keeps retrying every minute until the device answers, instead of waiting up to an hour on the library's silent retry.
+- Matter library messages (connection and session problems) now appear in the addon log instead of being lost.
 
 ## [0.2.180] - 2026-11-26
 

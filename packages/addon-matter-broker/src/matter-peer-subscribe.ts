@@ -127,9 +127,6 @@ export function subscribableFromPeer(
           const events = await collectEventReports(nodeId, records)
           for (const event of events) handlers.onEvent(event)
         },
-        closed: () => {
-          handlers.onClosed()
-        },
       }
       const result: unknown = await Promise.resolve(
         Reflect.apply(subscribe, interaction, [request]),

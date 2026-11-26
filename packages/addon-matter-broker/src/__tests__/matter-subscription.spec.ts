@@ -4,6 +4,7 @@ import {
   MatterSubscriptionSupervisor,
   SUBSCRIPTION_BACKOFF_INITIAL_MS,
   SUBSCRIPTION_BACKOFF_MAX_MS,
+  SUBSCRIBE_ATTEMPT_TIMEOUT_MS,
   collectAttributeReports,
   type MatterSubscribablePeer,
   type MatterSubscriptionHandlers,
@@ -32,14 +33,12 @@ function peer(input: {
   onSubscribe?: (handlers: MatterSubscriptionHandlers) => void
 }): {
   peer: MatterSubscribablePeer
-  emitClosed: () => void
   goOnline: () => void
   goOffline: () => void
   subscribeCount: () => number
 } {
   let online = input.online ?? true
   let subscribeCount = 0
-  let closed: (() => void) | null = null
   const onlineHandlers: Array<() => void> = []
   const offlineHandlers: Array<() => void> = []
   const view: MatterSubscribablePeer = {
@@ -47,7 +46,6 @@ function peer(input: {
     online: () => online,
     subscribe: async (handlers) => {
       subscribeCount += 1
-      closed = handlers.onClosed
       input.onSubscribe?.(handlers)
       return { close: async () => undefined }
     },
@@ -62,7 +60,6 @@ function peer(input: {
   }
   return {
     peer: view,
-    emitClosed: () => closed?.(),
     goOnline: () => {
       online = true
       for (const handler of onlineHandlers) handler()
@@ -91,11 +88,21 @@ describe('collectAttributeReports', () => {
           value: null,
           version: 2,
         },
-        { kind: 'attr-status', path: { endpointId: 1, clusterId: 1, attributeId: 0 }, status: 1 },
+        {
+          kind: 'attr-status',
+          path: { endpointId: 1, clusterId: 1, attributeId: 0 },
+          status: 1,
+        },
       ],
     ])
     expect(reports).toEqual([
-      { nodeId: '7', endpointId: 1, clusterId: 0x0101, attributeId: 0, value: 1 },
+      {
+        nodeId: '7',
+        endpointId: 1,
+        clusterId: 0x0101,
+        attributeId: 0,
+        value: 1,
+      },
     ])
   })
 })
@@ -157,38 +164,6 @@ describe('MatterSubscriptionSupervisor', () => {
     await supervisor.stop()
   })
 
-  it('resubscribes after the session drops, with a bounded backoff', async () => {
-    vi.useFakeTimers()
-    let fail = false
-    const supervisor = new MatterSubscriptionSupervisor({
-      brokerId: 'matter_001',
-      logger: silentLogger([]),
-      resolveDeviceId: () => null,
-      onReport: () => undefined,
-    })
-    const node = peer({
-      nodeId: 'n1',
-      onSubscribe: () => {
-        if (fail) throw new Error('session down')
-      },
-    })
-    await supervisor.sync([node.peer])
-    expect(node.subscribeCount()).toBe(1)
-
-    fail = true
-    node.emitClosed()
-    await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS)
-    expect(node.subscribeCount()).toBe(2)
-
-    const before = node.subscribeCount()
-    for (let i = 0; i < 8; i += 1) {
-      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_MAX_MS)
-    }
-    // An uncapped doubling would exceed the cap and these waits would not fire.
-    expect(node.subscribeCount()).toBeGreaterThanOrEqual(before + 8)
-    await supervisor.stop()
-  })
-
   it('resubscribes when the node comes back online', async () => {
     const supervisor = new MatterSubscriptionSupervisor({
       brokerId: 'matter_001',
@@ -199,7 +174,6 @@ describe('MatterSubscriptionSupervisor', () => {
     const node = peer({ nodeId: 'n1', online: true })
     await supervisor.sync([node.peer])
     node.goOffline()
-    node.emitClosed()
     expect(node.subscribeCount()).toBe(1)
     node.goOnline()
     await vi.waitFor(() => expect(node.subscribeCount()).toBe(2))
@@ -250,5 +224,147 @@ describe('classifyCommissionError', () => {
     expect(classifyCommissionError('matter-broker: invalid pairing code — empty code')).toBe(
       CommissionFailureCode.InvalidCode,
     )
+  })
+
+  describe('offline re-establishment', () => {
+    function setup(deviceId: number | null = 7): {
+      supervisor: MatterSubscriptionSupervisor
+      lines: string[]
+    } {
+      const lines: string[] = []
+      const supervisor = new MatterSubscriptionSupervisor({
+        brokerId: 'matter_001',
+        logger: silentLogger(lines),
+        resolveDeviceId: () => deviceId,
+        onReport: () => undefined,
+      })
+      return { supervisor, lines }
+    }
+
+    it('retries an offline node at 15 s, 30 s, then capped at 60 s, and stops when online', async () => {
+      vi.useFakeTimers()
+      const { supervisor, lines } = setup()
+      const node = peer({ nodeId: 'n1' })
+      await supervisor.sync([node.peer])
+      expect(node.subscribeCount()).toBe(1)
+      node.goOffline()
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS - 1)
+      expect(node.subscribeCount()).toBe(1)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(node.subscribeCount()).toBe(2)
+      await vi.advanceTimersByTimeAsync(2 * SUBSCRIPTION_BACKOFF_INITIAL_MS)
+      expect(node.subscribeCount()).toBe(3)
+      // Capped: 60 s apart, never longer, however many attempts have passed.
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(node.subscribeCount()).toBe(4)
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(node.subscribeCount()).toBe(5)
+      // Info carries the first attempt only; repeats are debug.
+      expect(lines.filter((l) => l.includes(':7:resubscribing')).length).toBe(1)
+      node.goOnline()
+      await vi.waitFor(() => expect(supervisor.phase('n1')).toBe('subscribed'))
+      const settled = node.subscribeCount()
+      await vi.advanceTimersByTimeAsync(10 * SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(node.subscribeCount()).toBe(settled)
+      await supervisor.stop()
+    })
+
+    it('stop cancels the pending retry', async () => {
+      vi.useFakeTimers()
+      const { supervisor } = setup()
+      const node = peer({ nodeId: 'n1' })
+      await supervisor.sync([node.peer])
+      node.goOffline()
+      expect(vi.getTimerCount()).toBeGreaterThan(0)
+      await supervisor.stop()
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(10 * SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(node.subscribeCount()).toBe(1)
+    })
+
+    it('never runs two attempts for one node at once', async () => {
+      vi.useFakeTimers()
+      const { supervisor } = setup()
+      let inFlight = 0
+      let maxInFlight = 0
+      const gate: { release: (() => void) | null } = { release: null }
+      const node = peer({ nodeId: 'n1' })
+      const slowPeer: MatterSubscribablePeer = {
+        ...node.peer,
+        subscribe: async (handlers) => {
+          inFlight += 1
+          maxInFlight = Math.max(maxInFlight, inFlight)
+          if (gate.release === null) {
+            await new Promise<void>((resolve) => {
+              gate.release = resolve
+            })
+          }
+          const sub = await node.peer.subscribe(handlers)
+          inFlight -= 1
+          return sub
+        },
+      }
+      const first = supervisor.sync([slowPeer])
+      await vi.advanceTimersByTimeAsync(0)
+      // While the first attempt hangs, a reconcile tick and an online event arrive.
+      void supervisor.sync([slowPeer])
+      node.goOffline()
+      node.goOnline()
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(maxInFlight).toBe(1)
+      gate.release?.()
+      await first
+      await supervisor.stop()
+    })
+
+    it('a subscribe that never settles fails the attempt, closes the late result and retries', async () => {
+      vi.useFakeTimers()
+      const { supervisor } = setup()
+      const closes: string[] = []
+      let calls = 0
+      let resolveFirst: ((sub: { close: () => Promise<void> }) => void) | null = null
+      const node = peer({ nodeId: 'n1' })
+      const hanging: MatterSubscribablePeer = {
+        ...node.peer,
+        subscribe: (handlers) => {
+          calls += 1
+          if (calls === 1) {
+            return new Promise((resolve) => {
+              resolveFirst = resolve
+            })
+          }
+          return node.peer.subscribe(handlers)
+        },
+      }
+      void supervisor.sync([hanging])
+      await vi.advanceTimersByTimeAsync(SUBSCRIBE_ATTEMPT_TIMEOUT_MS)
+      expect(supervisor.phase('n1')).not.toBe('resubscribing')
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS)
+      expect(calls).toBe(2)
+      expect(supervisor.phase('n1')).toBe('subscribed')
+      const late = resolveFirst as ((sub: { close: () => Promise<void> }) => void) | null
+      late?.({
+        close: async () => {
+          closes.push('late')
+        },
+      })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(closes).toEqual(['late'])
+      await supervisor.stop()
+    })
+
+    it('reconcile sync arms a retry for an offline slot that has none', async () => {
+      vi.useFakeTimers()
+      const { supervisor } = setup()
+      const node = peer({ nodeId: 'n1' })
+      await supervisor.sync([node.peer])
+      node.goOffline()
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS)
+      expect(node.subscribeCount()).toBe(2)
+      await supervisor.sync([node.peer])
+      await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_MAX_MS)
+      expect(node.subscribeCount()).toBeGreaterThanOrEqual(3)
+      await supervisor.stop()
+    })
   })
 })

@@ -41,6 +41,7 @@ import {
 } from './matter-commission-progress.js'
 import { prepareFabricStorage } from './matter-storage-lock.js'
 import { subscribableFromPeer } from './matter-peer-subscribe.js'
+import { attachMatterJsLogger } from './matter-js-logging.js'
 import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
 
 /** A commissioning failure (bad code / device unreachable), distinct from runtime. */
@@ -83,6 +84,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export class MatterJsController implements MatterController {
   readonly #options: MatterJsControllerOptions
   readonly #logger: IScopedLogger
+  #detachMatterLogger: (() => void) | null = null
   readonly #handlers: Set<(report: MatterAttributeReport) => void> = new Set()
   readonly #eventHandlers: Set<(event: MatterEventReport) => void> = new Set()
   readonly #subscriptions: MatterSubscriptionSupervisor
@@ -113,6 +115,7 @@ export class MatterJsController implements MatterController {
   /** Boot the ServerNode fabric, loading/persisting state from `dataDir`. */
   async start(): Promise<void> {
     if (this.#server !== null) return
+    this.#detachMatterLogger ??= attachMatterJsLogger(this.#logger)
     const server =
       this.#options.openServer !== undefined
         ? await this.#options.openServer()
@@ -133,6 +136,8 @@ export class MatterJsController implements MatterController {
     this.#handlers.clear()
     this.#eventHandlers.clear()
     await this.#subscriptions.stop()
+    this.#detachMatterLogger?.()
+    this.#detachMatterLogger = null
     const server = this.#server
     this.#server = null
     this.#lastValues.clear()

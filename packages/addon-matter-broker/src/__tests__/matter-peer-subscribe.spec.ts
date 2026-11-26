@@ -70,7 +70,7 @@ function peerWithReadOnlyNetwork(
   }
 }
 
-const HANDLERS = { onReport: () => undefined, onEvent: () => undefined, onClosed: () => undefined }
+const HANDLERS = { onReport: () => undefined, onEvent: () => undefined }
 
 describe('subscribableFromPeer', () => {
   it('turns auto-subscribe off through setStateOf and still subscribes', async () => {

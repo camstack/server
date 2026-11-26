@@ -19,21 +19,26 @@ function silentLogger(): IScopedLogger {
 
 interface RecordedRequest {
   updated?: (update: unknown) => Promise<void>
-  closed?: () => void
 }
 
 function recordedPeer(nodeId: string): {
   peer: Record<string, unknown>
   requests: RecordedRequest[]
+  goOffline: () => void
 } {
   const requests: RecordedRequest[] = []
+  const offlineHandlers: Array<() => void> = []
+  const lifecycle = {
+    isOnline: true,
+    online: { on: () => undefined, off: () => undefined },
+    offline: {
+      on: (handler: () => void) => offlineHandlers.push(handler),
+      off: () => undefined,
+    },
+  }
   const peer: Record<string, unknown> = {
     id: nodeId,
-    lifecycle: {
-      isOnline: true,
-      online: { on: () => undefined, off: () => undefined },
-      offline: { on: () => undefined, off: () => undefined },
-    },
+    lifecycle,
     stateOf: () => ({ autoSubscribe: true }),
     interaction: {
       subscribe: async (request: RecordedRequest) => {
@@ -42,7 +47,14 @@ function recordedPeer(nodeId: string): {
       },
     },
   }
-  return { peer, requests }
+  return {
+    peer,
+    requests,
+    goOffline: () => {
+      lifecycle.isOnline = false
+      for (const handler of offlineHandlers) handler()
+    },
+  }
 }
 
 function serverOf(peers: readonly Record<string, unknown>[]): MatterFabricServer {
@@ -89,7 +101,7 @@ describe('MatterJsController subscriptions', () => {
     await controller.stop()
   })
 
-  it('resubscribes after the recorded subscription closes', async () => {
+  it('re-establishes the subscription of a node that went offline', async () => {
     vi.useFakeTimers()
     const recorded = recordedPeer('11')
     const controller = new MatterJsController(
@@ -102,7 +114,7 @@ describe('MatterJsController subscriptions', () => {
     )
     await controller.start()
     expect(recorded.requests).toHaveLength(1)
-    recorded.requests[0]?.closed?.()
+    recorded.goOffline()
     await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS)
     expect(recorded.requests.length).toBeGreaterThanOrEqual(2)
     await controller.stop()
@@ -208,7 +220,9 @@ describe('MatterJsController commissioning failures', () => {
       recordingLogger(warns),
     )
     await controller.start()
-    await expect(controller.commissionNode('34970112332')).resolves.toEqual({ nodeId: '11' })
+    await expect(controller.commissionNode('34970112332')).resolves.toEqual({
+      nodeId: '11',
+    })
     expect(phases.at(-1)?.phase).toBe(CommissionPhase.Done)
     expect(warns.some((m) => m.includes('first subscription failed'))).toBe(true)
   })
