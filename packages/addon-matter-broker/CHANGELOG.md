@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.180] - 2026-11-26
+
 ### Changed
 
 - A Matter lock with the Unbolting feature now offers Open (unlock only unbolts, Open unlatches), and a battery reported on a separate power-source endpoint shows on the lock instead of as a 'Parts' device.

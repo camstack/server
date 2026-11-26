@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.512] - 2026-11-26
+
 ### Changed
 
 - Generated hooks for the cluster detection defaults plan/apply methods
