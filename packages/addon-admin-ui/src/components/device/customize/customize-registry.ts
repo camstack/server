@@ -45,22 +45,12 @@ const CONFIRM_REMOVE = { present: { confirm: useConfirmRemove } }
 const ROW_SWITCH = { present: { control: RowActiveSwitch } }
 
 /**
- * A scalar-row kind keeps its record in the `fields` feature of the device's
- * composition, with no marker of its own: that is the discriminant gap.
+ * The generic scalar row: `ScalarSourceCell` -> `ScalarDialogHost` ->
+ * `ScalarOverrideDialog` -> `SourceSelector`. Power source and lock door sensor
+ * have NO component of their own, they are scalar targets rendered by it.
  */
-const POWER_SOURCE: CustomizeKindSpec = {
-  kind: 'power-source',
-  storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
-  owner: {
-    row: { present: { component: ScalarSourceCell } },
-    // Editing a power source opens the formula dialog, not the common SourceSelector.
-    dialog: gap('dialog', 2),
-    remove: CONFIRM_REMOVE,
-    enabled: ROW_SWITCH,
-  },
-  linkedSide: gap('linkedSide', 3),
-  stamp: COMPOSITION_STAMP,
-}
+const SCALAR_ROW = { present: { component: ScalarSourceCell } }
+const SCALAR_DIALOG = { present: { component: ScalarOverrideDialog } }
 
 export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   'field-override': {
@@ -75,13 +65,30 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     linkedSide: gap('linkedSide', 3),
     stamp: COMPOSITION_STAMP,
   },
-  'power-source': POWER_SOURCE,
-  'lock-door-sensor': {
-    kind: 'lock-door-sensor',
+  'power-source': {
+    kind: 'power-source',
+    // Recognised today only by cap `power-source` (customize-rows.ts `POWER_CAPS` just picks the
+    // `power` section) and by `power-source-link.ts` reading the stored shape: no discriminant.
     storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
     owner: {
-      row: { present: { component: ScalarSourceCell } },
-      dialog: { present: { component: ScalarOverrideDialog } },
+      row: SCALAR_ROW,
+      // The formula dialog appears only through `FormulaEntryButton` when
+      // `row.otherFormula && !followOffered`; the edit dialog is the SourceSelector one.
+      dialog: SCALAR_DIALOG,
+      remove: CONFIRM_REMOVE,
+      enabled: ROW_SWITCH,
+    },
+    linkedSide: gap('linkedSide', 3),
+    stamp: COMPOSITION_STAMP,
+  },
+  'lock-door-sensor': {
+    kind: 'lock-door-sensor',
+    // Admin-ui has no reference to it at all: it is NOT distinguishable here. Only
+    // `packages/types/src/composition/lock-door-link.ts` knows it, from the stored shape.
+    storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
+    owner: {
+      row: SCALAR_ROW,
+      dialog: SCALAR_DIALOG,
       remove: CONFIRM_REMOVE,
       enabled: ROW_SWITCH,
     },
@@ -191,6 +198,8 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     owner: {
       row: { present: { component: TriggerRowCard } },
       dialog: { present: { component: TriggerDialog } },
+      // The row has a remove button (`TriggerRowCard` `onRemove`, unlink in `TriggeredByTable`);
+      // the gap is only that it asks for no `useConfirmRemove` confirmation.
       remove: gap('remove', 2),
       enabled: { present: { control: TriggerRowCard } },
     },

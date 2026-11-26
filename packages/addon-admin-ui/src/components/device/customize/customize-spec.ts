@@ -55,6 +55,16 @@ export type Piece<P extends CustomizePiece, T> = PiecePresent<T> | PieceGap<P>
 /** A component, hook or function of the existing implementation. */
 export type CustomizeImpl = (...args: never[]) => unknown
 
+export interface ImplComponent {
+  readonly component: CustomizeImpl
+}
+export interface ImplConfirm {
+  readonly confirm: CustomizeImpl
+}
+export interface ImplControl {
+  readonly control: CustomizeImpl
+}
+
 /** Where a kind lives. The discriminant is explicit, never inferred from the shape of another kind. */
 export type CustomizeStorageShape =
   | 'composition-feature'
@@ -81,13 +91,13 @@ export interface NotTogglable {
 
 export interface CustomizeOwnerSpec {
   /** The row (or cell set) in the single `CustomizeTable`. */
-  readonly row: Piece<'ownerRow', { readonly component: CustomizeImpl }>
+  readonly row: Piece<'ownerRow', ImplComponent>
   /** Add/Edit dialog built on the common `SourceSelector`. */
-  readonly dialog: Piece<'dialog', { readonly component: CustomizeImpl }>
+  readonly dialog: Piece<'dialog', ImplComponent>
   /** Remove through `useConfirmRemove`. */
-  readonly remove: Piece<'remove', { readonly confirm: CustomizeImpl }>
+  readonly remove: Piece<'remove', ImplConfirm>
   /** The library `Switch` bound to the stored `enabled`, or the reason the kind cannot be toggled. */
-  readonly enabled: Piece<'enabled', { readonly control: CustomizeImpl }> | NotTogglable
+  readonly enabled: Piece<'enabled', ImplControl> | NotTogglable
 }
 
 /** "Used by", computed on read from the owner's record; its removal edits the owner's record. */
