@@ -98,13 +98,15 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** The stamp field of a write on `blockId`, absent for a block this table did not read. */
+/** The stamp a write on `blockId` carries. A block this table did not read is refused, never written blind. */
 function stampOf(
   stamps: ReadonlyMap<string, number>,
   blockId: string,
-): { readonly expectedUpdatedAt?: number } {
+  notRead: string,
+): { readonly expectedUpdatedAt: number } {
   const stamp = stamps.get(blockId)
-  return stamp === undefined ? {} : { expectedUpdatedAt: stamp }
+  if (stamp === undefined) throw new Error(notRead)
+  return { expectedUpdatedAt: stamp }
 }
 
 export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
@@ -267,20 +269,20 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         if (op.kind === 'delete') {
           await remove.mutateAsync({
             blockId: op.blockId,
-            ...stampOf(stamps, op.blockId),
+            ...stampOf(stamps, op.blockId, t('customize.triggers.notRead')),
           })
         } else if (op.kind === 'update') {
           const saved = await update.mutateAsync({
             blockId: op.instance.blockId,
             block: codeOf(op.instance),
-            ...stampOf(stamps, op.instance.blockId),
+            ...stampOf(stamps, op.instance.blockId, t('customize.triggers.notRead')),
           })
           stamps.set(op.instance.blockId, saved.block.updatedAt)
         } else if (op.kind === 'enable') {
           const saved = await setEnabled.mutateAsync({
             blockId: op.blockId,
             enabled: op.enabled,
-            ...stampOf(stamps, op.blockId),
+            ...stampOf(stamps, op.blockId, t('customize.triggers.notRead')),
           })
           stamps.set(op.blockId, saved.block.updatedAt)
         } else {

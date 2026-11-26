@@ -33,6 +33,7 @@ import {
   type CoreBlockCompileInput,
   type CoreBlockInput,
   coreBlockComposition,
+  legacyCustomizeKindsOf,
   coreBlocksCapability,
   resolveCoreBlockEntry,
   defineAddonMigrations,
@@ -76,6 +77,7 @@ import {
   BlockSupervisor,
 } from './block-supervisor.js'
 import { staleBlockRefusal } from './block-stamp.js'
+import { KeyedSerialiser } from '../shared/serialise-per-key.js'
 import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
 import {
   armSchedulerEngine,
@@ -164,6 +166,10 @@ export class CoreBlocksAddon extends BaseAddon {
   }
 
   private store: CoreBlockStore | null = null
+  /** Saves of one block run one after another (D1098). */
+  private readonly blockSaves = new KeyedSerialiser()
+  /** Blocks already reported for an old-shape customization: said once each. */
+  private readonly legacyShapeWarned = new Set<string>()
   private prefs: BlockSettingsStore | null = null
   private transpiler: BlockTranspiler | null = null
   private typeDefs: readonly BlockTypeLib[] | null = null
@@ -333,6 +339,8 @@ export class CoreBlocksAddon extends BaseAddon {
     this.armLinkContributions()
     const removalHook = this.armDeviceRemoval()
 
+    for (const block of this.requireStore().list()) void this.warnLegacyCustomizeShape(block)
+
     this.ctx.logger.info('core-blocks ready', {
       meta: {
         blocks: this.store.list().length,
@@ -487,17 +495,68 @@ export class CoreBlocksAddon extends BaseAddon {
   }
 
   /**
+   * A composition still holding a power source, lock door sensor or follow-switch in the OLD
+   * unstamped shape (D1098) is read as having none of them: a restored or imported block the
+   * migration did not see. Said once per block, tagged with its device, never silently.
+   */
+  private async warnLegacyCustomizeShape(block: CoreBlock): Promise<void> {
+    const composition = coreBlockComposition(block)
+    if (composition === null || this.legacyShapeWarned.has(block.id)) return
+    const kinds = legacyCustomizeKindsOf(composition)
+    if (kinds.length === 0) return
+    this.legacyShapeWarned.add(block.id)
+    const target = composition.target
+    const deviceId =
+      target.kind === 'existing' ? await this.deviceIdOfRef(target.device).catch(() => null) : null
+    this.ctx.logger.warn(
+      'core block holds a customization in the old unstamped shape — it is read as absent until it is saved again',
+      {
+        ...(deviceId === null ? {} : { tags: { deviceId } }),
+        meta: { blockId: block.id, kinds },
+      },
+    )
+  }
+
+  /**
+   * One block write, serialised per block (D1098): the stamp check and the write after it are
+   * one step, the compile included, so two saves that read the same stamp cannot both pass.
+   */
+  private guardedBlockWrite<T>(
+    method: 'update' | 'delete' | 'setEnabled',
+    blockId: string,
+    expectedUpdatedAt: number | undefined,
+    by: string | undefined,
+    write: () => Promise<T>,
+  ): Promise<T> {
+    return this.blockSaves.run(blockId, async () => {
+      this.refuseStaleBlock(method, blockId, expectedUpdatedAt, by)
+      return write()
+    })
+  }
+
+  /**
    * The block's stamp is the `updatedAt` the caller read (D1098). A caller that names one
    * and finds the block changed since is refused by name — last-write-wins would drop the
-   * other admin's edit. A caller that names none is not checked; an unknown block falls
-   * through to the store, whose own refusal names it.
+   * other admin's edit. A caller that names none is deliberately NOT checked (a script, an
+   * internal re-expansion) and says so in one line; an unknown block falls through to the
+   * store, whose own refusal names it.
    */
-  private refuseStaleBlock(blockId: string, expectedUpdatedAt: number | undefined): void {
-    if (expectedUpdatedAt === undefined) return
+  private refuseStaleBlock(
+    method: string,
+    blockId: string,
+    expectedUpdatedAt: number | undefined,
+    by: string | undefined,
+  ): void {
+    if (expectedUpdatedAt === undefined) {
+      this.ctx.logger.info('core block write without a stamp — not checked for a concurrent edit', {
+        meta: { method, blockId, ...(by === undefined ? {} : { by }) },
+      })
+      return
+    }
     const refusal = staleBlockRefusal(this.requireStore().get(blockId), expectedUpdatedAt)
     if (refusal === null) return
     this.ctx.logger.warn('core block write refused — changed since read', {
-      meta: { blockId, stored: refusal.stored, expected: refusal.expected },
+      meta: { method, blockId, stored: refusal.stored, expected: refusal.expected },
     })
     throw refusal
   }
@@ -964,6 +1023,7 @@ export class CoreBlocksAddon extends BaseAddon {
           created.settingsSchema,
         )
         if (withSchema !== null) created = withSchema
+        void this.warnLegacyCustomizeShape(created)
         this.ctx.logger.info('core block created', {
           meta: { blockId: created.id, name: created.name, by: caller.userId },
         })
@@ -971,66 +1031,67 @@ export class CoreBlocksAddon extends BaseAddon {
         return { block: created }
       },
 
-      update: async ({ blockId, block, caller, expectedUpdatedAt }) => {
-        this.refuseStaleBlock(blockId, expectedUpdatedAt)
-        // Only when the SOURCE changed: re-compiling on a rename would fail a
-        // rename because of a pre-existing error, which is not the operator's
-        // problem at that moment.
-        const sourceChanged =
-          block.code !== undefined || block.files !== undefined || block.entry !== undefined
-        let js: string | null = null
-        if (sourceChanged) {
+      update: ({ blockId, block, caller, expectedUpdatedAt }) =>
+        this.guardedBlockWrite('update', blockId, expectedUpdatedAt, caller.userId, async () => {
+          // Only when the SOURCE changed: re-compiling on a rename would fail a
+          // rename because of a pre-existing error, which is not the operator's
+          // problem at that moment.
+          const sourceChanged =
+            block.code !== undefined || block.files !== undefined || block.entry !== undefined
+          let js: string | null = null
+          if (sourceChanged) {
+            const existing = this.requireStore().get(blockId)
+            js = await this.gate({
+              code: block.code ?? existing?.code,
+              files: block.files ?? existing?.files,
+              entry: block.entry ?? existing?.entry,
+            })
+          }
+          let updated = await this.requireStore().update(blockId, block)
+          if (js !== null && block.settingsSchema === undefined) {
+            const withSchema = await this.maybeCacheSettingsSchema(
+              blockId,
+              js,
+              // Re-extract when source changed even if an old schema was cached —
+              // the export may have changed with the code.
+              undefined,
+            )
+            if (withSchema !== null) updated = withSchema
+          }
+          void this.warnLegacyCustomizeShape(updated)
+          this.ctx.logger.info('core block updated', {
+            meta: { blockId, by: caller.userId },
+          })
+          this.convergeSoon()
+          return { block: updated }
+        }),
+
+      delete: ({ blockId, expectedUpdatedAt }) =>
+        this.guardedBlockWrite('delete', blockId, expectedUpdatedAt, undefined, async () => {
           const existing = this.requireStore().get(blockId)
-          js = await this.gate({
-            code: block.code ?? existing?.code,
-            files: block.files ?? existing?.files,
-            entry: block.entry ?? existing?.entry,
-          })
-        }
-        let updated = await this.requireStore().update(blockId, block)
-        if (js !== null && block.settingsSchema === undefined) {
-          const withSchema = await this.maybeCacheSettingsSchema(
-            blockId,
-            js,
-            // Re-extract when source changed even if an old schema was cached —
-            // the export may have changed with the code.
-            undefined,
-          )
-          if (withSchema !== null) updated = withSchema
-        }
-        this.ctx.logger.info('core block updated', {
-          meta: { blockId, by: caller.userId },
-        })
-        this.convergeSoon()
-        return { block: updated }
-      },
+          const linkRefusal = linkContributionDeleteRefusal(existing)
+          if (linkRefusal !== null) {
+            const target = existing === null ? null : coreBlockComposition(existing)?.target
+            const deviceId =
+              target?.kind === 'existing'
+                ? await this.deviceIdOfRef(target.device).catch(() => null)
+                : null
+            this.ctx.logger.warn('core block delete refused: it holds device-link contributions', {
+              ...(deviceId === null ? {} : { tags: { deviceId } }),
+              meta: { blockId, reason: linkRefusal },
+            })
+            throw new Error(linkRefusal)
+          }
+          await this.removeBlock(blockId, existing)
+          return { success: true }
+        }),
 
-      delete: async ({ blockId, expectedUpdatedAt }) => {
-        this.refuseStaleBlock(blockId, expectedUpdatedAt)
-        const existing = this.requireStore().get(blockId)
-        const linkRefusal = linkContributionDeleteRefusal(existing)
-        if (linkRefusal !== null) {
-          const target = existing === null ? null : coreBlockComposition(existing)?.target
-          const deviceId =
-            target?.kind === 'existing'
-              ? await this.deviceIdOfRef(target.device).catch(() => null)
-              : null
-          this.ctx.logger.warn('core block delete refused: it holds device-link contributions', {
-            ...(deviceId === null ? {} : { tags: { deviceId } }),
-            meta: { blockId, reason: linkRefusal },
-          })
-          throw new Error(linkRefusal)
-        }
-        await this.removeBlock(blockId, existing)
-        return { success: true }
-      },
-
-      setEnabled: async ({ blockId, enabled, expectedUpdatedAt }) => {
-        this.refuseStaleBlock(blockId, expectedUpdatedAt)
-        const updated = await this.requireStore().update(blockId, { enabled })
-        this.convergeSoon()
-        return { block: updated }
-      },
+      setEnabled: ({ blockId, enabled, expectedUpdatedAt }) =>
+        this.guardedBlockWrite('setEnabled', blockId, expectedUpdatedAt, undefined, async () => {
+          const updated = await this.requireStore().update(blockId, { enabled })
+          this.convergeSoon()
+          return { block: updated }
+        }),
 
       /**
        * Awaited, like a composition delete.

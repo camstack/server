@@ -15,10 +15,10 @@
  */
 import {
   type Composition,
-  type CompositionCustomizeKind,
   type CompositionFeature,
   type CoreBlock,
   CoreBlockSchema,
+  legacyCustomizeKindOf,
   type MigrationProcedureResult,
 } from '@camstack/types'
 import type { CoreBlockRowBody } from '../record-kinds.js'
@@ -26,29 +26,10 @@ import type { CoreBlocksMigrationPorts, StoredBlockRow } from './pump-cycle-spli
 
 export const CUSTOMIZE_KIND_DISCRIMINANT_ID = 'core-blocks/2026-11-26-customize-kind-discriminant'
 
-/** The kind the OLD shape of `feature` stood for, or null when it is none of the three. */
-function kindOfOldShape(feature: CompositionFeature): CompositionCustomizeKind | null {
-  if (feature.kind !== 'fields' || feature.customizeKind !== undefined) return null
-  if (feature.cap === 'power-source') return 'power-source'
-  if (feature.cap === 'lock-control') {
-    const state = feature.fields['state']
-    const x = state?.kind === 'expression' ? state.bindings['x'] : undefined
-    return x !== undefined && x.kind === 'from' ? 'lock-door-sensor' : null
-  }
-  if (
-    feature.cap === 'running-state' &&
-    feature.enabled === false &&
-    Object.keys(feature.fields).length === 0
-  ) {
-    return 'follow-switch'
-  }
-  return null
-}
-
 function stampComposition(composition: Composition): Composition | null {
   let changed = false
   const features = composition.features.map((feature): CompositionFeature => {
-    const kind = kindOfOldShape(feature)
+    const kind = legacyCustomizeKindOf(feature)
     if (kind === null || feature.kind !== 'fields') return feature
     changed = true
     return { ...feature, customizeKind: kind }
@@ -71,7 +52,13 @@ interface Rewrite {
 
 function rewriteOf(row: StoredBlockRow, ports: CoreBlocksMigrationPorts): Rewrite | null {
   const parsed = CoreBlockSchema.safeParse(row.data.block)
-  if (!parsed.success) return null
+  if (!parsed.success) {
+    ports.warn('core block skipped: it does not parse as a core block', {
+      blockId: row.id,
+      error: parsed.error.message,
+    })
+    return null
+  }
   const stamped = stampBlock(parsed.data)
   if (stamped === null) return null
   const updatedAt = Math.max(parsed.data.updatedAt + 1, ports.now())

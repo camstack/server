@@ -97,6 +97,7 @@ function rowBody(block: CoreBlock): CoreBlockRowBody {
 }
 
 const NOW = 5_000
+let lines: ReturnType<typeof recordingLogger>['lines'] = []
 let records: ReturnType<typeof createRecordsAccess>
 
 beforeEach(async () => {
@@ -120,7 +121,8 @@ beforeEach(async () => {
 
 async function runMigration(): Promise<string> {
   const handle = records.kind(coreBlocksRecordKinds.blocks)
-  const { logger } = recordingLogger()
+  const { logger, lines: recorded } = recordingLogger()
+  lines = recorded
   const ports = { ...coreBlocksMigrationPorts(handle, logger, () => NOW), ...NO_REMOTE_PORTS }
   const migration = defineAddonMigrations(ADDON_MIGRATIONS, ports).find(
     (m) => m.meta.id === CUSTOMIZE_KIND_DISCRIMINANT_ID,
@@ -181,5 +183,20 @@ describe('core-blocks migration: the Customize kind is stamped (D1098)', () => {
     const first = await storedBlock('old')
     await expect(runMigration()).resolves.toBe('already-done')
     expect(await storedBlock('old')).toEqual(first)
+  })
+
+  it('names a row that does not parse as a core block, and keeps going', async () => {
+    const handle = records.kind(coreBlocksRecordKinds.blocks)
+    await handle.put({
+      id: 'broken',
+      data: { ...rowBody(blockOf('x', 'x', compositionOf([OVERRIDE]))), block: { id: 'broken' } },
+    })
+    await expect(runMigration()).resolves.toBe('done')
+    expect(
+      lines.some((l) => l.level === 'warn' && JSON.stringify(l.extras).includes('broken')),
+    ).toBe(true)
+    expect(compositionOfBlock(await storedBlock('old')).features[0]).toMatchObject({
+      customizeKind: 'power-source',
+    })
   })
 })

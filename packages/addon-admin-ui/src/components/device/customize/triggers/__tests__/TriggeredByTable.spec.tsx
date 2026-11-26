@@ -28,6 +28,7 @@ const LIGHT = {
 }
 const LIVE = {
   blockId: '4864c0cc',
+  updatedAt: 111,
   name: 'Pulsante studio → Luce studio',
   enabled: true,
   templateId: 'builtin:linked-trigger',
@@ -54,6 +55,7 @@ const LIVE = {
 /** The thermometer's motion holds the light on for five minutes. */
 const MOTION_HOLD = {
   blockId: 'hall',
+  updatedAt: 222,
   name: 'Termometro → Luce studio',
   enabled: true,
   templateId: 'builtin:linked-trigger',
@@ -94,9 +96,14 @@ const slice = vi.hoisted((): { current: { status: string; data: unknown } } => (
 /** The camera joins the offered devices only in the specs that pick one. */
 const withCamera = vi.hoisted((): { current: boolean } => ({ current: false }))
 const create = vi.fn(async (_input: { block: { name: string; code: string } }) => ({}))
-const update = vi.fn(async (_input: { blockId: string; block: { code: string } }) => ({}))
-const remove = vi.fn(async (_input: { blockId: string }) => ({}))
-const setEnabled = vi.fn(async (_input: { blockId: string; enabled: boolean }) => ({}))
+const SAVED = { block: { updatedAt: 999 } }
+const update = vi.fn(
+  async (_input: { blockId: string; block: { code: string }; expectedUpdatedAt: number }) => SAVED,
+)
+const remove = vi.fn(async (_input: { blockId: string; expectedUpdatedAt: number }) => ({}))
+const setEnabled = vi.fn(
+  async (_input: { blockId: string; enabled: boolean; expectedUpdatedAt: number }) => SAVED,
+)
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
@@ -293,7 +300,9 @@ describe('TriggeredByTable', () => {
     fireEvent.click(screen.getByRole('button', { name: /Remove Pulsante studio/i }))
     expect(remove).not.toHaveBeenCalled()
     pressSave()
-    await waitFor(() => expect(remove).toHaveBeenCalledWith({ blockId: '4864c0cc' }))
+    await waitFor(() =>
+      expect(remove).toHaveBeenCalledWith({ blockId: '4864c0cc', expectedUpdatedAt: 111 }),
+    )
     expect(update).not.toHaveBeenCalled()
   })
 
@@ -429,6 +438,7 @@ describe('TriggeredByTable', () => {
       expect(setEnabled).toHaveBeenCalledWith({
         blockId: '4864c0cc',
         enabled: false,
+        expectedUpdatedAt: 111,
       }),
     )
   })

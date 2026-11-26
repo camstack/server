@@ -65,6 +65,7 @@ import type {
   LinkedDevicesMode,
 } from '@camstack/types'
 import { DeviceType, StaleStampError } from '@camstack/types'
+import { DEVICE_BLOB_SAVES } from '../shared/serialise-per-key.js'
 // The pure linked-set rules live in `@camstack/types` so the hub's boot
 // backfill and the admin UI's per-room rebuild share ONE definition of what a
 // room contains — see `linked-device-resolve.ts`.
@@ -333,24 +334,40 @@ export async function applyLinkedDevicesPatch(
   patch: Record<string, unknown>,
   expectedUpdatedAt: number,
 ): Promise<{ success: true; updatedAt: number }> {
-  const current = await pctx.settings.readDeviceStore(deviceId)
-  const stored = linkedDevicesStamp(current)
-  if (stored !== expectedUpdatedAt) {
-    throw new StaleStampError(`the linked devices of device ${deviceId}`, stored, expectedUpdatedAt)
-  }
-  const updatedAt = Math.max(stored + 1, Date.now())
-  const next: Record<string, unknown> = { ...current, [LINKED_UPDATED_AT_CONFIG_KEY]: updatedAt }
-  if (LINKED_IDS_CONFIG_KEY in patch) {
-    next[LINKED_IDS_CONFIG_KEY] = [
-      ...parseLinkedDevicesConfig({ [LINKED_IDS_CONFIG_KEY]: patch[LINKED_IDS_CONFIG_KEY] })
-        .manualIds,
-    ]
-  }
-  if (LINKED_TRACKED_IDS_CONFIG_KEY in patch) {
-    next[LINKED_TRACKED_IDS_CONFIG_KEY] = [...parseTrackedOptIn(patch)]
-  }
-  await pctx.settings.writeDeviceStore(deviceId, next)
-  return { success: true as const, updatedAt }
+  return DEVICE_BLOB_SAVES.run(deviceBlobKey(deviceId), async () => {
+    const current = await pctx.settings.readDeviceStore(deviceId)
+    const stored = linkedDevicesStamp(current)
+    if (stored !== expectedUpdatedAt) {
+      throw new StaleStampError(
+        `the linked devices of device ${deviceId}`,
+        stored,
+        expectedUpdatedAt,
+      )
+    }
+    const updatedAt = nextLinkedDevicesStamp(stored)
+    const next: Record<string, unknown> = { ...current, [LINKED_UPDATED_AT_CONFIG_KEY]: updatedAt }
+    if (LINKED_IDS_CONFIG_KEY in patch) {
+      next[LINKED_IDS_CONFIG_KEY] = [
+        ...parseLinkedDevicesConfig({ [LINKED_IDS_CONFIG_KEY]: patch[LINKED_IDS_CONFIG_KEY] })
+          .manualIds,
+      ]
+    }
+    if (LINKED_TRACKED_IDS_CONFIG_KEY in patch) {
+      next[LINKED_TRACKED_IDS_CONFIG_KEY] = [...parseTrackedOptIn(patch)]
+    }
+    await pctx.settings.writeDeviceStore(deviceId, next)
+    return { success: true as const, updatedAt }
+  })
+}
+
+/** The key under which saves of one device's settings blob are serialised. */
+export function deviceBlobKey(deviceId: number): string {
+  return `device:${deviceId}`
+}
+
+/** The stamp of the next write: strictly above the stored one, so two writes in a millisecond differ. */
+export function nextLinkedDevicesStamp(stored: number): number {
+  return Math.max(stored + 1, Date.now())
 }
 
 // ── Pick validation (the `linked-devices` extension slot, D648) ──────

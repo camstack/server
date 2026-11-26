@@ -165,6 +165,7 @@ export function AutomationsTab({
     mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
       system.trpcClient.coreBlocks.update.mutate({
         blockId: input.block.id,
+        expectedUpdatedAt: input.block.updatedAt,
         block: automationQuickEditInput(input.block, input.values),
       }),
     onSuccess: () => {
@@ -176,21 +177,23 @@ export function AutomationsTab({
     mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
       system.trpcClient.coreBlocks.update.mutate({
         blockId: input.block.id,
+        expectedUpdatedAt: input.block.updatedAt,
         block: automationQuickEditInput(input.block, input.values),
       }),
     onSuccess: refresh,
   })
   const update = useMutation({
-    mutationFn: (input: { blockId: string; block: CoreBlockInput }) =>
+    mutationFn: (input: { blockId: string; block: CoreBlockInput; expectedUpdatedAt: number }) =>
       system.trpcClient.coreBlocks.update.mutate(input),
     onSuccess: (result) => saved(result.block),
   })
   const remove = useMutation({
-    mutationFn: (blockId: string) => system.trpcClient.coreBlocks.delete.mutate({ blockId }),
+    mutationFn: (input: { blockId: string; expectedUpdatedAt: number }) =>
+      system.trpcClient.coreBlocks.delete.mutate(input),
     onSuccess: refresh,
   })
   const setEnabled = useMutation({
-    mutationFn: (input: { blockId: string; enabled: boolean }) =>
+    mutationFn: (input: { blockId: string; enabled: boolean; expectedUpdatedAt: number }) =>
       system.trpcClient.coreBlocks.setEnabled.mutate(input),
     onSuccess: refresh,
   })
@@ -198,6 +201,7 @@ export function AutomationsTab({
     mutationFn: (block: CoreBlock) =>
       system.trpcClient.coreBlocks.update.mutate({
         blockId: block.id,
+        expectedUpdatedAt: block.updatedAt,
         block: {
           name: block.name,
           ...(block.tags === undefined ? {} : { tags: block.tags }),
@@ -307,7 +311,13 @@ export function AutomationsTab({
           <AutomationEnabledSwitch
             block={block}
             disabled={setEnabled.isPending}
-            onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
+            onToggle={(enabled) =>
+              setEnabled.mutate({
+                blockId: block.id,
+                enabled,
+                expectedUpdatedAt: block.updatedAt,
+              })
+            }
           />
         ),
         sortValue: (block) => (block.enabled ? 1 : 0),
@@ -338,7 +348,10 @@ export function AutomationsTab({
                   ),
                   confirmLabel: t('common.delete', 'Delete'),
                   run: async () => {
-                    await remove.mutateAsync(block.id)
+                    await remove.mutateAsync({
+                      blockId: block.id,
+                      expectedUpdatedAt: block.updatedAt,
+                    })
                     await blocksQuery.refetch()
                   },
                 })
@@ -385,7 +398,13 @@ export function AutomationsTab({
         tags={quickModalBlock.tags ?? []}
         enabled={quickModalBlock.enabled}
         enabledBusy={setEnabled.isPending}
-        onEnabledChange={(enabled) => setEnabled.mutate({ blockId: quickModalBlock.id, enabled })}
+        onEnabledChange={(enabled) =>
+          setEnabled.mutate({
+            blockId: quickModalBlock.id,
+            enabled,
+            expectedUpdatedAt: quickModalBlock.updatedAt,
+          })
+        }
         saving={modalUpdate.isPending}
         error={modalUpdate.error === null ? null : errorMessage(modalUpdate.error)}
         onSave={(values) => modalUpdate.mutate({ block: quickModalBlock, values })}
@@ -452,6 +471,7 @@ export function AutomationsTab({
             onSave={(input) =>
               update.mutate({
                 blockId: editing.id,
+                expectedUpdatedAt: editing.updatedAt,
                 block: { ...input, tags: input.tags ?? editing.tags },
               })
             }
@@ -479,7 +499,12 @@ export function AutomationsTab({
           onQuickEdit={editing === null ? undefined : () => setQuickEditId(editing.id)}
           onSave={(input) => {
             if (editing === null) create.mutate(input)
-            else update.mutate({ blockId: editing.id, block: input })
+            else
+              update.mutate({
+                blockId: editing.id,
+                block: input,
+                expectedUpdatedAt: editing.updatedAt,
+              })
           }}
           onEject={() => {
             if (editing !== null) eject.mutate(editing)

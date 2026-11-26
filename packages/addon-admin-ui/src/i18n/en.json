@@ -3150,7 +3150,8 @@
       "replacesNote": "This trigger is narrowed in a way a pick cannot show. Saving replaces it with the events and parts chosen here.",
       "editTrigger": "Edit the trigger from {{name}}",
       "editTitle": "Trigger from {{name}}",
-      "addTitle": "Add a trigger"
+      "addTitle": "Add a trigger",
+      "notRead": "This trigger changed since the list was loaded. Reload and apply your edit again."
     }
   },
   "compositionEditor": {

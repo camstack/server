@@ -14,10 +14,15 @@ import {
   LINK_CANDIDATE_PROJECTION,
   LINKED_IDS_CONFIG_KEY,
   LINKED_MODE_CONFIG_KEY,
+  LINKED_UPDATED_AT_CONFIG_KEY,
+  deviceBlobKey,
   legacyAutoLinkIds,
+  linkedDevicesStamp,
+  nextLinkedDevicesStamp,
   parseLinkedDevicesConfig,
 } from './device-linked-devices.js'
 import type { ProviderContext } from './device-provider-context.js'
+import { DEVICE_BLOB_SAVES } from '../shared/serialise-per-key.js'
 import { listAll } from './device-queries.js'
 import { DeviceType } from '@camstack/types'
 
@@ -59,24 +64,31 @@ export async function runLinkedDevicesManualBackfillAtBoot(pctx: ProviderContext
   let linked = 0
   for (const cam of all) {
     if (cam.type !== DeviceType.Camera) continue
-    const blob = await pctx.settings.readDeviceStore(cam.id)
-    const plan = planManualBackfill({
-      selfId: cam.id,
-      selfLocation: cam.location ?? null,
-      blob,
-      candidates: all,
+    // Read, plan and write are one serialised step: a slot save of this camera cannot land between.
+    const done = await DEVICE_BLOB_SAVES.run(deviceBlobKey(cam.id), async () => {
+      const blob = await pctx.settings.readDeviceStore(cam.id)
+      const plan = planManualBackfill({
+        selfId: cam.id,
+        selfLocation: cam.location ?? null,
+        blob,
+        candidates: all,
+      })
+      if (!plan.write) return null
+      // The list changed, so the stamp an editor read is no longer current: it moves too.
+      await pctx.settings.writeDeviceStore(cam.id, {
+        ...blob,
+        [LINKED_MODE_CONFIG_KEY]: 'manual',
+        [LINKED_IDS_CONFIG_KEY]: [...plan.manualIds],
+        [LINKED_UPDATED_AT_CONFIG_KEY]: nextLinkedDevicesStamp(linkedDevicesStamp(blob)),
+      })
+      return plan.manualIds
     })
-    if (!plan.write) continue
-    await pctx.settings.writeDeviceStore(cam.id, {
-      ...blob,
-      [LINKED_MODE_CONFIG_KEY]: 'manual',
-      [LINKED_IDS_CONFIG_KEY]: [...plan.manualIds],
-    })
+    if (done === null) continue
     written += 1
-    linked += plan.manualIds.length
+    linked += done.length
     logger.info('linked devices: auto links materialised into the manual list (D356)', {
       tags: { deviceId: cam.id },
-      meta: { manualIds: plan.manualIds },
+      meta: { manualIds: done },
     })
   }
   await pctx.settings.writeAddonStore({

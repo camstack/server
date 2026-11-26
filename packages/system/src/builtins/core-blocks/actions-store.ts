@@ -25,6 +25,7 @@ import {
   type IScopedLogger,
   type RecordKindHandle,
 } from '@camstack/types'
+import { KeyedSerialiser } from '../shared/serialise-per-key.js'
 import { type ActionLinksRowBody, type ActionRowBody, ActionRowBodySchema } from './record-kinds.js'
 
 export interface ActionsStoreOptions {
@@ -50,6 +51,7 @@ export class ActionsStore {
   private readonly links: RecordKindHandle<ActionLinksRowBody>
   private readonly logger: IScopedLogger | undefined
   private readonly now: () => number
+  private readonly serial = new KeyedSerialiser()
   private readonly newId: () => string
 
   constructor(options: ActionsStoreOptions) {
@@ -202,23 +204,32 @@ export class ActionsStore {
       : { actionIds: row.data.actionIds, updatedAt: row.data.updatedAt ?? 0 }
   }
 
-  /** Drop `actionId` from every camera that links it; a camera left with none loses its row. */
+  /**
+   * Drop `actionId` from every camera that links it. The camera keeps its row, empty, so its stamp
+   * only ever moves forward. Each camera is read again under its own serialisation, so a save of
+   * that camera's links in flight is not overwritten by the page this scan read earlier.
+   */
   async unlinkAction(actionId: string): Promise<number> {
     let touched = 0
     let cursor: string | undefined
     do {
       const page = await this.links.query({ ...(cursor === undefined ? {} : { cursor }) })
-      for (const row of page.records) {
-        if (!row.data.actionIds.includes(actionId)) continue
-        const rest = row.data.actionIds.filter((id) => id !== actionId)
-        if (rest.length === 0) await this.links.delete(row.id)
-        else
+      for (const listed of page.records) {
+        if (!listed.data.actionIds.includes(actionId)) continue
+        const changed = await this.serial.run(`links:${listed.id}`, async () => {
+          const row = await this.links.get(listed.id)
+          if (row === null || !row.data.actionIds.includes(actionId)) return false
           await this.links.put({
             id: row.id,
             ...(row.deviceId === null ? {} : { deviceId: row.deviceId }),
-            data: { actionIds: rest, updatedAt: nextStamp(row.data.updatedAt ?? 0, this.now()) },
+            data: {
+              actionIds: row.data.actionIds.filter((id) => id !== actionId),
+              updatedAt: nextStamp(row.data.updatedAt ?? 0, this.now()),
+            },
           })
-        touched += 1
+          return true
+        })
+        if (changed) touched += 1
       }
       cursor = page.nextCursor ?? undefined
     } while (cursor !== undefined)
@@ -227,25 +238,32 @@ export class ActionsStore {
 
   /**
    * Replace a camera's links. The save carries the stamp it read (D1098): links changed since
-   * are refused by name. An empty list keeps its row, so the stamp survives the unlink.
+   * are refused by name. Read, check and write are one serialised step per camera, so two saves
+   * that read the same stamp cannot both pass. An empty list keeps its row, so the stamp survives.
    */
   async setLinks(
     deviceId: number,
     actionIds: readonly string[],
     expectedUpdatedAt: number,
   ): Promise<{ readonly actionIds: readonly string[]; readonly updatedAt: number }> {
-    const stored = (await this.linksStateOf(deviceId)).updatedAt
-    if (stored !== expectedUpdatedAt) {
-      throw new StaleStampError(`the action links of device ${deviceId}`, stored, expectedUpdatedAt)
-    }
-    const unique = [...new Set(actionIds)]
-    const updatedAt = nextStamp(stored, this.now())
-    await this.links.put({
-      id: String(deviceId),
-      deviceId,
-      data: { actionIds: unique, updatedAt },
+    return this.serial.run(`links:${deviceId}`, async () => {
+      const stored = (await this.linksStateOf(deviceId)).updatedAt
+      if (stored !== expectedUpdatedAt) {
+        throw new StaleStampError(
+          `the action links of device ${deviceId}`,
+          stored,
+          expectedUpdatedAt,
+        )
+      }
+      const unique = [...new Set(actionIds)]
+      const updatedAt = nextStamp(stored, this.now())
+      await this.links.put({
+        id: String(deviceId),
+        deviceId,
+        data: { actionIds: unique, updatedAt },
+      })
+      return { actionIds: unique, updatedAt }
     })
-    return { actionIds: unique, updatedAt }
   }
 }
 

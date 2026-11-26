@@ -479,6 +479,7 @@ export const coreBlocksCapability = {
         /**
          * The `updatedAt` the caller READ (D1098). When named, a block changed since is
          * refused (`[stale-stamp]`); the answer's `block.updatedAt` is the next stamp.
+         * Absent means the write is UNCHECKED (a script): the hub logs one line naming the method.
          */
         expectedUpdatedAt: z.number().optional(),
       }),
@@ -489,7 +490,7 @@ export const coreBlocksCapability = {
     delete: method(
       z.object({
         blockId: z.string(),
-        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). */
+        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). Absent = unchecked, logged. */
         expectedUpdatedAt: z.number().optional(),
       }),
       z.object({ success: z.literal(true) }),
@@ -503,7 +504,7 @@ export const coreBlocksCapability = {
       z.object({
         blockId: z.string(),
         enabled: z.boolean(),
-        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). */
+        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). Absent = unchecked, logged. */
         expectedUpdatedAt: z.number().optional(),
       }),
       z.object({ block: CoreBlockSchema }),

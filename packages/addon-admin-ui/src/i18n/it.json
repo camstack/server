@@ -3225,7 +3225,8 @@
       "replacesNote": "Questo trigger ha un filtro che una scelta non può mostrare. Salvando viene sostituito con gli eventi e le parti scelti qui.",
       "editTrigger": "Modifica il trigger di {{name}}",
       "editTitle": "Trigger di {{name}}",
-      "addTitle": "Aggiungi un comando"
+      "addTitle": "Aggiungi un comando",
+      "notRead": "Questo trigger e cambiato dopo il caricamento dell'elenco. Ricarica e ripeti la modifica."
     }
   },
   "compositionEditor": {
