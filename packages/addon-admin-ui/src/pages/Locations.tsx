@@ -20,6 +20,7 @@
 import { type IconKey, locationIconKey } from '@camstack/types'
 import {
   type PickerItem,
+  trpc,
   useDeviceExtensionSetSlot,
   useDeviceManagerAddLocation,
   useDeviceManagerListAll,
@@ -55,7 +56,11 @@ import { NewZoneButton } from './locations/NewZoneButton'
 import { QuickAddDevicesDialog } from './locations/QuickAddDevicesDialog'
 import { RoomSelect } from './locations/RoomSelect'
 import { UnassignedTable } from './locations/UnassignedTable'
-import { linkedDevicesSlotWrite, planRoomLinkRebuild } from './locations/rebuild-room-links'
+import {
+  LINKED_DEVICES_SLOT_REF,
+  linkedDevicesSlotWrite,
+  planRoomLinkRebuild,
+} from './locations/rebuild-room-links'
 import {
   devicesAtLocation,
   groupDevicesBySite,
@@ -69,6 +74,7 @@ export const LOCATIONS_UNASSIGNED_ROOM = '__unassigned__'
 export function LocationsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const utils = trpc.useUtils()
   const confirm = useConfirm()
   const { data: labels, isLoading: locLoading } = useDeviceManagerListLocations()
   // Assignments only — a room with no icon is ABSENT here, not `map-pin`. The
@@ -260,7 +266,16 @@ export function LocationsPage() {
     const refused: string[] = []
     for (const entry of plan.entries) {
       try {
-        await setLinkedDevices.mutateAsync(linkedDevicesSlotWrite(entry))
+        // The slot is read fresh, and the write carries that read's stamp (D1098).
+        const rows = await utils.deviceExtension.listSlots.fetch(
+          { deviceId: entry.deviceId },
+          { staleTime: 0 },
+        )
+        const slot = rows.find((r) => r.state === 'ok' && r.slotRef === LINKED_DEVICES_SLOT_REF)
+        if (slot === undefined || slot.state !== 'ok') {
+          throw new Error(t('customize.assign.none'))
+        }
+        await setLinkedDevices.mutateAsync(linkedDevicesSlotWrite(entry, slot.updatedAt))
       } catch (err: unknown) {
         refused.push(`• ${entry.name}: ${err instanceof Error ? err.message : String(err)}`)
       }

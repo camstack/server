@@ -510,7 +510,7 @@ describe('actions — camera links and who may run what', () => {
     const b = await w.service.create({
       action: { name: 'Garage', steps: [STEP(2)] },
     })
-    await w.service.setLinks({ deviceId: 616, actionIds: [a.action.id] })
+    await w.service.setLinks({ deviceId: 616, actionIds: [a.action.id], expectedUpdatedAt: 0 })
     return { w, porch: a.action, garage: b.action }
   }
 
@@ -601,7 +601,7 @@ describe('actions — camera links and who may run what', () => {
       },
     })
     await w.service.create({ action: { name: 'Garage', steps: [STEP(2)] } })
-    await w.service.setLinks({ deviceId: 616, actionIds: [a.action.id] })
+    await w.service.setLinks({ deviceId: 616, actionIds: [a.action.id], expectedUpdatedAt: 0 })
     const list = await w.service.listForCamera({ deviceId: 616 })
     expect(list.map((e) => e.name)).toEqual(['Porch'])
     expect(list[0]?.variables).toEqual([
@@ -621,13 +621,14 @@ describe('actions — camera links and who may run what', () => {
     await w.service.setLinks({
       deviceId: 617,
       actionIds: [porch.id, garage.id],
+      expectedUpdatedAt: 0,
     })
     await w.service.delete({ actionId: porch.id })
-    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({
+    expect(await w.service.getLinks({ deviceId: 616 })).toMatchObject({
       deviceId: 616,
       actionIds: [],
     })
-    expect(await w.service.getLinks({ deviceId: 617 })).toEqual({
+    expect(await w.service.getLinks({ deviceId: 617 })).toMatchObject({
       deviceId: 617,
       actionIds: [garage.id],
     })
@@ -636,15 +637,31 @@ describe('actions — camera links and who may run what', () => {
 
   it('an action an addon stopped declaring is hidden from the camera, its link kept', async () => {
     const w = await world({ addonActions: [] })
-    await w.service.setLinks({ deviceId: 616, actionIds: ['ha:script.gone'] })
+    await w.service.setLinks({ deviceId: 616, actionIds: ['ha:script.gone'], expectedUpdatedAt: 0 })
     expect(await w.service.listForCamera({ deviceId: 616 })).toEqual([])
     expect((await w.service.getLinks({ deviceId: 616 })).actionIds).toEqual(['ha:script.gone'])
+  })
+
+  it('a save carries the stamp it read: a stale stamp is refused, a fresh one returns the next', async () => {
+    const { w, porch, garage } = await linked()
+    const read = await w.service.getLinks({ deviceId: 616 })
+    expect(read.updatedAt).toBeGreaterThan(0)
+    const saved = await w.service.setLinks({
+      deviceId: 616,
+      actionIds: [porch.id, garage.id],
+      expectedUpdatedAt: read.updatedAt,
+    })
+    expect(saved.updatedAt).toBeGreaterThan(read.updatedAt)
+    await expect(
+      w.service.setLinks({ deviceId: 616, actionIds: [], expectedUpdatedAt: read.updatedAt }),
+    ).rejects.toThrow(/^\[stale-stamp\]/)
+    expect((await w.service.getLinks({ deviceId: 616 })).actionIds).toEqual([porch.id, garage.id])
   })
 
   it('a camera removed takes its links with it', async () => {
     const { w, porch } = await linked()
     await w.records.deleteDevice(616)
-    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({
+    expect(await w.service.getLinks({ deviceId: 616 })).toMatchObject({
       deviceId: 616,
       actionIds: [],
     })
@@ -890,7 +907,7 @@ describe('actions — device templates in step args (D1021)', () => {
         ],
       },
     })
-    await w.service.setLinks({ deviceId: 616, actionIds: [action.id] })
+    await w.service.setLinks({ deviceId: 616, actionIds: [action.id], expectedUpdatedAt: 0 })
     return { w, action }
   }
 
@@ -977,7 +994,7 @@ describe('actions — a conditional step (#472)', () => {
   async function guarded(conditions: StepConditionDoor | undefined) {
     const w = await world(conditions === undefined ? {} : { conditions })
     const { action } = await w.service.create({ action: { name: 'If', steps: [GUARDED] } })
-    await w.service.setLinks({ deviceId: 616, actionIds: [action.id] })
+    await w.service.setLinks({ deviceId: 616, actionIds: [action.id], expectedUpdatedAt: 0 })
     return { w, action }
   }
 

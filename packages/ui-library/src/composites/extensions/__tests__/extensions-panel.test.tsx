@@ -65,6 +65,7 @@ const LINKED: ExtensionSlotRow = {
   slot: 'linked-devices',
   authority: 'device-manager:_linkedDeviceIds',
   activation: null,
+  updatedAt: 0,
   value: { slot: 'linked-devices', deviceIds: [703, 999] },
   sources: [
     { deviceId: 703, name: 'Garage switch', health: 'ok' },
@@ -79,6 +80,7 @@ const GATED: ExtensionSlotRow = {
   slot: 'linked-devices',
   authority: 'other-owner:store',
   activation: { state: 'inactive', authority: 'device-manager:setWrapperActive' },
+  updatedAt: 0,
   value: { slot: 'linked-devices', deviceIds: [] },
   sources: [],
 }
@@ -196,6 +198,7 @@ describe('AssociationSlotCard', () => {
     expect(mutateAsync).toHaveBeenCalledWith({
       deviceId: 101,
       slotRef: 'device-manager:linked-devices',
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [703, 999, 701] },
     })
   })
@@ -257,6 +260,7 @@ describe('AssociationSlotCard — the tracked-event opt-in (D655)', () => {
     expect(mutateAsync).toHaveBeenCalledWith({
       deviceId: 101,
       slotRef: 'device-manager:linked-devices',
+      expectedUpdatedAt: 0,
       value: {
         slot: 'linked-devices',
         deviceIds: [703, 999],

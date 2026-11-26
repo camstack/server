@@ -80,11 +80,12 @@ describe('planRoomLinkRebuild', () => {
 
 describe('the rebuild writes through the linked-devices slot (D655)', () => {
   it('one setSlot per camera, routed to the device manager, the picks only', () => {
-    expect(linkedDevicesSlotWrite({ deviceId: 104, name: 'Hall', ids: [4595, 12] })).toEqual({
+    expect(linkedDevicesSlotWrite({ deviceId: 104, name: 'Hall', ids: [4595, 12] }, 77)).toEqual({
       deviceId: 104,
       slotRef: 'device-manager:linked-devices',
       // No `trackedDeviceIds`: absent leaves the tracked-event opt-in untouched.
       value: { slot: 'linked-devices', deviceIds: [4595, 12] },
+      expectedUpdatedAt: 77,
     })
   })
 })

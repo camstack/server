@@ -30,6 +30,7 @@ function instance(blockId: string, values: TemplateInstance['values']): Template
     enabled: true,
     templateId: 'builtin:linked-trigger',
     values,
+    updatedAt: 0,
   }
 }
 

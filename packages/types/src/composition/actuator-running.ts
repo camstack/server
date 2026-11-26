@@ -55,12 +55,19 @@ function hasSupplyRelation(composition: Composition): boolean {
  * (until another source is picked, which replaces it whole).
  */
 export function runningOptOutFeature(): CompositionFieldsFeature {
-  return { kind: 'fields', cap: RUNNING_CAP, enabled: false, fields: {} }
+  return {
+    kind: 'fields',
+    cap: RUNNING_CAP,
+    enabled: false,
+    fields: {},
+    customizeKind: 'follow-switch',
+  }
 }
 
 export function isRunningOptOut(feature: CompositionFieldsFeature | null): boolean {
   return (
     feature !== null &&
+    feature.customizeKind === 'follow-switch' &&
     feature.cap === RUNNING_CAP &&
     feature.enabled === false &&
     Object.keys(feature.fields).length === 0

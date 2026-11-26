@@ -81,12 +81,13 @@ function managerProvider(stores: Stores, logger: IScopedLogger, options: OwnerOp
         list: async () => ({
           authority: 'device-manager:_linkedDeviceIds',
           activation: null,
+          updatedAt: 0,
           value: { slot: 'linked-devices', deviceIds: [...stores.linked] },
           sources: stores.linked.map((deviceId) => ({ deviceId, name: null, health: 'ok' })),
         }),
-        set: async (_deviceId, value) => {
+        set: async (_deviceId, value, _expectedUpdatedAt) => {
           stores.linked = [...value.deviceIds]
-          return { applied: true, reload: 'none' }
+          return { applied: true, reload: 'none', updatedAt: 1 }
         },
         candidates: async () => [
           {
@@ -118,12 +119,13 @@ function otherProvider(stores: Stores, logger: IScopedLogger, options: OwnerOpti
         list: async () => ({
           authority: 'other-owner:store',
           activation: { state: 'active', authority: 'device-manager:setWrapperActive' },
+          updatedAt: 0,
           value: { slot: 'linked-devices', deviceIds: [...stores.other] },
           sources: stores.other.map((deviceId) => ({ deviceId, name: null, health: 'ok' })),
         }),
-        set: async (_deviceId, value) => {
+        set: async (_deviceId, value, _expectedUpdatedAt) => {
           stores.other = [...value.deviceIds]
-          return { applied: true, reload: 'none' }
+          return { applied: true, reload: 'none', updatedAt: 1 }
         },
         candidates: async () => [],
       }),
@@ -254,9 +256,10 @@ describe('device-extension — scalar calls reach the owner named by the slotRef
       caller['setSlot']?.({
         deviceId: CAMERA,
         slotRef: 'other-owner:linked-devices',
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [702, 703] },
       }),
-    ).resolves.toEqual({ applied: true, reload: 'none' })
+    ).resolves.toEqual({ applied: true, reload: 'none', updatedAt: 1 })
     expect(stores).toEqual({ linked: [701], other: [702, 703] })
   })
 
@@ -278,6 +281,7 @@ describe('device-extension — scalar calls reach the owner named by the slotRef
       caller['setSlot']?.({
         deviceId: CAMERA,
         slotRef: 'provider-homeassistant:consumables-graft',
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [9] },
       }),
     ).rejects.toMatchObject({
@@ -295,6 +299,7 @@ describe('device-extension — scalar calls reach the owner named by the slotRef
       caller['setSlot']?.({
         deviceId: CAMERA,
         slotRef: 'device-manager:linked-devices',
+        expectedUpdatedAt: 0,
         value: { slot: 'consumables-graft', deviceIds: [9] },
       }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' })

@@ -16,7 +16,9 @@ export interface LockDoorLink {
 
 export function lockDoorLinkOfComposition(composition: Composition | null): LockDoorLink | null {
   if (composition === null || composition.target.kind !== 'existing') return null
-  const feature = composition.features.find((f) => f.cap === 'lock-control')
+  const feature = composition.features.find(
+    (f) => f.kind === 'fields' && f.customizeKind === 'lock-door-sensor',
+  )
   if (feature === undefined || feature.kind !== 'fields') return null
   const state = feature.fields['state']
   if (state === undefined || state.kind !== 'expression') return null

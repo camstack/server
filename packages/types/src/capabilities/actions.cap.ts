@@ -45,8 +45,18 @@ const ActionIdInput = z.object({ actionId: z.string().min(1) })
 export const ActionLinksSchema = z.object({
   deviceId: z.number().int().nonnegative(),
   actionIds: z.array(z.string().min(1)).max(100),
+  /** The stamp of the record (D1098): the next `setLinks` carries it. 0 when never written. */
+  updatedAt: z.number(),
 })
 export type ActionLinks = z.infer<typeof ActionLinksSchema>
+
+export const ActionLinksSetInputSchema = z.object({
+  deviceId: z.number().int().nonnegative(),
+  actionIds: z.array(z.string().min(1)).max(100),
+  /** The `updatedAt` the caller READ; links changed since are refused (`[stale-stamp]`). */
+  expectedUpdatedAt: z.number(),
+})
+export type ActionLinksSetInput = z.infer<typeof ActionLinksSetInputSchema>
 
 export const actionsCapability = {
   name: 'actions',
@@ -149,7 +159,7 @@ export const actionsCapability = {
       auth: 'admin',
     }),
     /** Replace a camera's linked actions with what the operator picked. */
-    setLinks: method(ActionLinksSchema, ActionLinksSchema, {
+    setLinks: method(ActionLinksSetInputSchema, ActionLinksSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),

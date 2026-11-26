@@ -297,6 +297,7 @@ export function AssociationSlotCard({
       await setSlot.mutateAsync({
         deviceId,
         slotRef: row.slotRef,
+        expectedUpdatedAt: row.updatedAt,
         value: slotWriteValue(
           row.value,
           draft,

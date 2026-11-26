@@ -121,6 +121,7 @@ export function listTemplateInstances(
         blockId: block.id,
         name: block.name,
         enabled: block.enabled,
+        updatedAt: block.updatedAt,
         templateId,
         values: link.values,
         ...(link.problems === undefined ? {} : { problems: link.problems }),

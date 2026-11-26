@@ -13,6 +13,7 @@ import type {
 import { CAP_CUSTOMIZE_CATALOG } from '../../generated/customize-catalog.js'
 import type { CustomizeCatalog } from '../../capabilities/customize-catalog.js'
 import type {
+  CompositionCustomizeKind,
   CompositionExpressionSource,
   CompositionFieldSource,
   CompositionFieldsFeature,
@@ -46,9 +47,30 @@ export interface ScalarCompileInput {
   readonly sourceUnit: string | null
 }
 
+/**
+ * The Customize kind a scalar target IS (D1098): a power source and a lock
+ * door sensor are scalar targets of their cap, stored with a discriminant so
+ * no reader recognises them by shape.
+ */
+export function scalarTargetCustomizeKind(
+  cap: string,
+  targetId: string,
+): CompositionCustomizeKind | null {
+  if (cap === 'power-source' && targetId === 'switch') return 'power-source'
+  if (cap === 'lock-control' && targetId === 'door-contact') return 'lock-door-sensor'
+  return null
+}
+
 export function compileScalarOverride(
   input: ScalarCompileInput,
 ): CustomizeRoundTrip<CompositionFieldsFeature> {
+  const compiled = compileUnstamped(input)
+  const kind = scalarTargetCustomizeKind(input.draft.cap, input.draft.targetId)
+  if (!compiled.ok || kind === null) return compiled
+  return { ok: true, value: { ...compiled.value, customizeKind: kind } }
+}
+
+function compileUnstamped(input: ScalarCompileInput): CustomizeRoundTrip<CompositionFieldsFeature> {
   const target = catalogTarget(input.draft.cap, input.draft.targetId)
   if (target === null || target.cardinality !== 'scalar' || target.path === undefined) {
     return fail('target')

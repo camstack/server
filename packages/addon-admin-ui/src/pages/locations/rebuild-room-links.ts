@@ -108,14 +108,19 @@ export const LINKED_DEVICES_SLOT_REF = `device-manager${EXTENSION_SLOT_REF_SEPAR
  * The write that rebuilds ONE camera's list — through the `linked-devices`
  * extension slot, the only writer of the list since D655. The slot validates
  * a new pick (never the camera, a container or an unknown id) and refuses by
- * name, where the retired settings path took anything. The tracked-event
+ * name, where the retired settings path took anything. The write carries the
+ * stamp the camera's slot was read with (D1098). The tracked-event
  * opt-in is left out on purpose: absent means untouched, exactly what the
  * old settings patch did.
  */
-export function linkedDevicesSlotWrite(entry: RoomLinkPlanEntry): ExtensionSetSlotInput {
+export function linkedDevicesSlotWrite(
+  entry: RoomLinkPlanEntry,
+  expectedUpdatedAt: number,
+): ExtensionSetSlotInput {
   return {
     deviceId: entry.deviceId,
     slotRef: LINKED_DEVICES_SLOT_REF,
     value: { slot: 'linked-devices', deviceIds: [...entry.ids] },
+    expectedUpdatedAt,
   }
 }

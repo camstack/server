@@ -22,6 +22,7 @@ const STORED: TemplateInstance = {
   enabled: true,
   templateId: 'builtin:linked-trigger',
   values: linkedTriggerValues(PARAMS),
+  updatedAt: 0,
 }
 
 describe('trigger draft', () => {

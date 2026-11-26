@@ -31,6 +31,8 @@ import {
   CORE_BLOCKS_ADDON_ID,
   IDLE_ACTION_STATUS,
   type ActionLinks,
+  type ActionLinksSetInput,
+  StaleStampError,
   type ActionRunChanged,
   ACTION_RUN_MAX_MS,
   actionWaitTotalMs,
@@ -950,19 +952,39 @@ export class ActionsService implements IActionsProvider {
   // ── camera links ────────────────────────────────────────────────────────
 
   async getLinks(input: { deviceId: number }): Promise<ActionLinks> {
+    const state = await this.store.linksStateOf(input.deviceId)
     return {
       deviceId: input.deviceId,
-      actionIds: [...(await this.store.linksOf(input.deviceId))],
+      actionIds: [...state.actionIds],
+      updatedAt: state.updatedAt,
     }
   }
 
-  async setLinks(input: ActionLinks): Promise<ActionLinks> {
-    const actionIds = await this.store.setLinks(input.deviceId, input.actionIds)
-    this.logger.info('camera action links set', {
-      tags: { deviceId: input.deviceId },
-      meta: { count: actionIds.length },
-    })
-    return { deviceId: input.deviceId, actionIds: [...actionIds] }
+  async setLinks(input: ActionLinksSetInput): Promise<ActionLinks> {
+    try {
+      const saved = await this.store.setLinks(
+        input.deviceId,
+        input.actionIds,
+        input.expectedUpdatedAt,
+      )
+      this.logger.info('camera action links set', {
+        tags: { deviceId: input.deviceId },
+        meta: { count: saved.actionIds.length, updatedAt: saved.updatedAt },
+      })
+      return {
+        deviceId: input.deviceId,
+        actionIds: [...saved.actionIds],
+        updatedAt: saved.updatedAt,
+      }
+    } catch (err: unknown) {
+      if (err instanceof StaleStampError) {
+        this.logger.warn('camera action links refused — changed since read', {
+          tags: { deviceId: input.deviceId },
+          meta: { stored: err.stored, expected: err.expected },
+        })
+      }
+      throw err
+    }
   }
 
   /** The actions this camera links, live, with their variables. A dangling link is not listed. */

@@ -178,6 +178,7 @@ function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode 
         deviceId: device.id,
         slotRef: read.slot.slotRef,
         value: next,
+        expectedUpdatedAt: read.slot.updatedAt,
       })
       await slots.refetch()
       await queryClient.invalidateQueries({ queryKey: [['deviceManager']] })

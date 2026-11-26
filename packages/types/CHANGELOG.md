@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize: power source, lock door sensor and follow-switch entries now name their kind, and saving linked devices, camera actions or linked triggers refuses a stale write instead of overwriting another edit
+
 ## [1.2.635] - 2026-11-26
 
 ### Changed

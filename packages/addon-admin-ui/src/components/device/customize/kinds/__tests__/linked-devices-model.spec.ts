@@ -25,6 +25,7 @@ const SLOT: ExtensionSlotState = {
   slot: 'linked-devices',
   authority: 'device-manager:_linkedDeviceIds',
   activation: null,
+  updatedAt: 0,
   value: VALUE,
   sources: [
     { deviceId: 701, name: 'Luce porch', health: 'ok' },

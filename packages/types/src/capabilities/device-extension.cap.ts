@@ -109,6 +109,11 @@ export const ExtensionSlotStateSchema = z.object({
   authority: z.string(),
   activation: ExtensionSlotActivationSchema.nullable(),
   value: ExtensionSlotValueSchema,
+  /**
+   * The stamp of the owner's record (D1098): the value a `setSlot` must carry
+   * as `expectedUpdatedAt`. 0 when nothing was ever written.
+   */
+  updatedAt: z.number(),
   sources: z.array(ExtensionSlotSourceSchema),
   /**
    * Devices the owner links to the host ON ITS OWN, by structure, and that
@@ -178,6 +183,8 @@ export type ExtensionCandidates = z.infer<typeof ExtensionCandidatesSchema>
 export const ExtensionSetResultSchema = z.object({
   applied: z.literal(true),
   reload: z.enum(['none', 'host', 'parent']),
+  /** The new stamp of the record: the next save on this slot carries it. */
+  updatedAt: z.number(),
 })
 export type ExtensionSetResult = z.infer<typeof ExtensionSetResultSchema>
 
@@ -189,6 +196,8 @@ export type ExtensionSlotRefInput = z.infer<typeof ExtensionSlotRefInputSchema>
 
 export const ExtensionSetSlotInputSchema = ExtensionSlotRefInputSchema.extend({
   value: ExtensionSlotValueSchema,
+  /** The `updatedAt` the caller READ; a slot changed since is refused (`[stale-stamp]`). */
+  expectedUpdatedAt: z.number(),
 })
 export type ExtensionSetSlotInput = z.infer<typeof ExtensionSetSlotInputSchema>
 

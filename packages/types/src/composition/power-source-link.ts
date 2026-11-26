@@ -51,7 +51,9 @@ export function normalizeOffSeconds(value: unknown): number {
 
 /** The constant a stored `offSeconds` field carries, or undefined when it is not a literal number. */
 function storedOffSeconds(composition: Composition): unknown {
-  const feature = composition.features.find((f) => f.cap === 'power-source')
+  const feature = composition.features.find(
+    (f) => f.kind === 'fields' && f.customizeKind === 'power-source',
+  )
   if (feature === undefined || feature.kind !== 'fields') return undefined
   const field = feature.fields['offSeconds']
   if (field === undefined || field.kind !== 'expression') return undefined
@@ -73,7 +75,9 @@ export function powerSourceLinkOfComposition(
   if (composition.target.kind === 'existing') device = composition.target.device
   else if (blockId !== undefined) device = composedDeviceRef(blockId)
   else return null
-  const feature = composition.features.find((f) => f.cap === 'power-source')
+  const feature = composition.features.find(
+    (f) => f.kind === 'fields' && f.customizeKind === 'power-source',
+  )
   if (feature === undefined || feature.kind !== 'fields' || feature.enabled === false) return null
   const field = feature.fields['switchOn']
   if (field === undefined) return null
@@ -130,7 +134,9 @@ function actuatorKeys(composition: Composition): ReadonlySet<string> {
 export function powerSourceActuatorConflicts(
   composition: Composition,
 ): readonly PowerSourceActuatorConflict[] {
-  const index = composition.features.findIndex((f) => f.cap === 'power-source')
+  const index = composition.features.findIndex(
+    (f) => f.kind === 'fields' && f.customizeKind === 'power-source',
+  )
   const feature = composition.features[index]
   if (feature === undefined || feature.kind !== 'fields' || feature.enabled === false) return []
   const field = feature.fields['switchOn']

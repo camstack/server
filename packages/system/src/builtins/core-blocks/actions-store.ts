@@ -21,6 +21,7 @@ import {
   isInternalActionId,
   normalizeTags,
   INTERNAL_ACTION_PREFIX,
+  StaleStampError,
   type IScopedLogger,
   type RecordKindHandle,
 } from '@camstack/types'
@@ -191,6 +192,16 @@ export class ActionsStore {
     return row === null ? [] : row.data.actionIds
   }
 
+  /** The camera's links with the stamp a save must carry (D1098): 0 when nothing was written. */
+  async linksStateOf(
+    deviceId: number,
+  ): Promise<{ readonly actionIds: readonly string[]; readonly updatedAt: number }> {
+    const row = await this.links.get(String(deviceId))
+    return row === null
+      ? { actionIds: [], updatedAt: 0 }
+      : { actionIds: row.data.actionIds, updatedAt: row.data.updatedAt ?? 0 }
+  }
+
   /** Drop `actionId` from every camera that links it; a camera left with none loses its row. */
   async unlinkAction(actionId: string): Promise<number> {
     let touched = 0
@@ -205,7 +216,7 @@ export class ActionsStore {
           await this.links.put({
             id: row.id,
             ...(row.deviceId === null ? {} : { deviceId: row.deviceId }),
-            data: { actionIds: rest },
+            data: { actionIds: rest, updatedAt: nextStamp(row.data.updatedAt ?? 0, this.now()) },
           })
         touched += 1
       }
@@ -214,14 +225,27 @@ export class ActionsStore {
     return touched
   }
 
-  async setLinks(deviceId: number, actionIds: readonly string[]): Promise<readonly string[]> {
-    const unique = [...new Set(actionIds)]
-    if (unique.length === 0) {
-      await this.links.delete(String(deviceId))
-      return []
+  /**
+   * Replace a camera's links. The save carries the stamp it read (D1098): links changed since
+   * are refused by name. An empty list keeps its row, so the stamp survives the unlink.
+   */
+  async setLinks(
+    deviceId: number,
+    actionIds: readonly string[],
+    expectedUpdatedAt: number,
+  ): Promise<{ readonly actionIds: readonly string[]; readonly updatedAt: number }> {
+    const stored = (await this.linksStateOf(deviceId)).updatedAt
+    if (stored !== expectedUpdatedAt) {
+      throw new StaleStampError(`the action links of device ${deviceId}`, stored, expectedUpdatedAt)
     }
-    await this.links.put({ id: String(deviceId), deviceId, data: { actionIds: unique } })
-    return unique
+    const unique = [...new Set(actionIds)]
+    const updatedAt = nextStamp(stored, this.now())
+    await this.links.put({
+      id: String(deviceId),
+      deviceId,
+      data: { actionIds: unique, updatedAt },
+    })
+    return { actionIds: unique, updatedAt }
   }
 }
 
@@ -230,4 +254,9 @@ function withCanonicalStepTargets(data: unknown): unknown {
   if (data === null || typeof data !== 'object' || Array.isArray(data)) return data
   const steps = Reflect.get(data, 'steps')
   return steps === undefined ? data : { ...data, steps: canonicalStoredStepTargets(steps) }
+}
+
+/** The stamp of a write: strictly above the stored one, so two writes in one millisecond differ. */
+function nextStamp(stored: number, now: number): number {
+  return Math.max(stored + 1, now)
 }

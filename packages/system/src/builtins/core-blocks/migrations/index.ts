@@ -3,6 +3,10 @@ import {
   AUTOMATION_CONFIRMED_VIEW_ID,
   regenerateAutomationsConfirmedView,
 } from './automation-confirmed-view.js'
+import {
+  CUSTOMIZE_KIND_DISCRIMINANT_ID,
+  stampCustomizeKinds,
+} from './customize-kind-discriminant.js'
 import { dropFountainDrinkCounters, FOUNTAIN_DRINK_DROP_ID } from './fountain-drink-drop.js'
 import { HELPER_TO_CUSTOMIZE_ID, rewriteHelpersToCustomize } from './helper-to-customize.js'
 import {
@@ -22,6 +26,7 @@ import {
 } from './remote-config-migrations.js'
 
 export { AUTOMATION_CONFIRMED_VIEW_ID } from './automation-confirmed-view.js'
+export { CUSTOMIZE_KIND_DISCRIMINANT_ID } from './customize-kind-discriminant.js'
 export { FOUNTAIN_DRINK_DROP_ID } from './fountain-drink-drop.js'
 export {
   REMOTE_COLOUR_ROLES_ID,
@@ -193,5 +198,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[]
       fixtureMark: 'the colour and icon of each styled tag',
     },
     procedure: writeTagRecords,
+  },
+  {
+    meta: {
+      id: CUSTOMIZE_KIND_DISCRIMINANT_ID,
+      owner: 'core-blocks',
+      level: 'addon-state',
+      seq: 9,
+      dependsOn: [PUMP_CYCLE_SPLIT_ID, HELPER_TO_CUSTOMIZE_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Stamp the Customize kind (power-source, lock-door-sensor, follow-switch) on each stored feature recognised so far only by its shape, so the readers need no shape check',
+      fixtureMark: 'the block createdBy and name, which the migration does not know',
+    },
+    procedure: stampCustomizeKinds,
   },
 ]

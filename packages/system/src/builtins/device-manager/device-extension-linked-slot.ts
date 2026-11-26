@@ -25,12 +25,19 @@
  *    their children are), with devices in the camera's location SUGGESTED and
  *    nothing saved on its own (D356).
  */
-import type { DeviceInfo, ExtensionCandidate, ExtensionSlotSource } from '@camstack/types'
+import type {
+  DeviceInfo,
+  ExtensionCandidate,
+  ExtensionSetResult,
+  ExtensionSlotSource,
+  ExtensionSlotValueOf,
+} from '@camstack/types'
 import {
   createDeviceExtensionProvider,
   defineExtensionSlotProvider,
   DeviceType,
   type IDeviceExtensionProvider,
+  StaleStampError,
 } from '@camstack/types'
 import {
   applyLinkedDevicesPatch,
@@ -38,6 +45,7 @@ import {
   type LinkCandidate,
   LINKED_IDS_CONFIG_KEY,
   LINKED_TRACKED_IDS_CONFIG_KEY,
+  linkedDevicesStamp,
   parseLinkedDevicesConfig,
   parseTrackedOptIn,
   refusedLinkedPicks,
@@ -243,6 +251,7 @@ export function createDeviceManagerExtensionProvider(
       return {
         authority: LINKED_DEVICES_AUTHORITY,
         activation: null,
+        updatedAt: linkedDevicesStamp(blob),
         value: {
           slot: 'linked-devices',
           deviceIds: [...manualIds],
@@ -252,59 +261,87 @@ export function createDeviceManagerExtensionProvider(
         ...(implied.length > 0 ? { impliedSources: implied } : {}),
       }
     },
-    set: async (deviceId, value) => {
-      const [pickedRows, blob] = await Promise.all([
-        pctx.metaStore.rows.getMany(value.deviceIds),
-        pctx.settings.readDeviceStore(deviceId),
-      ])
-      const byId = pickedFrom(pickedRows)
-      const refused = refusedLinkedPicks({
-        selfId: deviceId,
-        picked: value.deviceIds,
-        persisted: parseLinkedDevicesConfig(blob).manualIds,
-        fleet: byId,
-      })
-      if (refused.length > 0) {
-        pctx.host.ctx.logger.warn('linked-devices: write refused — nothing persisted', {
-          tags: { deviceId },
-          meta: { refused },
-        })
-        throw new Error(
-          `linked-devices on ${deviceId}: refused — ` +
-            refused.map((r) => describeRefusal(r.deviceId, r.reason)).join('; '),
-        )
+    set: async (deviceId, value, expectedUpdatedAt) => {
+      try {
+        return await writeLinked(deviceId, value, expectedUpdatedAt)
+      } catch (err: unknown) {
+        if (err instanceof StaleStampError) {
+          pctx.host.ctx.logger.warn('linked-devices: write refused — changed since read', {
+            tags: { deviceId },
+            meta: { stored: err.stored, expected: err.expected },
+          })
+        }
+        throw err
       }
-      const tracked = value.trackedDeviceIds
-      if (tracked === undefined) {
-        // A card built before D655: the pick list only, the opt-in untouched.
-        await applyLinkedDevicesPatch(pctx, deviceId, { [LINKED_IDS_CONFIG_KEY]: value.deviceIds })
-        return { applied: true, reload: 'none' }
-      }
-      const implied = await impliedLinks(pctx, deviceId, value.deviceIds, pickedRows)
-      const notLinked = refusedTrackedOptIns({
-        tracked,
-        picked: value.deviceIds,
-        implied: implied.map((s) => s.deviceId),
-        stored: parseTrackedOptIn(blob),
-      })
-      if (notLinked.length > 0) {
-        pctx.host.ctx.logger.warn('linked-devices: write refused — nothing persisted', {
-          tags: { deviceId },
-          meta: { trackedNotLinked: notLinked },
-        })
-        throw new Error(
-          `linked-devices on ${deviceId}: refused — tracked events can only be opted in for a ` +
-            `linked device, not ${notLinked.join(', ')}`,
-        )
-      }
-      await applyLinkedDevicesPatch(pctx, deviceId, {
-        [LINKED_IDS_CONFIG_KEY]: value.deviceIds,
-        [LINKED_TRACKED_IDS_CONFIG_KEY]: [...new Set(tracked)],
-      })
-      return { applied: true, reload: 'none' }
     },
     candidates: async (deviceId) => candidatesFor(deviceId, await fleetOf(pctx)),
   })
+
+  async function writeLinked(
+    deviceId: number,
+    value: ExtensionSlotValueOf<'linked-devices'>,
+    expectedUpdatedAt: number,
+  ): Promise<ExtensionSetResult> {
+    const [pickedRows, blob] = await Promise.all([
+      pctx.metaStore.rows.getMany(value.deviceIds),
+      pctx.settings.readDeviceStore(deviceId),
+    ])
+    const byId = pickedFrom(pickedRows)
+    const refused = refusedLinkedPicks({
+      selfId: deviceId,
+      picked: value.deviceIds,
+      persisted: parseLinkedDevicesConfig(blob).manualIds,
+      fleet: byId,
+    })
+    if (refused.length > 0) {
+      pctx.host.ctx.logger.warn('linked-devices: write refused — nothing persisted', {
+        tags: { deviceId },
+        meta: { refused },
+      })
+      throw new Error(
+        `linked-devices on ${deviceId}: refused — ` +
+          refused.map((r) => describeRefusal(r.deviceId, r.reason)).join('; '),
+      )
+    }
+    const tracked = value.trackedDeviceIds
+    if (tracked === undefined) {
+      // A card built before D655: the pick list only, the opt-in untouched.
+      const saved = await applyLinkedDevicesPatch(
+        pctx,
+        deviceId,
+        { [LINKED_IDS_CONFIG_KEY]: value.deviceIds },
+        expectedUpdatedAt,
+      )
+      return { applied: true, reload: 'none', updatedAt: saved.updatedAt }
+    }
+    const implied = await impliedLinks(pctx, deviceId, value.deviceIds, pickedRows)
+    const notLinked = refusedTrackedOptIns({
+      tracked,
+      picked: value.deviceIds,
+      implied: implied.map((s) => s.deviceId),
+      stored: parseTrackedOptIn(blob),
+    })
+    if (notLinked.length > 0) {
+      pctx.host.ctx.logger.warn('linked-devices: write refused — nothing persisted', {
+        tags: { deviceId },
+        meta: { trackedNotLinked: notLinked },
+      })
+      throw new Error(
+        `linked-devices on ${deviceId}: refused — tracked events can only be opted in for a ` +
+          `linked device, not ${notLinked.join(', ')}`,
+      )
+    }
+    const saved = await applyLinkedDevicesPatch(
+      pctx,
+      deviceId,
+      {
+        [LINKED_IDS_CONFIG_KEY]: value.deviceIds,
+        [LINKED_TRACKED_IDS_CONFIG_KEY]: [...new Set(tracked)],
+      },
+      expectedUpdatedAt,
+    )
+    return { applied: true, reload: 'none', updatedAt: saved.updatedAt }
+  }
 
   return createDeviceExtensionProvider({
     source: DEVICE_MANAGER_EXTENSION_SOURCE,

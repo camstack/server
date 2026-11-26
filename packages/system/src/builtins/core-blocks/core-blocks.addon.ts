@@ -75,6 +75,7 @@ import {
   type BlockRunnerSnapshot,
   BlockSupervisor,
 } from './block-supervisor.js'
+import { staleBlockRefusal } from './block-stamp.js'
 import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
 import {
   armSchedulerEngine,
@@ -483,6 +484,22 @@ export class CoreBlocksAddon extends BaseAddon {
         logger: this.ctx.logger.child('automation-templates'),
       }),
     })
+  }
+
+  /**
+   * The block's stamp is the `updatedAt` the caller read (D1098). A caller that names one
+   * and finds the block changed since is refused by name — last-write-wins would drop the
+   * other admin's edit. A caller that names none is not checked; an unknown block falls
+   * through to the store, whose own refusal names it.
+   */
+  private refuseStaleBlock(blockId: string, expectedUpdatedAt: number | undefined): void {
+    if (expectedUpdatedAt === undefined) return
+    const refusal = staleBlockRefusal(this.requireStore().get(blockId), expectedUpdatedAt)
+    if (refusal === null) return
+    this.ctx.logger.warn('core block write refused — changed since read', {
+      meta: { blockId, stored: refusal.stored, expected: refusal.expected },
+    })
+    throw refusal
   }
 
   /**
@@ -954,7 +971,8 @@ export class CoreBlocksAddon extends BaseAddon {
         return { block: created }
       },
 
-      update: async ({ blockId, block, caller }) => {
+      update: async ({ blockId, block, caller, expectedUpdatedAt }) => {
+        this.refuseStaleBlock(blockId, expectedUpdatedAt)
         // Only when the SOURCE changed: re-compiling on a rename would fail a
         // rename because of a pre-existing error, which is not the operator's
         // problem at that moment.
@@ -987,7 +1005,8 @@ export class CoreBlocksAddon extends BaseAddon {
         return { block: updated }
       },
 
-      delete: async ({ blockId }) => {
+      delete: async ({ blockId, expectedUpdatedAt }) => {
+        this.refuseStaleBlock(blockId, expectedUpdatedAt)
         const existing = this.requireStore().get(blockId)
         const linkRefusal = linkContributionDeleteRefusal(existing)
         if (linkRefusal !== null) {
@@ -1006,7 +1025,8 @@ export class CoreBlocksAddon extends BaseAddon {
         return { success: true }
       },
 
-      setEnabled: async ({ blockId, enabled }) => {
+      setEnabled: async ({ blockId, enabled, expectedUpdatedAt }) => {
+        this.refuseStaleBlock(blockId, expectedUpdatedAt)
         const updated = await this.requireStore().update(blockId, { enabled })
         this.convergeSoon()
         return { block: updated }

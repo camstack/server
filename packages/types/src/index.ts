@@ -2053,6 +2053,7 @@ export {
 export {
   compileScalarOverride,
   defaultThresholdSamples,
+  scalarTargetCustomizeKind,
   type ScalarCompileInput,
   type ScalarValueKind,
 } from './composition/customize/scalar-compile.js'
@@ -3152,3 +3153,5 @@ export {
   type SwitchRunLimit,
   switchRunLimitOf,
 } from './device/switch-run-limits.js'
+
+export { STALE_STAMP_CODE, StaleStampError } from './stale-stamp.js'

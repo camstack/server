@@ -30,6 +30,7 @@ import {
   applyLinkedDevicesPatch,
   LINKED_IDS_CONFIG_KEY,
   LINKED_TRACKED_IDS_CONFIG_KEY,
+  LINKED_UPDATED_AT_CONFIG_KEY,
 } from '../device-linked-devices.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import { makeSettingsStoreApi, type FakeSettingsStore } from './settings-store-api.js'
@@ -206,12 +207,48 @@ describe('linked-devices slot — the keys the resolver reads', () => {
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [porch.id, kitchen.id] },
     })
-    await applyLinkedDevicesPatch({ settings: h.settings }, twin.id, {
-      [LINKED_IDS_CONFIG_KEY]: [String(porch.id), String(kitchen.id)],
+    await applyLinkedDevicesPatch(
+      { settings: h.settings },
+      twin.id,
+      {
+        [LINKED_IDS_CONFIG_KEY]: [String(porch.id), String(kitchen.id)],
+      },
+      0,
+    )
+    // The write stamp is a clock reading, so it is compared apart from the picks.
+    const picks = (id: number) => ({ ...h.stores[id], [LINKED_UPDATED_AT_CONFIG_KEY]: 0 })
+    expect(JSON.stringify(picks(cam.id))).toBe(JSON.stringify(picks(twin.id)))
+  })
+
+  it('a save carries the stamp it read: a stale stamp is refused, the write returns the next', async () => {
+    const h = await setup()
+    const { cam, porch, kitchen } = await topology(h)
+    const first = await h.extension.setSlot({
+      deviceId: cam.id,
+      slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
+      value: { slot: 'linked-devices', deviceIds: [porch.id] },
     })
-    expect(JSON.stringify(h.stores[cam.id])).toBe(JSON.stringify(h.stores[twin.id]))
+    expect(first.updatedAt).toBeGreaterThan(0)
+    await expect(
+      h.extension.setSlot({
+        deviceId: cam.id,
+        slotRef: SLOT_REF,
+        expectedUpdatedAt: 0,
+        value: { slot: 'linked-devices', deviceIds: [kitchen.id] },
+      }),
+    ).rejects.toThrow(/\[stale-stamp\]/)
+    expect((await h.settings.readDeviceStore(cam.id))[LINKED_IDS_CONFIG_KEY]).toEqual([porch.id])
+    const second = await h.extension.setSlot({
+      deviceId: cam.id,
+      slotRef: SLOT_REF,
+      expectedUpdatedAt: first.updatedAt,
+      value: { slot: 'linked-devices', deviceIds: [porch.id, kitchen.id] },
+    })
+    expect(second.updatedAt).toBeGreaterThan(first.updatedAt)
   })
 
   it('the resolver reads what setSlot wrote — the picks and the opt-in', async () => {
@@ -221,6 +258,7 @@ describe('linked-devices slot — the keys the resolver reads', () => {
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: {
         slot: 'linked-devices',
         deviceIds: [porch.id, kitchen.id],
@@ -250,6 +288,7 @@ describe('linked-devices slot — the tracked-event opt-in (D655)', () => {
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [porch.id, kitchen.id] },
     })
     expect(h.stores[cam.id]?.[LINKED_TRACKED_IDS_CONFIG_KEY]).toEqual([porch.id])
@@ -265,6 +304,7 @@ describe('linked-devices slot — the tracked-event opt-in (D655)', () => {
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [porch.id], trackedDeviceIds: [] },
     })
     expect(h.stores[cam.id]?.[LINKED_TRACKED_IDS_CONFIG_KEY]).toEqual([])
@@ -278,6 +318,7 @@ describe('linked-devices slot — the tracked-event opt-in (D655)', () => {
       h.extension.setSlot({
         deviceId: cam.id,
         slotRef: SLOT_REF,
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [porch.id], trackedDeviceIds: [kitchen.id] },
       }),
     ).rejects.toThrow(new RegExp(`linked device, not ${kitchen.id}`))
@@ -308,14 +349,18 @@ describe('linked-devices slot — the tracked-event opt-in (D655)', () => {
       h.extension.setSlot({
         deviceId: cam.id,
         slotRef: SLOT_REF,
+        expectedUpdatedAt: 0,
         value: {
           slot: 'linked-devices',
           deviceIds: [porch.id],
           trackedDeviceIds: [child.id, kitchen.id, porch.id],
         },
       }),
-    ).resolves.toEqual({ applied: true, reload: 'none' })
-    expect(h.stores[cam.id]).toEqual(stored)
+    ).resolves.toMatchObject({ applied: true, reload: 'none' })
+    expect(h.stores[cam.id]).toEqual({
+      ...stored,
+      [LINKED_UPDATED_AT_CONFIG_KEY]: expect.any(Number),
+    })
   })
 
   it('a written opt-in REPLACES the stored one — a stale one is removed by leaving it out', async () => {
@@ -328,6 +373,7 @@ describe('linked-devices slot — the tracked-event opt-in (D655)', () => {
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [porch.id], trackedDeviceIds: [porch.id] },
     })
     expect(h.stores[cam.id]?.[LINKED_TRACKED_IDS_CONFIG_KEY]).toEqual([porch.id])
@@ -368,6 +414,7 @@ describe('linked-devices slot — devices linked by structure (D655, D356)', () 
     await h.extension.setSlot({
       deviceId: cam.id,
       slotRef: SLOT_REF,
+      expectedUpdatedAt: 0,
       value: { slot: 'linked-devices', deviceIds: [porch.id], trackedDeviceIds: [child.id] },
     })
     const resolved = await h.manager.getLinkedDevices({ deviceId: cam.id })
@@ -387,6 +434,7 @@ describe('linked-devices slot — picks and candidates', () => {
       h.extension.setSlot({
         deviceId: cam.id,
         slotRef: SLOT_REF,
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [porch.id, container.id, cam.id] },
       }),
     ).rejects.toThrow(new RegExp(`${container.id} is a container.*${cam.id} is the camera itself`))
@@ -409,9 +457,10 @@ describe('linked-devices slot — picks and candidates', () => {
       h.extension.setSlot({
         deviceId: cam.id,
         slotRef: SLOT_REF,
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [container.id, porch.id] },
       }),
-    ).resolves.toEqual({ applied: true, reload: 'none' })
+    ).resolves.toMatchObject({ applied: true, reload: 'none' })
   })
 
   it('candidates: never self, its children or a container; same location suggested', async () => {

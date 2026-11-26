@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Stored power source, lock door sensor and follow-switch customizations are converted once at core-blocks start, and linked devices, camera action links and automation edits refuse a write made from a stale read
+
 ## [1.2.964] - 2026-11-26
 
 ### Changed

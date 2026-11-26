@@ -128,6 +128,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
         deviceId: camera.id,
         slotRef: present.slot.slotRef,
         value: withLinked(present.value, ids),
+        expectedUpdatedAt: present.slot.updatedAt,
       })
       await slots.refetch()
       await queryClient.invalidateQueries({ queryKey: [['deviceManager']] })

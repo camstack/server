@@ -208,6 +208,7 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
           deviceId: camera.deviceId,
           slotRef: read.slot.slotRef,
           value: withLinkToggled(read.value, device.id, true),
+          expectedUpdatedAt: read.slot.updatedAt,
         })
       } catch (err: unknown) {
         failures.push(`${camera.name}: ${messageOf(err)}`)
@@ -335,8 +336,8 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
     read.kind === 'present' && linksDevice(read.slot, read.value, state.device.id).implied
   // D49: the table's read only gates the button and shows the implied flag; the
   // WRITE is built from a read taken after the confirm, so a link another
-  // operator added while the dialog was open survives (`setSlot` takes the
-  // whole value, with no stamp to refuse a stale one).
+  // operator added while the dialog was open survives, and the write carries
+  // that read's stamp, so one made between the read and the write is refused.
   const unlink = async (): Promise<void> => {
     if (read.kind !== 'present' || busy) return
     const accepted = await confirmRemove(
@@ -358,6 +359,7 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
         deviceId: camera.id,
         slotRef: fresh.slot.slotRef,
         value: withLinkToggled(fresh.value, state.device.id, false),
+        expectedUpdatedAt: fresh.slot.updatedAt,
       })
       await state.refresh([camera.id])
     } catch (err: unknown) {

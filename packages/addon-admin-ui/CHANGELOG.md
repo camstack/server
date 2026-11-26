@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Internal: the device Customize kinds are listed in one typed registry; no visible change
+- Customize saves carry the version they read, so an edit made from a stale page is refused instead of overwriting a newer change
 
 ## [1.2.756] - 2026-11-26
 

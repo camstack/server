@@ -2203,6 +2203,8 @@ export {
 export {
   type ActionLinks,
   ActionLinksSchema,
+  type ActionLinksSetInput,
+  ActionLinksSetInputSchema,
   actionsCapability,
   type IActionsProvider,
 } from './actions.cap.js'

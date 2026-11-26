@@ -26,23 +26,16 @@ function gapSlots(spec: CustomizeKindSpec): readonly (readonly [CustomizePiece, 
 /** What phase 2 and 3 remove: each change to this list is a deliberate diff. */
 const EXPECTED_GAPS: Readonly<Record<CustomizeKind, readonly string[]>> = {
   'field-override': ['linkedSide:3'],
-  'power-source': ['discriminant:2', 'linkedSide:3'],
-  'lock-door-sensor': ['discriminant:2', 'linkedSide:3'],
-  'follow-switch': ['discriminant:2', 'dialog:2', 'remove:2', 'linkedSide:3'],
+  'power-source': ['linkedSide:3'],
+  'lock-door-sensor': ['linkedSide:3'],
+  'follow-switch': ['dialog:2', 'remove:2', 'linkedSide:3'],
   'keyed-items': ['enabled:2', 'linkedSide:3'],
   event: ['linkedSide:3'],
   'config-extension': ['dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
   'cap-link': ['dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
-  'linked-devices': ['stamp:2'],
-  'linked-actions': [
-    'discriminant:2',
-    'dialog:2',
-    'remove:2',
-    'enabled:2',
-    'linkedSide:3',
-    'stamp:2',
-  ],
-  'triggered-by': ['remove:2', 'linkedSide:3', 'stamp:2'],
+  'linked-devices': [],
+  'linked-actions': ['discriminant:2', 'dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
+  'triggered-by': ['remove:2', 'linkedSide:3'],
 }
 
 describe('Customize registry (D1098 phase 1)', () => {

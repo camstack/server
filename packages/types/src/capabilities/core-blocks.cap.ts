@@ -421,6 +421,8 @@ export const TemplateInstanceSchema = z.object({
   blockId: z.string(),
   name: z.string(),
   enabled: z.boolean(),
+  /** The block's stamp (D1098): a write on it names this as `expectedUpdatedAt`. */
+  updatedAt: z.number(),
   templateId: z.string(),
   /** What the operator filled in: input key to value. */
   values: TemplateInputValuesSchema,
@@ -474,18 +476,36 @@ export const coreBlocksCapability = {
       z.object({
         blockId: z.string(),
         block: CoreBlockInputFieldsSchema.partial(),
+        /**
+         * The `updatedAt` the caller READ (D1098). When named, a block changed since is
+         * refused (`[stale-stamp]`); the answer's `block.updatedAt` is the next stamp.
+         */
+        expectedUpdatedAt: z.number().optional(),
       }),
       z.object({ block: CoreBlockSchema }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
     /** Delete a core block. */
-    delete: method(z.object({ blockId: z.string() }), z.object({ success: z.literal(true) }), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
+    delete: method(
+      z.object({
+        blockId: z.string(),
+        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). */
+        expectedUpdatedAt: z.number().optional(),
+      }),
+      z.object({ success: z.literal(true) }),
+      {
+        kind: 'mutation',
+        auth: 'admin',
+      },
+    ),
     /** Enable or disable a core block. */
     setEnabled: method(
-      z.object({ blockId: z.string(), enabled: z.boolean() }),
+      z.object({
+        blockId: z.string(),
+        enabled: z.boolean(),
+        /** The `updatedAt` the caller READ; a block changed since is refused (`[stale-stamp]`). */
+        expectedUpdatedAt: z.number().optional(),
+      }),
       z.object({ block: CoreBlockSchema }),
       { kind: 'mutation', auth: 'admin' },
     ),

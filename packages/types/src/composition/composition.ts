@@ -242,10 +242,26 @@ export type CompositionItemEntry = z.infer<typeof CompositionItemEntrySchema>
 export const CompositionContributedBySchema = z.object({ linkId: z.string().min(1) })
 export type CompositionContributedBy = z.infer<typeof CompositionContributedBySchema>
 
+/**
+ * The Customize kinds that were once recognised only by the SHAPE of a stored
+ * fields feature (D1098): the stored entry now names its kind. Every other
+ * fields feature (a field override, keyed items, an event, a config extension)
+ * carries none.
+ */
+export const COMPOSITION_CUSTOMIZE_KINDS = [
+  'power-source',
+  'lock-door-sensor',
+  'follow-switch',
+] as const
+export const CompositionCustomizeKindSchema = z.enum(COMPOSITION_CUSTOMIZE_KINDS)
+export type CompositionCustomizeKind = z.infer<typeof CompositionCustomizeKindSchema>
+
 export const CompositionFieldsFeatureSchema = z.object({
   kind: z.literal('fields'),
   cap: z.string().min(1),
   enabled: z.boolean().optional(),
+  /** The discriminant of a power source, a lock door sensor or a follow-switch opt-out (D1098). */
+  customizeKind: CompositionCustomizeKindSchema.optional(),
   fields: z
     .record(z.string().min(1), CompositionFieldSourceSchema)
     .refine((fields) => Object.keys(fields).length <= MAX_COMPOSITION_FIELDS_PER_FEATURE, {

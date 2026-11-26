@@ -92,12 +92,13 @@ describe('createDeviceExtensionProvider', () => {
       list: async () => ({
         authority: 'device-manager:_linkedDeviceIds',
         activation: null,
+        updatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [701] },
         sources: [{ deviceId: 701, name: 'Porch contact', health: 'ok' }],
       }),
-      set: async (_deviceId, value) => {
+      set: async (_deviceId, value, _expectedUpdatedAt) => {
         written.push([...value.deviceIds])
-        return { applied: true, reload: 'none' }
+        return { applied: true, reload: 'none', updatedAt: 1 }
       },
       candidates: async () => [],
     })
@@ -134,9 +135,10 @@ describe('createDeviceExtensionProvider', () => {
       provider.setSlot({
         deviceId: CAMERA,
         slotRef: 'device-manager:linked-devices',
+        expectedUpdatedAt: 0,
         value: { slot: 'linked-devices', deviceIds: [701, 702] },
       }),
-    ).resolves.toEqual({ applied: true, reload: 'none' })
+    ).resolves.toEqual({ applied: true, reload: 'none', updatedAt: 1 })
     expect(written).toEqual([[701, 702]])
     expect(logger.info).toHaveBeenCalledWith(
       'device-extension: slot written',
@@ -156,6 +158,7 @@ describe('createDeviceExtensionProvider', () => {
       provider.setSlot({
         deviceId: CAMERA,
         slotRef: 'device-manager:linked-devices',
+        expectedUpdatedAt: 0,
         value: foreign,
       }),
     ).rejects.toThrow(/"probe" value was sent to slot "linked-devices"/)

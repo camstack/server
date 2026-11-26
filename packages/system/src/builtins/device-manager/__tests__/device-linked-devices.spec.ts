@@ -493,10 +493,15 @@ describe('linked devices have no settings section (D655)', () => {
   it('applyLinkedDevicesPatch normalizes and persists the list, and never writes a mode', async () => {
     const h = await setup()
     const { cam, gardenSensor } = await seedTopology(h)
-    await applyLinkedDevicesPatch({ settings: h.settings }, cam.id, {
-      [LINKED_MODE_CONFIG_KEY]: 'manual',
-      [LINKED_IDS_CONFIG_KEY]: [String(gardenSensor.id), 'not-a-number'],
-    })
+    await applyLinkedDevicesPatch(
+      { settings: h.settings },
+      cam.id,
+      {
+        [LINKED_MODE_CONFIG_KEY]: 'manual',
+        [LINKED_IDS_CONFIG_KEY]: [String(gardenSensor.id), 'not-a-number'],
+      },
+      0,
+    )
     const blob = await h.settings.readDeviceStore(cam.id)
     expect(blob[LINKED_MODE_CONFIG_KEY]).toBeUndefined()
     expect(blob[LINKED_IDS_CONFIG_KEY]).toEqual([gardenSensor.id])
@@ -521,9 +526,14 @@ describe('tracked-event selection persistence (absent vs explicit empty)', () =>
   it('applyLinkedDevicesPatch persists an EXPLICIT EMPTY selection as [] (distinguishable from absent)', async () => {
     const h = await setup()
     const { cam } = await seedTopology(h)
-    await applyLinkedDevicesPatch({ settings: h.settings }, cam.id, {
-      [LINKED_TRACKED_IDS_CONFIG_KEY]: [],
-    })
+    await applyLinkedDevicesPatch(
+      { settings: h.settings },
+      cam.id,
+      {
+        [LINKED_TRACKED_IDS_CONFIG_KEY]: [],
+      },
+      0,
+    )
     const blob = await h.settings.readDeviceStore(cam.id)
     // The key is PRESENT and an empty array — not dropped — so the resolver can
     // tell "operator deselected everything" from "never configured".

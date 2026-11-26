@@ -17,6 +17,7 @@ const LINKED: ExtensionSlotRow = {
   slot: 'linked-devices',
   authority: 'device-manager:_linkedDeviceIds',
   activation: null,
+  updatedAt: 0,
   value: { slot: 'linked-devices', deviceIds: [] },
   sources: [],
 }

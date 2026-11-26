@@ -106,9 +106,11 @@ export const SchedulerStateRowBodySchema: z.ZodType<SchedulerStateRowBody> = z.o
 })
 
 /** The actions one camera links (D356: the operator picked them). Row id = the deviceId. */
-export type ActionLinksRowBody = { readonly actionIds: string[] }
+export type ActionLinksRowBody = { readonly actionIds: string[]; readonly updatedAt?: number }
 export const ActionLinksRowBodySchema: z.ZodType<ActionLinksRowBody> = z.object({
   actionIds: z.array(z.string().min(1)).max(100),
+  /** The stamp a save must carry (D1098); a row written before it has none, which reads as 0. */
+  updatedAt: z.number().optional(),
 })
 
 /** A template (D963): the kind names the payload schema, the store never reads the payload. */

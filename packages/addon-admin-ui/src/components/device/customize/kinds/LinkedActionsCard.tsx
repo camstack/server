@@ -87,8 +87,12 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const rows = linkedIds.flatMap((id) => entries.filter((entry) => entry.id === id))
   const available = entries.filter((entry) => !linkedIds.includes(entry.id))
   const ready = links.data !== undefined && actions.data !== undefined
-  const write = (actionIds: readonly string[]): void =>
-    save.mutate({ deviceId: device.id, actionIds: [...actionIds] })
+  const stamp = links.data?.updatedAt
+  const write = (actionIds: readonly string[]): void => {
+    // The stamp the list was read with; a record not read yet is not written (D1098).
+    if (stamp === undefined) return
+    save.mutate({ deviceId: device.id, actionIds: [...actionIds], expectedUpdatedAt: stamp })
+  }
   const openPicker = (): void => {
     setDraft([])
     setPicking(true)

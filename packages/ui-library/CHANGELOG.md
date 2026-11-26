@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device extension slot card sends the version it read when saving
+
 ## [1.2.509] - 2026-11-26
 
 ### Changed

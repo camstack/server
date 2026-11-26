@@ -30,6 +30,7 @@ import { ConfigValueCell } from './table/ConfigRowCells'
 import { EventActionsCell } from './table/EventRowCells'
 import { RowActiveSwitch } from './table/RowActiveSwitch'
 import { ScalarSourceCell } from './table/ScalarRowParts'
+import { TriggeredByTable } from './triggers/TriggeredByTable'
 import { TriggerDialog } from './triggers/TriggerDialog'
 import { TriggerRowCard } from './triggers/TriggerRowCard'
 import { useConfirmRemove } from './use-confirm-remove'
@@ -40,6 +41,11 @@ function gap<P extends CustomizePiece>(piece: P, phase: CustomizeGapPhase): Piec
 }
 
 const COMPOSITION_STAMP = { present: { field: 'expectedUpdatedAt', plan: planCustomizationSave } }
+/** The discriminant of a kind a fields feature stores under `customizeKind` (D1098). */
+function customizeKindDiscriminant(value: string) {
+  return { present: { key: 'customizeKind', value } }
+}
+
 const FIELDS_DISCRIMINANT = { present: { key: 'kind', value: 'fields' } }
 const CONFIRM_REMOVE = { present: { confirm: useConfirmRemove } }
 const ROW_SWITCH = { present: { control: RowActiveSwitch } }
@@ -67,9 +73,11 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'power-source': {
     kind: 'power-source',
-    // Recognised today only by cap `power-source` (customize-rows.ts `POWER_CAPS` just picks the
-    // `power` section) and by `power-source-link.ts` reading the stored shape: no discriminant.
-    storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
+    // The stored feature names its kind (`customizeKind`), stamped by a core-blocks migration.
+    storage: {
+      shape: 'composition-feature',
+      discriminant: customizeKindDiscriminant('power-source'),
+    },
     owner: {
       row: SCALAR_ROW,
       // The formula dialog appears only through `FormulaEntryButton` when
@@ -83,9 +91,10 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'lock-door-sensor': {
     kind: 'lock-door-sensor',
-    // Admin-ui has no reference to it at all: it is NOT distinguishable here. Only
-    // `packages/types/src/composition/lock-door-link.ts` knows it, from the stored shape.
-    storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
+    storage: {
+      shape: 'composition-feature',
+      discriminant: customizeKindDiscriminant('lock-door-sensor'),
+    },
     owner: {
       row: SCALAR_ROW,
       dialog: SCALAR_DIALOG,
@@ -97,8 +106,11 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'follow-switch': {
     kind: 'follow-switch',
-    // ON stores nothing and OFF stores an opt-out feature recognised by its shape.
-    storage: { shape: 'composition-feature', discriminant: gap('discriminant', 2) },
+    // ON stores nothing and OFF stores an opt-out feature that names its kind.
+    storage: {
+      shape: 'composition-feature',
+      discriminant: customizeKindDiscriminant('follow-switch'),
+    },
     owner: {
       row: { present: { component: FollowSwitchToggle } },
       dialog: gap('dialog', 2),
@@ -174,7 +186,8 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     },
     // The camera side: cameras that link this device, read from their slots.
     linkedSide: { present: { view: LinkedCameraItem } },
-    stamp: gap('stamp', 2),
+    // The table reads `slot.updatedAt`, a save sends it as `expectedUpdatedAt`.
+    stamp: { present: { field: 'expectedUpdatedAt', plan: LinkedDevicesTable } },
   },
   'linked-actions': {
     kind: 'linked-actions',
@@ -187,7 +200,7 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       enabled: gap('enabled', 2),
     },
     linkedSide: gap('linkedSide', 3),
-    stamp: gap('stamp', 2),
+    stamp: { present: { field: 'expectedUpdatedAt', plan: LinkedActionItem } },
   },
   'triggered-by': {
     kind: 'triggered-by',
@@ -204,7 +217,8 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       enabled: { present: { control: TriggerRowCard } },
     },
     linkedSide: gap('linkedSide', 3),
-    stamp: gap('stamp', 2),
+    // `TriggeredByTable` sends the stamp it read and chains the one each write returns.
+    stamp: { present: { field: 'expectedUpdatedAt', plan: TriggeredByTable } },
   },
 }
 

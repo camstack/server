@@ -98,6 +98,15 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+/** The stamp field of a write on `blockId`, absent for a block this table did not read. */
+function stampOf(
+  stamps: ReadonlyMap<string, number>,
+  blockId: string,
+): { readonly expectedUpdatedAt?: number } {
+  const stamp = stamps.get(blockId)
+  return stamp === undefined ? {} : { expectedUpdatedAt: stamp }
+}
+
 export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
   const { t } = useTranslation()
   const uiText = useUiText()
@@ -251,18 +260,29 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
     setBusy(true)
     setRefusal(null)
     try {
+      // Each write names the stamp it read and hands the next write on the same block the
+      // stamp it returned (D1098): an edit followed by a toggle is two writes of one block.
+      const stamps = new Map<string, number>(stored.map((i) => [i.blockId, i.updatedAt]))
       for (const op of ops) {
-        if (op.kind === 'delete') await remove.mutateAsync({ blockId: op.blockId })
-        else if (op.kind === 'update') {
-          await update.mutateAsync({
+        if (op.kind === 'delete') {
+          await remove.mutateAsync({
+            blockId: op.blockId,
+            ...stampOf(stamps, op.blockId),
+          })
+        } else if (op.kind === 'update') {
+          const saved = await update.mutateAsync({
             blockId: op.instance.blockId,
             block: codeOf(op.instance),
+            ...stampOf(stamps, op.instance.blockId),
           })
+          stamps.set(op.instance.blockId, saved.block.updatedAt)
         } else if (op.kind === 'enable') {
-          await setEnabled.mutateAsync({
+          const saved = await setEnabled.mutateAsync({
             blockId: op.blockId,
             enabled: op.enabled,
+            ...stampOf(stamps, op.blockId),
           })
+          stamps.set(op.blockId, saved.block.updatedAt)
         } else {
           const params = linkedTriggerParamsOf(op.instance.values)
           if (params === null) throw new Error(t('customize.triggers.unreadableOne'))
@@ -330,6 +350,7 @@ export function TriggeredByTable({ device }: TriggeredByTableProps): ReactNode {
         target: device.name,
       }),
       enabled: true,
+      updatedAt: 0,
       templateId: LINKED_TRIGGER_TEMPLATE_ID,
       values: linkedTriggerValues(fresh),
     }

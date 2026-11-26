@@ -64,7 +64,7 @@ import type {
   LinkedDevice,
   LinkedDevicesMode,
 } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import { DeviceType, StaleStampError } from '@camstack/types'
 // The pure linked-set rules live in `@camstack/types` so the hub's boot
 // backfill and the admin UI's per-room rebuild share ONE definition of what a
 // room contains — see `linked-device-resolve.ts`.
@@ -83,6 +83,8 @@ export const LINKED_IDS_CONFIG_KEY = '_linkedDeviceIds'
  *  explicit operator OPT-IN (2026-07-22 flip: the old absent⇒ALL default
  *  auto-materialized sensor snapshots the operator never asked for). */
 export const LINKED_TRACKED_IDS_CONFIG_KEY = '_linkedDeviceTrackedIds'
+/** Reserved key: the stamp of the linked-devices record (D1098). Absent = never written = 0. */
+export const LINKED_UPDATED_AT_CONFIG_KEY = '_linkedDevicesUpdatedAt'
 
 /**
  * The three reserved keys, as one set: they stay with a camera's NUMBER on a
@@ -93,6 +95,7 @@ export const LINKED_DEVICES_RESERVED_KEYS: ReadonlySet<string> = new Set([
   LINKED_MODE_CONFIG_KEY,
   LINKED_IDS_CONFIG_KEY,
   LINKED_TRACKED_IDS_CONFIG_KEY,
+  LINKED_UPDATED_AT_CONFIG_KEY,
 ])
 
 export interface LinkedDevicesConfig {
@@ -306,6 +309,12 @@ export async function getLinkedDevicesBatch(
   })
 }
 
+/** The stamp a save of the linked-devices slot must carry: 0 when nothing was written. */
+export function linkedDevicesStamp(blob: Record<string, unknown>): number {
+  const raw = blob[LINKED_UPDATED_AT_CONFIG_KEY]
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0
+}
+
 /** The two device-store calls the linked-devices write needs — nothing else. */
 export interface LinkedDevicesStoreAccess {
   readonly settings: Pick<ProviderContext['settings'], 'readDeviceStore' | 'writeDeviceStore'>
@@ -322,9 +331,15 @@ export async function applyLinkedDevicesPatch(
   pctx: LinkedDevicesStoreAccess,
   deviceId: number,
   patch: Record<string, unknown>,
-): Promise<{ success: true }> {
+  expectedUpdatedAt: number,
+): Promise<{ success: true; updatedAt: number }> {
   const current = await pctx.settings.readDeviceStore(deviceId)
-  const next: Record<string, unknown> = { ...current }
+  const stored = linkedDevicesStamp(current)
+  if (stored !== expectedUpdatedAt) {
+    throw new StaleStampError(`the linked devices of device ${deviceId}`, stored, expectedUpdatedAt)
+  }
+  const updatedAt = Math.max(stored + 1, Date.now())
+  const next: Record<string, unknown> = { ...current, [LINKED_UPDATED_AT_CONFIG_KEY]: updatedAt }
   if (LINKED_IDS_CONFIG_KEY in patch) {
     next[LINKED_IDS_CONFIG_KEY] = [
       ...parseLinkedDevicesConfig({ [LINKED_IDS_CONFIG_KEY]: patch[LINKED_IDS_CONFIG_KEY] })
@@ -335,7 +350,7 @@ export async function applyLinkedDevicesPatch(
     next[LINKED_TRACKED_IDS_CONFIG_KEY] = [...parseTrackedOptIn(patch)]
   }
   await pctx.settings.writeDeviceStore(deviceId, next)
-  return { success: true as const }
+  return { success: true as const, updatedAt }
 }
 
 // ── Pick validation (the `linked-devices` extension slot, D648) ──────

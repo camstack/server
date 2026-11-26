@@ -42,6 +42,8 @@ export interface ExtensionSlotListing<Id extends ExtensionSlotId> {
   readonly authority: string
   readonly activation: ExtensionSlotActivation | null
   readonly value: ExtensionSlotValueOf<Id>
+  /** The stamp of the owner's record (D1098): 0 when nothing was ever written. */
+  readonly updatedAt: number
   readonly sources: readonly ExtensionSlotSource[]
   /** Linked by the owner's own structure, not picked (D655). Omit when none. */
   readonly impliedSources?: readonly ExtensionSlotSource[]
@@ -52,7 +54,11 @@ export interface ExtensionSlotImpl<Id extends ExtensionSlotId> {
   /** The slot as the owner's store holds it, or null when this host is not the owner's. */
   list(deviceId: number): Promise<ExtensionSlotListing<Id> | null>
   /** Write through the owner's EXISTING path. Refuse by name before persisting. */
-  set(deviceId: number, value: ExtensionSlotValueOf<Id>): Promise<ExtensionSetResult>
+  set(
+    deviceId: number,
+    value: ExtensionSlotValueOf<Id>,
+    expectedUpdatedAt: number,
+  ): Promise<ExtensionSetResult>
   /** Devices the editor may offer, suggestions pre-marked and never saved. */
   candidates(deviceId: number): Promise<readonly ExtensionCandidate[]>
 }
@@ -61,7 +67,11 @@ export interface ExtensionSlotImpl<Id extends ExtensionSlotId> {
 export interface ExtensionSlotProvider {
   readonly slot: ExtensionSlotId
   list(deviceId: number): Promise<ExtensionSlotListing<ExtensionSlotId> | null>
-  set(deviceId: number, value: ExtensionSlotValue): Promise<ExtensionSetResult>
+  set(
+    deviceId: number,
+    value: ExtensionSlotValue,
+    expectedUpdatedAt: number,
+  ): Promise<ExtensionSetResult>
   candidates(deviceId: number): Promise<readonly ExtensionCandidate[]>
 }
 
@@ -85,13 +95,13 @@ export function defineExtensionSlotProvider<Id extends ExtensionSlotId>(
       const value: ExtensionSlotValue = listing.value
       return { ...listing, value }
     },
-    set: async (deviceId, value) => {
+    set: async (deviceId, value, expectedUpdatedAt) => {
       if (!isValueOf(slot, value)) {
         throw new Error(
           `device-extension: a "${value.slot}" value was sent to slot "${slot}" — refused`,
         )
       }
-      return await impl.set(deviceId, value)
+      return await impl.set(deviceId, value, expectedUpdatedAt)
     },
     candidates: (deviceId) => impl.candidates(deviceId),
   }
@@ -164,6 +174,7 @@ export function createDeviceExtensionProvider(
           authority: listing.authority,
           activation: listing.activation,
           value: listing.value,
+          updatedAt: listing.updatedAt,
           sources: [...listing.sources],
           ...(listing.impliedSources !== undefined
             ? { impliedSources: [...listing.impliedSources] }
@@ -178,7 +189,7 @@ export function createDeviceExtensionProvider(
     },
     setSlot: async (input) => {
       const slot = await resolve(input.deviceId, input.slotRef)
-      const result = await slot.set(input.deviceId, input.value)
+      const result = await slot.set(input.deviceId, input.value, input.expectedUpdatedAt)
       logger.info('device-extension: slot written', {
         tags: { deviceId: input.deviceId },
         meta: { slotRef: input.slotRef, reload: result.reload },

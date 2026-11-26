@@ -306,6 +306,7 @@ describe('linked triggers on the customization list', () => {
     enabled,
     templateId: 'builtin:linked-trigger',
     values: { target, action: { actionId: 'switch.toggle' }, when: [] },
+    updatedAt: 0,
   })
 
   it('counts the triggers of each commanded device', () => {
