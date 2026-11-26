@@ -254,6 +254,25 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     await h.broker.stop()
   })
 
+  it('a stop during the crash backoff cancels the respawn and answers stopped (planning#739)', async () => {
+    const groups = fakeGroups({ log: [], members: [], ignoresTerm: false })
+    const h = harness('hub-pg-stop-backoff', groups, 'linux')
+    await h.broker.start()
+    const addons = [{ addonId: 'cam', addonDir: '/tmp/cam' }]
+    await h.broker.call('$process.spawnRunner', { runnerId: 'cam', addons })
+    crash(h.spawned[0]!.child, 'SIGKILL')
+    const stopped = await h.broker.call('$process.stop', { name: 'cam' })
+    expect(stopped).toEqual({ success: true })
+    // The first backoff is 500 ms: wait past it, nothing may come back.
+    await sleep(900)
+    expect(h.spawned.length, 'respawned after being told to stop').toBe(1)
+    // A later start works normally.
+    await h.broker.call('$process.spawnRunner', { runnerId: 'cam', addons })
+    expect(h.spawned.length).toBe(2)
+    await h.broker.call('$process.stop', { name: 'cam' })
+    await h.broker.stop()
+  })
+
   it('an operator restart spawns the new runner only after the old group is reaped', async () => {
     const listGate = gate()
     const calls: string[] = []

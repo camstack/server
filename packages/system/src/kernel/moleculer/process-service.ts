@@ -229,6 +229,8 @@ function createProcessService(
   // Runners whose crash is waiting on its backoff respawn: no entry in `processes`,
   // but still THERE for `$process.list` (the boot check must see "crashed", not "missing").
   const backingOff = new Map<string, SpawnedProcess>()
+  // The armed respawn timer of each backing-off runner, so an operator stop can cancel it.
+  const backoffTimers = new Map<string, ReturnType<typeof setTimeout>>()
   // In-flight group reaps per runner id (D668). A spawn for a runner id waits on this
   // first, so a new runner never co-exists with its predecessor's children — the
   // 13-minute dual-writer incident was exactly that co-existence.
@@ -278,6 +280,19 @@ function createProcessService(
   }
 
   /** Resolve a lookup name (runnerId or hosted addonId) to its runnerId, or null. */
+  function clearBackoffTimer(runnerId: string): void {
+    const timer = backoffTimers.get(runnerId)
+    if (timer !== undefined) clearTimeout(timer)
+    backoffTimers.delete(runnerId)
+  }
+  /** A runner id (or hosted addon id) that is waiting out its crash backoff. */
+  function resolveBackingOffName(lookupName: string): string | null {
+    if (backingOff.has(lookupName)) return lookupName
+    for (const candidate of backingOff.values()) {
+      if (candidate.runnerAddons.some((a) => a.addonId === lookupName)) return candidate.name
+    }
+    return null
+  }
   function resolveRunnerName(lookupName: string): string | null {
     if (processes.has(lookupName)) return lookupName
     for (const candidate of processes.values()) {
@@ -429,6 +444,7 @@ function createProcessService(
   ): SpawnedProcess {
     const nodeId = buildNodeId(runnerId)
     backingOff.delete(runnerId)
+    clearBackoffTimer(runnerId)
 
     // Resolve addon-runner.js path — in dev: this file's directory; in
     // prod: kernel dist. `addon-runner.js` is a kernel build entry point.
@@ -716,7 +732,8 @@ function createProcessService(
       if (capturedBroker) {
         forceMoleculerDisconnect(capturedBroker, entry.nodeId)
       }
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        backoffTimers.delete(runnerId)
         // Serialize the crash-respawn against any concurrent operator
         // restart/stop for the same id. If one already re-created the entry
         // under the lock, skip — respawning again would orphan its child.
@@ -730,6 +747,7 @@ function createProcessService(
           restarted.restartCount = entry.restartCount + 1
         })
       }, decision.backoffMs)
+      backoffTimers.set(runnerId, timer)
     })
 
     processes.set(runnerId, entry)
@@ -779,9 +797,20 @@ function createProcessService(
           // call for an addon co-located in a multi-addon runner (where
           // `runnerId !== addonId`) returns "not found" and the runner
           // subprocess leaks on uninstall. Mirrors `restart`/`listByAddon`.
-          const name = resolveRunnerName(ctx.params.name)
+          const name = resolveRunnerName(ctx.params.name) ?? resolveBackingOffName(ctx.params.name)
           if (name === null) return { success: false, reason: 'not found' }
           return withRunnerLock(name, async () => {
+            // A runner waiting out its crash backoff has no live child: cancel the
+            // pending respawn and report it stopped (no timer is added, D3/D6).
+            const waiting = backingOff.get(name)
+            if (waiting && !processes.has(name)) {
+              clearBackoffTimer(name)
+              backingOff.delete(name)
+              await reapRunnerGroup(waiting)
+              failedRetryLedger.forget(name)
+              crashSupervisor.reset(name)
+              return { success: true }
+            }
             // Re-read the CURRENT entry inside the lock — a queued restart for
             // the same runnerId may have respawned a fresh child since we
             // resolved the name; we must kill that one, not a stale reference.

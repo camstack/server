@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The day/night phase can now follow a light sensor instead of the sun (dark threshold, hysteresis, minimum duration); scheduler points, automation guards and time windows read it, and fall back to the sun, logged with the reason, when the sensor cannot be read.
+- A stop issued while a crashed runner waits out its respawn backoff now cancels the respawn and reports the runner stopped
 
 ## [1.2.965] - 2026-11-26
 
