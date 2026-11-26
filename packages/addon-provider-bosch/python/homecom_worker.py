@@ -209,13 +209,17 @@ async def _read(
             client.async_get_additional_heater_mode(gateway_id)
         )
         durations: Dict[str, Any] = {}
+        charges: Dict[str, Any] = {}
         for ref in device.get("dhw_circuits") or []:
             dhw_id = str(ref.get("id", "")).split("/")[-1] if isinstance(ref, dict) else ""
             if dhw_id:
                 durations[dhw_id] = await _optional(
                     client.async_get_dhw_charge_duration(gateway_id, dhw_id)
                 )
+                # The library's bulk update does not carry the charge: read it on its own.
+                charges[dhw_id] = await _optional(client.async_get_dhw_charge(gateway_id, dhw_id))
         extras["chargeDuration"] = durations
+        extras["charge"] = charges
     if normalize_reading(device)["heatSource"]["heatPumpType"] is None:
         extras["heatSourceProbe"] = await _probe_heat_source(session, token, gateway_id)
     return normalize_reading(device, extras)

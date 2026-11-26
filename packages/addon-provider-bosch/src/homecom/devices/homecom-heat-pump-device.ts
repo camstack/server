@@ -202,7 +202,17 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
         this.apply((r) => dhwOptionWrite(r, circuitId, 'level', level)),
       setDhwChargeDuration: ({ circuitId, minutes }) =>
         this.apply((r) => dhwChargeDurationWrite(r, circuitId, minutes)),
-      startExtraHotWater: ({ circuitId }) => this.apply((r) => extraHotWaterWrite(r, circuitId)),
+      startExtraHotWater: ({ circuitId }) =>
+        this.apply((r) => {
+          const write = extraHotWaterWrite(r, circuitId)
+          if (r.circuits.some((c) => c.id === circuitId && c.kind === 'dhw' && c.charge === null)) {
+            this.ctx.logger.info(
+              'HomeCom heat pump: extra hot water sent blind, the gateway charge state was not read',
+              { tags: { deviceId: this.ctx.id }, meta: { circuitId } },
+            )
+          }
+          return write
+        }),
     }
     this.ctx.registerNativeCap(heatPumpControlCapability, provider)
   }

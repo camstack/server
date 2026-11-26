@@ -17,7 +17,7 @@ import { k40Reading } from './homecom-bridge-fixture.js'
 
 type Provider = Record<string, (input: Record<string, unknown>) => Promise<unknown>>
 
-function rig() {
+function rig(circuitId = 'hc1') {
   const providers: Record<string, Provider> = {}
   let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
@@ -33,7 +33,12 @@ function rig() {
       addonId: 'bosch-homecom',
       metadata: {},
     },
-    persistedConfig: { nativeId: 'hc:1', brokerId: 'int-1', circuitId: 'hc1', system: 'homecom' },
+    persistedConfig: {
+      nativeId: `hc:${circuitId}`,
+      brokerId: 'int-1',
+      circuitId,
+      system: 'homecom',
+    },
     initialRuntimeState: {},
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
     persistConfig: vi.fn(async () => {}),
@@ -57,12 +62,20 @@ function rig() {
   return { ctx, providers }
 }
 
-function snapshotOf(away: boolean): HomeComSystemSnapshot {
+function snapshotOf(away: boolean, awayValue = 'off'): HomeComSystemSnapshot {
   const reading = k40Reading()
+  const [hc1] = reading.heatingCircuits
+  const circuits = hc1 === undefined ? [] : [hc1, { ...hc1, id: 'hc2' }]
+  const answered =
+    reading.system.away === null ? null : { ...reading.system.away, value: awayValue }
   return bridgeSnapshot({
     gatewayId: 'g1',
     deviceType: 'k40',
-    reading: away ? reading : { ...reading, system: { ...reading.system, away: null } },
+    reading: {
+      ...reading,
+      heatingCircuits: circuits,
+      system: { ...reading.system, away: away ? answered : null },
+    },
     logDrop: () => {},
     logTransientProbe: () => {},
   })
@@ -71,6 +84,7 @@ function snapshotOf(away: boolean): HomeComSystemSnapshot {
 function connect(
   snapshot: HomeComSystemSnapshot,
   writeHeatPump: HomeComApiClient['writeHeatPump'],
+  afterWrite: HomeComSystemSnapshot = snapshot,
 ) {
   const unused = async () => {
     throw new Error('not used')
@@ -78,7 +92,7 @@ function connect(
   const client: HomeComApiClient = {
     refreshTokens: unused,
     listGateways: unused,
-    fetchSystem: async () => snapshot,
+    fetchSystem: async () => afterWrite,
     probeGateway: unused,
     setCircuitSetpoint: unused,
     setCircuitMode: unused,
@@ -123,6 +137,24 @@ describe('HomeCom heating circuit presets (planning#741 A5)', () => {
     await device.onActivate()
     const slice = device.runtimeState.getCapState<ClimateControlStatus>('climate-control')
     expect(slice?.availablePresets).toEqual([])
+    homeComConnections.clear()
+  })
+
+  it('away is gateway-wide: a preset set on one circuit shows on the other', async () => {
+    const first = rig('hc1')
+    const second = rig('hc2')
+    const writeHeatPump = vi.fn(async () => {})
+    connect(snapshotOf(true, 'off'), writeHeatPump, snapshotOf(true, 'on'))
+    const a = new HomeComClimateDevice(first.ctx)
+    const b = new HomeComClimateDevice(second.ctx)
+    await a.onActivate()
+    await b.onActivate()
+    const presetOf = (d: HomeComClimateDevice) =>
+      d.runtimeState.getCapState<ClimateControlStatus>('climate-control')?.preset
+    expect([presetOf(a), presetOf(b)]).toEqual(['none', 'none'])
+    await first.providers['climate-control']?.['setPreset']?.({ preset: 'away' })
+    expect(writeHeatPump).toHaveBeenCalledTimes(1)
+    expect([presetOf(a), presetOf(b)]).toEqual(['away', 'away'])
     homeComConnections.clear()
   })
 

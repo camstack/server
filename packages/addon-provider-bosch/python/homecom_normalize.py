@@ -24,6 +24,7 @@ Setting = { value: str | number | None, min, max, allowed: [str], writeable: boo
 from __future__ import annotations
 
 import math
+import sys
 from typing import Any, Dict, List, Optional
 
 ROOM_TEMP_RANGE = (-40.0, 60.0)
@@ -226,10 +227,13 @@ def normalize_notifications(raw: Any) -> Optional[List[Dict[str, Any]]]:
         return None
     faults: List[Dict[str, Any]] = []
     for item in raw:
-        if not isinstance(item, dict):
-            continue
-        dcd, ccd = item.get("dcd"), item.get("ccd")
+        dcd = item.get("dcd") if isinstance(item, dict) else None
+        ccd = item.get("ccd") if isinstance(item, dict) else None
         if not isinstance(dcd, str) or not isinstance(ccd, str):
+            print(
+                f"[homecom_worker] dropped a malformed notification: {type(item).__name__}",
+                file=sys.stderr,
+            )
             continue
         faults.append(
             {
@@ -238,6 +242,9 @@ def normalize_notifications(raw: Any) -> Optional[List[Dict[str, Any]]]:
                 "severity": "error" if str(item.get("dlv")) == "8" else "warning",
             }
         )
+    if len(raw) > 0 and len(faults) == 0:
+        # A non-empty answer none of whose entries parse proves nothing: unknown, not "no fault".
+        return None
     return faults
 
 
@@ -275,7 +282,7 @@ def normalize_heating_circuit(ref: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def normalize_dhw_circuit(
-    ref: Dict[str, Any], charge_duration: Any = None
+    ref: Dict[str, Any], charge_duration: Any = None, charge: Any = None
 ) -> Optional[Dict[str, Any]]:
     circuit_id = _ref_id(ref)
     if circuit_id is None:
@@ -288,12 +295,13 @@ def normalize_dhw_circuit(
             if isinstance(level, str) and setting is not None:
                 levels[level] = setting
     duration = ref.get("chargeDuration")
+    own_charge = ref.get("charge")
     return {
         "id": circuit_id,
         "operationMode": setting_of(ref.get("operationMode")),
         "actualTemp": number_of(ref.get("actualTemp")),
         "currentTemperatureLevel": setting_of(ref.get("currentTemperatureLevel")),
-        "charge": setting_of(ref.get("charge")),
+        "charge": setting_of(own_charge if own_charge not in (None, {}) else charge),
         "chargeDuration": setting_of(duration if duration not in (None, {}) else charge_duration),
         "singleChargeSetpoint": setting_of(ref.get("singleChargeSetpoint")),
         "currentSetpoint": setting_of(ref.get("currentSetpoint")),
@@ -313,14 +321,15 @@ def normalize_reading(
     """`device` is the library's update dataclass as a dict; `extras` the separate reads.
 
     extras keys: `silentMode`, `additionalHeaterMode`, `aggregateStarts`,
-    `chargeDuration` ({ dhw id: payload }), `heatSourceProbe` ({ path: probe outcome }),
+    `chargeDuration` and `charge` ({ dhw id: payload }), `heatSourceProbe` ({ path: probe outcome }),
     `notifications` (the list of the direct read, or None when it was not answered).
     """
     more = extras or {}
     durations = more.get("chargeDuration") if isinstance(more.get("chargeDuration"), dict) else {}
     heating = [normalize_heating_circuit(ref) for ref in _refs(device.get("heating_circuits"))]
+    charges = more.get("charge") if isinstance(more.get("charge"), dict) else {}
     dhw = [
-        normalize_dhw_circuit(ref, durations.get(_ref_id(ref) or ""))
+        normalize_dhw_circuit(ref, durations.get(_ref_id(ref) or ""), charges.get(_ref_id(ref) or ""))
         for ref in _refs(device.get("dhw_circuits"))
     ]
     return {

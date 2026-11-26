@@ -117,6 +117,8 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
         await this.requireClient().setFanMode(this.#circuitId, fanMode)
         this.refreshFromSnapshot()
       },
+      // Away is ONE gateway-wide switch (`/system/awayMode/enabled`): every heating circuit
+      // of the gateway shows and sets the same preset.
       setPreset: async ({ preset }) => {
         const away = homeComConnections.getSnapshot(this.#brokerId)?.bridge?.system.away ?? null
         const client = this.requireClient()

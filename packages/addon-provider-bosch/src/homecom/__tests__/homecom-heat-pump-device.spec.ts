@@ -243,4 +243,65 @@ describe('HomeComHeatPumpDevice', () => {
     })
     homeComConnections.clear()
   })
+
+  it('keeps a raised fault when the next read has no notifications (unread never clears, D49)', async () => {
+    const { ctx } = rig()
+    const raised: HomeComHeatPumpReading = {
+      ...READING,
+      faults: [{ code: 'A11-1010', active: true, severity: 'error' }],
+    }
+    connect(
+      raised,
+      client(async () => snapshot(raised)),
+    )
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    await Promise.resolve()
+    expect(device.runtimeState.getCapState<ErrorStatus>('error')?.active).toBe(true)
+    homeComConnections.updateSnapshot('int-1', snapshot({ ...READING, faults: null }))
+    await Promise.resolve()
+    expect(device.runtimeState.getCapState<ErrorStatus>('error')).toMatchObject({
+      active: true,
+      code: 'A11-1010',
+    })
+    homeComConnections.updateSnapshot('int-1', snapshot({ ...READING, faults: [] }))
+    await Promise.resolve()
+    expect(device.runtimeState.getCapState<ErrorStatus>('error')?.active).toBe(false)
+    homeComConnections.clear()
+  })
+
+  it('logs the blind extra-hot-water start, with the device tag, when the charge was not read', async () => {
+    const { ctx, providers, logger } = rig()
+    const noCharge: HomeComHeatPumpReading = {
+      ...READING,
+      circuits: [
+        {
+          id: 'dhw1',
+          kind: 'dhw',
+          currentTemp: null,
+          targetTemp: null,
+          operationMode: null,
+          heatCoolMode: null,
+          summerWinter: null,
+          comfort: null,
+          eco: null,
+          maxFlow: null,
+          level: null,
+          chargeDuration: null,
+          charge: null,
+        },
+      ],
+    }
+    const api = client(async () => snapshot(noCharge))
+    connect(noCharge, api)
+    const device = new HomeComHeatPumpDevice(ctx)
+    await device.onActivate()
+    await providers['heat-pump-control']?.['startExtraHotWater']?.({ circuitId: 'dhw1' })
+    expect(api.writeHeatPump).toHaveBeenCalledWith([
+      { op: 'dhwCharge', circuitId: 'dhw1', value: 'start' },
+    ])
+    const blind = logger.info.mock.calls.find((c) => String(c[0]).includes('sent blind'))
+    expect(blind?.[1]).toMatchObject({ tags: { deviceId: 9 } })
+    homeComConnections.clear()
+  })
 })

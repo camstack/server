@@ -250,7 +250,121 @@ def test_a_history_notification_is_not_an_active_fault():
         {"code": "A11-1010", "active": True, "severity": "error"},
         {"code": "H00-2", "active": True, "severity": "warning"},
     ]
-    assert normalize_notifications([{"ccd": "1"}, "x"]) == []
+    assert normalize_notifications([]) == []
+    # a non-empty answer none of whose entries parse is unknown, never "no fault"
+    assert normalize_notifications([{"ccd": "1"}, "x"]) is None
+    mixed = normalize_notifications([{"ccd": "1"}, {"dcd": "A1", "ccd": "2", "act": "A"}])
+    assert [f["code"] for f in mixed] == ["A1-2"]
+
+
+def test_the_error_list_envelope_is_unwrapped_and_parsed():
+    envelope = {
+        "id": "/notifications",
+        "type": "errorList",
+        "writeable": 0,
+        "values": [{"dcd": "A11", "ccd": "1010", "act": "A", "dlv": "8"}],
+    }
+    listed = notifications_from_response(200, envelope)
+    assert normalize_notifications(listed) == [
+        {"code": "A11-1010", "active": True, "severity": "error"}
+    ]
+    empty = {"id": "/notifications", "type": "errorList", "values": []}
+    assert normalize_notifications(notifications_from_response(200, empty)) == []
+
+
+def test_a_dhw_charge_read_separately_fills_the_setting_and_a_failed_read_leaves_none():
+    device = k40_device()
+    device["dhw_circuits"][0].pop("charge")
+    charge = env("stop", allowedValues=["start", "stop"], writeable=1)
+    got = normalize_reading(device, {**extras(), "charge": {"dhw1": charge}})
+    assert got["dhwCircuits"][0]["charge"]["value"] == "stop"
+    assert got["dhwCircuits"][0]["charge"]["allowed"] == ["start", "stop"]
+    for failed in ({"dhw1": None}, {"dhw1": FORBIDDEN}, {}):
+        none = normalize_reading(device, {**extras(), "charge": failed})
+        assert none["dhwCircuits"][0]["charge"] is None
+
+
+class _FakeResponse:
+    def __init__(self, status, body=None, bad_json=False):
+        self.status, self._body, self._bad = status, body, bad_json
+
+    async def json(self, content_type=None):
+        if self._bad:
+            raise ValueError("not json")
+        return self._body
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _FakeSession:
+    def __init__(self, response=None, raises=None):
+        self.response, self.raises, self.urls = response, raises, []
+
+    def get(self, url, **kwargs):
+        self.urls.append(url)
+        if self.raises is not None:
+            raise self.raises
+        return self.response
+
+
+def _stub_library():
+    """`aiohttp` and `homecom_alt.const` are not installed under test: stand-ins, restored after."""
+    import types
+
+    aiohttp = types.ModuleType("aiohttp")
+
+    class ClientError(Exception):
+        pass
+
+    aiohttp.ClientError = ClientError
+    aiohttp.ClientTimeout = lambda total: total
+    homecom = types.ModuleType("homecom_alt")
+    const = types.ModuleType("homecom_alt.const")
+    const.BOSCHCOM_DOMAIN = "https://pointt.example"
+    const.BOSCHCOM_ENDPOINT_GATEWAYS = "/pointt-api/api/v1/gateways/"
+    homecom.const = const
+    saved = {k: sys.modules.get(k) for k in ("aiohttp", "homecom_alt", "homecom_alt.const")}
+    sys.modules.update({"aiohttp": aiohttp, "homecom_alt": homecom, "homecom_alt.const": const})
+    return aiohttp, saved
+
+
+def _restore(saved):
+    for key, mod in saved.items():
+        if mod is None:
+            sys.modules.pop(key, None)
+        else:
+            sys.modules[key] = mod
+
+
+def test_the_notifications_read_is_none_on_any_failure_and_the_url_is_well_formed():
+    import asyncio
+
+    from homecom_worker import _read_notifications
+
+    aiohttp, saved = _stub_library()
+    try:
+        ok_body = {"type": "errorList", "values": []}
+        cases = [
+            (_FakeSession(_FakeResponse(200, ok_body)), []),
+            (_FakeSession(_FakeResponse(403)), None),
+            (_FakeSession(_FakeResponse(404)), None),
+            (_FakeSession(_FakeResponse(500)), None),
+            (_FakeSession(_FakeResponse(200, bad_json=True)), None),
+            (_FakeSession(raises=asyncio.TimeoutError()), None),
+            (_FakeSession(raises=aiohttp.ClientError("down")), None),
+        ]
+        for session, expected in cases:
+            got = asyncio.run(_read_notifications(session, "tok", "101"))
+            assert got == expected, (session.urls, got)
+        assert cases[0][0].urls == [
+            "https://pointt.example/pointt-api/api/v1/gateways/101/resource/notifications"
+        ]
+    finally:
+        _restore(saved)
 
 
 def test_a_setting_carries_the_gateway_step():
