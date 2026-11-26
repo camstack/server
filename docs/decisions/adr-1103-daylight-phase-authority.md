@@ -39,9 +39,18 @@ so a dropped event delays a verdict by at most the re-check.
 ## Consequences
 
 A consumer that builds its own `TimeSite` must attach the phase or it judges on the
-sun. `notification/schedule.ts` still builds a zone-only site and has no phase.
-A sensor-judged window reports its next change as now plus the re-check bound, as
-the next transition cannot be predicted.
+sun. The sun-only sites, named: `notification/schedule.ts` and the recorder's
+`addon-pipeline/src/recorder/band-engine.ts` (both build a zone-only site, and both
+judge CLOCK ranges only — they take no `TimeSpec`, so a `phase` spec cannot reach
+them), and the scheduler's preview and conflict check (`scheduler-service.ts`,
+`timeSiteOf` without a phase: a preview shows what the sun would do, the engine
+itself reads the authority). A sensor-judged window reports its next change as now
+plus the re-check bound, as the next transition cannot be predicted.
+
+A sensor that stops answering keeps its LAST verdict for `SENSOR_HOLD_MS` (30 min):
+a failed read changes nothing (D49), so a hiccup flips no phase, emits no event and
+does not reset the hysteresis and dwell. Past the hold, or when the sensor never
+produced a verdict, the sun answers and the reason is logged.
 
 ## Enforcement
 

@@ -105,11 +105,50 @@ describe('DaylightPhaseService', () => {
     expect(h.log.lines.filter((l) => l.level === 'warn')).toHaveLength(1)
   })
 
+  it('keeps the last sensor verdict across a failed read, and honours the band when it returns', async () => {
+    const t = Date.parse('2026-01-14T11:00:00Z')
+    const h = await build(t)
+    await h.service.setSettings(SENSOR)
+    h.lux.value = 5
+    h.clock.t = t + 11 * MIN
+    expect((await h.service.getPhase({})).phase?.phase).toBe('night')
+    const emitted = h.emitted.length
+
+    // The sensor goes quiet: the sun (day at midday) must NOT take over, and nothing is announced.
+    h.lux.fails = true
+    h.clock.t = t + 20 * MIN
+    const held = await h.service.getPhase({})
+    expect(held.phase).toMatchObject({ phase: 'night', source: 'sensor' })
+    expect(held.fallbackReason).toContain('holding the last sensor verdict')
+    expect(h.emitted).toHaveLength(emitted)
+
+    // It returns INSIDE the band (35 lux): still night, hysteresis honoured, no new transition.
+    h.lux.fails = false
+    h.lux.value = 35
+    h.clock.t = t + 25 * MIN
+    const back = await h.service.getPhase({})
+    expect(back.phase).toMatchObject({ phase: 'night', source: 'sensor', since: t + 11 * MIN })
+    expect(back.fallbackReason).toBeNull()
+    expect(h.emitted).toHaveLength(emitted)
+  })
+
+  it('hands over to the sun once the sensor has been silent past the hold', async () => {
+    const t = Date.parse('2026-01-14T11:00:00Z')
+    const h = await build(t)
+    await h.service.setSettings(SENSOR)
+    h.lux.fails = true
+    h.clock.t = t + 29 * MIN
+    expect((await h.service.getPhase({})).phase?.source).toBe('sensor')
+    h.clock.t = t + 31 * MIN
+    expect((await h.service.getPhase({})).phase?.source).toBe('sun')
+  })
+
   it('treats a reading that is not a number as unreadable, never as zero', async () => {
     const t = Date.parse('2026-01-14T11:00:00Z')
     const h = await build(t)
     await h.service.setSettings(SENSOR)
     h.lux.value = null
+    h.clock.t = t + 31 * MIN // past the hold: there is no verdict left to keep
     const status = await h.service.getPhase({})
     expect(status.phase?.source).toBe('sun')
     expect(status.fallbackReason).toMatch(/not a number/)

@@ -88,7 +88,7 @@ export function buildSchedulersRuntime(deps: SchedulersRuntimeDeps): SchedulersR
     host,
     targets,
     templates: templateDoorOver(deps.api),
-    conditions: conditionDoorOver(deps.api),
+    conditions: conditionDoorOver(deps.api, deps.logger.child('conditions')),
     logger: deps.logger.child('engine'),
     record: (schedulerId, trace) =>
       deps.ledger.report(schedulerOwner(schedulerId), {

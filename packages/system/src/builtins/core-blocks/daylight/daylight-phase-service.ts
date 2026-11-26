@@ -37,6 +37,14 @@ import {
 } from '@camstack/types'
 import type { DaylightSettingsRowBody } from '../record-kinds.js'
 
+/**
+ * How long a sensor that stops answering keeps its LAST verdict before the sun takes over (D49: a
+ * failed read changes nothing). A hiccup must not flip the phase, fire a transition or restart the
+ * hysteresis and dwell; a sensor gone for this long is no longer a measurement. A sensor that never
+ * produced a verdict (nothing to hold) falls back to the sun at once.
+ */
+export const SENSOR_HOLD_MS = 30 * 60_000
+
 /** The one settings row. */
 export const DAYLIGHT_SETTINGS_ROW_ID = 'settings'
 
@@ -60,6 +68,8 @@ export class DaylightPhaseService implements IDaylightPhaseProvider {
   private settings: DaylightSettings | null = null
   /** The last sensor verdict, kept only while the sensor keeps answering. */
   private lastSensor: DaylightPhaseReading | null = null
+  /** When the sensor last answered with a number; the hold window of a failed read counts from it. */
+  private lastSensorOkAt = 0
   private lastReported: DaylightPhaseReading | null = null
   private lastFallbackReason: string | null = null
   private chain: Promise<unknown> = Promise.resolve()
@@ -148,14 +158,22 @@ export class DaylightPhaseService implements IDaylightPhaseProvider {
       if (sensed.ok) {
         phase = advanceSensorPhase(this.lastSensor, settings, sensed.value, now)
         this.lastSensor = phase
+        this.lastSensorOkAt = now
       } else {
-        fallbackReason = sensed.reason
-        this.lastSensor = null
+        const held = this.lastSensor !== null && now - this.lastSensorOkAt < SENSOR_HOLD_MS
+        fallbackReason = held ? `${sensed.reason} — holding the last sensor verdict` : sensed.reason
+        if (held) {
+          phase = this.lastSensor
+        } else {
+          this.lastSensor = null
+        }
         if (fallbackReason !== this.lastFallbackReason) {
-          this.deps.logger.warn('daylight sensor unreadable — the sun answers instead', {
-            tags: { deviceId: settings.deviceId },
-            meta: { reason: fallbackReason },
-          })
+          this.deps.logger.warn(
+            held
+              ? 'daylight sensor unreadable — holding the last verdict'
+              : 'daylight sensor unreadable — the sun answers instead',
+            { tags: { deviceId: settings.deviceId }, meta: { reason: sensed.reason } },
+          )
         }
       }
     }

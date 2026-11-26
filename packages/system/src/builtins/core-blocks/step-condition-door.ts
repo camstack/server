@@ -16,7 +16,9 @@ import {
   collectWhenMirrorSources,
   type EvaluateStepCondition,
   evaluateStepCondition,
+  errMsg,
   hasTimeLeaves,
+  type IScopedLogger,
   siteFor,
   siteWithPhase,
   stableIdMapOf,
@@ -27,7 +29,10 @@ import {
 /** Builds the evaluator for one run, bound to the devices its caller may read (`undefined` = all). */
 export type StepConditionDoor = (readable?: readonly number[]) => EvaluateStepCondition
 
-export function conditionDoorOver(api: () => AddonApi | undefined): StepConditionDoor {
+export function conditionDoorOver(
+  api: () => AddonApi | undefined,
+  logger?: IScopedLogger,
+): StepConditionDoor {
   return (readable) => async (when) => {
     const current = api()
     if (current === undefined) {
@@ -56,7 +61,12 @@ export function conditionDoorOver(api: () => AddonApi | undefined): StepConditio
         const phase = await Promise.resolve()
           .then(() => current.daylightPhase.getPhase.query({}))
           .then((status) => status.phase)
-          .catch(() => null)
+          .catch((err: unknown) => {
+            logger?.warn('step guard: the daylight phase is unreadable — the sun answers', {
+              meta: { error: errMsg(err) },
+            })
+            return null
+          })
         site = siteWithPhase(siteFor(reading) ?? zoneOnlySite(reading.timeZone), { phase })
       } catch (error) {
         return {

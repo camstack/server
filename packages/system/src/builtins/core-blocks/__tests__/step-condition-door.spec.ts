@@ -6,6 +6,7 @@
 import type { AddonApi, AutomationWhen, DaylightPhaseReading, SiteReading } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { conditionDoorOver } from '../step-condition-door.js'
+import { recordingLogger } from './fixtures.js'
 
 const ROME: SiteReading = {
   location: { latitude: 41.9, longitude: 12.5 },
@@ -131,6 +132,11 @@ describe('conditionDoorOver — a time-is guard', () => {
         },
       },
     })
-    expect((await conditionDoorOver(() => api)()(NIGHT_PRESET)).result).toBe('false')
+    const log = recordingLogger()
+    expect((await conditionDoorOver(() => api, log.logger)()(NIGHT_PRESET)).result).toBe('false')
+    // The fallback is never silent.
+    expect(
+      log.lines.some((l) => l.level === 'warn' && JSON.stringify(l).includes('authority down')),
+    ).toBe(true)
   })
 })

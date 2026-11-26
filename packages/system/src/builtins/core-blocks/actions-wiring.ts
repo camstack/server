@@ -179,7 +179,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     boundCaps: deps.boundCaps ?? boundCapsOver(deps.api),
     invokeCap: invokeCapOver(deps.api),
     templates: templateDoorOver(deps.api),
-    conditions: conditionDoorOver(deps.api),
+    conditions: conditionDoorOver(deps.api, deps.logger.child('conditions')),
     effects: {
       fetch: globalThis.fetch,
       connect: tcpConnect,

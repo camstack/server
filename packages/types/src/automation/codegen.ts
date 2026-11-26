@@ -1011,7 +1011,7 @@ ${
     try {
       const reading = await ctx.api.system.getSiteLocation.query()
       // the daylight authority's phase; an unreadable one is the sun (the authority logs why)
-      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch(() => null)
+      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch((error) => { ctx.logger.warn('daylight phase unreadable — the sun answers', { error: error instanceof Error ? error.message : String(error) }); return null })
       site = siteWithPhase(siteFor(reading) ?? zoneOnlySite(reading.timeZone), { phase })
     } catch (error) {
       ctx.logger.warn('site clock not refreshed — keeping the previous one', {
@@ -1092,7 +1092,7 @@ ${
         ctx.logger.warn('schedule not armed: ' + checked.message, { leaf, reason: checked.reason })
         return null
       }
-      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch(() => null)
+      const phase = await Promise.resolve().then(() => ctx.api.daylightPhase.getPhase.query({})).then((status) => status.phase).catch((error) => { ctx.logger.warn('daylight phase unreadable — the sun answers', { error: error instanceof Error ? error.message : String(error) }); return null })
       const site = siteWithPhase(checked.site ?? zoneOnlySite(reading.timeZone), { phase })
       const next = nextOccurrence(spec, Date.now(), site, days === undefined ? {} : { days })
       if (next === null) ctx.logger.info('schedule has no further occurrence', { leaf })
