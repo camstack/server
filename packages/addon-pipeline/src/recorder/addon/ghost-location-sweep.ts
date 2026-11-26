@@ -135,7 +135,31 @@ export type GhostSkipReason =
 /** Why a whole pass did nothing at all. */
 export type GhostPassRefusal =
   /** `storage.listLocations` resolved nothing — every id looks like a ghost. */
-  'no-resolvable-location'
+  | 'no-resolvable-location'
+  /** Another pass (automatic or the operator's action) is still running. */
+  | 'already-running'
+  /** The recorder is not ready on this node: no ledger, no sweeper armed. */
+  | 'not-armed'
+
+/** What one pass did (or, in a dry run, WOULD do) to one camera's ghost hours. */
+export interface GhostDeviceReport {
+  readonly deviceId: number
+  readonly repointedHours: number
+  readonly repointedSegments: number
+  /** The locations the hours are (or would be) repointed to. */
+  readonly repointedTo: readonly string[]
+  readonly forgottenHours: number
+  readonly forgottenSegments: number
+  readonly forgottenBytes: number
+  readonly skippedHours: number
+  readonly skipReasons: readonly GhostSkipReason[]
+  readonly probes: number
+}
+
+/** Options of one pass. `apply: false` lists, decides and reports — and writes nothing. */
+export interface GhostSweepOptions {
+  readonly apply: boolean
+}
 
 /** One physical root a ghost path may be probed against, with its aliases. */
 export interface GhostProbeRoot {
@@ -147,6 +171,10 @@ export interface GhostProbeRoot {
 
 /** What one pass examined, changed and refused. */
 export interface GhostSweepResult {
+  /** True when the pass wrote; false for a dry run, whose counts are what it WOULD do. */
+  readonly applied: boolean
+  /** Per camera, ordered by deviceId. */
+  readonly devices: readonly GhostDeviceReport[]
   /** The unresolvable location ids the ledger currently holds rows for. */
   readonly ghostLocations: readonly string[]
   /** Ghost hour rows the ledger holds, across every ghost location. */
@@ -276,6 +304,31 @@ type HourVerdict =
   | { readonly kind: 'absent' }
   | { readonly kind: 'refused'; readonly reason: GhostSkipReason; readonly detail: string }
 
+function emptyResult(
+  applied: boolean,
+  ghostLocations: readonly string[],
+  skippedByReason: Readonly<Record<GhostSkipReason, number>>,
+  refused: GhostPassRefusal | null,
+): GhostSweepResult {
+  return {
+    applied,
+    devices: [],
+    ghostLocations,
+    ghostHours: 0,
+    hoursExamined: 0,
+    hoursRepointed: 0,
+    hoursForgotten: 0,
+    segmentsRepointed: 0,
+    segmentsForgotten: 0,
+    bytesForgotten: 0,
+    hoursSkipped: 0,
+    skippedByReason,
+    probes: 0,
+    hoursDeferred: 0,
+    refused,
+  }
+}
+
 /** Per-device tallies, so the summary names cameras instead of rows. */
 interface DeviceTally {
   repointedHours: number
@@ -327,7 +380,31 @@ function zeroReasons(): Record<GhostSkipReason, number> {
 export class GhostLocationSweeper {
   constructor(private readonly deps: GhostLocationSweepDeps) {}
 
-  async sweep(): Promise<GhostSweepResult> {
+  private running = false
+
+  /**
+   * One pass. `apply: false` runs every read (the listings are the only I/O)
+   * and reaches the same verdicts, but touches neither the ledger nor the
+   * index: the counts it returns and logs are exactly what `apply: true` would
+   * do over the same rows. One pass at a time — a second call is refused.
+   */
+  async sweep(options: GhostSweepOptions): Promise<GhostSweepResult> {
+    if (this.running) {
+      this.deps.logger.warn(
+        'recorder: ghost-location reconcile skipped — a pass is already running',
+      )
+      return emptyResult(options.apply, [], zeroReasons(), 'already-running')
+    }
+    this.running = true
+    try {
+      return await this.runPass(options.apply)
+    } finally {
+      this.running = false
+    }
+  }
+
+  private async runPass(apply: boolean): Promise<GhostSweepResult> {
+    const mode = apply ? 'apply' : 'dry-run'
     const maxHours = this.deps.maxHoursPerPass ?? GHOST_MAX_HOURS_PER_PASS
     const maxProbes = this.deps.maxProbesPerPass ?? GHOST_MAX_PROBES_PER_PASS
     const skippedByReason = zeroReasons()
@@ -342,21 +419,7 @@ export class GhostLocationSweeper {
         'recorder: ghost-location reconcile did NOTHING — no recordings location resolves, so every ledger row looks like a ghost and none of them can be confirmed',
         { meta: { heldHours: this.deps.ledger.snapshot().length } },
       )
-      return {
-        ghostLocations: [],
-        ghostHours: 0,
-        hoursExamined: 0,
-        hoursRepointed: 0,
-        hoursForgotten: 0,
-        segmentsRepointed: 0,
-        segmentsForgotten: 0,
-        bytesForgotten: 0,
-        hoursSkipped: 0,
-        skippedByReason,
-        probes: 0,
-        hoursDeferred: 0,
-        refused: 'no-resolvable-location',
-      }
+      return emptyResult(apply, [], skippedByReason, 'no-resolvable-location')
     }
 
     const resolvable = new Set(locations.map((l) => l.id))
@@ -370,21 +433,7 @@ export class GhostLocationSweeper {
       this.deps.logger.debug('recorder: ghost-location reconcile — nothing to reconcile', {
         meta: { locations: [...resolvable].toSorted(), roots: roots.length },
       })
-      return {
-        ghostLocations,
-        ghostHours: 0,
-        hoursExamined: 0,
-        hoursRepointed: 0,
-        hoursForgotten: 0,
-        segmentsRepointed: 0,
-        segmentsForgotten: 0,
-        bytesForgotten: 0,
-        hoursSkipped: 0,
-        skippedByReason,
-        probes: 0,
-        hoursDeferred: 0,
-        refused: null,
-      }
+      return emptyResult(apply, ghostLocations, skippedByReason, null)
     }
 
     // A writer could still be finalizing into the newest hour. Nothing WRITES
@@ -456,8 +505,10 @@ export class GhostLocationSweeper {
         // index of footage that exists (D291). What moves is what the found
         // directory actually HOLDS, never what the ghost row said it held: the
         // listing is the authority for which segments exist (D523).
-        await this.deps.ledger.repointSegments(rows, target.id)
-        this.deps.applyToIndex(rows, target.id)
+        if (apply) {
+          await this.deps.ledger.repointSegments(rows, target.id)
+          this.deps.applyToIndex(rows, target.id)
+        }
         repointedHours += 1
         segmentsRepointed += rows.length
         const tally = tallyOf(row.deviceId)
@@ -469,17 +520,22 @@ export class GhostLocationSweeper {
 
       // Every candidate root listed this hour and every one of them came back
       // EMPTY. That is the trusted walk D148 asks for, done once per root.
-      const forgotten = await this.deps.ledger.forgetHour(
-        row.deviceId,
-        row.profile,
-        row.locationId,
-        row.hourStartMs,
-      )
-      if (this.deps.ledger.knowsHour(row.deviceId, row.profile, row.locationId, row.hourStartMs)) {
-        refuse(row, 'durable-refused', 'the ledger still holds the hour after the forget')
-        continue
+      let forgotten = row.segments
+      if (apply) {
+        forgotten = await this.deps.ledger.forgetHour(
+          row.deviceId,
+          row.profile,
+          row.locationId,
+          row.hourStartMs,
+        )
+        if (
+          this.deps.ledger.knowsHour(row.deviceId, row.profile, row.locationId, row.hourStartMs)
+        ) {
+          refuse(row, 'durable-refused', 'the ledger still holds the hour after the forget')
+          continue
+        }
+        this.deps.forgetInIndex(row.deviceId, row.locationId, row.hourStartMs)
       }
-      this.deps.forgetInIndex(row.deviceId, row.locationId, row.hourStartMs)
       forgottenHours += 1
       segmentsForgotten += forgotten
       bytesForgotten += row.bytes
@@ -489,25 +545,46 @@ export class GhostLocationSweeper {
       tally.forgottenBytes += row.bytes
     }
 
-    for (const [deviceId, tally] of byDevice) {
-      this.deps.logger.info('recorder: ghost-location reconcile — camera summary', {
-        tags: { deviceId },
-        meta: {
-          repointedHours: tally.repointedHours,
-          repointedSegments: tally.repointedSegments,
-          repointedTo: [...tally.targets].toSorted(),
-          forgottenHours: tally.forgottenHours,
-          forgottenSegments: tally.forgottenSegments,
-          forgottenBytes: tally.forgottenBytes,
-          skippedHours: tally.skipped,
-          skipReasons: [...tally.reasons].toSorted(),
-          probes: tally.probes,
-        },
+    const devices: GhostDeviceReport[] = []
+    for (const [deviceId, tally] of [...byDevice].toSorted((a, b) => a[0] - b[0])) {
+      devices.push({
+        deviceId,
+        repointedHours: tally.repointedHours,
+        repointedSegments: tally.repointedSegments,
+        repointedTo: [...tally.targets].toSorted(),
+        forgottenHours: tally.forgottenHours,
+        forgottenSegments: tally.forgottenSegments,
+        forgottenBytes: tally.forgottenBytes,
+        skippedHours: tally.skipped,
+        skipReasons: [...tally.reasons].toSorted(),
+        probes: tally.probes,
       })
+      this.deps.logger.info(
+        apply
+          ? 'recorder: ghost-location reconcile — camera summary'
+          : 'recorder: ghost-location dry-run — camera WOULD change (nothing written)',
+        {
+          tags: { deviceId },
+          meta: {
+            mode,
+            repointedHours: tally.repointedHours,
+            repointedSegments: tally.repointedSegments,
+            repointedTo: [...tally.targets].toSorted(),
+            forgottenHours: tally.forgottenHours,
+            forgottenSegments: tally.forgottenSegments,
+            forgottenBytes: tally.forgottenBytes,
+            skippedHours: tally.skipped,
+            skipReasons: [...tally.reasons].toSorted(),
+            probes: tally.probes,
+          },
+        },
+      )
     }
 
     const deferred = ghosts.length - examined
     const result: GhostSweepResult = {
+      applied: apply,
+      devices,
       ghostLocations,
       ghostHours: ghosts.length,
       hoursExamined: examined,
@@ -522,23 +599,29 @@ export class GhostLocationSweeper {
       hoursDeferred: deferred,
       refused: null,
     }
-    this.deps.logger.info('recorder: ghost-location reconcile complete', {
-      meta: {
-        ghostLocations,
-        ghostHours: result.ghostHours,
-        examined,
-        repointedHours,
-        repointedSegments: segmentsRepointed,
-        forgottenHours,
-        forgottenSegments: segmentsForgotten,
-        forgottenBytes: bytesForgotten,
-        skippedHours: skipped,
-        skippedByReason,
-        probes,
-        deferredHours: deferred,
-        roots: roots.length,
+    this.deps.logger.info(
+      apply
+        ? 'recorder: ghost-location reconcile complete'
+        : 'recorder: ghost-location dry-run complete — nothing written',
+      {
+        meta: {
+          mode,
+          ghostLocations,
+          ghostHours: result.ghostHours,
+          examined,
+          repointedHours,
+          repointedSegments: segmentsRepointed,
+          forgottenHours,
+          forgottenSegments: segmentsForgotten,
+          forgottenBytes: bytesForgotten,
+          skippedHours: skipped,
+          skippedByReason,
+          probes,
+          deferredHours: deferred,
+          roots: roots.length,
+        },
       },
-    })
+    )
     return result
   }
 

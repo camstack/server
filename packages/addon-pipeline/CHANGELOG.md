@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Recorder: the ghost-location sweep now also runs ten minutes after boot, and its automatic pass only reports; the new ghostLocationSweep action (apply false by default) shows per camera what it would repoint or forget, apply true does it. A dry run is an upper bound on forgets, and every pass takes the same first 16 hours (the rest are reported as deferred).
+
 ## [1.2.689] - 2026-11-26
 
 ### Changed

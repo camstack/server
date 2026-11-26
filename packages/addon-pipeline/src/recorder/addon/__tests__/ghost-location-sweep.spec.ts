@@ -246,6 +246,82 @@ function harness(options: HarnessOptions = {}): Harness {
   }
 }
 
+describe('GhostLocationSweeper — dry run versus apply', () => {
+  /** One repointable hour (camera 104: its files are under /recordings) and one
+   *  whose every root lists empty (camera 105). */
+  function fixture(): Harness {
+    return harness({
+      rows: [
+        ghostRow(104, 'high', paths(104, 'high', 3)),
+        ghostRow(105, 'high', paths(105, 'high', 2)),
+      ],
+      locations: [RECORDINGS, LOW_SSD],
+      listing: (locationId, deviceId, profile): HourListing =>
+        deviceId === 104 && locationId === 'recordings:default' ? paths(104, profile, 3) : [],
+    })
+  }
+
+  it('a dry run changes NOTHING and reports per camera what apply would do', async () => {
+    const h = fixture()
+    const before = [...h.ledger.rows.keys()].toSorted()
+    const result = await h.sweeper.sweep({ apply: false })
+
+    expect([...h.ledger.rows.keys()].toSorted()).toEqual(before)
+    expect(h.ledger.repointed).toHaveLength(0)
+    expect(h.ledger.forgotten).toHaveLength(0)
+    expect(h.applyToIndex).not.toHaveBeenCalled()
+    expect(h.forgetInIndex).not.toHaveBeenCalled()
+    expect(result.applied).toBe(false)
+    expect(result.hoursRepointed).toBe(1)
+    expect(result.segmentsRepointed).toBe(3)
+    expect(result.hoursForgotten).toBe(1)
+    expect(result.segmentsForgotten).toBe(2)
+    expect(result.devices).toEqual([
+      expect.objectContaining({
+        deviceId: 104,
+        repointedHours: 1,
+        repointedTo: ['recordings:default'],
+        forgottenHours: 0,
+      }),
+      expect.objectContaining({ deviceId: 105, repointedHours: 0, forgottenHours: 1 }),
+    ])
+    expect(h.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('dry-run'),
+      expect.objectContaining({ tags: { deviceId: 104 } }),
+    )
+  })
+
+  it('apply repoints exactly the row a dry run named and forgets exactly the other', async () => {
+    const dry = await fixture().sweeper.sweep({ apply: false })
+    const h = fixture()
+    const result = await h.sweeper.sweep({ apply: true })
+
+    expect(result.applied).toBe(true)
+    expect(result.hoursRepointed).toBe(dry.hoursRepointed)
+    expect(result.hoursForgotten).toBe(dry.hoursForgotten)
+    expect(h.ledger.repointed.map((r) => r.to)).toEqual(['recordings:default'])
+    expect(h.ledger.forgotten.map((f) => f.deviceId)).toEqual([105])
+    expect(h.ledger.rows.has(segmentHourKey(104, 'high', 'recordings:default', GHOST_HOUR))).toBe(
+      true,
+    )
+    expect(h.ledger.rows.has(segmentHourKey(105, 'high', GHOST_ID, GHOST_HOUR))).toBe(false)
+  })
+
+  it('refuses a second pass while one is running', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const h = fixture()
+    h.pace.mockImplementation(() => gate)
+    const first = h.sweeper.sweep({ apply: false })
+    const second = await h.sweeper.sweep({ apply: false })
+    expect(second.refused).toBe('already-running')
+    release()
+    await first
+  })
+})
+
 describe('ghostProbeRoots', () => {
   it('collapses aliases of ONE physical root into a single probe target', () => {
     const roots = ghostProbeRoots([RECORDINGS, RECORDINGS_LOW, LOW_SSD], REALPATH)
@@ -267,7 +343,7 @@ describe('ghostProbeRoots', () => {
 describe('GhostLocationSweeper — the pass refuses before it acts', () => {
   it('does NOTHING and says so when no location resolves', async () => {
     const h = harness({ rows: [ghostRow(104, 'high', paths(104, 'high', 3))], locations: [] })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.refused).toBe('no-resolvable-location')
     expect(h.listHour).not.toHaveBeenCalled()
@@ -284,7 +360,7 @@ describe('GhostLocationSweeper — the pass refuses before it acts', () => {
   it('never examines a row whose location DOES resolve', async () => {
     const healthy = ghostRow(104, 'high', paths(104, 'high', 5), 'recordings:default')
     const h = harness({ rows: [healthy] })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.ghostHours).toBe(0)
     expect(result.probes).toBe(0)
@@ -293,7 +369,7 @@ describe('GhostLocationSweeper — the pass refuses before it acts', () => {
 
   it('refuses an hour whose row accounts for no segments — there is nothing to confirm', async () => {
     const h = harness({ rows: [ghostRow(104, 'high', [])] })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['no-paths']).toBe(1)
     expect(result.hoursForgotten).toBe(0)
@@ -306,7 +382,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
   it('forgets an hour only after every candidate root listed it empty', async () => {
     const rowPaths = paths(104, 'high', 4)
     const h = harness({ rows: [ghostRow(104, 'high', rowPaths)] })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursForgotten).toBe(1)
     expect(result.segmentsForgotten).toBe(4)
@@ -330,7 +406,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
       rows: [ghostRow(104, 'high', paths(104, 'high', 3))],
       locations: [RECORDINGS, RECORDINGS_LOW, LOW_SSD],
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursForgotten).toBe(1)
     expect(result.probes).toBe(2)
@@ -348,7 +424,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
         return []
       },
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursForgotten).toBe(0)
     expect(result.skippedByReason['probe-error']).toBe(1)
@@ -363,7 +439,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
       locations: [RECORDINGS, LOW_SSD],
       listing: (locationId): HourListing => (locationId === 'recordingsLow:ssd' ? null : []),
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['detail-unavailable']).toBe(1)
     expect(result.hoursForgotten).toBe(0)
@@ -377,7 +453,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
       rows: [ghostRow(104, 'high', paths(104, 'high', 2))],
       listing: (): HourListing => [...paths(104, 'high', 2), foreign],
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['unparseable-paths']).toBe(1)
     expect(h.ledger.repointed).toHaveLength(0)
@@ -389,7 +465,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
     const ledger = new FakeLedger([ghostRow(104, 'high', paths(104, 'high', 2))])
     ledger.forgetRefuses = true
     const h = harness({ ledger })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(h.ledger.forgotten).toHaveLength(1)
     expect(result.hoursForgotten).toBe(0)
@@ -426,7 +502,7 @@ describe('GhostLocationSweeper — forget requires EVERY root to answer EMPTY', 
       pace: () => Promise.resolve(),
       realpath: REALPATH,
     })
-    await sweeper.sweep()
+    await sweeper.sweep({ apply: true })
 
     expect(order).toEqual(['durable', 'index'])
   })
@@ -449,7 +525,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       rows: [ghostRow(102, 'high', rowPaths)],
       listing: (locationId): HourListing => (locationId === 'recordings:default' ? rowPaths : []),
     })
-    await h.sweeper.sweep()
+    await h.sweeper.sweep({ apply: true })
 
     expect(h.ledger.forgotten).toEqual([])
     expect(h.forgetInIndex).not.toHaveBeenCalled()
@@ -464,7 +540,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       rows: [source],
       listing: (locationId): HourListing => (locationId === 'recordings:default' ? rowPaths : []),
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursRepointed).toBe(1)
     expect(result.segmentsRepointed).toBe(6)
@@ -492,7 +568,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       rows: [ghostRow(619, 'high', rowPaths)],
       listing: (locationId): HourListing => (locationId === 'recordings:default' ? onDisk : []),
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursRepointed).toBe(1)
     expect(result.segmentsRepointed).toBe(4)
@@ -512,7 +588,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       // stopped at the hit would show up as one listing instead of two.
       listing: (locationId): HourListing => (locationId === 'recordingsLow:ssd' ? rowPaths : []),
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursRepointed).toBe(1)
     // Two physical roots, two listings: short-circuiting on the first hit would
@@ -529,7 +605,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       listing: (locationId): HourListing =>
         locationId === 'recordings:default' && survivor !== undefined ? [survivor] : [],
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursRepointed).toBe(1)
     expect(result.hoursForgotten).toBe(0)
@@ -544,7 +620,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       rows: [ghostRow(592, 'low', lowPaths, 'recordingsLow:archived')],
       listing: (): HourListing => lowPaths,
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursRepointed).toBe(1)
     expect(h.ledger.repointed[0]?.to).toBe('recordingsLow:default')
@@ -559,7 +635,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       locations: [RECORDINGS, LOW_SSD],
       listing: (): HourListing => rowPaths,
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['found-at-multiple-roots']).toBe(1)
     expect(h.ledger.repointed).toHaveLength(0)
@@ -594,7 +670,7 @@ describe('GhostLocationSweeper — an hour that still EXISTS is REPOINTED, never
       pace: () => Promise.resolve(),
       realpath: REALPATH,
     })
-    await sweeper.sweep()
+    await sweeper.sweep({ apply: true })
 
     expect(order).toEqual(['durable', 'index'])
   })
@@ -612,7 +688,7 @@ describe('GhostLocationSweeper — bounded and paced', () => {
       ),
     )
     const h = harness({ rows, maxHoursPerPass: 3 })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.ghostHours).toBe(9)
     expect(result.hoursExamined).toBe(3)
@@ -626,7 +702,7 @@ describe('GhostLocationSweeper — bounded and paced', () => {
       ghostRow(104, 'high', paths(104, 'high', 1, hour), GHOST_ID, hour),
     )
     const h = harness({ rows, maxHoursPerPass: 1 })
-    await h.sweeper.sweep()
+    await h.sweeper.sweep({ apply: true })
 
     expect(h.ledger.forgotten[0]?.hour).toBe(GHOST_HOUR)
   })
@@ -639,7 +715,7 @@ describe('GhostLocationSweeper — bounded and paced', () => {
       locations: [RECORDINGS, LOW_SSD, ...manyRoots(1)],
       maxProbesPerPass: 1,
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['probe-budget']).toBe(1)
     expect(result.hoursForgotten).toBe(0)
@@ -652,7 +728,7 @@ describe('GhostLocationSweeper — bounded and paced', () => {
     const h = harness({
       rows: [ghostRow(104, 'high', paths(104, 'high', 2, liveHour), GHOST_ID, liveHour)],
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.skippedByReason['live-tail']).toBe(1)
     expect(h.listHour).not.toHaveBeenCalled()
@@ -667,7 +743,7 @@ describe('GhostLocationSweeper — bounded and paced', () => {
       rows: [ghostRow(104, 'high', paths(104, 'high', 4))],
       locations: manyRoots(GHOST_PROBE_BATCH * 2),
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.probes).toBe(GHOST_PROBE_BATCH * 2)
     expect(h.pace).toHaveBeenCalledTimes(2)
@@ -683,7 +759,7 @@ describe('GhostLocationSweeper — it is loud about what it did', () => {
         ghostRow(102, 'high', paths(102, 'high', 5)),
       ],
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.hoursForgotten).toBe(3)
     const perCamera = h.logger.info.mock.calls.filter(
@@ -701,7 +777,7 @@ describe('GhostLocationSweeper — it is loud about what it did', () => {
       rows: [ghostRow(592, 'high', paths(592, 'high', 2), 'recordings:gone')],
       listing: (): HourListing => null,
     })
-    const result = await h.sweeper.sweep()
+    const result = await h.sweeper.sweep({ apply: true })
 
     expect(result.ghostLocations).toEqual(['recordings:gone'])
     const summary = h.logger.info.mock.calls.find(
@@ -717,7 +793,6 @@ describe('the recorder addon arms the reconcile on the SLOWEST cadence it has', 
   // vitest runs from the package dir (nx) or the repo root.
   const here = dirname(fileURLToPath(import.meta.url))
   const addon = readFileSync(resolve(here, '../index.ts'), 'utf8')
-  const periodic = readFileSync(resolve(here, '../periodic-pass.ts'), 'utf8')
 
   const intervalOf = (name: string): number => {
     const match = new RegExp(`const ${name} = ([^\\n]+)`).exec(addon)
@@ -744,15 +819,16 @@ describe('the recorder addon arms the reconcile on the SLOWEST cadence it has', 
     expect(ghost).toBeGreaterThan(intervalOf('EXPORT_SWEEP_INTERVAL_MS'))
   })
 
-  it('does NOT run at boot — the pass primitive it uses fires on the interval only', () => {
-    expect(addon).toContain("name: 'ghost-location-reconcile'")
-    expect(addon).toContain('GHOST_LOCATION_SWEEP_INTERVAL_MS')
-    // The retention sweeper deliberately ticks immediately on `start()`; this
-    // one must not, because boot is when the staging reconcile, the ledger load
-    // and the first retention sweep are already contending for the array.
-    const armed = periodic.slice(periodic.indexOf('export function startPeriodicPass'))
-    expect(armed).toContain('setInterval(fire, deps.intervalMs)')
-    expect(armed).not.toMatch(/^\s*fire\(\)$/m)
+  it('schedules a FIRST pass after boot, so a daily pass is not starved by nightly restarts', () => {
+    const block = addon.slice(addon.indexOf("name: 'ghost-location-reconcile'"))
+    expect(block.slice(0, 400)).toContain(
+      'firstRunDelayMs: GHOST_LOCATION_SWEEP_FIRST_RUN_DELAY_MS',
+    )
+  })
+
+  it('the automatic pass is a DRY RUN; only the operator action applies', () => {
+    expect(addon).toContain('GHOST_AUTO_PASS_APPLIES = false')
+    expect(addon).toContain('sweeper.sweep({ apply: GHOST_AUTO_PASS_APPLIES })')
   })
 
   it('is stopped on shutdown, so a respawn never leaves a probe loop behind', () => {

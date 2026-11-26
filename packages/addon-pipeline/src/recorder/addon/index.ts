@@ -130,7 +130,11 @@ import { requireReadableLocation } from './location-resolve.js'
  * Hub harvests this named export into CustomActionRegistry. Actions that
  * exist only on the onInitialize envelope stay invisible to `addons.custom`.
  */
-export const customActions = { ...recorderDebugActions, ...locationDiscardActions }
+export const customActions = {
+  ...recorderDebugActions,
+  ...locationDiscardActions,
+  ...ghostSweepActions,
+}
 
 import { createRecordingConfigMirror, type RecordingConfigMirror } from './config-mirror.js'
 import { ExportEngine } from './export-engine.js'
@@ -148,6 +152,12 @@ import {
 import { recorderRecordKinds } from './record-kinds.js'
 import { renderClip, renderGif } from './footage-render.js'
 import { GhostLocationSweeper } from './ghost-location-sweep.js'
+import {
+  ghostSweepActions,
+  ghostSweepUnavailable,
+  type GhostLocationSweepInput,
+  type GhostSweepActions,
+} from './ghost-sweep-actions.js'
 import { runAdoptionCatchUp } from './hour-adoption-catchup.js'
 import { HourAdoptionSweeper } from './hour-adoption-sweep.js'
 import { AVAILABILITY_REPORT_INTERVAL_MS, reportAvailability } from './availability-report.js'
@@ -332,11 +342,27 @@ const REDUNDANCY_SWEEP_LOOKBACK_MS = 2 * REDUNDANCY_SWEEP_INTERVAL_MS
  * to do". Daily, bounded per pass, converges the live 32-row backlog in two
  * passes and is invisible the rest of the time.
  *
- * It also does NOT run at boot: `startPeriodicPass` fires on the interval only,
- * and boot is when the staging reconcile, the ledger load and the first
- * retention sweep are already contending for the same array.
+ * It DOES get a first pass shortly after boot
+ * (`GHOST_LOCATION_SWEEP_FIRST_RUN_DELAY_MS`, after the staging reconcile and
+ * the ledger load have settled): a hub stopped every night never reached the
+ * first 24 h tick. That automatic pass is a dry run; see
+ * `GHOST_AUTO_PASS_APPLIES`.
  */
 const GHOST_LOCATION_SWEEP_INTERVAL_MS = 24 * 60 * 60_000
+/**
+ * The first ghost pass runs this long after the pass is armed (after the ledger
+ * and locations are hydrated). Without it a daily pass never ran on a hub that
+ * is stopped every night: the 24 h timer never reached its first tick (26 days,
+ * 425 rows left pointing at a location the hub no longer has).
+ */
+const GHOST_LOCATION_SWEEP_FIRST_RUN_DELAY_MS = 10 * 60_000
+/**
+ * Whether the AUTOMATIC pass (boot + daily) writes. It does not: until the
+ * operator has read a dry-run report, only the `ghostLocationSweep` action with
+ * `apply: true` repoints or forgets. Flip only after the operator approves
+ * automatic repair.
+ */
+const GHOST_AUTO_PASS_APPLIES = false
 /** A ghost pass longer than this is reported with its duration. Bounded work
  *  (16 hours, 4 000 probes) on a slow array — minutes is normal, an hour is
  *  not. */
@@ -675,6 +701,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
   /** Daily ghost-location reconcile: durable hour rows stamped with a location
    *  the storage record no longer has. Armed in `onHubReachable`. */
   private ghostLocationPass: PeriodicPassHandle | null = null
+  /** The sweeper behind the pass, kept for the `ghostLocationSweep` action. */
+  private ghostSweeper: GhostLocationSweeper | null = null
   private hourAdoptionPass: PeriodicPassHandle | null = null
   /** The 30-minute per-camera availability line (planning#721). */
   private availabilityReportPass: PeriodicPassHandle | null = null
@@ -721,7 +749,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
   }
 
   protected async onInitialize(): Promise<
-    AddonInitResult<RecorderDebugActions & LocationDiscardActions>
+    AddonInitResult<RecorderDebugActions & LocationDiscardActions & GhostSweepActions>
   > {
     // This process's `loopMax` rises 0 → 242 → 898 → 2627 ms in lockstep with
     // its own `heapUsed` and plateaus with it, while every periodic pass ran at
@@ -1905,8 +1933,17 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     })
     return {
       providers,
-      customActions: { ...recorderDebugActions, ...locationDiscardActions },
+      customActions: { ...recorderDebugActions, ...locationDiscardActions, ...ghostSweepActions },
       actionHandlers: {
+        ghostLocationSweep: async (input: GhostLocationSweepInput) => {
+          if (this.ghostSweeper === null || this.ghostSweeper === undefined) {
+            this.ctx.logger.warn(
+              'ghostLocationSweep refused: not-armed (recorder not ready on this node)',
+            )
+            return ghostSweepUnavailable(input.apply)
+          }
+          return this.ghostSweeper.sweep({ apply: input.apply })
+        },
         'debug.storeCensus': async (input: DebugStoreCensusInput) =>
           handleStoreCensusAction(this.readCensus, this.ctx.logger.child('Census'), input),
         'storage.discardLocation': async (input: DiscardStartInput) =>
@@ -1966,6 +2003,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     this.redundancySweeper = null
     this.ghostLocationPass?.stop()
     this.ghostLocationPass = null
+    this.ghostSweeper = null
     this.hourAdoptionPass?.stop()
     this.hourAdoptionPass = null
     this.availabilityReportPass?.stop()
@@ -2526,8 +2564,8 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     // the eviction domain is built from CURRENT ids so they are never victim
     // candidates, and there is no root to walk, which is why D148's
     // walk-or-eviction confirmation cannot reach them either. Daily, bounded,
-    // and it starts NOTHING at boot (`startPeriodicPass` fires on the interval
-    // only). See `ghost-location-sweep.ts` for why a listing of the hour
+    // with a first pass shortly after boot, and the automatic pass only
+    // REPORTS (a dry run; the `ghostLocationSweep` action applies). See `ghost-location-sweep.ts` for why a listing of the hour
     // DIRECTORY at every resolvable root IS the trusted confirmation.
     const ledger = this.segmentHours
     if (ledger && this.ghostLocationPass === null) {
@@ -2546,13 +2584,15 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
         now: () => Date.now(),
         pace: () => sleep(GHOST_LOCATION_PROBE_PAUSE_MS),
       })
+      this.ghostSweeper = sweeper
       this.ghostLocationPass = startPeriodicPass({
         name: 'ghost-location-reconcile',
+        firstRunDelayMs: GHOST_LOCATION_SWEEP_FIRST_RUN_DELAY_MS,
         intervalMs: GHOST_LOCATION_SWEEP_INTERVAL_MS,
         slowAfterMs: GHOST_LOCATION_SWEEP_SLOW_AFTER_MS,
         heapProbe: this.heapProbe,
         run: async () => {
-          await sweeper.sweep()
+          await sweeper.sweep({ apply: GHOST_AUTO_PASS_APPLIES })
         },
         logger: this.ctx.logger,
       })
