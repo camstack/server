@@ -45,14 +45,35 @@ const IDENTITY_MIN_INTERVAL_MS = 15_000
 /** Counter steps kept per device: enough for the last windows, bounded in memory. */
 const COUNTER_SAMPLES_KEPT = 24
 
-/** The samples with `value` appended when it is a new step of the counter (a repeat adds none). */
+/**
+ * The samples with `value` appended when it is a new step of the counter (a repeat adds none).
+ * The first value seen after a start was not observed to CHANGE, so its poll time says nothing
+ * about when the counter stepped: for the counter that anchors a window (`anchors`) it is held
+ * back in `first` and never becomes a sample, and the window starts at the first real step.
+ */
+interface CounterTrack {
+  readonly first: number | null
+  readonly samples: readonly HeatPumpCounterSample[]
+}
+
+const NO_COUNTER: CounterTrack = { first: null, samples: [] }
+
 function withCounterStep(
-  samples: readonly HeatPumpCounterSample[],
+  track: CounterTrack,
   at: number,
   value: number | null,
-): readonly HeatPumpCounterSample[] {
-  if (value === null || samples[samples.length - 1]?.value === value) return samples
-  return [...samples, { at, value }].slice(-COUNTER_SAMPLES_KEPT)
+  anchors: boolean,
+): CounterTrack {
+  if (value === null) return track
+  if (track.first === null) {
+    return anchors ? { first: value, samples: [] } : { first: value, samples: [{ at, value }] }
+  }
+  const last = track.samples[track.samples.length - 1]?.value ?? track.first
+  if (last === value) return track
+  return {
+    first: track.first,
+    samples: [...track.samples, { at, value }].slice(-COUNTER_SAMPLES_KEPT),
+  }
 }
 
 function sameIdentities(
@@ -101,8 +122,8 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   #identitiesInFlight = false
   #identitiesFailed = false
   /** The lifetime kWh counters, one sample per new value, from which the hour average comes. */
-  #thermalSamples: readonly HeatPumpCounterSample[] = []
-  #electricalSamples: readonly HeatPumpCounterSample[] = []
+  #thermal: CounterTrack = NO_COUNTER
+  #electrical: CounterTrack = NO_COUNTER
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComHeatPumpSchema.parse(ctx.persistedConfig ?? {})
@@ -163,15 +184,17 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
       )
     }
     const now = Date.now()
-    this.#thermalSamples = withCounterStep(this.#thermalSamples, now, reading.thermalKwh)
-    this.#electricalSamples = withCounterStep(this.#electricalSamples, now, reading.electricalKwh)
+    // The thermal counter only fills the window the electrical one anchors, so its first value
+    // (held since the start) is a valid reading; the electrical one needs two observed steps.
+    this.#thermal = withCounterStep(this.#thermal, now, reading.thermalKwh, false)
+    this.#electrical = withCounterStep(this.#electrical, now, reading.electricalKwh, true)
     this.runtimeState.setCapState(
       STATUS_CAP,
       heatPumpStatusFrom(
         reading,
         now,
         this.#identities,
-        heatPumpHourAverages(this.#thermalSamples, this.#electricalSamples),
+        heatPumpHourAverages(this.#thermal.samples, this.#electrical.samples),
       ),
     )
     this.publishFaults(reading.faults)

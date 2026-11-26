@@ -91,5 +91,6 @@ the cap's schema, of the hero contribution and of the HomeCom mapping.
 > the same bridge zone. (6) The status carries `hourAverage`, a marked average beside
 > `power` (never in it): the average thermal and electrical power and the COP over the last
 > step of the lifetime kWh counters (`heatPumpHourAverages`). The device keeps a bounded,
-> in-memory list of counter steps and publishes it; it is null until two distinct counter
-> values have been seen (and again after a restart), and the live `power` stays null.
+> in-memory list of counter steps and publishes it; the first value seen after a start is
+> never a window start (it was not observed to change), so it is null until two observed
+> steps (and again after a restart), and the live `power` stays null.

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - HomeCom heat pumps report gateway faults, start extra hot water when its state is unreadable, honour gateway step sizes, turn holiday off, and offer an away preset on heating circuits (it switches the whole gateway's away mode, not one circuit)
 - HomeCom heat pump shows the compressor working time, heat demand, solar circuit and zone, names each circuit's device, and can set a circuit's control type, target temperature and hot-water level temperature; a zone with readable values is offered as a climate device
-- The HomeCom heat pump shows the average power and COP of the last hour from its energy counters (unknown until two counter steps have been seen), and a zone whose mode the gateway refuses reads unknown instead of off
+- The HomeCom heat pump shows the average power and COP of the last hour from its energy counters (unknown until two counter steps have been observed, and again after a restart), and a zone whose mode the gateway refuses reads unknown instead of off
 
 ## [0.1.64] - 2026-11-26
 

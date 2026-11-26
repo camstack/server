@@ -423,9 +423,9 @@ describe('HomeComHeatPumpDevice', () => {
     }
   })
 
-  it('publishes the hour average of the lifetime counters, unknown until two distinct values', async () => {
+  it('publishes the hour average only between two OBSERVED counter steps, never from the boot reading', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-11-26T10:00:00Z'))
+    vi.setSystemTime(new Date('2026-11-26T10:07:00Z'))
     try {
       const { ctx, providers } = rig()
       const at = (thermalKwh: number, electricalKwh: number) => ({
@@ -433,7 +433,8 @@ describe('HomeComHeatPumpDevice', () => {
         thermalKwh,
         electricalKwh,
       })
-      let next = snapshot(at(310, 100))
+      let next = snapshot(at(300, 100))
+      // The device starts mid-hour: 100 kWh was already on the counter, not a step it saw.
       connect(
         at(300, 100),
         client(async () => next),
@@ -443,17 +444,19 @@ describe('HomeComHeatPumpDevice', () => {
       const average = () =>
         device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.hourAverage
       expect(average()).toBeNull()
-      // The same electrical value an hour later is still one step: unknown, never 0 W.
-      vi.setSystemTime(new Date('2026-11-26T10:30:00Z'))
-      await providers['device-state-refresh']?.['refresh']?.({})
-      expect(average()).toBeNull()
       vi.setSystemTime(new Date('2026-11-26T11:00:00Z'))
-      next = snapshot(at(310, 102.53))
+      next = snapshot(at(305, 101))
+      await providers['device-state-refresh']?.['refresh']?.({})
+      // One observed step plus the boot reading: no window yet (it would be 53 min, not 1 h).
+      expect(average()).toBeNull()
+      vi.setSystemTime(new Date('2026-11-26T12:00:00Z'))
+      next = snapshot(at(310, 102))
       await providers['device-state-refresh']?.['refresh']?.({})
       const hour = average()
-      expect(hour?.electricalW).toBeCloseTo(2530, 6)
-      expect(hour?.thermalW).toBeCloseTo(10_000, 6)
-      expect(hour?.cop).toBeCloseTo(10 / 2.53, 6)
+      expect(hour?.fromAt).toBe(Date.parse('2026-11-26T11:00:00Z'))
+      expect(hour?.electricalW).toBeCloseTo(1000, 6)
+      expect(hour?.thermalW).toBeCloseTo(5000, 6)
+      expect(hour?.cop).toBeCloseTo(5, 6)
       // The live power stays unknown: the average sits beside it, never in it.
       expect(
         device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')?.power.electricalW,
