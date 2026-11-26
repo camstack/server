@@ -24,8 +24,9 @@ import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
 import { OverrideFieldRow } from './override-row/OverrideFieldRow'
 import { FollowSwitchToggle } from './scalar/FollowSwitchToggle'
 import { ScalarOverrideDialog } from './scalar/ScalarOverrideDialog'
+import { SourceSelectorActions } from './source-selector/SourceSelectorActions'
 import { SourceSelectorDevicesDialog } from './source-selector/SourceSelectorDevicesDialog'
-import { CapLinkRow } from './table/CapLinkRow'
+import { CapLinkDialog, CapLinkSourceCell } from './table/CapLinkRow'
 import { ConfigValueCell } from './table/ConfigRowCells'
 import { EventActionsCell } from './table/EventRowCells'
 import { RowActiveSwitch } from './table/RowActiveSwitch'
@@ -113,8 +114,13 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     },
     owner: {
       row: { present: { component: FollowSwitchToggle } },
-      dialog: gap('dialog', 2),
-      remove: gap('remove', 2),
+      dialog: {
+        notNeeded: 'a switch with nothing to pick: ON stores nothing, OFF stores the opt-out',
+      },
+      remove: {
+        notNeeded:
+          'turning the switch back on IS the removal: it drops the opt-out, and asks first when it discards a rule the operator wrote',
+      },
       enabled: { present: { control: FollowSwitchToggle } },
     },
     linkedSide: gap('linkedSide', 3),
@@ -127,7 +133,7 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       row: { present: { component: KeyedArrayCard } },
       dialog: { present: { component: KeyedArrayItemDialog } },
       remove: CONFIRM_REMOVE,
-      enabled: gap('enabled', 2),
+      enabled: ROW_SWITCH,
     },
     linkedSide: gap('linkedSide', 3),
     stamp: COMPOSITION_STAMP,
@@ -149,9 +155,13 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
     storage: { shape: 'composition-feature', discriminant: FIELDS_DISCRIMINANT },
     owner: {
       row: { present: { component: ConfigValueCell } },
+      // The editors (the remote modal, the fan presets card) own their writes in the owning capability.
       dialog: gap('dialog', 2),
       remove: gap('remove', 2),
-      enabled: gap('enabled', 2),
+      enabled: {
+        notTogglable:
+          'the configuration lives in the owning capability, which stores no enabled flag',
+      },
     },
     linkedSide: gap('linkedSide', 3),
     stamp: COMPOSITION_STAMP,
@@ -163,11 +173,11 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
       discriminant: { present: { key: 'kind', value: 'capLink' } },
     },
     owner: {
-      row: { present: { component: CapLinkRow } },
-      // A private picker, and removal is "clear the picker".
-      dialog: gap('dialog', 2),
-      remove: gap('remove', 2),
-      enabled: gap('enabled', 2),
+      row: { present: { component: CapLinkSourceCell } },
+      // The `SourceSelector` device step; Remove asks `useConfirmRemove`, the Switch is the stored `enabled`.
+      dialog: { present: { component: CapLinkDialog } },
+      remove: CONFIRM_REMOVE,
+      enabled: ROW_SWITCH,
     },
     linkedSide: gap('linkedSide', 3),
     stamp: COMPOSITION_STAMP,
@@ -191,13 +201,18 @@ export const CUSTOMIZE_REGISTRY: CustomizeRegistry = {
   },
   'linked-actions': {
     kind: 'linked-actions',
-    storage: { shape: 'action-links', discriminant: gap('discriminant', 2) },
+    storage: {
+      shape: 'action-links',
+      discriminant: {
+        notNeeded:
+          'the store is the discriminant: the links live in actions.setLinks, beside no other record',
+      },
+    },
     owner: {
       row: { present: { component: LinkedActionItem } },
-      // A private picker, and the toggle is a Checkbox.
-      dialog: gap('dialog', 2),
-      remove: gap('remove', 2),
-      enabled: gap('enabled', 2),
+      dialog: { present: { component: SourceSelectorActions } },
+      remove: CONFIRM_REMOVE,
+      enabled: { notTogglable: 'a link to an action is present or absent; it has no enabled flag' },
     },
     linkedSide: gap('linkedSide', 3),
     stamp: { present: { field: 'expectedUpdatedAt', plan: LinkedActionItem } },

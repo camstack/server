@@ -28,13 +28,13 @@ const EXPECTED_GAPS: Readonly<Record<CustomizeKind, readonly string[]>> = {
   'field-override': ['linkedSide:3'],
   'power-source': ['linkedSide:3'],
   'lock-door-sensor': ['linkedSide:3'],
-  'follow-switch': ['dialog:2', 'remove:2', 'linkedSide:3'],
-  'keyed-items': ['enabled:2', 'linkedSide:3'],
+  'follow-switch': ['linkedSide:3'],
+  'keyed-items': ['linkedSide:3'],
   event: ['linkedSide:3'],
-  'config-extension': ['dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
-  'cap-link': ['dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
+  'config-extension': ['dialog:2', 'remove:2', 'linkedSide:3'],
+  'cap-link': ['linkedSide:3'],
   'linked-devices': [],
-  'linked-actions': ['discriminant:2', 'dialog:2', 'remove:2', 'enabled:2', 'linkedSide:3'],
+  'linked-actions': ['linkedSide:3'],
   'triggered-by': ['linkedSide:3'],
 }
 
@@ -73,5 +73,44 @@ describe('Customize registry (D1098 phase 1)', () => {
   it.each(CUSTOMIZE_KINDS)('%s: declares exactly the expected gaps', (kind) => {
     const got = gapsOf(CUSTOMIZE_REGISTRY[kind]).map((g) => `${g.piece}:${g.phase}`)
     expect(got.toSorted()).toEqual([...EXPECTED_GAPS[kind]].toSorted())
+  })
+})
+
+/** A piece the spec says a kind does not have must say why: an empty reason is a gap in disguise. */
+function reasonsOf(spec: CustomizeKindSpec): readonly string[] {
+  const slots = [
+    spec.storage.discriminant,
+    spec.owner.dialog,
+    spec.owner.remove,
+    spec.owner.enabled,
+  ]
+  return slots.flatMap((piece) => {
+    if ('notNeeded' in piece) return [piece.notNeeded]
+    if ('notTogglable' in piece) return [piece.notTogglable]
+    return []
+  })
+}
+
+describe('Customize registry (D1098 phase 2b): one owner shape for every kind', () => {
+  it.each(CUSTOMIZE_KINDS)('%s: a missing piece names its reason', (kind) => {
+    for (const reason of reasonsOf(CUSTOMIZE_REGISTRY[kind])) {
+      expect(reason.trim().length).toBeGreaterThan(20)
+    }
+  })
+
+  it.each(
+    CUSTOMIZE_KINDS,
+  )('%s: its stamp is read, sent and chained as expectedUpdatedAt', (kind) => {
+    const { stamp } = CUSTOMIZE_REGISTRY[kind]
+    if ('gap' in stamp) throw new Error(`${kind} lacks a stamp`)
+    expect(stamp.present.field).toBe('expectedUpdatedAt')
+  })
+
+  it('only follow-switch may skip the dialog and the remove', () => {
+    const skipping = CUSTOMIZE_KINDS.filter((kind) => {
+      const { owner } = CUSTOMIZE_REGISTRY[kind]
+      return 'notNeeded' in owner.dialog || 'notNeeded' in owner.remove
+    })
+    expect(skipping).toEqual(['follow-switch'])
   })
 })

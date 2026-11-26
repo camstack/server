@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device picker: a new 'action' noun for picking actions
+
 ## [1.2.510] - 2026-11-26
 
 ### Changed

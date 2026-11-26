@@ -60,6 +60,7 @@ import {
   type SourceWireableField,
   sourceSearchRequires,
 } from './source-selector-model'
+import { SourceSelectorActions, type SourceSelectorActionsProps } from './SourceSelectorActions'
 import { siblingSuggestions } from './source-selector-siblings'
 
 export type { EventPickedRow }
@@ -157,10 +158,14 @@ export type SourceSelectorProps =
   | SourceSelectorEventProps
   | SourceSelectorMembersProps
   | SourceSelectorDevicesProps
+  | SourceSelectorActionsProps
 
 type SingleSelectorProps = Exclude<
   SourceSelectorProps,
-  SourceSelectorMembersProps | SourceSelectorEventCategoryProps | SourceSelectorDevicesProps
+  | SourceSelectorMembersProps
+  | SourceSelectorEventCategoryProps
+  | SourceSelectorDevicesProps
+  | SourceSelectorActionsProps
 >
 
 function toCandidates(
@@ -201,6 +206,7 @@ function conversionKey(name: 'threshold' | 'scale' | 'invert' | 'enum-map'): str
 export function SourceSelector(props: SourceSelectorProps): ReactNode {
   if (props.kind === 'members') return <SourceSelectorMembers {...props} />
   if (props.kind === 'devices') return <SourceSelectorDevices {...props} />
+  if (props.kind === 'actions') return <SourceSelectorActions {...props} />
   if (props.kind === 'event' && props.shape === 'category')
     return <EventCategorySource {...props} />
   return <SourceSelectorSingle {...props} />

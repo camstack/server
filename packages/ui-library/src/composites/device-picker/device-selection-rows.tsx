@@ -31,6 +31,7 @@ export type PickerNoun =
   | 'zone'
   | 'face'
   | 'calendar'
+  | 'action'
 
 /** Each noun's plural. */
 export const PICKER_NOUN_PLURAL: Readonly<Record<PickerNoun, string>> = {
@@ -42,6 +43,7 @@ export const PICKER_NOUN_PLURAL: Readonly<Record<PickerNoun, string>> = {
   zone: 'zones',
   face: 'faces',
   calendar: 'calendars',
+  action: 'actions',
 }
 
 /** What a picker lists, plural — the only words the loading / failed lines say. */
@@ -66,6 +68,8 @@ export function pickerNounLabel(noun: PickerNoun, t: UiTextFn): string {
       return t('uiLibrary.devicePicker.nounFace', 'face')
     case 'calendar':
       return t('uiLibrary.devicePicker.nounCalendar', 'calendar')
+    case 'action':
+      return t('uiLibrary.devicePicker.nounAction', 'action')
   }
 }
 
@@ -88,6 +92,8 @@ export function pickerNounPluralLabel(noun: PickerNoun, t: UiTextFn): string {
       return t('uiLibrary.devicePicker.pluralFaces', 'faces')
     case 'calendar':
       return t('uiLibrary.devicePicker.pluralCalendars', 'calendars')
+    case 'action':
+      return t('uiLibrary.devicePicker.pluralActions', 'actions')
   }
 }
 
@@ -110,6 +116,8 @@ function translatePlural(plural: PickerNounPlural, t: UiTextFn): string {
       return pickerNounPluralLabel('face', t)
     case PICKER_NOUN_PLURAL.calendar:
       return pickerNounPluralLabel('calendar', t)
+    case PICKER_NOUN_PLURAL.action:
+      return pickerNounPluralLabel('action', t)
     default:
       return plural
   }
@@ -160,6 +168,11 @@ export function orphanDeviceLabel<Id extends SelectionId>(
     case 'calendar':
       if (row.removed) {
         return t('uiLibrary.devicePicker.calendarNotFound', '{{id}} — calendar not found', { id })
+      }
+      return row.name ?? id
+    case 'action':
+      if (row.removed) {
+        return t('uiLibrary.devicePicker.actionNotFound', '{{id}} — action not found', { id })
       }
       return row.name ?? id
     case 'camera':

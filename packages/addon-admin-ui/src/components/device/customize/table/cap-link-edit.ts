@@ -73,6 +73,20 @@ export function withoutCapLink(current: Composition, link: OfferedCapLink): Comp
   return { ...current, features }
 }
 
+/** The composition with this link switched on or off; the link and its source stay stored. */
+export function withCapLinkEnabled(
+  current: Composition,
+  link: OfferedCapLink,
+  enabled: boolean,
+): Composition {
+  return {
+    ...current,
+    features: current.features.map((f) =>
+      isSameLink(f, link.cap, link.link.id) && f.kind === 'capLink' ? { ...f, enabled } : f,
+    ),
+  }
+}
+
 /** Whether the table offers this link on a device of `deviceType` (a link names the types it is offered on). */
 export function capLinkOfferedOn(link: CustomizeCapLink, deviceType: string): boolean {
   return link.deviceTypes?.some((type) => type === deviceType) === true

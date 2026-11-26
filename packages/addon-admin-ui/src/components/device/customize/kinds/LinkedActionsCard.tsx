@@ -7,7 +7,6 @@ import type { ActionEntry, DeviceInfo } from '@camstack/types'
 import {
   Badge,
   Button,
-  Checkbox,
   Dialog,
   DialogBody,
   DialogContent,
@@ -25,6 +24,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Play, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useDraftSection } from '../customize-draft'
+import { SourceSelector } from '../source-selector/SourceSelector'
 import { useConfirmRemove } from '../use-confirm-remove'
 import { useTranslation } from 'react-i18next'
 
@@ -85,7 +85,7 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const actions = useActionsList({})
   const links = useActionsGetLinks({ deviceId: device.id })
   const [picking, setPicking] = useState(false)
-  const [draft, setDraft] = useState<readonly string[]>([])
+  const [picked, setPicked] = useState<readonly string[]>([])
   const refresh = (): void => void queryClient.invalidateQueries({ queryKey: [['actions']] })
   const save = useActionsSetLinks({ onSuccess: refresh })
   const run = useActionsRun({ onSuccess: refresh })
@@ -126,11 +126,9 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
     discard: () => setPending(null),
   })
   const openPicker = (): void => {
-    setDraft([])
+    setPicked([])
     setPicking(true)
   }
-  const toggle = (id: string): void =>
-    setDraft(draft.includes(id) ? draft.filter((item) => item !== id) : [...draft, id])
   const error = save.error === null || save.error === undefined ? null : save.error.message
   return {
     ready,
@@ -158,33 +156,25 @@ export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
             <DialogDescription>{t('customize.linkedActions.pickHint')}</DialogDescription>
           </DialogHeader>
           <DialogBody>
-            <ul className="space-y-1">
-              {available.map((entry) => (
-                <li key={entry.id}>
-                  <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-surface-hover">
-                    <Checkbox
-                      checked={draft.includes(entry.id)}
-                      onChange={() => toggle(entry.id)}
-                    />
-                    <span className="flex-1">{entry.name}</span>
-                    <SourceBadge entry={entry} />
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <SourceSelector
+              kind="actions"
+              entries={available}
+              picked={picked}
+              onPickedChange={setPicked}
+            />
           </DialogBody>
           <DialogFooter className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setPicking(false)}>
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button
-              disabled={draft.length === 0 || save.isPending}
+              disabled={picked.length === 0 || save.isPending}
               onClick={() => {
-                write([...linkedIds, ...draft])
+                write([...linkedIds, ...picked])
                 setPicking(false)
               }}
             >
-              {t('customize.linkedActions.addN', { count: draft.length })}
+              {t('customize.linkedActions.addN', { count: picked.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -57,7 +57,12 @@ import { followSwitchRowListed } from '../scalar/follow-switch'
 import { scalarRowTitle, storedScalarFeature } from '../scalar/use-scalar-row'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import type { CustomizationHandle } from '../use-customization'
-import { CapLinkRow } from './CapLinkRow'
+import {
+  CapLinkActionsCell,
+  CapLinkDialog,
+  CapLinkSourceCell,
+  CapLinkValueCell,
+} from './CapLinkRow'
 import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
 import { capLinkOfferedOn, type OfferedCapLink } from './cap-link-edit'
 import {
@@ -88,6 +93,7 @@ import {
   fieldRowState,
   itemFieldRows,
 } from './field-rows'
+import { KeyedActionsCell } from './KeyedActionsCell'
 import { KeyedValueCell } from './KeyedValueCell'
 import { ManagedRowDialog } from './ManagedRowDialog'
 import {
@@ -424,12 +430,10 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionValue line={line} />
         if (isLinkedCameraLine(line)) return <LinkedCameraValue line={line} />
-        if (
-          line.kind === 'section' ||
-          line.kind === 'capSection' ||
-          line.kind === 'advanced' ||
-          line.kind === 'capLink'
-        )
+        if (line.kind === 'capLink') {
+          return <CapLinkValueCell device={device} handle={handle} offered={line.offered} />
+        }
+        if (line.kind === 'section' || line.kind === 'capSection' || line.kind === 'advanced')
           return null
         if (line.kind === 'field') {
           return (
@@ -467,7 +471,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         if (isLinkedActionLine(line)) return <LinkedActionSource line={line} />
         if (isLinkedCameraLine(line)) return null
         if (line.kind === 'capLink') {
-          return <CapLinkRow device={device} handle={handle} offered={line.offered} />
+          return <CapLinkSourceCell device={device} handle={handle} offered={line.offered} />
         }
         if (line.kind === 'section' || line.kind === 'capSection' || line.kind === 'advanced')
           return null
@@ -509,7 +513,19 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         if (isLinkedCameraLine(line)) {
           return cameras === null ? null : <LinkedCameraButtons line={line} state={cameras} />
         }
-        if (line.kind === 'section' || line.kind === 'advanced' || line.kind === 'capLink') {
+        if (line.kind === 'capLink') {
+          return (
+            <CapLinkActionsCell
+              device={device}
+              handle={handle}
+              offered={line.offered}
+              title={t('customize.table.capLink.sourceDevice')}
+              onEdit={() => setOpen(lineKey(line))}
+              onError={setError}
+            />
+          )
+        }
+        if (line.kind === 'section' || line.kind === 'advanced') {
           return null
         }
         if (line.kind === 'capSection') {
@@ -555,6 +571,17 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
               device={device}
               handle={handle}
               sensors={props.sensors}
+              onEdit={() => setOpen(spec.key)}
+              onError={setError}
+            />
+          )
+        }
+        if (spec.kind === 'keyed') {
+          return (
+            <KeyedActionsCell
+              spec={spec}
+              title={titleOf(spec)}
+              handle={handle}
               onEdit={() => setOpen(spec.key)}
               onError={setError}
             />
@@ -668,6 +695,17 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           onClose={() => setOpen(null)}
         />
       )}
+      {linkLines.map((line) => (
+        <CapLinkDialog
+          key={`${line.offered.cap}:${line.offered.link.id}`}
+          device={device}
+          handle={handle}
+          offered={line.offered}
+          open={open === `capLink:${line.offered.cap}:${line.offered.link.id}`}
+          onClose={() => setOpen(null)}
+          onError={setError}
+        />
+      ))}
       {actions?.dialog}
       {cameras?.dialog}
       {openPlan !== undefined && openPlan.spec.kind !== 'scalar' && (

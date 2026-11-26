@@ -72,6 +72,16 @@ export type CustomizeStorageShape =
   | 'automation'
   | 'action-links'
 
+/**
+ * A piece the kind does not need, with the reason: not a gap, because nothing
+ * is missing. A kind whose record has no other record to be told apart from
+ * (its own store), or whose control has nothing to pick, says so here instead
+ * of faking the piece.
+ */
+export interface NotNeeded {
+  readonly notNeeded: string
+}
+
 export interface CustomizeDiscriminant {
   /** The stored field that tells this kind apart, e.g. `kind`. */
   readonly key: string
@@ -81,7 +91,7 @@ export interface CustomizeDiscriminant {
 
 export interface CustomizeStorageSpec {
   readonly shape: CustomizeStorageShape
-  readonly discriminant: Piece<'discriminant', CustomizeDiscriminant>
+  readonly discriminant: Piece<'discriminant', CustomizeDiscriminant> | NotNeeded
 }
 
 export interface NotTogglable {
@@ -93,9 +103,9 @@ export interface CustomizeOwnerSpec {
   /** The row (or cell set) in the single `CustomizeTable`. */
   readonly row: Piece<'ownerRow', ImplComponent>
   /** Add/Edit dialog built on the common `SourceSelector`. */
-  readonly dialog: Piece<'dialog', ImplComponent>
+  readonly dialog: Piece<'dialog', ImplComponent> | NotNeeded
   /** Remove through `useConfirmRemove`. */
-  readonly remove: Piece<'remove', ImplConfirm>
+  readonly remove: Piece<'remove', ImplConfirm> | NotNeeded
   /** The library `Switch` bound to the stored `enabled`, or the reason the kind cannot be toggled. */
   readonly enabled: Piece<'enabled', ImplControl> | NotTogglable
 }
@@ -128,7 +138,9 @@ export interface DeclaredGap {
   readonly phase: CustomizeGapPhase
 }
 
-function gapOf<P extends CustomizePiece, T>(piece: Piece<P, T>): PieceGap<P>['gap'] | null {
+function gapOf<P extends CustomizePiece, T>(
+  piece: Piece<P, T> | NotNeeded,
+): PieceGap<P>['gap'] | null {
   return 'gap' in piece ? piece.gap : null
 }
 

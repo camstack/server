@@ -1,79 +1,165 @@
 /**
- * The "Source device" row of a whole-capability link the cap declares (D1076):
- * one picker, one stored `capLink` feature. The per-reading rows below it are
- * not touched; a link that would also take a field one of them stores is
- * refused by the server, and the reason is shown here.
+ * The "Source device" row of a whole-capability link the cap declares (D1076),
+ * as the cells of one `CustomizeTable` line like every other kind: the linked
+ * device in Source, the link's state in Value, and Edit (the `SourceSelector`
+ * device dialog), the active Switch and the confirmed Remove in Actions. Every
+ * change is a draft the tab's one Save writes; the server's refusal of a link
+ * that would also take a field one of the readings stores is shown on Save.
  */
 import type { DeviceInfo } from '@camstack/types'
-import { CapLinkCell, useCoreBlocksGetCapLinks } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import { Badge, IconButton } from '@camstack/ui-library'
+import { Pencil, Trash2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'
+import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
+import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import {
-  capLinkCellState,
   type OfferedCapLink,
-  storedCapLink,
   withCapLink,
+  withCapLinkEnabled,
   withoutCapLink,
 } from './cap-link-edit'
+import { RowActiveSwitch } from './RowActiveSwitch'
+import { useCapLinkRow } from './use-cap-link-row'
 
-export interface CapLinkRowProps {
+export interface CapLinkCellProps {
   readonly device: Pick<DeviceInfo, 'id'>
   readonly handle: CustomizationHandle
   readonly offered: OfferedCapLink
 }
 
-export function CapLinkRow(props: CapLinkRowProps): ReactNode {
+const testIdOf = (offered: OfferedCapLink): string => `cap-link-${offered.cap}-${offered.link.id}`
+
+/** The linked device, or "Not linked". */
+export function CapLinkSourceCell(props: CapLinkCellProps): ReactNode {
   const { t } = useTranslation()
-  const [error, setError] = useState<string | null>(null)
-  const candidates = useCandidateDevices(true)
-  const read = useCoreBlocksGetCapLinks({ deviceId: props.device.id })
-  const current = currentComposition(props.handle.state)
-  const stored = storedCapLink(current, props.offered.cap, props.offered.link.id)
-  const views = read.data?.status === 'ok' ? read.data.links : null
-  const sourceDeviceId =
-    stored !== null && candidates.kind === 'known'
-      ? (candidates.value.find(
-          (row) => row.addonId === stored.source.addonId && row.stableId === stored.source.stableId,
-        )?.id ?? null)
-      : null
-  const answered = props.handle.state.kind === 'none' || props.handle.state.kind === 'present'
-  const change = async (pickedId: number | null): Promise<void> => {
-    setError(null)
-    if (pickedId === null) {
-      if (current === null) return
-      const outcome = await props.handle.save(withoutCapLink(current, props.offered))
-      if (outcome.kind === 'refused') setError(outcome.reason)
-      return
-    }
-    if (candidates.kind !== 'known') return
-    const picked = candidates.value.find((row) => row.id === pickedId)
-    if (picked === undefined) return
-    const outcome = await props.handle.save(
-      withCapLink(current, props.handle.target, props.offered, {
-        addonId: picked.addonId,
-        stableId: picked.stableId,
-      }),
-    )
-    if (outcome.kind === 'refused') setError(outcome.reason)
-  }
+  const facts = useCapLinkRow(props.device, props.handle, props.offered)
   return (
-    <CapLinkCell
-      deviceId={props.device.id}
-      sourceCap={props.offered.link.sourceCap}
-      sourceDeviceId={sourceDeviceId}
-      state={capLinkCellState(stored, views, props.offered)}
-      disabled={!answered || candidates.kind !== 'known' || props.handle.saving}
-      error={error}
-      hint={
-        props.offered.link.mode === 'reference'
+    <span className="flex flex-col gap-0.5" data-testid={testIdOf(props.offered)}>
+      <span className="text-xs text-foreground">
+        {facts.stored === null
+          ? t('customize.table.capLink.none')
+          : (facts.source?.name ?? `#${facts.stored.source.stableId}`)}
+      </span>
+    </span>
+  )
+}
+
+/** The state the server reads for the stored link, and the one-line hint. */
+export function CapLinkValueCell(props: CapLinkCellProps): ReactNode {
+  const { t } = useTranslation()
+  const facts = useCapLinkRow(props.device, props.handle, props.offered)
+  return (
+    <span className="flex flex-col gap-1">
+      {facts.state === 'source-gone' && (
+        <Badge variant="warning">{t('customize.table.capLink.gone')}</Badge>
+      )}
+      {facts.state === 'disabled' && (
+        <Badge variant="neutral">{t('customize.table.capLink.off')}</Badge>
+      )}
+      <span className="text-[11px] text-foreground-muted">
+        {props.offered.link.mode === 'reference'
           ? t('customize.table.capLink.referenceHint')
-          : t('customize.table.capLink.projectHint')
-      }
-      testId={`cap-link-${props.offered.cap}-${props.offered.link.id}`}
-      onChange={(id) => void change(id)}
+          : t('customize.table.capLink.projectHint')}
+      </span>
+    </span>
+  )
+}
+
+export interface CapLinkActionsProps extends CapLinkCellProps {
+  readonly title: string
+  readonly onEdit: () => void
+  readonly onError: (reason: string | null) => void
+}
+
+/** Edit, active switch and remove; the switch and the bin exist once a link is stored. */
+export function CapLinkActionsCell(props: CapLinkActionsProps): ReactNode {
+  const { t } = useTranslation()
+  const confirmRemove = useConfirmRemove()
+  const facts = useCapLinkRow(props.device, props.handle, props.offered)
+  const current = currentComposition(props.handle.state)
+  const stored = facts.stored
+  const report = async (next: Parameters<CustomizationHandle['save']>[0]): Promise<void> => {
+    const outcome = await props.handle.save(next)
+    props.onError(outcome.kind === 'refused' ? outcome.reason : null)
+  }
+  const disabled = !facts.answered || props.handle.saving
+  return (
+    <span className="flex items-center justify-end gap-1">
+      <IconButton
+        variant="ghost"
+        size="sm"
+        icon={Pencil}
+        aria-label={t('customize.table.editWhat', { title: props.title })}
+        data-testid={`${testIdOf(props.offered)}-edit`}
+        disabled={disabled || facts.candidates.kind !== 'known'}
+        onClick={props.onEdit}
+      />
+      {stored !== null && current !== null && (
+        <RowActiveSwitch
+          title={props.title}
+          checked={stored.enabled !== false}
+          disabled={disabled}
+          testId={`${testIdOf(props.offered)}-active`}
+          onChange={(enabled) => void report(withCapLinkEnabled(current, props.offered, enabled))}
+        />
+      )}
+      {stored !== null && current !== null && (
+        <IconButton
+          variant="ghost"
+          size="sm"
+          icon={Trash2}
+          aria-label={`${t('customize.table.remove')} ${props.title}`}
+          data-testid={`${testIdOf(props.offered)}-remove`}
+          disabled={disabled}
+          onClick={() => {
+            const next = withoutCapLink(current, props.offered)
+            void confirmRemove(
+              t('customize.table.capLink.removeWhat', { name: facts.source?.name ?? props.title }),
+              next === null,
+            ).then((ok) => (ok ? report(next) : undefined))
+          }}
+        />
+      )}
+    </span>
+  )
+}
+
+export interface CapLinkDialogProps extends CapLinkCellProps {
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly onError: (reason: string | null) => void
+}
+
+/** The device step of the `SourceSelector`: one pick sets or replaces the link. */
+export function CapLinkDialog(props: CapLinkDialogProps): ReactNode {
+  const { t } = useTranslation()
+  const facts = useCapLinkRow(props.device, props.handle, props.offered)
+  return (
+    <SourceSelectorDevicesDialog
+      open={props.open}
+      title={t('customize.table.capLink.pickTitle')}
+      selection="single"
+      candidates={facts.candidates}
+      confirmLabel={() => t('customize.table.capLink.pick')}
+      onConfirm={(picked) => {
+        const first = picked[0]
+        props.onClose()
+        if (first === undefined) return
+        void props.handle
+          .save(
+            withCapLink(
+              currentComposition(props.handle.state),
+              props.handle.target,
+              props.offered,
+              first.ref,
+            ),
+          )
+          .then((outcome) => props.onError(outcome.kind === 'refused' ? outcome.reason : null))
+      }}
+      onClose={props.onClose}
     />
   )
 }
