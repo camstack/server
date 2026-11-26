@@ -2863,9 +2863,28 @@ export default class PipelineOrchestratorAddon
       writeClusterDefaults: async (defaults) => {
         await store.writeClusterDetectionDefaults(defaults)
       },
-      onApplied: () => this.placement!.redispatchAllActiveCameras('detection-defaults-changed'),
+      onApplied: () => this.reresolveActiveCameras(),
     })
     return this.detectionDefaultsService
+  }
+
+  /**
+   * Rebuild every assigned camera's config through the path a settings save
+   * takes (`handleSettingsChanged` -> `buildDetectionConfig` ->
+   * `resolveDetectionSettings`). A re-dispatch of the ledger's cached config
+   * would re-attach the OLD profile and fps.
+   */
+  private async reresolveActiveCameras(): Promise<void> {
+    for (const deviceId of this.ledger!.listAssignedDeviceIds()) {
+      try {
+        await this.handleSettingsChanged(deviceId)
+      } catch (err: unknown) {
+        this.ctx.logger.error('detection defaults: camera re-resolve failed', {
+          tags: { deviceId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
   }
 
   async planDetectionDefaults(): Promise<DetectionDefaultsPlan> {

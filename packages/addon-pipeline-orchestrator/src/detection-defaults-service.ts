@@ -6,7 +6,8 @@
  * cluster default plus the cameras that pin either field themselves. It writes
  * nothing. The APPLY recomputes the plan, refuses a different hash (`stale`,
  * with the fresh plan) and writes the CLUSTER default only — never a camera's
- * own setting. Neither runs on its own: the operator confirms.
+ * own setting. Neither runs on its own: the operator confirms. A changed
+ * default is then re-resolved for every running camera (`onApplied`).
  */
 import { createHash } from 'node:crypto'
 import {
@@ -71,7 +72,11 @@ export interface DetectionDefaultsServiceDeps {
   readonly readCameraStores: () => Promise<ReadonlyMap<number, Record<string, unknown>>>
   readonly readClusterDefaults: () => Promise<ClusterDetectionDefaults>
   readonly writeClusterDefaults: (defaults: ClusterDetectionDefaults) => Promise<void>
-  /** Cameras follow the new default on their next attach. */
+  /**
+   * Called only when the stored default CHANGED: re-resolves every running
+   * camera's config through the settings-save rebuild path (the cached ledger
+   * config would carry the old values).
+   */
   readonly onApplied: () => Promise<void>
 }
 
@@ -79,7 +84,7 @@ function pinsAnything(store: Record<string, unknown>): boolean {
   const fps = store['detectionFps']
   return (
     CamProfileSchema.safeParse(store['detectionStreamProfile']).success ||
-    (typeof fps === 'number' && fps > 0)
+    (typeof fps === 'number' && Number.isFinite(fps) && fps >= 0)
   )
 }
 
@@ -140,15 +145,28 @@ export class DetectionDefaultsService {
       ...(profile !== null ? { detectionStreamProfile: profile } : {}),
       ...(fps !== null ? { detectionFps: fps } : {}),
     }
-    await this.deps.writeClusterDefaults(written)
-    await this.deps.onApplied()
+    await this.store(plan.current, written)
     return { kind: 'applied', written }
   }
 
   /** Set (or clear) the stored default by hand; the code constant applies to a cleared field. */
   async set(defaults: ClusterDetectionDefaults): Promise<ClusterDetectionDefaults> {
-    await this.deps.writeClusterDefaults(defaults)
-    await this.deps.onApplied()
+    await this.store(await this.deps.readClusterDefaults(), defaults)
     return defaults
+  }
+
+  /** Write, and re-resolve the running cameras only when the stored value changed. */
+  private async store(
+    before: ClusterDetectionDefaults,
+    after: ClusterDetectionDefaults,
+  ): Promise<void> {
+    if (
+      before.detectionStreamProfile === after.detectionStreamProfile &&
+      before.detectionFps === after.detectionFps
+    ) {
+      return
+    }
+    await this.deps.writeClusterDefaults(after)
+    await this.deps.onApplied()
   }
 }

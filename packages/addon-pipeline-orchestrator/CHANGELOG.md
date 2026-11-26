@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Detection stream profile and fps now follow a cluster default; a suggested default is planned from the nodes' hardware and applied only when you confirm it, and cameras with their own value are never changed
+- A changed cluster detection default now reaches cameras that are already running, and a camera that pins a legacy native-rate fps keeps it
 
 ## [1.2.725] - 2026-11-26
 

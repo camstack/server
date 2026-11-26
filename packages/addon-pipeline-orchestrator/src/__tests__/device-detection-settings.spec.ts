@@ -817,9 +817,10 @@ describe('resolveDetectionSettings — cluster detection defaults', () => {
     expect(r.detectionFps).toBe(10)
   })
 
-  it('a legacy persisted fps of 0 is unset, so it follows the cluster default', () => {
+  it("a legacy persisted fps of 0 is the camera's own value: a cluster default never caps it", () => {
     const r = resolveDetectionSettings(input({ detectionFps: 0 }, { detectionFps: 5 }))
-    expect(r.detectionFps).toBe(5)
+    expect(r.detectionFps).not.toBe(5)
+    expect(r.detectionFps).toBe(10) // the legacy migration to the code constant, unchanged
   })
 
   it('each field resolves independently', () => {

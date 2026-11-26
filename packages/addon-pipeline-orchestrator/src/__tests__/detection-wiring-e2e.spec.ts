@@ -323,6 +323,50 @@ describe('PipelineOrchestratorAddon — detection wiring E2E', () => {
     expect(runner.attachedCameras.get(1)!.motionFps).toBe(6)
   })
 
+  // D1104: a cluster default set while a camera RUNS must reach that camera.
+  // The ledger caches the attach config, so a re-dispatch alone would
+  // re-attach the OLD profile and fps.
+  it('a changed cluster detection default reaches a running camera that stored no value of its own', async () => {
+    const broker = makeFakeBroker('hub')
+    const runner = makeFakeRunner({ nodeId: 'hub' })
+    wireRunnerToBroker(broker, 'hub', runner)
+
+    const streamBrokerCap = makeFakeStreamBrokerCap()
+    streamBrokerCap.register(1, 'provider-rtsp', makeCameraStreams())
+
+    const {
+      detectionStreamProfile: _p,
+      detectionFps: _f,
+      ...noOwnDetection
+    } = DEFAULT_DEVICE_SETTINGS
+    const { ctx, eventBus } = makeFakeContext({
+      addonConfig: { moleculerBroker: broker },
+      initialDeviceSettings: new Map<number, Record<string, unknown>>([[1, { ...noOwnDetection }]]),
+      initialGlobalSettings: { enabledNodes: enabledNodesFromBroker(broker) },
+      providers: { 'stream-broker': streamBrokerCap },
+    })
+
+    addon = new PipelineOrchestratorAddon()
+    await addon.initialize(ctx)
+    eventBus.emit({
+      id: 'evt-1',
+      timestamp: new Date(),
+      source: { type: 'device', id: 1 },
+      category: EventCategory.CameraStreamsProfileSlotsChanged,
+      data: { deviceId: 1, providerId: 'provider-rtsp' },
+    })
+    await waitUntil(() => runner.attachedCameras.has(1))
+    expect(runner.attachedCameras.get(1)!.detectionFps).toBe(10)
+    expect(runner.attachedCameras.get(1)!.detectionStreamId).toBe('main')
+
+    await addon.setClusterDetectionDefaults({ detectionStreamProfile: 'low', detectionFps: 5 })
+
+    await waitUntil(() => runner.attachedCameras.get(1)?.detectionFps === 5)
+    const attached = runner.attachedCameras.get(1)!
+    expect(attached.detectionFps).toBe(5)
+    expect(attached.detectionStreamId).toBe('sub')
+  })
+
   // P2-13: settings change mid-stream restarts detection cleanly ─────
   it('stops + restarts detection cleanly on mid-stream settings change (old audio sub released)', async () => {
     const broker = makeFakeBroker('hub')

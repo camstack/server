@@ -152,10 +152,14 @@ function numberOrDefault(flat: Record<string, unknown>, key: string): number {
   return typeof dflt === 'number' ? dflt : 0
 }
 
-/** The camera's OWN stored detection fps; a legacy `0` ("native rate") is unset. */
+/**
+ * The camera's OWN stored detection fps. A legacy `0` ("native rate") IS the
+ * camera's own value: the operator pinned it, so a cluster default never
+ * caps it (it still resolves through `numberOrDefault`, as it always did).
+ */
 function explicitDetectionFps(raw: Record<string, unknown>): number | undefined {
   const v = raw['detectionFps']
-  return typeof v === 'number' && v > 0 ? v : undefined
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : undefined
 }
 
 /** The camera's OWN stored detection stream profile, when it stored one. */
@@ -376,11 +380,14 @@ export function resolveDetectionSettings(
       mustString(flat, deviceId, 'detectionStreamProfile') as CamProfile,
     ),
     motionFps: numberOrDefault(flat, 'motionFps'),
-    detectionFps: resolveDetectionDefault<number>(
-      explicitDetectionFps(raw),
-      clusterDefaults.detectionFps,
-      numberOrDefault(flat, 'detectionFps'),
-    ),
+    detectionFps:
+      explicitDetectionFps(raw) === 0
+        ? numberOrDefault(flat, 'detectionFps')
+        : resolveDetectionDefault<number>(
+            explicitDetectionFps(raw),
+            clusterDefaults.detectionFps,
+            numberOrDefault(flat, 'detectionFps'),
+          ),
     activityDetectionFps: activityFps(flat),
     motionCooldownMs: numberOrDefault(flat, 'motionCooldownMs'),
     maxSessionHoldMs: numberOrDefault(flat, 'maxSessionHoldMs'),

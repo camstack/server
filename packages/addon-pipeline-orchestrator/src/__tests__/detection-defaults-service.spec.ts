@@ -61,7 +61,7 @@ function harness(over: Partial<DetectionDefaultsServiceDeps> = {}) {
     [1, { motionFps: 4 }],
     [2, { detectionFps: 7 }],
     [3, { detectionStreamProfile: 'mid' }],
-    [4, { detectionFps: 0 }], // legacy "native rate": unset
+    [4, { detectionFps: 0 }], // legacy "native rate": the camera's own value
   ])
   const writeClusterDefaults = vi.fn(async (d: ClusterDetectionDefaults) => {
     stored = d
@@ -89,7 +89,7 @@ describe('DetectionDefaultsService', () => {
     expect(plan.recommendation.detectionStreamProfile).toBe('low')
     expect(plan.recommendation.detectionFps).toBe(5)
     expect(plan.current).toEqual({})
-    expect(plan.overrides).toEqual({ count: 2, deviceIds: [2, 3] })
+    expect(plan.overrides).toEqual({ count: 3, deviceIds: [2, 3, 4] })
     expect(h.writeClusterDefaults).not.toHaveBeenCalled()
     expect(h.onApplied).not.toHaveBeenCalled()
   })
@@ -138,5 +138,16 @@ describe('DetectionDefaultsService', () => {
     const h = harness({ readClusterDefaults: async () => ({ detectionFps: 6 }) })
     await h.service.set({ detectionStreamProfile: 'mid' })
     expect(h.writeClusterDefaults).toHaveBeenCalledWith({ detectionStreamProfile: 'mid' })
+  })
+
+  it('set and apply of an unchanged default write nothing and re-resolve no camera', async () => {
+    const h = harness({
+      readClusterDefaults: async () => ({ detectionStreamProfile: 'low', detectionFps: 5 }),
+    })
+    await h.service.set({ detectionStreamProfile: 'low', detectionFps: 5 })
+    const { planHash } = await h.service.plan()
+    await h.service.apply({ planHash })
+    expect(h.writeClusterDefaults).not.toHaveBeenCalled()
+    expect(h.onApplied).not.toHaveBeenCalled()
   })
 })
