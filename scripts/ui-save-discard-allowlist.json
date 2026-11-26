@@ -25,11 +25,6 @@
     "reason": "known violation — planning#675 sweep"
   },
   {
-    "file": "packages/addon-admin-ui/src/components/device/customize/kinds/LinkedDevicesTable.tsx",
-    "anchor": "columns/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
     "file": "packages/addon-admin-ui/src/components/instances/InstanceSwitchCell.tsx",
     "anchor": "InstanceSwitchCell/onCheckedChange/inline#1",
     "reason": "known violation — planning#675 sweep"
