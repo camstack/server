@@ -21,7 +21,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
-import { ServiceBroker } from 'moleculer'
+import { ServiceBroker, type Service } from 'moleculer'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createProcessService } from '../../moleculer/process-service.js'
 import {
@@ -172,7 +172,7 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     const stopped = schema.stopped
     broker.createService({
       ...schema,
-      stopped(this: unknown) {
+      stopped(this: Service) {
         onStopped?.()
         if (typeof stopped === 'function') return stopped.call(this)
         return undefined
