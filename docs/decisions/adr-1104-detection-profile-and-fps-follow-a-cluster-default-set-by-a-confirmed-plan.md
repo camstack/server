@@ -49,7 +49,7 @@ Rule v1, over the nodes that serve cameras only:
 
 ## Consequences
 
-Changing the cluster default moves every unset camera: the apply re-resolves each running camera through the settings-save rebuild path (the cached attach config would keep the old values), and only when the stored default changed; cameras with an override do not move. A legacy stored `detectionFps: 0` is the camera's own value, so it counts as an override. The
+Changing the cluster default moves every unset camera: the apply re-resolves each running camera through the settings-save rebuild path (the cached attach config would keep the old values), and only when the stored default changed; cameras with an override do not move. A legacy stored `detectionFps: 0` is the camera's own value: it counts as an override, so the cluster default never reaches it, and its value resolves as before. An apply or set restarts every assigned camera through the settings-save path, sequentially, and the RPC returns when the loop finishes. The
 camera form shows the cluster value for an unset field (display only). A UI that
 submits the whole form on save would freeze the shown value into the camera: a
 form must send only edited fields. The rule is a version: a later rule changes
