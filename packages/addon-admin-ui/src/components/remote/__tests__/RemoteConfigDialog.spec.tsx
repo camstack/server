@@ -1,5 +1,10 @@
 import { selectOption } from '@camstack/ui-library/testing'
-import { type DeviceInfo, EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
+import {
+  type DeviceInfo,
+  DeviceType,
+  EMPTY_REMOTE_CONFIG,
+  type RemoteConfig,
+} from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -9,7 +14,7 @@ import '../../../i18n'
 const TV = 901
 const BOARD = 902
 
-const onKeep = vi.fn((_config: RemoteConfig) => undefined)
+const onKeep = vi.fn((_config: RemoteConfig): string | null => null)
 const updateTemplate = vi.fn(async (_input: { id: string; name: string; payload: unknown }) => ({
   status: 'saved' as const,
 }))
@@ -84,12 +89,21 @@ vi.mock('../../../pages/build/flow/CommandStep', () => ({
 
 import { RemoteConfigDialog } from '../RemoteConfigDialog'
 
-const DEVICE = {
+const DEVICE: DeviceInfo = {
   id: TV,
   name: 'Living room TV',
   stableId: 'tv',
-  type: 'media-player',
-} as unknown as DeviceInfo
+  addonId: 'test',
+  type: DeviceType.MediaPlayer,
+  location: null,
+  disabled: false,
+  parentDeviceId: null,
+  online: true,
+  features: [],
+  isCamera: false,
+  config: {},
+  integrationId: 'int_test',
+}
 
 const TRAIN = '[9000,-4500,560,-560,560,-1690]'
 const TRAIN_OFF = '[9000,-4500,560,-1690,560,-560]'
@@ -416,5 +430,58 @@ describe('RemoteConfigDialog', () => {
     pick('a')
     // The draft binds power differently from what is stored: the stored command is not the one tested.
     expect((screen.getByTestId('test-power') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('Test stays on for a binding the draft leaves as stored', () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: { action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' } },
+      },
+    }
+    savedCommands = ['power']
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <RemoteConfigDialog
+            device={DEVICE}
+            open
+            kept={storedConfig}
+            onKeep={onKeep}
+            onClose={vi.fn()}
+          />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+    pick('a')
+    expect((screen.getByTestId('test-power') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('a refused Keep leaves the modal open and shows why', () => {
+    onKeep.mockReturnValueOnce('Nothing was kept.')
+    const onClose = vi.fn()
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <RemoteConfigDialog device={DEVICE} open onKeep={onKeep} onClose={onClose} />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByTestId('remote-save'))
+    expect(screen.getByTestId('remote-keep-refusal').textContent).toBe('Nothing was kept.')
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('an accepted Keep closes the modal', () => {
+    const onClose = vi.fn()
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <RemoteConfigDialog device={DEVICE} open onKeep={onKeep} onClose={onClose} />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByTestId('remote-save'))
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })

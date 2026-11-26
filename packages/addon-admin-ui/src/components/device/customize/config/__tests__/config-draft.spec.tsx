@@ -3,6 +3,7 @@ import {
   CompositionSchema,
   CoreBlockSchema,
   type DeviceInfo,
+  DeviceType,
   EMPTY_REMOTE_CONFIG,
   type FanPreset,
   mediaPlayerExtensionCommands,
@@ -52,16 +53,29 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 import { CustomizeDraftProvider } from '../../customize-draft'
 import { ConfigDraftProvider, useConfigDraft } from '../config-draft'
 
-const native = { id: 5, name: 'TV', type: 'media-player', stableId: 'tv' } as unknown as DeviceInfo
-const built = {
-  id: 6,
-  name: 'Built TV',
-  type: 'media-player',
-  stableId: composedDeviceStableId(BLOCK_ID),
-} as unknown as DeviceInfo
+function deviceOf(id: number, name: string, stableId: string): DeviceInfo {
+  return {
+    id,
+    name,
+    stableId,
+    addonId: 'test',
+    type: DeviceType.MediaPlayer,
+    location: null,
+    disabled: false,
+    parentDeviceId: null,
+    online: true,
+    features: [],
+    isCamera: false,
+    config: {},
+    integrationId: 'int_test',
+  }
+}
+
+const native = deviceOf(5, 'TV', 'tv')
+const built = deviceOf(6, 'Built TV', composedDeviceStableId(BLOCK_ID))
 
 const CONFIG: RemoteConfig = { ...EMPTY_REMOTE_CONFIG, layoutTemplateId: 'tpl' }
-const PRESETS: FanPreset[] = [{ id: 'p1', name: 'Night' } as unknown as FanPreset]
+const PRESETS: FanPreset[] = [{ id: 'p1', name: 'Night', state: { speed: 30 } }]
 
 /** Two buttons that hand the draft an edit, and a probe that shows what it holds. */
 function Probe({ device }: { device: DeviceInfo }) {

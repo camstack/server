@@ -58,7 +58,7 @@ export interface RemoteConfigDialogProps {
   /** The configuration the tab's draft holds, shown instead of the stored one. */
   readonly kept?: RemoteConfig | null
   /** The operator confirmed the edit: the tab's draft takes this configuration. */
-  readonly onKeep: (config: RemoteConfig) => void
+  readonly onKeep: (config: RemoteConfig) => string | null
   readonly onClose: () => void
 }
 
@@ -112,7 +112,7 @@ interface FormProps {
   /** What the capability stores: Test sends this, so it decides which roles are testable. */
   readonly saved: RemoteConfig
   readonly initial: RemoteConfig
-  readonly onKeep: (config: RemoteConfig) => void
+  readonly onKeep: (config: RemoteConfig) => string | null
   readonly onClose: () => void
 }
 
@@ -130,6 +130,8 @@ function describeResult(result: RemoteSendResult, t: TFunction): string {
 }
 
 function DialogForm({ device, saved, initial, onKeep, onClose }: FormProps): ReactNode {
+  // Why the draft did not take the edit; the dialog stays open so nothing is lost.
+  const [keepRefusal, setKeepRefusal] = useState<string | null>(null)
   const { t, i18n } = useTranslation()
   const [config, setConfig] = useState<RemoteConfig>(initial)
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
@@ -374,6 +376,11 @@ function DialogForm({ device, saved, initial, onKeep, onClose }: FormProps): Rea
         )}
       </DialogBody>
       <DialogFooter>
+        {keepRefusal !== null && (
+          <p role="alert" className="text-xs text-danger" data-testid="remote-keep-refusal">
+            {keepRefusal}
+          </p>
+        )}
         <Button variant="ghost" onClick={onClose}>
           {t('common.cancel')}
         </Button>
@@ -381,8 +388,9 @@ function DialogForm({ device, saved, initial, onKeep, onClose }: FormProps): Rea
           disabled={check.config === null}
           onClick={() => {
             if (check.config === null) return
-            onKeep(check.config)
-            onClose()
+            const refusal = onKeep(check.config)
+            if (refusal === null) onClose()
+            else setKeepRefusal(refusal)
           }}
           data-testid="remote-save"
         >

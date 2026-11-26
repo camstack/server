@@ -6,16 +6,12 @@
  * ScalarOverrideDialog; an event, a list or an extension opens its own editor
  * (D315: unread applicability is said, never read as "nothing to add").
  */
-import {
-  CAP_CUSTOMIZE_CATALOG,
-  type CustomizeCatalog,
-  type DeviceInfo,
-  DeviceType,
-} from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalog, type DeviceInfo } from '@camstack/types'
 import {
   Button,
   type DataColumn,
   DataTable,
+  DataTableFilterBar,
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -23,6 +19,9 @@ import {
   ErrorBox,
   IconButton,
   SectionCard,
+  deviceTypeMetaOf,
+  useDataTableFilter,
+  useUiText,
 } from '@camstack/ui-library'
 import { Pencil, SlidersHorizontal } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
@@ -85,6 +84,7 @@ import {
   CapLinkSourceCell,
   CapLinkValueCell,
 } from './CapLinkRow'
+import { entryFilterConfig, entryRowsOf, withoutFilteredEntries } from './entry-filter'
 import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
 import { capLinkOfferedOn, type OfferedCapLink } from './cap-link-edit'
 import {
@@ -318,7 +318,9 @@ interface TableKinds {
 }
 
 export function CustomizeTable(props: CustomizeTableProps): ReactNode {
-  if (props.device.type === DeviceType.Camera) return <CameraCustomizeTable {...props} />
+  // The device the linked-devices slot is hosted on also owns the linked actions and the triggers.
+  if (EXTENSION_SLOT_ROWS['linked-devices'].hosts(props.device.type))
+    return <CameraCustomizeTable {...props} />
   if (hasLinkedCameras(props.device.type)) return <GuestCustomizeTable {...props} />
   return <PlainCustomizeTable {...props} />
 }
@@ -402,8 +404,21 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
   const split = splitRows(planRows(specs, facts, isLinked))
   const linkLines = offeredLinks([...split.active, ...split.addable], device.type)
   const actionLines = actions === null ? [] : linkedActionTableLines(actions)
-  const cameraLines = cameras === null ? [] : cameras.lines
-  const deviceLines = devices === null ? [] : devices.lines
+  const allCameraLines = cameras === null ? [] : cameras.lines
+  const allDeviceLines = devices === null ? [] : devices.lines
+  const uiText = useUiText()
+  const allEntries = entryRowsOf<TableLine>([
+    ...allDeviceLines,
+    ...allCameraLines,
+    ...triggers.lines,
+  ])
+  const entryFilter = useDataTableFilter(
+    allEntries,
+    entryFilterConfig<TableLine>((type) => deviceTypeMetaOf(type, uiText).label),
+  )
+  const cameraLines = withoutFilteredEntries(allCameraLines, entryFilter.rows)
+  const deviceLines = withoutFilteredEntries(allDeviceLines, entryFilter.rows)
+  const triggerLines = withoutFilteredEntries(triggers.lines, entryFilter.rows)
   if (
     specs.length === 0 &&
     groups.length === 0 &&
@@ -430,7 +445,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
     actionLines,
     deviceLines,
     cameraLines,
-    triggers.lines,
+    triggerLines,
   )
   const openField = groups
     .flatMap((group) => [...group.rows, ...group.advanced])
@@ -741,6 +756,21 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           <p role="alert" className="text-xs text-danger break-words">
             {error}
           </p>
+        )}
+        {answered && allEntries.length >= 2 && (
+          <DataTableFilterBar
+            state={entryFilter.state}
+            facets={entryFilter.facets}
+            labels={{
+              searchPlaceholder: t('customize.assign.search'),
+              searchLabel: t('customize.table.entrySearchLabel'),
+              facetsLabel: t('customize.table.entryTypeLabel'),
+              clearLabel: t('customize.table.entryClearFilters'),
+            }}
+            onSearch={entryFilter.setSearch}
+            onToggleFacet={entryFilter.toggleFacet}
+            onClear={entryFilter.clear}
+          />
         )}
         {answered && lines.length > 0 && (
           <DataTable

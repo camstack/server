@@ -335,6 +335,12 @@ export function LinkedDeviceItem({ line }: { readonly line: LinkedDeviceTableLin
               {t('customize.linked.notLinked')}
             </span>
           )}
+          <span
+            className="text-[11px] text-foreground-subtle"
+            data-testid={`linked-controls-${line.row.deviceId}`}
+          >
+            {t('customize.linked.controls')}: {line.row.orphan ? '—' : t('customize.linked.yes')}
+          </span>
           {line.row.health !== 'ok' && (
             <span role="alert" className="text-[11px] text-warning">
               {t(`customize.linked.health.${line.row.health}`)}

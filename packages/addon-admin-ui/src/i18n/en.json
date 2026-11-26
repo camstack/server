@@ -3107,7 +3107,12 @@
       },
       "unlink": "Unlink {{device}}",
       "unlinkWhat": "The link to {{device}}, which added: {{features}}",
-      "keep": "Keep"
+      "keep": "Keep",
+      "entrySearchLabel": "Search the linked devices, cameras and triggers",
+      "entryTypeLabel": "Device type",
+      "entryClearFilters": "Clear filters",
+      "keepUnavailable": "This editor has no Customize tab to keep its change in, so nothing was kept. Open the device's Customize tab and try again.",
+      "fanPresetDeleteWarning": "{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it."
     },
     "followSwitch": {
       "label": "Follow the device's switch",

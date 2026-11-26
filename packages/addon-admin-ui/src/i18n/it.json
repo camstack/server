@@ -3182,7 +3182,12 @@
       },
       "unlink": "Scollega {{device}}",
       "unlinkWhat": "Il collegamento a {{device}}, che ha aggiunto: {{features}}",
-      "keep": "Mantieni"
+      "keep": "Mantieni",
+      "entrySearchLabel": "Cerca tra dispositivi collegati, camere e attivazioni",
+      "entryTypeLabel": "Tipo di dispositivo",
+      "entryClearFilters": "Azzera i filtri",
+      "keepUnavailable": "Questo editor non ha una scheda Personalizza dove tenere la modifica, quindi non e stato tenuto nulla. Apri la scheda Personalizza del dispositivo e riprova.",
+      "fanPresetDeleteWarning": "{{name}} verra eliminato e Alexa, HomeKit e Home Assistant smettono di offrirlo."
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",

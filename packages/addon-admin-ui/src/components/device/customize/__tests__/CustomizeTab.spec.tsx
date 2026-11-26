@@ -341,6 +341,25 @@ vi.mock('../triggers/useTriggeredBy', async (importOriginal) => {
                   type: 'button',
                 },
               },
+              {
+                kind: 'triggerEntry',
+                row: {
+                  key: `c:${target.id}`,
+                  blockId: 'c',
+                  deviceId: 13,
+                  action: 'toggle',
+                  capability: 'switch',
+                  onForSeconds: null,
+                  activeWindow: null,
+                  activeWhen: null,
+                  enabled: true,
+                  flagged: false,
+                  filter: { kind: 'custom' },
+                  name: `Sensore for ${target.id}`,
+                  detail: null,
+                  type: 'sensor',
+                },
+              },
             ],
       canAdd: false,
       busy: false,
@@ -524,6 +543,29 @@ describe('CustomizeTab — what it may claim (D315)', () => {
     expect(within(table).getByText(`Pulsante for ${String(id)}`)).toBeTruthy()
     // No section card of its own beside the table.
     expect(screen.queryByRole('heading', { name: 'Triggered by' })).toBeNull()
+  })
+
+  it('searches and filters the device entries of the table by name and by type', () => {
+    triggers.current = 'some'
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    const id = String(device.current?.['id'])
+    const table = screen.getByTestId('customize-table')
+    fireEvent.change(screen.getByPlaceholderText('Search a device'), {
+      target: { value: 'Sensore' },
+    })
+    expect(within(table).queryByText(`Pulsante for ${id}`)).toBeNull()
+    expect(within(table).getByText(`Sensore for ${id}`)).toBeTruthy()
+    // The section line stays: the table keeps its shape while the entries narrow.
+    expect(within(table).getByText('Triggered by')).toBeTruthy()
+    fireEvent.change(screen.getByPlaceholderText('Search a device'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /^button/i }))
+    expect(within(table).getByText(`Pulsante for ${id}`)).toBeTruthy()
+    expect(within(table).queryByText(`Sensore for ${id}`)).toBeNull()
   })
 
   it('a present customization shows its block status', () => {

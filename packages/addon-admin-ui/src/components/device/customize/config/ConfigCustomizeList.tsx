@@ -7,7 +7,9 @@
  * entry with neither renders nothing (it never invents one).
  */
 import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@camstack/types'
+import { useRemoteGetConfig } from '@camstack/ui-library'
 import type { ComponentType, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FanPresetsExtensionCard } from '../../../fan-presets/FanPresetsExtensionCard'
 import { RemoteConfigDialog } from '../../../remote/RemoteConfigDialog'
 import { useConfigDraft } from './config-draft'
@@ -22,13 +24,24 @@ export interface ConfigEditorProps extends ConfigCardProps {
 
 /** The remote's modal: its confirm hands the configuration to the tab's draft, the tab's Save writes it. */
 export function RemoteEditor({ device, onClose }: ConfigEditorProps): ReactNode {
+  const { t } = useTranslation()
   const draft = useConfigDraft()
+  const stored = useRemoteGetConfig({ deviceId: device.id })
   return (
     <RemoteConfigDialog
       device={device}
       open
       kept={draft?.remote ?? null}
-      onKeep={(config) => draft?.setRemote(device, config)}
+      onKeep={(config) => {
+        // The tab has no draft to keep it in: the dialog stays open and says so.
+        if (draft === null) return t('customize.table.keepUnavailable')
+        // A Keep that lands on what is stored is no edit: the tab stays clean.
+        draft.setRemote(
+          device,
+          JSON.stringify(config) === JSON.stringify(stored.data) ? null : config,
+        )
+        return null
+      }}
       onClose={onClose}
     />
   )

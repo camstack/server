@@ -7,13 +7,18 @@
  * the tab's Save writes it, Discard restores what the fan stores.
  */
 import type { DeviceInfo, FanPreset } from '@camstack/types'
-import { Badge, Button, IconButton, useFanPresetsGetPresets } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  IconButton,
+  useConfirm,
+  useFanPresetsGetPresets,
+} from '@camstack/ui-library'
 import { Fan, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
 import { useConfigDraft } from '../device/customize/config/config-draft'
-import { useConfirmRemove } from '../device/customize/use-confirm-remove'
 import { FanPresetDialog } from './FanPresetDialog'
 import { newPresetId, presetFieldCount, removePreset, upsertPreset } from './fan-presets-model'
 
@@ -23,19 +28,26 @@ export interface FanPresetsExtensionCardProps {
 
 export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps): ReactNode {
   const { t } = useTranslation()
-  const confirmRemove = useConfirmRemove()
+  const confirm = useConfirm()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
   const draft = useConfigDraft()
   const [editing, setEditing] = useState<FanPreset | null>(null)
+  // Why an edit was not kept: the tab has no draft to keep it in, so it is said, never dropped.
+  const [refusal, setRefusal] = useState<string | null>(null)
   // What the card shows: the draft list when the operator edited one, else what the fan stores.
   const stored = draft?.fanPresets ?? presets.data
 
   // An edit that lands back on the stored list is no edit: the draft is dropped.
-  const keepList = (list: readonly FanPreset[]): void =>
-    draft?.setFanPresets(
-      device,
-      JSON.stringify(list) === JSON.stringify(presets.data) ? null : list,
-    )
+  const keepList = (list: readonly FanPreset[]): string | null => {
+    if (draft === null) {
+      const reason = t('customize.table.keepUnavailable')
+      setRefusal(reason)
+      return reason
+    }
+    setRefusal(null)
+    draft.setFanPresets(device, JSON.stringify(list) === JSON.stringify(presets.data) ? null : list)
+    return null
+  }
 
   return (
     <CustomizeCard
@@ -96,7 +108,12 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
                   name: preset.name,
                 })}
                 onClick={() => {
-                  void confirmRemove(preset.name, false).then((accepted) => {
+                  void confirm({
+                    title: t('fanPresets.card.deleteTitle', 'Delete this preset?'),
+                    message: t('customize.table.fanPresetDeleteWarning', { name: preset.name }),
+                    confirmLabel: t('common.delete', 'Delete'),
+                    variant: 'danger',
+                  }).then((accepted) => {
                     if (accepted) keepList(removePreset(stored, preset.id))
                   })
                 }}
@@ -105,18 +122,25 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
           ))}
         </ul>
       )}
+      {refusal !== null && editing === null && (
+        <p role="alert" className="px-3 py-2 text-xs text-danger" data-testid="fan-presets-refusal">
+          {refusal}
+        </p>
+      )}
       {editing !== null && stored !== undefined && (
         <FanPresetDialog
           fanId={device.id}
           draft={editing}
           others={stored}
           saving={false}
-          error={null}
+          error={refusal}
           onSave={(preset) => {
-            keepList(upsertPreset(stored, preset))
-            setEditing(null)
+            if (keepList(upsertPreset(stored, preset)) === null) setEditing(null)
           }}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            setEditing(null)
+            setRefusal(null)
+          }}
         />
       )}
     </CustomizeCard>
