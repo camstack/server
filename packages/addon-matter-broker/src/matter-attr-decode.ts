@@ -145,50 +145,60 @@ export function decodeMatterAttribute(input: {
    * alone does not.
    */
   readonly booleanState?: 'contact' | 'flood'
+  /** Ms epoch stamped on every timestamp the patch carries; default now (live), a replay passes the recorded time. */
+  readonly at?: number
 }): DecodedAttribute | null {
   const { clusterId, attributeId, value } = input
+  const at = input.at ?? Date.now()
   switch (clusterId) {
     case MatterClusterId.OnOff:
-      return decodeOnOff(attributeId, value)
+      return decodeOnOff(attributeId, value, at)
     case MatterClusterId.LevelControl:
-      return decodeLevel(attributeId, value)
+      return decodeLevel(attributeId, value, at)
     case MatterClusterId.BooleanState:
       return input.booleanState === 'flood'
-        ? decodeFlood(attributeId, value)
-        : decodeContact(attributeId, value)
+        ? decodeFlood(attributeId, value, at)
+        : decodeContact(attributeId, value, at)
     case MatterClusterId.OccupancySensing:
-      return decodeOccupancy(attributeId, value)
+      return decodeOccupancy(attributeId, value, at)
     case MatterClusterId.TemperatureMeasurement:
-      return decodeScaledMeasurement(attributeId, value, 'temperature-sensor', 'temperature', 0.01)
+      return decodeScaledMeasurement(
+        attributeId,
+        value,
+        'temperature-sensor',
+        'temperature',
+        0.01,
+        at,
+      )
     case MatterClusterId.RelativeHumidityMeasurement:
-      return decodeScaledMeasurement(attributeId, value, 'humidity-sensor', 'humidity', 0.01)
+      return decodeScaledMeasurement(attributeId, value, 'humidity-sensor', 'humidity', 0.01, at)
     case MatterClusterId.PressureMeasurement:
       // PressureMeasurement.MeasuredValue is in kPa×10; 1 kPa = 10 hPa → ×1.
-      return decodeScaledMeasurement(attributeId, value, 'pressure-sensor', 'pressure', 1)
+      return decodeScaledMeasurement(attributeId, value, 'pressure-sensor', 'pressure', 1, at)
     case MatterClusterId.IlluminanceMeasurement:
-      return decodeIlluminance(attributeId, value)
+      return decodeIlluminance(attributeId, value, at)
     case MatterClusterId.PowerSource:
-      return decodeBattery(attributeId, value)
+      return decodeBattery(attributeId, value, at)
     case MatterClusterId.Thermostat:
-      return decodeThermostat(attributeId, value)
+      return decodeThermostat(attributeId, value, at)
     case MatterClusterId.ElectricalPowerMeasurement:
-      return decodeElectricalPower(attributeId, value)
+      return decodeElectricalPower(attributeId, value, at)
     case MatterClusterId.ElectricalEnergyMeasurement:
-      return decodeElectricalEnergy(attributeId, value)
+      return decodeElectricalEnergy(attributeId, value, at)
     case MatterClusterId.DoorLock:
-      return decodeDoorLock(attributeId, value)
+      return decodeDoorLock(attributeId, value, at)
     case MatterClusterId.SmokeCoAlarm:
-      return decodeSmokeCoAlarm(attributeId, value)
+      return decodeSmokeCoAlarm(attributeId, value, at)
     case MatterClusterId.ValveConfigurationAndControl:
-      return decodeValve(attributeId, value)
+      return decodeValve(attributeId, value, at)
     case MatterClusterId.CarbonDioxideConcentration:
-      return decodeConcentration(attributeId, value, 'co2')
+      return decodeConcentration(attributeId, value, 'co2', at)
     case MatterClusterId.Pm25Concentration:
-      return decodeConcentration(attributeId, value, 'pm25')
+      return decodeConcentration(attributeId, value, 'pm25', at)
     case MatterClusterId.Pm10Concentration:
-      return decodeConcentration(attributeId, value, 'pm10')
+      return decodeConcentration(attributeId, value, 'pm10', at)
     case MatterClusterId.TvocConcentration:
-      return decodeConcentration(attributeId, value, 'voc')
+      return decodeConcentration(attributeId, value, 'voc', at)
     default:
       return null
   }
@@ -221,7 +231,7 @@ const DOOR_STATE_OPEN: ReadonlyMap<number, boolean> = new Map([
   [5, true],
 ])
 
-function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeDoorLock(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId === MatterAttributeId.LockState) {
     const raw = asNumber(value)
     if (raw === null) return null
@@ -229,7 +239,7 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
     if (mapped === undefined) return null
     const decoded: DecodedAttribute = {
       cap: 'lock-control',
-      patch: { state: mapped.state, lastChangedAt: Date.now() },
+      patch: { state: mapped.state, lastChangedAt: at },
       ...(mapped.detail !== undefined ? { detail: mapped.detail } : {}),
     }
     return decoded
@@ -242,7 +252,7 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
     if (detail === 'door-jammed') {
       return {
         cap: 'lock-control',
-        patch: { state: 'jammed', lastChangedAt: Date.now() },
+        patch: { state: 'jammed', lastChangedAt: at },
         detail,
       }
     }
@@ -250,7 +260,7 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
     // lock exposes. DoorJammed is the BOLT failing, not the door position.
     const open = DOOR_STATE_OPEN.get(raw)
     if (open !== undefined) {
-      return { cap: 'contact', patch: { entryOpen: open, lastChangedAt: Date.now() }, detail }
+      return { cap: 'contact', patch: { entryOpen: open, lastChangedAt: at }, detail }
     }
     return { cap: 'lock-control', patch: {}, detail }
   }
@@ -267,41 +277,45 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
   return null
 }
 
-function decodeFlood(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeFlood(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.StateValue) return null
   const detected = asBoolean(value)
   if (detected === null) return null
   // Water-leak / rain detector: StateValue true = detected (not "closed").
-  return { cap: 'flood', patch: { flooded: detected, lastChangedAt: Date.now() } }
+  return { cap: 'flood', patch: { flooded: detected, lastChangedAt: at } }
 }
 
 /** SmokeCOAlarm AlarmState: anything but Normal(0) is an alarm. */
-function decodeSmokeCoAlarm(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeSmokeCoAlarm(
+  attributeId: number,
+  value: unknown,
+  at: number,
+): DecodedAttribute | null {
   const raw = asNumber(value)
   if (raw === null) return null
   const detected = raw !== 0
   if (attributeId === MatterAttributeId.SmokeState) {
-    return { cap: 'smoke', patch: { detected, lastChangedAt: Date.now() } }
+    return { cap: 'smoke', patch: { detected, lastChangedAt: at } }
   }
   if (attributeId === MatterAttributeId.CoState) {
-    return { cap: 'carbon-monoxide', patch: { detected, lastChangedAt: Date.now() } }
+    return { cap: 'carbon-monoxide', patch: { detected, lastChangedAt: at } }
   }
   return null
 }
 
-function decodeValve(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeValve(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   const raw = asNumber(value)
   if (raw === null) return null
   if (attributeId === MatterAttributeId.ValveCurrentState) {
     // 2 = Transitioning says "moving", not which way: the command that started
     // the move already recorded opening / closing, so leave the slice alone.
-    if (raw === 0) return { cap: 'valve', patch: { state: 'closed', lastChangedAt: Date.now() } }
-    if (raw === 1) return { cap: 'valve', patch: { state: 'open', lastChangedAt: Date.now() } }
+    if (raw === 0) return { cap: 'valve', patch: { state: 'closed', lastChangedAt: at } }
+    if (raw === 1) return { cap: 'valve', patch: { state: 'open', lastChangedAt: at } }
     return { cap: 'valve', patch: {}, detail: 'valve-transitioning' }
   }
   if (attributeId === MatterAttributeId.ValveCurrentLevel) {
     const position = Math.max(0, Math.min(100, raw))
-    return { cap: 'valve', patch: { position, lastChangedAt: Date.now() } }
+    return { cap: 'valve', patch: { position, lastChangedAt: at } }
   }
   return null
 }
@@ -315,38 +329,39 @@ function decodeConcentration(
   attributeId: number,
   value: unknown,
   field: 'co2' | 'pm25' | 'pm10' | 'voc',
+  at: number,
 ): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.MeasuredValue) return null
   const raw = asNumber(value)
   if (raw === null || raw < 0) return null
-  return { cap: 'air-quality-sensor', patch: { [field]: raw, lastFetchedAt: Date.now() } }
+  return { cap: 'air-quality-sensor', patch: { [field]: raw, lastFetchedAt: at } }
 }
 
-function decodeOnOff(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeOnOff(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.OnOff) return null
   const on = asBoolean(value)
-  return on === null ? null : { cap: 'switch', patch: { on, lastChangedAt: Date.now() } }
+  return on === null ? null : { cap: 'switch', patch: { on, lastChangedAt: at } }
 }
 
-function decodeLevel(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeLevel(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.CurrentLevel) return null
   const level = asNumber(value)
   if (level === null) return null
   // Matter LevelControl.CurrentLevel is 0..254 → CamStack percentage 0..100.
   const percentage = Math.round((Math.max(0, Math.min(254, level)) / 254) * 100)
-  return { cap: 'brightness', patch: { level: percentage, lastChangedAt: Date.now() } }
+  return { cap: 'brightness', patch: { level: percentage, lastChangedAt: at } }
 }
 
-function decodeContact(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeContact(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.StateValue) return null
   const stateValue = asBoolean(value)
   if (stateValue === null) return null
   // BooleanState.StateValue true = contact closed; CamStack `entryOpen` is the
   // inverse (an open entry/door). A contact sensor reporting "closed" ⇒ not open.
-  return { cap: 'contact', patch: { entryOpen: !stateValue, lastChangedAt: Date.now() } }
+  return { cap: 'contact', patch: { entryOpen: !stateValue, lastChangedAt: at } }
 }
 
-function decodeOccupancy(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeOccupancy(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.Occupancy) return null
   const bitmap = asNumber(value)
   if (bitmap === null) return null
@@ -356,7 +371,7 @@ function decodeOccupancy(attributeId: number, value: unknown): DecodedAttribute 
   // only, and the merge keeps the stamp of the rise before it.
   return {
     cap: 'motion',
-    patch: detected ? { detected, lastDetectedAt: Date.now() } : { detected },
+    patch: detected ? { detected, lastDetectedAt: at } : { detected },
   }
 }
 
@@ -366,24 +381,29 @@ function decodeScaledMeasurement(
   cap: MatterEndpointCap,
   field: string,
   scale: number,
+  at: number,
 ): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.MeasuredValue) return null
   const raw = asNumber(value)
   // Matter uses a sentinel (null / 0x8000) for "unknown"; treat null as no value.
   if (raw === null) return null
-  return { cap, patch: { [field]: raw * scale, lastFetchedAt: Date.now() } }
+  return { cap, patch: { [field]: raw * scale, lastFetchedAt: at } }
 }
 
-function decodeIlluminance(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeIlluminance(
+  attributeId: number,
+  value: unknown,
+  at: number,
+): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.MeasuredValue) return null
   const raw = asNumber(value)
   if (raw === null || raw <= 0) return null
   // IlluminanceMeasurement.MeasuredValue = 10000 × log10(lux) + 1 ⇒ invert.
   const lux = Math.round(10 ** ((raw - 1) / 10000))
-  return { cap: 'ambient-light-sensor', patch: { illuminance: lux, lastFetchedAt: Date.now() } }
+  return { cap: 'ambient-light-sensor', patch: { illuminance: lux, lastFetchedAt: at } }
 }
 
-function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeBattery(attributeId: number, value: unknown, at: number): DecodedAttribute | null {
   if (attributeId === MatterAttributeId.BatPercentRemaining) {
     const half = asNumber(value)
     if (half === null) return null
@@ -391,7 +411,7 @@ function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | 
     const percentage = Math.max(0, Math.min(100, Math.round(half / 2)))
     return {
       cap: 'battery',
-      patch: { level: percentage, binary: false, lastUpdated: Date.now() },
+      patch: { level: percentage, binary: false, lastUpdated: at },
       detail: 'battery-percent',
     }
   }
@@ -404,7 +424,7 @@ function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | 
     if (stand === undefined) return null
     return {
       cap: 'battery',
-      patch: { level: stand, binary: true, lastUpdated: Date.now() },
+      patch: { level: stand, binary: true, lastUpdated: at },
       detail: 'battery-level-only',
     }
   }
@@ -413,7 +433,7 @@ function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | 
     if (state === null) return null
     // 0 Unknown, 1 IsCharging, 2 IsAtFullCharge (still on a charger), 3 IsNotCharging.
     const charging = state === 1 || state === 2 ? 'dc' : state === 3 ? 'none' : 'unknown'
-    return { cap: 'battery', patch: { charging, lastUpdated: Date.now() } }
+    return { cap: 'battery', patch: { charging, lastUpdated: at } }
   }
   return null
 }
@@ -425,20 +445,24 @@ const BAT_CHARGE_LEVEL_STAND_IN: ReadonlyMap<number, number> = new Map([
   [2, 5],
 ])
 
-function decodeThermostat(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeThermostat(
+  attributeId: number,
+  value: unknown,
+  at: number,
+): DecodedAttribute | null {
   switch (attributeId) {
     case MatterAttributeId.LocalTemperature: {
       const raw = asNumber(value)
       return raw === null
         ? null
-        : { cap: 'climate-control', patch: { currentTemp: raw * 0.01, lastFetchedAt: Date.now() } }
+        : { cap: 'climate-control', patch: { currentTemp: raw * 0.01, lastFetchedAt: at } }
     }
     case MatterAttributeId.OccupiedHeatingSetpoint:
     case MatterAttributeId.OccupiedCoolingSetpoint: {
       const raw = asNumber(value)
       return raw === null
         ? null
-        : { cap: 'climate-control', patch: { target: raw * 0.01, lastFetchedAt: Date.now() } }
+        : { cap: 'climate-control', patch: { target: raw * 0.01, lastFetchedAt: at } }
     }
     case MatterAttributeId.SystemMode: {
       const raw = asNumber(value)
@@ -446,42 +470,50 @@ function decodeThermostat(attributeId: number, value: unknown): DecodedAttribute
       const mode = SYSTEM_MODE_TO_HVAC.get(raw)
       return mode === undefined
         ? null
-        : { cap: 'climate-control', patch: { mode, lastFetchedAt: Date.now() } }
+        : { cap: 'climate-control', patch: { mode, lastFetchedAt: at } }
     }
     default:
       return null
   }
 }
 
-function decodeElectricalPower(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeElectricalPower(
+  attributeId: number,
+  value: unknown,
+  at: number,
+): DecodedAttribute | null {
   switch (attributeId) {
     case MatterAttributeId.ActivePower: {
       const mw = asNumber(value)
       return mw === null
         ? null
-        : { cap: 'power-meter', patch: { power: mw / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { power: mw / 1000, lastFetchedAt: at } }
     }
     case MatterAttributeId.Voltage: {
       const mv = asNumber(value)
       return mv === null
         ? null
-        : { cap: 'power-meter', patch: { voltage: mv / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { voltage: mv / 1000, lastFetchedAt: at } }
     }
     case MatterAttributeId.ActiveCurrent: {
       const ma = asNumber(value)
       return ma === null
         ? null
-        : { cap: 'power-meter', patch: { current: ma / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { current: ma / 1000, lastFetchedAt: at } }
     }
     default:
       return null
   }
 }
 
-function decodeElectricalEnergy(attributeId: number, value: unknown): DecodedAttribute | null {
+function decodeElectricalEnergy(
+  attributeId: number,
+  value: unknown,
+  at: number,
+): DecodedAttribute | null {
   if (attributeId !== MatterAttributeId.CumulativeEnergyImported) return null
   const mwh = asEnergyMilliWattHours(value)
   if (mwh === null) return null
   // mWh → kWh (÷ 1e6).
-  return { cap: 'power-meter', patch: { energy: mwh / 1_000_000, lastFetchedAt: Date.now() } }
+  return { cap: 'power-meter', patch: { energy: mwh / 1_000_000, lastFetchedAt: at } }
 }

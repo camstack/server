@@ -233,6 +233,12 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.reportUnsub = matterNodes.onAttributeReport((brokerId, report) => {
       this.applyReport(brokerId, report)
     })
+    // Reports recorded BEFORE this device existed (the controller's initial
+    // read at subscribe) are not re-emitted when unchanged: replay the gateway
+    // cache through the same decode path so no slice stays at its COLD seed.
+    for (const cached of matterNodes.cachedAttributesOf(this.brokerId, this.nodeId)) {
+      this.applyReport(this.brokerId, cached.report, cached.recordedAt)
+    }
     this.eventUnsub = matterNodes.onEvent((brokerId, event) => {
       this.applyEvent(brokerId, event)
     })
@@ -257,7 +263,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   /** Decode a live report into the owning cap's runtime-state slice. */
-  private applyReport(brokerId: string, report: MatterAttributeReport): void {
+  private applyReport(brokerId: string, report: MatterAttributeReport, recordedAt?: number): void {
     if (brokerId !== this.brokerId) return
     if (report.nodeId !== this.nodeId) return
     const fromFoldedPowerSource =
@@ -265,23 +271,26 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       report.endpointId === this.powerSourceEndpointId &&
       report.clusterId === MatterClusterId.PowerSource
     if (report.endpointId !== this.endpointId && !fromFoldedPowerSource) return
+    // A replayed cache entry is not news: it logs at debug, not on every restart.
+    const replay = recordedAt !== undefined
     const decoded = decodeMatterAttribute({
       clusterId: report.clusterId,
       attributeId: report.attributeId,
       value: report.value,
       booleanState: this.booleanState,
+      ...(recordedAt !== undefined ? { at: recordedAt } : {}),
     })
     if (decoded === null) return
     if (decoded.detail === 'pin-required' || decoded.detail === 'pin-not-required') {
       const next = decoded.detail === 'pin-required'
       if (next !== this.lockCodeRequired()) {
-        this.ctx.logger.info('Matter lock PIN requirement changed', {
+        this.ctx.logger[replay ? 'debug' : 'info']('Matter lock PIN requirement changed', {
           tags: { deviceId: this.id },
           meta: { nodeId: this.nodeId, endpointId: this.endpointId, pinRequired: next },
         })
       }
     } else if (decoded.detail !== undefined) {
-      this.ctx.logger.info('Matter lock detail', {
+      this.ctx.logger[replay ? 'debug' : 'info']('Matter lock detail', {
         tags: { deviceId: this.id },
         meta: { nodeId: this.nodeId, endpointId: this.endpointId, detail: decoded.detail },
       })

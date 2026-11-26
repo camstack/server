@@ -11,7 +11,7 @@ import {
   type AccessoryChildSpec,
   type IScopedLogger,
 } from '@camstack/types'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { MatterCommandInvocation, MatterNodeSnapshot } from '../matter-controller.js'
 import { matterCommands, matterNodes } from '../matter-gateway.js'
 import { MatterAttributeId } from '../matter-attr-decode.js'
@@ -404,5 +404,82 @@ describe('lock child: Open feature and command mapping', () => {
       value: 150,
     })
     expect((await statusOf(fx.providers, 'battery'))['level']).toBeNull()
+  })
+})
+
+describe('attributes cached before the device activates are replayed into its slices', () => {
+  const RECORDED_AT = 1_000_000
+  const ACTIVATED_AT = 9_000_000
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** Record a report at RECORDED_AT, then move the clock to ACTIVATED_AT. */
+  function recordThenAdvance(
+    clusterId: number,
+    attributeId: number,
+    value: unknown,
+    endpointId = 1,
+  ): void {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(RECORDED_AT)
+    matterNodes.recordAttribute('b1', { nodeId: '1', endpointId, clusterId, attributeId, value })
+    vi.setSystemTime(ACTIVATED_AT)
+  }
+
+  it('a lock cached as locked reads locked, stamped with the recorded time', async () => {
+    recordThenAdvance(MatterClusterId.DoorLock, MatterAttributeId.LockState, 1)
+    const { fx } = await lockWith({})
+    const status = await statusOf(fx.providers, 'lock-control')
+    expect(status['state']).toBe('locked')
+    expect(status['lastChangedAt']).toBe(RECORDED_AT)
+  })
+
+  it('a switch cached as on reads on, stamped with the recorded time', async () => {
+    recordThenAdvance(MatterClusterId.OnOff, 0, true)
+    const fx = await activeEndpoint({ type: DeviceType.Switch, capabilities: ['switch'] })
+    const status = await statusOf(fx.providers, 'switch')
+    expect(status['on']).toBe(true)
+    expect(status['lastChangedAt']).toBe(RECORDED_AT)
+  })
+
+  it('cached occupancy stamps lastDetectedAt with the recorded time, not the restart time', async () => {
+    recordThenAdvance(MatterClusterId.OccupancySensing, MatterAttributeId.Occupancy, 1)
+    const fx = await activeEndpoint({ type: DeviceType.Sensor, capabilities: ['motion'] })
+    const status = await statusOf(fx.providers, 'motion')
+    expect(status['detected']).toBe(true)
+    expect(status['lastDetectedAt']).toBe(RECORDED_AT)
+  })
+
+  it('a cached folded PowerSource battery replays onto the lock, stamped with the recorded time', async () => {
+    recordThenAdvance(MatterClusterId.PowerSource, MatterAttributeId.BatPercentRemaining, 100, 2)
+    const { fx } = await lockWith({ powerSourceEndpointId: 2 })
+    const status = await statusOf(fx.providers, 'battery')
+    expect(status['level']).toBe(50)
+    expect(status['lastUpdated']).toBe(RECORDED_AT)
+  })
+
+  it('a live report after the replay wins and carries the live time', async () => {
+    recordThenAdvance(MatterClusterId.DoorLock, MatterAttributeId.LockState, 1)
+    const { fx } = await lockWith({})
+    vi.setSystemTime(ACTIVATED_AT + 5)
+    matterNodes.recordAttribute('b1', {
+      nodeId: '1',
+      endpointId: 1,
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 2,
+    })
+    const status = await statusOf(fx.providers, 'lock-control')
+    expect(status['state']).toBe('unlocked')
+    expect(status['lastChangedAt']).toBe(ACTIVATED_AT + 5)
+  })
+
+  it('a replayed lock detail logs at debug, never at info', async () => {
+    recordThenAdvance(MatterClusterId.DoorLock, MatterAttributeId.LockState, 3)
+    const { fx } = await lockWith({})
+    const lines = fx.logs.filter((l) => l.message === 'Matter lock detail')
+    expect(lines.map((l) => l.level)).toEqual(['debug'])
   })
 })

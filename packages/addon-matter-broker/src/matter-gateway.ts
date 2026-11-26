@@ -23,6 +23,12 @@ function attrKey(
   return `${report.nodeId}:${report.endpointId}:${report.clusterId}:${report.attributeId}`
 }
 
+/** One cached attribute: the report and when the gateway recorded it (ms epoch). */
+export interface CachedAttribute {
+  readonly report: MatterAttributeReport
+  readonly recordedAt: number
+}
+
 /** A subscriber to live per-broker attribute reports. */
 export type AttributeReportListener = (brokerId: string, report: MatterAttributeReport) => void
 
@@ -36,7 +42,7 @@ export class MatterNodeResolver {
   /** Latest node inventory per broker. */
   readonly #nodes: Map<string, ReadonlyMap<string, MatterNodeSnapshot>> = new Map()
   /** Latest attribute value per broker → attrKey → value. */
-  readonly #attrs: Map<string, Map<string, unknown>> = new Map()
+  readonly #attrs: Map<string, Map<string, CachedAttribute>> = new Map()
   /** Live attribute-report subscribers (endpoint device classes). */
   readonly #listeners: Set<AttributeReportListener> = new Set()
   readonly #eventListeners: Set<EventListener> = new Set()
@@ -136,10 +142,10 @@ export class MatterNodeResolver {
   recordAttribute(brokerId: string, report: MatterAttributeReport): void {
     let perBroker = this.#attrs.get(brokerId)
     if (perBroker === undefined) {
-      perBroker = new Map<string, unknown>()
+      perBroker = new Map<string, CachedAttribute>()
       this.#attrs.set(brokerId, perBroker)
     }
-    perBroker.set(attrKey(report), report.value)
+    perBroker.set(attrKey(report), { report, recordedAt: Date.now() })
     for (const listener of this.#listeners) {
       try {
         listener(brokerId, report)
@@ -169,6 +175,14 @@ export class MatterNodeResolver {
     attributeId: number,
   ): unknown {
     return this.#attrs.get(brokerId)?.get(attrKey({ nodeId, endpointId, clusterId, attributeId }))
+      ?.report.value
+  }
+
+  /** Every cached attribute of one node, with the time the gateway recorded each. */
+  cachedAttributesOf(brokerId: string, nodeId: string): readonly CachedAttribute[] {
+    const perBroker = this.#attrs.get(brokerId)
+    if (perBroker === undefined) return []
+    return Array.from(perBroker.values()).filter((c) => c.report.nodeId === nodeId)
   }
 
   /** True when the broker has a live (published) inventory. */
