@@ -17,7 +17,7 @@ covers:
   - packages/addon-pipeline/src/stream-broker/**
   - packages/types/src/audio/**
   - packages/addon-pipeline/src/detection-pipeline/**
-last-verified: 2026-10-08
+last-verified: 2026-11-26
 ---
 
 # Media and detection data planes
@@ -719,6 +719,11 @@ most consumers of a broker are the system itself:
 ## WebRTC gotchas
 
 These are all field-learned; each cost a debugging session.
+
+- **A WebRTC session starts from the latest keyframe once DTLS connects, and
+  audio waits for that keyframe too.** A session whose DTLS never completes is
+  closed (`DTLS never connected — closing session`) rather than left feeding a
+  transport that is not connected.
 
 - **A client-offer session answers audio `sendonly` — unless a trusted caller
   asked for talk-back.** `webrtcSession.handleOffer({ talkback: true })` (the

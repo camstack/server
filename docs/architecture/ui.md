@@ -54,7 +54,7 @@ applies-to:
 covers:
   - packages/addon-admin-ui/src/**
   - packages/ui-library/src/**
-last-verified: 2026-11-02
+last-verified: 2026-11-26
 ---
 
 # Admin UI
@@ -1789,3 +1789,5 @@ stays. It sends `ready` on mount and `path` on every route change, routes a
 (web) or from the shell's script injection (native WebView); it posts back to its
 own origin, never `*`. The nav the drawer shows is the `app-source` manifest, built
 from the same table as the sidebar (`buildAdminNavManifest`, parity spec).
+Benchmark, Model Studio and Homematic CCU declare their app with `adminOnly: true`
+through the same `app-source` cap.

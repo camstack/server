@@ -1,6 +1,6 @@
 ---
 title: Logging — where a line goes, and how history is read back
-last-verified: 2026-10-21
+last-verified: 2026-11-26
 applies-to:
   - packages/system/src/logging/log-manager.ts
   - packages/system/src/logging/log-read-filter.ts
@@ -93,6 +93,15 @@ UI offers the readable ones.
   days; labels `job`/`node`/`level` select, `|=` / `|~` line filters narrow,
   `lineMatches` decides. The cursor is the oldest nanosecond returned plus the
   hashes of the lines already returned at it (siblings share a millisecond).
+
+## Export
+
+`GET /api/logs/export` streams the chosen history as NDJSON; `zip=1` streams
+one `.zip` holding that NDJSON, written by a single-entry streaming ZIP writer
+over `node:zlib` (no new dependency). An empty component and device selection
+exports every source over the range, which defaults to 6 h
+(`LOG_EXPORT_DEFAULT_WINDOW_MS`). The admin dialog has an "Export as ZIP"
+checkbox; the develop package's hub logs-export tool takes `zip: true`.
 
 ## The tail
 
