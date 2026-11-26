@@ -37,6 +37,7 @@ import { ComposedCustomizeBody } from './ComposedCustomizeBody'
 const DRAFT_ORDER: readonly string[] = [
   'composition',
   'linked-devices',
+  'linked-cameras',
   'linked-actions',
   'triggers',
 ]

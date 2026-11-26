@@ -112,6 +112,7 @@ vi.mock('../../source-selector/SourceSelectorDevicesDialog', () => ({
 const { LinkedCameraButtons, LinkedCameraItem, LinkedCameraValue, useLinkedCameras } = await import(
   '../LinkedCamerasRows'
 )
+const { CustomizeDraftProvider } = await import('../../customize-draft')
 
 /** The rows as the Customize table lays them out: one cell each, plus the picker its "+ Add" opens. */
 function Harness({ device }: { readonly device: typeof GATE }): ReactNode {
@@ -134,7 +135,9 @@ function Harness({ device }: { readonly device: typeof GATE }): ReactNode {
 function wrap(node: ReactNode): ReactNode {
   return (
     <MemoryRouter>
-      <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <CustomizeDraftProvider order={['linked-cameras']}>{node}</CustomizeDraftProvider>
+      </QueryClientProvider>
     </MemoryRouter>
   )
 }
@@ -205,34 +208,60 @@ describe('Linked cameras rows on a device a camera can link', () => {
     expect(screen.queryByRole('button', { name: 'pick Luce porch' })).toBeNull()
   })
 
-  it('adding writes this device into the picked camera slot read fresh, keeping its other ids', async () => {
+  it('adding is a draft line: nothing is written until Save, then the camera slot is read fresh and written with its stamp', async () => {
+    freshSlots.current[104] = [{ ...slotOf([705]), updatedAt: 41 }]
     render(wrap(<Harness device={GATE} />))
     fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera garden' }))
+    expect(screen.getByText('Camera garden')).toBeTruthy()
+    expect(setSlot).not.toHaveBeenCalled()
+    expect(fetchSlots).not.toHaveBeenCalledWith({ deviceId: 104 }, { staleTime: 0 })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 104,
         slotRef: 'device-manager:linked-devices',
         value: { slot: 'linked-devices', deviceIds: [705, 703] },
+        expectedUpdatedAt: 41,
       }),
     )
     expect(fetchSlots).toHaveBeenCalledWith({ deviceId: 104 }, { staleTime: 0 })
   })
 
-  it('a camera whose slot cannot be read is not written, and says so', async () => {
+  it('Discard drops a pending add and a pending remove without a write', async () => {
+    render(wrap(<Harness device={GATE} />))
+    fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
+    fireEvent.click(screen.getByRole('button', { name: 'pick Camera garden' }))
+    const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
+    await waitFor(() => expect(remove.hasAttribute('disabled')).toBe(false))
+    fireEvent.click(remove)
+    await waitFor(() => expect(screen.queryByText('Camera porch')).toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: 'Discard' }))
+    await screen.findByText('Camera porch')
+    expect(screen.queryByText('Camera garden')).toBeNull()
+    expect(setSlot).not.toHaveBeenCalled()
+  })
+
+  it('a camera whose slot cannot be read at Save is not written, says so, and stays in the draft', async () => {
     freshSlots.current = { 103: [slotOf([701, 703])] }
     render(wrap(<Harness device={GATE} />))
     fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
     fireEvent.click(screen.getByRole('button', { name: 'pick Camera shed' }))
-    expect(await screen.findByText(/owner timed out/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.getByText(/owner timed out/)).toBeTruthy()
     expect(setSlot).not.toHaveBeenCalled()
+    expect(screen.getByText('Camera shed')).toBeTruthy()
   })
 
-  it('removing drops only this device from the camera slot, keeping its other ids and tracked opt-in', async () => {
+  it('removing is a draft edit: Save drops only this device from the camera slot, keeping its other ids and tracked opt-in', async () => {
     render(wrap(<Harness device={GATE} />))
     const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
     await waitFor(() => expect(remove.hasAttribute('disabled')).toBe(false))
     fireEvent.click(remove)
+    await waitFor(() => expect(screen.queryByText('Camera porch')).toBeNull())
+    expect(setSlot).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
@@ -242,13 +271,15 @@ describe('Linked cameras rows on a device a camera can link', () => {
     )
   })
 
-  it('removing writes from a slot read AFTER the confirm: a link another operator added meanwhile survives', async () => {
+  it('Save writes from a slot read AT Save: a link another operator added meanwhile survives', async () => {
     render(wrap(<Harness device={GATE} />))
     const remove = await screen.findByRole('button', { name: 'Remove Camera porch' })
     await waitFor(() => expect(remove.hasAttribute('disabled')).toBe(false))
-    // Another operator links 801 to the camera while the confirm is open.
-    freshSlots.current[103] = [slotOf([701, 702, 703, 801], [702])]
     fireEvent.click(remove)
+    await waitFor(() => expect(screen.queryByText('Camera porch')).toBeNull())
+    // Another operator links 801 to the camera while the draft is open.
+    freshSlots.current[103] = [slotOf([701, 702, 703, 801], [702])]
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(setSlot).toHaveBeenCalledWith({
         deviceId: 103,
@@ -257,6 +288,18 @@ describe('Linked cameras rows on a device a camera can link', () => {
       }),
     )
     expect(invalidate).toHaveBeenCalledWith({ deviceId: 103 })
+  })
+
+  it('two cameras in one Save: the one that landed leaves the draft, the refused one stays', async () => {
+    freshSlots.current = { 104: [slotOf([705])] }
+    render(wrap(<Harness device={GATE} />))
+    fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
+    fireEvent.click(screen.getByRole('button', { name: 'pick Camera garden' }))
+    fireEvent.click(screen.getByRole('button', { name: 'open picker' }))
+    fireEvent.click(screen.getByRole('button', { name: 'pick Camera shed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(setSlot).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText(/Camera shed: owner timed out/)).toBeTruthy()
   })
 
   it('a camera whose slot cannot be read cannot be removed from', async () => {

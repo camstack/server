@@ -6,10 +6,12 @@
  * cameras not yet linked), never ticked for the operator (D356).
  *
  * Which cameras link this device is ONE read (`getLinkedDevicesBatch`), never a
- * row per camera. The camera's slot stays the one owner: every add and remove
- * is a read-modify-write of THAT camera's slot from what it was just read
- * (D49), refused while that read is pending or failed (D315), so a camera's
- * other ids and its tracked opt-in survive untouched.
+ * row per camera. An add or a remove edits the tab's draft (planning#675, D1098):
+ * nothing is written until Save. The camera's slot stays the one owner: Save is
+ * a read-modify-write of THAT camera's slot from a read taken at Save (D49),
+ * carrying that read's stamp, so a camera's other ids and its tracked opt-in
+ * survive untouched. A camera whose write succeeded leaves the draft; one that
+ * failed stays in it with its reason.
  */
 import type { DeviceInfo } from '@camstack/types'
 import {
@@ -22,7 +24,7 @@ import {
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type AssignmentCandidate,
@@ -30,6 +32,7 @@ import {
   candidateDetail,
 } from '../assignments/assignment-candidates'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
+import { useDraftSection } from '../customize-draft'
 import type { Known } from '../known'
 import { SourceSelectorDevicesDialog } from '../source-selector/SourceSelectorDevicesDialog'
 import { useConfirmRemove } from '../use-confirm-remove'
@@ -65,10 +68,12 @@ export interface LinkedCamerasState {
   readonly canAdd: boolean
   readonly busy: boolean
   readonly openPicker: () => void
-  /** Each linked camera's own slot, read ONCE for the whole table (the remove path). */
+  /** Each linked camera's own slot, read ONCE for the whole table (the implied flag). */
   readonly slotOf: (cameraId: number) => LinkedSlotRead
-  /** Re-read which cameras link this device, after these cameras' own slots were written. */
-  readonly refresh: (written: readonly number[]) => Promise<void>
+  /** Is this camera's link only in the draft (added, not saved yet)? */
+  readonly isPendingAdd: (cameraId: number) => boolean
+  /** Drop a camera from this device's links in the draft (an unsaved add simply disappears). */
+  readonly unlink: (cameraId: number) => void
   readonly dialog: ReactNode
 }
 
@@ -91,7 +96,6 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
   const setSlot = useDeviceExtensionSetSlot()
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [refusal, setRefusal] = useState<string | null>(null)
   const fleet = useCandidateDevices(true)
   const cameras: readonly CandidateDevice[] =
     fleet.kind === 'known'
@@ -103,7 +107,11 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
     { enabled: fleet.kind === 'known' && cameras.length > 0 },
   )
 
-  const linkedCameras: Known<readonly CandidateDevice[]> =
+  // The edits held until the tab's Save: cameras to link and cameras to unlink.
+  const [added, setAdded] = useState<readonly number[]>([])
+  const [removed, setRemoved] = useState<readonly number[]>([])
+
+  const storedCameras: Known<readonly CandidateDevice[]> =
     fleet.kind !== 'known'
       ? fleet
       : cameras.length === 0
@@ -121,6 +129,19 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
                   ),
                 ),
               }
+  // What the table shows: the stored links with the draft applied.
+  const linkedCameras: Known<readonly CandidateDevice[]> =
+    storedCameras.kind !== 'known'
+      ? storedCameras
+      : {
+          kind: 'known',
+          value: [
+            ...storedCameras.value.filter((c) => !removed.includes(c.id)),
+            ...cameras.filter(
+              (c) => added.includes(c.id) && !storedCameras.value.some((s) => s.id === c.id),
+            ),
+          ],
+        }
 
   const linkedIds = new Set(
     linkedCameras.kind === 'known' ? linkedCameras.value.map((c) => c.id) : [],
@@ -143,10 +164,10 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
             })),
         }
 
-  // ONE read for the table: every linked camera's own slot, for the remove path
-  // (the implied flag and the write base). A camera whose read failed is its own
+  // ONE read for the table: every stored linked camera's own slot, for the implied flag
+  // (a link the structure implies cannot be removed). A camera whose read failed is its own
   // `unknown`, never a failure of the others.
-  const linkedCameraIds = linkedCameras.kind === 'known' ? linkedCameras.value.map((c) => c.id) : []
+  const linkedCameraIds = storedCameras.kind === 'known' ? storedCameras.value.map((c) => c.id) : []
   const slotReads = useQuery({
     queryKey: [LINKED_SLOTS_KEY, device.id, linkedCameraIds.join(',')],
     enabled: linkedCameraIds.length > 0,
@@ -180,49 +201,67 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
     ])
   }
 
-  /** Each picked camera: its slot read fresh, this device added, written back whole (D49). */
-  const addCameras = async (picked: readonly AssignmentCandidate[]): Promise<void> => {
-    if (busy) {
-      setRefusal(t('customize.saveInFlight'))
-      return
-    }
-    setBusy(true)
-    setRefusal(null)
-    const failures: string[] = []
-    for (const camera of picked) {
-      try {
-        const rows = await utils.deviceExtension.listSlots.fetch(
-          { deviceId: camera.deviceId },
-          { staleTime: 0 },
-        )
-        const read = linkedSlotOf({ status: 'success', data: rows, error: null })
-        if (read.kind === 'unknown') {
-          failures.push(`${camera.name}: ${read.reason}`)
-          continue
-        }
-        if (read.kind !== 'present') {
-          failures.push(`${camera.name}: ${t('customize.assign.none')}`)
-          continue
-        }
-        await setSlot.mutateAsync({
-          deviceId: camera.deviceId,
-          slotRef: read.slot.slotRef,
-          value: withLinkToggled(read.value, device.id, true),
-          expectedUpdatedAt: read.slot.updatedAt,
-        })
-      } catch (err: unknown) {
-        failures.push(`${camera.name}: ${messageOf(err)}`)
-      }
-    }
-    if (failures.length > 0) {
-      setRefusal(t('customize.linked.someFailed', { failures: failures.join('; ') }))
-    }
+  /** One camera: its slot read fresh, this device toggled, written back whole with that read's stamp (D49). */
+  const writeCamera = async (cameraId: number, link: boolean): Promise<string | null> => {
+    const name = cameras.find((c) => c.id === cameraId)?.name ?? `#${String(cameraId)}`
     try {
-      await refresh(picked.map((c) => c.deviceId))
+      const rows = await utils.deviceExtension.listSlots.fetch(
+        { deviceId: cameraId },
+        { staleTime: 0 },
+      )
+      const read = linkedSlotOf({ status: 'success', data: rows, error: null })
+      if (read.kind === 'unknown') return `${name}: ${read.reason}`
+      if (read.kind !== 'present') return `${name}: ${t('customize.assign.none')}`
+      await setSlot.mutateAsync({
+        deviceId: cameraId,
+        slotRef: read.slot.slotRef,
+        value: withLinkToggled(read.value, device.id, link),
+        expectedUpdatedAt: read.slot.updatedAt,
+      })
+      return null
+    } catch (err: unknown) {
+      return `${name}: ${messageOf(err)}`
+    }
+  }
+
+  const commitRef = useRef<() => Promise<string | null>>(async () => null)
+  /** Every pending camera, each its own write; the ones that landed leave the draft. */
+  commitRef.current = async (): Promise<string | null> => {
+    if (busy) return t('customize.saveInFlight')
+    if (added.length + removed.length === 0) return null
+    setBusy(true)
+    const failures: string[] = []
+    const written: number[] = []
+    try {
+      for (const [ids, link] of [
+        [removed, false],
+        [added, true],
+      ] as const) {
+        for (const id of ids) {
+          const failure = await writeCamera(id, link)
+          if (failure === null) written.push(id)
+          else failures.push(failure)
+        }
+      }
+      setAdded((prev) => prev.filter((id) => !written.includes(id)))
+      setRemoved((prev) => prev.filter((id) => !written.includes(id)))
+      await refresh(written)
     } finally {
       setBusy(false)
     }
+    return failures.length === 0
+      ? null
+      : t('customize.linked.someFailed', { failures: failures.join('; ') })
   }
+  useDraftSection('linked-cameras', {
+    label: t('customize.table.section.linkedCameras'),
+    pendingCount: added.length + removed.length,
+    save: () => commitRef.current(),
+    discard: () => {
+      setAdded([])
+      setRemoved([])
+    },
+  })
 
   const problem: LinkedCameraTableLine | null =
     linkedCameras.kind === 'unknown'
@@ -233,9 +272,7 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
               ? t('customize.assign.devicesUnreadable', { reason: linkedCameras.reason })
               : t('customize.linked.camerasUnreadable', { reason: linkedCameras.reason }),
         }
-      : refusal !== null
-        ? { kind: 'cameraError', message: refusal }
-        : null
+      : null
   const entries: readonly LinkedCameraTableLine[] =
     linkedCameras.kind === 'known'
       ? linkedCameras.value.map((camera) => ({ kind: 'cameraEntry' as const, camera }))
@@ -254,7 +291,11 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
     busy,
     openPicker: () => setPicking(true),
     slotOf,
-    refresh,
+    isPendingAdd: (cameraId) => added.includes(cameraId),
+    unlink: (cameraId) => {
+      if (added.includes(cameraId)) setAdded((prev) => prev.filter((id) => id !== cameraId))
+      else setRemoved((prev) => (prev.includes(cameraId) ? prev : [...prev, cameraId]))
+    },
     dialog: (
       <SourceSelectorDevicesDialog
         open={picking}
@@ -264,7 +305,17 @@ export function useLinkedCameras(device: DeviceInfo): LinkedCamerasState {
         confirmLabel={(count) => t('customize.assign.addCount', { count })}
         onConfirm={(picked) => {
           setPicking(false)
-          void addCameras(picked)
+          const ids = picked.map((c) => c.deviceId)
+          // Picking a camera whose removal is pending cancels the removal.
+          setRemoved((prev) => prev.filter((id) => !ids.includes(id)))
+          setAdded((prev) => [
+            ...prev,
+            ...ids.filter(
+              (id) =>
+                !prev.includes(id) &&
+                !(storedCameras.kind === 'known' && storedCameras.value.some((c) => c.id === id)),
+            ),
+          ])
         }}
         onClose={() => setPicking(false)}
       />
@@ -323,50 +374,23 @@ interface CameraUnlinkProps {
   readonly state: LinkedCamerasState
 }
 
-/** One linked camera's remove: its slot is read fresh AFTER the confirm and written back whole without this device. */
+/** One linked camera's remove: asks first, then drops the link from the draft. */
 function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
   const { t } = useTranslation()
   const confirmRemove = useConfirmRemove()
-  const utils = trpc.useUtils()
-  const setSlot = useDeviceExtensionSetSlot()
-  const [busy, setBusy] = useState(false)
-  const [refusal, setRefusal] = useState<string | null>(null)
+  const pendingAdd = state.isPendingAdd(camera.id)
   const read = state.slotOf(camera.id)
   const implied =
-    read.kind === 'present' && linksDevice(read.slot, read.value, state.device.id).implied
-  // D49: the table's read only gates the button and shows the implied flag; the
-  // WRITE is built from a read taken after the confirm, so a link another
-  // operator added while the dialog was open survives, and the write carries
-  // that read's stamp, so one made between the read and the write is refused.
+    !pendingAdd &&
+    read.kind === 'present' &&
+    linksDevice(read.slot, read.value, state.device.id).implied
   const unlink = async (): Promise<void> => {
-    if (read.kind !== 'present' || busy) return
+    if (state.busy) return
     const accepted = await confirmRemove(
       t('customize.linked.removeFromCamera', { camera: camera.name, device: state.device.name }),
       false,
     )
-    if (!accepted) return
-    setBusy(true)
-    setRefusal(null)
-    try {
-      const rows = await utils.deviceExtension.listSlots.fetch(
-        { deviceId: camera.id },
-        { staleTime: 0 },
-      )
-      const fresh = linkedSlotOf({ status: 'success', data: rows, error: null })
-      if (fresh.kind === 'unknown') throw new Error(fresh.reason)
-      if (fresh.kind !== 'present') throw new Error(t('customize.assign.none'))
-      await setSlot.mutateAsync({
-        deviceId: camera.id,
-        slotRef: fresh.slot.slotRef,
-        value: withLinkToggled(fresh.value, state.device.id, false),
-        expectedUpdatedAt: fresh.slot.updatedAt,
-      })
-      await state.refresh([camera.id])
-    } catch (err: unknown) {
-      setRefusal(messageOf(err))
-    } finally {
-      setBusy(false)
-    }
+    if (accepted) state.unlink(camera.id)
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
@@ -376,24 +400,24 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
           variant="ghost"
           size="sm"
           aria-label={t('customize.assign.removeNamed', { name: camera.name })}
-          disabled={read.kind !== 'present' || busy}
+          disabled={state.busy || (!pendingAdd && read.kind !== 'present')}
           onClick={(e) => {
             e.stopPropagation()
             void unlink()
           }}
         />
       )}
-      {read.kind === 'pending' && (
+      {!pendingAdd && read.kind === 'pending' && (
         <span role="status" className="text-[11px] text-foreground-subtle">
           {t('customize.assign.checking')}
         </span>
       )}
-      {read.kind === 'unknown' && (
+      {!pendingAdd && read.kind === 'unknown' && (
         <span role="alert" className="text-[11px] text-warning break-words text-right">
           {t('customize.assign.unknown', { reason: read.reason })}
         </span>
       )}
-      {read.kind === 'absent' && (
+      {!pendingAdd && read.kind === 'absent' && (
         <span role="alert" className="text-[11px] text-warning break-words text-right">
           {t('customize.assign.unknown', { reason: t('customize.assign.none') })}
         </span>
@@ -401,11 +425,6 @@ function CameraUnlink({ camera, state }: CameraUnlinkProps): ReactNode {
       {implied && (
         <span className="text-[11px] text-foreground-subtle text-right">
           {t('customize.linked.impliedByStructure')}
-        </span>
-      )}
-      {refusal !== null && (
-        <span role="alert" className="text-[11px] text-danger break-words text-right">
-          {refusal}
         </span>
       )}
     </div>
