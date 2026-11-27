@@ -34,6 +34,7 @@ import type { AddonContext } from '@camstack/types'
 import { populateAccessoryInfo } from './builders/accessory-info.js'
 import { buildBattery } from './builders/battery.js'
 import { buildCameraStreamingDelegate } from './builders/camera-streams.js'
+import { buildHapWireProbe } from './builders/hap-wire-probe.js'
 import { buildDoorbell } from './builders/doorbell.js'
 import { buildIntercom } from './builders/intercom.js'
 import { buildMotionSensor } from './builders/motion-sensor.js'
@@ -51,12 +52,7 @@ import { buildMultiTierNegotiation } from '../multi-tier/negotiation.js'
 import { tiersForSensor } from '../multi-tier/tiers-for-sensor.js'
 import { TierVideoCodec } from '../multi-tier/video-stream-tiers.js'
 import { shapeCapsFor } from '../reconcile/accessory-shape.js'
-import type {
-  BuilderContext,
-  BuilderHandle,
-  CameraMapperOptions,
-  DeviceMapper,
-} from './types.js'
+import type { BuilderContext, BuilderHandle, CameraMapperOptions, DeviceMapper } from './types.js'
 
 export interface CameraAccessoryInput {
   readonly ctx: AddonContext
@@ -172,6 +168,8 @@ export async function buildCameraAccessory(input: CameraAccessoryInput): Promise
       : { sensors: { motion: true } }),
   })
   accessory.configureController(controller)
+  // Passive: logs HAP's own rejections and the stream-setup writes ahead of our delegate.
+  handles.push(buildHapWireProbe(bctx, accessory))
 
   // Apple's new camera specification, declared as a whole or not at all.
   //

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - HomeKit: a camera's snapshot fetches right after a doorbell press are now logged.
+- HomeKit: a camera's stream-setup writes and any HomeKit request the accessory rejects are now logged, to trace a notification long-press that opens no stream.
 
 ## [1.2.211] - 2026-11-26
 
