@@ -11,6 +11,8 @@ import { cpus } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+/** @typedef {'pass' | 'fail' | 'skipped'} StageStatus */
+
 const ANSI = /\u001b\[[0-9;]*m/g
 const PART_NAMES = ['transform', 'setup', 'collect', 'tests', 'environment', 'prepare']
 
@@ -85,12 +87,17 @@ function round3(seconds) {
  * @param {'GREEN' | 'RED'} input.result
  * @param {number} input.cpus
  * @param {readonly (readonly [string, number])[]} input.stages
+ * @param {readonly (readonly [string, StageStatus])[]} [input.stageResults] per-stage verdict, in run order
  * @param {readonly object[]} input.projects
  */
 export function buildTimingRecord(input) {
   /** @type {Record<string, number>} */
   const stages = {}
   for (const [name, seconds] of input.stages) stages[name] = round3(seconds)
+  /** @type {Record<string, StageStatus>} */
+  const stageResults = {}
+  for (const [name, status] of input.stageResults ?? []) stageResults[name] = status
+  const failedStage = (input.stageResults ?? []).find(([, status]) => status === 'fail')
   return {
     start: new Date(input.startMs).toISOString(),
     end: new Date(input.endMs).toISOString(),
@@ -99,6 +106,8 @@ export function buildTimingRecord(input) {
     result: input.result,
     cpus: input.cpus,
     stages,
+    stageResults,
+    failedStage: failedStage === undefined ? null : failedStage[0],
     projects: input.projects.map(projectRow),
   }
 }
@@ -149,8 +158,15 @@ export function formatTimingSummary(record, file) {
     `verify:push timing — ${secondsLabel(total)} total (scope ${record.scope}, ${record.result})`,
   ]
   for (const [name, seconds] of Object.entries(record.stages)) {
-    lines.push(`  ${name.padEnd(16)} ${secondsLabel(seconds)}`)
+    const status = record.stageResults?.[name]
+    lines.push(
+      `  ${name.padEnd(16)} ${secondsLabel(seconds)}${status === 'fail' ? '  FAILED' : ''}`,
+    )
   }
+  const skipped = Object.entries(record.stageResults ?? {})
+    .filter(([, status]) => status === 'skipped')
+    .map(([name]) => name)
+  if (skipped.length > 0) lines.push(`  skipped          ${skipped.join(', ')}`)
   if (record.projects.length > 0) lines.push(`  projects ${projectSummary(record.projects)}`)
   if (file !== undefined && file !== '') lines.push(`  file ${file}`)
   return lines.join('\n')
@@ -198,20 +214,28 @@ function parseArgs(argv) {
 }
 
 /**
- * @param {string} file
- * @returns {readonly (readonly [string, number])[]}
+ * One line per stage: `name<TAB>seconds[<TAB>status]`. A stage that was
+ * skipped carries `-` for the seconds and contributes only to the results.
+ * A two-column line (the old format) counts as a pass.
+ *
+ * @param {string} text
+ * @returns {{ stages: [string, number][], stageResults: [string, StageStatus][] }}
  */
-function readStages(file) {
-  const text = readFileSync(file, 'utf8')
+export function parseStageLines(text) {
   /** @type {[string, number][]} */
   const stages = []
+  /** @type {[string, StageStatus][]} */
+  const stageResults = []
   for (const line of text.split('\n')) {
     if (line === '') continue
-    const tab = line.indexOf('\t')
-    if (tab === -1) throw new Error(`verify-timing: bad stage line ${line}`)
-    stages.push([line.slice(0, tab), Number(line.slice(tab + 1))])
+    const [name, seconds, status] = line.split('\t')
+    if (name === undefined || seconds === undefined)
+      throw new Error(`verify-timing: bad stage line ${line}`)
+    const verdict = status === 'fail' || status === 'skipped' ? status : 'pass'
+    if (verdict !== 'skipped') stages.push([name, Number(seconds)])
+    stageResults.push([name, verdict])
   }
-  return stages
+  return { stages, stageResults }
 }
 
 /**
@@ -239,6 +263,8 @@ function main(argv) {
   const args = parseArgs(argv)
   const file = args.append
   if (file === undefined) throw new Error('verify-timing: --append is required')
+  const parsed =
+    args.stages === undefined ? null : parseStageLines(readFileSync(args.stages, 'utf8'))
   const record = buildTimingRecord({
     startMs: Number(args['start-ms']),
     endMs: Number(args['end-ms']),
@@ -246,7 +272,8 @@ function main(argv) {
     base: args.base ?? '',
     result: args.result === 'GREEN' ? 'GREEN' : 'RED',
     cpus: args.cpus === undefined ? cpus().length : Number(args.cpus),
-    stages: args.stages === undefined ? [] : readStages(args.stages),
+    stages: parsed === null ? [] : parsed.stages,
+    stageResults: parsed === null ? [] : parsed.stageResults,
     projects: args.projects === undefined ? [] : readProjects(args.projects),
   })
   appendTimingRecord(file, record)

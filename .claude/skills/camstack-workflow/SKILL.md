@@ -295,11 +295,23 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   It runs exactly the
   CI gates for what you are about to push (merge-base with `origin/main`,
   working tree included): the TypeScript 7 typecheck graded against the pins
-  (`scripts/typecheck-tsgo.ts`), the affected tests (`scripts/ci/test-affected.sh`),
-  `test:scripts` when `scripts/` moved, the addon footprint guard, and the D28
-  barrel guards (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane
-  calls too). Outside CI the heavy and light lanes run at the same time: heavy
-  projects start longest-first at `VERIFY_HEAVY_PARALLEL` (default 2), and the
+  (`scripts/typecheck-tsgo.ts`, `TSGO_JOBS=3` as CI), the affected tests
+  (`scripts/ci/test-affected.sh`), `test:scripts` when `scripts/` moved, the
+  addon footprint guard, and the D28 barrel guards
+  (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane calls too).
+  **Order and fail-fast:** cheap and decisive stages first, the long test stage
+  last, and the run STOPS at the first red stage with one line naming it:
+  changelog, test-load guards, barrel guards (source), build, tsgo, footprint,
+  barrel guards (dist), repo script tests, the canary (the `@camstack/types`
+  project and the admin-ui `api-method-groups` specs, where a capability change
+  is first seen red), then the affected test lanes. `VERIFY_FULL=1` keeps the
+  run-everything behaviour for one complete verdict (a red build or changelog
+  still stops it); `VERIFY_CODEGEN_CHECK=1` adds `codegen:check` after the
+  source guards. The gate SET is the same either way, only order and early exit
+  differ. In the test stage, projects that failed in the previous run of the
+  same base start first, then longest first. Outside CI the heavy and light
+  lanes run at the same time: heavy
+  projects at `VERIFY_HEAVY_PARALLEL` (default 2), and the
   worker counts are sized from the CPU count so the lanes together do not
   oversubscribe (default heavy 4 workers, light 2 — on 12 cores that is 2×4 +
   2×2). The 3 GB `NODE_OPTIONS` heap verify:push sets for one vitest is replaced
@@ -307,7 +319,8 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   36 GB machine). `VERIFY_LOCAL=0` forces the serial schedule CI uses. CI itself is
   unchanged: it calls `test-affected.sh --shard` and keeps the heavy lane at
   `--parallel=1`. Each run appends one JSON line to
-  `~/.cache/camstack/verify-timings.jsonl` and prints a stage summary.
+  `~/.cache/camstack/verify-timings.jsonl` (with `stageResults` pass | fail |
+  skipped per stage and `failedStage`) and prints a stage summary.
   A related run, a per-package tsgo check or one green
   spec is NOT the CI gate — that gap turned 9 of 13 red runs of 2026-10-12/13
   into "pinned-or-new error(s)" nobody had seen. RED means you do not push.

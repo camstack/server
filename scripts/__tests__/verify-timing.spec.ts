@@ -7,6 +7,7 @@ import {
   appendTimingRecord,
   buildTimingRecord,
   formatTimingSummary,
+  parseStageLines,
   parseVitestSummary,
 } from '../ci/verify-timing.mjs'
 
@@ -16,7 +17,10 @@ interface TimingRecord {
   readonly scope: string
   readonly result: string
   readonly stages: Readonly<Record<string, number>>
-  readonly projects: readonly { readonly project: string; readonly seconds: number }[]
+  readonly projects: readonly {
+    readonly project: string
+    readonly seconds: number
+  }[]
 }
 
 describe('vitest duration line', () => {
@@ -121,5 +125,67 @@ describe('verify timing record', () => {
     const src = readFileSync('scripts/ci/verify-push.sh', 'utf8')
     expect(src).toContain('verify-timings.jsonl')
     expect(src).toContain('verify-timing.mjs')
+  })
+
+  it('records a pass, fail or skipped verdict per stage and names the failed one', () => {
+    const written = buildTimingRecord({
+      startMs: 0,
+      endMs: 60_000,
+      scope: 'ALL',
+      base: 'abc',
+      result: 'RED',
+      cpus: 4,
+      stages: [
+        ['build', 40],
+        ['tsgo', 20],
+      ],
+      stageResults: [
+        ['build', 'pass'],
+        ['tsgo', 'fail'],
+        ['tests', 'skipped'],
+      ],
+      projects: [],
+    })
+    expect(written).toMatchObject({
+      stages: { build: 40, tsgo: 20 },
+      stageResults: { build: 'pass', tsgo: 'fail', tests: 'skipped' },
+      failedStage: 'tsgo',
+    })
+    expect(formatTimingSummary(written)).toContain('FAILED')
+    expect(formatTimingSummary(written)).toContain('skipped          tests')
+  })
+
+  it('parses the stage file: skipped stages add no seconds, the old two-column line is a pass', () => {
+    const parsed = parseStageLines(
+      'build\t12.5\tpass\ntsgo\t3.0\tfail\ntests\t-\tskipped\nold\t7\n',
+    )
+    expect(parsed.stages).toEqual([
+      ['build', 12.5],
+      ['tsgo', 3],
+      ['old', 7],
+    ])
+    expect(parsed.stageResults).toEqual([
+      ['build', 'pass'],
+      ['tsgo', 'fail'],
+      ['tests', 'skipped'],
+      ['old', 'pass'],
+    ])
+  })
+
+  it('verify:push stops at the first red stage unless VERIFY_FULL=1, and the test stage comes last', () => {
+    const src = readFileSync('scripts/ci/verify-push.sh', 'utf8')
+    expect(src).toContain('VERIFY_FULL')
+    expect(src).toContain('TSGO_JOBS')
+    const order = [
+      'testLoadGuards LOAD',
+      'build BUILD',
+      'tsgo TC',
+      'footprint FOOT',
+      'canary CANARY',
+      'tests TEST',
+    ]
+    const at = order.map((needle) => src.indexOf(`run_stage ${needle}`))
+    expect(at.every((index) => index > 0)).toBe(true)
+    expect([...at].sort((a, b) => a - b)).toEqual(at)
   })
 })
