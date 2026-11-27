@@ -8,6 +8,7 @@ import type { IScopedLogger } from '@camstack/types'
 import type { Z2mConnection, Z2mEndpoint, Z2mSocketFactory, Z2mTimers } from './z2m-client.js'
 import type { Z2mBridgeInfo, Z2mDevice, Z2mState } from './z2m-protocol.js'
 import { Z2mSession } from './z2m-session.js'
+import type { HeldMap } from './z2m-mesh.js'
 
 export interface Z2mDeviceListener {
   /** The device's entry in the server's table; null when the server no longer lists it. */
@@ -38,6 +39,34 @@ export class Z2mHub {
   private readonly sessions = new Map<string, Z2mSession>()
   private readonly deviceListeners = new Map<string, Set<Z2mDeviceListener>>()
   private readonly linkListeners = new Map<string, Set<Z2mLinkListener>>()
+
+  private readonly bound = new Map<string, number>()
+  private readonly held = new Map<string, HeldMap>()
+
+  /** Remember which CamStack device is the node `ieee` of an integration (for `device-mesh`). */
+  bindDevice(integrationId: string, ieee: string, deviceId: number): void {
+    this.bound.set(key(integrationId, ieee), deviceId)
+  }
+
+  deviceIdOf(integrationId: string, ieee: string): number | null {
+    return this.bound.get(key(integrationId, ieee)) ?? null
+  }
+
+  ieeeOf(integrationId: string, deviceId: number): string | null {
+    const prefix = integrationId + '\0'
+    for (const [k, id] of this.bound) {
+      if (id === deviceId && k.startsWith(prefix)) return k.slice(prefix.length)
+    }
+    return null
+  }
+
+  heldMap(integrationId: string): HeldMap | null {
+    return this.held.get(integrationId) ?? null
+  }
+
+  holdMap(integrationId: string, map: HeldMap): void {
+    this.held.set(integrationId, map)
+  }
 
   session(integrationId: string): Z2mSession | null {
     return this.sessions.get(integrationId) ?? null

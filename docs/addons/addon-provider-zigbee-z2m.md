@@ -48,3 +48,14 @@ State is pushed by the server; nothing is polled (D224). The first state a devic
 socket opens is the server's replay, so its `action` is never read as a button press.
 
 The role of an adopted device comes from its primary function when that function names one.
+
+## Network (`device-mesh`)
+
+The Gateway and every device answer `device-mesh`. Nodes, roles (coordinator, router, end device,
+sleepy end device from the power source) and availability come from the device table the server
+already pushes; links and link quality come from one `bridge/request/networkmap` (`type: raw`), which
+is sent only by `refresh` or `readNow`, never on its own. Zigbee2MQTT's scan queries the coordinator
+and the routers and never an end device, so a battery node is not woken: it is counted as skipped,
+and its links are what its parent router reports. Two callers share one scan in flight. Before any
+scan `readAt` is `null` and there are no links. `network` stays `null`: its technology has no Zigbee
+value.

@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New Zigbee2MQTT integration: connect to an existing Zigbee2MQTT server and see and operate its devices (lights, switches, covers, locks, climate, sensors and buttons)
+- The Zigbee network is readable as a device mesh: nodes, roles and link quality from the server's own network map, scanned only when you ask and never waking a battery device.

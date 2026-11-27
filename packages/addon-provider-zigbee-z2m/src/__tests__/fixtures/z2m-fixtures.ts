@@ -297,3 +297,80 @@ export const bridgeInfoPayload = {
   permit_join_end: null,
   config: { homeassistant: { enabled: false } },
 }
+
+/** What `bridge/response/networkmap` carries for `{ type: 'raw' }`: the coordinator, a router, two end devices. */
+export const networkMapData = {
+  routes: false,
+  type: 'raw',
+  value: {
+    nodes: [
+      {
+        ieeeAddr: '0x00124b0000000000',
+        friendlyName: 'Coordinator',
+        type: 'Coordinator',
+        networkAddress: 0,
+        failed: [],
+      },
+      {
+        ieeeAddr: '0x00158d0003aaaaaa',
+        friendlyName: 'plug_hall',
+        type: 'Router',
+        networkAddress: 100,
+        failed: [],
+      },
+      {
+        ieeeAddr: '0x00158d0001a2b3c4',
+        friendlyName: 'door_front',
+        type: 'EndDevice',
+        networkAddress: 4660,
+        failed: [],
+      },
+      {
+        ieeeAddr: '0x00158d0002d4e5f6',
+        friendlyName: 'weather_balcony',
+        type: 'EndDevice',
+        networkAddress: 22136,
+        failed: ['lqi'],
+      },
+    ],
+    links: [
+      {
+        source: { ieeeAddr: '0x00158d0003aaaaaa', networkAddress: 100 },
+        target: { ieeeAddr: '0x00124b0000000000', networkAddress: 0 },
+        linkquality: 200,
+        depth: 1,
+        routes: [],
+        sourceIeeeAddr: '0x00158d0003aaaaaa',
+        targetIeeeAddr: '0x00124b0000000000',
+        sourceNwkAddr: 100,
+        lqi: 200,
+        relationship: 1,
+      },
+      {
+        source: { ieeeAddr: '0x00158d0001a2b3c4', networkAddress: 4660 },
+        target: { ieeeAddr: '0x00158d0003aaaaaa', networkAddress: 100 },
+        linkquality: 120,
+        depth: 2,
+        routes: [],
+        sourceIeeeAddr: '0x00158d0001a2b3c4',
+        targetIeeeAddr: '0x00158d0003aaaaaa',
+        sourceNwkAddr: 4660,
+        lqi: 120,
+        relationship: 1,
+      },
+      {
+        source: { ieeeAddr: '0x00158d0002d4e5f6', networkAddress: 22136 },
+        target: { ieeeAddr: '0x00158d0003aaaaaa', networkAddress: 100 },
+        linkquality: 60,
+        depth: 2,
+        routes: [{ destinationAddress: 0 }],
+        sourceIeeeAddr: '0x00158d0002d4e5f6',
+        targetIeeeAddr: '0x00158d0003aaaaaa',
+        sourceNwkAddr: 22136,
+        lqi: 60,
+        relationship: 1,
+      },
+      { source: { ieeeAddr: '0x00158d0002d4e5f6' }, linkquality: 10 },
+    ],
+  },
+}

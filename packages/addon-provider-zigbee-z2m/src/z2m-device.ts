@@ -25,6 +25,7 @@ import {
   type EventEmitterStatus,
   type EventFire,
   eventEmitterCapability,
+  deviceMeshCapability,
   floodCapability,
   HvacModeSchema,
   humiditySensorCapability,
@@ -52,6 +53,7 @@ import { zigbeeDeviceSchema, type ZigbeeDeviceConfig } from './z2m-device-config
 import { type Z2mCap, type Z2mPlan, planZ2mDevice, roleForPrimaryCap } from './z2m-exposes.js'
 import { type Z2mConnection } from './z2m-client.js'
 import { z2mHub } from './z2m-hub.js'
+import { meshProviderFor } from './z2m-mesh.js'
 import type { Z2mDevice, Z2mScalar, Z2mState } from './z2m-protocol.js'
 
 const METER_QUANTITY = {
@@ -159,6 +161,8 @@ export class ZigbeeDevice extends BaseDevice<typeof zigbeeDeviceSchema> {
     this.markOnline(false)
     await this.backfillRole()
     const { integrationId, equipment } = this.persisted
+    z2mHub.bindDevice(integrationId, equipment, this.id)
+    this.ctx.registerNativeCap(deviceMeshCapability, meshProviderFor(z2mHub, integrationId))
     // No teardown hook exists on a device: the subscriptions live as long as the process.
     z2mHub.subscribeLink(integrationId, {
       connection: (state) => this.onConnection(state),
