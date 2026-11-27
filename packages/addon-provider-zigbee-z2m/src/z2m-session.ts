@@ -110,6 +110,10 @@ export class Z2mSession {
     return this.devices.get(ieee) ?? null
   }
 
+  get integrationId(): string {
+    return this.opts.integrationId
+  }
+
   stateOf(ieee: string): Z2mState | null {
     return this.states.get(ieee) ?? null
   }

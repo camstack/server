@@ -113,7 +113,7 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
       },
     )
     void this.reconcile()
-    const management = new Z2mManagement(z2mHub)
+    const management = new Z2mManagement(z2mHub, this.ctx.logger)
     return {
       providers: [
         ...regs,
@@ -140,6 +140,9 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
         renameDevice: async (input) => management.renameDevice(input),
         removeDevice: async (input) => management.removeDevice(input),
         restartBridge: async (input) => management.restartBridge(input),
+        checkDeviceUpdate: async (input) => management.checkDeviceUpdate(input),
+        updateDevice: async (input) => management.updateDevice(input),
+        deviceUpdates: async (input) => management.deviceUpdates(input),
       },
     }
   }

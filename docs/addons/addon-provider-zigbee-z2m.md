@@ -74,3 +74,15 @@ custom actions that act on that integration:
 
 A refusal from the server reaches the button as the server's own reason. Without an `instanceId` an
 action acts on the only open integration and refuses when there are several.
+
+### Firmware (OTA)
+
+| Action | Request | Notes |
+| --- | --- | --- |
+| Check a device for firmware | `bridge/request/device/ota_update/check` | the answer says whether an image is available |
+| Update a device firmware | `bridge/request/device/ota_update/update` | answers once the server accepted it; the server only answers the request when the update ends, so the end is logged against the device |
+| `deviceUpdates` (query) | none: read from the pushed state | each device's `update` block: state, progress, remaining seconds, installed and latest version |
+
+Progress is never polled: it is the `update` block the server publishes with a device's state, which
+is also in the device's raw state. CamStack sends only the one request; how a sleepy device is reached is the server's
+business.

@@ -6,7 +6,10 @@
  */
 import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
+import type { IScopedLogger } from '@camstack/types'
 import type { Z2mHub } from './z2m-hub.js'
+import { type Z2mDevice, Z2mOtaCheckSchema, Z2mUpdateStateSchema } from './z2m-protocol.js'
+import type { Z2mSession } from './z2m-session.js'
 
 /** The longest window the server accepts for permit join, in seconds. */
 export const Z2M_PERMIT_JOIN_MAX_S = 254
@@ -16,6 +19,22 @@ export const Z2M_PERMIT_JOIN_DEFAULT_S = 60
 const Target = z.object({ instanceId: z.string().optional() })
 
 const Done = z.object({ message: z.string() })
+
+const DeviceUpdate = z.object({
+  device: z.string(),
+  deviceId: z.number().nullable(),
+  state: z.enum(['available', 'updating', 'idle', 'scheduled']),
+  progress: z.number().nullable(),
+  remainingS: z.number().nullable(),
+  installedVersion: z.number().nullable(),
+  latestVersion: z.number().nullable(),
+})
+export type DeviceUpdate = z.infer<typeof DeviceUpdate>
+
+/** An update runs until the device has taken the image: minutes, up to an hour on a slow sleepy node. */
+export const Z2M_OTA_UPDATE_TIMEOUT_MS = 60 * 60_000
+/** How long a refusal may take to arrive before the update counts as accepted. */
+export const Z2M_OTA_ACCEPT_WINDOW_MS = 3_000
 
 export const zigbeeZ2mActions = defineCustomActions({
   /** Open the network for new devices for `seconds` (1 to 254); `0` closes it again. */
@@ -36,6 +55,22 @@ export const zigbeeZ2mActions = defineCustomActions({
     { kind: 'mutation', auth: 'admin' },
   ),
   restartBridge: customAction(Target.optional(), Done, { kind: 'mutation', auth: 'admin' }),
+  /** Ask the server whether a firmware image is available for one device (it may contact the device). */
+  checkDeviceUpdate: customAction(
+    Target.extend({ device: z.string() }),
+    z.object({ message: z.string(), updateAvailable: z.boolean() }),
+    { kind: 'mutation', auth: 'admin' },
+  ),
+  /** Start the firmware update of one device. It runs for minutes: this answers once it is accepted. */
+  updateDevice: customAction(Target.extend({ device: z.string() }), Done, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  /** Where each device's firmware stands, from the `update` block the server pushes with its state. */
+  deviceUpdates: customAction(Target.optional(), z.object({ devices: z.array(DeviceUpdate) }), {
+    kind: 'query',
+    auth: 'admin',
+  }),
 })
 
 export interface PermitJoinWindow {
@@ -72,10 +107,18 @@ export function parseRename(text: string): Rename {
 export type Z2mActionInput = z.input<typeof Target> | undefined
 
 /** What each action does, reading the sessions through the hub. */
-export class Z2mManagement {
-  constructor(private readonly hub: Z2mHub) {}
+export type Delay = (ms: number) => Promise<void>
 
-  private sessionOf(input: Z2mActionInput) {
+const realDelay: Delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+export class Z2mManagement {
+  constructor(
+    private readonly hub: Z2mHub,
+    private readonly logger: IScopedLogger,
+    private readonly delay: Delay = realDelay,
+  ) {}
+
+  private sessionOf(input: Z2mActionInput): Z2mSession {
     const id = input?.instanceId
     if (id !== undefined) {
       const session = this.hub.session(id)
@@ -129,6 +172,97 @@ export class Z2mManagement {
   async restartBridge(input: Z2mActionInput) {
     await this.sessionOf(input).request('bridge/request/restart', {})
     return { message: 'Zigbee2MQTT is restarting; devices reconnect on their own.' }
+  }
+
+  /** The table entry named by a friendly name or an IEEE address. */
+  private deviceNamed(session: Z2mSession, name: string): Z2mDevice {
+    const wanted = name.trim()
+    if (wanted === '') throw new Error('name the device')
+    for (const device of session.deviceTable().values()) {
+      if (device.friendly_name === wanted || device.ieee_address === wanted) return device
+    }
+    throw new Error(`Zigbee2MQTT does not list a device named ${wanted}`)
+  }
+
+  async checkDeviceUpdate(input: z.input<typeof Target> & { device: string }) {
+    const session = this.sessionOf(input)
+    const device = this.deviceNamed(session, input.device)
+    const data = await session.request('bridge/request/device/ota_update/check', {
+      id: device.ieee_address,
+    })
+    const parsed = Z2mOtaCheckSchema.safeParse(data)
+    if (!parsed.success)
+      throw new Error('Zigbee2MQTT answered the update check in an unknown shape')
+    const updateAvailable = parsed.data.update_available
+    return {
+      updateAvailable,
+      message: updateAvailable
+        ? `A firmware update is available for ${device.friendly_name}.`
+        : `${device.friendly_name} is up to date.`,
+    }
+  }
+
+  async updateDevice(input: z.input<typeof Target> & { device: string }) {
+    const session = this.sessionOf(input)
+    const device = this.deviceNamed(session, input.device)
+    const deviceId = this.hub.deviceIdOf(session.integrationId, device.ieee_address)
+    const tags = deviceId === null ? undefined : { deviceId }
+    const running = session.request(
+      'bridge/request/device/ota_update/update',
+      { id: device.ieee_address },
+      Z2M_OTA_UPDATE_TIMEOUT_MS,
+    )
+    // A refusal arrives at once; an update that is going ahead answers only when it is over.
+    const outcome = await Promise.race([
+      running.then(
+        () => 'done' as const,
+        (err: unknown) => err,
+      ),
+      this.delay(Z2M_OTA_ACCEPT_WINDOW_MS).then(() => 'running' as const),
+    ])
+    if (outcome === 'done') {
+      return { message: `${device.friendly_name} finished its firmware update.` }
+    }
+    if (outcome !== 'running') throw outcome instanceof Error ? outcome : new Error(String(outcome))
+    void running.then(
+      () =>
+        this.logger.info('zigbee2mqtt: firmware update finished', {
+          tags,
+          meta: { device: device.friendly_name },
+        }),
+      (err: unknown) =>
+        this.logger.warn('zigbee2mqtt: firmware update failed', {
+          tags,
+          meta: {
+            device: device.friendly_name,
+            reason: err instanceof Error ? err.message : String(err),
+          },
+        }),
+    )
+    return {
+      message: `Firmware update of ${device.friendly_name} started. Follow it under the device updates; do not power the device off.`,
+    }
+  }
+
+  deviceUpdates(input: Z2mActionInput): { devices: DeviceUpdate[] } {
+    const session = this.sessionOf(input)
+    const integrationId = session.integrationId
+    const devices: DeviceUpdate[] = []
+    for (const device of session.deviceTable().values()) {
+      const block = session.stateOf(device.ieee_address)?.['update']
+      const parsed = Z2mUpdateStateSchema.safeParse(block)
+      if (!parsed.success) continue
+      devices.push({
+        device: device.friendly_name,
+        deviceId: this.hub.deviceIdOf(integrationId, device.ieee_address),
+        state: parsed.data.state,
+        progress: parsed.data.progress ?? null,
+        remainingS: parsed.data.remaining ?? null,
+        installedVersion: parsed.data.installed_version ?? null,
+        latestVersion: parsed.data.latest_version ?? null,
+      })
+    }
+    return { devices }
   }
 }
 

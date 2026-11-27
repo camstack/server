@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { buildProviderZigbeeZ2mConnectionForm } from '../provider-zigbee-z2m-instances.js'
 import { Z2mManagement, parsePermitJoinSeconds, parseRename } from '../z2m-actions.js'
 import { Z2mHub } from '../z2m-hub.js'
-import { FakeNet, ManualTimers, recordingLogger } from './fakes.js'
+import { bridgeDevicesPayload } from './fixtures/z2m-fixtures.js'
+import { FakeNet, type LogLine, ManualTimers, recordingLogger } from './fakes.js'
+
+const DOOR = '0x00158d0001a2b3c4'
 
 function harness(ids: readonly string[] = ['z2m-1']) {
   const hub = new Z2mHub()
@@ -16,7 +19,15 @@ function harness(ids: readonly string[] = ['z2m-1']) {
     })
     net.last.open()
   }
-  const management = new Z2mManagement(hub)
+  const lines: LogLine[] = []
+  // The accept window never elapses by itself: a test lets it elapse when the update is going ahead.
+  let elapse: () => void = () => {}
+  const delay = (): Promise<void> => new Promise((resolve) => (elapse = resolve))
+  for (const id of ids) {
+    nets.get(id)?.last.push('bridge/devices', bridgeDevicesPayload)
+    hub.bindDevice(id, DOOR, 7)
+  }
+  const management = new Z2mManagement(hub, recordingLogger(lines), delay)
   /** The server answers the last request on `topic` with `status`. */
   const answer = (id: string, topic: string, status: 'ok' | 'error', error?: string): void => {
     const net = nets.get(id)
@@ -34,7 +45,7 @@ function harness(ids: readonly string[] = ['z2m-1']) {
       .get(id)
       ?.last.sentEnvelopes()
       .filter((e) => e.topic === `bridge/request/${topic}`) ?? []
-  return { management, answer, sentOn }
+  return { management, answer, sentOn, lines, nets, hub, elapse: () => elapse() }
 }
 
 describe('Zigbee2MQTT management actions', () => {
@@ -116,5 +127,64 @@ describe('Zigbee2MQTT management actions', () => {
       .flatMap((s) => s.fields)
       .find((f) => f.key === '__remove-device-force')
     expect(force).toMatchObject({ paramsStatic: { instanceId: 'z2m-1', force: true } })
+  })
+
+  it('checks one device for firmware and reports what the server found', async () => {
+    const h = harness()
+    const found = h.management.checkDeviceUpdate({ device: 'door_front' })
+    expect(h.sentOn('z2m-1', 'device/ota_update/check')[0]?.payload).toMatchObject({ id: DOOR })
+    h.nets.get('z2m-1')?.last.push('bridge/response/device/ota_update/check', {
+      data: { id: DOOR, update_available: true },
+      status: 'ok',
+      transaction: h.sentOn('z2m-1', 'device/ota_update/check')[0]?.payload['transaction'],
+    })
+    await expect(found).resolves.toMatchObject({ updateAvailable: true })
+    await expect(h.management.checkDeviceUpdate({ device: 'ghost' })).rejects.toThrow(
+      /does not list a device named ghost/,
+    )
+  })
+
+  it('an update the server refuses at once fails the button with the reason', async () => {
+    const h = harness()
+    const started = h.management.updateDevice({ device: DOOR })
+    h.answer('z2m-1', 'device/ota_update/update', 'error', 'no image available')
+    await expect(started).rejects.toThrow(/no image available/)
+  })
+
+  it('an update that is going ahead answers once accepted, and its end is logged against the device', async () => {
+    const h = harness()
+    const started = h.management.updateDevice({ device: 'door_front' })
+    h.elapse()
+    await expect(started).resolves.toMatchObject({ message: expect.stringContaining('started') })
+    h.answer('z2m-1', 'device/ota_update/update', 'error', 'device went away')
+    await Promise.resolve()
+    await Promise.resolve()
+    const failed = h.lines.find((l) => l.message.includes('firmware update failed'))
+    expect(failed?.extras).toMatchObject({ tags: { deviceId: 7 } })
+  })
+
+  it('lists the firmware state the server pushes with each device state', () => {
+    const h = harness()
+    h.nets.get('z2m-1')?.last.push('door_front', {
+      battery: 90,
+      update: {
+        state: 'updating',
+        progress: 42.5,
+        remaining: 120,
+        installed_version: 1,
+        latest_version: 2,
+      },
+    })
+    expect(h.management.deviceUpdates(undefined).devices).toEqual([
+      {
+        device: 'door_front',
+        deviceId: 7,
+        state: 'updating',
+        progress: 42.5,
+        remainingS: 120,
+        installedVersion: 1,
+        latestVersion: 2,
+      },
+    ])
   })
 })
