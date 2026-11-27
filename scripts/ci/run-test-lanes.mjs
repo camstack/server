@@ -28,6 +28,7 @@ import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { laneHeapMb, lanePlan, laneProcessCount, nodeOptionsWithHeap } from './lane-budget.mjs'
+import { previouslyFailedProjects } from './verify-history.mjs'
 import { parseVitestSummary } from './verify-timing.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
@@ -348,11 +349,13 @@ function stop(signal, code) {
 async function main(argv) {
   const args = parseArgs(argv)
   const cpuCount = args.cpuText === '' ? cpus().length : Number(args.cpuText)
+  const failedBefore = previouslyFailedProjects(process.env)
   const plan = lanePlan({
     cpus: cpuCount,
     heavy: splitCsv(args.heavy),
     light: splitCsv(args.light),
     env: process.env,
+    failedBefore,
   })
   if (args.printPlan) {
     process.stdout.write(`${JSON.stringify(plan)}\n`)
@@ -361,8 +364,21 @@ async function main(argv) {
   const known = projectsWithTests()
   const heavy = keepTestable(plan.heavy, known)
   const light = keepTestable(plan.light, known)
-  const runnable = lanePlan({ cpus: cpuCount, heavy, light, env: process.env })
-  const heapMb = laneHeapMb({ totalBytes: totalmem(), processCount: laneProcessCount(runnable) })
+  const runnable = lanePlan({
+    cpus: cpuCount,
+    heavy,
+    light,
+    env: process.env,
+    failedBefore,
+  })
+  if (failedBefore.length > 0)
+    process.stderr.write(
+      `test-affected: failed in the previous run, started first: ${failedBefore.join(', ')}\n`,
+    )
+  const heapMb = laneHeapMb({
+    totalBytes: totalmem(),
+    processCount: laneProcessCount(runnable),
+  })
   process.stderr.write(
     `test-affected: local heavy ${runnable.heavyParallel}×${runnable.heavyWorkers} [${runnable.heavy.join(', ')}]; light ${runnable.lightParallel}×${runnable.lightWorkers} (${cpuCount} cores, heap ${heapMb}mb, ${runnable.concurrent ? 'together' : 'one lane then the other'})\n`,
   )

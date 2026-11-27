@@ -16,19 +16,22 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 /**
- * Wall-clock seconds of the serial heavy lane on 2026-11-10 (12-core Mac).
- * An absent name sorts first: a package this table does not know yet is the
- * one whose cost we have not measured, so it must not wait behind known work.
+ * Median wall-clock seconds per project in the last ~80 `verify:push` runs
+ * (2026-11-27, 12-core Mac, both lanes running, so contention is in the
+ * numbers). Re-read `~/.cache/camstack/verify-timings.jsonl` when a package
+ * moves. An absent name sorts first: a package this table does not know yet is
+ * the one whose cost we have not measured, so it must not wait behind known
+ * work.
  */
 export const HEAVY_WEIGHT_SECONDS = {
-  '@camstack/addon-admin-ui': 328,
-  '@camstack/server-framework': 287,
-  '@camstack/addon-post-analysis': 266,
-  '@camstack/addon-pipeline': 209,
-  '@camstack/server': 173,
-  '@camstack/ui-library': 153,
-  '@camstack/types': 110,
-  '@camstack/addon-pipeline-orchestrator': 96,
+  '@camstack/addon-admin-ui': 1008,
+  '@camstack/server-framework': 483,
+  '@camstack/addon-post-analysis': 446,
+  '@camstack/ui-library': 299,
+  '@camstack/addon-pipeline': 265,
+  '@camstack/server': 221,
+  '@camstack/types': 61,
+  '@camstack/addon-pipeline-orchestrator': 55,
 }
 
 /**
@@ -55,6 +58,22 @@ export function orderLongestFirst(projects) {
     if (a > b) return 1
     return 0
   })
+}
+
+/**
+ * Projects that failed in the previous run of this base first (longest first
+ * among themselves), then the rest longest first. An unknown project keeps its
+ * place at the front of its own group.
+ *
+ * @param {readonly string[]} projects
+ * @param {readonly string[]} [failedBefore]
+ * @returns {string[]}
+ */
+export function orderProjects(projects, failedBefore = []) {
+  const failed = new Set(failedBefore)
+  const again = projects.filter((name) => failed.has(name))
+  const rest = projects.filter((name) => !failed.has(name))
+  return [...orderLongestFirst(again), ...orderLongestFirst(rest)]
 }
 
 /**
@@ -195,7 +214,13 @@ function bothBudget(cores, heavyN, lightN, env) {
     else if (heavyWorkers > 1) heavyWorkers -= 1
     else break
   }
-  return { concurrent: true, heavyParallel, lightParallel, heavyWorkers, lightWorkers }
+  return {
+    concurrent: true,
+    heavyParallel,
+    lightParallel,
+    heavyWorkers,
+    lightWorkers,
+  }
 }
 
 /**
@@ -238,15 +263,25 @@ function serialOnTinyMachine(cores, heavyN, lightN, env) {
  * @param {readonly string[]} input.heavy
  * @param {readonly string[]} input.light
  * @param {NodeJS.ProcessEnv} [input.env]
+ * @param {readonly string[]} [input.failedBefore] projects red in the previous run of this base
  */
-export function lanePlan({ cpus, heavy, light, env = {} }) {
+export function lanePlan({ cpus, heavy, light, env = {}, failedBefore = [] }) {
   const budget = localLaneBudget({
     cpus,
     heavyCount: heavy.length,
     lightCount: light.length,
     env,
   })
-  return { ...budget, cpus, heavy: orderLongestFirst(heavy), light: [...light] }
+  const failed = new Set(failedBefore)
+  return {
+    ...budget,
+    cpus,
+    heavy: orderProjects(heavy, failedBefore),
+    light: [
+      ...light.filter((name) => failed.has(name)),
+      ...light.filter((name) => !failed.has(name)),
+    ],
+  }
 }
 
 /**

@@ -9,7 +9,9 @@ import {
   localLaneBudget,
   localLanesEnabled,
   nodeOptionsWithHeap,
+  lanePlan,
   orderLongestFirst,
+  orderProjects,
 } from '../ci/lane-budget.mjs'
 import { workspacePackageDirs } from '../ci/run-test-lanes.mjs'
 
@@ -38,7 +40,12 @@ describe('local lane budget', () => {
 
   it('never schedules more vitest workers than cores', () => {
     for (const cpus of [1, 2, 4, 6, 8, 12, 16]) {
-      const budget = localLaneBudget({ cpus, heavyCount: 8, lightCount: 30, env: {} })
+      const budget = localLaneBudget({
+        cpus,
+        heavyCount: 8,
+        lightCount: 30,
+        env: {},
+      })
       // A serial schedule (one core cannot host both lanes) pays one lane at a time.
       const atOnce = budget.concurrent
         ? slots(budget)
@@ -72,7 +79,12 @@ describe('local lane budget', () => {
   })
 
   it('runs the lanes one after the other on a single core', () => {
-    const budget = localLaneBudget({ cpus: 1, heavyCount: 8, lightCount: 4, env: {} })
+    const budget = localLaneBudget({
+      cpus: 1,
+      heavyCount: 8,
+      lightCount: 4,
+      env: {},
+    })
     expect(budget.concurrent).toBe(false)
     expect(budget.heavyParallel * budget.heavyWorkers).toBeLessThanOrEqual(1)
     expect(budget.lightParallel * budget.lightWorkers).toBeLessThanOrEqual(1)
@@ -102,10 +114,18 @@ describe('local lane budget', () => {
 
 describe('lane heap', () => {
   it('fits the 12-core split in a 36 GB machine instead of inheriting a 3 GB heap per process', () => {
-    const budget = localLaneBudget({ cpus: 12, heavyCount: 8, lightCount: 30, env: {} })
+    const budget = localLaneBudget({
+      cpus: 12,
+      heavyCount: 8,
+      lightCount: 30,
+      env: {},
+    })
     const processes = laneProcessCount(budget)
     expect(processes).toBe(16)
-    const heap = laneHeapMb({ totalBytes: 36 * 1024 * 1024 * 1024, processCount: processes })
+    const heap = laneHeapMb({
+      totalBytes: 36 * 1024 * 1024 * 1024,
+      processCount: processes,
+    })
     expect(heap).toBe(1792)
     expect(nodeOptionsWithHeap('--max-old-space-size=3072', heap)).toBe('--max-old-space-size=1792')
   })
@@ -219,11 +239,47 @@ describe('heavy project order', () => {
     ).toEqual([
       '@camstack/brand-new',
       '@camstack/addon-admin-ui',
-      '@camstack/addon-pipeline',
       '@camstack/ui-library',
+      '@camstack/addon-pipeline',
     ])
     expect(HEAVY_WEIGHT_SECONDS['@camstack/addon-admin-ui']).toBeGreaterThan(
       HEAVY_WEIGHT_SECONDS['@camstack/ui-library'],
     )
+  })
+})
+
+describe('projects that failed last time', () => {
+  it('start first, longest first among themselves, then the rest longest first', () => {
+    expect(
+      orderProjects(
+        [
+          '@camstack/addon-admin-ui',
+          '@camstack/server',
+          '@camstack/types',
+          '@camstack/addon-pipeline',
+        ],
+        ['@camstack/types', '@camstack/addon-pipeline'],
+      ),
+    ).toEqual([
+      '@camstack/addon-pipeline',
+      '@camstack/types',
+      '@camstack/addon-admin-ui',
+      '@camstack/server',
+    ])
+  })
+
+  it('a plan puts a previously failed light project at the front of its lane', () => {
+    const plan = lanePlan({
+      cpus: 12,
+      heavy: ['@camstack/server'],
+      light: ['a', 'b', 'c'],
+      failedBefore: ['c'],
+    })
+    expect(plan.light).toEqual(['c', 'a', 'b'])
+  })
+
+  it('with no history the order is the plain longest-first one', () => {
+    const heavy = ['@camstack/ui-library', '@camstack/addon-admin-ui']
+    expect(orderProjects(heavy)).toEqual(orderLongestFirst(heavy))
   })
 })
