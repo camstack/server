@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A composed device capability (such as a doorbell added onto a camera) stays bound across a hub or composer restart, so exporters no longer rebuild the device without it.
+
 ## [1.2.972] - 2026-11-27
 
 ### Changed

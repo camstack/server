@@ -79,6 +79,12 @@ export interface BindingsDeps {
    * said once (task 17 review M1, `stale-wrapper-activations.ts`).
    */
   readonly staleWrapperActivations: StaleWrapperActivations
+  /**
+   * The caps a device holds a persisted composer `add` claim on (the hub-owned
+   * claims index, loaded at boot). A composed cap is bound from boot on this
+   * fact; the composer's live graft only makes it answer.
+   */
+  readonly composedCaps?: (deviceId: number) => readonly string[]
 }
 
 /**
@@ -778,6 +784,29 @@ async function resolveBindingsForDevice(
         nativeAddonId: entry.addonId,
       })
       seenCaps.add(entry.capName)
+    }
+  }
+
+  // 5. Composed caps under a persisted composer `add` claim. The graft is a live
+  //    registration of the composer's runner that lands tens of seconds after
+  //    every hub or composer restart; until then the cap was missing from the
+  //    device's bindings and every exporter rebuilt its accessory without it,
+  //    then with it again. The claim is persisted by the hub, so the binding
+  //    is stable from boot: provider = the composer, never a wait on the
+  //    runner (D3). A claim released removes the binding with its entry; a
+  //    live native or graft (steps 3 and 4) is the same provider and wins by
+  //    carrying its method list.
+  if (presence !== 'absent') {
+    for (const capName of deps.composedCaps?.(deviceId) ?? []) {
+      if (seenCaps.has(capName)) continue
+      entries.push({
+        capName,
+        kind: 'native',
+        providerAddonId: COMPOSER_ADDON_ID,
+        providerNodeId: deps.ctx.kernel.localNodeId ?? 'hub',
+        nativeAddonId: COMPOSER_ADDON_ID,
+      })
+      seenCaps.add(capName)
     }
   }
 

@@ -480,6 +480,7 @@ export class DeviceManagerAddon extends BaseAddon {
       rows,
       withAddonStoreWriteLock: this.addonStoreWriteLock,
       staleWrapperActivations: this.staleWrapperActivations,
+      composedCaps: (deviceId) => this.fieldClaimsImpl?.addClaimedCaps(deviceId) ?? [],
     }
   }
 

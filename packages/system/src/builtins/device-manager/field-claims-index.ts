@@ -68,6 +68,8 @@ export class FieldClaimsIndex {
   private entries: ReadonlyMap<string, FieldClaim> | null = null
   /** Devices with at least one entry — what the seed asks, per native write. */
   private claimedDevices: ReadonlySet<number> = new Set()
+  /** The caps each device carries an `add` claim for, from the loaded entries. */
+  private addCaps: ReadonlyMap<number, readonly string[]> = new Map()
   /** Why the last load did not succeed. */
   private notLoadedReason = 'not loaded yet'
   /** One load in flight at a time; concurrent callers join it. */
@@ -104,6 +106,16 @@ export class FieldClaimsIndex {
       (c) => ownerPrefix === undefined || c.owner.startsWith(ownerPrefix),
     )
     return { state: 'loaded', claims }
+  }
+
+  /**
+   * The caps a device holds an `add` claim on, sorted. `add` is a composer graft:
+   * a cap the device does not have natively, served from another device's
+   * state. Empty until a load has succeeded — the caller keeps its own answer
+   * then (D315): an unloaded index is not "no claims".
+   */
+  addClaimedCaps(deviceId: number): readonly string[] {
+    return this.addCaps.get(deviceId) ?? []
   }
 
   /** The entry for a key, when the index is loaded and has one. */
@@ -186,6 +198,12 @@ export class FieldClaimsIndex {
   private install(entries: ReadonlyMap<string, FieldClaim>): void {
     this.entries = entries
     this.claimedDevices = new Set([...entries.values()].map((c) => c.deviceId))
+    const byDevice = new Map<number, string[]>()
+    for (const claim of entries.values()) {
+      if (claim.mode !== 'add') continue
+      byDevice.set(claim.deviceId, [...(byDevice.get(claim.deviceId) ?? []), claim.capName])
+    }
+    this.addCaps = new Map([...byDevice].map(([id, caps]) => [id, caps.toSorted()]))
   }
 
   /** The three-way read (D651): a failed read is a REASON, never an empty index. */

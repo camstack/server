@@ -108,3 +108,29 @@ describe('FieldClaimsIndex — what does not load', () => {
     expect(view.state === 'loaded' && view.hasClaims(8)).toBe(false)
   })
 })
+
+describe('FieldClaimsIndex.addClaimedCaps — the caps a composer graft binds from boot', () => {
+  const ADD = {
+    deviceId: 615,
+    capName: 'doorbell',
+    owner: 'blk-1',
+    mode: 'add',
+    fields: ['pressed'],
+  }
+
+  it('lists the add-claimed caps of a loaded index, and drops one the moment its claim is released', async () => {
+    const idx = index()
+    const settings = settingsWith(async () => ({
+      kind: 'value',
+      value: { [FIELD_CLAIMS_INDEX_KEY]: [ADD, VALID] },
+    }))
+    expect(idx.addClaimedCaps(615)).toEqual([])
+    await idx.load(settings)
+    expect(idx.addClaimedCaps(615)).toEqual(['doorbell'])
+    // A replace claim is not a graft.
+    expect(idx.addClaimedCaps(7)).toEqual([])
+
+    await idx.remove({ deviceId: 615, capName: 'doorbell' }, settings)
+    expect(idx.addClaimedCaps(615)).toEqual([])
+  })
+})
