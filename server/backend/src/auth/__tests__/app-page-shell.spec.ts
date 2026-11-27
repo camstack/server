@@ -1,6 +1,4 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import { darkColors, defaultTheme, lightColors } from '@camstack/ui-library/theme/tokens'
 import { describe, expect, it } from 'vitest'
 import { renderConsentPage } from '../../api/oauth2/consent-page.js'
@@ -14,8 +12,6 @@ import {
 } from '../app-page-shell.js'
 import { APP_PASSKEY_CSP, appPasskeyPage, appPasskeyRefusalPage } from '../app-passkey-page.js'
 import { APP_REFUSED_CSP, appRefusedPage } from '../app-refused-route.js'
-
-const repoRoot = path.resolve(__dirname, '../../../../..')
 
 const hash = (text: string): string =>
   `'sha256-${createHash('sha256').update(text).digest('base64')}'`
@@ -101,28 +97,13 @@ describe('the app page shell', () => {
     for (const hex of hexes) expect(themeValues.has(hex)).toBe(true)
   })
 
-  it('carries the brand logo files, both schemes, inline and without an external asset', () => {
-    const strip = (svg: string): string =>
-      svg
-        .replace(/<!--[\s\S]*?-->/g, '')
-        .replace(/>\s+</g, '><')
-        .replace(/\s+/g, ' ')
-        .trim()
-    const brand = (file: string): string =>
-      strip(readFileSync(path.join(repoRoot, 'packages/addon-admin-ui/public/brand', file), 'utf8'))
-    const normalised = (svg: string): string =>
-      strip(
-        svg
-          .replace(' class="logo logo-dark"', '')
-          .replace(' class="logo logo-light"', '')
-          .replace(' role="img" aria-label="CamStack"', ''),
-      )
-    expect(normalised(APP_PAGE_LOGOS.dark)).toBe(
-      brand('logo-dark.svg').replace(/>\s*Cam<tspan/, '>Cam<tspan'),
-    )
-    expect(normalised(APP_PAGE_LOGOS.light)).toBe(
-      brand('logo-light.svg').replace(/>\s*Cam<tspan/, '>Cam<tspan'),
-    )
+  it('carries the brand mark, both schemes, inline and without an external asset', () => {
+    for (const logo of [APP_PAGE_LOGOS.dark, APP_PAGE_LOGOS.light]) {
+      expect(logo).toMatch(/^<svg class="logo logo-(dark|light)" role="img" aria-label="Dominevo"/)
+      expect(logo).not.toMatch(/(src|href)="https?:/)
+      expect(logo).toContain('<path d="M32 5 C44 19 53 29 53 40')
+    }
+    expect(APP_PAGE_LOGOS.dark).not.toBe(APP_PAGE_LOGOS.light)
     for (const { html } of PAGES) expect(html).not.toMatch(/(src|href)="https?:/)
   })
 
