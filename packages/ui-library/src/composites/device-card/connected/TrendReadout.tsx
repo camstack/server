@@ -25,6 +25,8 @@ export interface TrendReadoutViewProps {
   /** The span the points cover, ending now. */
   readonly windowMs: number
   readonly testId: string
+  /** A tile-sized line: the curve alone at the width it is given, no scale. */
+  readonly compact?: boolean | undefined
 }
 
 /**
@@ -41,6 +43,7 @@ export function TrendReadoutView({
   currentAriaHidden = false,
   windowMs,
   testId,
+  compact = false,
 }: TrendReadoutViewProps): ReactElement | null {
   const t = useUiText()
   const unitPreferences = useUnitPreferences()
@@ -58,6 +61,26 @@ export function TrendReadoutView({
         }).format
   const readout = trendReadout({ points, quantity, unit, format })
   if (readout === null) return null
+  if (compact) {
+    return (
+      <span data-testid={testId} className="flex w-full">
+        <Sparkline
+          points={[...points]}
+          ariaLabel={label}
+          token="primary"
+          {...(quantity === undefined
+            ? {}
+            : {
+                quantity,
+                displayPreference: preferenceForQuantity(unitPreferences, quantity),
+              })}
+          zeroBased={false}
+          height={24}
+          widthClassName="w-full"
+        />
+      </span>
+    )
+  }
   const hours = Math.round(windowMs / HOUR_MS)
   return (
     <span data-testid={testId} className="flex justify-center">

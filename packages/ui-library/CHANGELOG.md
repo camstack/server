@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device mesh sections are titled by the network name, with technology and channel badges, and the device widget shows the network
 - Ambient monitor is a device role, with its name and label in English and Italian.
 - A sensor with seven or more readings (an ambient monitor) is a grid of tiles, one per value, instead of a pie with a +N wedge; air-quality readings (CO2, VOC, PM2.5, PM10, air quality) have their own labels and colours, and a fan that also has temperature or humidity shows them as a readout row under its controls
+- A sensor with several readings animates and trends each reading like a single-reading sensor, and clicking a reading opens its history chart under the card
 
 ## [1.2.516] - 2026-11-27
 

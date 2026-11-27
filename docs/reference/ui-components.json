@@ -17756,6 +17756,12 @@
           "type": "ReadingDisplaySubject | null",
           "optional": false,
           "doc": "The device, so the trend reads in the unit of the card's big value."
+        },
+        {
+          "name": "compact",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A tile-sized line (a composed sensor's reading): the curve alone."
         }
       ]
     },

@@ -1,6 +1,7 @@
 import type { HeroMeasurementQuantity } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { cn } from '../../../../lib/cn'
+import { MeasurementFx } from '../../illustrations/MeasurementFx'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommonActions, CardOrientation } from '../../shell/model'
 import type { SensorPieCardModel } from './SensorPieCard'
@@ -106,7 +107,7 @@ export function SensorGridCard({
                       aria-label={`${reading.label} ${reading.value}${reading.unit === null ? '' : ` ${reading.unit}`}`}
                       onClick={() => onSelect?.(reading.id)}
                       className={cn(
-                        'flex w-full min-w-0 cursor-pointer flex-col items-start gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-opacity',
+                        'relative isolate flex w-full min-w-0 cursor-pointer overflow-hidden flex-col items-start gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-opacity',
                         reading.state === 'empty'
                           ? 'border-dashed border-foreground-subtle bg-surface'
                           : selected
@@ -115,6 +116,7 @@ export function SensorGridCard({
                         selectedId !== null && !selected && 'opacity-40',
                       )}
                     >
+                      {reading.visual == null ? null : <MeasurementFx visual={reading.visual} />}
                       <span className="max-w-full truncate text-xs text-foreground-muted">
                         {reading.label}
                       </span>
@@ -131,6 +133,7 @@ export function SensorGridCard({
                           </span>
                         )}
                       </span>
+                      {reading.trend ?? null}
                     </button>
                   </li>
                 )

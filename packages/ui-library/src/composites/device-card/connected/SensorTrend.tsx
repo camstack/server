@@ -20,6 +20,8 @@ export interface SensorTrendProps {
   readonly reading: HeroMeasurementReading
   /** The device, so the trend reads in the unit of the card's big value. */
   readonly subject: ReadingDisplaySubject | null
+  /** A tile-sized line (a composed sensor's reading): the curve alone. */
+  readonly compact?: boolean
 }
 
 /** The last day of a sensor's reading; nothing until the read answers with a line. */
@@ -29,6 +31,7 @@ export function SensorTrend({
   label,
   reading,
   subject,
+  compact = false,
 }: SensorTrendProps): ReactElement | null {
   const window = useMemo(() => {
     const to = Math.ceil(Date.now() / MINUTE_MS) * MINUTE_MS
@@ -52,6 +55,7 @@ export function SensorTrend({
       quantity={reading.quantity}
       subject={subject}
       currentAriaHidden
+      compact={compact}
       windowMs={HISTORY_WINDOW_MS['24h']}
     />
   )

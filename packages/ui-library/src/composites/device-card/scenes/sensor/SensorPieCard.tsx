@@ -1,6 +1,7 @@
 import type { HeroMeasurementQuantity } from '@camstack/types'
 import { type KeyboardEvent, type ReactElement, type ReactNode, useId } from 'react'
 import { cn } from '../../../../lib/cn'
+import type { SceneVisual } from '../../../hero-scene/types'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from '../../shell/model'
 import { PIE_CENTRE, PIE_RADIUS, type PieWedge, pieGeometry, type ReadingState } from './pie-model'
@@ -17,6 +18,10 @@ export interface PieReading {
   /** The short name under the value ("Light", "Motion"). */
   readonly label: string
   readonly state: ReadingState
+  /** The reading's own backdrop motion, the single-reading card's (`measurementVisual`); `null` = still. */
+  readonly visual?: SceneVisual | null
+  /** The reading's last day, the single-reading card's `SensorTrend`; absent until it answers. */
+  readonly trend?: ReactNode
 }
 
 export interface SensorPieCardModel {

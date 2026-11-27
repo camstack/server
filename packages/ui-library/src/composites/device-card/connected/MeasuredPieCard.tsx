@@ -12,6 +12,7 @@ import {
   useHeroLang,
 } from '../../hero-model/measurement-display'
 import { useRoleDisplayDefaults } from '../../device-item/role-display-defaults-context'
+import { measurementVisual } from '../scenes/sensor/model'
 import { readingStateOf } from '../scenes/sensor/pie-model'
 import { SensorGridCard } from '../scenes/sensor/SensorGridCard'
 import { type PieReading, SensorPieCard } from '../scenes/sensor/SensorPieCard'
@@ -87,6 +88,18 @@ export function MeasuredPieCard({
       unit: text.unit,
       label: quantityLabel(t, m.quantity),
       state: readingStateOf(m),
+      visual: measurementVisual(m),
+      trend:
+        m.historyKey === null || m.reading === null ? null : (
+          <SensorTrend
+            deviceId={deviceId}
+            historyKey={m.historyKey}
+            label={text.value}
+            reading={m.reading}
+            subject={subject}
+            compact
+          />
+        ),
     }
   }
   const lead = shown[0]
@@ -109,8 +122,6 @@ export function MeasuredPieCard({
       <ReadingHistory
         deviceId={deviceId}
         measurement={pickedMeasurement}
-        text={textOf(pickedMeasurement)}
-        subject={subject}
         since={measurementSinceText(pickedMeasurement, t)}
       />
     )
@@ -129,8 +140,6 @@ export function MeasuredPieCard({
 interface ReadingHistoryProps {
   readonly deviceId: number
   readonly measurement: HeroMeasurement
-  readonly text: MeasurementText
-  readonly subject: ReadingDisplaySubject | null
   readonly since: string | null
 }
 
@@ -142,28 +151,14 @@ export const STATE_READING_HISTORY_KEY: Readonly<Partial<Record<HeroMeasurementQ
   }
 
 /** One reading's value and the last day of it; a state reading shows ITS series only, never the device's whole History. */
-function ReadingHistory({
-  deviceId,
-  measurement,
-  text,
-  subject,
-  since,
-}: ReadingHistoryProps): ReactElement {
+function ReadingHistory({ deviceId, measurement, since }: ReadingHistoryProps): ReactElement {
   const t = useUiText()
-  const trend =
-    measurement.historyKey === null || measurement.reading === null ? null : (
-      <SensorTrend
-        deviceId={deviceId}
-        historyKey={measurement.historyKey}
-        label={text.value}
-        reading={measurement.reading}
-        subject={subject}
-      />
-    )
-  const stateKey = STATE_READING_HISTORY_KEY[measurement.quantity]
-  const states =
-    stateKey === undefined ? null : (
-      <DeviceHistoryView deviceId={deviceId} seriesKeys={[stateKey]} />
+  const seriesKey = measurement.historyKey ?? STATE_READING_HISTORY_KEY[measurement.quantity]
+  // The chart is the device-history view of this one series: it says itself
+  // whether the read is pending, absent or empty (D315), never a blank.
+  const chart =
+    seriesKey === undefined ? null : (
+      <DeviceHistoryView deviceId={deviceId} seriesKeys={[seriesKey]} fixedWindow="24h" />
     )
   return (
     <div className="flex w-full flex-col items-center gap-2" data-testid="dc-pie-history">
@@ -171,7 +166,7 @@ function ReadingHistory({
         {quantityLabel(t, measurement.quantity)}
       </span>
       {since === null ? null : <span className="text-xs text-foreground-muted">{since}</span>}
-      {trend ?? states ?? (
+      {chart ?? (
         <span className="text-xs text-foreground-muted" data-testid="dc-pie-no-history">
           {t('uiLibrary.sensorPie.noHistory', 'No history is kept for this reading.')}
         </span>
