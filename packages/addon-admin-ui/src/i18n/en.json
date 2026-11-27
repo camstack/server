@@ -14501,7 +14501,7 @@
       "cancelled": "Cancelled"
     },
     "kind": {
-      "device_adoption": "Device adoption"
+      "adoption": "Device adoption"
     },
     "cancelRefused": {
       "title": "Could not cancel",
@@ -14512,7 +14512,12 @@
       "notAllowed": "You are not allowed to cancel this job.",
       "producerRefused": "The task refused to stop right now.",
       "producerUnreachable": "The component running this job did not answer."
-    }
+    },
+    "unit": {
+      "candidates_one": "candidate",
+      "candidates_other": "candidates"
+    },
+    "noResult": "This job has no result to open."
   },
   "jobs": {
     "title": "Jobs",
@@ -14539,6 +14544,9 @@
     "pages": "Jobs pages",
     "previous": "Previous page",
     "next": "Next page",
-    "range": "{{from}}–{{to}} of {{total}}"
+    "range": "{{from}}–{{to}} of {{total}}",
+    "adoption": {
+      "title": "Adopting from {{addonId}} ({{total}} found)"
+    }
   }
 }

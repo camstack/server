@@ -8,16 +8,17 @@ import {
   Button,
   useAlert,
   useJobsCancel,
-  useJobsCollect,
+  useSystem,
   useJobsDismiss,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Job } from '@camstack/types'
 import { Loader2, X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
-import { AlertActionLink } from '../ui/AlertActionLink'
+import { startServerNavigation } from '../../lib/broker-oauth-popup'
 import { useUserNames } from '../access/AccessSection'
 import {
   canCancelJob,
@@ -56,7 +57,10 @@ export function JobStateBadge({ state }: { readonly state: Job['state'] }): Reac
 /** Real units when known; a pulsing bar when not — never an empty bar read as 0. */
 export function JobProgress({ job }: { readonly job: Pick<Job, 'state' | 'progress'> }): ReactNode {
   const reading = readJobProgress(job)
-  const text = formatJobProgress(reading)
+  const { t } = useTranslation()
+  const text = formatJobProgress(reading, (unit, count) =>
+    t(`activity.unit.${unit}`, { count, defaultValue: unit }),
+  )
   if (reading.kind === 'none') return null
   return (
     <div className="flex items-center gap-2">
@@ -115,19 +119,41 @@ export function JobActions({ job }: { readonly job: Job }): ReactNode {
     },
   })
   const dismiss = useJobsDismiss({ onSuccess: invalidate })
-  const collect = useJobsCollect({ jobId: job.jobId }, { enabled: job.state === 'done' })
-  const result = collect.data ?? null
+  const system = useSystem()
+  const navigate = useNavigate()
+  const [opening, setOpening] = useState(false)
+  // The result is resolved by the producer, so it is asked for only when the
+  // operator presses the button — never once per row on render.
+  const openResult = (): void => {
+    setOpening(true)
+    void system.trpcClient.jobs.collect
+      .query({ jobId: job.jobId })
+      .then((result) => {
+        if (result === null) {
+          void showAlert({
+            title: t('activity.openResult'),
+            message: t('activity.noResult'),
+          })
+          return
+        }
+        if (result.navigation === 'server') startServerNavigation(result.href)
+        else navigate(result.href)
+      })
+      .catch((err: unknown) =>
+        showAlert({
+          title: t('activity.openResult'),
+          message: err instanceof Error ? err.message : String(err),
+        }),
+      )
+      .finally(() => setOpening(false))
+  }
   return (
     <div className="flex items-center justify-end gap-1.5">
-      {result !== null && (
-        <AlertActionLink
-          action={{
-            label: t('activity.openResult'),
-            href: result.href,
-            ...(result.navigation !== undefined ? { navigation: result.navigation } : {}),
-          }}
-          className="inline-flex items-center rounded-md bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        />
+      {job.state === 'done' && (
+        <Button variant="primary" size="xs" disabled={opening} onClick={openResult}>
+          {opening && <Loader2 className="h-3 w-3 animate-spin" aria-hidden />}
+          {t('activity.openResult')}
+        </Button>
       )}
       {canCancelJob(job) && (
         <Button

@@ -14523,7 +14523,7 @@
       "cancelled": "Annullato"
     },
     "kind": {
-      "device_adoption": "Adozione dispositivi"
+      "adoption": "Adozione dispositivi"
     },
     "cancelRefused": {
       "title": "Impossibile annullare",
@@ -14534,7 +14534,12 @@
       "notAllowed": "Non hai il permesso di annullare questo job.",
       "producerRefused": "L'attività ha rifiutato di fermarsi ora.",
       "producerUnreachable": "Il componente che esegue il job non ha risposto."
-    }
+    },
+    "unit": {
+      "candidates_one": "candidato",
+      "candidates_other": "candidati"
+    },
+    "noResult": "Questo job non ha un risultato da aprire."
   },
   "jobs": {
     "title": "Job",
@@ -14561,6 +14566,9 @@
     "pages": "Pagine dei job",
     "previous": "Pagina precedente",
     "next": "Pagina successiva",
-    "range": "{{from}}–{{to}} di {{total}}"
+    "range": "{{from}}–{{to}} di {{total}}",
+    "adoption": {
+      "title": "Adozione da {{addonId}} ({{total}} trovati)"
+    }
   }
 }

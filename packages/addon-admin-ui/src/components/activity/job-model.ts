@@ -33,7 +33,11 @@ export function jobIsActive(job: Pick<Job, 'state'>): boolean {
 
 export type JobProgressReading =
   | { readonly kind: 'none' }
-  | { readonly kind: 'indeterminate'; readonly done: number | null; readonly unit: string | null }
+  | {
+      readonly kind: 'indeterminate'
+      readonly done: number | null
+      readonly unit: string | null
+    }
   | {
       readonly kind: 'determinate'
       readonly done: number
@@ -67,14 +71,19 @@ export function readJobProgress(job: Pick<Job, 'state' | 'progress'>): JobProgre
   }
 }
 
-/** "3 / 10 devices", "3 devices", or null when no count is known. */
-export function formatJobProgress(reading: JobProgressReading): string | null {
+export type UnitLabel = (unit: string, count: number) => string
+
+/** "3 / 10 devices", "3 devices", or null when no count is known. `unitLabel` localises the unit. */
+export function formatJobProgress(
+  reading: JobProgressReading,
+  unitLabel: UnitLabel = (unit) => unit,
+): string | null {
   if (reading.kind === 'none') return null
   if (reading.kind === 'indeterminate') {
     if (reading.done === null) return null
-    return `${String(reading.done)} ${reading.unit ?? ''}`.trim()
+    return `${String(reading.done)} ${unitLabel(reading.unit ?? '', reading.done)}`.trim()
   }
-  return `${String(reading.done)} / ${String(reading.total)} ${reading.unit}`.trim()
+  return `${String(reading.done)} / ${String(reading.total)} ${unitLabel(reading.unit, reading.total)}`.trim()
 }
 
 export interface JobKindRef {
