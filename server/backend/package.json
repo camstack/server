@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.972",
+  "version": "1.2.973",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -68,12 +68,8 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.764",
-        "@camstack/addon-agent-ui": ">=1.2.451",
-        "@camstack/addon-matter-broker": ">=0.2.182",
-        "@camstack/addon-osd-manager": ">=0.1.324",
-        "@camstack/addon-pipeline": ">=1.2.692",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.730"
+        "@camstack/addon-export-hap": ">=1.2.212",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.731"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
