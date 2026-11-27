@@ -49,6 +49,7 @@ vi.mock('../../components/system/PasskeyEnrollmentPrompt', () => ({
 }))
 vi.mock('../../components/system/ServerNamePrompt', () => ({ ServerNamePrompt: () => null }))
 vi.mock('../../components/ui/AlertBell', () => ({ AlertBell: () => null }))
+vi.mock('../../components/activity/ActivityButton', () => ({ ActivityButton: () => null }))
 vi.mock('../../components/ui/CriticalAlertsOnLoadPanel', () => ({
   CriticalAlertsOnLoadPanel: () => null,
 }))

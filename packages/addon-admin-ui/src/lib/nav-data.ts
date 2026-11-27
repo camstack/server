@@ -156,6 +156,14 @@ export const NAV_SECTION_SPECS: readonly NavSectionSpec[] = [
         path: '/system/ai',
         adminOnly: true,
       },
+      {
+        labelKey: 'nav.jobs',
+        fallback: 'Jobs',
+        icon: 'activity',
+        path: '/system/jobs',
+        adminOnly: true,
+        keywords: ['activity', 'tasks', 'progress', 'adoption'],
+      },
     ],
   },
   {

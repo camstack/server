@@ -18,7 +18,8 @@
     "viewer": "Viewer",
     "history": "History",
     "notInstalled": "{{page}} — not installed",
-    "archive": "Archive"
+    "archive": "Archive",
+    "jobs": "Jobs"
   },
   "system": {
     "title": "Administration",
@@ -14479,5 +14480,65 @@
       "below-min": "Below the minimum",
       "above-max": "Above the maximum"
     }
+  },
+  "activity": {
+    "title": "Activity",
+    "buttonCount": "Activity ({{count}})",
+    "viewAll": "All jobs",
+    "empty": "No activity yet",
+    "loadFailed": "Could not load activity",
+    "startedAgo": "Started {{when}}",
+    "finishedAgo": "Finished {{when}}",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss",
+    "openResult": "Open result",
+    "ownerSystem": "System",
+    "state": {
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "kind": {
+      "device_adoption": "Device adoption"
+    },
+    "cancelRefused": {
+      "title": "Could not cancel",
+      "unknown": "The job could not be cancelled.",
+      "notFound": "This job no longer exists.",
+      "notCancellable": "This job cannot be cancelled.",
+      "terminal": "This job has already finished.",
+      "notAllowed": "You are not allowed to cancel this job.",
+      "producerRefused": "The task refused to stop right now.",
+      "producerUnreachable": "The component running this job did not answer."
+    }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "subtitle": "Long-running work across the system, for every user.",
+    "search": "Search jobs",
+    "groupState": "State",
+    "groupKind": "Kind",
+    "groupOwner": "Owner",
+    "filters": "Job filters",
+    "clearFilters": "Clear filters",
+    "col": {
+      "job": "Job",
+      "state": "State",
+      "progress": "Progress",
+      "owner": "Owner",
+      "started": "Started",
+      "finished": "Finished",
+      "actions": "Actions"
+    },
+    "notFinished": "Not finished",
+    "empty": "No jobs yet.",
+    "emptyFiltered": "No job matches the filters.",
+    "loadFailed": "Could not load jobs",
+    "pages": "Jobs pages",
+    "previous": "Previous page",
+    "next": "Next page",
+    "range": "{{from}}–{{to}} of {{total}}"
   }
 }

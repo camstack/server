@@ -18,7 +18,8 @@
     "viewer": "Viewer",
     "history": "Cronologia",
     "notInstalled": "{{page}} — non installato",
-    "archive": "Archivio"
+    "archive": "Archivio",
+    "jobs": "Attività"
   },
   "system": {
     "title": "Amministrazione",
@@ -14501,5 +14502,65 @@
       "below-min": "Sotto il minimo",
       "above-max": "Sopra il massimo"
     }
+  },
+  "activity": {
+    "title": "Attività",
+    "buttonCount": "Attività ({{count}})",
+    "viewAll": "Tutti i job",
+    "empty": "Nessuna attività",
+    "loadFailed": "Impossibile caricare l'attività",
+    "startedAgo": "Avviato {{when}}",
+    "finishedAgo": "Terminato {{when}}",
+    "cancel": "Annulla",
+    "dismiss": "Nascondi",
+    "openResult": "Apri risultato",
+    "ownerSystem": "Sistema",
+    "state": {
+      "queued": "In coda",
+      "running": "In corso",
+      "done": "Completato",
+      "failed": "Fallito",
+      "cancelled": "Annullato"
+    },
+    "kind": {
+      "device_adoption": "Adozione dispositivi"
+    },
+    "cancelRefused": {
+      "title": "Impossibile annullare",
+      "unknown": "Il job non può essere annullato.",
+      "notFound": "Questo job non esiste più.",
+      "notCancellable": "Questo job non può essere annullato.",
+      "terminal": "Questo job è già terminato.",
+      "notAllowed": "Non hai il permesso di annullare questo job.",
+      "producerRefused": "L'attività ha rifiutato di fermarsi ora.",
+      "producerUnreachable": "Il componente che esegue il job non ha risposto."
+    }
+  },
+  "jobs": {
+    "title": "Job",
+    "subtitle": "Attività di lunga durata del sistema, di tutti gli utenti.",
+    "search": "Cerca job",
+    "groupState": "Stato",
+    "groupKind": "Tipo",
+    "groupOwner": "Proprietario",
+    "filters": "Filtri job",
+    "clearFilters": "Azzera filtri",
+    "col": {
+      "job": "Job",
+      "state": "Stato",
+      "progress": "Avanzamento",
+      "owner": "Proprietario",
+      "started": "Avviato",
+      "finished": "Terminato",
+      "actions": "Azioni"
+    },
+    "notFinished": "In corso",
+    "empty": "Nessun job.",
+    "emptyFiltered": "Nessun job corrisponde ai filtri.",
+    "loadFailed": "Impossibile caricare i job",
+    "pages": "Pagine dei job",
+    "previous": "Pagina precedente",
+    "next": "Pagina successiva",
+    "range": "{{from}}–{{to}} di {{total}}"
   }
 }

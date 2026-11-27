@@ -34,6 +34,7 @@ import { GlobalSearch } from '../components/search/GlobalSearch'
 import { PasskeyEnrollmentPrompt } from '../components/system/PasskeyEnrollmentPrompt'
 import { ServerNamePrompt } from '../components/system/ServerNamePrompt'
 import { AlertBell } from '../components/ui/AlertBell'
+import { ActivityButton } from '../components/activity/ActivityButton'
 import { CriticalAlertsOnLoadPanel } from '../components/ui/CriticalAlertsOnLoadPanel'
 import { useAuth } from '../contexts/auth-context'
 import { useServerName } from '../hooks/use-server-name'
@@ -515,6 +516,7 @@ export function AppLayout() {
         </Button>
 
         {/* Alerts */}
+        <ActivityButton variant="sidebar" compact={compact} />
         <AlertBell variant="sidebar" compact={compact} />
 
         {/* My access — every user (admin or not) can view their own scope
@@ -687,6 +689,7 @@ export function AppLayout() {
                   className="h-7"
                 />
               </div>
+              <ActivityButton />
               <AlertBell />
             </header>
           )}

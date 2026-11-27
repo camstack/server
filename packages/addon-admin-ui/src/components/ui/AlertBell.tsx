@@ -69,7 +69,7 @@ const STATUS_COLORS = {
 
 // ── Time formatting ─────────────────────────────────────────────────
 
-function formatTimeAgo(timestamp: number): string {
+export function formatTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
   if (seconds < 60) return i18n.t('helpers.relativeTime.justNow')
   const minutes = Math.floor(seconds / 60)

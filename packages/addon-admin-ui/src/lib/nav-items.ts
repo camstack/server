@@ -88,6 +88,7 @@ const NAV_ICONS: Readonly<Record<string, LucideIcon>> = {
   library: Library,
   archive: Archive,
   network: Network,
+  activity: Activity,
   'line-chart': LineChart,
   'git-branch': GitBranch,
   puzzle: Puzzle,

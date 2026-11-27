@@ -177,6 +177,7 @@ const HistoryPage = lazy(() =>
     default: m.HistoryPage,
   })),
 )
+const JobsPage = lazy(() => import('./pages/system/Jobs').then((m) => ({ default: m.JobsPage })))
 const CalendarsPage = lazy(() =>
   import('./pages/system/Calendars').then((m) => ({
     default: m.CalendarsPage,
@@ -532,6 +533,14 @@ export function App() {
                                   element={
                                     <ProtectedRoute requireAdmin>
                                       <HistoryPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/system/jobs"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <JobsPage />
                                     </ProtectedRoute>
                                   }
                                 />

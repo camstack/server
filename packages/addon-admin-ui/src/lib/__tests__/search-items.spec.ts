@@ -77,6 +77,7 @@ describe('buildNavSections — cluster group routes', () => {
       '/system/pipeline',
       '/system/addons',
       '/system/ai',
+      '/system/jobs',
     ])
     expect(sections.find((s) => s.key === 'detection')?.items.map((i) => i.path)).not.toContain(
       '/system/pipeline',
