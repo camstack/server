@@ -11710,7 +11710,12 @@
         "contact": "Contatto",
         "motion": "Movimento",
         "illuminance": "Luce",
-        "text": "Stato"
+        "text": "Stato",
+        "co2": "CO₂",
+        "voc": "VOC",
+        "pm25": "PM2.5",
+        "pm10": "PM10",
+        "aqi": "Qualità aria"
       },
       "updated": "Aggiornato · {{ago}}",
       "readings": "Letture",

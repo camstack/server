@@ -4395,7 +4395,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSensorCard.tsx",
-      "summary": "A sensor drawn from the hero model's measurements inside the shared card: one reading is the single-measurement scene (#514), two or more the pie (`sensorLayoutOf` decides, from the count alone).",
+      "summary": "A sensor drawn from the hero model's measurements inside the shared card: one reading is the single-measurement scene (#514), two to six the pie, seven or more a grid (`sensorLayoutOf` decides, from the count alone).",
       "propsExtends": ["ConnectedCardProps"],
       "props": [
         {

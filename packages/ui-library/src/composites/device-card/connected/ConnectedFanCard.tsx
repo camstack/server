@@ -9,6 +9,7 @@ import { FanCard } from '../scenes/fan/FanCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { fanPresetChoice, fanPresetFailure, fanSliceModel } from './fan-model'
 import { useCardCommon } from './use-card-common'
+import { useMeasurementReadings } from './use-measurement-readings'
 import { reportedCall } from './use-command-notice'
 import { useSwitchPower } from './use-switch-power'
 
@@ -38,6 +39,7 @@ export function ConnectedFanCard({
     { enabled: presetsPresence === 'present' && dev?.fanControl !== undefined },
   )
   const apply = useFanPresetsApplyPreset()
+  const readings = useMeasurementReadings(deviceId)
   if (!power.bound || power.on === undefined) return null
   const send = reportedCall(card)
   const cap = dev?.fanControl
@@ -62,6 +64,7 @@ export function ConnectedFanCard({
         on: power.on,
         since: power.since,
         timer: power.timer,
+        ...(readings.length === 0 ? {} : { readings }),
         ...slices,
       }}
       actions={{
@@ -86,7 +89,10 @@ export function ConnectedFanCard({
             return
           }
           send(async () => {
-            const result = await apply.mutateAsync({ deviceId, presetId: choice.presetId })
+            const result = await apply.mutateAsync({
+              deviceId,
+              presetId: choice.presetId,
+            })
             const failure = fanPresetFailure(result)
             if (failure !== null)
               throw new Error(

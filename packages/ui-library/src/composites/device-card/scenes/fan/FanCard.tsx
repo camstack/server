@@ -9,7 +9,13 @@ import { PopoverButton } from '../../parts/PopoverButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { useTimerSince } from '../../parts/SwitchTimer'
 import { columnButton, columnSlider } from '../../shell/column-items'
-import { rowButtons, rowSelector, rowTimer } from '../../shell/bottom-rows'
+import {
+  type BottomRow,
+  rowButtons,
+  rowSelector,
+  rowStats,
+  rowTimer,
+} from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -19,8 +25,29 @@ import {
   type FanAxisName,
   type FanCardActions,
   type FanCardModel,
+  type FanReading,
   signedDegrees,
 } from './model'
+
+/** The most readings one readout row holds (`rowStats` shares a row among four). */
+const READOUT_PER_ROW = 4
+
+/** The device's own readings as secondary rows under the fan's controls: read-only, never a control. */
+function readoutRows(readings: readonly FanReading[]): readonly BottomRow[] {
+  const rows: BottomRow[] = []
+  for (let from = 0; from < readings.length; from += READOUT_PER_ROW) {
+    rows.push(
+      rowStats(`readings-${String(from)}`, {
+        testId: 'dc-fan-readings',
+        cellTestId: 'dc-fan-reading',
+        stats: readings
+          .slice(from, from + READOUT_PER_ROW)
+          .map((r) => ({ id: r.id, name: r.name, value: r.value })),
+      }),
+    )
+  }
+  return rows
+}
 
 export interface FanCardProps {
   readonly model: FanCardModel
@@ -48,8 +75,15 @@ function AxisButton({
       : t('uiLibrary.deviceCard.fan.vertical', 'Vertical')
   const summary = axis.oscillating
     ? `${signedDegrees(axis.sweepFrom)} … ${signedDegrees(axis.sweepTo)}`
-    : t('uiLibrary.deviceCard.fan.fixedAt', 'fixed {{angle}}', { angle: signedDegrees(axis.angle) })
-  const range = { min: axis.min, max: axis.max, step: axis.step, valueLabel: signedDegrees }
+    : t('uiLibrary.deviceCard.fan.fixedAt', 'fixed {{angle}}', {
+        angle: signedDegrees(axis.angle),
+      })
+  const range = {
+    min: axis.min,
+    max: axis.max,
+    step: axis.step,
+    valueLabel: signedDegrees,
+  }
   return (
     <PopoverButton
       glyph={name === 'horizontal' ? 'swingHorizontal' : 'swing'}
@@ -80,14 +114,22 @@ function AxisButton({
             label={t('uiLibrary.deviceCard.fan.from', 'From')}
             ariaLabel={t('uiLibrary.deviceCard.fan.from', 'From')}
             value={axis.sweepFrom}
-            onCommit={(v) => onAxis(name, { sweepFrom: Math.min(v, axis.sweepTo - FAN_MIN_SWEEP) })}
+            onCommit={(v) =>
+              onAxis(name, {
+                sweepFrom: Math.min(v, axis.sweepTo - FAN_MIN_SWEEP),
+              })
+            }
           />
           <HorizontalSlider
             {...range}
             label={t('uiLibrary.deviceCard.fan.to', 'To')}
             ariaLabel={t('uiLibrary.deviceCard.fan.to', 'To')}
             value={axis.sweepTo}
-            onCommit={(v) => onAxis(name, { sweepTo: Math.max(v, axis.sweepFrom + FAN_MIN_SWEEP) })}
+            onCommit={(v) =>
+              onAxis(name, {
+                sweepTo: Math.max(v, axis.sweepFrom + FAN_MIN_SWEEP),
+              })
+            }
           />
         </>
       ) : (
@@ -229,6 +271,7 @@ export function FanCard({
           />
         ),
         bottom: [
+          ...readoutRows(model.readings ?? []),
           ...(model.presets.length === 0
             ? []
             : [
@@ -283,7 +326,12 @@ export function FanCard({
   )
 }
 
-const STILL_AXIS: FanAxisDrawing = { oscillating: false, from: 0, to: 0, fixed: 0 }
+const STILL_AXIS: FanAxisDrawing = {
+  oscillating: false,
+  from: 0,
+  to: 0,
+  fixed: 0,
+}
 
 function drawnAxis(axis: FanAxisModel | null): FanAxisDrawing {
   if (axis === null) return STILL_AXIS

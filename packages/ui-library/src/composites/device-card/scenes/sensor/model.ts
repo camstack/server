@@ -61,6 +61,11 @@ export function measurementVisual(m: MeasurementLook): SceneVisual | null {
     case 'motion':
       return (m.level ?? 0) > 0 ? { ...still, kind: 'ripple' } : null
     case 'illuminance':
+    case 'co2':
+    case 'voc':
+    case 'pm25':
+    case 'pm10':
+    case 'aqi':
       return null
     case 'text':
       return null

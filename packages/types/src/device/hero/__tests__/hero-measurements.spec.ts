@@ -9,7 +9,11 @@ const MIN = 60_000
 
 /** Device 5598: a Homematic motion sensor that also reports the light. */
 const MOTION_AND_LIGHT = {
-  motion: { detected: true, lastDetectedAt: NOW - 3 * MIN, autoClearAfterMs: null },
+  motion: {
+    detected: true,
+    lastDetectedAt: NOW - 3 * MIN,
+    autoClearAfterMs: null,
+  },
   'ambient-light-sensor': { illuminance: 142, lastFetchedAt: NOW - 2 * MIN },
 }
 
@@ -87,7 +91,12 @@ describe('a sensor carries ALL its measurements', () => {
       'ambient-light-sensor': { illuminance: null, lastFetchedAt: NOW },
     })
     const light = m.measurements?.find((x) => x.quantity === 'illuminance')
-    expect(light).toMatchObject({ reading: null, value: { en: '—' }, unit: 'lx', since: null })
+    expect(light).toMatchObject({
+      reading: null,
+      value: { en: '—' },
+      unit: 'lx',
+      since: null,
+    })
   })
 
   it('offline: every measurement is empty, none keeps a stale value', () => {
@@ -96,8 +105,17 @@ describe('a sensor carries ALL its measurements', () => {
     expect(m.measurements?.every((x) => x.reading === null && x.value.en === '—')).toBe(true)
   })
 
-  it('a non-sensor has no measurements', () => {
-    expect(buildAs(DeviceType.Switch, null, MOTION_AND_LIGHT).measurements).toBeUndefined()
+  it('a fan with temperature and humidity bindings carries them as measurements, never the single one', () => {
+    const fan = buildAs(DeviceType.Fan, null, {
+      'temperature-sensor': { temperature: 21.5, lastFetchedAt: NOW },
+      'humidity-sensor': { humidity: 48, lastFetchedAt: NOW },
+    })
+    expect(quantities(fan)).toEqual(['temperature', 'humidity'])
+    expect(fan.measurement).toBeUndefined()
+  })
+
+  it('a non-sensor that measures nothing has no measurements', () => {
+    expect(buildAs(DeviceType.Switch, null, {}).measurements).toBeUndefined()
   })
 
   it('the lead table names the quantity of each measuring role', () => {

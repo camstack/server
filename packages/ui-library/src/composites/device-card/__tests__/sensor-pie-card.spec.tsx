@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 /**
  * The pie scene (#694): one wedge per reading, the active one breathes with its
- * quantity's motion, a reading with no data is a dashed "—" wedge, a "+N" wedge
- * stands for the readings past the sixth, and a tap reports which wedge.
+ * quantity's motion, a reading with no data is a dashed "—" wedge, and a tap
+ * reports which wedge. Seven or more readings are `SensorGridCard`'s tiles.
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
+import { SensorGridCard } from '../scenes/sensor/SensorGridCard'
 import {
   type PieReading,
   SensorPieCard,
@@ -28,14 +29,10 @@ const reading = (id: string, over: Partial<PieReading> = {}): PieReading => ({
   ...over,
 })
 
-const model = (
-  readings: readonly PieReading[],
-  overflow: readonly PieReading[] = [],
-): SensorPieCardModel => ({
+const model = (readings: readonly PieReading[]): SensorPieCardModel => ({
   common,
   state: { label: 'Active', since: null, tone: 'primary' },
   readings,
-  overflow,
   updated: 'Updated · 2 min ago',
 })
 
@@ -50,7 +47,12 @@ describe('SensorPieCard', () => {
     render(
       <SensorPieCard
         model={model([
-          reading('m', { quantity: 'motion', value: 'Active', unit: null, state: 'active' }),
+          reading('m', {
+            quantity: 'motion',
+            value: 'Active',
+            unit: null,
+            state: 'active',
+          }),
           reading('t'),
         ])}
       />,
@@ -67,7 +69,12 @@ describe('SensorPieCard', () => {
       <SensorPieCard
         model={model([
           reading('a'),
-          reading('l', { quantity: 'illuminance', value: '—', unit: 'lx', state: 'empty' }),
+          reading('l', {
+            quantity: 'illuminance',
+            value: '—',
+            unit: 'lx',
+            state: 'empty',
+          }),
         ])}
       />,
     )
@@ -82,19 +89,6 @@ describe('SensorPieCard', () => {
     render(<SensorPieCard model={model([reading('a'), reading('b')])} />)
     const css = document.querySelector('style')?.textContent ?? ''
     expect(css).toContain('prefers-reduced-motion:reduce')
-  })
-
-  it('past six readings the sixth wedge is "+N" and opens the list', () => {
-    const onOverflow = vi.fn()
-    const five = ['a', 'b', 'c', 'd', 'e'].map((id) => reading(id))
-    render(
-      <SensorPieCard model={model(five, [reading('f'), reading('g')])} onOverflow={onOverflow} />,
-    )
-    expect(screen.getAllByTestId('dc-pie-wedge')).toHaveLength(5)
-    const more = screen.getByTestId('dc-pie-more')
-    expect(more.textContent).toBe('+2')
-    fireEvent.click(more)
-    expect(onOverflow).toHaveBeenCalledOnce()
   })
 
   it('the selected wedge is highlighted in its own quantity colour and the others dim', () => {
@@ -142,5 +136,46 @@ describe('SensorPieCard', () => {
     render(<SensorPieCard model={model([reading('a'), reading('b')])} onSelect={onSelect} />)
     fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[1] as Element)
     expect(onSelect).toHaveBeenCalledWith('b')
+  })
+})
+
+describe('SensorGridCard', () => {
+  const nine = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'].map((id) => reading(id))
+
+  it('draws one tile per reading, none hidden behind a "+N"', () => {
+    render(<SensorGridCard model={model(nine)} />)
+    expect(screen.getAllByTestId('dc-grid-tile')).toHaveLength(9)
+    expect(screen.queryByTestId('dc-pie-more')).toBeNull()
+    expect(screen.getByTestId('dc-grid-updated').textContent).toBe('Updated · 2 min ago')
+  })
+
+  it('a reading with no data is a dashed "—" tile, never 0', () => {
+    render(
+      <SensorGridCard
+        model={model([reading('a', { value: '—', unit: null, state: 'empty' }), ...nine])}
+      />,
+    )
+    const [first] = screen.getAllByTestId('dc-grid-tile')
+    expect(first?.getAttribute('data-state')).toBe('empty')
+    expect(first?.textContent).toContain('—')
+    expect(first?.className).toContain('border-dashed')
+  })
+
+  it('a tap reports the tile; the selected one is highlighted and the others dim', () => {
+    const onSelect = vi.fn()
+    render(
+      <SensorGridCard
+        model={model(nine)}
+        selectedId="b"
+        onSelect={onSelect}
+        detail={<p>chart</p>}
+      />,
+    )
+    const tiles = screen.getAllByTestId('dc-grid-tile')
+    expect(tiles[1]?.getAttribute('aria-pressed')).toBe('true')
+    expect(tiles[0]?.className).toContain('opacity-40')
+    fireEvent.click(tiles[2] as HTMLElement)
+    expect(onSelect).toHaveBeenCalledWith('c')
+    expect(screen.getByTestId('dc-grid-detail').textContent).toBe('chart')
   })
 })

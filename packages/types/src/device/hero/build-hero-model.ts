@@ -238,15 +238,15 @@ function measurementOf(
 }
 
 /**
- * Every measurement of a sensor, the role's own first. An offline device keeps them
- * all but empty, like the single one. Absent for a device that is not a sensor or
- * measures nothing.
+ * Every measurement of a device, the role's own first. A sensor draws them as its
+ * card; any other device (a fan with a temperature and a humidity binding) carries
+ * them for a secondary readout under its own controls. An offline device keeps them
+ * all but empty, like the single one. Absent for a device that measures nothing.
  */
 function measurementsOf(
   input: HeroModelInput,
   fragments: readonly HeroFragment[],
 ): HeroMeasurement[] | undefined {
-  if (input.device.type !== DeviceType.Sensor) return undefined
   const measured = fragments.flatMap((f) => [
     ...(f.measurement === undefined ? [] : [f.measurement]),
     ...(f.measurements ?? []),

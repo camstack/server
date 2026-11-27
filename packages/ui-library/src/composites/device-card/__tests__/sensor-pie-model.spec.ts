@@ -10,10 +10,24 @@ import {
 } from '../scenes/sensor/pie-model'
 
 const motion = readingOf('motion', { value: 'Active', tone: 'primary' })
-const light = readingOf('illuminance', { value: '142', number: 142, unit: 'lx' })
+const light = readingOf('illuminance', {
+  value: '142',
+  number: 142,
+  unit: 'lx',
+})
 const temp = readingOf('temperature', { value: '21', number: 21, unit: '°C' })
-const hum = readingOf('humidity', { value: '48', number: 48, unit: '%', tone: 'info' })
-const pow = readingOf('power', { value: '80', number: 80, unit: 'W', tone: 'primary' })
+const hum = readingOf('humidity', {
+  value: '48',
+  number: 48,
+  unit: '%',
+  tone: 'info',
+})
+const pow = readingOf('power', {
+  value: '80',
+  number: 80,
+  unit: 'W',
+  tone: 'primary',
+})
 const door = readingOf('contact', { value: 'Closed', tone: 'success' })
 const text = readingOf('text', { value: 'Eco' })
 
@@ -50,14 +64,16 @@ describe('sensorLayoutOf: the layout is derived from the number of readings', ()
   })
 
   it("one reading is today's single-measurement scene", () => {
-    expect(sensorLayoutOf(model([temp]))).toEqual({ kind: 'single', measurement: temp })
+    expect(sensorLayoutOf(model([temp]))).toEqual({
+      kind: 'single',
+      measurement: temp,
+    })
   })
 
   it('device 5598 (motion + light) is a two-wedge pie, the role reading first', () => {
     expect(sensorLayoutOf(model([motion, light]))).toEqual({
       kind: 'pie',
       shown: [motion, light],
-      hidden: [],
     })
   })
 
@@ -66,21 +82,22 @@ describe('sensorLayoutOf: the layout is derived from the number of readings', ()
       const layout = sensorLayoutOf(model([motion, light, temp, hum, pow, door].slice(0, n)))
       expect(layout).toMatchObject({ kind: 'pie' })
       expect(layout?.kind === 'pie' ? layout.shown.length : -1).toBe(n)
-      expect(layout?.kind === 'pie' ? layout.hidden.length : -1).toBe(0)
     }
   })
 
-  it('seven readings are five wedges and a "+2" wedge for the rest', () => {
+  it('seven readings are a grid of seven tiles, none hidden', () => {
     const layout = sensorLayoutOf(model([motion, light, temp, hum, pow, door, text]))
     expect(layout).toEqual({
-      kind: 'pie',
-      shown: [motion, light, temp, hum, pow],
-      hidden: [door, text],
+      kind: 'grid',
+      shown: [motion, light, temp, hum, pow, door, text],
     })
   })
 
   it('a sensor with a setting the operator can change keeps the full hero card', () => {
-    const settable: SensorLayoutInput = { ...model([motion, light]), rows: [SETTABLE] }
+    const settable: SensorLayoutInput = {
+      ...model([motion, light]),
+      rows: [SETTABLE],
+    }
     expect(sensorLayoutOf(settable)).toBeNull()
     expect(sensorLayoutOf({ ...settable, gated: ['contact'] })).not.toBeNull()
   })

@@ -24,6 +24,15 @@ export interface FanAxisPatch {
   readonly angle?: number
 }
 
+/** One read-only value shown under the fan's controls: a temperature, a humidity. */
+export interface FanReading {
+  readonly id: string
+  /** "Temperature". */
+  readonly name: string
+  /** "21.5 °C"; "—" when the device has not reported it, never 0. */
+  readonly value: string
+}
+
 export interface FanCardModel {
   readonly common: CardCommon
   /** Null when the switch state is not known. */
@@ -45,6 +54,8 @@ export interface FanCardModel {
     readonly vertical: FanAxisModel | null
   } | null
   readonly timer: SwitchTimerModel | null
+  /** What the device measures besides running a fan (its temperature and humidity bindings); absent or empty = no readout row. */
+  readonly readings?: readonly FanReading[]
   /**
    * The fan-control slice has not answered yet: the declared controls are
    * drawn but hold no value and take no command. Absent means answered.

@@ -11,7 +11,8 @@
  * empty "—" with its unit, D393); 1514 an offline temperature sensor whose stale
  * value is not drawn as current; 1515 and 1516 are numeric readings of no fixed type
  * (CPU load, a grid frequency) whose unit comes from the stored quantity. Load alone
- * (`--fixtures sensor-card`). Every hero model and row is built with the shared
+ * (`--fixtures sensor-card`). 1540 is an ambient monitor with seven readings (the
+ * grid), 1541 one with three (the pie). Every hero model and row is built with the shared
  * pure builder, so the fixture draws exactly what the hub would serve.
  */
 import { buildHeroModel } from '../../../../packages/types/src/device/hero/build-hero-model.ts'
@@ -188,6 +189,32 @@ const SPECS: Readonly<Record<number, Spec>> = {
       'power-meter': { power: 85, lastFetchedAt: NOW - 2 * MINUTE },
       contact: { entryOpen: false, lastChangedAt: NOW - 90 * MINUTE },
       'enum-sensor': { value: 'Eco', lastFetchedAt: NOW - 2 * MINUTE },
+    },
+  },
+  1540: {
+    name: 'Office air monitor',
+    type: 'sensor',
+    role: 'ambient-monitor',
+    slices: {
+      'temperature-sensor': { temperature: 22.4, lastFetchedAt: NOW - MINUTE },
+      'humidity-sensor': { humidity: 47, lastFetchedAt: NOW - MINUTE },
+      'air-quality-sensor': {
+        co2: 812,
+        voc: 140,
+        pm25: 9,
+        pm10: 14,
+        aqi: 38,
+        lastFetchedAt: NOW - MINUTE,
+      },
+    },
+  },
+  1541: {
+    name: 'Cellar air monitor',
+    type: 'sensor',
+    role: 'ambient-monitor',
+    slices: {
+      'temperature-sensor': { temperature: 14.1, lastFetchedAt: NOW - MINUTE },
+      'air-quality-sensor': { co2: 640, pm25: 4, lastFetchedAt: NOW - MINUTE },
     },
   },
   1530: {

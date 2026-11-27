@@ -11688,7 +11688,12 @@
         "contact": "Contact",
         "motion": "Motion",
         "illuminance": "Light",
-        "text": "State"
+        "text": "State",
+        "co2": "CO₂",
+        "voc": "VOC",
+        "pm25": "PM2.5",
+        "pm10": "PM10",
+        "aqi": "Air quality"
       },
       "updated": "Updated · {{ago}}",
       "readings": "Readings",

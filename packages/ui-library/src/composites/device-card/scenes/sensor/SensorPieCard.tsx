@@ -25,8 +25,6 @@ export interface SensorPieCardModel {
   readonly state: CardState
   /** One wedge each, the role's own reading first. */
   readonly readings: readonly PieReading[]
-  /** Behind the "+N" wedge; empty = no such wedge. */
-  readonly overflow: readonly PieReading[]
   /** "Updated · 2 min ago", top-left of the scene; `null` = never observed. */
   readonly updated: string | null
 }
@@ -38,8 +36,6 @@ export interface SensorPieCardProps {
   readonly showName?: boolean
   /** A wedge was tapped: that reading's history. */
   readonly onSelect?: (id: string) => void
-  /** The "+N" wedge was tapped: the full readings list. */
-  readonly onOverflow?: () => void
   /** The reading whose wedge is highlighted (the others dim); `null` = none. */
   readonly selectedId?: string | null
   /** Drawn inline below the pie, inside the card: the selected reading's chart. */
@@ -60,6 +56,11 @@ const WEDGE_FILL: Readonly<Record<HeroMeasurementQuantity, string>> = {
   motion: 'fill-chart-series-f/25 stroke-chart-series-f/60',
   contact: 'fill-success/25 stroke-success/60',
   text: 'fill-foreground-muted/25 stroke-foreground-muted/60',
+  co2: 'fill-chart-series-a/25 stroke-chart-series-a/60',
+  voc: 'fill-chart-series-b/25 stroke-chart-series-b/60',
+  pm25: 'fill-chart-series-c/25 stroke-chart-series-c/60',
+  pm10: 'fill-chart-series-e/25 stroke-chart-series-e/60',
+  aqi: 'fill-chart-series-d/25 stroke-chart-series-d/60',
 }
 /** The selected wedge: a stronger tint and a full-colour edge, still its own quantity's. */
 const WEDGE_FILL_SELECTED: Readonly<Record<HeroMeasurementQuantity, string>> = {
@@ -70,6 +71,11 @@ const WEDGE_FILL_SELECTED: Readonly<Record<HeroMeasurementQuantity, string>> = {
   motion: 'fill-chart-series-f/45 stroke-chart-series-f',
   contact: 'fill-success/45 stroke-success',
   text: 'fill-foreground-muted/45 stroke-foreground-muted',
+  co2: 'fill-chart-series-a/45 stroke-chart-series-a',
+  voc: 'fill-chart-series-b/45 stroke-chart-series-b',
+  pm25: 'fill-chart-series-c/45 stroke-chart-series-c',
+  pm10: 'fill-chart-series-e/45 stroke-chart-series-e',
+  aqi: 'fill-chart-series-d/45 stroke-chart-series-d',
 }
 /** Colours the quantity's motion (it draws in `currentColor`). */
 const WEDGE_FX_TEXT: Readonly<Record<HeroMeasurementQuantity, string>> = {
@@ -80,6 +86,11 @@ const WEDGE_FX_TEXT: Readonly<Record<HeroMeasurementQuantity, string>> = {
   motion: 'text-chart-series-f',
   contact: 'text-success',
   text: 'text-foreground-muted',
+  co2: 'text-chart-series-a',
+  voc: 'text-chart-series-b',
+  pm25: 'text-chart-series-c',
+  pm10: 'text-chart-series-e',
+  aqi: 'text-chart-series-d',
 }
 
 /** The size of the value, so a word and a long number stay inside the wedge. */
@@ -252,7 +263,7 @@ function Wedge({
  * tinted by its quantity, its value, unit and short name at the wedge's centre. A
  * reading that is on or alarming breathes, with its quantity's motion clipped
  * inside the wedge; one with no data is a dashed wedge with a "—". Tapping a
- * wedge highlights it (the others dim) and draws its history below the pie; a sixth "+N" wedge opens the full list.
+ * wedge highlights it (the others dim) and draws its history below the pie. Seven or more readings are `SensorGridCard`.
  */
 export function SensorPieCard({
   model,
@@ -260,13 +271,11 @@ export function SensorPieCard({
   orientation = 'vertical',
   showName = true,
   onSelect,
-  onOverflow,
   selectedId = null,
   detail = null,
 }: SensorPieCardProps): ReactElement {
   const uid = useId()
-  const hasOverflow = model.overflow.length > 0
-  const count = model.readings.length + (hasOverflow ? 1 : 0)
+  const count = model.readings.length
   const wedges = pieGeometry(count)
   const lead = model.readings[0]
   return (
@@ -324,13 +333,6 @@ export function SensorPieCard({
                   />
                 )
               })}
-              {hasOverflow ? (
-                <OverflowWedge
-                  wedge={wedges[count - 1]}
-                  more={model.overflow.length}
-                  onOverflow={onOverflow}
-                />
-              ) : null}
             </svg>
             {detail === null ? null : (
               <div data-testid="dc-pie-detail" className="flex w-full flex-col items-center gap-3">
@@ -341,37 +343,5 @@ export function SensorPieCard({
         ),
       }}
     />
-  )
-}
-
-interface OverflowWedgeProps {
-  readonly wedge: PieWedge | undefined
-  readonly more: number
-  readonly onOverflow: (() => void) | undefined
-}
-
-function OverflowWedge({ wedge, more, onOverflow }: OverflowWedgeProps): ReactElement | null {
-  if (wedge === undefined) return null
-  const open = (): void => onOverflow?.()
-  return (
-    <g
-      data-testid="dc-pie-more"
-      role="button"
-      tabIndex={0}
-      aria-label={`+${String(more)}`}
-      className="cursor-pointer"
-      onClick={open}
-      onKeyDown={onKey(open)}
-    >
-      <path d={wedge.path} className="fill-surface-hover stroke-border" strokeWidth={1.5} />
-      <text
-        x={wedge.centroid.x}
-        y={wedge.centroid.y + 4}
-        textAnchor="middle"
-        className="fill-foreground text-[14px] font-semibold"
-      >
-        {`+${String(more)}`}
-      </text>
-    </g>
   )
 }

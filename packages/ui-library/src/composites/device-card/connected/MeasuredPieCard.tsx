@@ -1,16 +1,9 @@
 import type { HeroMeasurement, HeroMeasurementQuantity } from '@camstack/types'
 import { type ReactElement, useEffect, useState } from 'react'
-import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
+import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceManagerGetDevice } from '../../../generated/system-hooks'
 import { formatLastSeen } from '../../../lib/format-last-seen'
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../../../primitives/dialog'
 import { pickText } from '../../hero-model/hero-model-view'
 import {
   measurementText,
@@ -19,34 +12,15 @@ import {
   useHeroLang,
 } from '../../hero-model/measurement-display'
 import { useRoleDisplayDefaults } from '../../device-item/role-display-defaults-context'
-import { CardReadings } from '../parts/Readings'
 import { readingStateOf } from '../scenes/sensor/pie-model'
+import { SensorGridCard } from '../scenes/sensor/SensorGridCard'
 import { type PieReading, SensorPieCard } from '../scenes/sensor/SensorPieCard'
 import type { CardOrientation } from '../shell/model'
+import { quantityLabel } from './measurement-label'
 import { measurementSinceText } from './measurement-since'
 import { SensorTrend } from './SensorTrend'
 import { DeviceHistoryView } from '../../device-history/DeviceHistoryView'
 import { useCardCommon } from './use-card-common'
-
-/** The short name of a quantity, under its value in the pie. */
-function quantityLabel(t: UiTextFn, quantity: HeroMeasurementQuantity): string {
-  switch (quantity) {
-    case 'temperature':
-      return t('uiLibrary.sensorPie.quantity.temperature', 'Temperature')
-    case 'humidity':
-      return t('uiLibrary.sensorPie.quantity.humidity', 'Humidity')
-    case 'power':
-      return t('uiLibrary.sensorPie.quantity.power', 'Power')
-    case 'contact':
-      return t('uiLibrary.sensorPie.quantity.contact', 'Contact')
-    case 'motion':
-      return t('uiLibrary.sensorPie.quantity.motion', 'Motion')
-    case 'illuminance':
-      return t('uiLibrary.sensorPie.quantity.illuminance', 'Light')
-    case 'text':
-      return t('uiLibrary.sensorPie.quantity.text', 'State')
-  }
-}
 
 /** Two readings of one quantity would share a key: the index keeps them apart. */
 const idOf = (m: HeroMeasurement, index: number): string => `${m.quantity}-${String(index)}`
@@ -55,7 +29,8 @@ export interface MeasuredPieCardProps {
   readonly deviceId: number
   readonly canActuate: boolean
   readonly shown: readonly HeroMeasurement[]
-  readonly hidden: readonly HeroMeasurement[]
+  /** Seven or more readings: tiles instead of wedges. */
+  readonly grid?: boolean
   readonly orientation?: CardOrientation
   readonly showName: boolean
   readonly onDrawn?: (drawn: boolean) => void
@@ -67,12 +42,12 @@ function latestSince(all: readonly HeroMeasurement[]): number | null {
   return moments.length === 0 ? null : Math.max(...moments)
 }
 
-/** A sensor with several readings: the pie, and the history / list dialogs behind its wedges. */
+/** A sensor with several readings: the pie (or, past six, the grid), and the history behind each reading. */
 export function MeasuredPieCard({
   deviceId,
   canActuate,
   shown,
-  hidden,
+  grid = false,
   orientation,
   showName,
   onDrawn,
@@ -94,11 +69,15 @@ export function MeasuredPieCard({
           ...(device.data.display === undefined ? {} : { display: device.data.display }),
         }
   const [selected, setSelected] = useState<string | null>(null)
-  const [listOpen, setListOpen] = useState(false)
 
-  const all = [...shown, ...hidden]
   const textOf = (m: HeroMeasurement): MeasurementText =>
-    measurementText({ measurement: m, lang, subject, unitPreferences, roleDefaults })
+    measurementText({
+      measurement: m,
+      lang,
+      subject,
+      unitPreferences,
+      roleDefaults,
+    })
   const readingOf = (m: HeroMeasurement, index: number): PieReading => {
     const text = textOf(m)
     return {
@@ -111,70 +90,40 @@ export function MeasuredPieCard({
     }
   }
   const lead = shown[0]
-  const ago = formatLastSeen(latestSince(all), t)
+  const ago = formatLastSeen(latestSince(shown), t)
   const picked = shown.findIndex((m, i) => idOf(m, i) === selected)
   const pickedMeasurement = picked < 0 ? undefined : shown[picked]
 
-  return (
-    <>
-      <SensorPieCard
-        model={{
-          common: card.common,
-          state: {
-            label: lead === undefined ? '' : pickText(lead.word, lang),
-            since: null,
-            tone: lead === undefined ? 'muted' : lead.tone,
-          },
-          readings: shown.map(readingOf),
-          overflow: hidden.map((m, i) => readingOf(m, shown.length + i)),
-          updated:
-            ago === null ? null : t('uiLibrary.sensorPie.updated', 'Updated · {{ago}}', { ago }),
-        }}
-        actions={card.actions}
-        showName={showName}
-        selectedId={pickedMeasurement === undefined ? null : selected}
-        onSelect={(id) => setSelected((current) => (current === id ? null : id))}
-        detail={
-          pickedMeasurement === undefined ? null : (
-            <ReadingHistory
-              deviceId={deviceId}
-              measurement={pickedMeasurement}
-              text={textOf(pickedMeasurement)}
-              subject={subject}
-              since={measurementSinceText(pickedMeasurement, t)}
-            />
-          )
-        }
-        onOverflow={() => setListOpen(true)}
-        {...(orientation === undefined ? {} : { orientation })}
+  const model = {
+    common: card.common,
+    state: {
+      label: lead === undefined ? '' : pickText(lead.word, lang),
+      since: null,
+      tone: lead === undefined ? ('muted' as const) : lead.tone,
+    },
+    readings: shown.map(readingOf),
+    updated: ago === null ? null : t('uiLibrary.sensorPie.updated', 'Updated · {{ago}}', { ago }),
+  }
+  const detail =
+    pickedMeasurement === undefined ? null : (
+      <ReadingHistory
+        deviceId={deviceId}
+        measurement={pickedMeasurement}
+        text={textOf(pickedMeasurement)}
+        subject={subject}
+        since={measurementSinceText(pickedMeasurement, t)}
       />
-      <Dialog open={listOpen} onOpenChange={setListOpen}>
-        <DialogContent width="sm">
-          <DialogHeader>
-            <DialogTitle>{t('uiLibrary.sensorPie.readings', 'Readings')}</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <CardReadings
-              testId="dc-pie-readings"
-              items={all.map((m, i) => {
-                const text = textOf(m)
-                const empty = readingStateOf(m) === 'empty'
-                return {
-                  id: idOf(m, i),
-                  label: quantityLabel(t, m.quantity),
-                  value: empty
-                    ? null
-                    : text.unit === null
-                      ? text.value
-                      : `${text.value} ${text.unit}`,
-                }
-              })}
-            />
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+    )
+  const common = {
+    model,
+    actions: card.actions,
+    showName,
+    selectedId: pickedMeasurement === undefined ? null : selected,
+    onSelect: (id: string) => setSelected((current) => (current === id ? null : id)),
+    detail,
+    ...(orientation === undefined ? {} : { orientation }),
+  }
+  return grid ? <SensorGridCard {...common} /> : <SensorPieCard {...common} />
 }
 
 interface ReadingHistoryProps {

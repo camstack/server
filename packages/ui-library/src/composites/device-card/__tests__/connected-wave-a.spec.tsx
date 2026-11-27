@@ -71,6 +71,9 @@ vi.mock('../../../generated/system-hooks', () => ({
     data: [{ id: 'p1', name: 'Sera', state: {} }],
   }),
   useFanPresetsApplyPreset: () => ({ mutateAsync: hub.applyPreset }),
+  // The fan's readout row: this device measures nothing.
+  useHeroLayoutGetHeroModel: () => ({ data: null }),
+  useDeviceManagerGetDevice: () => ({ data: null }),
 }))
 // The shell's data comes from a fixture; the notice is the REAL hook, so a
 // refusal travels command -> notice -> reason line.

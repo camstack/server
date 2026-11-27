@@ -26,6 +26,8 @@ const hub = vi.hoisted(() => ({
   model: null as HeroModel | null,
   /** What the shared card common offers as the device's History view; undefined = the fixture's own. */
   history: undefined as { charts: string | null; events: null } | undefined,
+  /** The device's type: only a sensor is drawn as its readings. */
+  type: 'sensor' as string,
 }))
 
 vi.mock('../../../generated/system-hooks', () => ({
@@ -34,7 +36,7 @@ vi.mock('../../../generated/system-hooks', () => ({
     data: hub.model,
     refetch: () => {},
   }),
-  useDeviceManagerGetDevice: () => ({ data: undefined }),
+  useDeviceManagerGetDevice: () => ({ data: { type: hub.type, role: null }, isPending: false }),
 }))
 vi.mock('../../hero-model/use-hero-live-refresh', () => ({
   useHeroLiveRefresh: () => {},
@@ -83,6 +85,20 @@ const motionAndLight = (): HeroModel => ({
     readingOf('illuminance', { value: '142', number: 142, unit: 'lx' }),
   ],
 })
+/** An ambient monitor: temperature, humidity and the five air readings. */
+const sevenReadings = (): HeroModel => ({
+  ...powerSensor(),
+  measurement: undefined,
+  measurements: [
+    readingOf('temperature', { value: '22.4', number: 22.4, unit: '°C' }),
+    readingOf('humidity', { value: '47', number: 47, unit: '%' }),
+    readingOf('co2', { value: '812', number: 812, unit: 'ppm' }),
+    readingOf('voc', { value: '140', number: 140, unit: 'ppb' }),
+    readingOf('pm25', { value: '9', number: 9, unit: 'µg/m³' }),
+    readingOf('pm10', { value: '14', number: 14, unit: 'µg/m³' }),
+    readingOf('aqi', { value: '38', number: 38 }),
+  ],
+})
 /** A sensor with a setting the operator can change keeps the full hero card. */
 const settableSensor = (): HeroModel => ({ ...powerSensor(), rows: [SETTABLE] })
 const SETTABLE: HeroRow = {
@@ -107,6 +123,7 @@ beforeEach(() => {
   hub.status = 'success'
   hub.model = null
   hub.history = undefined
+  hub.type = 'sensor'
   HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
     this.open = true
   }
@@ -188,6 +205,21 @@ describe('the connected sensor card', () => {
       screen.getAllByTestId('dc-pie-wedge').map((w) => w.getAttribute('data-quantity')),
     ).toEqual(['motion', 'illuminance'])
     expect(drawn).toHaveBeenCalledWith(true)
+  })
+  it('seven readings (an ambient monitor) are a grid of tiles, one per value, none hidden', () => {
+    hub.model = sevenReadings()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.queryByTestId('dc-sensor-pie')).toBeNull()
+    expect(
+      screen.getAllByTestId('dc-grid-tile').map((t) => t.getAttribute('data-quantity')),
+    ).toEqual(['temperature', 'humidity', 'co2', 'voc', 'pm25', 'pm10', 'aqi'])
+  })
+  it('a device that is not a sensor (a fan with a temperature binding) keeps its own card', () => {
+    hub.type = 'fan'
+    hub.model = motionAndLight()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByText('hero')).toBeTruthy()
+    expect(screen.queryByTestId('dc-sensor-pie')).toBeNull()
   })
   it('a pie device keeps the full History: the state corner opens it', () => {
     hub.model = motionAndLight()

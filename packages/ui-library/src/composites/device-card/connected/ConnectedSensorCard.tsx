@@ -1,4 +1,4 @@
-import type { HeroMeasurement } from '@camstack/types'
+import { DeviceType, type HeroMeasurement } from '@camstack/types'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { MeasuredPieCard } from './MeasuredPieCard'
@@ -36,8 +36,8 @@ export interface ConnectedSensorCardProps extends ConnectedCardProps {
 
 /**
  * A sensor drawn from the hero model's measurements inside the shared card: one
- * reading is the single-measurement scene (#514), two or more the pie
- * (`sensorLayoutOf` decides, from the count alone).
+ * reading is the single-measurement scene (#514), two to six the pie, seven or
+ * more a grid (`sensorLayoutOf` decides, from the count alone).
  */
 export function ConnectedSensorCard({
   deviceId,
@@ -50,25 +50,31 @@ export function ConnectedSensorCard({
 }: ConnectedSensorCardProps): ReactNode {
   const model = useHeroLayoutGetHeroModel({ deviceId, canActuate })
   useHeroLiveRefresh(deviceId, model.refetch)
+  // Only a sensor is drawn as its readings: a fan or a plug that also has a temperature
+  // binding carries `measurements` for its own card's readout row, and keeps its hero.
+  const device = useDeviceManagerGetDevice({ deviceId }, { staleTime: 60_000 })
   const layout: SensorLayout | null =
-    model.status === 'pending' || model.status === 'error' || model.data === null
+    model.status === 'pending' ||
+    model.status === 'error' ||
+    model.data === null ||
+    device.data?.type !== DeviceType.Sensor
       ? null
       : sensorLayoutOf(model.data)
   // The measured card reports `true`. A settled fallback has no child to report
   // it, and pending is still the placeholder — not a card.
   useEffect(() => {
-    if (model.status === 'pending') return
+    if (model.status === 'pending' || device.isPending) return
     if (layout === null) onDrawn?.(false)
-  }, [layout, model.status, onDrawn])
-  if (model.status === 'pending') return placeholder
+  }, [layout, model.status, device.isPending, onDrawn])
+  if (model.status === 'pending' || device.isPending) return placeholder
   if (layout === null) return fallback
-  if (layout.kind === 'pie') {
+  if (layout.kind === 'pie' || layout.kind === 'grid') {
     return (
       <MeasuredPieCard
         deviceId={deviceId}
         canActuate={canActuate}
         shown={layout.shown}
-        hidden={layout.hidden}
+        grid={layout.kind === 'grid'}
         showName={showName}
         {...(orientation === undefined ? {} : { orientation })}
         {...(onDrawn === undefined ? {} : { onDrawn })}

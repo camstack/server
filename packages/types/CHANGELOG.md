@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - device-mesh now derives a Mesh network tab on every device that carries it
 - A device-mesh topology now names its network: id, name, technology and channel
 - A sensor with two or more readings can have the Ambient monitor role, and an air-quality sensor now lists each of its readings (CO2, VOC, PM2.5, PM10, AQI) as its own measurement.
+- A device that is not a sensor but has temperature or humidity bindings now carries its readings in the hero model
 
 ## [1.2.643] - 2026-11-27
 

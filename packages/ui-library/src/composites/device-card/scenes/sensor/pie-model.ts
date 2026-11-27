@@ -1,12 +1,13 @@
 /**
  * The layout of a sensor card, derived from how many readings the device has —
  * there is no setting. One reading keeps the single-measurement scene; two to six
- * are a pie of equal wedges; seven or more are five wedges and a "+N" wedge that
- * opens the full list. Everything here is pure: the scene only paints it.
+ * are a pie of equal wedges; seven or more are a grid of tiles, one per reading
+ * (a pie past six wedges stops being legible). Everything here is pure: the scene
+ * only paints it.
  */
 import { type HeroMeasurement, type HeroModel, isNotReported } from '@camstack/types'
 
-/** The most wedges a pie draws, the "+N" wedge included. */
+/** The most readings a pie draws; one more and the card is a grid. */
 export const PIE_MAX_WEDGES = 6
 
 export type SensorLayoutInput = Pick<HeroModel, 'measurement' | 'measurements' | 'rows' | 'gated'>
@@ -17,8 +18,11 @@ export type SensorLayout =
       readonly kind: 'pie'
       /** One wedge each, in order: the role's own reading first. */
       readonly shown: readonly HeroMeasurement[]
-      /** Behind the "+N" wedge; empty = no such wedge. */
-      readonly hidden: readonly HeroMeasurement[]
+    }
+  | {
+      readonly kind: 'grid'
+      /** One tile each, in order: the role's own reading first. */
+      readonly shown: readonly HeroMeasurement[]
     }
 
 /**
@@ -33,12 +37,7 @@ export function sensorLayoutOf(model: SensorLayoutInput): SensorLayout | null {
   const [only, ...rest] = all
   if (only === undefined) return null
   if (rest.length === 0) return { kind: 'single', measurement: only }
-  if (all.length <= PIE_MAX_WEDGES) return { kind: 'pie', shown: all, hidden: [] }
-  return {
-    kind: 'pie',
-    shown: all.slice(0, PIE_MAX_WEDGES - 1),
-    hidden: all.slice(PIE_MAX_WEDGES - 1),
-  }
+  return { kind: all.length <= PIE_MAX_WEDGES ? 'pie' : 'grid', shown: all }
 }
 
 /** What a wedge says: no data (dashed, "—"), a reading at rest, or one that is on / alarming (breathes). */
