@@ -1,5 +1,7 @@
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { cn } from '../../../lib/cn'
+import type { SceneVisual } from '../../hero-scene/types'
+import { MeasurementFx } from '../illustrations/MeasurementFx'
 import type { CardGlyph } from '../icons'
 import { CardButton } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
@@ -105,6 +107,15 @@ export interface RowStat {
   readonly value: string
   readonly tone?: 'default' | 'warning'
   readonly testId?: string
+  /** The reading's own motion behind the cell (`measurementVisual`); `null` = still. */
+  readonly visual?: SceneVisual | null
+  /** The reading's last day under the value (a compact `SensorTrend`). */
+  readonly trend?: ReactNode
+  /** Makes the cell a button: tapping it opens that reading's chart. */
+  readonly onSelect?: (id: string) => void
+  readonly selected?: boolean
+  /** Another reading is open: this one dims. */
+  readonly dimmed?: boolean
 }
 
 const STATS_COLUMNS: Readonly<Record<number, string>> = {
@@ -133,25 +144,49 @@ export function rowStats(key: string, props: RowStatsProps): BottomRow {
       data-testid={props.testId}
       className={cn('grid w-full gap-1.5', STATS_COLUMNS[Math.min(props.stats.length, 4)])}
     >
-      {props.stats.map((stat) => (
-        <li
-          key={stat.id}
-          data-testid={stat.testId ?? props.cellTestId}
-          className="flex min-w-0 flex-col items-center rounded-lg bg-surface-hover px-1.5 py-1 text-center text-xs text-foreground-muted"
-        >
-          <span className="line-clamp-2 max-w-full break-words text-[11px] leading-tight">
-            {stat.name}
-          </span>
-          <span
-            className={cn(
-              'max-w-full truncate font-semibold tabular-nums',
-              stat.tone === 'warning' ? 'text-warning' : 'text-foreground',
+      {props.stats.map((stat) => {
+        const cell = (
+          <>
+            {stat.visual == null ? null : <MeasurementFx visual={stat.visual} />}
+            <span className="line-clamp-2 max-w-full break-words text-[11px] leading-tight">
+              {stat.name}
+            </span>
+            <span
+              className={cn(
+                'max-w-full truncate font-semibold tabular-nums',
+                stat.tone === 'warning' ? 'text-warning' : 'text-foreground',
+              )}
+            >
+              {stat.value}
+            </span>
+            {stat.trend ?? null}
+          </>
+        )
+        const box = cn(
+          'relative isolate flex min-w-0 flex-col items-center overflow-hidden rounded-lg bg-surface-hover px-1.5 py-1 text-center text-xs text-foreground-muted',
+          stat.selected === true && 'ring-2 ring-primary',
+          stat.dimmed === true && 'opacity-40',
+        )
+        const { onSelect } = stat
+        return (
+          <li key={stat.id} data-testid={stat.testId ?? props.cellTestId} className="min-w-0">
+            {onSelect === undefined ? (
+              <span className={cn(box, 'h-full')}>{cell}</span>
+            ) : (
+              // ui-check-ok: a selectable reading cell (opens its chart), not an action button
+              <button
+                type="button"
+                aria-pressed={stat.selected === true}
+                data-selected={stat.selected === true ? 'true' : undefined}
+                onClick={() => onSelect(stat.id)}
+                className={cn(box, 'h-full w-full cursor-pointer transition-opacity')}
+              >
+                {cell}
+              </button>
             )}
-          >
-            {stat.value}
-          </span>
-        </li>
-      ))}
+          </li>
+        )
+      })}
     </ul>,
   )
 }

@@ -83,6 +83,10 @@ export function fanFixtures(now: number = Date.now()): readonly FanFixture[] {
         presets: presets(['Normale', 'Notte', 'Naturale']),
         preset: 'device:Normale',
         timer: { defaultMinutes: 60, maxMinutes: 720, endsAt: now + 42 * MINUTE_MS },
+        readings: [
+          { id: 'temperature-0', name: 'Temperatura', value: '22,4 °C' },
+          { id: 'humidity-1', name: 'Umidità', value: '47 %' },
+        ],
       },
     },
     {

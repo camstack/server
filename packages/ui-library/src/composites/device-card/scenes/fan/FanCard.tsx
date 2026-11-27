@@ -15,6 +15,7 @@ import {
   rowSelector,
   rowStats,
   rowTimer,
+  rowTrend,
 } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
@@ -33,20 +34,45 @@ import {
 const READOUT_PER_ROW = 4
 
 /** The device's own readings as secondary rows under the fan's controls: read-only, never a control. */
-function readoutRows(readings: readonly FanReading[]): readonly BottomRow[] {
+function readoutRows(
+  readings: readonly FanReading[],
+  open: FanReadingOpen | undefined,
+): readonly BottomRow[] {
   const rows: BottomRow[] = []
   for (let from = 0; from < readings.length; from += READOUT_PER_ROW) {
     rows.push(
       rowStats(`readings-${String(from)}`, {
         testId: 'dc-fan-readings',
         cellTestId: 'dc-fan-reading',
-        stats: readings
-          .slice(from, from + READOUT_PER_ROW)
-          .map((r) => ({ id: r.id, name: r.name, value: r.value })),
+        stats: readings.slice(from, from + READOUT_PER_ROW).map((r) => ({
+          id: r.id,
+          name: r.name,
+          value: r.value,
+          ...(r.visual === undefined ? {} : { visual: r.visual }),
+          ...(r.trend === undefined ? {} : { trend: r.trend }),
+          ...(open === undefined
+            ? {}
+            : {
+                onSelect: open.onSelect,
+                selected: r.id === open.selectedId,
+                dimmed: open.selectedId !== null && r.id !== open.selectedId,
+              }),
+        })),
       }),
     )
   }
+  if (open?.detail !== undefined && open.detail !== null) {
+    rows.push(rowTrend('readings-detail', { trend: open.detail }))
+  }
   return rows
+}
+
+/** Which reading is open: a tap on a readout cell opens its chart under the readout rows. */
+export interface FanReadingOpen {
+  readonly selectedId: string | null
+  readonly onSelect: (id: string) => void
+  /** The open reading's chart; `null` = none open. */
+  readonly detail: ReactElement | null
 }
 
 export interface FanCardProps {
@@ -54,6 +80,8 @@ export interface FanCardProps {
   readonly actions: FanCardActions
   readonly orientation?: CardOrientation
   readonly showName?: boolean
+  /** Makes the readout cells buttons that open that reading's chart (absent = read-only). */
+  readonly readingOpen?: FanReadingOpen
 }
 
 /** One axis: its button says the sweep (or the held angle); the popover edits it. */
@@ -167,6 +195,7 @@ export function FanCard({
   actions,
   orientation = 'vertical',
   showName = true,
+  readingOpen,
 }: FanCardProps): ReactElement {
   const t = useUiText()
   const on = model.on === true
@@ -271,7 +300,7 @@ export function FanCard({
           />
         ),
         bottom: [
-          ...readoutRows(model.readings ?? []),
+          ...readoutRows(model.readings ?? [], readingOpen),
           ...(model.presets.length === 0
             ? []
             : [

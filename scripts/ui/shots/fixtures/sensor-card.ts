@@ -299,10 +299,16 @@ function modelOf(id: number, canActuate: boolean): HeroModel | null {
 }
 
 const history = historyArea.handlers
+/** The ambient monitors keep their own series; every other device here borrows the dishwasher's. */
+const OWN_HISTORY: ReadonlySet<number> = new Set([1540, 1541])
 const viaHistory = (path: string): ((i: unknown) => unknown) => {
   const h = history[path]
   return typeof h === 'function'
-    ? (i: unknown) => Reflect.apply(h, undefined, [{ ...(i as object), deviceId: 202 }])
+    ? (i: unknown) => {
+        const own = (i as { deviceId?: number }).deviceId
+        const deviceId = own !== undefined && OWN_HISTORY.has(own) ? own : 202
+        return Reflect.apply(h, undefined, [{ ...(i as object), deviceId }])
+      }
     : () => h ?? null
 }
 
@@ -358,5 +364,6 @@ export default defineFixtures({
     'deviceHistory.query': viaHistory('deviceHistory.query'),
     'deviceHistory.queryMany': history['deviceHistory.queryMany'] ?? null,
     'deviceHistory.getDeviceEnabled': { enabled: true },
+    'deviceRuns.listRuns': () => ({ __error: 'no provider' }),
   },
 })

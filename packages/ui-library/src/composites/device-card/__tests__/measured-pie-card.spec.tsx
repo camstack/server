@@ -109,6 +109,25 @@ describe('MeasuredPieCard in the grid', () => {
 })
 
 describe('MeasuredPieCard in the pie', () => {
+  it('every reading is also a tile with the same motion and trend as the grid', () => {
+    render(<MeasuredPieCard deviceId={1} canActuate={false} shown={shown} showName />)
+    const tiles = screen.getAllByTestId('dc-pie-tile')
+    expect(tiles).toHaveLength(3)
+    expect(
+      tiles[0]?.querySelector('[data-testid="dc-measurement-fx"]')?.getAttribute('data-fx'),
+    ).toBe('heat')
+    expect(tiles[1]?.querySelector('[data-testid="dc-sensor-trend"]')).not.toBeNull()
+    expect(tiles[2]?.querySelector('[data-testid="dc-sensor-trend"]')).toBeNull()
+  })
+
+  it('a tile click opens its chart, a second click closes it', () => {
+    render(<MeasuredPieCard deviceId={1} canActuate={false} shown={shown} showName />)
+    fireEvent.click(screen.getAllByTestId('dc-pie-tile')[1] as HTMLElement)
+    expect(screen.getByTestId('history-chart').getAttribute('data-keys')).toBe('cap:humidity.value')
+    fireEvent.click(screen.getAllByTestId('dc-pie-tile')[1] as HTMLElement)
+    expect(screen.queryByTestId('history-chart')).toBeNull()
+  })
+
   it('a wedge click opens its chart, a second click closes it', () => {
     render(<MeasuredPieCard deviceId={1} canActuate={false} shown={shown} showName />)
     fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[0] as Element)

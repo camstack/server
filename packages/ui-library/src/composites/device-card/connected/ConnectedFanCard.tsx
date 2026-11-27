@@ -39,7 +39,7 @@ export function ConnectedFanCard({
     { enabled: presetsPresence === 'present' && dev?.fanControl !== undefined },
   )
   const apply = useFanPresetsApplyPreset()
-  const readings = useMeasurementReadings(deviceId)
+  const { readings, open: readingOpen } = useMeasurementReadings(deviceId)
   if (!power.bound || power.on === undefined) return null
   const send = reportedCall(card)
   const cap = dev?.fanControl
@@ -59,6 +59,7 @@ export function ConnectedFanCard({
     <FanCard
       orientation={orientation}
       showName={showName}
+      {...(readings.length === 0 ? {} : { readingOpen })}
       model={{
         common: card.common,
         on: power.on,

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+import type { SceneVisual } from '../../../hero-scene/types'
 import type { MenuOption } from '../../parts/MenuButton'
 import type { SwitchTimerActions, SwitchTimerModel } from '../../parts/switch-timer-model'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
@@ -31,6 +33,10 @@ export interface FanReading {
   readonly name: string
   /** "21.5 °C"; "—" when the device has not reported it, never 0. */
   readonly value: string
+  /** The reading's own motion, the single-reading card's (`measurementVisual`); `null` = still. */
+  readonly visual?: SceneVisual | null
+  /** The reading's last day (a compact `SensorTrend`); absent until it answers. */
+  readonly trend?: ReactNode
 }
 
 export interface FanCardModel {

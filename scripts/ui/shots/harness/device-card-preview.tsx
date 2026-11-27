@@ -10,6 +10,7 @@ import i18n from '@admin/i18n'
 import { bridgeUiText } from '@admin/i18n/ui-text-bridge'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactElement, type ReactNode, useMemo, useState } from 'react'
+import { getSystem } from './stubs/backend'
 import { fakeClient } from './stubs/transport'
 import { ACTUATION_FIXTURE_DEVICE_ID } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/actuations'
 import {
@@ -21,6 +22,8 @@ import {
   type CoverCardActions,
   FanCard,
   type FanCardActions,
+  type FanCardModel,
+  type FanCardProps,
   HeaterCard,
   type HeaterCardActions,
   HeatPumpCard,
@@ -33,6 +36,7 @@ import {
   type PlugCardActions,
   RobotCard,
   type RobotCardActions,
+  SystemProvider,
   trpc,
   UiTextProvider,
   WaterHeaterCard,
@@ -54,6 +58,7 @@ import {
   energyDayFixture,
   energyFixtures,
 } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/energy'
+import { useMeasurementReadings } from '../../../../packages/ui-library/src/composites/device-card/connected/use-measurement-readings'
 import { fanFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/fan'
 import { heaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heater'
 import { heatPumpFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heat-pump'
@@ -155,6 +160,43 @@ const LIGHT_ACTIONS: LightCardActions = {
   onColor: noop,
   onWhite: noop,
 }
+/** A fan drawn with the readings, trend and chart of the fixture's ambient monitor (device 1540): the connected card's own hook. */
+function FanWithReadings(props: {
+  readonly model: FanCardModel
+  readonly orientation?: FanCardProps['orientation']
+}): ReactElement {
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  )
+  return (
+    <SystemProvider system={getSystem()}>
+      <trpc.Provider client={fakeClient()} queryClient={client}>
+        <QueryClientProvider client={client}>
+          <FanWithReadingsInner {...props} />
+        </QueryClientProvider>
+      </trpc.Provider>
+    </SystemProvider>
+  )
+}
+
+function FanWithReadingsInner({
+  model,
+  orientation,
+}: {
+  readonly model: FanCardModel
+  readonly orientation?: FanCardProps['orientation']
+}): ReactElement {
+  const { readings, open } = useMeasurementReadings(1540)
+  return (
+    <FanCard
+      model={{ ...model, readings: readings.length === 0 ? model.readings : readings }}
+      actions={FAN_ACTIONS}
+      orientation={orientation}
+      readingOpen={open}
+    />
+  )
+}
+
 const FAN_ACTIONS: FanCardActions = {
   ...PLUG_ACTIONS,
   onSpeed: noop,
@@ -343,7 +385,11 @@ function WaveAScene({ type }: { readonly type: string }): ReactElement | null {
         <>
           {fanFixtures().map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={false}>
-              <FanCard model={f.model} actions={FAN_ACTIONS} orientation={f.orientation} />
+              {f.id === 'fan-tower' ? (
+                <FanWithReadings model={f.model} orientation={f.orientation} />
+              ) : (
+                <FanCard model={f.model} actions={FAN_ACTIONS} orientation={f.orientation} />
+              )}
             </Cell>
           ))}
         </>

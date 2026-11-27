@@ -151,7 +151,11 @@ export const STATE_READING_HISTORY_KEY: Readonly<Partial<Record<HeroMeasurementQ
   }
 
 /** One reading's value and the last day of it; a state reading shows ITS series only, never the device's whole History. */
-function ReadingHistory({ deviceId, measurement, since }: ReadingHistoryProps): ReactElement {
+export function ReadingHistory({
+  deviceId,
+  measurement,
+  since,
+}: ReadingHistoryProps): ReactElement {
   const t = useUiText()
   const seriesKey = measurement.historyKey ?? STATE_READING_HISTORY_KEY[measurement.quantity]
   // The chart is the device-history view of this one series: it says itself

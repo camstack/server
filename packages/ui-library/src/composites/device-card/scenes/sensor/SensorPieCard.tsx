@@ -6,6 +6,7 @@ import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from '../../shell/model'
 import { PIE_CENTRE, PIE_RADIUS, type PieWedge, pieGeometry, type ReadingState } from './pie-model'
 import { SENSOR_PIE_CSS } from './pie-css'
+import { READING_TILES_GRID, ReadingTile } from './ReadingTile'
 
 /** One wedge as the operator reads it: already in their display unit. */
 export interface PieReading {
@@ -267,8 +268,9 @@ function Wedge({
  * A sensor with several readings: a pie of equal wedges from 12 o'clock, each
  * tinted by its quantity, its value, unit and short name at the wedge's centre. A
  * reading that is on or alarming breathes, with its quantity's motion clipped
- * inside the wedge; one with no data is a dashed wedge with a "—". Tapping a
- * wedge highlights it (the others dim) and draws its history below the pie. Seven or more readings are `SensorGridCard`.
+ * inside the wedge; one with no data is a dashed wedge with a "—". Under the pie each
+ * reading is also a `ReadingTile` (its motion and trend, as in the grid). Tapping a
+ * wedge or a tile highlights it (the others dim) and draws its history below the pie. Seven or more readings are `SensorGridCard`.
  */
 export function SensorPieCard({
   model,
@@ -339,6 +341,19 @@ export function SensorPieCard({
                 )
               })}
             </svg>
+            <ul className={READING_TILES_GRID} data-testid="dc-pie-legend">
+              {model.readings.map((reading) => (
+                <li key={reading.id} className="min-w-0">
+                  <ReadingTile
+                    reading={reading}
+                    selected={reading.id === selectedId}
+                    dimmed={selectedId !== null && reading.id !== selectedId}
+                    onSelect={onSelect}
+                    testId="dc-pie-tile"
+                  />
+                </li>
+              ))}
+            </ul>
             {detail === null ? null : (
               <div data-testid="dc-pie-detail" className="flex w-full flex-col items-center gap-3">
                 {detail}

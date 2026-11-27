@@ -9026,6 +9026,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "readingOpen",
+          "type": "FanReadingOpen",
+          "optional": true,
+          "doc": "Makes the readout cells buttons that open that reading's chart (absent = read-only)."
         }
       ]
     },

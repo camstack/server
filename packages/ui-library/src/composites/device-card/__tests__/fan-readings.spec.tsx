@@ -3,7 +3,7 @@
  * A fan that also carries a temperature and a humidity binding shows them as a
  * secondary readout row under its controls: read-only, never replacing a control.
  */
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fanFixtures } from '../__fixtures__/fan'
 import { FanCard } from '../scenes/fan/FanCard'
@@ -26,7 +26,9 @@ const actions: FanCardActions = {
 const tower = (): FanCardModel => {
   const f = fanFixtures(0).find((x) => x.id === 'fan-tower')
   if (f === undefined) throw new Error('no fan-tower fixture')
-  return f.model
+  // The fixture carries readings for the preview; these specs set their own.
+  const { readings: _preview, ...bare } = f.model
+  return bare
 }
 
 const reading = (id: string, name: string, value: string): FanReading => ({ id, name, value })
@@ -73,5 +75,60 @@ describe('the fan readout row', () => {
     render(<FanCard model={{ ...tower(), readings: many }} actions={actions} />)
     expect(screen.getAllByTestId('dc-fan-readings')).toHaveLength(2)
     expect(screen.getAllByTestId('dc-fan-reading')).toHaveLength(5)
+  })
+})
+
+describe('the fan readout row opens a reading', () => {
+  const readings: readonly FanReading[] = [
+    {
+      ...reading('temperature-0', 'Temperature', '23.5 °C'),
+      visual: { kind: 'heat', tone: 'warning', speed: 'normal', dim: false },
+      trend: <span data-testid="dc-sensor-trend" />,
+    },
+    reading('humidity-1', 'Humidity', '51 %'),
+  ]
+
+  it('each cell carries its motion and trend, and is a button that reports its id', () => {
+    const onSelect = vi.fn()
+    render(
+      <FanCard
+        model={{ ...tower(), readings }}
+        actions={actions}
+        readingOpen={{ selectedId: null, onSelect, detail: null }}
+      />,
+    )
+    const [first, second] = screen.getAllByTestId('dc-fan-reading')
+    expect(first?.querySelector('[data-testid="dc-measurement-fx"]')).not.toBeNull()
+    expect(first?.querySelector('[data-testid="dc-sensor-trend"]')).not.toBeNull()
+    expect(second?.querySelector('[data-testid="dc-measurement-fx"]')).toBeNull()
+    fireEvent.click(within(second as HTMLElement).getByRole('button'))
+    expect(onSelect).toHaveBeenCalledWith('humidity-1')
+  })
+
+  it('the open reading draws its chart under the readout and dims the others', () => {
+    render(
+      <FanCard
+        model={{ ...tower(), readings }}
+        actions={actions}
+        readingOpen={{
+          selectedId: 'humidity-1',
+          onSelect: vi.fn(),
+          detail: <p data-testid="chart">chart</p>,
+        }}
+      />,
+    )
+    expect(screen.getByTestId('chart')).toBeTruthy()
+    const [first, second] = screen.getAllByTestId('dc-fan-reading')
+    expect(
+      within(second as HTMLElement)
+        .getByRole('button')
+        .getAttribute('aria-pressed'),
+    ).toBe('true')
+    expect(within(first as HTMLElement).getByRole('button').className).toContain('opacity-40')
+  })
+
+  it('without readingOpen the readout stays read-only', () => {
+    render(<FanCard model={{ ...tower(), readings }} actions={actions} />)
+    expect(screen.queryAllByRole('button', { name: /Temperature/ })).toHaveLength(0)
   })
 })
