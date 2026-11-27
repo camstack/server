@@ -284,4 +284,79 @@ describe('MotionEpisodeTracker', () => {
     // the 2 edges), never for the observed-off.
     expect(onTick).toHaveBeenCalledTimes(3)
   })
+
+  describe('region timeline', () => {
+    const box = (x: number, pixelCount = 100) => ({ bbox: { x, y: 5, w: 10, h: 10 }, pixelCount })
+    function make() {
+      const insertRow = vi.fn().mockResolvedValue(7)
+      const closeRow = vi.fn().mockResolvedValue(true)
+      const checkpointRow = vi.fn().mockResolvedValue(true)
+      const tracker = new MotionEpisodeTracker<undefined>({
+        closeAfterMs: 15_000,
+        logger: fakeLogger() as never,
+        insertRow,
+        closeRow,
+        checkpointRow,
+      })
+      return { tracker, closeRow, checkpointRow }
+    }
+
+    it('regions moving over 5 s yield >=5 samples with the moved boxes, written at close', async () => {
+      const { tracker, closeRow } = make()
+      for (let s = 0; s <= 5; s++) {
+        await tracker.observe(1, 'analyzer', true, 10_000 + s * 1_000, undefined, [box(s * 20)])
+      }
+      await vi.advanceTimersByTimeAsync(15_000)
+      const timeline = closeRow.mock.calls[0]![0].motionTimeline
+      expect(timeline).toHaveLength(6)
+      expect(timeline.map((x: { boxes: { x: number }[] }) => x.boxes[0]!.x)).toEqual([
+        0, 20, 40, 60, 80, 100,
+      ])
+      expect(timeline[3].t).toBe(3_000)
+    })
+
+    it('keeps at most one sample per second under a 15 fps feed, the latest frame of the second', async () => {
+      const { tracker, closeRow } = make()
+      for (let f = 0; f < 15 * 3; f++) {
+        await tracker.observe(
+          1,
+          'analyzer',
+          true,
+          10_000 + Math.round((f * 1000) / 15),
+          undefined,
+          [box(f)],
+        )
+      }
+      await vi.advanceTimersByTimeAsync(15_000)
+      const timeline = closeRow.mock.calls[0]![0].motionTimeline
+      expect(timeline.length).toBeLessThanOrEqual(4)
+      expect(timeline.length).toBeGreaterThanOrEqual(3)
+      expect(timeline[0].boxes[0].x).toBe(14) // last frame inside second 0
+    })
+
+    it('caps a sample at 6 boxes, largest by pixelCount', async () => {
+      const { tracker, closeRow } = make()
+      const regions = Array.from({ length: 9 }, (_, i) => box(i, i + 1))
+      await tracker.observe(1, 'analyzer', true, 10_000, undefined, regions)
+      await vi.advanceTimersByTimeAsync(15_000)
+      const boxes = closeRow.mock.calls[0]![0].motionTimeline[0].boxes
+      expect(boxes.map((b: { x: number }) => b.x)).toEqual([8, 7, 6, 5, 4, 3])
+    })
+
+    it('an episode fed no regions (onboard) closes with no timeline key', async () => {
+      const { tracker, closeRow } = make()
+      await tracker.observe(1, 'onboard', true, 10_000, undefined)
+      await vi.advanceTimersByTimeAsync(15_000)
+      expect(closeRow.mock.calls[0]![0]).not.toHaveProperty('motionTimeline')
+    })
+
+    it('checkpoints the open row at most every 60 s', async () => {
+      const { tracker, checkpointRow } = make()
+      for (let s = 0; s <= 130; s += 5) {
+        await tracker.observe(1, 'analyzer', true, 10_000 + s * 1_000, undefined, [box(s)])
+      }
+      expect(checkpointRow).toHaveBeenCalledTimes(2)
+      expect(checkpointRow.mock.calls[0]![0].motionTimeline.length).toBeGreaterThan(5)
+    })
+  })
 })

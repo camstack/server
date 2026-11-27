@@ -806,6 +806,24 @@ const BaseEventFields = {
   timestamp: z.number(),
 }
 
+/**
+ * One sample of the motion region timeline: the regions of the latest analyzer
+ * frame inside one second of the episode. `t` is the ms offset from the
+ * episode's `timestamp` (like `edges`); `boxes` are at most
+ * {@link MOTION_TIMELINE_MAX_BOXES} bboxes, largest by pixelCount first, in
+ * analyzer pixels (the row's `frameWidth` x `frameHeight`).
+ */
+export const MotionTimelineSampleSchema = z.object({
+  t: z.number().int().nonnegative(),
+  boxes: z.array(BoundingBoxSchema).readonly(),
+})
+export type MotionTimelineSample = z.infer<typeof MotionTimelineSampleSchema>
+
+/** Boxes kept per timeline sample. */
+export const MOTION_TIMELINE_MAX_BOXES = 6
+/** At most one timeline sample per this many ms of episode time. */
+export const MOTION_TIMELINE_SAMPLE_MS = 1000
+
 const MotionEventSchema = z.object({
   ...BaseEventFields,
   kind: z.literal('motion'),
@@ -860,6 +878,15 @@ const MotionEventSchema = z.object({
    * which must never be read as "no episode happened here".
    */
   edges: z.array(z.number()).readonly().optional(),
+  /**
+   * Where the motion regions were over the WHOLE analyzer episode: at most one
+   * sample per second, each capped at 6 boxes (largest first), offsets from
+   * `timestamp`. Complements `regions` (the first frame only, kept as is).
+   * `null` = no timeline was recorded (a row written before this column, an
+   * onboard episode, or an analyzer episode that never closed or flushed) —
+   * never an empty array. Omitted in slim projection.
+   */
+  motionTimeline: z.array(MotionTimelineSampleSchema).readonly().nullable().optional(),
 })
 export type MotionEvent = z.infer<typeof MotionEventSchema>
 

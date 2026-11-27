@@ -16,6 +16,7 @@ import type {
   Zone,
   ZoneRule,
 } from '@camstack/types'
+import type { MotionTimelineSample } from '@camstack/types'
 import { EventCategory, errMsg } from '@camstack/types'
 import { NotificationCenter } from '../../notification-center/index.js'
 import { subjectLabelFromTiers } from '../../notification-center/rule-engine.js'
@@ -153,6 +154,7 @@ export interface BuildStoresDeps {
     readonly eventId: number
     readonly durationMs: number
     readonly edges: readonly number[]
+    readonly motionTimeline?: readonly MotionTimelineSample[]
   }) => Promise<boolean>
   readonly onMotionEpisodeEdge: (input: {
     readonly deviceId: number
@@ -433,6 +435,7 @@ export abstract class BuildStoresBase {
     readonly eventId: number
     readonly durationMs: number
     readonly edges: readonly number[]
+    readonly motionTimeline?: readonly MotionTimelineSample[]
   }): Promise<boolean> {
     return this.deps.closeMotionEpisodeRow(input)
   }

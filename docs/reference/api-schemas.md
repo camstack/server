@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1165 shared schemas.**
+**1166 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4392,6 +4392,7 @@ Enum: `"off" \| "on" \| "not-offered" \| "unreachable"`
 - `triggeredBy?`: `{ kind: "camera" } \| { kind: "sensor"; deviceId: number }`
 - `durationMs?`: `number \| null`
 - `edges?`: `number[]`
+- `motionTimeline?`: `MotionTimelineSampleSchema[] \| null`
 
 ### `MotionOnMotionChangedDataSchema`
 
@@ -4421,6 +4422,11 @@ Array of `MotionSourceEnum`
 - `detected`: `boolean`
 - `lastDetectedAt`: `number \| null`
 - `autoClearAfterMs`: `number \| null`
+
+### `MotionTimelineSampleSchema`
+
+- `t`: `number`
+- `boxes`: `BoundingBoxSchema[]`
 
 ### `MotionTriggerRuntimeStateSchema`
 

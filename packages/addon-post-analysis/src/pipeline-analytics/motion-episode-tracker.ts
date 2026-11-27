@@ -8,7 +8,13 @@
  * `setTimeout` and awaits a store call, so a test of ITS behaviour is a test
  * of timing and sequencing, not of the decision table.
  */
-import type { IScopedLogger, MotionSource } from '@camstack/types'
+import {
+  MOTION_TIMELINE_MAX_BOXES,
+  MOTION_TIMELINE_SAMPLE_MS,
+  type IScopedLogger,
+  type MotionSource,
+  type MotionTimelineSample,
+} from '@camstack/types'
 import {
   decideMotionSignal,
   motionEpisodeDurationMs,
@@ -33,7 +39,28 @@ export interface MotionEpisodeCloseInput {
   readonly eventId: number
   readonly durationMs: number
   readonly edges: readonly number[]
+  /** The region timeline collected over the episode; absent when none was. */
+  readonly motionTimeline?: readonly MotionTimelineSample[]
 }
+
+/** A region the analyzer saw on one frame — the input the timeline samples. */
+export interface MotionTimelineRegion {
+  readonly bbox: MotionTimelineSample['boxes'][number]
+  readonly pixelCount: number
+}
+
+export interface MotionEpisodeCheckpointInput {
+  readonly deviceId: number
+  readonly source: MotionSource
+  readonly eventId: number
+  readonly motionTimeline: readonly MotionTimelineSample[]
+}
+
+/** Bounded in-episode flush of the timeline, so a crash or a very long
+ *  episode does not lose it. */
+export const MOTION_TIMELINE_CHECKPOINT_MS = 60_000
+/** A runaway episode keeps its first hour of samples, and says so once. */
+export const MOTION_TIMELINE_MAX_SAMPLES = 3600
 
 export interface MotionEpisodeEdgeInput {
   readonly deviceId: number
@@ -70,6 +97,10 @@ export interface MotionEpisodeTrackerDeps<TRegionData> {
   /** Fired on a genuine off→on transition — open or a further edge inside an
    *  open episode. Drives the birth-latency onset mark + the motion-marker
    *  still, which the ORIGINAL code fired on every `transitionedOn`. */
+  /** Optional: UPDATE the open row with the timeline so far (never touches
+   *  `durationMs`, so the row stays open). Called at most once per
+   *  {@link MOTION_TIMELINE_CHECKPOINT_MS} per episode. */
+  readonly checkpointRow?: (input: MotionEpisodeCheckpointInput) => Promise<boolean>
   readonly onNewEdge?: (input: MotionEpisodeEdgeInput) => void
   /** Fired on every `detected:true` observation that reaches an open or
    *  newly-opened episode — transition or continuation. Drives the
@@ -85,6 +116,13 @@ interface TrackedSignal {
   episode: MotionEpisodeOpenState | null
 }
 
+interface TimelineState {
+  readonly samples: MotionTimelineSample[]
+  lastFlushAt: number
+  dirty: boolean
+  overflowLogged: boolean
+}
+
 function keyOf(deviceId: number, source: MotionSource): string {
   return `${deviceId}:${source}`
 }
@@ -92,6 +130,7 @@ function keyOf(deviceId: number, source: MotionSource): string {
 export class MotionEpisodeTracker<TRegionData> {
   private readonly signals = new Map<string, TrackedSignal>()
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
+  private readonly timelines = new Map<string, TimelineState>()
 
   constructor(private readonly deps: MotionEpisodeTrackerDeps<TRegionData>) {}
 
@@ -106,6 +145,7 @@ export class MotionEpisodeTracker<TRegionData> {
     detected: boolean,
     timestamp: number,
     regionData: TRegionData,
+    timelineRegions?: readonly MotionTimelineRegion[],
   ): Promise<void> {
     const key = keyOf(deviceId, source)
     const prior = this.signals.get(key)
@@ -137,6 +177,13 @@ export class MotionEpisodeTracker<TRegionData> {
           edgeOffsetsMs: [0],
         }
         this.setSignal(key, deviceId, source, true, episode)
+        this.timelines.set(key, {
+          samples: [],
+          lastFlushAt: timestamp,
+          dirty: false,
+          overflowLogged: false,
+        })
+        this.noteTimeline(key, deviceId, source, episode, timestamp, timelineRegions)
         this.armCloseTimer(key)
         this.deps.onNewEdge?.({ deviceId, source, timestamp, eventId, isFirst: true })
         this.deps.onTick?.({ deviceId, source, timestamp })
@@ -144,6 +191,7 @@ export class MotionEpisodeTracker<TRegionData> {
       }
       case 'extend-episode': {
         this.setSignal(key, deviceId, source, true, decision.next)
+        this.noteTimeline(key, deviceId, source, decision.next, timestamp, timelineRegions)
         this.armCloseTimer(key)
         if (decision.isNewEdge) {
           this.deps.onNewEdge?.({
@@ -173,6 +221,66 @@ export class MotionEpisodeTracker<TRegionData> {
       const signal = this.signals.get(key)
       if (!signal?.episode) continue
       await this.closeNow(key, signal, reason)
+    }
+  }
+
+  /**
+   * One analyzer frame's regions into the episode's timeline: at most one
+   * sample per {@link MOTION_TIMELINE_SAMPLE_MS} (the latest frame of that
+   * second wins), each capped at {@link MOTION_TIMELINE_MAX_BOXES} boxes,
+   * largest by pixelCount. Sampled here, where the episode lives — nothing
+   * about it crosses a process.
+   */
+  private noteTimeline(
+    key: string,
+    deviceId: number,
+    source: MotionSource,
+    episode: MotionEpisodeOpenState,
+    timestamp: number,
+    regions: readonly MotionTimelineRegion[] | undefined,
+  ): void {
+    const state = this.timelines.get(key)
+    if (state === undefined || regions === undefined) return
+    const t = Math.max(0, timestamp - episode.startedAt)
+    const boxes = [...regions]
+      .sort((a, b) => b.pixelCount - a.pixelCount)
+      .slice(0, MOTION_TIMELINE_MAX_BOXES)
+      .map((r) => ({ x: r.bbox.x, y: r.bbox.y, w: r.bbox.w, h: r.bbox.h }))
+    const last = state.samples[state.samples.length - 1]
+    const bucket = Math.floor(t / MOTION_TIMELINE_SAMPLE_MS)
+    if (last !== undefined && Math.floor(last.t / MOTION_TIMELINE_SAMPLE_MS) === bucket) {
+      state.samples[state.samples.length - 1] = { t, boxes }
+    } else if (state.samples.length >= MOTION_TIMELINE_MAX_SAMPLES) {
+      if (!state.overflowLogged) {
+        state.overflowLogged = true
+        this.deps.logger.warn('motion timeline full — later samples of this episode dropped', {
+          tags: { deviceId },
+          meta: { source, eventId: episode.eventId, maxSamples: MOTION_TIMELINE_MAX_SAMPLES },
+        })
+      }
+      return
+    } else {
+      state.samples.push({ t, boxes })
+    }
+    state.dirty = true
+    if (
+      this.deps.checkpointRow !== undefined &&
+      timestamp - state.lastFlushAt >= MOTION_TIMELINE_CHECKPOINT_MS
+    ) {
+      state.lastFlushAt = timestamp
+      state.dirty = false
+      const motionTimeline = [...state.samples]
+      void this.deps
+        .checkpointRow({ deviceId, source, eventId: episode.eventId, motionTimeline })
+        .then((landed) => {
+          if (!landed) {
+            state.dirty = true
+            this.deps.logger.warn('motion timeline checkpoint failed', {
+              tags: { deviceId },
+              meta: { source, eventId: episode.eventId },
+            })
+          }
+        })
     }
   }
 
@@ -215,6 +323,8 @@ export class MotionEpisodeTracker<TRegionData> {
     // close write is in flight must open a fresh episode, not extend the one
     // that is already on its way out.
     signal.episode = null
+    const timeline = this.timelines.get(key)
+    this.timelines.delete(key)
     const durationMs = motionEpisodeDurationMs(episode)
     const landed = await this.deps.closeRow({
       deviceId: signal.deviceId,
@@ -222,6 +332,9 @@ export class MotionEpisodeTracker<TRegionData> {
       eventId: episode.eventId,
       durationMs,
       edges: episode.edgeOffsetsMs,
+      ...(timeline !== undefined && timeline.samples.length > 0
+        ? { motionTimeline: timeline.samples }
+        : {}),
     })
     if (!landed) {
       this.deps.logger.warn('motion episode close failed — row keeps durationMs: null', {

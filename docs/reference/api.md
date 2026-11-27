@@ -4029,7 +4029,7 @@
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2735`
+- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2762`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IPipelineAnalyticsProvider`

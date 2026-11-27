@@ -26,7 +26,8 @@ import type {
   ObjectEventDraft,
   SettingsStoreClient,
 } from '@camstack/types'
-import { MotionTriggeredBySchema } from '@camstack/types'
+import { MotionTriggeredBySchema, type MotionTimelineSample } from '@camstack/types'
+import { decodeMotionTimeline, encodeMotionTimeline } from './motion-timeline-codec.js'
 import { decodeMotionEdges, encodeMotionEdges } from './motion-edge-codec.js'
 import { roundBbox } from './position-codec.js'
 import type { TieredLabelPatch } from '../pipeline/label-tier.js'
@@ -156,6 +157,14 @@ export const MOTION_COLUMNS = [
    * a legacy / analyzer / device-activity row means NOT RECORDED.
    */
   { name: 'triggeredBy', type: 'JSON' as const },
+  /**
+   * The analyzer episode's region timeline, encoded by `motion-timeline-codec.ts`
+   * (one sample per second, 6 boxes max). Written by the close UPDATE and by a
+   * bounded in-episode checkpoint. Additive (the collection gains the column in
+   * place); SQL NULL on an older row reads as `motionTimeline: null`. Declared,
+   * or the backend drops it on write (see `durationMs`).
+   */
+  { name: 'motionTimeline', type: 'TEXT' as const },
 ] as const
 
 export const OBJECT_COLUMNS = [
@@ -577,16 +586,47 @@ export class EventStore {
   async updateMotion(
     eventId: number,
     deviceId: number,
-    patch: { readonly durationMs: number; readonly edges: readonly number[] },
+    patch: {
+      readonly durationMs: number
+      readonly edges: readonly number[]
+      readonly motionTimeline?: readonly MotionTimelineSample[]
+    },
   ): Promise<boolean> {
     try {
       await this.motionLedger.update(String(eventId), {
         durationMs: patch.durationMs,
         edges: encodeMotionEdges(patch.edges),
+        ...(patch.motionTimeline !== undefined && patch.motionTimeline.length > 0
+          ? { motionTimeline: encodeMotionTimeline(patch.motionTimeline) }
+          : {}),
       })
       return true
     } catch (err) {
       this.logger.warn('updateMotion (episode close) failed', {
+        tags: { deviceId },
+        meta: { eventId, error: String(err) },
+      })
+      return false
+    }
+  }
+
+  /**
+   * Bounded in-episode flush of the region timeline: writes ONLY the
+   * `motionTimeline` column of the open row (the row stays open — no
+   * `durationMs`), so a crash or a 25-minute episode keeps what was seen.
+   */
+  async updateMotionTimeline(
+    eventId: number,
+    deviceId: number,
+    motionTimeline: readonly MotionTimelineSample[],
+  ): Promise<boolean> {
+    try {
+      await this.motionLedger.update(String(eventId), {
+        motionTimeline: encodeMotionTimeline(motionTimeline),
+      })
+      return true
+    } catch (err) {
+      this.logger.warn('updateMotionTimeline (episode checkpoint) failed', {
         tags: { deviceId },
         meta: { eventId, error: String(err) },
       })
@@ -814,6 +854,7 @@ export class EventStore {
       // column existed" — never "open".
       const {
         edges: rawEdges,
+        motionTimeline: rawMotionTimeline,
         durationMs: rawDurationMs,
         triggeredBy: rawTriggeredBy,
         ...data
@@ -823,7 +864,10 @@ export class EventStore {
         // the generic store, so the boundary converts (D474).
         id: Number(r.id),
         kind: 'motion',
-        ...(data as Omit<MotionEvent, 'id' | 'kind' | 'edges' | 'durationMs' | 'triggeredBy'>),
+        ...(data as Omit<
+          MotionEvent,
+          'id' | 'kind' | 'edges' | 'durationMs' | 'triggeredBy' | 'motionTimeline'
+        >),
         ...(rawDurationMs !== undefined
           ? {
               durationMs:
@@ -831,6 +875,8 @@ export class EventStore {
             }
           : {}),
         ...(rawEdges !== undefined ? { edges: decodeMotionEdges(rawEdges) } : {}),
+        // Absent column (older row) and garbage both read `null`, never `[]`.
+        motionTimeline: decodeMotionTimeline(rawMotionTimeline),
         ...storedTriggeredBy(rawTriggeredBy),
       }
       return ev

@@ -161,6 +161,23 @@ describe('EventStore', () => {
       expect(closedRow?.edges).toEqual([0, 4_500])
     })
 
+    it('the close UPDATE persists the region timeline; a checkpoint keeps the row open; an older row reads null', async () => {
+      const mid = await putMotion('timeline', store, { ...motion(4, 1000), durationMs: null })
+      const old = await putMotion('timeline-old', store, motion(4, 900))
+      const first = [{ t: 0, boxes: [{ x: 10, y: 20, w: 30, h: 40 }] }]
+      const both = [...first, { t: 1_000, boxes: [{ x: 50, y: 60, w: 70, h: 80 }] }]
+
+      expect(await store.updateMotionTimeline(mid, 4, first)).toBe(true)
+      const mid1 = (await store.queryMotion({ deviceId: 4 })).find((r) => r.id === mid)
+      expect(mid1?.motionTimeline).toEqual(first)
+      expect(mid1?.durationMs).toBeNull() // still open
+
+      await store.updateMotion(mid, 4, { durationMs: 1_000, edges: [0], motionTimeline: both })
+      const rows = await store.queryMotion({ deviceId: 4 })
+      expect(rows.find((r) => r.id === mid)?.motionTimeline).toEqual(both)
+      expect(rows.find((r) => r.id === old)?.motionTimeline).toBeNull()
+    })
+
     it('a row written before D475 has neither durationMs nor edges — never read as an open episode', async () => {
       const mid = await putMotion('legacy', store, motion(4, 1000))
       const rows = await store.queryMotion({ deviceId: 4 })

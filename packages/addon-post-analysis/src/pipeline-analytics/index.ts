@@ -47,6 +47,7 @@ import type {
   MotionEvent,
   MotionEventDraft,
   MotionOnMotionChangedPayload,
+  MotionTimelineSample,
   NativeCropBbox,
   ObjectDetection,
   ObjectEvent,
@@ -9563,16 +9564,23 @@ export default class PipelineAnalyticsAddon
     // instead, so a long continuous episode still feeds the aggregator at
     // the same density (D475).
     if (detected) this.eventStore?.noteMotionSample(deviceId, payload.regionCount, timestamp)
-    await this.motionEpisodes?.observe(deviceId, 'analyzer', detected, timestamp, {
-      regionCount: payload.regionCount,
-      regions: payload.regions.map((r) => ({
-        bbox: { x: r.bbox.x, y: r.bbox.y, w: r.bbox.w, h: r.bbox.h },
-        pixelCount: r.pixelCount,
-        intensity: r.intensity,
-      })),
-      frameWidth: payload.frameWidth,
-      frameHeight: payload.frameHeight,
-    })
+    await this.motionEpisodes?.observe(
+      deviceId,
+      'analyzer',
+      detected,
+      timestamp,
+      {
+        regionCount: payload.regionCount,
+        regions: payload.regions.map((r) => ({
+          bbox: { x: r.bbox.x, y: r.bbox.y, w: r.bbox.w, h: r.bbox.h },
+          pixelCount: r.pixelCount,
+          intensity: r.intensity,
+        })),
+        frameWidth: payload.frameWidth,
+        frameHeight: payload.frameHeight,
+      },
+      detected ? payload.regions : undefined,
+    )
   }
 
   /**
@@ -9694,10 +9702,12 @@ export default class PipelineAnalyticsAddon
     readonly eventId: number
     readonly durationMs: number
     readonly edges: readonly number[]
+    readonly motionTimeline?: readonly MotionTimelineSample[]
   }): Promise<boolean> {
     return this.eventStore!.updateMotion(input.eventId, input.deviceId, {
       durationMs: input.durationMs,
       edges: input.edges,
+      ...(input.motionTimeline !== undefined ? { motionTimeline: input.motionTimeline } : {}),
     })
   }
 

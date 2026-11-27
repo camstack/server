@@ -272,6 +272,8 @@ export class BuildStores extends BuildStoresBase {
       insertRow: (input) =>
         this.insertMotionEpisodeRow(input.deviceId, input.timestamp, input.regionData),
       closeRow: (input) => this.closeMotionEpisodeRow(input),
+      checkpointRow: (input) =>
+        eventStore.updateMotionTimeline(input.eventId, input.deviceId, input.motionTimeline),
       onNewEdge: (input) => this.onMotionEpisodeEdge(input),
       onTick: (input) => this.onMotionEpisodeTick(input),
     })
