@@ -4,6 +4,7 @@ title: A device is migrated to the ambient-monitor role once, by a verdict that 
 status: accepted
 date: 2026-11-27
 supersedes:
+covers: [packages/types/src/device/ambient-role-migration.ts]
 ---
 
 ## Context
@@ -32,7 +33,7 @@ forever. This was found in review, not in production.
 
 Existing devices are migrated to `ambient-monitor` once per device, by the
 single function `ambientRoleVerdict` in
-`packages/types/src/device/ambient-role-migration.ts`. It returns one of three <!-- drift-ok: lands in the following commit -->
+`packages/types/src/device/ambient-role-migration.ts`. It returns one of three
 verdicts:
 
 - `set`: the device's current role is the previous provider default, so it

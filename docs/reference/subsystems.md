@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 9367 source files · 1305 file(s) in no subsystem.**
+**31 subsystems · 9372 source files · 1305 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -26,7 +26,7 @@ commits. A generated page may not.
 | Kernel, addon lifecycle and boot | 137 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +101 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 115 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +62 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 360 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +284 more, 51 ADRs | 2026-11-26 | ✅ |
-| Device model and the provider contract | 192 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +89 more, 6 ADRs | 2026-11-26 | ✅ |
+| Device model and the provider contract | 193 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +90 more, 6 ADRs | 2026-11-26 | ✅ |
 | Device providers (per vendor) | 1022 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +97 more, 14 ADRs | 2026-11-26 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 146 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +65 more, 5 ADRs | 2026-11-26 | ✅ |
@@ -50,7 +50,7 @@ commits. A generated page may not.
 | Alerts, liveness and system health | 62 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +46 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 45 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-11-26 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1931 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +183 more, 15 ADRs | 2026-11-26 | ✅ |
+| Admin UI and the shared component library | 1935 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +183 more, 15 ADRs | 2026-11-26 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +24 more, 7 ADRs | 2026-11-26 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 965 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +193 more, 14 ADRs | 2026-11-26 | ⚠️ |
@@ -90,7 +90,7 @@ What a device IS across twenty vendors — identity, kinds, bindings, runtime st
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/types/src/device/**`, `packages/types/src/device-extension/**`, `packages/system/src/builtins/device-manager/**`, `packages/system/src/kernel/device-registry.ts`, `packages/system/src/kernel/provider-kind-drift.ts`, `server/backend/src/core/provider/**`
-- **Files**: 192 (191 claimed by some document)
+- **Files**: 193 (192 claimed by some document)
 - **Uncovered**: `server/backend/src/core/provider` (1)
 
 ### ✅ Device providers (per vendor)
@@ -306,7 +306,7 @@ The operator's web console, and the design-system package every CamStack surface
 
 - **Owner doc**: `docs/architecture/ui.md`
 - **Code**: `packages/addon-admin-ui/**`, `packages/addon-agent-ui/**`, `packages/ui-library/**`
-- **Files**: 1931 (1931 claimed by some document)
+- **Files**: 1935 (1935 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack

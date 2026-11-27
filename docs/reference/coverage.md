@@ -14,13 +14,13 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9367 source files · 251 units claimed by at least one document (9345 files).**
+**257 units · 9372 source files · 251 units claimed by at least one document (9350 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 726 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +89 more, 4 ADRs | 2026-11-26 |
-| `packages/ui-library/src/composites` | 718 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +63 more, 3 ADRs | 2026-11-26 |
+| `packages/ui-library/src/composites` | 722 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +63 more, 3 ADRs | 2026-11-26 |
 | `scripts` | 674 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +161 more, 14 ADRs | 2026-11-26 |
 | `packages/system/src/builtins` | 559 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +223 more, 21 ADRs | 2026-11-26 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 480 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
@@ -32,7 +32,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline/src/recorder` | 117 | `recorder` | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +77 more, 10 ADRs | 2026-11-26 |
 | `server/backend/src/core` | 114 | `api-surface`, `auth`, `capabilities`, `device-model`, `logging`, `notification-center`, `remote-access`, `storage`, `stream-broker`, `transport`, `update-and-release` | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `architecture/addon-lifecycle.md`, +58 more, 7 ADRs | 2026-11-26 |
 | `server/backend/src/api` | 97 | `api-surface` | `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, `decisions/adr-0895-there-is-one-token-and-no-other-bearer-format-a-share-link-is-a-token-and-only-a-login-session-becomes-a-session.md`, +71 more, 10 ADRs | 2026-11-26 |
-| `packages/types/src/device` | 94 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md`, +44 more, 1 ADR | 2026-11-26 |
+| `packages/types/src/device` | 95 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md`, +45 more, 1 ADR | 2026-11-26 |
 | `packages/addon-pipeline-orchestrator` | 87 | `pipeline-orchestration`, `zones` | `decisions/adr-1013-one-instance-model.md`, `architecture/inference-devices.md`, `decisions/adr-0650-a-detail-step-the-elected-device-cannot-run-is-delegated-within-the-node.md`, +58 more, 13 ADRs | 2026-11-26 |
 | `packages/cli/src/mcp` | 77 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-1077-the-onboarding-flow-is-written-once-in-the-public-docs-and-the-mcp-reads-it.md`, +4 more | 2026-11-21 |
 | `packages/addon-provider-reolink` | 76 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +23 more, 2 ADRs | 2026-11-26 |
