@@ -96,7 +96,7 @@ export class MatterMeshService {
   }
 
   topology(brokerId: string): MeshTopology {
-    return buildTopology(this.#inputs(brokerId))
+    return buildTopology(this.#inputs(brokerId), `matter:${brokerId}`)
   }
 
   diagnostics(brokerId: string, deviceId: number): MeshNodeDiagnostics {

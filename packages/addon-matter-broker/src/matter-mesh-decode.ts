@@ -47,6 +47,7 @@ const GENERAL = {
 const THREAD = {
   channel: 0,
   routingRole: 1,
+  networkName: 2,
   panId: 3,
   extPanId: 4,
   neighborTable: 7,
@@ -96,6 +97,8 @@ export interface ThreadFacts {
   readonly channel: number | null
   readonly panId: number | null
   readonly extPanId: string | null
+  /** The Thread `NetworkName` attribute; `null` = not read. */
+  readonly networkName: string | null
   readonly partitionId: number | null
   readonly neighbors: readonly MeshThreadNeighbor[] | null
   readonly routes: readonly MeshThreadRoute[] | null
@@ -276,6 +279,7 @@ function threadOf(index: AttrIndex): ThreadFacts | null {
     channel: asNum(index.value(c, THREAD.channel)),
     panId: asNum(index.value(c, THREAD.panId)),
     extPanId: asExtAddress(index.value(c, THREAD.extPanId)),
+    networkName: asStr(index.value(c, THREAD.networkName)),
     partitionId: asNum(index.value(c, THREAD.partitionId)),
     neighbors: mapList(index.value(c, THREAD.neighborTable), neighborOf),
     routes: mapList(index.value(c, THREAD.routeTable), routeOf),

@@ -28,6 +28,7 @@ describe('mesh map model', () => {
 
   it('keeps one edge per pair, the better link, tinted by tone, and drops dangling links', () => {
     const topology: MeshTopology = {
+      network: null,
       readAt: null,
       nodes: [node('a', 'router'), node('b', 'end-device')],
       links: [

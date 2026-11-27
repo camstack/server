@@ -70,7 +70,25 @@ export const MeshLinkSchema = z.object({
 })
 export type MeshLink = z.infer<typeof MeshLinkSchema>
 
+/** What a provider really reports today (a Matter fabric spans these three). */
+export const MeshTechnologySchema = z.enum(['thread', 'wifi', 'ethernet'])
+export type MeshTechnology = z.infer<typeof MeshTechnologySchema>
+
+/** The network a topology answer describes. Every field a provider did not read is `null`, never invented. */
+export const MeshNetworkInfoSchema = z.object({
+  /** Stable: the Thread extended PAN id (hex) when known, else a provider-scoped id. Two answers with one id are one network. */
+  id: z.string().min(1),
+  /** The network's own name (Thread `NetworkName`); `null` = not read. */
+  name: z.string().nullable(),
+  technology: MeshTechnologySchema,
+  channel: z.number().int().nullable(),
+  panId: z.number().int().nullable(),
+})
+export type MeshNetworkInfo = z.infer<typeof MeshNetworkInfoSchema>
+
 export const MeshTopologySchema = z.object({
+  /** The network these nodes sit in; `null` = a provider that does not say (or nothing read yet). */
+  network: MeshNetworkInfoSchema.nullable(),
   /** Ms epoch of the newest read behind this answer; `null` = nothing read yet. */
   readAt: z.number().nullable(),
   nodes: z.array(MeshNodeSchema),

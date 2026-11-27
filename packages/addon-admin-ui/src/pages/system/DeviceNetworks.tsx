@@ -8,11 +8,14 @@
  * integration instances with credentials; these are read from devices.
  */
 import {
+  Badge,
   Button,
   EmptyState,
   ErrorBox,
   Skeleton,
   useMeshNetworks,
+  useMeshNetworkTitle,
+  useMeshTransportLabel,
   useUiText,
   networkHasDevice,
   SECTION_BODY,
@@ -31,6 +34,8 @@ export function DeviceNetworksPage() {
   const t = useUiText()
   const [params, setParams] = useSearchParams()
   const mesh = useMeshNetworks()
+  const networkTitle = useMeshNetworkTitle()
+  const transportLabel = useMeshTransportLabel()
   const focused = parseNodeParam(params.get('node'))
 
   const select = (deviceId: number | null): void => {
@@ -101,13 +106,25 @@ export function DeviceNetworksPage() {
       )}
       {mesh.networks.map((network, index) => (
         <section key={network.rootDeviceId} className="flex flex-col gap-2">
-          {mesh.networks !== undefined && mesh.networks.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
-              {t('uiLibrary.deviceMesh.networkN', 'Network {{n}}', {
-                n: index + 1,
-              })}
+              {networkTitle(network.topology?.network ?? null, index)}
             </h2>
-          )}
+            {network.topology?.network != null && (
+              <>
+                <Badge variant="neutral">
+                  {transportLabel(network.topology.network.technology)}
+                </Badge>
+                {network.topology.network.channel !== null && (
+                  <Badge variant="neutral">
+                    {t('uiLibrary.deviceMesh.channel', 'Channel {{n}}', {
+                      n: network.topology.network.channel,
+                    })}
+                  </Badge>
+                )}
+              </>
+            )}
+          </div>
           <MeshNetworkView
             network={network}
             selectedDeviceId={

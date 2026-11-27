@@ -110,7 +110,18 @@ export default defineFixtures({
       suggested: [],
       missingIds: [],
     },
-    'deviceMesh.getTopology': { readAt: NOW - 3 * MINUTE, nodes, links },
+    'deviceMesh.getTopology': {
+      network: {
+        id: '1122334455667788',
+        name: 'Casa-Thread',
+        technology: 'thread',
+        channel: 15,
+        panId: 4660,
+      },
+      readAt: NOW - 3 * MINUTE,
+      nodes,
+      links,
+    },
     'deviceMesh.getNodeDiagnostics': (i: { deviceId: number }) => ({
       deviceId: i.deviceId,
       readAt: NOW - 3 * MINUTE,

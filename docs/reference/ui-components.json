@@ -21772,6 +21772,13 @@
       "summary": "Every mesh network of every provider of `device-mesh`."
     },
     {
+      "name": "useMeshNetworkTitle",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/mesh-labels.ts",
+      "summary": "Title of one mesh network: its own name, else \"Thread network <short id>\", else \"Network N\". Never a name the provider did not report."
+    },
+    {
       "name": "useMeshRoleLabel",
       "kind": "hook",
       "area": "composites",

@@ -23,7 +23,7 @@ import { Button } from '../../primitives/button'
 import { ErrorBox } from '../error-box'
 import { Skeleton } from '../../primitives/skeleton'
 import { LQI_TONE_TEXT, lqiTone, parentRouterOf } from './device-mesh-model'
-import { useMeshRoleLabel } from './mesh-labels'
+import { useMeshNetworkTitle, useMeshRoleLabel } from './mesh-labels'
 
 export interface DeviceMeshCardProps {
   readonly deviceId: number
@@ -52,6 +52,7 @@ function Row({
 export function DeviceMeshCard({ deviceId }: DeviceMeshCardProps): JSX.Element {
   const t = useUiText()
   const roleLabel = useMeshRoleLabel()
+  const networkTitle = useMeshNetworkTitle()
   const topology = useDeviceMeshGetTopology({ deviceId })
   const diagnostics = useDeviceMeshGetNodeDiagnostics({ deviceId })
   const readNow = useDeviceMeshReadNow({
@@ -88,6 +89,11 @@ export function DeviceMeshCard({ deviceId }: DeviceMeshCardProps): JSX.Element {
   return (
     <div className="flex flex-col gap-2">
       <dl className="flex flex-col gap-1">
+        {topology.data.network !== null && (
+          <Row label={t('uiLibrary.deviceMesh.network', 'Network')}>
+            {networkTitle(topology.data.network, 0)}
+          </Row>
+        )}
         <Row label={t('uiLibrary.deviceMesh.role', 'Role')}>{roleLabel(node.role)}</Row>
         <Row label={t('uiLibrary.deviceMesh.rssi', 'Signal (RSSI)')}>
           {node.rssi === null ? unknown : `${node.rssi} dBm`}

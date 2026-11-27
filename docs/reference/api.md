@@ -2666,7 +2666,7 @@
 
 ### `device-mesh` → `deviceMesh.*`
 
-- **Source:** `packages/types/src/capabilities/device-mesh.cap.ts:184`
+- **Source:** `packages/types/src/capabilities/device-mesh.cap.ts:202`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** deviceConfig(widget)
 - **Provider interface:** `IDeviceMeshProvider`

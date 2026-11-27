@@ -5,4 +5,4 @@ export {
   useMeshNetworks,
   type MeshNetworksResult,
 } from './use-mesh-networks'
-export { useMeshRoleLabel, useMeshTransportLabel } from './mesh-labels'
+export { useMeshNetworkTitle, useMeshRoleLabel, useMeshTransportLabel } from './mesh-labels'

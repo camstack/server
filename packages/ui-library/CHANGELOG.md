@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device mesh summary widget for a device page and the mesh model shared with the Network page
+- Device mesh sections are titled by the network name, with technology and channel badges, and the device widget shows the network
 
 ## [1.2.516] - 2026-11-27
 

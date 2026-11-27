@@ -136,7 +136,14 @@ export async function collectMeshNetworks(
     try {
       const topology = await fetchTopology(deviceId)
       for (const node of topology.nodes) if (node.deviceId !== null) covered.add(node.deviceId)
-      networks.push({ rootDeviceId: deviceId, topology, error: null })
+      // Two reads of one network (same id) are one section: keep the newer read.
+      const id = topology.network?.id ?? null
+      const same = id === null ? -1 : networks.findIndex((n) => n.topology?.network?.id === id)
+      if (same === -1) {
+        networks.push({ rootDeviceId: deviceId, topology, error: null })
+      } else if ((topology.readAt ?? -1) > (networks[same]?.topology?.readAt ?? -1)) {
+        networks[same] = { rootDeviceId: deviceId, topology, error: null }
+      }
     } catch (err) {
       networks.push({
         rootDeviceId: deviceId,

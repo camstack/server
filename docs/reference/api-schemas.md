@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1166 shared schemas.**
+**1168 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4235,6 +4235,14 @@ Enum: `"reported" \| "assumed"`
 - `lqi`: `number \| null`
 - `rssi`: `number \| null`
 
+### `MeshNetworkInfoSchema`
+
+- `id`: `string`
+- `name`: `string \| null`
+- `technology`: `MeshTechnologySchema`
+- `channel`: `number \| null`
+- `panId`: `number \| null`
+
 ### `MeshNodeDiagnosticsSchema`
 
 - `deviceId`: `number`
@@ -4302,8 +4310,13 @@ Enum: `"reported" \| "assumed"`
 - `daemonSocket?`: `string`
 - `daemonCliPath?`: `string`
 
+### `MeshTechnologySchema`
+
+Enum: `"thread" \| "wifi" \| "ethernet"`
+
 ### `MeshTopologySchema`
 
+- `network`: `MeshNetworkInfoSchema \| null`
 - `readAt`: `number \| null`
 - `nodes`: `MeshNodeSchema[]`
 - `links`: `MeshLinkSchema[]`

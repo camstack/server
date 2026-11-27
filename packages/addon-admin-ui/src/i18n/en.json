@@ -11744,7 +11744,10 @@
       "refresh": "Refresh",
       "nodeNotFound": "This device does not appear in the topology that was read.",
       "diagnosticsFailed": "The node diagnostics could not be read.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "threadNetwork": "Thread network {{id}}",
+      "network": "Network",
+      "channel": "Channel {{n}}"
     }
   },
   "helpers": {

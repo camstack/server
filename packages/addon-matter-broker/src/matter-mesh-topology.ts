@@ -6,8 +6,8 @@
  * `deviceId: null`.
  */
 
-import type { MeshLink, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
-import type { NodeMeshFacts } from './matter-mesh-decode.js'
+import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
+import type { NodeMeshFacts, ThreadFacts } from './matter-mesh-decode.js'
 
 /** One commissioned node as the builder sees it. */
 export interface MeshNodeInput {
@@ -78,7 +78,55 @@ function leafSignal(node: MeshNodeInput): {
   return best ?? { rssi: null, lqi: null }
 }
 
-export function buildTopology(nodes: readonly MeshNodeInput[]): MeshTopology {
+/**
+ * The network the answer describes. A fabric can span several Thread networks
+ * and carry Wi-Fi nodes too, so the answer names the one most nodes sit in: the
+ * Thread network (by extended PAN id) when any node reports one, else the
+ * dominant Wi-Fi / Ethernet segment, scoped to the broker. `null` when no node
+ * has been read far enough to tell.
+ */
+export function networkOf(nodes: readonly MeshNodeInput[], scope: string): MeshNetworkInfo | null {
+  const threads = new Map<string, { count: number; facts: ThreadFacts }>()
+  for (const node of nodes) {
+    const thread = node.facts.thread
+    if (thread === null || thread.extPanId === null) continue
+    const held = threads.get(thread.extPanId)
+    threads.set(thread.extPanId, { count: (held?.count ?? 0) + 1, facts: held?.facts ?? thread })
+  }
+  let best: { id: string; count: number; facts: ThreadFacts } | null = null
+  for (const [id, v] of threads) if (best === null || v.count > best.count) best = { id, ...v }
+  if (best !== null) {
+    // The name may be unread on the first node and read on another one.
+    const named = nodes.find(
+      (n) => n.facts.thread?.extPanId === best.id && n.facts.thread.networkName !== null,
+    )
+    return {
+      id: best.id,
+      name: named?.facts.thread?.networkName ?? null,
+      technology: 'thread',
+      channel: best.facts.channel,
+      panId: best.facts.panId,
+    }
+  }
+  const counts = new Map<'wifi' | 'ethernet', number>()
+  for (const node of nodes) {
+    const t = node.facts.transport
+    if (t === 'wifi' || t === 'ethernet') counts.set(t, (counts.get(t) ?? 0) + 1)
+  }
+  let tech: 'wifi' | 'ethernet' | null = null
+  for (const [t, c] of counts) if (tech === null || c > (counts.get(tech) ?? 0)) tech = t
+  if (tech === null) return null
+  const wifi = nodes.find((n) => n.facts.transport === 'wifi')?.facts.wifi ?? null
+  return {
+    id: `${scope}:${tech}`,
+    name: null,
+    technology: tech,
+    channel: tech === 'wifi' ? (wifi?.channel ?? null) : null,
+    panId: null,
+  }
+}
+
+export function buildTopology(nodes: readonly MeshNodeInput[], scope = 'matter'): MeshTopology {
   const own = ownAddressMap(nodes)
   const meshNodes: MeshNode[] = nodes.map((node) => ({
     deviceId: node.deviceId,
@@ -147,6 +195,7 @@ export function buildTopology(nodes: readonly MeshNodeInput[]): MeshTopology {
   }
   const readTimes = nodes.map((n) => n.facts.readAt).filter((t): t is number => t !== null)
   return {
+    network: networkOf(nodes, scope),
     readAt: readTimes.length === 0 ? null : Math.max(...readTimes),
     nodes: [...meshNodes, ...peers.values()],
     links,

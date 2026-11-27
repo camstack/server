@@ -22,6 +22,7 @@ const node = (over: Partial<MeshNode> & { nodeKey: string }): MeshNode => ({
 })
 
 const topo = (nodes: MeshNode[], links: MeshTopology['links'] = []): MeshTopology => ({
+  network: null,
   readAt: null,
   nodes,
   links,
@@ -81,5 +82,20 @@ describe('device-mesh model', () => {
       topology: null,
       error: 'broker offline',
     })
+  })
+
+  it('groups two reads of one network id into one section, keeping the newer read', async () => {
+    const info = {
+      id: '00112233aabbccdd',
+      name: 'Home',
+      technology: 'thread' as const,
+      channel: 15,
+      panId: 1,
+    }
+    const older = { ...topo([node({ nodeKey: '1', deviceId: 1 })]), network: info, readAt: 10 }
+    const newer = { ...topo([node({ nodeKey: '9', deviceId: 2 })]), network: info, readAt: 20 }
+    const result = await collectMeshNetworks([1, 2], async (id) => (id === 1 ? older : newer))
+    expect(result).toHaveLength(1)
+    expect(result[0]?.topology?.readAt).toBe(20)
   })
 })

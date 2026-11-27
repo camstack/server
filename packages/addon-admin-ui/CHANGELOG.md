@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Network -> Device networks: topology map, node table and node detail for every device mesh (Matter / Thread today)
+- Network > Device networks groups meshes by network and shows each network's name, technology and channel
 
 ## [1.2.764] - 2026-11-27
 

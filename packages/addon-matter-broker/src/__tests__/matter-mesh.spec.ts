@@ -395,3 +395,60 @@ describe('MatterMeshService periodic pass', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 })
+
+describe('the network a topology names', () => {
+  const EXT_PAN = 0x1122334455667788n
+  const named = (own: bigint, name: string | null): MeshAttr[] => [
+    ...threadAttrs(own, 5, []),
+    attr(THREAD, 0, 15),
+    attr(THREAD, 3, 4660),
+    attr(THREAD, 4, EXT_PAN),
+    ...(name === null ? [] : [attr(THREAD, 2, name)]),
+  ]
+  it('names the Thread network from NetworkName and the extended PAN id', () => {
+    const topology = buildTopology(
+      [
+        {
+          nodeId: '1',
+          label: 'a',
+          online: true,
+          deviceId: 1,
+          facts: decodeNodeMeshFacts(named(ROUTER_EXT, null)),
+        },
+        {
+          nodeId: '2',
+          label: 'b',
+          online: true,
+          deviceId: 2,
+          facts: decodeNodeMeshFacts(named(SLEEPY_EXT, 'Casa-Thread')),
+        },
+      ],
+      'matter:b1',
+    )
+    expect(topology.network).toEqual({
+      id: '1122334455667788',
+      name: 'Casa-Thread',
+      technology: 'thread',
+      channel: 15,
+      panId: 4660,
+    })
+  })
+  it('never invents a name: unread stays null', () => {
+    const topology = buildTopology([
+      {
+        nodeId: '1',
+        label: 'a',
+        online: true,
+        deviceId: 1,
+        facts: decodeNodeMeshFacts(named(ROUTER_EXT, null)),
+      },
+    ])
+    expect(topology.network?.name).toBeNull()
+  })
+  it('has no network when nothing was read', () => {
+    const facts = decodeNodeMeshFacts([])
+    expect(
+      buildTopology([{ nodeId: '1', label: 'x', online: true, deviceId: 1, facts }]).network,
+    ).toBeNull()
+  })
+})
