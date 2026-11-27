@@ -11776,7 +11776,8 @@
       "retry": "Riprova",
       "threadNetwork": "Rete Thread {{id}}",
       "network": "Rete",
-      "channel": "Canale {{n}}"
+      "channel": "Canale {{n}}",
+      "zigbeeNetwork": "Rete Zigbee {{id}}"
     }
   },
   "helpers": {

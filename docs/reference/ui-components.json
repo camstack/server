@@ -21802,7 +21802,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-mesh/mesh-labels.ts",
-      "summary": "Title of one mesh network: its own name, else \"Thread network <short id>\", else \"Network N\". Never a name the provider did not report."
+      "summary": "Title of one mesh network: its own name, else \"Thread network <short id>\" (or \"Zigbee network <short id>\"), else \"Network N\". Never a name the provider did not report."
     },
     {
       "name": "useMeshRoleLabel",

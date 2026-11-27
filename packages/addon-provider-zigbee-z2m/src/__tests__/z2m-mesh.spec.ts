@@ -59,7 +59,13 @@ describe('device-mesh over Zigbee2MQTT', () => {
     const topology = await h.mesh.getTopology({ deviceId: 1 })
     expect(h.scans()).toBe(0)
     expect(topology.readAt).toBeNull()
-    expect(topology.network).toBeNull()
+    expect(topology.network).toEqual({
+      id: '0102030405060708',
+      name: null,
+      technology: 'zigbee',
+      channel: 15,
+      panId: 6754,
+    })
     expect(topology.links).toEqual([])
     const door = topology.nodes.find((n) => n.nodeKey === DOOR)
     expect(door).toMatchObject({

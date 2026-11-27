@@ -11754,7 +11754,8 @@
       "retry": "Retry",
       "threadNetwork": "Thread network {{id}}",
       "network": "Network",
-      "channel": "Channel {{n}}"
+      "channel": "Channel {{n}}",
+      "zigbeeNetwork": "Zigbee network {{id}}"
     }
   },
   "helpers": {

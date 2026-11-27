@@ -7,6 +7,7 @@
 import type {
   IDeviceMeshProvider,
   MeshLink,
+  MeshNetworkInfo,
   MeshNode,
   MeshNodeDiagnostics,
   MeshPower,
@@ -16,7 +17,7 @@ import type {
   MeshTopology,
 } from '@camstack/types'
 import { errMsg } from '@camstack/types'
-import type { Z2mDevice, Z2mNetworkMap } from './z2m-protocol.js'
+import type { Z2mBridgeInfo, Z2mDevice, Z2mNetworkMap } from './z2m-protocol.js'
 import type { Z2mHub } from './z2m-hub.js'
 import { Z2mNetworkMapSchema } from './z2m-protocol.js'
 
@@ -33,6 +34,8 @@ export interface MeshInputs {
   readonly held: HeldMap | null
   readonly availability: (ieee: string) => boolean | null
   readonly deviceIdOf: (ieee: string) => number | null
+  /** The bridge's own description (`bridge/info`); null until the server has sent it. */
+  readonly bridge: Z2mBridgeInfo | null
 }
 
 function powerOf(device: Z2mDevice | undefined, type: string): MeshPower {
@@ -59,6 +62,26 @@ function endpointsOf(link: Z2mNetworkMap['value']['links'][number]): Endpoints |
   const from = link.sourceIeeeAddr ?? link.source?.ieeeAddr
   const to = link.targetIeeeAddr ?? link.target?.ieeeAddr
   return from !== undefined && to !== undefined ? { from, to } : null
+}
+
+function hexOf(extendedPanId: string | readonly number[]): string {
+  if (typeof extendedPanId === 'string') return extendedPanId.replace(/^0x/i, '').toLowerCase()
+  return extendedPanId.map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/** The Zigbee network `bridge/info` describes; null when the server gave no extended PAN id to key it by. */
+export function networkOf(bridge: Z2mBridgeInfo | null): MeshNetworkInfo | null {
+  const net = bridge?.network
+  if (net?.extended_pan_id === undefined) return null
+  const id = hexOf(net.extended_pan_id)
+  if (id === '') return null
+  return {
+    id,
+    name: null,
+    technology: 'zigbee',
+    channel: net.channel ?? null,
+    panId: net.pan_id ?? null,
+  }
 }
 
 /** The topology the server told us about; links only once a map has been scanned. */
@@ -101,8 +124,7 @@ export function buildTopology(input: MeshInputs): MeshTopology {
   }
   for (const [ieee, device] of input.table) push(ieee, device)
   for (const ieee of mapNodes.keys()) if (!seen.has(ieee)) push(ieee, undefined)
-  // `network` names a Thread, Wi-Fi or Ethernet network; its technology has no Zigbee value, so none is claimed.
-  return { network: null, readAt: input.held?.readAt ?? null, nodes, links }
+  return { network: networkOf(input.bridge), readAt: input.held?.readAt ?? null, nodes, links }
 }
 
 /** One node's own report; the radio figures a Zigbee node has no standard way to give stay `null`. */
@@ -197,6 +219,7 @@ export function meshProviderFor(
         held: hub.heldMap(integrationId),
         availability: (ieee) => session?.availabilityOf(ieee) ?? null,
         deviceIdOf: (ieee) => hub.deviceIdOf(integrationId, ieee),
+        bridge: session?.bridgeInfo ?? null,
       }
     },
     ieeeOf: (deviceId) => hub.ieeeOf(integrationId, deviceId),

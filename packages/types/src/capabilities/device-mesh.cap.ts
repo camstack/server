@@ -76,8 +76,8 @@ export const MeshLinkSchema = z.object({
 })
 export type MeshLink = z.infer<typeof MeshLinkSchema>
 
-/** What a provider really reports today (a Matter fabric spans these three). */
-export const MeshTechnologySchema = z.enum(['thread', 'wifi', 'ethernet'])
+/** What a provider really reports today (a Matter fabric spans thread, wifi and ethernet; a Zigbee2MQTT network is zigbee). */
+export const MeshTechnologySchema = z.enum(['thread', 'wifi', 'ethernet', 'zigbee'])
 export type MeshTechnology = z.infer<typeof MeshTechnologySchema>
 
 /** The network a topology answer describes. Every field a provider did not read is `null`, never invented. */

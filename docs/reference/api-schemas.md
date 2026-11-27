@@ -4313,7 +4313,7 @@ Enum: `"reported" \| "assumed"`
 
 ### `MeshTechnologySchema`
 
-Enum: `"thread" \| "wifi" \| "ethernet"`
+Enum: `"thread" \| "wifi" \| "ethernet" \| "zigbee"`
 
 ### `MeshTopologySchema`
 

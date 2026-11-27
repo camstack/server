@@ -41,7 +41,7 @@ export function useMeshTransportLabel(): (transport: MeshTransport) => string {
 }
 
 /**
- * Title of one mesh network: its own name, else "Thread network <short id>",
+ * Title of one mesh network: its own name, else "Thread network <short id>" (or "Zigbee network <short id>"),
  * else "Network N". Never a name the provider did not report.
  */
 export function useMeshNetworkTitle(): (info: MeshNetworkInfo | null, index: number) => string {
@@ -50,6 +50,11 @@ export function useMeshNetworkTitle(): (info: MeshNetworkInfo | null, index: num
     if (info?.name != null && info.name.trim() !== '') return info.name
     if (info?.technology === 'thread') {
       return t('uiLibrary.deviceMesh.threadNetwork', 'Thread network {{id}}', {
+        id: info.id.slice(-4),
+      })
+    }
+    if (info?.technology === 'zigbee') {
+      return t('uiLibrary.deviceMesh.zigbeeNetwork', 'Zigbee network {{id}}', {
         id: info.id.slice(-4),
       })
     }
