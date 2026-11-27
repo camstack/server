@@ -16,6 +16,21 @@ vi.mock('../hub-mdns-ciao.js', () => ({
   createCiaoPublisher: () => ({ publish: async () => ({ stop: async () => undefined }) }),
 }))
 
+const osInterfaces = vi.hoisted(() => vi.fn())
+const realInterfaces = vi.hoisted(() => ({
+  fn: () => ({}) as ReturnType<typeof import('node:os').networkInterfaces>,
+}))
+vi.mock('node:os', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:os')>()
+  osInterfaces.mockImplementation(actual.networkInterfaces)
+  realInterfaces.fn = actual.networkInterfaces
+  return {
+    ...actual,
+    default: { ...actual, networkInterfaces: osInterfaces },
+    networkInterfaces: osInterfaces,
+  }
+})
+
 const TUNNEL_HOST = 'hub.example-tunnel.test'
 
 function makeLogger(): IScopedLogger {
@@ -83,6 +98,7 @@ describe('local-network tunnel hostname reconcile', () => {
   })
   afterEach(() => {
     vi.useRealTimers()
+    osInterfaces.mockImplementation(realInterfaces.fn)
     fs.rmSync(dir, { recursive: true, force: true })
   })
 
@@ -105,6 +121,10 @@ describe('local-network tunnel hostname reconcile', () => {
   })
 
   it('a disconnected tunnel clears the hostname', async () => {
+    // Pin the host: with no LAN interface (a CI container) the cleared role resolves to null,
+    // with one it falls back to the LAN address. Either way the tunnel host must be gone; the
+    // empty set makes the null branch the one this spec always exercises.
+    osInterfaces.mockReturnValue({})
     let up = true
     const provider = await start(dir, async () =>
       up ? connected(true) : { connected: false, endpoint: null },
@@ -113,6 +133,6 @@ describe('local-network tunnel hostname reconcile', () => {
     up = false
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.now() + 60_000)
-    expect(await publicEndpoint(provider)).not.toContain(TUNNEL_HOST)
+    expect(await publicEndpoint(provider)).toBeNull()
   })
 })
