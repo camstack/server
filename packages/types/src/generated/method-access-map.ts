@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1581 method paths across 222 capabilities.
+ * Coverage: 1585 method paths across 223 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -448,6 +448,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.updateDeviceField': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.updateDeviceFieldsBatch': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.updateRoom': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceMesh.getNodeDiagnostics': { capName: "device-mesh", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
+  'deviceMesh.getTopology': { capName: "device-mesh", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
+  'deviceMesh.readNow': { capName: "device-mesh", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'deviceMesh.refresh': { capName: "device-mesh", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceOps.getConfigEntries': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceOps.getRawState': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceOps.getSettingsSchema': { capName: "device-ops", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1668,6 +1672,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-extension",
   "device-history",
   "device-manager",
+  "device-mesh",
   "device-ops",
   "device-provider",
   "device-removal-hook",
@@ -1860,6 +1865,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "detection-pipeline",
   "device-admin-link",
   "device-extension",
+  "device-mesh",
   "device-ops",
   "device-runs",
   "device-state-refresh",

@@ -36,6 +36,7 @@ import type { dayNightCapability } from '../capabilities/day-night.cap.js'
 import type { detectionPipelineCapability } from '../capabilities/detection-pipeline.cap.js'
 import type { deviceAdminLinkCapability } from '../capabilities/device-admin-link.cap.js'
 import type { deviceExtensionCapability } from '../capabilities/device-extension.cap.js'
+import type { deviceMeshCapability } from '../capabilities/device-mesh.cap.js'
 import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
 import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
 import type { deviceStateRefreshCapability } from '../capabilities/device-state-refresh.cap.js'
@@ -287,6 +288,7 @@ export interface DeviceProxy {
   readonly detectionPipeline?: InferDeviceProxyCap<typeof detectionPipelineCapability>
   readonly deviceAdminLink?: InferDeviceProxyCap<typeof deviceAdminLinkCapability>
   readonly deviceExtension?: InferDeviceProxyCap<typeof deviceExtensionCapability>
+  readonly deviceMesh?: InferDeviceProxyCap<typeof deviceMeshCapability>
   readonly deviceOps?: InferDeviceProxyCap<typeof deviceOpsCapability>
   readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
   readonly deviceStateRefresh?: InferDeviceProxyCap<typeof deviceStateRefreshCapability>
@@ -628,6 +630,13 @@ export function createDeviceProxy(
     listSlots: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'listSlots', 'query', input, undefined, options),
     listCandidates: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'listCandidates', 'query', input, undefined, options),
     setSlot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'setSlot', 'mutation', input, undefined, options),
+  }
+
+  const deviceMeshInterface = {
+    getTopology: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-mesh', 'deviceMesh', 'getTopology', 'query', input, undefined, options),
+    getNodeDiagnostics: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-mesh', 'deviceMesh', 'getNodeDiagnostics', 'query', input, undefined, options),
+    readNow: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-mesh', 'deviceMesh', 'readNow', 'mutation', input, undefined, options),
+    refresh: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-mesh', 'deviceMesh', 'refresh', 'mutation', input, undefined, options),
   }
 
   const deviceOpsInterface = {
@@ -1631,6 +1640,7 @@ export function createDeviceProxy(
     ...(bound('detection-pipeline') ? { detectionPipeline: detectionPipelineInterface } : {}),
     ...(bound('device-admin-link') ? { deviceAdminLink: deviceAdminLinkInterface } : {}),
     ...(bound('device-extension') ? { deviceExtension: deviceExtensionInterface } : {}),
+    ...(bound('device-mesh') ? { deviceMesh: deviceMeshInterface } : {}),
     ...(bound('device-ops') ? { deviceOps: deviceOpsInterface } : {}),
     ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),
     ...(bound('device-state-refresh') ? { deviceStateRefresh: deviceStateRefreshInterface } : {}),

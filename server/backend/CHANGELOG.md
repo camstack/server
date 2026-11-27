@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub serves the new device-mesh capability routes
+
 ## [1.2.971] - 2026-11-27
 
 ### Changed

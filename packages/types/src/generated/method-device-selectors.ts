@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 659 methods carry a device reference, of which
+ * Coverage: 663 methods carry a device reference, of which
  * 206 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -188,6 +188,10 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.updateConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.updateDeviceField': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.updateDeviceFieldsBatch': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceMesh.getNodeDiagnostics': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceMesh.getTopology': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceMesh.readNow': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceMesh.refresh': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceOps.getConfigEntries': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceOps.getRawState': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceOps.getSettingsSchema': [{ name: "deviceId", form: "single", optional: false }] as const,

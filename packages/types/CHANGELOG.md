@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New device-mesh capability: the radio mesh a device family lives on (topology, node diagnostics, read now, refresh)
+
 ## [1.2.642] - 2026-11-27
 
 ### Changed

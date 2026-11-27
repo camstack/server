@@ -5,7 +5,7 @@
  * `description` option, else the first JSDoc paragraph above the method.
  * Keys are tRPC paths (`<cap>.<method>`); a method without either is absent.
  *
- * Coverage: 1570 of 1581 methods.
+ * Coverage: 1574 of 1585 methods.
  */
 /* eslint-disable */
 export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.freeze({
@@ -432,6 +432,10 @@ export const METHOD_DESCRIPTIONS: Readonly<Record<string, string>> = Object.free
   "deviceManager.updateDeviceField": "Write one device field through the capability that owns it.",
   "deviceManager.updateDeviceFieldsBatch": "Batched counterpart of updateDeviceField — the admin UI groups per-provider changes so a single round-trip triggers at most one applyDeviceSettingsPatch per (capName, addonId) tuple. Per-patch failures are reported in failures[] without aborting the others; consumers inspect the list and surface targeted errors.",
   "deviceManager.updateRoom": "ONE write to ONE record: rename, restyle, describe, move to a zone. A field left out is kept, null clears it. A rename onto the name another room has is refused (room-name-taken); merge by moving devices instead. No device is rewritten. Unknown id is refused (room-not-found).",
+  "deviceMesh.getNodeDiagnostics": "One node's own report: identity, uptime, faults, fabrics and its radio's figures.",
+  "deviceMesh.getTopology": "The mesh the device sits in: nodes and the links between them, from what is already held.",
+  "deviceMesh.readNow": "Read that one node now, battery nodes included (an explicit ask).",
+  "deviceMesh.refresh": "Re-read the mains-powered nodes of the mesh; battery nodes are never touched.",
   "deviceOps.getConfigEntries": "Return the device's config entries (key + current value). Used by the device-manager aggregator when reading the driver's schema+values.",
   "deviceOps.getRawState": "Opt-in: return the device's RAW upstream state (the provider's cached values) as a display-safe { source, data } blob. Returns null when the device exposes no raw state — the State panel hides its Raw toggle in that case. One-shot (read the provider's existing cache; no upstream round-trip).",
   "deviceOps.getSettingsSchema": "Build the ConfigUISchema (FormBuilder input shape) from the device's Zod config schema. Runs on the worker that owns the IDevice so the Zod types stay local (they're function references, not serializable). Returns a fully JSON-serializable schema with sections/fields the admin UI renders directly.",

@@ -1190,6 +1190,18 @@ export const useDeviceManagerGetDeviceStatusAggregate: typeof trpc.deviceManager
 /** Generated alias around `trpc.deviceManager.getDeviceStatusAggregateBatch.useQuery`. */
 export const useDeviceManagerGetDeviceStatusAggregateBatch: typeof trpc.deviceManager.getDeviceStatusAggregateBatch.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.getDeviceStatusAggregateBatch.useQuery)
 
+/** Generated alias around `trpc.deviceMesh.getTopology.useQuery`. */
+export const useDeviceMeshGetTopology: typeof trpc.deviceMesh.getTopology.useQuery = /*#__PURE__*/ alias(() => trpc.deviceMesh.getTopology.useQuery)
+
+/** Generated alias around `trpc.deviceMesh.getNodeDiagnostics.useQuery`. */
+export const useDeviceMeshGetNodeDiagnostics: typeof trpc.deviceMesh.getNodeDiagnostics.useQuery = /*#__PURE__*/ alias(() => trpc.deviceMesh.getNodeDiagnostics.useQuery)
+
+/** Generated alias around `trpc.deviceMesh.readNow.useMutation`. */
+export const useDeviceMeshReadNow: typeof trpc.deviceMesh.readNow.useMutation = /*#__PURE__*/ alias(() => trpc.deviceMesh.readNow.useMutation)
+
+/** Generated alias around `trpc.deviceMesh.refresh.useMutation`. */
+export const useDeviceMeshRefresh: typeof trpc.deviceMesh.refresh.useMutation = /*#__PURE__*/ alias(() => trpc.deviceMesh.refresh.useMutation)
+
 /** Generated alias around `trpc.deviceOps.getStreamSources.useQuery`. */
 export const useDeviceOpsGetStreamSources: typeof trpc.deviceOps.getStreamSources.useQuery = /*#__PURE__*/ alias(() => trpc.deviceOps.getStreamSources.useQuery)
 

@@ -3327,6 +3327,26 @@ export {
   type IDeviceStateRefreshProvider,
 } from './device-state-refresh.cap.js'
 export {
+  deviceMeshCapability,
+  type IDeviceMeshProvider,
+  type MeshFabric,
+  type MeshLink,
+  MeshLinkSchema,
+  type MeshNode,
+  type MeshNodeDiagnostics,
+  MeshNodeDiagnosticsSchema,
+  MeshNodeSchema,
+  type MeshPower,
+  type MeshReadNowResult,
+  type MeshRefreshResult,
+  type MeshRole,
+  type MeshThreadNeighbor,
+  type MeshThreadRoute,
+  type MeshTopology,
+  MeshTopologySchema,
+  type MeshTransport,
+} from './device-mesh.cap.js'
+export {
   type IRecordingProvider,
   RECORDING_SOURCE_CAMSTACK,
   RECORDING_SOURCE_CAMSTACK_ADDON,
@@ -3989,6 +4009,7 @@ import type { rebootCapability } from './reboot.cap.js'
 import type { lowPowerSleepCapability } from './low-power-sleep.cap.js'
 import type { resyncCapability } from './resync.cap.js'
 import type { deviceStateRefreshCapability } from './device-state-refresh.cap.js'
+import type { deviceMeshCapability } from './device-mesh.cap.js'
 import type { recordingCapability } from './recording.cap.js'
 import type { recordingArchiveCapability } from './recording-archive.cap.js'
 import type { recordingExportCapability } from './recording-export.cap.js'
@@ -4140,6 +4161,7 @@ type AnyCapability =
   | typeof lowPowerSleepCapability
   | typeof resyncCapability
   | typeof deviceStateRefreshCapability
+  | typeof deviceMeshCapability
   | typeof brightnessCapability
   | typeof colorCapability
   | typeof climateControlCapability

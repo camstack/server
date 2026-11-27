@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**222 capabilities · 1581 methods.**
+**223 capabilities · 1585 methods.**
 
 ## Method index
 
@@ -439,6 +439,10 @@
 | `deviceManager.testField` | mutation | admin | device-manager |
 | `deviceManager.getDeviceStatusAggregate` | query | protected | device-manager |
 | `deviceManager.getDeviceStatusAggregateBatch` | query | protected | device-manager |
+| `deviceMesh.getTopology` | query | admin | device-mesh |
+| `deviceMesh.getNodeDiagnostics` | query | admin | device-mesh |
+| `deviceMesh.readNow` | mutation | admin | device-mesh |
+| `deviceMesh.refresh` | mutation | admin | device-mesh |
 | `deviceOps.getStreamSources` | query | protected | device-ops |
 | `deviceOps.getConfigEntries` | query | protected | device-ops |
 | `deviceOps.setConfig` | mutation | admin | device-ops |
@@ -2659,6 +2663,20 @@
 | testField | `deviceManager.testField` | mutation | admin | `{ deviceId: number; key: string; value: unknown }` | `{ status: "ok" \| "error"; labels?: string[]; error?: string }` |
 | getDeviceStatusAggregate | `deviceManager.getDeviceStatusAggregate` | query | protected | `{ deviceId: number; caps?: string[] }` | `Record<string, unknown \| null>` |
 | getDeviceStatusAggregateBatch | `deviceManager.getDeviceStatusAggregateBatch` | query | protected | `{ deviceIds: number[]; caps?: string[] }` | `Record<string, Record<string, unknown \| null>>` |
+
+### `device-mesh` → `deviceMesh.*`
+
+- **Source:** `packages/types/src/capabilities/device-mesh.cap.ts:184`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
+- **Archetypes:** —
+- **Provider interface:** `IDeviceMeshProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getTopology | `deviceMesh.getTopology` | query | admin | `{ deviceId: number }` | `MeshTopologySchema` |
+| getNodeDiagnostics | `deviceMesh.getNodeDiagnostics` | query | admin | `{ deviceId: number }` | `MeshNodeDiagnosticsSchema` |
+| readNow | `deviceMesh.readNow` | mutation | admin | `{ deviceId: number }` | `{ readOk: boolean; error: string \| null; diagnostics: MeshNodeDiagnosticsSchema }` |
+| refresh | `deviceMesh.refresh` | mutation | admin | `{ deviceId: number }` | `{ readNodes: number; failedNodes: number; skippedNodes: number }` |
 
 ### `device-ops` → `deviceOps.*`
 

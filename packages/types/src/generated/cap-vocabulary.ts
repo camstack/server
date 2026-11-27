@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 222 caps (114 device, 108 system).
+ * `*.cap.ts` (D1050): 223 caps (115 device, 108 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -4342,6 +4342,16 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
     notOperatorFacing: {
       refresh: 'the core schedules state refreshes itself; an operator never asks for one',
       resubscribe: 'the core schedules state refreshes itself; an operator never asks for one',
+    },
+  },
+  'device-mesh': {
+    scope: 'device',
+    noun: { en: 'Device mesh', it: 'Mesh dei dispositivi' },
+    notOperatorFacing: {
+      getTopology: 'network diagnostics are an admin tool, not an ecosystem entity',
+      getNodeDiagnostics: 'network diagnostics are an admin tool, not an ecosystem entity',
+      readNow: 'network diagnostics are an admin tool, not an ecosystem entity',
+      refresh: 'network diagnostics are an admin tool, not an ecosystem entity',
     },
   },
   'recording': { scope: 'device', noun: { en: 'Recording', it: 'Registrazione' } },

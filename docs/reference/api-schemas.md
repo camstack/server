@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1161 shared schemas.**
+**1165 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4227,6 +4227,44 @@ Enum: `"reported" \| "assumed"`
 - `notBefore`: `number`
 - `notAfter`: `number`
 
+### `MeshLinkSchema`
+
+- `from`: `string`
+- `to`: `string`
+- `kind`: `"neighbor" \| "route"`
+- `lqi`: `number \| null`
+- `rssi`: `number \| null`
+
+### `MeshNodeDiagnosticsSchema`
+
+- `deviceId`: `number`
+- `readAt`: `number \| null`
+- `vendor`: `string \| null`
+- `product`: `string \| null`
+- `hardwareVersion`: `string \| null`
+- `softwareVersion`: `string \| null`
+- `uptimeS`: `number \| null`
+- `rebootCount`: `number \| null`
+- `bootReason`: `string \| null`
+- `networkFaults`: `string[] \| null`
+- `fabrics`: `({ fabricIndex: number; label: string \| null; vendorId: number \| null })[] \| null`
+- `thread`: `{ role: string \| null; rloc16: number \| null; channel: number \| null; panId: number \| null; extPanId: string \| null; partitionId: number \| null; neighbors: ({ extAddress: string; rloc16: number \| null; lqi: number \| null; averageRssi: number \| null; lastRssi: number \| null; ageS: number \| null; isChild: boolean \| null; fullThreadDevice: boolean \| null })[] \| null; routes: ({ extAddress: string; rloc16: number \| null; routerId: number \| null; nextHop: number \| null; pathCost: number \| null; lqiIn: number \| null; lqiOut: number \| null; linkEstablished: boolean \| null })[] \| null } \| null`
+- `wifi`: `{ bssid: string \| null; rssi: number \| null; channel: number \| null; security: string \| null } \| null`
+- `ethernet`: `{ phyRateMbps: number \| null; fullDuplex: boolean \| null; carrierDetect: boolean \| null } \| null`
+
+### `MeshNodeSchema`
+
+- `deviceId`: `number \| null`
+- `nodeKey`: `string`
+- `label`: `string`
+- `transport`: `"thread" \| "wifi" \| "ethernet" \| "zigbee" \| "unknown"`
+- `role`: `"border-router" \| "router" \| "end-device" \| "sleepy-end-device" \| "coordinator" \| "unknown"`
+- `power`: `"mains" \| "battery" \| "unknown"`
+- `online`: `boolean`
+- `rssi`: `number \| null`
+- `lqi`: `number \| null`
+- `lastReadAt`: `number \| null`
+
 ### `MeshPeerSchema`
 
 - `id`: `string`
@@ -4263,6 +4301,12 @@ Enum: `"reported" \| "assumed"`
 - `keyExpiry`: `number \| null`
 - `daemonSocket?`: `string`
 - `daemonCliPath?`: `string`
+
+### `MeshTopologySchema`
+
+- `readAt`: `number \| null`
+- `nodes`: `MeshNodeSchema[]`
+- `links`: `MeshLinkSchema[]`
 
 ### `MeterStatusSchema`
 
