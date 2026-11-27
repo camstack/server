@@ -44,13 +44,13 @@ const NATIVE: HeatPumpStatus = HeatPumpStatusSchema.parse({
   lastFetchedAt: 1,
 })
 
-function link(targetId: string, fieldPath: string, unit: string) {
+function link(targetId: string, fieldPath: string, unit: string, sourceCap = 'power-meter') {
   const compiled = compileScalarOverride({
     draft: {
       kind: 'scalar',
       cap: CAP,
       targetId,
-      source: { ...METER, cap: 'power-meter', fieldPath },
+      source: { ...METER, cap: sourceCap, fieldPath },
       transform: { kind: 'identity' },
     },
     device: PUMP,
@@ -132,6 +132,19 @@ describe('heat-pump-status electrical fields read from a picked device', () => {
     expect(status.power.thermalW).toBe(3000)
     expect(status.energy.electricalKwh).toBe(321)
     expect(heatPumpInstantCop(status.power)).toBeCloseTo(3000 / 1234)
+  })
+
+  it('takes the energy system heat pump power, with its COP, once the operator links it', () => {
+    const key = compositionReadKey({
+      source: METER,
+      cap: 'energy-system',
+      fieldPath: 'heatPump.powerW',
+    })
+    readings.set(key, fresh(2900))
+    start([link('electrical-power', 'heatPump.powerW', 'W', 'energy-system')])
+    const status = served()
+    expect(status.power.electricalW).toBe(2900)
+    expect(heatPumpInstantCop(status.power)).toBeCloseTo(3000 / 2900)
   })
 
   it('replaces the native kWh when linked', () => {

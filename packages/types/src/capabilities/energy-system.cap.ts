@@ -55,9 +55,15 @@ export type EnergyGrid = z.infer<typeof EnergyGridSchema>
 
 /** A consumer on the bus (the house, the heat pump): power and energy drawn. */
 export const EnergyConsumerSchema = z.object({
-  powerW: z.number().nullable().meta(readingMeta('power')),
+  powerW: z
+    .number()
+    .nullable()
+    .meta(readingMeta('power', { label: 'Power' })),
   /** Lifetime consumption, kWh. */
-  energyKwh: z.number().nullable().meta(readingMeta('energy')),
+  energyKwh: z
+    .number()
+    .nullable()
+    .meta(readingMeta('energy', { label: 'Energy' })),
   /** Consumed today, kWh. */
   todayKwh: z.number().nullable().meta(readingMeta('energy')),
 })

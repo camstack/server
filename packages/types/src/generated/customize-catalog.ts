@@ -2023,6 +2023,12 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
     voltage: 'V',
     temperatureC: '°C',
   },
+  'energy-system': {
+    'house.powerW': 'W',
+    'house.energyKwh': 'kWh',
+    'heatPump.powerW': 'W',
+    'heatPump.energyKwh': 'kWh',
+  },
   'humidity-sensor': {
     humidity: '%',
   },

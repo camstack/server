@@ -75,7 +75,10 @@ function topLevelShape(schema: z.ZodType): Readonly<Record<string, z.ZodType>> |
   return shape
 }
 
-/** Top-level runtime paths that declare a unit. */
+/**
+ * Runtime paths that declare a unit: the top level, and the fields of a nullable object slot
+ * one level down as `slot.field` (a slot that is itself absent is a slot, not a reading).
+ */
 export function runtimeFieldUnits(schema: z.ZodType): Readonly<Record<string, string>> {
   const shape = topLevelShape(schema)
   if (shape === undefined) return {}
@@ -83,6 +86,12 @@ export function runtimeFieldUnits(schema: z.ZodType): Readonly<Record<string, st
   for (const [path, field] of Object.entries(shape)) {
     const unit = unitOnSchema(field)
     if (unit !== undefined) units[path] = unit
+    const slot = field instanceof z.ZodNullable ? topLevelShape(field) : undefined
+    if (slot === undefined) continue
+    for (const [key, inner] of Object.entries(slot)) {
+      const innerUnit = unitOnSchema(inner)
+      if (innerUnit !== undefined) units[`${path}.${key}`] = innerUnit
+    }
   }
   return units
 }

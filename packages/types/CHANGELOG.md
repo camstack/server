@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A heat pump can take its electrical power from the energy system's heat pump reading (Customize source picker).
+
 ## [1.2.641] - 2026-11-27
 
 ### Added

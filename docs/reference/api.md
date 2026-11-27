@@ -2869,7 +2869,7 @@
 
 ### `energy-system` → `energySystem.*`
 
-- **Source:** `packages/types/src/capabilities/energy-system.cap.ts:130`
+- **Source:** `packages/types/src/capabilities/energy-system.cap.ts:136`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `energy-system`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEnergySystemProvider`

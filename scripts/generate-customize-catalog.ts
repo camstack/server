@@ -101,12 +101,17 @@ function printArray(values: UnknownList, indent: number): string {
 
 type PlainRecord = Readonly<Record<string, unknown>>
 
+/** A dotted path (`heatPump.powerW`) is a quoted key; a plain identifier stays bare. */
+function printKey(key: string): string {
+  return /^[A-Za-z_$][\w$]*$/.test(key) ? key : `'${key}'`
+}
+
 function printObject(value: PlainRecord, indent: number): string {
   const entries = Object.entries(value).filter(([, item]) => item !== undefined)
   if (entries.length === 0) return '{}'
   const pad = ' '.repeat(indent + 2)
   const inner = entries
-    .map(([key, item]) => `${pad}${key}: ${printMember(key, item, indent)}`)
+    .map(([key, item]) => `${pad}${printKey(key)}: ${printMember(key, item, indent)}`)
     .join(',\n')
   return `{\n${inner},\n${' '.repeat(indent)}}`
 }
