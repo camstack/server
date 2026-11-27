@@ -28,6 +28,15 @@ export class BridgeInstance {
    * lands meanwhile sets `rerun`, and the running one goes again with the latest state.
    */
   readonly reconcileFlights = new Map<string, { rerun: boolean }>()
+  /**
+   * A shape change that only REMOVES features or caps, waiting for a second read to confirm it
+   * (a composed cap is briefly unbound while the composer restarts). By device id: the shape key
+   * seen, when, and the confirming re-read's timer.
+   */
+  readonly pendingRemovals = new Map<
+    string,
+    { readonly key: string; readonly since: number; readonly timer: ReturnType<typeof setTimeout> }
+  >()
   /** Pending rebuild timers per device id: debounce, cleared on detach. */
   readonly pendingRebuildTimers = new Map<string, ReturnType<typeof setTimeout>>()
   actionExports: ActionExports | null = null

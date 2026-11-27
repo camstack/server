@@ -20,7 +20,11 @@ import type { z } from 'zod'
 import { BridgeHost } from '../bridge-host.js'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { ExposedConfigEntry } from '../hap-export-records.js'
-import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
+import {
+  ExportHapAddon,
+  REMOVAL_CONFIRM_MS,
+  type ExportSyncStateSchema,
+} from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
 import { accessoryUuidFor } from '../mappers/kind.js'
 import type { DeviceMapper } from '../mappers/types.js'
@@ -312,11 +316,54 @@ describe('accessory shape — rebuild when an input moves, and only then', () =>
     addon.bindings = addon.bindings.filter((cap) => cap !== 'ptz')
     addon.emit(EventCategory.DeviceBindingsChanged)
     await settle()
+    // A removal waits for its confirming second read.
+    expect(addon.builds).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
 
     expect(addon.builds).toHaveLength(2)
     expect(addon.lastBuild?.caps).not.toContain('ptz')
     const line = addon.infos.find((l) => l.msg.includes('rebuilding accessory'))
     expect(line?.meta?.['changed']).toBe('caps -ptz')
+  })
+
+  it('a composed cap unbound for a moment at a restart and re-bound later rebuilds nothing', async () => {
+    addon.bindings = [...addon.bindings, 'doorbell']
+    await addon.boot()
+    expect(addon.lastBuild?.caps).toContain('doorbell')
+
+    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
+    addon.emit(EventCategory.DeviceBindingsChanged)
+    await settle()
+    expect(addon.builds).toHaveLength(1)
+    expect(addon.infos.some((l) => l.msg.includes('rebuild deferred'))).toBe(true)
+
+    // The composer re-asserts the graft inside the confirm window.
+    await vi.advanceTimersByTimeAsync(60_000)
+    addon.bindings = [...addon.bindings, 'doorbell']
+    addon.emit(EventCategory.DeviceBindingsChanged)
+    await settle()
+    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
+
+    expect(addon.builds).toHaveLength(1)
+    expect(addon.disposed).toBe(0)
+    expect(addon.infos.some((l) => l.msg.includes('rebuilding accessory'))).toBe(false)
+    const line = addon.infos.find((l) => l.msg.includes('removal reverted'))
+    expect(line?.tags).toEqual({ deviceId: CAM })
+  })
+
+  it('a removal still there at the second read is confirmed and rebuilds', async () => {
+    addon.bindings = [...addon.bindings, 'doorbell']
+    await addon.boot()
+
+    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
+    addon.emit(EventCategory.DeviceBindingsChanged)
+    await settle()
+    expect(addon.builds).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
+
+    expect(addon.builds).toHaveLength(2)
+    expect(addon.lastBuild?.caps).not.toContain('doorbell')
+    expect(addon.infos.some((l) => l.msg.includes('removal confirmed'))).toBe(true)
   })
 
   it('a device rename rebuilds the accessory under the new name', async () => {

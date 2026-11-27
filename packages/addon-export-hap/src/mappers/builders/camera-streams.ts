@@ -507,7 +507,10 @@ export function buildCameraStreamingDelegate(
   const delegate: CameraStreamingDelegate = {
     handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
       handleSnapshot(bctx, request)
-        .then((buf) => callback(undefined, buf))
+        .then((buf) => {
+          log.info('export-hap: snapshot served', { meta: { bytes: buf.length } })
+          callback(undefined, buf)
+        })
         .catch((err: unknown) => {
           log.warn('export-hap: snapshot failed', {
             meta: { error: errMsg(err) },
