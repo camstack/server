@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serves viewer 1.0.743: global highlight colours and holds, per-camera highlight classes and audio level.
+
 ## [1.2.730] - 2026-11-27
 
 ### Changed
