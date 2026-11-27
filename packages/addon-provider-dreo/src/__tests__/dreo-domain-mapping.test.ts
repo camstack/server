@@ -88,6 +88,19 @@ describe('fan speed mapping', () => {
     expect(levelToPercentage(percentageToLevel(100))).toBe(100)
   })
 
+  it('lets the slider reach 100% and round-trips every level, whatever the range', () => {
+    for (const max of [3, 4, 6, 8, 9]) {
+      const step = percentageStep(max)
+      // The slider snaps by `step`: its last stop must be exactly 100.
+      expect(Math.round(step * max)).toBe(100)
+      expect(step * max).toBeCloseTo(100, 9)
+      expect(levelToPercentage(max, max)).toBe(100)
+      for (let level = 1; level <= max; level++) {
+        expect(percentageToLevel(levelToPercentage(level, max), max)).toBe(level)
+      }
+    }
+  })
+
   it('produces a sane percentage step', () => {
     expect(percentageStep()).toBeGreaterThan(0)
     expect(percentageStep()).toBeLessThanOrEqual(100)

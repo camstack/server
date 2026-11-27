@@ -19,6 +19,7 @@ const PASSWORD = 'pw-secret-1234'
 const FAKE_WORKER = `
 const readline = require('node:readline')
 const state = (on) => ({ on, speed: 2, speedMin: 1, speedMax: 4, oscillating: false,
+  horizontalOscillating: null, verticalOscillating: null, preset: null, presets: null,
   temperature: null, humidity: null, pm25: null, connected: true })
 const out = (line) => process.stdout.write(JSON.stringify(line) + '\\n')
 readline.createInterface({ input: process.stdin }).on('line', (text) => {
@@ -56,14 +57,22 @@ function make(timeouts: { commandTimeoutMs?: number } = {}): {
   dirs.push(dir)
   const scriptPath = join(dir, 'worker.cjs')
   writeFileSync(scriptPath, FAKE_WORKER)
-  const bridge = createDreoBridge({ pythonPath: process.execPath, scriptPath, ...timeouts })
+  const bridge = createDreoBridge({
+    pythonPath: process.execPath,
+    scriptPath,
+    ...timeouts,
+  })
   bridges.push(bridge)
   const pushes: DreoPush[] = []
   bridge.onPush((push) => pushes.push(push))
   return { bridge, pushes }
 }
 
-const CONFIG = { email: 'u@example.com', password: PASSWORD, region: 'eu' } as const
+const CONFIG = {
+  email: 'u@example.com',
+  password: PASSWORD,
+  region: 'eu',
+} as const
 
 async function until(condition: () => boolean): Promise<void> {
   for (let i = 0; i < 200 && !condition(); i += 1) await new Promise((r) => setTimeout(r, 10))
@@ -97,7 +106,10 @@ describe('Dreo bridge', () => {
     await until(() => pushes.some((p) => p.push === 'state'))
     expect(pushes).toContainEqual({ push: 'channel', state: 'up' })
     const state = pushes.find((p) => p.push === 'state')
-    expect(state).toMatchObject({ deviceId: 'dev-1', state: { on: true, speedMax: 4 } })
+    expect(state).toMatchObject({
+      deviceId: 'dev-1',
+      state: { on: true, speedMax: 4 },
+    })
   })
 
   it('reads every device again on refresh', async () => {

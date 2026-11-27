@@ -19,7 +19,8 @@ from __future__ import annotations
 import threading
 from typing import Any, Callable, Dict, List, Optional
 
-COMMANDS = ("power", "speed", "oscillating")
+COMMANDS = ("power", "speed", "oscillating", "preset", "horizontalOscillating", "verticalOscillating")
+BOOLEAN_COMMANDS = ("power", "oscillating", "horizontalOscillating", "verticalOscillating")
 REGIONS = ("us", "eu")
 UNKNOWN_TYPE = "Unknown"
 
@@ -64,6 +65,17 @@ def _celsius(device: Any) -> Optional[float]:
     return value
 
 
+def _text(value: Any) -> Optional[str]:
+    return value if isinstance(value, str) and value != "" else None
+
+
+def _names(value: Any) -> Optional[List[str]]:
+    if not isinstance(value, (list, tuple)):
+        return None
+    names = [name for name in value if isinstance(name, str)]
+    return names or None
+
+
 def snapshot_of(device: Any) -> Dict[str, Any]:
     """What the device reports, as plain JSON values; None where the model has no such value."""
     speed = _number(_read(device, "fan_speed"))
@@ -77,6 +89,10 @@ def snapshot_of(device: Any) -> Dict[str, Any]:
         "speedMin": None if low is None else int(low),
         "speedMax": None if high is None else int(high),
         "oscillating": _boolean(_read(device, "oscillating")),
+        "horizontalOscillating": _boolean(_read(device, "horizontally_oscillating")),
+        "verticalOscillating": _boolean(_read(device, "vertically_oscillating")),
+        "preset": _text(_read(device, "preset_mode")),
+        "presets": _names(_read(device, "preset_modes")),
         "temperature": _celsius(device),
         "humidity": _number(_read(device, "humidity")),
         "pm25": _number(_read(device, "pm25")),
@@ -205,7 +221,10 @@ class Session:
         if command == "speed":
             if isinstance(value, bool) or not isinstance(value, int):
                 raise WorkerError("bad-request", "speed must be an integer")
-        elif not isinstance(value, bool):
+        elif command == "preset":
+            if not isinstance(value, str) or value == "":
+                raise WorkerError("bad-request", "preset must be a non-empty string")
+        elif command in BOOLEAN_COMMANDS and not isinstance(value, bool):
             raise WorkerError("bad-request", f"{command} must be a boolean")
         device_id = self._text(message, "deviceId")
         with self._lock:

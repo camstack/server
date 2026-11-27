@@ -58,4 +58,17 @@ export class DreoDeviceHandle {
   setOscillating(on: boolean): Promise<void> {
     return this.#send(this.deviceId, { command: 'oscillating', value: on })
   }
+
+  setAxisOscillating(axis: 'horizontal' | 'vertical', on: boolean): Promise<void> {
+    return this.#send(
+      this.deviceId,
+      axis === 'horizontal'
+        ? { command: 'horizontalOscillating', value: on }
+        : { command: 'verticalOscillating', value: on },
+    )
+  }
+
+  setPreset(preset: string): Promise<void> {
+    return this.#send(this.deviceId, { command: 'preset', value: preset })
+  }
 }

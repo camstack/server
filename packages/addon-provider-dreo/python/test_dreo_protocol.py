@@ -26,6 +26,10 @@ class FakeFan:
             "temperature": 68.0,
             "temperature_units": FakeUnits(),
             "connected": True,
+            "preset_mode": "Auto",
+            "preset_modes": ["Normal", "Auto", "Sleep"],
+            "horizontally_oscillating": True,
+            "vertically_oscillating": False,
             **values,
         }
         self.callbacks: List[Callable[[], None]] = []
@@ -46,6 +50,7 @@ def _prop(name: str) -> property:
 for _name in (
     "device_id", "model", "name", "type", "is_on", "fan_speed", "speed_range",
     "oscillating", "temperature", "temperature_units", "connected",
+    "preset_mode", "preset_modes", "horizontally_oscillating", "vertically_oscillating",
 ):
     setattr(FakeFan, _name, _prop(_name))
 
@@ -100,6 +105,33 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(state["temperature"], 20.0)
         self.assertEqual((state["speedMin"], state["speedMax"]), (1, 4))
         self.assertIsNone(state["humidity"])
+
+    def test_snapshot_reports_presets_and_the_oscillation_axes(self) -> None:
+        state = snapshot_of(self.fan)
+        self.assertEqual(state["preset"], "Auto")
+        self.assertEqual(state["presets"], ["Normal", "Auto", "Sleep"])
+        self.assertEqual((state["horizontalOscillating"], state["verticalOscillating"]), (True, False))
+
+    def test_snapshot_of_a_model_without_them_reports_none(self) -> None:
+        class Bare:
+            pass
+
+        state = snapshot_of(Bare())
+        self.assertIsNone(state["preset"])
+        self.assertIsNone(state["presets"])
+        self.assertIsNone(state["horizontalOscillating"])
+
+    def test_preset_and_axis_commands_are_accepted_and_typed(self) -> None:
+        self.session.handle(login_message())
+        for command, value in (("preset", "Sleep"), ("horizontalOscillating", False), ("verticalOscillating", True)):
+            self.session.handle({"op": "command", "deviceId": "dev-1", "command": command, "value": value})
+        self.assertEqual(
+            self.library.applied,
+            [("preset", "Sleep"), ("horizontalOscillating", False), ("verticalOscillating", True)],
+        )
+        for command, value in (("preset", True), ("preset", ""), ("verticalOscillating", "yes")):
+            with self.assertRaises(WorkerError):
+                self.session.handle({"op": "command", "deviceId": "dev-1", "command": command, "value": value})
 
     def test_login_lists_devices_with_their_state(self) -> None:
         result = self.session.handle(login_message())

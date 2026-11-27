@@ -22,7 +22,13 @@ from dreo_protocol import Session, WorkerError  # noqa: E402
 
 REGION_CODES = {"us": "NA", "eu": "EU"}
 POWER_ATTRS = ("is_on", "poweron")
-COMMAND_ATTRS = {"speed": "fan_speed", "oscillating": "oscillating"}
+COMMAND_ATTRS = {
+    "speed": "fan_speed",
+    "oscillating": "oscillating",
+    "preset": "preset_mode",
+    "horizontalOscillating": "horizontally_oscillating",
+    "verticalOscillating": "vertically_oscillating",
+}
 PINNED_VERSION = "1.11.11"
 
 

@@ -115,7 +115,8 @@ export function percentageToLevel(
 /** The percentage step a Dreo fan slider should snap to, given its max level. */
 export function percentageStep(maxLevel: number = DREO_MAX_FAN_LEVEL): number {
   if (maxLevel <= 0) return 1
-  return Math.round((1 / maxLevel) * 100)
+  // Not rounded: a rounded step (13 for 8 levels) makes the slider snap to 91 and never reach 100.
+  return 100 / maxLevel
 }
 
 /** Clamp a raw battery / percentage-ish number into the 0..100 inclusive range. */

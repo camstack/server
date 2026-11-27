@@ -20,6 +20,12 @@ export const DreoDeviceStateSchema = z.object({
   speedMin: z.number().nullable(),
   speedMax: z.number().nullable(),
   oscillating: z.boolean().nullable(),
+  /** Per-axis oscillation of an air circulator; null when the model has no such axis. */
+  horizontalOscillating: z.boolean().nullable(),
+  verticalOscillating: z.boolean().nullable(),
+  /** The active preset / wind mode by the library's own name, and the names the model accepts. */
+  preset: z.string().nullable(),
+  presets: z.array(z.string()).nullable(),
   /** Degrees Celsius, whatever unit the account reports in. */
   temperature: z.number().nullable(),
   humidity: z.number().nullable(),
@@ -82,6 +88,9 @@ export type DreoCommand =
   | { readonly command: 'power'; readonly value: boolean }
   | { readonly command: 'speed'; readonly value: number }
   | { readonly command: 'oscillating'; readonly value: boolean }
+  | { readonly command: 'horizontalOscillating'; readonly value: boolean }
+  | { readonly command: 'verticalOscillating'; readonly value: boolean }
+  | { readonly command: 'preset'; readonly value: string }
 
 export interface DreoBridge {
   /** Start the worker, sign in, open the push channel; resolves with every device of the account. */

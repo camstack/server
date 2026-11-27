@@ -1,8 +1,15 @@
 import {
+  DeviceFeature,
   fanControlCapability,
+  humiditySensorCapability,
   switchCapability,
+  temperatureSensorCapability,
   type DeviceContext,
   type FanControlStatus,
+  type FanOscillationAxes,
+  type FanOscillationAxis,
+  type HumiditySensorStatus,
+  type TemperatureSensorStatus,
   type InferNativeProvider,
   type SwitchStatus,
 } from '@camstack/types'
@@ -16,6 +23,42 @@ import {
 
 const SWITCH_CAP = 'switch'
 const FAN_CAP = 'fan-control'
+
+const TEMP_CAP = 'temperature-sensor'
+const HUMIDITY_CAP = 'humidity-sensor'
+const TEMP_COLD_START: TemperatureSensorStatus = {
+  temperature: 0,
+  lastFetchedAt: 0,
+}
+const HUMIDITY_COLD_START: HumiditySensorStatus = {
+  humidity: 0,
+  lastFetchedAt: 0,
+}
+
+/** An axis the library reports; the leaves it does not expose stay null (D393). */
+function axisOf(oscillating: boolean | null): FanOscillationAxis | null {
+  if (oscillating === null) return null
+  return {
+    oscillating,
+    angle: null,
+    sweepFrom: null,
+    sweepTo: null,
+    min: null,
+    max: null,
+    step: null,
+  }
+}
+
+function axesOf(
+  horizontal: boolean | null,
+  vertical: boolean | null,
+): FanOscillationAxes | undefined {
+  const axes: FanOscillationAxes = {
+    horizontal: axisOf(horizontal),
+    vertical: axisOf(vertical),
+  }
+  return axes.horizontal === null && axes.vertical === null ? undefined : axes
+}
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
 const FAN_COLD_START: FanControlStatus = {
@@ -37,10 +80,19 @@ const FAN_COLD_START: FanControlStatus = {
  * fan-control.setPercentage→speed level (percentage↔level over the device's own range);
  * fan-control.setOscillating→oscillation.
  *
- * TODO: preset / wind-mode (`mode` / `windType`) and air-circulator horizontal/vertical
- * oscillation are deferred — the `fan-control` cap models a single `oscillating` boolean.
+ * Presets are the library's own mode names (`preset` / `availablePresets`); an air circulator's
+ * horizontal and vertical oscillation are the `oscillationAxes` (on/off per axis). The axis
+ * angles are not mapped: the library exposes them as sweep widths per model, not as the cap's
+ * fixed position and sweep bounds. The ambient temperature (and humidity, when the model
+ * reports it) are `temperature-sensor` / `humidity-sensor` bindings of this same device.
  */
 export class DreoFanDevice extends DreoChildDevice {
+  override readonly features: readonly DeviceFeature[] = [
+    DeviceFeature.FanSpeed,
+    DeviceFeature.FanPreset,
+    DeviceFeature.FanOscillating,
+  ]
+
   // Widens the base's `protected` constructor to public so `dreoChildFactory`
   // can `new` it. The forward is required for the visibility change.
   // oxlint-disable-next-line no-useless-constructor
@@ -76,8 +128,35 @@ export class DreoFanDevice extends DreoChildDevice {
         await handle.setSpeed(Math.max(level, speedMin ?? 1))
       },
       setPreset: async ({ preset }) => {
-        // Preset / wind-mode mapping is deferred (see class TODO).
-        throw new Error(`dreo fan: presets not yet supported (got "${preset}")`)
+        await this.requireHandle().setPreset(preset)
+      },
+      setOscillationAxis: async ({ axis, oscillating, angle, sweepFrom, sweepTo }) => {
+        const unmapped = [
+          ...(angle === undefined ? [] : (['angle'] as const)),
+          ...(sweepFrom === undefined ? [] : (['sweepFrom'] as const)),
+          ...(sweepTo === undefined ? [] : (['sweepTo'] as const)),
+        ]
+        if (oscillating === undefined && unmapped.length === 0) {
+          return {
+            status: 'refused',
+            reason: 'nothing-to-set',
+            detail: 'no field to set',
+            applied: [],
+          }
+        }
+        if (oscillating !== undefined)
+          await this.requireHandle().setAxisOscillating(axis, oscillating)
+        const [field] = unmapped
+        if (field !== undefined) {
+          return {
+            status: 'refused',
+            reason: 'axis-not-linked',
+            field,
+            detail: `the ${axis} ${field} of this fan is not exposed by the Dreo cloud library`,
+            applied: oscillating === undefined ? [] : ['oscillating'],
+          }
+        }
+        return { status: 'applied' }
       },
       setDirection: async ({ direction }) => {
         throw new Error(`dreo fan: direction control not supported (got "${direction}")`)
@@ -88,27 +167,71 @@ export class DreoFanDevice extends DreoChildDevice {
     }
     this.ctx.registerNativeCap(fanControlCapability, fanProvider)
     this.runtimeState.setCapState(FAN_CAP, FAN_COLD_START)
+
+    const tempProvider: InferNativeProvider<typeof temperatureSensorCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<TemperatureSensorStatus>(TEMP_CAP) ?? TEMP_COLD_START,
+    }
+    this.ctx.registerNativeCap(temperatureSensorCapability, tempProvider)
+    this.runtimeState.setCapState(TEMP_CAP, TEMP_COLD_START)
+
+    // Humidity only where the model reports it: an always-empty binding is noise in Customize.
+    if (this.resolveHandle()?.state.humidity != null) {
+      const humidityProvider: InferNativeProvider<typeof humiditySensorCapability> = {
+        getStatus: async () =>
+          this.runtimeState.getCapState<HumiditySensorStatus>(HUMIDITY_CAP) ?? HUMIDITY_COLD_START,
+      }
+      this.ctx.registerNativeCap(humiditySensorCapability, humidityProvider)
+      this.runtimeState.setCapState(HUMIDITY_CAP, HUMIDITY_COLD_START)
+    }
   }
 
   protected override recomputeSlices(): void {
     const handle = this.resolveHandle()
     if (handle === null) return
-    const { on, speed, speedMax, oscillating } = handle.state
+    const {
+      on,
+      speed,
+      speedMax,
+      oscillating,
+      horizontalOscillating,
+      verticalOscillating,
+      preset,
+      presets,
+      temperature,
+      humidity,
+    } = handle.state
     const max = speedMax ?? DREO_MAX_FAN_LEVEL
     const now = Date.now()
 
     const switchSlice: SwitchStatus = { on, lastChangedAt: now }
     this.runtimeState.setCapState(SWITCH_CAP, switchSlice)
 
+    const axes = axesOf(horizontalOscillating, verticalOscillating)
+    const axesSlice = axes === undefined ? {} : { oscillationAxes: axes }
     const fanSlice: FanControlStatus = {
       speed: speed === null ? null : levelToPercentage(speed, max),
       percentageStep: percentageStep(max),
-      preset: '',
-      availablePresets: [],
+      preset: preset ?? '',
+      availablePresets: presets ?? [],
       direction: null,
       oscillating,
+      ...axesSlice,
       lastChangedAt: now,
     }
     this.runtimeState.setCapState(FAN_CAP, fanSlice)
+
+    if (temperature !== null) {
+      this.runtimeState.setCapState(TEMP_CAP, {
+        temperature,
+        lastFetchedAt: now,
+      })
+    }
+    if (humidity !== null) {
+      this.runtimeState.setCapState(HUMIDITY_CAP, {
+        humidity,
+        lastFetchedAt: now,
+      })
+    }
   }
 }
