@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.173] - 2026-11-27
+
 ### Changed
 
 - Dreo fans and air circulators now offer their preset modes and horizontal/vertical oscillation, report temperature (and humidity where the model has it), and the speed slider reaches 100%.

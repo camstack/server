@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.56] - 2026-11-27
+
 ### Changed
 
 - MQTT devices show their raw MQTT state on the device page, and CO2, VOC and particulate readings from an MQTT sensor now appear as air quality.

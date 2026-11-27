@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.973",
+  "version": "1.2.974",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -68,8 +68,14 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-export-hap": ">=1.2.212",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.731"
+        "@camstack/addon-admin-ui": ">=1.2.765",
+        "@camstack/addon-agent-ui": ">=1.2.452",
+        "@camstack/addon-matter-broker": ">=0.2.183",
+        "@camstack/addon-post-analysis": ">=1.2.734",
+        "@camstack/addon-provider-dreo": ">=0.2.173",
+        "@camstack/addon-provider-homematic": ">=1.2.218",
+        "@camstack/addon-provider-mqtt-ha": ">=0.1.56",
+        "@camstack/addon-provider-zigbee-z2m": ">=0.1.1"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

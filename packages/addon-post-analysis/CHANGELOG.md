@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.734] - 2026-11-27
+
 ### Changed
 
 - Motion events now keep where the motion regions were over the whole episode (one sample per second, up to 6 boxes), not only on the first frame

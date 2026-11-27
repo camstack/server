@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.517] - 2026-11-27
+
 ### Changed
 
 - Device mesh summary widget for a device page and the mesh model shared with the Network page

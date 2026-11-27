@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.218] - 2026-11-27
+
 ### Changed
 
 - A motion detector that also reports brightness is now an Ambient monitor; a role other than the previous default is kept.

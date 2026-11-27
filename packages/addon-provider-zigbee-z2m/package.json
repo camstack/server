@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-zigbee-z2m",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Connects to an existing Zigbee2MQTT server and exposes its devices.",
   "keywords": [
     "camstack",
@@ -47,7 +47,10 @@
           }
         ]
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.974"
+    }
   },
   "files": [
     "dist",

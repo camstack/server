@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.974] - 2026-11-27
+
 ### Changed
 
 - A doorbell press whose camera answers HTTP 503 now gets the last persisted snapshot instead of nothing, and an empty snapshot fallback is logged
