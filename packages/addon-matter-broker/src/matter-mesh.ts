@@ -60,6 +60,9 @@ export class MatterMeshService {
   readonly #nodes: MeshNodeSource
   #logger: IScopedLogger | null = null
   #reader: MeshReader | null = null
+  #timer: ReturnType<typeof setInterval> | null = null
+  /** When the pass now running started (ms), or `null` when none is in flight. */
+  #passStartedAt: number | null = null
 
   constructor(nodes: MeshNodeSource) {
     this.#nodes = nodes
@@ -73,8 +76,23 @@ export class MatterMeshService {
 
   /** Drop both (addon shutdown): a later read answers "controller not available". */
   detach(): void {
+    this.stopPeriodic()
     this.#reader = null
     this.#logger = null
+  }
+
+  /** Start the periodic mains pass (one timer; a second call replaces it). */
+  startPeriodic(intervalMs: number): void {
+    this.stopPeriodic()
+    this.#timer = setInterval(() => {
+      void this.refreshAll()
+    }, intervalMs)
+    this.#timer.unref()
+  }
+
+  stopPeriodic(): void {
+    if (this.#timer !== null) clearInterval(this.#timer)
+    this.#timer = null
   }
 
   topology(brokerId: string): MeshTopology {
@@ -150,21 +168,39 @@ export class MatterMeshService {
     return { readNodes, failedNodes, skippedNodes }
   }
 
-  /** The periodic pass: every broker, mains nodes only. */
+  /**
+   * The periodic pass: every broker, mains nodes only. A tick that finds the
+   * previous pass still running is skipped (and logged with that pass's age), so
+   * slow, timing-out nodes never stack concurrent passes.
+   */
   async refreshAll(): Promise<void> {
-    for (const brokerId of this.#nodes.brokerIds()) {
-      try {
-        const result = await this.refresh(brokerId)
-        this.#logger?.debug('device-mesh: periodic refresh', {
-          tags: { brokerId },
-          meta: { ...result },
-        })
-      } catch (err: unknown) {
-        this.#logger?.warn('device-mesh: periodic refresh failed', {
-          tags: { brokerId },
-          meta: { error: errMsg(err) },
-        })
+    if (this.#passStartedAt !== null) {
+      this.#logger?.warn(
+        'device-mesh: periodic refresh skipped, the previous pass is still running',
+        {
+          meta: { inFlightMs: Date.now() - this.#passStartedAt },
+        },
+      )
+      return
+    }
+    this.#passStartedAt = Date.now()
+    try {
+      for (const brokerId of this.#nodes.brokerIds()) {
+        try {
+          const result = await this.refresh(brokerId)
+          this.#logger?.debug('device-mesh: periodic refresh', {
+            tags: { brokerId },
+            meta: { ...result },
+          })
+        } catch (err: unknown) {
+          this.#logger?.warn('device-mesh: periodic refresh failed', {
+            tags: { brokerId },
+            meta: { error: errMsg(err) },
+          })
+        }
       }
+    } finally {
+      this.#passStartedAt = null
     }
   }
 

@@ -78,7 +78,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   }
 
   private registry: MatterBrokerRegistry | null = null
-  private meshTimer: ReturnType<typeof setInterval> | null = null
   private endpointReporterInstance: NodeEndpointReporter | null = null
 
   private get endpointReporter(): NodeEndpointReporter {
@@ -150,10 +149,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     matterMesh.attach(this.ctx.logger, (brokerId, nodeId, requests) =>
       this.requireRegistry().readAttributes(brokerId, nodeId, requests),
     )
-    this.meshTimer = setInterval(() => {
-      void matterMesh.refreshAll()
-    }, MESH_REFRESH_INTERVAL_MS)
-    this.meshTimer.unref()
+    matterMesh.startPeriodic(MESH_REFRESH_INTERVAL_MS)
 
     await this.registry.restore(this.activeBrokers)
 
@@ -303,8 +299,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   }
 
   protected override async onShutdown(): Promise<void> {
-    if (this.meshTimer !== null) clearInterval(this.meshTimer)
-    this.meshTimer = null
     matterMesh.detach()
     matterCommands.clear()
     try {

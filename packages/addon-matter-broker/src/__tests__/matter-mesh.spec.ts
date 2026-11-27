@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
 import { decodePowerSourceKind } from '../matter-attr-decode.js'
 import { MatterClusterId } from '../matter-cluster-mapping.js'
@@ -327,5 +327,71 @@ describe('MatterMeshService', () => {
   it('refuses a device that is not a node of the broker', async () => {
     const service = new MatterMeshService(fabric())
     await expect(service.readNow(BROKER, 99)).rejects.toThrow(/not a node/)
+  })
+})
+
+describe('MatterMeshService periodic pass', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** A reader that holds every read until the test releases it. */
+  function gatedReader(calls: string[]) {
+    const gates: (() => void)[] = []
+    const reader = (
+      _brokerId: string,
+      nodeId: string,
+    ): Promise<readonly MatterAttributeReport[]> => {
+      calls.push(nodeId)
+      return new Promise((resolve) => {
+        gates.push(() => resolve([]))
+      })
+    }
+    return { reader, release: () => gates.splice(0).forEach((g) => g()) }
+  }
+
+  it('runs one pass per tick, mains nodes only', async () => {
+    vi.useFakeTimers()
+    const calls: { nodeId: string; requests: readonly MeshReadRequest[] }[] = []
+    const service = new MatterMeshService(fabric())
+    service.attach(recordingLogger([]), recordingReader(calls))
+    service.startPeriodic(1000)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(calls.map((c) => c.nodeId)).toEqual(['1'])
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(calls.map((c) => c.nodeId)).toEqual(['1', '1'])
+    service.detach()
+  })
+
+  it('skips a tick while the previous pass is still in flight, and logs its age', async () => {
+    vi.useFakeTimers()
+    const lines: LogLine[] = []
+    const calls: string[] = []
+    const gate = gatedReader(calls)
+    const service = new MatterMeshService(fabric())
+    service.attach(recordingLogger(lines), gate.reader)
+    service.startPeriodic(1000)
+    await vi.advanceTimersByTimeAsync(1000)
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toEqual(['1'])
+    expect(lines.filter((l) => l.message.includes('skipped'))).toHaveLength(2)
+    gate.release()
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(calls).toEqual(['1', '1'])
+    gate.release()
+    service.detach()
+  })
+
+  it('detach clears the interval: no pass runs after shutdown', async () => {
+    vi.useFakeTimers()
+    const calls: { nodeId: string; requests: readonly MeshReadRequest[] }[] = []
+    const service = new MatterMeshService(fabric())
+    service.attach(recordingLogger([]), recordingReader(calls))
+    service.startPeriodic(1000)
+    service.detach()
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(calls).toEqual([])
+    expect(vi.getTimerCount()).toBe(0)
   })
 })
