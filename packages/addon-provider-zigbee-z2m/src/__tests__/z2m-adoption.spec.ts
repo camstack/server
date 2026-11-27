@@ -5,8 +5,13 @@ import { planZ2mDevice } from '../z2m-exposes.js'
 import { contactSensorExposes } from './fixtures/z2m-fixtures.js'
 import { recordingLogger } from './fakes.js'
 
-const plan = planZ2mDevice(contactSensorExposes)
-if (plan === null) throw new Error('fixture has no plan')
+function fixturePlan(): NonNullable<ReturnType<typeof planZ2mDevice>> {
+  const planned = planZ2mDevice(contactSensorExposes)
+  if (planned === null) throw new Error('fixture has no plan')
+  return planned
+}
+
+const plan = fixturePlan()
 
 function provider(firmware: boolean) {
   return buildProviderZigbeeZ2mAdoptionProvider({
