@@ -94,13 +94,13 @@ export interface MotionEpisodeTrackerDeps<TRegionData> {
    *  `deviceId` tag (D475 logging rule) — the store already logs its own
    *  failure, this is the "the episode never got its close" half. */
   readonly closeRow: (input: MotionEpisodeCloseInput) => Promise<boolean>
-  /** Fired on a genuine off→on transition — open or a further edge inside an
-   *  open episode. Drives the birth-latency onset mark + the motion-marker
-   *  still, which the ORIGINAL code fired on every `transitionedOn`. */
   /** Optional: UPDATE the open row with the timeline so far (never touches
    *  `durationMs`, so the row stays open). Called at most once per
    *  {@link MOTION_TIMELINE_CHECKPOINT_MS} per episode. */
   readonly checkpointRow?: (input: MotionEpisodeCheckpointInput) => Promise<boolean>
+  /** Fired on a genuine off→on transition — open or a further edge inside an
+   *  open episode. Drives the birth-latency onset mark + the motion-marker
+   *  still, which the ORIGINAL code fired on every `transitionedOn`. */
   readonly onNewEdge?: (input: MotionEpisodeEdgeInput) => void
   /** Fired on every `detected:true` observation that reaches an open or
    *  newly-opened episode — transition or continuation. Drives the
@@ -119,7 +119,6 @@ interface TrackedSignal {
 interface TimelineState {
   readonly samples: MotionTimelineSample[]
   lastFlushAt: number
-  dirty: boolean
   overflowLogged: boolean
 }
 
@@ -180,7 +179,6 @@ export class MotionEpisodeTracker<TRegionData> {
         this.timelines.set(key, {
           samples: [],
           lastFlushAt: timestamp,
-          dirty: false,
           overflowLogged: false,
         })
         this.noteTimeline(key, deviceId, source, episode, timestamp, timelineRegions)
@@ -262,19 +260,16 @@ export class MotionEpisodeTracker<TRegionData> {
     } else {
       state.samples.push({ t, boxes })
     }
-    state.dirty = true
     if (
       this.deps.checkpointRow !== undefined &&
       timestamp - state.lastFlushAt >= MOTION_TIMELINE_CHECKPOINT_MS
     ) {
       state.lastFlushAt = timestamp
-      state.dirty = false
       const motionTimeline = [...state.samples]
       void this.deps
         .checkpointRow({ deviceId, source, eventId: episode.eventId, motionTimeline })
         .then((landed) => {
           if (!landed) {
-            state.dirty = true
             this.deps.logger.warn('motion timeline checkpoint failed', {
               tags: { deviceId },
               meta: { source, eventId: episode.eventId },
