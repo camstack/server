@@ -30,8 +30,8 @@ import {
   signedDegrees,
 } from './model'
 
-/** The most readings one readout row holds (`rowStats` shares a row among four). */
-const READOUT_PER_ROW = 4
+/** The most readings one readout row holds: three keeps a long label such as "Temperatura" whole on a phone. */
+const READOUT_PER_ROW = 3
 
 /** The device's own readings as secondary rows under the fan's controls: read-only, never a control. */
 function readoutRows(
