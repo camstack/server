@@ -57,6 +57,7 @@ import {
   settingsStoreCapability,
   storageCapability,
   storageMigrationCapability,
+  nodeRemovalHookCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildStorageLocationRegistry } from '../../kernel/storage-location-registry.js'
@@ -109,6 +110,7 @@ import {
   type SeedDefaultsInput,
   StorageOrchestratorService,
 } from './storage-orchestrator.service.js'
+import { createNodeRemovalHook } from './node-removal.js'
 import type { DrainPlanEntry } from './storage-pressure-manager.js'
 import { StoragePressureManager } from './storage-pressure-manager.js'
 import {
@@ -719,6 +721,13 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     const registrations: ProviderRegistration[] = [
       { capability: storageCapability, provider },
       { capability: storageMigrationCapability, provider: migrationProvider },
+      {
+        capability: nodeRemovalHookCapability,
+        provider: createNodeRemovalHook({
+          service,
+          logger: this.ctx.logger.child('node-removal'),
+        }),
+      },
       // The data door (D44). One addon owns both storage surfaces —
       // bytes through `storage`, rows through `settings-store` — and each
       // dispatches to engines registered behind an internal collection

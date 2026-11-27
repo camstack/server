@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A composed device capability (such as a doorbell added onto a camera) stays bound across a hub or composer restart, so exporters no longer rebuild the device without it.
+- Forgetting a node now disables the storage locations that live on it (data and index stay); remove them by hand when you no longer want them.
 
 ## [1.2.972] - 2026-11-27
 

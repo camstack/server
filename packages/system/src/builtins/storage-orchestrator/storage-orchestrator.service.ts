@@ -626,6 +626,25 @@ export class StorageOrchestratorService {
   }
 
   /**
+   * Disable a location whose node was FORGOTTEN (#265), keeping the row, its
+   * bytes and its index. Unlike `upsertLocation` it does not refuse when the
+   * location is the last write target of its type: a node that no longer exists
+   * cannot serve writes, and keeping it "active" only makes the recorder aim at
+   * it. Persisted before the in-memory row changes, so a failed write leaves
+   * both as they were and the hook's retry finds the work still to do.
+   */
+  async disableLocationOfForgottenNode(id: string): Promise<void> {
+    const location = this.locations.get(id)
+    if (!location) throw new Error(`Storage location "${id}" not found`)
+    const updated: StorageLocation = withLocationMode(
+      { ...location, updatedAt: Date.now() },
+      'disabled',
+    )
+    if (this.locationStore) await this.locationStore.upsert(updated)
+    this.locations.set(id, updated)
+  }
+
+  /**
    * Insert or update a location.
    *
    * When a persistence store is wired (Task 6), the record is mirrored to it;

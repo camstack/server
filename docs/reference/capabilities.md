@@ -211,7 +211,7 @@ Singleton or collection providers, addressed without a device.
 | `network-access` | 5 | — | — | — | — | `cloudflare-tunnel` `tailscale-client` `tailscale-ingress` |
 | `network-quality` | 3 | — | — | — | — | — |
 | `node-certificates` | 8 | — | — | — | ✓ | — |
-| `node-removal-hook` | 1 | — | — | — | ✓ | `ai` `model-studio` `pipeline-orchestrator` |
+| `node-removal-hook` | 1 | — | — | — | ✓ | `ai` `model-studio` `pipeline-orchestrator` `storage-orchestrator` |
 | `nodes` | 14 | — | — | — | — | — |
 | `notification-output` | 5 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` `core-notifier` |
 | `notification-rules` | 29 | — | — | — | — | `pipeline-analytics` |
