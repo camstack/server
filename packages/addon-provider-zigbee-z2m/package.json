@@ -1,0 +1,75 @@
+{
+  "name": "@camstack/addon-provider-zigbee-z2m",
+  "version": "0.1.0",
+  "description": "Connects to an existing Zigbee2MQTT server and exposes its devices.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Zigbee2MQTT",
+    "addons": [
+      {
+        "id": "provider-zigbee-z2m",
+        "integrationRole": "devices",
+        "instanceMode": "multiple",
+        "mode": "account",
+        "category": "providers",
+        "name": "Zigbee2MQTT",
+        "description": "Connects to an existing Zigbee2MQTT server and exposes its devices.",
+        "entry": "./dist/provider-zigbee-z2m.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "device-removal-hook"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  }
+}

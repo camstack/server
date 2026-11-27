@@ -4,7 +4,7 @@
 
 # Addons
 
-97 addon manifests across 52 packages.
+98 addon manifests across 53 packages.
 
 One addon = one `addon-runner` process by default. A shared `execution.group`
 collapses its members into ONE process so their cap calls resolve in-process
@@ -94,6 +94,7 @@ this column exists to stop.
 | `provider-velux` | `@camstack/addon-provider-velux` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-vesync` | `@camstack/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-wyze` | `@camstack/addon-provider-wyze` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` `stream-params` |
+| `provider-zigbee-z2m` | `@camstack/addon-provider-zigbee-z2m` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `integration-instances` |
 | `record-entries` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `record-entries` |
 | `recorder` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `device-removal-hook` `load-contribution` `recording` `recording-archive` `recording-export` `storage-evictable` `storage-occupancy` `videoclips` |
 | `remote-access-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `remote-access` |
@@ -123,5 +124,5 @@ this column exists to stop.
 - `messaging` — 6
 - `networking` — 5
 - `pipeline` — 8
-- `providers` — 27
+- `providers` — 28
 - `system` — 44

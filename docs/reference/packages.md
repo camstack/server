@@ -4,7 +4,7 @@
 
 # Packages
 
-63 workspace packages. Roles are derived: `camstack.system: true` →
+64 workspace packages. Roles are derived: `camstack.system: true` →
 framework; a `camstack.addons[]` entry → addon; `server/*` → the root app;
 everything else → tooling.
 
@@ -27,7 +27,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | `@camstack/types` | `packages/types` | 1.2.643 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.516 | `@camstack/server` closure | — |
 
-## Addons (52)
+## Addons (53)
 
 Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
 
@@ -77,6 +77,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-velux` | `packages/addon-provider-velux` | 0.2.177 | addons dir | Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
 | `@camstack/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.2.172 | addons dir | VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
 | `@camstack/addon-provider-wyze` | `packages/addon-provider-wyze` | 0.2.178 | addons dir | Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink) |
+| `@camstack/addon-provider-zigbee-z2m` | `packages/addon-provider-zigbee-z2m` | 0.1.0 | addons dir | Connects to an existing Zigbee2MQTT server and exposes its devices. |
 | `@camstack/addon-remote-storage` | `packages/addon-remote-storage` | 1.2.147 | addons dir | Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap |
 | `@camstack/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 1.2.159 | addons dir | SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |
 | `@camstack/addon-static-turn` | `packages/addon-static-turn` | 1.2.150 | addons dir | Static / self-hosted (coturn) TURN provider for CamStack |
