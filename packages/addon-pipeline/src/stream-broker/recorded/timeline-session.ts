@@ -31,10 +31,16 @@ export interface TimelineSessionFeeder {
   dispose(): void
 }
 
+/** The video RTP clock the recorded track is written at. */
+const VIDEO_RTP_HZ = 90000
+
 export interface TimelineSessionHost {
   setLiveFeedGate(gated: boolean): void
   pushRecordedAccessUnit(annexB: Uint8Array, rtpTs90k: number, codec: 'H264' | 'H265'): void
   requestKeyframe(): void
+  /** Wire RTP timestamp of the newest recorded video frame pushed since the
+   *  last call (consumed), `undefined` when none. */
+  takeVideoWireRtpTs?(): number | undefined
   sendControl(raw: string): void
 }
 
@@ -291,6 +297,7 @@ export class TimelineSession {
         break
       case 'setRate':
         this.rate = msg.rate
+        this.deps.session.takeVideoWireRtpTs?.()
         this.feeder?.setRate(msg.rate)
         break
       case 'stepFrame':
@@ -636,6 +643,7 @@ export class TimelineSession {
     requestedProfile: string,
     opts?: TimelineSeekOptions,
   ): Promise<void> {
+    this.deps.session.takeVideoWireRtpTs?.()
     const profile = await this.resolveProfile(requestedProfile, epochMs)
     this.reportServedProfile(profile, requestedProfile)
     const profileChanged = profile !== this.profile
@@ -757,14 +765,19 @@ export class TimelineSession {
 
   /** Emit seam: the broker wires the feeder's onPosition callback to this.
    *  `pushSeq` rides along only on the position a scrub push emitted — the
-   *  viewer echoes it on `scrubAck` so the credit is repaid to the right push. */
+   *  viewer echoes it on `scrubAck` so the credit is repaid to the right push.
+   *  `rtpTs` (wire timestamp of the frame this position describes, with its
+   *  clock and the play rate) rides only when a frame was pushed since the
+   *  last position, never across a seek or rate change. */
   _emitPosition(epochMs: number, pushSeq?: number): void {
     this.lastPositionMs = epochMs
+    const rtpTs = this.deps.session.takeVideoWireRtpTs?.()
+    const anchor = rtpTs === undefined ? {} : { rtpTs, rtpHz: VIDEO_RTP_HZ, rate: this.rate }
     this.deps.session.sendControl(
       serializeServerMessage(
         pushSeq === undefined
-          ? { t: 'position', epochMs }
-          : { t: 'position', epochMs, seq: pushSeq },
+          ? { t: 'position', epochMs, ...anchor }
+          : { t: 'position', epochMs, seq: pushSeq, ...anchor },
       ),
     )
   }

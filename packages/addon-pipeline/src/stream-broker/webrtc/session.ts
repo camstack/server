@@ -750,6 +750,11 @@ export class AdaptiveSession {
   private lastRr: WeriftReceiverReport | null = null
   /** Monotonic base (ms, performance.now) for send-time RTP timestamps. */
   private videoRtpClockBaseMs: number | null = null
+  /** The RTP timestamp the newest video packet carried ON THE WIRE (after the
+   *  sender's offset). Set by `writeVideoNals`; read once per recorded push. */
+  private lastWireVideoRtpTs: number | null = null
+  /** Wire timestamp of the newest recorded video access unit not yet reported. */
+  private recordedWireVideoRtpTs: number | null = null
   /** Log the camera's actual H.264 profile-level-id once per session. */
   private profileLogged = false
   private readonly onStats: AdaptiveSessionOptions['onStats']
@@ -3806,7 +3811,21 @@ export class AdaptiveSession {
   pushRecordedAccessUnit(annexB: Uint8Array, rtpTs90k: number, codec: VideoCodec): void {
     const nals = splitAnnexBToNals(Buffer.from(annexB))
     if (nals.length === 0) return
+    this.lastWireVideoRtpTs = null
     this.writeVideoNals(nals, rtpTs90k, codec)
+    this.recordedWireVideoRtpTs = this.lastWireVideoRtpTs
+  }
+
+  /**
+   * The wire RTP timestamp of the newest recorded video access unit pushed
+   * since the last call, or `undefined` when none was (a seek, a rate change or
+   * a pause emits positions with no frame behind them). Consumes the value, so
+   * an anchor is never reported twice.
+   */
+  takeVideoWireRtpTs(): number | undefined {
+    const ts = this.recordedWireVideoRtpTs
+    this.recordedWireVideoRtpTs = null
+    return ts ?? undefined
   }
 
   /**
@@ -3935,6 +3954,9 @@ export class AdaptiveSession {
           })
         }
         this.videoSender!.sendRtp(pkt)
+        // werift's sender adds its timestamp offset to the header IN PLACE,
+        // synchronously, before its first await: this is the wire value.
+        this.lastWireVideoRtpTs = header.timestamp >>> 0
         this.videoSendHistory.record(payload.length, Date.now())
 
         this.rtpPacketsSent++

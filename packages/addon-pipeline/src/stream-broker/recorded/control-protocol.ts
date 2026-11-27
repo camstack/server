@@ -180,7 +180,18 @@ export const ServerMessageSchema = z.discriminatedUnion('t', [
   // push: the viewer echoes it back on `scrubAck` so the feeder knows which
   // outstanding push an ack settles. Optional — playback/step positions carry
   // no push, and a viewer that predates it simply acks without one.
-  z.object({ t: z.literal('position'), epochMs: z.number(), seq: z.number().optional() }),
+  // `rtpTs` is the uint32 RTP timestamp, as written on the wire, of the newest
+  // video frame behind `epochMs`; `rtpHz` its clock and `rate` the play rate.
+  // Absent when no frame was pushed since the last position, seek or rate
+  // change, so a viewer never maps a presented frame through a stale anchor.
+  z.object({
+    t: z.literal('position'),
+    epochMs: z.number(),
+    seq: z.number().optional(),
+    rtpTs: z.number().int().min(0).max(0xffffffff).optional(),
+    rtpHz: z.number().positive().optional(),
+    rate: z.number().optional(),
+  }),
   z.object({ t: z.literal('liveProfile'), profile: z.enum(['high', 'mid', 'low']) }),
   // The recorded tier ACTUALLY playing, next to the one the client asked for.
   // Sent whenever the pair changes — a seek that fell to Mid because High has

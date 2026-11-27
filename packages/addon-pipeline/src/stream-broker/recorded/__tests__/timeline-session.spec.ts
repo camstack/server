@@ -15,6 +15,7 @@ function makeSession() {
     pushRecordedAccessUnit: vi.fn(),
     requestKeyframe: vi.fn(),
     sendControl: (raw: string) => sent.push(raw),
+    takeVideoWireRtpTs: vi.fn((): number | undefined => undefined),
   }
 }
 
@@ -324,6 +325,54 @@ describe('TimelineSession', () => {
         { t: 'position', epochMs: 6000 },
       ]),
     )
+    ts.dispose()
+  })
+})
+
+describe('TimelineSession — position carries the wire RTP timestamp (planning#728)', () => {
+  it('adds rtpTs, rtpHz and rate when a frame was pushed, omits them otherwise', () => {
+    const s = makeSession()
+    const ts = new TimelineSession({ session: s, deviceId: 99, makeFeeder: () => fakeFeeder() })
+    s.takeVideoWireRtpTs.mockReturnValueOnce(0xfffffff0)
+    ts._emitPosition(6000)
+    ts._emitPosition(6040)
+    const msgs = s.sent.map((m) => JSON.parse(m))
+    expect(msgs[0]).toEqual({
+      t: 'position',
+      epochMs: 6000,
+      rtpTs: 0xfffffff0,
+      rtpHz: 90000,
+      rate: 1,
+    })
+    expect(msgs[1]).toEqual({ t: 'position', epochMs: 6040 })
+    ts.dispose()
+  })
+
+  it('reports the current rate and keeps the push seq', async () => {
+    const s = makeSession()
+    const ts = new TimelineSession({ session: s, deviceId: 99, makeFeeder: () => fakeFeeder() })
+    await ts.handleControl({ t: 'setRate', rate: 2 })
+    s.takeVideoWireRtpTs.mockReturnValueOnce(123)
+    ts._emitPosition(7000, 4)
+    expect(JSON.parse(s.sent[0]!)).toEqual({
+      t: 'position',
+      epochMs: 7000,
+      seq: 4,
+      rtpTs: 123,
+      rtpHz: 90000,
+      rate: 2,
+    })
+    ts.dispose()
+  })
+
+  it('drops the pending anchor on a seek and on a rate change', async () => {
+    const s = makeSession()
+    const ts = new TimelineSession({ session: s, deviceId: 99, makeFeeder: () => fakeFeeder() })
+    await ts.handleControl({ t: 'playRecorded', deviceId: 99, epoch: 6000, profile: 'mid' })
+    const afterSeek = s.takeVideoWireRtpTs.mock.calls.length
+    expect(afterSeek).toBeGreaterThan(0)
+    await ts.handleControl({ t: 'setRate', rate: 2 })
+    expect(s.takeVideoWireRtpTs.mock.calls.length).toBe(afterSeek + 1)
     ts.dispose()
   })
 })
