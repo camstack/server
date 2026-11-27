@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Persist-mode edits must keep the focused control enabled. Disabling the
- * form while `updateScopedSettings` runs blurred text inputs on every
- * keystroke (mobile keyboard closed) — Training Modal entry Name.
+ * Persist-mode edits are a draft until Save (planning#675) and must keep the
+ * focused control enabled while the save runs: disabling the form blurred text
+ * inputs (mobile keyboard closed) — Training Modal entry Name.
  */
 import type { ConfigUISchemaWithValues } from '@camstack/types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -38,9 +38,9 @@ function deferred<T>(): {
 }
 
 describe('AddonScopedSettingsForm persist edits', () => {
-  it('keeps the Name input enabled while a save is in flight', async () => {
-    const gate = deferred<unknown>()
+  function setup() {
     let stored = SCHEMA
+    const gate = deferred<unknown>()
     const mutate = vi.fn(async (input: { patch: Record<string, unknown> }) => {
       stored = {
         ...SCHEMA,
@@ -62,7 +62,6 @@ describe('AddonScopedSettingsForm persist edits', () => {
         updateScopedSettings: { mutate },
       },
     }
-
     render(
       <AddonScopedSettingsForm
         trpc={trpc}
@@ -71,13 +70,17 @@ describe('AddonScopedSettingsForm persist edits', () => {
         scope="cluster"
       />,
     )
+    return { mutate, query, gate }
+  }
 
+  it('writes nothing while typing, and only on Save (planning#675)', async () => {
+    const { mutate, query, gate } = setup()
     const input = (await screen.findByDisplayValue('Default')) as HTMLInputElement
-    expect(input.disabled).toBe(false)
-
     fireEvent.change(input, { target: { value: 'Staging' } })
+    expect(mutate).not.toHaveBeenCalled()
 
-    await waitFor(() => expect(mutate).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
     expect(mutate).toHaveBeenCalledWith({
       addonId: 'training-modal',
       cap: 'training-provider',
@@ -89,15 +92,23 @@ describe('AddonScopedSettingsForm persist edits', () => {
       cap: 'training-provider',
       scope: 'cluster',
     })
-    const duringSave = screen.getByDisplayValue('Staging') as HTMLInputElement
-    expect(duringSave.disabled).toBe(false)
-    expect(screen.getByText('Saving…')).toBeTruthy()
-
+    // The focused control stays enabled while the save is in flight (mobile keyboard).
+    expect((screen.getByDisplayValue('Staging') as HTMLInputElement).disabled).toBe(false)
     await act(async () => {
       gate.resolve({})
     })
-    await waitFor(() => expect(screen.queryByText('Saving…')).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Save' })).toBeNull())
     expect((screen.getByDisplayValue('Staging') as HTMLInputElement).disabled).toBe(false)
+  })
+
+  it('Discard restores the served value and never writes', async () => {
+    const { mutate } = setup()
+    const input = (await screen.findByDisplayValue('Default')) as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Staging' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Discard' }))
+    expect(screen.getByDisplayValue('Default')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
+    expect(mutate).not.toHaveBeenCalled()
   })
 })
 

@@ -19,6 +19,7 @@ import {
   dehydrateSchema,
 } from '@camstack/types'
 import { ConfigFormBuilder } from './config-form-builder.js'
+import { FormSaveBar } from './form-save-bar.js'
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg
@@ -121,6 +122,11 @@ function extractValues(schema: ConfigUISchemaWithValues | null): Record<string, 
   return out
 }
 
+/** Structural equality for JSON-shaped field values (arrays and objects included). */
+function sameValue(a: unknown, b: unknown): boolean {
+  return a === b || JSON.stringify(a) === JSON.stringify(b)
+}
+
 function stripValues(schema: ConfigUISchemaWithValues): ConfigUISchema {
   return dehydrateSchema(schema)
 }
@@ -147,6 +153,9 @@ export function AddonScopedSettingsForm({
   const [edits, setEdits] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  /** Saved values the last re-read did not echo back (the addon was mid-restart). */
+  const [committed, setCommitted] = useState<Record<string, unknown>>({})
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState<boolean>(defaultOpen ?? false)
   /** Bumps on every persist edit; a stale refetch must not clobber a newer local paint. */
@@ -164,6 +173,7 @@ export function AddonScopedSettingsForm({
       persistSeq.current++
       setHydrated(null)
       setEdits({})
+      setCommitted({})
     }
     setLoading(true)
     setError(null)
@@ -177,7 +187,10 @@ export function AddonScopedSettingsForm({
         // with a transient null. Initial load with no prior view stays null
         // (renders "not available") until the addon is ready.
         setHydrated((prev) => res ?? prev)
-        if (res) setEdits({})
+        if (res) {
+          setEdits({})
+          setCommitted({})
+        }
         setLoading(false)
       })
       .catch((err: unknown) => {
@@ -193,9 +206,10 @@ export function AddonScopedSettingsForm({
   const values = useMemo(() => {
     const served = extractValues(hydrated)
     const painted: Record<string, unknown> = { ...served }
+    for (const key of Object.keys(committed)) if (key in served) painted[key] = committed[key]
     for (const key of Object.keys(edits)) if (key in served) painted[key] = edits[key]
     return painted
-  }, [hydrated, edits])
+  }, [hydrated, edits, committed])
   const sectionKey = sectionIds?.join('\u0000')
   const schemaNoValues = useMemo(() => {
     if (!hydrated) return null
@@ -210,45 +224,54 @@ export function AddonScopedSettingsForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, sectionKey])
 
-  const handleChange = async (nextValues: Record<string, unknown>) => {
-    // Build a minimal patch — only keys whose value differs from the
-    // current hydrated snapshot. Keeps unrelated fields out of the
-    // persisted store and lets the addon's `maybeAutoRestart` logic
-    // only fire on real changes.
+  /** Keys whose draft differs from the served value: the one patch a Save sends. */
+  const pendingPatch = useMemo(() => {
+    const served = { ...extractValues(hydrated), ...committed }
     const patch: Record<string, unknown> = {}
-    for (const k of Object.keys(nextValues)) {
-      if (nextValues[k] !== values[k]) patch[k] = nextValues[k]
+    for (const key of Object.keys(edits)) {
+      if (key in served && !sameValue(edits[key], served[key])) patch[key] = edits[key]
     }
-    if (Object.keys(patch).length === 0) return
-    // Paint locally first and keep inputs enabled — disabling on save blurs
-    // the focused field (mobile keyboard closes) on every keystroke.
-    const seq = ++persistSeq.current
+    return patch
+  }, [hydrated, edits, committed])
+  const pendingCount = Object.keys(pendingPatch).length
+
+  // The edit stays in the local draft until Save; nothing is written from a field.
+  const handleChange = (nextValues: Record<string, unknown>) => {
     setEdits((prev) => ({ ...prev, ...nextValues }))
+  }
+
+  const handleDiscard = () => {
+    setEdits({})
+    setSaveError(null)
+  }
+
+  const handleSave = async () => {
+    if (pendingCount === 0) return
+    const seq = ++persistSeq.current
     setSaving(true)
-    setError(null)
+    setSaveError(null)
     try {
-      await trpc.addonSettings.updateScopedSettings.mutate({
-        ...target,
-        patch,
-      })
-      // Re-fetch so derived fields (e.g. `probedBest*` hints refreshed
-      // by a sibling action) stay in sync. A change that restarts the addon
-      // (engine cascade) makes this refetch race the restart window, where
-      // `getScopedSettings` returns null ("unavailable — keep last-known").
-      // Never overwrite a good hydrated schema with null, or the form would
-      // flash empty / reset its selection. Keep the previous view; the
-      // addon's own state is already persisted server-side.
-      // A newer keystroke bumps `persistSeq` — discard this refetch so it
-      // cannot rewind the optimistic paint mid-edit.
+      await trpc.addonSettings.updateScopedSettings.mutate({ ...target, patch: pendingPatch })
+      // Re-fetch so derived fields (e.g. `probedBest*` hints refreshed by a
+      // sibling action) stay in sync. A restart-causing change makes this
+      // refetch race the restart window, where `getScopedSettings` returns
+      // null: keep the previous view, the addon's state is already persisted.
       const next = await trpc.addonSettings.getScopedSettings.query(target)
-      if (next && seq === persistSeq.current) {
-        setHydrated(next)
-        setEdits({})
-      }
-      if (seq === persistSeq.current) onAfterChange?.()
-    } catch (err: unknown) {
       if (seq === persistSeq.current) {
-        setError(err instanceof Error ? err.message : String(err))
+        if (next) {
+          setHydrated(next)
+          setEdits({})
+        } else {
+          // Saved, but the re-read answered nothing: the patch is now the served state.
+          setCommitted((prev) => ({ ...prev, ...pendingPatch }))
+          setEdits({})
+        }
+        onAfterChange?.()
+      }
+    } catch (err: unknown) {
+      // A failed save keeps the draft so the operator can retry or discard.
+      if (seq === persistSeq.current) {
+        setSaveError(err instanceof Error ? err.message : String(err))
       }
     } finally {
       if (seq === persistSeq.current) setSaving(false)
@@ -281,9 +304,9 @@ export function AddonScopedSettingsForm({
 
   const body = (
     <>
-      {saving ? (
-        <div className="mb-2 text-[11px] text-foreground-subtle" aria-live="polite">
-          {t('uiLibrary.addonGlobalSettings.saving', 'Saving…')}
+      {saveError !== null ? (
+        <div className="mb-2 text-xs text-danger" role="alert">
+          {saveError}
         </div>
       ) : null}
       <ConfigFormBuilder
@@ -292,6 +315,12 @@ export function AddonScopedSettingsForm({
         onChange={handleChange}
         disabled={disabled === true}
         bare={bare}
+      />
+      <FormSaveBar
+        pendingCount={pendingCount}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscard}
+        saving={saving}
       />
     </>
   )
