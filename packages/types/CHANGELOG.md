@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - getMotionEvents can return a motionTimeline: the motion region boxes sampled each second over the episode
+- device-mesh now derives a Mesh network tab on every device that carries it
 
 ## [1.2.643] - 2026-11-27
 

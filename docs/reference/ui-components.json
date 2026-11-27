@@ -3566,6 +3566,13 @@
       ]
     },
     {
+      "name": "collectMeshNetworks",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "One `getTopology` answers for the whole mesh the device sits in, so a network is read once: every device that already appeared as a node of a topology read so far is skipped, and only the first uncovered device is ask…"
+    },
+    {
       "name": "colorIdForNode",
       "kind": "function",
       "area": "composites",
@@ -5825,6 +5832,13 @@
       "summary": "Selectable per-page sizes. The table default (50) is intentionally one of them."
     },
     {
+      "name": "DEVICE_MESH_CAP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/use-mesh-networks.ts",
+      "summary": "Every mesh network of every provider of `device-mesh`."
+    },
+    {
       "name": "DEVICE_NAME_FORMS",
       "kind": "constant",
       "area": "composites",
@@ -6596,6 +6610,21 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-select-filter.ts",
       "summary": "Does a device satisfy the filter?"
+    },
+    {
+      "name": "DeviceMeshCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/DeviceMeshCard.tsx",
+      "summary": "DeviceMeshCard — the device page's summary of where a device sits in its mesh (`device-mesh`, widget `host/device-mesh`): role, signal, last read, parent router and the node's own error counters, and a link into the N…",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "DeviceName",
@@ -11750,6 +11779,13 @@
       "summary": "Did the hub refuse this principal (rather than fail)?"
     },
     {
+      "name": "isRoutingRole",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Pure model of the `device-mesh` views: link-quality tone, the KPI row, the parent router of a node, and how the networks of every provider are enumerated from the per-device `getTopology` answers."
+    },
+    {
       "name": "isSecretField",
       "kind": "function",
       "area": "composites",
@@ -12287,6 +12323,13 @@
       "summary": "The linked heat pump's `heat-pump-status` slice and the day's counters as the card reads them. A slice that has not answered leaves everything null: the system's own heat pump branch is never mixed in (D224)."
     },
     {
+      "name": "linksOfNode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Every link that touches a node, with the peer's key on the other end."
+    },
+    {
       "name": "LIST_ROW",
       "kind": "constant",
       "area": "lib",
@@ -12606,6 +12649,27 @@
       ]
     },
     {
+      "name": "LQI_TONE_STROKE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "CSS variable of a tone, for SVG strokes."
+    },
+    {
+      "name": "LQI_TONE_TEXT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Token utility for text in a tone."
+    },
+    {
+      "name": "lqiTone",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Pure model of the `device-mesh` views: link-quality tone, the KPI row, the parent router of a node, and how the networks of every provider are enumerated from the per-device `getTopology` answers."
+    },
+    {
       "name": "lucideExportName",
       "kind": "function",
       "area": "composites",
@@ -12820,6 +12884,13 @@
       ]
     },
     {
+      "name": "medianOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Pure model of the `device-mesh` views: link-quality tone, the KPI row, the parent router of a node, and how the networks of every provider are enumerated from the per-device `getTopology` answers."
+    },
+    {
       "name": "mediaPhaseLabel",
       "kind": "function",
       "area": "composites",
@@ -12984,6 +13055,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/record-entries/record-entry-secrets.ts",
       "summary": "Merge an edited password box back into the body sent to `putEntry`."
+    },
+    {
+      "name": "meshNodeHref",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/DeviceMeshCard.tsx",
+      "summary": "The Network section focused on one node."
+    },
+    {
+      "name": "meshStats",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Pure model of the `device-mesh` views: link-quality tone, the KPI row, the parent router of a node, and how the networks of every provider are enumerated from the per-device `getTopology` answers."
     },
     {
       "name": "metadataEntries",
@@ -13318,6 +13403,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
       "summary": "Net grid, kWh: imported − exported (+ drew, − fed). Null unless both are known."
+    },
+    {
+      "name": "networkHasDevice",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Does the network list this CamStack device as one of its nodes?"
     },
     {
       "name": "NetworkLinkBadge",
@@ -14075,6 +14167,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-parent.ts",
       "summary": "Second-line hint: `in <parent>` when the device lives under a hub/container."
+    },
+    {
+      "name": "parentRouterOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "The routing node with the best known link to this node, or `null` when no router reports one."
     },
     {
       "name": "parseCapKey",
@@ -21664,6 +21763,27 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-lock-door-sensor.ts",
       "summary": "The linked door contact with its own reading, or `null` while unknown or when none is linked."
+    },
+    {
+      "name": "useMeshNetworks",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/use-mesh-networks.ts",
+      "summary": "Every mesh network of every provider of `device-mesh`."
+    },
+    {
+      "name": "useMeshRoleLabel",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/mesh-labels.ts",
+      "summary": "Role words of a mesh node; one place so the table, the map and the widget agree."
+    },
+    {
+      "name": "useMeshTransportLabel",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/mesh-labels.ts",
+      "summary": ""
     },
     {
       "name": "useNavigation",

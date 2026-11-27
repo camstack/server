@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Network -> Device networks: topology map, node table and node detail for every device mesh (Matter / Thread today)
+
 ## [1.2.764] - 2026-11-27
 
 ### Changed

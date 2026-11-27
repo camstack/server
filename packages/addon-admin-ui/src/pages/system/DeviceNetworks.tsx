@@ -1,0 +1,105 @@
+/**
+ * Network → Device networks: every mesh network of every provider of the
+ * `device-mesh` capability (a Matter fabric over Thread or Wi-Fi today, Zigbee
+ * later). Cap-derived: nothing here names a protocol. The selected node lives in
+ * the URL (`?node=<deviceId>`), so a device page can link straight to it.
+ *
+ * A sibling of "Mesh networks" (the VPN meshes), not a kind of it: those are
+ * integration instances with credentials; these are read from devices.
+ */
+import {
+  EmptyState,
+  ErrorBox,
+  Skeleton,
+  useMeshNetworks,
+  useUiText,
+  networkHasDevice,
+  SECTION_BODY,
+} from '@camstack/ui-library'
+import { Waypoints } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { MeshNetworkView } from '../../components/device-mesh/MeshNetworkView'
+
+export function parseNodeParam(raw: string | null): number | null {
+  if (raw === null) return null
+  const n = Number(raw)
+  return Number.isInteger(n) && n >= 0 ? n : null
+}
+
+export function DeviceNetworksPage() {
+  const t = useUiText()
+  const [params, setParams] = useSearchParams()
+  const mesh = useMeshNetworks()
+  const focused = parseNodeParam(params.get('node'))
+
+  const select = (deviceId: number | null): void => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (deviceId === null) next.delete('node')
+        else next.set('node', String(deviceId))
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  if (
+    mesh.presence === 'pending' ||
+    (mesh.presence === 'present' && mesh.networks === undefined && !mesh.isError)
+  ) {
+    return <Skeleton className="h-40 w-full" />
+  }
+  if (mesh.presence === 'unknown' || mesh.isError) {
+    return (
+      <ErrorBox
+        message={t('uiLibrary.deviceMesh.loadFailed', 'The mesh could not be read.')}
+        onRetry={mesh.refetch}
+      />
+    )
+  }
+  if (mesh.presence === 'absent' || mesh.networks === undefined || mesh.networks.length === 0) {
+    return (
+      <EmptyState
+        icon={Waypoints}
+        title={t('uiLibrary.deviceMesh.emptyTitle', 'No device networks')}
+        description={t(
+          'uiLibrary.deviceMesh.emptyDescription',
+          'Matter and Zigbee devices that report their mesh appear here once an integration that provides it is set up.',
+        )}
+      />
+    )
+  }
+  return (
+    <div className={`flex flex-col gap-6 ${SECTION_BODY}`}>
+      {mesh.truncated && (
+        <ErrorBox
+          variant="warning"
+          message={t(
+            'uiLibrary.deviceMesh.truncated',
+            'Only the first devices were checked; some networks may be missing.',
+          )}
+        />
+      )}
+      {mesh.networks.map((network, index) => (
+        <section key={network.rootDeviceId} className="flex flex-col gap-2">
+          {mesh.networks !== undefined && mesh.networks.length > 1 && (
+            <h2 className="text-sm font-semibold text-foreground">
+              {t('uiLibrary.deviceMesh.networkN', 'Network {{n}}', {
+                n: index + 1,
+              })}
+            </h2>
+          )}
+          <MeshNetworkView
+            network={network}
+            selectedDeviceId={
+              focused !== null && networkHasDevice(network, focused) ? focused : null
+            }
+            onSelectDevice={select}
+            onRetry={mesh.refetch}
+          />
+        </section>
+      ))}
+    </div>
+  )
+}

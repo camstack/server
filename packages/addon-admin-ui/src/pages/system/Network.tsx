@@ -17,6 +17,7 @@ import { TurnServersPage } from './TurnServers'
 import { NetworkAddressesPage } from './NetworkAddresses'
 import { MeshNetworksPage } from './MeshNetworks'
 import { HTTPS_CERTIFICATE_HREF, LocalAccessPage } from './LocalAccess'
+import { DeviceNetworksPage } from './DeviceNetworks'
 import { NetworkDiagnosticsPage } from './NetworkDiagnostics'
 
 /** Retired Network tabs: the HTTPS certificate now lives under Identity → Certificates. */
@@ -65,6 +66,12 @@ export function NetworkPage() {
           label: t('systemPage.network.meshNetworks', 'Mesh Networks'),
           content: <MeshNetworksPage />,
           ownedParams: INTEGRATION_HUB_OWNED_PARAMS,
+        },
+        {
+          id: 'device-mesh',
+          label: t('systemPage.network.deviceNetworks', 'Device networks'),
+          content: <DeviceNetworksPage />,
+          ownedParams: ['node'],
         },
         {
           id: INTEGRATION_HUB_PAGES.turn.tab,

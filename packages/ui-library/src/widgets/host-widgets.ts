@@ -5,6 +5,7 @@ import { CameraGridLayoutEditor } from '../composites/cap-settings/CameraGridLay
 // re-exports MaskShapeCanvas/MotionZonesSettings/PrivacyMaskSettings and
 // would chain statically back to react-konva.
 import { ClipsSection } from '../composites/clips/ClipsSection.js'
+import { DeviceMeshCard } from '../composites/device-mesh/DeviceMeshCard.js'
 import { ExtensionsPanel } from '../composites/extensions/ExtensionsPanel.js'
 import { NavigationPanel } from '../composites/cap-settings/NavigationPanel.js'
 import { PowerMeterLine } from '../composites/cap-settings/PowerMeterLine.js'
@@ -58,4 +59,6 @@ export const HOST_WIDGETS: Readonly<Record<string, ComponentType<HostWidgetProps
   // `device-extension` (D648) — what a device is extended with by other
   // devices; one card per slot, each read and written by the slot's owner.
   'host/extensions-panel': ExtensionsPanel,
+  // `device-mesh` — where a device sits in its radio / IP mesh, with a link to the Network page.
+  'host/device-mesh': DeviceMeshCard,
 }

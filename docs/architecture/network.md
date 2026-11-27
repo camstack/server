@@ -208,3 +208,7 @@ node scripts/hub/hub.mjs GET localNetwork.getAddresses
 The answer lists every palette row, the role flags and, per role, `flagged`,
 `resolved` and `source` (`flagged`, `auto` or `none`). Check `roles.publicEndpoint`
 first when a link points at a LAN address.
+
+## Device networks (Network → Device networks)
+
+A sibling of "Mesh networks" (the VPN meshes, which are integration instances with credentials), not a kind of it: the radio / IP meshes of devices (a Matter fabric over Thread or Wi-Fi, Zigbee later) are read from the devices, through the device-native `device-mesh` capability. The section enumerates the devices that carry the capability (`deviceManager.search` requiring it) and reads one `getTopology` per network: a topology answers for the whole mesh the device sits in, so every device already listed as a node of a read topology is skipped. A read that fails is its own network with the reason, never an empty one. The selected node is `?node=<deviceId>`; the device page's "View in the network" link opens the section on it. The device page itself carries the `host/device-mesh` widget, derived from the capability's `deviceConfig`.

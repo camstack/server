@@ -2668,7 +2668,7 @@
 
 - **Source:** `packages/types/src/capabilities/device-mesh.cap.ts:184`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
-- **Archetypes:** —
+- **Archetypes:** deviceConfig(widget)
 - **Provider interface:** `IDeviceMeshProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |

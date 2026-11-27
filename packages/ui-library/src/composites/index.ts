@@ -475,6 +475,7 @@ export {
   ExtensionsPanel,
   type ExtensionsPanelProps,
 } from './extensions/ExtensionsPanel.js'
+export * from './device-mesh/index.js'
 export * from './filter-bar'
 export * from './form-field'
 export * from './form-save-bar'

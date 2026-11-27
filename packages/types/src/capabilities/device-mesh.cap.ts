@@ -186,6 +186,18 @@ export const deviceMeshCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
+  deviceConfig: {
+    // The summary of where the device sits in its mesh, on its own device tab; the
+    // widget reads through the cap and only its "Read now" button writes.
+    ui: {
+      kind: 'widget',
+      widgetId: 'host/device-mesh',
+      tab: 'network',
+      topTab: true,
+      label: 'Mesh network',
+      order: 20,
+    },
+  },
   methods: {
     /** The mesh the device sits in: nodes and the links between them, from what is already held. */
     getTopology: method(DeviceInputSchema, MeshTopologySchema, {
