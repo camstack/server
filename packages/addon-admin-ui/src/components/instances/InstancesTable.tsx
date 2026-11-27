@@ -229,6 +229,8 @@ function EnableCell({
       aria-label={t('providerInstances.enable', 'Enable {{name}}', {
         name: row.providerName,
       })}
+      // save-discard: instant by design — the switch turns a built-in provider on or off for the
+      // function (an action on a running integration, like the snooze)
       onCheckedChange={(enabled) =>
         setEnabled.mutate({
           capName: functionCap,

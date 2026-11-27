@@ -134,6 +134,7 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
               aria-label={t('schedulers.list.enabledAria', 'Enable {{name}}', {
                 name: entry.name,
               })}
+              // save-discard: instant by design — the switch starts or stops the scheduler's holds
               onCheckedChange={(enabled) => setEnabled.mutate({ schedulerId: entry.id, enabled })}
             />
           </span>

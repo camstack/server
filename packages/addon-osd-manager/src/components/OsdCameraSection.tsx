@@ -148,6 +148,7 @@ export function OsdCameraSection({
           checked={cameraEnabled}
           disabled={busy}
           data-testid="osd-slot-camera-enabled"
+          // save-discard: live control — this switches the overlay on the camera itself and reads it back
           onChange={(e) => {
             const next = e.target.checked
             setCameraEnabled(next)

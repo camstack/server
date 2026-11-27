@@ -213,6 +213,14 @@ pending changes and sticks to the scroll parent.
   (Run, Test, Delete through the destructive dialog), and a toggle documented
   as instant on its row. Anything else that commits on its own is a bug.
 
+- A dialog's lead (the part above the generic form: a model picker, a provider
+  widget) never writes the record. It hands its values to the dialog through
+  `useInstanceLeadDraft()` (`components/instances/instance-lead-draft.tsx`),
+  which sends them with its own "Save changes".
+- A row that owns a write it cannot lift (an exporter row with its own
+  mutation) reports a write function to its parent, which holds ONE
+  `FormSaveBar` and runs them together.
+
 Operator rule, 2026-11-23 (the Customize trigger tables committed every edit
 on blur). Enforcement and the sweep: board #675.
 

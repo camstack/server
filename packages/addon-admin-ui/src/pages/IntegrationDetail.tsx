@@ -527,6 +527,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             >
               <Switch
                 checked={integration.enabled}
+                // save-discard: instant by design — the switch starts or stops the integration
                 onCheckedChange={(next) =>
                   toggleMutation.mutate({
                     id: integrationId!,

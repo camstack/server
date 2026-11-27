@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The camera on-screen-display switch is documented as a live control (no behaviour change)
+
 ## [0.1.323] - 2026-11-26
 
 ### Changed

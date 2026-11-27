@@ -1,103 +1,28 @@
 [
   {
-    "file": "packages/addon-admin-ui/src/components/backup/BackupEntriesTable.tsx",
-    "anchor": "EntryEnabledToggle/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/cameras/tabs/StreamsTab.tsx",
-    "anchor": "StreamsTab/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/certificates/DeviceSettingsRow.tsx",
-    "anchor": "DeviceSettingsRow/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/cluster/tabs/NodeDetailCapabilitiesTab.tsx",
-    "anchor": "columns/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
     "file": "packages/addon-admin-ui/src/components/detection-intelligence/PhotoEnrollDialog.tsx",
     "anchor": "PhotoEnrollDialog/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "one-shot"
   },
   {
     "file": "packages/addon-admin-ui/src/components/instances/InstanceSwitchCell.tsx",
     "anchor": "InstanceSwitchCell/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "documented instant"
   },
   {
     "file": "packages/addon-admin-ui/src/components/instances/InstancesTable.tsx",
     "anchor": "EnableCell/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/pipeline/CameraAssignmentsTable.tsx",
-    "anchor": "columns/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/pipeline/assignments/PlacementControls.tsx",
-    "anchor": "DevicePinSelect/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/pipeline/placement-board/NodeInferenceDevices.tsx",
-    "anchor": "columns/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/pipeline/placement-board/NodeInferenceDevices.tsx",
-    "anchor": "columns/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/components/pipeline/tabs/ClusterEventsTab.tsx",
-    "anchor": "ClusterEventsTab/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "documented instant"
   },
   {
     "file": "packages/addon-admin-ui/src/pages/IntegrationDetail.tsx",
     "anchor": "AddonIntegrationsView/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "documented instant"
   },
   {
     "file": "packages/addon-admin-ui/src/pages/build/schedulers/SchedulersTab.tsx",
     "anchor": "columns/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/build/shared/quick-bodies/ActionExporters.tsx",
-    "anchor": "ActionExporterRow/onCheckedChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/system/Addons.tsx",
-    "anchor": "InstalledTab/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/system/AiDefaultsCard.tsx",
-    "anchor": "AiDefaultsCard/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/system/AiProfileLead.tsx",
-    "anchor": "AiProfileLead/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/system/Calendars.tsx",
-    "anchor": "CalendarLegend/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/addon-admin-ui/src/pages/system/Calendars.tsx",
-    "anchor": "CalendarLegend/onChange/inline#2",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "documented instant"
   },
   {
     "file": "packages/addon-admin-ui/src/pages/system/NotificationRuleSnoozeSwitch.tsx",
@@ -105,18 +30,8 @@
     "reason": "documented instant"
   },
   {
-    "file": "packages/addon-admin-ui/src/pages/system/NotificationTexts.tsx",
-    "anchor": "NotificationTextsPage/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
     "file": "packages/addon-osd-manager/src/components/OsdCameraSection.tsx",
     "anchor": "OsdCameraSection/onChange/inline#1",
-    "reason": "known violation — planning#675 sweep"
-  },
-  {
-    "file": "packages/ui-library/src/composites/addon-scoped-settings-form.tsx",
-    "anchor": "body/onChange/handleChange#1",
-    "reason": "known violation — planning#675 sweep"
+    "reason": "live control"
   }
 ]

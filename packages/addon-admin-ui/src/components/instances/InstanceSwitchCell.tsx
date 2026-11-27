@@ -54,6 +54,8 @@ export function InstanceSwitchCell({
         disabled={setEnabled.isPending || notRunning !== null}
         aria-label={t('providerInstances.enable', 'Enable {{name}}', { name: row.name })}
         data-testid={`instance-switch-${row.id}`}
+        // save-discard: instant by design — the switch starts or stops the instance (an action on a
+        // running integration, like the snooze), and the row says why when it fails
         onCheckedChange={(enabled) => {
           setFailure(null)
           setEnabled.mutate({ addonId: row.addonId, id: row.id, enabled })
