@@ -4,7 +4,7 @@
 
 # Decisions
 
-1072 architecture decision records. One file per decision, never
+1073 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1086,6 +1086,7 @@ that rots.
 | D1104 | [A camera's detection stream profile and rate follow a cluster default, set only by a confirmed plan](adr-1104-detection-profile-and-fps-follow-a-cluster-default-set-by-a-confirmed-plan.md) | ✅ accepted | 2026-11-26 |
 | D1105 | [A long-running operation is a job in one per-user ledger, owned by whoever started it](adr-1105-a-long-running-operation-is-a-job-in-one-per-user-ledger.md) | ✅ accepted | 2026-11-26 |
 | D1106 | [A list row is one line with the kind's main control; the timed run is not drawn in it](adr-1106-a-list-row-is-one-line-with-the-main-control-and-the-timed-run-is-not-drawn-in-it.md) | ✅ accepted | 2026-11-26 |
+| D1107 | [A device is migrated to the ambient-monitor role once, by a verdict that never overwrites a role the operator chose, and the marker is written only after the change lands](adr-1107-ambient-monitor-role-migration.md) | ✅ accepted | 2026-11-27 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:
