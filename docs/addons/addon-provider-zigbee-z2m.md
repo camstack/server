@@ -59,3 +59,18 @@ and the routers and never an end device, so a battery node is not woken: it is c
 and its links are what its parent router reports. Two callers share one scan in flight. Before any
 scan `readAt` is `null` and there are no links. `network` stays `null`: its technology has no Zigbee
 value.
+
+## Management
+
+A saved integration's form carries buttons for the server's own management requests, all admin-only
+custom actions that act on that integration:
+
+| Button | Request | Input |
+| --- | --- | --- |
+| Allow new devices | `bridge/request/permit_join` | seconds, 1 to 254 (default 60); `0` closes it |
+| Rename a device | `bridge/request/device/rename` | `current name -> new name` |
+| Remove / Force remove | `bridge/request/device/remove` | name or IEEE address; force drops a device that does not answer |
+| Restart Zigbee2MQTT | `bridge/request/restart` | none |
+
+A refusal from the server reaches the button as the server's own reason. Without an `instanceId` an
+action acts on the only open integration and refuses when there are several.

@@ -68,6 +68,11 @@ export class Z2mHub {
     this.held.set(integrationId, map)
   }
 
+  /** The integrations whose session is open. */
+  sessionIds(): readonly string[] {
+    return [...this.sessions.keys()]
+  }
+
   session(integrationId: string): Z2mSession | null {
     return this.sessions.get(integrationId) ?? null
   }

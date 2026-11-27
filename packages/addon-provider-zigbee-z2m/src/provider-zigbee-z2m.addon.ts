@@ -41,6 +41,7 @@ import { Z2M_SYSTEM } from './z2m-device-config.js'
 import { ZigbeeDevice } from './z2m-device.js'
 import { planZ2mDevice, roleForPrimaryCap, type Z2mPlan } from './z2m-exposes.js'
 import { ZigbeeGatewayDevice } from './z2m-gateway-device.js'
+import { Z2mManagement, type ZigbeeZ2mActions, zigbeeZ2mActions } from './z2m-actions.js'
 import { z2mHub } from './z2m-hub.js'
 import { probeZ2m } from './z2m-probe.js'
 import { Z2mSessionFault, z2mSessionHealth } from './z2m-session-health.js'
@@ -86,7 +87,7 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
     super({})
   }
 
-  protected override async onInitialize(): Promise<AddonInitResult> {
+  protected override async onInitialize(): Promise<AddonInitResult<ZigbeeZ2mActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
     const records = this.ctx.records
     if (records === undefined) {
@@ -112,6 +113,7 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
       },
     )
     void this.reconcile()
+    const management = new Z2mManagement(z2mHub)
     return {
       providers: [
         ...regs,
@@ -132,6 +134,13 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
           },
         },
       ],
+      customActions: zigbeeZ2mActions,
+      actionHandlers: {
+        permitJoin: async (input) => management.permitJoin(input),
+        renameDevice: async (input) => management.renameDevice(input),
+        removeDevice: async (input) => management.removeDevice(input),
+        restartBridge: async (input) => management.restartBridge(input),
+      },
     }
   }
 

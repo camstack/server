@@ -5,6 +5,7 @@
  * part of the record: it is a device OF the integration, adopted from it.
  */
 import {
+  type ConfigSection,
   type ConfigUISchema,
   defineEntryKind,
   entryBody,
@@ -13,8 +14,10 @@ import {
   type RecordsAccess,
 } from '@camstack/types'
 import { z } from 'zod'
+import { Z2M_PERMIT_JOIN_DEFAULT_S } from './z2m-actions.js'
 
 export const Z2M_DEFAULT_PORT = 8080
+const Z2M_ADDON_ID = 'provider-zigbee-z2m'
 
 export const ProviderZigbeeZ2mConnectionsKind = defineEntryKind('connections', {
   title: 'Zigbee2MQTT integrations',
@@ -36,37 +39,139 @@ export const ProviderZigbeeZ2mRecordKinds = {
   connections: ProviderZigbeeZ2mConnectionsKind,
 } as const
 
-export function buildProviderZigbeeZ2mConnectionForm(): ConfigUISchema {
+/** What every action button of an integration's form sends along. */
+type ActionParams = {
+  readonly instanceId: string
+}
+
+function managementSection(params: ActionParams): ConfigSection {
   return {
-    sections: [
+    id: 'z2m-management',
+    title: 'Network management',
+    columns: 1,
+    fields: [
       {
-        id: 'connection',
-        title: 'Connection',
-        columns: 1,
-        fields: [
-          { type: 'text', key: 'name', label: 'Name' },
-          { type: 'text', key: 'host', label: 'Host' },
-          {
-            type: 'number',
-            key: 'port',
-            label: 'Frontend port',
-            default: Z2M_DEFAULT_PORT,
-          },
-          {
-            type: 'boolean',
-            key: 'tls',
-            label: 'Use TLS (wss)',
-            default: false,
-          },
-          {
-            type: 'password',
-            key: 'token',
-            label: 'Auth token (optional)',
-            showToggle: true,
-          },
-        ],
+        type: 'addon-action-button',
+        addonId: Z2M_ADDON_ID,
+        paramsStatic: params,
+        key: '__permit-join',
+        label: 'Allow new devices',
+        description:
+          'Opens the network so a device in pairing mode can join, then closes it on its own. Enter 0 to close it now.',
+        buttonLabel: 'Allow joining…',
+        action: 'permitJoin',
+        variant: 'default',
+        prompt: {
+          param: 'seconds',
+          title: 'Allow new devices',
+          message: 'For how many seconds (1 to 254)? 0 closes the network.',
+          placeholder: String(Z2M_PERMIT_JOIN_DEFAULT_S),
+        },
+        successMessage: '{message}',
+      },
+      {
+        type: 'addon-action-button',
+        addonId: Z2M_ADDON_ID,
+        paramsStatic: params,
+        key: '__rename-device',
+        label: 'Rename a device',
+        description:
+          'Renames the device on the Zigbee2MQTT server; its CamStack device keeps its identity.',
+        buttonLabel: 'Rename…',
+        action: 'renameDevice',
+        variant: 'default',
+        prompt: {
+          param: 'rename',
+          title: 'Rename a device',
+          message: 'Write: current name -> new name',
+          placeholder: 'door_front -> front door',
+        },
+        successMessage: '{message}',
+      },
+      {
+        type: 'addon-action-button',
+        addonId: Z2M_ADDON_ID,
+        paramsStatic: params,
+        key: '__remove-device',
+        label: 'Remove a device',
+        description: 'Removes the device from the network. It has to be paired again to come back.',
+        buttonLabel: 'Remove…',
+        action: 'removeDevice',
+        variant: 'danger',
+        prompt: {
+          param: 'device',
+          title: 'Remove a device',
+          message: 'The device name or IEEE address.',
+          placeholder: 'door_front',
+        },
+        successMessage: '{message}',
+      },
+      {
+        type: 'addon-action-button',
+        addonId: Z2M_ADDON_ID,
+        paramsStatic: { ...params, force: true },
+        key: '__remove-device-force',
+        label: 'Force remove a device',
+        description:
+          'For a device that no longer answers: it is dropped from the server even though the device did not confirm.',
+        buttonLabel: 'Force remove…',
+        action: 'removeDevice',
+        variant: 'danger',
+        prompt: {
+          param: 'device',
+          title: 'Force remove a device',
+          message: 'The device name or IEEE address.',
+          placeholder: 'door_front',
+        },
+        successMessage: '{message}',
+      },
+      {
+        type: 'addon-action-button',
+        addonId: Z2M_ADDON_ID,
+        paramsStatic: params,
+        key: '__restart-bridge',
+        label: 'Restart Zigbee2MQTT',
+        description: 'Restarts the server process. The network is unavailable for a moment.',
+        buttonLabel: 'Restart now',
+        action: 'restartBridge',
+        variant: 'danger',
+        confirmMessage: 'Restart Zigbee2MQTT? Every device is unreachable until it is back.',
+        successMessage: '{message}',
       },
     ],
+  }
+}
+
+export function buildProviderZigbeeZ2mConnectionForm(id: string | null = null): ConfigUISchema {
+  const connection: ConfigSection = {
+    id: 'connection',
+    title: 'Connection',
+    columns: 1,
+    fields: [
+      { type: 'text', key: 'name', label: 'Name' },
+      { type: 'text', key: 'host', label: 'Host' },
+      {
+        type: 'number',
+        key: 'port',
+        label: 'Frontend port',
+        default: Z2M_DEFAULT_PORT,
+      },
+      {
+        type: 'boolean',
+        key: 'tls',
+        label: 'Use TLS (wss)',
+        default: false,
+      },
+      {
+        type: 'password',
+        key: 'token',
+        label: 'Auth token (optional)',
+        showToggle: true,
+      },
+    ],
+  }
+  return {
+    sections: id === null ? [connection] : [connection, managementSection({ instanceId: id })],
   }
 }
 
@@ -103,7 +208,7 @@ export function buildProviderZigbeeZ2mInstances(
           },
         ],
       },
-      formSchema: () => buildProviderZigbeeZ2mConnectionForm(),
+      formSchema: (id) => buildProviderZigbeeZ2mConnectionForm(id),
       initialBody: (name): ProviderZigbeeZ2mConnectionBody => ({ name }),
       configured: (body) => (body.host ?? '').length > 0,
       onChanged: () => deps.onChanged(),
