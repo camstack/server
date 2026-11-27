@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Settings forms, tables and inline editors across the admin (backup entries, stream profiles, certificates, node capabilities, camera and device placement, event post-processing node, calendars, notification language, add-on auto-update, AI defaults and profiles, action exporters) now keep your edits as a draft and write only when you press Save; Discard restores the saved state
+
 ## [1.2.763] - 2026-11-27
 
 ### Changed
 
 - New Activity button in the shell (badge, running jobs, cancel, dismiss, open result) and a System → Jobs page listing every job for admins.
-- Settings forms, tables and inline editors across the admin (backup entries, stream profiles, certificates, node capabilities, camera and device placement, event post-processing node, calendars, notification language, add-on auto-update, AI defaults and profiles, action exporters) now keep your edits as a draft and write only when you press Save; Discard restores the saved state
 
 ## [1.2.762] - 2026-11-27
 
