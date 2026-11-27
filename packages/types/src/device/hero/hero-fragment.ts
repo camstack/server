@@ -134,4 +134,10 @@ export interface HeroFragment {
   readonly scene?: { readonly mode?: HeroSceneMode; readonly level?: number }
   /** This cap's single reading, when a sensor that measures only it is drawn as that reading. */
   readonly measurement?: HeroMeasurement
+  /**
+   * A cap with several readings in one slice (air quality) contributes one measurement
+   * PER present field. They join the sensor's `measurements` list; they never make the
+   * single `measurement` (that stays one-cap, one-quantity).
+   */
+  readonly measurements?: readonly HeroMeasurement[]
 }

@@ -539,6 +539,7 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.VoltageSensor]: 'inherit',
   [DeviceRole.CurrentSensor]: 'inherit',
   [DeviceRole.AirQualitySensor]: AIR_QUALITY_LOOK,
+  [DeviceRole.AmbientMonitor]: READING_SENSOR_LOOK,
   [DeviceRole.BatterySensor]: 'inherit',
   [DeviceRole.NumericSensor]: 'inherit',
   [DeviceRole.EnumSensor]: 'inherit',

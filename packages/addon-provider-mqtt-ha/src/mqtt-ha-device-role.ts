@@ -1,4 +1,4 @@
-import { DeviceRole, type DeviceType, type InitialDeviceMeta } from '@camstack/types'
+import { DeviceRole, DeviceType, type InitialDeviceMeta } from '@camstack/types'
 import type { MqttHaCap } from './mqtt-ha-domain-mapping.js'
 
 /**
@@ -42,17 +42,49 @@ export function deviceRoleForPrimaryCap(cap: MqttHaCap | undefined): DeviceRole 
   }
 }
 
+/**
+ * Caps that are a READING of the world. A battery is not one (a plain temperature
+ * sensor with a battery stays a temperature sensor); an actuator or an event source
+ * is not either.
+ */
+const READING_CAPS: ReadonlySet<MqttHaCap> = new Set<MqttHaCap>([
+  'contact',
+  'motion',
+  'flood',
+  'vibration',
+  'tamper',
+  'temperature-sensor',
+  'humidity-sensor',
+  'ambient-light-sensor',
+  'numeric-sensor',
+  'power-meter',
+])
+
+/**
+ * The role of a device: a `Sensor` that carries two or more distinct readings is an
+ * ambient monitor; anything else keeps the role of its primary cap. The vendor is
+ * one device here, so the call is safe (a Home Assistant provider cannot make it).
+ */
+export function deviceRoleForCapabilities(
+  deviceType: DeviceType,
+  capabilities: readonly MqttHaCap[],
+): DeviceRole | null {
+  const readings = new Set(capabilities.filter((c) => READING_CAPS.has(c)))
+  if (deviceType === DeviceType.Sensor && readings.size >= 2) return DeviceRole.AmbientMonitor
+  return deviceRoleForPrimaryCap(capabilities[0])
+}
+
 /** What one adopted plan contributes to the device meta row. */
 export interface MqttHaInitialMetaInput {
   readonly deviceType: DeviceType
   readonly name: string
   readonly integrationId: string
-  readonly primaryCap: MqttHaCap | undefined
+  readonly capabilities: readonly MqttHaCap[]
 }
 
 /** Meta passed to `devices.create` for one adopted plan. */
 export function mqttHaInitialMeta(input: MqttHaInitialMetaInput): InitialDeviceMeta {
-  const role = deviceRoleForPrimaryCap(input.primaryCap)
+  const role = deviceRoleForCapabilities(input.deviceType, input.capabilities)
   return {
     type: input.deviceType,
     name: input.name,

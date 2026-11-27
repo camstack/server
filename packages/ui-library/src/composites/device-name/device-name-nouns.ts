@@ -426,6 +426,15 @@ export const DEVICE_ROLE_NOUNS: readonly DeviceNounSpec[] = [
     aliases: [],
   },
   {
+    id: 'ambient-monitor',
+    key: 'uiLibrary.deviceMeta.noun.role.ambientMonitor',
+    en: 'Ambient monitor',
+    it: 'Monitor ambiente',
+    shortEn: 'Ambient',
+    shortIt: 'Ambiente',
+    aliases: [],
+  },
+  {
     id: 'battery-sensor',
     key: 'uiLibrary.deviceMeta.noun.role.batterySensor',
     en: 'Battery',

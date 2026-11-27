@@ -10051,7 +10051,8 @@
         "ups": "UPS",
         "climateVehicle": "Car climate",
         "lockVehicle": "Car lock",
-        "mediaPlayerTv": "Television"
+        "mediaPlayerTv": "Television",
+        "ambientMonitor": "Ambient monitor"
       },
       "noun": {
         "role": {
@@ -10112,7 +10113,8 @@
           "messagingNotifier": "Messaging",
           "emailNotifier": "Email",
           "genericNotifier": "Notifier",
-          "switchLight": "On/off light"
+          "switchLight": "On/off light",
+          "ambientMonitor": "Ambient monitor"
         },
         "type": {
           "camera": "Camera",

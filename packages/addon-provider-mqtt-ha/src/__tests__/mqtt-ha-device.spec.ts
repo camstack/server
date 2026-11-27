@@ -381,6 +381,49 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
   })
 })
 
+describe('MqttHaDevice ambient-monitor role', () => {
+  const multi = (): Record<string, unknown> => ({
+    ...configOf(contactMessages()),
+    capabilities: ['temperature-sensor', 'humidity-sensor', 'battery'],
+  })
+
+  it('stamps ambient-monitor on a multi-reading sensor that has no role', async () => {
+    const h = build(DeviceType.Sensor, multi())
+    await h.device.onActivate()
+    expect(h.setRole).toHaveBeenCalledWith({ deviceId: 9, role: 'ambient-monitor' })
+  })
+
+  it('replaces the role the provider used to set (the primary cap default)', async () => {
+    const h = build(DeviceType.Sensor, multi(), {}, 'temperature-sensor')
+    await h.device.onActivate()
+    expect(h.setRole).toHaveBeenCalledWith({ deviceId: 9, role: 'ambient-monitor' })
+  })
+
+  it('keeps an operator-chosen role and says so, tagged with the device', async () => {
+    const h = build(DeviceType.Sensor, multi(), {}, 'generic-sensor')
+    await h.device.onActivate()
+    expect(h.setRole).not.toHaveBeenCalled()
+    expect(h.info).toHaveBeenCalledWith(
+      expect.stringContaining('role kept: operator-chosen or unknown'),
+      expect.objectContaining({ tags: { deviceId: 9 } }),
+    )
+  })
+
+  it('decides once: a role the operator sets back to the old default is not flipped again', async () => {
+    const reviewed = { ...multi(), ambientRoleReviewed: true }
+    const h = build(DeviceType.Sensor, reviewed, {}, 'temperature-sensor')
+    await h.device.onActivate()
+    expect(h.setRole).not.toHaveBeenCalled()
+  })
+
+  it('a single-reading sensor keeps its old role', async () => {
+    const one = { ...configOf(contactMessages()), capabilities: ['temperature-sensor', 'battery'] }
+    const h = build(DeviceType.Sensor, one, {}, 'temperature-sensor')
+    await h.device.onActivate()
+    expect(h.setRole).not.toHaveBeenCalled()
+  })
+})
+
 type IrSlice = {
   lastSend?: { ok: boolean; error: string | null; medium: string } | null
   lastLearn?: { ok: boolean; error: string | null } | null

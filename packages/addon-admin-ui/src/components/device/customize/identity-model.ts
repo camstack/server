@@ -91,6 +91,7 @@ const ROLES_BY_TYPE: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>
     DeviceRole.VoltageSensor,
     DeviceRole.CurrentSensor,
     DeviceRole.AirQualitySensor,
+    DeviceRole.AmbientMonitor,
     DeviceRole.BatterySensor,
     DeviceRole.NumericSensor,
     DeviceRole.EnumSensor,

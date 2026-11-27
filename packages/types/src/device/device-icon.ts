@@ -118,6 +118,7 @@ export const DEVICE_ROLE_ICON = {
   [DeviceRole.VoltageSensor]: 'zap',
   [DeviceRole.CurrentSensor]: 'zap',
   [DeviceRole.AirQualitySensor]: 'wind',
+  [DeviceRole.AmbientMonitor]: 'gauge',
   [DeviceRole.BatterySensor]: 'gauge',
   [DeviceRole.NumericSensor]: 'hash',
   [DeviceRole.EnumSensor]: 'list',

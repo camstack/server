@@ -226,6 +226,12 @@ export {
   deviceTypeIconKey,
 } from './device-icon.js'
 export type { DeviceIconKey } from './device-icon.js'
+export {
+  ambientRoleVerdict,
+  type AmbientRoleInput,
+  type AmbientRoleVerdict,
+  persistedRoleOf,
+} from './ambient-role-migration.js'
 export type {
   IconCategoryId,
   IconEntry,

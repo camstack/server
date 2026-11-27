@@ -1,5 +1,9 @@
 import { z } from 'zod'
 import {
+  DeviceRole,
+  ambientRoleVerdict,
+  errMsg,
+  persistedRoleOf,
   motionCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -7,6 +11,7 @@ import {
   type PowerMeterStatus,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
+import { sensorRoleOf } from './hm-entity-spec.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
   registerAmbientLightCap,
@@ -23,6 +28,10 @@ export const hmSensorSchema = hmChildSchema.extend({
   channel: z.string().min(1).describe('Source channel address'),
   capabilities: z.array(z.string()).min(1),
   role: z.string().optional(),
+  /** The role the channel type alone gives the device (before a multi-reading sensor became an ambient monitor). */
+  channelRole: z.string().optional(),
+  /** The one-time ambient-monitor role decision was taken for this device. */
+  ambientRoleReviewed: z.boolean().optional(),
 })
 
 export type HmSensorConfig = z.infer<typeof hmSensorSchema>
@@ -43,6 +52,53 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
     this.registerSensorCaps()
     this.attachValueChangedListener((event, origin) => this.handleValueChanged(event, origin))
     this.watchBatteryConfig()
+  }
+
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    await this.reviewRole()
+  }
+
+  /**
+   * A multi-reading sensor adopted before `ambient-monitor` existed carries the role
+   * its channel type gave it (`channelRole`, or `role` on the oldest rows). Move it
+   * once; a role that is not that one was chosen by the operator and stays.
+   */
+  private async reviewRole(): Promise<void> {
+    const { capabilities, channelRole, role, ambientRoleReviewed } = this.config.values
+    const wanted = sensorRoleOf(null, capabilities)
+    const current = persistedRoleOf(this.ctx.deviceMeta)
+    const verdict = ambientRoleVerdict({
+      current,
+      wanted,
+      replaces: channelRole ?? role ?? null,
+      reviewed: ambientRoleReviewed === true,
+    })
+    if (verdict.markReviewed) {
+      await this.config.setAll({
+        ambientRoleReviewed: true,
+        ...(verdict.action === 'set' ? { role: DeviceRole.AmbientMonitor } : {}),
+      })
+    }
+    if (verdict.action === 'kept') {
+      this.ctx.logger.info('homematic: role kept: operator-chosen or unknown', {
+        tags: { deviceId: this.id },
+        meta: { role: current },
+      })
+    }
+    if (verdict.action !== 'set' || wanted === null) return
+    try {
+      await this.ctx.api.deviceManager.setRole.mutate({ deviceId: this.id, role: wanted })
+      this.ctx.logger.info('homematic: sensor role set to ambient monitor', {
+        tags: { deviceId: this.id },
+        meta: { replaced: current, caps: capabilities.join(',') },
+      })
+    } catch (err) {
+      this.ctx.logger.warn('homematic: sensor role was not set', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   private registerSensorCaps(): void {

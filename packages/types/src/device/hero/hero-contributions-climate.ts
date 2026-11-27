@@ -4,7 +4,10 @@
  * contribute, types never do (D14). A slice that is absent or does not parse is
  * "not answered": the state reads unknown, no row is drawn (D315, D393).
  */
-import { AirQualitySensorStatusSchema } from '../../capabilities/air-quality-sensor.cap.js'
+import {
+  AirQualitySensorStatusSchema,
+  type AirQualitySensorStatus,
+} from '../../capabilities/air-quality-sensor.cap.js'
 import { AmbientLightSensorStatusSchema } from '../../capabilities/ambient-light-sensor.cap.js'
 import { CarbonMonoxideStatusSchema } from '../../capabilities/carbon-monoxide.cap.js'
 import {
@@ -30,12 +33,14 @@ import {
 } from './hero-contribution-kit.js'
 import type { HeroFragment } from './hero-fragment.js'
 import {
+  airQualityMeasurement,
   emptyMeasurement,
   humidityMeasurement,
   illuminanceMeasurement,
   temperatureMeasurement,
   textMeasurement,
 } from './hero-measurement.js'
+import type { HeroMeasurement } from './hero-measurement.js'
 import type { HeroControl, HeroFact, HeroRow, HeroSideTile } from './hero-model.js'
 import type { HeroSceneMode } from './hero-scene.js'
 import { heroText, type HeroText } from './hero-text.js'
@@ -553,6 +558,18 @@ function airQualityWord(aqi: number): HeroText {
   return heroText('Unhealthy', 'Malsana')
 }
 
+/** One measurement per PRESENT field; an absent field is no measurement, never a 0 (D393). */
+function airQualityMeasurements(slice: AirQualitySensorStatus): HeroMeasurement[] {
+  const since = slice.lastFetchedAt
+  return [
+    ...(slice.aqi == null ? [] : [airQualityMeasurement('aqi', slice.aqi, since)]),
+    ...(slice.co2 == null ? [] : [airQualityMeasurement('co2', slice.co2, since)]),
+    ...(slice.pm25 == null ? [] : [airQualityMeasurement('pm25', slice.pm25, since)]),
+    ...(slice.voc == null ? [] : [airQualityMeasurement('voc', slice.voc, since)]),
+    ...(slice.pm10 == null ? [] : [airQualityMeasurement('pm10', slice.pm10, since)]),
+  ]
+}
+
 const airQualityContribution = contribution(
   'air-quality-sensor',
   AirQualitySensorStatusSchema,
@@ -573,7 +590,10 @@ const airQualityContribution = contribution(
       reading: reading('sensor', 'on'),
       ...(slice.aqi === undefined ? {} : { title: airQualityWord(slice.aqi) }),
       facts: parts.map((p) => fact('air-quality', 'wind', same(`${p.label} ${p.value}`))),
-      tiles: { right: parts.slice(0, 2).map((p) => tile(p.label, p.label, p.value)) },
+      tiles: {
+        right: parts.slice(0, 2).map((p) => tile(p.label, p.label, p.value)),
+      },
+      measurements: airQualityMeasurements(slice),
     }
   },
 )

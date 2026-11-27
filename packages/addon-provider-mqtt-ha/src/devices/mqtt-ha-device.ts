@@ -28,6 +28,7 @@ import {
   tamperCapability,
   temperatureSensorCapability,
   vibrationCapability,
+  ambientRoleVerdict,
   type DeviceContext,
   type AirQualitySensorStatus,
   type DeviceFeature,
@@ -59,7 +60,11 @@ import {
   type MqttHaCap,
   type MqttHaMeterField,
 } from '../mqtt-ha-domain-mapping.js'
-import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-role.js'
+import {
+  deviceRoleForCapabilities,
+  deviceRoleForPrimaryCap,
+  persistedDeviceRole,
+} from '../mqtt-ha-device-role.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import { matchIrProfile } from '../mqtt-ha-ir-profiles.js'
 import { registerMqttHaStateRefresh } from '../mqtt-ha-state-refresh.js'
@@ -168,27 +173,49 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   /**
-   * Devices adopted before roles were stamped keep `role: null`. The hero
-   * then reads them as a temperature sensor. Set the role once; an operator
-   * choice (any non-null role) is left as it is.
+   * The device role, kept current as the device activates.
+   *
+   * - No role yet: the role of the device's caps.
+   * - A multi-reading sensor that carries the role its PRIMARY cap used to give it
+   *   (the old default) moves to `ambient-monitor`, once. The meta row does not
+   *   record who set a role, so "equals the old default" is the only proof the
+   *   provider set it; any other role is the operator's and stays (logged). The
+   *   verdict is stored, so an operator who later picks the old role again is not
+   *   flipped back at the next start.
    */
   private async backfillRole(): Promise<void> {
-    if (persistedDeviceRole(this.ctx.deviceMeta) !== null) return
-    const cap = this.model.capabilities[0]
-    const role = deviceRoleForPrimaryCap(cap)
-    if (role === null) return
+    const capabilities = this.model.capabilities
+    const wanted = deviceRoleForCapabilities(this.ctx.deviceMeta.type, capabilities)
+    const current = persistedDeviceRole(this.ctx.deviceMeta)
+    const verdict = ambientRoleVerdict({
+      current,
+      wanted,
+      replaces: deviceRoleForPrimaryCap(capabilities[0]),
+      reviewed: this.config.get('ambientRoleReviewed') === true,
+    })
+    if (verdict.markReviewed) await this.config.setAll({ ambientRoleReviewed: true })
+    if (verdict.action === 'kept') {
+      this.ctx.logger.info('mqtt-ha: role kept: operator-chosen or unknown', {
+        tags: { deviceId: this.id },
+        meta: { role: current, offered: wanted },
+      })
+    }
+    if (verdict.action !== 'set' || wanted === null) return
     try {
-      await this.ctx.api.deviceManager.setRole.mutate({ deviceId: this.id, role })
+      await this.ctx.api.deviceManager.setRole.mutate({
+        deviceId: this.id,
+        role: wanted,
+      })
     } catch (err) {
       this.ctx.logger.warn('mqtt-ha: device role was not set', {
         tags: { deviceId: this.id },
-        meta: { error: errMsg(err), role },
+        meta: { error: errMsg(err), role: wanted },
       })
       return
     }
-    this.ctx.logger.info('mqtt-ha: device role set from its primary capability', {
+    this.ctx.logger.info('mqtt-ha: device role set from its capabilities', {
       tags: { deviceId: this.id },
-      meta: { role, cap },
+      meta: { role: wanted, replaced: current, caps: capabilities.join(',') },
     })
   }
 
@@ -353,7 +380,11 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private take(value: number, unit: string | null, quantity: ReadingQuantity): number | null {
-    const result = ingestReading({ value, rawUnit: unit ?? undefined, quantity })
+    const result = ingestReading({
+      value,
+      rawUnit: unit ?? undefined,
+      quantity,
+    })
     if (result.ok) return result.value
     this.ctx.logger.warn('numeric reading refused', {
       tags: { deviceId: this.id },
@@ -398,7 +429,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         if (pct === null || pct === undefined) return
         const percentage = clamp(pct, 0, 100)
         if (this.getCapSlice(brightnessCapability)?.level === percentage) return
-        this.setCapSlice(brightnessCapability, { level: percentage, lastChangedAt: now })
+        this.setCapSlice(brightnessCapability, {
+          level: percentage,
+          lastChangedAt: now,
+        })
         return
       }
       case 'color': {
@@ -444,7 +478,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const entity = this.bound(cap)
         const celsius = entity === null ? null : this.numberOf(entity, 'temperature')
         if (celsius === null) return
-        this.setCapSlice(temperatureSensorCapability, { temperature: celsius, lastFetchedAt: now })
+        this.setCapSlice(temperatureSensorCapability, {
+          temperature: celsius,
+          lastFetchedAt: now,
+        })
         return
       }
       case 'humidity-sensor': {
@@ -476,7 +513,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const quantity = learnQuantity(entity.unitOfMeasurement)
         const value = quantity === null ? null : this.numberOf(entity, quantity)
         if (value === null) return
-        this.setCapSlice(numericSensorCapability, { value, lastFetchedAt: now })
+        this.setCapSlice(numericSensorCapability, {
+          value,
+          lastFetchedAt: now,
+        })
         return
       }
       case 'climate-control':
@@ -510,8 +550,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private refreshMeter(now: number): void {
-    const prev: PowerMeterStatus = this.getCapSlice(powerMeterCapability) ?? { lastFetchedAt: 0 }
-    const next: { -readonly [K in keyof PowerMeterStatus]: PowerMeterStatus[K] } = { ...prev }
+    const prev: PowerMeterStatus = this.getCapSlice(powerMeterCapability) ?? {
+      lastFetchedAt: 0,
+    }
+    const next: {
+      -readonly [K in keyof PowerMeterStatus]: PowerMeterStatus[K]
+    } = { ...prev }
     let changed = false
     for (const field of METER_FIELDS) {
       const entityKey = this.model.meter[field]
@@ -537,7 +581,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       case 'contact': {
         const prior = this.getCapSlice(contactCapability)
         if (prior?.entryOpen === active) return
-        this.setCapSlice(contactCapability, { entryOpen: active, lastChangedAt: now })
+        this.setCapSlice(contactCapability, {
+          entryOpen: active,
+          lastChangedAt: now,
+        })
         return
       }
       case 'motion': {
@@ -552,17 +599,26 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       }
       case 'flood': {
         if (this.getCapSlice(floodCapability)?.flooded === active) return
-        this.setCapSlice(floodCapability, { flooded: active, lastChangedAt: now })
+        this.setCapSlice(floodCapability, {
+          flooded: active,
+          lastChangedAt: now,
+        })
         return
       }
       case 'vibration': {
         if (this.getCapSlice(vibrationCapability)?.detected === active) return
-        this.setCapSlice(vibrationCapability, { detected: active, lastChangedAt: now })
+        this.setCapSlice(vibrationCapability, {
+          detected: active,
+          lastChangedAt: now,
+        })
         return
       }
       case 'tamper': {
         if (this.getCapSlice(tamperCapability)?.tampered === active) return
-        this.setCapSlice(tamperCapability, { tampered: active, lastChangedAt: now })
+        this.setCapSlice(tamperCapability, {
+          tampered: active,
+          lastChangedAt: now,
+        })
         return
       }
     }
@@ -678,7 +734,9 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       case 'power-meter':
         return this.registerStatusOnly(
           powerMeterCapability,
-          { getStatus: async () => this.getCapSlice(powerMeterCapability) ?? { lastFetchedAt: 0 } },
+          {
+            getStatus: async () => this.getCapSlice(powerMeterCapability) ?? { lastFetchedAt: 0 },
+          },
           { lastFetchedAt: 0 },
         )
       case 'battery':
@@ -692,7 +750,9 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       case 'contact':
         return this.registerStatusOnly(
           contactCapability,
-          { getStatus: async () => this.getCapSlice(contactCapability) ?? COLD_CONTACT },
+          {
+            getStatus: async () => this.getCapSlice(contactCapability) ?? COLD_CONTACT,
+          },
           COLD_CONTACT,
         )
       case 'motion':
@@ -700,19 +760,25 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       case 'flood':
         return this.registerStatusOnly(
           floodCapability,
-          { getStatus: async () => this.getCapSlice(floodCapability) ?? COLD_FLOOD },
+          {
+            getStatus: async () => this.getCapSlice(floodCapability) ?? COLD_FLOOD,
+          },
           COLD_FLOOD,
         )
       case 'vibration':
         return this.registerStatusOnly(
           vibrationCapability,
-          { getStatus: async () => this.getCapSlice(vibrationCapability) ?? COLD_VIBRATION },
+          {
+            getStatus: async () => this.getCapSlice(vibrationCapability) ?? COLD_VIBRATION,
+          },
           COLD_VIBRATION,
         )
       case 'tamper':
         return this.registerStatusOnly(
           tamperCapability,
-          { getStatus: async () => this.getCapSlice(tamperCapability) ?? COLD_TAMPER },
+          {
+            getStatus: async () => this.getCapSlice(tamperCapability) ?? COLD_TAMPER,
+          },
           COLD_TAMPER,
         )
       case 'temperature-sensor':
@@ -732,7 +798,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
           humiditySensorCapability,
           {
             getStatus: async () =>
-              this.getCapSlice(humiditySensorCapability) ?? { humidity: null, lastFetchedAt: 0 },
+              this.getCapSlice(humiditySensorCapability) ?? {
+                humidity: null,
+                lastFetchedAt: 0,
+              },
           },
           { humidity: null, lastFetchedAt: 0 },
         )
@@ -762,7 +831,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
           numericSensorCapability,
           {
             getStatus: async () =>
-              this.getCapSlice(numericSensorCapability) ?? { value: 0, lastFetchedAt: 0 },
+              this.getCapSlice(numericSensorCapability) ?? {
+                value: 0,
+                lastFetchedAt: 0,
+              },
           },
           { value: 0, lastFetchedAt: 0 },
         )
@@ -837,7 +909,11 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private registerMotion(): void {
-    const COLD = { detected: false, lastDetectedAt: null, autoClearAfterMs: null }
+    const COLD = {
+      detected: false,
+      lastDetectedAt: null,
+      autoClearAfterMs: null,
+    }
     const provider: InferNativeProvider<typeof motionCapability> = {
       getStatus: async () => this.getCapSlice(motionCapability) ?? COLD,
       isDetected: async () => this.getCapSlice(motionCapability)?.detected === true,

@@ -473,6 +473,10 @@ export enum DeviceRole {
   VoltageSensor = 'voltage-sensor',
   CurrentSensor = 'current-sensor',
   AirQualitySensor = 'air-quality-sensor',
+  /** A sensor device that carries two or more distinct readings (temperature + humidity,
+   *  motion + brightness + temperature…). A `DeviceType.Sensor` device; set by a
+   *  single-vendor provider that knows the device is ONE multi-sensor. */
+  AmbientMonitor = 'ambient-monitor',
   /** Battery level (numeric % via `sensor` OR low-bool via
    *  `binary_sensor` — the cap distinguishes via the value type). */
   BatterySensor = 'battery-sensor',

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { DeviceRole, DeviceType } from '@camstack/types'
 import type { MqttHaCap } from '../mqtt-ha-domain-mapping.js'
 import { planMqttHaDevice } from '../mqtt-ha-domain-mapping.js'
-import { deviceRoleForPrimaryCap, mqttHaInitialMeta } from '../mqtt-ha-device-role.js'
+import {
+  deviceRoleForCapabilities,
+  deviceRoleForPrimaryCap,
+  mqttHaInitialMeta,
+} from '../mqtt-ha-device-role.js'
 import { groupEntitiesByDevice } from '../mqtt-ha-device-grouping.js'
 import { parseDiscoveryConfigPayload } from '../mqtt-ha-discovery-parser.js'
 import type { MqttHaDiscoveredEntity } from '../mqtt-ha-discovery-types.js'
@@ -67,7 +71,7 @@ describe('mqttHaInitialMeta', () => {
         deviceType: plan.deviceType,
         name: 'Front door',
         integrationId: 'int_1',
-        primaryCap: plan.capabilities[0],
+        capabilities: plan.capabilities,
       }),
     ).toMatchObject({
       type: DeviceType.Sensor,
@@ -83,8 +87,45 @@ describe('mqttHaInitialMeta', () => {
       deviceType: plan.deviceType,
       name: 'Plug',
       integrationId: 'int_1',
-      primaryCap: plan.capabilities[0],
+      capabilities: plan.capabilities,
     })
     expect(meta.role).toBeUndefined()
+  })
+})
+
+describe('deviceRoleForCapabilities', () => {
+  it('a sensor with two distinct readings is an ambient monitor', () => {
+    expect(
+      deviceRoleForCapabilities(DeviceType.Sensor, ['temperature-sensor', 'humidity-sensor']),
+    ).toBe(DeviceRole.AmbientMonitor)
+    expect(
+      deviceRoleForCapabilities(DeviceType.Sensor, ['motion', 'ambient-light-sensor', 'battery']),
+    ).toBe(DeviceRole.AmbientMonitor)
+  })
+
+  it('one reading keeps the old role, with or without a battery', () => {
+    expect(deviceRoleForCapabilities(DeviceType.Sensor, ['temperature-sensor'])).toBe(
+      DeviceRole.TemperatureSensor,
+    )
+    expect(deviceRoleForCapabilities(DeviceType.Sensor, ['contact', 'battery'])).toBe(
+      DeviceRole.ContactSensor,
+    )
+  })
+
+  it('a device that is not a sensor never becomes an ambient monitor', () => {
+    expect(
+      deviceRoleForCapabilities(DeviceType.Switch, ['temperature-sensor', 'humidity-sensor']),
+    ).toBe(DeviceRole.TemperatureSensor)
+  })
+
+  it('mqttHaInitialMeta stamps ambient-monitor on a multi-reading sensor', () => {
+    expect(
+      mqttHaInitialMeta({
+        deviceType: DeviceType.Sensor,
+        name: 'Garden',
+        integrationId: 'int_1',
+        capabilities: ['temperature-sensor', 'humidity-sensor'],
+      }).role,
+    ).toBe(DeviceRole.AmbientMonitor)
   })
 })

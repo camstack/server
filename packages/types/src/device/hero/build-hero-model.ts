@@ -247,7 +247,10 @@ function measurementsOf(
   fragments: readonly HeroFragment[],
 ): HeroMeasurement[] | undefined {
   if (input.device.type !== DeviceType.Sensor) return undefined
-  const measured = fragments.flatMap((f) => (f.measurement === undefined ? [] : [f.measurement]))
+  const measured = fragments.flatMap((f) => [
+    ...(f.measurement === undefined ? [] : [f.measurement]),
+    ...(f.measurements ?? []),
+  ])
   const ordered = orderedMeasurements(measured, input.device.role)
   if (ordered.length === 0) return undefined
   return input.device.online ? ordered : ordered.map((m) => emptyMeasurement(m.quantity))

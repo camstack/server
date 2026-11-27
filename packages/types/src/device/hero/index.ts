@@ -92,6 +92,7 @@ export {
   HeroMeasurementSchema,
   HeroMeasurementsSchema,
   HERO_LEAD_QUANTITY_BY_ROLE,
+  airQualityMeasurement,
   contactMeasurement,
   illuminanceMeasurement,
   motionMeasurement,
@@ -109,6 +110,11 @@ export {
   type HeroMeasurementReading,
   type HeroMeasurementSinceKind,
 } from './hero-measurement.js'
-export { NOT_REPORTED, heroText, isNotReported, type HeroText } from './hero-text.js'
+export {
+  NOT_REPORTED,
+  heroText,
+  isNotReported,
+  type HeroText,
+} from './hero-text.js'
 export * from './media-player-view.js'
 export { resolveOwnPower } from './own-power.js'

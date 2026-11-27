@@ -301,7 +301,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
         deviceType: plan.deviceType,
         name: input.name,
         integrationId: input.integrationId,
-        primaryCap: plan.capabilities[0],
+        capabilities: plan.capabilities,
       }),
     )
     this.ctx.logger.info('mqtt-ha: device adopted', {

@@ -93,7 +93,7 @@ describe('multi-reading sensor preset', () => {
     ])
   })
 
-  it('builds only the readings picked, led by the first one as the role', () => {
+  it('builds only the readings picked, on an ambient monitor whichever reading is first', () => {
     const composition = preset.build({
       humidity: ref('sensor.h'),
       illuminance: ref('sensor.l'),
@@ -103,7 +103,7 @@ describe('multi-reading sensor preset', () => {
       'ambient-light-sensor',
     ])
     expect(composition?.target).toMatchObject({
-      role: DeviceRole.HumiditySensor,
+      role: DeviceRole.AmbientMonitor,
     })
   })
 

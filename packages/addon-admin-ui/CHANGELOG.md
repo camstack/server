@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Network -> Device networks: topology map, node table and node detail for every device mesh (Matter / Thread today)
 - Network > Device networks groups meshes by network and shows each network's name, technology and channel
+- Ambient monitor can be picked as the role of a sensor, and a multi-reading sensor composed from existing sensors gets it by default.
 
 ## [1.2.764] - 2026-11-27
 

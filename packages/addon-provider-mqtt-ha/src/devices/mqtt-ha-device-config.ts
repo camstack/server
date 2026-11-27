@@ -36,6 +36,8 @@ export const mqttHaDeviceSchema = z.object({
   payloadOff: z.string().default('OFF'),
   system: z.literal('mqtt-ha').optional(),
   integrationId: z.string().optional(),
+  /** The one-time ambient-monitor role migration was decided for this device. */
+  ambientRoleReviewed: z.boolean().optional(),
 })
 
 export type MqttHaDeviceConfig = z.infer<typeof mqttHaDeviceSchema>

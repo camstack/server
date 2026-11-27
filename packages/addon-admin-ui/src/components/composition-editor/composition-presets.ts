@@ -137,7 +137,6 @@ interface ReadingKind {
   readonly key: string
   readonly cap: string
   readonly field: string
-  readonly role: DeviceRole
 }
 
 const READING_KINDS: readonly ReadingKind[] = [
@@ -145,19 +144,16 @@ const READING_KINDS: readonly ReadingKind[] = [
     key: 'temperature',
     cap: 'temperature-sensor',
     field: 'temperature',
-    role: DeviceRole.TemperatureSensor,
   },
   {
     key: 'humidity',
     cap: 'humidity-sensor',
     field: 'humidity',
-    role: DeviceRole.HumiditySensor,
   },
   {
     key: 'illuminance',
     cap: 'ambient-light-sensor',
     field: 'illuminance',
-    role: DeviceRole.AmbientLightSensor,
   },
 ]
 
@@ -198,10 +194,10 @@ const MULTI_READING_SENSOR: CompositionPreset = {
       return source === undefined ? [] : [{ kind, source }]
     })
     // One reading is a single-reading card, not a pie: a multi-reading sensor needs two.
-    const lead = picked[0]
-    if (lead === undefined || picked.length < MIN_READINGS) return null
+    if (picked.length < MIN_READINGS) return null
     return {
-      target: { kind: 'new', type: DeviceType.Sensor, role: lead.kind.role },
+      // Two or more readings on one device: an ambient monitor, whichever reading came first.
+      target: { kind: 'new', type: DeviceType.Sensor, role: DeviceRole.AmbientMonitor },
       features: picked.map(({ kind, source }) => readingFeature(kind, source)),
     }
   },

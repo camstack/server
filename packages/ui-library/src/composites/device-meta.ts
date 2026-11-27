@@ -611,6 +611,10 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
     labelKey: 'uiLibrary.deviceMeta.role.airQualitySensor',
     labelFallback: 'Air quality',
   },
+  [DeviceRole.AmbientMonitor]: {
+    labelKey: 'uiLibrary.deviceMeta.role.ambientMonitor',
+    labelFallback: 'Ambient monitor',
+  },
   [DeviceRole.BatterySensor]: {
     labelKey: 'uiLibrary.deviceMeta.role.batterySensor',
     labelFallback: 'Battery',

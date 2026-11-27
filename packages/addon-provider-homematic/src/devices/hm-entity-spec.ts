@@ -132,6 +132,20 @@ function deriveActuatorSpecs(
   return out
 }
 
+/**
+ * The role of a sensor child: a channel that carries two or more distinct readings
+ * (a motion detector that also reports the brightness) is ONE multi-sensor, so an
+ * ambient monitor; a single-reading channel keeps the role of its channel type. The
+ * battery is a status of the device, never a reading.
+ */
+export function sensorRoleOf(
+  mappedRole: DeviceRole | null,
+  capabilities: readonly string[],
+): DeviceRole | null {
+  const readings = new Set(capabilities.filter((c) => c !== HM_BATTERY_CAP))
+  return readings.size >= 2 ? DeviceRole.AmbientMonitor : mappedRole
+}
+
 /** Sensor specs (one per sensor channel) + ONE event-emitter spec over the
  *  union of key channels. Skips actuator caps (custom-entity-driven). */
 function deriveSensorAndEventSpecs(device: Pick<HmDevice, 'channels'>): HmEntitySpec[] {
@@ -150,16 +164,20 @@ function deriveSensorAndEventSpecs(device: Pick<HmDevice, 'channels'>): HmEntity
     }
     if (isEvent) keyChannels.push(channel)
     if (sensorCaps.length > 0) {
+      const role = sensorRoleOf(mapping.role, sensorCaps)
       out.push({
         key: `sensor-${channel.address}`,
         deviceType: DeviceType.Sensor,
-        role: mapping.role,
+        role,
         capabilities: sensorCaps,
         name: `Sensor ${channel.address}`,
         config: {
           channel: channel.address,
           capabilities: sensorCaps,
-          ...(mapping.role !== null ? { role: mapping.role } : {}),
+          ...(role !== null ? { role } : {}),
+          // What the channel type alone would have given the device: the one role a
+          // provider-set row can still carry (see `ambientRoleVerdict`).
+          ...(mapping.role !== null ? { channelRole: mapping.role } : {}),
         },
       })
     }

@@ -176,6 +176,7 @@ export const HERO_SCENE_BY_ROLE = {
   [DeviceRole.VoltageSensor]: 'plug',
   [DeviceRole.CurrentSensor]: 'plug',
   [DeviceRole.AirQualitySensor]: 'inherit',
+  [DeviceRole.AmbientMonitor]: 'inherit',
   [DeviceRole.BatterySensor]: 'inherit',
   [DeviceRole.NumericSensor]: 'inherit',
   [DeviceRole.EnumSensor]: 'inherit',

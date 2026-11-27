@@ -105,3 +105,34 @@ describe('a sensor carries ALL its measurements', () => {
     expect(HERO_LEAD_QUANTITY_BY_ROLE[DeviceRole.AmbientLightSensor]).toBe('illuminance')
   })
 })
+
+describe('the air-quality cap contributes one measurement per present field', () => {
+  it('emits N measurements for N present fields, the lead first', () => {
+    const m = sensor(DeviceRole.AirQualitySensor, {
+      'air-quality-sensor': { co2: 612, pm25: 8, voc: 120, lastFetchedAt: NOW },
+    })
+    expect(quantities(m)).toEqual(['co2', 'voc', 'pm25'])
+    expect(m.measurements?.[0]).toMatchObject({
+      reading: { value: 612, quantity: 'concentration-volume' },
+      unit: 'ppm',
+      historyKey: 'cap:air-quality-sensor.co2',
+    })
+    expect(m.measurement).toBeUndefined()
+  })
+
+  it('an absent field is no measurement, never a 0', () => {
+    const m = sensor(DeviceRole.AmbientMonitor, {
+      'air-quality-sensor': { aqi: 42, lastFetchedAt: NOW },
+    })
+    expect(quantities(m)).toEqual(['aqi'])
+    expect(m.measurements?.some((x) => x.reading?.value === 0)).toBe(false)
+  })
+
+  it('an ambient monitor mixes air quality with a temperature', () => {
+    const m = sensor(DeviceRole.AmbientMonitor, {
+      'temperature-sensor': { temperature: 21, lastFetchedAt: NOW },
+      'air-quality-sensor': { co2: 700, pm10: 12, lastFetchedAt: NOW },
+    })
+    expect(quantities(m)).toEqual(['temperature', 'co2', 'pm10'])
+  })
+})

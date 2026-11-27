@@ -22,6 +22,11 @@ export const HERO_MEASUREMENT_QUANTITIES = [
   'contact',
   'motion',
   'illuminance',
+  'co2',
+  'voc',
+  'pm25',
+  'pm10',
+  'aqi',
   'text',
 ] as const
 export type HeroMeasurementQuantity = (typeof HERO_MEASUREMENT_QUANTITIES)[number]
@@ -245,6 +250,89 @@ export function illuminanceMeasurement(lux: number, since: number | null): HeroM
 
 const ILLUMINANCE_HISTORY_KEY = 'cap:ambient-light-sensor.illuminance'
 
+/** The air-quality quantities: each is one field of the `air-quality-sensor` slice. */
+export type AirQualityMeasurementQuantity = 'co2' | 'voc' | 'pm25' | 'pm10' | 'aqi'
+
+interface AirQualityFace {
+  readonly icon: IconKey
+  readonly unit: string | null
+  readonly reading: ReadingQuantity
+  /** The value at which the scene reads fully strong. */
+  readonly fullScale: number
+  /** At or above this the reading is flagged as high. */
+  readonly highFrom: number
+}
+
+const AIR_QUALITY_FACE: Readonly<Record<AirQualityMeasurementQuantity, AirQualityFace>> = {
+  co2: {
+    icon: 'wind',
+    unit: 'ppm',
+    reading: 'concentration-volume',
+    fullScale: 2000,
+    highFrom: 1000,
+  },
+  voc: {
+    icon: 'wind',
+    unit: 'ppb',
+    reading: 'concentration-ppb',
+    fullScale: 1000,
+    highFrom: 500,
+  },
+  pm25: {
+    icon: 'wind',
+    unit: 'µg/m³',
+    reading: 'concentration-mass',
+    fullScale: 100,
+    highFrom: 35,
+  },
+  pm10: {
+    icon: 'wind',
+    unit: 'µg/m³',
+    reading: 'concentration-mass',
+    fullScale: 150,
+    highFrom: 50,
+  },
+  aqi: {
+    icon: 'wind',
+    unit: null,
+    reading: 'index',
+    fullScale: 300,
+    highFrom: 100,
+  },
+}
+
+/** One air-quality field as a measurement; the caller passes a real number, never a stand-in. */
+export function airQualityMeasurement(
+  quantity: AirQualityMeasurementQuantity,
+  amount: number,
+  since: number | null,
+): HeroMeasurement {
+  const face = AIR_QUALITY_FACE[quantity]
+  const high = amount >= face.highFrom
+  return {
+    quantity,
+    reading: { value: amount, quantity: face.reading },
+    icon: face.icon,
+    value: same(String(Math.round(amount))),
+    unit: face.unit,
+    band: null,
+    level: clamp01(amount / face.fullScale),
+    word: high ? heroText('High', 'Alto') : heroText('Good', 'Buono'),
+    tone: high ? 'warning' : 'success',
+    since,
+    sinceKind: 'updated',
+    historyKey: AIR_QUALITY_HISTORY_KEY[quantity],
+  }
+}
+
+const AIR_QUALITY_HISTORY_KEY: Readonly<Record<AirQualityMeasurementQuantity, string>> = {
+  co2: 'cap:air-quality-sensor.co2',
+  voc: 'cap:air-quality-sensor.voc',
+  pm25: 'cap:air-quality-sensor.pm25',
+  pm10: 'cap:air-quality-sensor.pm10',
+  aqi: 'cap:air-quality-sensor.aqi',
+}
+
 export function textMeasurement(text: string, since: number | null): HeroMeasurement {
   return {
     quantity: 'text',
@@ -259,6 +347,20 @@ export function textMeasurement(text: string, since: number | null): HeroMeasure
     since,
     sinceKind: 'updated',
     historyKey: null,
+  }
+}
+
+function airQualityFace(quantity: AirQualityMeasurementQuantity): {
+  readonly icon: IconKey
+  readonly unit: string | null
+  readonly sinceKind: HeroMeasurementSinceKind
+  readonly historyKey: string
+} {
+  return {
+    icon: AIR_QUALITY_FACE[quantity].icon,
+    unit: AIR_QUALITY_FACE[quantity].unit,
+    sinceKind: 'updated',
+    historyKey: AIR_QUALITY_HISTORY_KEY[quantity],
   }
 }
 
@@ -293,13 +395,23 @@ const QUANTITY_FACE: Readonly<
     historyKey: primarySeriesKey('power-meter'),
   },
   contact: { icon: null, unit: null, sinceKind: 'changed', historyKey: null },
-  motion: { icon: 'footprints', unit: null, sinceKind: 'changed', historyKey: null },
+  motion: {
+    icon: 'footprints',
+    unit: null,
+    sinceKind: 'changed',
+    historyKey: null,
+  },
   illuminance: {
     icon: 'sun',
     unit: 'lx',
     sinceKind: 'updated',
     historyKey: ILLUMINANCE_HISTORY_KEY,
   },
+  co2: airQualityFace('co2'),
+  voc: airQualityFace('voc'),
+  pm25: airQualityFace('pm25'),
+  pm10: airQualityFace('pm10'),
+  aqi: airQualityFace('aqi'),
   text: { icon: null, unit: null, sinceKind: 'updated', historyKey: null },
 }
 
@@ -358,6 +470,7 @@ export const HERO_LEAD_QUANTITY_BY_ROLE: Readonly<
   [DeviceRole.ContactSensor]: 'contact',
   [DeviceRole.AmbientLightSensor]: 'illuminance',
   [DeviceRole.PowerSensor]: 'power',
+  [DeviceRole.AirQualitySensor]: 'aqi',
   [DeviceRole.EnumSensor]: 'text',
 }
 
