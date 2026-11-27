@@ -62,7 +62,8 @@ export function PlacementCell({ deviceId, state, draft, onDraft, ...nodePin }: P
         {...(draft.node !== undefined ? { draft: draft.node } : {})}
         onChange={(target) => {
           const served = state.pinned && state.nodeId !== null ? state.nodeId : 'auto'
-          onDraft({ ...draft, node: target === served ? undefined : target })
+          // The accelerator pick names a device of the CURRENT node: a node change drops it.
+          onDraft(target === served ? {} : { node: target })
         }}
       />
       {placement?.nodeId != null ? (
@@ -71,6 +72,7 @@ export function PlacementCell({ deviceId, state, draft, onDraft, ...nodePin }: P
           nodeId={placement.nodeId}
           {...(draft.devicePin !== undefined ? { draft: draft.devicePin } : {})}
           onDraft={(devicePin) => onDraft({ ...draft, devicePin })}
+          disabled={draft.node !== undefined}
         />
       ) : (
         <Select

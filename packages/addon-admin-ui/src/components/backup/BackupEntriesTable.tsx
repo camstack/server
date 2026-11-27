@@ -113,7 +113,12 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
   }, [])
   const changes = useMemo(() => changedEntries(rows, draft), [rows, draft])
   const invalid = changes.some((c) => c.retentionCount === null)
+  const discardDraft = useCallback((): void => {
+    setDraft({})
+    setSaveError(null)
+  }, [])
   const saveDraft = useCallback((): void => {
+    if (invalid || changes.length === 0) return
     setSaveError(null)
     void Promise.all(
       changes.map((c) =>
@@ -132,7 +137,7 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
         setSaveError(err instanceof Error ? err.message : String(err))
         void queryClient.invalidateQueries({ queryKey: QUERY_KEY_SCHEDULES })
       })
-  }, [changes, upsert, queryClient])
+  }, [changes, invalid, upsert, queryClient])
 
   const columns = useMemo(
     () =>
@@ -144,8 +149,20 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
         draft,
         onDraft: editEntry,
         saving: upsert.isPending,
+        onSave: saveDraft,
+        onDiscard: discardDraft,
       }),
-    [destById, expanded, toggleExpand, onEdit, draft, editEntry, upsert.isPending],
+    [
+      destById,
+      expanded,
+      toggleExpand,
+      onEdit,
+      draft,
+      editEntry,
+      upsert.isPending,
+      saveDraft,
+      discardDraft,
+    ],
   )
 
   if (isLoading) {
@@ -216,10 +233,7 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
         pendingCount={changes.length}
         saving={upsert.isPending}
         onSave={saveDraft}
-        onDiscard={() => {
-          setDraft({})
-          setSaveError(null)
-        }}
+        onDiscard={discardDraft}
         {...(invalid
           ? {
               problem: t(
@@ -278,6 +292,9 @@ interface EntryColumnsDeps {
   readonly draft: Readonly<Record<string, EntryDraft>>
   readonly onDraft: (id: string, edit: EntryDraft) => void
   readonly saving: boolean
+  /** Enter in the retention input saves the draft; Escape discards it. */
+  readonly onSave: () => void
+  readonly onDiscard: () => void
 }
 
 function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
@@ -378,6 +395,8 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
             value={deps.draft[row.id]?.retention ?? String(row.retentionCount)}
             disabled={deps.saving}
             onChange={(retention) => deps.onDraft(row.id, { retention })}
+            onSave={deps.onSave}
+            onDiscard={deps.onDiscard}
           />
         </span>
       ),
@@ -498,9 +517,18 @@ interface EntryRetentionInputProps {
   readonly value: string
   readonly disabled: boolean
   readonly onChange: (retention: string) => void
+  readonly onSave: () => void
+  readonly onDiscard: () => void
 }
 
-function EntryRetentionInput({ row, value, disabled, onChange }: EntryRetentionInputProps) {
+function EntryRetentionInput({
+  row,
+  value,
+  disabled,
+  onChange,
+  onSave,
+  onDiscard,
+}: EntryRetentionInputProps) {
   const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1">
@@ -512,6 +540,10 @@ function EntryRetentionInput({ row, value, disabled, onChange }: EntryRetentionI
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onSave()
+          else if (e.key === 'Escape') onDiscard()
+        }}
         className="w-16"
         aria-label={t('backup.backupEntriesTable.retentionFor', 'Retention for {{value1}}', {
           value1: row.label || row.id,

@@ -228,6 +228,21 @@ describe('CameraAssignmentsTable (cluster)', () => {
     expect(mockSetDevicePin).toHaveBeenCalledWith({ deviceId: 101, deviceKey: 'edgetpu:usb' })
   })
 
+  it('picking another node drops an accelerator pick made for the old node — Save sends no stale pin', () => {
+    mockDevicePin.mockReturnValue({ data: { deviceKey: null } })
+    mockNodeDevices.mockReturnValue({ data: { devices: [CORAL] } })
+    renderWithRouter(<CameraAssignmentsTable />)
+    const row = rowOf('Front Door')
+    selectOption(
+      within(row).getByLabelText('Inference device pin') as HTMLButtonElement,
+      'edgetpu:usb',
+    )
+    selectOption(within(row).getByLabelText('Node pin') as HTMLButtonElement, 'hub')
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(mockAssignPipeline).toHaveBeenCalledWith({ deviceId: 101, agentNodeId: 'hub' })
+    expect(mockSetDevicePin).not.toHaveBeenCalled()
+  })
+
   it('a pin to an accelerator that is no longer enabled stays visible and selected', () => {
     mockDevicePin.mockReturnValue({ data: { deviceKey: 'openvino:npu' } })
     mockNodeDevices.mockReturnValue({ data: { devices: [] } })

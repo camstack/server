@@ -77,6 +77,8 @@ export interface DevicePinSelectProps {
   readonly draft?: string
   /** Held in the draft, not written; `undefined` means the pick equals the served pin. */
   readonly onDraft: (deviceKey: string | undefined) => void
+  /** A node change is pending: this node's accelerators no longer apply to where the camera will run. */
+  readonly disabled?: boolean
 }
 
 /**
@@ -85,7 +87,13 @@ export interface DevicePinSelectProps {
  * mounts before its option exists falls back to the first option ("Auto") and
  * does not always re-sync when the option appears.
  */
-export function DevicePinSelect({ deviceId, nodeId, draft, onDraft }: DevicePinSelectProps) {
+export function DevicePinSelect({
+  deviceId,
+  nodeId,
+  draft,
+  onDraft,
+  disabled,
+}: DevicePinSelectProps) {
   const { t } = useTranslation()
   const { data: pin } = usePipelineOrchestratorGetPipelineDevicePin(
     { deviceId },
@@ -135,6 +143,7 @@ export function DevicePinSelect({ deviceId, nodeId, draft, onDraft }: DevicePinS
       )}
       value={value}
       options={options}
+      {...(disabled === true ? { disabled: true } : {})}
       onChange={(event) => onDraft(event.target.value === served ? undefined : event.target.value)}
     />
   )

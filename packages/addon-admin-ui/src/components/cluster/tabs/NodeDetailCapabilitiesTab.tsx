@@ -82,7 +82,9 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
   const [saveError, setSaveError] = useState<string | null>(null)
   const changes = capRows.filter((r) => {
     const picked = draft[r.capName]
-    return picked !== undefined && picked !== (bindings?.[r.capName] ?? r.providers[0] ?? '')
+    // Against the STORED binding, not the displayed default: choosing the default while nothing
+    // is bound writes the explicit binding, as it did before the draft.
+    return picked !== undefined && picked !== bindings?.[r.capName]
   })
   const saveDraft = (): void => {
     setSaveError(null)

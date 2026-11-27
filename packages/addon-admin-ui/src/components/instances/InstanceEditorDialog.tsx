@@ -65,7 +65,11 @@ import {
   randomHex8,
   type TypedIdRuleFor,
 } from './instances-model'
-import { InstanceLeadDraftContext, type LeadValues } from './instance-lead-draft'
+import {
+  type InstanceLeadDraft,
+  InstanceLeadDraftContext,
+  type LeadValues,
+} from './instance-lead-draft'
 
 const IDENTITY_NAME = 'name'
 const IDENTITY_KIND = 'kind'
@@ -322,6 +326,28 @@ export function InstanceEditorDialog({
 
   // Edits the lead (above the form) hands over; they travel with this dialog's Save.
   const [leadValues, setLeadValues] = useState<LeadValues>({})
+  const patchLead = useCallback((values: LeadValues): void => {
+    setLeadValues((current) => ({ ...current, ...values }))
+  }, [])
+  // The last edit of a key wins: a form edit of a key the lead set drops the lead's value.
+  const previousEdited = useRef(edited)
+  useEffect(() => {
+    const before = previousEdited.current
+    previousEdited.current = edited
+    setLeadValues((current) => {
+      const kept = Object.entries(current).filter(
+        ([key]) => JSON.stringify(before[key]) === JSON.stringify(edited[key]),
+      )
+      return kept.length === Object.keys(current).length ? current : Object.fromEntries(kept)
+    })
+  }, [edited])
+  const leadDraft = useMemo<InstanceLeadDraft>(
+    () => ({
+      values: { ...effectiveInstanceValues(stored, edited), ...leadValues },
+      patch: patchLead,
+    }),
+    [stored, edited, leadValues, patchLead],
+  )
 
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
@@ -499,7 +525,7 @@ export function InstanceEditorDialog({
     >
       <div className="space-y-4">
         {instance !== null ? (
-          <InstanceLeadDraftContext.Provider value={setLeadValues}>
+          <InstanceLeadDraftContext.Provider value={leadDraft}>
             {lead}
           </InstanceLeadDraftContext.Provider>
         ) : null}

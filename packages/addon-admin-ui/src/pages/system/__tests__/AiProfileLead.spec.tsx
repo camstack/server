@@ -111,7 +111,7 @@ function renderLead(row: InstanceRow = ROW): void {
   })
   render(
     <QueryClientProvider client={client}>
-      <InstanceLeadDraftContext.Provider value={mockLeadValues}>
+      <InstanceLeadDraftContext.Provider value={{ values: {}, patch: mockLeadValues }}>
         <AiProfileLead row={row} />
       </InstanceLeadDraftContext.Provider>
     </QueryClientProvider>,
@@ -124,7 +124,7 @@ describe('AiProfileLead', () => {
     formValues = { model: '', supportsVision: false }
   })
 
-  it('renders the widget a kind names, and hands its config and model to the dialog as ONE set', async () => {
+  it('renders the widget a kind names, and hands its config and model to the dialog', async () => {
     kinds = [
       {
         id: 'managed-local',
@@ -135,13 +135,10 @@ describe('AiProfileLead', () => {
     ]
     renderLead()
     fireEvent.click(await screen.findByTestId('stub-widget'))
-    await waitFor(() =>
-      expect(mockLeadValues).toHaveBeenLastCalledWith({
-        modelRef: { kind: 'catalog', catalogId: 'c1' },
-        model: 'c1-file',
-        supportsVision: true,
-      }),
-    )
+    await waitFor(() => expect(mockLeadValues).toHaveBeenCalledTimes(2))
+    // Both changes of one widget action reach the dialog, which merges them into one draft.
+    expect(mockLeadValues).toHaveBeenCalledWith({ modelRef: { kind: 'catalog', catalogId: 'c1' } })
+    expect(mockLeadValues).toHaveBeenCalledWith({ model: 'c1-file', supportsVision: true })
     // The lead itself never writes the record.
     expect(mockUpdate).not.toHaveBeenCalled()
     // A kind with a model widget has no second model control.
@@ -194,7 +191,7 @@ describe('AiProfileLead', () => {
     await waitForSelectRows(select, (rows) => rows.some((r) => r.value === 'm-vision'))
     selectOption(select, 'm-vision')
     await waitFor(() =>
-      expect(mockLeadValues).toHaveBeenLastCalledWith({ model: 'm-vision', supportsVision: true }),
+      expect(mockLeadValues).toHaveBeenCalledWith({ model: 'm-vision', supportsVision: true }),
     )
     expect(mockUpdate).not.toHaveBeenCalled()
   })

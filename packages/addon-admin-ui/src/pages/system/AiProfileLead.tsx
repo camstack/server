@@ -13,7 +13,7 @@ import type { LlmModelInfo } from '@camstack/types'
 import { Button, ErrorBox, FormField, Select, useSystem } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HOLDER_QUERY_KEY } from '../../components/instances/use-instances-data'
@@ -45,21 +45,13 @@ export function AiProfileLead({ row }: { readonly row: InstanceRow }): ReactElem
     },
   })
 
-  // What this lead holds for the dialog's Save; the dialog sends it with the form's own edits.
-  const setLeadValues = useInstanceLeadDraft()
-  const [overlay, setOverlay] = useState<Values>({})
-
-  /** Changes made in the same tick (a widget replaces config and model together) merge into one overlay. */
-  const patch = useCallback((values: Values): void => {
-    setOverlay((current) => ({ ...current, ...values }))
-  }, [])
-  useEffect(() => {
-    setLeadValues(overlay)
-  }, [overlay, setLeadValues])
+  // The lead never writes: it hands its edits to the dialog and reads the record's live values
+  // back (stored, the form's edits, its own), so a later form edit of a key is not clobbered.
+  const { values: live, patch } = useInstanceLeadDraft()
 
   const kind = loaded.data?.description.kinds?.find((k) => k.id === row.kindId)
   const stored = loaded.data?.instance?.formValues
-  const values = useMemo<Values>(() => ({ ...stored, ...overlay }), [stored, overlay])
+  const values = useMemo<Values>(() => ({ ...stored, ...live }), [stored, live])
   const widgets = kind?.widgets ?? []
   const modelWidget = widgets.some((w) => w.placement === 'model')
 

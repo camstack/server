@@ -350,6 +350,7 @@ function CalendarLegend({
   pendingCount,
   onSave,
   onDiscard,
+  error,
 }: {
   readonly rows: readonly CalendarListRow[]
   readonly onToggleVisible: (calendarId: string, visible: boolean) => void
@@ -359,6 +360,8 @@ function CalendarLegend({
   readonly pendingCount: number
   readonly onSave: () => void
   readonly onDiscard: () => void
+  /** A failed save: the draft stays, the reason shows above the bar. */
+  readonly error: string | null
 }) {
   const { t } = useTranslation()
   return (
@@ -417,6 +420,11 @@ function CalendarLegend({
           )
         })}
       </ul>
+      {error !== null && (
+        <p className="text-xs text-danger" role="alert" data-testid="calendars-save-error">
+          {error}
+        </p>
+      )}
       <FormSaveBar
         pendingCount={pendingCount}
         onSave={onSave}
@@ -748,13 +756,23 @@ export function CalendarsPage() {
       [calendarId]: { ...prev[calendarId], color },
     }))
   }, [])
+  const [saveError, setSaveError] = useState<string | null>(null)
   const onSaveLegend = useCallback(() => {
+    setSaveError(null)
     const changes = changedCalendarPrefs(calendars, draft)
     void Promise.all(changes.map((c) => setPref.mutateAsync(c)))
       .then(() => prefsQuery.refetch())
       .then(() => setDraft({}))
+      .catch((err: unknown) => {
+        // Keep the draft; what did land is read back so the rest still shows as pending.
+        setSaveError(err instanceof Error ? err.message : String(err))
+        void prefsQuery.refetch()
+      })
   }, [calendars, draft, prefsQuery, setPref])
-  const onDiscardLegend = useCallback(() => setDraft({}), [])
+  const onDiscardLegend = useCallback(() => {
+    setSaveError(null)
+    setDraft({})
+  }, [])
 
   const goToday = useCallback(() => setAnchor(startOfDay(new Date())), [])
   const goPrev = useCallback(() => setAnchor((a) => shiftAnchor(a, mode, -1)), [mode])
@@ -813,6 +831,7 @@ export function CalendarsPage() {
           pendingCount={pendingCount}
           onSave={onSaveLegend}
           onDiscard={onDiscardLegend}
+          error={saveError}
         />
         <p className="text-sm text-foreground-subtle" data-testid="calendars-empty-hidden">
           {calendars.length === 0
@@ -835,6 +854,7 @@ export function CalendarsPage() {
           pendingCount={pendingCount}
           onSave={onSaveLegend}
           onDiscard={onDiscardLegend}
+          error={saveError}
         />
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
