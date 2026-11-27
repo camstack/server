@@ -7,15 +7,9 @@
  * here — against the REAL `lucide-react`, not a fake.
  */
 import { ICON_KEYS, canonicalIconKey } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { FAST_ICON_GLYPHS } from '../device-meta'
-import {
-  iconGlyphsFailed,
-  iconGlyphsLoaded,
-  loadIconGlyphs,
-  lucideExportName,
-  resolveDisplayIcon,
-} from '../icon-glyphs'
+import { loadIconGlyphs, lucideExportName, resolveDisplayIcon } from '../icon-glyphs'
 
 describe('the fast table (first paint)', () => {
   it('is a cache of catalog glyphs, never a second vocabulary', () => {
@@ -36,17 +30,28 @@ describe('the fast table (first paint)', () => {
 })
 
 describe('the lazy table', () => {
-  // The first load imports ~1,700 icon modules: far slower than the default 5 s under a loaded CI box.
-  it('returns undefined for a key outside the fast table until loaded, then draws it', {
-    timeout: 60_000,
-  }, async () => {
-    // `telescope` is in no meta table, so it is not in the fast table.
-    expect(FAST_ICON_GLYPHS.telescope).toBeUndefined()
-    if (!iconGlyphsLoaded()) expect(resolveDisplayIcon('telescope')).toBeUndefined()
-    await loadIconGlyphs()
-    expect(iconGlyphsLoaded()).toBe(true)
-    expect(iconGlyphsFailed()).toBe(false)
-    expect(resolveDisplayIcon('telescope')).toBeDefined()
+  // The loader is exercised against a two-glyph stand-in for the 1,700-module lucide table, so
+  // "undefined before load, drawn after" does not depend on how fast a loaded box transforms
+  // the real one. The REAL table is pinned by the "EVERY catalog key" test below.
+  it('returns undefined for a key outside the fast table until loaded, then draws it', async () => {
+    const telescope = () => null
+    vi.resetModules()
+    vi.doMock('lucide-react/dist/esm/icons/index.js', () => ({ Telescope: telescope }))
+    try {
+      const fresh = await import('../icon-glyphs')
+      const { FAST_ICON_GLYPHS: fast } = await import('../device-meta')
+      // `telescope` is in no meta table, so it is not in the fast table.
+      expect(fast.telescope).toBeUndefined()
+      expect(fresh.iconGlyphsLoaded()).toBe(false)
+      expect(fresh.resolveDisplayIcon('telescope')).toBeUndefined()
+      await fresh.loadIconGlyphs()
+      expect(fresh.iconGlyphsLoaded()).toBe(true)
+      expect(fresh.iconGlyphsFailed()).toBe(false)
+      expect(fresh.resolveDisplayIcon('telescope')).toBe(telescope)
+    } finally {
+      vi.doUnmock('lucide-react/dist/esm/icons/index.js')
+      vi.resetModules()
+    }
   })
 
   it('EVERY catalog key resolves to a glyph', { timeout: 60_000 }, async () => {
