@@ -27,11 +27,11 @@ const FAN_CAP = 'fan-control'
 const TEMP_CAP = 'temperature-sensor'
 const HUMIDITY_CAP = 'humidity-sensor'
 const TEMP_COLD_START: TemperatureSensorStatus = {
-  temperature: 0,
+  temperature: null,
   lastFetchedAt: 0,
 }
 const HUMIDITY_COLD_START: HumiditySensorStatus = {
-  humidity: 0,
+  humidity: null,
   lastFetchedAt: 0,
 }
 
@@ -144,8 +144,27 @@ export class DreoFanDevice extends DreoChildDevice {
             applied: [],
           }
         }
-        if (oscillating !== undefined)
-          await this.requireHandle().setAxisOscillating(axis, oscillating)
+        if (oscillating !== undefined) {
+          const handle = this.requireHandle()
+          const reported =
+            axis === 'horizontal'
+              ? handle.state.horizontalOscillating
+              : handle.state.verticalOscillating
+          if (reported === null) {
+            this.ctx.logger.warn('dreo fan: axis oscillation refused, the model has no such axis', {
+              tags: { deviceId: this.id },
+              meta: { axis, dreoDeviceId: this.dreoDeviceId },
+            })
+            return {
+              status: 'refused',
+              reason: 'axis-not-linked',
+              field: 'oscillating',
+              detail: `this fan has no ${axis} oscillation axis`,
+              applied: [],
+            }
+          }
+          await handle.setAxisOscillating(axis, oscillating)
+        }
         const [field] = unmapped
         if (field !== undefined) {
           return {
@@ -174,16 +193,20 @@ export class DreoFanDevice extends DreoChildDevice {
     }
     this.ctx.registerNativeCap(temperatureSensorCapability, tempProvider)
     this.runtimeState.setCapState(TEMP_CAP, TEMP_COLD_START)
+  }
 
-    // Humidity only where the model reports it: an always-empty binding is noise in Customize.
-    if (this.resolveHandle()?.state.humidity != null) {
-      const humidityProvider: InferNativeProvider<typeof humiditySensorCapability> = {
-        getStatus: async () =>
-          this.runtimeState.getCapState<HumiditySensorStatus>(HUMIDITY_CAP) ?? HUMIDITY_COLD_START,
-      }
-      this.ctx.registerNativeCap(humiditySensorCapability, humidityProvider)
-      this.runtimeState.setCapState(HUMIDITY_CAP, HUMIDITY_COLD_START)
+  /** Humidity is registered on the first reading: a model that never reports it gets no empty binding. */
+  private humidityRegistered = false
+
+  private ensureHumidityBinding(): void {
+    if (this.humidityRegistered) return
+    this.humidityRegistered = true
+    const humidityProvider: InferNativeProvider<typeof humiditySensorCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<HumiditySensorStatus>(HUMIDITY_CAP) ?? HUMIDITY_COLD_START,
     }
+    this.ctx.registerNativeCap(humiditySensorCapability, humidityProvider)
+    this.runtimeState.setCapState(HUMIDITY_CAP, HUMIDITY_COLD_START)
   }
 
   protected override recomputeSlices(): void {
@@ -228,6 +251,7 @@ export class DreoFanDevice extends DreoChildDevice {
       })
     }
     if (humidity !== null) {
+      this.ensureHumidityBinding()
       this.runtimeState.setCapState(HUMIDITY_CAP, {
         humidity,
         lastFetchedAt: now,

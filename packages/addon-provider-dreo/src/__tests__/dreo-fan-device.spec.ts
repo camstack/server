@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   DeviceFeature,
   DeviceType,
+  anyAxisOscillating,
   type DeviceContext,
   type FanControlStatus,
   type HumiditySensorStatus,
@@ -183,5 +184,61 @@ describe('Dreo air circulator', () => {
     const fan = device.runtimeState.getCapState<FanControlStatus>('fan-control')
     expect(fan?.availablePresets).toEqual([])
     expect(fan?.oscillationAxes).toBeUndefined()
+  })
+
+  it('an unread sensor value is null, never 0 (D393)', async () => {
+    const { device } = await circulator({ ...CIRCULATOR, temperature: null })
+    const status = device.runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor')
+    expect(status?.temperature).toBeNull()
+  })
+
+  it('registers humidity on the first reading that carries it', async () => {
+    const { device, registrations } = await circulator()
+    expect(registrations.map((r) => r.cap.name)).not.toContain('humidity-sensor')
+    dreoConnections
+      .getDevice('acct-1', 'dev-1')
+      ?.update({ ...IDLE_STATE, ...CIRCULATOR, humidity: 51 })
+    expect(registrations.map((r) => r.cap.name)).toContain('humidity-sensor')
+    expect(device.runtimeState.getCapState<HumiditySensorStatus>('humidity-sensor')?.humidity).toBe(
+      51,
+    )
+  })
+
+  it('refuses an axis the model lacks, without calling the worker', async () => {
+    const { bridge, registrations } = await circulator({
+      ...CIRCULATOR,
+      horizontalOscillating: null,
+      verticalOscillating: null,
+    })
+    const fan = registrations.find((r) => r.cap.name === 'fan-control')?.provider as {
+      setOscillationAxis: (i: {
+        deviceId: number
+        axis: 'horizontal'
+        oscillating: boolean
+      }) => Promise<{ status: string }>
+    }
+    const result = await fan.setOscillationAxis({
+      deviceId: 9,
+      axis: 'horizontal',
+      oscillating: true,
+    })
+    expect(result.status).toBe('refused')
+    expect(bridge.commands).toEqual([])
+    expect(quiet.warn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ tags: { deviceId: 9 } }),
+    )
+  })
+
+  it('keeps the combined flag coherent with the axes the device reports', async () => {
+    const { device } = await circulator({
+      ...CIRCULATOR,
+      oscillating: true,
+      horizontalOscillating: false,
+      verticalOscillating: true,
+    })
+    const fan = device.runtimeState.getCapState<FanControlStatus>('fan-control')
+    expect(fan?.oscillating).toBe(true)
+    expect(fan === undefined ? null : anyAxisOscillating(fan)).toBe(true)
   })
 })
