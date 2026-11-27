@@ -5327,7 +5327,8 @@
       "thisEntryHasNoLocations": "Questa voce non ha posizioni selezionate.",
       "lastRun": "ultima esecuzione {{when}}",
       "archivesFor": "Archivi di {{name}}",
-      "editEntry": "Modifica voce"
+      "editEntry": "Modifica voce",
+      "retentionInvalid": "La conservazione deve essere un numero intero di almeno 1."
     },
     "backupEntryModal": {
       "editBackupEntry": "Modifica voce di backup",

@@ -115,6 +115,9 @@ describe('fixed scoped settings mounts', () => {
     fireEvent.change(await screen.findByDisplayValue('value of Terminal field'), {
       target: { value: 'changed' },
     })
+    // The edit is a draft until the save bar's Save; nothing is written from the field.
+    expect(mutate).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() => expect(mutate).toHaveBeenCalled())
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({

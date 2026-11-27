@@ -5252,7 +5252,8 @@
       "thisEntryHasNoLocations": "This entry has no locations selected.",
       "lastRun": "last run {{when}}",
       "archivesFor": "Archives for {{name}}",
-      "editEntry": "Edit entry"
+      "editEntry": "Edit entry",
+      "retentionInvalid": "Retention must be a whole number of at least 1."
     },
     "backupEntryModal": {
       "editBackupEntry": "Edit backup entry",
