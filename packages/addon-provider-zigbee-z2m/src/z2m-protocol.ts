@@ -23,7 +23,7 @@ export type Z2mScalar = z.infer<typeof ScalarSchema>
  * `composite`) carries a `property`; a specific one (`switch`, `light`, `cover`, `lock`, `climate`,
  * `fan`) carries `features`, each a generic expose.
  */
-export const Z2mExposeSchema = z.object({
+const Z2mExposeBaseSchema = z.object({
   type: z.string(),
   name: z.string().optional(),
   label: z.string().optional(),
@@ -40,11 +40,13 @@ export const Z2mExposeSchema = z.object({
   value_toggle: ScalarSchema.optional(),
   values: z.array(z.string()).optional(),
   endpoint: z.string().optional(),
-  get features() {
-    return z.array(Z2mExposeSchema).optional()
-  },
 })
-export type Z2mExpose = z.infer<typeof Z2mExposeSchema>
+type Z2mExposeBase = z.infer<typeof Z2mExposeBaseSchema>
+/** A specific expose nests generic ones under the protocol's own `features` list (not a CamStack device feature). */
+export type Z2mExpose = Z2mExposeBase & { readonly features?: readonly Z2mExpose[] }
+export const Z2mExposeSchema: z.ZodType<Z2mExpose> = Z2mExposeBaseSchema.extend({
+  features: z.lazy(() => z.array(Z2mExposeSchema)).optional(),
+})
 
 export const Z2mDeviceDefinitionSchema = z.object({
   model: z.string().optional(),
