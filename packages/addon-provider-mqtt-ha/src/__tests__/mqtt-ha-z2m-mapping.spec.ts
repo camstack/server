@@ -9,6 +9,7 @@ import { planMqttHaContainer } from '../mqtt-ha-container-plan.js'
 import { adoptableMqttHaDevices, buildMqttHaDeviceCandidate } from '../mqtt-ha-discovery.js'
 import {
   IR_TOPIC,
+  airQualityMessages,
   bulbMessages,
   contactMessages,
   irBlasterButtonMessages,
@@ -119,6 +120,23 @@ describe('mapping by component + device_class', () => {
     expect(plan.deviceType).toBe(DeviceType.Sensor)
     expect(plan.capabilities).toEqual(['contact', 'battery'])
     expect(plan.meter).toEqual({})
+  })
+
+  it('air-quality monitor: CO2 joins temperature, humidity and battery as one air-quality-sensor', () => {
+    const { plan } = planOf(airQualityMessages())
+    expect(plan.deviceType).toBe(DeviceType.Sensor)
+    expect(plan.capabilities).toEqual([
+      'temperature-sensor',
+      'humidity-sensor',
+      'air-quality-sensor',
+      'battery',
+    ])
+    expect(Object.keys(plan.air)).toEqual(['co2'])
+    // The diagnostics stay out of the caps but the device keeps their records.
+    expect(plan.skippedEntities.map((e) => e.objectId).sort()).toEqual([
+      expect.stringContaining('last_seen'),
+      expect.stringContaining('linkquality'),
+    ])
   })
 
   it('motion sensor: motion, illuminance, temperature and battery on one Sensor', () => {

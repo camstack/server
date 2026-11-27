@@ -28,6 +28,7 @@ export type MqttHaCap =
   | 'temperature-sensor'
   | 'humidity-sensor'
   | 'ambient-light-sensor'
+  | 'air-quality-sensor'
   | 'numeric-sensor'
   | 'climate-control'
   | 'event-emitter'
@@ -39,6 +40,22 @@ export type MqttHaBinaryCap = 'contact' | 'motion' | 'flood' | 'vibration' | 'ta
 export type MqttHaMeterField = 'power' | 'energy' | 'voltage' | 'current'
 
 export type MqttHaMeterEntities = Partial<Record<MqttHaMeterField, string>>
+
+/** The `air-quality-sensor` status field a reading lands in. */
+export type MqttHaAirField = 'co2' | 'voc' | 'pm25' | 'pm10' | 'aqi'
+
+export type MqttHaAirEntities = Partial<Record<MqttHaAirField, string>>
+
+const AIR_FIELD_BY_CLASS: Readonly<Record<string, MqttHaAirField>> = {
+  carbon_dioxide: 'co2',
+  co2: 'co2',
+  volatile_organic_compounds: 'voc',
+  volatile_organic_compounds_parts: 'voc',
+  pm25: 'pm25',
+  pm2_5: 'pm25',
+  pm10: 'pm10',
+  aqi: 'aqi',
+}
 
 const METER_FIELD_BY_CLASS: Readonly<Record<string, MqttHaMeterField>> = {
   power: 'power',
@@ -68,6 +85,7 @@ export type MqttHaRole =
   | { readonly kind: 'event' }
   | { readonly kind: 'binary'; readonly cap: MqttHaBinaryCap }
   | { readonly kind: 'meter'; readonly field: MqttHaMeterField }
+  | { readonly kind: 'air'; readonly field: MqttHaAirField }
   | { readonly kind: 'battery' }
   | { readonly kind: 'temperature' }
   | { readonly kind: 'humidity' }
@@ -82,6 +100,8 @@ function classifySensor(entity: MqttHaEntity): MqttHaRole | null {
   if (deviceClass !== null) {
     const field = METER_FIELD_BY_CLASS[deviceClass]
     if (field !== undefined) return { kind: 'meter', field }
+    const air = AIR_FIELD_BY_CLASS[deviceClass]
+    if (air !== undefined) return { kind: 'air', field: air }
     if (deviceClass === 'temperature') return { kind: 'temperature' }
     if (deviceClass === 'humidity') return { kind: 'humidity' }
     if (deviceClass === 'illuminance' || deviceClass === 'illuminance_lux') {
@@ -133,10 +153,14 @@ export interface MqttHaDevicePlan {
   readonly bindings: Readonly<Partial<Record<MqttHaCap, string>>>
   /** `power-meter` field → the entity that feeds it (D951). */
   readonly meter: Readonly<MqttHaMeterEntities>
+  /** `air-quality-sensor` field → the entity that feeds it. */
+  readonly air: Readonly<MqttHaAirEntities>
   /** Entities the device keeps (those feeding a cap). */
   readonly members: readonly MqttHaEntity[]
   /** Entities of the physical device that feed nothing (diagnostics, unsupported). */
   readonly skipped: readonly string[]
+  /** The same entities as full records: the device keeps them so its raw state can list them. */
+  readonly skippedEntities: readonly MqttHaEntity[]
 }
 
 const COLOR_MODES: ReadonlySet<string> = new Set(['color_temp', 'xy', 'hs', 'rgb', 'rgbw', 'rgbww'])
@@ -170,6 +194,7 @@ const ALLOWED_CAPS: Readonly<Record<string, ReadonlySet<MqttHaCap>>> = {
     'temperature-sensor',
     'humidity-sensor',
     'ambient-light-sensor',
+    'air-quality-sensor',
     'numeric-sensor',
     'power-meter',
     'battery',
@@ -191,6 +216,7 @@ const CAP_ORDER: readonly MqttHaCap[] = [
   'temperature-sensor',
   'humidity-sensor',
   'ambient-light-sensor',
+  'air-quality-sensor',
   'numeric-sensor',
   'power-meter',
   'battery',
@@ -236,6 +262,8 @@ function capsFor(item: RoleEntity): readonly MqttHaCap[] {
       return [role.cap]
     case 'meter':
       return ['power-meter']
+    case 'air':
+      return ['air-quality-sensor']
     case 'battery':
       return ['battery']
     case 'temperature':
@@ -261,6 +289,7 @@ const SPECIFIC_READINGS: ReadonlySet<MqttHaCap> = new Set([
   'temperature-sensor',
   'humidity-sensor',
   'ambient-light-sensor',
+  'air-quality-sensor',
   'power-meter',
 ])
 
@@ -294,6 +323,7 @@ export function planMqttHaDevice(input: {
 
   const bindings: Partial<Record<MqttHaCap, string>> = {}
   const meter: MqttHaMeterEntities = {}
+  const air: MqttHaAirEntities = {}
   for (const item of roles) {
     for (const cap of capsFor(item)) {
       if (!allowed.has(cap)) continue
@@ -302,12 +332,18 @@ export function planMqttHaDevice(input: {
         meter[item.role.field] = item.entity.entityKey
         continue
       }
+      if (item.role.kind === 'air') {
+        if (air[item.role.field] !== undefined) continue
+        air[item.role.field] = item.entity.entityKey
+        continue
+      }
       // A light's switch / brightness / colour all read the same entity.
       if (bindings[cap] !== undefined) continue
       bindings[cap] = item.entity.entityKey
     }
   }
   if (Object.keys(meter).length > 0) bindings['power-meter'] = Object.values(meter)[0]
+  if (Object.keys(air).length > 0) bindings['air-quality-sensor'] = Object.values(air)[0]
 
   const present = new Set<MqttHaCap>(Object.keys(bindings).filter(isMqttHaCap))
   if (
@@ -323,11 +359,22 @@ export function planMqttHaDevice(input: {
   const feeding = new Set<string>(Object.values(bindings))
   for (const entityKey of irKeys) feeding.add(entityKey)
   for (const entityKey of Object.values(meter)) feeding.add(entityKey)
+  for (const entityKey of Object.values(air)) feeding.add(entityKey)
   const members = input.entities.filter((e) => feeding.has(e.entityKey))
-  const skipped = input.entities.filter((e) => !feeding.has(e.entityKey)).map((e) => e.entityKey)
-  return { deviceType, capabilities, bindings, meter, members, skipped }
+  const skippedEntities = input.entities.filter((e) => !feeding.has(e.entityKey))
+  const skipped = skippedEntities.map((e) => e.entityKey)
+  return { deviceType, capabilities, bindings, meter, air, members, skipped, skippedEntities }
 }
 
 function isMqttHaCap(value: string): value is MqttHaCap {
   return CAP_ORDER.some((cap) => cap === value)
+}
+
+/** Why an entity feeds no cap of its device, for the raw-state listing. */
+export function mqttHaSkipReason(entity: MqttHaEntity): string {
+  if (entity.entityCategory !== null) return `${entity.entityCategory} entity`
+  if (classifyMqttHaEntity(entity) === null) {
+    return `no capability for ${entity.component}${entity.deviceClass === null ? '' : ` / ${entity.deviceClass}`}`
+  }
+  return 'not offered by this device type'
 }

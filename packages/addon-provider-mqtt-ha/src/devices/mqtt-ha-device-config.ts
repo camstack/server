@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { mqttHaEntitySchema, type MqttHaEntity } from '../mqtt-ha-discovery-types.js'
-import type { MqttHaCap, MqttHaMeterEntities } from '../mqtt-ha-domain-mapping.js'
+import type {
+  MqttHaAirEntities,
+  MqttHaCap,
+  MqttHaMeterEntities,
+} from '../mqtt-ha-domain-mapping.js'
 
 /**
  * Persisted config of an adopted device. A device adopted by the current
@@ -18,6 +22,10 @@ export const mqttHaDeviceSchema = z.object({
   entities: z.array(mqttHaEntitySchema).default([]),
   bindings: z.record(z.string(), z.string()).default({}),
   meter: z.record(z.string(), z.string()).default({}),
+  /** `air-quality-sensor` field → entity key. */
+  air: z.record(z.string(), z.string()).default({}),
+  /** Entities that feed no cap (diagnostics, unsupported); kept for the raw-state listing. */
+  skippedEntities: z.array(mqttHaEntitySchema).default([]),
   capabilities: z.array(z.string()).default([]),
   // Legacy flat fields.
   component: z.enum(['sensor', 'switch']).optional(),
@@ -37,6 +45,8 @@ export interface MqttHaDeviceModel {
   readonly entities: ReadonlyMap<string, MqttHaEntity>
   readonly bindings: ReadonlyMap<MqttHaCap, string>
   readonly meter: Readonly<MqttHaMeterEntities>
+  readonly air: Readonly<MqttHaAirEntities>
+  readonly skippedEntities: readonly MqttHaEntity[]
   readonly capabilities: readonly MqttHaCap[]
 }
 
@@ -54,6 +64,7 @@ const CAP_NAMES: readonly MqttHaCap[] = [
   'temperature-sensor',
   'humidity-sensor',
   'ambient-light-sensor',
+  'air-quality-sensor',
   'numeric-sensor',
   'climate-control',
   'event-emitter',
@@ -94,6 +105,22 @@ function legacyEntity(config: MqttHaDeviceConfig): MqttHaEntity | null {
   }
 }
 
+function airEntities(config: MqttHaDeviceConfig): MqttHaAirEntities {
+  const out: MqttHaAirEntities = {}
+  for (const [field, entityKey] of Object.entries(config.air)) {
+    if (
+      field === 'co2' ||
+      field === 'voc' ||
+      field === 'pm25' ||
+      field === 'pm10' ||
+      field === 'aqi'
+    ) {
+      out[field] = entityKey
+    }
+  }
+  return out
+}
+
 function meterEntities(config: MqttHaDeviceConfig): MqttHaMeterEntities {
   const out: MqttHaMeterEntities = {}
   for (const [field, entityKey] of Object.entries(config.meter)) {
@@ -124,5 +151,12 @@ export function resolveDeviceModel(config: MqttHaDeviceConfig): MqttHaDeviceMode
     entities.size > 0 && config.entities.length === 0
       ? [...bindings.keys()]
       : config.capabilities.filter(isMqttHaCap)
-  return { entities, bindings, meter: meterEntities(config), capabilities }
+  return {
+    entities,
+    bindings,
+    meter: meterEntities(config),
+    air: airEntities(config),
+    skippedEntities: config.skippedEntities,
+    capabilities,
+  }
 }

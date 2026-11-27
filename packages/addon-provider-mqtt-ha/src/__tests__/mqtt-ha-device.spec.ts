@@ -12,6 +12,8 @@ import { parseDiscoveryConfigPayload } from '../mqtt-ha-discovery-parser.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import type { MqttHaDiscoveredEntity } from '../mqtt-ha-discovery-types.js'
 import {
+  AIR_TOPIC,
+  airQualityMessages,
   plugMessages,
   remoteMessages,
   contactMessages,
@@ -49,6 +51,8 @@ function configOf(messages: readonly DiscoveryMessage[]): Record<string, unknown
     entities: [...plan.members],
     bindings: plan.bindings,
     meter: plan.meter,
+    air: plan.air,
+    skippedEntities: [...plan.skippedEntities],
     capabilities: [...plan.capabilities],
   }
 }
@@ -610,5 +614,64 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     await expect(pending).rejects.toMatchObject({
       i18nCode: 'ir-transmitter.learn-undecodable',
     })
+  })
+})
+
+describe('MqttHaDevice air-quality monitor', () => {
+  const payload = {
+    temperature: 21.5,
+    humidity: 48,
+    co2: 612,
+    battery: 90,
+    linkquality: 120,
+    last_seen: '2026-11-27T10:00:00Z',
+  }
+
+  it('reads CO2 into the air-quality-sensor slice', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const entities = entitiesOf(airQualityMessages())
+    const h = build(DeviceType.Sensor, configOf(airQualityMessages()))
+    await h.device.onActivate()
+    deliver(mqttHaStateGateway, entities, AIR_TOPIC, JSON.stringify(payload))
+    expect(h.state().getCapState('air-quality-sensor')).toMatchObject({ co2: 612 })
+    expect(h.state().getCapState('temperature-sensor')).toMatchObject({ temperature: 21.5 })
+  })
+
+  it('getRawState returns the state payload per topic and says why an entity is skipped', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const entities = entitiesOf(airQualityMessages())
+    const h = build(DeviceType.Sensor, configOf(airQualityMessages()))
+    await h.device.onActivate()
+    deliver(mqttHaStateGateway, entities, AIR_TOPIC, JSON.stringify(payload))
+    const raw = await h.device.getRawState()
+    expect(raw?.source).toBe('mqtt-ha')
+    expect(raw?.data[AIR_TOPIC]).toEqual(payload)
+    const list = raw?.data['entities']
+    expect(Array.isArray(list)).toBe(true)
+    const rows = Array.isArray(list) ? list : []
+    expect(rows).toHaveLength(6)
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        objectId: expect.stringContaining('linkquality'),
+        entityCategory: 'diagnostic',
+        mappedCap: null,
+        skipReason: 'diagnostic entity',
+      }),
+    )
+    expect(rows).toContainEqual(
+      expect.objectContaining({ deviceClass: 'carbon_dioxide', mappedCap: 'air-quality-sensor' }),
+    )
+  })
+
+  it('getRawState keeps the entity list when nothing was published yet, and a non-JSON payload as text', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const h = build(DeviceType.Sensor, configOf(airQualityMessages()))
+    await h.device.onActivate()
+    const before = await h.device.getRawState()
+    expect(before?.data[AIR_TOPIC]).toBeUndefined()
+    expect(before?.data['entities']).toBeDefined()
+    mqttHaStateGateway.recordMessage(BROKER, AIR_TOPIC, 'not json')
+    const after = await h.device.getRawState()
+    expect(after?.data[AIR_TOPIC]).toBe('not json')
   })
 })

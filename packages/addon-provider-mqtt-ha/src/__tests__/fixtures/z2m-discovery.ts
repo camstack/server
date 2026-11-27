@@ -674,3 +674,50 @@ export function irBlasterButtonMessages(options?: {
     },
   ]
 }
+
+export const AIR_IEEE = '0x00158d0006e1f2a3'
+export const AIR_FRIENDLY = 'Office air monitor'
+export const AIR_TOPIC = `zigbee2mqtt/${AIR_FRIENDLY}`
+
+/** A battery air-quality monitor: temperature, humidity, CO2, battery and two diagnostics. */
+export function airQualityMessages(): readonly DiscoveryMessage[] {
+  const ieee = AIR_IEEE
+  const base = {
+    ...availability(AIR_FRIENDLY),
+    device: device(ieee, AIR_FRIENDLY, 'Acme', 'Air quality monitor'),
+    state_topic: AIR_TOPIC,
+  }
+  const sensor = (key: string, name: string, extra: Record<string, unknown>): DiscoveryMessage => ({
+    component: 'sensor',
+    objectId: `${ieee}_${key}`,
+    payload: {
+      ...base,
+      name,
+      value_template: `{{ value_json.${key} }}`,
+      unique_id: `${ieee}_${key}_zigbee2mqtt`,
+      ...extra,
+    },
+  })
+  return [
+    sensor('temperature', 'Temperature', {
+      device_class: 'temperature',
+      unit_of_measurement: '°C',
+    }),
+    sensor('humidity', 'Humidity', { device_class: 'humidity', unit_of_measurement: '%' }),
+    sensor('co2', 'CO2', { device_class: 'carbon_dioxide', unit_of_measurement: 'ppm' }),
+    sensor('battery', 'Battery', {
+      device_class: 'battery',
+      entity_category: 'diagnostic',
+      unit_of_measurement: '%',
+    }),
+    sensor('linkquality', 'Linkquality', {
+      entity_category: 'diagnostic',
+      unit_of_measurement: 'lqi',
+    }),
+    sensor('last_seen', 'Last seen', {
+      device_class: 'timestamp',
+      entity_category: 'diagnostic',
+      enabled_by_default: false,
+    }),
+  ]
+}

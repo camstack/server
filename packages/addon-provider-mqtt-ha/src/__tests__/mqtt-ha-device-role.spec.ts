@@ -38,6 +38,7 @@ const ROLE_BY_CAP: ReadonlyArray<readonly [MqttHaCap, DeviceRole | null]> = [
   ['temperature-sensor', DeviceRole.TemperatureSensor],
   ['humidity-sensor', DeviceRole.HumiditySensor],
   ['ambient-light-sensor', DeviceRole.AmbientLightSensor],
+  ['air-quality-sensor', DeviceRole.AirQualitySensor],
   ['numeric-sensor', DeviceRole.NumericSensor],
   ['battery', DeviceRole.BatterySensor],
   ['switch', null],

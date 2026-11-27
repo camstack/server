@@ -282,6 +282,8 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       entities: [...plan.members],
       bindings: plan.bindings,
       meter: plan.meter,
+      air: plan.air,
+      skippedEntities: [...plan.skippedEntities],
       capabilities: [...plan.capabilities],
       system: 'mqtt-ha',
       integrationId: input.integrationId,

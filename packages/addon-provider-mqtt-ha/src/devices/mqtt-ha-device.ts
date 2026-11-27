@@ -3,6 +3,7 @@ import {
   EventCategory,
   errMsg,
   HvacModeSchema,
+  airQualitySensorCapability,
   ambientLightSensorCapability,
   batteryCapability,
   brightnessCapability,
@@ -28,6 +29,7 @@ import {
   temperatureSensorCapability,
   vibrationCapability,
   type DeviceContext,
+  type AirQualitySensorStatus,
   type DeviceFeature,
   type EventEmitterStatus,
   type EventFire,
@@ -37,6 +39,7 @@ import {
   type IrTransmitterStateUpdate,
   type InferRuntimeState,
   type PowerMeterStatus,
+  type RawStateResult,
   type ReadingQuantity,
 } from '@camstack/types'
 import {
@@ -50,7 +53,12 @@ import {
   type MqttHaLightChange,
 } from '../mqtt-ha-entity-codec.js'
 import type { MqttHaEntity } from '../mqtt-ha-discovery-types.js'
-import type { MqttHaCap, MqttHaMeterField } from '../mqtt-ha-domain-mapping.js'
+import {
+  mqttHaSkipReason,
+  type MqttHaAirField,
+  type MqttHaCap,
+  type MqttHaMeterField,
+} from '../mqtt-ha-domain-mapping.js'
 import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-role.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import { matchIrProfile } from '../mqtt-ha-ir-profiles.js'
@@ -71,10 +79,30 @@ const METER_QUANTITY: Readonly<Record<MqttHaMeterField, ReadingQuantity>> = {
   current: 'current',
 }
 
+const AIR_QUANTITY: Readonly<Record<MqttHaAirField, ReadingQuantity>> = {
+  co2: 'concentration-volume',
+  voc: 'concentration-ppb',
+  pm25: 'concentration-mass',
+  pm10: 'concentration-mass',
+  aqi: 'index',
+}
+
+const AIR_FIELDS: readonly MqttHaAirField[] = ['co2', 'voc', 'pm25', 'pm10', 'aqi']
+
 const METER_FIELDS: readonly MqttHaMeterField[] = ['power', 'energy', 'voltage', 'current']
 
 function unsupported(what: string): Error {
   return new Error(`mqtt-ha: ${what} is not supported by this device`)
+}
+
+/** The JSON a payload holds, else the text itself. */
+function parsePayload(payload: string): unknown {
+  try {
+    const parsed: unknown = JSON.parse(payload)
+    return parsed
+  } catch {
+    return payload
+  }
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -157,6 +185,48 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       tags: { deviceId: this.id },
       meta: { role, cap },
     })
+  }
+
+  // ── Raw state ──────────────────────────────────────────────────────────
+
+  /** The cap an entity feeds, or null when it feeds none. */
+  private mappedCapOf(entityKey: string): MqttHaCap | null {
+    for (const [cap, key] of this.model.bindings) if (key === entityKey) return cap
+    if (Object.values(this.model.meter).includes(entityKey)) return 'power-meter'
+    if (Object.values(this.model.air).includes(entityKey)) return 'air-quality-sensor'
+    return null
+  }
+
+  /**
+   * Opt-in raw-state surface (`device-ops.getRawState`): the last payload of
+   * every state topic of the device, skipped entities' topics included, and
+   * the discovery entity list with the cap each feeds or why it feeds none.
+   * Payloads are the device's own readings; no credential travels on them.
+   */
+  async getRawState(): Promise<RawStateResult | null> {
+    const entities = [...this.model.entities.values(), ...this.model.skippedEntities]
+    const data: Record<string, unknown> = {}
+    for (const entity of entities) {
+      const topic = entity.stateTopic
+      if (topic === null || topic in data) continue
+      const payload = this.reader()(topic)
+      if (payload === undefined) continue
+      data[topic] = parsePayload(payload)
+    }
+    data['entities'] = entities.map((entity) => {
+      const mappedCap = this.mappedCapOf(entity.entityKey)
+      return {
+        component: entity.component,
+        objectId: entity.objectId,
+        deviceClass: entity.deviceClass,
+        unit: entity.unitOfMeasurement,
+        entityCategory: entity.entityCategory,
+        stateTopic: entity.stateTopic,
+        mappedCap,
+        skipReason: mappedCap === null ? mqttHaSkipReason(entity) : null,
+      }
+    })
+    return { source: 'mqtt-ha', data }
   }
 
   // ── Inbound ────────────────────────────────────────────────────────────
@@ -312,6 +382,9 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         })
         return
       }
+      case 'air-quality-sensor':
+        this.refreshAirQuality(now)
+        return
       case 'numeric-sensor': {
         const entity = this.bound(cap)
         if (entity === null) return
@@ -328,6 +401,27 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       case 'ir-transmitter':
         return
     }
+  }
+
+  private refreshAirQuality(now: number): void {
+    const prev: AirQualitySensorStatus = this.getCapSlice(airQualitySensorCapability) ?? {
+      lastFetchedAt: 0,
+    }
+    const next: { -readonly [K in keyof AirQualitySensorStatus]: AirQualitySensorStatus[K] } = {
+      ...prev,
+    }
+    let changed = false
+    for (const field of AIR_FIELDS) {
+      const entityKey = this.model.air[field]
+      const entity = entityKey === undefined ? undefined : this.model.entities.get(entityKey)
+      if (entity === undefined) continue
+      const value = this.numberOf(entity, AIR_QUANTITY[field])
+      if (value === null || prev[field] === value) continue
+      next[field] = Math.max(0, value)
+      changed = true
+    }
+    if (!changed) return
+    this.setCapSlice(airQualitySensorCapability, { ...next, lastFetchedAt: now })
   }
 
   private refreshMeter(now: number): void {
@@ -568,6 +662,15 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
               },
           },
           { illuminance: null, lastFetchedAt: 0 },
+        )
+      case 'air-quality-sensor':
+        return this.registerStatusOnly(
+          airQualitySensorCapability,
+          {
+            getStatus: async () =>
+              this.getCapSlice(airQualitySensorCapability) ?? { lastFetchedAt: 0 },
+          },
+          { lastFetchedAt: 0 },
         )
       case 'numeric-sensor':
         return this.registerStatusOnly(

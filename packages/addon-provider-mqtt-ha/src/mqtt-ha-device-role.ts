@@ -24,6 +24,8 @@ export function deviceRoleForPrimaryCap(cap: MqttHaCap | undefined): DeviceRole 
       return DeviceRole.HumiditySensor
     case 'ambient-light-sensor':
       return DeviceRole.AmbientLightSensor
+    case 'air-quality-sensor':
+      return DeviceRole.AirQualitySensor
     case 'numeric-sensor':
       return DeviceRole.NumericSensor
     case 'battery':
