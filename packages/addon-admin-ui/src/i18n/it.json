@@ -11762,7 +11762,11 @@
       "emptyTitle": "Nessuna rete di dispositivi",
       "emptyDescription": "I dispositivi Matter e Zigbee che riportano la propria rete compaiono qui quando è configurata un'integrazione che la fornisce.",
       "truncated": "Sono stati controllati solo i primi dispositivi: alcune reti potrebbero mancare.",
-      "networkN": "Rete {{n}}"
+      "networkN": "Rete {{n}}",
+      "refresh": "Aggiorna",
+      "nodeNotFound": "Questo dispositivo non compare nella topologia letta.",
+      "diagnosticsFailed": "Impossibile leggere la diagnostica del nodo.",
+      "retry": "Riprova"
     }
   },
   "helpers": {

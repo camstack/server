@@ -8,6 +8,7 @@
  * integration instances with credentials; these are read from devices.
  */
 import {
+  Button,
   EmptyState,
   ErrorBox,
   Skeleton,
@@ -16,7 +17,7 @@ import {
   networkHasDevice,
   SECTION_BODY,
 } from '@camstack/ui-library'
-import { Waypoints } from 'lucide-react'
+import { RefreshCw, Waypoints } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { MeshNetworkView } from '../../components/device-mesh/MeshNetworkView'
 
@@ -70,8 +71,25 @@ export function DeviceNetworksPage() {
       />
     )
   }
+  const focusedMissing =
+    focused !== null && !mesh.networks.some((n) => networkHasDevice(n, focused))
   return (
     <div className={`flex flex-col gap-6 ${SECTION_BODY}`}>
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" disabled={mesh.isFetching} onClick={mesh.refetch}>
+          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+          {t('uiLibrary.deviceMesh.refresh', 'Refresh')}
+        </Button>
+      </div>
+      {focusedMissing && (
+        <ErrorBox
+          variant="warning"
+          message={t(
+            'uiLibrary.deviceMesh.nodeNotFound',
+            'This device does not appear in the topology that was read.',
+          )}
+        />
+      )}
       {mesh.truncated && (
         <ErrorBox
           variant="warning"

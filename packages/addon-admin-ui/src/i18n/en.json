@@ -11740,7 +11740,11 @@
       "emptyTitle": "No device networks",
       "emptyDescription": "Matter and Zigbee devices that report their mesh appear here once an integration that provides it is set up.",
       "truncated": "Only the first devices were checked; some networks may be missing.",
-      "networkN": "Network {{n}}"
+      "networkN": "Network {{n}}",
+      "refresh": "Refresh",
+      "nodeNotFound": "This device does not appear in the topology that was read.",
+      "diagnosticsFailed": "The node diagnostics could not be read.",
+      "retry": "Retry"
     }
   },
   "helpers": {

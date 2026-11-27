@@ -24,11 +24,36 @@ const num = (v: number | null): string => (v === null ? UNKNOWN : String(v))
 
 export function MeshNodeDetail({ node }: { readonly node: MeshNode }) {
   const t = useUiText()
-  const deviceId = node.deviceId
-  const diagnostics = useDeviceMeshGetNodeDiagnostics(
-    { deviceId: deviceId ?? 0 },
-    { enabled: deviceId !== null },
+  if (node.deviceId === null) return <PeerOnlyDetail node={node} />
+  return <DeviceNodeDetail node={node} deviceId={node.deviceId} />
+}
+
+function PeerOnlyDetail({ node }: { readonly node: MeshNode }) {
+  const t = useUiText()
+  return (
+    <SectionCard
+      headingId="mesh-node-detail"
+      title={t('uiLibrary.deviceMesh.nodeDetail', 'Node: {{label}}', { label: node.label })}
+    >
+      <p className="p-3 text-sm text-foreground-muted">
+        {t(
+          'uiLibrary.deviceMesh.peerOnly',
+          'This node is on the mesh but was not added by CamStack, so only its links are known.',
+        )}
+      </p>
+    </SectionCard>
   )
+}
+
+function DeviceNodeDetail({
+  node,
+  deviceId,
+}: {
+  readonly node: MeshNode
+  readonly deviceId: number
+}) {
+  const t = useUiText()
+  const diagnostics = useDeviceMeshGetNodeDiagnostics({ deviceId })
   const readNow = useDeviceMeshReadNow({
     onSuccess: () => void diagnostics.refetch(),
   })
@@ -36,18 +61,6 @@ export function MeshNodeDetail({ node }: { readonly node: MeshNode }) {
     label: node.label,
   })
 
-  if (deviceId === null) {
-    return (
-      <SectionCard headingId="mesh-node-detail" title={title}>
-        <p className="p-3 text-sm text-foreground-muted">
-          {t(
-            'uiLibrary.deviceMesh.peerOnly',
-            'This node is on the mesh but was not added by CamStack, so only its links are known.',
-          )}
-        </p>
-      </SectionCard>
-    )
-  }
   const d = diagnostics.data
   const readError = readNow.data !== undefined && !readNow.data.readOk ? readNow.data.error : null
   const neighborColumns: readonly DataColumn<MeshThreadNeighbor>[] = [

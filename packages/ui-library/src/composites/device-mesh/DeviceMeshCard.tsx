@@ -115,6 +115,16 @@ export function DeviceMeshCard({ deviceId }: DeviceMeshCardProps): JSX.Element {
         </Row>
       </dl>
       {readError !== null && <ErrorBox variant="warning" message={readError} />}
+      {diagnostics.isError && (
+        <ErrorBox
+          variant="warning"
+          message={t(
+            'uiLibrary.deviceMesh.diagnosticsFailed',
+            'The node diagnostics could not be read.',
+          )}
+          onRetry={() => void diagnostics.refetch()}
+        />
+      )}
       {asleep && (
         <p className="text-xs text-foreground-subtle">
           {t(
