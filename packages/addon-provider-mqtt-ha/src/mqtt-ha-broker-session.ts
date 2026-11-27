@@ -5,6 +5,7 @@ import {
   parseDiscoveryConfigPayload,
   parseDiscoveryConfigTopic,
 } from './mqtt-ha-discovery-parser.js'
+import { deviceNativeId } from './mqtt-ha-device-grouping.js'
 import type { MqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { entityTopics } from './mqtt-ha-entity-codec.js'
 import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
@@ -228,6 +229,13 @@ export class MqttHaBrokerSession {
 
     this.deps.store.upsert(parsed)
     this.trackEntity(parsed)
+    if (parsed.device !== null) {
+      this.deps.stateGateway.recordDiscovery(
+        this.deps.brokerId,
+        deviceNativeId(parsed.device.id),
+        parsed,
+      )
+    }
   }
 
   /** One trigger config: its event joins, or leaves, the action entity of its device. */

@@ -63,10 +63,12 @@ import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import { matchIrProfile } from '../mqtt-ha-ir-profiles.js'
 import { registerMqttHaStateRefresh } from '../mqtt-ha-state-refresh.js'
+import { followDiscovery, type MqttHaDeviceLayout } from '../mqtt-ha-discovery-follow.js'
 import { MqttHaIrBridge } from './mqtt-ha-ir-bridge.js'
 import {
   mqttHaDeviceSchema,
   resolveDeviceModel,
+  type MqttHaDeviceConfig,
   type MqttHaDeviceModel,
 } from './mqtt-ha-device-config.js'
 
@@ -125,7 +127,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   readonly features: readonly DeviceFeature[] = []
 
   private readonly brokerId: string
-  private readonly model: MqttHaDeviceModel
+  private model: MqttHaDeviceModel
+  private readonly persisted: MqttHaDeviceConfig
   private eventSeq = 0
   private irBridge: MqttHaIrBridge | null = null
   private irLearnedKey: string | null = null
@@ -137,6 +140,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     const persisted = mqttHaDeviceSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, mqttHaDeviceSchema, { type: ctx.deviceMeta.type })
     this.brokerId = persisted.brokerId
+    this.persisted = persisted
     this.model = resolveDeviceModel(persisted)
     this.online = true
     void this.updateSourceInfo({
@@ -151,9 +155,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     for (const cap of this.model.capabilities) this.registerCap(cap)
     for (const entity of this.model.entities.values()) {
       mqttHaStateGateway.subscribeEntity(this.brokerId, entity.entityKey, (topic, payload) =>
-        this.onMessage(entity, topic, payload),
+        this.onMessage(this.model.entities.get(entity.entityKey) ?? entity, topic, payload),
       )
     }
+    this.followDiscovery()
     registerMqttHaStateRefresh({
       ctx: this.ctx,
       brokerId: this.brokerId,
@@ -185,6 +190,86 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       tags: { deviceId: this.id },
       meta: { role, cap },
     })
+  }
+
+  // ── Discovery ──────────────────────────────────────────────────────────
+
+  /** The layout this device persists, as it stands now. */
+  private layout(): MqttHaDeviceLayout {
+    return {
+      entities: [...this.model.entities.values()],
+      skippedEntities: this.model.skippedEntities,
+      bindings: Object.fromEntries(this.model.bindings),
+      meter: this.model.meter,
+      air: this.model.air,
+      capabilities: this.model.capabilities,
+    }
+  }
+
+  /**
+   * An adopted device follows its own discovery: a new or changed entity of
+   * its physical device is folded in when it arrives (the retained messages
+   * are replayed on subscribe). Only a device adopted as a whole follows;
+   * a gang child or a legacy flat device has no device key.
+   */
+  private followDiscovery(): void {
+    const deviceKey = this.persisted.deviceKey
+    if (deviceKey === undefined || this.persisted.entities.length === 0) return
+    mqttHaStateGateway.subscribeDiscovery(this.brokerId, deviceKey, (entity) => {
+      const change = followDiscovery({
+        layout: this.layout(),
+        deviceType: this.ctx.deviceMeta.type,
+        entity,
+      })
+      if (change === null) return
+      void this.applyLayout(change.layout, change.addedCaps)
+    })
+  }
+
+  private async applyLayout(
+    layout: MqttHaDeviceLayout,
+    addedCaps: readonly MqttHaCap[],
+  ): Promise<void> {
+    const prior = this.model
+    this.model = resolveDeviceModel(
+      mqttHaDeviceSchema.parse({
+        ...this.persisted,
+        entities: layout.entities,
+        skippedEntities: layout.skippedEntities,
+        bindings: layout.bindings,
+        meter: layout.meter,
+        air: layout.air,
+        capabilities: layout.capabilities,
+      }),
+    )
+    for (const entity of this.model.entities.values()) {
+      if (prior.entities.has(entity.entityKey)) continue
+      mqttHaStateGateway.subscribeEntity(this.brokerId, entity.entityKey, (topic, payload) =>
+        this.onMessage(this.model.entities.get(entity.entityKey) ?? entity, topic, payload),
+      )
+    }
+    for (const cap of addedCaps) this.registerCap(cap)
+    this.refresh()
+    this.ctx.logger.info('mqtt-ha: device re-planned from its discovery', {
+      tags: { deviceId: this.id },
+      meta: { added: addedCaps.join(','), removed: '' },
+    })
+    try {
+      await this.ctx.persistConfig({
+        ...this.ctx.persistedConfig,
+        entities: layout.entities,
+        skippedEntities: layout.skippedEntities,
+        bindings: layout.bindings,
+        meter: layout.meter,
+        air: layout.air,
+        capabilities: layout.capabilities,
+      })
+    } catch (err) {
+      this.ctx.logger.warn('mqtt-ha: re-planned layout was not persisted', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   // ── Raw state ──────────────────────────────────────────────────────────

@@ -67,6 +67,7 @@ interface Harness {
   /** The registration options of each native cap, by cap name. */
   readonly options: Map<string, unknown>
   readonly setRole: ReturnType<typeof vi.fn>
+  readonly persistConfig: ReturnType<typeof vi.fn>
   readonly info: ReturnType<typeof vi.fn>
 }
 
@@ -88,6 +89,7 @@ function build(
     setState: (input: { on: boolean }) => Promise<void>
   } | null = null
   const setRole = vi.fn(async () => {})
+  const persistConfig = vi.fn(async (_data: unknown) => {})
   const info = vi.fn()
   const ctx = {
     id: 9,
@@ -109,7 +111,7 @@ function build(
       subscribe: vi.fn(() => () => {}),
       getRecent: vi.fn(() => []),
     },
-    persistConfig: vi.fn(async () => {}),
+    persistConfig,
     fetchDevice: vi.fn(async () => ({
       deviceState: { setCapSlice: vi.fn(async () => {}) },
     })),
@@ -161,6 +163,7 @@ function build(
     providers,
     options,
     setRole,
+    persistConfig,
     info,
     setSwitch: async (on) => {
       if (switchProvider === null) throw new Error('no switch cap')
@@ -673,5 +676,81 @@ describe('MqttHaDevice air-quality monitor', () => {
     mqttHaStateGateway.recordMessage(BROKER, AIR_TOPIC, 'not json')
     const after = await h.device.getRawState()
     expect(after?.data[AIR_TOPIC]).toBe('not json')
+  })
+})
+
+describe('MqttHaDevice follows its discovery', () => {
+  /** The config an older adoption persisted: no CO2 entity existed then. */
+  function olderConfig(): Record<string, unknown> {
+    const messages = airQualityMessages().filter((m) => !m.objectId.endsWith('_co2'))
+    return configOf(messages)
+  }
+
+  function co2Entity(): MqttHaDiscoveredEntity {
+    const found = entitiesOf(airQualityMessages()).find((e) => e.deviceClass === 'carbon_dioxide')
+    if (found === undefined) throw new Error('fixture has no co2 entity')
+    return found
+  }
+
+  function deviceKeyOf(config: Record<string, unknown>): string {
+    const key = config['deviceKey']
+    if (typeof key !== 'string') throw new Error('no deviceKey')
+    return key
+  }
+
+  it('adds the air-quality-sensor binding when a CO2 entity is discovered, on the same device', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const config = olderConfig()
+    const h = build(DeviceType.Sensor, config)
+    await h.device.onActivate()
+    expect(h.providers.has('air-quality-sensor')).toBe(false)
+
+    mqttHaStateGateway.recordDiscovery(BROKER, deviceKeyOf(config), co2Entity())
+
+    expect(h.providers.has('air-quality-sensor')).toBe(true)
+    expect(h.persistConfig).toHaveBeenCalledTimes(1)
+    const written = h.persistConfig.mock.calls[0]?.[0]
+    expect(written).toMatchObject({
+      deviceKey: config['deviceKey'],
+      capabilities: expect.arrayContaining(['air-quality-sensor']),
+      air: { co2: expect.any(String) },
+    })
+    expect(h.info).toHaveBeenCalledWith(
+      'mqtt-ha: device re-planned from its discovery',
+      expect.objectContaining({
+        tags: { deviceId: 9 },
+        meta: expect.objectContaining({ added: 'air-quality-sensor' }),
+      }),
+    )
+    // The binding is live: the next payload fills the new slice.
+    deliver(
+      mqttHaStateGateway,
+      entitiesOf(airQualityMessages()),
+      AIR_TOPIC,
+      JSON.stringify({ co2: 700 }),
+    )
+    expect(h.state().getCapState('air-quality-sensor')).toMatchObject({ co2: 700 })
+  })
+
+  it('writes nothing when the discovery changes nothing', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const config = olderConfig()
+    const h = build(DeviceType.Sensor, config)
+    await h.device.onActivate()
+    const first = entitiesOf(airQualityMessages())[0]!
+    mqttHaStateGateway.recordDiscovery(BROKER, deviceKeyOf(config), first)
+    expect(h.persistConfig).not.toHaveBeenCalled()
+    mqttHaStateGateway.recordDiscovery(BROKER, deviceKeyOf(config), co2Entity())
+    mqttHaStateGateway.recordDiscovery(BROKER, deviceKeyOf(config), co2Entity())
+    expect(h.persistConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it('replays a discovery that arrived before the device was active', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const config = olderConfig()
+    mqttHaStateGateway.recordDiscovery(BROKER, deviceKeyOf(config), co2Entity())
+    const h = build(DeviceType.Sensor, config)
+    await h.device.onActivate()
+    expect(h.providers.has('air-quality-sensor')).toBe(true)
   })
 })

@@ -1,4 +1,5 @@
 import type { TopicPayloadReader } from './mqtt-ha-entity-codec.js'
+import type { MqttHaEntity } from './mqtt-ha-discovery-types.js'
 
 export type MqttHaPublish = (input: {
   readonly brokerId: string
@@ -7,6 +8,9 @@ export type MqttHaPublish = (input: {
 }) => Promise<void>
 
 /** Called for each message on one of an entity's topics (state or availability). */
+/** Called for each discovery record of one physical device, replayed on subscribe. */
+export type MqttHaDiscoveryListener = (entity: MqttHaEntity) => void
+
 export type MqttHaEntityListener = (topic: string, payload: string) => void
 
 /**
@@ -18,6 +22,8 @@ export type MqttHaEntityListener = (topic: string, payload: string) => void
 export class MqttHaStateGateway {
   private readonly payloads = new Map<string, string>()
   private readonly listeners = new Map<string, Set<MqttHaEntityListener>>()
+  private readonly discovered = new Map<string, Map<string, MqttHaEntity>>()
+  private readonly discoveryListeners = new Map<string, Set<MqttHaDiscoveryListener>>()
   private publishImpl: MqttHaPublish | null = null
 
   setPublisher(publish: MqttHaPublish): void {
@@ -61,6 +67,38 @@ export class MqttHaStateGateway {
     for (const listener of [...set]) listener(topic, payload)
   }
 
+  /** A discovery record of a physical device: kept, and told to the device that follows it. */
+  recordDiscovery(brokerId: string, deviceKey: string, entity: MqttHaEntity): void {
+    const key = this.topicKey(brokerId, deviceKey)
+    let bucket = this.discovered.get(key)
+    if (bucket === undefined) {
+      bucket = new Map()
+      this.discovered.set(key, bucket)
+    }
+    bucket.set(entity.entityKey, entity)
+    for (const listener of [...(this.discoveryListeners.get(key) ?? [])]) listener(entity)
+  }
+
+  /** Follow the discovery of one physical device; what was already discovered is replayed. */
+  subscribeDiscovery(
+    brokerId: string,
+    deviceKey: string,
+    listener: MqttHaDiscoveryListener,
+  ): () => void {
+    const key = this.topicKey(brokerId, deviceKey)
+    let set = this.discoveryListeners.get(key)
+    if (set === undefined) {
+      set = new Set()
+      this.discoveryListeners.set(key, set)
+    }
+    set.add(listener)
+    for (const entity of [...(this.discovered.get(key)?.values() ?? [])]) listener(entity)
+    return () => {
+      set.delete(listener)
+      if (set.size === 0) this.discoveryListeners.delete(key)
+    }
+  }
+
   async publish(brokerId: string, topic: string, payload: string): Promise<void> {
     const publish = this.publishImpl
     if (publish === null) throw new Error('mqtt-ha: MQTT publisher not wired')
@@ -71,6 +109,9 @@ export class MqttHaStateGateway {
     const prefix = `${brokerId}\0`
     for (const k of this.payloads.keys()) {
       if (k.startsWith(prefix)) this.payloads.delete(k)
+    }
+    for (const k of this.discovered.keys()) {
+      if (k.startsWith(prefix)) this.discovered.delete(k)
     }
   }
 }
