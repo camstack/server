@@ -1338,7 +1338,7 @@ export async function adoptionStartJob(
   const { addonId, integrationId, childNativeIds, filter, importLocations, perCandidate, caller } =
     input
   return pctx.host.adoptionJobs.start({
-    ...(caller !== undefined ? { ownerUserId: caller.userId } : {}),
+    ownerUserId: caller.userId,
     addonId,
     integrationId,
     childNativeIds,
