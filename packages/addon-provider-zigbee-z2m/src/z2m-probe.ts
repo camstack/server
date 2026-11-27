@@ -54,23 +54,28 @@ export function probeZ2m(
         error: `${where}: ${why}`,
       })
     cancel = timers.after(() => inconclusive('no answer'), options.timeoutMs ?? DEFAULT_TIMEOUT_MS)
-    socket = factory(buildZ2mUrl(endpoint), {
-      open: () => {},
-      message: (text) => {
-        const envelope = parseEnvelope(text)
-        if (envelope !== null && envelope.topic.startsWith(Z2M_BRIDGE_PREFIX)) {
-          finish({ success: true, status: 'validated' })
-        }
-      },
-      close: (code) =>
-        code === Z2M_CLOSE_UNAUTHORIZED
-          ? finish({
-              success: false,
-              status: 'rejected',
-              error: 'The server refused the auth token',
-            })
-          : inconclusive(`closed (${code})`),
-      error: (message) => inconclusive(message),
-    })
+    try {
+      socket = factory(buildZ2mUrl(endpoint), {
+        open: () => {},
+        message: (text) => {
+          const envelope = parseEnvelope(text)
+          if (envelope !== null && envelope.topic.startsWith(Z2M_BRIDGE_PREFIX)) {
+            finish({ success: true, status: 'validated' })
+          }
+        },
+        close: (code) =>
+          code === Z2M_CLOSE_UNAUTHORIZED
+            ? finish({
+                success: false,
+                status: 'rejected',
+                error: 'The server refused the auth token',
+              })
+            : inconclusive(`closed (${code})`),
+        error: (message) => inconclusive(message),
+      })
+    } catch {
+      // The constructor error can echo the URL, which carries the token: report a fixed reason.
+      inconclusive('the socket could not be opened')
+    }
   })
 }

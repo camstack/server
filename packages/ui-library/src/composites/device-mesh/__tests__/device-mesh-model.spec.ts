@@ -7,6 +7,7 @@ import {
   meshStats,
   medianOf,
   parentRouterOf,
+  splitByNetwork,
 } from '../device-mesh-model'
 
 const node = (over: Partial<MeshNode> & { nodeKey: string }): MeshNode => ({
@@ -142,5 +143,19 @@ describe('device-mesh model', () => {
     expect(result.map((n) => n.topology?.network?.id)).toEqual(['aa', 'bb'])
     expect(result.map((n) => n.topology?.nodes.length)).toEqual([1, 1])
     expect(result.some((n) => networkHasDevice(n, 2))).toBe(true)
+  })
+})
+
+describe('splitByNetwork foreign networks', () => {
+  it('a foreign network id keeps the answer technology, not a hard thread', () => {
+    const t: MeshTopology = {
+      network: { id: 'aaaa1111', name: null, technology: 'zigbee', channel: 15, panId: 1 },
+      readAt: null,
+      nodes: [node({ nodeKey: 'a' }), node({ nodeKey: 'b', networkId: 'bbbb2222' })],
+      links: [],
+    }
+    const parts = splitByNetwork(t)
+    expect(parts.map((p) => p.network?.technology)).toEqual(['zigbee', 'zigbee'])
+    expect(parts[1]?.network?.id).toBe('bbbb2222')
   })
 })

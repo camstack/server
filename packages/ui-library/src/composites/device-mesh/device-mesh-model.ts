@@ -136,7 +136,13 @@ export function splitByNetwork(topology: MeshTopology): readonly MeshTopology[] 
         ? null
         : id === own
           ? topology.network
-          : { id, name: null, technology: 'thread', channel: null, panId: null }
+          : {
+              id,
+              name: null,
+              technology: topology.network?.technology ?? 'thread',
+              channel: null,
+              panId: null,
+            }
     return {
       network,
       readAt: topology.readAt,

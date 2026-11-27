@@ -129,7 +129,9 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
         },
         {
           capability: deviceRemovalHookCapability,
-          // Device DATA only (footage, history, rows). Settings are cleared centrally. Idempotent.
+          // This addon keeps no per-device data of its own (state is held in memory and live from the
+          // server), so there is nothing to list or purge here. Teardown of subscriptions and held
+          // state happens in each device's removeDevice().
           provider: {
             onDeviceRemoved: async () => ({ counts: {} }),
             listDeviceData: async () => [],

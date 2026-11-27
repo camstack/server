@@ -156,3 +156,28 @@ describe('Z2mClient', () => {
     await expect(cut).rejects.toThrow('connection lost')
   })
 })
+
+describe('a socket constructor that throws', () => {
+  const throwing = (): never => {
+    throw new Error('Invalid URL: ws://z2m.lan:8080/api?token=s3cret')
+  }
+
+  it('the client logs host:port and a fixed reason, never the token', () => {
+    const lines: LogLine[] = []
+    const client = new Z2mClient({
+      endpoint: { host: 'z2m.lan', port: 8080, tls: false, token: 's3cret' },
+      logger: recordingLogger(lines),
+      onEnvelope: () => {},
+      onConnection: () => {},
+      factory: throwing,
+      timers: new ManualTimers(),
+      backoffBaseMs: 1000,
+      backoffMaxMs: 8000,
+      requestTimeoutMs: 5000,
+    })
+    client.start()
+    expect(lines.length).toBeGreaterThan(0)
+    expect(JSON.stringify(lines)).not.toContain('s3cret')
+    expect(JSON.stringify(lines)).toContain('z2m.lan:8080')
+  })
+})

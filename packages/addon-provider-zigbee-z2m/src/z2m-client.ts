@@ -197,7 +197,8 @@ export class Z2mClient {
       })
     } catch (err: unknown) {
       this.opts.logger.warn('zigbee2mqtt: could not open the socket', {
-        meta: { server: address, error: errMsg(err) },
+        // The constructor error can echo the URL, and the URL carries the token: log a fixed reason.
+        meta: { server: address, error: 'the socket constructor threw' },
       })
       this.socket = null
       this.scheduleRetry()

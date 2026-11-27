@@ -33,3 +33,20 @@ describe('probeZ2m', () => {
     await expect(refused).resolves.toMatchObject({ success: false, status: 'inconclusive' })
   })
 })
+
+describe('probeZ2m with a socket constructor that throws', () => {
+  it('answers inconclusive and never echoes the token', async () => {
+    const result = await probeZ2m(
+      { host: 'z2m.lan', port: 8080, tls: false, token: 's3cret' },
+      {
+        factory: () => {
+          throw new Error('Invalid URL: ws://z2m.lan:8080/api?token=s3cret')
+        },
+        timers: new ManualTimers(),
+      },
+    )
+    expect(result.success).toBe(false)
+    expect(result.status).toBe('inconclusive')
+    expect(JSON.stringify(result)).not.toContain('s3cret')
+  })
+})
