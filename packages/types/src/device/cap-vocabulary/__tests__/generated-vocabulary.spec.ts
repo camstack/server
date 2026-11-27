@@ -93,6 +93,8 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   // planning#719 P1: the central jobs ledger and the per-addon source it reads.
   'jobs',
   'job-source',
+  // planning#750: the radio mesh a device family lives on.
+  'device-mesh',
 ]
 
 /**
