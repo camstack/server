@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.182] - 2026-11-27
+
 ### Changed
 
 - Matter nodes report their network: Thread links, signal, role, power source and diagnostics; mains-powered nodes are re-read every 15 minutes, battery nodes only when asked

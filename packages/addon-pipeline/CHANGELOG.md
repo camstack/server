@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.692] - 2026-11-27
+
 ### Changed
 
 - Recorded playback reports the RTP timestamp of each position, so the viewer can follow the frame on screen.

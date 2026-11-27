@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.516] - 2026-11-27
+
 ### Changed
 
 - Add-on settings forms (AddonScopedSettingsForm) keep edits as a draft with a Save / Discard bar instead of writing on every change

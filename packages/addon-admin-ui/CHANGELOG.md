@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.764] - 2026-11-27
+
 ### Changed
 
 - Settings forms, tables and inline editors across the admin (backup entries, stream profiles, certificates, node capabilities, camera and device placement, event post-processing node, calendars, notification language, add-on auto-update, AI defaults and profiles, action exporters) now keep your edits as a draft and write only when you press Save; Discard restores the saved state
