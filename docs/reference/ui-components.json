@@ -23905,6 +23905,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "Lay the `bar` wash UNDER the native iOS glass too (it is already the fill of the blur and solid fallbacks). A MENU needs it: the system glas"
+        },
+        {
+          "name": "opaque",
+          "type": "boolean",
+          "optional": true,
+          "doc": "No see-through: the surface is the palette tone of its variant at full opacity, drawn the same way on every platform (no native glass, no bl"
         }
       ]
     },
