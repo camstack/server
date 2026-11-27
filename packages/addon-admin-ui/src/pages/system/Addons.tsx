@@ -21,6 +21,7 @@ import {
   useNodesClusterAddonStatus,
   Button,
   Select,
+  FormSaveBar,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Download, Loader2, RefreshCw, Search } from 'lucide-react'
@@ -447,6 +448,34 @@ function InstalledTab({
     },
   })
 
+  // The channel and the check cadence are ONE draft with ONE Save (planning#675).
+  const [channelDraft, setChannelDraft] = useState<'off' | 'latest' | 'beta' | null>(null)
+  const [intervalDraft, setIntervalDraft] = useState<number | null>(null)
+  const [autoUpdateError, setAutoUpdateError] = useState<string | null>(null)
+  const shownChannel = channelDraft ?? autoUpdateSettings?.channel
+  const shownInterval = intervalDraft ?? autoUpdateSettings?.updateCheckIntervalSeconds ?? 21600
+  const channelChanged = channelDraft !== null && channelDraft !== autoUpdateSettings?.channel
+  const intervalChanged =
+    intervalDraft !== null && intervalDraft !== autoUpdateSettings?.updateCheckIntervalSeconds
+  const saveAutoUpdate = (): void => {
+    if (autoUpdateSettings === undefined) return
+    const channel = channelDraft ?? autoUpdateSettings.channel
+    setAutoUpdateError(null)
+    void (async () => {
+      if (channelChanged) await setAutoUpdateMutation.mutateAsync({ channel })
+      if (intervalChanged) {
+        await setCheckIntervalMutation.mutateAsync({
+          channel,
+          updateCheckIntervalSeconds: shownInterval,
+        })
+      }
+      setChannelDraft(null)
+      setIntervalDraft(null)
+    })().catch((err: unknown) =>
+      setAutoUpdateError(err instanceof Error ? err.message : String(err)),
+    )
+  }
+
   const { data: searchResults, isFetching: isSearching } = useAddonsSearchAvailable(
     { query: deferredSearch || undefined },
     {
@@ -803,10 +832,10 @@ function InstalledTab({
                   variant="unstyled"
                   key={ch}
                   type="button"
-                  onClick={() => setAutoUpdateMutation.mutate({ channel: ch })}
+                  onClick={() => setChannelDraft(ch)}
                   disabled={setAutoUpdateMutation.isPending}
                   className={`px-2 py-1 transition-colors capitalize ${
-                    autoUpdateSettings?.channel === ch
+                    shownChannel === ch
                       ? ch === 'off'
                         ? 'bg-gray-700 text-gray-200'
                         : ch === 'latest'
@@ -832,15 +861,9 @@ function InstalledTab({
             <Select
               wrapperClassName="inline-block w-auto"
               className="font-medium text-foreground-subtle"
-              value={autoUpdateSettings?.updateCheckIntervalSeconds ?? 21600}
+              value={shownInterval}
               disabled={setCheckIntervalMutation.isPending || autoUpdateSettings === undefined}
-              onChange={(event) => {
-                if (autoUpdateSettings === undefined) return
-                setCheckIntervalMutation.mutate({
-                  channel: autoUpdateSettings.channel,
-                  updateCheckIntervalSeconds: Number(event.target.value),
-                })
-              }}
+              onChange={(event) => setIntervalDraft(Number(event.target.value))}
             >
               {UPDATE_CHECK_INTERVAL_CHOICES.map((choice) => (
                 <option key={choice.seconds} value={choice.seconds}>
@@ -873,6 +896,26 @@ function InstalledTab({
           </Button>
         )}
       </div>
+
+      {selectedNode.isHub && (
+        <>
+          {autoUpdateError !== null && (
+            <p role="alert" className="text-xs text-danger">
+              {autoUpdateError}
+            </p>
+          )}
+          <FormSaveBar
+            pendingCount={(channelChanged ? 1 : 0) + (intervalChanged ? 1 : 0)}
+            saving={setAutoUpdateMutation.isPending || setCheckIntervalMutation.isPending}
+            onSave={saveAutoUpdate}
+            onDiscard={() => {
+              setChannelDraft(null)
+              setIntervalDraft(null)
+              setAutoUpdateError(null)
+            }}
+          />
+        </>
+      )}
 
       {/* Two filters: update status + source (npm XOR local/dev). URL-backed. */}
       <div

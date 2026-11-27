@@ -28,7 +28,16 @@
  *     a notification reads "1 people".
  */
 
-import { Badge, Button, Card, ErrorBox, Input, Select, useSystem } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  Card,
+  ErrorBox,
+  FormSaveBar,
+  Input,
+  Select,
+  useSystem,
+} from '@camstack/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Languages, Loader2, RotateCcw, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -160,6 +169,8 @@ export function NotificationTextsPage() {
     void queryClient.invalidateQueries({ queryKey: [TEXTS_QUERY_KEY] })
   }
 
+  // The hub language is held until Save (planning#675); null means the served one stands.
+  const [languageDraft, setLanguageDraft] = useState<TextLanguage | null>(null)
   const setLanguage = useMutation({
     mutationFn: (language: TextLanguage) =>
       system.trpcClient.addons.custom.mutate({
@@ -167,7 +178,11 @@ export function NotificationTextsPage() {
         action: NC_SET_LANGUAGE_ACTION,
         input: { language },
       }),
-    onSuccess: invalidate,
+    // The text edits in progress belong to the "Editing" language and stay.
+    onSuccess: () => {
+      setLanguageDraft(null)
+      void queryClient.invalidateQueries({ queryKey: [TEXTS_QUERY_KEY] })
+    },
   })
 
   const saveOverrides = useMutation({
@@ -282,12 +297,12 @@ export function NotificationTextsPage() {
               </label>
               <div className="w-44">
                 <Select
-                  value={catalog.activeLanguage}
+                  value={languageDraft ?? catalog.activeLanguage}
                   disabled={busy}
                   options={languageOptions}
                   onChange={(e) => {
                     const next = e.target.value
-                    if (isTextLanguage(next)) setLanguage.mutate(next)
+                    if (isTextLanguage(next)) setLanguageDraft(next)
                   }}
                   data-testid="texts-hub-language"
                 />
@@ -339,6 +354,16 @@ export function NotificationTextsPage() {
               'A rule that writes its own title or body still overrides everything here — this page is the wording used when a rule does not.',
             )}
           </p>
+          <div className="mt-3">
+            <FormSaveBar
+              pendingCount={
+                languageDraft !== null && languageDraft !== catalog.activeLanguage ? 1 : 0
+              }
+              saving={setLanguage.isPending}
+              onSave={() => languageDraft !== null && setLanguage.mutate(languageDraft)}
+              onDiscard={() => setLanguageDraft(null)}
+            />
+          </div>
         </Card>
 
         {/* Wraps rather than squeezes: at phone width the search box, the

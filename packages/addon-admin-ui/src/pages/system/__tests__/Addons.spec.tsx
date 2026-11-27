@@ -124,6 +124,7 @@ vi.mock('@camstack/ui-library', async () => {
     FileInput: actual.FileInput,
     Textarea: actual.Textarea,
     Checkbox: actual.Checkbox,
+    FormSaveBar: actual.FormSaveBar,
     Slider: actual.Slider,
     Radio: actual.Radio,
     Input: ({ leftSlot: _l, rightSlot: _r, ...rest }: Record<string, unknown>) => (
