@@ -20,6 +20,7 @@ import {
   DataTable,
   EmptyState,
   ErrorBox,
+  FormSaveBar,
   IconButton,
   Input,
   TABLE_SCROLL_MAX_H,
@@ -35,16 +36,14 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CalendarClock,
-  Check,
   ChevronDown,
   ChevronRight,
   Loader2,
   Pencil,
   Play,
   Trash2,
-  X,
 } from 'lucide-react'
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { ArchiveList } from './ArchiveList'
@@ -104,6 +103,37 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
     setExpanded((prev) => (prev === id ? null : id))
   }, [])
 
+  // Enabled and retention edits of every row are ONE draft with ONE Save (planning#675).
+  const queryClient = useQueryClient()
+  const upsert = useBackupUpsertSchedule()
+  const [draft, setDraft] = useState<Readonly<Record<string, EntryDraft>>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const editEntry = useCallback((id: string, edit: EntryDraft): void => {
+    setDraft((prev) => ({ ...prev, [id]: { ...prev[id], ...edit } }))
+  }, [])
+  const changes = useMemo(() => changedEntries(rows, draft), [rows, draft])
+  const invalid = changes.some((c) => c.retentionCount === null)
+  const saveDraft = useCallback((): void => {
+    setSaveError(null)
+    void Promise.all(
+      changes.map((c) =>
+        upsert.mutateAsync({
+          ...entryBasePayload(c.row),
+          enabled: c.enabled,
+          retentionCount: c.retentionCount ?? c.row.retentionCount,
+        }),
+      ),
+    )
+      .then(() => {
+        setDraft({})
+        return queryClient.invalidateQueries({ queryKey: QUERY_KEY_SCHEDULES })
+      })
+      .catch((err: unknown) => {
+        setSaveError(err instanceof Error ? err.message : String(err))
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEY_SCHEDULES })
+      })
+  }, [changes, upsert, queryClient])
+
   const columns = useMemo(
     () =>
       entryColumns({
@@ -111,8 +141,11 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
         expandedId: expanded,
         onToggleExpand: toggleExpand,
         onEdit,
+        draft,
+        onDraft: editEntry,
+        saving: upsert.isPending,
       }),
-    [destById, expanded, toggleExpand, onEdit],
+    [destById, expanded, toggleExpand, onEdit, draft, editEntry, upsert.isPending],
   )
 
   if (isLoading) {
@@ -155,25 +188,86 @@ export function BackupEntriesTable({ onEdit, onOpenRestoreWizard }: BackupEntrie
   }
 
   return (
-    <DataTable<EntryRow>
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => row.id}
-      minWidthPx={980}
-      maxBodyHeight={TABLE_SCROLL_MAX_H}
-      emptyMessage={t('backup.backupEntriesTable.noBackupEntriesYet', 'No backup entries yet')}
-      onRowClick={(row) => onEdit(row)}
-      sheetOpenLabel={t('backup.backupEntriesTable.editEntry', 'Edit entry')}
-      isExpanded={(row) => row.id === expanded}
-      renderExpanded={(row) => (
-        <EntryArchivesPanel
-          row={row}
-          destById={destById}
-          {...(onOpenRestoreWizard ? { onOpenRestoreWizard } : {})}
-        />
+    <div className="space-y-2">
+      <DataTable<EntryRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        minWidthPx={980}
+        maxBodyHeight={TABLE_SCROLL_MAX_H}
+        emptyMessage={t('backup.backupEntriesTable.noBackupEntriesYet', 'No backup entries yet')}
+        onRowClick={(row) => onEdit(row)}
+        sheetOpenLabel={t('backup.backupEntriesTable.editEntry', 'Edit entry')}
+        isExpanded={(row) => row.id === expanded}
+        renderExpanded={(row) => (
+          <EntryArchivesPanel
+            row={row}
+            destById={destById}
+            {...(onOpenRestoreWizard ? { onOpenRestoreWizard } : {})}
+          />
+        )}
+      />
+      {saveError !== null && (
+        <p role="alert" className="text-xs text-danger">
+          {saveError}
+        </p>
       )}
-    />
+      <FormSaveBar
+        pendingCount={changes.length}
+        saving={upsert.isPending}
+        onSave={saveDraft}
+        onDiscard={() => {
+          setDraft({})
+          setSaveError(null)
+        }}
+        {...(invalid
+          ? {
+              problem: t(
+                'backup.backupEntriesTable.retentionInvalid',
+                'Retention must be a whole number of at least 1.',
+              ),
+            }
+          : {})}
+      />
+    </div>
   )
+}
+
+interface EntryDraft {
+  readonly enabled?: boolean
+  /** The retention as typed; parsed on Save. */
+  readonly retention?: string
+}
+
+interface EntryChange {
+  readonly row: EntryRow
+  readonly enabled: boolean
+  /** null: the typed retention is not a whole number >= 1. */
+  readonly retentionCount: number | null
+}
+
+function parseRetention(text: string): number | null {
+  const n = Number.parseInt(text, 10)
+  return Number.isNaN(n) || n < 1 ? null : n
+}
+
+/** The rows whose draft differs from the served schedule. */
+function changedEntries(
+  rows: readonly EntryRow[],
+  draft: Readonly<Record<string, EntryDraft>>,
+): readonly EntryChange[] {
+  const out: EntryChange[] = []
+  for (const row of rows) {
+    const edit = draft[row.id]
+    if (edit === undefined) continue
+    const enabled = edit.enabled ?? row.enabled
+    const retentionCount =
+      edit.retention === undefined ? row.retentionCount : parseRetention(edit.retention)
+    if (enabled !== row.enabled || retentionCount !== row.retentionCount) {
+      out.push({ row, enabled, retentionCount })
+    }
+  }
+  return out
 }
 
 interface EntryColumnsDeps {
@@ -181,6 +275,9 @@ interface EntryColumnsDeps {
   readonly expandedId: string | null
   readonly onToggleExpand: (id: string) => void
   readonly onEdit: (entry: EntryRow) => void
+  readonly draft: Readonly<Record<string, EntryDraft>>
+  readonly onDraft: (id: string, edit: EntryDraft) => void
+  readonly saving: boolean
 }
 
 function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
@@ -242,7 +339,12 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       sortValue: (row) => (row.enabled ? 1 : 0),
       render: (row) => (
         <span onClick={(event) => event.stopPropagation()}>
-          <EntryEnabledToggle row={row} />
+          <EntryEnabledToggle
+            row={row}
+            checked={deps.draft[row.id]?.enabled ?? row.enabled}
+            disabled={deps.saving}
+            onChange={(enabled) => deps.onDraft(row.id, { enabled })}
+          />
         </span>
       ),
     },
@@ -271,7 +373,12 @@ function entryColumns(deps: EntryColumnsDeps): readonly DataColumn<EntryRow>[] {
       sortValue: (row) => row.retentionCount,
       render: (row) => (
         <span onClick={(event) => event.stopPropagation()}>
-          <EntryRetentionInput row={row} />
+          <EntryRetentionInput
+            row={row}
+            value={deps.draft[row.id]?.retention ?? String(row.retentionCount)}
+            disabled={deps.saving}
+            onChange={(retention) => deps.onDraft(row.id, { retention })}
+          />
         </span>
       ),
     },
@@ -349,39 +456,35 @@ function EntryScheduleCell({ row }: { readonly row: EntryRow }): ReactNode {
   )
 }
 
-function useEntryBasePayload(row: EntryRow) {
-  return useMemo(
-    () => ({
-      id: row.id,
-      label: row.label,
-      cron: row.cron,
-      locationIds: [...row.locationIds],
-      retentionCount: row.retentionCount,
-      ...(row.dataSources ? { dataSources: [...row.dataSources] } : {}),
-      // Kept on every toggle / retention edit: dropping it would reset the schedule to settings.
-      ...(row.databases ? { databases: [...row.databases] } : {}),
-    }),
-    [row],
-  )
+function entryBasePayload(row: EntryRow) {
+  return {
+    id: row.id,
+    label: row.label,
+    cron: row.cron,
+    locationIds: [...row.locationIds],
+    retentionCount: row.retentionCount,
+    ...(row.dataSources ? { dataSources: [...row.dataSources] } : {}),
+    // Kept on every save: dropping it would reset the schedule to settings.
+    ...(row.databases ? { databases: [...row.databases] } : {}),
+  }
 }
 
-function EntryEnabledToggle({ row }: { readonly row: EntryRow }) {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const upsert = useBackupUpsertSchedule({
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY_SCHEDULES })
-    },
-  })
-  const basePayload = useEntryBasePayload(row)
+interface EntryEnabledToggleProps {
+  readonly row: EntryRow
+  readonly checked: boolean
+  readonly disabled: boolean
+  readonly onChange: (enabled: boolean) => void
+}
 
+function EntryEnabledToggle({ row, checked, disabled, onChange }: EntryEnabledToggleProps) {
+  const { t } = useTranslation()
   return (
     <label className="inline-flex cursor-pointer items-center">
       <Checkbox
         className="accent-primary"
-        checked={row.enabled}
-        disabled={upsert.isPending}
-        onChange={(e) => upsert.mutate({ ...basePayload, enabled: e.target.checked })}
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
         aria-label={t('backup.backupEntriesTable.enable', 'Enable {{value1}}', {
           value1: row.label || row.id,
         })}
@@ -390,30 +493,15 @@ function EntryEnabledToggle({ row }: { readonly row: EntryRow }) {
   )
 }
 
-function EntryRetentionInput({ row }: { readonly row: EntryRow }) {
+interface EntryRetentionInputProps {
+  readonly row: EntryRow
+  readonly value: string
+  readonly disabled: boolean
+  readonly onChange: (retention: string) => void
+}
+
+function EntryRetentionInput({ row, value, disabled, onChange }: EntryRetentionInputProps) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const upsert = useBackupUpsertSchedule({
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY_SCHEDULES })
-    },
-  })
-  const basePayload = useEntryBasePayload(row)
-  const [retentionDraft, setRetentionDraft] = useState<string>(String(row.retentionCount))
-  useEffect(() => {
-    setRetentionDraft(String(row.retentionCount))
-  }, [row.retentionCount])
-
-  const parsedDraft = Number.parseInt(retentionDraft, 10)
-  const draftValid = !Number.isNaN(parsedDraft) && parsedDraft >= 1
-  const dirty = retentionDraft !== String(row.retentionCount)
-
-  const saveRetention = (): void => {
-    if (!draftValid) return
-    upsert.mutate({ ...basePayload, enabled: row.enabled, retentionCount: parsedDraft })
-  }
-  const discardRetention = (): void => setRetentionDraft(String(row.retentionCount))
-
   return (
     <div className="flex items-center gap-1">
       {/* ui-check-ok: the retention is a count of archives kept, not a duration */}
@@ -421,38 +509,14 @@ function EntryRetentionInput({ row }: { readonly row: EntryRow }) {
         type="number"
         min={1}
         max={1000}
-        value={retentionDraft}
-        disabled={upsert.isPending}
-        onChange={(e) => setRetentionDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') saveRetention()
-          if (e.key === 'Escape') discardRetention()
-        }}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
         className="w-16"
         aria-label={t('backup.backupEntriesTable.retentionFor', 'Retention for {{value1}}', {
           value1: row.label || row.id,
         })}
       />
-      {dirty && (
-        <>
-          <IconButton
-            icon={Check}
-            size="sm"
-            variant="ghost"
-            aria-label={t('common.save')}
-            disabled={!draftValid || upsert.isPending}
-            onClick={saveRetention}
-          />
-          <IconButton
-            icon={X}
-            size="sm"
-            variant="ghost"
-            aria-label={t('common.cancel')}
-            disabled={upsert.isPending}
-            onClick={discardRetention}
-          />
-        </>
-      )}
     </div>
   )
 }

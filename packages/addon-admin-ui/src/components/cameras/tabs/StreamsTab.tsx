@@ -13,6 +13,7 @@ import {
   useSystem,
   useSystemNetworkAddresses,
   Button,
+  FormSaveBar,
   Select,
 } from '@camstack/ui-library'
 
@@ -148,13 +149,33 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
     },
   })
 
+  // The profile pickers edit a local draft; Save writes only the slots that differ.
+  // null in the draft means "not assigned".
+  const [profileDraft, setProfileDraft] = useState<Partial<Record<ProfileKey, string | null>>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const changedProfiles = PROFILES.filter(
+    ({ key }) => key in profileDraft && (profileDraft[key] ?? null) !== (profileMap[key] ?? null),
+  ).map(({ key }) => key)
   const handleProfileChange = useCallback(
     (profile: ProfileKey, camStreamId: string | undefined) => {
-      if (camStreamId) assignProfileMutation.mutate({ deviceId, profile, camStreamId })
-      else unassignProfileMutation.mutate({ deviceId, profile })
+      setProfileDraft((prev) => ({ ...prev, [profile]: camStreamId ?? null }))
     },
-    [assignProfileMutation, unassignProfileMutation, deviceId],
+    [],
   )
+  const saveProfiles = useCallback((): void => {
+    setSaveError(null)
+    void Promise.all(
+      changedProfiles.map((profile) => {
+        const camStreamId = profileDraft[profile]
+        return camStreamId
+          ? assignProfileMutation.mutateAsync({ deviceId, profile, camStreamId })
+          : unassignProfileMutation.mutateAsync({ deviceId, profile })
+      }),
+    )
+      .then(() => setProfileDraft({}))
+      .catch((err: unknown) => setSaveError(err instanceof Error ? err.message : String(err)))
+    // `profileMap` is derived per render from the polled slots; the draft is what Save sends.
+  }, [changedProfiles, profileDraft, assignProfileMutation, unassignProfileMutation, deviceId])
 
   const handleCopy = useCallback(async (url: string) => {
     try {
@@ -171,7 +192,8 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
   }
 
   const streamList = streams ?? []
-  const currentProfiles = profileMap ?? {}
+  const currentProfiles: Record<string, string | null> = { ...profileMap }
+  for (const [key, value] of Object.entries(profileDraft)) currentProfiles[key] = value ?? null
   const selectedStream = streamList.find((s) => s.id === activeStreamTab) ?? streamList[0]
 
   // Reverse map: streamId → assigned profiles
@@ -214,12 +236,10 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
                 autoMap.mid = sorted[0]?.id
                 autoMap.low = sorted[0]?.id
               }
-              for (const { key } of PROFILES) {
-                const camStreamId = autoMap[key]
-                if (camStreamId)
-                  assignProfileMutation.mutate({ deviceId, profile: key, camStreamId })
-                else unassignProfileMutation.mutate({ deviceId, profile: key })
-              }
+              // Fill the draft only: the operator reviews it and saves.
+              const auto: Partial<Record<ProfileKey, string | null>> = {}
+              for (const { key } of PROFILES) auto[key] = autoMap[key] ?? null
+              setProfileDraft(auto)
             }}
             disabled={
               assignProfileMutation.isPending ||
@@ -268,6 +288,22 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
             ))}
           </div>
         )}
+        {saveError !== null && (
+          <p role="alert" className="px-4 pb-2 text-xs text-danger">
+            {saveError}
+          </p>
+        )}
+        <div className="px-4 pb-3 empty:hidden">
+          <FormSaveBar
+            pendingCount={changedProfiles.length}
+            saving={assignProfileMutation.isPending || unassignProfileMutation.isPending}
+            onSave={saveProfiles}
+            onDiscard={() => {
+              setProfileDraft({})
+              setSaveError(null)
+            }}
+          />
+        </div>
       </div>
 
       {/* ── Available Streams (tabbed) ── */}

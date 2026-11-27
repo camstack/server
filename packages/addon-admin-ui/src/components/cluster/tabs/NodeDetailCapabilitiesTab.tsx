@@ -8,17 +8,19 @@
  *  - `pipelineOrchestrator.getCapabilityBindings({ nodeId })` for the
  *    currently active binding per cap
  *
- * Editing a binding writes via
+ * Binding edits are ONE local draft: Save writes every changed binding, Discard
+ * drops them (planning#675). A binding is written via
  * `pipelineOrchestrator.setCapabilityBinding({ nodeId, capName, addonId })`
  * which the orchestrator propagates via the `capability.binding-changed`
  * event — the target node's kernel picks it up and swaps its local
  * preferred-provider registry without restarting.
  */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import {
   DataTable,
+  FormSaveBar,
   TABLE_SCROLL_MAX_H,
   usePipelineOrchestratorGetCapabilityBindings,
   usePipelineOrchestratorSetCapabilityBinding,
@@ -75,6 +77,28 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
     },
   })
 
+  // capName -> addonId picked but not yet saved.
+  const [draft, setDraft] = useState<Readonly<Record<string, string>>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const changes = capRows.filter((r) => {
+    const picked = draft[r.capName]
+    return picked !== undefined && picked !== (bindings?.[r.capName] ?? r.providers[0] ?? '')
+  })
+  const saveDraft = (): void => {
+    setSaveError(null)
+    void Promise.all(
+      changes.map((r) =>
+        setBindingMutation.mutateAsync({
+          nodeId,
+          capName: r.capName,
+          addonId: draft[r.capName] ?? '',
+        }),
+      ),
+    )
+      .then(() => setDraft({}))
+      .catch((err: unknown) => setSaveError(err instanceof Error ? err.message : String(err)))
+  }
+
   if (capRows.length === 0) {
     return (
       <div className="py-4 text-xs text-muted-foreground text-center">
@@ -108,7 +132,7 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
       // not click already tells the operator everything they need.
       render: (r) => {
         const currentExplicit = bindings?.[r.capName]
-        const resolved = currentExplicit ?? r.providers[0] ?? ''
+        const resolved = draft[r.capName] ?? currentExplicit ?? r.providers[0] ?? ''
         // `[CLUSTER-CAPS-EDITABLE]` — render a dropdown even for
         // single-provider caps, pre-selected and disabled. Operators
         // previously saw only static text and thought the UI wasn't
@@ -120,9 +144,10 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
         return (
           <Select
             value={resolved}
-            onChange={(e) =>
-              setBindingMutation.mutate({ nodeId, capName: r.capName, addonId: e.target.value })
-            }
+            onChange={(e) => {
+              const addonId = e.target.value
+              setDraft((prev) => ({ ...prev, [r.capName]: addonId }))
+            }}
             disabled={isSingleProvider || setBindingMutation.isPending || isBindingsLoading}
             className="w-full"
             title={
@@ -149,12 +174,28 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
     // The standard sortable `DataTable`: same bordered, internally scrolling
     // shell with a pinned header — a node can bind dozens of caps and the
     // provider column is meaningless once the header scrolls off.
-    <DataTable<CapBindingRow>
-      columns={columns}
-      rows={capRows}
-      rowKey={(r) => r.capName}
-      minWidthPx={520}
-      maxBodyHeight={TABLE_SCROLL_MAX_H}
-    />
+    <div className="space-y-2">
+      <DataTable<CapBindingRow>
+        columns={columns}
+        rows={capRows}
+        rowKey={(r) => r.capName}
+        minWidthPx={520}
+        maxBodyHeight={TABLE_SCROLL_MAX_H}
+      />
+      {saveError !== null && (
+        <p role="alert" className="text-xs text-danger">
+          {saveError}
+        </p>
+      )}
+      <FormSaveBar
+        pendingCount={changes.length}
+        saving={setBindingMutation.isPending}
+        onSave={saveDraft}
+        onDiscard={() => {
+          setDraft({})
+          setSaveError(null)
+        }}
+      />
+    </div>
   )
 }
