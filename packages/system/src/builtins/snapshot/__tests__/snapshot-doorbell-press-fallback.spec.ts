@@ -22,32 +22,57 @@ import { freshSnapshotDataDir } from './scratch-data-dir.js'
 
 type ISnapshotProvider = InferProvider<typeof snapshotCapability>
 
+interface NativeState {
+  current: { base64: string; contentType: string } | null
+  error?: Error
+}
+
 const DEVICE = 615
 const JPEG_B64 = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]).toString('base64')
 
+/**
+ * The one documented type boundary of this spec: a fake carries only the
+ * members the addon touches, and the full `AddonContext` / `IScopedLogger`
+ * surfaces are far larger. Narrowing happens here, once, through a runtime
+ * check that the fake is an object, never through a cast at each call site.
+ */
+function isFake<T extends object>(value: object): value is T {
+  return typeof value === 'object'
+}
+
+function fake<T extends object>(value: object): T {
+  if (!isFake<T>(value)) throw new Error('fake is not an object')
+  return value
+}
+
+async function initProvider(ctx: AddonContext): Promise<ISnapshotProvider> {
+  const result = await new SnapshotAddon().initialize(ctx)
+  const list = Array.isArray(result) ? result : (result?.providers ?? [])
+  const first = list[0]
+  if (!first) throw new Error('no provider registered')
+  return fake<ISnapshotProvider>(first.provider)
+}
+
 function makeLogger(): IScopedLogger {
-  return {
+  return fake<IScopedLogger>({
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     child: vi.fn().mockReturnThis(),
     withTags: vi.fn().mockReturnThis(),
-  } as unknown as IScopedLogger
+  })
 }
 
-function makeCtx(
-  native: { current: { base64: string; contentType: string } | null },
-  logger: IScopedLogger,
-): AddonContext {
+function makeCtx(native: NativeState, logger: IScopedLogger): AddonContext {
   const store: Record<string, unknown> = {}
-  return {
+  return fake<AddonContext>({
     id: 'snapshot',
     logger,
     eventBus: { emit: vi.fn(), subscribe: () => () => undefined },
     addonConfig: {},
     dataDir: freshSnapshotDataDir(),
-    kernel: { localNodeId: 'hub', devices: {} as never },
+    kernel: { localNodeId: 'hub', devices: {} },
     settings: {
       readAddonStore: vi.fn(async () => ({ ...store })),
       writeAddonStore: vi.fn(async (p: Record<string, unknown>) => {
@@ -77,36 +102,30 @@ function makeCtx(
         getAllRtspEntries: { query: vi.fn(async () => []) },
         listAllProfileSlots: { query: vi.fn(async () => []) },
       },
-    } as never,
+    },
     getNativeProvider: vi.fn((cap: CapabilityDefinition) =>
       cap.name !== 'snapshot'
         ? null
         : {
-            getSnapshot: vi.fn(async () => native.current),
+            getSnapshot: vi.fn(async () => {
+              if (native.error) throw native.error
+              return native.current
+            }),
             invalidateCache: vi.fn(async () => undefined),
           },
     ),
     fetchDevice: vi.fn(async () => ({ deviceId: DEVICE, state: {} })),
-  } as unknown as AddonContext
+  })
 }
 
 describe('SnapshotAddon — every live rung empty (doorbell press, camera answers 503)', () => {
   it('serves the persisted last frame instead of nothing, and says so', async () => {
-    const native = {
-      current: { base64: JPEG_B64, contentType: 'image/jpeg' } as {
-        base64: string
-        contentType: string
-      } | null,
+    const native: NativeState = {
+      current: { base64: JPEG_B64, contentType: 'image/jpeg' },
     }
     const logger = makeLogger()
     const ctx = makeCtx(native, logger)
-    const addon = new SnapshotAddon()
-    const result = await addon.initialize(ctx)
-    const list = (Array.isArray(result) ? result : (result?.providers ?? [])) as ReadonlyArray<{
-      readonly provider: ISnapshotProvider
-    }>
-    const provider = list[0]?.provider
-    if (!provider) throw new Error('no provider')
+    const provider = await initProvider(ctx)
 
     // An earlier capture lands and is persisted.
     expect(await provider.getSnapshot({ deviceId: DEVICE })).not.toBeNull()
@@ -128,17 +147,26 @@ describe('SnapshotAddon — every live rung empty (doorbell press, camera answer
     )
   })
 
-  it('names the empty broker rung instead of dropping silently', async () => {
-    const native = { current: null as { base64: string; contentType: string } | null }
+  it('serves the persisted frame when the native provider THROWS instead of rethrowing', async () => {
+    const native: NativeState = { current: { base64: JPEG_B64, contentType: 'image/jpeg' } }
     const logger = makeLogger()
     const ctx = makeCtx(native, logger)
-    const addon = new SnapshotAddon()
-    const result = await addon.initialize(ctx)
-    const list = (Array.isArray(result) ? result : (result?.providers ?? [])) as ReadonlyArray<{
-      readonly provider: ISnapshotProvider
-    }>
-    const provider = list[0]?.provider
-    if (!provider) throw new Error('no provider')
+    const provider = await initProvider(ctx)
+    await provider.getSnapshot({ deviceId: DEVICE })
+    const file = join(ctx.dataDir, 'last-frame', `${String(DEVICE)}.jpg`)
+    await vi.waitFor(() => expect(existsSync(file)).toBe(true))
+    await provider.invalidateCache({ deviceId: DEVICE })
+
+    native.error = new Error('hikvision snapshot ch=101 → HTTP 503')
+    const image = await provider.getSnapshot({ deviceId: DEVICE })
+    expect(image?.base64).toBe(JPEG_B64)
+  })
+
+  it('names the empty broker rung instead of dropping silently', async () => {
+    const native: NativeState = { current: null }
+    const logger = makeLogger()
+    const ctx = makeCtx(native, logger)
+    const provider = await initProvider(ctx)
 
     expect(await provider.getSnapshot({ deviceId: DEVICE })).toBeNull()
     expect(logger.warn).toHaveBeenCalledWith(

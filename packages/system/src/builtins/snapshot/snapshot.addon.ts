@@ -1386,7 +1386,9 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
       log.info(
         persisted
           ? 'snapshot: no live frame — serving the persisted frame'
-          : 'snapshot: soft miss — serving the cached frame',
+          : outcome.ok
+            ? 'snapshot: soft miss — serving the cached frame'
+            : 'snapshot: native error — serving the cached frame',
         { tags: { deviceId }, meta: { ageMs } },
       )
       return hit.data
