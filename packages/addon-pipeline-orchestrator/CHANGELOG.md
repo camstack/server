@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Ships viewer 1.0.741: overlays on small cameras keep at least half size, apps have a back button.
+
 ## [1.2.729] - 2026-11-27
 
 ### Changed

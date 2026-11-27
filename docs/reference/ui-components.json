@@ -23184,6 +23184,33 @@
       ]
     },
     {
+      "name": "CheckboxRow",
+      "kind": "component",
+      "area": "viewer",
+      "file": "camstack/src/components/ui/CheckboxRow.tsx",
+      "summary": "A compact checkbox + label row for an option nested under an activation row in a floating panel (a card-sized `ToggleRow` would not fit there).",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onValueChange",
+          "type": "(value: boolean) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ChipMultiselect",
       "kind": "component",
       "area": "viewer",
@@ -25140,6 +25167,18 @@
           "type": "boolean",
           "optional": true,
           "doc": "Hide the bottom hairline (e.g. for the last row in a card)."
+        },
+        {
+          "name": "formatValue",
+          "type": "(value: number) => string",
+          "optional": true,
+          "doc": "How the value reads between the buttons (default: the number)."
+        },
+        {
+          "name": "compact",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Panel density: no card paddings or hairline — for a row nested inside a floating panel under its activation row."
         }
       ]
     },
