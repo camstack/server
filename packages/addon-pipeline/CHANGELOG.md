@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.691] - 2026-11-27
+
 ### Changed
 
 - Recorded playback always reports the profile it serves, including the first one

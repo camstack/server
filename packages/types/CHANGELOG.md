@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.641] - 2026-11-27
+
 ### Added
 
 - Added the jobs ledger capabilities (jobs, job-source) and the jobs.changed event

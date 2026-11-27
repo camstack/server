@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.515] - 2026-11-27
+
 ### Changed
 
 - The image device's full-view dialog shows a single close button
