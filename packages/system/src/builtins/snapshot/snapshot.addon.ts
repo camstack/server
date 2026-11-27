@@ -1360,44 +1360,44 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
   private async resolveOutcome(
     outcome: CaptureOutcome,
     deviceId: number,
-    hit: SnapshotCacheEntry | undefined,
+    memoryHit: SnapshotCacheEntry | undefined,
     log: IScopedLogger,
   ): Promise<SnapshotImage | null> {
-    if (outcome.ok) {
-      if (outcome.image) return outcome.image
-      // Soft miss — every live source declined. Keep the UI from going blank.
-      if (hit) {
-        const ageMs = Date.now() - hit.ts
-        if (ageMs > this.config.staleTtlMs) {
-          if (await this.staleHitBelongsToRemovedDevice(deviceId, ageMs)) return null
-          log.warn('snapshot: all live paths failed — serving stale cache', {
-            tags: { deviceId },
-            meta: { ageMs },
-          })
-        }
-        // D391: the old frame goes out as the answer — a caller that gates on the
-        // frame's age (the NC's linked stills) sees an old hit, so the line says
-        // that a miss, not a capture, produced it.
-        log.info('snapshot: soft miss — serving the cached frame', {
-          tags: { deviceId },
-          meta: { ageMs },
-        })
-        return hit.data
-      }
-      return null
-    }
-    // Hard native error. Stale cache first, else surface the cause.
+    if (outcome.ok && outcome.image) return outcome.image
+    // Every live rung came back empty. The last rung is the stale frame: the
+    // memory cache first, then the frame persisted on every capture — a camera
+    // nobody polls (a doorbell) has idled out of memory long before its press.
+    const persisted = memoryHit === undefined ? await this.durableEntry(deviceId) : undefined
+    const hit = memoryHit ?? persisted
     if (hit) {
       const ageMs = Date.now() - hit.ts
       if (ageMs > this.config.staleTtlMs) {
         if (await this.staleHitBelongsToRemovedDevice(deviceId, ageMs)) return null
-        log.warn('snapshot: native failed — serving stale cache', {
-          tags: { deviceId },
-          meta: { ageMs },
-        })
+        log.warn(
+          outcome.ok
+            ? 'snapshot: all live paths failed — serving stale cache'
+            : 'snapshot: native failed — serving stale cache',
+          { tags: { deviceId }, meta: { ageMs } },
+        )
       }
+      // D391: the old frame goes out as the answer — a caller that gates on the
+      // frame's age (the NC's linked stills) sees an old hit, so the line says
+      // that a miss, not a capture, produced it.
+      log.info(
+        persisted
+          ? 'snapshot: no live frame — serving the persisted frame'
+          : 'snapshot: soft miss — serving the cached frame',
+        { tags: { deviceId }, meta: { ageMs } },
+      )
       return hit.data
     }
+    if (outcome.ok) {
+      log.warn('snapshot: no live source produced a frame and no stale frame exists', {
+        tags: { deviceId },
+      })
+      return null
+    }
+    // Hard native error with nothing to fall back on: surface the cause.
     throw outcome.error
   }
 
@@ -1596,7 +1596,16 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
       { deviceId, ownerNodeId: owner.ownerNodeId, reachableHost: owner.reachableHost },
     )
     const usable = deviceEntries.filter((e) => e.enabled && !!e.url)
-    if (usable.length === 0) return null
+    if (usable.length === 0) {
+      this.ctx.logger.info(
+        'snapshot: broker rung empty — the device has no usable restream entry',
+        {
+          tags: { deviceId },
+          meta: { entries: deviceEntries.length },
+        },
+      )
+      return null
+    }
 
     // 1. Explicit preference — try it first without status gating.
     if (preferredStreamId && preferredStreamId !== 'auto') {
@@ -1654,6 +1663,10 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
       const grabbed = await this.runGrabWithResumeRetry(entry.url, deviceId).catch(() => null)
       if (grabbed) return grabbed
     }
+    this.ctx.logger.info('snapshot: broker rung produced no frame from any restream entry', {
+      tags: { deviceId },
+      meta: { tried: statuses.length },
+    })
     return null
   }
 
