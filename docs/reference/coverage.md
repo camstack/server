@@ -14,12 +14,12 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**257 units · 9346 source files · 251 units claimed by at least one document (9324 files).**
+**257 units · 9347 source files · 251 units claimed by at least one document (9325 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
-| `packages/addon-admin-ui/src/components` | 721 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +89 more, 4 ADRs | 2026-11-26 |
+| `packages/addon-admin-ui/src/components` | 722 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +89 more, 4 ADRs | 2026-11-26 |
 | `packages/ui-library/src/composites` | 713 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +63 more, 3 ADRs | 2026-11-26 |
 | `scripts` | 673 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +161 more, 14 ADRs | 2026-11-26 |
 | `packages/system/src/builtins` | 558 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +223 more, 21 ADRs | 2026-11-26 |

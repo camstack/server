@@ -11,7 +11,7 @@ import { selectOption, selectOptionValues, waitForSelectRows } from '@camstack/u
 import type { LlmDefault } from '@camstack/types'
 import { DETACHED_ROW_API, type LinkableInstance } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -184,6 +184,9 @@ describe('AiProfilesPage — default profiles', () => {
     const picker = await screen.findByLabelText('Default vision profile')
     await waitForSelectRows(picker, (rows) => rows.some((r) => r.value === 'p-vision'))
     selectOption(picker, 'p-vision')
+    // A draft until Save (planning#675).
+    expect(mockSetDefault).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(mockSetDefault).toHaveBeenCalledWith({
         selector: { purpose: 'vision' },
@@ -198,6 +201,8 @@ describe('AiProfilesPage — default profiles', () => {
     const picker = await screen.findByLabelText('Default text profile')
     await waitFor(() => expect(picker).toHaveValue('p-text'))
     selectOption(picker, '')
+    expect(mockSetDefault).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(mockSetDefault).toHaveBeenCalledWith({
         selector: { purpose: 'text' },

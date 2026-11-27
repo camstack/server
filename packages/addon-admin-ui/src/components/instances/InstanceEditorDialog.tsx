@@ -65,6 +65,7 @@ import {
   randomHex8,
   type TypedIdRuleFor,
 } from './instances-model'
+import { InstanceLeadDraftContext, type LeadValues } from './instance-lead-draft'
 
 const IDENTITY_NAME = 'name'
 const IDENTITY_KIND = 'kind'
@@ -319,10 +320,13 @@ export function InstanceEditorDialog({
       ? []
       : connectionWidgets.flatMap(({ widget }) => widget.ownedKeys(hydrated, values))
 
+  // Edits the lead (above the form) hands over; they travel with this dialog's Save.
+  const [leadValues, setLeadValues] = useState<LeadValues>({})
+
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
-      const diff = diffInstanceValues(stored, edited)
+      const diff = { ...diffInstanceValues(stored, edited), ...leadValues }
       // One tick is an ordinary create of one record holding that value.
       const patch =
         manyField !== null && picked.length === 1 ? { ...diff, [manyField.key]: picked[0] } : diff
@@ -494,7 +498,11 @@ export function InstanceEditorDialog({
       }
     >
       <div className="space-y-4">
-        {instance !== null ? lead : null}
+        {instance !== null ? (
+          <InstanceLeadDraftContext.Provider value={setLeadValues}>
+            {lead}
+          </InstanceLeadDraftContext.Provider>
+        ) : null}
         <FormBuilder
           schema={
             many

@@ -4,6 +4,7 @@
  */
 import type { LlmDefault } from '@camstack/types'
 import {
+  FormSaveBar,
   Label,
   SECTION_BODY,
   SectionCard,
@@ -12,6 +13,7 @@ import {
   useSystem,
 } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DEFAULTS_KEY,
@@ -45,16 +47,35 @@ export function AiDefaultsCard() {
         selector: { purpose: input.purpose },
         profileId: input.profileId,
       }),
-    onSuccess: () => {
-      void defaultsQuery.refetch()
-    },
   })
+  // The picks are held until Save (planning#675): purpose -> profile id, '' for None.
+  const [draft, setDraft] = useState<Readonly<Partial<Record<'text' | 'vision', string>>>>({})
 
-  const currentFor = (purpose: 'text' | 'vision'): string => {
+  const servedFor = (purpose: 'text' | 'vision'): string => {
     const match = (defaultsQuery.data ?? []).find(
       (d) => 'purpose' in d.selector && d.selector.purpose === purpose,
     )
     return match?.profileId ?? ''
+  }
+  const currentFor = (purpose: 'text' | 'vision'): string => draft[purpose] ?? servedFor(purpose)
+  const changed = DEFAULT_PURPOSES.filter(
+    ({ purpose }) => currentFor(purpose) !== servedFor(purpose),
+  )
+  const save = (): void => {
+    void Promise.all(
+      changed.map(({ purpose }) =>
+        setDefault.mutateAsync({
+          purpose,
+          // An empty option value is the DOM's only "nothing"; the cap
+          // spells it `null`, and '' would be stored as a profile id
+          // that resolves to no profile forever.
+          profileId: currentFor(purpose) === '' ? null : currentFor(purpose),
+        }),
+      ),
+    )
+      .then(() => defaultsQuery.refetch())
+      .then(() => setDraft({}))
+      .catch(() => undefined) // surfaced by `setDefault.error`; the draft stays
   }
 
   const labelFor = (purpose: 'text' | 'vision'): string =>
@@ -78,15 +99,7 @@ export function AiDefaultsCard() {
                 id={`llm-default-${purpose}`}
                 aria-label={labelFor(purpose)}
                 value={current}
-                onChange={(e) =>
-                  setDefault.mutate({
-                    purpose,
-                    // An empty option value is the DOM's only "nothing"; the cap
-                    // spells it `null`, and '' would be stored as a profile id
-                    // that resolves to no profile forever.
-                    profileId: e.target.value === '' ? null : e.target.value,
-                  })
-                }
+                onChange={(e) => setDraft((prev) => ({ ...prev, [purpose]: e.target.value }))}
                 options={[
                   { value: '', label: t('ai.none', 'None') },
                   // The stored id ALWAYS has an option, even when the profile
@@ -122,6 +135,17 @@ export function AiDefaultsCard() {
             </div>
           )
         })}
+      </div>
+      <div className={SECTION_BODY}>
+        <FormSaveBar
+          pendingCount={changed.length}
+          saving={setDefault.isPending}
+          onSave={save}
+          onDiscard={() => {
+            setDraft({})
+            setDefault.reset()
+          }}
+        />
       </div>
     </SectionCard>
   )

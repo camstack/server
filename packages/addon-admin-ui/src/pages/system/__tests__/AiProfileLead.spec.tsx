@@ -1,19 +1,22 @@
 /**
  * The top of an AI profile's dialog: provider widgets by generic id, or the model picker.
- * Every change is written through `integrationInstances.updateInstance`, and the changes one
- * widget makes together (config and model) travel as ONE patch.
+ * The lead never writes the record (planning#675): every change is handed to the editor dialog
+ * through the lead-draft context, and the changes one widget makes together (config and model)
+ * arrive as ONE set of values. The dialog saves them with its own "Save changes".
  */
 import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { InstanceLeadDraftContext } from '../../../components/instances/instance-lead-draft'
 import type { InstanceRow } from '../../../components/instances/instances-model'
 import type { ProviderWidgetProps } from '../ai-provider-widgets'
 
 let kinds: NonNullable<IntegrationInstanceDescription['kinds']> = []
 let formValues: Record<string, unknown> = {}
 const mockUpdate = vi.fn((_i: unknown) => Promise.resolve({ ok: true as const }))
+const mockLeadValues = vi.fn((_v: unknown) => undefined)
 const mockListModels = vi.fn((_i: unknown) =>
   Promise.resolve({
     ok: true as const,
@@ -108,7 +111,9 @@ function renderLead(row: InstanceRow = ROW): void {
   })
   render(
     <QueryClientProvider client={client}>
-      <AiProfileLead row={row} />
+      <InstanceLeadDraftContext.Provider value={mockLeadValues}>
+        <AiProfileLead row={row} />
+      </InstanceLeadDraftContext.Provider>
     </QueryClientProvider>,
   )
 }
@@ -119,7 +124,7 @@ describe('AiProfileLead', () => {
     formValues = { model: '', supportsVision: false }
   })
 
-  it('renders the widget a kind names, and writes its config and model as ONE patch', async () => {
+  it('renders the widget a kind names, and hands its config and model to the dialog as ONE set', async () => {
     kinds = [
       {
         id: 'managed-local',
@@ -130,16 +135,15 @@ describe('AiProfileLead', () => {
     ]
     renderLead()
     fireEvent.click(await screen.findByTestId('stub-widget'))
-    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
-    expect(mockUpdate).toHaveBeenCalledWith({
-      addonId: 'ai',
-      id: 'p1',
-      values: {
+    await waitFor(() =>
+      expect(mockLeadValues).toHaveBeenLastCalledWith({
         modelRef: { kind: 'catalog', catalogId: 'c1' },
         model: 'c1-file',
         supportsVision: true,
-      },
-    })
+      }),
+    )
+    // The lead itself never writes the record.
+    expect(mockUpdate).not.toHaveBeenCalled()
     // A kind with a model widget has no second model control.
     expect(screen.queryByText('Load models')).toBeNull()
   })
@@ -175,7 +179,7 @@ describe('AiProfileLead', () => {
     expect(await screen.findByText(/needs an editor part this build does not have/)).toBeTruthy()
   })
 
-  it('lists models for the stored record and writes the chosen one with its vision feature', async () => {
+  it('lists models for the stored record and hands the chosen one to the dialog with its vision feature', async () => {
     kinds = [{ id: 'openai', label: 'OpenAI', functionCap: 'llm' }]
     renderLead({ ...ROW, kindId: 'openai' })
     fireEvent.click(await screen.findByText('Load models'))
@@ -190,11 +194,8 @@ describe('AiProfileLead', () => {
     await waitForSelectRows(select, (rows) => rows.some((r) => r.value === 'm-vision'))
     selectOption(select, 'm-vision')
     await waitFor(() =>
-      expect(mockUpdate).toHaveBeenCalledWith({
-        addonId: 'ai',
-        id: 'p1',
-        values: { model: 'm-vision', supportsVision: true },
-      }),
+      expect(mockLeadValues).toHaveBeenLastCalledWith({ model: 'm-vision', supportsVision: true }),
     )
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 })

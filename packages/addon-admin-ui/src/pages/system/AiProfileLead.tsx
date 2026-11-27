@@ -6,24 +6,18 @@
  * - A kind without a model widget gets the model picker: "Load models" asks `llm.listModels` for
  *   the stored record's connection and the choice is written to the record.
  *
- * Both write through `integrationInstances.updateInstance` at once (a batched patch per change),
- * so the dialog's own "Save changes" only carries what the operator typed in the form below.
+ * Neither writes: every change joins the dialog's draft (`useInstanceLeadDraft`) and travels with
+ * its "Save changes", together with what the operator typed in the form below.
  */
 import type { LlmModelInfo } from '@camstack/types'
-import {
-  Button,
-  CAP_INSTANCES_QUERY_KEY,
-  ErrorBox,
-  FormField,
-  Select,
-  useSystem,
-} from '@camstack/ui-library'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, ErrorBox, FormField, Select, useSystem } from '@camstack/ui-library'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HOLDER_QUERY_KEY } from '../../components/instances/use-instances-data'
+import { useInstanceLeadDraft } from '../../components/instances/instance-lead-draft'
 import type { InstanceRow } from '../../components/instances/instances-model'
 import { type ModelSelection, providerWidget } from './ai-provider-widgets'
 
@@ -37,7 +31,6 @@ function textOf(values: Values, key: string): string {
 export function AiProfileLead({ row }: { readonly row: InstanceRow }): ReactElement | null {
   const { t } = useTranslation()
   const system = useSystem()
-  const queryClient = useQueryClient()
   const leadKey = useMemo(() => [HOLDER_QUERY_KEY, row.addonId, 'ai-lead', row.id], [row])
 
   const loaded = useQuery({
@@ -52,41 +45,17 @@ export function AiProfileLead({ row }: { readonly row: InstanceRow }): ReactElem
     },
   })
 
-  // What this lead has written and the record has not echoed back yet.
+  // What this lead holds for the dialog's Save; the dialog sends it with the form's own edits.
+  const setLeadValues = useInstanceLeadDraft()
   const [overlay, setOverlay] = useState<Values>({})
-  const pending = useRef<Values>({})
-  const scheduled = useRef(false)
 
-  const write = useMutation({
-    mutationFn: (values: Values) =>
-      system.trpcClient.integrationInstances.updateInstance.mutate({
-        addonId: row.addonId,
-        id: row.id,
-        values,
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
-      await queryClient.invalidateQueries({ queryKey: [CAP_INSTANCES_QUERY_KEY] })
-      setOverlay({})
-    },
-  })
-
-  /** Changes made in the same tick (a widget replaces config and model together) go as ONE patch. */
-  const patch = useCallback(
-    (values: Values): void => {
-      pending.current = { ...pending.current, ...values }
-      setOverlay((current) => ({ ...current, ...values }))
-      if (scheduled.current) return
-      scheduled.current = true
-      queueMicrotask(() => {
-        const batch = pending.current
-        pending.current = {}
-        scheduled.current = false
-        write.mutate(batch)
-      })
-    },
-    [write],
-  )
+  /** Changes made in the same tick (a widget replaces config and model together) merge into one overlay. */
+  const patch = useCallback((values: Values): void => {
+    setOverlay((current) => ({ ...current, ...values }))
+  }, [])
+  useEffect(() => {
+    setLeadValues(overlay)
+  }, [overlay, setLeadValues])
 
   const kind = loaded.data?.description.kinds?.find((k) => k.id === row.kindId)
   const stored = loaded.data?.instance?.formValues
@@ -199,7 +168,6 @@ export function AiProfileLead({ row }: { readonly row: InstanceRow }): ReactElem
           {listing.isError && <p className="mt-1 text-xs text-danger">{listing.error.message}</p>}
         </FormField>
       )}
-      {write.isError && <ErrorBox variant="warning" message={write.error.message} />}
     </div>
   )
 }
