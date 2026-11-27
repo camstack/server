@@ -15,17 +15,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Accessory } from '@homebridge/hap-nodejs'
 import { EventCategory } from '@camstack/types'
-import type { RtspEntryLike } from '@camstack/types'
 import type { DurableState, IScopedLogger, LogExtras, LogTags, SystemEvent } from '@camstack/types'
 import type { z } from 'zod'
 import { BridgeHost } from '../bridge-host.js'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { ExposedConfigEntry } from '../hap-export-records.js'
-import {
-  ExportHapAddon,
-  REMOVAL_CONFIRM_MS,
-  type ExportSyncStateSchema,
-} from '../hap-export.addon.js'
+import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
 import { accessoryUuidFor } from '../mappers/kind.js'
 import type { DeviceMapper } from '../mappers/types.js'
@@ -35,16 +30,6 @@ type ExportSyncState = z.infer<typeof ExportSyncStateSchema>
 type Handler = (event: SystemEvent) => void
 
 const CAM = 615
-
-const MID_ENTRY: RtspEntryLike = {
-  brokerId: 'cam-mid',
-  url: 'rtsp://example.invalid/mid',
-  mutedUrl: 'rtsp://example.invalid/mid-muted',
-  enabled: true,
-  codec: 'h264',
-  resolution: { width: 1280, height: 720 },
-  profile: 'mid',
-}
 
 interface FakeDevice {
   type: string
@@ -96,16 +81,12 @@ class TestAddon extends ExportHapAddon {
   buildMs = 0
   /** The per-device name store fails to answer (a transient settings read). */
   nameReadFails = false
-  /** The RTSP profiles the fake camera serves; `null` = not readable (token unmoved). */
-  rtspEntries: RtspEntryLike[] | null = null
   builds: Build[] = []
   disposed = 0
   /** Builds running at once, and the most ever seen: one device builds one at a time. */
   private building = 0
   maxBuilding = 0
   configWrites = 0
-  /** Reconciles that ran after the last `resetReconcileCount` (spied below). */
-  vi_reconciles = 0
   infos: LogLine[] = []
   private readonly logger = recordingLogger(this.infos)
   private syncState: ExportSyncState = {}
@@ -150,12 +131,7 @@ class TestAddon extends ExportHapAddon {
           this.cachedBindings = [...this.bindings]
         }
         const served = this.cachedBindings ?? this.bindings
-        return {
-          binding: { entries: served.map((capName) => ({ capName })) },
-          cameraStreams: {
-            getProfileRtspEntries: async () => this.rtspEntries,
-          },
-        }
+        return { binding: { entries: served.map((capName) => ({ capName })) } }
       },
       settings: {
         readDeviceStore: async () => {
@@ -216,22 +192,6 @@ class TestAddon extends ExportHapAddon {
   ): Promise<void> {
     this.configWrites += 1
     inst.exposure = { ...inst.exposure, devices: [...devices] }
-  }
-
-  protected override async reconcileDevice(inst: BridgeInstance, deviceId: string): Promise<void> {
-    this.vi_reconciles += this.reconcileCounting ? 1 : 0
-    await super.reconcileDevice(inst, deviceId)
-  }
-  /** Counting starts once the removal is pending, so the boot-time reconciles are not counted. */
-  reconcileCounting = false
-
-  detach(): Promise<void> {
-    return this.detachMapper(this.inst, String(CAM))
-  }
-
-  stop(): Promise<void> {
-    this.bridges.set(this.inst.id, this.inst)
-    return this.stopInstance(this.inst.id)
   }
 
   /** What `startInstance` does for each exposed entry at boot. */
@@ -352,138 +312,11 @@ describe('accessory shape — rebuild when an input moves, and only then', () =>
     addon.bindings = addon.bindings.filter((cap) => cap !== 'ptz')
     addon.emit(EventCategory.DeviceBindingsChanged)
     await settle()
-    // A removal waits for its confirming second read.
-    expect(addon.builds).toHaveLength(1)
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
 
     expect(addon.builds).toHaveLength(2)
     expect(addon.lastBuild?.caps).not.toContain('ptz')
     const line = addon.infos.find((l) => l.msg.includes('rebuilding accessory'))
     expect(line?.meta?.['changed']).toBe('caps -ptz')
-  })
-
-  it('a composed cap unbound for a moment at a restart and re-bound later rebuilds nothing', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    await addon.boot()
-    expect(addon.lastBuild?.caps).toContain('doorbell')
-
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.builds).toHaveLength(1)
-    expect(addon.infos.some((l) => l.msg.includes('rebuild deferred'))).toBe(true)
-
-    // The composer re-asserts the graft inside the confirm window.
-    await vi.advanceTimersByTimeAsync(60_000)
-    addon.bindings = [...addon.bindings, 'doorbell']
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
-
-    expect(addon.builds).toHaveLength(1)
-    expect(addon.disposed).toBe(0)
-    expect(addon.infos.some((l) => l.msg.includes('rebuilding accessory'))).toBe(false)
-    const line = addon.infos.find((l) => l.msg.includes('removal reverted'))
-    expect(line?.tags).toEqual({ deviceId: CAM })
-  })
-
-  it('a removal still there at the second read is confirmed and rebuilds', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    await addon.boot()
-
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.builds).toHaveLength(1)
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
-
-    expect(addon.builds).toHaveLength(2)
-    expect(addon.lastBuild?.caps).not.toContain('doorbell')
-    expect(addon.infos.some((l) => l.msg.includes('removal confirmed'))).toBe(true)
-  })
-
-  it('a removal plus a recordability move (the logged 615 shape) is deferred, then rebuilt once confirmed', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    addon.rtspEntries = []
-    await addon.boot()
-    expect(addon.builds).toHaveLength(1)
-
-    // Graft down, and the profiles now read as recordable (rec:none -> rec:mid).
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.device = { ...addon.device, features: ['motion-trigger'] }
-    addon.rtspEntries = [MID_ENTRY]
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.builds).toHaveLength(1)
-    const deferred = addon.infos.find((l) => l.msg.includes('rebuild deferred'))
-    expect(String(deferred?.meta?.['changed'])).toContain('-doorbell')
-    expect(String(deferred?.meta?.['changed'])).toContain('recordability')
-
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
-    expect(addon.builds).toHaveLength(2)
-    expect(addon.lastBuild?.caps).not.toContain('doorbell')
-  })
-
-  it('a removal that comes back with only the recordability moved rebuilds by the normal path', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    addon.rtspEntries = []
-    await addon.boot()
-
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.rtspEntries = [MID_ENTRY]
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.builds).toHaveLength(1)
-
-    addon.bindings = [...addon.bindings, 'doorbell']
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS)
-    expect(addon.builds).toHaveLength(2)
-    expect(addon.lastBuild?.caps).toContain('doorbell')
-    expect(addon.infos.some((l) => l.msg.includes('removal reverted'))).toBe(false)
-  })
-
-  it('a cap added while another is removed rebuilds at once', async () => {
-    addon.bindings = [...addon.bindings, 'ptz']
-    await addon.boot()
-
-    addon.bindings = [...addon.bindings.filter((cap) => cap !== 'ptz'), 'doorbell']
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-
-    expect(addon.builds).toHaveLength(2)
-    expect(addon.infos.some((l) => l.msg.includes('rebuild deferred'))).toBe(false)
-  })
-
-  it('a device detached inside the confirm window is never reconciled afterwards', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    await addon.boot()
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.inst.pendingRemovals.size).toBe(1)
-    addon.reconcileCounting = true
-
-    await addon.detach()
-    expect(addon.inst.pendingRemovals.size).toBe(0)
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS * 2)
-    expect(addon.builds).toHaveLength(1)
-    expect(addon.vi_reconciles).toBe(0)
-  })
-
-  it('a bridge stopped inside the confirm window is never reconciled afterwards', async () => {
-    addon.bindings = [...addon.bindings, 'doorbell']
-    await addon.boot()
-    addon.bindings = addon.bindings.filter((cap) => cap !== 'doorbell')
-    addon.emit(EventCategory.DeviceBindingsChanged)
-    await settle()
-    expect(addon.inst.pendingRemovals.size).toBe(1)
-    addon.reconcileCounting = true
-
-    await addon.stop()
-    expect(addon.inst.pendingRemovals.size).toBe(0)
-    await vi.advanceTimersByTimeAsync(REMOVAL_CONFIRM_MS * 2)
-    expect(addon.builds).toHaveLength(1)
-    expect(addon.vi_reconciles).toBe(0)
   })
 
   it('a device rename rebuilds the accessory under the new name', async () => {

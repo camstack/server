@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- HomeKit: a camera whose composed doorbell is briefly unbound at a hub or composer restart is no longer rebuilt without the Doorbell service; a removal is confirmed by a second read first.
+- HomeKit: a camera's snapshot fetches right after a doorbell press are now logged.
 
 ## [1.2.211] - 2026-11-26
 

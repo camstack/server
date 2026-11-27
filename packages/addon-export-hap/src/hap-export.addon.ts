@@ -114,7 +114,6 @@ import {
   accessoryShapeKey,
   type BuiltAccessoryShape,
   describeShapeChange,
-  isRemovalOnly,
   shapeCapsFor,
 } from './reconcile/accessory-shape.js'
 import { describeHomekitRecording, readHomekitRecordingActive } from './hksv/recording-active.js'
@@ -235,9 +234,6 @@ export function describeHksvCamera(
 
 /** What ships, and what an unset global resolves to. */
 export const DEFAULT_CLIP_RETENTION_DAYS = 14
-
-/** How long a shape that only lost features or caps waits for its confirming second read. */
-export const REMOVAL_CONFIRM_MS = 90_000
 
 /** The rails on the retention itself. Zero would silently disable the tee. */
 const MIN_CLIP_RETENTION_DAYS = 1
@@ -789,14 +785,12 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** Take a bridge's runtime down. Its pairing files stay: a stop is not a withdrawal. */
-  protected async stopInstance(id: string): Promise<void> {
+  private async stopInstance(id: string): Promise<void> {
     const inst = this.bridges.get(id)
     if (inst === undefined) return
     this.bridges.delete(id)
     for (const timer of inst.pendingRebuildTimers.values()) clearTimeout(timer)
     inst.pendingRebuildTimers.clear()
-    for (const pending of inst.pendingRemovals.values()) clearTimeout(pending.timer)
-    inst.pendingRemovals.clear()
     await inst.actionExports?.dispose()
     await this.detachAll(inst)
     await inst.bridgeHost.dispose()
@@ -1476,11 +1470,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       clearTimeout(pendingTimer)
       inst.pendingRebuildTimers.delete(deviceId)
     }
-    const pendingRemoval = inst.pendingRemovals.get(deviceId)
-    if (pendingRemoval) {
-      clearTimeout(pendingRemoval.timer)
-      inst.pendingRemovals.delete(deviceId)
-    }
     const mapper = inst.exposed.get(deviceId)
     if (!mapper) {
       // Mapper instance gone (boot reattach failed) — nothing for the
@@ -1907,11 +1896,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     const builtKey = built?.key ?? (await this.syncStateOf(inst)).get(numericId)?.fingerprint
 
     if (builtKey === current.key) {
-      this.clearPendingRemoval(
-        inst,
-        deviceId,
-        'removal reverted — shape back to what was built, no rebuild',
-      )
       if (!inst.exposed.has(deviceId)) {
         // Exposed in config but not attached (boot re-attach failed earlier) —
         // attach now; shape is unchanged so this is a first publish, not churn.
@@ -1931,11 +1915,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       return
     }
 
-    if (built !== undefined && (await this.deferRemoval(inst, deviceId, built, current))) return
-    const superseded = inst.pendingRemovals.get(deviceId)
-    if (superseded !== undefined) clearTimeout(superseded.timer)
-    inst.pendingRemovals.delete(deviceId)
-
     const changed =
       built === undefined
         ? ['no built shape recorded — compared with the persisted key']
@@ -1954,53 +1933,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         meta: { error: errMsg(err) },
       })
     }
-  }
-
-  /**
-   * A change that only REMOVES features or caps is confirmed by a second read after
-   * {@link REMOVAL_CONFIRM_MS} before it strips the accessory: a composed cap (the
-   * doorbell grafted onto 615) is unbound for a moment at every hub or composer
-   * restart, and rebuilding without its service and again with it made iOS reset it
-   * (D49: a read that would destroy work is confirmed by a second read). Additions
-   * and every other change apply at once. Returns true when the rebuild is held back.
-   */
-  private async deferRemoval(
-    inst: BridgeInstance,
-    deviceId: string,
-    built: BuiltAccessoryShape,
-    current: { readonly key: string; readonly shape: AccessoryShape },
-  ): Promise<boolean> {
-    if (!isRemovalOnly(built.shape, current.shape)) return false
-    const log = this.ctx.logger.withTags({ deviceId: Number.parseInt(deviceId, 10) })
-    const pending = inst.pendingRemovals.get(deviceId)
-    if (pending !== undefined && pending.key === current.key) {
-      if (Date.now() - pending.since < REMOVAL_CONFIRM_MS) return true
-      log.info('export-hap: removal confirmed by a second read — rebuilding', {
-        meta: { changed: describeShapeChange(built.shape, current.shape).join('; ') },
-      })
-      return false
-    }
-    if (pending !== undefined) clearTimeout(pending.timer)
-    const timer = setTimeout(() => this.runReconcile(inst, deviceId), REMOVAL_CONFIRM_MS)
-    timer.unref()
-    inst.pendingRemovals.set(deviceId, { key: current.key, since: Date.now(), timer })
-    log.info('export-hap: shape lost features — rebuild deferred until a second read confirms', {
-      meta: {
-        changed: describeShapeChange(built.shape, current.shape).join('; '),
-        confirmInMs: REMOVAL_CONFIRM_MS,
-      },
-    })
-    return true
-  }
-
-  private clearPendingRemoval(inst: BridgeInstance, deviceId: string, outcome: string): void {
-    const pending = inst.pendingRemovals.get(deviceId)
-    if (pending === undefined) return
-    clearTimeout(pending.timer)
-    inst.pendingRemovals.delete(deviceId)
-    this.ctx.logger
-      .withTags({ deviceId: Number.parseInt(deviceId, 10) })
-      .info(`export-hap: ${outcome}`)
   }
 
   /**
