@@ -12,12 +12,14 @@ import { Seconds } from '@matter/general'
 import { PeerSet, Subscribe } from '@matter/protocol'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterAttributeReport } from './matter-controller.js'
+import { readAllPeerAttributes } from './matter-peer-read.js'
 import {
   collectAttributeReports,
   collectEventReports,
   materialiseUpdate,
   type MatterPeerSubscription,
   type MatterSubscribablePeer,
+  type MatterSubscriptionHandlers,
 } from './matter-subscription.js'
 
 /** Sleepy Thread locks (the U200) report on a short floor and a one-minute ceiling. */
@@ -77,26 +79,48 @@ async function disableAutoSubscribe(
 
 /**
  * Actively dial a peer: the library `Peer.connect` runs operational discovery
- * (mDNS query) and a CASE handshake to the last known address, and `kick`
- * restarts a stalled handshake. A peer that cannot be resolved is a no-op.
+ * and a CASE handshake to the last known address, and `kick` restarts a
+ * stalled handshake first. Resolves true only when `connect` actually ran;
+ * false names, through `skipped`, the lookup that failed.
  */
-async function dialPeer(peer: Record<string, unknown>, signal: AbortSignal): Promise<void> {
+export async function dialPeer(
+  peer: Record<string, unknown>,
+  signal: AbortSignal,
+  skipped: (reason: string) => void,
+): Promise<boolean> {
   const env = peer['env']
   const getEnv = isRecord(env) ? env['get'] : undefined
   const state = peer['state']
   const commissioning = isRecord(state) ? state['commissioning'] : undefined
   const address = isRecord(commissioning) ? commissioning['peerAddress'] : undefined
-  if (typeof getEnv !== 'function' || address === undefined) return
+  if (typeof getEnv !== 'function') return refuse(skipped, 'node has no environment')
+  if (address === undefined) return refuse(skipped, 'node has no peer address')
   const peers: unknown = Reflect.apply(getEnv, env, [PeerSet])
   const lookup = isRecord(peers) ? peers['get'] : undefined
-  if (typeof lookup !== 'function') return
+  if (typeof lookup !== 'function') return refuse(skipped, 'no PeerSet')
   const protocolPeer: unknown = Reflect.apply(lookup, peers, [address])
-  if (!isRecord(protocolPeer)) return
+  if (!isRecord(protocolPeer)) return refuse(skipped, 'PeerSet has no such peer')
+  const connect = protocolPeer['connect']
+  if (typeof connect !== 'function') return refuse(skipped, 'peer has no connect')
   const kick = protocolPeer['kick']
   if (typeof kick === 'function') Reflect.apply(kick, protocolPeer, [])
-  const connect = protocolPeer['connect']
-  if (typeof connect !== 'function') return
   await Promise.resolve(Reflect.apply(connect, protocolPeer, [{ abort: signal }]))
+  return true
+}
+
+function refuse(skipped: (reason: string) => void, reason: string): false {
+  skipped(reason)
+  return false
+}
+
+/** One wildcard read of the node, reported like a subscription update. */
+async function refreshPeer(
+  peer: Record<string, unknown>,
+  nodeId: string,
+  handlers: MatterSubscriptionHandlers,
+): Promise<void> {
+  const reports = await readAllPeerAttributes(peer, nodeId)
+  for (const report of reports) handlers.onReport(report)
 }
 
 function subscriptionFrom(result: unknown): MatterPeerSubscription {
@@ -128,7 +152,8 @@ export function subscribableFromPeer(
     online: () => peerOnline(peer),
     onOnline: (handler) => listenLifecycle(peer, 'online', handler),
     onOffline: (handler) => listenLifecycle(peer, 'offline', handler),
-    connect: (signal) => dialPeer(peer, signal),
+    connect: (signal, skipped) => dialPeer(peer, signal, skipped),
+    refresh: (handlers) => refreshPeer(peer, nodeId, handlers),
     subscribe: async (handlers) => {
       await disableAutoSubscribe(peer, nodeId, logger)
       // `Subscribe()` builds the `attributeRequests` / `eventRequests` lists the

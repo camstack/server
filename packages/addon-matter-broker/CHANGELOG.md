@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A Matter device that went offline is dialled again instead of waiting for it to announce itself
+- A Matter device that went offline is dialled again instead of waiting for it to announce itself, and boot opens a single session per device
 
 ## [0.2.183] - 2026-11-27
 

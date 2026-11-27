@@ -25,6 +25,7 @@ export type SubscriptionPhase =
   | 'resubscribing'
   | 'subscribe-failed'
 
+type DialOutcome = 'dialed' | 'failed' | 'skipped'
 type OpenReason = 'boot' | 'sync' | 'retry' | 'online'
 
 export interface MatterPeerSubscription {
@@ -44,9 +45,15 @@ export interface MatterSubscribablePeer {
   /**
    * Actively dial the peer at its last known address (a fresh operational
    * discovery, then a CASE connect). Absent when the peer cannot be dialled.
-   * Never passively waits for an announcement; bounded by `signal`.
+   * Resolves true only when the dial actually ran; false (with the reason given
+   * to `skipped`) when it could not be attempted. Bounded by `signal`.
    */
-  connect?(signal: AbortSignal): Promise<void>
+  connect?(signal: AbortSignal, skipped: (reason: string) => void): Promise<boolean>
+  /**
+   * One read of every subscribed attribute, delivered through `handlers.onReport`:
+   * the freshness a re-opened subscription gets from its bootstrap read.
+   */
+  refresh?(handlers: MatterSubscriptionHandlers): Promise<void>
   onOnline(handler: () => void): () => void
   onOffline(handler: () => void): () => void
 }
@@ -179,15 +186,7 @@ export class MatterSubscriptionSupervisor {
     if (stale !== null) await stale.close().catch(() => undefined)
     let subscription: MatterPeerSubscription
     try {
-      subscription = await this.#subscribeBounded(peer, {
-        onReport: (report) => {
-          if (report.value === undefined || report.value === null) return
-          this.#onReport(report)
-        },
-        onEvent: (event) => {
-          this.#onEvent(event)
-        },
-      })
+      subscription = await this.#subscribeBounded(peer, this.#handlers())
     } catch (err: unknown) {
       slot.opening = false
       this.#log(
@@ -230,6 +229,31 @@ export class MatterSubscriptionSupervisor {
     this.#log(peer.nodeId, 'subscribed')
   }
 
+  #handlers(): MatterSubscriptionHandlers {
+    return {
+      onReport: (report) => {
+        if (report.value === undefined || report.value === null) return
+        this.#onReport(report)
+      },
+      onEvent: (event) => {
+        this.#onEvent(event)
+      },
+    }
+  }
+
+  /** The sustained subscription survived an offline spell: one read brings the state up to date. */
+  async #refreshAfterReturn(peer: MatterSubscribablePeer): Promise<void> {
+    if (peer.refresh === undefined) return
+    try {
+      await peer.refresh(this.#handlers())
+    } catch (err: unknown) {
+      this.#logger.warn('Matter subscription: refresh read after return failed', {
+        tags: this.#tags(peer.nodeId),
+        meta: { nodeId: peer.nodeId, error: errMsg(err) },
+      })
+    }
+  }
+
   /**
    * The slot holds a sustained subscription. Online: nothing to open, mark it
    * subscribed. Offline on a retry: dial the peer (never wait for an announce).
@@ -244,22 +268,27 @@ export class MatterSubscriptionSupervisor {
       slot.phase = 'subscribed'
       slot.attempt = 0
       this.#log(peer.nodeId, 'subscribed', { outcome: 'kept-sustained' })
+      await this.#refreshAfterReturn(peer)
       return true
     }
     // A peer that cannot be dialled keeps the old path: reopen the subscription.
     if (reason === 'retry' && peer.connect === undefined) return false
     if (reason === 'retry') {
       slot.opening = true
+      let outcome: DialOutcome
       try {
-        await this.#forceConnect(slot, peer)
+        outcome = await this.#forceConnect(slot, peer)
       } finally {
         slot.opening = false
       }
+      // Not dialled at all: fall back to reopening the subscription.
+      if (outcome === 'skipped') return false
       if (this.#stopped || this.#slots.get(peer.nodeId) !== slot) return true
       if (peer.online()) {
         slot.phase = 'subscribed'
         slot.attempt = 0
         this.#log(peer.nodeId, 'subscribed', { outcome: 'connected-on-retry' })
+        await this.#refreshAfterReturn(peer)
         return true
       }
       slot.phase = 'offline'
@@ -269,10 +298,14 @@ export class MatterSubscriptionSupervisor {
   }
 
   /** Retry from offline: a bounded active dial, every decision logged. */
-  async #forceConnect(slot: Slot, peer: MatterSubscribablePeer): Promise<void> {
+  async #forceConnect(slot: Slot, peer: MatterSubscribablePeer): Promise<DialOutcome> {
     const tags = this.#tags(peer.nodeId)
-    const skip = (reason: string): void => {
-      this.#logger.info(`retry: skipped (${reason})`, { tags, meta: { nodeId: peer.nodeId } })
+    const skip = (reason: string): DialOutcome => {
+      this.#logger.info(`retry: dial skipped (${reason})`, {
+        tags,
+        meta: { nodeId: peer.nodeId },
+      })
+      return 'skipped'
     }
     if (peer.online()) return skip('peer is online')
     if (peer.connect === undefined) return skip('peer cannot be dialled')
@@ -283,14 +316,20 @@ export class MatterSubscriptionSupervisor {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), SUBSCRIBE_ATTEMPT_TIMEOUT_MS)
     if (typeof timer.unref === 'function') timer.unref()
+    let why: string | null = null
     try {
-      await peer.connect(controller.signal)
+      const dialed = await peer.connect(controller.signal, (reason) => {
+        why = reason
+      })
+      if (!dialed) return skip(why ?? 'no reason given')
       this.#logger.info('retry: connect succeeded', { tags, meta: { nodeId: peer.nodeId } })
+      return 'dialed'
     } catch (err: unknown) {
       this.#logger.warn('retry: connect failed', {
         tags,
         meta: { nodeId: peer.nodeId, error: errMsg(err) },
       })
+      return 'failed'
     } finally {
       clearTimeout(timer)
     }
