@@ -101,7 +101,7 @@ describe('MatterJsController subscriptions', () => {
     await controller.stop()
   })
 
-  it('re-establishes the subscription of a node that went offline', async () => {
+  it('keeps one sustained subscription for a node that went offline (no second session)', async () => {
     vi.useFakeTimers()
     const recorded = recordedPeer('11')
     const controller = new MatterJsController(
@@ -116,7 +116,7 @@ describe('MatterJsController subscriptions', () => {
     expect(recorded.requests).toHaveLength(1)
     recorded.goOffline()
     await vi.advanceTimersByTimeAsync(SUBSCRIPTION_BACKOFF_INITIAL_MS)
-    expect(recorded.requests.length).toBeGreaterThanOrEqual(2)
+    expect(recorded.requests).toHaveLength(1)
     await controller.stop()
   })
 

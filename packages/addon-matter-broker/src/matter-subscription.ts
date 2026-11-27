@@ -25,6 +25,8 @@ export type SubscriptionPhase =
   | 'resubscribing'
   | 'subscribe-failed'
 
+type OpenReason = 'boot' | 'sync' | 'retry' | 'online'
+
 export interface MatterPeerSubscription {
   close(): Promise<void>
 }
@@ -39,6 +41,12 @@ export interface MatterSubscribablePeer {
   readonly nodeId: string
   online(): boolean
   subscribe(handlers: MatterSubscriptionHandlers): Promise<MatterPeerSubscription>
+  /**
+   * Actively dial the peer at its last known address (a fresh operational
+   * discovery, then a CASE connect). Absent when the peer cannot be dialled.
+   * Never passively waits for an announcement; bounded by `signal`.
+   */
+  connect?(signal: AbortSignal): Promise<void>
   onOnline(handler: () => void): () => void
   onOffline(handler: () => void): () => void
 }
@@ -109,14 +117,14 @@ export class MatterSubscriptionSupervisor {
       live.add(peer.nodeId)
       const slot = this.#slots.get(peer.nodeId)
       if (slot === undefined) {
-        await this.#open(peer)
+        await this.#open(peer, 'boot')
         continue
       }
       slot.peer = peer
       const cameBack = slot.phase !== 'subscribed' && peer.online()
       if (cameBack && !slot.opening) {
         slot.attempt = 0
-        await this.#open(peer)
+        await this.#open(peer, 'sync')
       } else if (
         !slot.opening &&
         slot.timer === null &&
@@ -141,7 +149,7 @@ export class MatterSubscriptionSupervisor {
     this.#slots.clear()
   }
 
-  async #open(peer: MatterSubscribablePeer): Promise<void> {
+  async #open(peer: MatterSubscribablePeer, reason: OpenReason): Promise<void> {
     if (this.#stopped) return
     const existing = this.#slots.get(peer.nodeId)
     if (existing?.opening === true) return
@@ -149,6 +157,11 @@ export class MatterSubscriptionSupervisor {
     if (existing?.timer !== null && existing?.timer !== undefined) {
       clearTimeout(existing.timer)
       existing.timer = null
+    }
+    if (existing !== undefined && existing.subscription !== null) {
+      // A sustained subscription is already alive (matter.js re-dials it by
+      // itself): closing and reopening it would open a second CASE session.
+      if (await this.#reviveSustained(existing, peer, reason)) return
     }
     const generation = (existing?.generation ?? 0) + 1
     const slot = existing ?? this.#fresh(peer)
@@ -159,8 +172,8 @@ export class MatterSubscriptionSupervisor {
     this.#slots.set(peer.nodeId, slot)
     this.#listen(slot)
     this.#log(peer.nodeId, 'resubscribing', { attempt: slot.attempt }, this.#perAttempt(slot))
-    // Closing the previous sustained subscription restarts matter.js's own
-    // (15 s doubling to 1 h) schedule, so reopening is a fresh attempt.
+    if (reason === 'retry') await this.#forceConnect(slot, peer)
+    // Fallback only (a peer that cannot be dialled): restart the subscription.
     const stale = slot.subscription
     slot.subscription = null
     if (stale !== null) await stale.close().catch(() => undefined)
@@ -217,6 +230,72 @@ export class MatterSubscriptionSupervisor {
     this.#log(peer.nodeId, 'subscribed')
   }
 
+  /**
+   * The slot holds a sustained subscription. Online: nothing to open, mark it
+   * subscribed. Offline on a retry: dial the peer (never wait for an announce).
+   */
+  async #reviveSustained(
+    slot: Slot,
+    peer: MatterSubscribablePeer,
+    reason: OpenReason,
+  ): Promise<boolean> {
+    slot.peer = peer
+    if (peer.online()) {
+      slot.phase = 'subscribed'
+      slot.attempt = 0
+      this.#log(peer.nodeId, 'subscribed', { outcome: 'kept-sustained' })
+      return true
+    }
+    // A peer that cannot be dialled keeps the old path: reopen the subscription.
+    if (reason === 'retry' && peer.connect === undefined) return false
+    if (reason === 'retry') {
+      slot.opening = true
+      try {
+        await this.#forceConnect(slot, peer)
+      } finally {
+        slot.opening = false
+      }
+      if (this.#stopped || this.#slots.get(peer.nodeId) !== slot) return true
+      if (peer.online()) {
+        slot.phase = 'subscribed'
+        slot.attempt = 0
+        this.#log(peer.nodeId, 'subscribed', { outcome: 'connected-on-retry' })
+        return true
+      }
+      slot.phase = 'offline'
+    }
+    this.#schedule(peer.nodeId)
+    return true
+  }
+
+  /** Retry from offline: a bounded active dial, every decision logged. */
+  async #forceConnect(slot: Slot, peer: MatterSubscribablePeer): Promise<void> {
+    const tags = this.#tags(peer.nodeId)
+    const skip = (reason: string): void => {
+      this.#logger.info(`retry: skipped (${reason})`, { tags, meta: { nodeId: peer.nodeId } })
+    }
+    if (peer.online()) return skip('peer is online')
+    if (peer.connect === undefined) return skip('peer cannot be dialled')
+    this.#logger.info('retry: forced rediscovery + connect', {
+      tags,
+      meta: { nodeId: peer.nodeId, attempt: slot.attempt },
+    })
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), SUBSCRIBE_ATTEMPT_TIMEOUT_MS)
+    if (typeof timer.unref === 'function') timer.unref()
+    try {
+      await peer.connect(controller.signal)
+      this.#logger.info('retry: connect succeeded', { tags, meta: { nodeId: peer.nodeId } })
+    } catch (err: unknown) {
+      this.#logger.warn('retry: connect failed', {
+        tags,
+        meta: { nodeId: peer.nodeId, error: errMsg(err) },
+      })
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
   #schedule(nodeId: string): void {
     const slot = this.#slots.get(nodeId)
     if (slot === undefined || this.#stopped) return
@@ -230,7 +309,7 @@ export class MatterSubscriptionSupervisor {
     this.#log(nodeId, 'backing-off', { delayMs: delay, attempt: slot.attempt }, false)
     slot.timer = setTimeout(() => {
       slot.timer = null
-      void this.#open(slot.peer)
+      void this.#open(slot.peer, 'retry')
     }, delay)
     if (typeof slot.timer.unref === 'function') slot.timer.unref()
   }
@@ -260,7 +339,7 @@ export class MatterSubscriptionSupervisor {
         }
         this.#log(slot.peer.nodeId, 'online')
         this.#onPresence(slot.peer.nodeId, true)
-        void this.#open(current.peer)
+        void this.#open(current.peer, 'online')
       }),
     )
   }

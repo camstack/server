@@ -164,7 +164,7 @@ describe('MatterSubscriptionSupervisor', () => {
     await supervisor.stop()
   })
 
-  it('resubscribes when the node comes back online', async () => {
+  it('keeps its one sustained subscription when the node comes back online', async () => {
     const supervisor = new MatterSubscriptionSupervisor({
       brokerId: 'matter_001',
       logger: silentLogger([]),
@@ -176,7 +176,8 @@ describe('MatterSubscriptionSupervisor', () => {
     node.goOffline()
     expect(node.subscribeCount()).toBe(1)
     node.goOnline()
-    await vi.waitFor(() => expect(node.subscribeCount()).toBe(2))
+    await vi.waitFor(() => expect(supervisor.phase('n1')).toBe('subscribed'))
+    expect(node.subscribeCount()).toBe(1)
     await supervisor.stop()
   })
 })

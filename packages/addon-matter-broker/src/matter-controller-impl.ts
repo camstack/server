@@ -339,6 +339,9 @@ export class MatterJsController implements MatterController {
       commission: ({ pairingCode, onPase }) =>
         server.peers.commission({
           pairingCode,
+          // Our supervisor owns the one sustained subscription; the library's own
+          // auto-subscribe would open a second CASE session per peer.
+          autoSubscribe: false,
           continueCommissioningAfterPase: () => {
             onPase()
             return true

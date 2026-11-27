@@ -9,7 +9,7 @@
  */
 
 import { Seconds } from '@matter/general'
-import { Subscribe } from '@matter/protocol'
+import { PeerSet, Subscribe } from '@matter/protocol'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { MatterAttributeReport } from './matter-controller.js'
 import {
@@ -75,6 +75,30 @@ async function disableAutoSubscribe(
   }
 }
 
+/**
+ * Actively dial a peer: the library `Peer.connect` runs operational discovery
+ * (mDNS query) and a CASE handshake to the last known address, and `kick`
+ * restarts a stalled handshake. A peer that cannot be resolved is a no-op.
+ */
+async function dialPeer(peer: Record<string, unknown>, signal: AbortSignal): Promise<void> {
+  const env = peer['env']
+  const getEnv = isRecord(env) ? env['get'] : undefined
+  const state = peer['state']
+  const commissioning = isRecord(state) ? state['commissioning'] : undefined
+  const address = isRecord(commissioning) ? commissioning['peerAddress'] : undefined
+  if (typeof getEnv !== 'function' || address === undefined) return
+  const peers: unknown = Reflect.apply(getEnv, env, [PeerSet])
+  const lookup = isRecord(peers) ? peers['get'] : undefined
+  if (typeof lookup !== 'function') return
+  const protocolPeer: unknown = Reflect.apply(lookup, peers, [address])
+  if (!isRecord(protocolPeer)) return
+  const kick = protocolPeer['kick']
+  if (typeof kick === 'function') Reflect.apply(kick, protocolPeer, [])
+  const connect = protocolPeer['connect']
+  if (typeof connect !== 'function') return
+  await Promise.resolve(Reflect.apply(connect, protocolPeer, [{ abort: signal }]))
+}
+
 function subscriptionFrom(result: unknown): MatterPeerSubscription {
   return {
     close: async () => {
@@ -104,6 +128,7 @@ export function subscribableFromPeer(
     online: () => peerOnline(peer),
     onOnline: (handler) => listenLifecycle(peer, 'online', handler),
     onOffline: (handler) => listenLifecycle(peer, 'offline', handler),
+    connect: (signal) => dialPeer(peer, signal),
     subscribe: async (handlers) => {
       await disableAutoSubscribe(peer, nodeId, logger)
       // `Subscribe()` builds the `attributeRequests` / `eventRequests` lists the
