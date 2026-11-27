@@ -48,6 +48,7 @@ const ROUTERS_BY_GROUP: Readonly<Record<MappedGroupId, readonly string[]>> = {
     'deviceExtension',
     'deviceHistory',
     'deviceManager',
+    'deviceMesh',
     'deviceOps',
     'deviceProvider',
     'deviceRemovalHook',
