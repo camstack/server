@@ -108,7 +108,7 @@ function build(role: string | null, config: Record<string, unknown> = {}) {
     logger,
     api: { deviceManager: { setRole: { mutate: setRole } } },
   } as unknown as DeviceContext
-  return { device: new HmSensorDevice(ctx), setRole, info }
+  return { device: new HmSensorDevice(ctx), setRole, info, persisted }
 }
 
 beforeEach(() => {
@@ -137,9 +137,24 @@ describe('an adopted multi-sensor moves to ambient-monitor once', () => {
     )
   })
 
+  it('a failed setRole stores no marker, so the next activation retries', async () => {
+    const first = build(DeviceRole.MotionSensor)
+    first.setRole.mockRejectedValueOnce(new Error('hub not ready'))
+    await first.device.onActivate()
+    expect(markerStored(first.persisted)).toBe(false)
+    const second = build(DeviceRole.MotionSensor)
+    await second.device.onActivate()
+    expect(second.setRole).toHaveBeenCalledWith({ deviceId: 5598, role: 'ambient-monitor' })
+    expect(markerStored(second.persisted)).toBe(true)
+  })
+
   it('does not flip a role back that was decided already', async () => {
     const h = build(DeviceRole.MotionSensor, { ambientRoleReviewed: true })
     await h.device.onActivate()
     expect(h.setRole).not.toHaveBeenCalled()
   })
 })
+
+function markerStored(persist: ReturnType<typeof vi.fn>): boolean {
+  return persist.mock.calls.some((call) => call[0]?.ambientRoleReviewed === true)
+}

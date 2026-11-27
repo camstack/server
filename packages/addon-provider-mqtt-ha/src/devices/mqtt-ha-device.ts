@@ -193,8 +193,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       replaces: deviceRoleForPrimaryCap(capabilities[0]),
       reviewed: this.config.get('ambientRoleReviewed') === true,
     })
-    if (verdict.markReviewed) await this.config.setAll({ ambientRoleReviewed: true })
     if (verdict.action === 'kept') {
+      await this.config.setAll({ ambientRoleReviewed: true })
       this.ctx.logger.info('mqtt-ha: role kept: operator-chosen or unknown', {
         tags: { deviceId: this.id },
         meta: { role: current, offered: wanted },
@@ -213,6 +213,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       })
       return
     }
+    // Stored only after the hub took the role: a failed call retries at the next start.
+    if (verdict.markReviewed) await this.config.setAll({ ambientRoleReviewed: true })
     this.ctx.logger.info('mqtt-ha: device role set from its capabilities', {
       tags: { deviceId: this.id },
       meta: { role: wanted, replaced: current, caps: capabilities.join(',') },

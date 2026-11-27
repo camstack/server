@@ -74,13 +74,8 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
       replaces: channelRole ?? role ?? null,
       reviewed: ambientRoleReviewed === true,
     })
-    if (verdict.markReviewed) {
-      await this.config.setAll({
-        ambientRoleReviewed: true,
-        ...(verdict.action === 'set' ? { role: DeviceRole.AmbientMonitor } : {}),
-      })
-    }
     if (verdict.action === 'kept') {
+      if (verdict.markReviewed) await this.config.setAll({ ambientRoleReviewed: true })
       this.ctx.logger.info('homematic: role kept: operator-chosen or unknown', {
         tags: { deviceId: this.id },
         meta: { role: current },
@@ -89,6 +84,11 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
     if (verdict.action !== 'set' || wanted === null) return
     try {
       await this.ctx.api.deviceManager.setRole.mutate({ deviceId: this.id, role: wanted })
+      // Stored only after the hub took the role: a failed call retries at the next start.
+      await this.config.setAll({
+        ambientRoleReviewed: true,
+        role: DeviceRole.AmbientMonitor,
+      })
       this.ctx.logger.info('homematic: sensor role set to ambient monitor', {
         tags: { deviceId: this.id },
         meta: { replaced: current, caps: capabilities.join(',') },

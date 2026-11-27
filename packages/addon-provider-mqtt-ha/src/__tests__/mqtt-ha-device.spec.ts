@@ -416,6 +416,17 @@ describe('MqttHaDevice ambient-monitor role', () => {
     expect(h.setRole).not.toHaveBeenCalled()
   })
 
+  it('a failed setRole stores no marker, so the next activation retries', async () => {
+    const first = build(DeviceType.Sensor, multi(), {}, 'temperature-sensor')
+    first.setRole.mockRejectedValueOnce(new Error('hub not ready'))
+    await first.device.onActivate()
+    expect(markerStored(first.persistConfig)).toBe(false)
+    const second = build(DeviceType.Sensor, multi(), {}, 'temperature-sensor')
+    await second.device.onActivate()
+    expect(second.setRole).toHaveBeenCalledWith({ deviceId: 9, role: 'ambient-monitor' })
+    expect(markerStored(second.persistConfig)).toBe(true)
+  })
+
   it('a single-reading sensor keeps its old role', async () => {
     const one = { ...configOf(contactMessages()), capabilities: ['temperature-sensor', 'battery'] }
     const h = build(DeviceType.Sensor, one, {}, 'temperature-sensor')
@@ -797,3 +808,14 @@ describe('MqttHaDevice follows its discovery', () => {
     expect(h.providers.has('air-quality-sensor')).toBe(true)
   })
 })
+function markerStored(persist: ReturnType<typeof vi.fn>): boolean {
+  return persist.mock.calls.some((call) => {
+    const saved: unknown = call[0]
+    return (
+      typeof saved === 'object' &&
+      saved !== null &&
+      'ambientRoleReviewed' in saved &&
+      saved.ambientRoleReviewed === true
+    )
+  })
+}
