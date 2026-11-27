@@ -57,8 +57,8 @@ already pushes; links and link quality come from one `bridge/request/networkmap`
 is sent only by `refresh` or `readNow`, never on its own. Zigbee2MQTT's scan queries the coordinator
 and the routers and never an end device, so a battery node is not woken: it is counted as skipped,
 and its links are what its parent router reports. Two callers share one scan in flight. Before any
-scan `readAt` is `null` and there are no links. `network` stays `null`: its technology has no Zigbee
-value.
+scan `readAt` is `null` and there are no links. `network` is the Zigbee network `bridge/info` describes: its id is the
+extended PAN id (hex), with channel and PAN id; the name stays `null` because Zigbee2MQTT gives none.
 
 ## Management
 
@@ -86,3 +86,16 @@ action acts on the only open integration and refuses when there are several.
 Progress is never polled: it is the `update` block the server publishes with a device's state, which
 is also in the device's raw state. CamStack sends only the one request; how a sleepy device is reached is the server's
 business.
+
+### Firmware as a device
+
+A device the server can update (`supports_ota`, or an `update` block in its state) is offered as a
+second adoption candidate: `<ieee>#update`, a `DeviceType.Update` device implementing `update`. It is a
+sibling of the device, never its child. Its status is the pushed `update` block (installed and latest
+version, updating or scheduled as in progress); `installUpdate` starts the over-the-air update. The
+integration actions stay.
+
+## Teardown
+
+A device that is removed or unregistered (`removeDevice`) drops its subscriptions to the integration,
+its `device-mesh` binding and the state it held; the hub keeps nothing for it.

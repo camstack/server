@@ -42,6 +42,7 @@ import { ZigbeeDevice } from './z2m-device.js'
 import { planZ2mDevice, roleForPrimaryCap, type Z2mPlan } from './z2m-exposes.js'
 import { ZigbeeGatewayDevice } from './z2m-gateway-device.js'
 import { Z2mManagement, type ZigbeeZ2mActions, zigbeeZ2mActions } from './z2m-actions.js'
+import { ZigbeeUpdateDevice } from './z2m-update-device.js'
 import { z2mHub } from './z2m-hub.js'
 import { probeZ2m } from './z2m-probe.js'
 import { Z2mSessionFault, z2mSessionHealth } from './z2m-session-health.js'
@@ -76,6 +77,7 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
   // The Gateway and the devices are siblings: all are restored as top-level devices.
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Gateway]: ZigbeeGatewayDevice,
+    [DeviceType.Update]: ZigbeeUpdateDevice,
     ...Object.fromEntries(ZIGBEE_TYPES.map((type) => [type, ZigbeeDevice])),
   }
 
@@ -270,6 +272,9 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
             type: plan.deviceType,
             online: session.availabilityOf(device.ieee_address),
             plan,
+            firmware:
+              device.definition?.supports_ota === true ||
+              session.stateOf(device.ieee_address)?.['update'] !== undefined,
           })
         }
         return found
@@ -301,7 +306,9 @@ export class ProviderZigbeeZ2mAddon extends BaseDeviceProvider {
         const device =
           type === DeviceType.Gateway
             ? await devices.create(stableId, ZigbeeGatewayDevice, config, null, meta)
-            : await devices.create(stableId, ZigbeeDevice, config, null, meta)
+            : type === DeviceType.Update
+              ? await devices.create(stableId, ZigbeeUpdateDevice, config, null, meta)
+              : await devices.create(stableId, ZigbeeDevice, config, null, meta)
         this.ctx.logger.info('zigbee2mqtt: device adopted', {
           tags: { deviceId: device.id },
           meta: {

@@ -7,6 +7,7 @@
 import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
 import type { IScopedLogger } from '@camstack/types'
+import { type Delay, realDelay, startFirmwareUpdate } from './z2m-firmware.js'
 import type { Z2mHub } from './z2m-hub.js'
 import { type Z2mDevice, Z2mOtaCheckSchema, Z2mUpdateStateSchema } from './z2m-protocol.js'
 import type { Z2mSession } from './z2m-session.js'
@@ -30,11 +31,6 @@ const DeviceUpdate = z.object({
   latestVersion: z.number().nullable(),
 })
 export type DeviceUpdate = z.infer<typeof DeviceUpdate>
-
-/** An update runs until the device has taken the image: minutes, up to an hour on a slow sleepy node. */
-export const Z2M_OTA_UPDATE_TIMEOUT_MS = 60 * 60_000
-/** How long a refusal may take to arrive before the update counts as accepted. */
-export const Z2M_OTA_ACCEPT_WINDOW_MS = 3_000
 
 export const zigbeeZ2mActions = defineCustomActions({
   /** Open the network for new devices for `seconds` (1 to 254); `0` closes it again. */
@@ -107,10 +103,6 @@ export function parseRename(text: string): Rename {
 export type Z2mActionInput = z.input<typeof Target> | undefined
 
 /** What each action does, reading the sessions through the hub. */
-export type Delay = (ms: number) => Promise<void>
-
-const realDelay: Delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
 export class Z2mManagement {
   constructor(
     private readonly hub: Z2mHub,
@@ -205,42 +197,17 @@ export class Z2mManagement {
   async updateDevice(input: z.input<typeof Target> & { device: string }) {
     const session = this.sessionOf(input)
     const device = this.deviceNamed(session, input.device)
-    const deviceId = this.hub.deviceIdOf(session.integrationId, device.ieee_address)
-    const tags = deviceId === null ? undefined : { deviceId }
-    const running = session.request(
-      'bridge/request/device/ota_update/update',
-      { id: device.ieee_address },
-      Z2M_OTA_UPDATE_TIMEOUT_MS,
-    )
-    // A refusal arrives at once; an update that is going ahead answers only when it is over.
-    const outcome = await Promise.race([
-      running.then(
-        () => 'done' as const,
-        (err: unknown) => err,
-      ),
-      this.delay(Z2M_OTA_ACCEPT_WINDOW_MS).then(() => 'running' as const),
-    ])
-    if (outcome === 'done') {
-      return { message: `${device.friendly_name} finished its firmware update.` }
-    }
-    if (outcome !== 'running') throw outcome instanceof Error ? outcome : new Error(String(outcome))
-    void running.then(
-      () =>
-        this.logger.info('zigbee2mqtt: firmware update finished', {
-          tags,
-          meta: { device: device.friendly_name },
-        }),
-      (err: unknown) =>
-        this.logger.warn('zigbee2mqtt: firmware update failed', {
-          tags,
-          meta: {
-            device: device.friendly_name,
-            reason: err instanceof Error ? err.message : String(err),
-          },
-        }),
+    const { finished } = await startFirmwareUpdate(
+      this.hub,
+      session,
+      { ieee: device.ieee_address, name: device.friendly_name },
+      this.logger,
+      this.delay,
     )
     return {
-      message: `Firmware update of ${device.friendly_name} started. Follow it under the device updates; do not power the device off.`,
+      message: finished
+        ? `${device.friendly_name} finished its firmware update.`
+        : `Firmware update of ${device.friendly_name} started. Follow it under the device updates; do not power the device off.`,
     }
   }
 

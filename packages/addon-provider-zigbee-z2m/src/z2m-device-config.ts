@@ -23,3 +23,23 @@ export const zigbeeDeviceSchema = z.object({
   plan: Z2mPlanSchema.nullish(),
 })
 export type ZigbeeDeviceConfig = z.infer<typeof zigbeeDeviceSchema>
+
+/** The suffix of the equipment id of a device's firmware Update device: `<ieee>#update`. */
+export const Z2M_UPDATE_SUFFIX = '#update'
+
+export function updateEquipmentOf(ieee: string): string {
+  return ieee + Z2M_UPDATE_SUFFIX
+}
+
+/** The IEEE address an Update device's equipment id names; null when it is not one. */
+export function ieeeOfUpdateEquipment(equipment: string): string | null {
+  return equipment.endsWith(Z2M_UPDATE_SUFFIX) && equipment.length > Z2M_UPDATE_SUFFIX.length
+    ? equipment.slice(0, -Z2M_UPDATE_SUFFIX.length)
+    : null
+}
+
+export const zigbeeUpdateSchema = z.object({
+  equipment: z.string().min(1).describe('IEEE address of the device, then #update'),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  system: z.literal(Z2M_SYSTEM).optional(),
+})

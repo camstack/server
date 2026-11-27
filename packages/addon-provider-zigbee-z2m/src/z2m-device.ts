@@ -135,6 +135,7 @@ export class ZigbeeDevice extends BaseDevice<typeof zigbeeDeviceSchema> {
   private readonly persisted: ZigbeeDeviceConfig
   private plan: Z2mPlan | null
   private lastState: Z2mState = {}
+  private unsubs: Array<() => void> = []
   private entry: Z2mDevice | null = null
   private linkOnline = false
   private bridgeOnline: boolean | null = null
@@ -163,8 +164,7 @@ export class ZigbeeDevice extends BaseDevice<typeof zigbeeDeviceSchema> {
     const { integrationId, equipment } = this.persisted
     z2mHub.bindDevice(integrationId, equipment, this.id)
     this.ctx.registerNativeCap(deviceMeshCapability, meshProviderFor(z2mHub, integrationId))
-    // No teardown hook exists on a device: the subscriptions live as long as the process.
-    z2mHub.subscribeLink(integrationId, {
+    const unsubLink = z2mHub.subscribeLink(integrationId, {
       connection: (state) => this.onConnection(state),
       bridge: (_info, online) => {
         this.bridgeOnline = online
@@ -172,7 +172,7 @@ export class ZigbeeDevice extends BaseDevice<typeof zigbeeDeviceSchema> {
       },
       devices: () => {},
     })
-    z2mHub.subscribeDevice(integrationId, equipment, {
+    const unsubDevice = z2mHub.subscribeDevice(integrationId, equipment, {
       device: (entry) => this.onEntry(entry),
       state: (state, delta) => this.onState(state, delta),
       availability: (online) => {
@@ -180,6 +180,17 @@ export class ZigbeeDevice extends BaseDevice<typeof zigbeeDeviceSchema> {
         this.syncOnline()
       },
     })
+    this.unsubs = [unsubLink, unsubDevice]
+  }
+
+  /** The device is removed or unregistered: drop its subscriptions, its binding and what it held. */
+  override async removeDevice(): Promise<void> {
+    for (const unsub of this.unsubs) unsub()
+    this.unsubs = []
+    z2mHub.unbindDevice(this.persisted.integrationId, this.persisted.equipment, this.id)
+    this.lastState = {}
+    this.entry = null
+    await super.removeDevice()
   }
 
   // ── Server → device ────────────────────────────────────────────────────

@@ -48,6 +48,12 @@ export class Z2mHub {
     this.bound.set(key(integrationId, ieee), deviceId)
   }
 
+  /** Forget the binding, only when it still names `deviceId` (a rebound ieee is not undone). */
+  unbindDevice(integrationId: string, ieee: string, deviceId: number): void {
+    const k = key(integrationId, ieee)
+    if (this.bound.get(k) === deviceId) this.bound.delete(k)
+  }
+
   deviceIdOf(integrationId: string, ieee: string): number | null {
     return this.bound.get(key(integrationId, ieee)) ?? null
   }

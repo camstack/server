@@ -18,6 +18,8 @@ export class ZigbeeGatewayDevice extends BaseDevice<typeof zigbeeGatewaySchema> 
 
   private linkOnline = false
   private bridgeOnline: boolean | null = null
+  private unsub: (() => void) | null = null
+  private coordinator: string | null = null
 
   constructor(ctx: DeviceContext) {
     super(ctx, zigbeeGatewaySchema, { type: ctx.deviceMeta.type })
@@ -29,19 +31,31 @@ export class ZigbeeGatewayDevice extends BaseDevice<typeof zigbeeGatewaySchema> 
     this.markOnline(false)
     const integrationId = this.config.get('integrationId')
     this.ctx.registerNativeCap(deviceMeshCapability, meshProviderFor(z2mHub, integrationId))
-    z2mHub.subscribeLink(integrationId, {
+    this.unsub = z2mHub.subscribeLink(integrationId, {
       connection: (state: Z2mConnection) => {
         this.linkOnline = state === 'online'
         this.sync()
       },
       bridge: (info, online) => {
         const coordinator = info?.coordinator?.ieee_address
-        if (coordinator !== undefined) z2mHub.bindDevice(integrationId, coordinator, this.id)
+        if (coordinator !== undefined) {
+          this.coordinator = coordinator
+          z2mHub.bindDevice(integrationId, coordinator, this.id)
+        }
         this.bridgeOnline = online
         this.sync()
       },
       devices: () => {},
     })
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.unsub?.()
+    this.unsub = null
+    if (this.coordinator !== null) {
+      z2mHub.unbindDevice(this.config.get('integrationId'), this.coordinator, this.id)
+    }
+    await super.removeDevice()
   }
 
   private sync(): void {

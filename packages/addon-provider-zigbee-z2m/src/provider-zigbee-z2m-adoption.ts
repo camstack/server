@@ -10,7 +10,7 @@ import {
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
-import { Z2M_GATEWAY_ID } from './z2m-device-config.js'
+import { Z2M_GATEWAY_ID, updateEquipmentOf } from './z2m-device-config.js'
 import type { Z2mPlan } from './z2m-exposes.js'
 
 /** A device the Zigbee2MQTT server lists and CamStack could adopt: its ieee address and its plan. */
@@ -20,6 +20,8 @@ export interface RemoteZigbeeDevice {
   readonly type: DeviceType
   readonly online: boolean | null
   readonly plan: Z2mPlan
+  /** The server can update this device's firmware (`supports_ota`, or an `update` block in its state). */
+  readonly firmware: boolean
 }
 
 export interface ProviderZigbeeZ2mAdoptionDeps {
@@ -68,6 +70,18 @@ export function buildProviderZigbeeZ2mAdoptionProvider(
         alreadyAdopted: adopted.has(remote.id),
         adoptedDeviceId: adopted.get(remote.id) ?? null,
         capabilities: remote.plan.capabilities,
+      })
+      if (!remote.firmware) continue
+      const updateId = updateEquipmentOf(remote.id)
+      offered.push({
+        childNativeId: updateId,
+        name: `${remote.name} firmware`,
+        type: DeviceType.Update,
+        status: remote.online === false ? 'offline' : 'online',
+        metadata: {},
+        alreadyAdopted: adopted.has(updateId),
+        adoptedDeviceId: adopted.get(updateId) ?? null,
+        capabilities: ['update'],
       })
     }
     return offered
