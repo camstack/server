@@ -77,6 +77,9 @@ describe('Cluster → Events post-processing node', () => {
       scope: 'cluster',
     })
     selectOption(select, 'hub')
+    // Held as a draft until Save (planning#675).
+    expect(updateScoped).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'pipeline-analytics',
       cap: 'pipeline-analytics',

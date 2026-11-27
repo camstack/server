@@ -22,6 +22,7 @@ import {
   cn,
   type DataColumn,
   DataTable,
+  FormSaveBar,
   TABLE_SCROLL_MAX_H,
   useClusterNodes,
   useDeviceManagerListAll,
@@ -30,6 +31,7 @@ import {
   usePipelineOrchestratorGetCameraStatuses,
   usePipelineOrchestratorGetPipelineAssignments,
   usePipelineOrchestratorListAgentSettings,
+  usePipelineOrchestratorSetPipelineDevicePin,
   usePipelineOrchestratorUnassignPipeline,
 } from '@camstack/ui-library'
 import { useEventInvalidation } from '../../hooks/useEventInvalidation'
@@ -42,6 +44,7 @@ import {
 import { buildColorByNodeId } from './assignments/node-color-map'
 import { RolesHereCell } from './assignments/RolesHereCell'
 import { AssignmentStatusCell } from './assignments/AssignmentStatusCell'
+import type { PlacementDraft } from './assignments/PlacementControls'
 import {
   BrokerDrillDown,
   PlacementCell,
@@ -130,7 +133,46 @@ export function CameraAssignmentsTable() {
   const invalidate = (): void => invalidateAssignmentQueries(queryClient)
   const assign = usePipelineOrchestratorAssignPipeline({ onSuccess: invalidate })
   const unassign = usePipelineOrchestratorUnassignPipeline({ onSuccess: invalidate })
-  const pending = assign.isPending || unassign.isPending
+  const setDevicePin = usePipelineOrchestratorSetPipelineDevicePin({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [['pipelineOrchestrator', 'getPipelineDevicePin']],
+      })
+    },
+  })
+  const pending = assign.isPending || unassign.isPending || setDevicePin.isPending
+
+  // Node and accelerator picks of every camera are ONE draft with ONE Save (planning#675).
+  const [draft, setDraft] = useState<Readonly<Record<number, PlacementDraft>>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const pendingRows = Object.entries(draft).filter(
+    ([, d]) => d.node !== undefined || d.devicePin !== undefined,
+  )
+  const pendingCount = pendingRows.reduce(
+    (n, [, d]) => n + (d.node !== undefined ? 1 : 0) + (d.devicePin !== undefined ? 1 : 0),
+    0,
+  )
+  const saveDraft = (): void => {
+    setSaveError(null)
+    const writes = pendingRows.flatMap(([id, d]) => {
+      const deviceId = Number(id)
+      const calls: Promise<unknown>[] = []
+      if (d.node !== undefined) {
+        calls.push(
+          d.node === 'auto'
+            ? unassign.mutateAsync({ deviceId })
+            : assign.mutateAsync({ deviceId, agentNodeId: d.node }),
+        )
+      }
+      if (d.devicePin !== undefined) {
+        calls.push(setDevicePin.mutateAsync({ deviceId, deviceKey: d.devicePin }))
+      }
+      return calls
+    })
+    void Promise.all(writes)
+      .then(() => setDraft({}))
+      .catch((err: unknown) => setSaveError(err instanceof Error ? err.message : String(err)))
+  }
 
   const columns: readonly DataColumn<ClusterAssignmentRow>[] = [
     {
@@ -165,11 +207,8 @@ export function CameraAssignmentsTable() {
           onlineNodes={onlineNodes}
           nameOf={nameOf}
           pending={pending}
-          onChange={(target) =>
-            target === 'auto'
-              ? unassign.mutate({ deviceId: row.deviceId })
-              : assign.mutate({ deviceId: row.deviceId, agentNodeId: target })
-          }
+          draft={draft[row.deviceId] ?? {}}
+          onDraft={(edit) => setDraft((prev) => ({ ...prev, [row.deviceId]: edit }))}
         />
       ),
     },
@@ -256,6 +295,20 @@ export function CameraAssignmentsTable() {
         minWidthPx={920}
         maxBodyHeight={TABLE_SCROLL_MAX_H}
         emptyMessage={emptyMessage}
+      />
+      {saveError !== null && (
+        <p role="alert" className="text-xs text-danger">
+          {saveError}
+        </p>
+      )}
+      <FormSaveBar
+        pendingCount={pendingCount}
+        saving={pending}
+        onSave={saveDraft}
+        onDiscard={() => {
+          setDraft({})
+          setSaveError(null)
+        }}
       />
     </div>
   )

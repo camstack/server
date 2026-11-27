@@ -10,10 +10,11 @@
  *     `pipeline-analytics` addon; takes effect on addon restart.
  *  2. Events FOLDER — the single `eventMedia` storage location.
  */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import {
+  FormSaveBar,
   useClusterNodes,
   useAddonSettingsGetScopedSettings,
   useAddonSettingsUpdateScopedSettings,
@@ -57,8 +58,12 @@ export function ClusterEventsTab() {
     scope: 'cluster',
   })
   const currentNode = readNodeValue(settings)
+  // The pick is held until Save (planning#675); absent means the served node stands.
+  const [pickedNode, setPickedNode] = useState<string | null>(null)
+  const shownNode = pickedNode ?? currentNode
   const updateGlobal = useAddonSettingsUpdateScopedSettings({
     onSuccess: () => {
+      setPickedNode(null)
       void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getScopedSettings']] })
     },
   })
@@ -85,16 +90,8 @@ export function ClusterEventsTab() {
           ) : (
             <Select
               wrapperClassName="inline-block w-auto"
-              value={currentNode}
-              onChange={(e) => {
-                if (e.target.value !== currentNode)
-                  updateGlobal.mutate({
-                    addonId: ADDON_ID,
-                    cap: CAP,
-                    scope: 'cluster',
-                    patch: { postProcessingNodeId: e.target.value },
-                  })
-              }}
+              value={shownNode}
+              onChange={(e) => setPickedNode(e.target.value)}
               disabled={updateGlobal.isPending}
             >
               {nodeOptions.map((id) => (
@@ -104,7 +101,21 @@ export function ClusterEventsTab() {
               ))}
             </Select>
           )}
-          {updateGlobal.isPending && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        </div>
+        <div className="mt-3">
+          <FormSaveBar
+            pendingCount={shownNode !== currentNode ? 1 : 0}
+            saving={updateGlobal.isPending}
+            onSave={() =>
+              updateGlobal.mutate({
+                addonId: ADDON_ID,
+                cap: CAP,
+                scope: 'cluster',
+                patch: { postProcessingNodeId: shownNode },
+              })
+            }
+            onDiscard={() => setPickedNode(null)}
+          />
         </div>
       </section>
 

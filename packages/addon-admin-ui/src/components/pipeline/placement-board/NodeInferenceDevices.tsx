@@ -11,6 +11,10 @@
  * than in a second list. The header's Rescan re-probes the node's accelerators
  * now (`platformProbe.rescanAccelerators`, routed by `nodeId`).
  *
+ * The switches, caps and shares edit ONE local draft per node; the Save bar
+ * writes it, Discard restores the served roster (planning#675). Forget and
+ * Rescan are one-shot actions and act at once.
+ *
  * Writes go through `setAgentInferenceDevices`, which REPLACES the node's stored
  * map wholesale — we send EVERY reported device with its honest `enabled` bit
  * (via the shared `buildInferenceDevicesWrite`). A disabled device is written
@@ -32,6 +36,7 @@ import {
   ConfirmActionButton,
   DataTable,
   type DataColumn,
+  FormSaveBar,
   Input,
   Switch,
   trpc,
@@ -213,9 +218,9 @@ export function NodeInferenceDevices({
   const devices: readonly NodeInferenceDevice[] = nodeDevices?.devices ?? []
   const reachable = nodeDevices?.reachable ?? isOnline
 
-  // Optimistic draft of the opt-in map, keyed by device key. Reseeded from the
-  // server whenever the persisted set changes so an in-flight edit isn't
-  // clobbered by our own commit round-tripping back.
+  // Draft of the opt-in map, keyed by device key, written only on Save.
+  // Reseeded from the server whenever the persisted set changes (a Save
+  // round-tripping back, or a Discard).
   const [draft, setDraft] = useState<Record<string, DeviceDraft>>({})
   const signature = devices
     .map(
@@ -257,9 +262,16 @@ export function NodeInferenceDevices({
 
   const update = (device: NodeInferenceDevice, patch: Partial<DeviceDraft>): void => {
     const current = draft[device.key] ?? deviceDefault(device)
-    const next = { ...draft, [device.key]: { ...current, ...patch } }
-    setDraft(next)
-    commit(next)
+    setDraft({ ...draft, [device.key]: { ...current, ...patch } })
+  }
+
+  const pendingCount = devices.filter((d) => {
+    const edit = draft[d.key]
+    return edit !== undefined && !sameDeviceState(edit, deviceDefault(d))
+  }).length
+  const discard = (): void => {
+    setDraft(Object.fromEntries(devices.map((d) => [d.key, deviceDefault(d)])))
+    setDevicesMutation.reset()
   }
 
   const rows = useMemo(() => buildDeviceTableRows(devices, share, placed), [devices, share, placed])
@@ -285,7 +297,6 @@ export function NodeInferenceDevices({
       if (current) next[entry.nodeId] = { ...current, weight: entry.weight }
     }
     setDraft(next)
-    commit(next)
   }
 
   const pending = setDevicesMutation.isPending || forgetMutation.isPending
@@ -531,6 +542,15 @@ export function NodeInferenceDevices({
             </div>
           )}
 
+          {reachable && (
+            <FormSaveBar
+              pendingCount={pendingCount}
+              saving={setDevicesMutation.isPending}
+              onSave={() => commit(draft)}
+              onDiscard={discard}
+            />
+          )}
+
           {mutationError != null && (
             <div className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
               {t(
@@ -544,6 +564,10 @@ export function NodeInferenceDevices({
       )}
     </div>
   )
+}
+
+function sameDeviceState(a: DeviceDraft, b: DeviceDraft): boolean {
+  return a.enabled === b.enabled && a.weight === b.weight && a.maxSessions === b.maxSessions
 }
 
 function deviceDefault(device: NodeInferenceDevice): DeviceDraft {

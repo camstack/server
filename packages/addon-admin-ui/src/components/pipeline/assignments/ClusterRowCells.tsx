@@ -16,7 +16,12 @@ import {
   WidgetSlot,
 } from '@camstack/ui-library'
 import type { RoleState } from './assignment-rows'
-import { DevicePinSelect, NodePinSelect, type NodePinSelectProps } from './PlacementControls'
+import {
+  DevicePinSelect,
+  NodePinSelect,
+  type NodePinSelectProps,
+  type PlacementDraft,
+} from './PlacementControls'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -35,20 +40,38 @@ function useLastPlacement(state: RoleState): RoleState | null {
   return last.current
 }
 
-export interface PlacementCellProps extends Omit<NodePinSelectProps, 'state'> {
+export interface PlacementCellProps
+  extends Omit<NodePinSelectProps, 'state' | 'draft' | 'onChange'> {
   readonly deviceId: number
   readonly state: RoleState
+  /** The unsaved picks of this camera. */
+  readonly draft: PlacementDraft
+  /** `undefined` for a field drops that pick (it equals the served pin). */
+  readonly onDraft: (edit: PlacementDraft) => void
 }
 
 /** Node pin, then the accelerator pin on the pinned (else last resolved) node. */
-export function PlacementCell({ deviceId, state, ...nodePin }: PlacementCellProps) {
+export function PlacementCell({ deviceId, state, draft, onDraft, ...nodePin }: PlacementCellProps) {
   const { t } = useTranslation()
   const placement = useLastPlacement(state)
   return (
     <div className="grid w-80 grid-cols-2 gap-1.5">
-      <NodePinSelect state={state} {...nodePin} />
+      <NodePinSelect
+        state={state}
+        {...nodePin}
+        {...(draft.node !== undefined ? { draft: draft.node } : {})}
+        onChange={(target) => {
+          const served = state.pinned && state.nodeId !== null ? state.nodeId : 'auto'
+          onDraft({ ...draft, node: target === served ? undefined : target })
+        }}
+      />
       {placement?.nodeId != null ? (
-        <DevicePinSelect deviceId={deviceId} nodeId={placement.nodeId} />
+        <DevicePinSelect
+          deviceId={deviceId}
+          nodeId={placement.nodeId}
+          {...(draft.devicePin !== undefined ? { draft: draft.devicePin } : {})}
+          onDraft={(devicePin) => onDraft({ ...draft, devicePin })}
+        />
       ) : (
         <Select
           aria-label={t(

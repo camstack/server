@@ -1,15 +1,14 @@
 /**
  * The placement column of Cluster → Assignments: WHERE a camera's detection
  * may run — a node pin and, on that node, an accelerator pin. Both are the
- * library `Select`; this is the only place either is edited from the table.
+ * library `Select`. Neither writes: a pick lands in the table's draft and is
+ * saved with the table's Save bar (planning#675).
  */
-import { useQueryClient } from '@tanstack/react-query'
 import {
   acceleratorLabel,
   Select,
   usePipelineOrchestratorGetNodeInferenceDevices,
   usePipelineOrchestratorGetPipelineDevicePin,
-  usePipelineOrchestratorSetPipelineDevicePin,
 } from '@camstack/ui-library'
 import { nodePinOptions, type RoleState } from './assignment-rows'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +21,14 @@ import { useTranslation } from 'react-i18next'
  */
 const NODE_DEVICES_STALE_MS = 300_000
 
+/** What the operator picked for one camera and has not saved; an absent field is untouched. */
+export interface PlacementDraft {
+  /** `'auto'` unpins; anything else is a node id. */
+  readonly node?: string
+  /** `'auto'` is any accelerator; anything else is a device key. */
+  readonly devicePin?: string
+}
+
 interface NamedNode {
   readonly id: string
   readonly name: string
@@ -32,7 +39,9 @@ export interface NodePinSelectProps {
   readonly onlineNodes: readonly NamedNode[]
   readonly nameOf: (nodeId: string) => string
   readonly pending: boolean
-  /** `'auto'` unpins; anything else is a node id. */
+  /** The unsaved pick, shown instead of the served pin. */
+  readonly draft?: string
+  /** `'auto'` unpins; anything else is a node id. Held in the draft, not written. */
   readonly onChange: (target: string) => void
 }
 
@@ -41,6 +50,7 @@ export function NodePinSelect({
   onlineNodes,
   nameOf,
   pending,
+  draft,
   onChange,
 }: NodePinSelectProps) {
   const { t } = useTranslation()
@@ -51,7 +61,7 @@ export function NodePinSelect({
         'assignments.placementControls.autoLetsEachSessionPick',
         'Auto lets each session pick its node; a pin keeps the camera on one node.',
       )}
-      value={state.pinned && state.nodeId !== null ? state.nodeId : 'auto'}
+      value={draft ?? (state.pinned && state.nodeId !== null ? state.nodeId : 'auto')}
       disabled={pending}
       options={[...nodePinOptions(state, onlineNodes, nameOf)]}
       onChange={(event) => onChange(event.target.value)}
@@ -63,6 +73,10 @@ export interface DevicePinSelectProps {
   readonly deviceId: number
   /** The node whose accelerators are offered: the pinned node, else the last one it ran on. */
   readonly nodeId: string
+  /** The unsaved pick, shown instead of the served pin. */
+  readonly draft?: string
+  /** Held in the draft, not written; `undefined` means the pick equals the served pin. */
+  readonly onDraft: (deviceKey: string | undefined) => void
 }
 
 /**
@@ -71,9 +85,8 @@ export interface DevicePinSelectProps {
  * mounts before its option exists falls back to the first option ("Auto") and
  * does not always re-sync when the option appears.
  */
-export function DevicePinSelect({ deviceId, nodeId }: DevicePinSelectProps) {
+export function DevicePinSelect({ deviceId, nodeId, draft, onDraft }: DevicePinSelectProps) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const { data: pin } = usePipelineOrchestratorGetPipelineDevicePin(
     { deviceId },
     { refetchOnMount: 'always' },
@@ -84,14 +97,6 @@ export function DevicePinSelect({ deviceId, nodeId }: DevicePinSelectProps) {
     { nodeId },
     { staleTime: NODE_DEVICES_STALE_MS },
   )
-  const setDevicePin = usePipelineOrchestratorSetPipelineDevicePin({
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: [['pipelineOrchestrator', 'getPipelineDevicePin']],
-      })
-    },
-  })
-
   if (pin === undefined || nodeDevices === undefined) {
     return (
       <span className="text-[10px] italic text-foreground-subtle">
@@ -102,7 +107,8 @@ export function DevicePinSelect({ deviceId, nodeId }: DevicePinSelectProps) {
 
   const devices = nodeDevices.devices ?? []
   const enabled = devices.filter((d) => d.enabled)
-  const value = pin?.deviceKey ?? 'auto'
+  const served = pin?.deviceKey ?? 'auto'
+  const value = draft ?? served
   // A pin to an accelerator the node no longer offers stays visible, selected.
   const pinnedMissing = value !== 'auto' && !enabled.some((d) => d.key === value)
   const pinnedDevice = devices.find((d) => d.key === value)
@@ -128,9 +134,8 @@ export function DevicePinSelect({ deviceId, nodeId }: DevicePinSelectProps) {
         'Pin detection to one accelerator of the node, or let each session pick.',
       )}
       value={value}
-      disabled={setDevicePin.isPending}
       options={options}
-      onChange={(event) => setDevicePin.mutate({ deviceId, deviceKey: event.target.value })}
+      onChange={(event) => onDraft(event.target.value === served ? undefined : event.target.value)}
     />
   )
 }

@@ -66,9 +66,14 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     usePipelineOrchestratorGetAudioAssignments: () => ({ data: [] }),
     usePipelineOrchestratorGetCameraStatuses: () => mockCameraStatuses(),
     usePipelineOrchestratorListAgentSettings: () => ({ data: [] }),
-    usePipelineOrchestratorAssignPipeline: () => ({ mutate: mockAssignPipeline, isPending: false }),
+    usePipelineOrchestratorAssignPipeline: () => ({
+      mutate: mockAssignPipeline,
+      mutateAsync: mockAssignPipeline,
+      isPending: false,
+    }),
     usePipelineOrchestratorUnassignPipeline: () => ({
       mutate: mockUnassignPipeline,
+      mutateAsync: mockUnassignPipeline,
       isPending: false,
     }),
     usePipelineOrchestratorAssignAudio: () => ({ mutate: vi.fn(), isPending: false }),
@@ -79,6 +84,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       mockNodeDevices() ?? { data: { devices: [] } },
     usePipelineOrchestratorSetPipelineDevicePin: () => ({
       mutate: mockSetDevicePin,
+      mutateAsync: mockSetDevicePin,
       isPending: false,
     }),
     useClusterNodes: () => ({
@@ -180,6 +186,9 @@ describe('CameraAssignmentsTable (cluster)', () => {
     const select = within(rowOf('Garden')).getByLabelText('Node pin') as HTMLButtonElement
     expect(selectOptionLabels(select)).toContain('Pin → macmini')
     selectOption(select, MAC)
+    // Nothing is written until Save (planning#675).
+    expect(mockAssignPipeline).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(mockAssignPipeline).toHaveBeenCalledWith({ deviceId: 102, agentNodeId: MAC })
   })
 
@@ -191,6 +200,8 @@ describe('CameraAssignmentsTable (cluster)', () => {
     const select = within(rowOf('Front Door')).getByLabelText('Node pin') as HTMLButtonElement
     expect(select.value).toBe('hub')
     selectOption(select, 'auto')
+    expect(mockUnassignPipeline).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(mockUnassignPipeline).toHaveBeenCalledWith({ deviceId: 101 })
   })
 
@@ -212,6 +223,8 @@ describe('CameraAssignmentsTable (cluster)', () => {
     expect(selectOptionLabels(select)).toContain('Coral Edge TPU · tflite')
     expect(selectOptionLabels(select).some((l) => /CPU/.test(l))).toBe(false)
     selectOption(select, 'edgetpu:usb')
+    expect(mockSetDevicePin).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(mockSetDevicePin).toHaveBeenCalledWith({ deviceId: 101, deviceKey: 'edgetpu:usb' })
   })
 
