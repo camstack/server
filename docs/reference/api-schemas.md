@@ -4272,6 +4272,7 @@ Enum: `"reported" \| "assumed"`
 - `rssi`: `number \| null`
 - `lqi`: `number \| null`
 - `lastReadAt`: `number \| null`
+- `networkId?`: `string \| null`
 
 ### `MeshPeerSchema`
 

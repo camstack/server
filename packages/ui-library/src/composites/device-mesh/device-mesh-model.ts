@@ -7,7 +7,7 @@
  * report is `null`, a median over no known value is `null`, and a network whose
  * read failed carries `topology: null` and the reason.
  */
-import type { MeshLink, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
+import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
 
 export type LqiTone = 'good' | 'fair' | 'poor' | 'unknown'
 
@@ -119,9 +119,93 @@ export function networkHasDevice(network: MeshNetwork, deviceId: number): boolea
 }
 
 /**
+ * One answer split by `node.networkId`: a provider whose answer spans several
+ * networks (a Matter fabric over two Thread networks) gets one topology per
+ * network. A node without a `networkId` belongs to the answer's own network.
+ */
+export function splitByNetwork(topology: MeshTopology): readonly MeshTopology[] {
+  const own = topology.network?.id ?? null
+  const idOf = (n: MeshNode): string | null => n.networkId ?? own
+  const ids = [...new Set(topology.nodes.map(idOf))]
+  if (ids.length <= 1) return [topology]
+  return ids.map((id) => {
+    const nodes = topology.nodes.filter((n) => idOf(n) === id)
+    const keys = new Set(nodes.map((n) => n.nodeKey))
+    const network: MeshNetworkInfo | null =
+      id === null
+        ? null
+        : id === own
+          ? topology.network
+          : { id, name: null, technology: 'thread', channel: null, panId: null }
+    return {
+      network,
+      readAt: topology.readAt,
+      nodes,
+      links: topology.links.filter((l) => keys.has(l.from) && keys.has(l.to)),
+    }
+  })
+}
+
+const newest = (a: number | null, b: number | null): number | null =>
+  a === null ? b : b === null ? a : Math.max(a, b)
+
+/**
+ * Merge two reads of one network. A node is the same node when it is the same
+ * CamStack device (or the same peer key of a device-less peer); the newer
+ * per-node read wins. Node keys are provider-scoped, so an incoming key that
+ * collides with a different node is renamed before its links are carried over.
+ */
+export function mergeTopologies(
+  base: MeshTopology,
+  incoming: MeshTopology,
+  incomingRoot: number,
+): MeshTopology {
+  const nodes: MeshNode[] = [...base.nodes]
+  const remap = new Map<string, string>()
+  for (const node of incoming.nodes) {
+    const same = nodes.findIndex((n) =>
+      node.deviceId !== null
+        ? n.deviceId === node.deviceId
+        : n.deviceId === null && n.nodeKey === node.nodeKey,
+    )
+    if (same !== -1) {
+      const held = nodes[same]
+      if (held === undefined) continue
+      remap.set(node.nodeKey, held.nodeKey)
+      if ((node.lastReadAt ?? -1) > (held.lastReadAt ?? -1)) {
+        nodes[same] = { ...node, nodeKey: held.nodeKey }
+      }
+      continue
+    }
+    const clash = nodes.some((n) => n.nodeKey === node.nodeKey)
+    const key = clash ? `${incomingRoot}/${node.nodeKey}` : node.nodeKey
+    remap.set(node.nodeKey, key)
+    nodes.push({ ...node, nodeKey: key })
+  }
+  const links = [...base.links]
+  const seen = new Set(links.map((l) => `${l.from}|${l.to}|${l.kind}`))
+  for (const link of incoming.links) {
+    const from = remap.get(link.from) ?? link.from
+    const to = remap.get(link.to) ?? link.to
+    const id = `${from}|${to}|${link.kind}`
+    if (seen.has(id) || from === to) continue
+    seen.add(id)
+    links.push({ ...link, from, to })
+  }
+  return {
+    network: base.network ?? incoming.network,
+    readAt: newest(base.readAt, incoming.readAt),
+    nodes,
+    links,
+  }
+}
+
+/**
  * One `getTopology` answers for the whole mesh the device sits in, so a network
  * is read once: every device that already appeared as a node of a topology read
- * so far is skipped, and only the first uncovered device is asked next. A device
+ * so far is skipped, and only the first uncovered device is asked next. An answer
+ * spanning several networks is split by node; reads that share a `network.id`
+ * (two brokers on one Thread network) are merged into one section. A device
  * whose read fails is its own failed network (nothing says which mesh it is in).
  */
 export async function collectMeshNetworks(
@@ -134,15 +218,21 @@ export async function collectMeshNetworks(
     if (covered.has(deviceId)) continue
     covered.add(deviceId)
     try {
-      const topology = await fetchTopology(deviceId)
-      for (const node of topology.nodes) if (node.deviceId !== null) covered.add(node.deviceId)
-      // Two reads of one network (same id) are one section: keep the newer read.
-      const id = topology.network?.id ?? null
-      const same = id === null ? -1 : networks.findIndex((n) => n.topology?.network?.id === id)
-      if (same === -1) {
-        networks.push({ rootDeviceId: deviceId, topology, error: null })
-      } else if ((topology.readAt ?? -1) > (networks[same]?.topology?.readAt ?? -1)) {
-        networks[same] = { rootDeviceId: deviceId, topology, error: null }
+      const read = await fetchTopology(deviceId)
+      for (const node of read.nodes) if (node.deviceId !== null) covered.add(node.deviceId)
+      for (const part of splitByNetwork(read)) {
+        const id = part.network?.id ?? null
+        const same = id === null ? -1 : networks.findIndex((n) => n.topology?.network?.id === id)
+        const held = same === -1 ? undefined : networks[same]
+        if (held?.topology == null) {
+          networks.push({ rootDeviceId: deviceId, topology: part, error: null })
+        } else {
+          networks[same] = {
+            rootDeviceId: held.rootDeviceId,
+            topology: mergeTopologies(held.topology, part, deviceId),
+            error: null,
+          }
+        }
       }
     } catch (err) {
       networks.push({

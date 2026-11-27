@@ -451,4 +451,36 @@ describe('the network a topology names', () => {
       buildTopology([{ nodeId: '1', label: 'x', online: true, deviceId: 1, facts }]).network,
     ).toBeNull()
   })
+  it('breaks a tie between two Thread networks by the lowest id, whatever the read order', () => {
+    const other = (own: bigint): MeshAttr[] => [
+      ...threadAttrs(own, 5, []),
+      attr(THREAD, 4, 0x0011223344556677n),
+    ]
+    const mk = (nodeId: string, attrs: MeshAttr[], deviceId: number) => ({
+      nodeId,
+      label: nodeId,
+      online: true,
+      deviceId,
+      facts: decodeNodeMeshFacts(attrs),
+    })
+    const a = mk('1', named(ROUTER_EXT, null), 1)
+    const b = mk('2', other(SLEEPY_EXT), 2)
+    const forward = buildTopology([a, b]).network?.id
+    expect(forward).toBe('0011223344556677')
+    expect(buildTopology([b, a]).network?.id).toBe(forward)
+  })
+  it('tags each node with its own network so a fabric spanning two can be split', () => {
+    const second = [...threadAttrs(SLEEPY_EXT, 5, []), attr(THREAD, 4, 0x0011223344556677n)]
+    const topology = buildTopology([
+      {
+        nodeId: '1',
+        label: 'a',
+        online: true,
+        deviceId: 1,
+        facts: decodeNodeMeshFacts(named(ROUTER_EXT, null)),
+      },
+      { nodeId: '2', label: 'b', online: true, deviceId: 2, facts: decodeNodeMeshFacts(second) },
+    ])
+    expect(topology.nodes.map((n) => n.networkId)).toEqual(['1122334455667788', '0011223344556677'])
+  })
 })

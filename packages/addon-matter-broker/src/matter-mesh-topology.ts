@@ -94,7 +94,12 @@ export function networkOf(nodes: readonly MeshNodeInput[], scope: string): MeshN
     threads.set(thread.extPanId, { count: (held?.count ?? 0) + 1, facts: held?.facts ?? thread })
   }
   let best: { id: string; count: number; facts: ThreadFacts } | null = null
-  for (const [id, v] of threads) if (best === null || v.count > best.count) best = { id, ...v }
+  // Most nodes wins; a tie goes to the lowest id so the answer does not depend on read order.
+  for (const [id, v] of threads) {
+    if (best === null || v.count > best.count || (v.count === best.count && id < best.id)) {
+      best = { id, ...v }
+    }
+  }
   if (best !== null) {
     // The name may be unread on the first node and read on another one.
     const named = nodes.find(
@@ -138,12 +143,18 @@ export function buildTopology(nodes: readonly MeshNodeInput[], scope = 'matter')
     online: node.online,
     ...leafSignal(node),
     lastReadAt: node.facts.readAt,
+    networkId: node.facts.thread?.extPanId ?? null,
   }))
   const links: MeshLink[] = []
   const seenLinks = new Set<string>()
   const peers = new Map<string, MeshNode>()
 
-  const target = (ext: string, isChild: boolean | null, full: boolean | null): string => {
+  const target = (
+    ext: string,
+    isChild: boolean | null,
+    full: boolean | null,
+    networkId: string | null,
+  ): string => {
     const owner = own.get(ext)
     if (owner !== undefined) return owner
     const key = peerNodeKey(ext)
@@ -159,6 +170,8 @@ export function buildTopology(nodes: readonly MeshNodeInput[], scope = 'matter')
         rssi: null,
         lqi: null,
         lastReadAt: null,
+        // A peer sits in the network of the node that reported it.
+        networkId,
       })
     }
     return key
@@ -176,7 +189,7 @@ export function buildTopology(nodes: readonly MeshNodeInput[], scope = 'matter')
     for (const n of thread.neighbors ?? []) {
       addLink({
         from: node.nodeId,
-        to: target(n.extAddress, n.isChild, n.fullThreadDevice),
+        to: target(n.extAddress, n.isChild, n.fullThreadDevice, thread.extPanId),
         kind: 'neighbor',
         lqi: n.lqi,
         rssi: n.averageRssi ?? n.lastRssi,
@@ -186,7 +199,7 @@ export function buildTopology(nodes: readonly MeshNodeInput[], scope = 'matter')
       if (r.linkEstablished !== true) continue
       addLink({
         from: node.nodeId,
-        to: target(r.extAddress, null, true),
+        to: target(r.extAddress, null, true, thread.extPanId),
         kind: 'route',
         lqi: r.lqiOut,
         rssi: null,

@@ -105,7 +105,10 @@ export function DeviceNetworksPage() {
         />
       )}
       {mesh.networks.map((network, index) => (
-        <section key={network.rootDeviceId} className="flex flex-col gap-2">
+        <section
+          key={`${network.topology?.network?.id ?? 'failed'}-${network.rootDeviceId}`}
+          className="flex flex-col gap-2"
+        >
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
               {networkTitle(network.topology?.network ?? null, index)}

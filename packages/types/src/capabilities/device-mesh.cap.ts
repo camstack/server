@@ -54,6 +54,12 @@ export const MeshNodeSchema = z.object({
   lqi: z.number().nullable(),
   /** Ms epoch of the last time something about this node was read; `null` = never. */
   lastReadAt: z.number().nullable(),
+  /**
+   * `MeshNetworkInfo.id` of the network this node sits in, when the provider knows
+   * it per node (one answer may span several networks); absent / `null` = the
+   * topology's own `network`.
+   */
+  networkId: z.string().nullable().optional(),
 })
 export type MeshNode = z.infer<typeof MeshNodeSchema>
 
@@ -87,7 +93,7 @@ export const MeshNetworkInfoSchema = z.object({
 export type MeshNetworkInfo = z.infer<typeof MeshNetworkInfoSchema>
 
 export const MeshTopologySchema = z.object({
-  /** The network these nodes sit in; `null` = a provider that does not say (or nothing read yet). */
+  /** The dominant network of these nodes (see each node's `networkId` for the others); `null` = a provider that does not say (or nothing read yet). */
   network: MeshNetworkInfoSchema.nullable(),
   /** Ms epoch of the newest read behind this answer; `null` = nothing read yet. */
   readAt: z.number().nullable(),

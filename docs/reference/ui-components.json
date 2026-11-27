@@ -13057,6 +13057,13 @@
       "summary": "Merge an edited password box back into the body sent to `putEntry`."
     },
     {
+      "name": "mergeTopologies",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "Merge two reads of one network. A node is the same node when it is the same CamStack device (or the same peer key of a device-less peer); the newer per-node read wins. Node keys are provider-scoped, so an incoming key…"
+    },
+    {
       "name": "meshNodeHref",
       "kind": "function",
       "area": "composites",
@@ -18508,6 +18515,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/responsive.ts",
       "summary": "Sidebar narrow lane in a SPLIT_PANEL_OUTER layout."
+    },
+    {
+      "name": "splitByNetwork",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
+      "summary": "One answer split by `node.networkId`: a provider whose answer spans several networks (a Matter fabric over two Thread networks) gets one topology per network. A node without a `networkId` belongs to the answer's own n…"
     },
     {
       "name": "splitDuration",
