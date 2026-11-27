@@ -92,6 +92,8 @@ export default defineFixtures({
     'addons.listUpdates': [],
     'addons.listCapabilityProviders': (i: { capName: string }) => providersOf(i.capName),
     'alerts.getUnreadCount': 1,
+    'jobs.getSummary': { running: 0, unseenFinished: 0 },
+    'jobs.list': [],
     'alerts.list': [
       {
         id: 'shot-google-broker-critical',

@@ -124,9 +124,10 @@ export function isSystemOwned(job: Pick<Job, 'ownerUserId'>): boolean {
 
 /** The badge: what is running now, plus the finished ones not yet seen. `null` = unmeasured, counted as nothing. */
 export function activityBadgeCount(
-  summary: { readonly running: number; readonly unseenFinished: number | null } | undefined,
+  summary: { readonly running: number; readonly unseenFinished: number | null } | null | undefined,
 ): number {
-  if (summary === undefined) return 0
+  // An unanswered query (undefined) and a null answer both mean "nothing to count", never a crash
+  if (summary === undefined || summary === null) return 0
   return summary.running + (summary.unseenFinished ?? 0)
 }
 

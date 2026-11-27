@@ -109,6 +109,7 @@ describe('badge and order', () => {
     expect(activityBadgeCount({ running: 2, unseenFinished: 1 })).toBe(3)
     expect(activityBadgeCount({ running: 2, unseenFinished: null })).toBe(2)
     expect(activityBadgeCount(undefined)).toBe(0)
+    expect(activityBadgeCount(null)).toBe(0)
   })
   it('puts live jobs first, then newest', () => {
     const jobs = [
