@@ -8,7 +8,7 @@
  * disabled is skipped, so a retry or the boot re-drive answers zero.
  */
 import { resolveLocationMode } from '@camstack/types'
-import type { INodeRemovalHookProvider, IScopedLogger } from '@camstack/types'
+import type { INodeRemovalHookProvider, IScopedLogger, StorageLocation } from '@camstack/types'
 import type { StorageOrchestratorService } from './storage-orchestrator.service.js'
 
 export interface NodeRemovalDeps {
@@ -17,6 +17,12 @@ export interface NodeRemovalDeps {
     'listLocations' | 'disableLocationOfForgottenNode'
   >
   readonly logger: IScopedLogger
+  /**
+   * Called after each location is disabled and persisted: the owner announces the
+   * change (`StorageLocationsChanged`) and re-evaluates writability, as every
+   * other door does, so consumers and the no-writable-location alert see it.
+   */
+  readonly onChanged: (location: StorageLocation) => void
 }
 
 export function createNodeRemovalHook(deps: NodeRemovalDeps): INodeRemovalHookProvider {
@@ -26,8 +32,20 @@ export function createNodeRemovalHook(deps: NodeRemovalDeps): INodeRemovalHookPr
       for (const location of deps.service.listLocations()) {
         if (location.nodeId !== nodeId) continue
         if (resolveLocationMode(location) === 'disabled') continue
-        await deps.service.disableLocationOfForgottenNode(location.id)
+        try {
+          await deps.service.disableLocationOfForgottenNode(location.id)
+        } catch (err) {
+          deps.logger.error('could not disable a storage location on a forgotten node', {
+            meta: {
+              nodeId,
+              locationId: location.id,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          })
+          throw err
+        }
         disabled += 1
+        deps.onChanged(location)
         deps.logger.info('disabled a storage location on a forgotten node', {
           meta: { nodeId, locationId: location.id },
         })

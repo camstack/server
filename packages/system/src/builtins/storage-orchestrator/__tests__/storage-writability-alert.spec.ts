@@ -18,6 +18,7 @@
  * a doorbell nobody rings.
  */
 import type {
+  INodeRemovalHookProvider,
   AddonContext,
   IEventBus,
   IScopedLogger,
@@ -90,6 +91,7 @@ interface Harness {
   readonly addon: StorageOrchestratorAddon
   readonly emitted: SystemEvent[]
   readonly logger: IScopedLogger
+  readonly nodeRemoval: INodeRemovalHookProvider | null
 }
 
 /** Boot the real addon. `withBus: false` reproduces a host that injects none. */
@@ -131,8 +133,11 @@ async function boot(withBus: boolean, preloaded: readonly SeedLocationRow[]): Pr
   const addon = new StorageOrchestratorAddon()
   // Documented type boundary: `AddonContext` is the kernel's full injection
   // surface; the orchestrator reads the handful of fields assembled above.
-  await addon.initialize(ctx as unknown as AddonContext)
-  return { addon, emitted, logger }
+  const init = await addon.initialize(ctx as unknown as AddonContext)
+  const registration = init?.providers?.find((p) => p.capability.name === 'node-removal-hook')
+  // Documented type boundary: a registration pairs a capability with its provider.
+  const nodeRemoval = registration ? (registration.provider as INodeRemovalHookProvider) : null
+  return { addon, emitted, logger, nodeRemoval }
 }
 
 const FINDING = 'storage:no-writable-location:recordings'
@@ -192,6 +197,43 @@ describe('the orchestrator alerts when a declared type has no writable location'
     expect(findings(harness.emitted)).toEqual([
       { category: EventCategory.SystemLivenessFailed, findingId: FINDING },
       { category: EventCategory.SystemLivenessRecovered, findingId: FINDING },
+    ])
+  })
+  it('forgetting the node that held the LAST write target announces it and raises the alert', async () => {
+    harness = await boot(true, [
+      {
+        id: 'logs:default',
+        data: {
+          id: 'logs:default',
+          type: 'logs',
+          display_name: 'Logs',
+          provider_id: PROVIDER_ID,
+          config: { basePath: '/data/logs' },
+          is_default: 0,
+          is_system: 0,
+          created_at: 1,
+          updated_at: 1,
+        },
+      },
+    ])
+    await vi.waitFor(() => expect(findings(harness!.emitted)).toHaveLength(1))
+    await harness.addon.saveLocation({
+      id: 'recordings:agent-a',
+      type: 'recordings',
+      displayName: 'Agent A',
+      providerId: PROVIDER_ID,
+      config: { basePath: '/recordings' },
+      nodeId: 'agent-a',
+      isSystem: false,
+    })
+    harness.emitted.length = 0
+    await harness.nodeRemoval!.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })
+    const changed = harness.emitted.filter(
+      (e) => e.category === EventCategory.StorageLocationsChanged,
+    )
+    expect(changed.map((e) => e.data['locationId'])).toEqual(['recordings:agent-a'])
+    expect(findings(harness.emitted)).toEqual([
+      { category: EventCategory.SystemLivenessFailed, findingId: FINDING },
     ])
   })
 })

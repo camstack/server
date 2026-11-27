@@ -726,6 +726,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
         provider: createNodeRemovalHook({
           service,
           logger: this.ctx.logger.child('node-removal'),
+          onChanged: (location) =>
+            this.announceLocationsChanged(location.id, location.type, 'upsert'),
         }),
       },
       // The data door (D44). One addon owns both storage surfaces —

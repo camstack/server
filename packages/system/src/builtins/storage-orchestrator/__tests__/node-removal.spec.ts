@@ -41,9 +41,11 @@ function loc(id: string, nodeId: string | undefined, type = 'recordings'): Locat
 function setup() {
   const logger = makeLogger()
   const persisted = new Map<string, StorageLocation>()
+  const failing = { upsert: false }
   const store: ILocationStore = {
     loadAll: async () => [...persisted.values()],
     upsert: async (row) => {
+      if (failing.upsert) throw new Error('store down')
       persisted.set(row.id, row)
     },
     delete: async (id) => {
@@ -57,9 +59,16 @@ function setup() {
   service.upsertLocation({ ...loc('ev-agent-a', 'agent-a', 'event-media'), mode: 'active' })
   service.upsertLocation({ ...loc('rec-agent-b', 'agent-b'), mode: 'active' })
   service.upsertLocation({ ...loc('s3-anywhere', undefined, 'backups'), mode: 'active' })
-  const hook = createNodeRemovalHook({ service, logger })
+  service.upsertLocation({ ...loc('rec-agent-a-ro', 'agent-a'), mode: 'readonly' })
+  service.upsertLocation({ ...loc('rec-agent-a-drain', 'agent-a'), mode: 'drain' })
+  const changed: string[] = []
+  const hook = createNodeRemovalHook({
+    service,
+    logger,
+    onChanged: (row) => changed.push(row.id),
+  })
   const mode = (id: string) => resolveLocationMode(service.getLocationById(id)!)
-  return { service, hook, logger, mode, persisted }
+  return { service, hook, logger, mode, persisted, changed, failing }
 }
 
 describe('storage-orchestrator node-removal-hook', () => {
@@ -68,19 +77,51 @@ describe('storage-orchestrator node-removal-hook', () => {
     const result = await hook.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })
     expect(mode('rec-agent-a')).toBe('disabled')
     expect(mode('ev-agent-a')).toBe('disabled')
+    expect(mode('rec-agent-a-ro')).toBe('disabled')
+    expect(mode('rec-agent-a-drain')).toBe('disabled')
     expect(mode('rec-hub')).toBe('active')
     expect(mode('rec-agent-b')).toBe('active')
     expect(mode('s3-anywhere')).toBe('active')
-    expect(result).toEqual({ counts: { 'storage-locations': 2 } })
+    expect(result).toEqual({ counts: { 'storage-locations': 4 } })
     // Never removed: data and index stay.
     expect(service.getLocationById('rec-agent-a')).toBeDefined()
     expect(resolveLocationMode(persisted.get('rec-agent-a')!)).toBe('disabled')
   })
 
   it('disables even the last write target of a type — a forgotten node cannot serve it', async () => {
-    const { hook, mode } = setup()
+    const { hook, mode, service } = setup()
+    // Negative control: the operator door refuses the very same disable.
+    expect(() =>
+      service.upsertLocation({ ...loc('ev-agent-a', 'agent-a', 'event-media'), mode: 'disabled' }),
+    ).toThrow(/last enabled location/)
+    expect(mode('ev-agent-a')).toBe('active')
     await hook.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })
     expect(mode('ev-agent-a')).toBe('disabled')
+  })
+
+  it('announces every disabled location through onChanged', async () => {
+    const { hook, changed } = setup()
+    await hook.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })
+    expect([...changed].sort()).toEqual(
+      ['ev-agent-a', 'rec-agent-a', 'rec-agent-a-drain', 'rec-agent-a-ro'].sort(),
+    )
+  })
+
+  it('a failed persist leaves the mode unchanged, logs it, and a retry finds the work', async () => {
+    const { hook, mode, failing, logger, changed } = setup()
+    failing.upsert = true
+    await expect(hook.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })).rejects.toThrow(
+      'store down',
+    )
+    expect(mode('rec-agent-a')).toBe('active')
+    expect(changed).toEqual([])
+    expect(vi.mocked(logger.error).mock.calls.at(-1)?.[1]).toMatchObject({
+      meta: { nodeId: 'agent-a', error: 'store down' },
+    })
+    failing.upsert = false
+    const retry = await hook.onNodeRemoved({ nodeId: 'agent-a', removedAt: 1 })
+    expect(retry).toEqual({ counts: { 'storage-locations': 4 } })
+    expect(mode('rec-agent-a')).toBe('disabled')
   })
 
   it('is idempotent: a second call changes nothing and answers zero', async () => {
