@@ -41,6 +41,7 @@
  * caps) the controller needs at construction time. The orchestrator
  * passes both into `new CameraController({...})`.
  */
+import { pressedRecently } from './doorbell.js'
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { createSocket, type Socket as UdpSocket } from 'node:dgram'
@@ -508,7 +509,10 @@ export function buildCameraStreamingDelegate(
     handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): void {
       handleSnapshot(bctx, request)
         .then((buf) => {
-          log.info('export-hap: snapshot served', { meta: { bytes: buf.length } })
+          // Info only right after a doorbell press (the notification thumbnail
+          // fetch); HomeKit polls snapshots constantly, so otherwise debug.
+          const served = pressedRecently(numericDeviceId) ? log.info : log.debug
+          served.call(log, 'export-hap: snapshot served', { meta: { bytes: buf.length } })
           callback(undefined, buf)
         })
         .catch((err: unknown) => {

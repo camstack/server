@@ -28,6 +28,17 @@ import { EventCategory } from '@camstack/types'
 import { describeDoorbellDelivery, ringReachedNobody } from './doorbell-delivery.js'
 import type { BuilderContext, BuilderHandle } from '../types.js'
 
+/** How long after a press pushed to HomeKit its snapshot fetches are worth an info line. */
+export const RECENT_PRESS_WINDOW_MS = 30_000
+
+const lastPressPushedAt = new Map<number, number>()
+
+/** True within {@link RECENT_PRESS_WINDOW_MS} after a press was pushed for this device. */
+export function pressedRecently(deviceId: number, now: number = Date.now()): boolean {
+  const at = lastPressPushedAt.get(deviceId)
+  return at !== undefined && now - at <= RECENT_PRESS_WINDOW_MS
+}
+
 export interface DoorbellBuilderInput {
   readonly bctx: BuilderContext
   readonly controller: DoorbellController
@@ -64,6 +75,7 @@ export async function buildDoorbell(input: DoorbellBuilderInput): Promise<Builde
           )
           return
         }
+        lastPressPushedAt.set(numericDeviceId, Date.now())
         log.info('export-hap: doorbell SINGLE_PRESS pushed to HomeKit', {
           meta: { ...delivery },
         })

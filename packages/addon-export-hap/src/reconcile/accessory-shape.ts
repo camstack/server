@@ -129,7 +129,9 @@ function listDelta(label: string, from: readonly string[], to: readonly string[]
 
 /**
  * True when the only difference between the built shape and the current one is
- * features or caps that are GONE now — nothing added, renamed or re-roled. A
+ * features or caps that are GONE now (a recordability change may ride along: the
+ * profiles of a device whose graft is down read differently) — nothing added,
+ * renamed or re-roled. A
  * composed cap that is briefly unbound at a boot looks exactly like this, so
  * the reconcile confirms it before it strips a live accessory.
  */
@@ -138,7 +140,6 @@ export function isRemovalOnly(built: AccessoryShape, current: AccessoryShape): b
   const b = normaliseShapeInputs(current.inputs)
   if (a.kind !== b.kind || a.deviceType !== b.deviceType) return false
   if (a.role !== b.role || a.name !== b.name) return false
-  if (current.recordability !== null && built.recordability !== current.recordability) return false
   const keeps = (from: readonly string[], to: readonly string[]): boolean =>
     to.every((x) => from.includes(x))
   const removed = a.features.length - b.features.length + (a.caps.length - b.caps.length) > 0

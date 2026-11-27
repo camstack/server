@@ -236,10 +236,10 @@ export function describeHksvCamera(
 /** What ships, and what an unset global resolves to. */
 export const DEFAULT_CLIP_RETENTION_DAYS = 14
 
-/** The rails on the retention itself. Zero would silently disable the tee. */
 /** How long a shape that only lost features or caps waits for its confirming second read. */
 export const REMOVAL_CONFIRM_MS = 90_000
 
+/** The rails on the retention itself. Zero would silently disable the tee. */
 const MIN_CLIP_RETENTION_DAYS = 1
 const MAX_CLIP_RETENTION_DAYS = 365
 
@@ -789,12 +789,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** Take a bridge's runtime down. Its pairing files stay: a stop is not a withdrawal. */
-  private async stopInstance(id: string): Promise<void> {
+  protected async stopInstance(id: string): Promise<void> {
     const inst = this.bridges.get(id)
     if (inst === undefined) return
     this.bridges.delete(id)
     for (const timer of inst.pendingRebuildTimers.values()) clearTimeout(timer)
     inst.pendingRebuildTimers.clear()
+    for (const pending of inst.pendingRemovals.values()) clearTimeout(pending.timer)
+    inst.pendingRemovals.clear()
     await inst.actionExports?.dispose()
     await this.detachAll(inst)
     await inst.bridgeHost.dispose()
@@ -1474,6 +1476,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       clearTimeout(pendingTimer)
       inst.pendingRebuildTimers.delete(deviceId)
     }
+    const pendingRemoval = inst.pendingRemovals.get(deviceId)
+    if (pendingRemoval) {
+      clearTimeout(pendingRemoval.timer)
+      inst.pendingRemovals.delete(deviceId)
+    }
     const mapper = inst.exposed.get(deviceId)
     if (!mapper) {
       // Mapper instance gone (boot reattach failed) — nothing for the
@@ -1925,6 +1932,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     }
 
     if (built !== undefined && (await this.deferRemoval(inst, deviceId, built, current))) return
+    const superseded = inst.pendingRemovals.get(deviceId)
+    if (superseded !== undefined) clearTimeout(superseded.timer)
     inst.pendingRemovals.delete(deviceId)
 
     const changed =
