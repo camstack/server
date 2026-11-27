@@ -207,7 +207,7 @@ describe('a composed cap follows its claim through the real claim API, and its f
   }
 
   it('releasing the claim removes the binding at once', async () => {
-    const h = await setupHarness({ capabilityRegistry: new CapabilityRegistry() })
+    const h = await setupHarness({ capabilityRegistry: new CapabilityRegistry(makeLogger()) })
     const id = await registerCamera(h, 'provider-hikvision', 'cam-615')
     await addClaim(h, id)
     const bound = (await h.provider.getBindings({ deviceId: id })).entries.map((e) => e.capName)
@@ -224,7 +224,7 @@ describe('a composed cap follows its claim through the real claim API, and its f
   })
 
   it('the derived features are the same with the claim alone as with the claim plus the live graft', async () => {
-    const h = await setupHarness({ capabilityRegistry: new CapabilityRegistry() })
+    const h = await setupHarness({ capabilityRegistry: new CapabilityRegistry(makeLogger()) })
     const id = await registerCamera(h, 'provider-hikvision', 'cam-615')
     await addClaim(h, id)
     const { entries } = await h.provider.getBindings({ deviceId: id })
