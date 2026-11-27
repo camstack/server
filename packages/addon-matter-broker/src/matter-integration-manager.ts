@@ -6,6 +6,7 @@ import {
   type MatterController,
   type MatterControllerOptions,
   type MatterNodeSnapshot,
+  type MatterReadRequest,
   type Unsubscribe,
 } from './matter-controller.js'
 import { MatterJsController } from './matter-controller-impl.js'
@@ -157,6 +158,14 @@ export class MatterIntegrationManager {
   /** Invoke an outbound cluster command on the live controller. */
   async invokeCommand(invocation: MatterCommandInvocation): Promise<void> {
     await this.requireController().invokeCommand(invocation)
+  }
+
+  /** Read whole clusters off a node through the live controller (a radio round trip). */
+  async readAttributes(
+    nodeId: string,
+    requests: readonly MatterReadRequest[],
+  ): Promise<readonly MatterAttributeReport[]> {
+    return this.requireController().readAttributes(nodeId, requests)
   }
 
   /** Boot the controller, subscribe to reports, seed + schedule reconcile. */

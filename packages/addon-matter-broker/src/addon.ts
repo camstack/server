@@ -32,6 +32,7 @@ import { buildMatterAdoptionProvider } from './matter-adoption-provider.js'
 import { cascadeRemoveDevicesForBroker } from './matter-broker-device-cascade.js'
 import { setBrokerDevicesOnline, type OfflineTarget } from './matter-broker-offline.js'
 import { matterCommands, matterNodes } from './matter-gateway.js'
+import { MESH_REFRESH_INTERVAL_MS, matterMesh } from './matter-mesh.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
 import {
   mappableEndpoints,
@@ -77,6 +78,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   }
 
   private registry: MatterBrokerRegistry | null = null
+  private meshTimer: ReturnType<typeof setInterval> | null = null
   private endpointReporterInstance: NodeEndpointReporter | null = null
 
   private get endpointReporter(): NodeEndpointReporter {
@@ -142,6 +144,16 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     matterCommands.setDispatcher((brokerId, invocation) =>
       this.requireRegistry().invokeCommand(brokerId, invocation),
     )
+
+    // The device-mesh reads go through the same live controllers; a 15-minute pass
+    // re-reads MAINS-powered nodes only (battery nodes are read on request, never here).
+    matterMesh.attach(this.ctx.logger, (brokerId, nodeId, requests) =>
+      this.requireRegistry().readAttributes(brokerId, nodeId, requests),
+    )
+    this.meshTimer = setInterval(() => {
+      void matterMesh.refreshAll()
+    }, MESH_REFRESH_INTERVAL_MS)
+    this.meshTimer.unref()
 
     await this.registry.restore(this.activeBrokers)
 
@@ -291,6 +303,9 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   }
 
   protected override async onShutdown(): Promise<void> {
+    if (this.meshTimer !== null) clearInterval(this.meshTimer)
+    this.meshTimer = null
+    matterMesh.detach()
     matterCommands.clear()
     try {
       await this.registry?.shutdown()

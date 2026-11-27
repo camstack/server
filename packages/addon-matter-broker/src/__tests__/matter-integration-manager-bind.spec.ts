@@ -50,6 +50,7 @@ function failingController(message: string): MatterController {
     subscribeEvents: () => () => undefined,
     invokeCommand: notNeeded,
     removeNode: notNeeded,
+    readAttributes: notNeeded,
     syncSubscriptions: async () => undefined,
   }
 }

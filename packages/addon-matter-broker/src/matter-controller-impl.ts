@@ -29,6 +29,7 @@ import {
   type MatterEventReport,
   type MatterControllerOptions,
   type MatterEndpointSnapshot,
+  type MatterReadRequest,
   type MatterNodeSnapshot,
   type Unsubscribe,
 } from './matter-controller.js'
@@ -40,6 +41,7 @@ import {
   CommissionPhase,
 } from './matter-commission-progress.js'
 import { prepareFabricStorage } from './matter-storage-lock.js'
+import { readPeerAttributes } from './matter-peer-read.js'
 import { subscribableFromPeer } from './matter-peer-subscribe.js'
 import { attachMatterJsLogger } from './matter-js-logging.js'
 import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
@@ -286,6 +288,17 @@ export class MatterJsController implements MatterController {
       commandName: invocation.commandName,
       ...(invocation.args !== undefined ? { args: invocation.args } : {}),
     })
+  }
+
+  /** Read whole clusters off a commissioned node now. */
+  async readAttributes(
+    nodeId: string,
+    requests: readonly MatterReadRequest[],
+  ): Promise<readonly MatterAttributeReport[]> {
+    const server = this.#requireServer('readAttributes')
+    const peer = this.#rawPeer(server, nodeId)
+    if (peer === null) throw new Error(`matter-broker: node ${nodeId} not commissioned`)
+    return readPeerAttributes(peer, nodeId, requests)
   }
 
   /** Decommission a node from this fabric (best-effort device round-trip). */

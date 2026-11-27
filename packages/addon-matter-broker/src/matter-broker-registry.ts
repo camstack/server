@@ -9,6 +9,7 @@ import type {
   MatterAttributeReport,
   MatterCommandInvocation,
   MatterNodeSnapshot,
+  MatterReadRequest,
 } from './matter-controller.js'
 import type { MatterBrokerEntry, MatterConnection } from './config.js'
 import type { CommissionProgress } from './matter-commission-progress.js'
@@ -25,6 +26,7 @@ export type ManagerLike = Pick<
   | 'removeNode'
   | 'reconcile'
   | 'invokeCommand'
+  | 'readAttributes'
   | 'getCommissionProgress'
 >
 
@@ -222,6 +224,17 @@ export class MatterBrokerRegistry {
     const mgr = this.#managers.get(brokerId)
     if (!mgr) throw new Error(`MatterBrokerRegistry: unknown broker id "${brokerId}"`)
     await mgr.invokeCommand(invocation)
+  }
+
+  /** Route a cluster read to the broker's live controller. */
+  async readAttributes(
+    brokerId: string,
+    nodeId: string,
+    requests: readonly MatterReadRequest[],
+  ): Promise<readonly MatterAttributeReport[]> {
+    const mgr = this.#managers.get(brokerId)
+    if (!mgr) throw new Error(`MatterBrokerRegistry: unknown broker id "${brokerId}"`)
+    return mgr.readAttributes(nodeId, requests)
   }
 
   // ── Read helpers ──────────────────────────────────────────────────────────

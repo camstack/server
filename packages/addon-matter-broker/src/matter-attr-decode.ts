@@ -32,6 +32,8 @@ export const MatterAttributeId = {
   Occupancy: 0x0000,
   /** *Measurement.MeasuredValue (scaled int per cluster). */
   MeasuredValue: 0x0000,
+  /** Global attribute: the cluster FeatureMap (bitmap). PowerSource: bit0 Wired, bit1 Battery. */
+  FeatureMap: 0xfffc,
   /** PowerSource.BatPercentRemaining (uint8, half-percent 0..200). */
   BatPercentRemaining: 0x000c,
   /** PowerSource.BatChargeLevel (enum: 0=Ok,1=Warning,2=Critical). Some locks report only this. */
@@ -516,4 +518,39 @@ function decodeElectricalEnergy(
   if (mwh === null) return null
   // mWh → kWh (÷ 1e6).
   return { cap: 'power-meter', patch: { energy: mwh / 1_000_000, lastFetchedAt: at } }
+}
+
+/** What a PowerSource cluster says the node is powered by. */
+export type PowerSourceKind = 'wired' | 'battery'
+
+/** PowerSource FeatureMap bit0: the source is wired (mains). */
+const POWER_SOURCE_WIRED_BIT = 0x1
+/** PowerSource FeatureMap bit1: the source is a battery. */
+const POWER_SOURCE_BATTERY_BIT = 0x2
+
+/**
+ * What one PowerSource cluster is, from its FeatureMap: a number / bigint bitmap
+ * or a named-feature record (`{ wired, battery }`, matter.js's decoded form).
+ * `null` = the map was not readable, or names neither feature: unknown, never a
+ * guess. A source carrying both bits is a wired source with a battery behind it;
+ * the node is mains-powered, so `wired` wins.
+ */
+export function decodePowerSourceKind(featureMap: unknown): PowerSourceKind | null {
+  let wired: boolean | null = null
+  let battery: boolean | null = null
+  if (typeof featureMap === 'number' || typeof featureMap === 'bigint') {
+    const bits = Number(featureMap)
+    wired = (bits & POWER_SOURCE_WIRED_BIT) !== 0
+    battery = (bits & POWER_SOURCE_BATTERY_BIT) !== 0
+  } else if (typeof featureMap === 'object' && featureMap !== null) {
+    const named = (key: string): boolean | null => {
+      const v: unknown = Reflect.get(featureMap, key)
+      return typeof v === 'boolean' ? v : null
+    }
+    wired = named('wired')
+    battery = named('battery')
+  }
+  if (wired === true) return 'wired'
+  if (battery === true) return 'battery'
+  return null
 }

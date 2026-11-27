@@ -9,11 +9,14 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type FeatureProbeStatus,
+  deviceMeshCapability,
+  type IDeviceMeshProvider,
   type IDevice,
   resyncCapability,
   resyncThroughAdoption,
 } from '@camstack/types'
 import { matterNodes } from '../matter-gateway.js'
+import { matterMesh } from '../matter-mesh.js'
 import { endpointsEqual, mappableEndpoints } from '../matter-node-reconcile.js'
 import { endpointLabel, mapMatterEndpointToCamStack } from '../matter-cluster-mapping.js'
 import { MatterEndpointDevice } from './matter-endpoint-device.js'
@@ -79,6 +82,14 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
     this.brokerId = cfg.brokerId
     this.nodeId = cfg.nodeId
     this.integrationId = cfg.integrationId
+    // The fabric's network view: the section a per-device widget binds to (planning#750).
+    const mesh: IDeviceMeshProvider = {
+      getTopology: async () => matterMesh.topology(cfg.brokerId),
+      getNodeDiagnostics: async ({ deviceId }) => matterMesh.diagnostics(cfg.brokerId, deviceId),
+      readNow: async ({ deviceId }) => matterMesh.readNow(cfg.brokerId, deviceId),
+      refresh: async () => matterMesh.refresh(cfg.brokerId),
+    }
+    this.ctx.registerNativeCap(deviceMeshCapability, mesh)
     this.online = matterNodes.getNode(this.brokerId, this.nodeId)?.online ?? false
     matterNodes.bindDevice(this.nodeId, this.id)
     void this.updateSourceInfo({ id: this.nodeId, system: 'matter' })

@@ -82,6 +82,12 @@ export interface MatterCommandInvocation {
   readonly args?: Record<string, unknown>
 }
 
+/** One `(endpoint, cluster)` to read in full. */
+export interface MatterReadRequest {
+  readonly endpointId: number
+  readonly clusterId: number
+}
+
 /** Result of a commissioning attempt. */
 export interface CommissionResult {
   readonly nodeId: string
@@ -114,6 +120,14 @@ export interface MatterController {
   invokeCommand(invocation: MatterCommandInvocation): Promise<void>
   /** Remove (decommission) a node from this fabric. */
   removeNode(nodeId: string): Promise<void>
+  /**
+   * Read whole clusters off a node NOW (a radio round trip). Throws when the node
+   * cannot be reached; a cluster the endpoint does not serve returns no report.
+   */
+  readAttributes(
+    nodeId: string,
+    requests: readonly MatterReadRequest[],
+  ): Promise<readonly MatterAttributeReport[]>
   /**
    * Ensure every commissioned node has a live attribute subscription.
    * Called on start, after commission, and on the reconcile backstop.
@@ -207,6 +221,13 @@ export class StubMatterController implements MatterController {
 
   async removeNode(_nodeId: string): Promise<void> {
     throw new MatterControllerNotWiredError('removeNode')
+  }
+
+  async readAttributes(
+    _nodeId: string,
+    _requests: readonly MatterReadRequest[],
+  ): Promise<readonly MatterAttributeReport[]> {
+    throw new MatterControllerNotWiredError('readAttributes')
   }
 
   async syncSubscriptions(): Promise<void> {

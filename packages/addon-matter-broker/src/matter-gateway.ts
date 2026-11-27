@@ -155,6 +155,11 @@ export class MatterNodeResolver {
     }
   }
 
+  /** Ids of every broker with a published inventory. */
+  brokerIds(): readonly string[] {
+    return Array.from(this.#nodes.keys())
+  }
+
   /** All nodes for a broker, or [] when unknown. */
   getNodes(brokerId: string): readonly MatterNodeSnapshot[] {
     const byId = this.#nodes.get(brokerId)
