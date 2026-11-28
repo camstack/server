@@ -149,7 +149,7 @@ describe('POST /api/server-upload — auth', () => {
   it('401s without an authorization header', async () => {
     const res = await injectUpload({
       files: [
-        { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+        { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
       ],
       fields: { version: DEV_VERSION },
       token: null,
@@ -160,7 +160,7 @@ describe('POST /api/server-upload — auth', () => {
   it('401s a token that authenticates nobody (an unknown bearer is unauthenticated, not forbidden)', async () => {
     const res = await injectUpload({
       files: [
-        { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+        { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
       ],
       fields: { version: DEV_VERSION },
       token: 'not-a-real-token',
@@ -173,7 +173,7 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
   it('rejects a version that is not dev-channel shaped', async () => {
     for (const bad of ['1.1.54', '1.1.54-rc.1', '1.1.54-dev.abc', 'latest']) {
       const res = await injectUpload({
-        files: [{ filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', bad) }],
+        files: [{ filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', bad) }],
         fields: { version: bad },
       })
       expect(res.statusCode, `version ${bad}`).toBe(400)
@@ -183,7 +183,7 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
   it('rejects a version containing path separators', async () => {
     const bad = '../1.1.54-dev.1'
     const res = await injectUpload({
-      files: [{ filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', bad) }],
+      files: [{ filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', bad) }],
       fields: { version: bad },
     })
     expect(res.statusCode).toBe(400)
@@ -192,7 +192,7 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
   it('rejects when the version field is missing', async () => {
     const res = await injectUpload({
       files: [
-        { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+        { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
       ],
       fields: {},
     })
@@ -230,14 +230,14 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
     if (res.statusCode === 200) {
       const dir = devUploadVersionDir(serverRootDir(dataDir), DEV_VERSION)
       const entries = fs.readdirSync(dir).sort()
-      expect(entries).toEqual(['camstack-server.tgz', 'manifest.json'])
+      expect(entries).toEqual(['dominevo-server.tgz', 'manifest.json'])
     }
   })
 
   it('rejects a tarball whose package name is not @dominevo-scoped', async () => {
     const res = await injectUpload({
       files: [
-        { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+        { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
         { filename: 'left-pad.tgz', buffer: makeTgz('left-pad', DEV_VERSION) },
       ],
       fields: { version: DEV_VERSION },
@@ -249,7 +249,7 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
 
   it('rejects a tarball whose version differs from the declared dev version', async () => {
     const res = await injectUpload({
-      files: [{ filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', '1.1.54') }],
+      files: [{ filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', '1.1.54') }],
       fields: { version: DEV_VERSION },
     })
     expect(res.statusCode).toBe(400)
@@ -257,7 +257,7 @@ describe('POST /api/server-upload — validation (fail-closed)', () => {
 
   it('rejects a malformed archive', async () => {
     const res = await injectUpload({
-      files: [{ filename: 'camstack-server.tgz', buffer: Buffer.from('not a tgz') }],
+      files: [{ filename: 'dominevo-server.tgz', buffer: Buffer.from('not a tgz') }],
       fields: { version: DEV_VERSION },
     })
     expect(res.statusCode).toBe(400)
@@ -268,7 +268,7 @@ describe('POST /api/server-upload — happy path', () => {
   it('stores every tarball + manifest under dev-uploads/<version>/', async () => {
     const res = await injectUpload({
       files: [
-        { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+        { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
         { filename: 'camstack-types.tgz', buffer: makeTgz('@dominevo/types', DEV_VERSION) },
       ],
       fields: { version: DEV_VERSION },
@@ -290,7 +290,7 @@ describe('POST /api/server-upload — happy path', () => {
 
   it('records the CLI build time in the manifest, and omits it when the field is absent or invalid', async () => {
     const files = [
-      { filename: 'camstack-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
+      { filename: 'dominevo-server.tgz', buffer: makeTgz('@dominevo/server', DEV_VERSION) },
     ]
     const dir = devUploadVersionDir(serverRootDir(dataDir), DEV_VERSION)
 

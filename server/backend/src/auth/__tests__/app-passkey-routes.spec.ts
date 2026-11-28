@@ -124,7 +124,7 @@ describe('GET /auth/app/passkey', () => {
     const body = res.body
     expect(body).toContain('Sign in with a passkey')
     expect(body).not.toMatch(/(src|href)="https?:/)
-    expect(body).toContain(`href="camstack://auth-callback?error=cancelled&#38;state=${STATE}"`)
+    expect(body).toContain(`href="dominevo://auth-callback?error=cancelled&#38;state=${STATE}"`)
     // The one inline script is exactly what the CSP hashes.
     const script = /<script>([\s\S]*)<\/script>/.exec(body)?.[1] ?? ''
     expect(csp).toContain(`'sha256-${createHash('sha256').update(script).digest('base64')}'`)
@@ -187,7 +187,7 @@ describe('POST /auth/app/passkey/begin and /finish', () => {
   it('Continue mints the code: PKCE- and state-bound, at the app', async () => {
     const { finish, confirm, handoffs } = boot()
     const location = new URL(await confirm(await finish()))
-    expect(`${location.protocol}//${location.host}`).toBe('camstack://auth-callback')
+    expect(`${location.protocol}//${location.host}`).toBe('dominevo://auth-callback')
     expect(location.searchParams.get('state')).toBe(STATE)
     const code = location.searchParams.get('code') ?? ''
     // Wrong verifier is refused (and burns the code) ...
@@ -220,7 +220,7 @@ describe('POST /auth/app/passkey/begin and /finish', () => {
     const { finish, handoffs, logs } = boot({ verified: false })
     const res = await finish()
     expect(res.json<{ location: string }>().location).toBe(
-      `camstack://auth-callback?error=passkey-failed&state=${STATE}`,
+      `dominevo://auth-callback?error=passkey-failed&state=${STATE}`,
     )
     expect(handoffs.pendingCount).toBe(0)
     expect(logs.join('\n')).not.toContain(STATE)
