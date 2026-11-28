@@ -25,11 +25,11 @@ run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_typ
 # Output (publish_release only — an artifact run leaves installers on the runner):
 #
 #   ── Docker image on GHCR (accel-prefixed tags, no bare :latest) ──────
-#     ghcr.io/<owner>/camstack:{intel-X.Y.Z, intel-latest}   (linux/amd64)
-#     ghcr.io/<owner>/camstack:{amd-X.Y.Z, amd-latest}       (linux/amd64)
-#     ghcr.io/<owner>/camstack:{intel-legacy-X.Y.Z, intel-legacy-latest}   (Gen8-11 iGPU)
-#     ghcr.io/<owner>/camstack:{nvidia-X.Y.Z, nvidia-latest}               (Turing+ / sm_75+)
-#     ghcr.io/<owner>/camstack:{nvidia-legacy-X.Y.Z, nvidia-legacy-latest} (Pascal/Maxwell)
+#     ghcr.io/<owner>/dominevo:{intel-X.Y.Z, intel-latest}   (linux/amd64)
+#     ghcr.io/<owner>/dominevo:{amd-X.Y.Z, amd-latest}       (linux/amd64)
+#     ghcr.io/<owner>/dominevo:{intel-legacy-X.Y.Z, intel-legacy-latest}   (Gen8-11 iGPU)
+#     ghcr.io/<owner>/dominevo:{nvidia-X.Y.Z, nvidia-latest}               (Turing+ / sm_75+)
+#     ghcr.io/<owner>/dominevo:{nvidia-legacy-X.Y.Z, nvidia-legacy-latest} (Pascal/Maxwell)
 #     (`intel` / `amd` / `intel-legacy` / `nvidia` / `nvidia-legacy` are Dockerfile --target names; more accels = matrix rows)
 #     (multi_arch=true workflow_dispatch input adds linux/arm64 via QEMU)
 #
@@ -251,7 +251,7 @@ jobs:
           SERVER_VERSION: ${{ needs.derive-version.outputs.server_version }}
         run: |
           OWNER_LC="${{ steps.repo.outputs.owner }}"
-          IMG="${{ env.REGISTRY }}/${OWNER_LC}/camstack"
+          IMG="${{ env.REGISTRY }}/${OWNER_LC}/dominevo"
 
           # Commit log between previous tag and current — feed for the
           # auto-changelog. Empty if no previous tag.
@@ -324,7 +324,7 @@ jobs:
 
   # ── Step 2 — Docker image (single Dominevo image, hub OR agent) ──
   #
-  # ONE image name `ghcr.io/<owner>/camstack` from the single `Dockerfile`:
+  # ONE image name `ghcr.io/<owner>/dominevo` from the single `Dockerfile`:
   # hub vs agent at runtime via CAMSTACK_ROLE; accel variant via `--target`
   # (`intel` | `amd`). Tags are accel-prefixed
   # (`intel-<version>`, `amd-latest`, …) — never a bare `:latest`.
@@ -342,35 +342,35 @@ jobs:
             runner: ci-release
             dockerfile: Dockerfile
             target: intel
-            image: camstack
+            image: dominevo
             title: Dominevo
             description: Dominevo node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
           - accel: amd
             runner: ci-release
             dockerfile: Dockerfile
             target: amd
-            image: camstack
+            image: dominevo
             title: Dominevo (AMD)
             description: Dominevo node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
           - accel: intel-legacy
             runner: ci-release
             dockerfile: Dockerfile
             target: intel-legacy
-            image: camstack
+            image: dominevo
             title: Dominevo (Intel legacy)
             description: Dominevo node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via CAMSTACK_ROLE
           - accel: nvidia
             runner: ci-release
             dockerfile: Dockerfile
             target: nvidia
-            image: camstack
+            image: dominevo
             title: Dominevo (NVIDIA)
             description: Dominevo node (NVIDIA Turing and newer, CUDA 12) — needs the NVIDIA Container Toolkit
           - accel: nvidia-legacy
             runner: ci-release
             dockerfile: Dockerfile
             target: nvidia-legacy
-            image: camstack
+            image: dominevo
             title: Dominevo (NVIDIA legacy)
             description: Dominevo node (NVIDIA Pascal/Maxwell, CUDA 11.8) — needs the NVIDIA Container Toolkit
     runs-on: [self-hosted, linux, x64, docker, "${{ matrix.runner }}"]
@@ -1215,7 +1215,7 @@ jobs:
           SERVER_VERSION: ${{ needs.derive-version.outputs.server_version }}
         run: |
           OWNER_LC="${{ steps.repo.outputs.owner }}"
-          IMG="${{ env.REGISTRY }}/${OWNER_LC}/camstack"
+          IMG="${{ env.REGISTRY }}/${OWNER_LC}/dominevo"
           {
             echo "## Dominevo — Release \`v${VERSION}\`"
             echo ""
