@@ -290,7 +290,7 @@ describe('seedNodeModulesRoots', () => {
     const present = new Set(['/opt', SEED_HUB, SEED_FRAMEWORK])
     const roots = seedNodeModulesRoots({
       existsSync: (p) => present.has(p),
-      readdirSync: () => ['camstack-hub', 'camstack-seed-framework', 'not-a-package-tree'],
+      readdirSync: () => ['dominevo-hub', 'camstack-seed-framework', 'not-a-package-tree'],
     })
     expect(roots).toEqual([SEED_HUB, SEED_FRAMEWORK])
   })
