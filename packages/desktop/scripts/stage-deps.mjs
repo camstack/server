@@ -162,10 +162,15 @@ if (!nodeAvSiblingRange) {
   )
   process.exit(1)
 }
+// The closure pins (#681) are root `overrides`, and npm refuses a direct spec
+// that differs from an override of the same package (EOVERRIDE, even with
+// --force). So the prebuild is fetched at the pinned version when there is one.
+const stageOverrides = JSON.parse(readFileSync(join(stageDir, 'package.json'), 'utf8')).overrides ?? {}
+const nodeAvSiblingSpec = stageOverrides[nodeAvSibling] ?? nodeAvSiblingRange
 if (!existsSync(join(stageModules, nodeAvSibling))) {
-  console.log(`[stage-deps] fetching node-av prebuild ${nodeAvSibling}@${nodeAvSiblingRange} …`)
+  console.log(`[stage-deps] fetching node-av prebuild ${nodeAvSibling}@${nodeAvSiblingSpec} …`)
   execSync(
-    `npm install --no-save --no-audit --no-fund --force --os=${process.platform} --cpu=${targetArch} "${nodeAvSibling}@${nodeAvSiblingRange}"`,
+    `npm install --no-save --no-audit --no-fund --force --os=${process.platform} --cpu=${targetArch} "${nodeAvSibling}@${nodeAvSiblingSpec}"`,
     { cwd: stageDir, stdio: 'inherit' },
   )
 }
