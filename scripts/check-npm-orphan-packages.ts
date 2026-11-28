@@ -42,7 +42,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
-const SEARCH_URL = 'https://registry.npmjs.org/-/v1/search?text=%40camstack&size=250'
+const SEARCH_URL = 'https://registry.npmjs.org/-/v1/search?text=%40dominevo&size=250'
 const FETCH_TIMEOUT_MS = 20_000
 
 /**
@@ -51,6 +51,11 @@ const FETCH_TIMEOUT_MS = 20_000
  * before removal. The value says where the behaviour went, because "it was
  * removed" and "it moved into a bundle" call for different answers when someone
  * asks why their install broke.
+ */
+/**
+ * The whole `@camstack/*` scope and the unscoped `camstack` CLI were retired by the
+ * Dominevo rename: every package restarted at 0.1.0 under `@dominevo/*` and the old
+ * names are deprecated on npm. The search below therefore asks for `@dominevo` only.
  */
 const RETIRED: Readonly<Record<string, string>> = {
   camstack:
@@ -128,7 +133,7 @@ const fetchPublishedNames = async (): Promise<readonly string[] | null> => {
         return typeof pkg?.name === 'string' ? pkg.name : null
       })
       .filter((name: string | null): name is string => name !== null)
-      .filter((name: string): boolean => name === 'camstack' || name.startsWith('@dominevo/'))
+      .filter((name: string): boolean => name === 'dominevo' || name.startsWith('@dominevo/'))
   } catch {
     return null
   }
